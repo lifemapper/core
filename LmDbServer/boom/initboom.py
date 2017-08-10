@@ -24,16 +24,18 @@
 import ConfigParser
 import mx.DateTime
 import os
+from osgeo.ogr import wkbPolygon
 import time
 from types import IntType
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
-                        ProcessType, JobStatus, MatrixType, 
-                        SERVER_PIPELINE_HEADING, SERVER_BOOM_HEADING)
+   ProcessType, JobStatus, MatrixType, SERVER_PIPELINE_HEADING, 
+   SERVER_BOOM_HEADING, DEFAULT_MAPUNITS, DEFAULT_EPSG)
 from LmCommon.common.readyfile import readyFilename
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource,
+                                           TNCMetadata)
 from LmDbServer.common.localconstants import (GBIF_TAXONOMY_FILENAME, 
                                               GBIF_PROVIDER_FILENAME)
 from LmServer.common.datalocator import EarlJr
@@ -43,6 +45,7 @@ from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH,
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
+from LmServer.base.layer2 import Vector
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
@@ -299,11 +302,15 @@ class BOOMFiller(LMObject):
          config.set(thisHeading, 'CODE', alg.code)
          for name, val in alg.parameters.iteritems():
             config.set(thisHeading, name, str(val))
+      
+      email = self.usrEmail
+      if email is None:
+         email = ''
 
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', self.usr)
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', self.archiveName)
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_PRIORITY', str(self.priority))
-      config.set(SERVER_BOOM_HEADING, 'TROUBLESHOOTERS', self.usrEmail)
+      config.set(SERVER_BOOM_HEADING, 'TROUBLESHOOTERS', email)
       
       # SDM input
       if mdlMaskName is not None:
@@ -435,7 +442,7 @@ class BOOMFiller(LMObject):
                                                           DEFAULT_EMAIL_POSTFIX)))
       if self.usr != PUBLIC_USER:
          email = self.usrEmail
-         if self.usrEmail is None:
+         if email is None:
             email = '{}{}'.format(self.usr, DEFAULT_EMAIL_POSTFIX)
          userList.append((self.usr, email))
    
@@ -1032,11 +1039,10 @@ class BOOMFiller(LMObject):
    # .............................
    def addGRIMChains(self, defaultGrims):
       grimChains = []
-      currtime = mx.DateTime.gmt().mjd
 
       for code, grim in defaultGrims.iteritems():
          # Create MFChain for this GRIM
-         grimChain = self._createGrimMF(code, currtime)
+         grimChain = self._createGrimMF(code, CURR_MJD)
          targetDir = grimChain.getRelativeDirectory()
          mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
          
@@ -1066,6 +1072,28 @@ class BOOMFiller(LMObject):
                        .format(grimChain.objId, code))
                
       return grimChains
+
+   # .............................
+   def addTNCEcoregions(self):
+
+      meta = {Vector.META_IS_CATEGORICAL: TNCMetadata.isCategorical, 
+              ServiceObject.META_TITLE: TNCMetadata.title, 
+              ServiceObject.META_AUTHOR: TNCMetadata.author, 
+              ServiceObject.META_DESCRIPTION: TNCMetadata.description,
+              ServiceObject.META_KEYWORDS: TNCMetadata.keywords,
+              ServiceObject.META_CITATION: TNCMetadata.citation,
+              }
+      dloc = os.path.join(ENV_DATA_PATH, 
+                          TNCMetadata.filename + LMFormat.getDefaultOGR().ext)
+      ecoregions = Vector(TNCMetadata.title, PUBLIC_USER, DEFAULT_EPSG, 
+                          ident=None, dlocation=dloc, 
+                          metadata=meta, dataFormat=LMFormat.getDefaultOGR().driver, 
+                          ogrType=TNCMetadata.ogrType,
+                          valAttribute=TNCMetadata.valAttribute, 
+                          mapunits=DEFAULT_MAPUNITS, bbox=TNCMetadata.bbox,
+                          modTime=CURR_MJD)
+      updatedEcoregions = self.scribe.findOrInsertLayer(ecoregions)
+      return updatedEcoregions
 
    # ...............................................
    def addAlgorithms(self):
@@ -1131,9 +1159,10 @@ def initBoom(paramFname, isInitial=True):
       # Insert all taxonomic sources for now
       filler.scribe.log.info('  Insert taxonomy metadata ...')
       for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-         taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
-   
+         taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],
+                                                             taxInfo['url'])
       filler.addAlgorithms()
+      filler.addTNCEcoregions()
          
    # This user and default users
    # Add param user, PUBLIC_USER, DEFAULT_POST_USER users

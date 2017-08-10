@@ -29,7 +29,8 @@ from osgeo.osr import CoordinateTransformation, SpatialReference
 from types import TupleType, ListType, FloatType, IntType, StringType, UnicodeType
 
 from LmBackend.common.lmobj import LMObject, LMError
-from LmCommon.common.lmconstants import LegalMapUnits
+from LmCommon.common.lmconstants import (LegalMapUnits, DEFAULT_EPSG,
+   DEFAULT_MAPUNITS)
 from LmServer.common.localconstants import SMTP_SENDER
 
 # ............................................................................
@@ -152,8 +153,8 @@ class LMSpatialObject(LMObject):
       @todo: REMOVE THIS HACK!
              Add mapunits to Occ table (and Scenario?), handle on construction.
       """
-      if self._mapunits is None and self._epsg == 4326:
-         self._mapunits = 'dd'
+      if self._mapunits is None and self._epsg == DEFAULT_EPSG:
+         self._mapunits = DEFAULT_MAPUNITS
       return self._mapunits
 
    mapUnits = property(_getUnits, _setUnits)
@@ -230,6 +231,20 @@ class LMSpatialObject(LMObject):
          bstrLst = ['{0:.2f}'.format(b) for b in self._bbox]
       return bstrLst
 
+# ...............................................
+   @classmethod
+   def getExtentAsString(bboxList, separator=' '):
+      """
+      Get the minx, miny, maxx, maxy values of the dataset as a string of 
+      separator separated values.  Values are rounded to 2 digits past the decimal.
+      """
+      bboxStr = None
+      if bboxList is not None:
+         bboxStr = ('{val0:.2f}{sep}{val1:.2f}{sep}{val2:.2f}{sep}{val3:.2f}'
+         .format(val0=bboxList[0], val1=bboxList[1], val2=bboxList[2], 
+                 val3=bboxList[3], sep=separator))
+      return bboxStr
+
 # ..............................................................................
 #   def getBBString(self):
    def getCSVExtentString(self):
@@ -238,11 +253,8 @@ class LMSpatialObject(LMObject):
       @return: String in the format 'minX,minY,maxX,maxY'
       @note: Used in bbox value in database records
       """
-      coordStrings = self._getBoundsAsStrings()
-      if coordStrings is not None:
-         return ','.join(coordStrings)
-      else:
-         return None
+      bboxStr = LMSpatialObject.getExtentAsString(self._bbox, separator=',')
+      return bboxStr
 
 # ..............................................................................
    def getSSVExtentString(self):
@@ -251,11 +263,8 @@ class LMSpatialObject(LMObject):
       @return: String in the format 'minX  minY  maxX  maxY'
       @note: Used in EXTENT parameter in Mapserver mapfiles
       """
-      coordStrings = self._getBoundsAsStrings()
-      if coordStrings is not None:
-         return ' '.join(coordStrings)
-      else:
-         return None
+      bboxStr = LMSpatialObject.getExtentAsString(self._bbox, separator=' ')
+      return bboxStr
 
 # ..............................................................................
    def getMinX(self):

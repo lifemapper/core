@@ -915,6 +915,27 @@ class Borg(DbPostgresql):
       return newOrExistingEnvType
                              
 # ...............................................
+   def findOrInsertLayer(self, lyr):
+      """
+      @summary: Find or insert a Layer into the database
+      @param lyr: Raster or Vector layer to insert
+      @return: new or existing Raster or Vector.
+      """
+      wkt = None
+      if lyr.dataFormat in LMFormat.OGRDrivers() and lyr.epsgcode == DEFAULT_EPSG:
+         wkt = lyr.getWkt()
+      meta = lyr.dumpLyrMetadata()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer',
+                           lyr.getId(), lyr.getUserId(), lyr.squid, lyr.verify, 
+                           lyr.name, lyr.getDLocation(), meta, lyr.dataFormat, 
+                           lyr.gdaltype, lyr.ogrType, lyr.valUnits, 
+                           lyr.nodataVal, lyr.minVal, lyr.maxVal, 
+                           lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
+                           lyr.getCSVExtentString(), wkt, lyr.modTime)
+      updatedLyr = self._createLayer(row, idxs)
+      return updatedLyr
+   
+# ...............................................
    def findOrInsertShapeGrid(self, shpgrd, cutout):
       """
       @summary: Find or insert a ShapeGrid into the database

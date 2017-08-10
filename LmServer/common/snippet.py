@@ -31,7 +31,7 @@ from mx.DateTime import DateTimeFromMJD, gmt
 from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import SOLR_SERVER, SOLR_SNIPPET_COLLECTION
 from LmServer.common.solr import buildSolrDocument, postSolrDocument
-from LmServer.legion.occlayer import OccurrenceLayer
+# from LmServer.legion.occlayer import OccurrenceLayer
 
 # =============================================================================
 class SnippetOperations(object):
@@ -99,7 +99,10 @@ class SnippetShooter(LMObject):
                      request, etc) 
       @see: SnippetOperations
       """
-      if not isinstance(obj1, OccurrenceLayer):
+#       if not isinstance(obj1, OccurrenceLayer):
+      try:
+         obj1.getScientificName()
+      except:
          raise LMError('Do no know how to create snippets for: {}'.format(
             str(obj1.__class__)))
       else:

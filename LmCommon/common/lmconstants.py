@@ -1024,6 +1024,15 @@ YMD_HH_MM_SS = "%Y-%m-%d %H:%M%S"
 DEFAULT_POST_USER = 'anon'
 
 # .............................................................................
+# .                               Geo constants                              .
+# .............................................................................
+DEFAULT_GLOBAL_EXTENT = (-180.0, -60.0, 180.0, 90.0)
+DEFAULT_EPSG = 4326
+DEFAULT_MAPUNITS = 'dd'
+DEFAULT_CELLSIDES = 4
+DEFAULT_CELLSIZE = 1.0
+
+# .............................................................................
 # .                             Instance constants                            .
 # .............................................................................
 LM_CLIENT_VERSION_URL = "http://svc.lifemapper.org/clients/versions.xml"

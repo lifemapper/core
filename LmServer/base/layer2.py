@@ -155,6 +155,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       return self._layerUserId
    
 # ...............................................
+   # TODO: remove this??
    def getValAttribute(self):
       return self._valAttribute
 
@@ -170,7 +171,10 @@ class _Layer(LMSpatialObject, ServiceObject):
    @property
    def ogrType(self):
       return self._ogrType
-
+   
+   @property
+   def valAttribute(self):
+      return self._valAttribute
    
 # # ...............................................
 #    def _setUnits(self, mapunits):

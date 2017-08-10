@@ -42,6 +42,7 @@ class ServiceObject(LMObject):
    META_AUTHOR = 'author'
    META_DESCRIPTION = 'description'
    META_KEYWORDS = 'keywords'
+   META_CITATION = 'citation'
    
 # .............................................................................
 # Constructor
