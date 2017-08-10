@@ -25,12 +25,15 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from ast import literal_eval
+from mx.DateTime import DateTimeFromMJD
 import subprocess
 import urllib2
 
-from LmServer.common.lmconstants import SOLR_POST_COMMAND, SOLR_SERVER,\
-   SOLR_FIELDS, SOLR_ARCHIVE_COLLECTION
-from ast import literal_eval
+from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
+                                         SOLR_POST_COMMAND, SOLR_SERVER, 
+                                         SOLR_SNIPPET_COLLECTION)
+from LmServer.common.snippet import SnippetFields
 
 # .............................................................................
 def buildSolrDocument(docPairs):
@@ -167,5 +170,60 @@ def queryArchiveIndex(algorithmCode=None, bbox=None, gridSetId=None,
                                                       miny, minx, maxy, maxx)))
    
    rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams, 
+                               fqParams=fqParams))
+   return rDict['response']['docs']
+
+# .............................................................................
+def querySnippetIndex(ident1=None, provider=None, collection=None, 
+                      catalogNumber=None, operation=None, afterTime=None,
+                      beforeTime=None, ident2=None, url=None, who=None,
+                      agent=None, why=None):
+   """
+   @summary: Query the snippet Solr index
+   @param ident1: An identifier for the primary object (probably occurrence 
+                     point)
+   @param provider: The occurrence point provider
+   @param collection: The collection the point belongs to
+   @param catalogNumber: The catalog number of the occurrence point
+   @param operation: The operation that took place (see SnippetOperations)
+   @param afterTime: Return hits after this time (MJD format)
+   @param beforeTime: Return hits before this time (MJD format)
+   @param ident2: A identifier for the secondary object (occurrence set or 
+                     projection)
+   @param url: A url for the resulting object
+   @param who: Who initiated the action
+   @param agent: The agent that initiated the action
+   @param why: Why the action was initiated
+   """
+   qParams = [
+      (SnippetFields.AGENT, agent),
+      (SnippetFields.CATALOG_NUMBER, catalogNumber),
+      (SnippetFields.COLLECTION, collection),
+      (SnippetFields.IDENT_1, ident1),
+      (SnippetFields.IDENT_2, ident2),
+      (SnippetFields.OPERATION, operation),
+      (SnippetFields.PROVIDER, provider),
+      (SnippetFields.URL, url),
+      (SnippetFields.WHO, who),
+      (SnippetFields.WHY, why)
+   ]
+   
+   fqParams = []
+   if afterTime is not None or beforeTime is not None:
+      if afterTime is not None:
+         aTime = DateTimeFromMJD(afterTime).strftime('%Y-%m-%dT%H:%M:%SZ')
+      else:
+         aTime = '*'
+
+      if beforeTime is not None:
+         bTime = DateTimeFromMJD(beforeTime).strftime('%Y-%m-%dT%H:%M:%SZ')
+      else:
+         bTime = '*'
+   
+      fqParams.append((SnippetFields.OP_TIME, '%5B{}%20TO%20{}%5D'.format(aTime, 
+                                                                      bTime)))
+   
+   
+   rDict = literal_eval(_query(SOLR_SNIPPET_COLLECTION, qParams=qParams, 
                                fqParams=fqParams))
    return rDict['response']['docs']

@@ -42,6 +42,7 @@ from LmWebServer.services.api.v2.scenario import ScenarioService
 from LmWebServer.services.api.v2.scenPackage import ScenarioPackageService
 from LmWebServer.services.api.v2.sdmProject import SdmProjectService
 from LmWebServer.services.api.v2.shapegrid import ShapeGridService
+from LmWebServer.services.api.v2.snippet import SnippetService
 from LmWebServer.services.api.v2.tree import TreeService
 
 # .............................................................................
@@ -59,6 +60,7 @@ class ApiRootV2(object):
    scenpackage = ScenarioPackageService()
    sdmproject = SdmProjectService()
    shapegrid = ShapeGridService()
+   snippet = SnippetService()
    tree = TreeService()
    
    ogc = MapService()
