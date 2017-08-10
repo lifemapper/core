@@ -27,11 +27,13 @@
           02110-1301, USA.
 """
 from mx.DateTime import DateTimeFromMJD, gmt
+import os
+from random import randint
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmServer.common.lmconstants import SOLR_SERVER, SOLR_SNIPPET_COLLECTION
+from LmServer.common.lmconstants import SOLR_SERVER, SOLR_SNIPPET_COLLECTION,\
+   UPLOAD_PATH
 from LmServer.common.solr import buildSolrDocument, postSolrDocument
-# from LmServer.legion.occlayer import OccurrenceLayer
 
 # =============================================================================
 class SnippetOperations(object):
@@ -149,10 +151,12 @@ class SnippetShooter(LMObject):
       # Build the Solr document
       solrPostStr = buildSolrDocument(self.snippets)
       
+      deletePostFilename = False
       # Write to temp file
       if solrPostFilename is None:
          #TODO: Fill in
-         solrPostFilename = None
+         solrPostFilename = os.path.join(UPLOAD_PATH, 'snippetPost-{}'.format(randint(0, 10000)))
+         deletePostFilename = True
 
       with open(solrPostFilename, 'w') as outF:
          outF.write(solrPostStr)
@@ -160,6 +164,9 @@ class SnippetShooter(LMObject):
       # Shoot snippets
       postSolrDocument(self.collection, solrPostFilename)
 
+      if deletePostFilename:
+         os.remove(solrPostFilename)
+         
       # Reset snippet list
       self.snippets = []
    

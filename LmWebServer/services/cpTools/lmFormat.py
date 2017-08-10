@@ -28,12 +28,15 @@
 """
 import cherrypy
 
-from LmCommon.common.lmconstants import LMFormat, HTTPStatus
+from LmCommon.common.lmconstants import LMFormat, HTTPStatus, JSON_INTERFACE,\
+   SHAPEFILE_INTERFACE, CSV_INTERFACE
 
 from LmWebServer.formatters.fileFormatter import (csvObjectFormatter,
                                                   gtiffObjectFormatter,
                                                   shapefileObjectFormatter)
 from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.snippet import SnippetShooter, SnippetOperations
 
 # .............................................................................
 def lmFormatter(f):
@@ -68,14 +71,20 @@ def lmFormatter(f):
          try:
             # If JSON or default
             if ah in [LMFormat.JSON.getMimeType(), '*/*']:
+               shootSnippets(handler_result, SnippetOperations.VIEWED, 
+                             JSON_INTERFACE)
                return jsonObjectFormatter(handler_result)
             #elif ah == LMFormat.KML.getMimeType():
             #   return kmlObjectFormatter(handler_result)
             elif ah == LMFormat.GTIFF.getMimeType():
                return gtiffObjectFormatter(handler_result)
             elif ah == LMFormat.SHAPE.getMimeType():
+               shootSnippets(handler_result, SnippetOperations.DOWNLOADED, 
+                             SHAPEFILE_INTERFACE)
                return shapefileObjectFormatter(handler_result)
             elif ah == LMFormat.CSV.getMimeType():
+               shootSnippets(handler_result, SnippetOperations.DOWNLOADED, 
+                             CSV_INTERFACE)
                return csvObjectFormatter(handler_result)
          except Exception, e:
             # Ignore and try next accept header
@@ -89,3 +98,20 @@ def lmFormatter(f):
       return jsonObjectFormatter(handler_result)
    
    return wrapper
+
+# .............................................................................
+def shootSnippets(obj, operation, formatString):
+   """
+   @summary: Attempt to shoot snippets for downloads / viewings / etc
+   """
+   # Only shoot public data snippets
+   if obj.getUserId() == PUBLIC_USER:
+      try:
+         shooter = SnippetShooter()
+         shooter.addSnippets(obj, operation, 
+                             url='{}/{}'.format(obj.metadataUrl, formatString), 
+                             who='user', agent='webService', why='request')
+         shooter.shootSnippets()
+      except:
+         pass
+      
