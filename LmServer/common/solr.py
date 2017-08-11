@@ -185,7 +185,7 @@ def querySnippetIndex(ident1=None, provider=None, collection=None,
    @param provider: The occurrence point provider
    @param collection: The collection the point belongs to
    @param catalogNumber: The catalog number of the occurrence point
-   @param operation: The operation that took place (see SnippetOperations)
+   @param operation: A LmServer.common.lmconstants.SnippetOperations
    @param afterTime: Return hits after this time (MJD format)
    @param beforeTime: Return hits before this time (MJD format)
    @param ident2: A identifier for the secondary object (occurrence set or 

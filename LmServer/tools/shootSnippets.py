@@ -29,7 +29,7 @@
 import argparse
 
 from LmServer.common.log import ConsoleLogger
-from LmServer.common.snippet import SnippetOperations, SnippetShooter
+from LmServer.common.lmconstants import SnippetOperations, SnippetShooter
 from LmServer.db.borgscribe import BorgScribe
 
 

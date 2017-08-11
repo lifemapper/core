@@ -61,17 +61,17 @@ class SnippetShooter(LMObject):
       """
       @summary: Adds snippets for posting to the snippet shooter's list
       @param obj1: Required, this will start out as only occurrence sets but 
-                      should be expanded later to include other object types
-      @param operation: See SnippetOperations for available operations
+             should be expanded later to include other object types
+      @param operation: See LmServer.common.lmconstants.SnippetOperations 
+             for available operations
       @param opTime: (optional) MJD time that this operation took place
       @param obj2ident: (optional) Identifier of the secondary object
       @param url: (optional) A URL related to this snippet
       @param who: (optional) A string representing who initiated this action
       @param agent: (optional) The agent that this action was initiated through
-                       examples could be LmCompute, web client, or similar
+             examples could be LmCompute, web client, or similar
       @param why: (optional) Why this action was initiated (archive, user 
-                     request, etc) 
-      @see: SnippetOperations
+             request, etc) 
       """
 #       if not isinstance(obj1, OccurrenceLayer):
       try:

@@ -36,7 +36,8 @@ from LmWebServer.formatters.fileFormatter import (csvObjectFormatter,
                                                   shapefileObjectFormatter)
 from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
 from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.snippet import SnippetShooter, SnippetOperations
+from LmServer.common.lmconstants import SnippetOperations
+from LmServer.common.snippet import SnippetShooter
 
 # .............................................................................
 def lmFormatter(f):

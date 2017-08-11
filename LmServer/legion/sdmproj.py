@@ -38,7 +38,7 @@ from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
             DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, ProcessTool,
             SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM)
 from LmServer.legion.cmd import MfRule
-from LmServer.common.snippet import SnippetOperations
+from LmServer.common.lmconstants import SnippetOperations
 
 # .........................................................................
 class _ProjectionType(_LayerParameters, ProcessObject):
