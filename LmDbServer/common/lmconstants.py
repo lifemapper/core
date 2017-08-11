@@ -115,35 +115,35 @@ class TNCMetadata:
    title = 'tnc_terr_ecoregions'
    author = 'The Nature Conservancy'
    isCategorical = True
-   description = """
-   Global Ecoregions, Major Habitat Types, Biogeographical Realms and The 
-   Nature Conservancy Terrestrial Assessment Units as of December 14, 2009
-   Purpose: Developed originally by Olson, D. M. and E. Dinerstein (2002), 
-   Bailey (1995) and Environment Canada (Wiken, 1986), these data layers were 
-   modified by The Nature Conservancy (TNC) to be used in its Biodiversity 
-   Planning exercises in the process known as Ecoregional Assessments. Several 
-   Ecoregions were modified from the originals by TNC staff developing the 
-   aforementioned assessments. The modifications are based on ecological, 
-   bio-physical and political rationales; most changes are noted in the 
-   accompanying documentation (attributes). Ecoregions in Canada and Mexico were 
-   modified mainly at the border with US territory, where TNC modified-Bailey 
-   (1995) ecoregions crossed over the country boundaries and the Olson, D. M. 
-   and E. Dinerstein (2002) and (Wiken, 1986) were replaced where the TNC 
-   modified-Bailey (1995) overlayed them. This layer was split from the 
-   terrestrial ecoregional assessment layer in June 2008."""
+   description = ' '.join('Global Ecoregions, Major Habitat Types,',
+   'Biogeographical Realms and The Nature Conservancy Terrestrial Assessment', 
+   'Units as of December 14, 2009 Purpose: Developed originally by Olson, D. M.', 
+   'and E. Dinerstein (2002), Bailey (1995) and Environment Canada (Wiken,', 
+   '1986), these data layers were modified by The Nature Conservancy (TNC) to',
+   'be used in its Biodiversity Planning exercises in the process known as',
+   'Ecoregional Assessments. Several Ecoregions were modified from the',
+   'originals by TNC staff developing the aforementioned assessments. The',
+   'modifications are based on ecological, bio-physical and political',
+   'rationales; most changes are noted in the accompanying documentation',
+   '(attributes). Ecoregions in Canada and Mexico were modified mainly at the',
+   'border with US territory, where TNC modified-Bailey (1995) ecoregions',
+   'crossed over the country boundaries and the Olson, D. M. and E. Dinerstein',
+   '(2002) and (Wiken, 1986) were replaced where the TNC modified-Bailey (1995)',
+   'overlayed them. This layer was split from the terrestrial ecoregional',
+   'assessment layer in June 2008.')
    keywords = ['Terrestrial Ecoregions', 'Major Habitat Types', 
                'Biogeographic Realms', 'TNC', 'World', 'Global']
    url = 'http://maps.tnc.org'
-   citation = """
-   Olson, D. M. and E. Dinerstein. 2002. The Global 200: Priority ecoregions for 
-   global conservation. (PDF file) Annals of the Missouri Botanical Garden 
-   89:125-126. -The Nature Conservancy, USDA Forest Service and U.S. Geological 
-   Survey, based on Bailey, Robert G. 1995. Description of the ecoregions of the 
-   United States (2nd ed.). Misc. Pub. No. 1391, Map scale 1:7,500,000. USDA 
-   Forest Service. 108pp. -The Nature Conservancy (2003), based on Wiken, E.B. 
-   (compiler). 1986. Terrestrial ecozones of Canada. Ecological Land 
-   Classification Series No. 19. Environment Canada, Hull, Que. 26 pp. + map."""
-   bbox = (-180, -90, 180, 83)
+   citation = ' '.join('Olson, D. M. and E. Dinerstein. 2002. The Global 200:',
+   'Priority ecoregions for global conservation. (PDF file) Annals of the',
+   'Missouri Botanical Garden 89:125-126. -The Nature Conservancy, USDA Forest',
+   'Service and U.S. Geological Survey, based on Bailey, Robert G. 1995.',
+   'Description of the ecoregions of the United States (2nd ed.). Misc. Pub.',
+   'No. 1391, Map scale 1:7,500,000. USDA Forest Service. 108pp. -The Nature',
+   'Conservancy (2003), based on Wiken, E.B.(compiler). 1986. Terrestrial',
+   'ecozones of Canada. Ecological Land Classification Series No. 19.',
+   'Environment Canada, Hull, Que. 26 pp. + map.')
+   bbox = (-180.0, -90.0, 180.0, 83.0)
    ogrType = wkbPolygon
    valAttribute = 'WWF_MHTNAM'
    filename = 'tnc_terr_ecoregions'

@@ -32,7 +32,7 @@ from random import randint
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import (SOLR_SERVER, SOLR_SNIPPET_COLLECTION,
-   UPLOAD_PATH, SnippetOperations, SnippetFields)
+   UPLOAD_PATH, SnippetFields)
 from LmServer.common.solr import buildSolrDocument, postSolrDocument
 
 # =============================================================================

@@ -1278,6 +1278,7 @@ paramFname = '/state/partition1/tmpdata/file_18072.ini'
 paramFname='/state/partition1/tmpdata/atest_2.ini'
 paramFname='/state/partition1/tmpdata/atest3.ini'
 isInitial=False
+filler = BOOMFiller()
 
 filler = BOOMFiller(configFname=paramFname)
 filler.initializeInputs()
