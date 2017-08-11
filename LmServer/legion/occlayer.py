@@ -714,6 +714,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             snippetPostFilename
          ])
          rules.append(MfRule(snippetCmd, [snippetPostFilename], 
-                             dependencies=targetFiles))
+                             dependencies=[os.path.join(targetDir, 
+                                      'occ_{}.success'.format(self.getId()))]))
          
       return rules

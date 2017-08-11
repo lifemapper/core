@@ -56,6 +56,9 @@ QUERY_PARAMETERS = {
       'name' : 'afterTime',
       'processIn' : getMjdTimeFromISO8601
    },
+   'agent' : {
+      'name' : 'agent'
+   },
    'algorithmcode' : {
       'name' : 'algorithmCode',
    },
@@ -82,6 +85,9 @@ QUERY_PARAMETERS = {
       'name' : 'bgcolor',
       'processIn' : lambda x: getColor(x, allowRamp=False)
    },
+   'catalognumber' : {
+      'name' : 'catalogNumber'
+   },
    'cellsides' : {
       'name' : 'cellSides',
       'processIn' : int
@@ -89,6 +95,9 @@ QUERY_PARAMETERS = {
    'cellsize' : {
       'name' : 'cellSize',
       'processIn' : float
+   },
+   'collection' : {
+      'name' : 'collection'
    },
    'color' : {
       'name' : 'color',
@@ -140,6 +149,12 @@ QUERY_PARAMETERS = {
       'name' : 'height',
       'processIn' : int
    },
+   'ident1' : {
+      'name' : 'ident1'
+   },
+   'ident2' : {
+      'name' : 'ident2'
+   },
    'isbinary' : {
       'name' : 'isBinary',
       'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
@@ -188,6 +203,9 @@ QUERY_PARAMETERS = {
       'name' : 'occurrenceSetId',
       'processIn' : int
    },
+   'operation' : {
+      'name' : 'operation'
+   },
    'offset' : {
       'name' : 'offset',
       'processIn' : lambda x: max(0, int(x)) # Integer, minimum is zero
@@ -229,6 +247,9 @@ QUERY_PARAMETERS = {
    },
    'projectionscenariocode' : {
       'name' : 'projectionScenarioCode'
+   },
+   'provider' : {
+      'name' : 'provider'
    },
    'request' : {
       'name' : 'request'
@@ -299,12 +320,21 @@ QUERY_PARAMETERS = {
    'treename' : {
       'name' : 'name' # Map to 'name' for processing
    },
+   'url' : {
+      'name' : 'url'
+   },
    'user' : {
       'name' : 'urlUser',
       'processIn' : lambda x: x.lower()
    },
    'version' : {
       'name' : 'version'
+   },
+   'who' : {
+      'name' : 'who'
+   },
+   'why' : {
+      'name' : 'why'
    },
    'width' : {
       'name' : 'width',
