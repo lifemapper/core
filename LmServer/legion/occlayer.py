@@ -35,7 +35,7 @@ from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT,
                   LMServiceType, ProcessTool)
 from LmServer.common.localconstants import POINT_COUNT_MAX
 from LmServer.legion.cmd import MfRule
-from LmServer.common.snippet import SnippetOperations
+from LmServer.common.lmconstants import SnippetOperations
 
 # .............................................................................
 # .............................................................................

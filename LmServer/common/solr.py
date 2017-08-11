@@ -33,7 +33,7 @@ import urllib2
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
                                          SOLR_POST_COMMAND, SOLR_SERVER, 
                                          SOLR_SNIPPET_COLLECTION)
-from LmServer.common.snippet import SnippetFields
+from LmServer.common.lmconstants import SnippetFields
 
 # .............................................................................
 def buildSolrDocument(docPairs):

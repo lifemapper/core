@@ -31,37 +31,9 @@ import os
 from random import randint
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmServer.common.lmconstants import SOLR_SERVER, SOLR_SNIPPET_COLLECTION,\
-   UPLOAD_PATH
+from LmServer.common.lmconstants import (SOLR_SERVER, SOLR_SNIPPET_COLLECTION,
+   UPLOAD_PATH, SnippetOperations, SnippetFields)
 from LmServer.common.solr import buildSolrDocument, postSolrDocument
-
-# =============================================================================
-class SnippetOperations(object):
-   """
-   @summary: Class of available snippet operations
-   """
-   DOWNLOADED = 'downloaded'
-   VIEWED = 'viewed'
-   ADDED_TO = 'addedTo'
-   USED_IN = 'usedIn'
-
-# =============================================================================
-class SnippetFields(object):
-   """
-   @summary: Snippet fields in Solr index
-   """
-   AGENT = 'agent'
-   CATALOG_NUMBER = 'catalogNumber'
-   COLLECTION = 'collection'
-   ID = 'id'
-   IDENT_1 = 'ident1'
-   IDENT_2 = 'ident2'
-   OP_TIME = 'opTime'
-   OPERATION = 'operation'
-   PROVIDER = 'provider'
-   URL = 'url'
-   WHO = 'who'
-   WHY = 'why'
 
 # =============================================================================
 class SnippetShooter(LMObject):

@@ -1889,6 +1889,37 @@ ALGORITHM_DATA  = {
 }
 
 # ============================================================================
+# =                              Snippet Constants                              =
+# ============================================================================
+# =============================================================================
+class SnippetOperations(object):
+   """
+   @summary: Class of available snippet operations
+   """
+   DOWNLOADED = 'downloaded'
+   VIEWED = 'viewed'
+   ADDED_TO = 'addedTo'
+   USED_IN = 'usedIn'
+
+# =============================================================================
+class SnippetFields(object):
+   """
+   @summary: Snippet fields in Solr index
+   """
+   AGENT = 'agent'
+   CATALOG_NUMBER = 'catalogNumber'
+   COLLECTION = 'collection'
+   ID = 'id'
+   IDENT_1 = 'ident1'
+   IDENT_2 = 'ident2'
+   OP_TIME = 'opTime'
+   OPERATION = 'operation'
+   PROVIDER = 'provider'
+   URL = 'url'
+   WHO = 'who'
+   WHY = 'why'
+
+# ============================================================================
 # =                              Solr Constants                              =
 # ============================================================================
 SOLR_ARCHIVE_COLLECTION = 'lmArchive'
