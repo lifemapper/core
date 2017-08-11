@@ -928,7 +928,7 @@ class Borg(DbPostgresql):
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer',
                            lyr.getId(), lyr.getUserId(), lyr.squid, lyr.verify, 
                            lyr.name, lyr.getDLocation(), meta, lyr.dataFormat, 
-                           lyr.gdaltype, lyr.ogrType, lyr.valUnits, 
+                           lyr.gdalType, lyr.ogrType, lyr.valUnits, 
                            lyr.nodataVal, lyr.minVal, lyr.maxVal, 
                            lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
                            lyr.getCSVExtentString(), wkt, lyr.modTime)

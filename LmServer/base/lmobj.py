@@ -233,20 +233,19 @@ class LMSpatialObject(LMObject):
 
 # ...............................................
    @classmethod
-   def getExtentAsString(bboxList, separator=' '):
+   def getExtentAsString(cls, bboxList, separator=' '):
       """
       Get the minx, miny, maxx, maxy values of the dataset as a string of 
       separator separated values.  Values are rounded to 2 digits past the decimal.
       """
       bboxStr = None
       if bboxList is not None:
-         bboxStr = ('{val0:.2f}{sep}{val1:.2f}{sep}{val2:.2f}{sep}{val3:.2f}'
-         .format(val0=bboxList[0], val1=bboxList[1], val2=bboxList[2], 
-                 val3=bboxList[3], sep=separator))
+         bboxStr = ('{:.2f}{sep}{:.2f}{sep}{:.2f}{sep}{:.2f}'
+         .format(bboxList[0], bboxList[1], bboxList[2], bboxList[3], 
+                 sep=separator))
       return bboxStr
 
 # ..............................................................................
-#   def getBBString(self):
    def getCSVExtentString(self):
       """
       @summary Returns the bounding box values as a comma-delimited string,
