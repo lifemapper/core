@@ -263,7 +263,7 @@ Populate archive
      or ARCHIVE_USER) data space (/share/lm/data/archive/user/)
 
 #. Convert and catalog data for LmCompute.  The script uses the  
-   SCENARIO_PACKAGE_SEED value from config.lmserver.ini, so override it 
+   SCENARIO_PACKAGE value from config.lmserver.ini, so override it 
    in config.site.ini if you have added new data. ::
 
    # /opt/lifemapper/rocks/bin/seedData

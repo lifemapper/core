@@ -75,7 +75,7 @@ USER_OCCURRENCE_DATA_DELIMITER: ,
 ;; The default SCENARIO_PACKAGE (10min-past-present-future) is filled in and  
 ;; installed during 'lifemapper-server' roll installation matches these default 
 ;; scenarios. 
-;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE_SEED
+;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE
 ;; in the [LmCompute - environment] section should match SCENARIO_PACKAGE here
 SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
 

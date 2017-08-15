@@ -29,8 +29,8 @@ PLUGINS_PATH: @LMHOME@/LmCompute/plugins
 ;;**    SAMPLE_JOBS_PATH, SAMPLE_LAYERS_PATH, SAMPLE_DATA_PATH, TEMPORARY_FILE_PATH
 
 ;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE in the
-;; [LmServer - pipeline] section should match SCENARIO_PACKAGE_SEED here
-SCENARIO_PACKAGE_SEED: @SCENARIO_PACKAGE_SEED@
+;; [LmServer - pipeline] section should match SCENARIO_PACKAGE here
+SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
 
 [LmCompute - plugins - maxent]
 JAVA_MAX_MEM_OPTION: 2g
