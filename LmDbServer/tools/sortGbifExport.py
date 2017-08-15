@@ -501,8 +501,9 @@ def checkMergedFile(datapath, filePrefix, keyCol, logfile):
    finally:
       bigSortedData.close()
       
-   logfile.write('{} uniqueCount; {} failCount; currRecnum {}\n'.format( 
-             uniqueCount, failCount, bigSortedData.currRecnum))
+   logfile.write('uniqueCount {}\n'.format(uniqueCount))
+   logfile.write('failCount {}\n'.format(failCount))
+   logfile.write('currRecnum {}\n'.format(bigSortedData.currRecnum))
 
 # ..............................................................................
 # MAIN
@@ -558,6 +559,8 @@ if __name__ == '__main__':
       parser.print_help()
       parser.usage
       exit(-1)
+
+   print('doSplit: {}, doMerge: {}, doCheck: {}'.format(doSplit, doMerge, doCheck))
 
    if not os.path.exists(fullfilename):
       print('Missing input file {}'.format(fullfilename))
