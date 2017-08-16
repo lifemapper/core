@@ -28,16 +28,18 @@
 @todo: Can we make this more elegant?
 @todo: Trees
 """
+import cherrypy
 from hashlib import md5
 import json
 from types import ListType, DictionaryType
+
+from LmCommon.common.lmconstants import LMFormat
 
 from LmServer.base.atom import Atom
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.utilities import formatTimeHuman
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import OGC_SERVICE_URL, LMFileType
-
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
@@ -367,6 +369,7 @@ def _formatObject(obj):
    """
    @summary: Helper method to format an individual object based on its type
    """
+   cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
    if isinstance(obj, DictionaryType):
       return obj
    elif isinstance(obj, Atom):
