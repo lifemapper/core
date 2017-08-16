@@ -16,36 +16,3 @@ tools.sessions.timeout: 20160
 tools.sessions.locking: 'implicit'
 environment: 'embedded'
 
-[/clients]
-tools.staticdir.on: True
-tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/clients'
-
-[/dashboard]
-tools.statidcir.on: True
-tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/lmdashboard'
-
-[/dl]
-tools.staticdir.on: True
-tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/dl'
-tools.staticdir.content_types : {'gz' : 'application/x-gzip'}
-
-[/favicon.ico]
-tools.staticfile.on: True
-tools.staticfile.filename: '@LMHOME@/LmWebServer/public_html/static/favicon.ico'
-
-[/help]
-tools.staticdir.on: True
-tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/help'
-
-[/robots.txt]
-tools.staticfile.on: True
-tools.staticfile.filename: '@LMHOME@/LmWebServer/public_html/static/robots.txt'
-
-[/samples]
-tools.staticdir.on: True
-tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/samples'
-
-[/schemas]
-tools.staticdir.on: True
-tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/schemas'
-tools.staticdir.content_types: {'xsd' : 'application/xml', 'wadl': 'application/xml'}
