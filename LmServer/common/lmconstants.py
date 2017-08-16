@@ -82,7 +82,7 @@ CS_OPTIONS = '-n {} -B {} -p {} -m 100 -o {} -O 100M -H {}'.format(
 WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
 WORKER_OPTIONS = '-C {}:{} -s {}'.format(PUBLIC_FQDN, CS_PORT, WORKER_PATH)
 
-WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} -E "{}" -S {}'.format(
+WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} --workers-per-cycle=0 -E "{}" -S {}'.format(
    MIN_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_DATA_PATH)
 
 # Makeflow options
