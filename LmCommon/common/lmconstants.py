@@ -23,7 +23,13 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
+try:
+   from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
+except:
+   OFTInteger = 0 
+   OFTReal = 2 
+   OFTString = 4
+   OFTBinary = 8
    
 # .............................................................................
 # .    Configuration file headings
@@ -57,7 +63,7 @@ ENV_LAYER_DIR = 'layers'
 # .............................................................................
 # DATA FORMATS
 MASK_TYPECODE = 'MASK'
-ENCODING =  'utf-8'   
+ENCODING =  'utf-8'
 
 # .............................................................................
 class FileFormat:
