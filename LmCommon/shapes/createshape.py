@@ -401,7 +401,8 @@ class ShapeShifter(object):
          for idx in idxs:
             fldnames.append(self.dataFields[idx][0])
       csvData = StringIO.StringIO()
-      csvData.write(toUnicode(self.rawdata, ENCODING))
+      csvData.write(fromUnicode(toUnicode(self.rawdata, encoding=ENCODING),
+                                encoding=ENCODING))
       csvData.seek(0)
       reader = csv.DictReader(csvData, fieldnames=fldnames)
       return reader
