@@ -113,11 +113,11 @@ DB_HOSTNAME: @DB_FQDN@
 ; .............................................................................
 [LmServer - Matt Daemon]
 ; MattDaemon constants
-;MAX_MAKEFLOWS: 5
-; MAX_MAKEFLOWS should be 10% of the number of CPUs on the cluster
+; MAX_MAKEFLOWS = ~ 10% of total number of CPUs of cluster compute nodes, min 2
+MAX_MAKEFLOWS: @MAX_MAKEFLOWS@
 MIN_WORKERS: 2
-;MAX_WORKERS: 5
-MAX_WORKERS should be the number of CPUs on the nodes of the cluster
+; MAX_WORKERS = total number of CPUs of cluster compute nodes
+MAX_WORKERS: @MAX_WORKERS@
 
 ; .............................................................................
 [LmClient - Open Tree of Life]
