@@ -291,7 +291,7 @@ def mergeSortedFiles(datapath, inputPrefix, mergePrefix, keyCol, logfile,
                                                 mergePrefix, logfile, run=outIdx)
             
          # Find smallest again
-         thisKey, pos = _getSmallestKeyAndPosition(splitFiles, lastKey=key)
+         thisKey, pos = _getSmallestKeyAndPosition(splitFiles)
          if thisKey != smallKey:
             if thisKey > smallKey:
                logfile.write('New key = {} (file {})\n'.format(smallKey, pos))
