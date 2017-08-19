@@ -28,8 +28,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from random import random, choice, randint
+from random import random, choice, randint, shuffle
 import numpy as np
+import time
 
 from LmCommon.common.matrix import Matrix
 
@@ -77,6 +78,7 @@ def maxColOrRow(rowTots, colTots, nRows, nCols):
    a = rowWeights * colOnes
    b = rowOnes * colWeights
    
+   return a+b
    return np.maximum.reduce([a, b])
 
 # .............................................................................
@@ -90,6 +92,7 @@ def gradyRandomize(mtx):
    
    # Step 1: Get the marginal totals of the matrix
    # ...........................
+   aTime1 = time.time()
    rowTots = np.sum(mtxData, axis=1)
    colTots = np.sum(mtxData, axis=0)
    nRows, nCols = mtxData.shape
@@ -103,11 +106,17 @@ def gradyRandomize(mtx):
    rowTots = rowTots.reshape((nRows, 1))
    colTots = colTots.reshape((1, nCols))
    
+   bTime1 = time.time()
+   print "Step 1 time: {}".format(bTime1-aTime1)
+   
    # Step 2: Get initial random matrix
    # ...........................
    getInitialRandomMatrix = np.vectorize(randPresAbs)
    
    mtx1 = getInitialRandomMatrix(weights)
+   
+   bTime2 = time.time()
+   print "Step 2 time: {}".format(bTime2 - bTime1)
    
    # Step 3: Fix broken marginals
    # ...........................
@@ -115,23 +124,30 @@ def gradyRandomize(mtx):
    numFixed = 0
    
    for i in xrange(nRows):
-      while np.sum(mtx1[i,:]) > rowTots[i]:
-         myChoice = choice(np.where(mtx1[i]==1)[0])
-         fixAttempts += 1
-         if mtx1[i, myChoice] == 1:
-            mtx1[i, myChoice] = 0
-            numFixed += 1
-   
+      rowSum = np.sum(mtx1[i,:])
+      if rowSum > rowTots[i]:
+         rowChoices = np.where(mtx1[i] == 1)[0]
+         shuffle(rowChoices)
+         # for as many indecies as we are over the total
+         for x in range(int(rowSum - rowTots[i])):
+            mtx1[i, rowChoices[x]] = 0
+            numFixed += 1 
+      
    for j in xrange(nCols):
-      while np.sum(mtx1[:,j]) > colTots[0,j]:
-         myChoice = choice(np.where(mtx1[:,j]==1)[0])
-         fixAttempts += 1
-         if mtx1[myChoice, j] == 1: # Can probably skip this
-            mtx1[myChoice, j] = 0
+      colSum = np.sum(mtx1[:,j])
+      if colSum > colTots[0,j]:
+         colChoices = np.where(mtx1[:,j] == 1)[0]
+         shuffle(colChoices)
+         for y in range(int(colSum - colTots[0,j])):
+            mtx1[colChoices[y], j] = 0
             numFixed += 1
+      
             
    #filledTotal = np.sum(mtx1)
    
+   bTime3 = time.time()
+   print "Step 3 time: {}".format(bTime3 - bTime2)
+
    # Step 4: Fill
    # ...........................
    problemRows = []
@@ -142,6 +158,8 @@ def gradyRandomize(mtx):
    
    unfilledRows = np.where(rowSums < rowTots[:,0])[0].tolist()
    unfilledCols = np.where(colSums < colTots[0,:])[0].tolist()
+   
+   print "Unfilled rows: {}, unfilled columns: {}".format(len(unfilledRows), len(unfilledCols))
    
    while unfilledRows:
       possibleCols = []
@@ -165,6 +183,10 @@ def gradyRandomize(mtx):
    
    problemColumns = unfilledCols
    
+   bTime4 = time.time()
+   print "Step 4 time: {}".format(bTime4 - bTime3)
+   print "{} problem columns".format(len(problemColumns))
+
    # Step 5: Fix problems
    # ...........................
    j = 0
@@ -176,21 +198,46 @@ def gradyRandomize(mtx):
       r = choice(problemRows)
       c = choice(problemColumns)
       i = 0
-      r2 = randint(0, nRows-1)
-      c2 = randint(0, nCols-1)
-      while i < SEARCH_THRESHOLD and not (mtx1[r,c2] == 0 and mtx1[r2,c2] == 1 and mtx1[r2,c] == 0):
-         i += 1
-         r2 = randint(0, nRows-1)
-         c2 = randint(0, nCols-1)
-      if i < SEARCH_THRESHOLD:
-         mtx1[r,c2] = 1
-         mtx1[r2,c2] = 0
-         mtx1[r2,c] = 1
-      else:
-         if j < SEARCH_THRESHOLD:
-            j += 1
-         else:
-            raise Exception ("Couldn't fix row, col (%s, %s)" % (r, c))
+      
+      cs = np.where(mtx1[r] == 0)[0]
+      rs = np.where(mtx1[:,c] == 0)[0]
+      
+      numTries = 0
+      found = False
+      
+      while not found and numTries < SEARCH_THRESHOLD:
+         r2 = np.random.choice(rs)
+         c2 = np.random.choice(cs)
+         numTries += 1
+         
+         if mtx1[r2,c2] == 1:
+            mtx1[r,c2] = 1
+            mtx1[r2,c2] = 0
+            mtx1[r2,c] = 1
+            found = True
+      
+      if not found:
+         raise Exception("Couldn't fix row, col ({}, {})".format(r, c))
+      
+      #r2 = randint(0, nRows-1)
+      #c2 = randint(0, nCols-1)
+      # 
+      ## Can I do this with numpy?  maybe find all of the combinations and just pick from that?
+      #
+      #while i < SEARCH_THRESHOLD and not (
+      #   mtx1[r,c2] == 0 and mtx1[r2,c2] == 1 and mtx1[r2,c] == 0):
+      #   i += 1
+      #   r2 = randint(0, nRows-1)
+      #   c2 = randint(0, nCols-1)
+      #if i < SEARCH_THRESHOLD:
+      #   mtx1[r,c2] = 1
+      #   mtx1[r2,c2] = 0
+      #   mtx1[r2,c] = 1
+      #else:
+      #   if j < SEARCH_THRESHOLD:
+      #      j += 1
+      ##   else:
+      #      raise Exception ("Couldn't fix row, col (%s, %s)" % (r, c))
       
       rSum = np.sum(mtx1[r,:])#, axis=1)
       cSum = np.sum(mtx1[:,c])#, axis=0)
@@ -200,5 +247,9 @@ def gradyRandomize(mtx):
       if cSum == int(colTots[0,c]):
          problemColumns.remove(c)
    
+   bTime5 = time.time()
+   print "Step 5 time: {}".format(bTime5 - bTime4)
+   print "Total time: {}".format(bTime5 - aTime1)
+
    return Matrix(mtx1, headers=mtxHeaders)
    
