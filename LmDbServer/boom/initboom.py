@@ -1152,9 +1152,10 @@ def initBoom(paramFname, isInitial=True):
    filler = BOOMFiller(configFname=paramFname)
    filler.initializeInputs()
 
-   # ...............................................
-   # Data for this instance (Taxonomy, algorithms, default users)
-   # ...............................................
+   # This user and default users
+   # Add param user, PUBLIC_USER, DEFAULT_POST_USER users
+   filler.addUsers(isInitial=isInitial)
+
    if isInitial:
       # Insert all taxonomic sources for now
       filler.scribe.log.info('  Insert taxonomy metadata ...')
@@ -1162,12 +1163,10 @@ def initBoom(paramFname, isInitial=True):
          taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],
                                                              taxInfo['url'])
       filler.addAlgorithms()
+      # Insert all taxonomic sources for now
+      filler.scribe.log.info('  Insert Algorithms ...')
       filler.addTNCEcoregions()
-         
-   # This user and default users
-   # Add param user, PUBLIC_USER, DEFAULT_POST_USER users
-   filler.addUsers(isInitial=isInitial)
-   
+
    # ...............................................
    # Data for this Boom archive
    # ...............................................
