@@ -30,7 +30,5 @@
 -- ----------------------------------------------------------------------------
 \c borg
 
-drop TABLE gridsettree ;
-alter TABLE gridset add column treeId int REFERENCES lm_v3.Tree;
 
 -- -------------------------------

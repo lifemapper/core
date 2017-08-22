@@ -195,7 +195,7 @@ LmServer
    # psql -U admin -d borg
    psql (9.1.22)
    Type "help" for help.
-   mal=> select scenariocode, userid from scenario;
+   borg=> select scenariocode, userid from scenario;
 
 Configure new BOOM
 ------------------
