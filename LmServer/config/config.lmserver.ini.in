@@ -115,7 +115,6 @@ DB_HOSTNAME: @DB_FQDN@
 ; MattDaemon constants
 ; MAX_MAKEFLOWS = ~ 10% of total number of CPUs of cluster compute nodes, min 2
 MAX_MAKEFLOWS: @MAX_MAKEFLOWS@
-MIN_WORKERS: 2
 ; MAX_WORKERS = total number of CPUs of cluster compute nodes
 MAX_WORKERS: @MAX_WORKERS@
 

@@ -34,7 +34,7 @@ from types import IntType, FloatType
 from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat, 
                                          ProcessType)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, MAX_WORKERS, 
-                              MIN_WORKERS, PUBLIC_FQDN, SHARED_DATA_PATH, 
+                              PUBLIC_FQDN, SHARED_DATA_PATH, 
                               SCRATCH_PATH, PID_PATH, DEFAULT_EPSG, 
                               WEBSERVICES_ROOT)
 
@@ -83,7 +83,7 @@ WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
 WORKER_OPTIONS = '-C {}:{} -s {}'.format(PUBLIC_FQDN, CS_PORT, WORKER_PATH)
 
 WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} --workers-per-cycle=0 -E "{}" -S {}'.format(
-   MIN_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_DATA_PATH)
+   MAX_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_DATA_PATH)
 
 # Makeflow options
 MAKEFLOW_OPTIONS = '-T wq -t 600 -u 600 -X {} -a -C {}:{}'.format(
