@@ -1045,6 +1045,8 @@ class BOOMFiller(LMObject):
          grimChain = self._createGrimMF(code, CURR_MJD)
          targetDir = grimChain.getRelativeDirectory()
          mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
+         self.scribe.log.info('  {} grim columns for scencode {}'
+                       .format(grimChain.objId, code))
          
          colFilenames = []
          for mtxcol in mtxcols:
@@ -1183,16 +1185,17 @@ def initBoom(paramFname, isInitial=True):
    # Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
    scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
    
-   # If there are Scenario GRIMs, create MFChain for each 
-   filler.addGRIMChains(scenGrims)
-      
    # Write config file for this archive
    filler.writeConfigFile()
    filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
-   
-   # Create MFChain to run Boomer on these inputs IFF not the initial archive 
-   # If this is the initial archive, we will run the boomer as a daemon
-   if not isInitial:
+         
+   if isInitial:
+      # If there are Scenario GRIMs, create MFChain for each 
+      time.sleep(30)
+      filler.addGRIMChains(scenGrims)
+   else:
+      # Create MFChain to run Boomer on these inputs IFF not the initial archive 
+      # If this is the initial archive, we will run the boomer as a daemon
       mfChain = filler.addBoomChain()
       
    filler.close()
