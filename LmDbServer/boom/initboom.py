@@ -1184,16 +1184,14 @@ def initBoom(paramFname, isInitial=True):
    #     matrixColumns, default GRIMs with matrixColumns
    # Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
    scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
+   # If there are Scenario GRIMs, create MFChain for each 
+   filler.addGRIMChains(scenGrims)
    
    # Write config file for this archive
    filler.writeConfigFile()
    filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
          
-   if isInitial:
-      # If there are Scenario GRIMs, create MFChain for each 
-      time.sleep(30)
-      filler.addGRIMChains(scenGrims)
-   else:
+   if not isInitial:
       # Create MFChain to run Boomer on these inputs IFF not the initial archive 
       # If this is the initial archive, we will run the boomer as a daemon
       mfChain = filler.addBoomChain()

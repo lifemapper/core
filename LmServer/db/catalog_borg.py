@@ -1191,13 +1191,11 @@ class Borg(DbPostgresql):
                            lyr.getParamId(), lyr.envCode, lyr.gcmCode,
                            lyr.altpredCode, lyr.dateCode, envmeta, 
                            lyr.paramModTime)
-      if scenarioId is not None:
-         etid = self._getColumnValue(row, idxs, ['envtypeid'])
-         lyrid = self._getColumnValue(row, idxs, ['layerid'])
-         row, idxs = self.executeInsertAndSelectOneFunction(
-                     'lm_joinScenarioLayer', scenarioId, lyrid, etid)
-      # Use row from first or second query      
       newOrExistingLyr = self._createEnvLayer(row, idxs)
+      if scenarioId is not None:
+         jrow, jidxs = self.executeInsertAndSelectOneFunction(
+                     'lm_joinScenarioLayer', scenarioId, 
+                     newOrExistingLyr.getId(), newOrExistingLyr.getParamId())
       return newOrExistingLyr
 
 # ...............................................
