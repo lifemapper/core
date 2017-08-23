@@ -1194,8 +1194,8 @@ class Borg(DbPostgresql):
       newOrExistingLyr = self._createEnvLayer(row, idxs)
       if scenarioId is not None:
          jrow, jidxs = self.executeInsertAndSelectOneFunction(
-                     'lm_joinScenarioLayer', scenarioId, 
-                     newOrExistingLyr.getId(), newOrExistingLyr.getParamId())
+                  'lm_joinScenarioLayer', scenarioId, 
+                  newOrExistingLyr.getLayerId(), newOrExistingLyr.getParamId())
       return newOrExistingLyr
 
 # ...............................................
