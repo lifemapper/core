@@ -436,8 +436,8 @@ class ChristopherWalken(LMObject):
                scenarioCode: PAV filename for input into multi-species
                MFChains (potatoInputs)
       """
-      objs = []
       currtime = dt.gmt().mjd
+      spud = None
       potatoInputs = {}
       pcount = prcount = icount = ircount = 0
       # WeaponOfChoice resets old or failed Occurrenceset
@@ -445,6 +445,7 @@ class ChristopherWalken(LMObject):
       if self.weaponOfChoice.finishedInput:
          self._writeDoneWalkenFile()
       if occ:
+         objs = []
          # Process existing OccurrenceLayer (copy if up-to-date and complete,
          # recompute if incomplete, obsolete, or failed)
          objs.append(occ)
@@ -472,8 +473,8 @@ class ChristopherWalken(LMObject):
    
             self.log.info('   Will compute {} projections, {} matrixColumns ( {}, {} reset)'
                           .format(pcount, icount, prcount, ircount))
-      spudObjs = [o for o in objs if o is not None]
-      spud = self._createSpudMakeflow(spudObjs)
+         spudObjs = [o for o in objs if o is not None]
+         spud = self._createSpudMakeflow(spudObjs)
       return spud, potatoInputs
       
    # ...............................

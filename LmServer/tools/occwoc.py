@@ -210,7 +210,7 @@ class _SpeciesWeaponOfChoice(LMObject):
       else:
          # Ignore existing, complete
          self.log.info('   Ignoring up to date OccLayer')
-      
+         occ = None
       if occ is not None:
          # Set processType and metadata location (from config, not saved in DB)
          occ.processType = self.processType
