@@ -732,11 +732,10 @@ class Raster(_Layer):
       
       newVerify = self.computeHash(dlocation=dlocation)
       if verify is not None and verify <> newVerify:
-         msgs.append('Computed hash value for {} ({}) does not match {}'
-                     .format(dlocation, newVerify, verify))
-#          raise LMError(currargs=msg)
-      else:
-         verify = newVerify
+         pass
+#          msgs.append('Computed hash value for {} ({}) does not match {}'
+#                      .format(dlocation, newVerify, verify))
+      verify = newVerify
       
       drv = dataset.GetDriver()
       gdalFormat = drv.GetDescription()
