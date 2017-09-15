@@ -908,12 +908,17 @@ class BorgScribe(LMObject):
       return mfchain
    
 # ...............................................
+   def getMFChain(self, mfprocessid):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getMFChain()
+      """
+      mfchain = self._borg.getMFChain(mfprocessid)
+      return mfchain
+
+# ...............................................
    def findMFChains(self, count, userId=None):
       """
-      @summary: Retrieves MFChains from database, optionally filtered by status 
-                and/or user, updates their status
-      @param count: Number of MFChains to pull
-      @param userId: If not None, filter by this user 
+      @copydoc LmServer.db.catalog_borg.Borg::findMFChains()
       """
       mfchainList = self._borg.findMFChains(count, userId, 
                                  JobStatus.INITIALIZE, JobStatus.PULL_REQUESTED)

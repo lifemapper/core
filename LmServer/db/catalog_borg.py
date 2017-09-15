@@ -2328,6 +2328,17 @@ class Borg(DbPostgresql):
          mfchainList.append(mfchain)
       return mfchainList
       
+# ...............................................
+   def getMFChain(self, mfprocessid):
+      """
+      @summary: Retrieves MFChain from database
+      @param mfprocessid: Database ID of MFChain to pull
+      @return: LmServer.legion.processchain.MFChains
+      """
+      row, idxs = self.executeSelectManyFunction('lm_getMFChain', mfprocessid)
+      mfchain = self._createMFChain(row, idxs)
+      return mfchain
+      
    # ...............................................
    def updateObject(self, obj):
       """

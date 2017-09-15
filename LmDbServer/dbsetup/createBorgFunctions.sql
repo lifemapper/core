@@ -2179,6 +2179,23 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getMFChain(mfid int)
+RETURNS lm_v3.MFProcess AS
+$$
+DECLARE
+   rec lm_v3.MFProcess%ROWTYPE;
+BEGIN
+   begin
+      SELECT * INTO STRICT rec FROM lm_v3.MFProcess WHERE mfprocessid = mfid;
+      EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+            RAISE NOTICE 'MFProcess id = % not found', mfid;
+   end;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateMFChain(mfid int, 
                                                   dloc varchar,
                                                   stat int,
