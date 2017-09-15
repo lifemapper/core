@@ -820,6 +820,9 @@ class ProcessType:
    BISON_TAXA_OCCURRENCE = 410
    IDIGBIO_TAXA_OCCURRENCE = 415
    USER_TAXA_OCCURRENCE = 420
+   OCC_BUCKETEER = 450
+   OCC_SORTER = 460
+   OCC_SPLITTER = 470
    # Intersect
    INTERSECT_RASTER = 230
    INTERSECT_VECTOR = 240
@@ -913,7 +916,9 @@ class ProcessType:
                    ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY,
                    ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
                    ProcessType.MCPA_RANDOM, ProcessType.ENCODE_HYPOTHESES,
-                   ProcessType.ENCODE_PHYLOGENY, ProcessType.MCPA_ASSEMBLE]:
+                   ProcessType.ENCODE_PHYLOGENY, ProcessType.MCPA_ASSEMBLE,
+                   ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER, 
+                   ProcessType.OCC_SPLITTER]:
          return True
       return False
    
@@ -940,6 +945,11 @@ class ProcessType:
                    ProcessType.MCPA_RANDOM]:
          return True
       return False  
+
+   @staticmethod
+   def isAggregate(ptype):
+      return ptype in [ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER, 
+                       ProcessType.OCC_SPLITTER]
 
    @staticmethod
    def randomTypes():
