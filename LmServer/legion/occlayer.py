@@ -511,7 +511,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       self.clearFeatures()
       if dlocation is None:
          dlocation = self.getDLocation(largeFile=largeFile)
-      Vector.readData(self, dlocation=dlocation)
+      Vector.readData(self, dlocation=dlocation, doReadData=True)
 
 # ...............................................
    def readXMLPoints(self, data):
