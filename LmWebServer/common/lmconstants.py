@@ -182,6 +182,9 @@ QUERY_PARAMETERS = {
       'name' : 'limit',
       'processIn' : lambda x: max(1, int(x)) # Integer, minimum is one
    },
+   'map' : {
+      'name' : 'mapName'
+   },
    'mapname' : {
       'name' : 'mapName'
    },

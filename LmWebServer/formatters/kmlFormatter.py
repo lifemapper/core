@@ -1,12 +1,12 @@
 """
 @summary: Module containing KML Formatter class and helping functions
+@note: This needs to be cleaned up a lot.  This is a patch to get us through
+          until we can spend some time on this
 @author: CJ Grady
 @version: 1.0
 @status: beta
-@note: Part of the Factory pattern
-@see: Formatter
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -30,94 +30,26 @@
 from osgeo import ogr
 from LmCommon.common.lmXml import (CDATA, Element, register_namespace, 
                                   setDefaultNamespace, SubElement, tostring)
-from LmCommon.common.lmconstants import ENCODING, HTTPStatus
+#from LmCommon.common.lmconstants import ENCODING, HTTPStatus
 
-from LmServer.base.layer2 import Raster
-from LmServer.base.lmobj import LmHTTPError
-from LmServer.base.serviceobject import ServiceObject
-from LmServer.base.utilities import escapeString, formatTimeHuman
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import OccurrenceFieldNames
+from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.sdmproj import SDMProjection
 from LmServer.common.localconstants import WEBSERVICES_ROOT
-from LmServer.sdm.occlayer import OccurrenceLayer
-from LmServer.sdm.sdmexperiment import SDMExperiment
-from LmServer.sdm.sdmprojection import SDMProjection
+from LmServer.base.utilities import formatTimeHuman
+#from LmServer.base.layer2 import Raster
+#from LmServer.base.lmobj import LmHTTPError
+#from LmServer.base.serviceobject import ServiceObject
+#from LmServer.base.utilities import escapeString, formatTimeHuman
+#from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import OccurrenceFieldNames
+#from LmServer.common.localconstants import WEBSERVICES_ROOT
+#from LmServer.sdm.occlayer import OccurrenceLayer
+#from LmServer.sdm.sdmexperiment import SDMExperiment
+#from LmServer.sdm.sdmprojection import SDMProjection
 
-from LmWebServer.formatters.formatter import Formatter, FormatterResponse
+#from LmWebServer.formatters.formatter import Formatter, FormatterResponse
 
 KML_NS = "http://www.opengis.net/kml/2.2"
-
-# .............................................................................
-class KmlFormatter(Formatter):
-   """
-   @summary: Formatter class for KML output
-   """
-   # ..................................
-   def format(self):
-      """
-      @summary: Formats the object
-      @return: A response containing the content and metadata of the format 
-                  operation
-      @rtype: FormatterResponse
-      """
-      if not isinstance(self.obj, ServiceObject):
-         raise LmHTTPError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE, 
-                     "Can't format %s object as KML" % str(self.obj.__class__))
-      kml = getKml(self.obj)
-      try:
-         name = self.obj.serviceType[:-1]
-      except:
-         name = "items"
-      
-      ct = "application/vnd.google-earth.kml+xml"
-      fn = "%s%s.kml" % (name, self.obj.getId())
-      headers = {"Content-Disposition" : 'attachment; filename="%s"' % fn}
-      
-      return FormatterResponse(kml, contentType=ct, filename=fn, 
-                                                         otherHeaders=headers)
-
-
-# .............................................................................
-def addSdmExperiment(parent, exp):
-   """
-   @summary: Adds an SDM experiment to the KML output
-   @param exp: The SDM experiment to add
-   @param parent: The parent ElementTree element to add it to
-   """
-   SubElement(parent, "name", 
-                                value="Lifemapper experiment %s" % exp.getId())
-   SubElement(parent, "styleUrl", value="#lmBalloon")
-   SubElement(parent, "open", value="1")
-
-   # Extended Data
-   extData = SubElement(parent, "ExtendedData")
-   el1 = SubElement(extData, "Data", attrib={"name": "metadataUrl"})
-   SubElement(el1, "value", value=exp.metadataUrl)
-   el2 = SubElement(extData, "Data", attrib={"name": "lastModified"})
-   SubElement(el2, "displayName", value="Last Modified")
-   SubElement(el2, "value", value=formatTimeHuman(exp.statusModTime))
-   
-   # Description
-   SubElement(parent, "description", 
-                                value="Lifemapper experiment %s" % exp.getId())
-
-   # Projections Folder
-   prjFolderEl = SubElement(parent, "Folder")
-   SubElement(prjFolderEl, "name", 
-                           value="Projections for experiment %s" % exp.getId())
-   SubElement(prjFolderEl, "styleUrl", value="#lmBalloon")
-   SubElement(prjFolderEl, "open", value="1")
-   SubElement(prjFolderEl, "description", 
-                           value="Projections for experiment %s" % exp.getId())
-   for i in xrange(len(exp.projections)):
-      addProjection(prjFolderEl, exp.projections[i], int(i == 0), 1)
-
-   # Occurrence Set Folder
-   occFolderEl = SubElement(parent, "Folder")
-   SubElement(occFolderEl, "styleUrl", value="#lmBalloon")
-   SubElement(occFolderEl, "description", 
-                        value="Occurrence Set for Experiment %s" % exp.getId())
-   addOccurrenceSet(occFolderEl, exp.model.occurrenceSet)
 
 # .............................................................................
 def addOccurrenceSet(parent, occ):
@@ -127,139 +59,21 @@ def addOccurrenceSet(parent, occ):
    @param occ: The occurrence set object to add
    """
    SubElement(parent, "name", 
-                            value="Points for occurrence set %s" % occ.getId())
+           value='{} points (Occ Id: {})'.format(occ.displayName, occ.getId()))
    SubElement(parent, "open", value="1")
    SubElement(parent, "description", 
-                 value="Lifemapper points for occurrence set %s" % occ.getId())
+           value='{} points (Occ Id: {})'.format(occ.displayName, occ.getId()))
    
-   # Add points
-   if occ.fromGbif:
-      for pt in occ.features:
-         addGbifPoint(parent, pt)
-   else:
-      for pt in occ.features:
-         addUserPoint(parent, pt)
-
+   
+   # TODO: Look at feature attributes and decide what to read
+   for pt in occ.features:
+      addPoint(parent, pt)
+   
 # .............................................................................
-def addGbifPoint(parent, point):
+def addPoint(parent, point):
    """
-   @summary: Adds an occurrence point to the KML output
-   @param parent: The parent element to add it to
-   @param point: The point to add
    """
-   # Name
    name = getNameForPoint(point)
-
-   latitude, longitude = getLatLonForPoint(point)
-   
-   # Provider name
-   try:
-      providerName = point.provname
-   except:
-      try:
-         providerName = point.instcode
-      except:
-         providerName = None
-
-   if providerName is not None:
-      providerName = unicode(providerName, ENCODING)
-
-   # Resource name
-   try:
-      resourceName = point.resname
-   except:
-      try:
-         resourceName = point.collcode
-      except:
-         resourceName = None
-   
-   if resourceName is not None:
-      resourceName = unicode(resourceName, ENCODING)
-   
-   # Collector
-   try:
-      collector = point.collectr
-   except:
-      try:
-         collector = point.coll
-      except:
-         collector = point.rec_by
-
-   if collector is not None:
-      collector = unicode(collector, ENCODING)
-   
-   # Collection Date
-   try:
-      colDate = formatTimeHuman(point.colldate)
-   except:
-      # If the year is not provided, set to unknown.  If there is a year, try 
-      #    to get month and day but fall back to January if no month and the 
-      #    first day of the month if none provided
-      try:
-         year = point.year
-         try:
-            month = point.month
-         except:
-            month = "1"
-         try:
-            day = point.day
-         except:
-            day = "1"
-         colDate = "%s-%s-%s" % (year, month, day)
-      except:
-         colDate = "Unknown"
-
-   latitude = float(latitude)
-   longitude = float(longitude)
-   
-   # Throw out bad data
-   if latitude >= -90.0 and latitude <= 90.0 and longitude >= -180.0 and longitude <= 180.0:
-      # Placemark
-      pmEl = SubElement(parent, "Placemark")
-      SubElement(pmEl, "name", value=escapeString(name, "xml"))
-      SubElement(pmEl, "styleUrl", value="#lmGbifOccurrenceBalloon")
-      
-      # Point
-      ptEl = SubElement(pmEl, "Point")
-      SubElement(ptEl, "coordinates", value="%s,%s,0" % (longitude, latitude))
-      
-      # Extended data
-      extDataEl = SubElement(pmEl, "ExtendedData")
-      
-      # Latitude
-      latEl = SubElement(extDataEl, "Data", attrib={"name": "latitude"})
-      SubElement(latEl, "value", value=latitude)
-      
-      # Longitude
-      lonEl = SubElement(extDataEl, "Data", attrib={"name": "longitude"})
-      SubElement(lonEl, "value", value=longitude)
-      
-      # Provider name
-      pnEl = SubElement(extDataEl, "Data", attrib={"name": "providerName"})
-      SubElement(pnEl, "value", value=escapeString(providerName, "xml"))
-         
-      # Resource name
-      rnEl = SubElement(extDataEl, "Data", attrib={"name": "resourceName"})
-      SubElement(rnEl, "value", value=escapeString(resourceName, "xml"))
-   
-      # Collector
-      colEl = SubElement(extDataEl, "Data", attrib={"name": "collector"})
-      SubElement(colEl, "value", value=escapeString(collector, "xml"))
-   
-      # Collection Date
-      colDateEl = SubElement(extDataEl, "Data", attrib={"name": "colDate"})
-      SubElement(colDateEl, "value", value=colDate)
-
-# .............................................................................
-def addUserPoint(parent, point):
-   """
-   @summary: Adds an occurrence point to the KML output
-   @param parent: The parent element to add it to
-   @param point: The point to add
-   """
-   
-   name = getNameForPoint(point)
-
    lat, lon = getLatLonForPoint(point)
 
    pmEl = SubElement(parent, "Placemark")
@@ -275,7 +89,7 @@ def addUserPoint(parent, point):
    
    lonEl = SubElement(ext, "Data", attrib={"name": "longitude"})
    SubElement(lonEl, "value", value=lon)
-
+      
 # .............................................................................
 def addProjection(parent, prj, visibility, indent=0):
    """
@@ -304,11 +118,12 @@ def addProjection(parent, prj, visibility, indent=0):
    SubElement(lookAt, "heading", value="0.0")
    
    # Icon
-   ej = EarlJr()
    iconEl = SubElement(goEl, "Icon")
-   SubElement(iconEl, "href", value=ej.constructLMMapRequest(
-                                       "%s/ogc" % prj.metadataUrl,
-                                       width=800, height=400, bbox=prj.bbox))
+   
+   mapUrl = prj._earlJr.constructLMMapRequest('{}/{}{}'.format(
+                               WEBSERVICES_ROOT, 'api/v2/ogc', prj._mapPrefix), 
+                                            400, 200, prj.bbox, color='ff0000')
+   SubElement(iconEl, "href", value=mapUrl)
    
    # Latitude Longitude Box
    latLonBoxEl = SubElement(goEl, "LatLonBox")
@@ -322,64 +137,15 @@ def addProjection(parent, prj, visibility, indent=0):
    extData = SubElement(goEl, "ExtendedData")
    
    lastModEl = SubElement(extData, "Data", attrib={"name": "lastModified"})
-   SubElement(lastModEl, "value", value=formatTimeHuman(prj.statusModTime))
+   SubElement(lastModEl, "value", value=formatTimeHuman(prj.modTime))
 
    scnTitleEl = SubElement(extData, "Data", attrib={"name": "scenarioTitle"})
-   SubElement(scnTitleEl, "value", value=prj._scenario.title)
+   # TODO: Get the title for this scenario
+   SubElement(scnTitleEl, "value", value=prj._projScenario.code)
+
 
 # .............................................................................
-def addLayer(parent, lyr, visibility, indent=0):
-   """
-   @summary: Adds a layer to the KML output
-   @param parent: The parent element to add it to
-   @param point: The layer to add
-   """
-   lyrName = "Lifemapper layer %s" % lyr.getId()
-   if indent == 0:
-      SubElement(parent, "name", value=lyrName)
-      SubElement(parent, "description", value=lyrName)
-   
-   # Ground Overlay
-   goEl = SubElement(parent, "GroundOverlay")
-   SubElement(goEl, "styleUrl", value="#lmLayerBalloon")
-   SubElement(goEl, "name", value=lyrName)
-   SubElement(goEl, "visibility", value=visibility)
-   
-   # Look at
-   lookAt = SubElement(goEl, "LookAt")
-   SubElement(lookAt, "latitude", value="0.0")
-   SubElement(lookAt, "longitude", value="0.0")
-   SubElement(lookAt, "altitude", value="0.0")
-   SubElement(lookAt, "range", value="500000")
-   SubElement(lookAt, "tilt", value="0.0")
-   SubElement(lookAt, "heading", value="0.0")
-   
-   # Icon
-   iconEl = SubElement(goEl, "Icon")
-   ej = EarlJr()
-   SubElement(iconEl, "href", value=ej.constructLMMapRequest(
-                                       "%s/ogc" % lyr.metadataUrl, width=800, 
-                                       height=400, bbox=lyr.bbox))
-   
-   # Latitude Longitude Box
-   latLonBoxEl = SubElement(goEl, "LatLonBox")
-   SubElement(latLonBoxEl, "north", value=lyr.bbox[3])
-   SubElement(latLonBoxEl, "south", value=lyr.bbox[1])
-   SubElement(latLonBoxEl, "west", value=lyr.bbox[0])
-   SubElement(latLonBoxEl, "east", value=lyr.bbox[2])
-   SubElement(latLonBoxEl, "rotation", value="0.0")
-   
-   # Extended Data
-   extData = SubElement(goEl, "ExtendedData")
-   
-   lastModEl = SubElement(extData, "Data", attrib={"name": "lastModified"})
-   SubElement(lastModEl, "value", value=formatTimeHuman(lyr.modTime))
-
-   scnTitleEl = SubElement(extData, "Data", attrib={"name": "layerTitle"})
-   SubElement(scnTitleEl, "value", value=lyr.title)
-
-# .............................................................................
-def getKml(obj):
+def getKML(myObj):
    """
    @summary: Gets a KML document for the object
    @param obj: The object to return in KML
@@ -606,19 +372,27 @@ def getKml(obj):
                </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
 
    # Add object
-   if isinstance(obj, SDMExperiment):
-      addSdmExperiment(doc, obj)
-   elif isinstance(obj, SDMProjection):
-      addProjection(doc, obj, 1)
-   elif isinstance(obj, Raster):
-      addLayer(doc, obj, 1)
-   elif isinstance(obj, OccurrenceLayer):
-      addOccurrenceSet(doc, obj)
+   if isinstance(myObj, SDMProjection):
+      addProjection(doc, myObj, 1)
+   elif isinstance(myObj, OccurrenceLayer):
+      addOccurrenceSet(doc, myObj)
       
    temp = tostring(root)
    temp = temp.replace('&lt;', '<')
    temp = temp.replace('&gt;', '>')
    return temp
+
+# .............................................................................
+def kmlObjectFormatter(obj):
+   """
+   @summary: Looks at object and converts to KML based on its type
+   """
+   kmlStr = getKML(obj)
+   return kmlStr
+
+
+
+
 
 # .............................................................................
 def getNameForPoint(pt):
