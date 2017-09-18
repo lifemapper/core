@@ -179,6 +179,13 @@ class ProcessTool:
                jr = 'mcpa_random'
             elif ptype == ProcessType.MCPA_ASSEMBLE:
                jr = 'mcpa_assemble'
+         elif ProcessType.isAggregate(ptype):
+            if ptype == ProcessType.OCC_BUCKETEER:
+               jr = 'occurrence_bucketeer'
+            elif ptype == ProcessType.OCC_SORTER:
+               jr = 'occurrence_sorter'
+            elif ptype == ProcessType.OCC_SPLITTER:
+               jr = 'occurrence_splitter'
                
       elif ProcessType.isBoom(ptype):
          relpath = BOOM_SCRIPTS_DIR

@@ -820,6 +820,9 @@ class ProcessType:
    BISON_TAXA_OCCURRENCE = 410
    IDIGBIO_TAXA_OCCURRENCE = 415
    USER_TAXA_OCCURRENCE = 420
+   OCC_BUCKETEER = 450
+   OCC_SORTER = 460
+   OCC_SPLITTER = 470
    # Intersect
    INTERSECT_RASTER = 230
    INTERSECT_VECTOR = 240
@@ -913,7 +916,9 @@ class ProcessType:
                    ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY,
                    ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
                    ProcessType.MCPA_RANDOM, ProcessType.ENCODE_HYPOTHESES,
-                   ProcessType.ENCODE_PHYLOGENY, ProcessType.MCPA_ASSEMBLE]:
+                   ProcessType.ENCODE_PHYLOGENY, ProcessType.MCPA_ASSEMBLE,
+                   ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER, 
+                   ProcessType.OCC_SPLITTER]:
          return True
       return False
    
@@ -940,6 +945,11 @@ class ProcessType:
                    ProcessType.MCPA_RANDOM]:
          return True
       return False  
+
+   @staticmethod
+   def isAggregate(ptype):
+      return ptype in [ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER, 
+                       ProcessType.OCC_SPLITTER]
 
    @staticmethod
    def randomTypes():
@@ -1112,6 +1122,7 @@ class GBIF:
    WAIT_TIME = 3 * ONE_MIN
    LIMIT = 300
    REST_URL = 'http://api.gbif.org/v1'
+   QUALIFIER = 'gbif:'
    
    SPECIES_SERVICE = 'species'
    OCCURRENCE_SERVICE = 'occurrence'
@@ -1323,11 +1334,96 @@ class IDIGBIO:
    SEARCH_LIMIT = 5000
    ID_FIELD = 'uuid'
    LINK_FIELD = 'idigbiourl'
-   GBIFID_FIELD = 'taxonid'
+   GBIFID_FIELD = 'taxonID'
    BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"
    OCCURRENCE_ITEMS_KEY = 'items'
    RECORD_CONTENT_KEY = 'data'
    RECORD_INDEX_KEY = 'indexTerms'
+   QUALIFIER = 'idigbio:'
+   
+class IDIG_DUMP:
+   EXPORT_FIELDS = {0: ('coreid', None),
+                    1: (IDIGBIO.QUALIFIER + 'associatedsequences', None),
+                    2: (IDIGBIO.QUALIFIER + 'barcodeValue', None),
+                    3: (DWC_QUALIFIER + 'basisOfRecord', None),
+                    4: (DWC_QUALIFIER + 'bed', None),
+                    5: (GBIF.QUALIFIER + 'canonicalName', None),
+                    6: (DWC_QUALIFIER + 'catalogNumber', None),
+                    7: (DWC_QUALIFIER + 'class', None),
+                    8: (DWC_QUALIFIER + 'collectionCode', None),
+                    9: (DWC_QUALIFIER + 'collectionID', None),
+                    10: (IDIGBIO.QUALIFIER + 'collectionName', None),
+                    11: (DWC_QUALIFIER + 'recordedBy', None),
+                    12: (DWC_QUALIFIER + 'vernacularName', None),
+                    13: (IDIGBIO.QUALIFIER + 'commonnames', None),
+                    14: (DWC_QUALIFIER + 'continent', None),
+                    15: (DWC_QUALIFIER + 'coordinateUncertaintyInMeters', None),
+                    16: (DWC_QUALIFIER + 'country', None),
+                    17: (IDIGBIO.QUALIFIER + 'isoCountryCode', None),
+                    18: (DWC_QUALIFIER + 'county', None),
+                    19: (IDIGBIO.QUALIFIER + 'eventDate', None),
+                    20: (IDIGBIO.QUALIFIER + 'dateModified', None),
+                    21: (IDIGBIO.QUALIFIER + 'dataQualityScore', None),
+                    22: (DWC_QUALIFIER + 'earliestAgeOrLowestStage', None),
+                    23: (DWC_QUALIFIER + 'earliestEonOrLowestEonothem', None),
+                    24: (DWC_QUALIFIER + 'earliestEpochOrLowestSeries', None),
+                    25: (DWC_QUALIFIER + 'earliestEraOrLowestErathem', None),
+                    26: (DWC_QUALIFIER + 'earliestPeriodOrLowestSystem', None),
+                    27: (IDIGBIO.QUALIFIER + 'etag', None),
+                    28: (DWC_QUALIFIER + 'eventDate', None),
+                    29: (DWC_QUALIFIER + 'family', None),
+                    30: (DWC_QUALIFIER + 'fieldNumber', None),
+                    31: (IDIGBIO.QUALIFIER + 'flags', None),
+                    32: (DWC_QUALIFIER + 'formation', None),
+                    33: (DWC_QUALIFIER + 'genus', None),
+                    34: (DWC_QUALIFIER + 'geologicalContextID', None),
+                    35: (IDIGBIO.QUALIFIER + 'geoPoint', None),
+                    36: (DWC_QUALIFIER + 'group', None),
+                    37: (IDIGBIO.QUALIFIER + 'hasImage', None),
+                    38: (IDIGBIO.QUALIFIER + 'hasMedia', None),
+                    39: (DWC_QUALIFIER + 'higherClassification', None),
+                    40: (DWC_QUALIFIER + 'highestBiostratigraphicZone', None),
+                    41: (DWC_QUALIFIER + 'individualCount', None),
+                    42: (DWC_QUALIFIER + 'infraspecificEpithet', None),
+                    43: (DWC_QUALIFIER + 'institutionCode', None),
+                    44: (DWC_QUALIFIER + 'institutionID', None),
+                    45: (IDIGBIO.QUALIFIER + 'institutionName', None),
+                    46: (DWC_QUALIFIER + 'kingdom', None),
+                    47: (DWC_QUALIFIER + 'latestAgeOrHighestStage', None),
+                    48: (DWC_QUALIFIER + 'latestEonOrHighestEonothem', None),
+                    49: (DWC_QUALIFIER + 'latestEpochOrHighestSeries', None),
+                    50: (DWC_QUALIFIER + 'latestEraOrHighestErathem', None),
+                    51: (DWC_QUALIFIER + 'latestPeriodOrHighestSystem', None),
+                    52: (DWC_QUALIFIER + 'lithostratigraphicTerms', None),
+                    53: (DWC_QUALIFIER + 'locality', None),
+                    54: (DWC_QUALIFIER + 'lowestBiostratigraphicZone', None),
+                    55: (DWC_QUALIFIER + 'maximumDepthInMeters', None),
+                    56: (DWC_QUALIFIER + 'maximumElevationInMeters', None),
+                    57: (IDIGBIO.QUALIFIER + 'mediarecords', None),
+                    58: (DWC_QUALIFIER + 'member', None),
+                    59: (DWC_QUALIFIER + 'minimumDepthInMeters', None),
+                    60: (DWC_QUALIFIER + 'minimumElevationInMeters', None),
+                    61: (DWC_QUALIFIER + 'municipality', None),
+                    62: (DWC_QUALIFIER + 'occurrenceID', None),
+                    63: (DWC_QUALIFIER + 'order', None),
+                    64: (DWC_QUALIFIER + 'phylum', None),
+                    65: (IDIGBIO.QUALIFIER + 'recordIds', None),
+                    66: (DWC_QUALIFIER + 'recordNumber', None),
+                    67: (IDIGBIO.QUALIFIER + 'recordset', None),
+                    68: (DWC_QUALIFIER + 'scientificName', None),
+                    69: (DWC_QUALIFIER + 'specificEpithet', None),
+                    70: (DWC_QUALIFIER + 'startDayOfYear', None),
+                    71: (DWC_QUALIFIER + 'stateProvince', None),
+                    72: (DWC_QUALIFIER + 'taxonID', None),
+                    73: (DWC_QUALIFIER + 'taxonomicStatus', None),
+                    74: (DWC_QUALIFIER + 'taxonRank', None),
+                    75: (DWC_QUALIFIER + 'typeStatus', None),
+                    76: (IDIGBIO.QUALIFIER + 'uuid', None),
+                    77: (DWC_QUALIFIER + 'verbatimEventDate', None),
+                    78: (DWC_QUALIFIER + 'verbatimLocality', None),
+                    79: (IDIGBIO.QUALIFIER + 'version', None),
+                    80: (DWC_QUALIFIER + 'waterBody', None),
+                    }
    
 class IDIGBIO_QUERY:
    EXPORT_FIELDS = {0: (IDIGBIO.ID_FIELD, OFTString), 
