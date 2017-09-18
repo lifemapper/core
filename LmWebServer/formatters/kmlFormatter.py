@@ -27,7 +27,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import cherrypy
 from osgeo import ogr
+from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.lmXml import (CDATA, Element, register_namespace, 
                                   setDefaultNamespace, SubElement, tostring)
 #from LmCommon.common.lmconstants import ENCODING, HTTPStatus
@@ -388,6 +390,8 @@ def kmlObjectFormatter(obj):
    """
    @summary: Looks at object and converts to KML based on its type
    """
+   #cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
+   cherrypy.response.headers['Content-Type'] = LMFormat.KML.getMimeType()
    kmlStr = getKML(obj)
    return kmlStr
 
