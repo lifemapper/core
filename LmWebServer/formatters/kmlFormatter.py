@@ -375,6 +375,7 @@ def getKML(myObj):
    if isinstance(myObj, SDMProjection):
       addProjection(doc, myObj, 1)
    elif isinstance(myObj, OccurrenceLayer):
+      myObj.readData(doReadData=True)
       addOccurrenceSet(doc, myObj)
       
    temp = tostring(root)
