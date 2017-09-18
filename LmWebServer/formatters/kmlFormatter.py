@@ -377,7 +377,8 @@ def getKML(myObj):
    if isinstance(myObj, SDMProjection):
       addProjection(doc, myObj, 1)
    elif isinstance(myObj, OccurrenceLayer):
-      myObj.readData(doReadData=True)
+      #myObj.readData(doReadData=True)
+      myObj.readShapefile()
       addOccurrenceSet(doc, myObj)
       
    temp = tostring(root)
@@ -392,6 +393,7 @@ def kmlObjectFormatter(obj):
    """
    #cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
    cherrypy.response.headers['Content-Type'] = LMFormat.KML.getMimeType()
+   cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}.kml"'.format(obj.name)
    kmlStr = getKML(obj)
    return kmlStr
 
