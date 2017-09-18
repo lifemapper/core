@@ -35,6 +35,7 @@ from LmWebServer.formatters.fileFormatter import (csvObjectFormatter,
                                                   gtiffObjectFormatter,
                                                   shapefileObjectFormatter)
 from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
+from LmWebServer.formatters.kmlFormatter import kmlObjectFormatter
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmconstants import SnippetOperations
 from LmServer.common.snippet import SnippetShooter
@@ -75,8 +76,8 @@ def lmFormatter(f):
                shootSnippets(handler_result, SnippetOperations.VIEWED, 
                              JSON_INTERFACE)
                return jsonObjectFormatter(handler_result)
-            #elif ah == LMFormat.KML.getMimeType():
-            #   return kmlObjectFormatter(handler_result)
+            elif ah == LMFormat.KML.getMimeType():
+               return kmlObjectFormatter(handler_result)
             elif ah == LMFormat.GTIFF.getMimeType():
                return gtiffObjectFormatter(handler_result)
             elif ah == LMFormat.SHAPE.getMimeType():
