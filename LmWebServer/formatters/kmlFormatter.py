@@ -410,6 +410,14 @@ def getNameForPoint(pt):
    """
    name = None
    
+   try:
+      return pt.sciname
+   except:
+      try:
+         return pt.occurid
+      except:
+         pass
+   
    for att in OccurrenceFieldNames.DATANAME:
       try:
          name = pt.__getattribute__(att)
