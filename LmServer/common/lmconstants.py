@@ -242,16 +242,19 @@ class PrimaryEnvironment:
    
 # ............................................................................
 class ReferenceType:
-   SDMModel = 101
+#    SDMModel = 101
    SDMProjection = 102
-   SDMExperiment = 103
+#    SDMExperiment = 103
    OccurrenceSet = 104
-   GridPAV = 150
-   RADExperiment = 201
-   Bucket = 202
-   OriginalPamSum = 203
-   RandomPamSum = 204
-   ShapeGrid = 205
+   MatrixColumn = 201
+   ShapeGrid = 202
+#    GridPAV = 150
+#    RADExperiment = 201
+#    Bucket = 202
+#    OriginalPamSum = 203
+#    RandomPamSum = 204
+   Matrix = 301
+   Gridset = 401
    
    @staticmethod
    def name(rt):
@@ -263,8 +266,9 @@ class ReferenceType:
    
    @staticmethod
    def sdmTypes():
-      return [ReferenceType.OccurrenceSet, ReferenceType.SDMModel, 
-              ReferenceType.SDMProjection, ReferenceType.SDMExperiment]
+      return [ReferenceType.OccurrenceSet, ReferenceType.SDMProjection]
+#       return [ReferenceType.OccurrenceSet, ReferenceType.SDMModel, 
+#               ReferenceType.SDMProjection, ReferenceType.SDMExperiment]
       
    @staticmethod
    def isSDM(rtype):
@@ -274,9 +278,11 @@ class ReferenceType:
       
    @staticmethod
    def radTypes():
-      return [ReferenceType.ShapeGrid, ReferenceType.Bucket, 
-              ReferenceType.OriginalPamSum, ReferenceType.RandomPamSum,
-              ReferenceType.RADExperiment]
+      return [ReferenceType.ShapeGrid, ReferenceType.MatrixColumn, 
+              ReferenceType.Matrix, ReferenceType.Gridset]
+#       return [ReferenceType.ShapeGrid, ReferenceType.Bucket, 
+#               ReferenceType.OriginalPamSum, ReferenceType.RandomPamSum,
+#               ReferenceType.RADExperiment]
 
    @staticmethod
    def isRAD(rtype):
@@ -286,9 +292,12 @@ class ReferenceType:
    
    @staticmethod
    def boomTypes():
-      return [ReferenceType.OccurrenceSet, ReferenceType.SDMModel, 
-              ReferenceType.SDMProjection, ReferenceType.GridPAV, 
-              ReferenceType.SDMExperiment]
+      allTypes = ReferenceType.sdmTypes()
+      allTypes.extend(ReferenceType.radTypes())
+      return allTypes
+#       return [ReferenceType.OccurrenceSet, ReferenceType.SDMModel, 
+#               ReferenceType.SDMProjection, ReferenceType.GridPAV, 
+#               ReferenceType.SDMExperiment]
 
    @staticmethod
    def isBOOM(rtype):
@@ -296,81 +305,81 @@ class ReferenceType:
          return True
       return False
    
-   @staticmethod
-   def dependencies(rtype):
-      if rtype == ReferenceType.OccurrenceSet:
-         return []
-      elif rtype == ReferenceType.SDMModel:
-         return [ReferenceType.OccurrenceSet]
-      elif rtype == ReferenceType.SDMProjection:
-         return [ReferenceType.SDMModel]
-      elif rtype == ReferenceType.GridPAV:
-         return [ReferenceType.SDMProjection]
-      
-      elif rtype == ReferenceType.ShapeGrid:
-         return []
-      elif rtype == ReferenceType.Bucket:
-         return [ReferenceType.ShapeGrid]
-      elif rtype == ReferenceType.OriginalPamSum:
-         return [ReferenceType.Bucket]
-      elif rtype == ReferenceType.RandomPamSum:
-         return [ReferenceType.OriginalPamSum]
-      
-   @staticmethod
-   def bottomUpChain(rtype):
-      """
-      @return: a nested tuple of type with nested list of dependencies as:
-         (pavRefType, [(prjRefType, [(mdlRefType, [(occRefType, [])])])])
-      @note: bottom up
-      """
-      print 'bottomUpChain has been called with {}'.format(rtype)
-      deps = ReferenceType.dependencies(rtype)
-      if not deps:
-         return (rtype, deps)
-      else:
-         theseDeps = []
-         for dep in deps:
-            print '  intermediate dep {}'.format(dep)
-            theseDeps.append(ReferenceType.bottomUpChain(dep))
-         return (rtype, theseDeps)
-
-   @staticmethod
-   def dependents(rtype):
-      if rtype == ReferenceType.OccurrenceSet:
-         return [ReferenceType.SDMModel]
-      elif rtype == ReferenceType.SDMModel:
-         return [ReferenceType.SDMProjection]
-      elif rtype == ReferenceType.SDMProjection:
-         return [ReferenceType.GridPAV]
-      elif rtype == ReferenceType.GridPAV:
-         return []
-      
-      elif rtype == ReferenceType.ShapeGrid:
-         return [ReferenceType.Bucket]
-      elif rtype == ReferenceType.Bucket:
-         return [ReferenceType.OriginalPamSum]
-      elif rtype == ReferenceType.OriginalPamSum:
-         return [ReferenceType.RandomPamSum]
-      elif rtype == ReferenceType.RandomPamSum:
-         return []
-
-   @staticmethod
-   def topDownChain(rtype):
-      """
-      @return: a nested tuple of type with nested list of dependents as:
-         (occRefType, [(mdlRefType, [(prjRefType, [(pavRefType, [])])])])
-      @note: top down
-      """
-      print 'topDownChain has been called with {}'.format(rtype)
-      deps = ReferenceType.dependents(rtype)
-      if not deps:
-         return (rtype, deps)
-      else:
-         theseDeps = []
-         for dep in deps:
-            print '  intermediate dep {}'.format(dep)
-            theseDeps.append(ReferenceType.topDownChain(dep))
-         return (rtype, theseDeps)
+#    @staticmethod
+#    def dependencies(rtype):
+#       if rtype == ReferenceType.OccurrenceSet:
+#          return []
+#       elif rtype == ReferenceType.SDMModel:
+#          return [ReferenceType.OccurrenceSet]
+#       elif rtype == ReferenceType.SDMProjection:
+#          return [ReferenceType.SDMModel]
+#       elif rtype == ReferenceType.GridPAV:
+#          return [ReferenceType.SDMProjection]
+#       
+#       elif rtype == ReferenceType.ShapeGrid:
+#          return []
+#       elif rtype == ReferenceType.Bucket:
+#          return [ReferenceType.ShapeGrid]
+#       elif rtype == ReferenceType.OriginalPamSum:
+#          return [ReferenceType.Bucket]
+#       elif rtype == ReferenceType.RandomPamSum:
+#          return [ReferenceType.OriginalPamSum]
+#       
+#    @staticmethod
+#    def bottomUpChain(rtype):
+#       """
+#       @return: a nested tuple of type with nested list of dependencies as:
+#          (pavRefType, [(prjRefType, [(mdlRefType, [(occRefType, [])])])])
+#       @note: bottom up
+#       """
+#       print 'bottomUpChain has been called with {}'.format(rtype)
+#       deps = ReferenceType.dependencies(rtype)
+#       if not deps:
+#          return (rtype, deps)
+#       else:
+#          theseDeps = []
+#          for dep in deps:
+#             print '  intermediate dep {}'.format(dep)
+#             theseDeps.append(ReferenceType.bottomUpChain(dep))
+#          return (rtype, theseDeps)
+# 
+#    @staticmethod
+#    def dependents(rtype):
+#       if rtype == ReferenceType.OccurrenceSet:
+#          return [ReferenceType.SDMModel]
+#       elif rtype == ReferenceType.SDMModel:
+#          return [ReferenceType.SDMProjection]
+#       elif rtype == ReferenceType.SDMProjection:
+#          return [ReferenceType.GridPAV]
+#       elif rtype == ReferenceType.GridPAV:
+#          return []
+#       
+#       elif rtype == ReferenceType.ShapeGrid:
+#          return [ReferenceType.Bucket]
+#       elif rtype == ReferenceType.Bucket:
+#          return [ReferenceType.OriginalPamSum]
+#       elif rtype == ReferenceType.OriginalPamSum:
+#          return [ReferenceType.RandomPamSum]
+#       elif rtype == ReferenceType.RandomPamSum:
+#          return []
+# 
+#    @staticmethod
+#    def topDownChain(rtype):
+#       """
+#       @return: a nested tuple of type with nested list of dependents as:
+#          (occRefType, [(mdlRefType, [(prjRefType, [(pavRefType, [])])])])
+#       @note: top down
+#       """
+#       print 'topDownChain has been called with {}'.format(rtype)
+#       deps = ReferenceType.dependents(rtype)
+#       if not deps:
+#          return (rtype, deps)
+#       else:
+#          theseDeps = []
+#          for dep in deps:
+#             print '  intermediate dep {}'.format(dep)
+#             theseDeps.append(ReferenceType.topDownChain(dep))
+#          return (rtype, theseDeps)
 
 from LmCommon.common.lmconstants import DWCNames
 class OccurrenceFieldNames:

@@ -257,9 +257,17 @@ def usage():
 
 # .............................................................................
 if __name__ == "__main__":   
-   WORKPATH = '/tank/data/input/species/'
+#    WORKPATH = '/tank/data/input/species/'
+#    OCCURRENCE_BASENAME = 'seasia_gbif.meta'
+#    USER_OCCURRENCE_CSV = 'gbif_borneo_simple.csv'
+#    unsortedPrefix = 'chunk'
+#    sortedPrefix = 'smallsort'
+#    mergedPrefix = 'sorted'
+#    basename = os.path.splitext(USER_OCCURRENCE_CSV)[0]
+   
+   WORKPATH = '/tank/data/Biotaphy/NA_proj/fulldump'
    OCCURRENCE_BASENAME = 'seasia_gbif.meta'
-   USER_OCCURRENCE_CSV = 'gbif_borneo_simple.csv'
+   USER_OCCURRENCE_CSV = 'occurrence.csv'
    unsortedPrefix = 'chunk'
    sortedPrefix = 'smallsort'
    mergedPrefix = 'sorted'
