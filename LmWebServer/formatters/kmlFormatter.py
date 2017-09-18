@@ -221,10 +221,10 @@ def getKML(myObj):
 
    # lmGbifOccurrenceBalloon
    lmGbif = SubElement(doc, "Style", attrib={"id": "lmGbifOccurrenceBalloon"})
-   SubElement(
-        # Nested parent elements that don't add extra attributes
-        SubElement(SubElement(lmGbif, "IconStyle"), "Icon"), 
-        "href", value="%s/images/pushpin.png" % WEBSERVICES_ROOT)
+   #SubElement(
+   #     # Nested parent elements that don't add extra attributes
+   #     SubElement(SubElement(lmGbif, "IconStyle"), "Icon"), 
+   #     "href", value="%s/images/pushpin.png" % WEBSERVICES_ROOT)
 
    # Nested parent elements that don't add extra attributes
    SubElement(SubElement(lmGbif, "BalloonStyle"), "text").append(CDATA("""\
@@ -295,10 +295,10 @@ def getKML(myObj):
 
    # lmUserOccurrenceBalloon
    lmUser = SubElement(doc, "Style", attrib={"id": "lmUserOccurrenceBalloon"})
-   SubElement(
-        # Nested parent elements that don't add extra attributes
-        SubElement(SubElement(lmUser, "IconStyle"), "Icon"), 
-        "href", value="%s/images/pushpin.png" % WEBSERVICES_ROOT)
+   #SubElement(
+   #     # Nested parent elements that don't add extra attributes
+   #     SubElement(SubElement(lmUser, "IconStyle"), "Icon"), 
+   #     "href", value="%s/images/pushpin.png" % WEBSERVICES_ROOT)
 
    # Nested parent elements that don't add extra attributes
    SubElement(SubElement(lmUser, "BalloonStyle"), "text").append(CDATA("""\
