@@ -366,8 +366,8 @@ class JobStage:
    # ==========================================================================
    # SDMOccurrenceJob contains OccurrenceSet 
    OCCURRENCE = 105
-   # SDMModelJob contains SDMModel 
-   MODEL = 110
+#    # SDMModelJob contains SDMModel 
+#    MODEL = 110
    # SDMProjectionJob contains SDMProjection 
    PROJECT = 120
    # ==========================================================================   
@@ -1000,16 +1000,16 @@ class RandomizeMethods:
 # TODO: Remove?  Does not appear to be used
 class API_SERVICE:
    BUCKETS = 'buckets' # TODO: Remove, obsolete
-   EXPERIMENTS = 'experiments' # TODO: Remove, obsolete
-   RAD_EXPERIMENTS = 'radexperiments' # TODO: Remove, obsolete
-   SDM_EXPERIMENTS = 'sdmexperiments' # TODO: Remove, obsolete
+#    EXPERIMENTS = 'experiments' # TODO: Remove, obsolete
+#    RAD_EXPERIMENTS = 'radexperiments' # TODO: Remove, obsolete
+#    SDM_EXPERIMENTS = 'sdmexperiments' # TODO: Remove, obsolete
    LAYERS = 'layer'
-   LAYERTYPES = 'typecodes' # TODO: Remove, obsolete
-   MODELS = 'models' # TODO: Remove, obsolete
+#    LAYERTYPES = 'typecodes' # TODO: Remove, obsolete
+#    MODELS = 'models' # TODO: Remove, obsolete
    OCCURRENCES = 'occurrence'
-   PAMSUMS = 'pamsums' # TODO: Remove, obsolete
-   ANCILLARY_LAYERS = 'anclayers' # TODO: Remove, obsolete
-   PRESENCEABSENCE_LAYERS = 'palayers' # TODO: Remove, obsolete
+#    PAMSUMS = 'pamsums' # TODO: Remove, obsolete
+#    ANCILLARY_LAYERS = 'anclayers' # TODO: Remove, obsolete
+#    PRESENCEABSENCE_LAYERS = 'palayers' # TODO: Remove, obsolete
    MATRIX_LAYERS = 'column'
    PROJECTIONS = 'sdmproject'
    SCENARIOS = 'scenario'
