@@ -35,7 +35,7 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.lmconstants import ReferenceType
 
 # ...............................................
-def notifyPeople(self, subject, message, recipients=TROUBLESHOOTERS):
+def notifyPeople(logger, subject, message, recipients=TROUBLESHOOTERS):
    if not (isinstance(recipients, ListType) 
            or isinstance(recipients, TupleType)):
       recipients = [recipients]
@@ -43,12 +43,13 @@ def notifyPeople(self, subject, message, recipients=TROUBLESHOOTERS):
    try:
       notifier.sendMessage(recipients, subject, message)
    except Exception, e:
-      self.log.error('Failed to notify %s about %s' 
-                     % (str(recipients), subject))
+      logger.error('Failed to notify {} about {}'.format(str(recipients), subject))
 
 # ...............................................
 def _getProgress(scribe, usr, aftertime):
    progress = {}
+   if aftertime is not None:
+      aftertime = float(aftertime)
    for otype in ReferenceType.statusTypes():
       if otype == ReferenceType.OccurrenceSet:
          count = scribe.countOccurrenceSets(userId=usr, afterTime=aftertime, 
@@ -71,26 +72,21 @@ def _getProgress(scribe, usr, aftertime):
 
 # ...............................................
 def getCompletionStats(scribe):
-   oneHourAgo = (DT.gmt() - ONE_HOUR).mjd
-   oneDayAgo = (DT.gmt() - ONE_DAY).mjd
-   oneMonthAgo = (DT.gmt() - ONE_MONTH).mjd
+   oneHourAgo = "{0:.2f}".format((DT.gmt() - ONE_HOUR).mjd)
+   oneDayAgo = "{0:.2f}".format((DT.gmt() - ONE_DAY).mjd)
+   oneMonthAgo = "{0:.2f}".format((DT.gmt() - ONE_MONTH).mjd)
    display = {oneHourAgo: 'Hour', oneDayAgo: 'Day', oneMonthAgo: 'Month', None: 'Total'}
-   USERS = (DEFAULT_POST_USER, PUBLIC_USER, None)
+   USERS = (DEFAULT_POST_USER, PUBLIC_USER)
    TIMES = (oneMonthAgo, oneDayAgo, None)
-   stats = {}
    outputLines = []
    for aftertime in TIMES:
       outputLines.append(display[aftertime])
       for usr in USERS:
          theseStats = _getProgress(scribe, usr, aftertime)
-         stats[aftertime][usr] = theseStats
          outputLines.append('')
          outputLines.append('User: {}'.format(usr))
-         outputLines.append('{0: <15}{1: <15}{2: <15}{3: <15}'.format('Status',
-                            (ReferenceType.name(rt) for rt in ReferenceType.statusTypes())))
-         for stat in theseStats:
-            line = '{0: <15}'.format(stat)
-            outputLines.append(line)
+         for rt in ReferenceType.statusTypes():
+            outputLines.append('   {}: {}'.format(ReferenceType.name(rt), theseStats[rt]))
          outputLines.append('\n')
       outputLines.append('\n')
    output = '\n'.join(outputLines)
@@ -105,7 +101,7 @@ if __name__ == '__main__':
    scribe.openConnections()
    
    output = getCompletionStats(scribe)
-   notifyPeople('LM database stats', output)
+   notifyPeople(logger, 'LM database stats', output)
    logger.info(output)
    scribe.closeConnections()
          
@@ -118,8 +114,7 @@ from types import ListType, TupleType
 
 from LmServer.notifications.email import EmailNotifier
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, 
-                                         ONE_MONTH, ONE_DAY, ONE_HOUR,
-   JobStatus)
+                        ONE_MONTH, ONE_DAY, ONE_HOUR, JobStatus)
 from LmServer.common.localconstants import PUBLIC_USER, TROUBLESHOOTERS
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe

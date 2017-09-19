@@ -57,7 +57,7 @@ class EmailNotifier(object):
       if not isinstance(toAddrs, ListType):
          toAddrs = [toAddrs]
       
-      mailMsg = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
+      mailMsg = ("From: {}\r\nTo: {}\r\nSubject: {}\r\n\r\n{}".format(
                               self.fromAddr, ", ".join(toAddrs), subject, msg))
       try:
          self.server.sendmail(self.fromAddr, toAddrs, mailMsg)
