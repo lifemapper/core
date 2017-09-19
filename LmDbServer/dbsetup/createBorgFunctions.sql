@@ -2432,12 +2432,12 @@ BEGIN
 
    -- filter by layers modified after given time
    IF aftertime is not null THEN
-      wherecls = wherecls || ' AND statusModTime >=  ' || quote_literal(aftertime);
+      wherecls = wherecls || ' AND mtxcolstatusModTime >=  ' || quote_literal(aftertime);
    END IF;
    
    -- filter by layers modified before given time
    IF beforetime is not null THEN
-      wherecls = wherecls || ' AND statusModTime <=  ' || quote_literal(beforetime);
+      wherecls = wherecls || ' AND mtxcolstatusModTime <=  ' || quote_literal(beforetime);
    END IF;
 
    -- filter by epsgcode
@@ -2449,16 +2449,16 @@ BEGIN
    IF afterstat is not null OR beforestat is not null THEN
       begin
          IF afterstat = beforestat THEN
-            wherecls = wherecls || ' AND status =  ' || afterstat;
+            wherecls = wherecls || ' AND mtxcolstatus =  ' || afterstat;
          ELSE
             -- filter by status >= given value
             IF afterstat is not null THEN
-                wherecls = wherecls || ' AND status >=  ' || afterstat;
+                wherecls = wherecls || ' AND mtxcolstatus >=  ' || afterstat;
             END IF;
    
             -- filter by status <= given value
             IF beforestat is not null THEN
-               wherecls = wherecls || ' AND status <=  ' || beforestat;
+               wherecls = wherecls || ' AND mtxcolstatus <=  ' || beforestat;
             END IF;
          END IF;
       end;

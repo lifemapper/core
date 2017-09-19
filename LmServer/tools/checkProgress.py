@@ -27,14 +27,16 @@ import os
 from types import ListType, TupleType
 
 from LmServer.notifications.email import EmailNotifier
-from LmCommon.common.lmconstants import DEFAULT_POST_USER
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, 
+                                         ONE_MONTH, ONE_DAY, ONE_HOUR,
+   JobStatus)
 from LmServer.common.localconstants import PUBLIC_USER, TROUBLESHOOTERS
 from LmServer.common.log import ScriptLogger
-from LmServer.db.scribe import Scribe
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.lmconstants import ReferenceType
 
 # ...............................................
-def _notifyPeople(self, subject, message, recipients=TROUBLESHOOTERS):
+def notifyPeople(self, subject, message, recipients=TROUBLESHOOTERS):
    if not (isinstance(recipients, ListType) 
            or isinstance(recipients, TupleType)):
       recipients = [recipients]
@@ -45,76 +47,141 @@ def _notifyPeople(self, subject, message, recipients=TROUBLESHOOTERS):
       self.log.error('Failed to notify %s about %s' 
                      % (str(recipients), subject))
 
+# # ...............................................
+# def _assembleDatabaseStats(scribe):
+#    oneHourAgo = DT.gmt() - ONE_HOUR
+#    oneDayAgo = DT.gmt() - ONE_DAY
+#    oneMonthAgo = DT.gmt() - ONE_MONTH
+#    display = {oneDayAgo: 'Day', oneMonthAgo: 'Month', None: 'Total'}
+#    
+#    USERS = (DEFAULT_POST_USER, PUBLIC_USER, None)
+#    TIMES = (oneDayAgo, oneMonthAgo, None)
+#    OBJ_TYPES = ReferenceType.sdmTypes
+#    OBJ_TYPES.remove(ReferenceType.SDMExperiment)
+#    
+#    stats = {}
+#    for timeagg in TIMES:
+#       for usr in USERS:
+#          theseStats = scribe.getProgress(usrid=usr, starttime=timeagg)
+#          stats[timeagg][usr] = theseStats
+#    
+#    allStatii = set()
+#    for reftype in OBJ_TYPES:
+#       for timeagg in TIMES:
+#          for usr in USERS:
+#             allStatii = allStatii.union(stats[timeagg][usr][reftype])
+#    allStatii = list(allStatii)
+#    allStatii.sort()
+#    
+#    outputLines = []
+#    for timeagg in TIMES:
+#       outputLines.append('Aggregate: {}'.format(display[timeagg]))
+#       for usr in USERS:
+#          outputLines.append('')
+#          outputLines.append('User: {}'.format(usr))
+#          outputLines.append('{0: <15}{1: <15}{2: <15}{3: <15}'.format('Status',
+#                             (ReferenceType.name(rt) for rt in OBJ_TYPES)))
+#          for stat in allStatii:
+#             line = '{0: <15}'.format(stat)
+#             for reftype in OBJ_TYPES: 
+#                line += '{0: <15}'.format(stats[timeagg][usr][stat])
+#             outputLines.append(line)
+#    output = '\n'.join(outputLines)
+#    _notifyPeople('LM database stats', output)
+#    return output
+
 # ...............................................
-def _assembleDatabaseStats(scribe):
-   oneDayAgo = DT.gmt() - (1/24.0)
-   oneMonthAgo = DT.gmt() - 30
-   display = {oneDayAgo: 'Day', oneMonthAgo: 'Month', None: 'Total'}
-   
+def _getProgress(scribe, usr, aftertime):
+   progress = {}
+   for otype in ReferenceType.statusTypes:
+      if otype == ReferenceType.OccurrenceSet:
+         count = scribe.countOccurrenceSets(userId=usr, afterTime=aftertime, 
+                                            afterStatus=JobStatus.COMPLETE, 
+                                            beforeStatus=JobStatus.COMPLETE)
+      elif otype == ReferenceType.SDMProjection:
+         count = scribe.countSDMProjects(userId=usr, afterTime=aftertime, 
+                                         afterStatus=JobStatus.COMPLETE, 
+                                         beforeStatus=JobStatus.COMPLETE)
+      elif otype == ReferenceType.MatrixColumn:
+         count = scribe.countMatrixColumns(userId=usr, afterTime=aftertime, 
+                                           afterStatus=JobStatus.COMPLETE, 
+                                           beforeStatus=JobStatus.COMPLETE)
+      elif otype == ReferenceType.Matrix:
+         count = scribe.countMatrices(userId=usr, afterTime=aftertime, 
+                                      afterStatus=JobStatus.COMPLETE, 
+                                      beforeStatus=JobStatus.COMPLETE)
+      progress[otype] = count
+   return progress
+
+# ...............................................
+def getCompletionStats(scribe):
+   oneHourAgo = (DT.gmt() - ONE_HOUR).mjd
+   oneDayAgo = (DT.gmt() - ONE_DAY).mjd
+   oneMonthAgo = (DT.gmt() - ONE_MONTH).mjd
+   display = {oneHourAgo: 'Hour', oneDayAgo: 'Day', oneMonthAgo: 'Month', None: 'Total'}
    USERS = (DEFAULT_POST_USER, PUBLIC_USER, None)
-   TIMES = (oneDayAgo, oneMonthAgo, None)
-   OBJ_TYPES = ReferenceType.sdmTypes
-   OBJ_TYPES.remove(ReferenceType.SDMExperiment)
-   
+   TIMES = (oneMonthAgo, oneDayAgo, None)
    stats = {}
-   for timeagg in TIMES:
-      for usr in USERS:
-         theseStats = scribe.getProgress(usrid=usr, starttime=timeagg)
-         stats[timeagg][usr] = theseStats
-   
-   allStatii = set()
-   for reftype in OBJ_TYPES:
-      for timeagg in TIMES:
-         for usr in USERS:
-            allStatii = allStatii.union(stats[timeagg][usr][reftype])
-   allStatii = list(allStatii)
-   allStatii.sort()
-   
    outputLines = []
-   for timeagg in TIMES:
-      outputLines.append('Aggregate: {}'.format(display[timeagg]))
+   for aftertime in TIMES:
+      outputLines.append(display[aftertime])
       for usr in USERS:
+         theseStats = _getProgress(scribe, usr, aftertime)
+         stats[aftertime][usr] = theseStats
          outputLines.append('')
          outputLines.append('User: {}'.format(usr))
          outputLines.append('{0: <15}{1: <15}{2: <15}{3: <15}'.format('Status',
-                            (ReferenceType.name(rt) for rt in OBJ_TYPES)))
-         for stat in allStatii:
+                            (ReferenceType.name(rt) for rt in ReferenceType.statusTypes)))
+         for stat in theseStats:
             line = '{0: <15}'.format(stat)
-            for reftype in OBJ_TYPES: 
-               line += '{0: <15}'.format(stats[timeagg][usr][stat])
             outputLines.append(line)
+         outputLines.append('\n')
+      outputLines.append('\n')
    output = '\n'.join(outputLines)
-   _notifyPeople('LM database stats', output)
    return output
-
             
 # ...............................................
 # ...............................................
 if __name__ == '__main__':
-#    parser = argparse.ArgumentParser(
-#                 description="Script to determine the computational state of objects")      
-#    parser.add_argument('-e', "--email", type=str, 
-#                         help='Email recipient for summary')
-#    
-#    args = parser.parse_args()
-#    email = None
-#    if args.email:
-#       email = args.email
-      
    basename = os.path.splitext(os.path.basename(__file__))[0]
    logger = ScriptLogger(basename)
-   scribe = Scribe(logger)
+   scribe = BorgScribe(logger)
    scribe.openConnections()
    
-   output = _assembleDatabaseStats(scribe)
-   logger.info(output)
-   
+   output = getCompletionStats(scribe)
+   notifyPeople('LM database stats', output)
    logger.info(output)
    scribe.closeConnections()
          
    
    
-   
+"""
+import mx.DateTime as DT
+import os
+from types import ListType, TupleType
+
+from LmServer.notifications.email import EmailNotifier
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, 
+                                         ONE_MONTH, ONE_DAY, ONE_HOUR,
+   JobStatus)
+from LmServer.common.localconstants import PUBLIC_USER, TROUBLESHOOTERS
+from LmServer.common.log import ScriptLogger
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.common.lmconstants import ReferenceType
+statusTypes = [ReferenceType.OccurrenceSet, ReferenceType.SDMProjection, 
+              ReferenceType.ShapeGrid, 201, 301]
+
+basename = 'testit'
+logger = ScriptLogger(basename)
+scribe = BorgScribe(logger)
+scribe.openConnections()
+
+output = getCompletionStats(scribe)
+notifyPeople('LM database stats', output)
+logger.info(output)
+scribe.closeConnections()
+
+"""
    
    
    

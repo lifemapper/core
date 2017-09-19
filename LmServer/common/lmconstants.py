@@ -304,6 +304,13 @@ class ReferenceType:
       if rtype in ReferenceType.boomTypes():
          return True
       return False
+
+   @staticmethod
+   def statusTypes():
+      return [ReferenceType.OccurrenceSet, ReferenceType.SDMProjection, 
+              ReferenceType.ShapeGrid, ReferenceType.MatrixColumn, 
+              ReferenceType.Matrix]
+
    
 #    @staticmethod
 #    def dependencies(rtype):
