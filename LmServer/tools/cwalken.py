@@ -30,7 +30,7 @@ from types import IntType
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, MatrixType) 
+          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, MatrixType, IDIG_DUMP) 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
 
 from LmServer.common.datalocator import EarlJr
@@ -250,9 +250,9 @@ class ChristopherWalken(LMObject):
             useGBIFTaxonIds = True
             occData = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
             occDelimiter = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
-            occCSV = os.path.join(SPECIES_DATA_PATH, occData + LMFormat.CSV.ext)
-            occMeta = os.path.join(SPECIES_DATA_PATH, 
-                                   occData + LMFormat.METADATA.ext)
+            # Path containing multiple csv files, each with multiple taxa
+            occCSV = os.path.join(SPECIES_DATA_PATH, occData)
+            occMeta = IDIG_DUMP.METADATA
          # User data, anything not above
          else:
             useGBIFTaxonIds = False

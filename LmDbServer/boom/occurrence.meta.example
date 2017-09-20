@@ -1,94 +1,84 @@
 # .............................................................................
-## TODO: simplify structure to the following:
-##       {<fieldname or columnIndex>: {
-##                      'name': <shortname>, 
-##                      'type': <type>, 
-##                      'acceptedvalues': [<val1>, <val2>, ...]
-##                      },
-##        ...
-##       {<fieldrole>: shortname or column index, 
-##        ...
-##        }
-##   name required,
-##   type required, 
+##   key (original name or column index) required,
+##   shortname (<= 10 chars) required,
+##   type required (integer, string, or real), 
+##   role (required for Longitude, Latitude, GroupBy, TaxaName fields,
+##         optional for UniqueID field),
 ##   acceptedvalues optional, 
 ##   keys for each field dictionary are case-insensitive
 # .............................................................................
-# Note: This file must have the same basename as the CSV file it describes
-# Note: Field names MUST BE in the first row of the CSV data file
+# Note, This file must have the same basename as the CSV file it describes
 # 
-# This file must contain a Python dictionary with:
-#     Key = (field name or column index) 
-#            or field role
-#     Value = if field heading, tuple: (Shortname, Type [, AcceptedValues])
-#             if field role, string: one of the existing field headings
-# 
-# Shortname must be 10 characters or fewer and will be used in the shapefile 
-#   created for each dataset.  
-# Type must be 'integer', 'string', or 'real'
-# AcceptedValues (optional) is a list of accepted values for this field.  
-#   Records with non-accepted values will be discarded.
+# '#' indicates a comment line, all others must contain comma-separated values:
+#  IFF a field performs a specific role in these data, role name should be the 
+#      4th value on a line
+#   1st value:  Key = original field name (matching the header in data file) 
+#                     or column index
+#   2nd value:  Shortname = a new field name, 10 chars or less
+#   3rd value:  Type = integer, string, or real
+#   4th value:  Role = if true, UniqueID, Longitude, Latitude, GroupBy, TaxaName
+#   All following values (starting at 4 or 5):  AcceptedValues = (optional) accepted values for this field 
 #
-# Key field role (case-insensitive) MUST identify four or five of the fields: 
-#   UniqueID, Longitude, Latitude, GroupBy, TaxaName 
-#     UniqueID is the OPTIONAL string or integer field containing a unique ID 
-#         for each record. Values will be generated if missing.
-#     Longitude is the field with the x coordinate
-#     Latitude is the field with the y coordinate
-#     GroupBy is the field identifying which value to group records by
-#         (records in the CSV file should be grouped on this field)
-#     TaxaName is the string field containing the taxa name for the recordset
-#         (if records for a dataset have different values, the first record will
-#          determine the dataset name)
+# Role (case-insensitive) MUST be present for 3 or 4 of the fields
+#    Required:
+#       TaxaName field contains the taxa name for the recordset. If records
+#          for a dataset have different values, the first record will
+#          determine the dataset displayname
+#    Required: Either Longitude & Latitude or Geopoint
+#       Longitude field contains x coordinate
+#       Latitude field contains y coordinate
+#       Geopoint field contains both x and y coordinates
+#           CSV data will be in the format {"lat": -16.35, "lon": -67.616667}
+#    Optional:
+#       UniqueID field contains a unique ID for each record. Values will be 
+#          generated if missing. 
+#    Optional:
+#       GroupBy field contains value to group records by. Records will be   
+#           grouped by TaxaName if this role is undefined.
+#
 # .............................................................................
 
-{
   # Field names
-  'gbifid': ('gbifid', 'integer'),
-  'datasetkey': ('datasetkey', 'string'), 
-  'occurrenceid': ('occurid', 'string'),
-  'kingdom': ('kingdom', 'string'),
-  'phylum': ('phylum', 'string'),
-  'class': ('class', 'string'),
-  'order': ('order', 'string'),
-  'family': ('family', 'string'),
-  'genus': ('genus', 'string'),
-  'species': ('species', 'string'),
-  'infraspecificepithet': ('isepithet', 'string'), 
-  'taxonrank': ('taxonrank', 'string', ['SUBSPECIES', 'SPECIES']),
-  'scientificname': ('sciname', 'string'),
-  'countrycode': ('cntrycode', 'string'),
-  'locality': ('locality', 'string'),
-  'publishingorgkey': ('puborgkey', 'string'),
-  'decimallatitude': ('dec_lat', 'real'),
-  'decimallongitude': ('dec_long', 'real'),
-  'elevation': ('elevation', 'real'),
-  'elevationaccuracy': ('elev_acc', 'real'),
-  'depth': ('depth', 'real'),
-  'depthaccuracy': ('depth_acc', 'real'),
-  'eventdate': ('eventdate', 'string'),
-  'day': ('day', 'integer'),
-  'month': ('month', 'integer'),
-  'year': ('year', 'integer'),
-  'taxonkey': ('taxonkey', 'integer'),
-  'specieskey': ('specieskey', 'integer'),
-  'basisofrecord': ('basisofrec', 'string'),
-  'institutioncode': ('inst_code', 'string'),
-  'collectioncode': ('coll_code', 'string'),
-  'catalognumber': ('catnum', 'string'),
-  'recordnumber': ('recnum', 'string'),
-  'identifiedby': ('idby', 'string'),
-  'rights': ('rights', 'string'),
-  'rightsholder': ('rightshold', 'string'),
-  'recordedby': ('rec_by', 'string'),
-  'typestatus': ('typestatus', 'string'),
-  'establishmentmeans': ('estabmeans', 'string'),
-  'lastinterpreted': ('lastinterp', 'string'),
-  'mediatype': ('mediatype', 'string'),
-  'issue': ('issue', 'string'),
-  # Field roles
-  'UniqueID': 'gbifid', 
-  'Longitude': 'decimallongitude',
-  'Latitude': 'decimallatitude',
-  'GroupBy': 'taxonkey',
-  'TaxaName': 'species' }
+  gbifid, gbifid, integer, UniqueID
+  datasetkey, datasetkey, string 
+  occurrenceid, occurid, string
+  kingdom, kingdom, string
+  phylum, phylum, string
+  class, class, string
+  order, order, string
+  family, family, string
+  genus, genus, string
+  species, species, string, TaxaName
+  infraspecificepithet, isepithet, string 
+  taxonrank, taxonrank, string, SUBSPECIES, SPECIES
+  scientificname, sciname, string
+  countrycode, cntrycode, string
+  locality, locality, string
+  publishingorgkey, puborgkey, string
+  decimallatitude, dec_lat, real, Latitude
+  decimallongitude, dec_long, real, Longitude
+  elevation, elevation, real
+  elevationaccuracy, elev_acc, real
+  depth, depth, real
+  depthaccuracy, depth_acc, real
+  eventdate, eventdate, string
+  day, day, integer
+  month, month, integer
+  year, year, integer
+  taxonkey, taxonkey, integer, GroupBy
+  specieskey, specieskey, integer
+  basisofrecord, basisofrec, string
+  institutioncode, inst_code, string
+  collectioncode, coll_code, string
+  catalognumber, catnum, string
+  recordnumber, recnum, string
+  identifiedby, idby, string
+  rights, rights, string
+  rightsholder, rightshold, string
+  recordedby, rec_by, string
+  typestatus, typestatus, string
+  establishmentmeans, estabmeans, string
+  lastinterpreted, lastinterp, string
+  mediatype, mediatype, string
+  issue, issue, string
+

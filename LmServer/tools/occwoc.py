@@ -50,6 +50,18 @@ class _SpeciesWeaponOfChoice(LMObject):
    # .............................
    def __init__(self, scribe, user, archiveName, epsg, expDate, inputFname,  
                 metaFname=None, taxonSourceName=None, logger=None):
+      """
+      @param scribe: An open LmServer.db.borgscribe.BorgScribe object
+      @param user: Userid
+      @param archiveName: Name of gridset to be created for these data
+      @param epsg: EPSG code for map projection
+      @param expDate: Expiration date in Modified Julian Day format
+      @param inputFname: Input species data filename or directory containing 
+             multiple files of CSV data
+      @param metaFname: Input species metadata filename or dictionary
+      @param taxonSourceName: Unique name of entity providing taxonomy data
+      @param logger: a logger from LmServer.common.log
+      """
       super(_SpeciesWeaponOfChoice, self).__init__()
       self.finishedInput = False
       # Set name for this WoC
@@ -62,6 +74,7 @@ class _SpeciesWeaponOfChoice(LMObject):
       self.userId = user
       self.epsg = epsg
       self._obsoleteTime = expDate
+      # either a file or directory
       self.inputFilename = inputFname
       # Common metadata description for csv points
       # TODO: Add this for others?

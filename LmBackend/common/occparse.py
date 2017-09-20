@@ -38,18 +38,22 @@ class OccDataParser(object):
    @summary: Object with metadata and open file.  OccDataParser maintains 
              file position and most recently read data chunk
    """
-   FIELD_ROLE_IDENTIFIER = 'UniqueID'
-   FIELD_ROLE_LONGITUDE = 'Longitude'
-   FIELD_ROLE_LATITUDE = 'Latitude'
-   FIELD_ROLE_GROUPBY = 'GroupBy'
-   FIELD_ROLE_TAXANAME = 'TaxaName'
+   FIELD_ROLE_IDENTIFIER = 'uniqueid'
+   FIELD_ROLE_LONGITUDE = 'longitude'
+   FIELD_ROLE_LATITUDE = 'latitude'
+   FIELD_ROLE_GEOPOINT = 'geopoint'
+   FIELD_ROLE_GROUPBY = 'groupby'
+   FIELD_ROLE_TAXANAME = 'taxaname'
    REQUIRED_FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
                            FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME]
+   FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
+                  FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME, FIELD_ROLE_IDENTIFIER]
 
    def __init__(self, logger, data, metadata, delimiter=','):
       """
-      @summary Reader for arbitrary user CSV data file with header record and 
-               metadata file
+      @summary Reader for arbitrary user CSV data file with
+               - header record and metadata file, OR
+               - no header and metadata dictionary
       @param logger: Logger to use for the main thread
       @param data: raw data or filename for CSV data
       @param metadata: dictionary or filename containing dictionary of metadata
@@ -69,6 +73,7 @@ class OccDataParser(object):
       self._idIdx = None
       self._xIdx = None
       self._yIdx = None
+      self._geoIdx = None
       self._groupByIdx = None
       self._nameIdx = None
             
@@ -93,13 +98,26 @@ class OccDataParser(object):
       if self._file is None:
          self.dataFname = None
       
-      # Read CSV header
-      tmpList = self._csvreader.next()
-      self.header = [fldname.strip() for fldname in tmpList]
       # Read metadata file/stream
-      fieldmeta, metadataFname = self.readMetadata(metadata)
+      self.header = None
+      fieldmeta, metadataFname, doMatchHeader = self.readMetadata(metadata)
       if metadataFname is None:
          self.metadataFname = metadataFname
+      if doMatchHeader:
+         # Read CSV header
+         tmpList = self._csvreader.next()
+         self.header = [fldname.strip() for fldname in tmpList]
+
+      (self.fieldNames,
+       self.fieldTypes,
+       self.filters,
+       self._idIdx,
+       self._xIdx,
+       self._yIdx,
+       self._geoIdx,
+       self._groupByIdx, 
+       self._nameIdx) = self.getMetadata(fieldmeta, self.header)
+      self.fieldCount = len(self.fieldNames)
       
       self._populateMetadata(fieldmeta, self.header)
          
@@ -126,29 +144,6 @@ class OccDataParser(object):
          except Exception, e:
             raise Exception('Failed to read or open {}'.format(datafile))
       return csvreader, f
-
-   # .............................................................................
-   def _populateMetadata(self, fieldmeta, header):
-      try:
-         (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, groupByIdx, 
-          nameIdx) = self.getMetadata(fieldmeta, self.header)
-      except Exception, e:
-#          self.log.warning(str(e))
-#          try:
-#             (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, groupByIdx, 
-#              nameIdx) = self.getMetadataDeprecated(fieldmeta, self.header)
-#          except Exception, e:
-         raise Exception('Failed to read header or metadata, ({})'
-                         .format(str(e))) 
-      self.fieldNames = fieldNames
-      self.fieldCount = len(fieldNames)
-      self.fieldTypes = fieldTypes
-      self.filters = filters
-      self._idIdx = idIdx
-      self._xIdx = xIdx
-      self._yIdx = yIdx
-      self._groupByIdx = groupByIdx
-      self._nameIdx = nameIdx
 
    # .............................................................................
    @property
@@ -186,6 +181,13 @@ class OccDataParser(object):
       return yVal   
       
    @property
+   def ptValue(self):
+      ptVal = None
+      if self.currLine is not None:
+         ptVal = self.currLine[self._ptIdx]
+      return ptVal   
+      
+   @property
    def groupByValue(self):
       value = None
       if self.currLine is not None:
@@ -218,19 +220,48 @@ class OccDataParser(object):
    def yFieldName(self):
       return self.fieldNames[self._yIdx]
       
+   @property
+   def ptFieldName(self):
+      try:
+         return self.fieldNames[self._ptIdx]
+      except:
+         return None
+
    # .............................................................................
    @staticmethod
    def readMetadata(metadata):
-      fieldmeta = metadataFname = None
+      """
+      Returns a dictionary with 
+         Key = original name or column index
+         Value = dictionary of keys 'name', 'type', 'role', and 'acceptedVals'
+                               values 
+      """
+      doMatchHeader = False
+      fieldmeta = {} 
+      metadataFname = None
       try:
          f = open(metadata, 'r')
       except Exception, e:
-         fieldmeta = metadata            
+         fieldmeta = metadata  
       else:
          metadataFname = metadata
          try:
-            metaStr = f.read()
-            fieldmeta = ast.literal_eval(metaStr)
+            for line in f:
+               if not line.startswith('#'):
+                  tmp = line.split(',')
+                  if len(tmp) >= 3:
+                     parts = [p.strip() for p in tmp]
+                     key = parts[0]
+                     name = parts[1]
+                     ogrtype = OccDataParser.getOgrFieldType(parts[2])
+                     fieldmeta[key] = {'name': name, 'type': ogrtype}
+                     if len(parts) >= 4: 
+                        rest = parts[3:]
+                        if rest[0].lower() in OccDataParser.FIELD_ROLES:
+                           fieldmeta[key]['role'] = rest[0].lower()
+                           rest = rest[1:]
+                        if len(rest) >= 1:
+                           fieldmeta[key]['acceptedVals'] = rest
          except Exception, e:
             raise Exception('Failed to evaluate contents of metadata file {}'
                             .format(metadataFname))
@@ -239,79 +270,107 @@ class OccDataParser(object):
             
       if type(fieldmeta) not in (DictionaryType, DictType):
          raise Exception('Failed to read or open {}'.format(metadata))
-      return fieldmeta, metadataFname
+      
+      for key in fieldmeta.keys():
+         try:
+            int(key)
+         except:
+            doMatchHeader = True
+            break
+            
+      return fieldmeta, metadataFname, doMatchHeader
          
    # .............................................................................
    @staticmethod
    def getMetadata(fldmeta, header):
       """
       @summary: Identify data columns from metadata dictionary and data header
-      @param fldmeta: Dictionary of field names, types, and filter values.
-                      Keywords identify which fields are the x, y, id, grouping 
-                      field, taxa name.
+      @param fldmeta: Dictionary of field names, types, roles, and accepted values.
+                      If the first level 'Value' is None, this field will be ignored
+                         Key = original name or column index
+                         Value = None or
+                                 Dictionary of 
+                                   key = ['name', 'type', 
+                                           optional 'role', and 
+                                           optional 'acceptedVals']
+                                   values for those items
+                      Keywords identify roles for x, y, id, grouping, taxa name.
       @param header: First row of data file containing field names for values 
                      in subsequent rows. Field names match those in fldmeta 
                      dictionary
       @return: list of: fieldName list (order of data columns)
                         fieldType list (order of data columns)
-                        dictionary of filters for accepted values for one or 
-                            more fields 
-                        integer indexes for id, x, y, groupBy, and name fields
+                        dictionary of filters for accepted values for zero or 
+                            more fields, keys are the new field indexes
+                        column indexes for id, x, y, geopoint, groupBy, and name fields
       """
       fieldNames = []
       fieldTypes = []
       filters = {}
-      idIdx = xIdx = yIdx = groupByIdx = nameIdx = None
-      try:
-         fldId = fldmeta[OccDataParser.FIELD_ROLE_IDENTIFIER]
-      except:
-         fldId = None
-         
-      try:
-         fldLon = fldmeta[OccDataParser.FIELD_ROLE_LONGITUDE]
-         fldLat = fldmeta[OccDataParser.FIELD_ROLE_LATITUDE]
-         fldGrp = fldmeta[OccDataParser.FIELD_ROLE_GROUPBY]
-         fldTaxa = fldmeta[OccDataParser.FIELD_ROLE_TAXANAME]
-      except Exception, e:
-         raise Exception('Error: {}; Missing required field role(s) {}'
-                  .format(str(e), ','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
+      idIdx = xIdx = yIdx = ptIdx = groupByIdx = nameIdx = None
+      # Build new metadata dict with column indexes as keys
+      if header is not None:
+         # keys are fieldnames
+         idxdict = {}
+         for i in range(len(header)):
+            try:
+               idxdict[i] = fldmeta[header[i]]
+            except:
+               idxdict[i] = None
+      else:
+         # keys are column indexs
+         idxdict = fldmeta
       
-      for i in range(len(header)):
-         oname = header[i]
-         if oname not in fldmeta.keys():
-            raise Exception('Header fieldname {} missing from metadata'
-                            .format(oname))
-         shortname = fldmeta[oname][0]
-         ogrtype = OccDataParser.getOgrFieldType(fldmeta[oname][1])
+      for idx, vals in idxdict.iteritems():
+         # add placeholders in the fieldnames and fieldTypes lists for 
+         # columns we will not process 
+         shortname = idx
+         ogrtype = role = acceptedVals = None
+         if vals is not None:
+            # Get required vals for columns to save  
+            shortname = vals['name']
+            ogrtype = vals['type']
+            # Check for optional filter AcceptedValues.  
+            try:
+               acceptedVals = idxdict[idx]['acceptedVals']
+            except:
+               pass
+            else:
+               if ogrtype == OFTString:
+                  acceptedVals = [val.lower() for val in acceptedVals]
+            # Find column index of important fields
+            try:
+               role = idxdict[idx]['role'].lower()
+            except:
+               pass
+            else:
+               if role == OccDataParser.FIELD_ROLE_IDENTIFIER:
+                  idIdx = idx
+               elif role == OccDataParser.FIELD_ROLE_LONGITUDE:
+                  xIdx = idx
+               elif role == OccDataParser.FIELD_ROLE_LATITUDE:
+                  yIdx = idx
+               elif role == OccDataParser.FIELD_ROLE_GEOPOINT:
+                  ptIdx = idx
+               elif role == OccDataParser.FIELD_ROLE_TAXANAME:
+                  nameIdx = idx
+               # Group by may be the same as taxaname
+               if role == OccDataParser.FIELD_ROLE_GROUPBY:
+                  groupByIdx = idx
          fieldNames.append(shortname)
          fieldTypes.append(ogrtype)
-         # Check for optional filter AcceptedValues.  Records without an
-         # AcceptedValue value will be ignored
-         if len(fldmeta[oname]) == 3:
-            if type(fldmeta[oname][2]) in (ListType, TupleType):
-               acceptedVals = fldmeta[oname][2]
-               if ogrtype == OFTString:
-                  acceptedVals = [val.lower() for val in fldmeta[oname][2]]
-               filters[i] = acceptedVals 
-         # Find column index of important fields
-         # Id, lat, long will always be separate fields
-         if oname == fldId:
-            idIdx = i
-         elif oname == fldLon:
-            xIdx = i
-         elif oname == fldLat:
-            yIdx = i
-         # May group by Taxa
-         elif oname == fldTaxa:
-            nameIdx = i
-         if oname == fldGrp:
-            groupByIdx = i         
-      
-      if (xIdx == None or yIdx == None or groupByIdx == None or nameIdx == None):
-         raise Exception('Missing one of required field roles ({}) in header'
-                         .format(','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
+         filters[idx] = acceptedVals
+
+      # Check existence of required roles
+      if nameIdx is None:
+         raise Exception('Missing `TAXANAME` required roles in metadata')
+      if (xIdx is None or yIdx is None) and ptIdx is None:
+         raise Exception('Missing `LATITUDE`-`LONGITUDE` pair or `GEOPOINT` roles in metadata')
+      if groupByIdx is None:
+         groupByIdx = nameIdx
       return (fieldNames, fieldTypes, filters, 
-              idIdx, xIdx, yIdx, groupByIdx, nameIdx)
+              idIdx, xIdx, yIdx, ptIdx, groupByIdx, nameIdx)
+      
    # .............................................................................
    @staticmethod
    def getOgrFieldType(typeString):
@@ -631,7 +690,7 @@ metadataFname = pthAndBasename + LMFormat.METADATA.ext
 delimiter = ','
 
 # Read metadata file/stream
-fieldmeta, metadataFname = OccDataParser.readMetadata(metadata)   
+fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(metadata)   
 csvreader, _file = OccDataParser.getReader(data, delimiter)
 
 # Read CSV header
@@ -649,7 +708,7 @@ csvreader, f = OccDataParser.getReader(data, delimiter)
 tmpHeader = csvreader.next()
 header = [fldname.strip() for fldname in tmpHeader]
 # Read metadata file/stream
-fieldmeta, metadataFname = OccDataParser.readMetadata(metadata)
+fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(metadata)
 
 
 (fieldNames, fieldTypes, filters, 

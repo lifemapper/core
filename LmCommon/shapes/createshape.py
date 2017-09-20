@@ -88,6 +88,7 @@ class ShapeShifter(object):
          self.idField = self.op.idFieldName
          self.xField = self.op.xFieldName
          self.yField = self.op.yFieldName
+         self.ptField = self.op.ptFieldName
 
       elif processType == ProcessType.GBIF_TAXA_OCCURRENCE:
          self.dataFields = GBIF_QUERY.EXPORT_FIELDS
@@ -600,15 +601,38 @@ class ShapeShifter(object):
                               'Failed to create field {}'.format(LM_ID_FIELD))
     
       return newLyr
-         
+
+   # ...............................................
+   def _getXY(self, recDict):
+      """
+      @note: returns Longitude/X Latitude/Y from x, y fields or geopoint
+      """
+      x = y = None
+      try:
+         x = recDict[self.xField]
+         y = recDict[self.yField]
+      except:
+         pt = recDict[self.ptField]
+         npt = pt.strip('{').strip('}')
+         newcoords = npt.split(',')
+         for coord in newcoords:
+            latidx = coord.index('lat:')
+            if latidx >= 0:
+               y = coord[latidx+4:].strip()
+            lonidx = coord.index('lon:')
+            if lonidx >= 0:
+               x = coord[lonidx+4:].strip()
+      return x, y
+   
    # ...............................................
    def _fillFeature(self, feat, recDict):
       """
       @note: This *should* return the modified feature
       """
+      x, y = self._getXY(recDict)
       try:
          # Set LM added fields, geometry, geomwkt
-         wkt = 'POINT ({} {})'.format(recDict[self.xField], recDict[self.yField])
+         wkt = 'POINT ({} {})'.format(x, y)
          feat.SetField(LM_WKT_FIELD, wkt)
          geom = ogr.CreateGeometryFromWkt(wkt)
          feat.SetGeometryDirectly(geom)
