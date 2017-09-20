@@ -60,7 +60,7 @@ class SpeciesHintService(LmService):
             genus = '{}*'.format(parts[0])
             sp = None
       
-         matches = queryArchiveIndex(taxGenus=genus, taxSpecies=sp, 
+         matches = queryArchiveIndex(taxGenus=genus.title(), taxSpecies=sp, 
                                      userId=self.getUserId(urlUser=urlUser))
          
          occIds = []
