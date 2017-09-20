@@ -77,7 +77,8 @@ class OccurrenceLayerService(LmService):
    @lmFormatter
    def GET(self, pathOccSetId=None, afterTime=None, beforeTime=None, 
            displayName=None, epsgCode=None, minimumNumberOfPoints=1, 
-           limit=100, offset=0, urlUser=None, status=None, gridSetId=None):
+           limit=100, offset=0, urlUser=None, status=None, gridSetId=None,
+           fillPoints=False):
       """
       @summary: Performs a GET request.  If an occurrence set id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -94,7 +95,7 @@ class OccurrenceLayerService(LmService):
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints,
                 gridSetId=gridSetId, status=status)
       else:
-         return self._getOccurrenceSet(pathOccSetId)
+         return self._getOccurrenceSet(pathOccSetId, fillPoints=fillPoints)
    
    # ................................
    #@cherrypy.tools.json_out
@@ -187,7 +188,7 @@ class OccurrenceLayerService(LmService):
       return {'count' : occCount}
 
    # ................................
-   def _getOccurrenceSet(self, pathOccSetId):
+   def _getOccurrenceSet(self, pathOccSetId, fillPoints=False):
       """
       @summary: Attempt to get an occurrence set
       """
@@ -198,6 +199,8 @@ class OccurrenceLayerService(LmService):
       
       # If allowed to, return
       if checkUserPermission(self.getUserId(), occ, HTTPMethod.GET):
+         if fillPoints:
+            occ.readShapefile()
          return occ
       else:
          raise cherrypy.HTTPError(403, 

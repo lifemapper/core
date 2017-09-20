@@ -43,6 +43,7 @@ from LmWebServer.services.api.v2.scenPackage import ScenarioPackageService
 from LmWebServer.services.api.v2.sdmProject import SdmProjectService
 from LmWebServer.services.api.v2.shapegrid import ShapeGridService
 from LmWebServer.services.api.v2.snippet import SnippetService
+from LmWebServer.services.api.v2.speciesHint import SpeciesHintService
 from LmWebServer.services.api.v2.tree import TreeService
 
 # .............................................................................
@@ -54,6 +55,7 @@ class ApiRootV2(object):
    envlayer = EnvLayerService()
    globalpam = GlobalPAMService()
    gridset = GridSetService()
+   hint = SpeciesHintService()
    layer = LayerService()
    occurrence = OccurrenceLayerService()
    scenario = ScenarioService()
