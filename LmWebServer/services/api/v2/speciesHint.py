@@ -72,11 +72,12 @@ class SpeciesHintService(LmService):
             displayName = match['displayName']
             binomial = '{} {}'.format(match['taxonGenus'], match['taxonSpecies'])
             if not occId in occIds:
+               occIds.append(occId)
                ret.append({
                   'binomial' : binomial,
                   'name' : displayName,
                   'numPoints' : pointCount,
                   'occurrenceSet' : occId
                })
-         return ret
+         return ret[:limit]
    
