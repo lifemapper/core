@@ -268,6 +268,9 @@ QUERY_PARAMETERS = {
       'name' : 'scenarioId',
       'processIn' : int
    },
+   'searchstring' : {
+      'name' : 'searchString'
+   },
    'service' : {
       'name' : 'service'
    },
