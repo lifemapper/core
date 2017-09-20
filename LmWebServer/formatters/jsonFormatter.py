@@ -191,6 +191,8 @@ def formatOccurrenceSet(occ):
                                     resolution=occ.resolution)
    occDict['speciesName'] = occ.displayName
    occDict['squid'] = occ.squid
+   if len(occ.features) > 0:
+      occDict['features'] = occ.features
    
    return occDict
 

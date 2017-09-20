@@ -130,6 +130,10 @@ QUERY_PARAMETERS = {
    'exceptions' : {
       'name' : 'exceptions'
    },
+   'fillpoints' : {
+      'name' : 'fillPoints',
+      'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+   },
    'format' : {
       # TODO: Forward to respFormat since format is reserved
       'name' : 'respFormat',
