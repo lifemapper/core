@@ -384,25 +384,37 @@ class OccDataParser(object):
                          .format(typeString))
    
    # ...............................................
-   def _getXY(self, line):
+   @staticmethod
+   def getXY(line, xIdx, yIdx, geoIdx):
       """
       @note: returns Longitude/X Latitude/Y from x, y fields or geopoint
       """
       x = y = None
       try:
-         x = line[self._xIdx]
-         y = line[self._yIdx]
+         x = line[xIdx]
+         y = line[yIdx]
       except:
-         pt = line[self._geoIdx]
+         pt = line[geoIdx]
          npt = pt.strip('{').strip('}')
          newcoords = npt.split(',')
          for coord in newcoords:
-            latidx = coord.index('lat:')
-            if latidx >= 0:
-               y = coord[latidx+4:].strip()
-            lonidx = coord.index('lon:')
-            if lonidx >= 0:
-               x = coord[lonidx+4:].strip()
+            try:
+               latidx = coord.index('lat')
+            except:
+               # Longitude
+               try:
+                  lonidx = coord.index('lon')
+               except:
+                  pass
+               else:
+                  if lonidx >= 0:
+                     tmp = coord[lonidx+3:].strip()
+                     x = tmp.replace('"', '').replace(':', '').replace(',', '').strip()
+            # Latitude
+            else:
+               if latidx >= 0:
+                  tmp = coord[latidx+3:].strip()
+                  y = tmp.replace('"', '').replace(':', '').replace(',', '').strip()
       return x, y
 
    # ...............................................
@@ -441,7 +453,7 @@ class OccDataParser(object):
                goodEnough = False
          
       # Lat/long values
-      x, y = self._getXY(line)
+      x, y = self.getXY(line, self._xIdx, self._yIdx, self._geoIdx)
       try:
          float(x)
          float(y)

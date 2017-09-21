@@ -984,6 +984,40 @@ from LmServer.tools.occwoc import *
 from LmServer.db.borgscribe import BorgScribe
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
+def getXY(line, xIdx, yIdx, geoIdx):
+      x = y = None
+      try:
+         x = line[xIdx]
+         y = line[yIdx]
+      except:
+         pt = line[geoIdx]
+         npt = pt.strip('{').strip('}')
+         newcoords = npt.split(',')
+         for coord in newcoords:
+            try:
+               latidx = coord.index('lat')
+            except:
+               # Longitude
+               try:
+                  lonidx = coord.index('lon')
+               except:
+                  pass
+               else:
+                  if lonidx >= 0:
+                     tmp = coord[lonidx+3:].strip()
+                     x = tmp.replace('"', '').replace(':', '').replace(',', '').strip()
+            # Latitude
+            else:
+               if latidx >= 0:
+                  tmp = coord[latidx+3:].strip()
+                  y = tmp.replace('"', '').replace(':', '').replace(',', '').strip()
+      return x, y
+
+pt = line[geoIdx]
+npt = pt.strip('{').strip('}')
+newcoords = npt.split(',')
+coord = newcoords[0]
+
 
 useGBIFTaxonIds = True
 occDelimiter = ',' 
@@ -1002,6 +1036,7 @@ if os.path.isfile(occData):
 else:
    fnames = glob.glob(os.path.join(occData, 
                       '*{}'.format(LMFormat.CSV.ext)))
+
 if len(fnames) > 0:
    occCSV = fnames[0]
    if len(fnames) > 1:
@@ -1014,7 +1049,71 @@ woc = UserWoC(scribe, userId, 'someArchiveName',
                       4326, expDate, occCSV, occMeta, 
                       occDelimiter, logger=logger, 
                       useGBIFTaxonomy=useGBIFTaxonIds)
-op = woc.occParser                   
-                      
+op = woc.occParser         
+
+
+op = OccDataParser(logger, occCSV, occMeta)
+f = open(occCSV, 'r')
+cr = csv.reader(f, delimiter=',')
+fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(occMeta)
+               
+(fieldNames,
+ fieldTypes,
+ filters,
+ idIdx,
+ xIdx,
+ yIdx,
+ geoIdx,
+ groupByIdx, 
+ nameIdx) = OccDataParser.getMetadata(fieldmeta, None)
+ 
+line = cr.next()
+goodEnough = True
+
+for filterIdx, acceptedVals in filters.iteritems():
+   val = line[filterIdx]
+   try:
+      val = val.lower()
+   except:
+      pass
+   if acceptedVals is not None and val not in acceptedVals:
+      goodEnough = False
+
+try:
+   gval = line[groupByIdx]
+except Exception, e:
+   self.badGroups += 1
+   goodEnough = False
+else:
+   self.groupVals.add(gval)
+   
+if idIdx is not None:
+   try:
+      int(line[idIdx])
+   except Exception, e:
+      if line[idIdx] == '':
+         goodEnough = False
+   
+x, y = getXY(line, xIdx, yIdx, geoIdx)
+try:
+   float(x)
+   float(y)
+except Exception, e:
+   self.badGeos += 1
+   goodEnough = False
+else:
+   if x == 0 and y == 0:
+      self.badGeos += 1
+      goodEnough = False
+         
+# Dataset name value
+if line[self._nameIdx] == '':
+   self.badNames += 1
+   goodEnough = False
+   
+if goodEnough:
+   self.recTotalGood += 1
+   
+return goodEnough
 
 """
