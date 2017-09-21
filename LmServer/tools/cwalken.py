@@ -107,7 +107,7 @@ class ChristopherWalken(LMObject):
       """
       @summary: Sets objects and parameters for workflow on this object
       """
-      self.oneOfManyCSVs = False
+      self.moreDataToProcess = False
       (self.userId, 
        self.archiveName, 
        self.priority, 
@@ -261,7 +261,8 @@ class ChristopherWalken(LMObject):
                                   '*{}'.format(LMFormat.CSV.ext))
             if len(fnames) > 0:
                occCSV = fnames[0]
-               self.oneOfManyCSVs = True
+               if len(fnames) > 1:
+                  self.moreDataToProcess = True
             else:
                occCSV = None
             occMeta = IDIG_DUMP.METADATA

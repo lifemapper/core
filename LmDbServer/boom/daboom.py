@@ -28,7 +28,6 @@ import os, sys, time
 import traceback
 
 from LmBackend.common.daemon import Daemon
-from LmCommon.common.lmconstants import LMFormat
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmDbServer.boom.boomer import Boomer
 from LmServer.base.utilities import isCorrectUser
