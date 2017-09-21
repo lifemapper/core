@@ -206,6 +206,21 @@ class Boomer(LMObject):
       self.christopher.stopWalken()
       self.rotatePotatoes()
 
+   # .............................
+   def restartWalken(self):
+      if self.christopher.complete() and self.christopher.moreDataToProcess():
+         # Rename old file
+         oldfname = self.christopher.weaponOfChoice.occParser.dataFname
+         ts = dt.localtime().tuple()
+         timestamp = '{}{:02d}{:02d}-{:02d}{:02d}'.format(ts[0], ts[1], ts[2], ts[3], ts[4])
+         newfname = oldfname + '.' + timestamp
+         try:
+            os.rename(oldfname, newfname)
+         except Exception, e:
+            self.log.error('Failed to rename {} to {}'.format(oldfname, newfname))
+         # Restart with next file
+         self.initializeMe()
+
 # ...............................................
    def _createMasterMakeflow(self):
       meta = {MFChain.META_CREATED_BY: self.name,

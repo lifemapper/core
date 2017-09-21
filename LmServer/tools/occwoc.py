@@ -957,3 +957,49 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                                  .format(occ.getUserId(), occ.getId()))
       return userOcc
    
+"""
+import shutil
+try:
+   import mx.DateTime as dt
+except:
+   pass
+
+import csv
+import os
+import sys
+from time import sleep
+
+from LmBackend.common.lmobj import LMError, LMObject
+from LmBackend.common.occparse import OccDataParser
+from LmCommon.common.apiquery import BisonAPI, GbifAPI
+from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
+                                    ProcessType, JobStatus, ONE_HOUR, LMFormat, IDIG_DUMP) 
+from LmServer.base.taxon import ScientificName
+from LmServer.common.lmconstants import LOG_PATH
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.log import ScriptLogger
+from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.tools.occwoc import *
+from LmServer.db.borgscribe import BorgScribe
+
+TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
+
+useGBIFTaxonIds = True
+occDelimiter = ',' 
+occCSV = '/state/partition1/lmserver/data/species/idig'
+occMeta = IDIG_DUMP.METADATA
+
+scriptname = 'wocTesting'
+logger = ScriptLogger(scriptname)
+scribe = BorgScribe(logger)
+scribe.openConnections()
+userId = 'kubi'
+expDate = dt.DateTime(2017,9,20).mjd
+weaponOfChoice = UserWoC(scribe, userId, 'someArchiveName', 
+                      4326, expDate, occCSV, occMeta, 
+                      occDelimiter, logger=logger, 
+                      useGBIFTaxonomy=useGBIFTaxonIds)
+                      
+                      
+
+"""

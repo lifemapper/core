@@ -102,7 +102,7 @@ class OccDataParser(object):
       self.header = None
       fieldmeta, metadataFname, doMatchHeader = self.readMetadata(metadata)
       if metadataFname is None:
-         self.metadataFname = metadataFname
+         self.metadataFname = None
       if doMatchHeader:
          # Read CSV header
          tmpList = self._csvreader.next()
@@ -119,8 +119,6 @@ class OccDataParser(object):
        self._nameIdx) = self.getMetadata(fieldmeta, self.header)
       self.fieldCount = len(self.fieldNames)
       
-      self._populateMetadata(fieldmeta, self.header)
-         
       # Start by pulling line 1; populates groupVal, currLine and currRecnum
       self.pullNextValidRec()
       # record number of the chunk of current key

@@ -22,6 +22,7 @@
           02110-1301, USA.
 """
 # .............................................................................
+import glob
 import mx.DateTime as dt
 from osgeo.ogr import wkbPoint
 import os
@@ -106,6 +107,7 @@ class ChristopherWalken(LMObject):
       """
       @summary: Sets objects and parameters for workflow on this object
       """
+      self.oneOfManyCSVs = False
       (self.userId, 
        self.archiveName, 
        self.priority, 
@@ -248,10 +250,20 @@ class ChristopherWalken(LMObject):
          # iDigBio data
          if datasource == SpeciesDatasource.IDIGBIO:
             useGBIFTaxonIds = True
-            occData = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
             occDelimiter = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
-            # Path containing multiple csv files, each with multiple taxa
-            occCSV = os.path.join(SPECIES_DATA_PATH, occData)
+            occName = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
+            occData = os.path.join(SPECIES_DATA_PATH, occName)
+            # Path containing multiple csv files, get the first one
+            if os.path.isfile(occData):
+               occCSV = occData
+            else:
+               fnames = glob.glob(os.path.join(SPECIES_DATA_PATH, occData), 
+                                  '*{}'.format(LMFormat.CSV.ext))
+            if len(fnames) > 0:
+               occCSV = fnames[0]
+               self.oneOfManyCSVs = True
+            else:
+               occCSV = None
             occMeta = IDIG_DUMP.METADATA
          # User data, anything not above
          else:

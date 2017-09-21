@@ -23,7 +23,6 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmDbServer.tools.sortGbifExport import DWCNames, OFTString
 try:
    from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
 except:
