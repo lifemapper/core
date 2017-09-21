@@ -384,6 +384,28 @@ class OccDataParser(object):
                          .format(typeString))
    
    # ...............................................
+   def _getXY(self, line):
+      """
+      @note: returns Longitude/X Latitude/Y from x, y fields or geopoint
+      """
+      x = y = None
+      try:
+         x = line[self._xIdx]
+         y = line[self._yIdx]
+      except:
+         pt = line[self._geoIdx]
+         npt = pt.strip('{').strip('}')
+         newcoords = npt.split(',')
+         for coord in newcoords:
+            latidx = coord.index('lat:')
+            if latidx >= 0:
+               y = coord[latidx+4:].strip()
+            lonidx = coord.index('lon:')
+            if lonidx >= 0:
+               x = coord[lonidx+4:].strip()
+      return x, y
+
+   # ...............................................
    def _testLine(self, line):
       goodEnough = True
       self.recTotal += 1
@@ -395,7 +417,7 @@ class OccDataParser(object):
             val = val.lower()
          except:
             pass
-         if val not in acceptedVals:
+         if acceptedVals is not None and val not in acceptedVals:
             self.badFilterVals.add(val)
             self.badFilters += 1
             goodEnough = False
@@ -419,14 +441,15 @@ class OccDataParser(object):
                goodEnough = False
          
       # Lat/long values
+      x, y = self._getXY(line)
       try:
-         float(line[self._xIdx])
-         float(line[self._yIdx])
+         float(x)
+         float(y)
       except Exception, e:
          self.badGeos += 1
          goodEnough = False
       else:
-         if line[self._xIdx] == 0 and line[self._yIdx] == 0:
+         if x == 0 and y == 0:
             self.badGeos += 1
             goodEnough = False
                

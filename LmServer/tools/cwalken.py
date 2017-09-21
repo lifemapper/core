@@ -251,14 +251,14 @@ class ChristopherWalken(LMObject):
          if datasource == SpeciesDatasource.IDIGBIO:
             useGBIFTaxonIds = True
             occDelimiter = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
-            occName = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
-            occData = os.path.join(SPECIES_DATA_PATH, occName)
+            occname = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
+            occData = os.path.join(SPECIES_DATA_PATH, occname)
             # Path containing multiple csv files, get the first one
             if os.path.isfile(occData):
                occCSV = occData
             else:
-               fnames = glob.glob(os.path.join(SPECIES_DATA_PATH, occData), 
-                                  '*{}'.format(LMFormat.CSV.ext))
+               fnames = glob.glob(os.path.join(occData, 
+                                               '*{}'.format(LMFormat.CSV.ext)))
             if len(fnames) > 0:
                occCSV = fnames[0]
                if len(fnames) > 1:

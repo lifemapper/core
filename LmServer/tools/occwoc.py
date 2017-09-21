@@ -965,6 +965,7 @@ except:
    pass
 
 import csv
+import glob
 import os
 import sys
 from time import sleep
@@ -986,7 +987,7 @@ TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
 useGBIFTaxonIds = True
 occDelimiter = ',' 
-occCSV = '/state/partition1/lmserver/data/species/idig'
+occData = '/state/partition1/lmserver/data/species/idig'
 occMeta = IDIG_DUMP.METADATA
 
 scriptname = 'wocTesting'
@@ -995,11 +996,25 @@ scribe = BorgScribe(logger)
 scribe.openConnections()
 userId = 'kubi'
 expDate = dt.DateTime(2017,9,20).mjd
-weaponOfChoice = UserWoC(scribe, userId, 'someArchiveName', 
+
+if os.path.isfile(occData):
+   occCSV = occData
+else:
+   fnames = glob.glob(os.path.join(occData, 
+                      '*{}'.format(LMFormat.CSV.ext)))
+if len(fnames) > 0:
+   occCSV = fnames[0]
+   if len(fnames) > 1:
+      moreDataToProcess = True
+else:
+   occCSV = None
+occMeta = IDIG_DUMP.METADATA
+
+woc = UserWoC(scribe, userId, 'someArchiveName', 
                       4326, expDate, occCSV, occMeta, 
                       occDelimiter, logger=logger, 
                       useGBIFTaxonomy=useGBIFTaxonIds)
-                      
+op = woc.occParser                   
                       
 
 """
