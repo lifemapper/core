@@ -33,10 +33,10 @@ import sys
 from time import sleep
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
                                     ProcessType, JobStatus, ONE_HOUR, LMFormat) 
+from LmCommon.common.occparse import OccDataParser
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH
 from LmServer.common.localconstants import PUBLIC_USER
@@ -977,35 +977,6 @@ from LmServer.tools.occwoc import *
 from LmServer.db.borgscribe import BorgScribe
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
-def getXY(line, xIdx, yIdx, geoIdx):
-      x = y = None
-      try:
-         x = line[xIdx]
-         y = line[yIdx]
-      except:
-         pt = line[geoIdx]
-         npt = pt.strip('{').strip('}')
-         newcoords = npt.split(',')
-         for coord in newcoords:
-            try:
-               latidx = coord.index('lat')
-            except:
-               # Longitude
-               try:
-                  lonidx = coord.index('lon')
-               except:
-                  pass
-               else:
-                  if lonidx >= 0:
-                     tmp = coord[lonidx+3:].strip()
-                     x = tmp.replace('"', '').replace(':', '').replace(',', '').strip()
-            # Latitude
-            else:
-               if latidx >= 0:
-                  tmp = coord[latidx+3:].strip()
-                  y = tmp.replace('"', '').replace(':', '').replace(',', '').strip()
-      return x, y
-
 
 useGBIFTaxonIds = True
 occDelimiter = ',' 
@@ -1031,6 +1002,7 @@ if len(fnames) > 0:
       moreDataToProcess = True
 else:
    occCSV = None
+   
 occMeta = IDIG_DUMP.METADATA
 
 woc = UserWoC(scribe, userId, 'someArchiveName', 
@@ -1041,6 +1013,8 @@ op = woc.occParser
 
 
 op = OccDataParser(logger, occCSV, occMeta)
+
+
 f = open(occCSV, 'r')
 cr = csv.reader(f, delimiter=',')
 fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(occMeta)
@@ -1096,5 +1070,5 @@ else:
 if line[nameIdx] == '':
    goodEnough = False
    
-
+value = int(line[groupByIdx])
 """

@@ -26,7 +26,7 @@ import os
 import sys
 
 from LmCommon.common.lmconstants import LMFormat
-from LmBackend.common.occparse import OccDataParser
+from LmCommon.common.occparse import OccDataParser
 from LmServer.common.log import ScriptLogger
 
 # ...............................................

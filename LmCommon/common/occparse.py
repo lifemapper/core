@@ -164,26 +164,26 @@ class OccDataParser(object):
          idVal = self.currLine[self._idIdx]
       return idVal
    
-   @property
-   def xValue(self):
-      xVal = None
-      if self.currLine is not None:
-         xVal = self.currLine[self._xIdx]
-      return xVal
-   
-   @property
-   def yValue(self):
-      yVal = None
-      if self.currLine is not None:
-         yVal = self.currLine[self._yIdx]
-      return yVal   
-      
-   @property
-   def ptValue(self):
-      ptVal = None
-      if self.currLine is not None:
-         ptVal = self.currLine[self._ptIdx]
-      return ptVal   
+#    @property
+#    def xValue(self):
+#       xVal = None
+#       if self.currLine is not None:
+#          xVal = self.currLine[self._xIdx]
+#       return xVal
+#    
+#    @property
+#    def yValue(self):
+#       yVal = None
+#       if self.currLine is not None:
+#          yVal = self.currLine[self._yIdx]
+#       return yVal   
+#       
+#    @property
+#    def xyStrings(self):
+#       x = y = None
+#       if self.currLine is not None:
+#          x, y = self.getXY(self.currLine, self._xIdx, self._yIdx, self._ptIdx)
+#       return x, y   
       
    @property
    def groupByValue(self):
@@ -212,11 +212,17 @@ class OccDataParser(object):
    
    @property
    def xFieldName(self):
-      return self.fieldNames[self._xIdx]
+      try:
+         return self.fieldNames[self._xIdx]
+      except:
+         return None
    
    @property
    def yFieldName(self):
-      return self.fieldNames[self._yIdx]
+      try:
+         return self.fieldNames[self._yIdx]
+      except:
+         return None
       
    @property
    def ptFieldName(self):

@@ -31,13 +31,13 @@ import os
 from osgeo import ogr, osr
 import StringIO
 import subprocess
-from types import ListType, TupleType, UnicodeType, StringType
+from types import UnicodeType, StringType
 
-from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
                GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
                LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
                DWCNames, LMFormat, DEFAULT_EPSG)
+from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCompute.common.lmObj import LmException
@@ -58,10 +58,10 @@ class ShapeShifter(object):
    def __init__(self, processType, rawdata, count, logger=None, metadata=None, 
                 delimiter=','):
       """
-      @param data: Either csv blob of GBIF data or list of dictionary records
-                   of BISON data
       @param processType: ProcessType constant, either GBIF_TAXA_OCCURRENCE,
                           BISON_TAXA_OCCURRENCE or IDIGBIO_TAXA_OCCURRENCE  
+      @param rawdata: Either csv blob of GBIF, iDigBio, or User data 
+                      or list of dictionary records of BISON data
       """
       self._reader = None
       # If necessary, map provider dictionary keys to our field names
@@ -86,8 +86,14 @@ class ShapeShifter(object):
                               'Failed to get metadata')
          self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter)
          self.idField = self.op.idFieldName
-         self.xField = self.op.xFieldName
-         self.yField = self.op.yFieldName
+         if self.op.xFieldName is not None: 
+            self.xField = self.op.xFieldName
+         else:
+            self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
+         if self.op.yFieldName is None:
+            self.yField = self.op.yFieldName
+         else:
+            self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
          self.ptField = self.op.ptFieldName
 
       elif processType == ProcessType.GBIF_TAXA_OCCURRENCE:
@@ -142,52 +148,52 @@ class ShapeShifter(object):
          lyr.CreateFeature(feat)
          feat.Destroy()
 
-   # .............................................................................
-   def _getMetadata(self, origfldnames):
-      fldmeta = self._readMetadata()
-      
-      for i in range(len(origfldnames)):         
-         oname = origfldnames[i]
-         shortname = fldmeta[oname][0]
-         ogrtype = self.getOgrFieldType(fldmeta[oname][1])
-         self.fieldNames.append(shortname)
-         self.fieldTypes.append(ogrtype)
-         
-         if len(fldmeta[oname]) == 3:
-            if type(fldmeta[oname][2]) in (ListType, TupleType):
-               acceptedVals = fldmeta[oname][2]
-               if ogrtype == ogr.OFTString:
-                  acceptedVals = [val.lower() for val in fldmeta[oname][2]]
-               self.filters[i] = acceptedVals 
-            else:
-               role = fldmeta[oname][2].lower()
-               if role == 'id':
-                  self._idIdx = i
-               elif role == 'longitude':
-                  self._xIdx = i
-               elif role == 'latitude':
-                  self._yIdx = i
-               elif role == 'groupby':
-                  self._groupByIdx = i
-               elif role == 'dataname':
-                  self._nameIdx = i
-      self.fieldCount = len(self.fieldNames)
-      
-      if self._idIdx == None:
-         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                           'Missing \'id\' unique identifier field')
-      if self._xIdx == None:
-         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                           'Missing \'longitude\' georeference field')
-      if self._yIdx == None:
-         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                           'Missing \'latitude\' georeference field')
-      if self._groupByIdx == None:
-         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                           'Missing \'groupby\' sorting field')
-      if self._nameIdx == None:
-         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                           'Missing \'dataname\' dataset name field')
+#    # .............................................................................
+#    def _getMetadata(self, origfldnames):
+#       fldmeta = self._readMetadata()
+#       
+#       for i in range(len(origfldnames)):         
+#          oname = origfldnames[i]
+#          shortname = fldmeta[oname][0]
+#          ogrtype = self.getOgrFieldType(fldmeta[oname][1])
+#          self.fieldNames.append(shortname)
+#          self.fieldTypes.append(ogrtype)
+#          
+#          if len(fldmeta[oname]) == 3:
+#             if type(fldmeta[oname][2]) in (ListType, TupleType):
+#                acceptedVals = fldmeta[oname][2]
+#                if ogrtype == ogr.OFTString:
+#                   acceptedVals = [val.lower() for val in fldmeta[oname][2]]
+#                self.filters[i] = acceptedVals 
+#             else:
+#                role = fldmeta[oname][2].lower()
+#                if role == 'id':
+#                   self._idIdx = i
+#                elif role == 'longitude':
+#                   self._xIdx = i
+#                elif role == 'latitude':
+#                   self._yIdx = i
+#                elif role == 'groupby':
+#                   self._groupByIdx = i
+#                elif role == 'dataname':
+#                   self._nameIdx = i
+#       self.fieldCount = len(self.fieldNames)
+#       
+#       if self._idIdx == None:
+#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+#                            'Missing \'id\' unique identifier field')
+#       if self._xIdx == None:
+#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+#                            'Missing \'longitude\' georeference field')
+#       if self._yIdx == None:
+#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+#                            'Missing \'latitude\' georeference field')
+#       if self._groupByIdx == None:
+#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+#                            'Missing \'groupby\' sorting field')
+#       if self._nameIdx == None:
+#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+#                            'Missing \'dataname\' dataset name field')
 
 # .............................................................................
 # Public functions
@@ -414,8 +420,8 @@ class ShapeShifter(object):
          recDict = self._getUserCSVRec() 
       elif self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
          recDict = self._getCSVRec()
-      # handle BISON, iDigBio the same
       else:
+         # get BISON from web service
          recDict = self._getAPIResponseRec()
       if recDict is not None:
          self._currRecum += 1
@@ -454,15 +460,16 @@ class ShapeShifter(object):
       tmpDict = {}
       recDict = None
       badRecCount = 0
-      # skip bad lines
+      # skip lines w/o valid coordinates
       while not success and not self.op.eof():
          try:
             self.op.pullNextValidRec()
             if not self.op.eof():
+               x, y = OccDataParser.getXY(recDict, self.xField, self.yField, self.ptField)
                # Unique identifier field is not required, default to FID
                # ignore records without valid lat/long; all occ jobs contain these fields
-               tmpDict[self.op.xFieldName] = float(self.op.xValue)
-               tmpDict[self.op.yFieldName] = float(self.op.yValue)
+               tmpDict[self.xField] = float(x)
+               tmpDict[self.yField] = float(y)
                success = True
          except StopIteration, e:
             success = True
@@ -476,7 +483,9 @@ class ShapeShifter(object):
                                                      fromUnicode(toUnicode(e))))
       if success:
          for i in range(len(self.op.fieldNames)):
-            tmpDict[self.op.fieldNames[i]] = self.op.currLine[i]
+            # got x, y above
+            if self.op.fieldNames[i] not in (self.xField, self.yField):
+               tmpDict[self.op.fieldNames[i]] = self.op.currLine[i]
          recDict = tmpDict
       if badRecCount > 0:
          print('Skipped over {} bad records'.format(badRecCount))
@@ -601,35 +610,14 @@ class ShapeShifter(object):
                               'Failed to create field {}'.format(LM_ID_FIELD))
     
       return newLyr
-
-   # ...............................................
-   def _getXY(self, recDict):
-      """
-      @note: returns Longitude/X Latitude/Y from x, y fields or geopoint
-      """
-      x = y = None
-      try:
-         x = recDict[self.xField]
-         y = recDict[self.yField]
-      except:
-         pt = recDict[self.ptField]
-         npt = pt.strip('{').strip('}')
-         newcoords = npt.split(',')
-         for coord in newcoords:
-            latidx = coord.index('lat:')
-            if latidx >= 0:
-               y = coord[latidx+4:].strip()
-            lonidx = coord.index('lon:')
-            if lonidx >= 0:
-               x = coord[lonidx+4:].strip()
-      return x, y
    
    # ...............................................
    def _fillFeature(self, feat, recDict):
       """
       @note: This *should* return the modified feature
       """
-      x, y = self._getXY(recDict)
+      x = recDict[self.xField]
+      y = recDict[self.yField]
       try:
          # Set LM added fields, geometry, geomwkt
          wkt = 'POINT ({} {})'.format(x, y)
