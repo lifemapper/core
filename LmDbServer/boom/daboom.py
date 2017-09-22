@@ -143,6 +143,7 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmBackend.common.daemon import Daemon
+from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import LMFormat
 from LmDbServer.common.lmconstants import BOOM_PID_FILE, TAXONOMIC_SOURCE
 from LmDbServer.boom.boomer import Boomer
@@ -175,7 +176,10 @@ woc = boomer.christopher.weaponOfChoice
 op = boomer.christopher.weaponOfChoice.occParser
 
 dataChunk, taxonKey, taxonName = op.pullCurrentChunk()
-sciName = woc._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
+
+
+sciName = woc._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
+sciName = woc._scribe.findOrInsertTaxon(taxonSourceId=woc._taxonSourceId, 
                                                taxonKey=taxonKey)
 
 if op.useGBIFTaxonomy:

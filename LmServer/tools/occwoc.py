@@ -590,8 +590,9 @@ class UserWoC(_SpeciesWeaponOfChoice):
          # Get or insert ScientificName (squid)
          if self.useGBIFTaxonomy:
             sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
-            # Override the given taxonName with the resolved GBIF canonical name
-            taxonName = sciName.canonicalName
+            if sciName:
+               # Override the given taxonName with the resolved GBIF canonical name
+               taxonName = sciName.canonicalName
          else:
             if not taxonName:
                taxonName = taxonKey
