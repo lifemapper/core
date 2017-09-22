@@ -465,10 +465,9 @@ class OccDataParser(object):
             self.badGeos += 1
             goodEnough = False
                
-      # Dataset name value
-      if line[self._nameIdx] == '':
-         self.badNames += 1
-         goodEnough = False
+#       # Dataset name value
+#       if line[self._nameIdx] == '':
+#          self.badNames += 1
          
       if goodEnough:
          self.recTotalGood += 1
@@ -489,7 +488,7 @@ class OccDataParser(object):
          except OverflowError, e:
             self.log.debug( 'Overflow on %d (%s)' % (self.currRecnum, str(e)))
          except StopIteration:
-            self.log.debug('EOF on rec %d' % (self.currRecnum))
+            self.log.debug('EOF after rec %d' % (self.currRecnum))
             self.close()
             self.currLine = None
             success = True
@@ -549,6 +548,7 @@ class OccDataParser(object):
                   complete = True
                   self.currLine = None
                   self.groupVal = None
+                  self.log.info('Unable to pullNextValidRec; completed')
                   
       except Exception, e:
          self.log.error('Failed in pullNextValidRec, currRecnum=%s, e=%s' 

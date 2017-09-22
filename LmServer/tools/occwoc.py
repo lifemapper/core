@@ -570,18 +570,11 @@ class UserWoC(_SpeciesWeaponOfChoice):
          self._currRec = None
 
 # ...............................................
-   def _getChunk(self):
-      """
-      @note: If useGBIFTaxonomy is true, the 'GroupBy' field should contain
-             the GBIF TaxonID for the accepted Taxon of each record in the group. 
-      """
-      chunk, chunkGroup, chunkName = self.occParser.pullCurrentChunk()
-      return chunk, chunkName, chunkGroup
-      
-# ...............................................
    def getOne(self):
       occ = None
-      dataChunk, taxonName, taxonKey = self._getChunk()
+      # If useGBIFTaxonomy is true, the 'GroupBy' field will contain
+      # the GBIF TaxonID for the accepted Taxon of each record in the group.
+      dataChunk, taxonKey, taxonName = self.occParser.pullCurrentChunk()
       if dataChunk and taxonName:
          # Get or insert ScientificName (squid)
          if self.useGBIFTaxonomy:
@@ -1013,11 +1006,6 @@ def getXY(line, xIdx, yIdx, geoIdx):
                   y = tmp.replace('"', '').replace(':', '').replace(',', '').strip()
       return x, y
 
-pt = line[geoIdx]
-npt = pt.strip('{').strip('}')
-newcoords = npt.split(',')
-coord = newcoords[0]
-
 
 useGBIFTaxonIds = True
 occDelimiter = ',' 
@@ -1069,6 +1057,7 @@ fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(occMeta)
  
 line = cr.next()
 goodEnough = True
+groupVals = set()
 
 for filterIdx, acceptedVals in filters.iteritems():
    val = line[filterIdx]
@@ -1082,10 +1071,9 @@ for filterIdx, acceptedVals in filters.iteritems():
 try:
    gval = line[groupByIdx]
 except Exception, e:
-   self.badGroups += 1
    goodEnough = False
 else:
-   self.groupVals.add(gval)
+   groupVals.add(gval)
    
 if idIdx is not None:
    try:
@@ -1094,26 +1082,19 @@ if idIdx is not None:
       if line[idIdx] == '':
          goodEnough = False
    
-x, y = getXY(line, xIdx, yIdx, geoIdx)
+x, y = OccDataParser.getXY(line, xIdx, yIdx, geoIdx)
 try:
    float(x)
    float(y)
 except Exception, e:
-   self.badGeos += 1
    goodEnough = False
 else:
    if x == 0 and y == 0:
-      self.badGeos += 1
       goodEnough = False
          
 # Dataset name value
-if line[self._nameIdx] == '':
-   self.badNames += 1
+if line[nameIdx] == '':
    goodEnough = False
    
-if goodEnough:
-   self.recTotalGood += 1
-   
-return goodEnough
 
 """
