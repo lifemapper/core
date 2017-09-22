@@ -277,7 +277,8 @@ class ChristopherWalken(LMObject):
          weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
                                   epsg, expDate, occCSV, occMeta, 
                                   occDelimiter, logger=self.log, 
-                                  useGBIFTaxonomy=useGBIFTaxonIds)
+                                  useGBIFTaxonomy=useGBIFTaxonIds,
+                                  taxonSourceName=taxonSourceName)
       return weaponOfChoice
 
 # .............................................................................

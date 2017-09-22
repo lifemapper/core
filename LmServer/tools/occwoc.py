@@ -488,9 +488,10 @@ class UserWoC(_SpeciesWeaponOfChoice):
    """
    def __init__(self, scribe, user, archiveName, epsg, expDate, 
                 userOccCSV, userOccMeta, userOccDelimiter, 
-                logger=None, useGBIFTaxonomy=False):
+                logger=None, useGBIFTaxonomy=False, taxonSourceName=None):
       super(UserWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
                                     userOccCSV, metaFname=userOccMeta, 
+                                    taxonSourceName=taxonSourceName, 
                                     logger=logger)
       # User-specific attributes
       self.processType = ProcessType.USER_TAXA_OCCURRENCE

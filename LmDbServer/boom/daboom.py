@@ -144,7 +144,7 @@ import os, sys, time
 
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import LMFormat
-from LmDbServer.common.lmconstants import BOOM_PID_FILE
+from LmDbServer.common.lmconstants import BOOM_PID_FILE, TAXONOMIC_SOURCE
 from LmDbServer.boom.boomer import Boomer
 from LmServer.base.utilities import isCorrectUser
 from LmServer.common.datalocator import EarlJr
@@ -170,6 +170,16 @@ boomer = Boomer(configFname, assemblePams=True, log=log)
 boomer.initializeMe()
 
 boomer.keepWalken
+chris = boomer.christopher
+woc = boomer.christopher.weaponOfChoice
+op = boomer.christopher.weaponOfChoice.occParser
+
+dataChunk, taxonKey, taxonName = op.pullCurrentChunk()
+sciName = woc._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
+                                               taxonKey=taxonKey)
+
+if op.useGBIFTaxonomy:
+   sciName = woc._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
 
 boomer.processSpud()
 
