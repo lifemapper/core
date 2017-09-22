@@ -156,12 +156,11 @@ from LmServer.tools.cwalken import ChristopherWalken
 SPUD_LIMIT = 100
 
 earl = EarlJr()
-pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
+user = 'idigbio'
+pth = earl.createDataPath(user, LMFileType.BOOM_CONFIG)
 configFname = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
                                               LMFormat.CONFIG.ext))   
-configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini' 
-
-select * from lm_v3.lm_findOrInsertMatrixColumn('biotaphy',NULL,27,NULL,491,'5460b06e839e09674ce4d759175a3ad5b76d266ed4d7a104605ae3918f17e412',NULL,NULL,'{"minPresence": 1, "maxPresence": 255, "valName": "pixel", "filterString": "None", "minPercent": 25}',0,57923.9950783);
+# configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini' 
 
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))

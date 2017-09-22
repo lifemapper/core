@@ -230,11 +230,11 @@ Populate archive
      # rocks/bin/getClimateData
 
 #. Populate the database with inputs for the default archive.  This runs 
-   LmDbServer/boom/boominput.py with no arguments::
+   LmDbServer/boom/initboom.py with no arguments::
 
      # rocks/bin/fillDB
    
-   * The boominput script will either accept a boom initialization configuration  
+   * The initboom script will either accept a boom initialization configuration  
      file (example in LmServer/boom/boomInit.sample.ini) or pick up default 
      arguments from config.lmserver.ini and config.site.ini.
 

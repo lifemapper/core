@@ -21,9 +21,7 @@
 #
 # Role (case-insensitive) MUST be present for 3 or 4 of the fields
 #    Required:
-#       TaxaName field contains the taxa name for the recordset. If records
-#          for a dataset have different values, the first record will
-#          determine the dataset displayname
+#       GroupBy field contains value to group records by. 
 #    Required: Either Longitude & Latitude or Geopoint
 #       Longitude field contains x coordinate
 #       Latitude field contains y coordinate
@@ -33,8 +31,10 @@
 #       UniqueID field contains a unique ID for each record. Values will be 
 #          generated if missing. 
 #    Optional:
-#       GroupBy field contains value to group records by. Records will be   
-#           grouped by TaxaName if this role is undefined.
+#       TaxaName field contains the taxa name for the recordset. If records
+#          for a dataset have different values, the first record will
+#          determine the dataset displayname.  Records will be   
+#          named with GroupBy field if this role is undefined.
 #
 # .............................................................................
 

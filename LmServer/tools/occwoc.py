@@ -571,15 +571,29 @@ class UserWoC(_SpeciesWeaponOfChoice):
 
 # ...............................................
    def getOne(self):
+      """
+      @summary: Create and return an OccurrenceLayer from a chunk of CSV 
+                records grouped by a `taxonKey`
+      @note: If useGBIFTaxonomy is true, 
+             - the `taxonKey` will contain the GBIF TaxonID for the accepted 
+               Taxon of each record in the chunk, and a taxon record will be 
+               retrieved (if already present) or queried from GBIF and inserted
+             - the OccurrenceLayer.displayname will use the resolved GBIF 
+               canonical name
+      @note: If taxonName is missing, and useGBIFTaxonomy is False, 
+             the OccurrenceLayer.displayname will use the GroupBy value
+      """
       occ = None
-      # If useGBIFTaxonomy is true, the 'GroupBy' field will contain
-      # the GBIF TaxonID for the accepted Taxon of each record in the group.
       dataChunk, taxonKey, taxonName = self.occParser.pullCurrentChunk()
-      if dataChunk and taxonName:
+      if dataChunk:
          # Get or insert ScientificName (squid)
          if self.useGBIFTaxonomy:
             sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
+            # Override the given taxonName with the resolved GBIF canonical name
+            taxonName = sciName.canonicalName
          else:
+            if not taxonName:
+               taxonName = taxonKey
             bbsciName = ScientificName(taxonName, userId=self.userId)
             sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
          if sciName is not None:
