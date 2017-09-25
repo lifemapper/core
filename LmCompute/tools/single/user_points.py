@@ -31,6 +31,7 @@
 import argparse
 import ast
 
+from LmCommon.common.occparse import OccDataParser
 from LmCompute.plugins.single.occurrences.csvOcc import createUserShapefile
 
 # .............................................................................
@@ -52,10 +53,7 @@ if __name__ == "__main__":
                help="The maximum number of points for the modelable shapefile")
    args = parser.parse_args()
    
-   with open(args.metadataFile) as metaIn:
-      tmp = metaIn.read()
-      meta = ast.literal_eval(tmp)
-   
+   meta, _, _ = OccDataParser.readMetadata(args.metadataFile)
    createUserShapefile(args.pointsCsvFn, meta, args.outFile, 
                        args.bigFile, args.maxPoints)
    
