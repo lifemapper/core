@@ -160,7 +160,7 @@ class MattDaemon(Daemon):
             mfs.append((mfObj, newLoc))
          except Exception, e:
             # Could fail if original dlocation does not exist
-            pass
+            self.log.debug('Could not move mf doc: {}'.format(str(e)))
 
       return mfs
       
@@ -308,27 +308,26 @@ class MattDaemon(Daemon):
                                            zero: successful, positive: error)
       @param lmStatus: If provided, update the database with this status
       """
-      # If success, delete
+      self.log.debug('Cleaning up: {}'.format(mfDocFn))
+      # CJG - 2017/09/25
+      #   For now, we will always delete the directory.  We can enable some 
+      #    checks later to see if we should try to recover but right now this
+      #    is leaving too many orphaned workflows and files that are filling
+      #    the file system
+      
+      mfRelDir = mfObj.getRelativeDirectory()
+      
+      if mfRelDir is not None:
+         mfWsDir = os.path.join(WORKER_PATH, mfRelDir)
+         self.log.debug('Attempting to delete: {}'.format(mfWsDir))
+         try:
+            shutil.rmtree(mfWsDir)
+         except Exception, e:
+            self.log.debug('Could not delete: {} - {}'.format(mfWsDir, str(e)))
+      
+      # If exit status is zero, remove from DB.  Otherwise update with error
+      #    status
       if exitStatus == 0:
-         
-         # We won't necessarily know every single file created, so makeflow
-         #    cannot clean up automatically
-         # Use the relative driectory for the makeflow to get the workspace
-         #    directory to delete
-         mfRelDir = mfObj.getRelativeDirectory()
-         self.log.debug('Completed workflow relative directory: {}'.format(mfRelDir))
-         
-         # Make sure we have a relative directory, otherwise skip so we don't
-         #    delete everything in the workspace
-         if mfRelDir is not None:
-            mfWsDir = os.path.join(WORKER_PATH, mfRelDir)
-            self.log.debug('Attempting to delete: {}'.format(mfWsDir))
-            try:
-               shutil.rmtree(mfWsDir)
-            except Exception, e:
-               self.log.debug('Could not delete: {} - {}'.format(mfWsDir, str(e)))
-         
-         
          self.scribe.deleteObject(mfObj)
       else:
          # Either killed by signal or error
