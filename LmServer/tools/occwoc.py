@@ -252,7 +252,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                                                    taxonKey, e))
          else:
             # if no species key, this is not a species
-            if taxStatus == 'ACCEPTED':
+            if rankStr in ('SPECIES', 'GENUS') and taxStatus == 'ACCEPTED':
 #             if taxonKey in (retSpecieskey, acceptedkey, genuskey):
                currtime = dt.gmt().mjd
                sname = ScientificName(scinameStr, 
@@ -488,13 +488,14 @@ class UserWoC(_SpeciesWeaponOfChoice):
    """
    def __init__(self, scribe, user, archiveName, epsg, expDate, 
                 userOccCSV, userOccMeta, userOccDelimiter, 
-                logger=None, useGBIFTaxonomy=False, taxonSourceName=None):
+                logger=None, processType=ProcessType.USER_TAXA_OCCURRENCE, 
+                useGBIFTaxonomy=False, taxonSourceName=None):
       super(UserWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
                                     userOccCSV, metaFname=userOccMeta, 
                                     taxonSourceName=taxonSourceName, 
                                     logger=logger)
       # User-specific attributes
-      self.processType = ProcessType.USER_TAXA_OCCURRENCE
+      self.processType = processType
       self.useGBIFTaxonomy = useGBIFTaxonomy
       self.occParser = None
       try:

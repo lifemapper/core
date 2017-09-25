@@ -176,7 +176,14 @@ woc = boomer.christopher.weaponOfChoice
 op = boomer.christopher.weaponOfChoice.occParser
 
 dataChunk, taxonKey, taxonName = op.pullCurrentChunk()
+(rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
+             nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
+             familyStr, genusStr, speciesStr, genusKey, speciesKey, 
+             loglines) = GbifAPI.getTaxonomy(taxonKey)
 
+print 'match={}, acceptedKey={} taxonKey={}'.format(str(acceptedKey=taxonKey), acceptedKey, taxonKey)
+'100000060'
+>>> taxonKey
 
 sciName = woc._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
 sciName = woc._scribe.findOrInsertTaxon(taxonSourceId=woc._taxonSourceId, 
