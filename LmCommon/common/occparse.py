@@ -244,13 +244,13 @@ class OccDataParser(object):
    @property
    def ptFieldName(self):
       try:
-         return self.fieldNames[self._ptIdx]
+         return self.fieldNames[self._geoIdx]
       except:
          return None
 
    @property
    def ptIdx(self):
-      return self._ptIdx
+      return self._geoIdx
    
 
    # .............................................................................

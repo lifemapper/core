@@ -85,10 +85,16 @@ class ShapeShifter(object):
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                               'Failed to get metadata')
          self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter)
-         self.idField = self.op.idIdx
-         self.xField = self.op.xIdx
-         self.yField = self.op.yIdx
-         self.ptField = self.op.ptIdx
+         self.idField = self.op.idFieldName
+         if self.op.xFieldName is not None: 
+            self.xField = self.op.xFieldName
+         else:
+            self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
+         if self.op.yFieldName is None:
+            self.yField = self.op.yFieldName
+         else:
+            self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
+         self.ptField = self.op.ptFieldName
 
       elif processType == ProcessType.GBIF_TAXA_OCCURRENCE:
          self.dataFields = GBIF_QUERY.EXPORT_FIELDS
@@ -459,8 +465,8 @@ class ShapeShifter(object):
          try:
             self.op.pullNextValidRec()
             if not self.op.eof():
-               x, y = OccDataParser.getXY(self.op.currLine, self.xField, 
-                                          self.yField, self.ptField)
+               x, y = OccDataParser.getXY(self.op.currLine, 
+                                          self.op.xIdx, self.op.yIdx, self.ptIdx)
                # Unique identifier field is not required, default to FID
                # ignore records without valid lat/long; all occ jobs contain these fields
                tmpDict[self.xField] = float(x)
@@ -479,7 +485,7 @@ class ShapeShifter(object):
       if success:
          for i in range(len(self.op.fieldNames)):
             # got x, y above
-            if self.op.fieldNames[i] not in (self.xField, self.yField):
+            if i not in (self.op.xIdx, self.op.yIdx):
                tmpDict[self.op.fieldNames[i]] = self.op.currLine[i]
          recDict = tmpDict
       if badRecCount > 0:
@@ -611,8 +617,9 @@ class ShapeShifter(object):
       """
       @note: This *should* return the modified feature
       """
-      x = recDict[self.xField]
-      y = recDict[self.yField]
+#       xName = self.op.fieldNames[self.xField]
+      x = recDict[self.op.fieldNames[self.xField]]
+      y = recDict[self.op.fieldNames[self.yField]]
       try:
          # Set LM added fields, geometry, geomwkt
          wkt = 'POINT ({} {})'.format(x, y)
