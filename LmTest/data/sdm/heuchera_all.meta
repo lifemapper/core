@@ -1,37 +1,4 @@
-# .............................................................................
-# Note: This file must have the same basename as the CSV file it describes
-# 
-# This file must contain a Python dictionary with:
-#     Key = field name or field role
-#     Value = if field heading, tuple: (Shortname, Type)
-#             if field role, string: one of the existing field headings
-# 
-# Key field name in the first row of the CSV data file
-# Shortname must be 10 characters or fewer and will be used in the shapefile 
-#   created for each dataset.  
-# Type must be 'integer', 'string', or 'real'
-#
-# Key field role (case-insensitive) MUST identify four or five of the fields: 
-#   UniqueID, Longitude, Latitude, GroupBy, TaxaName 
-#     UniqueID is the string or integer field containing a unique ID for each 
-#         record. This field is optional. Values will be generated if missing.
-#     Longitude is the field with the x coordinate
-#     Latitude is the field with the y coordinate
-#     GroupBy is the field identifying which value to group records by
-#         (records in the CSV file should be grouped on this field)
-#     TaxaName is the string field containing the taxa name for the recordset
-#         (if records for a dataset have different values, the first record will
-#          determine the dataset name)
-# .............................................................................
 
-{
-  # Field names
-  'species': ('species', 'string'),
-  'decimallongitude': ('dec_long', 'real'),
-  'decimallatitude': ('dec_lat', 'real'),
-  # Field roles
-  'Longitude': 'decimallongitude',
-  'Latitude': 'decimallatitude',
-  'GroupBy': 'species',
-  'TaxaName': 'species' 
-  }
+species, species, string, GroupBy
+decimallongitude, dec_long, real, Longitude
+decimallatitude, dec_lat, real, Latitude

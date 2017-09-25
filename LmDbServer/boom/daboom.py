@@ -153,6 +153,17 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
 from LmServer.common.log import ScriptLogger
 from LmServer.tools.cwalken import ChristopherWalken
+from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import (LM_NAMESPACE, LMFormat, 
+                                         ProcessType, JobStatus)
+from LmServer.base.layer2 import Vector, _LayerParameters
+from LmServer.base.serviceobject2 import ProcessObject
+from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, 
+                  OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
+                  LMServiceType, ProcessTool)
+from LmServer.common.localconstants import POINT_COUNT_MAX
+from LmServer.legion.cmd import MfRule
+from LmServer.common.lmconstants import SnippetOperations
 
 SPUD_LIMIT = 100
 
@@ -175,22 +186,23 @@ chris = boomer.christopher
 woc = boomer.christopher.weaponOfChoice
 op = boomer.christopher.weaponOfChoice.occParser
 
+occ = woc.getOne()
+
 dataChunk, taxonKey, taxonName = op.pullCurrentChunk()
 (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
              nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
              familyStr, genusStr, speciesStr, genusKey, speciesKey, 
              loglines) = GbifAPI.getTaxonomy(taxonKey)
-
-print 'match={}, acceptedKey={} taxonKey={}'.format(str(acceptedKey=taxonKey), acceptedKey, taxonKey)
-'100000060'
->>> taxonKey
-
-sciName = woc._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
-sciName = woc._scribe.findOrInsertTaxon(taxonSourceId=woc._taxonSourceId, 
-                                               taxonKey=taxonKey)
-
-if op.useGBIFTaxonomy:
-   sciName = woc._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
+print 'taxStatus={}, match={}, acceptedKey={} taxonKey={} speciesKey={} rankStr={}'.format(
+  taxStatus, str(acceptedKey==taxonKey), acceptedKey, taxonKey, speciesKey, rankStr)
+print
+# 
+# sciName = woc._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
+# sciName = woc._scribe.findOrInsertTaxon(taxonSourceId=woc._taxonSourceId, 
+#                                                taxonKey=taxonKey)
+# 
+# if op.useGBIFTaxonomy:
+#    sciName = woc._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
 
 boomer.processSpud()
 

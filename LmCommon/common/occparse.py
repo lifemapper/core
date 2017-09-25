@@ -367,11 +367,11 @@ class OccDataParser(object):
 
       # Check existence of required roles
       if nameIdx is None:
-         raise Exception('Missing `TAXANAME` required roles in metadata')
+         nameIdx = groupByIdx
       if (xIdx is None or yIdx is None) and ptIdx is None:
          raise Exception('Missing `LATITUDE`-`LONGITUDE` pair or `GEOPOINT` roles in metadata')
       if groupByIdx is None:
-         groupByIdx = nameIdx
+         raise Exception('Missing `GROUPBY` required role in metadata')
       return (fieldNames, fieldTypes, filters, 
               idIdx, xIdx, yIdx, ptIdx, groupByIdx, nameIdx)
       
