@@ -85,16 +85,10 @@ class ShapeShifter(object):
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                               'Failed to get metadata')
          self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter)
-         self.idField = self.op.idFieldName
-         if self.op.xFieldName is not None: 
-            self.xField = self.op.xFieldName
-         else:
-            self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
-         if self.op.yFieldName is None:
-            self.yField = self.op.yFieldName
-         else:
-            self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
-         self.ptField = self.op.ptFieldName
+         self.idField = self.op.idIdx
+         self.xField = self.op.xIdx
+         self.yField = self.op.yIdx
+         self.ptField = self.op.ptIdx
 
       elif processType == ProcessType.GBIF_TAXA_OCCURRENCE:
          self.dataFields = GBIF_QUERY.EXPORT_FIELDS

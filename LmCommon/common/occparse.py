@@ -204,6 +204,10 @@ class OccDataParser(object):
       return nameVal
    
    @property
+   def nameIdx(self):
+      return self._nameIdx
+   
+   @property
    def idFieldName(self):
       if self._idIdx is None:
          return None
@@ -211,11 +215,20 @@ class OccDataParser(object):
          return self.fieldNames[self._idIdx]
    
    @property
+   def idIdx(self):
+      return self._idIdx
+   
+   @property
    def xFieldName(self):
       try:
          return self.fieldNames[self._xIdx]
       except:
          return None
+
+   @property
+   def xIdx(self):
+      return self._xIdx
+   
    
    @property
    def yFieldName(self):
@@ -225,11 +238,20 @@ class OccDataParser(object):
          return None
       
    @property
+   def yIdx(self):
+      return self._yIdx
+   
+   @property
    def ptFieldName(self):
       try:
          return self.fieldNames[self._ptIdx]
       except:
          return None
+
+   @property
+   def ptIdx(self):
+      return self._ptIdx
+   
 
    # .............................................................................
    @staticmethod

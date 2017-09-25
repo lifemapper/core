@@ -53,7 +53,7 @@ if __name__ == "__main__":
                help="The maximum number of points for the modelable shapefile")
    args = parser.parse_args()
    
-   meta, _, _ = OccDataParser.readMetadata(args.metadataFile)
+   meta, _, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
    createUserShapefile(args.pointsCsvFn, meta, args.outFile, 
                        args.bigFile, args.maxPoints)
    
@@ -73,7 +73,7 @@ inmeta = '/share/lm/data/archive/biotaphy/heuchera_all.meta'
 outFile = '/tmp/mf_18/pt_6/pt_6.shp'
 bigFile = '/tmp/mf_18/pt_6/big_6.shp'
 mxpts = 500
-meta, _, _ = OccDataParser.readMetadata(inmeta)                   
+meta, _, doMatchHeader = OccDataParser.readMetadata(inmeta)                   
 pointCsvFn = infname
 with open(pointCsvFn) as inF:
    csvInputBlob = inF.read()
@@ -85,12 +85,20 @@ readyFilename(outFile, overwrite=True)
 readyFilename(bigFile, overwrite=True)
 logger = LmComputeLogger('testpoints')
 shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, csvInputBlob, 21, logger=logger, metadata=meta)
+op = shaper.op
 
 outDs = bigDs = None             
 outDs = shaper._createDataset(outFile)
 outLyr = shaper._addUserFieldDef(outDs)
 lyrDef = outLyr.GetLayerDefn()
-recDict = shaper._getRecord()
+
+shaper.processType == ProcessType.USER_TAXA_OCCURRENCE
+op.pullNextValidRec()
+
+x, y = OccDataParser.getXY(op.currLine, shaper.xField, shaper.yField, None)
+
+recDict = shaper._getUserCSVRec()
+# recDict = shaper._getRecord()
 
 op = shaper.op
 
