@@ -57,3 +57,41 @@ if __name__ == "__main__":
    createUserShapefile(args.pointsCsvFn, meta, args.outFile, 
                        args.bigFile, args.maxPoints)
    
+"""
+import os
+
+from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
+from LmCommon.shapes.createshape import ShapeShifter
+from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.readyfile import readyFilename
+from LmCompute.common.lmObj import LmException
+from LmCompute.common.log import LmComputeLogger
+from LmCommon.common.occparse import OccDataParser
+
+infname = '/share/lm/data/archive/biotaphy/000/000/000/006/pt_6.csv'
+inmeta = '/share/lm/data/archive/biotaphy/heuchera_all.meta'
+outFile = '/tmp/mf_18/pt_6/pt_6.shp'
+bigFile = '/tmp/mf_18/pt_6/big_6.shp'
+mxpts = 500
+meta, _, _ = OccDataParser.readMetadata(inmeta)                   
+pointCsvFn = infname
+with open(pointCsvFn) as inF:
+   csvInputBlob = inF.read()
+
+
+count = len(csvInputBlob.split('\n')) - 2
+
+readyFilename(outFile, overwrite=True)
+readyFilename(bigFile, overwrite=True)
+logger = LmComputeLogger('testpoints')
+shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, csvInputBlob, 21, logger=logger, metadata=meta)
+
+outDs = bigDs = None             
+outDs = shaper._createDataset(outFile)
+outLyr = shaper._addUserFieldDef(outDs)
+lyrDef = outLyr.GetLayerDefn()
+recDict = shaper._getRecord()
+
+op = shaper.op
+
+"""

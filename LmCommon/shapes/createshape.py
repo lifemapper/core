@@ -465,7 +465,8 @@ class ShapeShifter(object):
          try:
             self.op.pullNextValidRec()
             if not self.op.eof():
-               x, y = OccDataParser.getXY(recDict, self.xField, self.yField, self.ptField)
+               x, y = OccDataParser.getXY(self.op.currLine, self.xField, 
+                                          self.yField, self.ptField)
                # Unique identifier field is not required, default to FID
                # ignore records without valid lat/long; all occ jobs contain these fields
                tmpDict[self.xField] = float(x)
