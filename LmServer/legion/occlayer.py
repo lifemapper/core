@@ -700,7 +700,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
          # Snippets
          snippetPostFilename = os.path.join(targetDir, 
-                                   'snippets_create_{}.xml'.format(self.getId))
+                                   'snippets_create_{}.xml'.format(self.getId()))
          snippetCmd = ' '.join([
             'LOCAL',
             '$PYTHON',
