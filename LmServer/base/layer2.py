@@ -1993,7 +1993,13 @@ class Vector(_Layer):
       self.setDLocation(dlocation=tmpname)
       
 # ...............................................
-   def _setGeometry(self):
+   def _setGeometry(self, convexHullBuffer=None):
+      """
+      From osgeo.ogr.py: "The nQuadSegs parameter can be used
+        to control how many segments should be used to define a 90 degree
+        curve - a quadrant of a circle. A value of 30 is a reasonable default"
+      """
+      nQuadSegs = 30
       if self._geometry is None and self._convexHull is None and self._features:
          if self._ogrType == ogr.wkbPoint:
             gtype = ogr.wkbMultiPoint
@@ -2018,14 +2024,20 @@ class Vector(_Layer):
                      (str(fvals[self.getLocalIdIndex()])) )
             else:
                geom.AddGeometryDirectly(fgeom)
-         
          self._geometry = geom
          
          # Now set convexHull
          tmpGeom = self._geometry.ConvexHull()
          if tmpGeom.GetGeometryType() != ogr.wkbPolygon:
-            self._convexHull = tmpGeom.Buffer(.1, 2)
+            # If geom is a single point, not a polygon, buffer it
+            if convexHullBuffer is None:
+               convexHullBuffer = 0.1
+            self._convexHull = tmpGeom.Buffer(convexHullBuffer, nQuadSegs)
+         elif convexHullBuffer is not None:
+            # If requested buffer
+            self._convexHull = tmpGeom.Buffer(convexHullBuffer, nQuadSegs)
          else:
+            # No buffer
             self._convexHull = tmpGeom
             
          # Don't reset Bounding Box for artificial geometry of stacked 3d data
@@ -2033,7 +2045,7 @@ class Vector(_Layer):
          self._setBBox((minx, miny, maxx, maxy))
             
 # ...............................................
-   def getConvexHullWkt(self):
+   def getConvexHullWkt(self, convexHullBuffer=None):
       """
       @summary: Return Well Known Text (wkt) of the polygon representing the 
                 convex hull of the data.
@@ -2041,7 +2053,11 @@ class Vector(_Layer):
              buffer the point to create a small polygon. 
       """
       wkt = None
-      self._setGeometry()         
+      # If requesting a buffer, reset geometry and recalc convexHull
+      if convexHullBuffer is not None:
+         self._geometry = None 
+         self._convexHull = None
+      self._setGeometry(convexHullBuffer=convexHullBuffer)
       if self._convexHull is not None: 
          wkt = self._convexHull.ExportToWkt()
       return wkt
