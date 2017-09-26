@@ -466,7 +466,7 @@ class ShapeShifter(object):
             self.op.pullNextValidRec()
             if not self.op.eof():
                x, y = OccDataParser.getXY(self.op.currLine, 
-                                          self.op.xIdx, self.op.yIdx, self.ptIdx)
+                                          self.op.xIdx, self.op.yIdx, self.op.ptIdx)
                # Unique identifier field is not required, default to FID
                # ignore records without valid lat/long; all occ jobs contain these fields
                tmpDict[self.xField] = float(x)
@@ -618,8 +618,8 @@ class ShapeShifter(object):
       @note: This *should* return the modified feature
       """
 #       xName = self.op.fieldNames[self.xField]
-      x = recDict[self.op.fieldNames[self.xField]]
-      y = recDict[self.op.fieldNames[self.yField]]
+      x = recDict[self.op.xFieldName]
+      y = recDict[self.op.yFieldName]
       try:
          # Set LM added fields, geometry, geomwkt
          wkt = 'POINT ({} {})'.format(x, y)
@@ -670,6 +670,7 @@ class ShapeShifter(object):
          for name in recDict.keys():
             # Handles reverse lookup for BISON metadata
             # TODO: make this consistent!!!
+            # For User data, name = fldname
             fldname = self._lookup(name)
             if fldname is not None:
                val = recDict[name]
