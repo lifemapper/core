@@ -57,7 +57,7 @@ def buildSolrDocument(docPairs):
          # Only add the field if the value is not None
          if fVal is not None: 
             docLines.append('      <field name="{}">{}</field>'.format(fName, 
-                                                   fVal.replace('&', '&amp;')))
+                                              str(fVal).replace('&', '&amp;')))
       docLines.append('   </doc>')
    docLines.append('</add>')
    return '\n'.join(docLines)

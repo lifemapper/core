@@ -134,7 +134,8 @@ class PamStats(object):
       
       # Return a matrix
       return Matrix(np.concatenate(statColumns, axis=1), 
-                    headers={'1': sitesHeaders})
+                    headers={'0' : self.pam.getRowHeaders(),
+                             '1': sitesHeaders})
       
    # ...........................
    def getSpeciesStatistics(self):
