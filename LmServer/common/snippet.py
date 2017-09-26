@@ -138,7 +138,8 @@ class SnippetShooter(LMObject):
          outF.write(solrPostStr)
       
       # Shoot snippets
-      postSolrDocument(self.collection, solrPostFilename)
+      if len(self.snippets) > 0:
+         postSolrDocument(self.collection, solrPostFilename)
 
       if deletePostFilename:
          os.remove(solrPostFilename)
