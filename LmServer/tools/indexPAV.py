@@ -63,18 +63,36 @@ def getPostDocument(pav, prj, occ, pam, sciName, pavFname):
    if prj.modTime is not None:
       prjModTime = DateTimeFromMJD(prj.modTime).strftime('%Y-%m-%dT%H:%M:%SZ')
 
+   # Taxonomy fields
+   txKingdom = None
+   txPhylum = None
+   txClass = None
+   txOrder = None
+   txFamily = None
+   txGenus = None
+   
+   try:
+      txKingdom = sciName.kingdom
+      txPhylum = sciName.phylum
+      txClass = sciName.txClass
+      txOrder = sciName.txOrder
+      txFamily = sciName.family
+      txGenus = sciName.genus
+   except:
+      pass
+   
    
    fields = [
       (SOLR_FIELDS.ID, pav.getId()),
       (SOLR_FIELDS.USER_ID, pav.getUserId()),
       (SOLR_FIELDS.DISPLAY_NAME, occ.displayName),
       (SOLR_FIELDS.SQUID, pav.squid),
-      (SOLR_FIELDS.TAXON_KINGDOM, sciName.kingdom),
-      (SOLR_FIELDS.TAXON_PHYLUM, sciName.phylum),
-      (SOLR_FIELDS.TAXON_CLASS, sciName.txClass),
-      (SOLR_FIELDS.TAXON_ORDER, sciName.txOrder),
-      (SOLR_FIELDS.TAXON_FAMILY, sciName.family),
-      (SOLR_FIELDS.TAXON_GENUS, sciName.genus),
+      (SOLR_FIELDS.TAXON_KINGDOM, txKingdom),
+      (SOLR_FIELDS.TAXON_PHYLUM, txPhylum),
+      (SOLR_FIELDS.TAXON_CLASS, txClass),
+      (SOLR_FIELDS.TAXON_ORDER, txOrder),
+      (SOLR_FIELDS.TAXON_FAMILY, txFamily),
+      (SOLR_FIELDS.TAXON_GENUS, txGenus),
       (SOLR_FIELDS.TAXON_SPECIES, sp),
       (SOLR_FIELDS.ALGORITHM_CODE, prj.algorithmCode),
       (SOLR_FIELDS.ALGORITHM_PARAMETERS, prj.dumpAlgorithmParametersAsString()),
