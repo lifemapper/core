@@ -92,6 +92,10 @@ if __name__ == '__main__':
    shooter.addSnippets(occ, args.operation, opTime=modTime, 
                        obj2ident=args.obj2ident, url=url, who=args.who, 
                        agent=args.agent, why=args.why)
-   # Shoot snippets
-   shooter.shootSnippets(solrPostFilename=args.postFilename)
    
+   if len(shooter.snippets) > 0:
+      # Shoot snippets
+      shooter.shootSnippets(solrPostFilename=args.postFilename)
+   else:
+      with open(args.postFilename, 'w') as outF:
+         outF.write('none')
