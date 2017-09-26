@@ -93,25 +93,29 @@ class SnippetShooter(LMObject):
          opTimeStr = DateTimeFromMJD(opTime).strftime('%Y-%m-%dT%H:%M:%SZ')
          
          for feat in obj1.features:
-            catNum = feat.catnum
-            provider = feat.provider
-            col = feat.coll_code
-            ident = '{}:{}:{}'.format(provider, col, catNum)
-            opId = '{}:{}:{}'.format(ident, operation, opTimeStr)
-            self.snippets.append([
-               (SnippetFields.AGENT, agent),
-               (SnippetFields.CATALOG_NUMBER, catNum),
-               (SnippetFields.COLLECTION, col),
-               (SnippetFields.ID, opId),
-               (SnippetFields.IDENT_1, ident),
-               (SnippetFields.IDENT_2, obj2ident),
-               (SnippetFields.OP_TIME, opTimeStr),
-               (SnippetFields.OPERATION, operation),
-               (SnippetFields.PROVIDER, provider),
-               (SnippetFields.URL, url),
-               (SnippetFields.WHO, who),
-               (SnippetFields.WHY, why),
-            ])
+            try:
+               catNum = feat.catnum
+               provider = feat.provider
+               col = feat.coll_code
+               ident = '{}:{}:{}'.format(provider, col, catNum)
+               opId = '{}:{}:{}'.format(ident, operation, opTimeStr)
+               self.snippets.append([
+                  (SnippetFields.AGENT, agent),
+                  (SnippetFields.CATALOG_NUMBER, catNum),
+                  (SnippetFields.COLLECTION, col),
+                  (SnippetFields.ID, opId),
+                  (SnippetFields.IDENT_1, ident),
+                  (SnippetFields.IDENT_2, obj2ident),
+                  (SnippetFields.OP_TIME, opTimeStr),
+                  (SnippetFields.OPERATION, operation),
+                  (SnippetFields.PROVIDER, provider),
+                  (SnippetFields.URL, url),
+                  (SnippetFields.WHO, who),
+                  (SnippetFields.WHY, why),
+               ])
+            except:
+               # If we don't know what to create a snippet for, skip
+               pass
    
    # ............................
    def shootSnippets(self, solrPostFilename=None):
