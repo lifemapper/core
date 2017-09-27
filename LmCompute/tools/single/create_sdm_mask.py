@@ -72,7 +72,7 @@ def getMergedIntersectingEcoregions(mergedPtGeom, ecoregionFilename):
    """
    drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
    ds = drv.Open(ecoregionFilename)
-   lyr = ds.getLayer(0)
+   lyr = ds.GetLayer(0)
    
    regGeom = None
    for feat in lyr:
