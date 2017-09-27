@@ -331,7 +331,7 @@ class Borg(DbPostgresql):
          mtxcolid = self._getColumnValue(row,idxs,['matrixcolumnid']) 
          mtxid = self._getColumnValue(row,idxs,['matrixid']) 
          mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
-         squid = self._getColumnValue(row,idxs,['mtxcolsquid'])
+         squid = self._getColumnValue(row,idxs,['squid'])
          ident = self._getColumnValue(row,idxs,['mtxcolident'])
          mtxcolmeta = self._getColumnValue(row,idxs,['mtxcolmetatadata'])
          intparams = self._getColumnValue(row,idxs,['intersectparams'])
