@@ -114,47 +114,7 @@ Install bugfixes
    * Fix node group permissions on /state/partition1/lmscratch ::  
      # rocks run host compute "chgrp -R lmwriter /state/partition1/lmscratch"
      # rocks run host compute "chmod -R g+ws /state/partition1/lmscratch"
-   
-
-Configure for new data
-----------------------
-#. Compute 
-   * Run seedData with scen package name.  This builds files in alternate data 
-     formats and creates/fills the LmCompute sqlite3 database with file 
-     locations so data does not need to be pulled from the server for 
-     computations ::  
-     # /opt/lifemapper/rocks/bin/seedData
-        
-#. Server 
-   #. Run fillDB bash script (as root) with parameter ini file pointing to
-      alternate env and species data.  When running this way, the script will
-      not create a makeflow record and file ::  
-      # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphy_heuchera_CONUS.boom.ini
-     
-   #. fillDB Results: 
-      * (not in this case) insert a makeflow record and file to run the boomer script.  
-      * output a BOOM config file to be used as input to the boomer script. 
-      * print BOOM config filename to the screen and to the output logfile.
-
-   #. Copy species data into new user dataspace (created by fillDB) ::  
-      # cp /opt/lifemapper/LmTest/data/sdm/heuchera* /share/lm/data/archive/biotaphy/
-     
-   #. You may manually run the boom script as a daemon on the test dataset at 
-      the command prompt for more direct testing.  The test data will boom quickly.  
-      If so, cleanup by deleting the makeflow record from the database and 
-      file from the filesystem.
-      borg=> SELECT * from mfprocess where metadata like '
-      # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphy_heuchera_CONUS.boom.ini
-      # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphy_heuchera_CONUS.boom.ini
-      # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphy_heuchera_CONUS.boom.ini
-      # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphy_heuchera_CONUS.boom.ini
-
-   #. Run boom daemon (as lmwriter) with new test config file ::  
-      # $PYTHON /opt/lifemapper/LmServer/boom/daboom \
-         --config_file=/share/lm/data/archive/biotaphy/biotaphy_heuchera_CONUS.ini \
-         start
-
-   
+      
 Look for Errors
 ---------------
    
@@ -197,8 +157,50 @@ LmServer
    Type "help" for help.
    borg=> select scenariocode, userid from scenario;
 
-Configure new BOOM
-------------------
+Configure for new data
+----------------------
+#. Environmental data
+   #. Server 
+      #. Run getClimateData bash script with scen package name.  This downloads
+         data package and sets permissions ::  
+         # /opt/lifemapper/rocks/bin/getClimateData biotaphyNA
+
+   #. Compute 
+      * Run seedData with scen package name.  This builds files in alternate data 
+        formats and creates/fills the LmCompute sqlite3 database with file 
+        locations so data does not need to be pulled from the server for 
+        computations ::  
+        # /opt/lifemapper/rocks/bin/seedData biotaphyNA
+        
+#. Update Archive (boom) construction parameters
+   #. Server 
+      #. Run fillDB bash script (as root) with archive parameter file pointing to
+         alternate env and species data.  When running this way, the script will
+         not create a makeflow record and file ::  
+         # /opt/lifemapper/rocks/bin/fillDB /opt/lifemapper/LmTest/data/sdm/biotaphy_heuchera_CONUS.boom.ini
+     
+      #. fillDB Results: 
+         * output a BOOM config file to be used as input to the boomer script. 
+         * print BOOM config filename to the screen and to the output logfile.
+         * create a user workspace if needed, place new shapegrid in it, fix permissions
+         * (NOT in this case) insert a makeflow record and file to run the boomer script.  
+
+      #. Copy species data into new user dataspace (created by fillDB) ::  
+         # cp /opt/lifemapper/LmTest/data/sdm/heuchera* /share/lm/data/archive/biotaphy/
+     
+   #. You may manually run the boom script as a daemon on the test dataset at 
+      the command prompt for more direct testing.  The test data will boom quickly.  
+      If so, cleanup by deleting the makeflow record from the database and 
+      file from the filesystem.
+      borg=> SELECT * from mfprocess where metadata like '%GRIM%';
+
+   #. Run boom daemon (as lmwriter) with new test config file ::  
+      # $PYTHON /opt/lifemapper/LmDbServer/boom/daboom.py \
+         --config_file=/share/lm/data/archive/biotaphy/biotaphy_heuchera_CONUS.ini \
+         start
+
+Misc Data Info
+--------------
 #. Make sure there is an environmental data package (<SCEN_PKG>.tar.gz) 
    containing a metadata file (<SCEN_PKG>.py) and a CSV file containing 
    layer file hash values and relative filenames ((<SCEN_PKG>.csv) and 
@@ -210,64 +212,9 @@ Configure new BOOM
    /opt/lifemapper/config/boomInit.sample.ini as "alternate" data input to the 
    fillDB script
 
-#. The follow **Compute** and **Server** instructions in **Install bugfixes** 
-   above.   
-
 #. Either allow the makeflow produced by fillDB to be run automatically, 
    or run the boom daemon as described above. 
   
-Populate archive
-----------------
-#. Download new environmental data from Yeti.  Requirements for assembling 
-   environmental data are at:  `Configure Archive Data`_
-
-   * For now, update config.site.ini with SCENARIO_PACKAGE corresponding to the 
-     basename of a tar.gz file present in the yeti download directory.  The 
-     compressed file must contain scenario metadata with the SCENARIO_PACKAGE 
-     basename and .meta file extension and layer data.  (TODO: Change to accept 
-     an argument) Then call::
-     
-     # rocks/bin/getClimateData
-
-#. Populate the database with inputs for the default archive.  This runs 
-   LmDbServer/boom/initboom.py with no arguments::
-
-     # rocks/bin/fillDB
-   
-   * The initboom script will either accept a boom initialization configuration  
-     file (example in LmServer/boom/boomInit.sample.ini) or pick up default 
-     arguments from config.lmserver.ini and config.site.ini.
-
-   * The configuration will find either:
-   
-     * SCENARIO_PACKAGE for scenario creation. SCENARIO_PACKAGE indicating a 
-       file ENV_DATA_PATH/SCENARIO_PACKAGE.py describing and pointing to local 
-       data.
-     * or SCENARIO_PACKAGE_MODEL_SCENARIO and 
-       SCENARIO_PACKAGE_PROJECTION_SCENARIOS, with codes for scenarios that 
-       are already described in the database.
-       
-   * The boominput script will:
-    
-     * assemble all of the metadata and populate the database with inputs for a 
-       BOOM process.  
-     * build and write a shapegrid for a "Global PAM"
-     * write a configuration file to the user data space with all of the 
-       designated or calculated metadata for the BOOM process
-       
-   * Additional values will be pulled from the scenario package metadata 
-     (<SCENARIO_PACKAGE>.py) file included in <SCENARIO_PACKAGE>.tar.gz.
-
-   * Values for these data and this archive will be written to a new config 
-     file named <SCENARIO_PACKAGE.ini> and placed in the user's (PUBLIC_USER
-     or ARCHIVE_USER) data space (/share/lm/data/archive/user/)
-
-#. Convert and catalog data for LmCompute.  The script uses the  
-   SCENARIO_PACKAGE value from config.lmserver.ini, so override it 
-   in config.site.ini if you have added new data. ::
-
-   # /opt/lifemapper/rocks/bin/seedData
-
 #. Data value/location requirements :  
 
    * to use a unique userId/archiveName combination.  
