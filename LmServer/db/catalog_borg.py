@@ -332,7 +332,7 @@ class Borg(DbPostgresql):
          mtxid = self._getColumnValue(row,idxs,['matrixid']) 
          mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
          squid = self._getColumnValue(row,idxs,['squid'])
-         ident = self._getColumnValue(row,idxs,['mtxcolident'])
+         ident = self._getColumnValue(row,idxs,['ident'])
          mtxcolmeta = self._getColumnValue(row,idxs,['mtxcolmetatadata'])
          intparams = self._getColumnValue(row,idxs,['intersectparams'])
          mtxcolstat = self._getColumnValue(row,idxs,['mtxcolstatus']) 
