@@ -192,7 +192,7 @@ def formatOccurrenceSet(occ):
    occDict['speciesName'] = occ.displayName
    occDict['squid'] = occ.squid
    if len(occ.features) > 0:
-      occDict['features'] = occ.features
+      occDict['features'] = [f.getAttributes() for f in occ.features]
    
    return occDict
 
