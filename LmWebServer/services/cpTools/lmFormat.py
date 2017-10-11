@@ -107,13 +107,13 @@ def shootSnippets(obj, operation, formatString):
    @summary: Attempt to shoot snippets for downloads / viewings / etc
    """
    # Only shoot public data snippets
-   if obj.getUserId() == PUBLIC_USER:
-      try:
+   try:
+      if obj.getUserId() == PUBLIC_USER:
          shooter = SnippetShooter()
          shooter.addSnippets(obj, operation, 
                              url='{}/{}'.format(obj.metadataUrl, formatString), 
                              who='user', agent='webService', why='request')
          shooter.shootSnippets()
-      except:
-         pass
+   except:
+      pass
       
