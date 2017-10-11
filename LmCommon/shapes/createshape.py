@@ -617,9 +617,13 @@ class ShapeShifter(object):
       """
       @note: This *should* return the modified feature
       """
-#       xName = self.op.fieldNames[self.xField]
-      x = recDict[self.op.xFieldName]
-      y = recDict[self.op.yFieldName]
+      try:
+         x = recDict[self.op.fieldNames]
+         y = recDict[self.op.fieldNames]
+      except:
+         x = recDict[self.xField]
+         y = recDict[self.yField]
+         
       try:
          # Set LM added fields, geometry, geomwkt
          wkt = 'POINT ({} {})'.format(x, y)
