@@ -113,10 +113,12 @@ def _formatObject(obj):
    """
    cherrypy.response.headers['Content-Type'] = LMFormat.GEO_JSON.getMimeType()
    if isinstance(obj, (OccurrenceLayer, ShapeGrid, Vector)):
+      cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}.geojson"'.format(obj.name)
       return geoJsonify(obj.getDLocation())
    elif isinstance(obj, LMMatrix):
       sg = obj.getGridset().getShapegrid()
       mtx = Matrix.load(obj.getDLocation())
+      cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="mtx_{}.geojson"'.format(obj.getId())
       return geoJsonify(sg.getDLocation(), matrix=mtx, mtxJoinAttrib=0)
    else:
       raise TypeError, "Cannot format object of type: {}".format(type(obj))
