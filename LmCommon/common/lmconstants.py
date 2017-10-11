@@ -118,6 +118,7 @@ class LMFormat:
    GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff', default=True)
    HFA = FileFormat('.img', 'image/octet-stream', driver='HFA')
    JSON = FileFormat('.json', 'application/json')
+   GEO_JSON = FileFormat('.geojson', 'application/vnd.geo+json')
    KML = FileFormat('.kml', 'application/vnd.google-earth.kml+xml')
    LOG = FileFormat('.log', 'text/plain')
    MAKEFLOW = FileFormat('.mf', 'text/plain')
@@ -276,12 +277,13 @@ class LMFormat:
 # SHAPEFILE_MAX_STRINGSIZE = 255
 
 # Web object interfaces
-CSV_INTERFACE = "csv"
-GEOTIFF_INTERFACE = "gtiff"
-JSON_INTERFACE = "json"
-KML_INTERFACE = "kml"
-OGC_INTERFACE = "ogc"
-SHAPEFILE_INTERFACE = "shapefile"
+CSV_INTERFACE = 'csv'
+GEO_JSON_INTERFACE = 'geojson'
+GEOTIFF_INTERFACE = 'gtiff'
+JSON_INTERFACE = 'json'
+KML_INTERFACE = 'kml'
+OGC_INTERFACE = 'ogc'
+SHAPEFILE_INTERFACE = 'shapefile'
 
 # .............................................................................
 # .                               Job constants                               .
