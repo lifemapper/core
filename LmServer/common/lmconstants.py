@@ -163,6 +163,8 @@ class ProcessTool:
                jr = 'encode_hypotheses'
             elif ptype == ProcessType.ENCODE_PHYLOGENY:
                jr = 'encode_phylogeny'
+            elif ptype == ProcessType.BUILD_ANC_PAM:
+               jr = 'create_ancestral_pam'
          elif ProcessType.isRandom(ptype):
             if ptype == ProcessType.RAD_GRADY:
                jr = 'grady_randomize'

@@ -840,6 +840,7 @@ class ProcessType:
    ENCODE_HYPOTHESES = 350
    ENCODE_PHYLOGENY = 360
    SQUID_INC = 365
+   BUILD_ANC_PAM = 370
    # Randomize
    RAD_SWAP = 331
    RAD_SPLOTCH = 332
@@ -922,14 +923,15 @@ class ProcessType:
                    ProcessType.MCPA_RANDOM, ProcessType.ENCODE_HYPOTHESES,
                    ProcessType.ENCODE_PHYLOGENY, ProcessType.MCPA_ASSEMBLE,
                    ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER, 
-                   ProcessType.OCC_SPLITTER]:
+                   ProcessType.OCC_SPLITTER, ProcessType.BUILD_ANC_PAM]:
          return True
       return False
    
    @staticmethod
    def isRADPrep(ptype):
       if ptype in [ProcessType.RAD_BUILDGRID, ProcessType.RAD_CALCULATE, 
-              ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]:
+              ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY,
+              ProcessType.BUILD_ANC_PAM]:
          return True
       return False
    
@@ -946,7 +948,7 @@ class ProcessType:
                    ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
                    ProcessType.RAD_GRADY, ProcessType.MCPA_ASSEMBLE,
                    ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
-                   ProcessType.MCPA_RANDOM]:
+                   ProcessType.MCPA_RANDOM, ProcessType.BUILD_ANC_PAM]:
          return True
       return False  
 
