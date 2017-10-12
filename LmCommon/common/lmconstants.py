@@ -156,7 +156,7 @@ class LMFormat:
    
    @staticmethod
    def OGRFormats():
-      return [LMFormat.SHAPE, LMFormat.CSV]
+      return [LMFormat.SHAPE, LMFormat.CSV, LMFormat.GEO_JSON]
 
    @staticmethod
    def getDefaultOGR():
@@ -177,11 +177,12 @@ class LMFormat:
 
    @staticmethod
    def getFormatByExtension(ext):
-      for ff in (LMFormat.ASCII, LMFormat.CSV, LMFormat.GTIFF, LMFormat.HFA, 
-                 LMFormat.JSON, LMFormat.KML, LMFormat.LOG, LMFormat.MAKEFLOW, 
-                 LMFormat.MAP, LMFormat.MXE, LMFormat.NEWICK, LMFormat.NUMPY, 
-                 LMFormat.PICKLE, LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, 
-                 LMFormat.TXT, LMFormat.XML, LMFormat.ZIP):
+      for ff in (LMFormat.ASCII, LMFormat.CSV, LMFormat.GEO_JSON, 
+                 LMFormat.GTIFF, LMFormat.HFA, LMFormat.JSON, LMFormat.KML, 
+                 LMFormat.LOG, LMFormat.MAKEFLOW, LMFormat.MAP, LMFormat.MXE, 
+                 LMFormat.NEWICK, LMFormat.NUMPY, LMFormat.PICKLE, 
+                 LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, LMFormat.TXT, 
+                 LMFormat.XML, LMFormat.ZIP):
          if ext == ff.ext:
             return ff
       return None
@@ -237,7 +238,7 @@ class LMFormat:
 
    @staticmethod
    def isJSON(ext):
-      if ext == LMFormat.JSON.ext:
+      if ext in (LMFormat.GEO_JSON.ext, LMFormat.JSON.ext):
          return True
       return False
    
@@ -304,6 +305,7 @@ class MatrixType:
    PAM = 1
    GRIM = 2
    BIOGEO_HYPOTHESES = 3
+   ANC_PAM = 4
    ROLLING_PAM = 10
    # OUTPUTS
    OBSERVED_CALC = 101

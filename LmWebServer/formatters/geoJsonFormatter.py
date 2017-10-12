@@ -29,7 +29,7 @@ import cherrypy
 import json
 import ogr
 
-from LmCommon.common.lmconstants import LMFormat
+from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmCommon.common.matrix import Matrix
 
 from LmServer.base.layer2 import Vector
@@ -116,10 +116,16 @@ def _formatObject(obj):
       cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}.geojson"'.format(obj.name)
       return geoJsonify(obj.getDLocation())
    elif isinstance(obj, LMMatrix):
-      sg = obj.getGridset().getShapegrid()
-      mtx = Matrix.load(obj.getDLocation())
-      cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="mtx_{}.geojson"'.format(obj.getId())
-      return geoJsonify(sg.getDLocation(), matrix=mtx, mtxJoinAttrib=0)
+      if obj.matrixType in (MatrixType.PAM, MatrixType.ROLLING_PAM, 
+                            MatrixType.ANC_PAM, MatrixType.SITES_COV_OBSERVED, 
+                            MatrixType.SITES_COV_RANDOM, 
+                            MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM):
+         sg = obj.getGridset().getShapegrid()
+         mtx = Matrix.load(obj.getDLocation())
+         cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="mtx_{}.geojson"'.format(obj.getId())
+         return geoJsonify(sg.getDLocation(), matrix=mtx, mtxJoinAttrib=0)
+      else:
+         raise TypeError, 'Cannot format matrix type: {}'.format(obj.matrixType)
    else:
       raise TypeError, "Cannot format object of type: {}".format(type(obj))
 
