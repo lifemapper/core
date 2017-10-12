@@ -748,7 +748,6 @@ DEBUG_USER_PREFIX = 'debug_'
 
 HINT_PREFIX = 'hint'
 
-CT_USER = 'changeThinking'
 # SPECIES LAYER STYLES FOR CHANGETHINKING
 CT_SPECIES_KEYWORD = 'NatureServe'
 CT_SPECIES_LAYER_STYLES  = {'blue':  '           SYMBOL \'hatch\'\n' +

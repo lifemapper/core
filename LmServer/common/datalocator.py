@@ -219,7 +219,7 @@ class EarlJr(LMObject):
          nameparts.append(FileFix.PREFIX[ftype])
          
       # MAPs
-      if ftype == LMFileType.SCENARIO_MAP:
+      if ftype in (LMFileType.SCENARIO_MAP, LMFileType.RAD_MAP):
          nameparts.append(usr)
       # User Maps for unconnected user layers (not SCENARIO_MAP or SDM_MAP)
       elif ftype == LMFileType.OTHER_MAP:
