@@ -127,8 +127,8 @@ Look for Errors
    runs) and will be useful if the script must be re-run manually for testing.
 #. **Clean compute nodes**  
    
-LmCompute
-~~~~~~~~~
+Check LmCompute
+~~~~~~~~~~~~~~~
 
 #. Check LmCompute logfiles
 
@@ -138,8 +138,8 @@ LmCompute
      * installComputeCronJobs.log
      * seedData.log (seedData must be run manually by user after reboot)
 
-LmServer
-~~~~~~~~
+Check LmServer
+~~~~~~~~~~~~~~
 
 #. Check LmServer logfiles
 
@@ -157,20 +157,30 @@ LmServer
    Type "help" for help.
    borg=> select scenariocode, userid from scenario;
 
+Start Archive Booming
+~~~~~~~~~~~~~~~~~~~~~
+#. Start daboom daemon and run for awhile to test operation::
+
+   [root@notyeti-193 lifemapper]# su - lmwriter
+   [lmwriter@notyeti-193 lifemapper]$ cd /opt/lifemapper
+   [lmwriter@notyeti-193 lifemapper]$ $PYTHON LmDbServer/boom/daboom.py \
+          --config_file=/state/partition1/lm/data/archive/kubi/BOOM_Archive.ini \
+          start
+
 Configure for new data
 ----------------------
 #. Environmental data
    #. Server 
       #. Run getClimateData bash script with scen package name.  This downloads
          data package and sets permissions ::  
-         # /opt/lifemapper/rocks/bin/getClimateData biotaphyNA
+         # /opt/lifemapper/rocks/bin/getClimateData biotaphyCONUS
 
    #. Compute 
       * Run seedData with scen package name.  This builds files in alternate data 
         formats and creates/fills the LmCompute sqlite3 database with file 
         locations so data does not need to be pulled from the server for 
         computations ::  
-        # /opt/lifemapper/rocks/bin/seedData biotaphyNA
+        # /opt/lifemapper/rocks/bin/seedData biotaphyCONUS
         
 #. Update Archive (boom) construction parameters
    #. Server 
@@ -198,6 +208,15 @@ Configure for new data
       # $PYTHON /opt/lifemapper/LmDbServer/boom/daboom.py \
          --config_file=/share/lm/data/archive/biotaphy/biotaphy_heuchera_CONUS.ini \
          start
+         
+Clear user data
+---------------
+#. Delete user data from database::
+      borg=> SELECT * from lm_clearUserData(<username>)
+
+#. Delete user data from filesystem::
+      # rm -rf /share/lm/data/archive/<username>
+
 
 Misc Data Info
 --------------

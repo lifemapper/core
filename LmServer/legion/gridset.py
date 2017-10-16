@@ -31,8 +31,10 @@ from types import StringType
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import MatrixType, JobStatus, ProcessType
+from LmServer.base.lmmap import LMMap
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.lmconstants import LMFileType, LMServiceType, ProcessTool
+from LmServer.common.lmconstants import (LMFileType, LMServiceType, ProcessTool, 
+                                         ID_PLACEHOLDER)
 from LmServer.legion.lmmatrix import LMMatrix                                  
 from LmServer.legion.cmd import MfRule
 
@@ -42,7 +44,7 @@ NUM_RAND_PER_GROUP = 10
 
 
 # .............................................................................
-class Gridset(ServiceObject):
+class Gridset(LMMap, ServiceObject):
    """
    The Gridset class contains all of the information for one view (extent and 
    resolution) of a RAD experiment.  
@@ -78,9 +80,15 @@ class Gridset(ServiceObject):
          elif epsgcode != shapeGrid.epsgcode:
             raise LMError('Gridset EPSG {} does not match Shapegrid EPSG {}'
                           .format(self._epsg, shapeGrid.epsgcode))
-
+         bbox = shapeGrid.bbox
+         mapunits = shapeGrid.mapUnits
+            
       ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS, 
                              metadataUrl=metadataUrl, modTime=modTime)
+      title = 'Matrix map for Gridset {}'.format(name)
+      self._setMapPrefix()
+      LMMap.__init__(self, name, title, self._mapPrefix, 
+                     epsgcode, bbox, mapunits, mapType=LMFileType.OTHER_MAP)
       # TODO: Aimee, do you want to move this somewhere else?
       self._dlocation = None
       self.name = name
@@ -116,6 +124,7 @@ class Gridset(ServiceObject):
 
    epsgcode = property(_getEPSG, _setEPSG)
       
+# ...............................................
    @property
    def treeId(self):
       try:
@@ -123,6 +132,32 @@ class Gridset(ServiceObject):
       except:
          return None
          
+# ...............................................
+   def _createMapPrefix(self):
+      """
+      @summary: Construct the endpoint of a Lifemapper WMS URL for 
+                this object.
+      @note: Uses the metatadataUrl for this object, plus 'ogc' format, 
+             map=<mapname>, and key/value pairs.  
+      @note: If the object has not yet been inserted into the database, a 
+             placeholder is used until replacement after database insertion.
+      """
+      grdid = self.getId()
+      if grdid is None:
+         grdid = ID_PLACEHOLDER
+      mapprefix = self._earlJr.constructMapPrefixNew(urlprefix=self.metadataUrl,
+                              ftype=LMFileType.RAD_MAP, mapname=self.mapName, 
+                              usr=self._userId)
+      return mapprefix
+   
+   def _setMapPrefix(self):
+      mapprefix = self._createMapPrefix()
+      self._mapPrefix = mapprefix
+          
+   @property
+   def mapPrefix(self): 
+      return self._mapPrefix
+
 # .............................................................................
 # Private methods
 # .............................................................................
@@ -652,6 +687,9 @@ class Gridset(ServiceObject):
                if mtx.getId() not in existingIds:
                   self._matrices.append(mtx)
                                        
+   def getMatrices(self, mtypes):
+      return self._matrices
+
    def _getMatrixTypes(self, mtypes):
       if type(mtypes) is int:
          mtypes = [mtypes]
@@ -727,14 +765,7 @@ class Gridset(ServiceObject):
                if shpLyr.CreateField(fldDefn) != 0:
                   raise LMError('CreateField failed for %s in %s' 
                                 % (fldname, shpfilename))             
-         
-#          # Debug only
-#          featdef = shpLyr.GetLayerDefn()
-#          featcount = shpLyr.GetFeatureCount()
-#          for i in range(featdef.GetFieldCount()):
-#             fld = featdef.GetFieldDefn(i)
-#             print '%s  %d  %d' % (fld.name, fld.type, fld.precision)  
-#          print  "done with diagnostic loop"
+
          # For each site/feature, fill with value from matrix
          currFeat = shpLyr.GetNextFeature()
          sitesKeys = sorted(self.getSitesPresent().keys())
@@ -770,6 +801,11 @@ class Gridset(ServiceObject):
                                                                   str(e))
       return success
       
+   # ...............................................
+   def writeMap(self, mapfilename):
+      LMMap.writeMap(self, mapfilename, shpGrid=self._shapeGrid, 
+                     matrices=self._matrices)
+
    # ...............................................
    def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
       """
