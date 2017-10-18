@@ -230,7 +230,7 @@ class StockpileCommand(_LmCommand):
       """
       _LmCommand.__init__(self)
       
-      self.args = [pType, objectId, successFilename]
+      self.args = [str(pType), str(objectId), successFilename]
       self.outputs.append(successFilename)
       
       if isinstance(objOutputFilenames, list):
