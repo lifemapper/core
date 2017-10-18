@@ -720,7 +720,7 @@ class SDMProjection(_ProjectionType, Raster):
          
          touchAndCopyCmd = ChainCommand([touchCmd, cpCmd])
          
-         rules.append(touchAndCopyCmd.getMakeflowRule())
+         rules.append(touchAndCopyCmd.getMakeflowRule(local=True))
       else:
          # Generate the model
          modelRules = self._computeMyModel(workDir=workDir)
