@@ -70,3 +70,6 @@ LmDbServer/dbsetup/defineDBTables.sql
 LmDbServer/dbsetup/runAllSQLScripts.sql
 LmDbServer/dbsetup/runUpdateDBScripts.sql
 LmServer/db/connect.py.orig
+
+# Mac
+.DS_Store
