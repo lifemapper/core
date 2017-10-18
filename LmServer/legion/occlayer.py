@@ -25,16 +25,22 @@ import mx.DateTime
 import os
 from osgeo import ogr
 
+from LmBackend.command.common import ChainCommand, SystemCommand
+from LmBackend.command.server import (LmTouchCommand, ShootSnippetsCommand,
+                                      StockpileCommand)
+from LmBackend.command.single import (BisonPointsCommand, GbifPointsCommand,
+                                      IdigbioPointsCommand, UserPointsCommand)
 from LmBackend.common.lmobj import LMError
+
 from LmCommon.common.lmconstants import (LM_NAMESPACE, LMFormat, 
                                          ProcessType, JobStatus)
+
 from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
-from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, 
-                  OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
-                  LMServiceType, ProcessTool)
+from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, 
+                                         LMFileType, LMServiceType, 
+                                         OccurrenceFieldNames)
 from LmServer.common.localconstants import POINT_COUNT_MAX
-from LmServer.legion.cmd import MfRule
 from LmServer.common.lmconstants import SnippetOperations
 
 # .............................................................................
@@ -628,7 +634,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 computation.  Note in code
       """
       rules = []
-      deps = None
       if workDir is None:
          workDir = '' # So path joins work
       
@@ -641,80 +646,74 @@ class OccurrenceLayer(OccurrenceType, Vector):
       
       # If already completed
       if JobStatus.finished(self.status):
-         # Get the first target file
-         touchCopyArgs = ['LOCAL', '$PYTHON',
-                          ProcessTool.get(ProcessType.TOUCH),
-                          os.path.join(targetDir, 'touch.out'),
-                          '; ',
-                          'cp',
-                          '{}*'.format(os.path.splitext(self.getDLocation())[0]),
-                          targetDir ]
-         touchCopyCmd = ' '.join(touchCopyArgs)
-         rules.append(MfRule(touchCopyCmd, targetFiles))
+         #touch directory then copy file
+         touchCmd = LmTouchCommand(os.path.join(targetDir, 'touch.out'))
+         
+         cpCmd = SystemCommand('cp', 
+                               '{}* {}'.format(
+                                 os.path.splitext(self.getDLocation())[0], 
+                                 targetDir),
+                               outputs=targetFiles)
+         
+         touchAndCopyCmd = ChainCommand([touchCmd, cpCmd])
+         
+         rules.append(touchAndCopyCmd.getMakeflowRule())
       
       else:
          # Compute everything
-         deps = []
-         cmdArgs = ['LOCAL', '$PYTHON',
-                    ProcessTool.get(self.processType)]
-      
-         # TODO: This is a hack using canonical name instead of GBIFTaxonId for iDigBio
-         if self.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
+         
+         outFile = os.path.join(targetDir, outFileBasename)
+         bigFile = os.path.join(targetDir, bigFileBasename)
+         
+         if self.processType == ProcessType.BISON_TAXA_OCCURRENCE:
+            occCmd = BisonPointsCommand(self.getRawDLocation(), outFile, 
+                                        bigFile, POINT_COUNT_MAX)
+         elif self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
+            occCmd = GbifPointsCommand(self.getRawDLocation(), self.queryCount, 
+                                       outFile, bigFile, POINT_COUNT_MAX)
+         elif self.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
+            # TODO: This is a hack using canoncial name instead of GBIFTaxonId
+            #          for iDigBio
             name = self.getScientificName().canonicalName
-            rawdloc = '\"{}\"'.format(name)
-         else:
-            rawdloc = self.getRawDLocation()
-         cmdArgs.append(rawdloc)
-         
-         # Process type specific arguments
-         # NOTE: Dependencies are commented out because Makeflow will not allow
-         #          absolute paths
-         
-         if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
-            cmdArgs.append(str(self.queryCount))
-            #deps.append(self.getRawDLocation())
-            
-         # Read user-supplied metadata into string
+            occCmd = IdigbioPointsCommand('\"{}\"'.format(name),
+                                          outFile, bigFile, POINT_COUNT_MAX)
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
-            cmdArgs.append(self.rawMetaDLocation)
-            #deps.extend([self.getRawDLocation(), self.rawMetaDLocation])
-
-         cmdArgs.extend([
-            os.path.join(targetDir, outFileBasename),
-            os.path.join(targetDir, bigFileBasename),
-            str(POINT_COUNT_MAX)
-         ])
-
-         cmd = ' '.join(cmdArgs)
+            occCmd = UserPointsCommand(self.getRawDLocation(),
+                                       self.rawMetaDLocation, outFile, bigFile, 
+                                       POINT_COUNT_MAX)
+         else:
+            raise Exception, 'Unknown point process type: {}'.format(
+                                                              self.processType)
          
-         # NOTE: Don't add big file to targets since it may not be created
-         rules.append(MfRule(cmd, targetFiles, dependencies=deps))
-      
-         status = None
-         uRule = self.getUpdateRule(self.getId(), status, 
-                                   os.path.join(targetDir, 
-                                                'occ_{}'.format(self.getId())), 
-                                   targetFiles)
-      
-         rules.append(uRule)
+         # Inputs - We don't list dependencies because we can't use absolute
+         #             paths with Makeflow, we could move the raw files to the
+         #             workspace first if we really wanted to
+         occCmd.outputs.extend(targetFiles)
+         # NOTE: Don't add big file outputs to outputs since they may not be
+         #          created
+         rules.append(occCmd.getMakeflowRule(local=True))
+
+
+         # Rule for Test/Update 
+         successFname = os.path.join(targetDir, 
+                                     'occ_{}.success'.format(self.getId()))
+         
+         spCmd = StockpileCommand(self.processType, self.getId(), successFname,
+                                  targetFiles)
+         rules.append(spCmd.getMakeflowRule(local=True))
          
          # Snippets
          snippetPostFilename = os.path.join(targetDir, 
-                                   'snippets_create_{}.xml'.format(self.getId()))
-         snippetCmd = ' '.join([
-            'LOCAL',
-            '$PYTHON',
-            ProcessTool.get(ProcessType.SNIPPET_POST),
-            '-o2ident lm-occ-{}'.format(self.getId()),
-            '-url {}'.format(self.metadataUrl),
-            '-who Lifemapper',
-            '-agent LmCompute',
-            str(self.getId()),
-            SnippetOperations.ADDED_TO,
-            snippetPostFilename
-         ])
-         rules.append(MfRule(snippetCmd, [snippetPostFilename], 
-                             dependencies=[os.path.join(targetDir, 
-                                      'occ_{}.success'.format(self.getId()))]))
+                                 'snippets_create_{}.xml'.format(self.getId()))
          
+         snippetCmd = ShootSnippetsCommand(self._occurrenceSet.getId(),
+                                           SnippetOperations.ADDED_TO,
+                                           snippetPostFilename,
+                                           o2ident='lm-occ-{}'.format(self.getId()),
+                                           url=self.metadataUrl,
+                                           who='Lifemapper',
+                                           agent='LmCompute')
+         snippetCmd.inputs.append(successFname)
+         rules.append(snippetCmd.getMakeflowRule(local=True))
+
       return rules
