@@ -657,7 +657,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
          touchAndCopyCmd = ChainCommand([touchCmd, cpCmd])
          
-         rules.append(touchAndCopyCmd.getMakeflowRule())
+         rules.append(touchAndCopyCmd.getMakeflowRule(local=True))
       
       else:
          # Compute everything
