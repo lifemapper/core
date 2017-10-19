@@ -21,15 +21,22 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import glob
 import mx.DateTime
 import os
 
+from LmBackend.command.common import SystemCommand, ChainCommand
+from LmBackend.command.server import (IndexPAVCommand, LmTouchCommand, 
+                                      StockpileCommand)
+from LmBackend.command.single import (GrimRasterCommand, 
+                                IntersectVectorCommand, IntersectRasterCommand)
+
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmCommon.common.matrix import Matrix
+
 from LmServer.base.layer2 import _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import LMServiceType, ProcessTool
-from LmServer.legion.cmd import MfRule
+from LmServer.common.lmconstants import LMServiceType
 
 # .............................................................................
 # .............................................................................
@@ -184,7 +191,6 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                                    os.path.basename(self.layer.getDLocation()))
             
          # Layer input
-         dependentFiles = [inputLayerFname]
          try:
             status = self.layer.status
          except:
@@ -195,85 +201,93 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             rules.extend(lyrRules)
          else:
             outfname = os.path.join(os.path.dirname(inputLayerFname), 'touch.out')
-            cmdArgs = ['LOCAL', 
-                       '$PYTHON',
-                       ProcessTool.get(ProcessType.TOUCH), 
-                       outfname, 
-                       ';'
-                       'cp',
-                       self.layer.getDLocation(), 
-                       inputLayerFname]
-            touchAndCopyCmd = ' '.join(cmdArgs)
-            touchAndCopyRule = MfRule(touchAndCopyCmd, [inputLayerFname])
-            rules.append(touchAndCopyRule)
+            
+            touchCmd = LmTouchCommand(outfname)
+            
+            # Check for vector layers
+            if self.layer.ogrType is not None:
+               origVectorFiles = glob.glob('{}*'.format(
+                  os.path.splitext(self.layer.getDLocation())[0]))
+               vectorFiles = [os.path.join(
+                    targetDir, os.path.basename(fn)) for fn in origVectorFiles]
+
+               cpCmd = SystemCommand('cp', ' '.join([self.layer.getDLocation(), 
+                                                  inputLayerFname]), 
+                                     inputs=origVectorFiles, 
+                                     outputs=vectorFiles)
+            else:
+               cpCmd = SystemCommand('cp', ' '.join([self.layer.getDLocation(), 
+                                                  inputLayerFname]), 
+                                     inputs=[self.layer.getDLocation()], 
+                                     outputs=[inputLayerFname])
+
+            touchAndCopyCmd = ChainCommand([touchCmd, cpCmd])
+            rules.append(touchAndCopyCmd.getMakeflowRule(local=True))
             
          shpgrdRules = self.shapegrid.computeMe(workDir=workDir)
          rules.extend(shpgrdRules)
          
-         dependentFiles.extend(self.shapegrid.getTargetFiles(workDir=workDir))
-       
-         options = ''
-         if self.squid is not None:
-            options = "--squid {0}".format(self.squid)
-         elif self.ident is not None:
-            options = "--ident {0}".format(self.ident)
-
-         pavFname = os.path.join(targetDir, self.getTargetFilename())
          
-         if ProcessType.isIntersect(self.processType):
-            if self.processType == ProcessType.INTERSECT_RASTER_GRIM:
-               if self.intersectParams[self.INTERSECT_PARAM_WEIGHTED_MEAN]:
-                  # Default option for numerical data
-                  intersectArgs = []
-               else:
-                  # For classified data
-                  intersectArgs = [str(self.intersectParams
-                                       [self.INTERSECT_PARAM_MIN_PERCENT])]
-            else:
-               intersectArgs = [
-                  str(self.intersectParams[self.INTERSECT_PARAM_MIN_PRESENCE]),
-                  str(self.intersectParams[self.INTERSECT_PARAM_MAX_PRESENCE]),
-                  str(self.intersectParams[self.INTERSECT_PARAM_MIN_PERCENT])]
-
          shapegridFile = os.path.join(workDir, 
                     os.path.splitext(self.shapegrid.getRelativeDLocation())[0],
                     os.path.basename(self.shapegrid.getDLocation()))
+
+         pavFname = os.path.join(targetDir, self.getTargetFilename())
+
          
-         cmdArguments = ['$PYTHON', 
-                         ProcessTool.get(self.processType),
-                         options,
-                         shapegridFile,  
-                         inputLayerFname,
-                         pavFname,
-                         str(self.layer.resolution)]
-         cmdArguments.extend(intersectArgs)
-         cmd = ' '.join(cmdArguments)
-         rules.append(MfRule(cmd, [pavFname], dependencies=dependentFiles))
+         if self.processType == ProcessType.INTERSECT_RASTER_GRIM:
+            try:
+               minPercent = self.intersectParams[
+                  self.INTERSECT_PARAM_MIN_PERCENT]
+            except:
+               minPercent = None
+               
+            intCmd = GrimRasterCommand(shapegridFile, inputLayerFname,
+                                       pavFname, self.layer.resolution,
+                                       minPercent=minPercent, ident=self.ident)
+         elif self.layer.ogrType is not None:
+            intCmd = IntersectVectorCommand(shapegridFile, inputLayerFname,
+                              pavFname, 
+                              self.intersectParams[
+                                 self.INTERSECT_PARAM_VAL_NAME],
+                              self.intersectParams[
+                                 self.INTERSECT_PARAM_MIN_PRESENCE],
+                              self.intersectParams[
+                                 self.INTERSECT_PARAM_MAX_PRESENCE],
+                              self.intersectParams[
+                                 self.INTERSECT_PARAM_MIN_PERCENT],
+                              squid=self.squid)
+            self.inputs.extend(vectorFiles)
+            
+         else:
+            intCmd = IntersectRasterCommand(shapegridFile, inputLayerFname,
+                              pavFname, self.layer.resolution,
+                              self.intersectParams[
+                                 self.INTERSECT_PARAM_MIN_PRESENCE],
+                              self.intersectParams[
+                                 self.INTERSECT_PARAM_MAX_PRESENCE],
+                              self.intersectParams[
+                                 self.INTERSECT_PARAM_MIN_PERCENT],
+                              squid=self.squid)
+            
+         intCmd.inputs.extend(self.shapegrid.getTargetFiles(workDir=workDir))
+         rules.append(intCmd.getMakeflowRule())
          
          # Rule for Test/Update 
-         status = None
-         basename = os.path.join(targetDir, 'mtxcol_{}'.format(self.getId()))
-         uRule = self.getUpdateRule(self.getId(), status, basename, [pavFname])
-         rules.append(uRule)
+         successFilename = os.path.join(targetDir, 
+                                    'mtxcol_{}.success'.format(self.getId()))
+         spCmd = StockpileCommand(self.processType, self.getId(), 
+                                  successFilename, [pavFname])
+         rules.append(spCmd.getMakeflowRule(local=True))
          
          # TODO: Post to Solr
          if self.postToSolr:
             postXmlFilename = os.path.join(targetDir, 
                                    'mtxcol_solr_{}.xml'.format(self.getId()))
-            solrPostArgs = [
-               'LOCAL',
-               '$PYTHON',
-               ProcessTool.get(ProcessType.SOLR_POST),
-               pavFname,
-               str(self.getId()), # PAV id
-               str(self.layer.getId()), # Projection id
-               str(self.parentId), # PAM id
-               postXmlFilename
-            ]
-            solrCmd = ' '.join(solrPostArgs)
-            solrRule = MfRule(solrCmd, [postXmlFilename], 
-                              dependencies=[pavFname])
-            rules.append(solrRule)
+            solrCmd = IndexPAVCommand(pavFname, self.getId(), 
+                                      self.layer.getId(), self.parentId, 
+                                      postXmlFilename)
+            rules.append(solrCmd.getMakeflowRule(local=True))
       
       return rules
 
