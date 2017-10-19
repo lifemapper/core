@@ -43,7 +43,7 @@ if __name__ == "__main__":
       description="This script encodes a biogeographic hypothesis shapegrid") 
 
    parser.add_argument('-e', '--eventField', dest='eventField', type=str,
-                    help="Use this field in the shapegrid to determine events")
+                    help="Use this field in the layer to determine events")
    parser.add_argument('shapegridFn', type=str, 
                  help="The file location of the shapegrid to use for encoding")
    parser.add_argument("outFn", type=str, 
