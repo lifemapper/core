@@ -24,33 +24,36 @@
 import ConfigParser
 import mx.DateTime
 import os
-from osgeo.ogr import wkbPolygon
 import time
 from types import IntType
 
+from LmBackend.command.boom import BoomerCommand
 from LmBackend.common.lmobj import LMError, LMObject
+
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
-   ProcessType, JobStatus, MatrixType, SERVER_PIPELINE_HEADING, 
-   SERVER_BOOM_HEADING, DEFAULT_MAPUNITS, DEFAULT_EPSG)
+from LmCommon.common.lmconstants import (DEFAULT_EPSG, DEFAULT_MAPUNITS, 
+                     DEFAULT_POST_USER, JobStatus, LMFormat, MatrixType, 
+                     ProcessType, SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource,
+
+from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE, 
                                            TNCMetadata)
-from LmDbServer.common.localconstants import (GBIF_TAXONOMY_FILENAME, 
-                                              GBIF_PROVIDER_FILENAME)
+from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
+                                              GBIF_TAXONOMY_FILENAME)
+
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
-         GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
-         DEFAULT_EMAIL_POSTFIX, Priority, ProcessTool)
-from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.lmconstants import (Algorithms, ARCHIVE_KEYWORD, 
+                           ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX, GGRIM_KEYWORD,
+                           GPAM_KEYWORD, LMFileType, Priority, 
+                           PUBLIC_ARCHIVE_NAME)
 from LmServer.common.lmuser import LMUser
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.cmd import MfRule
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
@@ -1127,20 +1130,16 @@ class BOOMFiller(LMObject):
                        statusModTime=CURR_MJD)
       mfChain = self.scribe.insertMFChain(newMFC)
 
-      cmdArgs = ['LOCAL', '$PYTHON',
-                 ProcessTool.get(ProcessType.BOOMER),
-                 '--config_file={}'.format(self.outConfigFilename)]
-      boomCmd = ' '.join(cmdArgs)
-
       baseAbsFilename, ext = os.path.splitext(self.outConfigFilename)
       # Boomer.ChristopherWalken writes this file when finished walking through 
       # species data (initiated by this Makeflow).  
       walkedArchiveFname = baseAbsFilename + LMFormat.LOG.ext
 
       # Create a rule from the MF and Arf file creation
-      rule = MfRule(boomCmd, [walkedArchiveFname], 
-                    dependencies=[self.outConfigFilename])
-      mfChain.addCommands([rule])
+      boomCmd = BoomerCommand(configFile=self.outConfigFilename)
+      boomCmd.outputs.append(walkedArchiveFname)
+
+      mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
       mfChain.write()
       mfChain.updateStatus(JobStatus.INITIALIZE)
       self.scribe.updateObject(mfChain)
@@ -1257,7 +1256,7 @@ from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.cmd import MfRule
+from LmBackend.common.cmd import MfRule
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
