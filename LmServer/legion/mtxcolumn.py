@@ -213,12 +213,12 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
 
                cpCmd = SystemCommand('cp', ' '.join([self.layer.getDLocation(), 
                                                   inputLayerFname]), 
-                                     inputs=origVectorFiles, 
+                                     #inputs=origVectorFiles, 
                                      outputs=vectorFiles)
             else:
                cpCmd = SystemCommand('cp', ' '.join([self.layer.getDLocation(), 
                                                   inputLayerFname]), 
-                                     inputs=[self.layer.getDLocation()], 
+                                     #inputs=[self.layer.getDLocation()], 
                                      outputs=[inputLayerFname])
 
             touchAndCopyCmd = ChainCommand([touchCmd, cpCmd])
@@ -257,7 +257,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                               self.intersectParams[
                                  self.INTERSECT_PARAM_MIN_PERCENT],
                               squid=self.squid)
-            self.inputs.extend(vectorFiles)
+            intCmd.inputs.extend(vectorFiles)
             
          else:
             intCmd = IntersectRasterCommand(shapegridFile, inputLayerFname,
