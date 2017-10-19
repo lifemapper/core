@@ -26,20 +26,23 @@ import logging
 import mx.DateTime as dt
 import os, sys, time
 
-from LmCommon.common.lmconstants import JobStatus, ProcessType
-from LmCommon.common.readyfile import readyFilename
+from LmBackend.command.common import ChainCommand, SystemCommand
+from LmBackend.command.server import LmTouchCommand
 from LmBackend.common.lmobj import LMError, LMObject
+
+from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.readyfile import readyFilename
+
 from LmServer.base.utilities import isCorrectUser
 from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME) 
 from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
                                             SCRATCH_PATH)
-from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME, 
-                                         ProcessTool)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.cmd import MfRule
 from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
+
 
 SPUD_LIMIT = 100
 
@@ -277,25 +280,16 @@ class Boomer(LMObject):
       
       #TODO: Add this back with a relative path for makeflow files if needed
       #dependencies.append(outputFname)
-      cmdArgs = ['makeflow',
-                 '-T wq', 
-                 '-N lifemapper-{}b'.format(mfchain.getId()),
-                 '-C {}:9097'.format(PUBLIC_FQDN),
-                 '-X {}/worker/'.format(SCRATCH_PATH),
-                 '-a {}'.format(outputFname)]
-      mfCmd = ' '.join(cmdArgs)
+      mfCmd = SystemCommand('makeflow', 
+                            ' '.join(['-T wq', 
+                                      '-N lifemapper-{}b'.format(mfchain.getId()),
+                                      '-C {}:9097'.format(PUBLIC_FQDN),
+                                      '-X {}/worker/'.format(SCRATCH_PATH),
+                                      '-a {}'.format(outputFname)]))
+      arfCmd = LmTouchCommand(targetFname)
       
-      arfCmdArgs = ['$PYTHON', 
-                    ProcessTool.get(ProcessType.TOUCH),
-                    targetFname]
-      arfCmd = ' '.join(arfCmdArgs)
-      
-      #arfCmd = 'touch {}'.format(targetFname)
-      cmd = 'LOCAL {} ; {}'.format(arfCmd, mfCmd)
-      # Create a rule from the MF and Arf file creation
-      # TODO: Replace these dependencies with Delay rule
-      rule = MfRule(cmd, [targetFname], dependencies=dependencies)
-      self.masterPotato.addCommands([rule])
+      mpCmd = ChainCommand([arfCmd, mfCmd])
+      self.masterPotato.addCommands([mpCmd.getMakeflowRule(local=True)])
 
    # .............................
    def _addDelayRuleToMasterPotatoHead(self, mfchain):
@@ -305,15 +299,18 @@ class Boomer(LMObject):
                 of the multi-species makeflows.
       @TODO: Replace adding all dependencies to the Potato makeflow command
              with this Delay rule
+      @todo: When implementing this, use a ChainCommand object with a touch
+                command and something else.  Don't use MfRule directly
       """
-      targetFname = self.masterPotato.getArfFilename(prefix='goPotato')
-      cmdArgs = ['checkArfFiles'].extend(self.spudArfFnames)
-      mfCmd = ' '.join(cmdArgs)
-      arfCmd = 'touch {}'.format(targetFname)
-      cmd = 'LOCAL {} ; {}'.format(arfCmd, mfCmd)
-      # Create a rule from the MF and Arf file creation
-      rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
-      self.masterPotato.addCommands([rule])
+      pass
+      #targetFname = self.masterPotato.getArfFilename(prefix='goPotato')
+      #cmdArgs = ['checkArfFiles'].extend(self.spudArfFnames)
+      #mfCmd = ' '.join(cmdArgs)
+      #arfCmd = 'touch {}'.format(targetFname)
+      #cmd = 'LOCAL {} ; {}'.format(arfCmd, mfCmd)
+      ## Create a rule from the MF and Arf file creation
+      #rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
+      #self.masterPotato.addCommands([rule])
 
    # .............................
    def processAll(self):
@@ -374,7 +371,7 @@ from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME,
                                          ProcessTool)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.cmd import MfRule
+from LmBackend.common.cmd import MfRule
 from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 from LmServer.legion.mtxcolumn import MatrixColumn          
