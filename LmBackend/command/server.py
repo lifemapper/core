@@ -98,7 +98,8 @@ class IndexPAVCommand(_LmCommand):
       self.inputs.append(pavFilename)
       self.outputs.append(pavIdxFilename)
       
-      self.args = [pavFilename, pavId, projId, pamId, pavIdxFilename]
+      self.args = [pavFilename, str(pavId), str(projId), 
+                   str(pamId), pavIdxFilename]
 
    # ................................
    def getCommand(self):
