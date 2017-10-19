@@ -32,7 +32,9 @@ from LmCommon.shapes.buildShapegrid import buildShapegrid
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, LMServiceType, ProcessTool)
-from LmServer.legion.cmd import MfRule
+from LmBackend.command.server import LmTouchCommand
+from LmBackend.command.common import SystemCommand, ChainCommand
+from LmBackend.command.multi import BuildShapegridCommand
 
 # .............................................................................
 class ShapeGrid(_LayerParameters, Vector, ProcessObject):
@@ -279,44 +281,26 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       if JobStatus.finished(self.status):
          # Need to move outputs
          baseName = os.path.splitext(self.getDLocation())[0]
-         arfCmdArgs = ['$PYTHON',
-                       ProcessTool.get(ProcessType.TOUCH),
-                       os.path.join(targetDir, 'touch.out')]
-         arfCmd = ' '.join(arfCmdArgs)
-
-         cmdArgs = [
-            'LOCAL',
-            arfCmd,
-            ';',
-            'cp',
-            '{}.*'.format(baseName),
-            targetDir
-         ]
-         cmd = ' '.join(cmdArgs)
-         rules.append(MfRule(cmd, targetFiles))
+         
+         touchCmd = LmTouchCommand(os.path.join(targetDir, 'touch.out'))
+         cpCmd = SystemCommand('cp', 
+                               '{}.* {}'.format(baseName, targetDir), 
+                               outputs=targetFiles)
+         touchAndCopyCommand = ChainCommand([touchCmd, cpCmd])
+         rules.append(touchAndCopyCommand.getMakeflowRule(local=True))
       else:
          # Need to compute
          cutoutWktFilename = None
          # TODO: Cutouts
-         options = ''
-         if cutoutWktFilename is not None:
-            options = '--cutoutWktFn={}'.format(cutoutWktFilename)
          outFile = os.path.join(targetDir, os.path.basename(self.getDLocation()))
       
-         cmdArguments = ['$PYTHON', 
-                         ProcessTool.get(self.processType), 
-                         outFile,
-                         str(self.getMinX()),
-                         str(self.getMinY()),
-                         str(self.getMaxX()),
-                         str(self.getMaxY()),
-                         str(self.cellsize),
-                         str(self.epsgcode),
-                         str(self.cellsides),
-                         options]
-
-         cmd = ' '.join(cmdArguments)
-         rules.append(MfRule(cmd, targetFiles))
+         sgCmd = BuildShapegridCommand(outFile, self.getMinX(), self.getMinY(),
+                                       self.getMaxX(), self.getMaxY(), 
+                                       self.cellsize, self.epsgcode, 
+                                       self.cellsides, 
+                                       cutoutWKTFilename=cutoutWktFilename)
+         rules.append(sgCmd.getMakeflowRule())
+         
       return rules
 
    # ................................
