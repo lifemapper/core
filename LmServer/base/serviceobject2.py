@@ -30,7 +30,7 @@ from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import ProcessType
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import ID_PLACEHOLDER, ProcessTool
-from LmServer.legion.cmd import MfRule
+from LmBackend.common.cmd import MfRule
 
 # .............................................................................
 class ServiceObject(LMObject):
@@ -239,6 +239,8 @@ class ProcessObject(LMObject):
       @param successFileBasename: basename of file which will be written to  
              indicate success of update operation 
       @param filesToCheck: List of files to be tested for validity.  
+      @deprecated: This method may go away if I have to pull out the success
+                      file too many times.  It will at least change
       """
       opts = []
       if status is not None:
