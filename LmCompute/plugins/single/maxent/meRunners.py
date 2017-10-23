@@ -59,7 +59,7 @@ class MaxentModel(object):
    # ...................................
    def __init__(self, jobName, pointsFn, layersJson, rulesetFn, paramsJson=None, 
                 packageFn=None, workDir=None, metricsFn=None, logFn=None, 
-                statusFn=None):
+                statusFn=None, mask=None):
       """
       @summary: Constructor for ME model
       @param pointsFn: The file location of the shapefile containing points
@@ -72,6 +72,7 @@ class MaxentModel(object):
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
       @param statusFn: If provided, write the status to this location
+      @param mask: If provided, use this file as a mask
       """
       self.metrics = {}
       self.metrics['algorithmCode'] = 'ATT_MAXENT'
@@ -105,6 +106,14 @@ class MaxentModel(object):
       except:
          pass
       self._processLayers(layersJson, self.layersDir)
+
+      # Process mask if provided
+      if mask is not None:
+         # TODO: Evaluate if we need to convert this to be the same format as
+         #          the other layers or if we can mix
+         maskFn = os.path.join(self.layersDir, 'mask{}'.format(
+            os.path.splitext(mask)[1]))
+         os.symlink(mask, maskFn)
 
       # parameters
       self.params = self._processParameters(paramsJson)
@@ -314,7 +323,7 @@ class MaxentProjection(object):
    # ...................................
    def __init__(self, jobName, rulesetFn, layersJson, outAsciiFn, 
                 paramsJson=None, workDir=None, metricsFn=None, logFn=None, 
-                statusFn=None, packageFn=None):
+                statusFn=None, packageFn=None, mask=None):
       """
       @summary: Constructor for ME projection
       @param pointsFn: The file location of the shapefile containing points
@@ -326,6 +335,7 @@ class MaxentProjection(object):
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
       @param statusFn: If provided, write the status to this location
+      @param mask: If provided, use this file as a mask
       """
       self.metrics = {}
       self.metrics['algorithmCode'] = 'ATT_MAXENT'
@@ -355,6 +365,14 @@ class MaxentProjection(object):
       except:
          pass
       self._processLayers(layersJson, self.layersDir)
+
+      # Process mask if provided
+      if mask is not None:
+         # TODO: Evaluate if we need to convert this to be the same format as
+         #          the other layers or if we can mix
+         maskFn = os.path.join(self.layersDir, 'mask{}'.format(
+            os.path.splitext(mask)[1]))
+         os.symlink(mask, maskFn)
 
       # parameters
       self.params = self._processParameters(paramsJson)

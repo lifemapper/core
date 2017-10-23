@@ -61,7 +61,7 @@ class OpenModellerModel(object):
    # ...................................
    def __init__(self, jobName, pointsFn, layersJson, rulesetFn, paramsJson, 
                 packageFn=None, workDir=None, metricsFn=None, logFn=None, 
-                statusFn=None):
+                statusFn=None, mask=None):
       """
       @summary: Constructor for OM model
       @param pointsFn: The file location of the shapefile containing points
@@ -73,6 +73,7 @@ class OpenModellerModel(object):
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
       @param statusFn: If provided, write the status to this location
+      @param mask: If provided, use this file as the mask
       """
       self.metrics = {}
       self.metrics['processType'] = self.PROCESS_TYPE
@@ -98,6 +99,10 @@ class OpenModellerModel(object):
 
       # layers
       layerFns, maskFn = self._processLayers(layersJson)
+      
+      # If a mask was provided, use it
+      if mask is not None:
+         maskFn = mask
 
       # parameters
       algoParams = self._processParameters(paramsJson)
@@ -313,7 +318,8 @@ class OpenModellerProjection(object):
    
    # ...................................
    def __init__(self, jobName, rulesetFn, layersJson, outTiffFn, workDir=None, 
-                metricsFn=None, logFn=None, statusFn=None, packageFn=None):
+                metricsFn=None, logFn=None, statusFn=None, packageFn=None,
+                mask=None):
       """
       @summary: Constructor for ME model
       @param pointsFn: The file location of the shapefile containing points
@@ -323,6 +329,7 @@ class OpenModellerProjection(object):
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
       @param statusFn: If provided, write the status to this location
+      @param mask: If provided, use this file as a mask
       """
       self.metrics = {}
       self.metrics['algorithmCode'] = 'ATT_MAXENT'
@@ -347,6 +354,10 @@ class OpenModellerProjection(object):
    
       # layers
       layerFns, maskFn = self._processLayers(layersJson)
+      
+      # If a mask was explicitly provided, use it
+      if mask is not None:
+         maskFn = mask
       
       # Other
       self.outTiffFn = outTiffFn

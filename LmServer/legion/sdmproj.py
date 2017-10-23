@@ -29,7 +29,8 @@ import os
 
 from LmBackend.command.common import ChainCommand, SystemCommand
 from LmBackend.command.server import (LmTouchCommand, ShootSnippetsCommand,
-                                      StockpileCommand)
+                                      StockpileCommand,
+   CreateConvexHullShapefileCommand)
 from LmBackend.command.single import SdmodelCommand, SdmProjectCommand
 from LmBackend.common.lmobj import LMError
 
@@ -659,6 +660,52 @@ class SDMProjection(_ProjectionType, Raster):
                      bbox, color, self.getSRSAsString(), format)
       return wmsUrl   
 
+   # ................................
+   def _computeMyMask(self, maskLyr, workDir=None):
+      """
+      @summary: Generate rules for creating a mask layer based on convex hull 
+                   and ecoregions
+      @param maskLyr: A layer object to use as the base mask layer.  Should be
+                         a categorical layer
+      @param workDir: A directory to store the amsk layer
+      """
+      rules = []
+      if workDir is None:
+         workDir = ''
+      
+      occId = self.getOccurrenceSetId()
+         
+      convexHullFilename = os.path.join(workDir, 'occ_{}_convexHull.shp'.format(occId))
+         
+      convexHullCmd = CreateConvexHullShapefileCommand(occId, convexHullFilename, 
+                                                       bufferDistance=.1)
+      # TODO: Define outputs
+      convexHullCmd.outputs = []
+      
+      #gdalwarp -of GTiff -cutline DATA/area_of_interest.shp \
+      # -cl area_of_interest  -crop_to_cutline DATA/PCE_in_gw.asc  data_masked7.tiff
+      
+      maskName = maskLyr.name
+      if maskName is None:
+         maskName = maskLyr.verify
+      
+      if self.isATT():
+         outFormat = 'AAIGrid'
+         maskFn = os.path.join(workDir, '{}.asc'.format(maskName))
+      else:
+         outFormat = 'GTiff'
+         maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
+      
+      maskArgs = '-of {} -cutline {} {}'.format(outFormat, convexHullFilename, maskFn)
+      maskCmd = SystemCommand('gdalwarp', maskArgs, outputs=[maskFn])
+      
+      # Create a chain command so we don't have to know which shapefiles are 
+      #    produced, try to define them if possible though
+      createMaskCommand = ChainCommand([convexHullCmd, maskCmd])
+      
+      rules.append(createMaskCommand.getMakeflowRule(local=True))
+      return rules, maskFn
+
    # .............................................................................
    def _computeMyModel(self, workDir=None):
       """
@@ -674,6 +721,14 @@ class SDMProjection(_ProjectionType, Raster):
       occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
       occSetFname = os.path.join(occTargetDir, occFileBasename)
       
+      if self.modelMask is not None:
+         maskRules, wsMaskFn = self._computeMyMask(self.modelMask, 
+                                                   workDir=workDir)
+         rules.extend(maskRules)
+      else:
+         wsMaskFn = None
+      
+      
       if self.isATT():
          ptype = ProcessType.ATT_MODEL
       else:
@@ -688,7 +743,7 @@ class SDMProjection(_ProjectionType, Raster):
       
       mdlCmd = SdmodelCommand(ptype, mdlName, occSetFname, layersJsonFname,
                               rulesetFname, paramsJsonFname, 
-                              workDir=occTargetDir)
+                              workDir=occTargetDir, maskFilename=wsMaskFn)
       mdlCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
       
       rules.append(mdlCmd.getMakeflowRule())
@@ -725,6 +780,14 @@ class SDMProjection(_ProjectionType, Raster):
          # Generate the model
          modelRules = self._computeMyModel(workDir=workDir)
          rules.extend(modelRules)
+         
+         # Mask rules
+         if self.projMask is not None:
+            maskRules, wsMaskFn = self._computeMyMask(self.projMaskMask, 
+                                                      workDir=workDir)
+            rules.extend(maskRules)
+         else:
+            wsMaskFn = None
          
          # Status file name
          statusFname = os.path.join(targetDir, 
@@ -778,7 +841,8 @@ class SDMProjection(_ProjectionType, Raster):
                                     layersJsonFname, rawPrjRaster, algo=algo,
                                     workDir=targetDir, 
                                     packageFilename=packageFname, 
-                                    statusFilename=statusFname)
+                                    statusFilename=statusFname, 
+                                    maskFilename=wsMaskFn)
          rules.append(prjCmd.getMakeflowRule())
 
          # Rule for Test/Update 
