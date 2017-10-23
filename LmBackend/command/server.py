@@ -80,6 +80,35 @@ class AddBioGeoAndTreeCommand(_LmCommand):
             self.optArgs, ' '.join(self.args))
 
 # .............................................................................
+class CreateConvexHullShapefileCommand(_LmCommand):
+   """
+   @summary: This command will write a shapefile containing a feature with the 
+                convex hull of the occurrence set
+   """
+   # ................................
+   def __init__(self, occId, outFilename, bufferDistance=None):
+      """
+      @summary: Construct the command object
+      @param occId: The database id of the occurrence set to use
+      @param outFilename: The file location to write the shapefile
+      @param bufferDistance: A buffer, in map units, to include with the convex hull
+      """
+      _LmCommand.__init__(self)
+      self.args = '{} {}'.format(occId, outFilename)
+      self.optArgs = ''
+      if bufferDistance is not None:
+         self.optArgs += ' -b {}'.format(bufferDistance)
+      
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the raw command to run on the system
+      """
+      return '{} {}{} {}'.format(CMD_PYBIN, 
+            os.path.join(SERVER_SCRIPTS_DIR, 'create_convex_hull_shapefile.py'),
+            self.optArgs, self.args)
+
+# .............................................................................
 class IndexPAVCommand(_LmCommand):
    """
    @summary: This command will post PAV information to a solr index
