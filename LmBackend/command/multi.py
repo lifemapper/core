@@ -456,7 +456,7 @@ class OccurrenceBucketeerCommand(_LmCommand):
       if self.pos is not None:
          optArgs += ' -pos {}'.format(self.pos)
       if self.width is not None:
-         optArgs += ' - num {}'.format(self.width)
+         optArgs += ' -num {}'.format(self.width)
       if self.headerRow:
          optArgs += ' -header'
       
