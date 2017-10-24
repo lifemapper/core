@@ -62,6 +62,7 @@ if __name__ == "__main__":
                        help='Optional output job status file')
    parser.add_argument('-p', '--package_file', type=str, 
              help="If provided, write the projection package to this location")
+   parser.add_argument('-m', '--mask', type=str, help='A file to use as a mask')
    
    args = parser.parse_args()
    
@@ -80,13 +81,13 @@ if __name__ == "__main__":
                              args.outputRaster, paramsJson=paramsJson,
                              workDir=args.work_dir, metricsFn=args.metrics_file,
                              logFn=args.log_file, statusFn=args.status_file, 
-                             packageFn=args.package_file)
+                             packageFn=args.package_file, mask=args.mask)
    else:
       job = OpenModellerProjection(args.jobName, args.rulesetFn, layersJson, 
                              args.outputRaster, workDir=args.work_dir, 
                              metricsFn=args.metrics_file, logFn=args.log_file, 
                              statusFn=args.status_file, 
-                             packageFn=args.package_file)
+                             packageFn=args.package_file, mask=args.mask)
       
    job.run()
    

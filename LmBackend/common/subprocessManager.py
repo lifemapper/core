@@ -35,6 +35,7 @@ CONCURRENT_PROCESSES = max(1, multiprocessing.cpu_count() - 2)
 from LmCommon.common.lmXml import serialize, tostring
 
 WAIT_TIME = 10
+MAX_RUN_TIME = 60 * 60 * 10 # 10 hours
 
 # .............................................................................
 class VariableContainer(object):
@@ -129,15 +130,15 @@ class SubprocessRunner(object):
    @summary: This class manages a subprocess
    """
    # .............................
-   def __init__(self, cmd, waitSeconds=WAIT_TIME):
+   def __init__(self, cmd, waitSeconds=WAIT_TIME, killTime=MAX_RUN_TIME):
       """
       @summary: Constructor for single command runner
       @param cmd: The command to run
       @param waitSeconds: The number of seconds to wait between polls
-      @todo: Add max wait time before giving up
       """
       self.cmd = cmd
       self.waitTime = waitSeconds
+      self.killTime = killTime
    
    # .............................
    def run(self):
@@ -148,8 +149,14 @@ class SubprocessRunner(object):
       stdErr = None
       myProc = Popen(self.cmd, shell=True, stderr=PIPE)
       self._wait()
-      while myProc.poll() is None:
+      runTime = 0
+      while myProc.poll() is None and runTime < self.killTime:
          self._wait()
+         runTime += self.waitTime
+         
+      if runTime >= self.killTime:
+         myProc.kill()
+         
       # Get output
       exitCode = myProc.poll()
       if myProc.stderr is not None:

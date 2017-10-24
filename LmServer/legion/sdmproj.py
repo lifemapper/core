@@ -27,18 +27,25 @@ import json
 import mx.DateTime
 import os
 
+from LmBackend.command.common import ChainCommand, SystemCommand
+from LmBackend.command.server import (LmTouchCommand, ShootSnippetsCommand,
+                                      StockpileCommand,
+   CreateConvexHullShapefileCommand)
+from LmBackend.command.single import SdmodelCommand, SdmProjectCommand
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import (LMFormat, JobStatus, ProcessType,
-                                         GEOTIFF_INTERFACE)
+
+from LmCommon.common.lmconstants import (GEOTIFF_INTERFACE, JobStatus, 
+                                         LMFormat, ProcessType)
 from LmCommon.common.verify import computeHash
 
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
-            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, ProcessTool,
-            SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM)
-from LmServer.legion.cmd import MfRule
+                           DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType,
+                           SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM)
 from LmServer.common.lmconstants import SnippetOperations
+
+
 
 # .........................................................................
 class _ProjectionType(_LayerParameters, ProcessObject):
@@ -653,6 +660,52 @@ class SDMProjection(_ProjectionType, Raster):
                      bbox, color, self.getSRSAsString(), format)
       return wmsUrl   
 
+   # ................................
+   def _computeMyMask(self, maskLyr, workDir=None):
+      """
+      @summary: Generate rules for creating a mask layer based on convex hull 
+                   and ecoregions
+      @param maskLyr: A layer object to use as the base mask layer.  Should be
+                         a categorical layer
+      @param workDir: A directory to store the amsk layer
+      """
+      rules = []
+      if workDir is None:
+         workDir = ''
+      
+      occId = self.getOccurrenceSetId()
+         
+      convexHullFilename = os.path.join(workDir, 'occ_{}_convexHull.shp'.format(occId))
+         
+      convexHullCmd = CreateConvexHullShapefileCommand(occId, convexHullFilename, 
+                                                       bufferDistance=.1)
+      # TODO: Define outputs
+      convexHullCmd.outputs = []
+      
+      #gdalwarp -of GTiff -cutline DATA/area_of_interest.shp \
+      # -cl area_of_interest  -crop_to_cutline DATA/PCE_in_gw.asc  data_masked7.tiff
+      
+      maskName = maskLyr.name
+      if maskName is None:
+         maskName = maskLyr.verify
+      
+      if self.isATT():
+         outFormat = 'AAIGrid'
+         maskFn = os.path.join(workDir, '{}.asc'.format(maskName))
+      else:
+         outFormat = 'GTiff'
+         maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
+      
+      maskArgs = '-of {} -cutline {} {}'.format(outFormat, convexHullFilename, maskFn)
+      maskCmd = SystemCommand('gdalwarp', maskArgs, outputs=[maskFn])
+      
+      # Create a chain command so we don't have to know which shapefiles are 
+      #    produced, try to define them if possible though
+      createMaskCommand = ChainCommand([convexHullCmd, maskCmd])
+      
+      rules.append(createMaskCommand.getMakeflowRule(local=True))
+      return rules, maskFn
+
    # .............................................................................
    def _computeMyModel(self, workDir=None):
       """
@@ -668,6 +721,14 @@ class SDMProjection(_ProjectionType, Raster):
       occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
       occSetFname = os.path.join(occTargetDir, occFileBasename)
       
+      if self.modelMask is not None:
+         maskRules, wsMaskFn = self._computeMyMask(self.modelMask, 
+                                                   workDir=workDir)
+         rules.extend(maskRules)
+      else:
+         wsMaskFn = None
+      
+      
       if self.isATT():
          ptype = ProcessType.ATT_MODEL
       else:
@@ -676,28 +737,17 @@ class SDMProjection(_ProjectionType, Raster):
       mdlName = self.getModelTarget()
       rulesetFname = os.path.join(occTargetDir, os.path.basename(self.getModelFilename()))
       
-      mdlOpts = {'-w' : occTargetDir}
-      args = ' '.join(["{opt} {val}".format(opt=o, val=v
-                                         ) for o, v in mdlOpts.iteritems()])
-
       layersJsonFname = self.getLayersJsonFilename(self.modelScenario, 
                                                    self.modelMask)
       paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
-      mdlCmdArgs = ['$PYTHON',
-                    ProcessTool.get(ptype),
-                    args,
-                    str(ptype),
-                    mdlName,
-                    occSetFname,
-                    layersJsonFname,
-                    rulesetFname,
-                    paramsJsonFname]
-      cmd = ' '.join(mdlCmdArgs)
-         
-      rules.append(MfRule(cmd, [rulesetFname], 
-                             #dependencies=[occSetFname]))
-                             dependencies=self._occurrenceSet.getTargetFiles(
-                                workDir=workDir)))
+      
+      mdlCmd = SdmodelCommand(ptype, mdlName, occSetFname, layersJsonFname,
+                              rulesetFname, paramsJsonFname, 
+                              workDir=occTargetDir, maskFilename=wsMaskFn)
+      mdlCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
+      
+      rules.append(mdlCmd.getMakeflowRule())
+
       return rules
 
    # ......................................
@@ -716,22 +766,28 @@ class SDMProjection(_ProjectionType, Raster):
          cpRaster = os.path.join(targetDir, os.path.basename(self.getDLocation()))
          
          #touch directory then copy file
-         touchAndCopyArgs = ['LOCAL', 
-                             '$PYTHON', 
-                             ProcessTool.get(ProcessType.TOUCH), 
-                             os.path.join(targetDir, 'touch.out') ,
-                             ';',
-                             'cp',
-                             self.getDLocation(),
-                             cpRaster ]
-         touchAndCopyCmd = ' '.join(touchAndCopyArgs)
+         touchCmd = LmTouchCommand(os.path.join(targetDir, 'touch.out'))
          
-         touchAndCopyRule = MfRule(touchAndCopyCmd, [cpRaster])
-         rules.append(touchAndCopyRule)
+         cpCmd = SystemCommand('cp', 
+                               '{} {}'.format(self.getDLocation(), cpRaster), 
+                               inputs=[self.getDLocation()], 
+                               outputs=[cpRaster])
+         
+         touchAndCopyCmd = ChainCommand([touchCmd, cpCmd])
+         
+         rules.append(touchAndCopyCmd.getMakeflowRule(local=True))
       else:
          # Generate the model
          modelRules = self._computeMyModel(workDir=workDir)
          rules.extend(modelRules)
+         
+         # Mask rules
+         if self.projMask is not None:
+            maskRules, wsMaskFn = self._computeMyMask(self.projMaskMask, 
+                                                      workDir=workDir)
+            rules.extend(maskRules)
+         else:
+            wsMaskFn = None
          
          # Status file name
          statusFname = os.path.join(targetDir, 
@@ -739,14 +795,8 @@ class SDMProjection(_ProjectionType, Raster):
          packageFname = os.path.join(targetDir, 
                                os.path.basename(self.getProjPackageFilename()))
          
-         prjOpts = {
-            '-w' : targetDir,
-            '-p' : packageFname,
-            '-s' : statusFname
-         }
          
          prjName = os.path.basename(os.path.splitext(self.getDLocation())[0])
-         #prjName = 'prj_{}'.format(self.getId())
          
          # Generate the projection
          if self.isATT():
@@ -755,84 +805,65 @@ class SDMProjection(_ProjectionType, Raster):
             
             paramsJsonFname = self.getAlgorithmParametersJsonFilename(
                                                                self._algorithm)
-            prjOpts['-algo'] = paramsJsonFname
-            
-            convertCmdArgs = [os.path.join(BIN_PATH, 'gdal_translate')]
+            algo = paramsJsonFname
             
             # If archive or default, scale
             #if self.getUserId() in [PUBLIC_USER, DEFAULT_POST_USER]:
             
             # TODO: Get this from db
             # CJG / AMS - 06/22/2017 - Always scale for now
-            convertCmdArgs.extend(["-scale 0 1 {} {}"
-                                      .format(SCALE_PROJECTION_MINIMUM,
-                                              SCALE_PROJECTION_MAXIMUM),
-                                      "-ot Int16", 
-                                      "-of GTiff"])
-            # If Charlie, multiply
-            # TODO: put these scaling params in SCALE_PROJECTION_MINIMUM and MAX
-            #elif self.getUserId() == 'cgwillis':
-            #   convertCmdArgs.extend(["-scale 0 1 0 10000",
-            #                          "-ot Int16",
-            #                          "-of GTiff"])
-            ## Else, just convert
-            #else:
-            #   convertCmdArgs.extend(["-of GTiff"])
-            convertCmdArgs.extend([rawPrjRaster, outTiff])
-            convertCmd = ' '.join(convertCmdArgs)
-            rules.append(MfRule(convertCmd, [outTiff], 
-                                dependencies=[rawPrjRaster]))
+            
+            convertCmd = SystemCommand(os.path.join(BIN_PATH, 'gdal_translate'),
+                           '-scale 0 1 {} {} -ot Int16 -of GTiff {} {}'.format(
+                                 SCALE_PROJECTION_MINIMUM, 
+                                 SCALE_PROJECTION_MAXIMUM,
+                                 rawPrjRaster,
+                                 outTiff),
+                           inputs=[rawPrjRaster],
+                           outputs=[outTiff])
+            rules.append(convertCmd.getMakeflowRule())
             
          else:
+            algo = None
             rawPrjRaster = os.path.join(targetDir, '{}.tif'.format(prjName))
             outTiff = rawPrjRaster
       
          # Rule for SDMProject process 
-         prjArgs = ' '.join(["{opt} {val}".format(opt=o, val=v
-                                            ) for o, v in prjOpts.iteritems()])
-
          occTargetDir = os.path.join(workDir, 
                os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
          modelFname = os.path.join(occTargetDir, 
                                      os.path.basename(self.getModelFilename()))
 
-         layersJsonFname = self.getLayersJsonFilename(self.projScenario, self.projMask)
-         prjCmdArgs = ['$PYTHON',
-                       ProcessTool.get(self.processType),
-                       prjArgs,
-                       str(self.processType),
-                       prjName,
-                       modelFname,
-                       layersJsonFname,
-                       rawPrjRaster]
-         prjCmd = ' '.join(prjCmdArgs)
-         rules.append(MfRule(prjCmd, [rawPrjRaster, statusFname, packageFname], 
-                             dependencies=[modelFname]))
+         layersJsonFname = self.getLayersJsonFilename(self.projScenario, 
+                                                      self.projMask)
+         
+         prjCmd = SdmProjectCommand(self.processType, prjName, modelFname,
+                                    layersJsonFname, rawPrjRaster, algo=algo,
+                                    workDir=targetDir, 
+                                    packageFilename=packageFname, 
+                                    statusFilename=statusFname, 
+                                    maskFilename=wsMaskFn)
+         rules.append(prjCmd.getMakeflowRule())
 
          # Rule for Test/Update 
-         status = None
-         uRule = self.getUpdateRule(self.getId(), status, 
-                                    os.path.join(targetDir, prjName), 
-                                    [outTiff, packageFname])
-         rules.append(uRule)
+         successFname = os.path.join(targetDir, '{}.success'.format(prjName))
+         spCmd = StockpileCommand(self.processType, self.getId(), successFname,
+                                  [outTiff, packageFname])
+         rules.append(spCmd.getMakeflowRule(local=True))
          
          # Snippets
          snippetPostFilename = os.path.join(targetDir, 
                                  'snippets_usedId_{}.xml'.format(self.getId()))
-         snippetCmd = ' '.join([
-            'LOCAL',
-            '$PYTHON',
-            ProcessTool.get(ProcessType.SNIPPET_POST),
-            '-o2ident lm-prj-{}'.format(self.getId()),
-            '-url {}'.format(self.metadataUrl),
-            '-who Lifemapper',
-            '-agent LmCompute',
-            str(self._occurrenceSet.getId()),
-            SnippetOperations.USED_IN,
-            snippetPostFilename
-         ])
-         rules.append(MfRule(snippetCmd, [snippetPostFilename], dependencies=[
-            os.path.join(targetDir, '{}.success'.format(prjName))]))
+         
+         snippetCmd = ShootSnippetsCommand(self._occurrenceSet.getId(),
+                                           SnippetOperations.USED_IN,
+                                           snippetPostFilename,
+                                           o2ident='lm-prj-{}'.format(self.getId()),
+                                           url=self.metadataUrl,
+                                           who='Lifemapper',
+                                           agent='LmCompute')
+         snippetCmd.inputs.append(successFname)
+         rules.append(snippetCmd.getMakeflowRule(local=True))
          
       return rules
    

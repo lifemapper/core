@@ -26,12 +26,15 @@
 import os
 import mx.DateTime
 
+from LmBackend.command.common import ConcatenateMatricesCommand
+from LmBackend.command.server import StockpileCommand, TriageCommand
+
 from LmCommon.common.lmconstants import (MatrixType, ProcessType, CSV_INTERFACE, 
                                          LMFormat, JobStatus)
 from LmCommon.common.matrix import Matrix
+
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import (LMServiceType, LMFileType, ProcessTool)
-from LmServer.legion.cmd import MfRule
+from LmServer.common.lmconstants import (LMServiceType, LMFileType)
 
 # .............................................................................
 class LMMatrix(Matrix, ServiceObject, ProcessObject):
@@ -218,23 +221,6 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       self.mtxMetadata = super(LMMatrix, self)._loadMetadata(newMetadata)
 
 # ...............................................
-   def _createMatrixRule(self, processType, dependentFnameList, targetFnameList, 
-                         cmdArgs=[], local=False):
-      """
-      @summary: Creates a MF Rule from parameters. 
-      @note: This assumes a single target file
-      """
-      cmdArguments = []
-      if local:
-         cmdArguments.append('LOCAL')
-      cmdArguments.extend(['$PYTHON', 
-                           ProcessTool.get(processType)])
-      cmdArguments.extend(cmdArgs)
-      cmd = ' '.join(cmdArguments)
-      rule = MfRule(cmd, targetFnameList, dependencies=dependentFnameList)
-      return rule
-
-# ...............................................
    def computeMe(self, triageInFname, triageOutFname, workDir=None):
       """
       @summary: Creates a command to triage possible MatrixColumn inputs,
@@ -248,27 +234,21 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       #TODO: Update
       matrixOutputFname = os.path.join(workDir, os.path.basename(self.getDLocation()))
       # Triage "Mash the potato" rule 
-      tRule = self._createMatrixRule(ProcessType.MF_TRIAGE, 
-                                     [], [triageOutFname],
-                                     ##TODO: Reinstate? 
-                                     #[triageInFname], [triageOutFname],
-                                     cmdArgs=[triageInFname, triageOutFname],
-                                     local=True)
-      rules.append(tRule)
+      tCmd = TriageCommand(triageInFname, triageOutFname)
+      rules.append(tCmd.getMakeflowRule(local=True))
+      
       # Assemble Matrix rule
-      cRule = self._createMatrixRule(ProcessType.CONCATENATE_MATRICES, 
-                                     [triageOutFname], [matrixOutputFname], 
-                                     cmdArgs=['--mashedPotato={}'.format(triageOutFname),
-                                               matrixOutputFname,
-                                               '1' # Axis
-                                               ])
-      rules.append(cRule)
+      concatCmd = ConcatenateMatricesCommand([], '1', matrixOutputFname,
+                                           mashedPotatoFilename=triageOutFname)
+      rules.append(concatCmd.getMakeflowRule())
       # Store Matrix Rule
       status = None
-      successFileBasename, _ = os.path.splitext(matrixOutputFname)
-      uRule = self.getUpdateRule(self.getId(), status, successFileBasename, [matrixOutputFname])
-      rules.append(uRule)
-        
+      successFilename = '{}.success'.format(
+         os.path.splitext(matrixOutputFname)[0])
+      spCmd = StockpileCommand(self.processType, self.getId(), successFilename, 
+                               [matrixOutputFname], status=status)
+      rules.append(spCmd.getMakeflowRule(local=True))
+      
       return rules
 
    # .............................
@@ -281,28 +261,16 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       # Add concatenate command
       mtxOutputFname = os.path.join(workDir, 'mtx_{}{}'
                                     .format(self.getId(), LMFormat.JSON.ext))
-      concatArgs = ['$PYTHON',
-                    ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
-                    mtxOutputFname, 
-                    # Axis
-                    '1', 
-                    ' '.join(mtxcolFnames)
-                    ]
-      concatCmd = ' '.join(concatArgs)
-      rules.append(MfRule(concatCmd, [mtxOutputFname], dependencies=mtxcolFnames))
+      
+      concatCmd = ConcatenateMatricesCommand(mtxcolFnames, '1', mtxOutputFname)
+      rules.append(concatCmd.getMakeflowRule())
+
       # Stockpile Matrix
       mtxSuccessFilename = os.path.join(workDir, 'mtx_{}.success'
                                         .format(self.getId()))
-      stockpileArgs = ['LOCAL',
-                       '$PYTHON',
-                       ProcessTool.get(ProcessType.UPDATE_OBJECT),
-                       '-s {}'.format(JobStatus.COMPLETE),
-                       str(ProcessType.CONCATENATE_MATRICES),
-                       str(self.getId()),
-                       mtxSuccessFilename,
-                       mtxOutputFname]
-      stockpileCmd = ' '.join(stockpileArgs)
-      rules.append(MfRule(stockpileCmd, [mtxSuccessFilename], 
-                          dependencies=[mtxOutputFname]))
+      spCmd = StockpileCommand(ProcessType.CONCATENATE_MATRICES, self.getId(),
+                               mtxSuccessFilename, mtxOutputFname, 
+                               status=JobStatus.COMPLETE)
+      rules.append(spCmd.getMakeflowRule(local=True))
       return rules
 
