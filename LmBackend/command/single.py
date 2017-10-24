@@ -131,7 +131,7 @@ class GrimRasterCommand(_LmCommand):
          optArgs += ' -m {}'.format(self.minPercent)
       if self.ident is not None:
          optArgs += ' -i {}'.format(self.ident)
-      return '{} {}{} {} {} {} {} {} {} {}'.format(CMD_PYBIN,
+      return '{} {}{} {} {} {} {}'.format(CMD_PYBIN,
             os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'grim_raster.py'),
             optArgs, self.sgFn, self.rastFn, self.grimColFn, self.resolution)
 
