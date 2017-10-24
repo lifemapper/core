@@ -107,6 +107,9 @@ class MaxentModel(object):
          pass
       self._processLayers(layersJson, self.layersDir)
 
+      # parameters
+      self.params = self._processParameters(paramsJson)
+      
       # Process mask if provided
       if mask is not None:
          # TODO: Evaluate if we need to convert this to be the same format as
@@ -114,10 +117,9 @@ class MaxentModel(object):
          maskFn = os.path.join(self.layersDir, 'mask{}'.format(
             os.path.splitext(mask)[1]))
          os.symlink(mask, maskFn)
+         
+         self.params += ' togglelayertype=mask'
 
-      # parameters
-      self.params = self._processParameters(paramsJson)
-      
       # Need species name?
       self.lambdasFile = os.path.join(self.workDir, 
                                       "{0}.lambdas".format(self.occName))
@@ -366,6 +368,9 @@ class MaxentProjection(object):
          pass
       self._processLayers(layersJson, self.layersDir)
 
+      # parameters
+      self.params = self._processParameters(paramsJson)
+      
       # Process mask if provided
       if mask is not None:
          # TODO: Evaluate if we need to convert this to be the same format as
@@ -373,10 +378,8 @@ class MaxentProjection(object):
          maskFn = os.path.join(self.layersDir, 'mask{}'.format(
             os.path.splitext(mask)[1]))
          os.symlink(mask, maskFn)
+         self.params += ' togglelayertype=mask'
 
-      # parameters
-      self.params = self._processParameters(paramsJson)
-      
       # Other
       self.asciiOut = outAsciiFn
       #self.asciiOut = os.path.join(self.workDir, 'output.asc')
