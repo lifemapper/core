@@ -94,11 +94,12 @@ class Gridset(ServiceObject): #LMMap
       ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS, 
                              metadataUrl=metadataUrl, modTime=modTime)
       title = 'Matrix map for Gridset {}'.format(name)
-      self._setMapPrefix()
       #LMMap.__init__(self, name, title, self._mapPrefix, 
       #               epsgcode, bbox, mapunits, mapType=LMFileType.OTHER_MAP)
       # TODO: Aimee, do you want to move this somewhere else?
       self._dlocation = None
+      self._mapFilename = None
+      self._setMapPrefix()
       self.name = name
       self.grdMetadata = {}
       self.loadGrdMetadata(metadata)
