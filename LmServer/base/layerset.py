@@ -26,8 +26,7 @@ import os
 from osgeo import gdal, gdalconst, ogr
 
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT, DEFAULT_EPSG,
-                                         DEFAULT_MAPUNITS)
+from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT)
 from LmServer.base.layer2 import _Layer, Raster, Vector
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
@@ -40,9 +39,7 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          DEFAULT_ENVIRONMENTAL_PALETTE, CT_SPECIES_LAYER_STYLES, 
          CT_SPECIES_KEYWORD, PROJ_LIB, SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM)
-from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX,
-                                            DEFAULT_EPSG)
-from LmServer.common.lmconstants import CT_USER
+from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX)
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
 
@@ -352,6 +349,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
          fname = self._earlJr.createFilename(self._mapType, 
                                              occsetId=self.getId(), 
                                              usr=self._userId)
+      # This will not occur here? only in 
+      # LmServer.base.legion.gridset.Gridset
       elif self._mapType == LMFileType.RAD_MAP:
          fname = self._earlJr.createFilename(self._mapType, 
                                              gridsetId=self.getId(),
@@ -379,9 +378,9 @@ class MapLayerSet(_LayerSet, ServiceObject):
       """
       @summary: Delete the mapfile containing this layer
       """
-      if self.mapfilename is None:
+      if self._mapFilename is None:
          self.setLocalMapFilename()
-      success, msg = self.deleteFile(self.mapfilename)
+      success, msg = self.deleteFile(self._mapFilename)
 
 # ...............................................
    @property

@@ -141,6 +141,28 @@ class Gridset(ServiceObject): #LMMap
          return None
          
 # ...............................................
+   def setLocalMapFilename(self, mapfname=None):
+      """
+      @note: Overrides existing _mapFilename
+      @summary: Set absolute mapfilename containing all computed layers for this 
+                Gridset. 
+      """
+      if mapfname is None:
+         mapfname = self._earlJr.createFilename(LMFileType.RAD_MAP, 
+                                             gridsetId=self.getId(),
+                                             usr=self._userId)
+      self._mapFilename = mapfname
+
+# ...............................................
+   def clearLocalMapfile(self):
+      """
+      @summary: Delete the mapfile containing this layer
+      """
+      if self.mapfilename is None:
+         self.setLocalMapFilename()
+      success, msg = self.deleteFile(self.mapfilename)
+
+# ...............................................
    def _createMapPrefix(self):
       """
       @summary: Construct the endpoint of a Lifemapper WMS URL for 
@@ -165,6 +187,23 @@ class Gridset(ServiceObject): #LMMap
    @property
    def mapPrefix(self): 
       return self._mapPrefix
+
+# ...............................................
+   @property
+   def mapFilename(self):
+      if self._mapFilename is None:
+         self.setLocalMapFilename()
+      return self._mapFilename
+   
+# ...............................................
+   @property
+   def mapName(self):
+      mapname = None
+      if self._mapFilename is not None:
+         pth, mapfname = os.path.split(self._mapFilename)
+         mapname, ext = os.path.splitext(mapfname)
+      return mapname
+   
 
 # .............................................................................
 # Private methods
