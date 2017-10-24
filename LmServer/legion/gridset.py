@@ -40,7 +40,7 @@ from LmBackend.common.lmobj import LMError
 
 from LmCommon.common.lmconstants import MatrixType, JobStatus, ProcessType
 
-from LmServer.base.lmmap import LMMap
+#from LmServer.base.lmmap import LMMap
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType, 
                                          LMServiceType)
@@ -52,7 +52,7 @@ NUM_RAND_PER_GROUP = 10
 
 
 # .............................................................................
-class Gridset(LMMap, ServiceObject):
+class Gridset(ServiceObject): #LMMap
    """
    The Gridset class contains all of the information for one view (extent and 
    resolution) of a RAD experiment.  
@@ -95,8 +95,8 @@ class Gridset(LMMap, ServiceObject):
                              metadataUrl=metadataUrl, modTime=modTime)
       title = 'Matrix map for Gridset {}'.format(name)
       self._setMapPrefix()
-      LMMap.__init__(self, name, title, self._mapPrefix, 
-                     epsgcode, bbox, mapunits, mapType=LMFileType.OTHER_MAP)
+      #LMMap.__init__(self, name, title, self._mapPrefix, 
+      #               epsgcode, bbox, mapunits, mapType=LMFileType.OTHER_MAP)
       # TODO: Aimee, do you want to move this somewhere else?
       self._dlocation = None
       self.name = name
@@ -661,8 +661,9 @@ class Gridset(LMMap, ServiceObject):
       
    # ...............................................
    def writeMap(self, mapfilename):
-      LMMap.writeMap(self, mapfilename, shpGrid=self._shapeGrid, 
-                     matrices=self._matrices)
+      pass
+      #LMMap.writeMap(self, mapfilename, shpGrid=self._shapeGrid, 
+      #               matrices=self._matrices)
 
    # ...............................................
    def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
