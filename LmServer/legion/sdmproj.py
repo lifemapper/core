@@ -489,13 +489,13 @@ class SDMProjection(_ProjectionType, Raster):
          }
       
          # Add mask
-         try:
-            layersObj["mask"] = {
-               "identifier" : mask.verify
-            }
-            layersObj["mask"]["url"] = mask.getURL(format=GEOTIFF_INTERFACE)
-         except:
-            pass
+         #try:
+         #   layersObj["mask"] = {
+         #      "identifier" : mask.verify
+         #   }
+         #   layersObj["mask"]["url"] = mask.getURL(format=GEOTIFF_INTERFACE)
+         #except:
+         #   pass
       
          for lyr in scenario.layers:
             lyrObj = {
