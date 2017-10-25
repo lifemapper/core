@@ -792,7 +792,7 @@ class SDMProjection(_ProjectionType, Raster):
       rules.append(touchCmd.getMakeflowRule(local=True))
       
       
-      if JobStatus.finished(self.status):
+      if self.status == JobStatus.COMPLETE:
          # Just need to move the tiff into place
          cpRaster = os.path.join(targetDir, os.path.basename(self.getDLocation()))
          
@@ -800,7 +800,7 @@ class SDMProjection(_ProjectionType, Raster):
          
          cpCmd = SystemCommand('cp', 
                                '{} {}'.format(self.getDLocation(), cpRaster), 
-                               inputs=[self.getDLocation(), touchFn], 
+                               inputs=[touchFn], 
                                outputs=[cpRaster])
          
          rules.append(cpCmd.getMakeflowRule(local=True))
