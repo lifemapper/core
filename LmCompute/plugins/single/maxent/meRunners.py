@@ -41,7 +41,7 @@ from LmBackend.common.subprocessManager import SubprocessRunner
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 
-from LmCompute.common.layerManager import LayerManager
+from LmCompute.common.layerManager import LayerManager, convertAsciisToMxes
 from LmCompute.common.localconstants import SHARED_DATA_PATH
 from LmCompute.common.lmObj import LmException
 
@@ -116,7 +116,8 @@ class MaxentModel(object):
          #          the other layers or if we can mix
          maskFn = os.path.join(self.layersDir, 'mask{}'.format(
             os.path.splitext(mask)[1]))
-         os.symlink(mask, maskFn)
+         #os.symlink(mask, maskFn)
+         convertAsciisToMxes([(mask, maskFn)])
          
          self.params += ' togglelayertype=mask'
 
@@ -377,7 +378,8 @@ class MaxentProjection(object):
          #          the other layers or if we can mix
          maskFn = os.path.join(self.layersDir, 'mask{}'.format(
             os.path.splitext(mask)[1]))
-         os.symlink(mask, maskFn)
+         #os.symlink(mask, maskFn)
+         convertAsciisToMxes([(mask, maskFn)])
          self.params += ' togglelayertype=mask'
 
       # Other
