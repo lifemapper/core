@@ -61,8 +61,8 @@ class BuildShapegridCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{pyBin} {script}{optArgs} {posArgs}'.format(pyBin=CMD_PYBIN, 
-         self.getScript(), optArgs=self.optArgs,
+      return '{pyBin} {script} {optArgs} {posArgs}'.format(pyBin=CMD_PYBIN, 
+         script=self.getScript(), optArgs=self.optArgs,
          posArgs = ' '.join([self.sgFn, self.minX, self.minY, self.maxX, 
                              self.maxY, self.cellSize, self.epsg, 
                              self.cellSides]))
