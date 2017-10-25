@@ -26,7 +26,7 @@ import os
 from osgeo import gdal, gdalconst, ogr
 
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT)
+from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT, DEFAULT_EPSG)
 from LmServer.base.layer2 import _Layer, Raster, Vector
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
@@ -575,25 +575,23 @@ class MapLayerSet(_LayerSet, ServiceObject):
          subsetFname = None                      
          meta = self._getLayerMetadata(sdlLyr, metalines=attMeta, 
                                        isVector=True)
-         
-         if (sdlLyr.getUserId() == CT_USER
-             and sdlLyr.title.startswith(CT_SPECIES_KEYWORD)):
-            cls = self._createStyleClasses(sdlLyr.name, CT_SPECIES_LAYER_STYLES)
-   
-         else:         
-            if (sdlLyr.ogrType == ogr.wkbPoint 
-                or sdlLyr.ogrType == ogr.wkbMultiPoint):
-               style = self._createStyle(POINT_SYMBOL, POINT_SIZE, 
-                                         colorstr=DEFAULT_POINT_COLOR)
-            elif (sdlLyr.ogrType == ogr.wkbLineString 
-                  or sdlLyr.ogrType == ogr.wkbMultiLineString):
-               style = self._createStyle(LINE_SYMBOL, LINE_SIZE, 
-                                         colorstr=DEFAULT_LINE_COLOR)
-            elif (sdlLyr.ogrType == ogr.wkbPolygon 
-                  or sdlLyr.ogrType == ogr.wkbMultiPolygon):
-               style = self._createStyle(POLYGON_SYMBOL, POLYGON_SIZE, 
-                                         outlinecolorstr=DEFAULT_LINE_COLOR)
-            cls = self._createClass(sdlLyr.name, [style])
+#          if (sdlLyr.getUserId() == CT_USER
+#              and sdlLyr.title.startswith(CT_SPECIES_KEYWORD)):
+#             cls = self._createStyleClasses(sdlLyr.name, CT_SPECIES_LAYER_STYLES)
+#          else:    
+         if (sdlLyr.ogrType == ogr.wkbPoint 
+             or sdlLyr.ogrType == ogr.wkbMultiPoint):
+            style = self._createStyle(POINT_SYMBOL, POINT_SIZE, 
+                                      colorstr=DEFAULT_POINT_COLOR)
+         elif (sdlLyr.ogrType == ogr.wkbLineString 
+               or sdlLyr.ogrType == ogr.wkbMultiLineString):
+            style = self._createStyle(LINE_SYMBOL, LINE_SIZE, 
+                                      colorstr=DEFAULT_LINE_COLOR)
+         elif (sdlLyr.ogrType == ogr.wkbPolygon 
+               or sdlLyr.ogrType == ogr.wkbMultiPolygon):
+            style = self._createStyle(POLYGON_SYMBOL, POLYGON_SIZE, 
+                                      outlinecolorstr=DEFAULT_LINE_COLOR)
+         cls = self._createClass(sdlLyr.name, [style])
          
       lyr = self._createLayer(sdlLyr, dataspecs, proj, meta, cls=cls)
       return lyr
