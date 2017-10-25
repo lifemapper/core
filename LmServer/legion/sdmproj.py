@@ -676,7 +676,9 @@ class SDMProjection(_ProjectionType, Raster):
       occId = self.getOccurrenceSetId()
          
       convexHullFilename = os.path.join(workDir, 'occ_{}_convexHull.shp'.format(occId))
-         
+      
+      touchCmd = LmTouchCommand(os.path.join(workDir, 'touch.out'))
+      
       convexHullCmd = CreateConvexHullShapefileCommand(occId, convexHullFilename, 
                                                        bufferDistance=.1)
       # TODO: Define outputs
@@ -704,7 +706,7 @@ class SDMProjection(_ProjectionType, Raster):
       
       # Create a chain command so we don't have to know which shapefiles are 
       #    produced, try to define them if possible though
-      createMaskCommand = ChainCommand([convexHullCmd, maskCmd])
+      createMaskCommand = ChainCommand([touchCmd, convexHullCmd, maskCmd])
       
       rules.append(createMaskCommand.getMakeflowRule(local=True))
       return rules, maskFn
