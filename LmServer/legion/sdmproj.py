@@ -742,12 +742,18 @@ class SDMProjection(_ProjectionType, Raster):
       mdlName = self.getModelTarget()
       rulesetFname = os.path.join(occTargetDir, os.path.basename(self.getModelFilename()))
       
+      touchFn = os.path.join(workDir, 'touch.out')
+      dirTouchCmd = LmTouchCommand(touchFn)
+      rules.append(dirTouchCmd.getMakeflowRule(local=True))
+      
+      
       layersJsonFname = self.getLayersJsonFilename(self.modelScenario, 
                                                    self.modelMask)
       
       wsLyrsFn = os.path.join(workDir, os.path.basename(layersJsonFname))
       cpLyrJsonCommand = SystemCommand('cp', '{} {}'.format(layersJsonFname, 
                                                             wsLyrsFn), 
+                                       inputs=[touchFn],
                                        outputs=[wsLyrsFn])
       rules.append(cpLyrJsonCommand.getMakeflowRule(local=True))
       
@@ -757,6 +763,7 @@ class SDMProjection(_ProjectionType, Raster):
       cpAlgoParamsCommand = SystemCommand('cp', 
                                           '{} {}'.format(paramsJsonFname, 
                                                          algo), 
+                                          inputs=[touchFn],
                                           outputs=[algo])
       rules.append(cpAlgoParamsCommand.getMakeflowRule(local=True))
       
@@ -785,11 +792,12 @@ class SDMProjection(_ProjectionType, Raster):
          cpRaster = os.path.join(targetDir, os.path.basename(self.getDLocation()))
          
          #touch directory then copy file
-         touchCmd = LmTouchCommand(os.path.join(targetDir, 'touch.out'))
+         touchFn = os.path.join(targetDir, 'touch.out')
+         touchCmd = LmTouchCommand(touchFn)
          
          cpCmd = SystemCommand('cp', 
                                '{} {}'.format(self.getDLocation(), cpRaster), 
-                               inputs=[self.getDLocation()], 
+                               inputs=[self.getDLocation(), touchFn], 
                                outputs=[cpRaster])
          
          touchAndCopyCmd = ChainCommand([touchCmd, cpCmd])
@@ -829,6 +837,7 @@ class SDMProjection(_ProjectionType, Raster):
             cpAlgoParamsCommand = SystemCommand('cp', 
                                                 '{} {}'.format(paramsJsonFname, 
                                                                algo), 
+                                                inputs=[touchFn],
                                                 outputs=[algo])
             rules.append(cpAlgoParamsCommand.getMakeflowRule(local=True))
             
