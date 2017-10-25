@@ -783,7 +783,7 @@ class SDMProjection(_ProjectionType, Raster):
          
          # Mask rules
          if self.projMask is not None:
-            maskRules, wsMaskFn = self._computeMyMask(self.projMaskMask, 
+            maskRules, wsMaskFn = self._computeMyMask(self.projMask, 
                                                       workDir=workDir)
             rules.extend(maskRules)
          else:

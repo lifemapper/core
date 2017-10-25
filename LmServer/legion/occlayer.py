@@ -706,7 +706,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          snippetPostFilename = os.path.join(targetDir, 
                                  'snippets_create_{}.xml'.format(self.getId()))
          
-         snippetCmd = ShootSnippetsCommand(self._occurrenceSet.getId(),
+         snippetCmd = ShootSnippetsCommand(self.getId(),
                                            SnippetOperations.ADDED_TO,
                                            snippetPostFilename,
                                            o2ident='lm-occ-{}'.format(self.getId()),
