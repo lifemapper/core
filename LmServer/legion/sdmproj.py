@@ -696,7 +696,10 @@ class SDMProjection(_ProjectionType, Raster):
          outFormat = 'GTiff'
          maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
       
-      maskArgs = '-of {} -cutline {} {}'.format(outFormat, convexHullFilename, maskFn)
+      maskArgs = '-of {} -cutline {} {} {}'.format(outFormat, 
+                                                   convexHullFilename, 
+                                                   maskLyr.getDLocation(), 
+                                                   maskFn)
       maskCmd = SystemCommand('gdalwarp', maskArgs, outputs=[maskFn])
       
       # Create a chain command so we don't have to know which shapefiles are 
