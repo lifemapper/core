@@ -691,12 +691,11 @@ class SDMProjection(_ProjectionType, Raster):
       if maskName is None:
          maskName = maskLyr.verify
       
-      if self.isATT():
-         outFormat = 'AAIGrid'
-         maskFn = os.path.join(workDir, '{}.asc'.format(maskName))
-      else:
-         outFormat = 'GTiff'
-         maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
+      
+      # Need to create mask as GTiff always and conditionally translate to ASC
+      
+      outFormat = 'GTiff'
+      maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
       
       maskArgs = '-of {} -cutline {} {} {}'.format(outFormat, 
                                                    convexHullFilename, 
@@ -706,7 +705,19 @@ class SDMProjection(_ProjectionType, Raster):
       
       # Create a chain command so we don't have to know which shapefiles are 
       #    produced, try to define them if possible though
-      createMaskCommand = ChainCommand([touchCmd, convexHullCmd, maskCmd])
+      cmds = [touchCmd, convexHullCmd, maskCmd]
+      
+      if self.isATT():
+         # Need to convert to ASCII
+         finalMaskFn = os.path.join(workDir, '{}.asc'.format(maskName))
+         convertCmd = SystemCommand('gdal_translate', 
+                                    '-of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(maskFn, finalMaskFn),
+                                    inputs=[maskFn],
+                                    outputs=[finalMaskFn])
+         cmds.append(convertCmd)
+         maskFn = finalMaskFn
+      
+      createMaskCommand = ChainCommand(cmds)
       
       rules.append(createMaskCommand.getMakeflowRule(local=True))
       return rules, maskFn
