@@ -739,11 +739,25 @@ class SDMProjection(_ProjectionType, Raster):
       
       layersJsonFname = self.getLayersJsonFilename(self.modelScenario, 
                                                    self.modelMask)
-      paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
       
-      mdlCmd = SdmodelCommand(ptype, mdlName, occSetFname, layersJsonFname,
-                              rulesetFname, paramsJsonFname, 
-                              workDir=occTargetDir, maskFilename=wsMaskFn)
+      wsLyrsFn = os.path.join(workDir, os.path.basename(layersJsonFname))
+      cpLyrJsonCommand = SystemCommand('cp', '{} {}'.format(layersJsonFname, 
+                                                            wsLyrsFn), 
+                                       outputs=[wsLyrsFn])
+      rules.append(cpLyrJsonCommand.getMakeflowRule(local=True))
+      
+      paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
+      algo = os.path.join(workDir, os.path.basename(paramsJsonFname))
+      
+      cpAlgoParamsCommand = SystemCommand('cp', 
+                                          '{} {}'.format(paramsJsonFname, 
+                                                         algo), 
+                                          outputs=[algo])
+      rules.append(cpAlgoParamsCommand.getMakeflowRule(local=True))
+      
+      mdlCmd = SdmodelCommand(ptype, mdlName, occSetFname, wsLyrsFn, 
+                              rulesetFname, algo, workDir=occTargetDir, 
+                              maskFilename=wsMaskFn)
       mdlCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
       
       rules.append(mdlCmd.getMakeflowRule())
@@ -805,7 +819,13 @@ class SDMProjection(_ProjectionType, Raster):
             
             paramsJsonFname = self.getAlgorithmParametersJsonFilename(
                                                                self._algorithm)
-            algo = paramsJsonFname
+            algo = os.path.join(targetDir, os.path.basename(paramsJsonFname))
+            
+            cpAlgoParamsCommand = SystemCommand('cp', 
+                                                '{} {}'.format(paramsJsonFname, 
+                                                               algo), 
+                                                outputs=[algo])
+            rules.append(cpAlgoParamsCommand.getMakeflowRule(local=True))
             
             # If archive or default, scale
             #if self.getUserId() in [PUBLIC_USER, DEFAULT_POST_USER]:
@@ -836,9 +856,14 @@ class SDMProjection(_ProjectionType, Raster):
 
          layersJsonFname = self.getLayersJsonFilename(self.projScenario, 
                                                       self.projMask)
+         wsLyrsFn = os.path.join(workDir, os.path.basename(layersJsonFname))
+         cpLyrJsonCommand = SystemCommand('cp', '{} {}'.format(layersJsonFname, 
+                                                               wsLyrsFn), 
+                                          outputs=[wsLyrsFn])
+         rules.append(cpLyrJsonCommand.getMakeflowRule(local=True))
          
          prjCmd = SdmProjectCommand(self.processType, prjName, modelFname,
-                                    layersJsonFname, rawPrjRaster, algo=algo,
+                                    wsLyrsFn, rawPrjRaster, algo=algo,
                                     workDir=targetDir, 
                                     packageFilename=packageFname, 
                                     statusFilename=statusFname, 
