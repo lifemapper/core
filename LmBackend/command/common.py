@@ -21,8 +21,6 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import os
-
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import CMD_PYBIN, COMMON_SCRIPTS_DIR
 
@@ -64,6 +62,9 @@ class ConcatenateMatricesCommand(_LmCommand):
    @summary: This command will concatenate a list of matrices based on the 
                 specified axis
    """
+   relDir = COMMON_SCRIPTS_DIR
+   scriptName = 'concatenate_matrices.py'
+
    # ................................
    def __init__(self, matrices, axis, outMtxFilename, 
                       mashedPotatoFilename=None):
@@ -99,8 +100,7 @@ class ConcatenateMatricesCommand(_LmCommand):
       posArgs = '{} {} {}'.format(self.outMtxFilename, self.axis, 
                                   ' '.join(self.mtxFilenames))
       
-      return '{} {} {} {}'.format(CMD_PYBIN, 
-                  os.path.join(COMMON_SCRIPTS_DIR, 'concatenate_matrices.py'),
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
                   optionalArgs, posArgs)
 
 # .............................................................................

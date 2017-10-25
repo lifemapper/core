@@ -21,8 +21,6 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import os
-
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import CMD_PYBIN, SINGLE_SPECIES_SCRIPTS_DIR
 
@@ -31,6 +29,9 @@ class BisonPointsCommand(_LmCommand):
    """
    @summary: This command builds a BISON occurrence set
    """
+   relDir = SINGLE_SPECIES_SCRIPTS_DIR
+   scriptName = 'bison_points.py'
+
    # ................................
    def __init__(self, pointsUrl, outFile, bigFile, maxPoints):
       """
@@ -52,8 +53,7 @@ class BisonPointsCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {}'.format(CMD_PYBIN,
-                  os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'bison_points.py'),
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
                   self.pointsUrl, self.outFile, self.bigFile, self.maxPoints)
 
 # .............................................................................
@@ -61,6 +61,9 @@ class GbifPointsCommand(_LmCommand):
    """
    @summary: This command creates an occurrence set from GBIF points
    """
+   relDir = SINGLE_SPECIES_SCRIPTS_DIR
+   scriptName = 'gbif_points.py'
+
    # ................................
    def __init__(self, csvFile, pointCount, outFile, bigFile, maxPoints):
       """
@@ -86,8 +89,7 @@ class GbifPointsCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return ''.format(CMD_PYBIN, 
-               os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'gbif_points.py'),
+      return ''.format(CMD_PYBIN, self.getScript(),
                self.csvFile, self.pointCount, self.outFile, self.bigFile, 
                self.maxPoints)
 
@@ -96,6 +98,9 @@ class GrimRasterCommand(_LmCommand):
    """
    @summary: This command intersects a raster layer and a shapegrid for a GRIM
    """
+   relDir = SINGLE_SPECIES_SCRIPTS_DIR
+   scriptName = 'grim_raster.py'
+
    # ................................
    def __init__(self, shapegridFilename, rasterFilename, grimColFilename, 
                 resolution, minPercent=None, ident=None):
@@ -131,8 +136,7 @@ class GrimRasterCommand(_LmCommand):
          optArgs += ' -m {}'.format(self.minPercent)
       if self.ident is not None:
          optArgs += ' -i {}'.format(self.ident)
-      return '{} {} {} {} {} {} {}'.format(CMD_PYBIN,
-            os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'grim_raster.py'),
+      return '{} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
             optArgs, self.sgFn, self.rastFn, self.grimColFn, self.resolution)
 
 # .............................................................................
@@ -140,6 +144,9 @@ class IdigbioPointsCommand(_LmCommand):
    """
    @summary: This command creates an iDigBio occurrence set
    """
+   relDir = SINGLE_SPECIES_SCRIPTS_DIR
+   scriptName = 'idigbio_points.py'
+
    # ................................
    def __init__(self, taxonKey, outFile, bigFile, maxPoints):
       """
@@ -162,8 +169,7 @@ class IdigbioPointsCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {}'.format(CMD_PYBIN, 
-               os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'idigbio_points.py'), 
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
                self.taxonKey, self.outFile, self.bigFile, self.maxPoints)
 
 # .............................................................................
@@ -171,6 +177,9 @@ class IntersectRasterCommand(_LmCommand):
    """
    @summary: This command intersects a raster layer and a shapegrid
    """
+   relDir = SINGLE_SPECIES_SCRIPTS_DIR
+   scriptName = 'intersect_raster.py'
+
    # ................................
    def __init__(self, shapegridFilename, rasterFilename, pavFilename, 
                 resolution, minPresence, maxPresence, percentPresence, 
@@ -206,8 +215,7 @@ class IntersectRasterCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN,
-            os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'intersect_raster.py'),
+      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
             ' --squid={}'.format(self.squid) if self.squid is not None else '',
             self.sgFn, self.rastFn, self.pavFn, self.resolution, self.minPres, 
             self.maxPres, self.perPres)
@@ -217,6 +225,9 @@ class IntersectVectorCommand(_LmCommand):
    """
    @summary: This command intersects a vector layer and a shapegrid
    """
+   relDir = SINGLE_SPECIES_SCRIPTS_DIR
+   scriptName = 'intersect_vector.py'
+
    # ................................
    def __init__(self, shapegridFilename, vectorFilename, pavFilename, 
                 presenceAttrib, minPresence, maxPresence, percentPresence, 
@@ -253,8 +264,7 @@ class IntersectVectorCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN,
-            os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'intersect_vector.py'),
+      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
             ' --squid={}'.format(self.squid) if self.squid is not None else '',
             self.sgFn, self.vectFn, self.pavFn, self.presAttrib, self.minPres, 
             self.maxPres, self.perPres)
@@ -264,6 +274,9 @@ class SdmodelCommand(_LmCommand):
    """
    @summary: This command creates a species distribution model
    """
+   relDir = SINGLE_SPECIES_SCRIPTS_DIR
+   scriptName = 'sdmodel.py'
+
    # ................................
    def __init__(self, pType, jobName, pointsFilename, layersJsonFilename, 
                 rulesetFilename, paramsJsonFilename, packageFilename=None,
@@ -332,8 +345,7 @@ class SdmodelCommand(_LmCommand):
       @summary: Get the raw command to run on the system
       """
       return '{} {} {} {} {} {} {} {} {}'.format(
-         CMD_PYBIN,
-         os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'sdmodel.py'),
+         CMD_PYBIN, self.getScript(),
          self.optArgs, self.pType, self.jobName, self.pointsFn,
          self.lyrsFn, self.rsFn, self.paramsFn)
 
@@ -343,6 +355,9 @@ class SdmProjectCommand(_LmCommand):
    @summary: This command creates a projection from a model rule set and a 
                 package of climate layers
    """
+   relDir = SINGLE_SPECIES_SCRIPTS_DIR
+   scriptName = 'sdmproject.py'
+
    # ................................
    def __init__(self, pType, jobName, rulesetFilename, layersJsonFilename, 
                 outputRasterFilename, algo=None, workDir=None, 
@@ -413,8 +428,7 @@ class SdmProjectCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {} {}'.format(CMD_PYBIN, 
-               os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'sdmproject.py'), 
+      return '{} {} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
                self.optArgs, self.pType, self.jobName, self.rsFn, 
                self.lyrsFn, self.outFn)
 
@@ -423,6 +437,9 @@ class UserPointsCommand(_LmCommand):
    """
    @summary: This command will create an occurrence set from user point data
    """
+   relDir = SINGLE_SPECIES_SCRIPTS_DIR
+   scriptName = 'user_points.py'
+
    # ................................
    def __init__(self, inCsvFilename, metadataFilename, outFilename, 
                 bigFilename, maxPoints):
@@ -452,7 +469,6 @@ class UserPointsCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'user_points.py'), 
+      return '{} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.inCsvFn, self.metaFn, self.outFn, self.bigFn, self.maxPoints)
 

@@ -23,10 +23,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import os
-
 from LmBackend.command.base import _LmCommand
-
 from LmBackend.common.lmconstants import CMD_PYBIN, SERVER_SCRIPTS_DIR
 
 # .............................................................................
@@ -35,6 +32,9 @@ class AddBioGeoAndTreeCommand(_LmCommand):
    @summary: This command will add biogeographic hypotheses and a tree to a 
                 grid set
    """
+   relDir = SERVER_SCRIPTS_DIR
+   scriptName = 'addBioGeoAndTree.py'
+
    # ................................
    def __init__(self, gridsetId, hypothesesFilenames, treeFilename=None, 
                       treeName=None, eventField=None):
@@ -75,8 +75,7 @@ class AddBioGeoAndTreeCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(SERVER_SCRIPTS_DIR, 'addBioGeoAndTree.py'),
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.optArgs, ' '.join(self.args))
 
 # .............................................................................
@@ -85,6 +84,9 @@ class CreateConvexHullShapefileCommand(_LmCommand):
    @summary: This command will write a shapefile containing a feature with the 
                 convex hull of the occurrence set
    """
+   relDir = SERVER_SCRIPTS_DIR
+   scriptName = 'create_convex_hull_shapefile.py'
+
    # ................................
    def __init__(self, occId, outFilename, bufferDistance=None):
       """
@@ -104,8 +106,7 @@ class CreateConvexHullShapefileCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(SERVER_SCRIPTS_DIR, 'create_convex_hull_shapefile.py'),
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.optArgs, self.args)
 
 # .............................................................................
@@ -113,6 +114,9 @@ class IndexPAVCommand(_LmCommand):
    """
    @summary: This command will post PAV information to a solr index
    """
+   relDir = SERVER_SCRIPTS_DIR
+   scriptName = 'indexPAV.py'
+
    # ................................
    def __init__(self, pavFilename, pavId, projId, pamId, pavIdxFilename):
       """
@@ -135,15 +139,16 @@ class IndexPAVCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {}'.format(CMD_PYBIN, 
-            os.path.join(SERVER_SCRIPTS_DIR, 'indexPAV.py'),
-            ' '.join(self.args))
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), ' '.join(self.args))
 
 # .............................................................................
 class LmTouchCommand(_LmCommand):
    """
    @summary: This command will touch a file, creating necessary directories  
    """
+   relDir = SERVER_SCRIPTS_DIR
+   scriptName = 'lmTouch.py'
+
    # ................................
    def __init__(self, filename):
       """
@@ -159,15 +164,16 @@ class LmTouchCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {}'.format(CMD_PYBIN, 
-            os.path.join(SERVER_SCRIPTS_DIR, 'lmTouch.py'),
-            self.filename)
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.filename)
 
 # .............................................................................
 class ShootSnippetsCommand(_LmCommand):
    """
    @summary: This command will shoot snippets into an index
    """
+   relDir = SERVER_SCRIPTS_DIR
+   scriptName = 'shootSnippets.py'
+
    # ................................
    def __init__(self, occSetId, operation, postFilename, o2ident=None, 
                       url=None, who=None, agent=None, why=None):
@@ -207,8 +213,7 @@ class ShootSnippetsCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(SERVER_SCRIPTS_DIR, 'shootSnippets.py'),
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.optArgs, ' '.join(self.args))
 
 # .............................................................................
@@ -216,6 +221,9 @@ class SquidIncCommand(_LmCommand):
    """
    @summary: This command will add squids to a tree
    """
+   relDir = SERVER_SCRIPTS_DIR
+   scriptName = 'squid_inc.py'
+
    # ................................
    def __init__(self, treeFilename, userId, outTreeFilename):
       """
@@ -235,15 +243,16 @@ class SquidIncCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {}'.format(CMD_PYBIN, 
-            os.path.join(SERVER_SCRIPTS_DIR, 'squid_inc.py'),
-            ' '.join(self.args))
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), ' '.join(self.args))
 
 # .............................................................................
 class StockpileCommand(_LmCommand):
    """
    @summary: This command will stockpile the outputs of a process
    """
+   relDir = SERVER_SCRIPTS_DIR
+   scriptName = 'stockpile.py'
+
    # ................................
    def __init__(self, pType, objectId, successFilename, objOutputFilenames, 
                 status=None, statusFilename=None):
@@ -283,8 +292,7 @@ class StockpileCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(SERVER_SCRIPTS_DIR, 'stockpile.py'),
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.optArgs, ' '.join(self.args))
 
 # .............................................................................
@@ -293,6 +301,9 @@ class TriageCommand(_LmCommand):
    @summary: This command will determine which files referenced in the input
                 file exist and will output a file containing those references
    """
+   relDir = SERVER_SCRIPTS_DIR
+   scriptName = 'triage.py'
+
    # ................................
    def __init__(self, inFilename, outFilename):
       """
@@ -313,7 +324,5 @@ class TriageCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {}'.format(CMD_PYBIN, 
-            os.path.join(SERVER_SCRIPTS_DIR, 'triage.py'),
-            ' '.join(self.args))
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), ' '.join(self.args))
 

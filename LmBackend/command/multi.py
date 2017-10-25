@@ -21,16 +21,17 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import os
-
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import CMD_PYBIN, MULTI_SPECIES_SCRIPTS_DIR
 
 # .............................................................................
 class BuildShapegridCommand(_LmCommand):
    """
-   @summary: This command will 
+   @summary: This command will build a shapegrid
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'build_shapegrid.py'
+
    # ................................
    def __init__(self, shapegridFilename, minX, minY, maxX, maxY, cellSize, 
                 epsg, numSides, cutoutWKTFilename=None):
@@ -61,8 +62,7 @@ class BuildShapegridCommand(_LmCommand):
       @summary: Get the raw command to run on the system
       """
       return '{pyBin} {script}{optArgs} {posArgs}'.format(pyBin=CMD_PYBIN, 
-         script=os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'build_shapegrid.py'),
-         optArgs=self.optArgs,
+         self.getScript(), optArgs=self.optArgs,
          posArgs = ' '.join([self.sgFn, self.minX, self.minY, self.maxX, 
                              self.maxY, self.cellSize, self.epsg, 
                              self.cellSides]))
@@ -72,6 +72,9 @@ class CalculateStatsCommand(_LmCommand):
    """
    @summary: This command will calculate statistics for a PAM
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'calculate_pam_stats.py'
+
    # ................................
    def __init__(self, pamFilename, sitesFilename, speciesFilename, 
                   diversityFilename, treeFilename=None, schluter=False,
@@ -108,8 +111,7 @@ class CalculateStatsCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'calculate_pam_stats.py'),
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             ' '.join(self.optArgs), ' '.join(self.args))
 
 # .............................................................................
@@ -117,6 +119,9 @@ class CreateAncestralPamCommand(_LmCommand):
    """
    @summary: This command will create an ancestral PAM from a PAM and tree
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'create_ancestral_pam.py'
+
    # ................................
    def __init__(self, pamFilename, treeFilename, outputFilename):
       """
@@ -135,15 +140,16 @@ class CreateAncestralPamCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'create_ancestral_pam.py'),
-            self.args)
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
 
 # .............................................................................
 class EncodeHypothesesCommand(_LmCommand):
    """
    @summary: This command will encode biogeographic hypotheses with a shapegrid
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'encode_hypotheses.py'
+
    # ................................
    def __init__(self, shapegridFilename, layerFilenames, outputFilename, 
                       eventField=None):
@@ -176,8 +182,7 @@ class EncodeHypothesesCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'encode_hypotheses.py'),
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             ' -e {}'.format(self.eventField) if self.eventField is not None else '',
             self.sgFn, self.outFn, ' '.join(self.lyrFns))
 
@@ -186,6 +191,9 @@ class EncodePhylogenyCommand(_LmCommand):
    """
    @summary: This command will encode a tree and PAM into a matrix
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'encode_phylogeny.py'
+
    # ................................
    def __init__(self, treeFilename, pamFilename, outMtxFilename, 
                       mashedPotato=None):
@@ -214,8 +222,7 @@ class EncodePhylogenyCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'encode_phylogeny.py'),
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             ' -m {}'.format(self.mashedPotato) if self.mashedPotato is not None else '',
             self.treeFn, self.pamFn, self.outMtxFn)
 
@@ -224,6 +231,9 @@ class McpaAssembleCommand(_LmCommand):
    """
    @summary: This command will assemble the outputs of MCPA into a single matrix
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'mcpa_assemble.py'
+
    # ................................
    def __init__(self, envPartCorFilename, envAdjRsqFilename, envFGlobFilename, 
                 envFPartFilename, envBHFGlobFilename, envBHFPartFilename,
@@ -263,8 +273,7 @@ class McpaAssembleCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'mcpa_assemble.py'),
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), 
             ' '.join([self.envPartCorFn, self.envAdjRsqFn, self.envFGlobFn, 
                       self.envFPartFn, self.envBHFGlobFn, self.envBHFPartFn,
                       self.bgPartCorFn, self.bgAdjRsqFn, self.bgFGlobFn, 
@@ -276,6 +285,9 @@ class McpaCorrectPValuesCommand(_LmCommand):
    """
    @summary: This command will correct the P-values generated by MCPA
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'mcpa_correct_pvalues.py'
+
    # ................................
    def __init__(self, observedFilename, outPvaluesFilename, bhValuesFilename, 
                       fValueFilenames):
@@ -310,15 +322,17 @@ class McpaCorrectPValuesCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'mcpa_correct_pvalues.py'),
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.obsFn, self.pValFn, self.bhFn, ' '.join(self.fValFns))
 
 # .............................................................................
 class McpaObservedCommand(_LmCommand):
    """
-   @summary: This command will 
+   @summary: This command will run an observed run of MCPA
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'mcpa_observed.py'
+
    # ................................
    def __init__(self, pamFilename, treeMtxFilename, grimFilename, 
                       adjRsqFilename, partCorMtxFilename, 
@@ -360,8 +374,7 @@ class McpaObservedCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'mcpa_observed.py'),
+      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
             self.optArgs, self.pamFn, self.treeMtxFn, self.grimFn, 
             self.adjRsqFn, self.partCorMtxFn, self.fGlobFn, self.fPartFn)
 
@@ -370,6 +383,9 @@ class McpaRandomCommand(_LmCommand):
    """
    @summary: This command will compute MCPA on randomized data
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'mcpa_random.py'
+
    # ................................
    def __init__(self, pamFilename, treeMtxFilename, grimFilename, 
                       fGlobalRandMtxFilename, fPartRandMtxFilename, 
@@ -409,8 +425,7 @@ class McpaRandomCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'mcpa_random.py'),
+      return '{} {} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.optArgs, self.pamFn, self.treeMtxFn, self.grimFn, 
             self.fGlobFn, self.fPartFn)
 
@@ -419,6 +434,9 @@ class OccurrenceBucketeerCommand(_LmCommand):
    """
    @summary: This command will split a CSV into buckets based on the group field
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'occurrence_bucketeer.py'
+
    # ................................
    def __init__(self, outBasename, groupPosition, inFilename, position=None, 
                 width=None, headerRow=False):
@@ -460,8 +478,7 @@ class OccurrenceBucketeerCommand(_LmCommand):
       if self.headerRow:
          optArgs += ' -header'
       
-      return '{} {} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'occurrence_bucketeer.py'),
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             optArgs, self.outBase, self.groupPos, ' '.join(self.inFiles))
 
 # .............................................................................
@@ -469,6 +486,9 @@ class OccurrenceSorterCommand(_LmCommand):
    """
    @summary: This command will sort a CSV file on a group field
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'occurrence_sorter.py'
+
    # ................................
    def __init__(self, inFilename, outFilename, groupPosition):
       """
@@ -490,8 +510,7 @@ class OccurrenceSorterCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'occurrence_sorter.py'),
+      return '{} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.outFn, self.groupPos, self.inFn)
 
 # .............................................................................
@@ -499,6 +518,9 @@ class OccurrenceSplitterCommand(_LmCommand):
    """
    @summary: This command will split a sorted CSV file on a group field
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'occurrence_splitter.py'
+
    # ................................
    def __init__(self, groupPosition, inFilename, outDir, prefix=None):
       """
@@ -523,8 +545,7 @@ class OccurrenceSplitterCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'occurrence_splitter.py'),
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             ' -p {}'.format(self.prefix) if self.prefix is not None else '',
             self.groupPos, self.inFn, self.outDir)
 
@@ -533,6 +554,9 @@ class RandomizeGradyCommand(_LmCommand):
    """
    @summary: This command will randomize a PAM using CJ's method
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'grady_randomize.py'
+
    # ................................
    def __init__(self, pamFilename, randPamFilename):
       """
@@ -552,8 +576,7 @@ class RandomizeGradyCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'grady_randomize.py'),
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.pamFn, self.outFn)
 
 # .............................................................................
@@ -561,6 +584,9 @@ class RandomizeSplotchCommand(_LmCommand):
    """
    @summary: This command will randomize a PAM using the splotch method
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'splotch_randomize.py'
+
    # ................................
    def __init__(self, pamFilename, numSides, outFilename):
       """
@@ -582,8 +608,7 @@ class RandomizeSplotchCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'splotch_randomize.py'),
+      return '{} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.pamFn, self.numSides, self.outFn)
 
 # .............................................................................
@@ -591,6 +616,9 @@ class RandomizeSwapCommand(_LmCommand):
    """
    @summary: This command will randomize a PAM using the swap method
    """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'swap_randomize.py'
+
    # ................................
    def __init__(self, pamFilename, numSwaps, outFilename):
       """
@@ -612,7 +640,6 @@ class RandomizeSwapCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {}'.format(CMD_PYBIN, 
-            os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'swap_randomize.py'),
+      return '{} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.pamFn, self.numSwaps, self.outFn)
 

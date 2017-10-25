@@ -23,8 +23,6 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import os
-
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import BOOM_SCRIPTS_DIR, CMD_PYBIN
 
@@ -33,6 +31,9 @@ class BoomerCommand(_LmCommand):
    """
    @summary: This command will run the boomer
    """
+   relDir = BOOM_SCRIPTS_DIR
+   scriptName = 'boomer.py'
+
    # ................................
    def __init__(self, configFile=None):
       """
@@ -50,15 +51,16 @@ class BoomerCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{}'.format(CMD_PYBIN, 
-            os.path.join(BOOM_SCRIPTS_DIR, 'boomer.py'),
-            self.optArgs)
+      return '{} {}{}'.format(CMD_PYBIN, self.getScript(), self.optArgs)
 
 # .............................................................................
 class InitBoomCommand(_LmCommand):
    """
    @summary: This command will run the initboom script
    """
+   relDir = BOOM_SCRIPTS_DIR
+   scriptName = 'initboom.py'
+
    # ................................
    def __init__(self, configFile=None, isFirstRun=False):
       """
@@ -81,7 +83,5 @@ class InitBoomCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {}'.format(CMD_PYBIN, 
-            os.path.join(BOOM_SCRIPTS_DIR, 'initboom.py'),
-            self.optArgs)
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs)
 

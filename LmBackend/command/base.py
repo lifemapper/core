@@ -24,15 +24,20 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import os
 import subprocess
 
 from LmBackend.common.cmd import MfRule
+from LmServer.common.localconstants import APP_PATH
 
 # .............................................................................
 class _LmCommand(object):
    """
    @summary: A wrapper class for Lifemapper commands to run scripts
    """
+   relDir = None
+   scriptName = None
+   
    # ................................
    def __init__(self):
       self.inputs = []
@@ -62,6 +67,12 @@ class _LmCommand(object):
       rule = MfRule(cmd, self.outputs, dependencies=self.inputs)
       return rule
 
+   # ................................
+   def getScript(self):
+      """
+      @summary: Get the path to the script to run
+      """
+      return os.path.join(APP_PATH, self.relDir, self.scriptName)
    # ................................
    def Popen(self, **kwargs):
       """
