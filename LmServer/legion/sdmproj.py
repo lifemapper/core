@@ -786,23 +786,24 @@ class SDMProjection(_ProjectionType, Raster):
          workDir = ''
          
       targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
-         
+      
+      touchFn = os.path.join(targetDir, 'touch.out')
+      touchCmd = LmTouchCommand(touchFn)
+      rules.append(touchCmd.getMakeflowRule(local=True))
+      
+      
       if JobStatus.finished(self.status):
          # Just need to move the tiff into place
          cpRaster = os.path.join(targetDir, os.path.basename(self.getDLocation()))
          
          #touch directory then copy file
-         touchFn = os.path.join(targetDir, 'touch.out')
-         touchCmd = LmTouchCommand(touchFn)
          
          cpCmd = SystemCommand('cp', 
                                '{} {}'.format(self.getDLocation(), cpRaster), 
                                inputs=[self.getDLocation(), touchFn], 
                                outputs=[cpRaster])
          
-         touchAndCopyCmd = ChainCommand([touchCmd, cpCmd])
-         
-         rules.append(touchAndCopyCmd.getMakeflowRule(local=True))
+         rules.append(cpCmd.getMakeflowRule(local=True))
       else:
          # Generate the model
          modelRules = self._computeMyModel(workDir=workDir)
