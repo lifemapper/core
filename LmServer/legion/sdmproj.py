@@ -681,8 +681,8 @@ class SDMProjection(_ProjectionType, Raster):
       
       convexHullCmd = CreateConvexHullShapefileCommand(occId, convexHullFilename, 
                                                        bufferDistance=.1)
-      # TODO: Define outputs
-      convexHullCmd.outputs = []
+      convexHullCmd.outputs = ['{}{}'.format(
+         os.path.splitext(convexHullFilename)[0], ext) for ext in ['.shp', '.shx', '.dbf']]
       
       #gdalwarp -of GTiff -cutline DATA/area_of_interest.shp \
       # -cl area_of_interest  -crop_to_cutline DATA/PCE_in_gw.asc  data_masked7.tiff
@@ -714,7 +714,7 @@ class SDMProjection(_ProjectionType, Raster):
                                     '-of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(maskFn, finalMaskFn),
                                     inputs=[maskFn],
                                     outputs=[finalMaskFn])
-         cmds.append(convertCmd)
+         rules.append(convertCmd.getMakeflowRule(local=True))
          maskFn = finalMaskFn
       
       createMaskCommand = ChainCommand(cmds)
