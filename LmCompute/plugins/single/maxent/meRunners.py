@@ -39,7 +39,7 @@ import zipfile
 
 from LmBackend.common.subprocessManager import SubprocessRunner
 
-from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
 
 from LmCompute.common.layerManager import LayerManager, convertAsciisToMxes
 from LmCompute.common.localconstants import SHARED_DATA_PATH
@@ -114,8 +114,7 @@ class MaxentModel(object):
       if mask is not None:
          # TODO: Evaluate if we need to convert this to be the same format as
          #          the other layers or if we can mix
-         maskFn = os.path.join(self.layersDir, 'mask{}'.format(
-            os.path.splitext(mask)[1]))
+         maskFn = os.path.join(self.layersDir, 'mask{}'.format(LMFormat.MXE.ext))
          #os.symlink(mask, maskFn)
          convertAsciisToMxes([(os.path.abspath(mask), maskFn)])
          
@@ -377,7 +376,7 @@ class MaxentProjection(object):
          # TODO: Evaluate if we need to convert this to be the same format as
          #          the other layers or if we can mix
          maskFn = os.path.join(self.layersDir, 'mask{}'.format(
-            os.path.splitext(mask)[1]))
+            LMFormat.MXE.ext))
          #os.symlink(mask, maskFn)
          convertAsciisToMxes([(os.path.abspath(mask), maskFn)])
          self.params += ' togglelayertype=mask'
