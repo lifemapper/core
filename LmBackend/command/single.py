@@ -292,7 +292,7 @@ class SdmodelCommand(_LmCommand):
       _LmCommand.__init__(self)
       self.inputs.extend([pointsFilename, layersJsonFilename, 
                           paramsJsonFilename])
-      self.outputs.extend(rulesetFilename)
+      self.outputs.append(rulesetFilename)
 
       self.pType = pType
       self.jobName = jobName
