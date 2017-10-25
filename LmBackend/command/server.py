@@ -75,7 +75,7 @@ class AddBioGeoAndTreeCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {}'.format(CMD_PYBIN, 
             os.path.join(SERVER_SCRIPTS_DIR, 'addBioGeoAndTree.py'),
             self.optArgs, ' '.join(self.args))
 
@@ -104,7 +104,7 @@ class CreateConvexHullShapefileCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {}'.format(CMD_PYBIN, 
             os.path.join(SERVER_SCRIPTS_DIR, 'create_convex_hull_shapefile.py'),
             self.optArgs, self.args)
 
@@ -207,7 +207,7 @@ class ShootSnippetsCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {}'.format(CMD_PYBIN, 
             os.path.join(SERVER_SCRIPTS_DIR, 'shootSnippets.py'),
             self.optArgs, ' '.join(self.args))
 
@@ -283,7 +283,7 @@ class StockpileCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {}'.format(CMD_PYBIN, 
             os.path.join(SERVER_SCRIPTS_DIR, 'stockpile.py'),
             self.optArgs, ' '.join(self.args))
 

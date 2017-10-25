@@ -131,7 +131,7 @@ class GrimRasterCommand(_LmCommand):
          optArgs += ' -m {}'.format(self.minPercent)
       if self.ident is not None:
          optArgs += ' -i {}'.format(self.ident)
-      return '{} {}{} {} {} {} {}'.format(CMD_PYBIN,
+      return '{} {} {} {} {} {} {}'.format(CMD_PYBIN,
             os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'grim_raster.py'),
             optArgs, self.sgFn, self.rastFn, self.grimColFn, self.resolution)
 
@@ -206,7 +206,7 @@ class IntersectRasterCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {} {} {} {} {} {} {}'.format(CMD_PYBIN,
+      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN,
             os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'intersect_raster.py'),
             ' --squid={}'.format(self.squid) if self.squid is not None else '',
             self.sgFn, self.rastFn, self.pavFn, self.resolution, self.minPres, 
@@ -253,7 +253,7 @@ class IntersectVectorCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {} {} {} {} {} {} {}'.format(CMD_PYBIN,
+      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN,
             os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'intersect_vector.py'),
             ' --squid={}'.format(self.squid) if self.squid is not None else '',
             self.sgFn, self.vectFn, self.pavFn, self.presAttrib, self.minPres, 
@@ -331,7 +331,7 @@ class SdmodelCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {} {} {} {} {} {}'.format(
+      return '{} {} {} {} {} {} {} {} {}'.format(
          CMD_PYBIN,
          os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'sdmodel.py'),
          self.optArgs, self.pType, self.jobName, self.pointsFn,
@@ -413,7 +413,7 @@ class SdmProjectCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {} {} {} {} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {} {} {} {} {}'.format(CMD_PYBIN, 
                os.path.join(SINGLE_SPECIES_SCRIPTS_DIR, 'sdmproject.py'), 
                self.optArgs, self.pType, self.jobName, self.rsFn, 
                self.lyrsFn, self.outFn)

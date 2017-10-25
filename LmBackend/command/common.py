@@ -99,7 +99,7 @@ class ConcatenateMatricesCommand(_LmCommand):
       posArgs = '{} {} {}'.format(self.outMtxFilename, self.axis, 
                                   ' '.join(self.mtxFilenames))
       
-      return '{} {} {}{}'.format(CMD_PYBIN, 
+      return '{} {} {} {}'.format(CMD_PYBIN, 
                   os.path.join(COMMON_SCRIPTS_DIR, 'concatenate_matrices.py'),
                   optionalArgs, posArgs)
 

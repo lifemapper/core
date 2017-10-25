@@ -176,7 +176,7 @@ class EncodeHypothesesCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {} {} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, 
             os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'encode_hypotheses.py'),
             ' -e {}'.format(self.eventField) if self.eventField is not None else '',
             self.sgFn, self.outFn, ' '.join(self.lyrFns))
@@ -214,7 +214,7 @@ class EncodePhylogenyCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {} {} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, 
             os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'encode_phylogeny.py'),
             ' -m {}'.format(self.mashedPotato) if self.mashedPotato is not None else '',
             self.treeFn, self.pamFn, self.outMtxFn)
@@ -360,7 +360,7 @@ class McpaObservedCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {} {} {} {} {} {} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN, 
             os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'mcpa_observed.py'),
             self.optArgs, self.pamFn, self.treeMtxFn, self.grimFn, 
             self.adjRsqFn, self.partCorMtxFn, self.fGlobFn, self.fPartFn)
@@ -409,7 +409,7 @@ class McpaRandomCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {} {} {} {} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {} {} {} {} {}'.format(CMD_PYBIN, 
             os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'mcpa_random.py'),
             self.optArgs, self.pamFn, self.treeMtxFn, self.grimFn, 
             self.fGlobFn, self.fPartFn)
@@ -460,7 +460,7 @@ class OccurrenceBucketeerCommand(_LmCommand):
       if self.headerRow:
          optArgs += ' -header'
       
-      return '{} {}{} {} {} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, 
             os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'occurrence_bucketeer.py'),
             optArgs, self.outBase, self.groupPos, ' '.join(self.inFiles))
 
@@ -523,7 +523,7 @@ class OccurrenceSplitterCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {}{} {} {} {}'.format(CMD_PYBIN, 
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, 
             os.path.join(MULTI_SPECIES_SCRIPTS_DIR, 'occurrence_splitter.py'),
             ' -p {}'.format(self.prefix) if self.prefix is not None else '',
             self.groupPos, self.inFn, self.outDir)
