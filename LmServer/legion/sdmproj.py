@@ -697,7 +697,7 @@ class SDMProjection(_ProjectionType, Raster):
       outFormat = 'GTiff'
       maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
       
-      maskArgs = '-of {} -cutline {} {} {}'.format(outFormat, 
+      maskArgs = '-of {} -dstnodata -9999 -cutline {} {} {}'.format(outFormat, 
                                                    convexHullFilename, 
                                                    maskLyr.getDLocation(), 
                                                    maskFn)
@@ -711,7 +711,7 @@ class SDMProjection(_ProjectionType, Raster):
          # Need to convert to ASCII
          finalMaskFn = os.path.join(workDir, '{}.asc'.format(maskName))
          convertCmd = SystemCommand('gdal_translate', 
-                                    '-of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(maskFn, finalMaskFn),
+                                    '-a_nodata -9999 -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(maskFn, finalMaskFn),
                                     inputs=[maskFn],
                                     outputs=[finalMaskFn])
          rules.append(convertCmd.getMakeflowRule(local=True))
