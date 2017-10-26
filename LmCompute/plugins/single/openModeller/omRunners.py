@@ -31,7 +31,6 @@
           02110-1301, USA.
 @todo: Metrics keys
 """
-import json
 import ogr
 import os
 import shutil
@@ -202,8 +201,7 @@ class OpenModellerModel(object):
             status = JobStatus.OM_MOD_REQ_ERROR
          elif omLog.find("[Error] Unable to open file") >= 0:
             status = JobStatus.OM_MOD_REQ_LAYER_ERROR
-         elif omLog.find("[Error] Algorithm %s not found" % \
-                                               self.job.algorithm.code) >= 0:
+         elif omLog.find("[Error] Algorithm %s not found" % self.algoCode) >= 0:
             status = JobStatus.OM_MOD_REQ_ALGO_INVALID_ERROR
          elif omLog.find("[Error] Parameter") >= 0:
             if omLog.find("not set properly.\n", 
