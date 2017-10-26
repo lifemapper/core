@@ -23,6 +23,7 @@
 """
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import CMD_PYBIN, COMMON_SCRIPTS_DIR
+import cmd
 
 # .............................................................................
 class ChainCommand(_LmCommand):
@@ -102,6 +103,40 @@ class ConcatenateMatricesCommand(_LmCommand):
       
       return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
                   optionalArgs, posArgs)
+
+# .............................................................................
+class ModifyAsciiHeadersCommand(_LmCommand):
+   """
+   @summary: This command will reduce the number of decimal digits in ASCII
+                headers
+   """
+   relDir = COMMON_SCRIPTS_DIR
+   scriptName = 'modify_ascii_headers.py'
+
+   # ................................
+   def __init__(self, origAsciiFilename, modifiedAsciiFilename, digits=4):
+      """
+      @summary: Construct the command object
+      @param origAsciiFilename: The original ASCII file
+      @param modifiedAsciiFilename: The modified ASCII file
+      @param digits: The number of decimal digits to keep
+      """
+      _LmCommand.__init__(self)
+      
+      self.args = '{} {}'.format(origAsciiFilename, modifiedAsciiFilename)
+      self.optArgs = '-d {}'.format(digits)
+      
+      self.inputs.append(origAsciiFilename)
+      self.outputs.append(modifiedAsciiFilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the concatenate matrices command
+      """
+      cmd = '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs, 
+                                 self.args)
+      return cmd
 
 # .............................................................................
 class SystemCommand(_LmCommand):

@@ -27,7 +27,8 @@ import json
 import mx.DateTime
 import os
 
-from LmBackend.command.common import ChainCommand, SystemCommand
+from LmBackend.command.common import ChainCommand, SystemCommand,\
+   ModifyAsciiHeadersCommand
 from LmBackend.command.server import (LmTouchCommand, ShootSnippetsCommand,
                                       StockpileCommand,
    CreateConvexHullShapefileCommand)
@@ -709,11 +710,18 @@ class SDMProjection(_ProjectionType, Raster):
       
       if self.isATT():
          # Need to convert to ASCII
+         tmpMaskFn = os.path.join(workDir, '{}_temp.asc'.format(maskName))
          finalMaskFn = os.path.join(workDir, '{}.asc'.format(maskName))
          convertCmd = SystemCommand('gdal_translate', 
-                                    '-a_nodata -9999 -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(maskFn, finalMaskFn),
-                                    inputs=[maskFn],
-                                    outputs=[finalMaskFn])
+            '-a_nodata -9999 -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
+               maskFn, tmpMaskFn),
+            inputs=[maskFn],
+            outputs=[tmpMaskFn])
+         
+         modMaskCmd = ModifyAsciiHeadersCommand(tmpMaskFn, finalMaskFn)
+         rules.append(modMaskCmd.getMakeflowRule())
+         
+         
          rules.append(convertCmd.getMakeflowRule(local=True))
          maskFn = finalMaskFn
       
