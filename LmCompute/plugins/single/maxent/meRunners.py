@@ -105,7 +105,7 @@ class MaxentModel(object):
          os.makedirs(self.layersDir)
       except:
          pass
-      self._processLayers(layersJson, self.layersDir)
+      _, symMaskFn = self._processLayers(layersJson, self.layersDir)
 
       # parameters
       self.params = self._processParameters(paramsJson)
@@ -117,6 +117,7 @@ class MaxentModel(object):
          maskFn = os.path.join(self.layersDir, 'mask{}'.format(LMFormat.MXE.ext))
          #os.symlink(mask, maskFn)
          convertAsciisToMxes([(os.path.abspath(mask), maskFn)])
+         os.symlink(maskFn, symMaskFn)
          
          self.params += ' togglelayertype=mask'
 
@@ -366,7 +367,7 @@ class MaxentProjection(object):
          os.makedirs(self.layersDir)
       except:
          pass
-      self._processLayers(layersJson, self.layersDir)
+      _, symMaskFn = self._processLayers(layersJson, self.layersDir)
 
       # parameters
       self.params = self._processParameters(paramsJson)
@@ -379,6 +380,7 @@ class MaxentProjection(object):
             LMFormat.MXE.ext))
          #os.symlink(mask, maskFn)
          convertAsciisToMxes([(os.path.abspath(mask), maskFn)])
+         os.symlink(maskFn, symMaskFn)
          self.params += ' togglelayertype=mask'
 
       # Other
