@@ -25,6 +25,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 @todo: Process grids
+@todo: Constants instead of strings
 """
 from ConfigParser import ConfigParser
 import json
@@ -54,20 +55,66 @@ class BoomPoster(object):
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', archiveName)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_PRIORITY', Priority.REQUESTED)
       
-      # TODO: Determine this from POST
-      self.config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', False)
       
-      if reqJson.has_key('algorithms'):
-         self._processAlgorithms(reqJson['algorithms'])
+      # Check for old parameters for backwards compatibility until Ben updates
+      if reqJson.has_key('algorithms') and \
+           reqJson.has_key('occurrenceSets') and \
+           reqJson.has_key('modelScenario') and \
+           reqJson.has_key('projectionScenarios'):
+         # Old app did not allow for global PAMs
+         self.config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', False)
          
-      if reqJson.has_key('occurrenceSets'):
-         self._processOccurrenceSets(reqJson['occurrenceSets'])
+         if reqJson.has_key('algorithms'):
+            self._old_processAlgorithms(reqJson['algorithms'])
+            
+         if reqJson.has_key('occurrenceSets'):
+            self._old_processOccurrenceSets(reqJson['occurrenceSets'])
+            
+         if reqJson.has_key('modelScenario'):
+            self._old_processModelScenario(reqJson['modelScenario'])
+            
+         if reqJson.has_key('projectionScenarios'):
+            self._old_processProjectionScenarios(reqJson['projectionScenarios'])
+      else:
          
-      if reqJson.has_key('modelScenario'):
-         self._processModelScenario(reqJson['modelScenario'])
+         # NOTE: For this next round of boom services, we are still only 
+         #          one group of occurrences, one shapegrid, one scenario 
+         #          package, etc.  The schema is farther along in making things
+         #          more generic, but the service will be more restrictive 
+         #          until we have legitimate use-cases for the flexibility.
          
-      if reqJson.has_key('projectionScenarios'):
-         self._processProjectionScenarios(reqJson['projectionScenarios'])
+         # Look for occurrence set specification at top level
+         if reqJson.has_key('occurrence'):
+            self._processOccurrenceSets(reqJson['occurrence'])
+         
+         # Look for scenario package information at top level
+         if reqJson.has_key('scenarioPackage'):
+            self._processScenarioPackage(reqJson['scenarioPackage'])
+            
+         # Look for shapegrid information
+         if reqJson.has_key('shapegrid'):
+            self._processShapegrid(reqJson['shapegrid'])
+            
+         
+         
+         
+         # Global PAMs (globalPam)
+         # MCPAs (mcpa)
+         # Occurrence sets (occurrence)
+         # PAM stats (pamStats)
+         # Scenario packages (scenarioPackage)
+         # SDMs (sdm)
+         # Shapegrid (shapegrid)
+         # Tree (tree)
+         
+         
+         
+         pass
+       
+      
+      # Look for new stuff
+      
+      
 
    # ................................
    def initBoom(self):
@@ -92,7 +139,7 @@ class BoomPoster(object):
          random.randint(0, 100000), ext))
    
    # ................................
-   def _processAlgorithms(self, algoJson):
+   def _old_processAlgorithms(self, algoJson):
       """
       @summary: Process algorithms in request
       """
@@ -106,7 +153,7 @@ class BoomPoster(object):
          i += 1
    
    # ................................
-   def _processOccurrenceSets(self, occSetJson):
+   def _old_processOccurrenceSets(self, occSetJson):
       """
       @summary: Process occurrence sets in request
       @todo: GBIF, iDigBio, Bison, etc
@@ -142,7 +189,7 @@ class BoomPoster(object):
          self.config.set(SERVER_BOOM_HEADING, 'DATASOURCE', 'EXISTING')
    
    # ................................
-   def _processModelScenario(self, scnJson):
+   def _old_processModelScenario(self, scnJson):
       """
       """
       scnCode = scnJson['scenarioCode']
@@ -150,7 +197,7 @@ class BoomPoster(object):
                       scnCode)
    
    # ................................
-   def _processProjectionScenarios(self, scnsJson):
+   def _old_processProjectionScenarios(self, scnsJson):
       """
       @todo: Process layers package
       """
