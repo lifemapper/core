@@ -344,18 +344,20 @@ class ChristopherWalken(LMObject):
 #       else:
 #          raise LMError('Failed to retrieve scenario {}'.format(mdlScen))
       # Get optional model and project masks
-      try:
-         mdlMaskName = self._getBoomOrDefault('MODEL_MASK_NAME')
+      mdlMaskName = self._getBoomOrDefault('MODEL_MASK_NAME')
+      if mdlMaskName:
          mdlMask = self._scribe.getLayer(userId=userId, 
                                          lyrName=mdlMaskName, epsg=epsg)
-      except:
-         pass
-      try:
-         prjMaskName = self._getBoomOrDefault('PROJECTION_MASK_NAME')
+         if mdlMask is None:
+            raise LMError('Failed to retrieve Model Mask {}'
+                          .format(mdlMaskName))
+      prjMaskName = self._getBoomOrDefault('PROJECTION_MASK_NAME')
+      if prjMaskName:
          prjMask = self._scribe.getLayer(userId=userId, 
-                                         lyrName=prjMaskName, epsg=epsg)
-      except:
-         pass
+                                            lyrName=prjMaskName, epsg=epsg)
+         if prjMask is None:
+            raise LMError('Failed to retrieve Projection Mask {}'
+                          .format(prjMaskName))
       
       return (mdlScen, mdlMask, prjScens, prjMask)  
 
@@ -363,11 +365,19 @@ class ChristopherWalken(LMObject):
    def _getGlobalPamObjects(self, userId, archiveName, epsg):
       # Get existing intersect grid, gridset and parameters for Global PAM
       gridname = self._getBoomOrDefault('GRID_NAME')
-      intersectGrid = self._scribe.getShapeGrid(userId=userId, lyrName=gridname, 
-                                                epsg=epsg)
+      if gridname:
+         intersectGrid = self._scribe.getShapeGrid(userId=userId, lyrName=gridname, 
+                                                   epsg=epsg)
+         if intersectGrid is None:
+            raise LMError('Failed to retrieve Shapegrid for intersection {}'
+                          .format(gridname))
+
       # Global PAM and Scenario GRIM for each scenario
       boomGridset = self._scribe.getGridset(name=archiveName, userId=userId, 
                                             fillMatrices=True)
+      if boomGridset is None:
+         raise LMError('Failed to retrieve Gridset for shapegrid {}, user {}'
+                       .format(gridname, userId))
       boomGridset.setMatrixProcessType(ProcessType.CONCATENATE_MATRICES, 
                                        matrixTypes=[MatrixType.PAM, 
                                                     MatrixType.ROLLING_PAM, 
