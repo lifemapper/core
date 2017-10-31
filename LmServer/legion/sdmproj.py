@@ -693,9 +693,10 @@ class SDMProjection(_ProjectionType, Raster):
       occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
       occSetFname = os.path.join(occTargetDir, occFileBasename)
       ecoMaskCmd = CreateMaskTiffCommand(maskLyr.getDLocation(), 
-                                         self.occurrenceSet.getDLocation(), 
+                                         occSetFname,
                                          ecoMaskFilename)
-      ecoMaskCmd.inputs.append(occSetFname)
+      #ecoMaskCmd.inputs.append(occSetFname)
+      ecoMaskCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
       
       #gdalwarp -of GTiff -cutline DATA/area_of_interest.shp \
       # -cl area_of_interest  -crop_to_cutline DATA/PCE_in_gw.asc  data_masked7.tiff
