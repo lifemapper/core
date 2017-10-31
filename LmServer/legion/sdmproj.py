@@ -688,6 +688,8 @@ class SDMProjection(_ProjectionType, Raster):
       ecoMaskFilename = os.path.join(workDir, 'ecoMask.tif')
       
       # Ecoregions mask
+      occTargetDir = os.path.join(workDir, 
+               os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
       occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
       occSetFname = os.path.join(occTargetDir, occFileBasename)
       ecoMaskCmd = CreateMaskTiffCommand(maskLyr.getDLocation(), 
