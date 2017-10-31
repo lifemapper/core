@@ -49,7 +49,7 @@ from LmServer.common.lmconstants import (Algorithms, ARCHIVE_KEYWORD,
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.base.layer2 import Vector
+from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
@@ -61,6 +61,7 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
+from LmDbServer.boom.pamme import CURR_MJD
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
@@ -125,7 +126,7 @@ class BOOMFiller(LMObject):
        self.gridname, 
        self.intersectParams) = self.readParamVals()
        
-      # Fill existing scenarios from configured codes 
+      # Fill existing scenarios AND SDM mask layer from configured codes 
       # or create from ScenPackage metadata
       self._fillScenarios()
 
@@ -153,8 +154,10 @@ class BOOMFiller(LMObject):
       else:
          # If new ScenPackage was provided (not SDM scenario codes), fill codes 
          (self.scenPkg, self.modelScenCode, self.epsg, self.mapunits, 
-          self.scenPackageMetaFilename) = self._createScenarios()
+          self.scenPackageMetaFilename, masklyr) = self._createScenarios()
          self.prjScenCodeList = self.scenPkg.scenarios.keys()
+      # Fill mask layer
+      self.masklyr = masklyr
       # Fill grid bbox with scenario package if it is absent
       if self.gridbbox is None:
          self.gridbbox = self.scenPkg.bbox
@@ -487,6 +490,10 @@ class BOOMFiller(LMObject):
    def _createScenarios(self):
       # Imports META
       META, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
+      
+      # Mask layer
+      masklyr = self._createMaskLayer(META, pkgMeta, elyrMeta)
+
       epsg = elyrMeta['epsg']
       mapunits = elyrMeta['mapunits']
       self.scribe.log.info('  Read ScenPackage {} metadata ...'.format(self.scenPackageName))
@@ -510,7 +517,7 @@ class BOOMFiller(LMObject):
       self.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
       for scen in allScens.values():
          scenPkg.addScenario(scen)
-      return scenPkg, basescen.code, epsg, mapunits, scenPackageMetaFilename
+      return scenPkg, basescen.code, epsg, mapunits, scenPackageMetaFilename, masklyr
    
    # ...............................................
    def _checkOccurrenceSets(self, limit=10):
@@ -566,6 +573,33 @@ class BOOMFiller(LMObject):
       return name
     
    # ...............................................
+   def _createMaskLayer(self, META, pkgMeta, elyrMeta):
+      """
+      @summary Assembles layer metadata for mask
+      """
+      maskMeta = META.SDM_MASK
+      keywords = [k for k in maskMeta['keywords']]
+      lyrmeta = {Vector.META_IS_CATEGORICAL: TNCMetadata.isCategorical, 
+              ServiceObject.META_TITLE: maskMeta['title'], 
+              ServiceObject.META_AUTHOR: TNCMetadata.author, 
+              ServiceObject.META_DESCRIPTION: maskMeta['description'],
+              ServiceObject.META_KEYWORDS: keywords,
+              ServiceObject.META_CITATION: TNCMetadata.citation,
+              }
+      relfname = maskMeta['file']
+      dloc = os.path.join(ENV_DATA_PATH, relfname)
+      if not os.path.exists(dloc):
+         print('Missing local data %s' % dloc)
+      masklyr = Raster(maskMeta['name'], self.usr, elyrMeta['epsg'], 
+                dlocation=dloc, metadata=lyrmeta, 
+                dataFormat=elyrMeta['gdalformat'], 
+                gdalType=elyrMeta['gdaltype'], 
+                valUnits=elyrMeta['mapunits'],  
+                resolution=elyrMeta['resolution'], bbox=pkgMeta['bbox'],
+                modTime=CURR_MJD)
+      return masklyr
+   
+   # ...............................................
    def _getBaselineLayers(self, pkgMeta, baseMeta, elyrMeta, lyrtypeMeta):
       """
       @summary Assembles layer metadata for a single layerset
@@ -605,7 +639,7 @@ class BOOMFiller(LMObject):
          if isStatic:
             staticLayers[envcode] = envlyr
       return layers, staticLayers
-   
+
    # ...............................................
    def _findFileFor(self, ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
       isStatic = False
@@ -795,6 +829,11 @@ class BOOMFiller(LMObject):
       self.scenPkg.setScenarios(updatedScens)
    
    # ...............................................
+   def addMaskLayer(self):
+      if self.masklyr:
+         self.scribe.findOrInsertLayer(self.masklyr)
+
+   # ...............................................
    def _findClimatePackageMetadata(self):
       scenPackageMetaFilename = os.path.join(ENV_DATA_PATH, 
                      '{}{}'.format(self.scenPackageName, LMFormat.PYTHON.ext))      
@@ -815,7 +854,7 @@ class BOOMFiller(LMObject):
       META, scenPackageMetaFilename = self._findClimatePackageMetadata()
       # Combination of scenario and layer attributes making up these data 
       pkgMeta = META.CLIMATE_PACKAGES[self.scenPackageName]
-      
+      maskName = META.SDM_MASK
       try:
          epsg = META.EPSG
       except:
@@ -1173,6 +1212,8 @@ def initBoom(paramFname, isInitial=True):
    # ...............................................
    # This updates the scenPkg with db objects for other operations
    filler.addPackageScenariosLayers()
+   
+   filler.addMaskLayer()
          
    # Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
    if filler.occIdFname:
