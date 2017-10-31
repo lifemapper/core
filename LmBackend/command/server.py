@@ -110,6 +110,36 @@ class CreateConvexHullShapefileCommand(_LmCommand):
             self.optArgs, self.args)
 
 # .............................................................................
+class CreateMaskTiffCommand(_LmCommand):
+   """
+   @summary: This command will create a mask Tiff file
+   """
+   relDir = SERVER_SCRIPTS_DIR
+   scriptName = 'create_mask_tiff.py'
+
+   # ................................
+   def __init__(self, inRasterFilename, pointsFilename, outRasterFilename):
+      """
+      @summary: Construct the command object
+      @param inRasterFilename: The input raster file to use
+      @param pointsFilename: The path to the points shapefile to use
+      @param outRasterFilename: The file location to write the output raster
+      """
+      _LmCommand.__init__(self)
+      
+      self.args = '{} {} {}'.format(inRasterFilename, pointsFilename, 
+                                    outRasterFilename)
+      #self.inputs.extend([inRasterFilename, pointsFilename])
+      self.outputs.append(outRasterFilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the concatenate matrices command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+# .............................................................................
 class IndexPAVCommand(_LmCommand):
    """
    @summary: This command will post PAV information to a solr index

@@ -31,7 +31,7 @@ from LmBackend.command.common import ChainCommand, SystemCommand,\
    ModifyAsciiHeadersCommand
 from LmBackend.command.server import (LmTouchCommand, ShootSnippetsCommand,
                                       StockpileCommand,
-   CreateConvexHullShapefileCommand)
+   CreateConvexHullShapefileCommand, CreateMaskTiffCommand)
 from LmBackend.command.single import SdmodelCommand, SdmProjectCommand
 from LmBackend.common.lmobj import LMError
 
@@ -681,9 +681,17 @@ class SDMProjection(_ProjectionType, Raster):
       touchCmd = LmTouchCommand(os.path.join(workDir, 'touch.out'))
       
       convexHullCmd = CreateConvexHullShapefileCommand(occId, convexHullFilename, 
-                                                       bufferDistance=.1)
+                                                       bufferDistance=.5)
       convexHullCmd.outputs = ['{}{}'.format(
          os.path.splitext(convexHullFilename)[0], ext) for ext in ['.shp', '.shx', '.dbf']]
+
+      ecoMaskFilename = os.path.join(workDir, 'ecoMask.tif')
+      
+      # Ecoregions mask
+      ecoMaskCmd = CreateMaskTiffCommand(maskLyr.getDLocation(), 
+                                         self.occurrenceSet.getDLocation(), 
+                                         ecoMaskFilename)
+     
       
       #gdalwarp -of GTiff -cutline DATA/area_of_interest.shp \
       # -cl area_of_interest  -crop_to_cutline DATA/PCE_in_gw.asc  data_masked7.tiff
@@ -700,13 +708,13 @@ class SDMProjection(_ProjectionType, Raster):
       
       maskArgs = '-of {} -dstnodata -9999 -cutline {} {} {}'.format(outFormat, 
                                                    convexHullFilename, 
-                                                   maskLyr.getDLocation(), 
+                                                   ecoMaskFilename,
                                                    maskFn)
       maskCmd = SystemCommand('gdalwarp', maskArgs, outputs=[maskFn])
       
       # Create a chain command so we don't have to know which shapefiles are 
       #    produced, try to define them if possible though
-      cmds = [touchCmd, convexHullCmd, maskCmd]
+      cmds = [touchCmd, ecoMaskCmd, convexHullCmd, maskCmd]
       
       if self.isATT():
          # Need to convert to ASCII
