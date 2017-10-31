@@ -114,7 +114,7 @@ class ModifyAsciiHeadersCommand(_LmCommand):
    scriptName = 'modify_ascii_headers.py'
 
    # ................................
-   def __init__(self, origAsciiFilename, modifiedAsciiFilename, digits=4):
+   def __init__(self, origAsciiFilename, modifiedAsciiFilename, digits=7):
       """
       @summary: Construct the command object
       @param origAsciiFilename: The original ASCII file
