@@ -168,7 +168,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
       """
       @summary: Return temporary filename for output.
       """
-      relFname = 'mtxcol_{}{}'.format(self.getId(), LMFormat.NUMPY.ext)
+      relFname = 'mtxcol_{}{}'.format(self.getId(), LMFormat.JSON.ext)
       return relFname
 
 # ...............................................
