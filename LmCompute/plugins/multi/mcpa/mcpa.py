@@ -256,8 +256,8 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False, headerPrefix=''):
       #    of freedom for weighted models are different from non-weighted models
       #    adjustments based on effective degrees of freedom should be 
       #    considered
-      adjRsq[j, 0] = 1 - ((numSites - 1)/(numSites - numPredictors - 1)
-                                                                  ) * (1 - rSq)
+      adjRsq[j, 0] = 1 - ((numSites - 1.0)/(numSites - numPredictors - 1.0)
+                                                                  ) * (1.0 - rSq)
       
       fGlobal[j, 0] = np.sum(predicted.T.dot(predicted)) / totalPsigmaResidual
       
