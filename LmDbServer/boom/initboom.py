@@ -124,7 +124,8 @@ class BOOMFiller(LMObject):
        self.cellsides,
        self.cellsize,
        self.gridname, 
-       self.intersectParams) = self.readParamVals()
+       self.intersectParams, 
+       self.mdlMaskName, self.prjMaskName) = self.readParamVals()
        
       # Fill existing scenarios AND SDM mask layer from configured codes 
       # or create from ScenPackage metadata
@@ -262,6 +263,9 @@ class BOOMFiller(LMObject):
       userOccSep = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA_DELIMITER')
       minpoints = self._getBoomOrDefault(config, 'POINT_COUNT_MIN')
       algs = self._getAlgorithms(config)
+
+      mdlMaskName = self._getBoomOrDefault(config, 'MODEL_MASK_NAME')
+      prjMaskName = self._getBoomOrDefault(config, 'PROJECTION_MASK_NAME')
          
       assemblePams = self._getBoomOrDefault(config, 'ASSEMBLE_PAMS', isBool=True)
       gridbbox = self._getBoomOrDefault(config, 'GRID_BBOX', isList=True)
@@ -291,7 +295,7 @@ class BOOMFiller(LMObject):
               occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
               userOccFname, userOccSep, minpoints, algs, 
               assemblePams, gridbbox, cellsides, cellsize, gridname, 
-              intersectParams)
+              intersectParams, mdlMaskName, prjMaskName)
       
    # ...............................................
    def writeConfigFile(self, fname=None, mdlMaskName=None, prjMaskName=None):
@@ -319,10 +323,10 @@ class BOOMFiller(LMObject):
       config.set(SERVER_BOOM_HEADING, 'TROUBLESHOOTERS', email)
       
       # SDM input
-      if mdlMaskName is not None:
-         config.set(SERVER_BOOM_HEADING, 'MODEL_MASK_NAME', mdlMaskName)
-      if prjMaskName is not None:
-         config.set(SERVER_BOOM_HEADING, 'PROJECTION_MASK_NAME', prjMaskName)
+      if self.mdlMaskName is not None:
+         config.set(SERVER_BOOM_HEADING, 'MODEL_MASK_NAME', self.mdlMaskName)
+      if self.prjMaskName is not None:
+         config.set(SERVER_BOOM_HEADING, 'PROJECTION_MASK_NAME', self.prjMaskName)
       
       # SDM input environmental data, pulled from SCENARIO_PACKAGE metadata
       pcodes = ','.join(self.prjScenCodeList)
@@ -1346,7 +1350,8 @@ filler.inParamFname = cfname
        filler.cellsides,
        filler.cellsize,
        filler.gridname, 
-       filler.intersectParams) = filler.readParamVals()
+       filler.intersectParams,
+       filler.mdlMaskName, filler.prjMaskName) = filler.readParamVals()
        
 META, scenPackageMetaFilename, pkgMeta, elyrMeta = filler._pullClimatePackageMetadata()
 

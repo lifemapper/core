@@ -389,6 +389,10 @@ configFname = '/state/partition1/lm/data/archive/biotaphy/biotaphy_lowres.ini'
 
 configFname = '/share/lm/data/archive/biotaphy/sax_10min.ini'
 boomer = Boomer(configFname, log=logger)
+boomer._scribe.openConnections()
+boomer.christopher = ChristopherWalken(configFname, scribe=boomer._scribe)
+chris = boomer.christopher
+chris.moreDataToProcess = False
 
 userId = chris._getBoomOrDefault('ARCHIVE_USER')
 archiveName = chris._getBoomOrDefault('ARCHIVE_NAME')
@@ -416,6 +420,22 @@ weaponOfChoice = UserWoC(chris._scribe, userId, archiveName,
                       processType=processType,
                       useGBIFTaxonomy=useGBIFTaxonIds,
                       taxonSourceName=taxonSourceName)
+minPoints = chris._getBoomOrDefault('POINT_COUNT_MIN')
+algorithms = chris._getAlgorithms()
+(mdlScen, mdlMask, prjScens, prjMask) = chris._getProjParams(userId, epsg)
+mdlMaskName = chris._getBoomOrDefault('MODEL_MASK_NAME')
+if mdlMaskName:
+   mdlMask = chris._scribe.getLayer(userId=userId, 
+                                   lyrName=mdlMaskName, epsg=epsg)
+prjMaskName = chris._getBoomOrDefault('PROJECTION_MASK_NAME')
+if prjMaskName:
+   prjMask = chris._scribe.getLayer(userId=userId, 
+                                   lyrName=prjMaskName, epsg=epsg)
+
+(boomGridset, intersectParams) = chris._getGlobalPamObjects(userId, 
+                                                      archiveName, epsg)
+assemblePams = chris._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
+
 f = open(occMeta, 'r')
 lines = f.readlines()
 f.close()
