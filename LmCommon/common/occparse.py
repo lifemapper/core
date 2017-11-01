@@ -257,10 +257,14 @@ class OccDataParser(object):
    @staticmethod
    def readMetadata(metadata):
       """
-      Returns a dictionary with 
+      @summary: Reads a stream/string of metadata describing a CSV file of  
+                species occurrence point data
+      @return: a dictionary with 
          Key = original name or column index
          Value = dictionary of keys 'name', 'type', 'role', and 'acceptedVals'
                                values 
+      @note: A full description of the input data is at 
+             LmDbServer/boom/occurrence.meta.example
       """
       doMatchHeader = False
       fieldmeta = {} 
@@ -277,15 +281,22 @@ class OccDataParser(object):
                   tmp = line.split(',')
                   if len(tmp) >= 3:
                      parts = [p.strip() for p in tmp]
+                     # First value is original fieldname
                      key = parts[0]
+                     # Second value is short fieldname, 10 chars or less
                      name = parts[1]
+                     # Third value is string/real/integer
                      ogrtype = OccDataParser.getOgrFieldType(parts[2])
                      fieldmeta[key] = {'name': name, 'type': ogrtype}
                      if len(parts) >= 4: 
                         rest = parts[3:]
+                        # If there are 4 values, last one is the role this 
+                        # field plays in the data: 
+                        #   Longitude, Latitude, Geopoint, GroupBy, TaxaName, UniqueID
                         if rest[0].lower() in OccDataParser.FIELD_ROLES:
                            fieldmeta[key]['role'] = rest[0].lower()
                            rest = rest[1:]
+                        # Remaining values are acceptable values for this field
                         if len(rest) >= 1:
                            fieldmeta[key]['acceptedVals'] = rest
          except Exception, e:
