@@ -606,15 +606,16 @@ class BOOMFiller(LMObject):
       """
       layers = []
       staticLayers = {}
+      dateCode = baseMeta['times'].keys()[0]
       for envcode in pkgMeta['layertypes']:
          ltmeta = lyrtypeMeta[envcode]
          envKeywords = [k for k in baseMeta['keywords']]
-         relfname, isStatic = self._findFileFor(ltmeta, pkgMeta['baseline'], 
+         relfname, isStatic = self._findFileFor(ltmeta, baseMeta['code'], 
                                            gcm=None, tm=None, altPred=None)
-         lyrname = self._getbioName(pkgMeta['baseline'], pkgMeta['res'], 
+         lyrname = self._getbioName(baseMeta['code'], pkgMeta['res'], 
                                     lyrtype=envcode, suffix=pkgMeta['suffix'])
-         lyrmeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
-                    'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
+         lyrmeta = {'title': ' '.join((baseMeta['code'], ltmeta['title'])),
+                    'description': ' '.join((baseMeta['code'], ltmeta['description']))}
          envmeta = {'title': ltmeta['title'],
                     'description': ltmeta['description'],
                     'keywords': envKeywords.extend(ltmeta['keywords'])}
@@ -632,7 +633,7 @@ class BOOMFiller(LMObject):
                            bbox=pkgMeta['bbox'], 
                            modTime=CURR_MJD, 
                            envCode=envcode, 
-                           dateCode=pkgMeta['baseline'],
+                           dateCode=dateCode,
                            envMetadata=envmeta,
                            envModTime=CURR_MJD)
          layers.append(envlyr)
@@ -729,7 +730,8 @@ class BOOMFiller(LMObject):
    #    tm = baseMeta['times'].keys()[0]
       basekeywords = [k for k in climKeywords]
       basekeywords.extend(baseMeta['keywords'])
-      
+      # there should only be one
+      dateCode = baseMeta['times'].keys()[0]
       scencode = self._getbioName(baseCode, pkgMeta['res'], suffix=pkgMeta['suffix'])
       lyrs, staticLayers = self._getBaselineLayers(pkgMeta, baseMeta, elyrMeta, 
                                               lyrtypeMeta)
@@ -741,7 +743,7 @@ class BOOMFiller(LMObject):
                       metadata=scenmeta, 
                       units=elyrMeta['mapunits'], 
                       res=elyrMeta['resolution'], 
-                      dateCode=pkgMeta['baseline'],
+                      dateCode=dateCode,
                       bbox=pkgMeta['bbox'], 
                       modTime=CURR_MJD,  
                       layers=lyrs)
@@ -787,7 +789,7 @@ class BOOMFiller(LMObject):
             scentitle = self._getbioName(predRpt, pkgMeta['res'], gcm=mdlvals['name'], 
                                     tm=tmvals['name'], altpred=altpred, 
                                     suffix=pkgMeta['suffix'], isTitle=True)
-            obstitle = observedPredictedMeta[pkgMeta['baseline']]['title']
+            obstitle = observedPredictedMeta['baseline']['title']
             scendesc =  ' '.join((obstitle, 
                      'and predicted climate calculated from {}'.format(scentitle)))
             scenmeta = {ServiceObject.META_TITLE: scentitle, 
