@@ -21,6 +21,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import os
+
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import CMD_PYBIN, SINGLE_SPECIES_SCRIPTS_DIR
 
@@ -124,7 +126,10 @@ class GrimRasterCommand(_LmCommand):
       self.grimColFn = grimColFilename
       self.resolution = resolution
       self.minPercent = minPercent
-      self.ident = ident
+      if ident is not None:
+         self.ident = ident
+      else:
+         self.ident = os.path.splitext(os.path.basename(rasterFilename))[0]
 
    # ................................
    def getCommand(self):
