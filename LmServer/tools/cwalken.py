@@ -282,6 +282,9 @@ class ChristopherWalken(LMObject):
                                   processType=processType,
                                   useGBIFTaxonomy=useGBIFTaxonIds,
                                   taxonSourceName=taxonSourceName)
+         
+      weaponOfChoice.initializeMe()
+         
       return weaponOfChoice
 
 # .............................................................................

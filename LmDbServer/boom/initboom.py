@@ -1348,13 +1348,75 @@ filler.inParamFname = cfname
        filler.gridname, 
        filler.intersectParams) = filler.readParamVals()
        
+META, scenPackageMetaFilename, pkgMeta, elyrMeta = filler._pullClimatePackageMetadata()
+
+# Mask layer
+masklyr = filler._createMaskLayer(META, pkgMeta, elyrMeta)
+
+epsg = elyrMeta['epsg']
+mapunits = elyrMeta['mapunits']
+
+scenPkg = ScenPackage(filler.scenPackageName, filler.usr, 
+                      epsgcode=epsg,
+                      bbox=pkgMeta['bbox'],
+                      mapunits=mapunits,
+                      modTime=CURR_MJD)
+                      
+observedPredictedMeta = META.OBSERVED_PREDICTED_META
+lyrtypeMeta = META.LAYERTYPE_META
+climKeywords = META.CLIMATE_KEYWORDS
+
+basekeywords = [k for k in climKeywords]
+basekeywords.extend(baseMeta['keywords'])
+
+baseMeta = observedPredictedMeta['baseline']
+baseCode = baseMeta['code']
+
+
+dateCode = baseMeta['times'].keys()[0]
+scencode = filler._getbioName(baseCode, pkgMeta['res'], suffix=pkgMeta['suffix'])
+
+lyrs, staticLayers = filler._getBaselineLayers(pkgMeta, baseMeta, elyrMeta, 
+                                        lyrtypeMeta)
+                                        
+                                        
+scenmeta = {ServiceObject.META_TITLE: baseMeta['title'], 
+            ServiceObject.META_AUTHOR: baseMeta['author'], 
+            ServiceObject.META_DESCRIPTION: baseMeta['description'], 
+            ServiceObject.META_KEYWORDS: basekeywords}
+scen = Scenario(scencode, filler.usr, elyrMeta['epsg'], 
+                metadata=scenmeta, 
+                units=elyrMeta['mapunits'], 
+                res=elyrMeta['resolution'], 
+                dateCode=dateCode,
+                bbox=pkgMeta['bbox'], 
+                modTime=CURR_MJD,  
+                layers=lyrs)
+
+basescen, staticLayers = filler._createBaselineScenario(pkgMeta, elyrMeta, 
+                                                META.LAYERTYPE_META,
+                                                META.OBSERVED_PREDICTED_META,
+                                                META.CLIMATE_KEYWORDS)
+
+scenPkg.addScenario(basescen)
+# Predicted Past and Future
+allScens = filler._createPredictedScenarios(pkgMeta, elyrMeta, 
+                                     META.LAYERTYPE_META, staticLayers,
+                                     META.OBSERVED_PREDICTED_META,
+                                     META.CLIMATE_KEYWORDS)
+filler.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
+for scen in allScens.values():
+   scenPkg.addScenario(scen)
+return scenPkg, basescen.code, epsg, mapunits, scenPackageMetaFilename, masklyr
+
+       
 (filler.scenPkg, filler.modelScenCode, filler.epsg, filler.mapunits, 
           filler.scenPackageMetaFilename, masklyr) = filler._createScenarios()
-         filler.prjScenCodeList = filler.scenPkg.scenarios.keys()
-      filler.masklyr = masklyr
-      # Fill grid bbox with scenario package if it is absent
-      if filler.gridbbox is None:
-         filler.gridbbox = filler.scenPkg.bbox
+          
+filler.prjScenCodeList = filler.scenPkg.scenarios.keys()
+filler.masklyr = masklyr
+if filler.gridbbox is None:
+   filler.gridbbox = filler.scenPkg.bbox
          
 filler.initializeInputs()
 

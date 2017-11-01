@@ -52,11 +52,11 @@ class OccDataParser(object):
    def __init__(self, logger, data, metadata, delimiter=','):
       """
       @summary Reader for arbitrary user CSV data file with
-               - header record and metadata file, OR
-               - no header and metadata dictionary
+               - header record and metadata with column **names** first, OR
+               - no header and and metadata with column **positions** first
       @param logger: Logger to use for the main thread
       @param data: raw data or filename for CSV data
-      @param metadata: dictionary or filename containing dictionary of metadata
+      @param metadata: dictionary or filename containing metadata
       """
       self.metadataFname = metadata
       self.dataFname = data
@@ -98,9 +98,51 @@ class OccDataParser(object):
       if self._file is None:
          self.dataFname = None
       
-      # Read metadata file/stream
       self.header = None
-      fieldmeta, metadataFname, doMatchHeader = self.readMetadata(metadata)
+      self.fieldNames = None
+      self.fieldTypes = None
+      self.filters = None
+      self._idIdx = None
+      self._xIdx = None
+      self._yIdx = None
+      self._geoIdx = None
+      self._groupByIdx = None
+      self._nameIdx = None
+      self.fieldCount = None
+      self.groupFirstRec = None
+      self.currIsGoodEnough = None
+
+#       fieldmeta, metadataFname, doMatchHeader = self.readMetadata(metadata)
+#       if metadataFname is None:
+#          self.metadataFname = None
+#       if doMatchHeader:
+#          # Read CSV header
+#          tmpList = self._csvreader.next()
+#          self.header = [fldname.strip() for fldname in tmpList]
+# 
+#       (self.fieldNames,
+#        self.fieldTypes,
+#        self.filters,
+#        self._idIdx,
+#        self._xIdx,
+#        self._yIdx,
+#        self._geoIdx,
+#        self._groupByIdx, 
+#        self._nameIdx) = self.getMetadata(fieldmeta, self.header)
+#       self.fieldCount = len(self.fieldNames)
+#       
+#       # Start by pulling line 1; populates groupVal, currLine and currRecnum
+#       self.pullNextValidRec()
+#       # record number of the chunk of current key
+#       self.groupFirstRec = self.currRecnum     
+#       self.currIsGoodEnough = True
+
+   # .............................
+   def initializeMe(self):
+      """
+      @summary: Initializes CSV Reader and interprets metadata
+      """
+      fieldmeta, metadataFname, doMatchHeader = self.readMetadata(self.metadataFname)
       if metadataFname is None:
          self.metadataFname = None
       if doMatchHeader:

@@ -84,7 +84,7 @@ SDM_MASK = {'name': 'ecoreg_10min_global',
 # Metadata for possible data - ONLY that specified by 'baseline' and 'predicted'
 # in the chosen package in CLIMATE_PACKAGES will be pulled.
 OBSERVED_PREDICTED_META = {
-   # Top keys are the relative directory, under under CLIMATE_PACKAGE topdir
+   # Top keys are 'baseline' for modeling scenario, or GCM report (past CMIP, future IPCC)
    'baseline':
       # append res and suffix for scenariococe
       {'code': 'observed', 
@@ -158,6 +158,10 @@ OBSERVED_PREDICTED_META = {
 
 # Metadata for possible data - ONLY that specified by 'layertypes' in the chosen 
 # package in CLIMATE_PACKAGES will be pulled.
+# Files contain relative file path, plus a list of either:
+#     * the baseline code, or
+#     * for GCM predictions, a combination of the 
+#        Report, Model, Times, and AlternatePrediction  
 LAYERTYPE_META = {
    'bio1': {
       'title': 'Annual Mean Temperature',

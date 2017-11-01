@@ -387,7 +387,58 @@ configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini'
 configFname = '/share/lm/data/archive/atest3/atest3.ini' 
 configFname = '/state/partition1/lm/data/archive/biotaphy/biotaphy_lowres.ini'
 
+configFname = '/share/lm/data/archive/biotaphy/sax_10min.ini'
 boomer = Boomer(configFname, log=logger)
+
+userId = chris._getBoomOrDefault('ARCHIVE_USER')
+archiveName = chris._getBoomOrDefault('ARCHIVE_NAME')
+archivePriority = chris._getBoomOrDefault('ARCHIVE_PRIORITY')
+
+earl = EarlJr()
+boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
+epsg = chris._getBoomOrDefault('SCENARIO_PACKAGE_EPSG')
+useGBIFTaxonIds = False
+processType = ProcessType.USER_TAXA_OCCURRENCE
+occData = chris._getBoomOrDefault('USER_OCCURRENCE_DATA')
+occDelimiter = chris._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
+occCSV = os.path.join(boompath, occData + LMFormat.CSV.ext)
+occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
+from LmServer.tools.occwoc import BisonWoC, GBIFWoC, UserWoC, ExistingWoC
+expDate = dt.DateTime(chris._getBoomOrDefault('SPECIES_EXP_YEAR'), 
+                            chris._getBoomOrDefault('SPECIES_EXP_MONTH'), 
+                            chris._getBoomOrDefault('SPECIES_EXP_DAY')).mjd
+
+taxonSourceName = None
+                            
+weaponOfChoice = UserWoC(chris._scribe, userId, archiveName, 
+                      epsg, expDate, occCSV, occMeta, 
+                      occDelimiter, logger=chris.log, 
+                      processType=processType,
+                      useGBIFTaxonomy=useGBIFTaxonIds,
+                      taxonSourceName=taxonSourceName)
+f = open(occMeta, 'r')
+lines = f.readlines()
+f.close()
+
+fieldmeta = {}
+for line in lines:
+   print line
+   if not line.startswith('#'):
+      tmp = line.split(',')
+      if len(tmp) >= 3:
+         parts = [p.strip() for p in tmp]
+         key = parts[0]
+         name = parts[1]
+         ogrtype = OccDataParser.getOgrFieldType(parts[2])
+         fieldmeta[key] = {'name': name, 'type': ogrtype}
+         if len(parts) >= 4: 
+            rest = parts[3:]
+            if rest[0].lower() in OccDataParser.FIELD_ROLES:
+               fieldmeta[key]['role'] = rest[0].lower()
+               rest = rest[1:]
+            if len(rest) >= 1:
+               fieldmeta[key]['acceptedVals'] = rest
+
 
 boomer.initializeMe()
 christopher = boomer.christopher
