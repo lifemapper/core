@@ -289,7 +289,7 @@ class Gridset(ServiceObject): #LMMap
                                                  wsPamFilename), 
                                   inputs=[pam.getDLocation()], 
                                   outputs=[wsPamFilename])
-         touchAndCopyPamCmd = ChainCommand[pamTouchCmd, cpPamCmd]
+         touchAndCopyPamCmd = ChainCommand([pamTouchCmd, cpPamCmd])
          rules.append(touchAndCopyPamCmd.getMakeflowRule(local=True))
          
          # RAD calculations

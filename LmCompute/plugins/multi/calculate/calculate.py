@@ -143,10 +143,11 @@ class PamStats(object):
       @summary: Retrieves the species statistics as a Matrix of species 
                    statistic columns
       """
-      spData = np.concatenate([self.omega.reshape(self.numSpecies, 1),
-                               self.omegaProp.reshape(self.numSpecies, 1),
-                               self.psi.reshape(self.numSpecies, 1),
-                               self.psiAvgProp.reshape(self.numSpecies, 1)],
+      numSp = self.omega.shape[0]
+      spData = np.concatenate([self.omega.reshape(numSp, 1),
+                               self.omegaProp.reshape(numSp, 1),
+                               self.psi.reshape(numSp, 1),
+                               self.psiAvgProp.reshape(numSp, 1)],
                               axis=1)
       spHeaders = {'1': [PamStatKeys.OMEGA, PamStatKeys.OMEGA_PROP, 
                        PamStatKeys.PSI, PamStatKeys.PSI_AVG_PROP]}
@@ -227,7 +228,7 @@ class PamStats(object):
                nearestTotal += nearest
          mntd.append(float(nearestTotal) / numSp)
       # Set the mntd attribute
-      self.mntd = np.array(mntd).reshape((self.numSites, 1))
+      self.mntd = np.array(mntd).reshape((mntd.shape[0], 1))
    
    # ...........................
    def _calculateTreeStats(self, pdMtx):
@@ -279,7 +280,8 @@ class PamStats(object):
             mpd.append(0.0)
             pearson.append(0.0)
 
-      # Create numpy arrays      
-      self.mpd = np.array(mpd).reshape((self.numSites, 1))
-      self.pearson = np.array(pearson).reshape((self.numSites, 1))
+      # Create numpy arrays
+      numSites = mpd.shape[0]
+      self.mpd = np.array(mpd).reshape((numSites, 1))
+      self.pearson = np.array(pearson).reshape((numSites, 1))
    

@@ -133,11 +133,11 @@ if __name__ == '__main__':
    
    parser = argparse.ArgumentParser(
       description='Create a quarternary site by ancestral node matrix indicating which sides of a clade are present')
-   parser.add_argument('PAM_FILENAME', dest='pamFn', type=str, 
+   parser.add_argument('pamFn', type=str, 
                help='The file location of the PAM to use to build this matrix')
-   parser.add_argument('TREE_FILENAME', dest='treeFn', type=str,
+   parser.add_argument('treeFn', type=str,
               help='The file location of the tree to use to build this matrix')
-   parser.add_argument('OUTPUT_FILENAME', dest='outFn', type=str,
+   parser.add_argument('outFn', type=str,
                        help='The file location to write the generated matrix')
    
    args = parser.parse_args()
