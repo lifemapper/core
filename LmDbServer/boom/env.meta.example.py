@@ -59,9 +59,7 @@ CLIMATE_PACKAGES = {
    '10min-past-present-future':
       {'res': '10min',
        'bbox': [-180, -60, 180, 90],
-       'topdir': '10min',
-       # BASELINE_DATA code
-       'baseline': 'observed',
+#        'baseline': 'observed',
        # {REPORT: [(GCM, Time, RCP(opt)), (model, Time, RCP(opt)) ...]}
        'predicted': {'AR5': [('CCSM4', '2050', 'RCP4.5'), 
                              ('CCSM4', '2070', 'RCP4.5'),
@@ -76,12 +74,21 @@ CLIMATE_PACKAGES = {
        'suffix': None}
 }
 
+SDM_MASK = {'name': 'ecoreg_10min_global',
+            'title': 'Ecoregions',
+            'description': 'TNC Ecoregions',
+            'valunits':'nominal',
+            'keywords': ('ecoregions'),
+            'file': 'sax_layers_10min/ecoreg_10min_global.tif'}
+
 # Metadata for possible data - ONLY that specified by 'baseline' and 'predicted'
 # in the chosen package in CLIMATE_PACKAGES will be pulled.
 OBSERVED_PREDICTED_META = {
    # Top keys are the relative directory, under under CLIMATE_PACKAGE topdir
-   'observed':
-      {'name': 'Worldclim 1.4',
+   'baseline':
+      # append res and suffix for scenariococe
+      {'code': 'observed', 
+       'name': 'Worldclim 1.4',
        'keywords': ['observed', 'present'],
        'times': {'Curr': {'name': '1950-2000'}},
        'title': 'Worldclim 1.4', 

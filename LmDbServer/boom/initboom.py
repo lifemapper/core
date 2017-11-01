@@ -724,13 +724,13 @@ class BOOMFiller(LMObject):
       """
       @summary Assemble Worldclim/bioclim scenario
       """
-      obsKey = pkgMeta['baseline']
-      baseMeta = observedPredictedMeta[obsKey]
+      baseMeta = observedPredictedMeta['baseline']
+      baseCode = baseMeta['code']
    #    tm = baseMeta['times'].keys()[0]
       basekeywords = [k for k in climKeywords]
       basekeywords.extend(baseMeta['keywords'])
       
-      scencode = self._getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
+      scencode = self._getbioName(baseCode, pkgMeta['res'], suffix=pkgMeta['suffix'])
       lyrs, staticLayers = self._getBaselineLayers(pkgMeta, baseMeta, elyrMeta, 
                                               lyrtypeMeta)
       scenmeta = {ServiceObject.META_TITLE: baseMeta['title'], 
@@ -1251,8 +1251,7 @@ if __name__ == '__main__':
             help=('Configuration file for the archive, gridset, and grid ' +
                   'to be created from these data.'))
    parser.add_argument('--is_first_run', action='store_true',
-            help=('Compute multi-species matrix outputs for the matrices ' +
-                  'in this Gridset.'))
+            help=('For first, public archive, compute "Global PAM" '))
    args = parser.parse_args()
    paramFname = args.config_file
    isInitial = args.is_first_run
@@ -1320,7 +1319,41 @@ paramFname='/state/partition1/tmpdata/atest3.ini'
 isInitial=False
 filler = BOOMFiller()
 
-filler = BOOMFiller(configFname=paramFname)
+cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
+filler = BOOMFiller(configFname=cfname)
+filler.inParamFname = cfname
+(filler.usr,
+       filler.usrEmail,
+       filler.archiveName,
+       filler.priority,
+       filler.scenPackageName,
+       filler.modelScenCode,
+       filler.prjScenCodeList,
+       filler.dataSource,
+       filler.occIdFname,
+       filler.gbifFname,
+       filler.idigFname,
+       filler.idigOccSep,
+       filler.bisonFname,
+       filler.userOccFname,
+       filler.userOccSep,   
+       filler.minpoints,
+       filler.algorithms,
+       filler.assemblePams,
+       filler.gridbbox,
+       filler.cellsides,
+       filler.cellsize,
+       filler.gridname, 
+       filler.intersectParams) = filler.readParamVals()
+       
+(filler.scenPkg, filler.modelScenCode, filler.epsg, filler.mapunits, 
+          filler.scenPackageMetaFilename, masklyr) = filler._createScenarios()
+         filler.prjScenCodeList = filler.scenPkg.scenarios.keys()
+      filler.masklyr = masklyr
+      # Fill grid bbox with scenario package if it is absent
+      if filler.gridbbox is None:
+         filler.gridbbox = filler.scenPkg.bbox
+         
 filler.initializeInputs()
 
 # ...............................................
