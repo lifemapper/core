@@ -94,7 +94,7 @@ class CalculateStatsCommand(_LmCommand):
          self.inputs.append(treeFilename)
          self.optArgs.append('-t {}'.format(treeFilename))
          
-      if schluter is not None:
+      if schluter:
          self.optArgs.append('--schluter')
          
       if speciesCovarianceFilename is not None:
