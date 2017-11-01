@@ -323,8 +323,12 @@ class OccDataParser(object):
                   tmp = line.split(',')
                   if len(tmp) >= 3:
                      parts = [p.strip() for p in tmp]
-                     # First value is original fieldname
+                     # First value is original fieldname or column index
                      key = parts[0]
+                     try:
+                        key = int(parts[0])
+                     except:
+                        pass
                      # Second value is short fieldname, 10 chars or less
                      name = parts[1]
                      # Third value is string/real/integer
