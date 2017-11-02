@@ -313,9 +313,13 @@ class Gridset(ServiceObject): #LMMap
             # TODO: Site covariance, species covariance, schluter
 
             # TODO: Add tree, it may already be in workspace
+            try:
+               statsTreeFn = squidTreeFilename
+            except:
+               statsTreeFn = None
             statsCmd = CalculateStatsCommand(wsPamFilename, siteStatsFilename,
                                              spStatsFilename, divStatsFilename,
-                                             treeFilename=None)
+                                             treeFilename=statsTreeFn)
             
             spSiteStatsCmd = StockpileCommand(ProcessType.RAD_CALCULATE, 
                                               siteStatsMtx.getId(), 
