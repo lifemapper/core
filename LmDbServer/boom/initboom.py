@@ -237,7 +237,7 @@ class BOOMFiller(LMObject):
          if algHeading.endswith('DEFAULT'):
             defaultAlgs[algHeading] = alg
          else:
-            algs.append[algHeading] = alg
+            algs[algHeading] = alg
       if len(algs) == 0:
          algs = defaultAlgs
       return algs
