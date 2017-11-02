@@ -30,6 +30,7 @@ import json
 import os
 
 from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
+from LmCommon.common.occparse import OccDataParser
 from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCommon.common.readyfile import readyFilename
@@ -97,7 +98,7 @@ def createUserShapefile(pointCsvFn, meta, outFile, bigFile, maxPoints):
    """
    @summary: Processes a user-provided CSV dataset
    @param pointCsvFn: CSV file of points
-   @param meta: A JSON string of metadata for these occurrences
+   @param meta: A file or dictionary of metadata for these occurrences
    @param outFile: The file location to write the modelable occurrence set
    @param bigFile: The file location to write the full occurrence set 
    @param maxPoints: The maximum number of points to be included in the regular
@@ -106,6 +107,8 @@ def createUserShapefile(pointCsvFn, meta, outFile, bigFile, maxPoints):
    with open(pointCsvFn) as inF:
       csvInputBlob = inF.read()
       
+#    fldmeta, _, doMatchHeader = OccDataParser.readMetadata(meta)
+
    # Assume there is a header, could be sniffed if we want to
    count = len(csvInputBlob.split('\n')) - 2
    return parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 

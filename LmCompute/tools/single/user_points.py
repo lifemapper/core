@@ -44,7 +44,7 @@ if __name__ == "__main__":
    parser.add_argument('pointsCsvFn', type=str,
                        help="A path to a raw user CSV file")
    parser.add_argument('metadataFile', type=str, 
-                       help="JSON file of occurrence set metadata")
+                       help="CSV file of occurrence set metadata")
    parser.add_argument('outFile', type=str, 
                   help="The file location to write the shapefile for modeling")
    parser.add_argument('bigFile', type=str, 
@@ -64,38 +64,34 @@ $PYTHON /opt/lifemapper/LmCompute/tools/single/user_points.py \
         mf_18/pt_6/pt_6.shp mf_18/pt_6/bigpt_6.shp 500
 
 
-
+import json
 import os
-
-from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
-               GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
-               LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
-               DWCNames, LMFormat, DEFAULT_EPSG)
-from types import UnicodeType, StringType
-
 from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
+from LmCommon.common.occparse import OccDataParser
 from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
-from LmCommon.common.occparse import OccDataParser
 
-infname = '/share/lm/data/archive/biotaphy/000/000/000/006/pt_6.csv'
-inmeta = '/share/lm/data/archive/biotaphy/heuchera_all.meta'
-outFile = 'mf_18/pt_6/pt_6.shp'
-bigFile = 'mf_18/pt_6/big_6.shp'
-mxpts = 500
-meta, _, doMatchHeader = OccDataParser.readMetadata(inmeta)                   
-pointCsvFn = infname
+pointCsvFn = '/share/lm/data/archive/biotaphy/000/000/006/963/pt_6963.csv'
+meta='/share/lm/data/archive/biotaphy/saxifragales.meta'
+outFile = 'mf_7125/pt_6963/pt_6963.shp'
+bigFile = 'mf_7125/pt_6963/bigpt_6963.shp'
+readyFilename(outFile, overwrite=True)
+readyFilename(bigFile, overwrite=True)
+maxPoints = 500
+
 with open(pointCsvFn) as inF:
    csvInputBlob = inF.read()
 
+meta, _, doMatchHeader = OccDataParser.readMetadata(meta)
 
 count = len(csvInputBlob.split('\n')) - 2
 
-readyFilename(outFile, overwrite=True)
-readyFilename(bigFile, overwrite=True)
+parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
+                       bigFile, count, maxPoints, metadata=meta, isUser=True)
+
 logger = LmComputeLogger('testpoints')
 shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, csvInputBlob, 21, logger=logger, metadata=meta)
 op = shaper.op
@@ -107,24 +103,7 @@ lyrDef = outLyr.GetLayerDefn()
 
 shaper.processType == ProcessType.USER_TAXA_OCCURRENCE
 
-recDict = shaper._getRecord()
 
-feat = ogr.Feature(lyrDef)
-x = recDict[op.xFieldName]
-y = recDict[op.yFieldName]
-wkt = 'POINT ({} {})'.format(x, y)
-feat.SetField(LM_WKT_FIELD, wkt)
-geom = ogr.CreateGeometryFromWkt(wkt)
-feat.SetGeometryDirectly(geom)
-
-for name in recDict.keys():
-   fldname = shaper._lookup(name)
-   if fldname is not None:
-      val = recDict[name]
-      if val is not None and val != 'None':
-         if isinstance(val, UnicodeType):
-            val = fromUnicode(val)
-         feat.SetField(fldname, val)
 
 
 """
