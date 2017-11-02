@@ -289,7 +289,8 @@ class ChristopherWalken(LMObject):
 
 # .............................................................................
    def _getAlgorithms(self):
-      algorithms = []
+      algs = []
+      defaultAlgs = []
       # Get algorithms for SDM modeling
       sections = self.cfg.getsections('ALGORITHM')
       for algHeading in sections:
@@ -306,8 +307,13 @@ class ChristopherWalken(LMObject):
                else:
                   val = self.cfg.getfloat(algHeading, pname)
                alg.setParameter(pname, val)
-         algorithms.append(alg)
-      return algorithms
+         if algHeading.endswith('DEFAULT'):
+            defaultAlgs.append(alg)
+         else:
+            algs.append(alg)
+      if len(algs) == 0:
+         algs = defaultAlgs
+      return algs
 
 # .............................................................................
    def _getProjParams(self, userId, epsg):

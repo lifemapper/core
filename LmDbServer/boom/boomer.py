@@ -377,6 +377,7 @@ from LmServer.tools.cwalken import ChristopherWalken
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, MatrixType) 
+from LmCommon.common.occparse import OccDataParser
 
 
 scriptname = 'boomerTesting'
@@ -420,21 +421,24 @@ weaponOfChoice = UserWoC(chris._scribe, userId, archiveName,
                       processType=processType,
                       useGBIFTaxonomy=useGBIFTaxonIds,
                       taxonSourceName=taxonSourceName)
+                      
+op = OccDataParser(chris.log, occCSV, occMeta, delimiter=occDelimiter)
+
 minPoints = chris._getBoomOrDefault('POINT_COUNT_MIN')
 algorithms = chris._getAlgorithms()
 (mdlScen, mdlMask, prjScens, prjMask) = chris._getProjParams(userId, epsg)
-mdlMaskName = chris._getBoomOrDefault('MODEL_MASK_NAME')
-if mdlMaskName:
-   mdlMask = chris._scribe.getLayer(userId=userId, 
-                                   lyrName=mdlMaskName, epsg=epsg)
-prjMaskName = chris._getBoomOrDefault('PROJECTION_MASK_NAME')
-if prjMaskName:
-   prjMask = chris._scribe.getLayer(userId=userId, 
-                                   lyrName=prjMaskName, epsg=epsg)
-
-(boomGridset, intersectParams) = chris._getGlobalPamObjects(userId, 
-                                                      archiveName, epsg)
-assemblePams = chris._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
+# mdlMaskName = chris._getBoomOrDefault('MODEL_MASK_NAME')
+# if mdlMaskName:
+#    mdlMask = chris._scribe.getLayer(userId=userId, 
+#                                    lyrName=mdlMaskName, epsg=epsg)
+# prjMaskName = chris._getBoomOrDefault('PROJECTION_MASK_NAME')
+# if prjMaskName:
+#    prjMask = chris._scribe.getLayer(userId=userId, 
+#                                    lyrName=prjMaskName, epsg=epsg)
+# 
+# (boomGridset, intersectParams) = chris._getGlobalPamObjects(userId, 
+#                                                       archiveName, epsg)
+# assemblePams = chris._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
 
 f = open(occMeta, 'r')
 lines = f.readlines()
@@ -576,4 +580,6 @@ boomer._scribe.updateObject((boomer.masterPotato)
 boomer.spudArfFile.close()
 Daemon.onShutdown(boomer)
 
+
+       
 """

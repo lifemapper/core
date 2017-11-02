@@ -99,10 +99,7 @@ INTERSECT_MINPERCENT: 25
 INTERSECT_MINPRESENCE: 1
 INTERSECT_MAXPRESENCE: 255
 
-[ALGORITHM - 1]
-CODE: BIOCLIM
-
-[ALGORITHM - 2]
+[ALGORITHM - DEFAULT]
 CODE: ATT_MAXENT
 
 ; .............................................................................

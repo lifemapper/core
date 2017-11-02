@@ -212,7 +212,12 @@ class BOOMFiller(LMObject):
    
 # .............................................................................
    def _getAlgorithms(self, config):
-      algorithms = []
+      """
+      @note: Returns configured algorithms, uses default algorithms only 
+             if no others exist
+      """
+      algs = {}
+      defaultAlgs = {}
       # Get algorithms for SDM modeling
       sections = config.getsections('ALGORITHM')
       for algHeading in sections:
@@ -229,8 +234,13 @@ class BOOMFiller(LMObject):
                else:
                   val = config.getfloat(algHeading, pname)
                alg.setParameter(pname, val)
-         algorithms.append(alg)
-      return algorithms
+         if algHeading.endswith('DEFAULT'):
+            defaultAlgs[algHeading] = alg
+         else:
+            algs.append[algHeading] = alg
+      if len(algs) == 0:
+         algs = defaultAlgs
+      return algs
       
    # ...............................................
    def readParamVals(self):
@@ -304,14 +314,11 @@ class BOOMFiller(LMObject):
       
       # .........................................      
       # SDM Algorithms with all parameters   
-      counter = 0
-      for alg in self.algorithms:
-         counter += 1
-         thisHeading = 'ALGORITHM {}'.format(counter)
-         config.add_section(thisHeading)
-         config.set(thisHeading, 'CODE', alg.code)
+      for heading, alg in self.algorithms.iteritems():
+         config.add_section(heading)
+         config.set(heading, 'CODE', alg.code)
          for name, val in alg.parameters.iteritems():
-            config.set(thisHeading, name, str(val))
+            config.set(heading, name, str(val))
       
       email = self.usrEmail
       if email is None:
