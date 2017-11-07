@@ -95,16 +95,12 @@ class LmTree(object):
                         labelAttribute='squid')
    
    # ..............................
-   def addSQUIDs(self, squidDict):
-      """
-      @summary: Add Lifemapper SQUIDs to the tree
-      @param squidDict: A dictionary with tip label keys and LM squid values
-      @deprecated: Use annotateTree instead
-      """
-      self.annotateTree(PhyloTreeKeys.SQUID, squidDict)
-   
    def getDistanceMatrix(self, labelAttribute='label', orderedLabels=None):
       """
+      @summary: Get a Matrix object of phylogenetic distances between tips
+      @param labelAttribute: The attribute of the tips to use as labels for 
+                                the matrix
+      @param orderedLabels: If provided, use this order of labels
       """
       # Get list of labels
       if orderedLabels is None:
