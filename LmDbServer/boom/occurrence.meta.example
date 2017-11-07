@@ -1,25 +1,26 @@
 # .............................................................................
-##   key (original name or column index) required,
-##   shortname (<= 10 chars) required,
-##   type required (integer, string, or real), 
-##   role (required for Longitude, Latitude, GroupBy, TaxaName fields,
-##         optional for UniqueID field),
-##   acceptedvalues optional, 
-##   keys for each field dictionary are case-insensitive
+##   Columns
+##   1) key: required, original name or zero-based column index,
+##   2) shortname: required, <= 10 chars,
+##   3) type: required, integer, string, or real, 
+##   4) role: optional for TaxaName, UniqueID field,
+##            required for Longitude, Latitude, Geopoint, GroupBy fields,
+##   4or5..n) optional, all additional values are acceptedvalues , 
 # .............................................................................
 # Note, This file must have the same basename as the CSV file it describes
 # 
 # '#' indicates a comment line, all others must contain comma-separated values:
 #  IFF a field performs a specific role in these data, role name should be the 
 #      4th value on a line
-#   1st value:  Key = original field name (matching the header in data file) 
+#   1st column:  Key = original field name (matching the header in data file) 
 #                     or column index (Zero-based)
-#   2nd value:  Shortname = a new field name, 10 chars or less
-#   3rd value:  Type = integer, string, or real
-#   4th value:  Role = if true, UniqueID, Longitude, Latitude, GroupBy, TaxaName
-#   All following values (starting at 4 or 5):  AcceptedValues = (optional) accepted values for this field 
+#   2nd column:  Shortname = a new field name, 10 chars or less
+#   3rd column:  Type = integer, string, or real
+#   4th column:  Role = if applicable for this field, Longitude, Latitude, Geopoint, 
+#                                              GroupBy, TaxaName, UniqueID
+#   All following columns (starting at 4 or 5):  accepted values for this field 
 #
-# Role (case-insensitive) MUST be present for 3 or 4 of the fields
+# Role (case-insensitive) MUST be present 2-4 of the fields
 #    Required:
 #       GroupBy field contains value to group records by. 
 #    Required: Either Longitude & Latitude or Geopoint

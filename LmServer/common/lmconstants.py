@@ -29,7 +29,7 @@ from osgeo.ogr import (wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint,
                        wkbMultiLineString, wkbMultiPolygon)
    
 import os.path
-from types import IntType, FloatType
+from types import IntType, FloatType,StringType
 
 from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat, 
                                          ProcessType)
@@ -1337,6 +1337,16 @@ class Algorithms:
    ENFA = AlgQualities('ENFA', 'Ecological-Niche Factor Analysis')
    # Not yet implemented
    RNDFOREST = AlgQualities('RNDFOREST', 'Random Forests')
+   # Masking algorithm
+   HULL_INTERSECT = AlgQualities('hull_region_intersect', 
+                                 'Convex Hull Region Intersect',
+                                 isDiscreteOutput=True,
+                                 parameters = {'buffer':
+                                                {'type': FloatType,
+                                                 'min': 0, 'default': 0.5, 'max': 2 },
+                                               # Region MUST be supplied by user
+                                               'region':
+                                                {'type': StringType }})
    
    @staticmethod
    def implemented():
@@ -1831,6 +1841,17 @@ ALGORITHM_DATA  = {
 'ENFA': ENFA_PARAMETERS, 
 'RNDFOREST': RNDFOREST_PARAMETERS
 }
+
+class SdmMasks(object):
+   HULL_INTERSECT = AlgQualities('hull_region_intersect', 
+                                 'Convex Hull Region Intersect',
+                                 isDiscreteOutput=True,
+                                 parameters = {'buffer':
+                                                {'type': FloatType,
+                                                 'min': 0, 'default': 0.5, 'max': 2 },
+                                               # Region MUST be supplied by user
+                                               'region':
+                                                {'type': StringType }})
 
 # ============================================================================
 # =                              Snippet Constants                              =

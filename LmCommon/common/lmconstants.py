@@ -35,6 +35,7 @@ except:
 # .    Configuration file headings
 # .............................................................................
 SERVER_BOOM_HEADING = 'BOOM'
+SERVER_SDM_MASK_HEADING = 'PREPROCESSING SDM_MASK'
 SERVER_ENV_HEADING = 'LmServer - environment'
 SERVER_PIPELINE_HEADING = 'LmServer - pipeline'
 SERVER_DB_HEADING = 'LmServer - dbserver'
