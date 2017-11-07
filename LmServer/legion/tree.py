@@ -21,12 +21,11 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import json
 import mx.DateTime
 import os
 
 from LmBackend.common.lmobj import LMObject
-from LmCommon.common.lmconstants import JSON_INTERFACE
+from LmCommon.common.lmconstants import JSON_INTERFACE, DEFAULT_TREE_SCHEMA
 from LmCommon.trees.lmTree import LmTree
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import LMServiceType, LMFileType, ID_PLACEHOLDER
@@ -39,14 +38,13 @@ class Tree(LmTree, ServiceObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, name, metadata={}, treeDict=None, dlocation=None,
+   def __init__(self, name, metadata={}, dlocation=None, schema=DEFAULT_TREE_SCHEMA,
                 metadataUrl=None, userId=None, treeId=None, modTime=None):
       """
       @summary Constructor for the Tree class.  
       @copydoc LmCommon.trees.lmTree.LmTree::fromFile()
       @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
       @param name: The user-provided name of this tree
-      @param treeDict: file or data (dictionary) for LmTree base object
       @param dlocation: file of data for LmTree base object
       @param treeId: dbId  for ServiceObject
       """
@@ -54,14 +52,8 @@ class Tree(LmTree, ServiceObject):
                              metadataUrl=metadataUrl, modTime=modTime)
       # TODO: Do we always want to read the file??
       #       Maybe just populate attributes saved in DB?
-      if treeDict:
-         LmTree.__init__(self, treeDict)
-      elif dlocation is not None:
-         with open(dlocation) as inF:
-            treeDict = json.load(inF)
-         LmTree.__init__(self, treeDict)
-      else:
-         LmTree.__init__(self, {})
+      if dlocation is not None:
+         LmTree.__init__(self, dlocation, schema)
       self.name = name
       self._dlocation = dlocation
       self.treeMetadata = {}

@@ -29,6 +29,7 @@
 """
 import argparse
 
+from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA
 from LmCommon.common.matrix import Matrix
 from LmCommon.trees.lmTree import LmTree
 from LmCompute.plugins.multi.calculate.calculate import PamStats
@@ -66,7 +67,7 @@ if __name__ == "__main__":
    
    # Load tree if exists
    if args.treeFn is not None:
-      tree = LmTree.fromFile(args.treeFn)
+      tree = LmTree(args.treeFn, DEFAULT_TREE_SCHEMA)
    else:
       tree = None
    

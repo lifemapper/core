@@ -36,46 +36,49 @@ import numpy as np
 
 from LmCommon.common.matrix import Matrix
 from LmCommon.trees.lmTree import LmTree
-from LmCommon.common.lmconstants import PhyloTreeKeys
+from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA, PhyloTreeKeys
 
 # Local constants for this module
 LEFT_SQUIDS_KEY = 'leftSquids'
 RIGHT_SQUIDS_KEY = 'rightSquids'
 
 # .............................................................................
-def _getSquidsInClade(clade):
+def _getSquidsInClade(node):
    """
    @summary: Builds a dictionary of clad id keys with left and right squids
                 for each internal tree node
-   @param clade: A clade to build this dictionary for
+   @param node: A tree node to build this dictionary for
    @note: This function is recursive and will build a lookup dictionary for the
              the entire subtree under the clade
    @note: The tree must be binary
    """
    cladeDict = {}
    allSquids = []
-   if len(clade[PhyloTreeKeys.CHILDREN]) == 2:
-      # Process children
-      leftCladeDict, leftSquids = _getSquidsInClade(
-                                             clade[PhyloTreeKeys.CHILDREN][0])
-      rightCladeDict, rightSquids = _getSquidsInClade(
-                                             clade[PhyloTreeKeys.CHILDREN][1])
+   
+   if node.num_child_nodes() == 2:
+      leftCladeDict, leftSquids = _getSquidsInClade(node.child_nodes()[0])
+      rightCladeDict, rightSquids = _getSquidsInClade(node.chidl_nodes()[1])
+      
       # Add to all squids
       allSquids.extend(leftSquids)
       allSquids.extend(rightSquids)
       
-      # Merge dictionaries
+      # Merge dictionary
       cladeDict.update(leftCladeDict)
       cladeDict.update(rightCladeDict)
+      
       # Add this clade to dictionary
-      cladeDict[clade[PhyloTreeKeys.CLADE_ID]] = {
+      cladeDict[node.label] = {
          LEFT_SQUIDS_KEY : leftSquids,
          RIGHT_SQUIDS_KEY : rightSquids
       }
+      
    else:
-      if clade.has_key(PhyloTreeKeys.SQUID):
-         allSquids.append(clade[PhyloTreeKeys.SQUID])
-   
+      try:
+         allSquids.append(getattr(node.taxon, PhyloTreeKeys.SQUID))
+      except:
+         pass
+         
    return cladeDict, allSquids
 
 # .............................................................................
@@ -144,7 +147,7 @@ if __name__ == '__main__':
    
    # Read in inputs
    pam = Matrix.load(args.pamFn)
-   tree = LmTree.fromFile(args.treeFn)
+   tree = LmTree(args.treeFn, DEFAULT_TREE_SCHEMA)
    
    # Build the Ancestral PAM
    ancPam = build_ancestral_pam(pam, tree)

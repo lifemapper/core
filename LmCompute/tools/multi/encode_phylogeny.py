@@ -31,6 +31,7 @@
 """
 import argparse
 
+from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA, PhyloTreeKeys
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.phylo import PhyloEncoding
 from LmCommon.trees.lmTree import LmTree
@@ -53,7 +54,7 @@ if __name__ == "__main__":
    
    args = parser.parse_args()
    
-   tree = LmTree.fromFile(args.treeFn)
+   tree = LmTree(args.treeFn, DEFAULT_TREE_SCHEMA)
    
    # Check if we can encode tree
    if tree.hasBranchLengths() and not tree.isUltrametric():
@@ -83,10 +84,11 @@ if __name__ == "__main__":
       for i in range(len(squids)):
          squidDict[squids[i]] = i
    
-   tree.addSquidMatrixIndices(squidDict)
+   tree.annotateTree(PhyloTreeKeys.MTX_IDX, squidDict, 
+                     labelAttribute=PhyloTreeKeys.SQUID)
    
    # Prune tree
-   tree.pruneTipsWithoutMatrixIndices()
+   tree.pruneTipsWithoutAttribute(searchAttribute=PhyloTreeKeys.MTX_IDX)
    
    encoder = PhyloEncoding(tree, pam)
 

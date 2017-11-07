@@ -126,6 +126,7 @@ class LMFormat:
    MAP = FileFormat('.map', 'text/plain')
    METADATA = FileFormat('.meta', 'text/plain')
    MXE = FileFormat('.mxe', 'application/octet-stream')
+   NEXUS = FileFormat('.nex', 'text/plain', allExtensions=['.nex', '.nxs'])
    NEWICK = FileFormat('.tre', 'text/plain', allExtensions=['.tre', '.nhx'])
    NUMPY = FileFormat('.npy', 'application/octet-stream')
    PICKLE = FileFormat('.pkl', 'application/octet-stream')
@@ -1742,13 +1743,12 @@ class PamStatKeys(object):
 # .............................................................................
 # .                     Phylogenetic Tree Module Constants                    .
 # .............................................................................
+DEFAULT_TREE_SCHEMA = 'nexus'
+
+# .............................
 class PhyloTreeKeys(object):
    """
-   @summary: Class containing keys for Jeff's Phylo Trees
+   @summary: Keys for phylogenetic trees
    """
-   CHILDREN = 'children' # Children of a node
-   BRANCH_LENGTH = 'length' # Branch length for that node
    MTX_IDX = 'mx' # The matrix index for this node
-   NAME = 'name' # Name of the node
-   CLADE_ID = 'cladeId' # This is an identifier for the clade
    SQUID = 'squid' # This is the LM SQUID (species identifier) for the tip

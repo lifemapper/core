@@ -27,7 +27,9 @@
 """
 import argparse
 
+from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA, PhyloTreeKeys
 from LmCommon.trees.lmTree import LmTree
+
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 
@@ -48,7 +50,7 @@ if __name__ == "__main__":
    
    # Load tree
    userId = args.userName
-   tree = LmTree.fromFile(args.treeFile)
+   tree = LmTree(args.treeFile, DEFAULT_TREE_SCHEMA)
    
    # Do stuff
    scribe = BorgScribe(ScriptLogger('squidInc'))
@@ -56,13 +58,12 @@ if __name__ == "__main__":
    
    squidDict = {}
    
-   for label, cladeId in tree.getLabels():
+   for label in tree.getLabels():
       sno = scribe.getTaxon(userId=userId, taxonName=label)
       if sno is not None:
          squidDict[label] = sno.squid
    
-   tree.addSQUIDs(squidDict)
-   
+   tree.annotateTree(PhyloTreeKeys.SQUID, squidDict)
    
    scribe.closeConnections()
    
