@@ -237,6 +237,8 @@ class PamStats(object):
                    coefficient for pair distance and pair sites shared
                    statistics using the tree
       @param pdMtx: Phylogenetic distance matrix from each node to all others
+      @note: This is the covariance of taxon distance and sites shared by each
+                pair of species in a cell
       """
       mpd = []
       pearson = []
