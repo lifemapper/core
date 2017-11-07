@@ -290,7 +290,7 @@ class BOOMFiller(LMObject):
       maskAlg = None
       maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING)
       if len(maskAlgList) == 1:
-         maskAlg = maskAlgList[0]
+         maskAlg = maskAlgList.values()[0]
       
 #       mdlMaskName = self._getBoomOrDefault(config, 'MODEL_MASK_NAME')
 #       prjMaskName = self._getBoomOrDefault(config, 'PROJECTION_MASK_NAME')
@@ -617,7 +617,7 @@ class BOOMFiller(LMObject):
    # ...............................................
    def _createMaskLayer(self, SPMETA, pkgMeta, elyrMeta):
       """
-      @summary Assembles layer metadata for mask
+      @summary Assembles layer metadata for optional mask from scenario package
       """
       # Required keys in SDM_MASK_INPUT: name, bbox, gdaltype, gdalformat, file
       maskMeta = SPMETA.SDM_MASK_INPUT
@@ -1379,30 +1379,7 @@ paramFname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
 
 cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
 filler = BOOMFiller(configFname=cfname)
-
-config = Config(siteFn=paramFname)
-maskAlgList = filler._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING)
-sectionPrefix=SERVER_SDM_MASK_HEADING
-sections = config.getsections(sectionPrefix)
-algHeading = sections[0]
-acode =  config.get(algHeading, 'CODE')
-
-alg = Algorithm(acode)
-alg.fillWithDefaults()
-
-algoptions = config.getoptions(algHeading)
-for name in algoptions:
-   pname, ptype = alg.findParamNameType(name)
-   if pname is not None:
-      if ptype == IntType:
-         val = config.getint(algHeading, pname)
-      elif ptype == FloatType:
-         val = config.getfloat(algHeading, pname)
-      else:
-         val = config.get(algHeading, pname)
-      print pname, val
-      
-      alg.setParameter(pname, val)
+filler.initializeInputs()
 
 
 (filler.usr,

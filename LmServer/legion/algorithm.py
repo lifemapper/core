@@ -81,13 +81,15 @@ class Algorithm(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, code, metadata={}, parameters={}, name=None):
+   def __init__(self, code, metadata={}, parameters={}, inputs={}, name=None):
       """
       @summary Constructor for the algorithm class.  Algorithm should be 
                initialized from the database upon construction.
       @param code: The algorithm code for openModeller
       @param metadata: Dictionary of Algorithm metadata
       @param parameters: Dictionary of Algorithm parameters
+      @param inputs: Dictionary of Algorithm input data, with keyword and 
+                     data object
       @param name: (optional) The full algorithm name
       """
       self.code = code
@@ -99,6 +101,8 @@ class Algorithm(LMObject):
       self._initParameters()
       if parameters:
          self._setParameters(parameters)
+      self._inputData = {}
+      self.setInputs(inputs)
       
    # ...............................................
    def _initParameters(self):
@@ -150,6 +154,40 @@ class Algorithm(LMObject):
 # Public Methods
 # .........................................................................
 # ...............................................
+   # ...............................................
+   def setInputs(self, inputs):
+      """
+      @summary Set the data inputs of the (masking) algorithm
+      @param inputs: A dictionary of Layer objects for the algorithm 
+      """
+      if inputs is not None:
+         if type(inputs) is dict: 
+            newInputs = inputs
+         else:
+            try:
+               newInputs = json.loads(inputs)
+            except Exception, e:
+               print('Failed to load JSON object from type {} object {}'
+                     .format(type(inputs), inputs))
+         self._inputData = newInputs
+
+   # ...............................................
+   def setInput(self, key, input):
+      """
+      @summary Set a data input of the (masking) algorithm
+      @param input: A layer name or Layer objects 
+      """
+      self._inputData[key] = input
+
+   # ...............................................
+   def getInputs(self):
+      """
+      @summary Return a dictionary in which key = param name and 
+               value = layer object
+      @return A dictionary of the algorithm's input data
+      """
+      return self._inputData
+
 # ...............................................
    def dumpAlgParameters(self):
       return LMObject._dumpMetadata(self, self._parameters)

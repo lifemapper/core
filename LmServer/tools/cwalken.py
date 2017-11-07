@@ -31,7 +31,8 @@ from types import IntType, FloatType
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, MatrixType, IDIG_DUMP) 
+          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, SERVER_SDM_MASK_HEADING,
+          MatrixType, IDIG_DUMP) 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
 
 from LmServer.common.datalocator import EarlJr
@@ -117,9 +118,8 @@ class ChristopherWalken(LMObject):
        self.minPoints, 
        self.algs, 
        self.mdlScen, 
-       self.mdlMask, 
        self.prjScens, 
-       self.prjMask, 
+       self.sdmMaskInputLayer, 
        self.boomGridset, 
        self.intersectParams, 
        self.assemblePams) = self._getConfiguredObjects()
@@ -288,13 +288,14 @@ class ChristopherWalken(LMObject):
       return weaponOfChoice
 
 # .............................................................................
-   def _getAlgorithm(self, config, algHeading):
+   def _getAlgorithm(self, algHeading):
       """
       @note: Returns configured algorithm
       """
       acode =  self.cfg.get(algHeading, 'CODE')
       alg = Algorithm(acode)
       alg.fillWithDefaults()
+      inputs = {}
       # override defaults with any option specified
       algoptions = self.cfg.getoptions(algHeading)
       for name in algoptions:
@@ -306,7 +307,13 @@ class ChristopherWalken(LMObject):
                val = self.cfg.getfloat(algHeading, pname)
             else:
                val = self.cfg.get(algHeading, pname)
-            alg.setParameter(pname, val)
+               # Some algorithms(mask) may have a parameter indicating a layer
+               if acode == 'hull_region_intersect' and pname == 'region':
+                  inputs[pname] = val
+               else:
+                  alg.setParameter(pname, val)
+      if inputs:
+         alg.setInputs(inputs)
       return alg
 
 # .............................................................................
@@ -329,7 +336,7 @@ class ChristopherWalken(LMObject):
 # .............................................................................
    def _getProjParams(self, userId, epsg):
       prjScens = []
-      mdlScen = mdlMask = prjMask = None
+      mdlScen = sdmMaskInputLayer = None
       
       # Get environmental data model and projection scenarios
       mdlScenCode = self._getBoomOrDefault('SCENARIO_PACKAGE_MODEL_SCENARIO')
@@ -351,35 +358,23 @@ class ChristopherWalken(LMObject):
       else:
          raise LMError('Failed to retrieve ScenPackage for scenarios {}'
                        .format(prjScenCodes))
-#       mdlScen = self._scribe.getScenario(mdlScenCode, userId=userId, fillLayers=True)
-#       if mdlScen is not None:
-#          if mdlScenCode not in prjScenCodes:
-#             prjScens.append(mdlScen)
-#          for pcode in prjScenCodes:
-#             scen = self._scribe.getScenario(pcode, userId=userId, fillLayers=True)
-#             if scen is not None:
-#                prjScens.append(scen)
-#             else:
-#                raise LMError('Failed to retrieve scenario {}'.format(pcode))
-#       else:
-#          raise LMError('Failed to retrieve scenario {}'.format(mdlScen))
-      # Get optional model and project masks
-      mdlMaskName = self._getBoomOrDefault('MODEL_MASK_NAME')
-      if mdlMaskName:
-         mdlMask = self._scribe.getLayer(userId=userId, 
-                                         lyrName=mdlMaskName, epsg=epsg)
-         if mdlMask is None:
-            raise LMError('Failed to retrieve Model Mask {}'
-                          .format(mdlMaskName))
-      prjMaskName = self._getBoomOrDefault('PROJECTION_MASK_NAME')
-      if prjMaskName:
-         prjMask = self._scribe.getLayer(userId=userId, 
-                                            lyrName=prjMaskName, epsg=epsg)
-         if prjMask is None:
-            raise LMError('Failed to retrieve Projection Mask {}'
-                          .format(prjMaskName))
-      
-      return (mdlScen, mdlMask, prjScens, prjMask)  
+      # Should be only one or None
+      maskAlgList = self._getAlgorithms(sectionPrefix=SERVER_SDM_MASK_HEADING)
+      if len(maskAlgList) == 1:
+         sdmMaskAlg = maskAlgList.values()[0]
+         # TODO: Handle if there is more than one input layer
+         for inputKey, lyrname in sdmMaskAlg.getInputs():
+            lyr = self._scribe.getLayer(userId=userId, lyrName=lyrname, 
+                                        epsg=epsg) 
+            sdmMaskAlg.setInput(inputKey, lyr)
+         sdmMaskLayers = sdmMaskAlg.getInputs()
+         if len(sdmMaskLayers) >= 1:
+            raise LMError(currargs='Unable to process > 1 input SDM mask layer')
+         elif len(sdmMaskLayers) == 1:
+            sdmMaskInputLayer = sdmMaskLayers.values()[0]
+            
+
+      return (mdlScen, prjScens, sdmMaskInputLayer)  
 
 # .............................................................................
    def _getGlobalPamObjects(self, userId, archiveName, epsg):
@@ -452,14 +447,15 @@ class ChristopherWalken(LMObject):
       # SDM inputs
       minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
       algorithms = self._getAlgorithms()
-      (mdlScen, mdlMask, prjScens, prjMask) = self._getProjParams(userId, epsg)
+
+      (mdlScen, prjScens, sdmMaskInputLayer) = self._getProjParams(userId, epsg)
       # Global PAM inputs
       (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                             archiveName, epsg)
       assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
 
       return (userId, archiveName, archivePriority, boompath, weaponOfChoice,  
-              epsg, minPoints, algorithms, mdlScen, mdlMask, prjScens, prjMask, 
+              epsg, minPoints, algorithms, mdlScen, prjScens, sdmMaskInputLayer, 
               boomGridset, intersectParams, assemblePams)  
 
    # ...............................
@@ -603,9 +599,9 @@ class ChristopherWalken(LMObject):
             self.log.debug('Found/inserted SDMProject {}'.format(prj.getId()))
             # Fill in projection with input scenario layers, masks
             prj._modelScenario = self.mdlScen
-            prj.setModelMask(self.mdlMask)
+            prj.setModelMask(self.sdmMaskInputLayer)
             prj._projScenario = prjscen
-            prj.setProjMask(self.prjMask)
+            prj.setProjMask(self.sdmMaskInputLayer)
             # Rollback if obsolete or failed
             reset = self._doReset(prj.status, prj.statusModTime)
             if reset:
