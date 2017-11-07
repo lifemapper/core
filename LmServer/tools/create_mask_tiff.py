@@ -84,9 +84,14 @@ def createMaskRaster(inRasterFn, pointsFn, outRasterFn):
    for x,y in pts:
       col = int((x - xOrigin) / pixelWidth)
       row = int((yOrigin - y) / pixelHeight)
-      vals.add(data[row][col])
+      try:
+         vals.add(data[row][col])
+      except:
+         pass
    
    listVals = list(vals)
+   if len(listVals) == 0:
+      raise Exception, 'No intersection between points and raster'
    noData = -9999
    newData = noData * np.ones(data.shape, dtype=int)
    
