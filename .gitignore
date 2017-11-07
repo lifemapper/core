@@ -61,6 +61,9 @@ target/
 .pydevproject
 .settings
 
+# Folder metadata files
+.DS_Store
+
 # Installed files
 LmServer/db/connect.py
 config/config.*.ini
