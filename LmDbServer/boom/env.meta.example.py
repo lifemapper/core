@@ -74,12 +74,44 @@ CLIMATE_PACKAGES = {
        'suffix': None}
 }
 
-SDM_MASK = {'name': 'ecoreg_10min_global',
-            'title': 'Ecoregions',
-            'description': 'TNC Ecoregions',
-            'valunits':'nominal',
-            'keywords': ('ecoregions'),
-            'file': 'sax_layers_10min/ecoreg_10min_global.tif'}
+# # Required keys in SDM_MASK_INPUT: name, bbox, gdaltype, gdalformat, file
+SDM_MASK_INPUT = {'name': 'ecoreg_10min_global',
+   'bbox': (-180.0, -90.0, 180.0, 83.0),
+   'gdaltype': ENVLYR_GDALTYPE,
+   'gdalformat': ENVLYR_GDALFORMAT,
+   'file': 'ecoreg_10min_global.tif',
+   'title': 'Generalized, Rasterized TNC Terrestrial Ecoregions, 10min',
+   'author': 'The Nature Conservancy',
+   'isCategorical': True,
+   'description': ' '.join(('Global Ecoregions, Major Habitat Types,',
+      'Biogeographical Realms and The Nature Conservancy Terrestrial Assessment', 
+      'Units as of December 14, 2009 Purpose: Developed originally by Olson, D. M.', 
+      'and E. Dinerstein (2002), Bailey (1995) and Environment Canada (Wiken,', 
+      '1986), these data layers were modified by The Nature Conservancy (TNC) to',
+      'be used in its Biodiversity Planning exercises in the process known as',
+      'Ecoregional Assessments. Several Ecoregions were modified from the',
+      'originals by TNC staff developing the aforementioned assessments. The',
+      'modifications are based on ecological, bio-physical and political',
+      'rationales; most changes are noted in the accompanying documentation',
+      '(attributes). Ecoregions in Canada and Mexico were modified mainly at the',
+      'border with US territory, where TNC modified-Bailey (1995) ecoregions',
+      'crossed over the country boundaries and the Olson, D. M. and E. Dinerstein',
+      '(2002) and (Wiken, 1986) were replaced where the TNC modified-Bailey (1995)',
+      'overlayed them. This layer was split from the terrestrial ecoregional',
+      'assessment layer in June 2008.')),
+   'keywords': ['Terrestrial Ecoregions', 'Major Habitat Types', 
+               'Biogeographic Realms', 'TNC', 'World', 'Global'],
+   'url': 'http://maps.tnc.org',
+   'citation': ' '.join(('Olson, D. M. and E. Dinerstein. 2002. The Global 200:',
+      'Priority ecoregions for global conservation. (PDF file) Annals of the',
+      'Missouri Botanical Garden 89:125-126. -The Nature Conservancy, USDA Forest',
+      'Service and U.S. Geological Survey, based on Bailey, Robert G. 1995.',
+      'Description of the ecoregions of the United States (2nd ed.). Misc. Pub.',
+      'No. 1391, Map scale 1:7,500,000. USDA Forest Service. 108pp. -The Nature',
+      'Conservancy (2003), based on Wiken, E.B.(compiler). 1986. Terrestrial',
+      'ecozones of Canada. Ecological Land Classification Series No. 19.',
+      'Environment Canada, Hull, Que. 26 pp. + map.'))}
+
 
 # Metadata for possible data - ONLY that specified by 'baseline' and 'predicted'
 # in the chosen package in CLIMATE_PACKAGES will be pulled.

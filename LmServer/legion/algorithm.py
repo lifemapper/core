@@ -231,9 +231,14 @@ class Algorithm(LMObject):
             if constraints['type'] == StringType:
                if (isinstance(val, StringType)):
                   val = val.lower()
-                  if not(val in constraints['options']):
-                     raise InvalidValueError(['Invalid value %s; Valid options are %s' % 
-                                              (val, str(constraints['options']) )])
+                  try:
+                     valOptions = constraints['options']
+                  except:
+                     pass
+                  else:
+                     if not(val in valOptions):
+                        raise InvalidValueError(['Invalid value {}; Valid options are {}'
+                                                 .format(val, str(valOptions))])
                else :
                   raise WrongTypeError(['Expected StringType, Received %s - type %s' % 
                                         (str(val), str(type(val))) ])

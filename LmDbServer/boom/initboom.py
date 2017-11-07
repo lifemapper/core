@@ -25,7 +25,7 @@ import ConfigParser
 import mx.DateTime
 import os
 import time
-from types import IntType
+from types import IntType, FloatType
 
 from LmBackend.command.boom import BoomerCommand
 from LmBackend.common.lmobj import LMError, LMObject
@@ -33,7 +33,8 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, DEFAULT_MAPUNITS, 
                      DEFAULT_POST_USER, JobStatus, LMFormat, MatrixType, 
-                     ProcessType, SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING)
+                     ProcessType, SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING, 
+                     SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
 
 from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE, 
@@ -125,7 +126,7 @@ class BOOMFiller(LMObject):
        self.cellsize,
        self.gridname, 
        self.intersectParams, 
-       self.mdlMaskName, self.prjMaskName) = self.readParamVals()
+       self.maskAlg) = self.readParamVals()
        
       # Fill existing scenarios AND SDM mask layer from configured codes 
       # or create from ScenPackage metadata
@@ -211,29 +212,40 @@ class BOOMFiller(LMObject):
       return scribe
    
 # .............................................................................
-   def _getAlgorithms(self, config):
+   def _getAlgorithm(self, config, algHeading):
+      """
+      @note: Returns configured algorithm
+      """
+      acode =  config.get(algHeading, 'CODE')
+      alg = Algorithm(acode)
+      alg.fillWithDefaults()
+      # override defaults with any option specified
+      algoptions = config.getoptions(algHeading)
+      for name in algoptions:
+         pname, ptype = alg.findParamNameType(name)
+         if pname is not None:
+            if ptype == IntType:
+               val = config.getint(algHeading, pname)
+            elif ptype == FloatType:
+               val = config.getfloat(algHeading, pname)
+            else:
+               val = config.get(algHeading, pname)
+            alg.setParameter(pname, val)
+      return alg
+      
+# .............................................................................
+   def _getAlgorithms(self, config, sectionPrefix='ALGORITHM'):
       """
       @note: Returns configured algorithms, uses default algorithms only 
              if no others exist
       """
       algs = {}
       defaultAlgs = {}
-      # Get algorithms for SDM modeling
-      sections = config.getsections('ALGORITHM')
+      # Get algorithms for SDM modeling or SDM mask
+      sections = config.getsections(sectionPrefix)
       for algHeading in sections:
-         acode =  config.get(algHeading, 'CODE')
-         alg = Algorithm(acode)
-         alg.fillWithDefaults()
-         # override defaults with any option specified
-         algoptions = config.getoptions(algHeading)
-         for name in algoptions:
-            pname, ptype = alg.findParamNameType(name)
-            if pname is not None:
-               if ptype == IntType:
-                  val = config.getint(algHeading, pname)
-               else:
-                  val = config.getfloat(algHeading, pname)
-               alg.setParameter(pname, val)
+         alg = self._getAlgorithm(config, algHeading)
+         
          if algHeading.endswith('DEFAULT'):
             defaultAlgs[algHeading] = alg
          else:
@@ -241,7 +253,7 @@ class BOOMFiller(LMObject):
       if len(algs) == 0:
          algs = defaultAlgs
       return algs
-      
+
    # ...............................................
    def readParamVals(self):
       if self.inParamFname is None or not os.path.exists(self.inParamFname):
@@ -272,10 +284,16 @@ class BOOMFiller(LMObject):
       userOccFname = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA')
       userOccSep = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA_DELIMITER')
       minpoints = self._getBoomOrDefault(config, 'POINT_COUNT_MIN')
-      algs = self._getAlgorithms(config)
-
-      mdlMaskName = self._getBoomOrDefault(config, 'MODEL_MASK_NAME')
-      prjMaskName = self._getBoomOrDefault(config, 'PROJECTION_MASK_NAME')
+      algs = self._getAlgorithms(config, sectionPrefix='ALGORITHM')
+      
+      # Should be only one or None
+      maskAlg = None
+      maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING)
+      if len(maskAlgList) == 1:
+         maskAlg = maskAlgList[0]
+      
+#       mdlMaskName = self._getBoomOrDefault(config, 'MODEL_MASK_NAME')
+#       prjMaskName = self._getBoomOrDefault(config, 'PROJECTION_MASK_NAME')
          
       assemblePams = self._getBoomOrDefault(config, 'ASSEMBLE_PAMS', isBool=True)
       gridbbox = self._getBoomOrDefault(config, 'GRID_BBOX', isList=True)
@@ -305,10 +323,10 @@ class BOOMFiller(LMObject):
               occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
               userOccFname, userOccSep, minpoints, algs, 
               assemblePams, gridbbox, cellsides, cellsize, gridname, 
-              intersectParams, mdlMaskName, prjMaskName)
+              intersectParams, maskAlg)
       
    # ...............................................
-   def writeConfigFile(self, fname=None, mdlMaskName=None, prjMaskName=None):
+   def writeConfigFile(self, fname=None):
       config = ConfigParser.SafeConfigParser()
       config.add_section(SERVER_BOOM_HEADING)
       
@@ -320,6 +338,13 @@ class BOOMFiller(LMObject):
          for name, val in alg.parameters.iteritems():
             config.set(heading, name, str(val))
       
+      # SDM Mask input
+      if self.maskAlg is not None:
+         config.add_section(SERVER_SDM_MASK_HEADING)
+         config.set(heading, 'CODE', self.maskAlg.code)
+         for name, val in alg.parameters.iteritems():
+            config.set(SERVER_SDM_MASK_HEADING, name, str(val))
+
       email = self.usrEmail
       if email is None:
          email = ''
@@ -328,13 +353,7 @@ class BOOMFiller(LMObject):
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', self.archiveName)
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_PRIORITY', str(self.priority))
       config.set(SERVER_BOOM_HEADING, 'TROUBLESHOOTERS', email)
-      
-      # SDM input
-      if self.mdlMaskName is not None:
-         config.set(SERVER_BOOM_HEADING, 'MODEL_MASK_NAME', self.mdlMaskName)
-      if self.prjMaskName is not None:
-         config.set(SERVER_BOOM_HEADING, 'PROJECTION_MASK_NAME', self.prjMaskName)
-      
+            
       # SDM input environmental data, pulled from SCENARIO_PACKAGE metadata
       pcodes = ','.join(self.prjScenCodeList)
       config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', 
@@ -499,11 +518,11 @@ class BOOMFiller(LMObject):
          
    # ...............................................
    def _createScenarios(self):
-      # Imports META
-      META, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
+      # Imports SPMETA
+      SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
       
       # Mask layer
-      masklyr = self._createMaskLayer(META, pkgMeta, elyrMeta)
+      masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
 
       epsg = elyrMeta['epsg']
       mapunits = elyrMeta['mapunits']
@@ -515,16 +534,16 @@ class BOOMFiller(LMObject):
                             modTime=CURR_MJD)
       # Current
       basescen, staticLayers = self._createBaselineScenario(pkgMeta, elyrMeta, 
-                                                      META.LAYERTYPE_META,
-                                                      META.OBSERVED_PREDICTED_META,
-                                                      META.CLIMATE_KEYWORDS)
+                                                      SPMETA.LAYERTYPE_META,
+                                                      SPMETA.OBSERVED_PREDICTED_META,
+                                                      SPMETA.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Assembled base scenario {}'.format(basescen.code))
       scenPkg.addScenario(basescen)
       # Predicted Past and Future
       allScens = self._createPredictedScenarios(pkgMeta, elyrMeta, 
-                                           META.LAYERTYPE_META, staticLayers,
-                                           META.OBSERVED_PREDICTED_META,
-                                           META.CLIMATE_KEYWORDS)
+                                           SPMETA.LAYERTYPE_META, staticLayers,
+                                           SPMETA.OBSERVED_PREDICTED_META,
+                                           SPMETA.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
       for scen in allScens.values():
          scenPkg.addScenario(scen)
@@ -584,30 +603,56 @@ class BOOMFiller(LMObject):
       return name
     
    # ...............................................
-   def _createMaskLayer(self, META, pkgMeta, elyrMeta):
+   def _getOptionalMetadata(self, metaDict, key):
       """
       @summary Assembles layer metadata for mask
       """
-      maskMeta = META.SDM_MASK
-      keywords = [k for k in maskMeta['keywords']]
-      lyrmeta = {Vector.META_IS_CATEGORICAL: TNCMetadata.isCategorical, 
-              ServiceObject.META_TITLE: maskMeta['title'], 
-              ServiceObject.META_AUTHOR: TNCMetadata.author, 
-              ServiceObject.META_DESCRIPTION: maskMeta['description'],
-              ServiceObject.META_KEYWORDS: keywords,
-              ServiceObject.META_CITATION: TNCMetadata.citation,
-              }
-      relfname = maskMeta['file']
+      val = None
+      try:
+         val = metaDict[key]
+      except:
+         pass
+      return val
+
+   # ...............................................
+   def _createMaskLayer(self, SPMETA, pkgMeta, elyrMeta):
+      """
+      @summary Assembles layer metadata for mask
+      """
+      # Required keys in SDM_MASK_INPUT: name, bbox, gdaltype, gdalformat, file
+      maskMeta = SPMETA.SDM_MASK_INPUT
+      
+      lyrmeta = {
+         Vector.META_IS_CATEGORICAL: self._getOptionalMetadata(maskMeta, 'iscategorical'), 
+         ServiceObject.META_TITLE: self._getOptionalMetadata(maskMeta, 'title'), 
+         ServiceObject.META_AUTHOR: self._getOptionalMetadata(maskMeta, 'author'), 
+         ServiceObject.META_DESCRIPTION: self._getOptionalMetadata(maskMeta, 'description'),
+         ServiceObject.META_KEYWORDS: self._getOptionalMetadata(maskMeta, 'keywords'),
+         ServiceObject.META_CITATION: self._getOptionalMetadata(maskMeta, 'citation')}
+      # required
+      try:
+         name = maskMeta['name']
+         bbox = maskMeta['bbox']
+         relfname = maskMeta['file']
+         dtype = maskMeta['gdaltype']
+         dformat = maskMeta['gdalformat']
+      except KeyError:
+         raise LMError(currargs='Missing one of: name, bbox, file, gdaltype, '+ 
+                       'gdalformat in SDM_MASK_INPUT in scenario package metadata')
+         
       dloc = os.path.join(ENV_DATA_PATH, relfname)
       if not os.path.exists(dloc):
          print('Missing local data %s' % dloc)
-      masklyr = Raster(maskMeta['name'], self.usr, elyrMeta['epsg'], 
-                dlocation=dloc, metadata=lyrmeta, 
-                dataFormat=elyrMeta['gdalformat'], 
-                gdalType=elyrMeta['gdaltype'], 
-                valUnits=elyrMeta['mapunits'],  
-                resolution=elyrMeta['resolution'], bbox=pkgMeta['bbox'],
-                modTime=CURR_MJD)
+      # basic file properties match those of scenario layers, elyrMeta
+      masklyr = Raster(name, self.usr, 
+                       elyrMeta['epsg'], 
+                       valUnits=elyrMeta['mapunits'],  
+                       resolution=elyrMeta['resolution'], 
+                       dlocation=dloc, metadata=lyrmeta, 
+                       dataFormat=dformat, 
+                       gdalType=dtype, 
+                       bbox=bbox,
+                       modTime=CURR_MJD)
       return masklyr
    
    # ...............................................
@@ -856,42 +901,42 @@ class BOOMFiller(LMObject):
       # TODO: change to importlib on python 2.7 --> 3.3+  
       try:
          import imp
-         META = imp.load_source('currentmetadata', scenPackageMetaFilename)
+         SPMETA = imp.load_source('currentmetadata', scenPackageMetaFilename)
       except Exception, e:
          raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
                        .format(scenPackageMetaFilename, e))
-      return META, scenPackageMetaFilename
+      return SPMETA, scenPackageMetaFilename
    
    # ...............................................
    def _pullClimatePackageMetadata(self):
-      META, scenPackageMetaFilename = self._findClimatePackageMetadata()
+      SPMETA, scenPackageMetaFilename = self._findClimatePackageMetadata()
       # Combination of scenario and layer attributes making up these data 
-      pkgMeta = META.CLIMATE_PACKAGES[self.scenPackageName]
-      maskName = META.SDM_MASK
+      pkgMeta = SPMETA.CLIMATE_PACKAGES[self.scenPackageName]
+      maskName = SPMETA.SDM_MASK_INPUT
       try:
-         epsg = META.EPSG
+         epsg = SPMETA.EPSG
       except:
          raise LMError('Failed to specify EPSG for {}'
                        .format(self.scenPackageName))
       try:
-         mapunits = META.MAPUNITS
+         mapunits = SPMETA.MAPUNITS
       except:
          raise LMError('Failed to specify MAPUNITS for {}'
                        .format(self.scenPackageName))
       try:
-         resInMapunits = META.RESOLUTIONS[pkgMeta['res']]
+         resInMapunits = SPMETA.RESOLUTIONS[pkgMeta['res']]
       except:
          raise LMError('Failed to specify res (or RESOLUTIONS values) for {}'
                        .format(self.scenPackageName))
       try:
-         gdaltype = META.ENVLYR_GDALTYPE
+         gdaltype = SPMETA.ENVLYR_GDALTYPE
       except:
          raise LMError('Failed to specify ENVLYR_GDALTYPE for {}'
                        .format(self.scenPackageName))
       try:
-         gdalformat = META.ENVLYR_GDALFORMAT
+         gdalformat = SPMETA.ENVLYR_GDALFORMAT
       except:
-         raise LMError(currargs='Failed to specify META.ENVLYR_GDALFORMAT for {}'
+         raise LMError(currargs='Failed to specify SPMETA.ENVLYR_GDALFORMAT for {}'
                        .format(self.scenPackageName))
       # Spatial and format attributes of data files
       elyrMeta = {'epsg': epsg, 
@@ -899,7 +944,7 @@ class BOOMFiller(LMObject):
                     'resolution': resInMapunits, 
                     'gdaltype': gdaltype, 
                     'gdalformat': gdalformat}
-      return META, scenPackageMetaFilename, pkgMeta, elyrMeta
+      return SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta
 
    # ...............................................
    def _addIntersectGrid(self):
@@ -1284,13 +1329,13 @@ import mx.DateTime
 import os
 from osgeo.ogr import wkbPolygon
 import time
-from types import IntType
+from types import IntType, FloatType
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
    ProcessType, JobStatus, MatrixType, SERVER_PIPELINE_HEADING, 
-   SERVER_BOOM_HEADING, DEFAULT_MAPUNITS, DEFAULT_EPSG)
+   SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING, DEFAULT_MAPUNITS, DEFAULT_EPSG)
 from LmCommon.common.readyfile import readyFilename
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource,
                                            TNCMetadata)
@@ -1329,12 +1374,37 @@ paramFname = '/state/partition1/tmpdata/atest.boom.ini'
 paramFname = '/state/partition1/tmpdata/file_18072.ini'
 paramFname='/state/partition1/tmpdata/atest_2.ini'
 paramFname='/state/partition1/tmpdata/atest3.ini'
-isInitial=False
-filler = BOOMFiller()
+paramFname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
+
 
 cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
 filler = BOOMFiller(configFname=cfname)
-filler.inParamFname = cfname
+
+config = Config(siteFn=paramFname)
+maskAlgList = filler._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING)
+sectionPrefix=SERVER_SDM_MASK_HEADING
+sections = config.getsections(sectionPrefix)
+algHeading = sections[0]
+acode =  config.get(algHeading, 'CODE')
+
+alg = Algorithm(acode)
+alg.fillWithDefaults()
+
+algoptions = config.getoptions(algHeading)
+for name in algoptions:
+   pname, ptype = alg.findParamNameType(name)
+   if pname is not None:
+      if ptype == IntType:
+         val = config.getint(algHeading, pname)
+      elif ptype == FloatType:
+         val = config.getfloat(algHeading, pname)
+      else:
+         val = config.get(algHeading, pname)
+      print pname, val
+      
+      alg.setParameter(pname, val)
+
+
 (filler.usr,
        filler.usrEmail,
        filler.archiveName,
@@ -1358,12 +1428,12 @@ filler.inParamFname = cfname
        filler.cellsize,
        filler.gridname, 
        filler.intersectParams,
-       filler.mdlMaskName, filler.prjMaskName) = filler.readParamVals()
+       filler.maskAlg) = filler.readParamVals()
        
-META, scenPackageMetaFilename, pkgMeta, elyrMeta = filler._pullClimatePackageMetadata()
+SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = filler._pullClimatePackageMetadata()
 
 # Mask layer
-masklyr = filler._createMaskLayer(META, pkgMeta, elyrMeta)
+masklyr = filler._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
 
 epsg = elyrMeta['epsg']
 mapunits = elyrMeta['mapunits']
@@ -1374,9 +1444,9 @@ scenPkg = ScenPackage(filler.scenPackageName, filler.usr,
                       mapunits=mapunits,
                       modTime=CURR_MJD)
                       
-observedPredictedMeta = META.OBSERVED_PREDICTED_META
-lyrtypeMeta = META.LAYERTYPE_META
-climKeywords = META.CLIMATE_KEYWORDS
+observedPredictedMeta = SPMETA.OBSERVED_PREDICTED_META
+lyrtypeMeta = SPMETA.LAYERTYPE_META
+climKeywords = SPMETA.CLIMATE_KEYWORDS
 
 basekeywords = [k for k in climKeywords]
 basekeywords.extend(baseMeta['keywords'])
@@ -1406,16 +1476,16 @@ scen = Scenario(scencode, filler.usr, elyrMeta['epsg'],
                 layers=lyrs)
 
 basescen, staticLayers = filler._createBaselineScenario(pkgMeta, elyrMeta, 
-                                                META.LAYERTYPE_META,
-                                                META.OBSERVED_PREDICTED_META,
-                                                META.CLIMATE_KEYWORDS)
+                                                SPMETA.LAYERTYPE_META,
+                                                SPMETA.OBSERVED_PREDICTED_META,
+                                                SPMETA.CLIMATE_KEYWORDS)
 
 scenPkg.addScenario(basescen)
 # Predicted Past and Future
 allScens = filler._createPredictedScenarios(pkgMeta, elyrMeta, 
-                                     META.LAYERTYPE_META, staticLayers,
-                                     META.OBSERVED_PREDICTED_META,
-                                     META.CLIMATE_KEYWORDS)
+                                     SPMETA.LAYERTYPE_META, staticLayers,
+                                     SPMETA.OBSERVED_PREDICTED_META,
+                                     SPMETA.CLIMATE_KEYWORDS)
 filler.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
 for scen in allScens.values():
    scenPkg.addScenario(scen)

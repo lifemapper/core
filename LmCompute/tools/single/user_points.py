@@ -59,9 +59,11 @@ if __name__ == "__main__":
    
 """
 $PYTHON /opt/lifemapper/LmCompute/tools/single/user_points.py \
-        /share/lm/data/archive/biotaphy/000/000/000/006/pt_6.csv \
-        /share/lm/data/archive/biotaphy/heuchera_all.meta \
-        mf_18/pt_6/pt_6.shp mf_18/pt_6/bigpt_6.shp 500
+        /share/lm/data/archive/biotaphy/000/000/006/963/pt_6963.csv \
+        /share/lm/data/archive/biotaphy/saxifragales.meta \
+        /tmp/mf_7125/pt_6963/pt_6963.shp \
+        /tmp/mf_7125/pt_6963/bigpt_6963.shp \
+        500
 
 
 import json

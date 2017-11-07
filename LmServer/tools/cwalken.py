@@ -26,7 +26,7 @@ import glob
 import mx.DateTime as dt
 from osgeo.ogr import wkbPoint
 import os
-from types import IntType
+from types import IntType, FloatType
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
@@ -288,25 +288,36 @@ class ChristopherWalken(LMObject):
       return weaponOfChoice
 
 # .............................................................................
+   def _getAlgorithm(self, config, algHeading):
+      """
+      @note: Returns configured algorithm
+      """
+      acode =  self.cfg.get(algHeading, 'CODE')
+      alg = Algorithm(acode)
+      alg.fillWithDefaults()
+      # override defaults with any option specified
+      algoptions = self.cfg.getoptions(algHeading)
+      for name in algoptions:
+         pname, ptype = alg.findParamNameType(name)
+         if pname is not None:
+            if ptype == IntType:
+               val = self.cfg.getint(algHeading, pname)
+            elif ptype == FloatType:
+               val = self.cfg.getfloat(algHeading, pname)
+            else:
+               val = self.cfg.get(algHeading, pname)
+            alg.setParameter(pname, val)
+      return alg
+
+# .............................................................................
    def _getAlgorithms(self):
       algs = []
       defaultAlgs = []
       # Get algorithms for SDM modeling
       sections = self.cfg.getsections('ALGORITHM')
       for algHeading in sections:
-         acode =  self.cfg.get(algHeading, 'CODE')
-         alg = Algorithm(acode)
-         alg.fillWithDefaults()
-         # override defaults with any option specified
-         algoptions = self.cfg.getoptions(algHeading)
-         for name in algoptions:
-            pname, ptype = alg.findParamNameType(name)
-            if pname is not None:
-               if ptype == IntType:
-                  val = self.cfg.getint(algHeading, pname)
-               else:
-                  val = self.cfg.getfloat(algHeading, pname)
-               alg.setParameter(pname, val)
+         alg = self._getAlgorithm(algHeading)
+         
          if algHeading.endswith('DEFAULT'):
             defaultAlgs.append(alg)
          else:
