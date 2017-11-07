@@ -57,7 +57,8 @@ class LmTree(object):
    # Public functions
    # ..........................................................................
    # ..............................
-   def annotateTree(self, attributeName, annotationPairs, labelAttribute='label'):
+   def annotateTree(self, attributeName, annotationPairs, 
+                    labelAttribute='label'):
       """
       @summary: Annotates the nodes of the tree
       @param attributeName: The name of the annotation attribute to add
@@ -73,26 +74,6 @@ class LmTree(object):
          except KeyError:
             # Pass if a label is not found in the dictionary, otherwise fail
             pass
-   
-   
-   def addMatrixIndices(self, pamMetadata):
-      """
-      @summary: Add matrix indices to the tree
-      @param pamMetadata: A dictionary of (label, matrix index) pairs for a PAM
-      @todo: Should this fail if not all of the columns are found?
-      @deprecated: Use annotateTree instead
-      """
-      self.annotateTree(PhyloTreeKeys.MTX_IDX, pamMetadata)
-   
-   # ..............................
-   def addSquidMatrixIndices(self, pamMetadata):
-      """
-      @summary: Add matrix indices to the tree
-      @param pamMetadata: A dictionary of (squid, matrix index) pairs for a PAM
-      @deprecated: Use annotateTree instead
-      """
-      self.annotateTree(PhyloTreeKeys.MTX_IDX, pamMetadata, 
-                        labelAttribute='squid')
    
    # ..............................
    def getDistanceMatrix(self, labelAttribute='label', orderedLabels=None):
