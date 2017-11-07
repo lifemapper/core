@@ -25,7 +25,6 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-@todo: Keep PAM headers when PAMs are wrapped as Matrix objects
 """
 from math import sqrt
 import numpy as np
@@ -44,7 +43,6 @@ class PamStats(object):
       @summary: Constructor
       @param pam: A Present / Absence Matrix to compute statistics for
       @param tree: An optional LmTree object to use for additional statistics
-      @todo: Do something with PAM headers
       """
       # Ensure PAM is a Matrix object.  PAM data will be shortcut to data
       if isinstance(pam, Matrix):
