@@ -125,6 +125,7 @@ class LMFormat:
    MAP = FileFormat('.map', 'text/plain')
    METADATA = FileFormat('.meta', 'text/plain')
    MXE = FileFormat('.mxe', 'application/octet-stream')
+   NEXUS = FileFormat('.nex', 'text/plain', allExtensions=['.nex', '.nxs'])
    NEWICK = FileFormat('.tre', 'text/plain', allExtensions=['.tre', '.nhx'])
    NUMPY = FileFormat('.npy', 'application/octet-stream')
    PICKLE = FileFormat('.pkl', 'application/octet-stream')
