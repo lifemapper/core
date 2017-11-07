@@ -1346,7 +1346,8 @@ class Algorithms:
                                                  'min': 0, 'default': 0.5, 'max': 2 },
                                                # Region MUST be supplied by user
                                                'region':
-                                                {'type': StringType }})
+                                                {'type': StringType, 
+                                                 'default': None }})
    
    @staticmethod
    def implemented():
@@ -1354,7 +1355,7 @@ class Algorithms:
                Algorithms.ENVDIST, Algorithms.ENVSCORE, Algorithms.GARP, 
                Algorithms.DG_GARP, Algorithms.GARP_BS, Algorithms.DG_GARP_BS, 
                Algorithms.MAXENT, Algorithms.ATT_MAXENT, Algorithms.SVM, 
-               Algorithms.ANN, Algorithms.AQUAMAPS)
+               Algorithms.ANN, Algorithms.AQUAMAPS, Algorithms.HULL_INTERSECT)
 
    @staticmethod
    def codes():

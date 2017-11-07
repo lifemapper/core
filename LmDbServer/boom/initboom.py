@@ -25,7 +25,7 @@ import ConfigParser
 import mx.DateTime
 import os
 import time
-from types import IntType
+from types import IntType, FloatType
 
 from LmBackend.command.boom import BoomerCommand
 from LmBackend.common.lmobj import LMError, LMObject
@@ -212,14 +212,10 @@ class BOOMFiller(LMObject):
       return scribe
    
 # .............................................................................
-   def _getAlgorithm(self, config, algHeading, isPrefix=False):
+   def _getAlgorithm(self, config, algHeading):
       """
-      @note: Returns configured algorithms, uses default algorithms only 
-             if no others exist
+      @note: Returns configured algorithm
       """
-      if isPrefix:
-         # Get section starting with algHeading (expecting one)
-         sections = config.getsections(algHeading)
       acode =  config.get(algHeading, 'CODE')
       alg = Algorithm(acode)
       alg.fillWithDefaults()
@@ -230,8 +226,10 @@ class BOOMFiller(LMObject):
          if pname is not None:
             if ptype == IntType:
                val = config.getint(algHeading, pname)
-            else:
+            elif ptype == FloatType:
                val = config.getfloat(algHeading, pname)
+            else:
+               val = config.get(algHeading, pname)
             alg.setParameter(pname, val)
       return alg
       
@@ -244,7 +242,7 @@ class BOOMFiller(LMObject):
       algs = {}
       defaultAlgs = {}
       # Get algorithms for SDM modeling or SDM mask
-      sections = config.getsections('ALGORITHM')
+      sections = config.getsections(sectionPrefix)
       for algHeading in sections:
          alg = self._getAlgorithm(config, algHeading)
          
@@ -1331,13 +1329,13 @@ import mx.DateTime
 import os
 from osgeo.ogr import wkbPolygon
 import time
-from types import IntType
+from types import IntType, FloatType
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
    ProcessType, JobStatus, MatrixType, SERVER_PIPELINE_HEADING, 
-   SERVER_BOOM_HEADING, DEFAULT_MAPUNITS, DEFAULT_EPSG)
+   SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING, DEFAULT_MAPUNITS, DEFAULT_EPSG)
 from LmCommon.common.readyfile import readyFilename
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource,
                                            TNCMetadata)
@@ -1376,12 +1374,37 @@ paramFname = '/state/partition1/tmpdata/atest.boom.ini'
 paramFname = '/state/partition1/tmpdata/file_18072.ini'
 paramFname='/state/partition1/tmpdata/atest_2.ini'
 paramFname='/state/partition1/tmpdata/atest3.ini'
-isInitial=False
-filler = BOOMFiller()
+paramFname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
+
 
 cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
 filler = BOOMFiller(configFname=cfname)
-filler.inParamFname = cfname
+
+config = Config(siteFn=paramFname)
+maskAlgList = filler._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING)
+sectionPrefix=SERVER_SDM_MASK_HEADING
+sections = config.getsections(sectionPrefix)
+algHeading = sections[0]
+acode =  config.get(algHeading, 'CODE')
+
+alg = Algorithm(acode)
+alg.fillWithDefaults()
+
+algoptions = config.getoptions(algHeading)
+for name in algoptions:
+   pname, ptype = alg.findParamNameType(name)
+   if pname is not None:
+      if ptype == IntType:
+         val = config.getint(algHeading, pname)
+      elif ptype == FloatType:
+         val = config.getfloat(algHeading, pname)
+      else:
+         val = config.get(algHeading, pname)
+      print pname, val
+      
+      alg.setParameter(pname, val)
+
+
 (filler.usr,
        filler.usrEmail,
        filler.archiveName,
