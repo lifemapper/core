@@ -71,6 +71,14 @@ class _ProjectionType(_LayerParameters, ProcessObject):
       @param projMask: Mask for SDM project process
       @param processType: LmCommon.common.lmconstants.ProcessType for computation
       @param projMetadata: Metadata for this projection 
+      @note: projMask and mdlMask are currently input data layer for the only
+             mask method.  This is set in the boom configuration file in the 
+             `PREPROCESSING SDM_MASK` section, with `CODE` set to 
+             `hull_region_intersect`, `buffer` to some value in the mapunits
+             of the occurrence layer, and `region` with name of a layer owned by
+             the boom user. 
+      @todo: projMask and mdlMask should be dictionaries with masking method,
+             input data and parameters
       """
       if status is not None and statusModTime is None:
          statusModTime = mx.DateTime.utc().mjd

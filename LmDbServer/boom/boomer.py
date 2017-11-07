@@ -383,15 +383,16 @@ from LmCommon.common.occparse import OccDataParser
 scriptname = 'boomerTesting'
 logger = ScriptLogger(scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
-
 configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini' 
 configFname = '/share/lm/data/archive/atest3/atest3.ini' 
 configFname = '/state/partition1/lm/data/archive/biotaphy/biotaphy_lowres.ini'
 
 configFname = '/share/lm/data/archive/biotaphy/sax_10min.ini'
 boomer = Boomer(configFname, log=logger)
-boomer._scribe.openConnections()
-boomer.christopher = ChristopherWalken(configFname, scribe=boomer._scribe)
+boomer.initializeMe()
+
+# boomer._scribe.openConnections()
+# boomer.christopher = ChristopherWalken(configFname, scribe=boomer._scribe)
 chris = boomer.christopher
 chris.moreDataToProcess = False
 
