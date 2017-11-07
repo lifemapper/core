@@ -34,6 +34,7 @@ from LmCommon.common.lmconstants import LMFormat, HTTPStatus, JSON_INTERFACE,\
 from LmWebServer.formatters.fileFormatter import (csvObjectFormatter,
                                                   gtiffObjectFormatter,
                                                   shapefileObjectFormatter)
+from LmWebServer.formatters.geoJsonFormatter import geoJsonObjectFormatter
 from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
 from LmWebServer.formatters.kmlFormatter import kmlObjectFormatter
 from LmServer.common.localconstants import PUBLIC_USER
@@ -71,6 +72,8 @@ def lmFormatter(f):
       
       for ah, _ in sortedAccepts:
          try:
+            if ah == LMFormat.GEO_JSON.getMimeType():
+               return geoJsonObjectFormatter(handler_result)
             # If JSON or default
             if ah in [LMFormat.JSON.getMimeType(), '*/*']:
                shootSnippets(handler_result, SnippetOperations.VIEWED, 

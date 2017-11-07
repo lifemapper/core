@@ -21,269 +21,30 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-#import collections
 import os
 from osgeo import gdal, gdalconst, ogr
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT, DEFAULT_EPSG)
-from LmServer.base.layer2 import _Layer, Raster, Vector
+from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.colorpalette import colorPalette
+from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE, 
-         MapPrefix, LMFileType, IMAGE_PATH, BLUE_MARBLE_IMAGE, POINT_SYMBOL, 
+         LMFileType, IMAGE_PATH, BLUE_MARBLE_IMAGE, POINT_SYMBOL, 
          POINT_SIZE, LINE_SYMBOL, LINE_SIZE, POLYGON_SYMBOL, POLYGON_SIZE, 
          QUERY_TOLERANCE, SYMBOL_FILENAME, DEFAULT_POINT_COLOR, 
-         DEFAULT_LINE_COLOR, DEFAULT_PROJECTION_PALETTE, LMServiceType,
-         DEFAULT_ENVIRONMENTAL_PALETTE, CT_SPECIES_LAYER_STYLES, 
-         CT_SPECIES_KEYWORD, PROJ_LIB, SCALE_PROJECTION_MINIMUM,
+         DEFAULT_LINE_COLOR, DEFAULT_PROJECTION_PALETTE, 
+         DEFAULT_ENVIRONMENTAL_PALETTE, PROJ_LIB, SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM)
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX)
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
-
-# .............................................................................
-class _LayerSet(LMSpatialObject):
-   """
-   Superclass of MapLayerSet
-   @todo: extend as collections.MutableSequence subclass
-   """   
-   def __init__(self, name, title=None, keywords=None, epsgcode=None, 
-                layers=None, bbox=None, mapunits=None):
-      """
-      @summary Constructor for the LayerSet class
-      @copydoc LmServer.base.lmobj.LMSpatialObject::__init__()
-      @param name: name or code for this layerset
-      @param title: (optional) human readable title of this layerset
-      @param keywords: (optional) sequence of keywords for this layerset
-      @param layers: (optional) list of layers 
-      """
-      LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
-
-      ## Name or code identifying this set of layers
-      self.name = name
-      ## Title for this set of layers
-      self.title = title
-      # Keywords for the layerset as a whole
-      self._setKeywords(keywords)
-      self._layers = []
-      ## List of Raster or Vector objects for this LayerSet'
-      ## Also sets epsg and bbox
-      ## If no layers, initializes to empty list 
-      self._setLayers(layers)
-
-   def _getUnits(self):
-      """
-      @todo: add mapunits to Occ table (and Scenario?), 
-             handle better on construction.
-      """
-      if self._mapunits is None and len(self._layers) > 0:
-         self._setUnits(self._layers[0].mapUnits)
-      return self._mapunits
-
-# ...............................................
-   def getSRS(self):
-      srs = self.createSRSFromEPSG()
-      return srs      
-      
-## .............................................................................
-## MutableSequence methods
-## .............................................................................
-#   def __iter__(self):
-#      return self
-#   
-#   # For Python 3 compatibility
-#   def __next__(self):
-#      pass
-#
-#   # For Python 2 compatibility
-#   def next(self):
-#      return self.__next__()
-#   
-#   def __contains__(self, key):
-#      pass
-#   
-#   def __len__(self):
-#      pass
-#   
-#   def __getitem__(self, index):
-#      pass
-#   
-#   def index(self, value): 
-#      pass
-#   
-#   def count(self):
-#      return self.__len__()
-#   
-#   def __setitem__(self, index, value):
-#      pass 
-   
-# .............................................................................
-   def getLayer(self, metadataUrl):
-      """
-      @summary Gets a layer from the LayerSet with the specified mapPrefix
-      @param metadataUrl: metadataUrl for which to find matching layer
-      @return the layer object with the given metadataUrl, None if there is no 
-              matching layer
-      """
-      for lyr in self._layers:
-         if lyr.metadataUrl == metadataUrl:
-            return lyr
-      return None
-   
-# .............................................................................
-   def addLayer(self, lyr):
-      """
-      @note: metadataUrl is used for identification - ensuring that a layer is 
-             not duplicated in the layerset.  MetadataUrl should be (relatively)
-             unique, unlike mapPrefix which is constructed differently for each
-             layerset (and mapfile) that contains a layer.
-      """
-      if isinstance(lyr, _Layer):
-         if self.getLayer(lyr.metadataUrl) is None:
-            if self._epsg is None or self._epsg == lyr.epsgcode:
-               self._layers.append(lyr)
-               if self._epsg is None:
-                  self._setEPSG(lyr.epsgcode)
-            else:
-               raise LMError('Invalid layer SRS %s for layerset with SRS %s' 
-                             % (lyr.epsgcode, self._epsg))
-      else:
-         raise LMError(['Cannot add %s as a Layer' % str(type(lyr))])
-         
-# .............................................................................
-   def addKeywords(self, keywordSequence):
-      """
-      @summary Adds keywords to the LayerSet object
-      @param keywordSequence: List of keywords to add
-      """
-      if keywordSequence is not None:
-         for k in keywordSequence:
-            self._keywords.add(k)
-         
-   def addKeyword(self, keyword):
-      """
-      @summary Adds a keyword to the LayerSet object
-      @param keyword: Keyword to add
-      """
-      if keyword is not None:
-         self._keywords.add(keyword)
-
-   def _getKeywords(self):
-      """
-      @summary Gets the keywords of the LayerSet
-      @return List of keywords describing the LayerSet
-      """
-      return self._keywords
-         
-   def _setKeywords(self, keywordSequence):
-      """
-      @summary Sets the keywords of the LayerSet
-      @param keywordSequence: List of keywords that will be associated with 
-                              the LayerSet
-      """
-      if keywordSequence is not None:
-         self._keywords = set(keywordSequence)
-      else:
-         self._keywords = set()
-            
-## .............................................................................
-#   def _setEpsgcode(self, epsg=None):
-#      if epsg is not None:
-#         self._setEPSG(epsg)
-#      elif self._layers:
-#         codes = [lyr.epsgcode for lyr in self._layers]
-#         self._setEPSG(codes)
-#      else:
-#         self._setEPSG(epsg)
-                     
-# .............................................................................
-   def _intersectLayerKeywords(self):
-      """
-      @summary Gets keywords common to all layers in the scenario
-      @return Set of keywords
-      """
-      s = set()
-      for i in range(len(self._layers)):
-         if i == 0:
-            s = s.union(self._layers[0].keywords)
-         else:
-            s = s.intersection(self._layers[i].keywords)
-      return s
-
-   def _unionLayerKeywords(self):
-      """
-      @summary Gets all keywords that occur in layers in the scenario
-      @return Set of keywords
-      """
-      s = set()
-      for i in range(len(self._layers)):
-         s = s.union(self._layers[i].keywords)
-      return s
-
-# .............................................................................
-   def _getUnionBounds(self):
-      """
-      @summary Gets the union of all bounding boxes in the layers of the 
-               LayerSet
-      @return tuple of (minx, miny, maxx, maxy) 
-      """
-      lyrBoxes = [lyr.bbox for lyr in self._layers]
-      return self.unionBoundingBoxes(lyrBoxes)
-   
-   def _getIntersectBounds(self):
-      """
-      @summary Gets the intersection of all associated bounding boxes
-      @return tuple of (minx, miny, maxx, maxy) 
-      """
-      lyrBoxes = [lyr.bbox for lyr in self._layers]
-      return self.intersectBoundingBoxes(lyrBoxes)
-   
-# .............................................................................
-   def _getLayers(self):
-      return self._layers
-
-   def _setLayers(self, lyrs):
-      if lyrs is not None:
-         for lyr in lyrs:
-            self.addLayer(lyr)
-      else:
-         self._layers = []
-      ## Using Intersection, could be Union, both 
-      ## intersectBounds, unionBounds available as properties
-      bbox = self._getUnionBounds()
-      self._setBBox(bbox)
-      
-   def _getLayerCount(self):
-      count = 0
-      if self._layers is not None:
-         count = len(self._layers)
-      return count
-   
-# .............................................................................
-
-   ## Set of words describing layerset as a whole
-   keywords = property(_getKeywords, _setKeywords)    
-   layers = property(_getLayers, _setLayers)
-   # property counting the actual layer objects present 
-   count = property (_getLayerCount)
-
-   # Read-only properties  
-   # union/intersection of the keywords/Boundaries of all
-   # layers of the LayerSet
-   
-   # Return set of keywords
-   unionKeywords = property(_unionLayerKeywords)
-   intersectKeywords = property(_intersectLayerKeywords)
-
-   # Return tuple of (minx, miny, maxx, maxy)
-   unionBounds = property(_getUnionBounds)
-   intersectBounds = property(_getIntersectBounds)
    
 # .............................................................................
 # .............................................................................
-class MapLayerSet(_LayerSet, ServiceObject):
+class LMMap(LMSpatialObject):
    """
    Superclass of Scenario, PresenceAbsenceLayerset.  
    @todo: extend as collections.MutableSequence subclass
@@ -292,171 +53,72 @@ class MapLayerSet(_LayerSet, ServiceObject):
 # .............................................................................
 # Constructor
 # .............................................................................   
-   def __init__(self, mapname, title=None, 
-                url=None, dlocation=None, keywords=None, epsgcode=None, layers=None, 
-                userId=None, dbId=None, modTime=None, 
-                bbox=None, mapunits=None,
-                serviceType=LMServiceType.LAYERSETS, mapType=LMFileType.OTHER_MAP):
+   def __init__(self, mapname, title, url, epsgcode, bbox, mapunits, 
+                layers=[], gridset=None, mapType=LMFileType.OTHER_MAP):
       """
       @summary Constructor for the LayerSet class
-      @copydoc LmServer.base.layerset._LayerSet::__init__()
-      @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
-      @param mapname: mapname or code for this layerset
-      @param layers: list of layers 
-      @param dbid: database id of the object, occsetId for SDM_MAP layersets, 
-             gridsetId for RAD_MAP layersets, scenCode for Scenarios 
+      @copydoc LmServer.base.lmobj.LMSpatialObject::__init__()
+      @param mapname: name for OWS map metadata
+      @param title: title for OWS map metadata
+      @param url: onlineUrl for OWS map metadata
+      @param layers: Layers to map
+      @param gridset: Gridset containing shapegrid and site-based matrices that 
+                      can be joined to the shapegrid for map 
       """
-      _LayerSet.__init__(self, mapname, title=title, keywords=keywords, 
-                         epsgcode=epsgcode, layers=layers, 
-                         bbox=bbox, mapunits=mapunits)
-      ServiceObject.__init__(self, userId, dbId, serviceType, metadataUrl=url, 
-                             modTime=modTime)
-      self._mapFilename = dlocation
+      LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
+      self.mapName = mapname
+      self.url = url
+      self.title = title
+      self.layers = layers
+      self._gridset = gridset
       self._mapType = mapType
       self._mapPrefix = None
-
-# # ...............................................         
-#    def createMapPrefix(self):
-#       """
-#       @note: Only calls this method if not overridden by special cases for 
-#              Scenario or SDM Data  
-#       """
-#       mapprefix = self._earlJr.constructOtherMapPrefix(self.getUserId())
-#       return mapprefix
       
-# ...............................................
-   # TODO: remove this property
-   @property
-   def mapPrefix(self):
-      self.setMapPrefix()
-      return self._mapPrefix
-   
-   def setMapPrefix(self, mapprefix=None):
-      if mapprefix is None:
-         mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.OTHER_MAP, 
-                                    objCode=self.getId(), mapname=self.mapName, 
-                                    usr=self._userId, epsg=self.epsgcode)
-      self._mapPrefix = mapprefix
-      
-# ...............................................
-   def createLocalMapFilename(self):
-      """
-      @summary: Full mapfile with path, containing this layer.
-      @note: This method is overridden in Scenario  
-      """
-      fname = None
-      if self._mapType == LMFileType.SDM_MAP:
-         fname = self._earlJr.createFilename(self._mapType, 
-                                             occsetId=self.getId(), 
-                                             usr=self._userId)
-      # This will not occur here? only in 
-      # LmServer.base.legion.gridset.Gridset
-      elif self._mapType == LMFileType.RAD_MAP:
-         fname = self._earlJr.createFilename(self._mapType, 
-                                             gridsetId=self.getId(),
-                                             usr=self._userId)
-      elif self._mapType == LMFileType.OTHER_MAP:
-         fname = self._earlJr.createFilename(self._mapType, 
-                                             usr=self._userId, 
-                                             epsg=self._epsg)
-      else:
-         print('Unsupported mapType {}'.format(self._mapType))
-      return fname
-
-# ...............................................
-   def setLocalMapFilename(self, mapfname=None):
-      """
-      @note: Overrides existing _mapFilename
-      @summary: Set absolute mapfilename containing all layers for this User/EPSG. 
-      """
-      if mapfname is None:
-         mapfname = self.createLocalMapFilename()
-      self._mapFilename = mapfname
-
-# ...............................................
-   def clearLocalMapfile(self):
-      """
-      @summary: Delete the mapfile containing this layer
-      """
-      if self._mapFilename is None:
-         self.setLocalMapFilename()
-      success, msg = self.deleteFile(self._mapFilename)
-
-# ...............................................
-   @property
-   def mapFilename(self):
-      if self._mapFilename is None:
-         self.setLocalMapFilename()
-      return self._mapFilename
-   
-# ...............................................
-   @property
-   def mapName(self):
-      mapname = None
-      if self._mapFilename is not None:
-         pth, mapfname = os.path.split(self._mapFilename)
-         mapname, ext = os.path.splitext(mapfname)
-      return mapname
-   
 # .............................................................................
-   def _getMapsetUrl(self):
-      """
-      @note: This method is overridden in Scenario  
-      """
-      url = None
-      self.setLocalMapFilename()
-      if self._mapType == LMFileType.SDM_MAP:
-         for lyr in self.layers:
-            if isinstance(lyr, OccurrenceLayer):
-               url = lyr.metadataUrl
-      elif self._mapType == LMFileType.RAD_MAP:
-         print('RAD_MAP is not yet implemented')
-      elif self._mapType == LMFileType.OTHER_MAP:
-         print('OTHER_MAP is not yet implemented')
-      else:
-         print('Unsupported mapType {}'.format(self._mapType))
-      return url
-            
-# .............................................................................
-   def writeMap(self, template=MAP_TEMPLATE):
+   def writeMap(self, mapfilename, layers=[], shpGrid=None, matrices=None, 
+                template=MAP_TEMPLATE):
       """
       @summary Create a mapfile by replacing strings in a template mapfile 
                with text created for the layer set.
-      @param mapcode: Prefix for the mapfilename
+      @param mapfilename: Filename for mapfile
       @param template: Template mapfile 
       @return a string representing a mapfile 
       """
-      self.setLocalMapFilename()
-      # if mapfile does not exist, create service from database, then write file
-      if not(os.path.exists(self._mapFilename)):            
+      if not(os.path.exists(mapfilename)):
+         allLayers = []
+         if layers:
+            lyrs = self._createLayers()
+            allLayers.append(lyrs)
+         if shpGrid is not None and matrices is not None:
+            for matrix in matrices:
+               mtxLyrs = self._createMatrixJoin(shpGrid, matrix)
+               allLayers.append(mtxLyrs)
+         lyrstr = '\n'.join(allLayers)
          try:
-            layers = self._createLayers()
-            mapTemplate = self._earlJr.getMapFilenameFromMapname(template)
+            earlJr = EarlJr()
+            mapTemplate = earlJr.getMapFilenameFromMapname(template)
             mapstr = self._getBaseMap(mapTemplate)
-            onlineUrl = self._getMapsetUrl()
-            mapstr = self._addMapBaseAttributes(mapstr, onlineUrl)
-            mapstr = mapstr.replace('##_LAYERS_##', layers)
+            mapstr = self._addMapBaseAttributes(mapstr)
+            mapstr = mapstr.replace('##_LAYERS_##', lyrstr)
          except Exception, e:
             raise
          
          try:
             self._writeBaseMap(mapstr)
          except Exception, e:
-            raise LMError('Failed to write %s: %s' % (self._mapFilename, str(e)))
+            raise LMError('Failed to write {}: {}'.format(mapfilename, str(e)))
 
 # ...............................................
-   def _writeBaseMap(self, mapstr):
-      dir = os.path.dirname(self._mapFilename)
-      self.readyFilename(self._mapFilename, overwrite=True)
-      
+   def _writeBaseMap(self, mapstr, mapfilename):
+      self.readyFilename(mapfilename, overwrite=True)      
       try:
-         f = open(self._mapFilename, 'w')
+         f = open(mapfilename, 'w')
          # make sure that group is set correctly
          f.write(mapstr)
          f.close()
-         print('Wrote %s' % (self._mapFilename))
+         print('Wrote {}'.format(mapfilename))
       except Exception, e:
-         raise LMError('Failed to write %s; %s' % (self._mapFilename, str(e)))
+         raise LMError('Failed to write {}: {}'.format(mapfilename, str(e)))
       
 # ...............................................
    def _getBaseMap(self, fname):
@@ -470,44 +132,29 @@ class MapLayerSet(_LayerSet, ServiceObject):
       return map
          
 # ...............................................
-   def _addMapBaseAttributes(self, mapstr, onlineUrl):
+   def _addMapBaseAttributes(self, mapstr):
       """
       @summary Set map attributes on the map from the LayerSet
       @param mapstr: string for a mapserver mapfile to modify
       """
-      if self.name.startswith(MapPrefix.SDM):
+      if self._mapType == LMFileType.SDM_MAP:
          label = 'Lifemapper Species Map Service'
-      elif self.name.startswith(MapPrefix.USER):
-         label = 'Lifemapper User Data Map Service'
-      elif self.name.startswith(MapPrefix.SCEN):
+      elif self._mapType == LMFileType.SCENARIO_MAP:
          label = 'Lifemapper Environmental Data Map Service'
-      elif self.name.startswith(MapPrefix.ANC):
+      elif self._mapType == LMFileType.ANCILLARY_MAP:
          label = 'Lifemapper Ancillary Map Service'
-      elif self.name.startswith(MapPrefix.RAD):
+      elif self._mapType == LMFileType.RAD_MAP:
          label = 'Lifemapper RAD Map Service'
-#      elif self.name.lower() == SPECIES_SERVICENAME:
-#         label = 'Lifemapper Species Occurrence Service'
-#      elif self.name.lower() == PROJECTION_SERVICENAME:
-#         label = 'Lifemapper Species Habitat Projection Service'
       else:
          label = 'Lifemapper Data Service'
 
       # changed this from self.name (which left 'scen_' prefix off scenarios)
       mapstr = mapstr.replace('##_MAPNAME_##', self.mapName)      
-                              
-      if self.epsgcode == DEFAULT_EPSG:
-         mbbox = DEFAULT_GLOBAL_EXTENT
-      else:
-         mbbox = self.unionBounds
-      boundstr = LMSpatialObject.getExtentAsString(mbbox, separator='  ')
-
+      boundstr = LMSpatialObject.getExtentAsString(self.bbox, separator='  ')
       mapstr = mapstr.replace('##_EXTENT_##', boundstr)
-      mapunits = self.mapUnits
-      mapstr = mapstr.replace('##_UNITS_##',  mapunits)
-
+      mapstr = mapstr.replace('##_UNITS_##',  self.mapUnits)
       mapstr = mapstr.replace('##_SYMBOLSET_##',  SYMBOL_FILENAME)
       mapstr = mapstr.replace('##_PROJLIB_##',  PROJ_LIB)
-      
       mapprj = self._createProjectionInfo(self.epsgcode)
       mapstr = mapstr.replace('##_PROJECTION_##',  mapprj)
       
@@ -518,7 +165,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       meta = '\n'.join([meta, '         ows_enable_request   \"*\"'])
       meta = '\n'.join([meta, '         ows_label   \"%s\"' % label])
       meta = '\n'.join([meta, '         ows_title   \"%s\"' % self.title])
-      meta = '\n'.join([meta, '         ows_onlineresource   \"%s\"' % onlineUrl])
+      meta = '\n'.join([meta, '         ows_onlineresource   \"%s\"' % self.url])
       meta = '\n'.join([meta, '      END'])
 
       mapstr = mapstr.replace('##_MAP_METADATA_##', meta)
@@ -526,32 +173,35 @@ class MapLayerSet(_LayerSet, ServiceObject):
 
 # ...............................................
    def _createLayers(self):
+      joinLyrStr = ''
       topLyrStr = ''
       midLyrStr = ''
       baseLyrStr = ''
+      
+      if self._gridset is not None:
+         sgLyr = self._gridset.getShapegrid()
+         for matrix in self._gridset.getMatrices():
+            joinLyrStr = self._createMatrixJoin(sgLyr, matrix)
             
       # Vector layers are described first, so drawn on top
-      for lyr in self.layers:
-#         print 'Getting layer %s/%d from %s ...' % (lyr.name, lyr.getId(), self.name)
-         # todo: Check if lyr is OccurrenceLayer, respond differently to other
-         #       types of vector layers.  
-         #       Maybe use ServiceObject._serviceType for display options
-         if isinstance(lyr, Vector):
-            lyrstr = self._createVectorLayer(lyr)
-            topLyrStr = '\n'.join([topLyrStr, lyrstr])
-            
-         elif isinstance(lyr, Raster):
-            # projections are below vector layers and above the base layer
-            if isinstance(lyr, SDMProjection):
-               palette = DEFAULT_PROJECTION_PALETTE
-               lyrstr = self._createRasterLayer(lyr, palette)
-               midLyrStr = '\n'.join([midLyrStr, lyrstr])
-            else:
-               palette = DEFAULT_ENVIRONMENTAL_PALETTE
-               lyrstr = self._createRasterLayer(lyr, palette)
-               baseLyrStr = '\n'.join([baseLyrStr, lyrstr])
+      if self.layers:
+         for lyr in self.layers:
+            if isinstance(lyr, Vector):
+               lyrstr = self._createVectorLayer(lyr)
+               topLyrStr = '\n'.join([topLyrStr, lyrstr])
+               
+            elif isinstance(lyr, Raster):
+               # projections are below vector layers and above the base layer
+               if isinstance(lyr, SDMProjection):
+                  palette = DEFAULT_PROJECTION_PALETTE
+                  lyrstr = self._createRasterLayer(lyr, palette)
+                  midLyrStr = '\n'.join([midLyrStr, lyrstr])
+               else:
+                  palette = DEFAULT_ENVIRONMENTAL_PALETTE
+                  lyrstr = self._createRasterLayer(lyr, palette)
+                  baseLyrStr = '\n'.join([baseLyrStr, lyrstr])
               
-      maplayers = '\n'.join([topLyrStr, midLyrStr, baseLyrStr])
+      maplayers = '\n'.join([joinLyrStr, topLyrStr, midLyrStr, baseLyrStr])
                   
       # Add bluemarble image to Data/Occurrence Map Services
       if self.epsgcode == DEFAULT_EPSG:
@@ -568,33 +218,64 @@ class MapLayerSet(_LayerSet, ServiceObject):
       cls=None
       
       dataspecs = self._getVectorDataSpecs(sdlLyr)
-
       if dataspecs: 
          proj = self._createProjectionInfo(sdlLyr.epsgcode)
-         
          subsetFname = None                      
          meta = self._getLayerMetadata(sdlLyr, metalines=attMeta, 
                                        isVector=True)
-#          if (sdlLyr.getUserId() == CT_USER
-#              and sdlLyr.title.startswith(CT_SPECIES_KEYWORD)):
-#             cls = self._createStyleClasses(sdlLyr.name, CT_SPECIES_LAYER_STYLES)
-#          else:    
-         if (sdlLyr.ogrType == ogr.wkbPoint 
-             or sdlLyr.ogrType == ogr.wkbMultiPoint):
-            style = self._createStyle(POINT_SYMBOL, POINT_SIZE, 
-                                      colorstr=DEFAULT_POINT_COLOR)
-         elif (sdlLyr.ogrType == ogr.wkbLineString 
-               or sdlLyr.ogrType == ogr.wkbMultiLineString):
-            style = self._createStyle(LINE_SYMBOL, LINE_SIZE, 
-                                      colorstr=DEFAULT_LINE_COLOR)
-         elif (sdlLyr.ogrType == ogr.wkbPolygon 
-               or sdlLyr.ogrType == ogr.wkbMultiPolygon):
-            style = self._createStyle(POLYGON_SYMBOL, POLYGON_SIZE, 
-                                      outlinecolorstr=DEFAULT_LINE_COLOR)
-         cls = self._createClass(sdlLyr.name, [style])
+         
+      if (sdlLyr.ogrType == ogr.wkbPoint 
+          or sdlLyr.ogrType == ogr.wkbMultiPoint):
+         style = self._createStyle(POINT_SYMBOL, POINT_SIZE, 
+                                   colorstr=DEFAULT_POINT_COLOR)
+      elif (sdlLyr.ogrType == ogr.wkbLineString 
+            or sdlLyr.ogrType == ogr.wkbMultiLineString):
+         style = self._createStyle(LINE_SYMBOL, LINE_SIZE, 
+                                   colorstr=DEFAULT_LINE_COLOR)
+      elif (sdlLyr.ogrType == ogr.wkbPolygon 
+            or sdlLyr.ogrType == ogr.wkbMultiPolygon):
+         style = self._createStyle(POLYGON_SYMBOL, POLYGON_SIZE, 
+                                   outlinecolorstr=DEFAULT_LINE_COLOR)
+      cls = self._createClass(sdlLyr.name, [style])
          
       lyr = self._createLayer(sdlLyr, dataspecs, proj, meta, cls=cls)
       return lyr
+
+# ...............................................
+   def _createMatrixJoin(self, sgLyr, matrix):
+      jlyrs = ''
+      shpDlocation = sgLyr.getDLocation()
+      mtxDlocation = matrix.getCSVDLocation()
+      if shpDlocation is not None and os.path.exists(shpDlocation):
+         jlyrsNames = matrix.getColumnHeaders()
+         for joinName in jlyrsNames:
+            jlyrs = '\n'.join([jlyrs, '   LAYER'])
+            jlyrs = '\n'.join([jlyrs, '      NAME  \"{}\"'.format(joinName)])
+            jlyrs = '\n'.join([jlyrs, '      TYPE  POLYGON'])
+            jlyrs = '\n'.join([jlyrs, '      STATUS  DEFAULT'])
+            jlyrs = '\n'.join([jlyrs, '      DATA  {}'.format(shpDlocation)])
+            jlyrs = '\n'.join([jlyrs, '      OPACITY 100'])
+            jlyrs = '\n'.join([jlyrs, '      CLASS'])
+            jlyrs = '\n'.join([jlyrs, '         NAME   {}'.format(joinName)])
+            jlyrs = '\n'.join([jlyrs, '         STYLE' ])
+            jlyrs = '\n'.join([jlyrs, '            OUTLINECOLOR   120 120 120'])
+            jlyrs = '\n'.join([jlyrs, '            COLOR   255 255 0'])
+            jlyrs = '\n'.join([jlyrs, '         END' ])
+            jlyrs = '\n'.join([jlyrs, '      END'])
+            jlyrs = '\n'.join([jlyrs, '      TEMPLATE \"%s\"' % QUERY_TEMPLATE])
+            jlyrs = '\n'.join([jlyrs, '      TOLERANCE  %d' % QUERY_TOLERANCE])
+            jlyrs = '\n'.join([jlyrs, '      TOLERANCEUNITS  pixels'])
+            jlyrs = '\n'.join([jlyrs, '      JOIN'])
+            jlyrs = '\n'.join([jlyrs, '         NAME   {}'.format(joinName)])
+            jlyrs = '\n'.join([jlyrs, '         CONNECTIONTYPE  CSV'])
+            jlyrs = '\n'.join([jlyrs, '         TABLE  \"{}\"'.format(mtxDlocation)])
+            jlyrs = '\n'.join([jlyrs, '         FROM  \"{}\"'.format(sgLyr.siteId)])
+            jlyrs = '\n'.join([jlyrs, '         TO    \"1\"'])
+            jlyrs = '\n'.join([jlyrs, '         TYPE  ONE-TO-ONE'])
+            jlyrs = '\n'.join([jlyrs, '      END'])
+            jlyrs = '\n'.join([jlyrs, '   END'])
+            jlyrs = '\n'.join([jlyrs, ''])
+      return jlyrs
 
 # ...............................................
    def _createRasterLayer(self, sdlLyr, paletteName):
@@ -1023,3 +704,31 @@ class MapLayerSet(_LayerSet, ServiceObject):
       return (vmin, vmax, nodata, vals)
             
 # ...............................................
+"""
+import os
+from osgeo import gdal, gdalconst, ogr
+
+from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT, DEFAULT_EPSG)
+from LmServer.base.layer2 import Raster, Vector
+from LmServer.base.lmobj import LMSpatialObject
+from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.common.colorpalette import colorPalette
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE, 
+         LMFileType, IMAGE_PATH, BLUE_MARBLE_IMAGE, POINT_SYMBOL, 
+         POINT_SIZE, LINE_SYMBOL, LINE_SIZE, POLYGON_SYMBOL, POLYGON_SIZE, 
+         QUERY_TOLERANCE, SYMBOL_FILENAME, DEFAULT_POINT_COLOR, 
+         DEFAULT_LINE_COLOR, DEFAULT_PROJECTION_PALETTE, 
+         DEFAULT_ENVIRONMENTAL_PALETTE, PROJ_LIB, SCALE_PROJECTION_MINIMUM,
+   SCALE_PROJECTION_MAXIMUM)
+from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX)
+from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.sdmproj import SDMProjection
+from LmServer.base.lmmap import *
+
+map = LMMap(mapname, title, url, epsgcode, bbox, mapunits, 
+            layers=[], gridset=None, mapType=LMFileType.OTHER_MAP)
+                
+map.writeMap()
+"""

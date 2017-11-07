@@ -60,6 +60,7 @@ if __name__ == '__main__':
                        help='Optional output logfile')
    parser.add_argument('-s', '--status_file', type=str,
                        help='Optional output job status file')
+   parser.add_argument('-m', '--mask', type=str, help='A file to use as a mask')
    
    args = parser.parse_args()
    
@@ -75,13 +76,13 @@ if __name__ == '__main__':
                         args.rulesetFn, paramsJson=paramsJson, 
                         packageFn=args.package_file, workDir=args.work_dir,
                         metricsFn=args.metrics_file, logFn=args.log_file,
-                        statusFn=args.status_file)
+                        statusFn=args.status_file, mask=args.mask)
    else:
       job = OpenModellerModel(args.jobName, args.pointsFn, layersJson, 
                         args.rulesetFn, paramsJson, 
                         packageFn=args.package_file, workDir=args.work_dir,
                         metricsFn=args.metrics_file, logFn=args.log_file,
-                        statusFn=args.status_file)
+                        statusFn=args.status_file, mask=args.mask)
    
    job.run()
    

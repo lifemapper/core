@@ -23,8 +23,8 @@
 """
 import argparse
 import logging
-import mx.DateTime as dt
-import os, sys, time
+import sys
+import time
 import traceback
 
 from LmBackend.common.daemon import Daemon
@@ -162,7 +162,7 @@ from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT,
                   OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
                   LMServiceType, ProcessTool)
 from LmServer.common.localconstants import POINT_COUNT_MAX
-from LmServer.legion.cmd import MfRule
+from LmBackend.common.cmd import MfRule
 from LmServer.common.lmconstants import SnippetOperations
 
 SPUD_LIMIT = 100

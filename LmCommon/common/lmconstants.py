@@ -118,6 +118,7 @@ class LMFormat:
    GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff', default=True)
    HFA = FileFormat('.img', 'image/octet-stream', driver='HFA')
    JSON = FileFormat('.json', 'application/json')
+   GEO_JSON = FileFormat('.geojson', 'application/vnd.geo+json')
    KML = FileFormat('.kml', 'application/vnd.google-earth.kml+xml')
    LOG = FileFormat('.log', 'text/plain')
    MAKEFLOW = FileFormat('.mf', 'text/plain')
@@ -155,7 +156,7 @@ class LMFormat:
    
    @staticmethod
    def OGRFormats():
-      return [LMFormat.SHAPE, LMFormat.CSV]
+      return [LMFormat.SHAPE, LMFormat.CSV, LMFormat.GEO_JSON]
 
    @staticmethod
    def getDefaultOGR():
@@ -176,11 +177,12 @@ class LMFormat:
 
    @staticmethod
    def getFormatByExtension(ext):
-      for ff in (LMFormat.ASCII, LMFormat.CSV, LMFormat.GTIFF, LMFormat.HFA, 
-                 LMFormat.JSON, LMFormat.KML, LMFormat.LOG, LMFormat.MAKEFLOW, 
-                 LMFormat.MAP, LMFormat.MXE, LMFormat.NEWICK, LMFormat.NUMPY, 
-                 LMFormat.PICKLE, LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, 
-                 LMFormat.TXT, LMFormat.XML, LMFormat.ZIP):
+      for ff in (LMFormat.ASCII, LMFormat.CSV, LMFormat.GEO_JSON, 
+                 LMFormat.GTIFF, LMFormat.HFA, LMFormat.JSON, LMFormat.KML, 
+                 LMFormat.LOG, LMFormat.MAKEFLOW, LMFormat.MAP, LMFormat.MXE, 
+                 LMFormat.NEWICK, LMFormat.NUMPY, LMFormat.PICKLE, 
+                 LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, LMFormat.TXT, 
+                 LMFormat.XML, LMFormat.ZIP):
          if ext == ff.ext:
             return ff
       return None
@@ -236,7 +238,7 @@ class LMFormat:
 
    @staticmethod
    def isJSON(ext):
-      if ext == LMFormat.JSON.ext:
+      if ext in (LMFormat.GEO_JSON.ext, LMFormat.JSON.ext):
          return True
       return False
    
@@ -276,12 +278,13 @@ class LMFormat:
 # SHAPEFILE_MAX_STRINGSIZE = 255
 
 # Web object interfaces
-CSV_INTERFACE = "csv"
-GEOTIFF_INTERFACE = "gtiff"
-JSON_INTERFACE = "json"
-KML_INTERFACE = "kml"
-OGC_INTERFACE = "ogc"
-SHAPEFILE_INTERFACE = "shapefile"
+CSV_INTERFACE = 'csv'
+GEO_JSON_INTERFACE = 'geojson'
+GEOTIFF_INTERFACE = 'gtiff'
+JSON_INTERFACE = 'json'
+KML_INTERFACE = 'kml'
+OGC_INTERFACE = 'ogc'
+SHAPEFILE_INTERFACE = 'shapefile'
 
 # .............................................................................
 # .                               Job constants                               .
@@ -302,6 +305,7 @@ class MatrixType:
    PAM = 1
    GRIM = 2
    BIOGEO_HYPOTHESES = 3
+   ANC_PAM = 4
    ROLLING_PAM = 10
    # OUTPUTS
    OBSERVED_CALC = 101
@@ -836,6 +840,7 @@ class ProcessType:
    ENCODE_HYPOTHESES = 350
    ENCODE_PHYLOGENY = 360
    SQUID_INC = 365
+   BUILD_ANC_PAM = 370
    # Randomize
    RAD_SWAP = 331
    RAD_SPLOTCH = 332
@@ -918,14 +923,15 @@ class ProcessType:
                    ProcessType.MCPA_RANDOM, ProcessType.ENCODE_HYPOTHESES,
                    ProcessType.ENCODE_PHYLOGENY, ProcessType.MCPA_ASSEMBLE,
                    ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER, 
-                   ProcessType.OCC_SPLITTER]:
+                   ProcessType.OCC_SPLITTER, ProcessType.BUILD_ANC_PAM]:
          return True
       return False
    
    @staticmethod
    def isRADPrep(ptype):
       if ptype in [ProcessType.RAD_BUILDGRID, ProcessType.RAD_CALCULATE, 
-              ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]:
+              ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY,
+              ProcessType.BUILD_ANC_PAM]:
          return True
       return False
    
@@ -942,7 +948,7 @@ class ProcessType:
                    ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
                    ProcessType.RAD_GRADY, ProcessType.MCPA_ASSEMBLE,
                    ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
-                   ProcessType.MCPA_RANDOM]:
+                   ProcessType.MCPA_RANDOM, ProcessType.BUILD_ANC_PAM]:
          return True
       return False  
 

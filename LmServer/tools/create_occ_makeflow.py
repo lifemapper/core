@@ -29,10 +29,10 @@
 """
 import argparse
 
-from LmServer.legion.cmd import MfRule
+from LmBackend.command.multi import (OccurrenceBucketeerCommand,
+                         OccurrenceSorterCommand)#, OccurrenceSplitterCommand)
+
 from LmServer.legion.processchain import MFChain
-from LmServer.common.lmconstants import ProcessTool
-from LmCommon.common.lmconstants import ProcessType
 
 # .............................................................................
 def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='', 
@@ -53,29 +53,26 @@ def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='',
    if depth == 0:
       # Sort
       sortedFn = '{}_sorted.csv'.format(basename)
-      cmd = '$PYTHON {} {} {} {}'.format(
-         ProcessTool.get(ProcessType.OCC_SORTER), sortedFn, groupPos, inFn)
-      rules.append(MfRule(cmd, [sortedFn], 
-                          dependencies=[inFn]))
+      
+      sortCmd = OccurrenceSorterCommand(inFn, sortedFn, groupPos)
+      rules.append(sortCmd.getMakeflowRule())
       
       # TODO: Add split command (unknown outputs)
       # Split
-      #splitCmd = 'LOCAL $PYTHON -p taxon_ {} {} {}'.format(groupPos, sortedFn, 
-      #                                                     outDir)
-      #rules.append(MfRule(splitCmd, []))
+      #splitCmd = OccurrenceSplitterCommand(groupPos, sortedFn, outDir, 
+      #                                     prefix='taxon_')
+      #rules.append(splitCmd.getMakeflowRule())
    else:
       # More splitting
       baseNames = []
       for i in range(10**width):
          bn = (str(i) + '0'*width)[0:width]
          baseNames.append((bn, '{}.csv'.format(bn)))
-      cmd = '$PYTHON {} -pos {} -num {}'.format(
-         ProcessTool.get(ProcessType.OCC_BUCKETEER), pos, width)
-      if headers:
-         cmd += '-header'
-      cmd += ' {} {} {}'.format(basename, groupPos, inFn)
-      rules.append(MfRule(cmd, [bn[1] for bn in baseNames],
-                    dependencies=[inFn]))
+      
+      bucketeerCmd = OccurrenceBucketeerCommand(basename, groupPos, inFn, 
+                                                position=pos, width=width, 
+                                                headerRow=headers)
+      rules.append(bucketeerCmd.getMakeflowRule())
       
       # Recurse
       for bn, bFn in baseNames:

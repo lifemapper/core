@@ -39,9 +39,9 @@ import zipfile
 
 from LmBackend.common.subprocessManager import SubprocessRunner
 
-from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
 
-from LmCompute.common.layerManager import LayerManager
+from LmCompute.common.layerManager import LayerManager, convertAsciisToMxes
 from LmCompute.common.localconstants import SHARED_DATA_PATH
 from LmCompute.common.lmObj import LmException
 
@@ -59,7 +59,7 @@ class MaxentModel(object):
    # ...................................
    def __init__(self, jobName, pointsFn, layersJson, rulesetFn, paramsJson=None, 
                 packageFn=None, workDir=None, metricsFn=None, logFn=None, 
-                statusFn=None):
+                statusFn=None, mask=None):
       """
       @summary: Constructor for ME model
       @param pointsFn: The file location of the shapefile containing points
@@ -72,6 +72,7 @@ class MaxentModel(object):
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
       @param statusFn: If provided, write the status to this location
+      @param mask: If provided, use this file as a mask
       """
       self.metrics = {}
       self.metrics['algorithmCode'] = 'ATT_MAXENT'
@@ -104,11 +105,22 @@ class MaxentModel(object):
          os.makedirs(self.layersDir)
       except:
          pass
-      self._processLayers(layersJson, self.layersDir)
+      _, symMaskFn = self._processLayers(layersJson, self.layersDir)
 
       # parameters
       self.params = self._processParameters(paramsJson)
       
+      # Process mask if provided
+      if mask is not None:
+         # TODO: Evaluate if we need to convert this to be the same format as
+         #          the other layers or if we can mix
+         maskFn = os.path.join(self.layersDir, 'mask{}'.format(LMFormat.MXE.ext))
+         #os.symlink(mask, maskFn)
+         convertAsciisToMxes([(os.path.abspath(mask), maskFn)])
+         #os.symlink(maskFn, symMaskFn)
+         
+         self.params += ' togglelayertype=mask'
+
       # Need species name?
       self.lambdasFile = os.path.join(self.workDir, 
                                       "{0}.lambdas".format(self.occName))
@@ -314,7 +326,7 @@ class MaxentProjection(object):
    # ...................................
    def __init__(self, jobName, rulesetFn, layersJson, outAsciiFn, 
                 paramsJson=None, workDir=None, metricsFn=None, logFn=None, 
-                statusFn=None, packageFn=None):
+                statusFn=None, packageFn=None, mask=None):
       """
       @summary: Constructor for ME projection
       @param pointsFn: The file location of the shapefile containing points
@@ -326,6 +338,7 @@ class MaxentProjection(object):
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
       @param statusFn: If provided, write the status to this location
+      @param mask: If provided, use this file as a mask
       """
       self.metrics = {}
       self.metrics['algorithmCode'] = 'ATT_MAXENT'
@@ -354,11 +367,22 @@ class MaxentProjection(object):
          os.makedirs(self.layersDir)
       except:
          pass
-      self._processLayers(layersJson, self.layersDir)
+      _, symMaskFn = self._processLayers(layersJson, self.layersDir)
 
       # parameters
       self.params = self._processParameters(paramsJson)
       
+      # Process mask if provided
+      if mask is not None:
+         # TODO: Evaluate if we need to convert this to be the same format as
+         #          the other layers or if we can mix
+         maskFn = os.path.join(self.layersDir, 'mask{}'.format(
+            LMFormat.MXE.ext))
+         #os.symlink(mask, maskFn)
+         convertAsciisToMxes([(os.path.abspath(mask), maskFn)])
+         #os.symlink(maskFn, symMaskFn)
+         self.params += ' togglelayertype=mask'
+
       # Other
       self.asciiOut = outAsciiFn
       #self.asciiOut = os.path.join(self.workDir, 'output.asc')

@@ -88,6 +88,10 @@ class _SpeciesWeaponOfChoice(LMObject):
       self.startFile = os.path.join(LOG_PATH, 'start.{}.txt'.format(self.name))
       self._linenum = 0
 
+   # .............................
+   def initializeMe(self):
+      pass
+
 # ...............................................
    @property
    def expirationDate(self):
@@ -497,18 +501,28 @@ class UserWoC(_SpeciesWeaponOfChoice):
       # User-specific attributes
       self.processType = processType
       self.useGBIFTaxonomy = useGBIFTaxonomy
+      self._userOccCSV = userOccCSV
+      self._userOccMeta = userOccMeta
+      self._delimiter = userOccDelimiter
       self.occParser = None
-      try:
-         self.occParser = OccDataParser(logger, userOccCSV, userOccMeta, 
-                                        delimiter=userOccDelimiter) 
-      except Exception, e:
-         raise LMError(currargs=e.args)
          
-      if self.occParser is not None:
-         self._fieldNames = self.occParser.header
-      else:
-         raise LMError('Failed to initialize OccDataParser')
       
+   # .............................
+   def initializeMe(self):
+      """
+      @summary: Creates objects (ChristopherWalken for walking the species
+                and MFChain objects for workflow computation requests.
+      """
+      try:
+         self.occParser = OccDataParser(self.log, self._userOccCSV, 
+                                        self._userOccMeta, 
+                                        delimiter=self._delimiter) 
+      except Exception, e:
+         raise LMError('Failed to construct OccDataParser')
+      
+      self._fieldNames = self.occParser.header
+      self.occParser.initializeMe()       
+
 # ...............................................
    def close(self):
       try:

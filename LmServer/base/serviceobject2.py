@@ -30,7 +30,7 @@ from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import ProcessType
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import ID_PLACEHOLDER, ProcessTool
-from LmServer.legion.cmd import MfRule
+from LmBackend.common.cmd import MfRule
 
 # .............................................................................
 class ServiceObject(LMObject):
@@ -229,34 +229,3 @@ class ProcessObject(LMObject):
 #       relFname = 'potato_{}.success'.format(self.objId)
 #       return relFname
 
-   # ...............................................
-   def getUpdateRule(self, objId, status, successFileBasename, filesToCheck):
-      """
-      @summary: Creates a rule to test output files and update the database
-      @param objId: Identifier used to query the database for this object
-      @param status: Output value or file containing value of object process
-             results.  Currently unused. 
-      @param successFileBasename: basename of file which will be written to  
-             indicate success of update operation 
-      @param filesToCheck: List of files to be tested for validity.  
-      """
-      opts = []
-      if status is not None:
-         try:
-            int(status)
-            opts.append('-s {}'.format(status))
-         except:
-            opts.append('-f {}'.format(status))
-      successFname = successFileBasename + '.success'
-      # Assemble command - configured python and script
-      args = ['LOCAL', '$PYTHON ', 
-              ProcessTool.get(ProcessType.UPDATE_OBJECT)]
-      # options
-      args.extend(opts)
-      # positional arguments
-      args.extend([str(self.processType), str(objId), successFname])
-      args.extend(filesToCheck)
-      cmd = ' '.join(args)
-      
-      rule = MfRule(cmd, [successFname], dependencies=filesToCheck)
-      return rule

@@ -26,20 +26,23 @@ import logging
 import mx.DateTime as dt
 import os, sys, time
 
-from LmCommon.common.lmconstants import JobStatus, ProcessType
-from LmCommon.common.readyfile import readyFilename
+from LmBackend.command.common import ChainCommand, SystemCommand
+from LmBackend.command.server import LmTouchCommand
 from LmBackend.common.lmobj import LMError, LMObject
+
+from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.readyfile import readyFilename
+
 from LmServer.base.utilities import isCorrectUser
 from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME) 
 from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
                                             SCRATCH_PATH)
-from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME, 
-                                         ProcessTool)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.cmd import MfRule
 from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
+
 
 SPUD_LIMIT = 100
 
@@ -277,25 +280,16 @@ class Boomer(LMObject):
       
       #TODO: Add this back with a relative path for makeflow files if needed
       #dependencies.append(outputFname)
-      cmdArgs = ['makeflow',
-                 '-T wq', 
-                 '-N lifemapper-{}b'.format(mfchain.getId()),
-                 '-C {}:9097'.format(PUBLIC_FQDN),
-                 '-X {}/worker/'.format(SCRATCH_PATH),
-                 '-a {}'.format(outputFname)]
-      mfCmd = ' '.join(cmdArgs)
+      mfCmd = SystemCommand('makeflow', 
+                            ' '.join(['-T wq', 
+                                      '-N lifemapper-{}b'.format(mfchain.getId()),
+                                      '-C {}:9097'.format(PUBLIC_FQDN),
+                                      '-X {}/worker/'.format(SCRATCH_PATH),
+                                      '-a {}'.format(outputFname)]))
+      arfCmd = LmTouchCommand(targetFname)
       
-      arfCmdArgs = ['$PYTHON', 
-                    ProcessTool.get(ProcessType.TOUCH),
-                    targetFname]
-      arfCmd = ' '.join(arfCmdArgs)
-      
-      #arfCmd = 'touch {}'.format(targetFname)
-      cmd = 'LOCAL {} ; {}'.format(arfCmd, mfCmd)
-      # Create a rule from the MF and Arf file creation
-      # TODO: Replace these dependencies with Delay rule
-      rule = MfRule(cmd, [targetFname], dependencies=dependencies)
-      self.masterPotato.addCommands([rule])
+      mpCmd = ChainCommand([arfCmd, mfCmd])
+      self.masterPotato.addCommands([mpCmd.getMakeflowRule(local=True)])
 
    # .............................
    def _addDelayRuleToMasterPotatoHead(self, mfchain):
@@ -305,15 +299,18 @@ class Boomer(LMObject):
                 of the multi-species makeflows.
       @TODO: Replace adding all dependencies to the Potato makeflow command
              with this Delay rule
+      @todo: When implementing this, use a ChainCommand object with a touch
+                command and something else.  Don't use MfRule directly
       """
-      targetFname = self.masterPotato.getArfFilename(prefix='goPotato')
-      cmdArgs = ['checkArfFiles'].extend(self.spudArfFnames)
-      mfCmd = ' '.join(cmdArgs)
-      arfCmd = 'touch {}'.format(targetFname)
-      cmd = 'LOCAL {} ; {}'.format(arfCmd, mfCmd)
-      # Create a rule from the MF and Arf file creation
-      rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
-      self.masterPotato.addCommands([rule])
+      pass
+      #targetFname = self.masterPotato.getArfFilename(prefix='goPotato')
+      #cmdArgs = ['checkArfFiles'].extend(self.spudArfFnames)
+      #mfCmd = ' '.join(cmdArgs)
+      #arfCmd = 'touch {}'.format(targetFname)
+      #cmd = 'LOCAL {} ; {}'.format(arfCmd, mfCmd)
+      ## Create a rule from the MF and Arf file creation
+      #rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
+      #self.masterPotato.addCommands([rule])
 
    # .............................
    def processAll(self):
@@ -374,12 +371,13 @@ from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME,
                                          ProcessTool)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.cmd import MfRule
+from LmBackend.common.cmd import MfRule
 from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, MatrixType) 
+from LmCommon.common.occparse import OccDataParser
 
 
 scriptname = 'boomerTesting'
@@ -390,7 +388,81 @@ configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini'
 configFname = '/share/lm/data/archive/atest3/atest3.ini' 
 configFname = '/state/partition1/lm/data/archive/biotaphy/biotaphy_lowres.ini'
 
+configFname = '/share/lm/data/archive/biotaphy/sax_10min.ini'
 boomer = Boomer(configFname, log=logger)
+boomer._scribe.openConnections()
+boomer.christopher = ChristopherWalken(configFname, scribe=boomer._scribe)
+chris = boomer.christopher
+chris.moreDataToProcess = False
+
+userId = chris._getBoomOrDefault('ARCHIVE_USER')
+archiveName = chris._getBoomOrDefault('ARCHIVE_NAME')
+archivePriority = chris._getBoomOrDefault('ARCHIVE_PRIORITY')
+
+earl = EarlJr()
+boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
+epsg = chris._getBoomOrDefault('SCENARIO_PACKAGE_EPSG')
+useGBIFTaxonIds = False
+processType = ProcessType.USER_TAXA_OCCURRENCE
+occData = chris._getBoomOrDefault('USER_OCCURRENCE_DATA')
+occDelimiter = chris._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
+occCSV = os.path.join(boompath, occData + LMFormat.CSV.ext)
+occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
+from LmServer.tools.occwoc import BisonWoC, GBIFWoC, UserWoC, ExistingWoC
+expDate = dt.DateTime(chris._getBoomOrDefault('SPECIES_EXP_YEAR'), 
+                            chris._getBoomOrDefault('SPECIES_EXP_MONTH'), 
+                            chris._getBoomOrDefault('SPECIES_EXP_DAY')).mjd
+
+taxonSourceName = None
+                            
+weaponOfChoice = UserWoC(chris._scribe, userId, archiveName, 
+                      epsg, expDate, occCSV, occMeta, 
+                      occDelimiter, logger=chris.log, 
+                      processType=processType,
+                      useGBIFTaxonomy=useGBIFTaxonIds,
+                      taxonSourceName=taxonSourceName)
+                      
+op = OccDataParser(chris.log, occCSV, occMeta, delimiter=occDelimiter)
+
+minPoints = chris._getBoomOrDefault('POINT_COUNT_MIN')
+algorithms = chris._getAlgorithms()
+(mdlScen, mdlMask, prjScens, prjMask) = chris._getProjParams(userId, epsg)
+# mdlMaskName = chris._getBoomOrDefault('MODEL_MASK_NAME')
+# if mdlMaskName:
+#    mdlMask = chris._scribe.getLayer(userId=userId, 
+#                                    lyrName=mdlMaskName, epsg=epsg)
+# prjMaskName = chris._getBoomOrDefault('PROJECTION_MASK_NAME')
+# if prjMaskName:
+#    prjMask = chris._scribe.getLayer(userId=userId, 
+#                                    lyrName=prjMaskName, epsg=epsg)
+# 
+# (boomGridset, intersectParams) = chris._getGlobalPamObjects(userId, 
+#                                                       archiveName, epsg)
+# assemblePams = chris._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
+
+f = open(occMeta, 'r')
+lines = f.readlines()
+f.close()
+
+fieldmeta = {}
+for line in lines:
+   print line
+   if not line.startswith('#'):
+      tmp = line.split(',')
+      if len(tmp) >= 3:
+         parts = [p.strip() for p in tmp]
+         key = parts[0]
+         name = parts[1]
+         ogrtype = OccDataParser.getOgrFieldType(parts[2])
+         fieldmeta[key] = {'name': name, 'type': ogrtype}
+         if len(parts) >= 4: 
+            rest = parts[3:]
+            if rest[0].lower() in OccDataParser.FIELD_ROLES:
+               fieldmeta[key]['role'] = rest[0].lower()
+               rest = rest[1:]
+            if len(rest) >= 1:
+               fieldmeta[key]['acceptedVals'] = rest
+
 
 boomer.initializeMe()
 christopher = boomer.christopher
@@ -508,4 +580,6 @@ boomer._scribe.updateObject((boomer.masterPotato)
 boomer.spudArfFile.close()
 Daemon.onShutdown(boomer)
 
+
+       
 """

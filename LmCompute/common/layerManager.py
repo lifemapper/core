@@ -714,7 +714,7 @@ def convertAsciisToMxes(fnTups):
    shutil.rmtree(outDir)
 
 # .............................................................................
-def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=4):
+def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=7):
    """
    @summary: Converts an existing GeoTIFF file into an ASCII grid
    @param tiffFn: The path to an existing GeoTIFF file

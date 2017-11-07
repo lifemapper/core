@@ -86,7 +86,7 @@ WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} --workers-per-cyc
    MAX_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_DATA_PATH)
 
 # Makeflow options
-MAKEFLOW_OPTIONS = '-T wq -t 600 -u 600 -X {} -a -C {}:{}'.format(
+MAKEFLOW_OPTIONS = '-T wq -j 5 -t 600 -u 600 -X {} -a -C {}:{}'.format(
    WORKER_PATH, PUBLIC_FQDN, CS_PORT) 
 
 # Remove old worker directories command
@@ -163,6 +163,8 @@ class ProcessTool:
                jr = 'encode_hypotheses'
             elif ptype == ProcessType.ENCODE_PHYLOGENY:
                jr = 'encode_phylogeny'
+            elif ptype == ProcessType.BUILD_ANC_PAM:
+               jr = 'create_ancestral_pam'
          elif ProcessType.isRandom(ptype):
             if ptype == ProcessType.RAD_GRADY:
                jr = 'grady_randomize'
@@ -384,6 +386,8 @@ class LMFileType:
    SHAPEGRID = 201     # TODO: delete??
    PAM = 222
    GRIM = 223
+   ANC_PAM = 224
+   
    SUM_CALCS = 241
    SUM_SHAPE = 242
    CALCS = 243 # New rad calcs
@@ -409,6 +413,7 @@ class LMFileType:
    MCPA_OUTPUTS = 324
    TREE = 325
    
+   # TODO: Consider removing these.  We only return one matrix with all of them
    MCPA_BG_F_GLOBAL = 330 
    MCPA_BG_F_SEMI = 331
    MCPA_BG_OBS_ADJ_R_SQ = 332
@@ -466,7 +471,8 @@ class LMFileType:
                    LMFileType.RANDOM_CALC, LMFileType.SITES_RANDOM,
                    LMFileType.SPECIES_RANDOM, LMFileType.DIVERSITY_RANDOM,
                    LMFileType.SCHLUTER_RANDOM, LMFileType.SPECIES_COV_RANDOM,
-                   LMFileType.SITES_COV_RANDOM, LMFileType.MCPA_OUTPUTS]:
+                   LMFileType.SITES_COV_RANDOM, LMFileType.MCPA_OUTPUTS,
+                   LMFileType.ANC_PAM]:
          return True
       return False
 
@@ -499,7 +505,10 @@ class LMFileType:
    def isMatrix(rtype):
       if rtype in [LMFileType.PAM, LMFileType.GRIM, LMFileType.BIOGEO_HYPOTHESES, 
                    LMFileType.TREE, LMFileType.PADDED_PAM, LMFileType.MCPA_OUTPUTS,
-                   LMFileType.CALCS, LMFileType.MCPA_BG_F_GLOBAL,
+                   LMFileType.CALCS, 
+                   # TODO: CJG - Consider removing extra MCPA matrix types.  We
+                   #          only return one matrix with everything currently
+                   LMFileType.MCPA_BG_F_GLOBAL,
                    LMFileType.MCPA_BG_F_SEMI, LMFileType.MCPA_BG_OBS_ADJ_R_SQ,
                    LMFileType.MCPA_BG_OBS_PARTIAL, LMFileType.MCPA_BG_RAND_F_GLOBAL,
                    LMFileType.MCPA_BG_RAND_F_PARTIAL, LMFileType.MCPA_ENV_F_GLOBAL,
@@ -512,7 +521,7 @@ class LMFileType:
                    LMFileType.RANDOM_CALC, LMFileType.SITES_RANDOM,
                    LMFileType.SPECIES_RANDOM, LMFileType.DIVERSITY_RANDOM,
                    LMFileType.SCHLUTER_RANDOM, LMFileType.SPECIES_COV_RANDOM,
-                   LMFileType.SITES_COV_RANDOM]:
+                   LMFileType.SITES_COV_RANDOM, LMFileType.ANC_PAM]:
          return True
       return False
    
@@ -520,6 +529,8 @@ class LMFileType:
    def getMatrixFiletype(mtype):
       if mtype in (MatrixType.PAM, MatrixType.ROLLING_PAM):
          return LMFileType.PAM
+      elif mtype == MatrixType.ANC_PAM:
+         return LMFileType.ANC_PAM
       elif mtype == MatrixType.GRIM:
          return LMFileType.GRIM
       elif mtype == MatrixType.BIOGEO_HYPOTHESES:
@@ -612,6 +623,7 @@ class FileFix:
              LMFileType.SHAPEGRID: 'shpgrid',
              LMFileType.ATTR_MATRIX: 'attrMtx',
              LMFileType.PAM: 'pam',
+             LMFileType.ANC_PAM: 'anc_pam',
              LMFileType.GRIM: 'grim',
              LMFileType.SUM_CALCS: PAMSUM_PREFIX,
              LMFileType.CALCS: 'calc', # TODO: Add to this?
@@ -683,6 +695,7 @@ class FileFix:
                 LMFileType.SHAPEGRID:  LMFormat.SHAPE.ext,
                 LMFileType.ATTR_MATRIX: LMFormat.NUMPY.ext,
                 LMFileType.PAM: LMFormat.JSON.ext,
+                LMFileType.ANC_PAM: LMFormat.JSON.ext,
                 LMFileType.GRIM: LMFormat.JSON.ext,
                 LMFileType.SUM_CALCS: LMFormat.PICKLE.ext,
                 LMFileType.SUM_SHAPE: LMFormat.SHAPE.ext,
@@ -748,7 +761,6 @@ DEBUG_USER_PREFIX = 'debug_'
 
 HINT_PREFIX = 'hint'
 
-CT_USER = 'changeThinking'
 # SPECIES LAYER STYLES FOR CHANGETHINKING
 CT_SPECIES_KEYWORD = 'NatureServe'
 CT_SPECIES_LAYER_STYLES  = {'blue':  '           SYMBOL \'hatch\'\n' +

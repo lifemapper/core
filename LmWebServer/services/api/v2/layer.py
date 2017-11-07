@@ -133,7 +133,7 @@ class LayerService(LmService):
          lyrContent = cherrypy.request.body
          lyr = EnvLayer(layerName, self.getUserId(), epsgCode, 
                         lyrMetadata=additionalMetadata, valUnits=valUnits, 
-                        valAttibut='pixel', envCode=envCode, gcmCode=gcmCode,
+                        valAttribute='pixel', envCode=envCode, gcmCode=gcmCode,
                         altpredCode=alternatePredictionCode, dateCode=dateCode,
                         envTypeId=envLayerTypeId)
          lyr.writeRaster(srcData=lyrContent)

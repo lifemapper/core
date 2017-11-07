@@ -122,8 +122,11 @@ class Matrix(object):
             mtx.data = mtx.data.reshape(newShape)
             mtx.setHeaders([''], axis=str(axis))
          
-         # TODO: Handle when there are no headers for an axis
-         axisHeaders.extend(mtx.getHeaders(axis=str(axis)))
+         h = mtx.getHeaders(axis=str(axis))
+         if h is None:
+            h = ['']
+         axisHeaders.extend(h)
+         #axisHeaders.extend(mtx.getHeaders(axis=str(axis)))
          mtxObjs.append(mtx.data)
          
       # Create a new data matrix

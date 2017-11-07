@@ -13,7 +13,7 @@
 #  IFF a field performs a specific role in these data, role name should be the 
 #      4th value on a line
 #   1st value:  Key = original field name (matching the header in data file) 
-#                     or column index
+#                     or column index (Zero-based)
 #   2nd value:  Shortname = a new field name, 10 chars or less
 #   3rd value:  Type = integer, string, or real
 #   4th value:  Role = if true, UniqueID, Longitude, Latitude, GroupBy, TaxaName
