@@ -34,7 +34,7 @@
 import numpy as np
 from random import shuffle
 
-from LmCommon.common.lmconstants import PhyloTreeKeys
+from LmCommon.common.lmconstants import PhyloTreeKeys, DEFAULT_TREE_SCHEMA
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.encodingException import EncodingException
 from LmCommon.trees.lmTree import LmTree
@@ -46,17 +46,14 @@ class PhyloEncoding(object):
                 tree to match a PAM
    """
    # ..............................   
-   def __init__(self, treeDict, pam):
+   def __init__(self, tree, pam):
       """
       @summary: Base constructor
-      @param treeDict: A phylogenetic tree as a dictionary that will be 
-                converted to an LmTree object
+      @param tree: An LmTree object
       @param pam: A Matrix for a PAM
       """
-      if not isinstance(treeDict, LmTree):
-         self.tree = LmTree(treeDict)
-      else:
-         self.tree = treeDict
+      self.tree = tree
+
       if isinstance(pam, Matrix):
          self.pam = pam
       else:
@@ -72,7 +69,7 @@ class PhyloEncoding(object):
       @param pamDLoc: The location of the PAM (in numpy format)
       @raise IOError: If one or both of the files are not found
       """
-      tree = LmTree.fromFile(treeDLoc)
+      tree = LmTree(treeDLoc, DEFAULT_TREE_SCHEMA)
       
       pam = Matrix.load(pamDLoc)
       
@@ -96,31 +93,6 @@ class PhyloEncoding(object):
                   "PAM and Tree do not match, fix before encoding")
       
       return pMtx
-   
-   # ..............................
-   def extendPamToMatchTree(self):
-      """
-      @summary: Extend the provided PAM with additional columns of aggregated 
-                   presences for tips that didn't have matrix indices.  These 
-                   columns are created by assembling all of the columns from 
-                   the tips in the sister clade that have matrix indices and 
-                   creating a column with a true presence value if any of the 
-                   sister tip columns have true presence at that site.
-      """
-      _, newColumns = self._getSisterTipsForClade(self.tree.tree, 
-                                                           self.pam.data.shape[1]-1)
-      newColumnMtx = np.zeros((self.pam.data.shape[0], len(newColumns.keys())), 
-                             dtype=np.int)
-      # Extend the PAM by adding new columns to the right side
-      self.pam.append(Matrix(newColumnMtx, axis=1))
-      # TODO: Add header?
-
-      for mtxIdx in newColumns.keys():
-         # Get a matrix of all of the sister tips in the PAM
-         tmp = np.take(self.pam.data, newColumns[mtxIdx], axis=1)
-         # Set the presence value for each site to true if any of the sister 
-         #    tips are present
-         self.pam.data[:,mtxIdx] = np.any(tmp, axis=1)
    
    # ..............................
    def validate(self):
@@ -152,7 +124,7 @@ class PhyloEncoding(object):
       return False
    
    # ..............................
-   def _buildPBranchLengthValues(self, clade):
+   def _buildPBranchLengthValues(self, node):
       """
       @summary: Recurse through tree to get P matrix values for node / tip 
                    combinations
@@ -161,7 +133,7 @@ class PhyloEncoding(object):
       blDict = {} # Dictionary of branch length lists bottom-up from tip to 
       #                current clade
       
-      cladeBL = clade[PhyloTreeKeys.BRANCH_LENGTH] # To avoid lookups
+      cladeBL = node.edge_length # To avoid lookups
       
       # This is the sum of all branch lengths in the clade and will be used as
       #    the denominator for the p value for each tip to this node.  See the
@@ -173,14 +145,13 @@ class PhyloEncoding(object):
       pValsDict = {} # Dictionary of dictionaries of P-values, first key is 
       #                   node path id, sub keys are tip matrix indices for 
       #                   that node
-      if len(clade[PhyloTreeKeys.CHILDREN]) > 0: # Assume this is two
-         
+      if node.num_child_nodes() > 0: # Assume this is two
          cladePvals = {} # Initialize P-values for the clade dictionary
          multipliers = [-1.0, 1.0] # One branch should be positive, the other  
          #                              negative
          shuffle(multipliers)
          
-         for child in clade[PhyloTreeKeys.CHILDREN]:
+         for child in node.child_nodes():
             
             childBlDict, childBlSum, childPvalDict = \
                                           self._buildPBranchLengthValues(child)
@@ -193,7 +164,7 @@ class PhyloEncoding(object):
             #    sum
             blSum += childBlSum
 
-            childBL = child[PhyloTreeKeys.BRANCH_LENGTH]
+            childBL = child.edge_length
 
             # We will add this value to the branch length list for all of the 
             #    tips in this clade.  It is the branch length of this clade 
@@ -217,11 +188,11 @@ class PhyloEncoding(object):
                # Add to blDict with this branch length
                blDict[k] = tipBLs
 
-         pValsDict[clade[PhyloTreeKeys.CLADE_ID]] = cladePvals
+         pValsDict[node.label] = cladePvals
          
       else: # We are at a tip
          blDict = {
-            clade[PhyloTreeKeys.MTX_IDX] : []
+            getattr(node.taxon, PhyloTreeKeys.MTX_IDX) : []
          }
          
       
@@ -288,36 +259,33 @@ class PhyloEncoding(object):
       """
       # .......................
       # Initialize the matrix
-      allCladeIds = self.tree.cladePaths.keys()
+      internalNodeLabels = [n.label for n in self.tree.tree.nodes() if not n.is_leaf()]
+      labels = self.pam.getColumnHeaders()
       
-      # Internal path ids are the subset of path ids that are not tips
-      internalCladeIds = list(set(allCladeIds) - set(self.tree.tips))
-      matrix = np.zeros((len(self.tree.tips), len(internalCladeIds)), 
-                        dtype=np.float)
+      matrix = np.zeros((len(labels), len(internalNodeLabels)), dtype=np.float)
 
       # Get the list of tip proportion lists
       # Note: Which tip each of the lists belongs to doesn't really matter but
       #          recursion will start at the top and go to the bottom of the 
       #          tree tips
-      tipProps = self._buildPMatrixTipProportionList(self.tree.tree, visited=[])
+      tipProps = self._buildPMatrixTipProportionList(self.tree.tree.seed_node, 
+                                                     visited=[])
       
       # We need a mapping of node path id to matrix column.  I don't think 
       #    order matters
-      nodeColumnIndex = dict(zip(internalCladeIds, range(len(internalCladeIds))))
+      nodeColumnIndex = dict(zip(internalNodeLabels, 
+                                 range(len(internalNodeLabels))))
       
       # The matrix index of the tip in the PAM maps to the row index of P
       for rowIdx, tipProp in tipProps:
          for nodeCladeId, val in tipProp:
             matrix[rowIdx][nodeColumnIndex[nodeCladeId]] = val
             
-      labelPairs = self.tree.getMatrixIndexLabelPairs(useSquids=True, 
-                                                      sort=True)
-      labels = [label for _, label in labelPairs]
       return Matrix(matrix, headers={'0': labels,
                               '1': [k for k,_ in nodeColumnIndex.iteritems()]})  
    
    # ..............................   
-   def _buildPMatrixTipProportionList(self, clade, visited=[]):
+   def _buildPMatrixTipProportionList(self, node, visited=[]):
       """
       @summary: Recurses through the tree to build a list of tip proportions to 
                    be used to build a P-matrix when no branch lengths are 
@@ -328,18 +296,19 @@ class PhyloEncoding(object):
                 towards the tips at each hop
       """
       tipProps = []
-      if len(clade[PhyloTreeKeys.CHILDREN]) > 0: # Assume this is two
+      if node.num_child_nodes() > 0: # Assume this is two
          # First divide all existing visited by two
          newVisited = [(idx, val / 2.0) for idx, val in visited]
          # Recurse.  Left is negative, right is positive
+         leftChild, rightChild = node.child_nodes()
          tipProps.extend(
-            self._buildPMatrixTipProportionList(clade[PhyloTreeKeys.CHILDREN][0], 
-                            newVisited + [(clade[PhyloTreeKeys.CLADE_ID], -1.0)]))
+            self._buildPMatrixTipProportionList(leftChild, 
+                                            newVisited + [(node.label, -1.0)]))
          tipProps.extend(
-            self._buildPMatrixTipProportionList(clade[PhyloTreeKeys.CHILDREN][1], 
-                             newVisited + [(clade[PhyloTreeKeys.CLADE_ID], 1.0)]))
+            self._buildPMatrixTipProportionList(rightChild, 
+                                             newVisited + [(node.label, 1.0)]))
       else: # We are at a tip
-         tipProps.append((clade[PhyloTreeKeys.MTX_IDX], visited)) # Just return a list with one list
+         tipProps.append((getattr(node.taxon, PhyloTreeKeys.MTX_IDX), visited)) # Just return a list with one list
       return tipProps
    
    # ..............................   
@@ -396,11 +365,11 @@ class PhyloEncoding(object):
       @see: Literature supplemental material
       """
       # We only need the P-values dictionary
-      _, _, pValDict = self._buildPBranchLengthValues(self.tree.tree)
-      
+      _, _, pValDict = self._buildPBranchLengthValues(self.tree.tree.seed_node)
       
       # Initialize the matrix
-      matrix = np.zeros((len(self.tree.tips), len(pValDict.keys())), 
+      labels = self.pam.getColumnHeaders()
+      matrix = np.zeros((len(labels), len(pValDict.keys())), 
                         dtype=np.float)
 
       # We need a mapping of node path id to matrix column.  I don't think 
@@ -413,43 +382,6 @@ class PhyloEncoding(object):
             matrix[tipMtxIdx][nodeColumnIndex[nodeCladeId]] = pValDict[
                                                          nodeCladeId][tipMtxIdx]
             
-      labelPairs = self.tree.getMatrixIndexLabelPairs(useSquids=True, 
-                                                      sort=True)
-      labels = [label for _, label in labelPairs]
       return Matrix(matrix, headers={'0': labels,
                               '1': [k for k,_ in nodeColumnIndex.iteritems()]})  
-   
-   # ..............................
-   def _getSisterTipsForClade(self, clade, lastColumn):
-      """
-      @summary: Looks at the children of the clade to see if they are tips.  If 
-                   so, check if it has a matrix index.  If not, get all of the
-                   matrix indices in the sister clade and add to the dictionary
-                   of new matrix columns to create.  Then recurse over children.
-      @param clade: The clade to process
-      @param lastColumn: The last column in the PAM.  Add to this as necessary
-      @todo: Consider changing the name of this function
-      """
-      newColumns = {} # This is a dictionary with new matrix index key and a 
-      #                    list of tips in the sister clade with matrix indices
-      
-      # This will fail if not binary
-      leftChild, rightChild = clade[PhyloTreeKeys.CHILDREN]
-      
-      # We will put these into a list so code does not have to be duplicated
-      for child, sister in [(leftChild, rightChild), (rightChild, leftChild)]:
-         # Check child
-         if len(child[PhyloTreeKeys.CHILDREN]) > 0: # Assume this is 2
-            lastColumn, childColumns = self._getSisterTipsForClade(child, 
-                                                                   lastColumn)
-            newColumns.update(childColumns)
-         else: # Tip
-            if not child.has_key(PhyloTreeKeys.MTX_IDX): # No matrix index
-               # Get the sister tips with matrix indices
-               sisterTips = self.tree.getMatrixIndicesInClade(clade=sister)
-               lastColumn += 1
-               newColumns[lastColumn] = sisterTips
-               child[PhyloTreeKeys.MTX_IDX] = lastColumn
-      
-      return lastColumn, newColumns
    
