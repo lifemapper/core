@@ -31,8 +31,9 @@ from types import IntType, FloatType
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, SERVER_SDM_MASK_HEADING,
-          MatrixType, IDIG_DUMP) 
+          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, 
+          SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX,
+          SERVER_DEFAULT_HEADING_POSTFIX, MatrixType, IDIG_DUMP) 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
 
 from LmServer.common.datalocator import EarlJr
@@ -317,15 +318,15 @@ class ChristopherWalken(LMObject):
       return alg
 
 # .............................................................................
-   def _getAlgorithms(self):
+   def _getAlgorithms(self, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX):
       algs = []
       defaultAlgs = []
       # Get algorithms for SDM modeling
-      sections = self.cfg.getsections('ALGORITHM')
+      sections = self.cfg.getsections(sectionPrefix)
       for algHeading in sections:
          alg = self._getAlgorithm(algHeading)
          
-         if algHeading.endswith('DEFAULT'):
+         if algHeading.endswith(SERVER_DEFAULT_HEADING_POSTFIX):
             defaultAlgs.append(alg)
          else:
             algs.append(alg)
@@ -359,7 +360,7 @@ class ChristopherWalken(LMObject):
          raise LMError('Failed to retrieve ScenPackage for scenarios {}'
                        .format(prjScenCodes))
       # Should be only one or None
-      maskAlgList = self._getAlgorithms(sectionPrefix=SERVER_SDM_MASK_HEADING)
+      maskAlgList = self._getAlgorithms(sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
       if len(maskAlgList) == 1:
          sdmMaskAlg = maskAlgList.values()[0]
          # TODO: Handle if there is more than one input layer
@@ -446,7 +447,7 @@ class ChristopherWalken(LMObject):
                                                   boompath)
       # SDM inputs
       minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
-      algorithms = self._getAlgorithms()
+      algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
 
       (mdlScen, prjScens, sdmMaskInputLayer) = self._getProjParams(userId, epsg)
       # Global PAM inputs
