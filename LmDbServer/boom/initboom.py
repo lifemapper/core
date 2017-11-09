@@ -32,9 +32,10 @@ from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, DEFAULT_MAPUNITS, 
-                     DEFAULT_POST_USER, JobStatus, LMFormat, MatrixType, 
-                     ProcessType, SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING, 
-                     SERVER_PIPELINE_HEADING)
+      DEFAULT_POST_USER, JobStatus, LMFormat, MatrixType, ProcessType, 
+      SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
+      SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
+      SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
 
 from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE, 
@@ -219,6 +220,7 @@ class BOOMFiller(LMObject):
       acode =  config.get(algHeading, 'CODE')
       alg = Algorithm(acode)
       alg.fillWithDefaults()
+      inputs = {}
       # override defaults with any option specified
       algoptions = config.getoptions(algHeading)
       for name in algoptions:
@@ -230,11 +232,17 @@ class BOOMFiller(LMObject):
                val = config.getfloat(algHeading, pname)
             else:
                val = config.get(algHeading, pname)
+               # Some algorithms(mask) may have a parameter indicating a layer,
+               # if so, add name to parameters and object to inputs
+               if acode == 'hull_region_intersect' and pname == 'region':
+                  inputs[pname] = val
             alg.setParameter(pname, val)
+      if inputs:
+         alg.setInputs(inputs)
       return alg
       
 # .............................................................................
-   def _getAlgorithms(self, config, sectionPrefix='ALGORITHM'):
+   def _getAlgorithms(self, config, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX):
       """
       @note: Returns configured algorithms, uses default algorithms only 
              if no others exist
@@ -246,7 +254,7 @@ class BOOMFiller(LMObject):
       for algHeading in sections:
          alg = self._getAlgorithm(config, algHeading)
          
-         if algHeading.endswith('DEFAULT'):
+         if algHeading.endswith(SERVER_DEFAULT_HEADING_POSTFIX):
             defaultAlgs[algHeading] = alg
          else:
             algs[algHeading] = alg
@@ -288,7 +296,7 @@ class BOOMFiller(LMObject):
       
       # Should be only one or None
       maskAlg = None
-      maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING)
+      maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
       if len(maskAlgList) == 1:
          maskAlg = maskAlgList.values()[0]
       
@@ -340,10 +348,10 @@ class BOOMFiller(LMObject):
       
       # SDM Mask input
       if self.maskAlg is not None:
-         config.add_section(SERVER_SDM_MASK_HEADING)
+         config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
          config.set(heading, 'CODE', self.maskAlg.code)
          for name, val in alg.parameters.iteritems():
-            config.set(SERVER_SDM_MASK_HEADING, name, str(val))
+            config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
 
       email = self.usrEmail
       if email is None:
