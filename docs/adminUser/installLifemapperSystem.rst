@@ -9,19 +9,9 @@ Install or Update a Lifemapper Server/Compute installation
 
 Current versions
 ----------------
-Download the current Lifemapper roll files and shasums:
-
-* lifemapper-compute-<yyyy.mm.dd>-0.x86_64.iso (and .sha)
-* lifemapper-server-<yyyy.mm.dd>-0.x86_64.iso
-
 #. **Download** new LmServer and LmCompute rolls to server, then validate 
    checksums.  Replace filename with latest roll names::
 
-   # cd /state/partition1/apps/
-   # wget http://lifemapper.org/dl/lifemapper-compute-2017.05.04-0.x86_64.disk1.iso
-   # wget http://lifemapper.org/dl/lifemapper-compute-2017.05.04-0.x86_64.disk1.sha
-   # wget http://lifemapper.org/dl/lifemapper-server-2017.05.04-0.x86_64.disk1.iso
-   # wget http://lifemapper.org/dl/lifemapper-server-2017.05.04-0.x86_64.disk1.sha
    # sha256sum -c lifemapper-*.sha
 
 (If update) Stop processes
@@ -48,15 +38,11 @@ Update existing install
    numbers, matching the code rpms (lifemapper-lmserver or lifemapper-lmcompute).  
    As long as this is true, rpms will be replaced correctly.  If it is false, 
    the configuration rpms must be manually removed so that configuration scripts 
-   will be run on install::
+   will be run on install. If the above is true on a lifemapper-compute 
+   installation, do the same thing for every node::
       
    # rpm -el rocks-lifemapper rocks-lmcompute
-   
-#. If the above is true on a lifemapper-compute installation, do the same thing
-   for the nodes::
-
-   # rocks run host compute 'rpm -el rocks-lmcompute'
-   
+      
 
 Install both rolls on Frontend
 ------------------------------
@@ -70,8 +56,8 @@ run the cleanRoll scripts for each roll.
    Replace the following roll name with the latest version, identified
    at the top of this document::
 
-   # rocks add roll lifemapper-server-6.2-0.x86_64.disk1.iso clean=1
-   # rocks add roll lifemapper-compute-6.2-0.x86_64.disk1.iso clean=1
+   # rocks add roll lifemapper-server-*.iso clean=1
+   # rocks add roll lifemapper-compute-*.iso clean=1
    
 #. **Create distribution**::
 
