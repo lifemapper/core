@@ -360,7 +360,10 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmDbServer.boom.boomer import *
-from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
+          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, 
+          SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX,
+          SERVER_DEFAULT_HEADING_POSTFIX, MatrixType, IDIG_DUMP) 
 from LmCommon.common.readyfile import readyFilename
 from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.base.utilities import isCorrectUser
@@ -383,97 +386,31 @@ from LmCommon.common.occparse import OccDataParser
 scriptname = 'boomerTesting'
 logger = ScriptLogger(scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
-configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini' 
-configFname = '/share/lm/data/archive/atest3/atest3.ini' 
-configFname = '/state/partition1/lm/data/archive/biotaphy/biotaphy_lowres.ini'
+configFname='/share/lm/data/archive/biotaphy/biotaphy_heuchera_CONUS.ini'
 
-configFname = '/share/lm/data/archive/biotaphy/sax_10min.ini'
 boomer = Boomer(configFname, log=logger)
-boomer.initializeMe()
-
-# boomer._scribe.openConnections()
-# boomer.christopher = ChristopherWalken(configFname, scribe=boomer._scribe)
+boomer.initializeMe()                      
 chris = boomer.christopher
-chris.moreDataToProcess = False
-
-userId = chris._getBoomOrDefault('ARCHIVE_USER')
-archiveName = chris._getBoomOrDefault('ARCHIVE_NAME')
-archivePriority = chris._getBoomOrDefault('ARCHIVE_PRIORITY')
-
-earl = EarlJr()
-boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
-epsg = chris._getBoomOrDefault('SCENARIO_PACKAGE_EPSG')
-useGBIFTaxonIds = False
-processType = ProcessType.USER_TAXA_OCCURRENCE
-occData = chris._getBoomOrDefault('USER_OCCURRENCE_DATA')
-occDelimiter = chris._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
-occCSV = os.path.join(boompath, occData + LMFormat.CSV.ext)
-occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
-from LmServer.tools.occwoc import BisonWoC, GBIFWoC, UserWoC, ExistingWoC
-expDate = dt.DateTime(chris._getBoomOrDefault('SPECIES_EXP_YEAR'), 
-                            chris._getBoomOrDefault('SPECIES_EXP_MONTH'), 
-                            chris._getBoomOrDefault('SPECIES_EXP_DAY')).mjd
-
-taxonSourceName = None
-                            
-weaponOfChoice = UserWoC(chris._scribe, userId, archiveName, 
-                      epsg, expDate, occCSV, occMeta, 
-                      occDelimiter, logger=chris.log, 
-                      processType=processType,
-                      useGBIFTaxonomy=useGBIFTaxonIds,
-                      taxonSourceName=taxonSourceName)
-                      
-op = OccDataParser(chris.log, occCSV, occMeta, delimiter=occDelimiter)
-
-minPoints = chris._getBoomOrDefault('POINT_COUNT_MIN')
-algorithms = chris._getAlgorithms()
-(mdlScen, mdlMask, prjScens, prjMask) = chris._getProjParams(userId, epsg)
-# mdlMaskName = chris._getBoomOrDefault('MODEL_MASK_NAME')
-# if mdlMaskName:
-#    mdlMask = chris._scribe.getLayer(userId=userId, 
-#                                    lyrName=mdlMaskName, epsg=epsg)
-# prjMaskName = chris._getBoomOrDefault('PROJECTION_MASK_NAME')
-# if prjMaskName:
-#    prjMask = chris._scribe.getLayer(userId=userId, 
-#                                    lyrName=prjMaskName, epsg=epsg)
-# 
-# (boomGridset, intersectParams) = chris._getGlobalPamObjects(userId, 
-#                                                       archiveName, epsg)
-# assemblePams = chris._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
-
-f = open(occMeta, 'r')
-lines = f.readlines()
-f.close()
-
-fieldmeta = {}
-for line in lines:
-   print line
-   if not line.startswith('#'):
-      tmp = line.split(',')
-      if len(tmp) >= 3:
-         parts = [p.strip() for p in tmp]
-         key = parts[0]
-         name = parts[1]
-         ogrtype = OccDataParser.getOgrFieldType(parts[2])
-         fieldmeta[key] = {'name': name, 'type': ogrtype}
-         if len(parts) >= 4: 
-            rest = parts[3:]
-            if rest[0].lower() in OccDataParser.FIELD_ROLES:
-               fieldmeta[key]['role'] = rest[0].lower()
-               rest = rest[1:]
-            if len(rest) >= 1:
-               fieldmeta[key]['acceptedVals'] = rest
-
-
-boomer.initializeMe()
-christopher = boomer.christopher
-weaponOfChoice = christopher.weaponOfChoice
+woc = chris.weaponOfChoice
 alg = christopher.algs[0]
 prjscen = christopher.prjScens[0]
 scribe = boomer._scribe
 borg = scribe._borg
 
-spud, potatoInputs = christopher.startWalken()
+userId = chris._getBoomOrDefault('ARCHIVE_USER')
+archiveName = chris._getBoomOrDefault('ARCHIVE_NAME')
+archivePriority = chris._getBoomOrDefault('ARCHIVE_PRIORITY')
+earl = EarlJr()
+boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
+epsg = chris._getBoomOrDefault('SCENARIO_PACKAGE_EPSG')
+weaponOfChoice = chris._getOccWeaponOfChoice(userId, archiveName, epsg, 
+                                            boompath)
+# SDM inputs
+minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
+algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
+
+
+spud, potatoInputs = boomer.christopher.startWalken()
 select * from lm_v3.lm_updateOccurrenceSet(66,NULL,
 'Bensoniella_oregona',
 '/share/lm/data/archive/biotaphy/000/000/000/066/pt_66.shp',
@@ -484,7 +421,7 @@ keepWalken = not christopher.complete
 if  spud:
    # Gather species ARF dependency to delay start of multi-species MF
    spudArf = spud.getArfFilename(prefix='spud')
-   self.spudArfFnames.append(spudArf)
+   chris.spudArfFnames.append(spudArf)
    # Add PAV outputs to raw potato files for triage input
    squid = spud.mfMetadata[MFChain.META_SQUID]
    if potatoInputs:
