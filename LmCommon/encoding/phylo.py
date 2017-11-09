@@ -107,7 +107,10 @@ class PhyloEncoding(object):
          # List of matrix indices (based on PAM column count)
          pamMatrixIndices = range(self.pam.data.shape[1])
          # All matrix indices in tree
-         treeMatrixIndices = self.tree.getMatrixIndicesInClade()
+         
+         treeMatrixIndices = [mtxId for _, mtxId in self.tree.getAnnotations(
+                                                        PhyloTreeKeys.MTX_IDX)]
+         #treeMatrixIndices = self.tree.getMatrixIndicesInClade()
          
          # Find the intersection between the two lists by creating a set for 
          #    each and then checking which values are in both and making a list 
