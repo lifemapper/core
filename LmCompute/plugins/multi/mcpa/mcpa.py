@@ -299,14 +299,18 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False, headerPrefix=''):
          fSemiPartialMtx[j, i] = (rSq - remainingRsq) / totalPsigmaResidual
    
    # Adding headers for each Matrix
-   adjR2Mtx = Matrix(adjRsq, headers={'0' : phyloMtx.getColumnHeaders(),
-                                      '1' : ['{}Adjusted R-squared'.format(headerPrefix)]})
-   fGlobalMtx = Matrix(fGlobal, headers={'0' : phyloMtx.getColumnHeaders(),
-                                         '1' : ['{}F-Global'.format(headerPrefix)]})
-   spMtx = Matrix(semiPartialMtx, headers={'0' : phyloMtx.getColumnHeaders(),
-                                        '1' : predictorMtx.getColumnHeaders()})
-   fSpMtx = Matrix(fSemiPartialMtx, headers={'0' : phyloMtx.getColumnHeaders(),
-                                        '1' : predictorMtx.getColumnHeaders()})
+   adjR2Mtx = Matrix(np.nan_to_num(adjRsq), 
+                     headers={'0' : phyloMtx.getColumnHeaders(),
+                              '1' : ['{}Adjusted R-squared'.format(headerPrefix)]})
+   fGlobalMtx = Matrix(np.nan_to_num(fGlobal), 
+                       headers={'0' : phyloMtx.getColumnHeaders(),
+                                '1' : ['{}F-Global'.format(headerPrefix)]})
+   spMtx = Matrix(np.nan_to_num(semiPartialMtx), 
+                  headers={'0' : phyloMtx.getColumnHeaders(),
+                           '1' : predictorMtx.getColumnHeaders()})
+   fSpMtx = Matrix(np.nan_to_num(fSemiPartialMtx), 
+                   headers={'0' : phyloMtx.getColumnHeaders(),
+                            '1' : predictorMtx.getColumnHeaders()})
    
                                  
    return adjR2Mtx, fGlobalMtx, spMtx, fSpMtx
