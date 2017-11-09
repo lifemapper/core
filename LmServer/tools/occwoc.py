@@ -616,9 +616,10 @@ class UserWoC(_SpeciesWeaponOfChoice):
          if sciName is not None:
             occ = self._createOrResetOccurrenceset(sciName, len(dataChunk), 
                                                    data=dataChunk)
-            self.log.info('Processed occset {}, name {}, with {} records; next start {}'
-                          .format(occ.getId(), taxonName, len(dataChunk), 
-                                  self.nextStart))
+            if occ is not None:
+               self.log.info('Processed occset {}, name {}, with {} records; next start {}'
+                             .format(occ.getId(), taxonName, len(dataChunk), 
+                                     self.nextStart))
       return occ
 
 # ...............................................
