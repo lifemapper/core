@@ -362,19 +362,15 @@ class ChristopherWalken(LMObject):
       # Should be only one or None
       maskAlgList = self._getAlgorithms(sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
       if len(maskAlgList) == 1:
-         sdmMaskAlg = maskAlgList.values()[0]
+         sdmMaskAlg = maskAlgList[0]
          # TODO: Handle if there is more than one input layer
-         for inputKey, lyrname in sdmMaskAlg.getInputs():
-            lyr = self._scribe.getLayer(userId=userId, lyrName=lyrname, 
-                                        epsg=epsg) 
-            sdmMaskAlg.setInput(inputKey, lyr)
-         sdmMaskLayers = sdmMaskAlg.getInputs()
-         if len(sdmMaskLayers) >= 1:
+         if len(sdmMaskAlg.getInputs()) > 1:
             raise LMError(currargs='Unable to process > 1 input SDM mask layer')
-         elif len(sdmMaskLayers) == 1:
-            sdmMaskInputLayer = sdmMaskLayers.values()[0]
+         for inputKey, lyrname in sdmMaskAlg.getInputs().iteritems():
+            sdmMaskInputLayer = self._scribe.getLayer(userId=userId, 
+                                                      lyrName=lyrname, epsg=epsg) 
+            sdmMaskAlg.setInput(inputKey, sdmMaskInputLayer)
             
-
       return (mdlScen, prjScens, sdmMaskInputLayer)  
 
 # .............................................................................
@@ -592,7 +588,8 @@ class ChristopherWalken(LMObject):
       prj = None
       if occ is not None:
          tmpPrj = SDMProjection(occ, alg, self.mdlScen, prjscen, 
-                        modelMask=self.mdlMask, projMask=self.prjMask, 
+                        modelMask=self.sdmMaskInputLayer, 
+                        projMask=self.sdmMaskInputLayer, 
                         dataFormat=LMFormat.GTIFF.driver,
                         status=JobStatus.GENERAL, statusModTime=currtime)
          prj = self._scribe.findOrInsertSDMProject(tmpPrj)
