@@ -173,16 +173,16 @@ class PamStats(object):
       # Site statistics
       self.alphaProp = self.alpha.astype(float) / self.numSpecies
       self.phi = self.pamData.dot(self.omega)
-      self.phiAvgProp = self.phi.astype(float) / (self.numSites * self.alpha)
       # phiAvgProp can have np.nan values if empty rows and columns, set to zero
-      self.phiAvgProp[~np.isfinite(self.phiAvgProp)] = 0
+      self.phiAvgProp = np.nan_to_num(
+         self.phi.astype(float) / (self.numSites * self.alpha))
       
       # Species statistics
       self.omegaProp = self.omega.astype(float) / self.numSites
       self.psi = self.alpha.dot(self.pamData)
-      self.psiAvgProp = self.psi.astype(float) / (self.numSpecies * self.omega)
       # psiAvgProp can produce np.nan for empty row and columns, set to zero
-      self.psiAvgProp[ ~ np.isfinite(self.psiAvgProp)] = 0
+      self.psiAvgProp = np.nan_to_num(
+         self.psi.astype(float) / (self.numSpecies * self.omega))
    
    # ...........................
    def _calculateCovarianceMatrices(self):
