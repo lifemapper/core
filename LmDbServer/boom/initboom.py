@@ -639,15 +639,20 @@ class BOOMFiller(LMObject):
       except KeyError:
          raise LMError(currargs='Missing one of: name, bbox, file, gdaltype, '+ 
                        'gdalformat in SDM_MASK_INPUT in scenario package metadata')
+      else:   
+         dloc = os.path.join(ENV_DATA_PATH, relfname)
+         if not os.path.exists(dloc):
+            print('Missing local data %s' % dloc)
+
+      # epsg, mapunits and resolution must match the Scenario Package
+      epsg = elyrMeta['epsg'],
+      munits = elyrMeta['mapunits'],  
+      res = elyrMeta['resolution'], 
          
-      dloc = os.path.join(ENV_DATA_PATH, relfname)
-      if not os.path.exists(dloc):
-         print('Missing local data %s' % dloc)
-      # basic file properties match those of scenario layers, elyrMeta
       masklyr = Raster(name, self.usr, 
-                       elyrMeta['epsg'], 
-                       valUnits=elyrMeta['mapunits'],  
-                       resolution=elyrMeta['resolution'], 
+                       epsg, 
+                       mapunits=munits,  
+                       resolution=res, 
                        dlocation=dloc, metadata=lyrmeta, 
                        dataFormat=dformat, 
                        gdalType=dtype, 
@@ -912,7 +917,6 @@ class BOOMFiller(LMObject):
       SPMETA, scenPackageMetaFilename = self._findClimatePackageMetadata()
       # Combination of scenario and layer attributes making up these data 
       pkgMeta = SPMETA.CLIMATE_PACKAGES[self.scenPackageName]
-      maskName = SPMETA.SDM_MASK_INPUT
       try:
          epsg = SPMETA.EPSG
       except:

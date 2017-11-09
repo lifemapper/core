@@ -102,6 +102,11 @@ INTERSECT_MAXPRESENCE: 255
 [ALGORITHM - DEFAULT]
 CODE: ATT_MAXENT
 
+[PREPROCESSING SDM_MASK - DEFAULT]
+CODE: hull_region_intersect
+buffer: .5
+region: ecoreg_10min_global
+
 ; .............................................................................
 [LmServer - dbserver]
 CONNECTION_PORT: 6432

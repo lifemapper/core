@@ -21,12 +21,8 @@ SCRATCH_PATH: @LMSCRATCHDISK@
 PID_PATH: @LMSCRATCHDISK@/run
 SHARED_DATA_PATH: @DATADIR_SHARED@
 
-;;**!!! JOB_REQUEST_PATH and PLUGINS_PATH go away
-JOB_REQUEST_PATH: @LMDISK@/jobRequests/
+;;** ?? PLUGINS_PATH goes away
 PLUGINS_PATH: @LMHOME@/LmCompute/plugins
-
-;;**!!! CJ look at these: 
-;;**    SAMPLE_JOBS_PATH, SAMPLE_LAYERS_PATH, SAMPLE_DATA_PATH, TEMPORARY_FILE_PATH
 
 ;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE in the
 ;; [LmServer - pipeline] section should match SCENARIO_PACKAGE here
@@ -47,9 +43,3 @@ CONVERT_JAVA_INIT_MEM_OPTION: 512m
 [LmClient - Open Tree of Life]
 OTL_HINT_URL: http://api.opentreeoflife.org/v2/tnrs/autocomplete_name
 OTL_TREE_WEB_URL: http://api.opentreeoflife.org/v2/tree_of_life/subtree
-
-; ...............................................
-[LmClient - contact]
-INSTITUTION_NAME: University of Kansas Biodiversity Institute
-ADMIN_NAME: Jeff Cavner
-ADMIN_EMAIL: jcavner@ku.edu 
