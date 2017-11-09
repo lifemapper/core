@@ -76,6 +76,21 @@ class LmTree(object):
             pass
    
    # ..............................
+   def getAnnotations(self, annotationAttribute):
+      """
+      @summary: Gets a list of (label, annotation) pairs
+      @param annotationAttribute: The annotation attribute to retrieve
+      """
+      annotations = []
+      for taxon in self.tree.taxon_namespace:
+         try:
+            att = getattr(taxon, annotationAttribute)
+            annotations.append((taxon.label, att))
+         except:
+            pass
+      return annotations
+   
+   # ..............................
    def getDistanceMatrix(self, labelAttribute='label', orderedLabels=None):
       """
       @summary: Get a Matrix object of phylogenetic distances between tips
