@@ -1,4 +1,0 @@
-
-species, species, string, GroupBy
-decimallongitude, dec_long, real, Longitude
-decimallatitude, dec_lat, real, Latitude

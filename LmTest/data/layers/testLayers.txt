@@ -1,8 +1,0 @@
-http://LmComputeTest/services/sdm/layers/266/GTiff, lyr266.tif
-http://LmComputeTest/services/sdm/layers/276/GTiff, lyr276.tif
-http://LmComputeTest/services/sdm/layers/283/GTiff, lyr283.tif
-http://LmComputeTest/services/sdm/layers/284/GTiff, lyr284.tif
-http://LmComputeTest/services/sdm/layers/266/AAIGrid, lyr266.asc
-http://LmComputeTest/services/sdm/layers/276/AAIGrid, lyr276.asc
-http://LmComputeTest/services/sdm/layers/283/AAIGrid, lyr283.asc
-http://LmComputeTest/services/sdm/layers/284/AAIGrid, lyr284.asc
