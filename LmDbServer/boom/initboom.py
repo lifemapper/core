@@ -645,9 +645,9 @@ class BOOMFiller(LMObject):
             print('Missing local data %s' % dloc)
 
       # epsg, mapunits and resolution must match the Scenario Package
-      epsg = elyrMeta['epsg'],
-      munits = elyrMeta['mapunits'],  
-      res = elyrMeta['resolution'], 
+      epsg = elyrMeta['epsg']
+      munits = elyrMeta['mapunits'] 
+      res = elyrMeta['resolution']
          
       masklyr = Raster(name, self.usr, 
                        epsg, 
@@ -1413,6 +1413,43 @@ filler.initializeInputs()
        
 SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = filler._pullClimatePackageMetadata()
 
+lyrmeta = {
+   Vector.META_IS_CATEGORICAL: filler._getOptionalMetadata(maskMeta, 'iscategorical'), 
+   ServiceObject.META_TITLE: filler._getOptionalMetadata(maskMeta, 'title'), 
+   ServiceObject.META_AUTHOR: filler._getOptionalMetadata(maskMeta, 'author'), 
+   ServiceObject.META_DESCRIPTION: filler._getOptionalMetadata(maskMeta, 'description'),
+   ServiceObject.META_KEYWORDS: filler._getOptionalMetadata(maskMeta, 'keywords'),
+   ServiceObject.META_CITATION: filler._getOptionalMetadata(maskMeta, 'citation')}
+# required
+try:
+   name = maskMeta['name']
+   bbox = maskMeta['bbox']
+   relfname = maskMeta['file']
+   dtype = maskMeta['gdaltype']
+   dformat = maskMeta['gdalformat']
+except KeyError:
+   raise LMError(currargs='Missing one of: name, bbox, file, gdaltype, '+ 
+                 'gdalformat in SDM_MASK_INPUT in scenario package metadata')
+else:   
+   dloc = os.path.join(ENV_DATA_PATH, relfname)
+   if not os.path.exists(dloc):
+      print('Missing local data %s' % dloc)
+
+# epsg, mapunits and resolution must match the Scenario Package
+epsg = elyrMeta['epsg']
+munits = elyrMeta['mapunits']
+res = elyrMeta['resolution']
+   
+masklyr = Raster(name, filler.usr, 
+                 epsg, 
+                 mapunits=munits,  
+                 resolution=res, 
+                 dlocation=dloc, metadata=lyrmeta, 
+                 dataFormat=dformat, 
+                 gdalType=dtype, 
+                 bbox=bbox,
+                 modTime=CURR_MJD)
+
 # Mask layer
 masklyr = filler._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
 
@@ -1491,7 +1528,7 @@ if isInitial:
    filler.scribe.log.info('  Insert taxonomy metadata ...')
    for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
       taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
-
+filler.initializeInputs()
    filler.addAlgorithms()
    filler.addTNCEcoregions()
       
