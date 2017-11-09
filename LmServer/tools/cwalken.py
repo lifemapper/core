@@ -308,11 +308,11 @@ class ChristopherWalken(LMObject):
                val = self.cfg.getfloat(algHeading, pname)
             else:
                val = self.cfg.get(algHeading, pname)
-               # Some algorithms(mask) may have a parameter indicating a layer
+               # Some algorithms(mask) may have a parameter indicating a layer,
+               # if so, add name to parameters and object to inputs
                if acode == 'hull_region_intersect' and pname == 'region':
                   inputs[pname] = val
-               else:
-                  alg.setParameter(pname, val)
+            alg.setParameter(pname, val)
       if inputs:
          alg.setInputs(inputs)
       return alg

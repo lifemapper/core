@@ -220,6 +220,7 @@ class BOOMFiller(LMObject):
       acode =  config.get(algHeading, 'CODE')
       alg = Algorithm(acode)
       alg.fillWithDefaults()
+      inputs = {}
       # override defaults with any option specified
       algoptions = config.getoptions(algHeading)
       for name in algoptions:
@@ -231,7 +232,13 @@ class BOOMFiller(LMObject):
                val = config.getfloat(algHeading, pname)
             else:
                val = config.get(algHeading, pname)
+               # Some algorithms(mask) may have a parameter indicating a layer,
+               # if so, add name to parameters and object to inputs
+               if acode == 'hull_region_intersect' and pname == 'region':
+                  inputs[pname] = val
             alg.setParameter(pname, val)
+      if inputs:
+         alg.setInputs(inputs)
       return alg
       
 # .............................................................................
@@ -341,10 +348,10 @@ class BOOMFiller(LMObject):
       
       # SDM Mask input
       if self.maskAlg is not None:
-         config.add_section(SERVER_SDM_MASK_HEADING)
+         config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
          config.set(heading, 'CODE', self.maskAlg.code)
          for name, val in alg.parameters.iteritems():
-            config.set(SERVER_SDM_MASK_HEADING, name, str(val))
+            config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
 
       email = self.usrEmail
       if email is None:
