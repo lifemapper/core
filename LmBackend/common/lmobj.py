@@ -84,7 +84,7 @@ class LMObject(object):
       else:
          pth, basename = os.path.split(fullfilename)
          
-         # If the file path is a local file we don't need to create directories
+         # If the file path is in cwd we don't need to create directories
          if len(pth) == 0:
             return True
          
