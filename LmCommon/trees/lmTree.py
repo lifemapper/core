@@ -187,7 +187,7 @@ class LmTree(object):
       """
       try:
          minBL, maxBL = self.tree.minmax_leaf_distance_from_root()
-         if minBL == maxBL:
+         if round(minBL, 7) == round(maxBL, 7):
             return True
       except:
          pass
