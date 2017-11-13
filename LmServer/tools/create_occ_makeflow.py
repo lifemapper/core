@@ -34,6 +34,7 @@ from LmBackend.command.multi import (OccurrenceBucketeerCommand,
                          OccurrenceSorterCommand)#, OccurrenceSplitterCommand)
 
 from LmServer.legion.processchain import MFChain
+from LmBackend.command.server import LmTouchCommand
 
 # .............................................................................
 def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='', 
@@ -107,9 +108,13 @@ if __name__ == '__main__':
    args = parser.parse_args()
    
    mf = MFChain(args.userId)
+   
+   # Add out directory touch rule
+   touchCmd = LmTouchCommand(os.path.join(args.outDir, 'touch.out'))
+   mf.addCommands([touchCmd.getMakeflowRule(local=True)])
+   
    # Recursively create rules
    for fn in args.inputFilename:
-      print 'Input filename:', fn
       rules = getRulesForFile(fn, args.groupPosition, width=args.width, 
                             depth=args.depth, basename='bucket_', headers=True,
                             outDir=args.outDir)
