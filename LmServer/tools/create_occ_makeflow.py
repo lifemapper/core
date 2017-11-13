@@ -73,7 +73,7 @@ def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='',
       bucketeerCmd = OccurrenceBucketeerCommand(basename, groupPos, inFn, 
                                                 position=pos, width=width, 
                                                 headerRow=headers)
-      bucketeerCmd.outputs.extend(baseNames)
+      bucketeerCmd.outputs.extend([bFn for _, bFn in baseNames])
       
       rules.append(bucketeerCmd.getMakeflowRule())
       
