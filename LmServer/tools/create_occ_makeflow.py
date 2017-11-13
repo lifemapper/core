@@ -53,7 +53,7 @@ def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='',
    rules = []
    if depth == 0:
       # Sort
-      sortedFn = '{}_sorted.csv'.format(basename)
+      sortedFn = os.path.join(outDir, '{}_sorted.csv'.format(basename))
       
       sortCmd = OccurrenceSorterCommand(inFn, sortedFn, groupPos)
       rules.append(sortCmd.getMakeflowRule())
@@ -109,6 +109,7 @@ if __name__ == '__main__':
    mf = MFChain(args.userId)
    # Recursively create rules
    for fn in args.inputFilename:
+      print 'Input filename:', fn
       rules = getRulesForFile(fn, args.groupPosition, width=args.width, 
                             depth=args.depth, basename='bucket_', headers=True,
                             outDir=args.outDir)
