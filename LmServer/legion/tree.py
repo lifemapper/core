@@ -50,17 +50,17 @@ class Tree(LmTree, ServiceObject):
       """
       ServiceObject.__init__(self, userId, treeId, LMServiceType.TREES, 
                              metadataUrl=metadataUrl, modTime=modTime)
+      self.name = name
+      self._dlocation = dlocation
+      self.treeMetadata = {}
+      self.loadTreeMetadata(metadata)
+         
       # TODO: Do we always want to read the file??
       #       Maybe just populate attributes saved in DB?
       if dlocation is not None:
          LmTree.__init__(self, dlocation, schema)
       elif self.getDLocation() is not None:
          LmTree.__init__(self, self.getDLocation(), schema)
-      self.name = name
-      self._dlocation = dlocation
-      self.treeMetadata = {}
-      self.loadTreeMetadata(metadata)
-         
       
 # ...............................................
 # Properties
