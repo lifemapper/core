@@ -232,7 +232,7 @@ class PamStats(object):
          else:
             mntd.append(0.0)
       # Set the mntd attribute
-      self.mntd = np.array(mntd).reshape((mntd.shape[0], 1))
+      self.mntd = np.array(mntd).reshape((len(mntd), 1))
    
    # ...........................
    def _calculateTreeStats(self, pdMtx):
