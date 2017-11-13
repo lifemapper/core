@@ -455,6 +455,7 @@ class OccurrenceBucketeerCommand(_LmCommand):
          self.inFiles = inFilename
       else:
          self.inFiles = [inFilename]
+      self.inputs.extend(self.inFiles)
       
       # Outputs are unknown unless you know the data
       #self.outputs.append()
