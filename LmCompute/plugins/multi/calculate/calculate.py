@@ -228,7 +228,9 @@ class PamStats(object):
                      nearest = cmpVal
                print nearest
                nearestTotal += nearest
-         mntd.append(float(nearestTotal) / numSp)
+            mntd.append(float(nearestTotal) / numSp)
+         else:
+            mntd.append(0.0)
       # Set the mntd attribute
       self.mntd = np.array(mntd).reshape((mntd.shape[0], 1))
    
