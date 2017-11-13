@@ -287,7 +287,7 @@ class PamStats(object):
             pearson.append(0.0)
 
       # Create numpy arrays
-      numSites = mpd.shape[0]
+      numSites = len(mpd)
       self.mpd = np.array(mpd).reshape((numSites, 1))
       self.pearson = np.array(pearson).reshape((numSites, 1))
    
