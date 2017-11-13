@@ -56,12 +56,12 @@ if __name__ == "__main__":
       
    try:
       outf = open(outfname, 'w')
-      
+      startpos = len(basepath)+1
       for dirpath, dirnames, filenames in os.walk(datapath):
          for fname in filenames:
             fullname = os.path.join(dirpath, fname)
             if fullname.endswith(LMFormat.GTIFF.ext):
-               relname = fullname.strip(basepath)
+               relname = fullname[startpos:]
                print('Computing hash for {} (in {})'.format(relname, basepath))
                hashval = computeHash(dlocation=fullname)
                outf.write('{},  {}\n'.format(hashval, relname))
@@ -71,7 +71,9 @@ if __name__ == "__main__":
       outf.close()
       
 """
-$PYTHON LmDbServer/tools/createClimateHashfile.py Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover /share/lm/data/layers/ryan/Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover
+$PYTHON LmDbServer/tools/createClimateHashfile.py \
+        Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover \
+        /share/lm/data/layers/ryan/Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover
 
 $PYTHON LmDbServer/tools/createClimateHashfile.py 10min-past-present-future /share/lm/data/layers/10min-past-present-future
 
