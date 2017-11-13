@@ -81,7 +81,7 @@ def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='',
       for bn, bFn in baseNames:
          rules.extend(getRulesForFile(bFn, groupPos, width=width, 
                                     depth=depth-1, basename=bn, headers=False, 
-                                    pos=pos+width))
+                                    pos=pos+width, outDir=outDir))
    return rules
          
 # .............................................................................
