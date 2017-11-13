@@ -74,6 +74,9 @@ class LmTree(object):
          except KeyError:
             # Pass if a label is not found in the dictionary, otherwise fail
             pass
+         except AttributeError:
+            # Pass if taxon does not have attribute (may not have squid)
+            pass
    
    # ..............................
    def getAnnotations(self, annotationAttribute):
