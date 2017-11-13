@@ -71,9 +71,14 @@ def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='',
          bn = '{}{}'.format(basename, (str(i) + '0'*width)[0:width])
          baseNames.append((bn, os.path.join(outDir, '{}.csv'.format(bn))))
       
+      # Add out directory touch rule
+      touchFn = os.path.join(outDir, 'touch.out')
+      touchCmd = LmTouchCommand(touchFn)
+      rules.append(touchCmd.getMakeflowRule(local=True))
       bucketeerCmd = OccurrenceBucketeerCommand(basename, groupPos, inFn, 
                                                 position=pos, width=width, 
                                                 headerRow=headers)
+      bucketeerCmd.inputs.append(touchFn)
       bucketeerCmd.outputs.extend([bFn for _, bFn in baseNames])
       
       rules.append(bucketeerCmd.getMakeflowRule())
@@ -108,11 +113,7 @@ if __name__ == '__main__':
    args = parser.parse_args()
    
    mf = MFChain(args.userId)
-   
-   # Add out directory touch rule
-   touchCmd = LmTouchCommand(os.path.join(args.outDir, 'touch.out'))
-   mf.addCommands([touchCmd.getMakeflowRule(local=True)])
-   
+      
    # Recursively create rules
    for fn in args.inputFilename:
       rules = getRulesForFile(fn, args.groupPosition, width=args.width, 
