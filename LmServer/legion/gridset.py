@@ -257,7 +257,7 @@ class Gridset(ServiceObject): #LMMap
             
             # Copy tree to workspace, touch the directory to ensure creation,
             #   then copy tree
-            wsTreeFilename = os.path.join(targetDir, 'wsTree.json')
+            wsTreeFilename = os.path.join(targetDir, 'wsTree.nex')
 
             treeTouchCmd = LmTouchCommand(os.path.join(targetDir, 
                                                        'touchTree.out'))
@@ -271,7 +271,7 @@ class Gridset(ServiceObject): #LMMap
             rules.append(touchAndCopyTreeCmd.getMakeflowRule(local=True))
 
             # Add squids to workspace tree via SQUID_INC
-            squidTreeFilename = os.path.join(targetDir, 'squidTree.json')
+            squidTreeFilename = os.path.join(targetDir, 'squidTree.nex')
             squidCmd = SquidIncCommand(wsTreeFilename, self.getUserId(), 
                                        squidTreeFilename)
             rules.append(squidCmd.getMakeflowRule(local=True))
