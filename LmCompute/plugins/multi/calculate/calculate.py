@@ -281,7 +281,10 @@ class PamStats(object):
             pearsonDenominator = sqrt((sumXsq - (sumX**2 / numPairs)) * (
                                                 sumYsq - (sumY**2 / numPairs)))
             
-            pearson.append(pearsonNumerator / pearsonDenominator)
+            try:
+               pearson.append(pearsonNumerator / pearsonDenominator)
+            except:
+               pearson.append(0.0)
          else:
             mpd.append(0.0)
             pearson.append(0.0)
