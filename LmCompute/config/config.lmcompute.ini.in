@@ -14,10 +14,10 @@ PYTHON_CMD: @PYBIN@
 ; ...............................................
 [LmCompute - environment]
 LM_PATH: @LMHOME@
-LM_DISK: @LMDISK@
 SCRATCH_PATH: @LMSCRATCHDISK@
 
-;; These 2 variables are identical in config.lmserver.ini
+;; These 3 variables are identical in config.lmserver.ini
+LM_DISK: @LMDISK@
 PID_PATH: @LMSCRATCHDISK@/run
 SHARED_DATA_PATH: @DATADIR_SHARED@
 
