@@ -34,7 +34,7 @@ from types import IntType, FloatType,StringType
 from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat, 
                                          ProcessType)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, MAX_WORKERS, 
-                              PUBLIC_FQDN, SHARED_DATA_PATH, 
+                              PUBLIC_FQDN, SHARED_DATA_PATH, LM_DISK,
                               SCRATCH_PATH, PID_PATH, DEFAULT_EPSG, 
                               WEBSERVICES_ROOT)
 
@@ -50,6 +50,8 @@ USER_MAKEFLOW_DIR = 'makeflow'
 # On shared data directory (shared if lifemapper-compute is also installed)
 ENV_DATA_PATH = os.path.join(SHARED_DATA_PATH,'layers')
 ARCHIVE_PATH = os.path.join(SHARED_DATA_PATH,'archive')
+# On shared sge directory
+SHARED_SGE_PATH = os.path.join(LM_DISK, 'sge')
 # On lmserver data directory
 SPECIES_DATA_PATH = os.path.join(DATA_PATH, 'species')
 TEST_DATA_PATH = os.path.join(DATA_PATH, 'test') 
@@ -83,7 +85,7 @@ WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
 WORKER_OPTIONS = '-C {}:{} -s {}'.format(PUBLIC_FQDN, CS_PORT, WORKER_PATH)
 
 WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} --workers-per-cycle=0 -E "{}" -S {}'.format(
-   MAX_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_DATA_PATH)
+   MAX_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_SGE_PATH)
 
 # Makeflow options
 MAKEFLOW_OPTIONS = '-T wq -j 5 -t 600 -u 600 -X {} -a -C {}:{}'.format(

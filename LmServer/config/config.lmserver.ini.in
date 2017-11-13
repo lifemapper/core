@@ -13,9 +13,10 @@ APP_PATH: @LMHOME@
 DATA_PATH: @DATADIR_SERVER@
 SCRATCH_PATH: @LMSCRATCHDISK@
 
-;; These 2 variables are identical in config.lmcompute.ini
+;; These 3 variables are identical in config.lmcompute.ini
 PID_PATH: @LMSCRATCHDISK@/run
 SHARED_DATA_PATH: @DATADIR_SHARED@
+LM_DISK: @LMDISK@
 
 ; .............................................................................
 [LmServer - registeredcompute]
