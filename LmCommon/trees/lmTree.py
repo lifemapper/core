@@ -66,9 +66,15 @@ class LmTree(object):
       @param labelAttribute: If this is provided, use this annotation attribute
                                 as the key instead of the label
       """
+      if labelAttribute == 'label':
+         labelMethod = lambda taxon: taxon.label
+      else:
+         labelMethod = lambda taxon: taxon.annotations.get_value(labelAttribute)
+         
       for taxon in self.tree.taxon_namespace:
          try:
-            label = getattr(taxon, labelAttribute)
+            #label = getattr(taxon, labelAttribute)
+            label = labelMethod(taxon)
             setattr(taxon, attributeName, annotationPairs[label])
             taxon.annotations.add_bound_attribute(attributeName)
          except KeyError:
@@ -87,7 +93,7 @@ class LmTree(object):
       annotations = []
       for taxon in self.tree.taxon_namespace:
          try:
-            att = getattr(taxon, annotationAttribute)
+            att = taxon.annotations.get_value(annotationAttribute)
             annotations.append((taxon.label, att))
          except:
             pass
@@ -101,11 +107,15 @@ class LmTree(object):
                                 the matrix
       @param orderedLabels: If provided, use this order of labels
       """
+      if labelAttribute == 'label':
+         labelFn = lambda taxon: taxon.label
+      else:
+         labelFn = lambda taxon: taxon.annotations.get_value(labelAttribute)
       # Get list of labels
       if orderedLabels is None:
          orderedLabels = []
          for taxon in self.tree.taxon_namespace:
-            orderedLabels.append(getattr(taxon, labelAttribute))
+            orderedLabels.append(labelFn(taxon))
       
       labelLookup = dict(
          [(orderedLabels[i], i) for i in range(len(orderedLabels))])
@@ -115,14 +125,14 @@ class LmTree(object):
       pdm = self.tree.phylogenetic_distance_matrix()
       
       for taxon1 in self.tree.taxon_namespace:
-         label = getattr(taxon1, labelAttribute)
+         label = labelFn(taxon1)
          # Check for matrix index
          try:
             idx1 = labelLookup[label]
             
             for taxon2 in self.tree.taxon_namespace:
                try:
-                  idx2 = labelLookup[getattr(taxon2, labelAttribute)]
+                  idx2 = labelLookup[labelFn(taxon2)]
                   #mrca = pdm.mrca(taxon1, taxon2)
                   dist = pdm.patristic_distance(taxon1, taxon2)
                   distMtx[idx1, idx2] = dist
@@ -206,7 +216,7 @@ class LmTree(object):
       for taxon in self.tree.taxon_namespace:
          val = None
          try:
-            val = getattr(taxon, searchAttribute)
+            val = taxon.annotations.get_value(searchAttribute)
          except:
             pass
          if val is None:
