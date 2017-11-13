@@ -67,7 +67,7 @@ def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='',
       # More splitting
       baseNames = []
       for i in range(10**width):
-         bn = (str(i) + '0'*width)[0:width]
+         bn = '{}{}'.format(basename, (str(i) + '0'*width)[0:width])
          baseNames.append((bn, os.path.join(outDir, '{}.csv'.format(bn))))
       
       bucketeerCmd = OccurrenceBucketeerCommand(basename, groupPos, inFn, 
