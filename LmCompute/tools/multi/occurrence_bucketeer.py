@@ -29,6 +29,7 @@
           02110-1301, USA.
 """
 import argparse
+import os
 
 from LmCommon.common.unicodeCsv import UnicodeReader, UnicodeWriter
 
@@ -109,7 +110,7 @@ if __name__ == '__main__':
    if args.num is not None:
       numCmp = args.num
       
-   splitIntoBuckets(args.inputFilename, args.outputBasename, 
+   splitIntoBuckets(args.inputFilename, os.path.abspath(args.outputBasename), 
                     args.groupPosition, strPos=strPos, numCmp=numCmp, 
                     headers=args.header)
    

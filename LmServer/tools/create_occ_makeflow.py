@@ -28,6 +28,7 @@
           02110-1301, USA.
 """
 import argparse
+import os
 
 from LmBackend.command.multi import (OccurrenceBucketeerCommand,
                          OccurrenceSorterCommand)#, OccurrenceSplitterCommand)
@@ -67,11 +68,13 @@ def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='',
       baseNames = []
       for i in range(10**width):
          bn = (str(i) + '0'*width)[0:width]
-         baseNames.append((bn, '{}.csv'.format(bn)))
+         baseNames.append((bn, os.path.join(outDir, '{}.csv'.format(bn))))
       
       bucketeerCmd = OccurrenceBucketeerCommand(basename, groupPos, inFn, 
                                                 position=pos, width=width, 
                                                 headerRow=headers)
+      bucketeerCmd.outputs.extend(baseNames)
+      
       rules.append(bucketeerCmd.getMakeflowRule())
       
       # Recurse
