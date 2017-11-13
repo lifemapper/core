@@ -33,7 +33,7 @@ from LmBackend.command.common import ChainCommand, SystemCommand
 from LmBackend.command.multi import (CalculateStatsCommand, 
                      EncodePhylogenyCommand, McpaAssembleCommand, 
                      McpaCorrectPValuesCommand, McpaObservedCommand, 
-                     McpaRandomCommand)
+                     McpaRandomCommand, CreateAncestralPamCommand)
 from LmBackend.command.server import (LmTouchCommand, SquidIncCommand, 
                                       StockpileCommand)
 from LmBackend.common.lmobj import LMError
@@ -315,6 +315,22 @@ class Gridset(ServiceObject): #LMMap
             # TODO: Add tree, it may already be in workspace
             try:
                statsTreeFn = squidTreeFilename
+               # TODO: Trees should probably have squids added if they exist,
+               #          Reorganize when this settles down
+               ancPamMtx = pamDict[pamId][MatrixType.ANC_PAM]
+               ancPamSuccessFilename = os.path.join(pamWorkDir, 'ancPam.success')
+               ancPamFilename = os.path.join(pamWorkDir, 'ancPam.json')
+               
+               
+               ancestralCmd = CreateAncestralPamCommand(wsPamFilename, 
+                                                        squidTreeFilename, 
+                                                        ancPamFilename)
+               ancPamCatalogCmd = StockpileCommand(ProcessType.RAD_CALCULATE,
+                                                   ancPamMtx.getId(),
+                                                   ancPamSuccessFilename,
+                                                   ancPamFilename)
+               rules.append(ancestralCmd.getMakeflowRule())
+               rules.append(ancPamCatalogCmd.getMakeflowRule(local=True))
             except:
                statsTreeFn = None
             statsCmd = CalculateStatsCommand(wsPamFilename, siteStatsFilename,

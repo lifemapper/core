@@ -170,6 +170,13 @@ class RADCaller(LMObject):
                                                   pam.gcmCode, pam.altpredCode, 
                                                   pam.dateCode)
             # TODO: Site covariance, species covariance, schluter
+            
+            # Ancestral PAM
+            pd[MatrixType.ANC_PAM] = self._getOrInsertMatrix(gridsetId, 
+                                                  MatrixType.ANC_PAM,
+                                                  ProcessType.RAD_CALCULATE,
+                                                  pam.gcmCode, pam.altpredCode,
+                                                  pam.dateCode)
          
          if doMCPA:
             # GRIM
