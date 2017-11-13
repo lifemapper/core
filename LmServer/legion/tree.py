@@ -54,6 +54,8 @@ class Tree(LmTree, ServiceObject):
       #       Maybe just populate attributes saved in DB?
       if dlocation is not None:
          LmTree.__init__(self, dlocation, schema)
+      elif self.getDLocation() is not None:
+         LmTree.__init__(self, self.getDLocation(), schema)
       self.name = name
       self._dlocation = dlocation
       self.treeMetadata = {}
