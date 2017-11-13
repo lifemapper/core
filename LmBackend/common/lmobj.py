@@ -83,6 +83,11 @@ class LMObject(object):
             return False
       else:
          pth, basename = os.path.split(fullfilename)
+         
+         # If the file path is a local file we don't need to create directories
+         if len(pth) == 0:
+            return True
+         
          try:
             os.makedirs(pth, 0775)
          except:
