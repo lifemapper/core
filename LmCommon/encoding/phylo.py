@@ -109,7 +109,7 @@ class PhyloEncoding(object):
          # All matrix indices in tree
          
          treeMatrixIndices = [mtxId for _, mtxId in self.tree.getAnnotations(
-                                                        PhyloTreeKeys.MTX_IDX)]
+                                                        PhyloTreeKeys.MTX_IDX) if mtxId is not None]
          #treeMatrixIndices = self.tree.getMatrixIndicesInClade()
          
          # Find the intersection between the two lists by creating a set for 
@@ -271,6 +271,7 @@ class PhyloEncoding(object):
       # Note: Which tip each of the lists belongs to doesn't really matter but
       #          recursion will start at the top and go to the bottom of the 
       #          tree tips
+      self.tree.tree.seed_node._set_edge_length(0.0)
       tipProps = self._buildPMatrixTipProportionList(self.tree.tree.seed_node, 
                                                      visited=[])
       
@@ -368,6 +369,8 @@ class PhyloEncoding(object):
       @see: Literature supplemental material
       """
       # We only need the P-values dictionary
+      # TODO: Is there a better way to do this so the length of the r?
+      self.tree.tree.seed_node._set_edge_length(0.0)
       _, _, pValDict = self._buildPBranchLengthValues(self.tree.tree.seed_node)
       
       # Initialize the matrix

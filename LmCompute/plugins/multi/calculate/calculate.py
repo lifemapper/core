@@ -226,11 +226,12 @@ class PamStats(object):
                   cmpVal = pdMtx.data[i, j]
                   if cmpVal > 0.0 and cmpVal < nearest:
                      nearest = cmpVal
-               print nearest
                nearestTotal += nearest
-         mntd.append(float(nearestTotal) / numSp)
+            mntd.append(float(nearestTotal) / numSp)
+         else:
+            mntd.append(0.0)
       # Set the mntd attribute
-      self.mntd = np.array(mntd).reshape((mntd.shape[0], 1))
+      self.mntd = np.array(mntd).reshape((len(mntd), 1))
    
    # ...........................
    def _calculateTreeStats(self, pdMtx):
@@ -279,13 +280,16 @@ class PamStats(object):
             pearsonDenominator = sqrt((sumXsq - (sumX**2 / numPairs)) * (
                                                 sumYsq - (sumY**2 / numPairs)))
             
-            pearson.append(pearsonNumerator / pearsonDenominator)
+            try:
+               pearson.append(pearsonNumerator / pearsonDenominator)
+            except:
+               pearson.append(0.0)
          else:
             mpd.append(0.0)
             pearson.append(0.0)
 
       # Create numpy arrays
-      numSites = mpd.shape[0]
-      self.mpd = np.array(mpd).reshape((numSites, 1))
-      self.pearson = np.array(pearson).reshape((numSites, 1))
+      numSites = len(mpd)
+      self.mpd = np.nan_to_num(np.array(mpd).reshape((numSites, 1)))
+      self.pearson = np.nan_to_num(np.array(pearson).reshape((numSites, 1)))
    

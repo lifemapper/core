@@ -140,7 +140,7 @@ class CreateAncestralPamCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), ' '.join(self.args))
 
 # .............................................................................
 class EncodeHypothesesCommand(_LmCommand):
@@ -439,7 +439,7 @@ class OccurrenceBucketeerCommand(_LmCommand):
 
    # ................................
    def __init__(self, outBasename, groupPosition, inFilename, position=None, 
-                width=None, headerRow=False):
+                width=None, headerRow=False, outDir='.'):
       """
       @summary: Construct the command object
       @param outBasename: The base name to use for output files
@@ -465,6 +465,7 @@ class OccurrenceBucketeerCommand(_LmCommand):
       self.pos = position
       self.width = width
       self.headerRow = headerRow
+      self.outDir = outDir
 
    # ................................
    def getCommand(self):
@@ -478,6 +479,8 @@ class OccurrenceBucketeerCommand(_LmCommand):
          optArgs += ' -num {}'.format(self.width)
       if self.headerRow:
          optArgs += ' -header'
+      if self.outDir:
+         optArgs += ' -o {}'.format(self.outDir)
       
       return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             optArgs, self.outBase, self.groupPos, ' '.join(self.inFiles))

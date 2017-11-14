@@ -57,7 +57,7 @@ def _getSquidsInClade(node):
    
    if node.num_child_nodes() == 2:
       leftCladeDict, leftSquids = _getSquidsInClade(node.child_nodes()[0])
-      rightCladeDict, rightSquids = _getSquidsInClade(node.chidl_nodes()[1])
+      rightCladeDict, rightSquids = _getSquidsInClade(node.child_nodes()[1])
       
       # Add to all squids
       allSquids.extend(leftSquids)
@@ -99,7 +99,7 @@ def build_ancestral_pam(pam, tree):
       squidLookup[squidHeaders[i]] = i
 
    # Get the lookup dictionary
-   cladeDict, _ = _getSquidsInClade(tree.tree)
+   cladeDict, _ = _getSquidsInClade(tree.tree.seed_node)
    
    # Initialize new matrix
    numRows = pam.data.shape[0]

@@ -38,7 +38,7 @@ DEF_CHAR = '0' # Default character
 
 # .............................................................................
 def splitIntoBuckets(inputFilenames, outputBasename, groupPos, strPos=0, 
-                     numCmp=1, headers=False):
+                     numCmp=1, headers=False, outDir='.'):
    """
    @summary: Split input files into output bucket files
    @param inputFilenames: A list of CSV filenames of input data
@@ -56,7 +56,7 @@ def splitIntoBuckets(inputFilenames, outputBasename, groupPos, strPos=0,
       # Some keys end up duplicated so only add if doesn't exist (9 can become 
       #    '900', etc)
       if not buckets.has_key(k):
-         buckets[k] = UnicodeWriter(open('{}{}.csv'.format(outputBasename, k), 'w'))
+         buckets[k] = UnicodeWriter(open(os.path.join(outDir, '{}{}.csv'.format(outputBasename, k)), 'w'))
          #buckets[k] = csv.writer(open('{}{}.csv'.format(outputBasename, k), 'w'))
 
    for fn in inputFilenames:
@@ -99,6 +99,7 @@ if __name__ == '__main__':
                                  help='How many characters to use for buckets')
    parser.add_argument('-header', dest='header', action='store_true',
                                    help='Do the input files have a header row')
+   parser.add_argument('-o', dest='outDir', type=str, help='The output directory')
    args = parser.parse_args()
    
    if args.pos is not None:
@@ -112,5 +113,5 @@ if __name__ == '__main__':
       
    splitIntoBuckets(args.inputFilename, os.path.abspath(args.outputBasename), 
                     args.groupPosition, strPos=strPos, numCmp=numCmp, 
-                    headers=args.header)
+                    headers=args.header, outDir=args.outDir)
    
