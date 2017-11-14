@@ -33,14 +33,16 @@ Current versions
 
 Update existing install
 ~~~~~~~~~~~~~~~~~~~~~~~
-#. When updating an existing install, it should always be true that the 
-   configuration rpms (rocks-lifemapper, rocks-lmcompute) have new version 
+#. Remove old rolls (without cleaning or removing individual rpms)::
+   # rocks remove roll lifemapper-server version=2017.09.20
+   
+#. (Optional) When updating an existing install, it should always be true that  
+   the configuration rpms (rocks-lifemapper, rocks-lmcompute) have new version 
    numbers, matching the code rpms (lifemapper-lmserver or lifemapper-lmcompute).  
    As long as this is true, rpms will be replaced correctly.  If it is false, 
    the configuration rpms must be manually removed so that configuration scripts 
    will be run on install. If the above is true on a lifemapper-compute 
    installation, do the same thing for every node::
-      
    # rpm -el rocks-lifemapper rocks-lmcompute
       
 
