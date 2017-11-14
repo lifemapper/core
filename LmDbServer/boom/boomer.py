@@ -138,7 +138,9 @@ class Boomer(LMObject):
             # Add MF rule for Spud execution to Master MF
             self._addRuleToMasterPotatoHead(spud, prefix='spud')
             # Gather species ARF dependency to delay start of multi-species MF
-            spudArf = spud.getArfFilename(prefix='spud')
+            spudArf = spud.getArfFilename(
+                             arfDir=self.masterPotato.getRelativeDirectory(), 
+                             prefix='spud')
             self.spudArfFnames.append(spudArf)
             # Add PAV outputs to raw potato files for triage input
             squid = spud.mfMetadata[MFChain.META_SQUID]
@@ -274,7 +276,9 @@ class Boomer(LMObject):
       """
       @summary: Create a Spud or Potato rule for the MasterPotatoHead MF 
       """
-      targetFname = mfchain.getArfFilename(prefix=prefix)
+      targetFname = mfchain.getArfFilename(
+                             arfDir=self.masterPotato.getRelativeDirectory(),
+                             prefix=prefix)
       outputFname = mfchain.getDLocation()
       # Add MF doc (existence) as dependency to run MF doc
       
@@ -288,7 +292,9 @@ class Boomer(LMObject):
                                       '-a {}'.format(outputFname)]))
       arfCmd = LmTouchCommand(targetFname)
       
-      mpCmd = ChainCommand([arfCmd, mfCmd])
+      delCmd = SystemCommand('rm', '-rf {}'.format(mfchain.getRelativeDirectory()))
+      
+      mpCmd = ChainCommand([arfCmd, mfCmd, delCmd])
       self.masterPotato.addCommands([mpCmd.getMakeflowRule(local=True)])
 
    # .............................
@@ -420,7 +426,8 @@ select * from lm_v3.lm_updateOccurrenceSet(66,NULL,
 keepWalken = not christopher.complete
 if  spud:
    # Gather species ARF dependency to delay start of multi-species MF
-   spudArf = spud.getArfFilename(prefix='spud')
+   spudArf = spud.getArfFilename(arfDir=self.masterPotato.getRelativeDirectory(), 
+                                 prefix='spud')
    chris.spudArfFnames.append(spudArf)
    # Add PAV outputs to raw potato files for triage input
    squid = spud.mfMetadata[MFChain.META_SQUID]
@@ -488,7 +495,8 @@ while not spud:
    spud, potatoInputs = boomer.christopher.startWalken()
    if spud:
       boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
-      spudArf = spud.getArfFilename(prefix='spud')
+      spudArf = spud.getArfFilename(
+                  arfDir=self.masterPotato.getRelativeDirectory(), prefix='spud')
       boomer.spudArfFnames.append(spudArf)
       for scencode, f in boomer.triagePotatoFiles.keys():
          squid = spud.mfMetadata[MFChain.META_SQUID]
