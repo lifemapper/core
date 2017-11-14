@@ -226,7 +226,6 @@ class PamStats(object):
                   cmpVal = pdMtx.data[i, j]
                   if cmpVal > 0.0 and cmpVal < nearest:
                      nearest = cmpVal
-               print nearest
                nearestTotal += nearest
             mntd.append(float(nearestTotal) / numSp)
          else:
@@ -291,6 +290,6 @@ class PamStats(object):
 
       # Create numpy arrays
       numSites = len(mpd)
-      self.mpd = np.array(mpd).reshape((numSites, 1))
-      self.pearson = np.array(pearson).reshape((numSites, 1))
+      self.mpd = np.nan_to_num(np.array(mpd).reshape((numSites, 1)))
+      self.pearson = np.nan_to_num(np.array(pearson).reshape((numSites, 1)))
    
