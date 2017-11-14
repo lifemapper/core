@@ -398,19 +398,19 @@ boomer = Boomer(configFname, log=logger)
 boomer.initializeMe()                      
 chris = boomer.christopher
 woc = chris.weaponOfChoice
-alg = christopher.algs[0]
-prjscen = christopher.prjScens[0]
+alg = chris.algs[0]
+prjscen = chris.prjScens[0]
 scribe = boomer._scribe
 borg = scribe._borg
 
-userId = chris._getBoomOrDefault('ARCHIVE_USER')
-archiveName = chris._getBoomOrDefault('ARCHIVE_NAME')
-archivePriority = chris._getBoomOrDefault('ARCHIVE_PRIORITY')
-earl = EarlJr()
-boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
-epsg = chris._getBoomOrDefault('SCENARIO_PACKAGE_EPSG')
-weaponOfChoice = chris._getOccWeaponOfChoice(userId, archiveName, epsg, 
-                                            boompath)
+# userId = chris._getBoomOrDefault('ARCHIVE_USER')
+# archiveName = chris._getBoomOrDefault('ARCHIVE_NAME')
+# archivePriority = chris._getBoomOrDefault('ARCHIVE_PRIORITY')
+# earl = EarlJr()
+# boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
+# epsg = chris._getBoomOrDefault('SCENARIO_PACKAGE_EPSG')
+# weaponOfChoice = chris._getOccWeaponOfChoice(userId, archiveName, epsg, 
+#                                             boompath)
 # SDM inputs
 minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
 algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
