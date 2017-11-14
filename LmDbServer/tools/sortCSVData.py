@@ -29,7 +29,7 @@ from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.occparse import OccDataParser
 from LmServer.common.log import ScriptLogger
 
-OUT_DELIMITER = ','
+OUT_DELIMITER = '\t'
 
 # ...............................................
 def _getOPFilename(datapath, prefix, base, run=None):
@@ -59,7 +59,8 @@ def _getSmallestKeyAndPosition(sortedFiles):
 # ...............................................
 def checkMergedFile(log, mergefname, metafname):
    chunkCount = recCount = failSortCount = failChunkCount = 0
-   bigSortedData = OccDataParser(log, mergefname, metafname)
+   bigSortedData = OccDataParser(log, mergefname, metafname, delimiter=OUT_DELIMITER)
+   bigSortedData.initializeMe()
    prevKey = bigSortedData.groupVal
    
    chunk, chunkGroup, chunkName = bigSortedData.pullCurrentChunk()
@@ -294,6 +295,7 @@ if __name__ == "__main__":
    if cmd in ('split', 'all'):   
       # Split into smaller unsorted files
       occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter)
+      occparser.initializeMe()
       groupByIdx = occparser.groupByIdx
        
       splitIntoFiles(occparser, pth, unsortedPrefix, basename, 500000)
@@ -329,13 +331,13 @@ from LmDbServer.tools.sortCSVData import *
 
 cmd = 'split'
 
-OUT_DELIMITER = ','
+OUT_DELIMITER = '\t'
 unsortedPrefix = 'chunk'
 sortedPrefix = 'smsort'
 mergedPrefix = 'sorted'
 
 datafname = '/state/partition1/lmscratch/temp/taiwan_occ.csv'
-del = '\t'
+inDelimiter = '\t'
 basepath, ext = os.path.splitext(datafname)
 pth, basename = os.path.split(basepath)
 logname = 'sortCSVData_{}_{}'.format(basename, cmd)
@@ -343,9 +345,10 @@ metafname = basepath + LMFormat.METADATA.ext
 mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename, 
                                                 LMFormat.CSV.ext))
    
-log = ScriptLogger(logname)
+log = ScriptLogger('sortCSVTest')
 
-occparser = OccDataParser(log, datafname, metafname, delimiter=del)
+occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter)
+occparser.initializeMe()
 groupByIdx = occparser.groupByIdx
  
 splitIntoFiles(occparser, pth, unsortedPrefix, basename, 500000)
@@ -354,31 +357,8 @@ print 'groupByIdx = ', groupByIdx
 
 sortFiles(groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
 
-# mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, 
-#                  metafname, maxFileSize=None)
-datapath = pth
-inputPrefix = sortedPrefix
-inIdx = 0
-mergeFile = open(mergefname, 'wb')
-csvwriter = csv.writer(mergeFile, delimiter=OUT_DELIMITER)
-
-sortedFiles = []
-srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
-while os.path.exists(srtFname):
-   op = OccDataParser(log, srtFname, metafname)
-   op.initializeMe()
-   sortedFiles.append(op)
-   inIdx += 1
-   srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
-   
-
-csvwriter.writerow(sortedFiles[0].header)
-smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
-while pos is not None:
-   # Output records in this file with smallKey 
-   _popChunkAndWrite(csvwriter, sortedFiles[pos])
-      
-   smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
+mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, 
+                 metafname, maxFileSize=None)
 
 checkMergedFile(log, mergefname, metafname)
 
