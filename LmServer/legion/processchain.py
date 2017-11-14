@@ -145,16 +145,19 @@ class MFChain(ProcessObject):
       self._dlocation = None
 
 # ...............................................
-   def getArfFilename(self, prefix='mf'):
+   def getArfFilename(self, arfDir=None, prefix='mf'):
       """
       @summary: Return temporary dummy filename written to indicate completion  
                 of this MFChain.
+      @param arfDir: A directory to put the arf file. Else use relative dir
       """
       #TODO: Update with something more specific
       #earlJr = EarlJr()
       #pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
       #fname = os.path.join(pth, '{}_{}.arf'.format(prefix, self.objId))
-      fname = os.path.join(self.getRelativeDirectory(), 'arf', 
+      if arfDir is None:
+         arfDir = self.getRelativeDirectory()
+      fname = os.path.join(arfDir, 'arf', 
                            '{}_{}.arf'.format(prefix, self.objId))
       return fname
 
