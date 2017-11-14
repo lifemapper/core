@@ -108,8 +108,8 @@ class PhyloEncoding(object):
          pamMatrixIndices = range(self.pam.data.shape[1])
          # All matrix indices in tree
          
-         treeMatrixIndices = [mtxId for squid, mtxId in self.tree.getAnnotations(
-                                                        PhyloTreeKeys.MTX_IDX) if squid is not None]
+         treeMatrixIndices = [mtxId for _, mtxId in self.tree.getAnnotations(
+                                                        PhyloTreeKeys.MTX_IDX) if mtxId is not None]
          #treeMatrixIndices = self.tree.getMatrixIndicesInClade()
          
          # Find the intersection between the two lists by creating a set for 
