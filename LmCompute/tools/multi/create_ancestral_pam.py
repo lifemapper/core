@@ -75,7 +75,7 @@ def _getSquidsInClade(node):
       
    else:
       try:
-         allSquids.append(getattr(node.taxon, PhyloTreeKeys.SQUID))
+         allSquids.append(node.taxon.annotations.get_value(PhyloTreeKeys.SQUID))
       except:
          pass
          
