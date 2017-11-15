@@ -52,7 +52,8 @@ def splitIntoBuckets(inputFilenames, outputBasename, groupPos, strPos=0,
    numBuckets = BASE_BUCKET_NUM ** numCmp
    buckets = {}
    for i in range(numBuckets):
-      k = (str(i) + DEF_CHAR*numCmp)[0:numCmp]
+      #k = (str(i) + DEF_CHAR*numCmp)[0:numCmp]
+      k = (DEF_CHAR*numCmp + str(i))[-numCmp:]
       # Some keys end up duplicated so only add if doesn't exist (9 can become 
       #    '900', etc)
       if not buckets.has_key(k):
