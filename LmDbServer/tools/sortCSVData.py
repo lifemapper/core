@@ -29,6 +29,8 @@ from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.occparse import OccDataParser
 from LmServer.common.log import ScriptLogger
 
+OUT_DELIMITER = '\t'
+
 # ...............................................
 def _getOPFilename(datapath, prefix, base, run=None):
    basename = '%s_%s' % (prefix, base)
@@ -57,7 +59,8 @@ def _getSmallestKeyAndPosition(sortedFiles):
 # ...............................................
 def checkMergedFile(log, mergefname, metafname):
    chunkCount = recCount = failSortCount = failChunkCount = 0
-   bigSortedData = OccDataParser(log, mergefname, metafname)
+   bigSortedData = OccDataParser(log, mergefname, metafname, delimiter=OUT_DELIMITER)
+   bigSortedData.initializeMe()
    prevKey = bigSortedData.groupVal
    
    chunk, chunkGroup, chunkName = bigSortedData.pullCurrentChunk()
@@ -120,7 +123,7 @@ def splitIntoFiles(occparser, datapath, prefix, basename, maxFileSize):
       chunk = occparser.getSizeChunk(maxFileSize)
       fname = _getOPFilename(datapath, prefix, basename, run=idx)
       newFile = open(fname, 'wb')
-      csvwriter = csv.writer(newFile, delimiter='\t')
+      csvwriter = csv.writer(newFile, delimiter=OUT_DELIMITER)
       csvwriter.writerow(occparser.header)
       for rec in chunk:
          csvwriter.writerow(rec)
@@ -138,7 +141,7 @@ def sortFiles(groupByIdx, datapath, inprefix, outprefix, basename):
       # Read rows
       unsRows = []
       with open(infname, 'r') as csvfile:
-         occreader = csv.reader(csvfile, delimiter='\t')
+         occreader = csv.reader(csvfile, delimiter=OUT_DELIMITER)
          header = occreader.next()
          while True:
             try: 
@@ -153,7 +156,7 @@ def sortFiles(groupByIdx, datapath, inprefix, outprefix, basename):
       srtRows = sortRecs(unsRows, groupByIdx)
       # Write sorted records to file
       with open(outfname, 'wb') as csvfile:
-         occwriter = csv.writer(csvfile, delimiter='\t')
+         occwriter = csv.writer(csvfile, delimiter=OUT_DELIMITER)
          occwriter.writerow(header)
          for rec in srtRows:
             occwriter.writerow(rec)
@@ -168,7 +171,7 @@ def _switchFiles(openFile, csvwriter, datapath, prefix, basename, run=None):
    # Open next output sorted file
    newFname = _getOPFilename(datapath, prefix, basename, run=run)
    newFile = open(newFname, 'wb')
-   csvwriter = csv.writer(newFile, delimiter='\t')
+   csvwriter = csv.writer(newFile, delimiter=OUT_DELIMITER)
    return newFile, csvwriter
 
 # ...............................................
@@ -207,13 +210,14 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
       outIdx = 0
    # Open output sorted file
    mergeFile = open(mergefname, 'wb')
-   csvwriter = csv.writer(mergeFile, delimiter='\t')
+   csvwriter = csv.writer(mergeFile, delimiter=OUT_DELIMITER)
 
    # Open all input split files
    sortedFiles = []
    srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
    while os.path.exists(srtFname):
-      op = OccDataParser(log, srtFname, metafname)
+      op = OccDataParser(log, srtFname, metafname, delimiter=OUT_DELIMITER)
+      op.initializeMe()
       sortedFiles.append(op)
       inIdx += 1
       srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
@@ -251,57 +255,111 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
 def usage():
    output = """
    Usage:
-      sortCSVData [split | merge | check]
+      sortCSVData inputDelimiter inputCSVFile [split | sort | merge | check]
    """
    print output
 
 # .............................................................................
 if __name__ == "__main__":   
-#    WORKPATH = '/tank/data/input/species/'
-#    OCCURRENCE_BASENAME = 'seasia_gbif.meta'
-#    USER_OCCURRENCE_CSV = 'gbif_borneo_simple.csv'
-#    unsortedPrefix = 'chunk'
-#    sortedPrefix = 'smallsort'
-#    mergedPrefix = 'sorted'
-#    basename = os.path.splitext(USER_OCCURRENCE_CSV)[0]
-   
-   WORKPATH = '/tank/data/Biotaphy/NA_proj/fulldump'
-   OCCURRENCE_BASENAME = 'seasia_gbif.meta'
-   USER_OCCURRENCE_CSV = 'occurrence.csv'
-   unsortedPrefix = 'chunk'
-   sortedPrefix = 'smallsort'
-   mergedPrefix = 'sorted'
-   basename = os.path.splitext(USER_OCCURRENCE_CSV)[0]
-    
-   if len(sys.argv) == 2:
-      log = ScriptLogger('occparse_%s' % sys.argv[1])
+   if len(sys.argv) in (3,4):
       csv.field_size_limit(sys.maxsize)
+      if len(sys.argv) == 3:
+         cmd = 'all'
+      else:
+         cmd = sys.argv[3]
    else:
       usage()
-    
-   datafname = os.path.join(WORKPATH, OCCURRENCE_BASENAME + LMFormat.CSV.ext)
-   metafname = os.path.join(WORKPATH, OCCURRENCE_BASENAME + LMFormat.METADATA.ext)
-   mergefname = os.path.join(WORKPATH, '%s_%s.csv' % (mergedPrefix, basename))
 
-   if sys.argv[1] == 'sort':   
+   inDelimiter = sys.argv[1]
+   if inDelimiter == ',':
+      print 'delimiter is comma'
+   else:
+      inDelimiter = '\t'
+   datafname = sys.argv[2]
+   
+   unsortedPrefix = 'chunk'
+   sortedPrefix = 'smsort'
+   mergedPrefix = 'sorted'
+
+   basepath, ext = os.path.splitext(datafname)
+   pth, basename = os.path.split(basepath)
+   logname = 'sortCSVData_{}_{}'.format(basename, cmd)
+   metafname = basepath + LMFormat.METADATA.ext
+   mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename, 
+                                                   LMFormat.CSV.ext))
+   if not os.path.exists(datafname) or not os.path.exists(metafname):
+      print('Files {} and {} must exist'.format(datafname, metafname))
+      exit()
+      
+   log = ScriptLogger(logname)
+   if cmd in ('split', 'all'):   
       # Split into smaller unsorted files
-      occparser = OccDataParser(log, datafname, metafname)
+      occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter)
+      occparser.initializeMe()
       groupByIdx = occparser.groupByIdx
        
-      splitIntoFiles(occparser, WORKPATH, unsortedPrefix, basename, 500000)
+      splitIntoFiles(occparser, pth, unsortedPrefix, basename, 500000)
       occparser.close()
       print 'groupByIdx = ', groupByIdx
+
+   elif cmd in ('sort', 'all'):   
               
       # Sort smaller files
-      sortFiles(groupByIdx, WORKPATH, unsortedPrefix, sortedPrefix, basename)
+      sortFiles(groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
 
+   elif cmd in ('merge', 'all'):   
       # Merge all data for production system into multiple subset files
-      mergeSortedFiles(log, mergefname, WORKPATH, sortedPrefix, basename, 
+      mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, 
                        metafname, maxFileSize=None)
 
-   elif sys.argv[1] == 'check':
+   elif cmd == 'check':
       # Check final output (only for single file now)
       checkMergedFile(log, mergefname, metafname)
    else:
       usage()
 
+"""
+import csv
+import os
+import sys
+
+from LmCommon.common.lmconstants import LMFormat
+from LmCommon.common.occparse import OccDataParser
+from LmServer.common.log import ScriptLogger
+
+from LmDbServer.tools.sortCSVData import *
+
+cmd = 'split'
+
+OUT_DELIMITER = '\t'
+unsortedPrefix = 'chunk'
+sortedPrefix = 'smsort'
+mergedPrefix = 'sorted'
+
+datafname = '/state/partition1/lmscratch/temp/taiwan_occ.csv'
+inDelimiter = '\t'
+basepath, ext = os.path.splitext(datafname)
+pth, basename = os.path.split(basepath)
+logname = 'sortCSVData_{}_{}'.format(basename, cmd)
+metafname = basepath + LMFormat.METADATA.ext
+mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename, 
+                                                LMFormat.CSV.ext))
+   
+log = ScriptLogger('sortCSVTest')
+
+occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter)
+occparser.initializeMe()
+groupByIdx = occparser.groupByIdx
+ 
+splitIntoFiles(occparser, pth, unsortedPrefix, basename, 500000)
+occparser.close()
+print 'groupByIdx = ', groupByIdx
+
+sortFiles(groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
+
+mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, 
+                 metafname, maxFileSize=None)
+
+checkMergedFile(log, mergefname, metafname)
+
+"""
