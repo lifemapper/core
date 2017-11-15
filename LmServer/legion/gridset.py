@@ -350,10 +350,10 @@ class Gridset(ServiceObject): #LMMap
                                               divSuccessFilename,
                                               divStatsFilename)
             
-            rules.extend([statsCmd.getMakeflowRule(),
-                          spSiteStatsCmd.getMakeflowRule(),
-                          spSpeciesStatsCmd.getMakeflowRule(),
-                          spDiversityStatsCmd.getMakeflowRule()])
+            rules.extend([statsCmd.getMakeflowRule(local=True),
+                          spSiteStatsCmd.getMakeflowRule(local=True),
+                          spSpeciesStatsCmd.getMakeflowRule(local=True),
+                          spDiversityStatsCmd.getMakeflowRule(local=True)])
             
          # MCPA
          if doMCPA:
@@ -503,7 +503,7 @@ class Gridset(ServiceObject): #LMMap
             mcpaOutStockpileCmd = StockpileCommand(ProcessType.MCPA_ASSEMBLE,
                                     mcpaOutMtx.getId(), mcpaOutSuccessFilename, 
                                     wsMcpaOutFilename)
-            rules.append(mcpaOutStockpileCmd.getMakeflowRule())
+            rules.append(mcpaOutStockpileCmd.getMakeflowRule(local=True))
 
       return rules
    
