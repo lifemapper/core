@@ -75,9 +75,10 @@ def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='',
       touchFn = os.path.join(outDir, 'touch.out')
       touchCmd = LmTouchCommand(touchFn)
       rules.append(touchCmd.getMakeflowRule(local=True))
-      bucketeerCmd = OccurrenceBucketeerCommand(basename, groupPos, inFn, 
+      bucketeerCmd = OccurrenceBucketeerCommand(os.path.join(outDir, basename), 
+                                                groupPos, inFn, 
                                                 position=pos, width=width, 
-                                                headerRow=headers, outDir=outDir)
+                                                headerRow=headers)
       bucketeerCmd.inputs.append(touchFn)
       bucketeerCmd.outputs.extend([bFn for _, bFn in baseNames])
       
