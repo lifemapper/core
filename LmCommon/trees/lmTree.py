@@ -200,8 +200,7 @@ class LmTree(object):
       """
       try:
          minBL, maxBL = self.tree.minmax_leaf_distance_from_root()
-         if round(minBL, 7) == round(maxBL, 7):
-            return True
+         return np.isclose(minBL, maxBL)
       except:
          pass
       return False
