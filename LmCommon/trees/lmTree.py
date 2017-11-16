@@ -57,6 +57,17 @@ class LmTree(object):
    # Public functions
    # ..........................................................................
    # ..............................
+   def addNodeLabels(self):
+      """
+      @summary: Add labels to the internal nodes of a tree
+      @todo: Look to see if some or all nodes already have labels 
+      """
+      i = 0
+      for node in self.tree.nodes():
+         node.label = 'Node_{}'.format(i)
+         i += 1
+         
+   # ..............................
    def annotateTree(self, attributeName, annotationPairs, 
                     labelAttribute='label'):
       """

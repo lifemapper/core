@@ -2,11 +2,11 @@
 @summary: Add a tree and biogeographic hypotheses to a grid set
 """
 import argparse
-from mx.DateTime import gmt
 import os
 import sys
 
-from LmCommon.common.lmconstants import JobStatus, MatrixType, ProcessType
+from LmCommon.common.lmconstants import (JobStatus, MatrixType, PhyloTreeKeys,
+                                         ProcessType)
 from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
 from LmServer.base.utilities import isCorrectUser
 from LmServer.common.log import ConsoleLogger
@@ -47,6 +47,23 @@ def addToGridset(gridsetId, treeFilename=None, treeName=None, hypotheses=None,
    # If a tree was provided
    if treeFilename and treeName:
       t = Tree(treeName, dlocation=treeFilename, userId=gs.getUserId())
+
+      # Add squids
+      userId = gs.getUserId()
+      
+      squidDict = {}
+      for label in t.getLabels():
+         # TODO: Do we always need to do this?
+         taxLabel = label.replace(' ', '_')
+         sno = scribe.getTaxon(userId=userId, taxonName=taxLabel)
+         if sno is not None:
+            squidDict[label] = sno.squid
+
+         t.annotateTree(PhyloTreeKeys.SQUID, squidDict)
+   
+      # Add node labels
+      t.addNodeLabels()
+      
       insertedTree = scribe.findOrInsertTree(t)
       insertedTree.clearDLocation()
       insertedTree.updateModtime()
@@ -58,8 +75,6 @@ def addToGridset(gridsetId, treeFilename=None, treeName=None, hypotheses=None,
       gs.tree = insertedTree
       gs.updateModtime()
       scribe.updateObject(gs)
-      
-      
    
    scribe.closeConnections()
 
