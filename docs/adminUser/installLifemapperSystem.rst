@@ -98,11 +98,10 @@ Install nodes from Frontend
 
 Install bugfixes
 ----------------
-#. Compute Nodes:
-   * Check/fix node group permissions on /state/partition1/lmscratch ::  
-     # rocks run host compute "hostname; ls -lah /state/partition1/"
-     # rocks run host compute "chgrp -R lmwriter /state/partition1/lmscratch"
-     # rocks run host compute "chmod -R g+ws /state/partition1/lmscratch"
+#. Compute Nodes - check/fix node group permissions on /state/partition1/lmscratch ::  
+   # rocks run host compute "hostname; ls -lah /state/partition1/"
+   # rocks run host compute "chgrp -R lmwriter /state/partition1/lmscratch"
+   # rocks run host compute "chmod -R g+ws /state/partition1/lmscratch"
       
 Look for Errors
 ---------------
@@ -116,20 +115,8 @@ Look for Errors
    runs) and will be useful if the script must be re-run manually for testing.
 #. **Clean compute nodes**  
    
-Check LmCompute
-~~~~~~~~~~~~~~~
-
-#. Check LmCompute logfiles
-
-   * /tmp/post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
-   * files in /state/partition1/lmscratch/log
-     * initLMcompute.log 
-     * installComputeCronJobs.log
-     * seedData.log (seedData must be run manually by user after reboot)
-
 Check LmServer
 ~~~~~~~~~~~~~~
-
 #. Check LmServer logfiles
 
    * /tmp/post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
@@ -138,7 +125,7 @@ Check LmServer
      * installServerCronJobs.log
      * fillDB
      
-#. **Test database contents** ::  
+#. Check database contents ::  
 
    # export PGPASSWORD=`grep admin /opt/lifemapper/rocks/etc/users | awk '{print $2}'`
    # psql -U admin -d borg
@@ -146,64 +133,73 @@ Check LmServer
    Type "help" for help.
    borg=> select scenariocode, userid from scenario;
 
+Check LmCompute
+~~~~~~~~~~~~~~~
+#. Check LmCompute logfiles
+
+   * /tmp/post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
+   * files in /state/partition1/lmscratch/log
+     * initLMcompute.log 
+     * installComputeCronJobs.log
+     * seedData.log (seedData must be run manually by user after reboot)
+
 Start Archive Booming
 ~~~~~~~~~~~~~~~~~~~~~
-#. Start daboom daemon and run for awhile to test operation::
+#. BOOM manually for direct testing
+   * Run boom daemon (as lmwriter) with output BOOM config file ::  
+    [lmwriter]$ $PYTHON /opt/lifemapper/LmDbServer/boom/daboom.py \
+                --config_file=<NEW_CONFIG_FILE>  \
+                start
 
-   [root@notyeti-193 lifemapper]# su - lmwriter
-   [lmwriter@notyeti-193 lifemapper]$ cd /opt/lifemapper
-   [lmwriter@notyeti-193 lifemapper]$ $PYTHON LmDbServer/boom/daboom.py \
-          --config_file=/state/partition1/lm/data/archive/kubi/BOOM_Archive.ini \
-          start
+   * If needed, cleanup by deleting the makeflow record from the database and 
+     file from the filesystem.
+      borg=> SELECT * from mfprocess where metadata like '%GRIM%';
 
 Configure for new/test data
 ---------------------------
-#. Environmental data
-   #. Server 
-      #. Run getClimateData bash script with scen package name.  This downloads
-         data package and sets permissions.  (test data = `biotaphyCONUS`) ::  
-         # /opt/lifemapper/rocks/bin/getClimateData <SCEN_PACKAGE_NAME>
+#. Download and install test environmental data for both server and compute, 
+   species data and BOOM parameter file for server.  Bash script getTestPackage 
+   is in lmserver roll
+   * There is one good test package, named **test_sax**
+   * Run getTestPackage bash script with test package name.  This downloads
+     data package, installs all into correct directories and sets permissions.::  
+     # /opt/lifemapper/rocks/bin/getTestPackage <TEST_PACKAGE_NAME>
 
-   #. Compute 
-      * Run seedData with scen package name.  This builds files in alternate data 
-        formats and creates/fills the LmCompute sqlite3 database with file 
-        locations so data does not need to be pulled from the server for 
-        computations. (test data = `biotaphyCONUS`) ::  
-        # /opt/lifemapper/rocks/bin/seedData <SCEN_PACKAGE_NAME>
-
-#. Update Archive (boom) construction parameters
-   #. Server 
-      #. Run fillDB bash script (as root) with archive parameter file pointing to
-         alternate env and species data.  When running this way, the script 
-         will not create a makeflow record and file. (Test data = 
-         /opt/lifemapper/LmTest/data/sdm/biotaphy_heuchera_CONUS.boom.ini) ::  
-         # /opt/lifemapper/rocks/bin/fillDB <BOOM_PARAM_FILE>
-     
-      #. fillDB Results: 
-         * output a BOOM config file to be used as input to the boomer script. 
-           (For test parameters this will be 
-           /share/lm/data/archive/biotaphy/biotaphy_heuchera_CONUS.ini) 
-         * print BOOM config filename to the screen and to the output logfile.
-         * create a user workspace if needed, place new shapegrid in it, fix permissions
-         * (NOT in this case) insert a makeflow record and file to run the boomer script.  
-     
-#. Species data
-   #. Server
-      * Copy species data into new user dataspace (created by fillDB) (Test 
-        data = /opt/lifemapper/LmTest/data/sdm/heuchera*) ::  
-         # cp <SPECIES_DATA_FILES> /share/lm/data/archive/biotaphy/
+#. Copy species data for server into user dataspace (handled in getTestPackage) ::  
+   # cp <SPECIES_DATA_FILES> /share/lm/data/archive/<user>/
            
-#. Boom 
-   #. You may manually run the boom script as a daemon on the test dataset at 
-      the command prompt for more direct testing.  The test data will boom 
-      quickly. Run boom daemon (as lmwriter) with new test config file 
-      (created above, /opt/lifemapper/LmTest/data/sdm/biotaphy_heuchera_CONUS.boom.ini) ::  
-      # $PYTHON /opt/lifemapper/LmDbServer/boom/daboom.py --config_file=<NEW_CONFIG_FILE>  start
+#. Download and install environmental data for both server and compute (handled 
+   in getTestPackage). Bash script getClimateData is in lmserver roll.
+   * Run getClimateData bash script with scen package name.  This downloads
+     data package and sets permissions.::  
+     # /opt/lifemapper/rocks/bin/getClimateData <SCEN_PACKAGE_NAME>
 
-   #. If needed, cleanup by deleting the makeflow record from the database and 
-      file from the filesystem.
-      borg=> SELECT * from mfprocess where metadata like '%GRIM%';
+#. Catalog environmental data for Compute (handled in getTestPackage): 
+   * Run seedData (as root) with scen package name.  This builds files in  
+     alternate data formats and creates/fills the LmCompute sqlite3 database 
+     with file locations so data does not need to be pulled from the server for 
+     computations. ::  
+     # /opt/lifemapper/rocks/bin/seedData <SCEN_PACKAGE_NAME>
 
+#. Catalog BOOM archive parameters, including environmental data, for Server
+   * Run fillDB bash script (as root) with boom parameter file pointing to
+     chosen environmental and species data. 
+   * If you installed data with getTestPackage, the boom parameter file
+     will be in the /state/partition1/lmscratch/temp directory
+   * When running this way, the script will not create a makeflow record and file. ::  
+     # /opt/lifemapper/rocks/bin/fillDB <BOOM_PARAM_FILE>
+     
+   * Results of fillDB: 
+     * User data directory
+       * create if needed
+       * output a BOOM config file, to be used as input to the boomer script. 
+       * output new shapegrid 
+       * fix permissions
+     * print BOOM config filename to the screen and to the output logfile.
+     * (NOT in this case) insert a makeflow record and file to run the boomer script.  
+     
+#. BOOM manually for direct testing
+   * See instructions in **Start Archive Booming** above
          
 Clear user data
 ---------------
