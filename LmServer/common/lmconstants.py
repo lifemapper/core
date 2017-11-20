@@ -88,7 +88,7 @@ WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} --workers-per-cyc
    MAX_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_SGE_PATH)
 
 # Makeflow options
-MAKEFLOW_OPTIONS = '-T wq -j 5 -t 600 -u 600 -X {} -a -C {}:{}'.format(
+MAKEFLOW_OPTIONS = '--local-cores=2 -T wq -t 600 -u 600 -X {} -a -C {}:{}'.format(
    WORKER_PATH, PUBLIC_FQDN, CS_PORT) 
 
 # Remove old worker directories command
