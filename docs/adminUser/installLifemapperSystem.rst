@@ -34,7 +34,11 @@ Current versions
 Update existing install
 ~~~~~~~~~~~~~~~~~~~~~~~
 #. Remove old rolls (without cleaning or removing individual rpms)::
-   # rocks remove roll lifemapper-server version=2017.09.20
+   # rocks remove roll lifemapper-server lifemapper-compute
+   
+#. Remove old elgis repository rpm (it will cause yum to fail and pull old 
+   pgbouncer, postgresql, rpms from the roll.  TODO: update static rpms in roll) ::
+   # rpm -evl --quiet --nodeps elgis-release
    
 #. (Optional) When updating an existing install, it should always be true that  
    the configuration rpms (rocks-lifemapper, rocks-lmcompute) have new version 
@@ -70,8 +74,8 @@ run the cleanRoll scripts for each roll.
 
     # rocks run roll lifemapper-server > add-server.sh
     # rocks run roll lifemapper-compute > add-compute.sh
-    # bash add-server.sh 2>&1 | tee add-server.out
-    # bash add-compute.sh 2>&1 | tee add-compute.out
+    # bash add-server.sh 2>&1 | tee add-server.2017.11.20.2.out
+    # bash add-compute.sh 2>&1 | tee add-compute.2017.11.20.2.out
 
 #. **IF** installing compute roll first or alone, manually set the 
    LM_dbserver and LM_webserver attributes.  If this server will also
