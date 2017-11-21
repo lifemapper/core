@@ -91,7 +91,7 @@ class GbifPointsCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return ''.format(CMD_PYBIN, self.getScript(),
+      return '{} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
                self.csvFile, self.pointCount, self.outFile, self.bigFile, 
                self.maxPoints)
 
