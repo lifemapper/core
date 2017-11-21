@@ -452,9 +452,10 @@ class BisonWoC(_SpeciesWeaponOfChoice):
          sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
          if sciName is not None:
             occ = self._createOrResetOccurrenceset(sciName, tsnCount,
-                                                               taxonSourceKey=tsn)
-         self.log.info('Processed occset {}, tsn {}, with {} points; next start {}'
-                       .format(occ.getId(), tsn, tsnCount, self.nextStart))
+                                                   taxonSourceKey=tsn)
+         if occ:
+            self.log.info('Processed occset {}, tsn {}, with {} points; next start {}'
+                          .format(occ.getId(), tsn, tsnCount, self.nextStart))
       return occ
 
 # ...............................................

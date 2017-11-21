@@ -223,7 +223,10 @@ class ChristopherWalken(LMObject):
 #          gbifTax = self._getBoomOrDefault('GBIF_TAXONOMY_FILENAME')
 #          gbifTaxFile = os.path.join(SPECIES_DATA_PATH, gbifTax)
          gbifOcc = self._getBoomOrDefault('GBIF_OCCURRENCE_FILENAME')
+         # GBIF data may be for user, or public archive (in SPECIES_DATA_PATH)
          gbifOccFile = os.path.join(SPECIES_DATA_PATH, gbifOcc)
+         if not os.path.exists(gbifOccFile):
+            gbifOccFile = os.path.join(boompath, gbifOcc)
          gbifProv = self._getBoomOrDefault('GBIF_PROVIDER_FILENAME')
          gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          weaponOfChoice = GBIFWoC(self._scribe, userId, archiveName, 
