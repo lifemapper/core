@@ -160,28 +160,22 @@ Configure for new/test data
 #. Download and install test environmental data for both server and compute, 
    species data and BOOM parameter file for server.  Bash script getTestPackage 
    is in lmserver roll
-   * There is one good test package, named **test_sax**
+   * There are 2 good test packages, named **test_sax** and **test_heuchera**
    * Run getTestPackage bash script with test package name.  This downloads
      data package, installs all into correct directories and sets permissions.::  
      # /opt/lifemapper/rocks/bin/getTestPackage <TEST_PACKAGE_NAME>
 
-#. Copy species data for server into user dataspace (handled in getTestPackage) ::  
+#. (ONLY if not using getTestPackage) Copy species data for server into user dataspace ::  
    # cp <SPECIES_DATA_FILES> /share/lm/data/archive/<user>/
            
-#. Download and install environmental data for both server and compute (handled 
-   in getTestPackage). Bash script getClimateData is in lmserver roll.
+#. (ONLY if not using getTestPackage) Download and install environmental data 
+   for both server and compute. Bash script getClimateData is in lmserver roll.
    * Run getClimateData bash script with scen package name.  This downloads
      data package and sets permissions.::  
      # /opt/lifemapper/rocks/bin/getClimateData <SCEN_PACKAGE_NAME>
 
-#. Catalog environmental data for Compute (handled in getTestPackage): 
-   * Run seedData (as root) with scen package name.  This builds files in  
-     alternate data formats and creates/fills the LmCompute sqlite3 database 
-     with file locations so data does not need to be pulled from the server for 
-     computations. ::  
-     # /opt/lifemapper/rocks/bin/seedData <SCEN_PACKAGE_NAME>
-
-#. Catalog BOOM archive parameters, including environmental data, for Server
+#. (ONLY if not using getTestPackage) Catalog BOOM archive parameters, including 
+   environmental data, for Server
    * Run fillDB bash script (as root) with boom parameter file pointing to
      chosen environmental and species data. 
    * If you installed data with getTestPackage, the boom parameter file
@@ -197,6 +191,13 @@ Configure for new/test data
        * fix permissions
      * print BOOM config filename to the screen and to the output logfile.
      * (NOT in this case) insert a makeflow record and file to run the boomer script.  
+
+#. Catalog environmental data for Compute: 
+   * Run seedData (as root) with scen package name.  This builds files in  
+     alternate data formats and creates/fills the LmCompute sqlite3 database 
+     with file locations so data does not need to be pulled from the server for 
+     computations. ::  
+     # /opt/lifemapper/rocks/bin/seedData <SCEN_PACKAGE_NAME>
      
 #. BOOM manually for direct testing
    * See instructions in **Start Archive Booming** above

@@ -195,9 +195,9 @@ class BOOMFiller(LMObject):
    def _warnPermissions(self):
       if not isCorrectUser():
          print("""
-               When not running this script as `lmwriter`, make sure to fix
+               When not running this {} as `lmwriter`, make sure to fix
                permissions on the newly created shapegrid {}
-               """.format(self.gridname))
+               """.format(self.name, self.gridname))
          
    # ...............................................
    def _getDb(self):
@@ -1299,7 +1299,9 @@ def initBoom(paramFname, isInitial=True):
    
    # Write config file for this archive
    filler.writeConfigFile()
-   filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
+   filler.scribe.log.info('******')
+   filler.scribe.log.info('Use {} as input to daboom daemon'.format(filler.outConfigFilename))   
+   filler.scribe.log.info('******')
          
    if not isInitial:
       # Create MFChain to run Boomer on these inputs IFF not the initial archive 
