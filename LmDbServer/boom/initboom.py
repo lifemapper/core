@@ -151,6 +151,8 @@ class BOOMFiller(LMObject):
       """
       # Configured codes for existing Scenarios
       if self.modelScenCode is not None:
+         SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()      
+         masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
          self.scenPackageMetaFilename = None
          # Fill or reset epsgcode, mapunits, gridbbox
          self.scenPkg, self.epsg, self.mapunits = self._checkScenarios()
@@ -526,10 +528,8 @@ class BOOMFiller(LMObject):
          
    # ...............................................
    def _createScenarios(self):
-      # Imports SPMETA
+      # TODO move these next 2 commands into fillScenarios
       SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
-      
-      # Mask layer
       masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
 
       epsg = elyrMeta['epsg']
@@ -1299,9 +1299,11 @@ def initBoom(paramFname, isInitial=True):
    
    # Write config file for this archive
    filler.writeConfigFile()
+   filler.scribe.log.info('')
    filler.scribe.log.info('******')
-   filler.scribe.log.info('Use {} as input to daboom daemon'.format(filler.outConfigFilename))   
+   filler.scribe.log.info('--config_file={}'.format(filler.outConfigFilename))   
    filler.scribe.log.info('******')
+   filler.scribe.log.info('')
          
    if not isInitial:
       # Create MFChain to run Boomer on these inputs IFF not the initial archive 

@@ -758,9 +758,10 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
                                                       len(dataChunk), 
                                                       taxonSourceKey=speciesKey, 
                                                       data=dataChunk)
-            self.log.info('Processed occset {} gbif key {} with {} records; next start {}'
-                          .format(occ.getId(), speciesKey, len(dataChunk), 
-                                  self.nextStart))
+            if occ:
+               self.log.info('Processed occset {} gbif key {} with {} records; next start {}'
+                             .format(occ.getId(), speciesKey, len(dataChunk), 
+                                     self.nextStart))
       return occ
    
 # ...............................................
