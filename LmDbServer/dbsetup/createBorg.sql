@@ -346,6 +346,7 @@ create table lm_v3.SDMProject
 );  
 CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProject(statusModTime);
 CREATE INDEX idx_prjStatus ON lm_v3.SDMProject(status);
+CREATE INDEX idx_layerid ON lm_v3.SDMProject(layerid);
 
 -- -------------------------------
 -- Process and Output Object (1-to-1 join with Layer)
