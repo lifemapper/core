@@ -172,13 +172,20 @@ user = 'idigbio'
 pth = earl.createDataPath(user, LMFileType.BOOM_CONFIG)
 configFname = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
                                               LMFormat.CONFIG.ext))   
-# configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini' 
+# configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini'  
+configFname = '/share/lm/data/archive/tester/gbif500ktest.ini
 
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 log = ScriptLogger('debug_dabomb', level=logging.INFO)
 
 boomer = Boomer(configFname, assemblePams=True, log=log)
+boomer._scribe.openConnections()
+boomer.christopher = ChristopherWalken(boomer.configFname,
+                                              scribe=boomer._scribe)
+boomer.christopher.initializeMe()                                   
+                                              
+
 boomer.initializeMe()
 
 boomer.keepWalken

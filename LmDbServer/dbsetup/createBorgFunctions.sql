@@ -2716,6 +2716,11 @@ DECLARE
    currCount int := -1;
    total int;
 BEGIN
+   -- MFProcesses
+	DELETE FROM lm_v3.MFProcess WHERE userid = usr;
+	GET DIAGNOSTICS total = ROW_COUNT;
+   RAISE NOTICE 'Deleted % MF processes for User %', total, usr;
+
    SELECT * INTO total FROM lm_v3.lm_clearComputedUserData(usr);
    
    -- Gridsets (Cascades to Matrix)

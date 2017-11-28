@@ -151,6 +151,8 @@ class BOOMFiller(LMObject):
       """
       # Configured codes for existing Scenarios
       if self.modelScenCode is not None:
+         SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()      
+         masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
          self.scenPackageMetaFilename = None
          # Fill or reset epsgcode, mapunits, gridbbox
          self.scenPkg, self.epsg, self.mapunits = self._checkScenarios()
@@ -195,9 +197,9 @@ class BOOMFiller(LMObject):
    def _warnPermissions(self):
       if not isCorrectUser():
          print("""
-               When not running this script as `lmwriter`, make sure to fix
+               When not running this {} as `lmwriter`, make sure to fix
                permissions on the newly created shapegrid {}
-               """.format(self.gridname))
+               """.format(self.name, self.gridname))
          
    # ...............................................
    def _getDb(self):
@@ -526,10 +528,8 @@ class BOOMFiller(LMObject):
          
    # ...............................................
    def _createScenarios(self):
-      # Imports SPMETA
+      # TODO move these next 2 commands into fillScenarios
       SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
-      
-      # Mask layer
       masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
 
       epsg = elyrMeta['epsg']
@@ -711,24 +711,24 @@ class BOOMFiller(LMObject):
       return layers, staticLayers
 
    # ...............................................
-   def _findFileFor(self, ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
+   def _findFileFor(self, ltmeta, scencode, gcm=None, tm=None, altPred=None):
       isStatic = False
       ltfiles = ltmeta['files']
       if len(ltfiles) == 1:
          isStatic = True
          relFname = ltfiles.keys()[0]
-         if obsOrPred in ltfiles[relFname]:
+         if scencode in ltfiles[relFname]:
             return relFname, isStatic
       else:
          for relFname, kList in ltmeta['files'].iteritems():
-            if obsOrPred in kList:
+            if scencode in kList:
                if gcm == None and tm == None and altPred == None:
                   return relFname, isStatic
                elif (gcm in kList and tm in kList and
                      (altPred is None or altPred in kList)):
                   return relFname, isStatic
       print('Failed to find layertype {} for {}, gcm {}, altpred {}, time {}'
-            .format(ltmeta['title'], obsOrPred, gcm, altPred, tm))
+            .format(ltmeta['title'], scencode, gcm, altPred, tm))
       return None, None
          
    # ...............................................
@@ -1299,7 +1299,11 @@ def initBoom(paramFname, isInitial=True):
    
    # Write config file for this archive
    filler.writeConfigFile()
-   filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
+   filler.scribe.log.info('')
+   filler.scribe.log.info('******')
+   filler.scribe.log.info('--config_file={}'.format(filler.outConfigFilename))   
+   filler.scribe.log.info('******')
+   filler.scribe.log.info('')
          
    if not isInitial:
       # Create MFChain to run Boomer on these inputs IFF not the initial archive 
@@ -1387,7 +1391,30 @@ filler.initializeInputs()
 filler = BOOMFiller()
 filler.initializeInputs()
 
-
+filler.usr
+filler.usrEmail,
+filler.archiveName,
+filler.priority,
+filler.scenPackageName,
+filler.modelScenCode,
+filler.prjScenCodeList,
+filler.dataSource,
+filler.occIdFname,
+filler.gbifFname,
+filler.idigFname,
+filler.idigOccSep,
+filler.bisonFname,
+filler.userOccFname,
+filler.userOccSep,   
+filler.minpoints,
+filler.algorithms,
+filler.assemblePams,
+filler.gridbbox,
+filler.cellsides,
+filler.cellsize,
+filler.gridname, 
+filler.intersectParams, 
+filler.maskAlg
 # ...............................................
 # Data for this instance (Taxonomy, algorithms, default users)
 # ...............................................

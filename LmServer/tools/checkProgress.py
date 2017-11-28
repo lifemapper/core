@@ -34,6 +34,16 @@ from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.lmconstants import ReferenceType
 
+oneHourAgo = "{0:.2f}".format((DT.gmt() - ONE_HOUR).mjd)
+oneDayAgo = "{0:.2f}".format((DT.gmt() - ONE_DAY).mjd)
+oneMonthAgo = "{0:.2f}".format((DT.gmt() - ONE_MONTH).mjd)
+
+DISPLAY = {oneHourAgo: 'Hour', 
+           oneDayAgo: 'Day', 
+           oneMonthAgo: 'Month', None: 'Total'}
+USERS = (DEFAULT_POST_USER, PUBLIC_USER)
+TIMES = (oneHourAgo, oneMonthAgo, oneDayAgo, None)
+
 # ...............................................
 def notifyPeople(logger, subject, message, recipients=TROUBLESHOOTERS):
    if not (isinstance(recipients, ListType) 
@@ -46,52 +56,65 @@ def notifyPeople(logger, subject, message, recipients=TROUBLESHOOTERS):
       logger.error('Failed to notify {} about {}'.format(str(recipients), subject))
 
 # ...............................................
-def _getProgress(scribe, usr, aftertime):
+def _getProgress(scribe, usr, aftertime, afterStatus, beforeStatus):
    progress = {}
    if aftertime is not None:
       aftertime = float(aftertime)
-   for otype in ReferenceType.statusTypes():
+   for otype in ReferenceType.progressTypes():
       if otype == ReferenceType.OccurrenceSet:
          count = scribe.countOccurrenceSets(userId=usr, afterTime=aftertime, 
-                                            afterStatus=JobStatus.COMPLETE, 
-                                            beforeStatus=JobStatus.COMPLETE)
+                                            afterStatus=afterStatus, 
+                                            beforeStatus=beforeStatus)
       elif otype == ReferenceType.SDMProjection:
          count = scribe.countSDMProjects(userId=usr, afterTime=aftertime, 
-                                         afterStatus=JobStatus.COMPLETE, 
-                                         beforeStatus=JobStatus.COMPLETE)
+                                         afterStatus=afterStatus, 
+                                         beforeStatus=beforeStatus)
       elif otype == ReferenceType.MatrixColumn:
          count = scribe.countMatrixColumns(userId=usr, afterTime=aftertime, 
-                                           afterStatus=JobStatus.COMPLETE, 
-                                           beforeStatus=JobStatus.COMPLETE)
+                                           afterStatus=afterStatus, 
+                                           beforeStatus=beforeStatus)
       elif otype == ReferenceType.Matrix:
          count = scribe.countMatrices(userId=usr, afterTime=aftertime, 
-                                      afterStatus=JobStatus.COMPLETE, 
-                                      beforeStatus=JobStatus.COMPLETE)
+                                      afterStatus=afterStatus, 
+                                      beforeStatus=beforeStatus)
       progress[otype] = count
    return progress
 
 # ...............................................
-def getCompletionStats(scribe):
-   oneHourAgo = "{0:.2f}".format((DT.gmt() - ONE_HOUR).mjd)
-   oneDayAgo = "{0:.2f}".format((DT.gmt() - ONE_DAY).mjd)
-   oneMonthAgo = "{0:.2f}".format((DT.gmt() - ONE_MONTH).mjd)
-   display = {oneHourAgo: 'Hour', oneDayAgo: 'Day', oneMonthAgo: 'Month', None: 'Total'}
-   USERS = (DEFAULT_POST_USER, PUBLIC_USER)
-   TIMES = (oneMonthAgo, oneDayAgo, None)
-   outputLines = []
+def getStats(scribe, 
+             afterStatus=JobStatus.COMPLETE, 
+             beforeStatus=None):
+   outputLines = [] 
+   if afterStatus == beforeStatus:
+      stat = afterStatus
+   elif beforeStatus is None:
+      stat = '>= {}'.format(afterStatus)
+   else:
+      stat = '{} - {}'.format(afterStatus, beforeStatus)
+   title = 'STATUS {}'.format(stat)
+   header = ['', '***********************************', title, 
+                  '***********************************']
+   outputLines.extend(header)
    for aftertime in TIMES:
-      outputLines.append(display[aftertime])
+      tmHeader = ('', '**************', DISPLAY[aftertime],'**************')
+      outputLines.extend(tmHeader)
+      print '\n'.join(outputLines)
       for usr in USERS:
-         theseStats = _getProgress(scribe, usr, aftertime)
-         outputLines.append('')
-         outputLines.append('User: {}'.format(usr))
-         for rt in ReferenceType.statusTypes():
-            outputLines.append('   {}: {}'.format(ReferenceType.name(rt), theseStats[rt]))
-         outputLines.append('\n')
-      outputLines.append('\n')
+         theseLines = []
+         theseStats = _getProgress(scribe, usr, aftertime, 
+                                   afterStatus, beforeStatus)
+         theseLines.append('')
+         theseLines.append('User: {}'.format(usr))
+         for rt in ReferenceType.progressTypes():
+            theseLines.append('   {}: {}'.format(ReferenceType.name(rt), 
+                                                 theseStats[rt]))
+         print '\n'.join(theseLines)
+         outputLines.extend(theseLines)
+      outputLines.append('')
    output = '\n'.join(outputLines)
    return output
             
+
 # ...............................................
 # ...............................................
 if __name__ == '__main__':
@@ -100,7 +123,9 @@ if __name__ == '__main__':
    scribe = BorgScribe(logger)
    scribe.openConnections()
    
-   output = getCompletionStats(scribe)
+   output = getStats(scribe, afterStatus=JobStatus.COMPLETE, 
+                     beforeStatus=JobStatus.COMPLETE)
+   output = getStats(scribe, afterStatus=JobStatus.GENERAL_ERROR)
    notifyPeople(logger, 'LM database stats', output)
    logger.info(output)
    scribe.closeConnections()
@@ -121,13 +146,25 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.lmconstants import ReferenceType
 from LmServer.tools.checkProgress import *
 
+oneHourAgo = "{0:.2f}".format((DT.gmt() - ONE_HOUR).mjd)
+oneDayAgo = "{0:.2f}".format((DT.gmt() - ONE_DAY).mjd)
+oneMonthAgo = "{0:.2f}".format((DT.gmt() - ONE_MONTH).mjd)
+
+DISPLAY = {oneHourAgo: 'Hour', 
+           oneDayAgo: 'Day', 
+           oneMonthAgo: 'Month', None: 'Total'}
+USERS = (DEFAULT_POST_USER, PUBLIC_USER)
+TIMES = (oneHourAgo, oneMonthAgo, oneDayAgo, None)
+
 basename = 'testit'
 logger = ScriptLogger(basename)
 scribe = BorgScribe(logger)
 scribe.openConnections()
 
-output = getCompletionStats(scribe)
-notifyPeople('LM database stats', output)
+output = getStats(scribe, afterStatus=JobStatus.COMPLETE, 
+                  beforeStatus=JobStatus.COMPLETE)
+output = getStats(scribe, afterStatus=JobStatus.GENERAL_ERROR)
+
 logger.info(output)
 scribe.closeConnections()
 
