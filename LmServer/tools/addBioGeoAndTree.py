@@ -59,7 +59,7 @@ def addToGridset(gridsetId, treeFilename=None, treeName=None, hypotheses=None,
          if sno is not None:
             squidDict[label] = sno.squid
 
-         t.annotateTree(PhyloTreeKeys.SQUID, squidDict)
+      t.annotateTree(PhyloTreeKeys.SQUID, squidDict)
    
       # Add node labels
       t.addNodeLabels()
