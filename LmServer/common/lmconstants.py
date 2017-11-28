@@ -295,11 +295,14 @@ class ReferenceType:
       return False
 
    @staticmethod
-   def statusTypes():
+   def progressTypes():
       return [ReferenceType.OccurrenceSet, ReferenceType.SDMProjection, 
-              ReferenceType.ShapeGrid, ReferenceType.MatrixColumn, 
-              ReferenceType.Matrix]
+              ReferenceType.MatrixColumn, ReferenceType.Matrix]
 
+   @staticmethod
+   def statusTypes():
+      tps = ReferenceType.progressTypes().append(ReferenceType.ShapeGrid)
+      return tps
    
 
 from LmCommon.common.lmconstants import DWCNames
