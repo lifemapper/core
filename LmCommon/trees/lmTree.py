@@ -27,6 +27,7 @@
           02110-1301, USA.
 @todo: Should we provide a method to collapse clades that only have one child?
 @todo: Should pruning a tree collapse clades automatically?
+@todo: Add method to remove annotations
 """
 import dendropy
 import numpy as np
@@ -69,7 +70,7 @@ class LmTree(object):
          
    # ..............................
    def annotateTree(self, attributeName, annotationPairs, 
-                    labelAttribute='label'):
+                    labelAttribute='label', update=False):
       """
       @summary: Annotates the nodes of the tree
       @param attributeName: The name of the annotation attribute to add
@@ -86,8 +87,16 @@ class LmTree(object):
          try:
             #label = getattr(taxon, labelAttribute)
             label = labelMethod(taxon)
-            setattr(taxon, attributeName, annotationPairs[label])
-            taxon.annotations.add_bound_attribute(attributeName)
+            
+            if taxon.annotations.get_value(attributeName) is not None:
+               if update:
+                  # Remove existing values
+                  for ann in taxon.annotations.findall(name=attributeName):
+                     taxon.annotations.remove(ann)
+                  # Set new value
+                  taxon.annotations.add_new(attributeName, annotationPairs[label])
+            else:
+               taxon.annotations.add_new(attributeName, annotationPairs[label])
          except KeyError:
             # Pass if a label is not found in the dictionary, otherwise fail
             pass
