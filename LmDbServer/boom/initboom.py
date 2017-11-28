@@ -711,24 +711,24 @@ class BOOMFiller(LMObject):
       return layers, staticLayers
 
    # ...............................................
-   def _findFileFor(self, ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
+   def _findFileFor(self, ltmeta, scencode, gcm=None, tm=None, altPred=None):
       isStatic = False
       ltfiles = ltmeta['files']
       if len(ltfiles) == 1:
          isStatic = True
          relFname = ltfiles.keys()[0]
-         if obsOrPred in ltfiles[relFname]:
+         if scencode in ltfiles[relFname]:
             return relFname, isStatic
       else:
          for relFname, kList in ltmeta['files'].iteritems():
-            if obsOrPred in kList:
+            if scencode in kList:
                if gcm == None and tm == None and altPred == None:
                   return relFname, isStatic
                elif (gcm in kList and tm in kList and
                      (altPred is None or altPred in kList)):
                   return relFname, isStatic
       print('Failed to find layertype {} for {}, gcm {}, altpred {}, time {}'
-            .format(ltmeta['title'], obsOrPred, gcm, altPred, tm))
+            .format(ltmeta['title'], scencode, gcm, altPred, tm))
       return None, None
          
    # ...............................................
@@ -1391,7 +1391,30 @@ filler.initializeInputs()
 filler = BOOMFiller()
 filler.initializeInputs()
 
-
+filler.usr
+filler.usrEmail,
+filler.archiveName,
+filler.priority,
+filler.scenPackageName,
+filler.modelScenCode,
+filler.prjScenCodeList,
+filler.dataSource,
+filler.occIdFname,
+filler.gbifFname,
+filler.idigFname,
+filler.idigOccSep,
+filler.bisonFname,
+filler.userOccFname,
+filler.userOccSep,   
+filler.minpoints,
+filler.algorithms,
+filler.assemblePams,
+filler.gridbbox,
+filler.cellsides,
+filler.cellsize,
+filler.gridname, 
+filler.intersectParams, 
+filler.maskAlg
 # ...............................................
 # Data for this instance (Taxonomy, algorithms, default users)
 # ...............................................

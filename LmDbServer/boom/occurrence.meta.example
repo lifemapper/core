@@ -39,47 +39,27 @@
 #
 # .............................................................................
 
-  # Field names
-  gbifid, gbifid, integer, UniqueID
-  datasetkey, datasetkey, string 
-  occurrenceid, occurid, string
-  kingdom, kingdom, string
-  phylum, phylum, string
-  class, class, string
-  order, order, string
-  family, family, string
-  genus, genus, string
-  species, species, string, TaxaName
-  infraspecificepithet, isepithet, string 
-  taxonrank, taxonrank, string, SUBSPECIES, SPECIES
-  scientificname, sciname, string
-  countrycode, cntrycode, string
-  locality, locality, string
-  publishingorgkey, puborgkey, string
-  decimallatitude, dec_lat, real, Latitude
-  decimallongitude, dec_long, real, Longitude
-  elevation, elevation, real
-  elevationaccuracy, elev_acc, real
-  depth, depth, real
-  depthaccuracy, depth_acc, real
-  eventdate, eventdate, string
-  day, day, integer
-  month, month, integer
-  year, year, integer
-  taxonkey, taxonkey, integer, GroupBy
-  specieskey, specieskey, integer
-  basisofrecord, basisofrec, string
-  institutioncode, inst_code, string
-  collectioncode, coll_code, string
-  catalognumber, catnum, string
-  recordnumber, recnum, string
-  identifiedby, idby, string
-  rights, rights, string
-  rightsholder, rightshold, string
-  recordedby, rec_by, string
-  typestatus, typestatus, string
-  establishmentmeans, estabmeans, string
-  lastinterpreted, lastinterp, string
-  mediatype, mediatype, string
-  issue, issue, string
+0, gbifid, integer, uniqueid
+1, occurid, integer
+2, taxonkey, integer, groupby
+3, datasetkey, string
+4, puborgkey, string
+5, basisofrec, string
+6, kingdomkey, integer
+7, phylumkey, integer
+8, classkey, integer
+9, orderkey, integer
+10, familykey, integer
+11, genuskey, integer
+12, specieskey, integer
+13, sciname, string, taxaname
+14, dec_lat, real, latitude
+15, dec_long, real, longitude
+16, day, integer
+17, month, integer
+18, year, integer
+19, rec_by, string
+20, inst_code, string
+21, coll_code, string
+22, catnum, string
 
