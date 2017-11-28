@@ -256,21 +256,37 @@ class ChristopherWalken(LMObject):
             useGBIFTaxonIds = True
             processType = ProcessType.IDIGBIO_TAXA_OCCURRENCE
             occDelimiter = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
+            
             occname = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
-            occData = os.path.join(SPECIES_DATA_PATH, occname)
-            # Path containing multiple csv files, get the first one
-            if os.path.isfile(occData):
-               occCSV = occData
-            else:
-               fnames = glob.glob(os.path.join(occData, 
-                                               '*{}'.format(LMFormat.CSV.ext)))
-            if len(fnames) > 0:
-               occCSV = fnames[0]
-               if len(fnames) > 1:
-                  self.moreDataToProcess = True
-            else:
-               occCSV = None
-            occMeta = IDIG_DUMP.METADATA
+            occInstalled = os.path.join(SPECIES_DATA_PATH, occname)
+            occUser = os.path.join(boompath, occname)
+            # Check for data installed into species path 
+            occCSV = None
+            if os.path.exists(occInstalled + LMFormat.CSV.ext):
+               occCSV = occInstalled + LMFormat.CSV.ext
+               occMeta = occInstalled + LMFormat.METADATA.ext
+            elif os.path.exists(occUser + LMFormat.CSV.ext):
+               occCSV = occUser + LMFormat.CSV.ext
+               occMeta = IDIG_DUMP.METADATA
+               
+            # IDIG_OCCURRENCE_DATA may be a directory containing multiple csv files
+            if occCSV is None:
+               if os.path.exists(occInstalled):
+                  pthname = occInstalled
+                  occMeta = IDIG_DUMP.METADATA
+               elif os.path.exists(occUser):
+                  pthname = occUser
+                  occMeta = pthname + LMFormat.METADATA.ext
+               else:
+                  raise LMError('Failed to find file or directory {} in {} or {}'
+                                .format(SPECIES_DATA_PATH, boompath))
+               fnames = glob.glob(os.path.join(pthname, '*' + LMFormat.CSV.ext))
+               if len(fnames) > 0:
+                  occCSV = fnames[0]
+                  if len(fnames) > 1:
+                     self.moreDataToProcess = True
+               else:
+                  occCSV = None
          # User data, anything not above
          else:
             useGBIFTaxonIds = False
