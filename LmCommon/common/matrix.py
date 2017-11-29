@@ -242,7 +242,7 @@ class Matrix(object):
       writeObj[HEADERS_KEY] = self.headers
       writeObj[DATA_KEY] = ArrayStream(self.data)
       
-      json.dump(writeObj, flo, indent=3)
+      json.dump(writeObj, flo, indent=3, default=float)
    
    # ...........................
    def setColumnHeaders(self, headers):
