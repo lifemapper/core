@@ -63,6 +63,8 @@ class MattDaemon(Daemon):
                 Workers can be located anywhere, but at least one should 
                 probably run locally for local processes like database updates. 
    """
+   debug = False
+   
    # .............................
    def initialize(self):
       """
@@ -241,7 +243,10 @@ class MattDaemon(Daemon):
          self.stopCatalogServer()
       except:
          pass
-      
+   
+   # .............................
+   def setDebug(self, flag):
+      self.debug = flag
       
    # .............................
    def startCatalogServer(self):
@@ -317,7 +322,7 @@ class MattDaemon(Daemon):
       
       mfRelDir = mfObj.getRelativeDirectory()
       
-      if mfRelDir is not None:
+      if mfRelDir is not None and not self.debug:
          mfWsDir = os.path.join(WORKER_PATH, mfRelDir)
          self.log.debug('Attempting to delete: {}'.format(mfWsDir))
          try:
@@ -361,6 +366,8 @@ if __name__ == "__main__":
                            description="Controls a pool of Makeflow processes",
                            version="1.0.0")
    
+   parser.add_argument('-d', dest='debug', action='store_true', 
+                       help='Enable debugging mode (will not delete outputs)')
    parser.add_argument('cmd', choices=[DaemonCommands.START, 
                                        DaemonCommands.STOP, 
                                        DaemonCommands.RESTART],
@@ -370,6 +377,9 @@ if __name__ == "__main__":
 
    mfDaemon = MattDaemon(MATT_DAEMON_PID_FILE, 
                log=LmServerLogger("mattDaemon", addConsole=True, addFile=True))
+   
+   # Set debugging
+   mfDaemon.setDebug(args.debug)
 
    if args.cmd.lower() == DaemonCommands.START:
       print "Start"
