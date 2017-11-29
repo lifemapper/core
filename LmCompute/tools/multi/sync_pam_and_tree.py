@@ -72,7 +72,7 @@ def prunePamAndTree(pam, tree):
       metadata['pruned_PAM_squids'] = prunedPAMSquids
 
    # Add matrix indices to tree
-   squidDict = dict(enumerate(pam.getColumnHeaders()))
+   squidDict = dict([(v, k) for k, v in enumerate(pam.getColumnHeaders())])
    tree.annotateTree(PhyloTreeKeys.MTX_IDX, squidDict, 
                      labelAttribute=PhyloTreeKeys.SQUID)
    # Prune tips not in PAM
