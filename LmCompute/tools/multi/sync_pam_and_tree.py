@@ -61,6 +61,7 @@ def prunePamAndTree(pam, tree):
       if not pamSquids[i] in treeSquids:
          delCols.append(i)
          prunedPAMSquids.append(pamSquids[i])
+      else:
          goodPAMSquids.append(pamSquids[i])
    
    # If we need to, prune the PAM
