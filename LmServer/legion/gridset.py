@@ -351,7 +351,7 @@ class Gridset(ServiceObject): #LMMap
                                               divSuccessFilename,
                                               divStatsFilename)
             
-            rules.extend([statsCmd.getMakeflowRule(local=True),
+            rules.extend([statsCmd.getMakeflowRule(),
                           spSiteStatsCmd.getMakeflowRule(local=True),
                           spSpeciesStatsCmd.getMakeflowRule(local=True),
                           spDiversityStatsCmd.getMakeflowRule(local=True)])
