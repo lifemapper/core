@@ -27,7 +27,7 @@ import csv
 import os
 import sys
 import StringIO
-from types import DictionaryType, DictType, ListType, TupleType
+from types import DictionaryType, DictType
 
 from LmCommon.common.lmconstants import (ENCODING, OFTInteger, OFTReal, 
                                          OFTString, LMFormat)
@@ -44,9 +44,7 @@ class OccDataParser(object):
    FIELD_ROLE_GEOPOINT = 'geopoint'
    FIELD_ROLE_GROUPBY = 'groupby'
    FIELD_ROLE_TAXANAME = 'taxaname'
-   REQUIRED_FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
-                           FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME]
-   FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
+   FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, FIELD_ROLE_GEOPOINT,
                   FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME, FIELD_ROLE_IDENTIFIER]
 
    def __init__(self, logger, data, metadata, delimiter=','):
@@ -331,20 +329,21 @@ class OccDataParser(object):
                         pass
                      # Second value is short fieldname, 10 chars or less
                      name = parts[1]
-                     # Third value is string/real/integer
+                     # Third value is string/real/integer or None to ignore
                      ogrtype = OccDataParser.getOgrFieldType(parts[2])
-                     fieldmeta[key] = {'name': name, 'type': ogrtype}
-                     if len(parts) >= 4: 
-                        rest = parts[3:]
-                        # If there are 4 values, last one is the role this 
-                        # field plays in the data: 
-                        #   Longitude, Latitude, Geopoint, GroupBy, TaxaName, UniqueID
-                        if rest[0].lower() in OccDataParser.FIELD_ROLES:
-                           fieldmeta[key]['role'] = rest[0].lower()
-                           rest = rest[1:]
-                        # Remaining values are acceptable values for this field
-                        if len(rest) >= 1:
-                           fieldmeta[key]['acceptedVals'] = rest
+                     if ogrtype is not None:
+                        fieldmeta[key] = {'name': name, 'type': ogrtype}
+                        if len(parts) >= 4: 
+                           rest = parts[3:]
+                           # If there are 4 values, last one is the role this 
+                           # field plays in the data: 
+                           #   Longitude, Latitude, Geopoint, GroupBy, TaxaName, UniqueID
+                           if rest[0].lower() in OccDataParser.FIELD_ROLES:
+                              fieldmeta[key]['role'] = rest[0].lower()
+                              rest = rest[1:]
+                           # Remaining values are acceptable values for this field
+                           if len(rest) >= 1:
+                              fieldmeta[key]['acceptedVals'] = rest
          except Exception, e:
             raise Exception('Failed to evaluate contents of metadata file {}'
                             .format(metadataFname))
@@ -458,14 +457,16 @@ class OccDataParser(object):
    @staticmethod
    def getOgrFieldType(typeString):
       typestr = typeString.lower()
-      if typestr == 'integer':
+      if typestr == 'none':
+         return None
+      elif typestr in ('int', 'integer'):
          return OFTInteger
       elif typestr == 'string':
          return OFTString
       elif typestr == 'real':
          return OFTReal
       else:
-         raise Exception('Unsupported field type {} (requires int, string, real)'
+         raise Exception('Unsupported field type {} (requires None, int, string, real)'
                          .format(typeString))
    
    # ...............................................

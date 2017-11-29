@@ -259,33 +259,33 @@ class ChristopherWalken(LMObject):
             occname = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
             occInstalled = os.path.join(SPECIES_DATA_PATH, occname)
             occUser = os.path.join(boompath, occname)
-            # Check for data installed into species path 
+            
+            # Check for CSV file installed into species or user path 
             occCSV = None
             if os.path.exists(occInstalled + LMFormat.CSV.ext):
-               occCSV = occInstalled + LMFormat.CSV.ext
-               occMeta = occInstalled + LMFormat.METADATA.ext
+               occBasename = occInstalled + LMFormat.CSV.ext
             elif os.path.exists(occUser + LMFormat.CSV.ext):
-               occCSV = occUser + LMFormat.CSV.ext
-               occMeta = IDIG_DUMP.METADATA
+               occBasename = occUser
+            occCSV = occBasename + LMFormat.CSV.ext
                
-            # IDIG_OCCURRENCE_DATA may be a directory containing multiple csv files
+            # Check for directory containing csv files in species or user path 
             if occCSV is None:
                if os.path.exists(occInstalled):
-                  pthname = occInstalled
-                  occMeta = IDIG_DUMP.METADATA
+                  occBasename = occInstalled
                elif os.path.exists(occUser):
-                  pthname = occUser
-                  occMeta = pthname + LMFormat.METADATA.ext
+                  occBasename = occUser
                else:
                   raise LMError('Failed to find file or directory {} in {} or {}'
                                 .format(SPECIES_DATA_PATH, boompath))
-               fnames = glob.glob(os.path.join(pthname, '*' + LMFormat.CSV.ext))
+
+               fnames = glob.glob(os.path.join(occBasename, '*' + LMFormat.CSV.ext))
                if len(fnames) > 0:
                   occCSV = fnames[0]
                   if len(fnames) > 1:
                      self.moreDataToProcess = True
-               else:
-                  occCSV = None
+
+            # Metadata file should be present with csv file/s 
+            occMeta = occBasename + LMFormat.METADATA.ext
          # User data, anything not above
          else:
             useGBIFTaxonIds = False
