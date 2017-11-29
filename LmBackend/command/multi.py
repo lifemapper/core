@@ -675,4 +675,4 @@ class SyncPamAndTreeCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), ' '.join(self.args))
