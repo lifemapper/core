@@ -164,19 +164,14 @@ from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT,
 from LmServer.common.localconstants import POINT_COUNT_MAX
 from LmBackend.common.cmd import MfRule
 from LmServer.common.lmconstants import SnippetOperations
+from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
+                                         Priority)
 
 SPUD_LIMIT = 100
 
-earl = EarlJr()
-user = 'idigbio'
-pth = earl.createDataPath(user, LMFileType.BOOM_CONFIG)
-configFname = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
-                                              LMFormat.CONFIG.ext))   
-# configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini'  
-configFname = '/share/lm/data/archive/tester/gbif500ktest.ini
+configFname = '/share/lm/data/archive/tester/gbif500ktest.ini'
+configFname = '/share/lm/data/archive/biotaphytest/dirty_plants.ini'
 
-secs = time.time()
-timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 log = ScriptLogger('debug_dabomb', level=logging.INFO)
 
 boomer = Boomer(configFname, assemblePams=True, log=log)
@@ -184,10 +179,7 @@ boomer._scribe.openConnections()
 boomer.christopher = ChristopherWalken(boomer.configFname,
                                               scribe=boomer._scribe)
 boomer.christopher.initializeMe()                                   
-                                              
-
 boomer.initializeMe()
-
 boomer.keepWalken
 chris = boomer.christopher
 woc = boomer.christopher.weaponOfChoice
