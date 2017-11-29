@@ -242,6 +242,7 @@ class LmTree(object):
             pruneTaxa.append(taxon)
       
       self.tree.prune_taxa(pruneTaxa)
+      self.tree.purge_taxon_namespace()
                
    # ..............................   
    def resolvePolytomies(self):
