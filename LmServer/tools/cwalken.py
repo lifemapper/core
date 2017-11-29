@@ -254,7 +254,7 @@ class ChristopherWalken(LMObject):
          # iDigBio data
          if datasource == SpeciesDatasource.IDIGBIO:
             useGBIFTaxonIds = True
-            processType = ProcessType.IDIGBIO_TAXA_OCCURRENCE
+#             processType = ProcessType.USER_TAXA_OCCURRENCE
             occDelimiter = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
             
             occname = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
@@ -290,7 +290,7 @@ class ChristopherWalken(LMObject):
          # User data, anything not above
          else:
             useGBIFTaxonIds = False
-            processType = ProcessType.USER_TAXA_OCCURRENCE
+#             processType = ProcessType.USER_TAXA_OCCURRENCE
             occData = self._getBoomOrDefault('USER_OCCURRENCE_DATA')
             occDelimiter = self._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
             occCSV = os.path.join(boompath, occData + LMFormat.CSV.ext)
@@ -299,7 +299,7 @@ class ChristopherWalken(LMObject):
          weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
                                   epsg, expDate, occCSV, occMeta, 
                                   occDelimiter, logger=self.log, 
-                                  processType=processType,
+                                  processType=ProcessType.USER_TAXA_OCCURRENCE,
                                   useGBIFTaxonomy=useGBIFTaxonIds,
                                   taxonSourceName=taxonSourceName)
          
