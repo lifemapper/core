@@ -285,7 +285,7 @@ class StockpileCommand(_LmCommand):
 
    # ................................
    def __init__(self, pType, objectId, successFilename, objOutputFilenames, 
-                status=None, statusFilename=None):
+                status=None, statusFilename=None, metadataFilename=None):
       """
       @summary: Construct the command object
       @param pType: The process type of the outputs
@@ -296,6 +296,7 @@ class StockpileCommand(_LmCommand):
       @param status: An optional object status to update the database with
       @param statusFilename: The location of a file that contains status 
                                 information for the object
+      @param metadataFilename: The file location of metadata about this object
       """
       _LmCommand.__init__(self)
       
@@ -316,6 +317,10 @@ class StockpileCommand(_LmCommand):
       if statusFilename is not None:
          self.optArgs += ' -f {}'.format(statusFilename)
          self.inputs.append(statusFilename)
+         
+      if metadataFilename is not None:
+         self.inputs.append(metadataFilename)
+         self.optArgs += ' -m {}'.format(metadataFilename)
 
    # ................................
    def getCommand(self):

@@ -240,7 +240,7 @@ class Matrix(object):
       """
       writeObj = {}
       writeObj[HEADERS_KEY] = self.headers
-      writeObj[DATA_KEY] = self.data.tolist()
+      writeObj[DATA_KEY] = ArrayStream(self.data)
       
       json.dump(writeObj, flo, indent=3)
    
@@ -393,21 +393,48 @@ class Matrix(object):
       for row in csvGenerator():
          flo.write("{0}\n".format(','.join([str(v) for v in row])))
          
+# .............................................................................
+class ArrayStream(list):
+   """
+   @summary: Generator class for a numpy array for JSON serialization
+   @note: This is done to save memory rather than creating a list of the entire
+             array / matrix.  It is used by the JSON encoder to write the data
+             to file
+   """
+   # ...........................
+   def __init__(self, x):
+      """
+      @summary: Constructor
+      @param x: The numpy array to stream
+      """
+      self.x = x
+      self.myLen = self.x.shape[0]
+      
+   # ...........................
+   def __iter__(self):
+      """
+      @summary: Iterator for array
+      """
+      return self.gen()
+
+   # ...........................
+   def __len__(self):
+      """
+      @summary: Length function
+      """
+      return self.myLen
    
-   # Initialize an array
-   # Update headers
-   # Insert row
-   # Get row / column shortcuts
-   # Insert column / etc
-   # Update row / column / etc by index or by header name
-   
-   
-   # To consider
-   #   Data could be none?
-   #   PAVs
-   #   How to read row indices from a shapegrid?
-   #   Missing headers?
-   #   Multiple header columns
-   #   Should headers overlap?
-   #   What happens when headers don't match?
-   
+   # ...........................
+   def gen(self):
+      """
+      @summary: Generator function.  Loop over array and create ArrayStrems for
+                   sub arrays
+      """
+      n = 0
+      
+      while n < self.myLen:
+         if isinstance(self.x[n], np.ndarray):
+            yield ArrayStream(self.x[n])
+         else:
+            yield self.x[n]
+         n += 1

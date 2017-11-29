@@ -88,7 +88,7 @@ WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} --workers-per-cyc
    MAX_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_SGE_PATH)
 
 # Makeflow options
-MAKEFLOW_OPTIONS = '-T wq -j 5 -t 600 -u 600 -X {} -a -C {}:{}'.format(
+MAKEFLOW_OPTIONS = '--local-cores=2 -T wq -t 600 -u 600 -X {} -a -C {}:{}'.format(
    WORKER_PATH, PUBLIC_FQDN, CS_PORT) 
 
 # Remove old worker directories command
@@ -1091,8 +1091,8 @@ ATT_MAXENT_PARAMS = {'responsecurves':
                          {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
                      'jackknife': 
                          {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
-                     'outputformat': # 0 - raw, 1 - logistic, 2 - cumulative
-                         {'type' : IntType, 'min' : 0, 'max' : 2, 'default' : 1},
+                     'outputformat': # 0 - raw, 1 - logistic, 2 - cumulative, 3 - cloglog
+                         {'type' : IntType, 'min' : 0, 'max' : 3, 'default' : 3},
                      'randomseed': 
                          {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
                      'logscale': 
