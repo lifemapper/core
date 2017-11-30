@@ -59,10 +59,10 @@ if __name__ == "__main__":
    
 """
 $PYTHON /opt/lifemapper/LmCompute/tools/single/user_points.py \
-        /share/lm/data/archive/biotaphy/000/000/006/963/pt_6963.csv \
-        /share/lm/data/archive/biotaphy/saxifragales.meta \
-        /tmp/mf_7125/pt_6963/pt_6963.shp \
-        /tmp/mf_7125/pt_6963/bigpt_6963.shp \
+        /share/lm/data/archive/biotaphytest/000/000/006/277/pt_6277.csv \
+        /share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta \
+        /tmp/mf_6418/pt_6277/pt_6277.shp \
+        /tmp/mf_6418/pt_6277/bigpt_6277.shp \
         500
 
 
@@ -75,24 +75,33 @@ from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
+from LmCompute.plugins.single.occurrences.csvOcc import parseCsvData
 
-pointCsvFn = '/share/lm/data/archive/biotaphy/000/000/006/963/pt_6963.csv'
-meta='/share/lm/data/archive/biotaphy/saxifragales.meta'
-outFile = 'mf_7125/pt_6963/pt_6963.shp'
-bigFile = 'mf_7125/pt_6963/bigpt_6963.shp'
+pointCsvFn = '/share/lm/data/archive/biotaphytest/000/000/006/277/pt_6277.csv'
+metafname='/share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta'
+outFile = '/tmp/mf_6418/pt_6277/pt_6277.shp'
+bigFile = '/tmp/mf_6418/pt_6277/bigpt_6277.shp'
 readyFilename(outFile, overwrite=True)
 readyFilename(bigFile, overwrite=True)
 maxPoints = 500
 
+
+
 with open(pointCsvFn) as inF:
    csvInputBlob = inF.read()
 
-meta, _, doMatchHeader = OccDataParser.readMetadata(meta)
-
+meta, _, doMatchHeader = OccDataParser.readMetadata(metafname)
+header = None
+if doMatchHeader:
+   header = True
+   
+(fieldIndexMeta, filters, idIdx, xIdx, yIdx, ptIdx, groupByIdx, 
+  nameIdx) = OccDataParser.getMetadata(meta, header)
+  
 count = len(csvInputBlob.split('\n')) - 2
 
 parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
-                       bigFile, count, maxPoints, metadata=meta, isUser=True)
+            bigFile, count, maxPoints, metadata=meta, isUser=True)
 
 logger = LmComputeLogger('testpoints')
 shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, csvInputBlob, 21, logger=logger, metadata=meta)

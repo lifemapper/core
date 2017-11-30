@@ -166,6 +166,11 @@ from LmBackend.common.cmd import MfRule
 from LmServer.common.lmconstants import SnippetOperations
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
                                          Priority)
+from LmServer.legion.processchain import MFChain
+from LmServer.tools.occwoc import BisonWoC, GBIFWoC, UserWoC, ExistingWoC
+from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.lmconstants import (ENCODING, OFTInteger, OFTReal, 
+                                         OFTString, LMFormat)
 
 SPUD_LIMIT = 100
 
@@ -178,6 +183,109 @@ boomer = Boomer(configFname, assemblePams=True, log=log)
 boomer._scribe.openConnections()
 boomer.christopher = ChristopherWalken(boomer.configFname,
                                               scribe=boomer._scribe)
+chris = boomer.christopher
+
+chris.moreDataToProcess = False
+userId = chris._getBoomOrDefault('ARCHIVE_USER')
+archiveName = chris._getBoomOrDefault('ARCHIVE_NAME')
+archivePriority = chris._getBoomOrDefault('ARCHIVE_PRIORITY')
+earl = EarlJr()
+boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
+epsg = chris._getBoomOrDefault('SCENARIO_PACKAGE_EPSG')
+useGBIFTaxonIds = False
+datasource = chris._getBoomOrDefault('DATASOURCE')
+taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
+expDate = dt.DateTime(chris._getBoomOrDefault('SPECIES_EXP_YEAR'), 
+                      chris._getBoomOrDefault('SPECIES_EXP_MONTH'), 
+                      chris._getBoomOrDefault('SPECIES_EXP_DAY')).mjd
+#if datasource == SpeciesDatasource.IDIGBIO:
+useGBIFTaxonIds = True
+occDelimiter = chris._getBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
+occname = chris._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
+occInstalled = os.path.join(SPECIES_DATA_PATH, occname)
+occUser = os.path.join(boompath, occname)
+occCSV = None
+if os.path.exists(occInstalled + LMFormat.CSV.ext):
+   occBasename = occInstalled + LMFormat.CSV.ext
+elif os.path.exists(occUser + LMFormat.CSV.ext):
+   occBasename = occUser
+
+occCSV = occBasename + LMFormat.CSV.ext   
+occMeta = occBasename + LMFormat.METADATA.ext
+weaponOfChoice = UserWoC(chris._scribe, userId, archiveName, 
+                                  epsg, expDate, occCSV, occMeta, 
+                                  occDelimiter, logger=chris.log, 
+                                  processType=ProcessType.USER_TAXA_OCCURRENCE,
+                                  useGBIFTaxonomy=useGBIFTaxonIds,
+                                  taxonSourceName=taxonSourceName)
+woc = weaponOfChoice
+woc.occParser = OccDataParser(woc.log, woc._userOccCSV, 
+                                        woc._userOccMeta, 
+                                        delimiter=woc._delimiter)
+op = woc.occParser 
+
+fieldmeta, metadataFname, doMatchHeader = op.readMetadata(op.metadataFname)
+header = None
+fieldNames = []
+fieldTypes = []
+filters = {}
+idIdx = xIdx = yIdx = ptIdx = groupByIdx = nameIdx = None
+idxdict = fieldmeta
+for idx, vals in idxdict.iteritems():
+   shortname = idx
+   ogrtype = role = acceptedVals = None
+   if vals is not None:
+      shortname = vals['name']
+      ogrtype = vals['type']
+      try:
+         acceptedVals = idxdict[idx]['acceptedVals']
+      except:
+         pass
+      else:
+         if ogrtype == OFTString:
+            acceptedVals = [val.lower() for val in acceptedVals]
+      try:
+         role = idxdict[idx]['role'].lower()
+      except:
+         pass
+      else:
+         if role == OccDataParser.FIELD_ROLE_IDENTIFIER:
+            idIdx = idx
+         elif role == OccDataParser.FIELD_ROLE_LONGITUDE:
+            xIdx = idx
+         elif role == OccDataParser.FIELD_ROLE_LATITUDE:
+            yIdx = idx
+         elif role == OccDataParser.FIELD_ROLE_GEOPOINT:
+            ptIdx = idx
+         elif role == OccDataParser.FIELD_ROLE_TAXANAME:
+            nameIdx = idx
+         if role == OccDataParser.FIELD_ROLE_GROUPBY:
+            groupByIdx = idx
+
+# weaponOfChoice = chris._getOccWeaponOfChoice(userId, archiveName, epsg, 
+#                                                   boompath)
+
+(chris.userId, 
+ chris.archiveName, 
+ chris.priority, 
+ chris.boompath, 
+ self.weaponOfChoice, 
+ self.epsg, 
+ self.minPoints, 
+ self.algs, 
+ self.mdlScen, 
+ self.prjScens, 
+ self.sdmMaskInputLayer, 
+ self.boomGridset, 
+ self.intersectParams, 
+ self.assemblePams) = self._getConfiguredObjects()
+# One Global PAM for each scenario
+if self.assemblePams:
+   for prjscen in self.prjScens:
+      self.globalPAMs[prjscen.code] = self.boomGridset.getPAMForCodes(
+                     prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode)
+      
+                                              
 boomer.christopher.initializeMe()                                   
 boomer.initializeMe()
 boomer.keepWalken

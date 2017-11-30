@@ -26,11 +26,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import json
 import os
 
 from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
-from LmCommon.common.occparse import OccDataParser
 from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCommon.common.readyfile import readyFilename
@@ -160,11 +158,31 @@ from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 from LmServer.db.borgscribe import BorgScribe
+from LmCommon.common.occparse import OccDataParser
 
 from LmCommon.common.readyfile import readyFilename
 
+pointCsvFn = '/share/lm/data/archive/biotaphytest/000/000/006/277/pt_6277.csv'
+metafname='/share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta'
+outFile = '/tmp/mf_6418/pt_6277/pt_6277.shp'
+bigFile = '/tmp/mf_6418/pt_6277/bigpt_6277.shp'
+readyFilename(outFile, overwrite=True)
+readyFilename(bigFile, overwrite=True)
+maxPoints = 500
+
+metadata, _, doMatchHeader = OccDataParser.readMetadata(metafname)
+
+with open(pointCsvFn) as inF:
+   rawData = inF.read()
+   
+count = len(rawData)
 
 logger = LmComputeLogger('crap')
+shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, rawData, count, logger=logger, 
+                      metadata=metadata)
+shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
+                        isUser=isUser)
+
 
 from LmCompute.plugins.single.occurrences.csvOcc import *
 scribe = BorgScribe(logger)
