@@ -91,7 +91,7 @@ class ShapeShifter(object):
             self.xField = self.op.xFieldName
          else:
             self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
-         if self.op.yFieldName is None:
+         if self.op.yFieldName is not None:
             self.yField = self.op.yFieldName
          else:
             self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
@@ -149,52 +149,6 @@ class ShapeShifter(object):
          lyr.CreateFeature(feat)
          feat.Destroy()
 
-#    # .............................................................................
-#    def _getMetadata(self, origfldnames):
-#       fldmeta = self._readMetadata()
-#       
-#       for i in range(len(origfldnames)):         
-#          oname = origfldnames[i]
-#          shortname = fldmeta[oname][0]
-#          ogrtype = self.getOgrFieldType(fldmeta[oname][1])
-#          self.fieldNames.append(shortname)
-#          self.fieldTypes.append(ogrtype)
-#          
-#          if len(fldmeta[oname]) == 3:
-#             if type(fldmeta[oname][2]) in (ListType, TupleType):
-#                acceptedVals = fldmeta[oname][2]
-#                if ogrtype == ogr.OFTString:
-#                   acceptedVals = [val.lower() for val in fldmeta[oname][2]]
-#                self.filters[i] = acceptedVals 
-#             else:
-#                role = fldmeta[oname][2].lower()
-#                if role == 'id':
-#                   self._idIdx = i
-#                elif role == 'longitude':
-#                   self._xIdx = i
-#                elif role == 'latitude':
-#                   self._yIdx = i
-#                elif role == 'groupby':
-#                   self._groupByIdx = i
-#                elif role == 'dataname':
-#                   self._nameIdx = i
-#       self.fieldCount = len(self.fieldNames)
-#       
-#       if self._idIdx == None:
-#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                            'Missing \'id\' unique identifier field')
-#       if self._xIdx == None:
-#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                            'Missing \'longitude\' georeference field')
-#       if self._yIdx == None:
-#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                            'Missing \'latitude\' georeference field')
-#       if self._groupByIdx == None:
-#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                            'Missing \'groupby\' sorting field')
-#       if self._nameIdx == None:
-#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                            'Missing \'dataname\' dataset name field')
 
 # .............................................................................
 # Public functions
@@ -465,9 +419,10 @@ class ShapeShifter(object):
       while not success and not self.op.eof():
          try:
             self.op.pullNextValidRec()
+            thisrec = self.op.currLine
             if not self.op.eof():
-               x, y = OccDataParser.getXY(self.op.currLine, 
-                                          self.op.xIdx, self.op.yIdx, self.op.ptIdx)
+               x, y = OccDataParser.getXY(thisrec, self.op.xIdx, self.op.yIdx, 
+                                          self.op.ptIdx)
                # Unique identifier field is not required, default to FID
                # ignore records without valid lat/long; all occ jobs contain these fields
                tmpDict[self.xField] = float(x)
@@ -484,10 +439,10 @@ class ShapeShifter(object):
             print('Exception reading line {} ({})'.format(self.op.currRecnum, 
                                                      fromUnicode(toUnicode(e))))
       if success:
-         for i in range(len(self.op.fieldNames)):
-            # got x, y above
-            if i not in (self.op.xIdx, self.op.yIdx):
-               tmpDict[self.op.fieldNames[i]] = self.op.currLine[i]
+         for idx, vals in self.op.fieldIndexMeta.keys():
+            if vals is not None and idx not in (self.op.xIdx, self.op.yIdx):
+               fldname = self.op.fieldIndexMeta[idx][OccDataParser.FIELD_NAME_KEY]
+               tmpDict[fldname] = thisrec[idx]
          recDict = tmpDict
       if badRecCount > 0:
          print('Skipped over {} bad records'.format(badRecCount))
@@ -533,17 +488,18 @@ class ShapeShifter(object):
       if newLyr is None:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                            'Layer creation failed')
-       
-      for pos in range(len(self.op.fieldNames)):
-         fldname = self.op.fieldNames[pos]
-         fldtype = self.op.fieldTypes[pos]
-         fldDef = ogr.FieldDefn(fldname, fldtype)
-         if fldtype == ogr.OFTString:
-            fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
-         returnVal = newLyr.CreateField(fldDef)
-         if returnVal != 0:
-            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                            'Failed to create field {}'.format(fldname))
+      
+      for idx, vals in self.op.fieldIndexMeta.keys():
+         if vals is not None:
+            fldname = vals[OccDataParser.FIELD_NAME_KEY]
+            fldtype = vals[OccDataParser.FIELD_TYPE_KEY] 
+            fldDef = ogr.FieldDefn(fldname, fldtype)
+            if fldtype == ogr.OFTString:
+               fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
+            returnVal = newLyr.CreateField(fldDef)
+            if returnVal != 0:
+               raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                               'Failed to create field {}'.format(fldname))
             
       # Add wkt field
       fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
@@ -619,8 +575,8 @@ class ShapeShifter(object):
       @note: This *should* return the modified feature
       """
       try:
-         x = recDict[self.op.fieldNames]
-         y = recDict[self.op.fieldNames]
+         x = recDict[self.op.xIdx]
+         y = recDict[self.op.yIdx]
       except:
          x = recDict[self.xField]
          y = recDict[self.yField]
