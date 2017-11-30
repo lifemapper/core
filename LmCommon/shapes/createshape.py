@@ -214,7 +214,7 @@ class ShapeShifter(object):
          else:
             outLyr = self._addFieldDef(outDs)
          lyrDef = outLyr.GetLayerDefn()
-            
+
          # Do we need a BIG dataset?
          if len(discardIndices) > 0 and bigfname is not None:
             if not readyFilename(bigfname, overwrite=overwrite):
@@ -439,7 +439,7 @@ class ShapeShifter(object):
             print('Exception reading line {} ({})'.format(self.op.currRecnum, 
                                                      fromUnicode(toUnicode(e))))
       if success:
-         for idx, vals in self.op.fieldIndexMeta.keys():
+         for idx, vals in self.op.fieldIndexMeta.iteritems():
             if vals is not None and idx not in (self.op.xIdx, self.op.yIdx):
                fldname = self.op.fieldIndexMeta[idx][OccDataParser.FIELD_NAME_KEY]
                tmpDict[fldname] = thisrec[idx]
@@ -483,19 +483,20 @@ class ShapeShifter(object):
    def _addUserFieldDef(self, newDataset):
       spRef = osr.SpatialReference()
       spRef.ImportFromEPSG(DEFAULT_EPSG)
+      maxStrlen = LMFormat.getStrlenForDefaultOGR()
     
       newLyr = newDataset.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
       if newLyr is None:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                            'Layer creation failed')
       
-      for idx, vals in self.op.fieldIndexMeta.keys():
+      for idx, vals in self.op.fieldIndexMeta.iteritems():
          if vals is not None:
             fldname = vals[OccDataParser.FIELD_NAME_KEY]
             fldtype = vals[OccDataParser.FIELD_TYPE_KEY] 
             fldDef = ogr.FieldDefn(fldname, fldtype)
             if fldtype == ogr.OFTString:
-               fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
+               fldDef.SetWidth(maxStrlen)
             returnVal = newLyr.CreateField(fldDef)
             if returnVal != 0:
                raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
@@ -503,7 +504,7 @@ class ShapeShifter(object):
             
       # Add wkt field
       fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
-      fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
+      fldDef.SetWidth(maxStrlen)
       returnVal = newLyr.CreateField(fldDef)
       if returnVal != 0:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
@@ -569,6 +570,44 @@ class ShapeShifter(object):
     
       return newLyr
    
+
+   # ...............................................
+   def _handleSpecialFields(self, feat, recDict):
+      try:
+         # Find or assign a (dataset) unique id for each point
+         if self.idField is not None:
+            try:
+               ptid = recDict[self.idField]
+            except:
+               # Set LM added id field
+               ptid = self._currRecum 
+               feat.SetField(self.idField, ptid)
+
+         # If data has a Url link field
+         if self.linkField is not None:
+            try:
+               searchid = recDict[self.linkField]
+            except:
+               pass
+            else:
+               pturl = '{}{}'.format(self.linkUrl, str(searchid))
+               feat.SetField(self.linkField, pturl)
+                     
+         # If data has a provider field and value to be resolved
+         if self.computedProviderField is not None:
+            prov = ''
+            try:
+               prov = recDict[self.providerKeyField]
+            except:
+               pass
+            if not (isinstance(prov, StringType) or isinstance(prov, UnicodeType)):
+               prov = ''
+            feat.SetField(self.computedProviderField, prov)
+
+      except Exception, e:
+         print('Failed to set optional field in rec {}, e = {}'.format(str(recDict), e))
+         raise e
+
    # ...............................................
    def _fillFeature(self, feat, recDict):
       """
@@ -591,54 +630,24 @@ class ShapeShifter(object):
          print('Failed to create/set geometry, e = {}'.format(e))
          raise e
          
-      try:
-         # If data has a unique id for each point
-         if self.idField is not None:
-            try:
-               ptid = recDict[self.idField]
-            except:
-               # Set LM added id field
-               ptid = self._currRecum 
-               feat.SetField(self.idField, ptid)
-
-         # If data has a Url link field
-         if self.linkField is not None:
-            try:
-               searchid = recDict[self.linkIdField]
-            except:
-               pass
-            else:
-               pturl = '{}{}'.format(self.linkUrl, str(searchid))
-               feat.SetField(self.linkField, pturl)
-                     
-         # If data has a provider field and value to be resolved
-         if self.computedProviderField is not None:
-            prov = ''
-            try:
-               prov = recDict[self.providerKeyField]
-            except:
-               pass
-            if not (isinstance(prov, StringType) or isinstance(prov, UnicodeType)):
-               prov = ''
-            feat.SetField(self.computedProviderField, prov)
-
-      except Exception, e:
-         print('Failed to set optional field in rec {}, e = {}'.format(str(recDict), e))
-         raise e
+      specialFields = (self.idField, self.linkField, self.providerKeyField, 
+                       self.computedProviderField)
+      self._handleSpecialFields(feat, recDict)
 
       try:
          # Add values out of the line of data
          for name in recDict.keys():
-            # Handles reverse lookup for BISON metadata
-            # TODO: make this consistent!!!
-            # For User data, name = fldname
-            fldname = self._lookup(name)
-            if fldname is not None:
-               val = recDict[name]
-               if val is not None and val != 'None':
-                  if isinstance(val, UnicodeType):
-                     val = fromUnicode(val)
-                  feat.SetField(fldname, val)
+            if (name in feat.keys() and name not in specialFields):
+               # Handles reverse lookup for BISON metadata
+               # TODO: make this consistent!!!
+               # For User data, name = fldname
+               fldname = self._lookup(name)
+               if fldname is not None:
+                  val = recDict[name]
+                  if val is not None and val != 'None':
+                     if isinstance(val, UnicodeType):
+                        val = fromUnicode(val)
+                     feat.SetField(fldname, val)
       except Exception, e:
          print('Failed to fillFeature with recDict {}, e = {}'.format(str(recDict), e))
          raise e
