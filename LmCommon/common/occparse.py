@@ -330,47 +330,49 @@ class OccDataParser(object):
                   try:
                      key = int(parts[0])
                   except:
-                     pass
-                  if len(tmp) < 3:
-                     print('Skipping field {} without name and/or type'.format(key))
-                     fieldmeta[key] = None
-                  else:
-                     # Required second value is fieldname, 
-                     # Required third value is string/real/integer or None to ignore
-                     name = parts[1]
-                     ftype = parts[2]
-                     if len(name) > 10:
-                        # Name be 10 chars or less to write to a shapefile
-                        print('Warning: field {} name {} > 10 chars'.format(key, name))
-                     # Convert to OGR field type
-                     ogrtype = OccDataParser.getOgrFieldType(ftype)
-                     if ogrtype is None:
-                        print('Skipping field {} with type {}'.format(key, parts[2]))
+                     if len(key) == 0:
+                        key = None
+                  if key is not None:
+                     if len(tmp) < 3:
+                        print('Skipping field {} without name or type'.format(key))
                         fieldmeta[key] = None
                      else:
-                        fieldmeta[key] = {OccDataParser.FIELD_NAME_KEY: name, 
-                                          OccDataParser.FIELD_TYPE_KEY: ogrtype}
-                        # Optional remaining values are role and/or allowable values
-                        if len(parts) >= 4:
-                           # Convert to lowercase 
-                           rest = []
-                           for val in parts[3:]:
-                              try:
-                                 rest.append(val.lower())
-                              except:
-                                 rest.append(val)
-                           # If there are 4+ values, fourth may be role of this field: 
-                           #   longitude, latitude, geopoint, groupby, taxaname, uniqueid
-                           # Convert to lowercase
-                           if rest[0] in OccDataParser.FIELD_ROLES:
-                              fieldmeta[key][OccDataParser.FIELD_ROLE_KEY] = rest[0]
-                              rest = rest[1:]
-                           # Remaining values are acceptable values for this field
-                           if len(rest) >= 1:
-                              fieldmeta[key][OccDataParser.FIELD_VALS_KEY] = rest
+                        # Required second value is fieldname, 
+                        # Required third value is string/real/integer or None to ignore
+                        name = parts[1]
+                        ftype = parts[2]
+                        if len(name) > 10:
+                           # Name be 10 chars or less to write to a shapefile
+                           print('Warning: field {} name {} > 10 chars'.format(key, name))
+                        # Convert to OGR field type
+                        ogrtype = OccDataParser.getOgrFieldType(ftype)
+                        if ogrtype is None:
+                           print('Skipping field {} with type {}'.format(key, parts[2]))
+                           fieldmeta[key] = None
+                        else:
+                           fieldmeta[key] = {OccDataParser.FIELD_NAME_KEY: name, 
+                                             OccDataParser.FIELD_TYPE_KEY: ogrtype}
+                           # Optional remaining values are role and/or allowable values
+                           if len(parts) >= 4:
+                              # Convert to lowercase 
+                              rest = []
+                              for val in parts[3:]:
+                                 try:
+                                    rest.append(val.lower())
+                                 except:
+                                    rest.append(val)
+                              # If there are 4+ values, fourth may be role of this field: 
+                              #   longitude, latitude, geopoint, groupby, taxaname, uniqueid
+                              # Convert to lowercase
+                              if rest[0] in OccDataParser.FIELD_ROLES:
+                                 fieldmeta[key][OccDataParser.FIELD_ROLE_KEY] = rest[0]
+                                 rest = rest[1:]
+                              # Remaining values are acceptable values for this field
+                              if len(rest) >= 1:
+                                 fieldmeta[key][OccDataParser.FIELD_VALS_KEY] = rest
          except Exception, e:
-            raise Exception('Failed to evaluate contents of metadata file {}'
-                            .format(metadataFname))
+            raise Exception('Failed to evaluate contents of metadata file {}, ({})'
+                            .format(metadataFname, e))
          finally:
             f.close()
             
@@ -456,23 +458,29 @@ class OccDataParser(object):
                fieldIndexMeta[idx]['role'] = role
                if role == OccDataParser.FIELD_ROLE_IDENTIFIER:
                   idIdx = idx
+                  print ('Found id index {}').format(idx)
                elif role == OccDataParser.FIELD_ROLE_LONGITUDE:
                   xIdx = idx
+                  print ('Found X index {}').format(idx)
                elif role == OccDataParser.FIELD_ROLE_LATITUDE:
                   yIdx = idx
+                  print ('Found Y index {}').format(idx)
                elif role == OccDataParser.FIELD_ROLE_GEOPOINT:
                   ptIdx = idx
+                  print ('Found point index {}').format(idx)
                elif role == OccDataParser.FIELD_ROLE_TAXANAME:
                   nameIdx = idx
-               # Group by may be the same as taxaname
-               if role == OccDataParser.FIELD_ROLE_GROUPBY:
+                  print ('Found name index {}').format(idx)
+               elif role == OccDataParser.FIELD_ROLE_GROUPBY:
                   groupByIdx = idx
+                  print ('Found group index {}').format(idx)
          filters[idx] = acceptedVals
 
       # Check existence of required roles
       if nameIdx is None:
          nameIdx = groupByIdx
       if (xIdx is None or yIdx is None) and ptIdx is None:
+         print ('Found x {}, y {}, point {}').format(xIdx, yIdx, ptIdx)
          raise Exception('Missing `LATITUDE`-`LONGITUDE` pair or `GEOPOINT` roles in metadata')
       if groupByIdx is None:
          raise Exception('Missing `GROUPBY` required role in metadata')
