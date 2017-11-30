@@ -333,7 +333,7 @@ class OccDataParser(object):
                      pass
                   if len(tmp) < 3:
                      print('Skipping field {} without name and/or type'.format(key))
-#                      fieldmeta[key] = None
+                     fieldmeta[key] = None
                   else:
                      # Required second value is fieldname, 
                      # Required third value is string/real/integer or None to ignore
@@ -346,28 +346,28 @@ class OccDataParser(object):
                      ogrtype = OccDataParser.getOgrFieldType(ftype)
                      if ogrtype is None:
                         print('Skipping field {} with type {}'.format(key, parts[2]))
-#                         fieldmeta[key] = None
-                        break
-                     fieldmeta[key] = {OccDataParser.FIELD_NAME_KEY: name, 
-                                       OccDataParser.FIELD_TYPE_KEY: ogrtype}
-                     # Optional remaining values are role and/or allowable values
-                     if len(parts) >= 4:
-                        # Convert to lowercase 
-                        rest = []
-                        for val in parts[3:]:
-                           try:
-                              rest.append(val.lower())
-                           except:
-                              rest.append(val)
-                        # If there are 4+ values, fourth may be role of this field: 
-                        #   longitude, latitude, geopoint, groupby, taxaname, uniqueid
-                        # Convert to lowercase
-                        if rest[0] in OccDataParser.FIELD_ROLES:
-                           fieldmeta[key][OccDataParser.FIELD_ROLE_KEY] = rest[0]
-                           rest = rest[1:]
-                        # Remaining values are acceptable values for this field
-                        if len(rest) >= 1:
-                           fieldmeta[key][OccDataParser.FIELD_VALS_KEY] = rest
+                        fieldmeta[key] = None
+                     else:
+                        fieldmeta[key] = {OccDataParser.FIELD_NAME_KEY: name, 
+                                          OccDataParser.FIELD_TYPE_KEY: ogrtype}
+                        # Optional remaining values are role and/or allowable values
+                        if len(parts) >= 4:
+                           # Convert to lowercase 
+                           rest = []
+                           for val in parts[3:]:
+                              try:
+                                 rest.append(val.lower())
+                              except:
+                                 rest.append(val)
+                           # If there are 4+ values, fourth may be role of this field: 
+                           #   longitude, latitude, geopoint, groupby, taxaname, uniqueid
+                           # Convert to lowercase
+                           if rest[0] in OccDataParser.FIELD_ROLES:
+                              fieldmeta[key][OccDataParser.FIELD_ROLE_KEY] = rest[0]
+                              rest = rest[1:]
+                           # Remaining values are acceptable values for this field
+                           if len(rest) >= 1:
+                              fieldmeta[key][OccDataParser.FIELD_VALS_KEY] = rest
          except Exception, e:
             raise Exception('Failed to evaluate contents of metadata file {}'
                             .format(metadataFname))
