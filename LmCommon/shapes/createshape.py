@@ -421,7 +421,7 @@ class ShapeShifter(object):
       recDict = None
       badRecCount = 0
       # skip lines w/o valid coordinates
-      while not success and not self.op.closed():
+      while not success and not self.op.closed:
          try:
             self.op.pullNextValidRec()
             thisrec = self.op.currLine
