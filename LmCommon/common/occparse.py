@@ -115,30 +115,6 @@ class OccDataParser(object):
       self.groupFirstRec = None
       self.currIsGoodEnough = None
 
-#       fieldmeta, metadataFname, doMatchHeader = self.readMetadata(metadata)
-#       if metadataFname is None:
-#          self.metadataFname = None
-#       if doMatchHeader:
-#          # Read CSV header
-#          tmpList = self._csvreader.next()
-#          self.header = [fldname.strip() for fldname in tmpList]
-# 
-#       (self.fieldIndexMeta,
-#        self.filters,
-#        self._idIdx,
-#        self._xIdx,
-#        self._yIdx,
-#        self._geoIdx,
-#        self._groupByIdx, 
-#        self._nameIdx) = self.getMetadata(fieldmeta, self.header)
-#       self.fieldCount = len(self.fieldIndexMeta)
-#       
-#       # Start by pulling line 1; populates groupVal, currLine and currRecnum
-#       self.pullNextValidRec()
-#       # record number of the chunk of current key
-#       self.groupFirstRec = self.currRecnum     
-#       self.currIsGoodEnough = True
-
    # .............................
    def initializeMe(self):
       """
@@ -180,23 +156,8 @@ class OccDataParser(object):
          csvreader = csv.reader(f, delimiter=delimiter)
       except Exception, e:
          try:
-            # Try stringio with input as single string
             f = StringIO.StringIO()
-            lines = datafile.split('\n')
             f.write(datafile.encode(ENCODING))
-            f.seek(0)
-            csvreader = csv.reader(f, delimiter=delimiter)
-         except UnicodeDecodeError, e:
-            # Try stringio with input as lines
-            f.close()
-            f = StringIO.StringIO()
-            lines = datafile.split('\n')
-            for ln in lines:
-               try:
-                  f.write(ln.encode(ENCODING))
-               except Exception, e:
-                  # Skip line
-                  pass
             f.seek(0)
             csvreader = csv.reader(f, delimiter=delimiter)
          except Exception, e:

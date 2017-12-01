@@ -30,7 +30,7 @@ import os
 
 from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.shapes.createshape import ShapeShifter
-from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.lmconstants import JobStatus, ProcessType, ENCODING
 from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
@@ -104,11 +104,27 @@ def createUserShapefile(pointCsvFn, meta, outFile, bigFile, maxPoints):
    """
    with open(pointCsvFn) as inF:
       csvInputBlob = inF.read()
-      
+   
    # Assume no header
-   count = len(csvInputBlob.split('\n')) - 1
-   return parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
-                       bigFile, count, maxPoints, metadata=meta, isUser=True)
+   lines = csvInputBlob.split('\n') - 1
+   origCount = len(lines)
+   # remove non-encodeable lines
+   cleanLines = []
+   for ln in lines:
+      try: 
+         clnLn = ln.encode(ENCODING)
+      except:
+         pass
+      else:
+         cleanLines.append(clnLn)
+   cleanCount = len(cleanLines)
+   cleanBlob = '\n'.join(cleanLines)
+   
+   print('Cleaned blob of non-encodable lines, orig {}, new {}'
+         .format(origCount, cleanCount))
+      
+   return parseCsvData(cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
+                       bigFile, cleanCount, maxPoints, metadata=meta, isUser=True)
       
 # .............................................................................
 def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
@@ -164,6 +180,20 @@ $PYTHON /opt/lifemapper/LmCompute/tools/single/user_points.py \
         500
 
 from LmCompute.plugins.single.occurrences.csvOcc import createUserShapefile
+import json
+import os
+from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
+from LmCommon.common.occparse import OccDataParser
+from LmCommon.shapes.createshape import ShapeShifter
+from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.readyfile import readyFilename
+from LmCompute.common.lmObj import LmException
+from LmCompute.common.log import LmComputeLogger
+from LmCompute.plugins.single.occurrences.csvOcc import parseCsvData
+from osgeo import ogr, osr
+from LmCommon.common.lmconstants import *
+from types import UnicodeType, StringType
+import StringIO
 
 pointsCsvFn = '/share/lm/data/archive/biotaphytest/000/000/006/275/pt_6275.csv'
 metadataFile = '/share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta'
@@ -176,6 +206,8 @@ from LmCommon.common.readyfile import readyFilename
 meta, _, doMatchHeader = OccDataParser.readMetadata(metadataFile)
 # createUserShapefile(pointsCsvFn, meta, outFile, 
 #                        bigFile, maxPoints)
+isUser=True
+
 with open(pointsCsvFn) as inF:
    csvInputBlob = inF.read()
 
@@ -189,19 +221,28 @@ metadata = meta
 readyFilename(outFile, overwrite=True)
 readyFilename(bigFile, overwrite=True)
 logger = LmComputeLogger(os.path.basename('crap'))
-# shaper = ShapeShifter(processType, rawData, count, logger=logger, 
-#                       metadata=metadata)
-delimiter=','
-rawdata = rawData
+shaper = ShapeShifter(processType, rawData, count, logger=logger, 
+                      metadata=metadata)
+op = shaper.op
+op._csvreader, op._file = op.getReader(rawData, delimiter)
+(cr, f) = (op._csvreader, op._file)
 
-# op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter)
-data = rawdata
-# _csvreader, _file = OccDataParser.getReader(data, delimiter)
-import csv, os, sys
-datafile = data
+# shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
+#                         isUser=isUser)
+(outfname, bigfname, overwrite) = (outFile, bigFile, True)
+readyFilename(outfname, overwrite=overwrite)
+discardIndices = []
+outDs = shaper._createDataset(outfname)
+outLyr = shaper._addUserFieldDef(outDs)
+lyrDef = outLyr.GetLayerDefn()
 
-shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
-                        isUser=isUser)
+
+
+
+
+
+
+
 
 
 
@@ -233,65 +274,16 @@ else:
 
 
 
-
-
-
-import json
-import os
-from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
-from LmCommon.common.occparse import OccDataParser
-from LmCommon.shapes.createshape import ShapeShifter
-from LmCommon.common.lmconstants import JobStatus, ProcessType
-from LmCommon.common.readyfile import readyFilename
-from LmCompute.common.lmObj import LmException
-from LmCompute.common.log import LmComputeLogger
-from LmCompute.plugins.single.occurrences.csvOcc import parseCsvData
-from osgeo import ogr, osr
-from LmCommon.common.lmconstants import *
-from types import UnicodeType, StringType
-import StringIO
-
-
-
-meta, _, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
-   createUserShapefile(args.pointsCsvFn, meta, args.outFile, 
-                       args.bigFile, args.maxPoints)
-
-with open(pointCsvFn) as inF:
-   csvInputBlob = inF.read()
-
-meta, _, doMatchHeader = OccDataParser.readMetadata(metafname)
-header = None
-if doMatchHeader:
-   print 'Yikes header!'
-   
-(fieldIndexMeta, filters, idIdx, xIdx, yIdx, ptIdx, groupByIdx, 
-  nameIdx) = OccDataParser.getMetadata(meta, header)
-  
-count = len(csvInputBlob.split('\n')) - 1
-
-parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
-            bigFile, count, maxPoints, metadata=meta, isUser=True)
-
-logger = LmComputeLogger('testpoints')
-shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, csvInputBlob, 21, logger=logger, metadata=meta)
-op = shaper.op
-
-outDs = bigDs = None             
-outDs = shaper._createDataset(outFile)
-outLyr = shaper._addUserFieldDef(outDs)
-lyr = outLyr
-lyrDef = outLyr.GetLayerDefn()
 fnames = []
 for i in range(21):
    fnames.append(lyrDef.GetFieldDefn(i).name)
 
-recDict = shaper._getRecord()
-print recDict
-
 #####################################
 loop
 #####################################
+recDict = shaper._getRecord()
+print recDict
+
 # shaper._createFillFeat(lyrDef, recDict, outLyr)
 feat = ogr.Feature(lyrDef)
 
