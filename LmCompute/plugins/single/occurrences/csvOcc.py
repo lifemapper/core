@@ -106,7 +106,7 @@ def createUserShapefile(pointCsvFn, meta, outFile, bigFile, maxPoints):
       csvInputBlob = inF.read()
    
    # Assume no header
-   lines = csvInputBlob.split('\n') - 1
+   lines = csvInputBlob.split('\n')
    origCount = len(lines)
    # remove non-encodeable lines
    cleanLines = []
@@ -210,12 +210,26 @@ isUser=True
 
 with open(pointsCsvFn) as inF:
    csvInputBlob = inF.read()
+   lines = csvInputBlob.split('\n')
+   origCount = len(lines)
+   cleanLines = []
+   for ln in lines:
+      try: 
+         clnLn = ln.encode(ENCODING)
+      except:
+         pass
+      else:
+         cleanLines.append(clnLn)
+   cleanCount = len(cleanLines)
+   cleanBlob = '\n'.join(cleanLines)
+   
+print('Cleaned blob of non-encodable lines, orig {}, new {}'
+         .format(origCount, cleanCount))
 
-count = len(csvInputBlob.split('\n')) - 1
-# parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
-#              bigFile, count, maxPoints, metadata=meta, isUser=True)
+# parseCsvData(cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
+#              bigFile, cleanCount, maxPoints, metadata=meta, isUser=True)
 processType = ProcessType.USER_TAXA_OCCURRENCE
-rawData = csvInputBlob
+rawData = cleanBlob
 metadata = meta
 
 readyFilename(outFile, overwrite=True)
