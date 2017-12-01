@@ -72,6 +72,7 @@ class ShapeShifter(object):
       self.rawdata = rawdata
       self.linkField = None
       self.linkUrl = None
+      self.providerKeyField = None
       self.computedProviderField = None
       self.op = None
       
@@ -86,6 +87,8 @@ class ShapeShifter(object):
                               'Failed to get metadata')
          self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter)
          self.op.initializeMe()
+         if self.op.header is not None:
+            self._recCount = self._recCount - 1
          self.idField = self.op.idFieldName
          if self.op.xFieldName is not None: 
             self.xField = self.op.xFieldName
@@ -192,10 +195,10 @@ class ShapeShifter(object):
                featCount = slyr.GetFeatureCount()
       if not goodData: 
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                           'Failed to create shapefile {}'.format(dlocation))
+                           'Failed to open dataset or layer {}'.format(dlocation))
       elif featCount == 0:
          raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
-                           'Failed to create shapefile {}'.format(dlocation))
+                           'Failed to create shapefile with > 0 points {}'.format(dlocation))
       return goodData, featCount
 
    # .............................................................................

@@ -105,8 +105,8 @@ def createUserShapefile(pointCsvFn, meta, outFile, bigFile, maxPoints):
    with open(pointCsvFn) as inF:
       csvInputBlob = inF.read()
       
-   # Assume there is a header, could be sniffed if we want to
-   count = len(csvInputBlob.split('\n')) - 2
+   # Assume no header
+   count = len(csvInputBlob.split('\n')) - 1
    return parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
                        bigFile, count, maxPoints, metadata=meta, isUser=True)
       
@@ -149,18 +149,27 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
       
 
 """
+$PYTHON /opt/lifemapper/LmCompute/tools/single/user_points.py \
+        /share/lm/data/archive/biotaphytest/000/000/006/277/pt_6277.csv \
+        /share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta \
+        /tmp/mf_6418/pt_6277/pt_6277.shp \
+        /tmp/mf_6418/pt_6277/bigpt_6277.shp \
+        500
+
+
 import json
 import os
-
-from LmCommon.common.apiquery import *
+from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
+from LmCommon.common.occparse import OccDataParser
 from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmCommon.common.occparse import OccDataParser
-
-from LmCommon.common.readyfile import readyFilename
+from LmCompute.plugins.single.occurrences.csvOcc import parseCsvData
+from osgeo import ogr, osr
+from LmCommon.common.lmconstants import *
+from types import UnicodeType, StringType
 
 pointCsvFn = '/share/lm/data/archive/biotaphytest/000/000/006/277/pt_6277.csv'
 metafname='/share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta'
@@ -170,53 +179,85 @@ readyFilename(outFile, overwrite=True)
 readyFilename(bigFile, overwrite=True)
 maxPoints = 500
 
-metadata, _, doMatchHeader = OccDataParser.readMetadata(metafname)
+
 
 with open(pointCsvFn) as inF:
-   rawData = inF.read()
+   csvInputBlob = inF.read()
+
+meta, _, doMatchHeader = OccDataParser.readMetadata(metafname)
+header = None
+if doMatchHeader:
+   print 'Yikes header!'
    
-count = len(rawData)
+(fieldIndexMeta, filters, idIdx, xIdx, yIdx, ptIdx, groupByIdx, 
+  nameIdx) = OccDataParser.getMetadata(meta, header)
+  
+count = len(csvInputBlob.split('\n')) - 1
 
-logger = LmComputeLogger('crap')
-shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, rawData, count, logger=logger, 
-                      metadata=metadata)
-shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
-                        isUser=isUser)
+parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
+            bigFile, count, maxPoints, metadata=meta, isUser=True)
+
+logger = LmComputeLogger('testpoints')
+shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, csvInputBlob, 21, logger=logger, metadata=meta)
+op = shaper.op
+
+outDs = bigDs = None             
+outDs = shaper._createDataset(outFile)
+outLyr = shaper._addUserFieldDef(outDs)
+lyr = outLyr
+lyrDef = outLyr.GetLayerDefn()
+fnames = []
+for i in range(21):
+   fnames.append(lyrDef.GetFieldDefn(i).name)
+
+recDict = shaper._getRecord()
+print recDict
+
+#####################################
+loop
+#####################################
+# shaper._createFillFeat(lyrDef, recDict, outLyr)
+feat = ogr.Feature(lyrDef)
+
+# _fillFeature
+try:
+   x = recDict[shaper.op.xIdx]
+   y = recDict[shaper.op.yIdx]
+except:
+   x = recDict[shaper.xField]
+   y = recDict[shaper.yField]
 
 
-from LmCompute.plugins.single.occurrences.csvOcc import *
-scribe = BorgScribe(logger)
-success = scribe.openConnections()
+wkt = 'POINT ({} {})'.format(x, y)
+feat.SetField(LM_WKT_FIELD, wkt)
+geom = ogr.CreateGeometryFromWkt(wkt)
+feat.SetGeometryDirectly(geom)
+specialFields = (shaper.idField, shaper.linkField, shaper.providerKeyField, 
+                 shaper.computedProviderField)
 
-keys = {1967: 'Trichotria pocillum', 1034: 'Antiphonus conatus', 
-2350: 'Antheromorpha', 8133: 'Scytonotus piger', 1422: 'Helichus suturalis', 
-3799: 'Anacaena debilis', 1393: 'Discoderus papagonis', 653: 'Cicindela repanda', 
-896: 'Cicindela purpurea', 1762: 'Cicindela tranquebarica', 
-1419: 'Cicindela duodecimguttata', 3641: 'Cicindela punctulata', 
-1818: 'Cicindela oregona', 895: 'Cicindela hirticollis', 
-1298: 'Cicindela sexguttata', 1507: 'Cicindela ocellata', 
-1219: 'Cicindela formosa', 1042: 'Amara obesa', 927: 'Brachinus elongatulus', 
-1135: 'Brachinus mexicanus'}
 
-lmapi = IdigbioAPI()
+shaper._handleSpecialFields(feat, recDict)
 
-olist = lmapi.queryBySciname('Trichotria pocillum')
-   
-for key, name in keys.iteritems():
-   olist = lmapi.queryByGBIFTaxonId(key)
-   countkey = api.count_records(rq={'taxonid':key, 'basisofrecord': 'preservedspecimen'})
-   countname = api.count_records(rq={'scientificname':name, 'basisofrecord': 'preservedspecimen'})
-   print '{}: lm={}, iTaxonkey={}, iName={}'.format(key, len(olist), countkey, countname) 
+for name in recDict.keys():
+   if (name in feat.keys() and name not in specialFields):
+      fldname = shaper._lookup(name)
+      if fldname is not None:
+         val = recDict[name]
+         if val is not None and val != 'None':
+            if isinstance(val, UnicodeType):
+               val = fromUnicode(val)
+            feat.SetField(fldname, val)
 
-occAPI = IdigbioAPI()
-for taxonKey in keys:
-   occList = occAPI.queryByGBIFTaxonId(taxonKey)
-   count = len(occList)
-   print '{}: {}'.format(taxonKey, count)
-   
-   
-return parseCsvData(occList, ProcessType.IDIGBIO_TAXA_OCCURRENCE, outFile, 
-                    bigFile, count, maxPoints)
- 
+
+lyr.CreateFeature(feat)
+feat.Destroy()
+#####################################
+                     
+(minX, maxX, minY, maxY) = outLyr.GetExtent()
+geomtype = lyrDef.GetGeomType()
+fcount = outLyr.GetFeatureCount()
+outDs.Destroy()
+shaper._finishWrite(outFile, minX, maxX, minY, maxY, geomtype, fcount)
+
 """
    
