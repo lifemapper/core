@@ -125,6 +125,7 @@ class OccDataParser(object):
          self.metadataFname = None
       if doMatchHeader:
          # Read CSV header
+         print ('*** Getting line ...')
          tmpList = self._csvreader.next()
          self.header = [fldname.strip() for fldname in tmpList]
 
@@ -169,7 +170,7 @@ class OccDataParser(object):
    def currRecnum(self):
       if self._csvreader:
          return self._csvreader.line_num
-      elif self.eof():
+      elif self.closed():
          return -9999
       else:
          return None
@@ -575,6 +576,7 @@ class OccDataParser(object):
       line = None
       while not success and self._csvreader is not None:
          try:
+            print ('*** Getting line ...')
             line = self._csvreader.next()
             goodEnough = self._testLine(line)
             success = True
@@ -651,7 +653,7 @@ class OccDataParser(object):
 
    # ...............................................
    def printStats(self):
-      if not self.eof():
+      if not self.closed():
          self.log.error('File is on line {}; printStats must be run after reading complete file' 
                         % self._csvreader.line_num)      
       else:
@@ -752,9 +754,9 @@ class OccDataParser(object):
          self.currLine = self.groupVal = None      
       return chunk
 
-   # ...............................................
-   def eof(self):
-      return self.currLine is None
+#    # ...............................................
+#    def eof(self):
+#       return self.currLine is None
    
 # ...............................................
    @property

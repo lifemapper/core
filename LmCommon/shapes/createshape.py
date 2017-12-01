@@ -421,11 +421,11 @@ class ShapeShifter(object):
       recDict = None
       badRecCount = 0
       # skip lines w/o valid coordinates
-      while not success and not self.op.eof():
+      while not success and not self.op.closed():
          try:
             self.op.pullNextValidRec()
             thisrec = self.op.currLine
-            if not self.op.eof():
+            if thisrec is not None:
                x, y = OccDataParser.getXY(thisrec, self.op.xIdx, self.op.yIdx, 
                                           self.op.ptIdx)
                # Unique identifier field is not required, default to FID
