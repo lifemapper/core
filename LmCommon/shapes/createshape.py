@@ -383,6 +383,7 @@ class ShapeShifter(object):
          # get BISON from web service
          recDict = self._getAPIResponseRec()
       if recDict is not None:
+         print('recnum {} pt {}'.format(self._currRecum, recDict['geoPoint']))
          self._currRecum += 1
       return recDict
       

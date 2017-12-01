@@ -636,6 +636,7 @@ class OccDataParser(object):
                complete = True
                      
             if not complete:
+               print('pulled not-goodEnough line {}'.format(line))
                line, goodEnough = self._getLine()
                if line is None:
                   complete = True
