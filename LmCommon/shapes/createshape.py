@@ -425,6 +425,10 @@ class ShapeShifter(object):
          try:
             self.op.pullNextValidRec()
             thisrec = self.op.currLine
+            tr = 'data'
+            if thisrec is None:
+               tr = 'None'
+            print('_getUserCSVRec thisrec {}'.format(tr))
             if thisrec is not None:
                x, y = OccDataParser.getXY(thisrec, self.op.xIdx, self.op.yIdx, 
                                           self.op.ptIdx)

@@ -125,8 +125,9 @@ class OccDataParser(object):
          self.metadataFname = None
       if doMatchHeader:
          # Read CSV header
-         print ('*** Getting line ...')
+         print ('*** Getting header ...')
          tmpList = self._csvreader.next()
+         print ('Header = {}'.format(tmpList))
          self.header = [fldname.strip() for fldname in tmpList]
 
 #       (self.fieldNames,
@@ -627,7 +628,9 @@ class OccDataParser(object):
       """
       complete = False
       self.groupVal = None
+      print('Pulling line')
       line, goodEnough = self._getLine()
+      print('  pull goodEnough {}'.format(goodEnough))
       if self.closed:
          self.currLine = self.groupVal = None
       try:
@@ -638,13 +641,15 @@ class OccDataParser(object):
                complete = True
                      
             if not complete:
-               print('pulled not-goodEnough line {}'.format(line))
+               print('pull line not goodEnough, trying again')
                line, goodEnough = self._getLine()
+               print('pull next try: goodEnough {}'.format(goodEnough))
                if line is None:
                   complete = True
                   self.currLine = None
                   self.groupVal = None
                   self.log.info('Unable to pullNextValidRec; completed')
+         print('')
                   
       except Exception, e:
          self.log.error('Failed in pullNextValidRec, currRecnum=%s, e=%s' 
