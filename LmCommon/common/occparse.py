@@ -170,7 +170,7 @@ class OccDataParser(object):
    def currRecnum(self):
       if self._csvreader:
          return self._csvreader.line_num
-      elif self.closed():
+      elif self.closed:
          return -9999
       else:
          return None
@@ -653,7 +653,7 @@ class OccDataParser(object):
 
    # ...............................................
    def printStats(self):
-      if not self.closed():
+      if not self.closed:
          self.log.error('File is on line {}; printStats must be run after reading complete file' 
                         % self._csvreader.line_num)      
       else:
