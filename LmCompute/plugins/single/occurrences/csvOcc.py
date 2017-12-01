@@ -156,6 +156,85 @@ $PYTHON /opt/lifemapper/LmCompute/tools/single/user_points.py \
         /tmp/mf_6418/pt_6277/bigpt_6277.shp \
         500
 
+$PYTHON /opt/lifemapper/LmCompute/tools/single/user_points.py \
+        /share/lm/data/archive/biotaphytest/000/000/006/275/pt_6275.csv  \
+        /share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta \
+        /tmp/mf_6416/pt_6275/pt_6275.shp  \
+        /tmp/mf_6416/pt_6275/bigpt_6275.shp \
+        500
+
+from LmCompute.plugins.single.occurrences.csvOcc import createUserShapefile
+
+pointsCsvFn = '/share/lm/data/archive/biotaphytest/000/000/006/275/pt_6275.csv'
+metadataFile = '/share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta'
+outFile = '/tmp/mf_6416/pt_6275/pt_6275.shp'
+bigFile = '/tmp/mf_6416/pt_6275/bigpt_6275.shp'
+maxPoints = 500
+from LmCommon.common.readyfile import readyFilename
+
+# user_points.py
+meta, _, doMatchHeader = OccDataParser.readMetadata(metadataFile)
+# createUserShapefile(pointsCsvFn, meta, outFile, 
+#                        bigFile, maxPoints)
+with open(pointsCsvFn) as inF:
+   csvInputBlob = inF.read()
+
+count = len(csvInputBlob.split('\n')) - 1
+# parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
+#              bigFile, count, maxPoints, metadata=meta, isUser=True)
+processType = ProcessType.USER_TAXA_OCCURRENCE
+rawData = csvInputBlob
+metadata = meta
+
+readyFilename(outFile, overwrite=True)
+readyFilename(bigFile, overwrite=True)
+logger = LmComputeLogger(os.path.basename('crap'))
+# shaper = ShapeShifter(processType, rawData, count, logger=logger, 
+#                       metadata=metadata)
+delimiter=','
+rawdata = rawData
+
+# op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter)
+data = rawdata
+# _csvreader, _file = OccDataParser.getReader(data, delimiter)
+import csv, os, sys
+datafile = data
+
+shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
+                        isUser=isUser)
+
+
+
+
+meta, _, doMatchHeader = OccDataParser.readMetadata(metadataFile)
+
+(rawData, processType, outFile, bigFile, count, maxPoints,
+ metadata=None, isUser=False = (pointsCsvFn, meta, outFile, bigFile, 500)
+                 
+readyFilename(outFile, overwrite=True)
+readyFilename(bigFile, overwrite=True)
+if count <= 0:
+   f = open(outFile, 'w')
+   f.write('Zero data points')
+   f.close()
+   f = open(bigFile, 'w')
+   f.write('Zero data points')
+   f.close()
+else:
+   logger = LmComputeLogger(os.path.basename(__file__))
+   shaper = ShapeShifter(processType, rawData, count, logger=logger, 
+                         metadata=metadata)
+   shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
+                           isUser=isUser)
+   if not os.path.exists(bigFile):
+      f = open(bigFile, 'w')
+      f.write('No excess data')
+      f.close()
+
+
+
+
+
 
 import json
 import os
@@ -170,16 +249,13 @@ from LmCompute.plugins.single.occurrences.csvOcc import parseCsvData
 from osgeo import ogr, osr
 from LmCommon.common.lmconstants import *
 from types import UnicodeType, StringType
-
-pointCsvFn = '/share/lm/data/archive/biotaphytest/000/000/006/277/pt_6277.csv'
-metafname='/share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta'
-outFile = '/tmp/mf_6418/pt_6277/pt_6277.shp'
-bigFile = '/tmp/mf_6418/pt_6277/bigpt_6277.shp'
-readyFilename(outFile, overwrite=True)
-readyFilename(bigFile, overwrite=True)
-maxPoints = 500
+import StringIO
 
 
+
+meta, _, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
+   createUserShapefile(args.pointsCsvFn, meta, args.outFile, 
+                       args.bigFile, args.maxPoints)
 
 with open(pointCsvFn) as inF:
    csvInputBlob = inF.read()

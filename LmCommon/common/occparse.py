@@ -180,8 +180,23 @@ class OccDataParser(object):
          csvreader = csv.reader(f, delimiter=delimiter)
       except Exception, e:
          try:
+            # Try stringio with input as single string
             f = StringIO.StringIO()
+            lines = datafile.split('\n')
             f.write(datafile.encode(ENCODING))
+            f.seek(0)
+            csvreader = csv.reader(f, delimiter=delimiter)
+         except UnicodeDecodeError, e:
+            # Try stringio with input as lines
+            f.close()
+            f = StringIO.StringIO()
+            lines = datafile.split('\n')
+            for ln in lines:
+               try:
+                  f.write(ln.encode(ENCODING))
+               except Exception, e:
+                  # Skip line
+                  pass
             f.seek(0)
             csvreader = csv.reader(f, delimiter=delimiter)
          except Exception, e:
@@ -337,17 +352,15 @@ class OccDataParser(object):
                         print('Skipping field {} without name or type'.format(key))
                         fieldmeta[key] = None
                      else:
-                        # Required second value is fieldname, 
+                        # Required second value is fieldname, must 
+                        # be 10 chars or less to write to a shapefile
                         # Required third value is string/real/integer or None to ignore
                         name = parts[1]
                         ftype = parts[2]
-                        if len(name) > 10:
-                           # Name be 10 chars or less to write to a shapefile
-                           print('Warning: field {} name {} > 10 chars'.format(key, name))
                         # Convert to OGR field type
                         ogrtype = OccDataParser.getOgrFieldType(ftype)
                         if ogrtype is None:
-                           print('Skipping field {} with type {}'.format(key, parts[2]))
+                           # Skip field without OGR type
                            fieldmeta[key] = None
                         else:
                            fieldmeta[key] = {OccDataParser.FIELD_NAME_KEY: name, 
