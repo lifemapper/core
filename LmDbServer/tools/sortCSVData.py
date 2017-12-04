@@ -60,7 +60,8 @@ def _getSmallestKeyAndPosition(sortedFiles):
 # ...............................................
 def checkMergedFile(log, mergefname, metafname):
    chunkCount = recCount = failSortCount = failChunkCount = 0
-   bigSortedData = OccDataParser(log, mergefname, metafname, delimiter=OUT_DELIMITER)
+   bigSortedData = OccDataParser(log, mergefname, metafname, 
+                                 delimiter=OUT_DELIMITER, pullChunks=True)
    bigSortedData.initializeMe()
    prevKey = bigSortedData.groupVal
    
@@ -217,7 +218,8 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
    sortedFiles = []
    srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
    while os.path.exists(srtFname):
-      op = OccDataParser(log, srtFname, metafname, delimiter=OUT_DELIMITER)
+      op = OccDataParser(log, srtFname, metafname, delimiter=OUT_DELIMITER, 
+                         pullChunks=True)
       op.initializeMe()
       sortedFiles.append(op)
       inIdx += 1
@@ -296,7 +298,8 @@ if __name__ == "__main__":
    log = ScriptLogger(logname)
    if cmd in ('split', 'sort', 'all'):   
       # Split into smaller unsorted files
-      occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter)
+      occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter,
+                                pullChunks=True)
       occparser.initializeMe()
       groupByIdx = occparser.groupByIdx
       print 'groupByIdx = ', groupByIdx
@@ -347,7 +350,7 @@ mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename,
    
 log = ScriptLogger('sortCSVTest')
 
-occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter)
+occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter, pullChunks=True)
 occparser.initializeMe()
 groupByIdx = occparser.groupByIdx
  

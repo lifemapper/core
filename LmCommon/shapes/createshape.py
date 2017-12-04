@@ -61,7 +61,8 @@ class ShapeShifter(object):
       @param processType: ProcessType constant, either GBIF_TAXA_OCCURRENCE,
                           BISON_TAXA_OCCURRENCE or IDIGBIO_TAXA_OCCURRENCE  
       @param rawdata: Either csv blob of GBIF, iDigBio, or User data 
-                      or list of dictionary records of BISON data
+                      or list of dictionary records of BISON data for which to
+                      create a single shapefile.
       """
       self._reader = None
       # If necessary, map provider dictionary keys to our field names
@@ -85,8 +86,8 @@ class ShapeShifter(object):
          if not metadata:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                               'Failed to get metadata')
-         print ('*** ShapeShifter.__init__, metadata type {}'.format(type(metadata)))
-         self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter)
+         self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter,
+                                 pullChunks=False)
          self.op.initializeMe()
          if self.op.header is not None:
             self._recCount = self._recCount - 1
@@ -384,7 +385,7 @@ class ShapeShifter(object):
          # get BISON from web service
          recDict = self._getAPIResponseRec()
       if recDict is not None:
-         print('recnum {} pt {}'.format(self._currRecum, recDict['geoPoint']))
+#          print('recnum {} pt {}'.format(self._currRecum, recDict['geoPoint']))
          self._currRecum += 1
       return recDict
       
@@ -426,10 +427,6 @@ class ShapeShifter(object):
          try:
             self.op.pullNextValidRec()
             thisrec = self.op.currLine
-            tr = 'data'
-            if thisrec is None:
-               tr = 'None'
-            print('_getUserCSVRec thisrec {}'.format(tr))
             if thisrec is not None:
                x, y = OccDataParser.getXY(thisrec, self.op.xIdx, self.op.yIdx, 
                                           self.op.ptIdx)

@@ -52,7 +52,7 @@ class OccDataParser(object):
    FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, FIELD_ROLE_GEOPOINT,
                   FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME, FIELD_ROLE_IDENTIFIER]
 
-   def __init__(self, logger, data, metadata, delimiter=','):
+   def __init__(self, logger, data, metadata, delimiter=',', pullChunks=False):
       """
       @summary Reader for arbitrary user CSV data file with
                - header record and metadata with column **names** first, OR
@@ -60,6 +60,11 @@ class OccDataParser(object):
       @param logger: Logger to use for the main thread
       @param data: raw data or filename for CSV data
       @param metadata: dictionary or filename containing metadata
+      @param pullChunks: use the object to pull chunks of data based on the 
+               groupBy column.  This results in 'pre-fetching' a line of
+               data at the start of a chunk to establish the group, and 
+               identifying the end of a chunk when the current line does not 
+               match the existing chunk.
       """
       self._rawMetadata = metadata
       self._fieldmeta = None
@@ -67,6 +72,7 @@ class OccDataParser(object):
          
       self.dataFname = data
       self.delimiter = delimiter
+      self._doPreFetch = pullChunks
       self._file = None
       
       self.log = logger
@@ -119,11 +125,9 @@ class OccDataParser(object):
       """
       @summary: Initializes CSV Reader and interprets metadata
       """
-      print ('*** OP.initializeMe, self._fieldmeta type = {}'.format(str(self.self._rawMetadata)))
       fieldmeta, self._metadataFname, doMatchHeader = self.readMetadata(self._rawMetadata)
       if doMatchHeader:
          # Read CSV header
-         print ('*** Getting header ...')
          tmpList = self._csvreader.next()
          print ('Header = {}'.format(tmpList))
          self.header = [fldname.strip() for fldname in tmpList]
@@ -139,7 +143,8 @@ class OccDataParser(object):
       self.fieldCount = len(self.fieldIndexMeta)
       
       # Start by pulling line 1; populates groupVal, currLine and currRecnum
-      self.pullNextValidRec()
+      if self._doPreFetch:
+         self.pullNextValidRec()
       # record number of the chunk of current key
       self.groupFirstRec = self.currRecnum     
       self.currIsGoodEnough = True
@@ -152,14 +157,12 @@ class OccDataParser(object):
       try:
          f = open(datafile, 'r')
          csvreader = csv.reader(f, delimiter=delimiter)
-         print ('*** OccDataParser reading data file')
       except Exception, e:
          try:
             f = StringIO.StringIO()
             f.write(datafile.encode(ENCODING))
             f.seek(0)
             csvreader = csv.reader(f, delimiter=delimiter)
-            print ('*** OccDataParser raw data')
          except Exception, e:
             raise Exception('Failed to read or open {}'.format(datafile))
       return csvreader, f
@@ -573,7 +576,6 @@ class OccDataParser(object):
       line = None
       while not success and self._csvreader is not None:
          try:
-            print ('*** Getting line ...')
             line = self._csvreader.next()
             goodEnough = self._testLine(line)
             success = True
@@ -624,10 +626,7 @@ class OccDataParser(object):
       """
       complete = False
       self.groupVal = None
-      print('')
-      print('Pulling line')
       line, goodEnough = self._getLine()
-      print('  pull goodEnough {}'.format(goodEnough))
       if self.closed:
          self.currLine = self.groupVal = None
       try:
@@ -638,9 +637,7 @@ class OccDataParser(object):
                complete = True
                      
             if not complete:
-               print('pull line not goodEnough, trying again')
                line, goodEnough = self._getLine()
-               print('pull next try: goodEnough {}'.format(goodEnough))
                if line is None:
                   complete = True
                   self.currLine = None
@@ -791,7 +788,7 @@ if __name__ == '__main__':
    pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
    log = TestLogger('occparse_checkInput')
    op = OccDataParser(log, pthAndBasename + LMFormat.CSV.ext, 
-                      pthAndBasename + LMFormat.METADATA.ext)
+                      pthAndBasename + LMFormat.METADATA.ext, pullChunks=True)
    op.readAllRecs()
    op.printStats()
    op.close()

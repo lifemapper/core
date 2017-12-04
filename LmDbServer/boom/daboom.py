@@ -221,7 +221,8 @@ weaponOfChoice = UserWoC(chris._scribe, userId, archiveName,
 woc = weaponOfChoice
 woc.occParser = OccDataParser(woc.log, woc._userOccCSV, 
                                         woc._userOccMeta, 
-                                        delimiter=woc._delimiter)
+                                        delimiter=woc._delimiter, 
+                                        pullChunks=True)
 op = woc.occParser 
 
 fieldmeta, metadataFname, doMatchHeader = op.readMetadata(op.metadataFname)
