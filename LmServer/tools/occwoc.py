@@ -1061,7 +1061,7 @@ fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(occMeta)
  yIdx,
  geoIdx,
  groupByIdx, 
- nameIdx) = OccDataParser.getMetadata(fieldmeta, None)
+ nameIdx) = OccDataParser.getCheckIndexedMetadata(fieldmeta, None)
  
 line = cr.next()
 goodEnough = True

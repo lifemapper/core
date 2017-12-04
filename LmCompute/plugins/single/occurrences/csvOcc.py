@@ -92,11 +92,11 @@ def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints):
                        bigFile, count, maxPoints)
    
 # .............................................................................
-def createUserShapefile(pointCsvFn, meta, outFile, bigFile, maxPoints):
+def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints):
    """
    @summary: Processes a user-provided CSV dataset
    @param pointCsvFn: CSV file of points
-   @param meta: A file or dictionary of metadata for these occurrences
+   @param metadata: A file or dictionary of metadata for these occurrences
    @param outFile: The file location to write the modelable occurrence set
    @param bigFile: The file location to write the full occurrence set 
    @param maxPoints: The maximum number of points to be included in the regular
@@ -120,11 +120,11 @@ def createUserShapefile(pointCsvFn, meta, outFile, bigFile, maxPoints):
    cleanCount = len(cleanLines)
    cleanBlob = '\n'.join(cleanLines)
    
-   print('Cleaned blob of non-encodable lines, orig {}, new {}'
+   print('createUserShapefile, Cleaned blob of non-encodable lines, orig {}, new {}'
          .format(origCount, cleanCount))
       
    return parseCsvData(cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
-                       bigFile, cleanCount, maxPoints, metadata=meta, isUser=True)
+                       bigFile, cleanCount, maxPoints, metadata=metadata, isUser=True)
       
 # .............................................................................
 def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
@@ -154,6 +154,7 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
       f.close()
    else:
       logger = LmComputeLogger(os.path.basename(__file__))
+      print ('*** parseCsvData, metadata type {}'.format(type(metadata)))
       shaper = ShapeShifter(processType, rawData, count, logger=logger, 
                             metadata=metadata)
       shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 

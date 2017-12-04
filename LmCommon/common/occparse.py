@@ -61,15 +61,16 @@ class OccDataParser(object):
       @param data: raw data or filename for CSV data
       @param metadata: dictionary or filename containing metadata
       """
-      self.metadataFname = metadata
+      self._rawMetadata = metadata
+      self._fieldmeta = None
+      self._metadataFname = None
+         
       self.dataFname = data
       self.delimiter = delimiter
       self._file = None
       
       self.log = logger
-#       self.fieldNames = [] 
       self.fieldCount = 0
-#       self.fieldTypes = []
       
       # Record values to check
       self.filters = {}
@@ -102,8 +103,6 @@ class OccDataParser(object):
          self.dataFname = None
       
       self.header = None
-#       self.fieldNames = None
-#       self.fieldTypes = None
       self.filters = None
       self._idIdx = None
       self._xIdx = None
@@ -120,9 +119,8 @@ class OccDataParser(object):
       """
       @summary: Initializes CSV Reader and interprets metadata
       """
-      fieldmeta, metadataFname, doMatchHeader = self.readMetadata(self.metadataFname)
-      if metadataFname is None:
-         self.metadataFname = None
+      print ('*** OP.initializeMe, self._fieldmeta type = {}'.format(str(self.self._rawMetadata)))
+      fieldmeta, self._metadataFname, doMatchHeader = self.readMetadata(self._rawMetadata)
       if doMatchHeader:
          # Read CSV header
          print ('*** Getting header ...')
@@ -130,8 +128,6 @@ class OccDataParser(object):
          print ('Header = {}'.format(tmpList))
          self.header = [fldname.strip() for fldname in tmpList]
 
-#       (self.fieldNames,
-#        self.fieldTypes,
       (self.fieldIndexMeta,
        self.filters,
        self._idIdx,
@@ -139,7 +135,7 @@ class OccDataParser(object):
        self._yIdx,
        self._geoIdx,
        self._groupByIdx, 
-       self._nameIdx) = self.getMetadata(fieldmeta, self.header)
+       self._nameIdx) = self.getCheckIndexedMetadata(fieldmeta, self.header)
       self.fieldCount = len(self.fieldIndexMeta)
       
       # Start by pulling line 1; populates groupVal, currLine and currRecnum
@@ -156,12 +152,14 @@ class OccDataParser(object):
       try:
          f = open(datafile, 'r')
          csvreader = csv.reader(f, delimiter=delimiter)
+         print ('*** OccDataParser reading data file')
       except Exception, e:
          try:
             f = StringIO.StringIO()
             f.write(datafile.encode(ENCODING))
             f.seek(0)
             csvreader = csv.reader(f, delimiter=delimiter)
+            print ('*** OccDataParser raw data')
          except Exception, e:
             raise Exception('Failed to read or open {}'.format(datafile))
       return csvreader, f
@@ -366,7 +364,7 @@ class OccDataParser(object):
          
    # .............................................................................
    @staticmethod
-   def getMetadata(fldmeta, header):
+   def getCheckIndexedMetadata(fldmeta, header):
       """
       @summary: Identify data columns from metadata dictionary and optional 
                 data header. If the header is present, convert keys 
@@ -390,12 +388,13 @@ class OccDataParser(object):
                             more fields, keys are the new field indexes
                         column indexes for id, x, y, geopoint, groupBy, and name fields
       """
-#       fieldNames = []
-#       fieldTypes = []
       filters = {}
       idIdx = xIdx = yIdx = ptIdx = groupByIdx = nameIdx = None
-      # Build new metadata dict with column indexes as keys
-      if header is not None:
+      # If necessary, build new metadata dict with column indexes as keys
+      if header is None:
+         # keys are column indexs
+         fieldIndexMeta = fldmeta
+      else:
          # keys are fieldnames
          fieldIndexMeta = {}
          for i in range(len(header)):
@@ -403,9 +402,6 @@ class OccDataParser(object):
                fieldIndexMeta[i] = fldmeta[header[i]]
             except:
                fieldIndexMeta[i] = None
-      else:
-         # keys are column indexs
-         fieldIndexMeta = fldmeta
       
       for idx, vals in fieldIndexMeta.iteritems():
          # add placeholders in the fieldnames and fieldTypes lists for 
@@ -413,7 +409,7 @@ class OccDataParser(object):
          ogrtype = role = acceptedVals = None
          if vals is not None:
             # Get required vals for columns to save  
-            shortname = fieldIndexMeta[idx][OccDataParser.FIELD_NAME_KEY]
+            name = fieldIndexMeta[idx][OccDataParser.FIELD_NAME_KEY]
             ogrtype = fieldIndexMeta[idx][OccDataParser.FIELD_TYPE_KEY]
             # Check for optional filter AcceptedValues.  
             try:
@@ -628,6 +624,7 @@ class OccDataParser(object):
       """
       complete = False
       self.groupVal = None
+      print('')
       print('Pulling line')
       line, goodEnough = self._getLine()
       print('  pull goodEnough {}'.format(goodEnough))
@@ -649,7 +646,6 @@ class OccDataParser(object):
                   self.currLine = None
                   self.groupVal = None
                   self.log.info('Unable to pullNextValidRec; completed')
-         print('')
                   
       except Exception, e:
          self.log.error('Failed in pullNextValidRec, currRecnum=%s, e=%s' 
@@ -832,7 +828,7 @@ tmpList = csvreader.next()
 header = [fldname.strip() for fldname in tmpList]
 
 (fieldIndexMeta, filters, idIdx, xIdx, yIdx, ptIdx, groupByIdx, 
-nameIdx) = OccDataParser.getMetadata(fieldmeta, header)
+nameIdx) = OccDataParser.getCheckIndexedMetadata(fieldmeta, header)
 
 # open parser
 occparser = OccDataParser(log, data, metadata, delimiter=delimiter)
@@ -846,7 +842,7 @@ fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(metadata)
 
 
 (fieldIndexMeta, filters, 
- idIdx, xIdx, yIdx, groupByIdx, nameIdx) = OccDataParser.getMetadata(fieldmeta, 
+ idIdx, xIdx, yIdx, groupByIdx, nameIdx) = OccDataParser.getCheckIndexedMetadata(fieldmeta, 
                                                                   header)       
 op = OccDataParser(log, data, metadata, delimiter=',')
 op.readAllRecs()
