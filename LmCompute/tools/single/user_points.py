@@ -29,9 +29,8 @@
           02110-1301, USA.
 """
 import argparse
-import ast
 
-from LmCommon.common.occparse import OccDataParser
+# from LmCommon.common.occparse import OccDataParser
 from LmCompute.plugins.single.occurrences.csvOcc import createUserShapefile
 
 # .............................................................................
@@ -53,7 +52,8 @@ if __name__ == "__main__":
                help="The maximum number of points for the modelable shapefile")
    args = parser.parse_args()
    
-   meta, _, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
-   createUserShapefile(args.pointsCsvFn, meta, args.outFile, 
+#    meta, _, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
+   print ('*** user_points, metafile = {}'.format(args.metadataFile))
+   createUserShapefile(args.pointsCsvFn, args.metadataFile, args.outFile, 
                        args.bigFile, args.maxPoints)
    
