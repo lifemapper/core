@@ -387,7 +387,7 @@ class PhyloEncoding(object):
       for nodeCladeId in pValDict.keys():
          
          for tipMtxIdx in pValDict[nodeCladeId].keys():
-            matrix[tipMtxIdx][nodeColumnIndex[nodeCladeId]] = pValDict[
+            matrix[int(tipMtxIdx)][nodeColumnIndex[nodeCladeId]] = pValDict[
                                                          nodeCladeId][tipMtxIdx]
             
       return Matrix(matrix, headers={'0': labels,
