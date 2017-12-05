@@ -195,7 +195,7 @@ class PhyloEncoding(object):
          
       else: # We are at a tip
          blDict = {
-            getattr(node.taxon, PhyloTreeKeys.MTX_IDX) : []
+            node.taxon.annotations.get_value(PhyloTreeKeys.MTX_IDX) : []
          }
          
       
@@ -312,7 +312,9 @@ class PhyloEncoding(object):
             self._buildPMatrixTipProportionList(rightChild, 
                                              newVisited + [(node.label, 1.0)]))
       else: # We are at a tip
-         tipProps.append((getattr(node.taxon, PhyloTreeKeys.MTX_IDX), visited)) # Just return a list with one list
+         tipProps.append((
+            node.taxon.annotations.get_value(PhyloTreeKeys.MTX_IDX), 
+            visited)) # Just return a list with one list
       return tipProps
    
    # ..............................   
