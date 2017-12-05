@@ -108,7 +108,7 @@ class PhyloEncoding(object):
          pamMatrixIndices = range(self.pam.data.shape[1])
          # All matrix indices in tree
          
-         treeMatrixIndices = [mtxId for _, mtxId in self.tree.getAnnotations(
+         treeMatrixIndices = [int(mtxId) for _, mtxId in self.tree.getAnnotations(
                                                         PhyloTreeKeys.MTX_IDX) if mtxId is not None]
          #treeMatrixIndices = self.tree.getMatrixIndicesInClade()
          
