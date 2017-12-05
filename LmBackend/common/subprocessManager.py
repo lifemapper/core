@@ -5,7 +5,7 @@
 @version: 1.0
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -35,7 +35,7 @@ CONCURRENT_PROCESSES = max(1, multiprocessing.cpu_count() - 2)
 from LmCommon.common.lmXml import serialize, tostring
 
 WAIT_TIME = 10
-MAX_RUN_TIME = 60 * 60 * 5 # 5 hours
+MAX_RUN_TIME = 60 * 60 * 2 # 2 hours
 
 # .............................................................................
 class VariableContainer(object):
