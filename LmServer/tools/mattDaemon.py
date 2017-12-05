@@ -121,9 +121,9 @@ class MattDaemon(Daemon):
                   
                   # File outputs
                   procOut = open(os.path.join(LOG_PATH, 
-                                            'mf_{}.out'.format(mfObj.getId())))
+                                       'mf_{}.out'.format(mfObj.getId())), 'a')
                   procErr = open(os.path.join(LOG_PATH,
-                                            'mf_{}.err'.format(mfObj.getId())))
+                                       'mf_{}.err'.format(mfObj.getId())), 'a')
                   
                   self._mfPool.append([mfObj, mfDocFn, Popen(cmd, shell=True, 
                                                       preexec_fn=os.setsid), 
