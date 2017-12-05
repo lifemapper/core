@@ -153,8 +153,8 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
       f.write('Zero data points')
       f.close()
    else:
-      logger = LmComputeLogger(os.path.basename(__file__))
-      print ('*** parseCsvData, metadata type {}'.format(type(metadata)))
+      logname, ext = os.path.splitext(os.path.basename(__file__))
+      logger = LmComputeLogger(logname, addConsole=True)
       shaper = ShapeShifter(processType, rawData, count, logger=logger, 
                             metadata=metadata)
       shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
@@ -235,7 +235,7 @@ metadata = meta
 
 readyFilename(outFile, overwrite=True)
 readyFilename(bigFile, overwrite=True)
-logger = LmComputeLogger(os.path.basename('crap'))
+logger = LmComputeLogger(os.path.basename('crap'), addConsole=True)
 shaper = ShapeShifter(processType, rawData, count, logger=logger, 
                       metadata=metadata)
 op = shaper.op
@@ -277,7 +277,7 @@ if count <= 0:
    f.write('Zero data points')
    f.close()
 else:
-   logger = LmComputeLogger(os.path.basename(__file__))
+   logger = LmComputeLogger('crap', addConsole=True)
    shaper = ShapeShifter(processType, rawData, count, logger=logger, 
                          metadata=metadata)
    shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 

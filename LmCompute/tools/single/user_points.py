@@ -53,7 +53,6 @@ if __name__ == "__main__":
    args = parser.parse_args()
    
 #    meta, _, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
-   print ('*** user_points, metafile = {}'.format(args.metadataFile))
    createUserShapefile(args.pointsCsvFn, args.metadataFile, args.outFile, 
                        args.bigFile, args.maxPoints)
    

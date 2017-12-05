@@ -150,7 +150,6 @@ class ShapeShifter(object):
          print('Failed to _createFillFeat, e = {}'.format(fromUnicode(toUnicode(e))))
          raise e
       else:
-         print ('Creating feature with wkt {}'.format(feat.GetField(LM_WKT_FIELD)))
          # Create new feature, setting FID, in this layer
          lyr.CreateFeature(feat)
          feat.Destroy()
