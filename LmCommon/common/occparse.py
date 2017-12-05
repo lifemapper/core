@@ -27,29 +27,32 @@ import csv
 import os
 import sys
 import StringIO
-from types import DictionaryType, DictType, ListType, TupleType
+from types import DictionaryType, DictType
 
 from LmCommon.common.lmconstants import (ENCODING, OFTInteger, OFTReal, 
                                          OFTString, LMFormat)
-
+from LmBackend.common.lmobj import LMError
 # .............................................................................
 class OccDataParser(object):
    """
    @summary: Object with metadata and open file.  OccDataParser maintains 
              file position and most recently read data chunk
    """
+   FIELD_NAME_KEY = 'name'
+   FIELD_TYPE_KEY = 'type'
+   FIELD_ROLE_KEY = 'role'
+   FIELD_VALS_KEY = 'acceptedvals'
+
    FIELD_ROLE_IDENTIFIER = 'uniqueid'
    FIELD_ROLE_LONGITUDE = 'longitude'
    FIELD_ROLE_LATITUDE = 'latitude'
    FIELD_ROLE_GEOPOINT = 'geopoint'
    FIELD_ROLE_GROUPBY = 'groupby'
    FIELD_ROLE_TAXANAME = 'taxaname'
-   REQUIRED_FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
-                           FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME]
-   FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
+   FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, FIELD_ROLE_GEOPOINT,
                   FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME, FIELD_ROLE_IDENTIFIER]
 
-   def __init__(self, logger, data, metadata, delimiter=','):
+   def __init__(self, logger, data, metadata, delimiter=',', pullChunks=False):
       """
       @summary Reader for arbitrary user CSV data file with
                - header record and metadata with column **names** first, OR
@@ -57,16 +60,23 @@ class OccDataParser(object):
       @param logger: Logger to use for the main thread
       @param data: raw data or filename for CSV data
       @param metadata: dictionary or filename containing metadata
+      @param pullChunks: use the object to pull chunks of data based on the 
+               groupBy column.  This results in 'pre-fetching' a line of
+               data at the start of a chunk to establish the group, and 
+               identifying the end of a chunk when the current line does not 
+               match the existing chunk.
       """
-      self.metadataFname = metadata
+      self._rawMetadata = metadata
+      self._fieldmeta = None
+      self._metadataFname = None
+         
       self.dataFname = data
       self.delimiter = delimiter
+      self._doPreFetch = pullChunks
       self._file = None
       
       self.log = logger
-      self.fieldNames = [] 
       self.fieldCount = 0
-      self.fieldTypes = []
       
       # Record values to check
       self.filters = {}
@@ -99,8 +109,6 @@ class OccDataParser(object):
          self.dataFname = None
       
       self.header = None
-      self.fieldNames = None
-      self.fieldTypes = None
       self.filters = None
       self._idIdx = None
       self._xIdx = None
@@ -112,57 +120,31 @@ class OccDataParser(object):
       self.groupFirstRec = None
       self.currIsGoodEnough = None
 
-#       fieldmeta, metadataFname, doMatchHeader = self.readMetadata(metadata)
-#       if metadataFname is None:
-#          self.metadataFname = None
-#       if doMatchHeader:
-#          # Read CSV header
-#          tmpList = self._csvreader.next()
-#          self.header = [fldname.strip() for fldname in tmpList]
-# 
-#       (self.fieldNames,
-#        self.fieldTypes,
-#        self.filters,
-#        self._idIdx,
-#        self._xIdx,
-#        self._yIdx,
-#        self._geoIdx,
-#        self._groupByIdx, 
-#        self._nameIdx) = self.getMetadata(fieldmeta, self.header)
-#       self.fieldCount = len(self.fieldNames)
-#       
-#       # Start by pulling line 1; populates groupVal, currLine and currRecnum
-#       self.pullNextValidRec()
-#       # record number of the chunk of current key
-#       self.groupFirstRec = self.currRecnum     
-#       self.currIsGoodEnough = True
-
    # .............................
    def initializeMe(self):
       """
       @summary: Initializes CSV Reader and interprets metadata
       """
-      fieldmeta, metadataFname, doMatchHeader = self.readMetadata(self.metadataFname)
-      if metadataFname is None:
-         self.metadataFname = None
+      fieldmeta, self._metadataFname, doMatchHeader = self.readMetadata(self._rawMetadata)
       if doMatchHeader:
          # Read CSV header
          tmpList = self._csvreader.next()
+         print ('Header = {}'.format(tmpList))
          self.header = [fldname.strip() for fldname in tmpList]
 
-      (self.fieldNames,
-       self.fieldTypes,
+      (self.fieldIndexMeta,
        self.filters,
        self._idIdx,
        self._xIdx,
        self._yIdx,
        self._geoIdx,
        self._groupByIdx, 
-       self._nameIdx) = self.getMetadata(fieldmeta, self.header)
-      self.fieldCount = len(self.fieldNames)
+       self._nameIdx) = self.getCheckIndexedMetadata(fieldmeta, self.header)
+      self.fieldCount = len(self.fieldIndexMeta)
       
       # Start by pulling line 1; populates groupVal, currLine and currRecnum
-      self.pullNextValidRec()
+      if self._doPreFetch:
+         self.pullNextValidRec()
       # record number of the chunk of current key
       self.groupFirstRec = self.currRecnum     
       self.currIsGoodEnough = True
@@ -190,7 +172,7 @@ class OccDataParser(object):
    def currRecnum(self):
       if self._csvreader:
          return self._csvreader.line_num
-      elif self.eof():
+      elif self.closed:
          return -9999
       else:
          return None
@@ -254,7 +236,7 @@ class OccDataParser(object):
       if self._idIdx is None:
          return None
       else:
-         return self.fieldNames[self._idIdx]
+         return self.fieldIndexMeta[self._idIdx][self.FIELD_NAME_KEY]
    
    @property
    def idIdx(self):
@@ -263,7 +245,7 @@ class OccDataParser(object):
    @property
    def xFieldName(self):
       try:
-         return self.fieldNames[self._xIdx]
+         return self.fieldIndexMeta[self._xIdx][self.FIELD_NAME_KEY]
       except:
          return None
 
@@ -275,7 +257,7 @@ class OccDataParser(object):
    @property
    def yFieldName(self):
       try:
-         return self.fieldNames[self._yIdx]
+         return self.fieldIndexMeta[self._yIdx][self.FIELD_NAME_KEY]
       except:
          return None
       
@@ -286,7 +268,7 @@ class OccDataParser(object):
    @property
    def ptFieldName(self):
       try:
-         return self.fieldNames[self._geoIdx]
+         return self.fieldIndexMeta[self._geoIdx][self.FIELD_NAME_KEY]
       except:
          return None
 
@@ -300,54 +282,74 @@ class OccDataParser(object):
    def readMetadata(metadata):
       """
       @summary: Reads a stream/string of metadata describing a CSV file of  
-                species occurrence point data
+                species occurrence point data, and converts roles to lowercase
       @return: a dictionary with 
-         Key = original name or column index
+         Key = column name or column index
          Value = dictionary of keys 'name', 'type', 'role', and 'acceptedVals'
                                values 
       @note: A full description of the input data is at 
              LmDbServer/boom/occurrence.meta.example
       """
       doMatchHeader = False
-      fieldmeta = {} 
       metadataFname = None
       try:
          f = open(metadata, 'r')
       except Exception, e:
          fieldmeta = metadata  
       else:
+         fieldmeta = {} 
          metadataFname = metadata
          try:
             for line in f:
                if not line.startswith('#'):
                   tmp = line.split(',')
-                  if len(tmp) >= 3:
-                     parts = [p.strip() for p in tmp]
-                     # First value is original fieldname or column index
-                     key = parts[0]
-                     try:
-                        key = int(parts[0])
-                     except:
-                        pass
-                     # Second value is short fieldname, 10 chars or less
-                     name = parts[1]
-                     # Third value is string/real/integer
-                     ogrtype = OccDataParser.getOgrFieldType(parts[2])
-                     fieldmeta[key] = {'name': name, 'type': ogrtype}
-                     if len(parts) >= 4: 
-                        rest = parts[3:]
-                        # If there are 4 values, last one is the role this 
-                        # field plays in the data: 
-                        #   Longitude, Latitude, Geopoint, GroupBy, TaxaName, UniqueID
-                        if rest[0].lower() in OccDataParser.FIELD_ROLES:
-                           fieldmeta[key]['role'] = rest[0].lower()
-                           rest = rest[1:]
-                        # Remaining values are acceptable values for this field
-                        if len(rest) >= 1:
-                           fieldmeta[key]['acceptedVals'] = rest
+                  parts = [p.strip() for p in tmp]
+                  # First value is original fieldname or column index
+                  key = parts[0]
+                  try:
+                     key = int(parts[0])
+                  except:
+                     if len(key) == 0:
+                        key = None
+                  if key is not None:
+                     if len(tmp) < 3:
+                        print('Skipping field {} without name or type'.format(key))
+                        fieldmeta[key] = None
+                     else:
+                        # Required second value is fieldname, must 
+                        # be 10 chars or less to write to a shapefile
+                        # Required third value is string/real/integer or None to ignore
+                        name = parts[1]
+                        ftype = parts[2]
+                        # Convert to OGR field type
+                        ogrtype = OccDataParser.getOgrFieldType(ftype)
+                        if ogrtype is None:
+                           # Skip field without OGR type
+                           fieldmeta[key] = None
+                        else:
+                           fieldmeta[key] = {OccDataParser.FIELD_NAME_KEY: name, 
+                                             OccDataParser.FIELD_TYPE_KEY: ogrtype}
+                           # Optional remaining values are role and/or allowable values
+                           if len(parts) >= 4:
+                              # Convert to lowercase 
+                              rest = []
+                              for val in parts[3:]:
+                                 try:
+                                    rest.append(val.lower())
+                                 except:
+                                    rest.append(val)
+                              # If there are 4+ values, fourth may be role of this field: 
+                              #   longitude, latitude, geopoint, groupby, taxaname, uniqueid
+                              # Convert to lowercase
+                              if rest[0] in OccDataParser.FIELD_ROLES:
+                                 fieldmeta[key][OccDataParser.FIELD_ROLE_KEY] = rest[0]
+                                 rest = rest[1:]
+                              # Remaining values are acceptable values for this field
+                              if len(rest) >= 1:
+                                 fieldmeta[key][OccDataParser.FIELD_VALS_KEY] = rest
          except Exception, e:
-            raise Exception('Failed to evaluate contents of metadata file {}'
-                            .format(metadataFname))
+            raise Exception('Failed to evaluate contents of metadata file {}, ({})'
+                            .format(metadataFname, e))
          finally:
             f.close()
             
@@ -365,9 +367,11 @@ class OccDataParser(object):
          
    # .............................................................................
    @staticmethod
-   def getMetadata(fldmeta, header):
+   def getCheckIndexedMetadata(fldmeta, header):
       """
-      @summary: Identify data columns from metadata dictionary and data header
+      @summary: Identify data columns from metadata dictionary and optional 
+                data header. If the header is present, convert keys 
+                in the fldmeta dictionary from column names to column indices.
       @param fldmeta: Dictionary of field names, types, roles, and accepted values.
                       If the first level 'Value' is None, this field will be ignored
                          Key = original name or column index
@@ -387,85 +391,90 @@ class OccDataParser(object):
                             more fields, keys are the new field indexes
                         column indexes for id, x, y, geopoint, groupBy, and name fields
       """
-      fieldNames = []
-      fieldTypes = []
       filters = {}
       idIdx = xIdx = yIdx = ptIdx = groupByIdx = nameIdx = None
-      # Build new metadata dict with column indexes as keys
-      if header is not None:
+      # If necessary, build new metadata dict with column indexes as keys
+      if header is None:
+         # keys are column indexs
+         fieldIndexMeta = fldmeta
+      else:
          # keys are fieldnames
-         idxdict = {}
+         fieldIndexMeta = {}
          for i in range(len(header)):
             try:
-               idxdict[i] = fldmeta[header[i]]
+               fieldIndexMeta[i] = fldmeta[header[i]]
             except:
-               idxdict[i] = None
-      else:
-         # keys are column indexs
-         idxdict = fldmeta
+               fieldIndexMeta[i] = None
       
-      for idx, vals in idxdict.iteritems():
+      for idx, vals in fieldIndexMeta.iteritems():
          # add placeholders in the fieldnames and fieldTypes lists for 
          # columns we will not process 
-         shortname = idx
          ogrtype = role = acceptedVals = None
          if vals is not None:
             # Get required vals for columns to save  
-            shortname = vals['name']
-            ogrtype = vals['type']
+            name = fieldIndexMeta[idx][OccDataParser.FIELD_NAME_KEY]
+            ogrtype = fieldIndexMeta[idx][OccDataParser.FIELD_TYPE_KEY]
             # Check for optional filter AcceptedValues.  
             try:
-               acceptedVals = idxdict[idx]['acceptedVals']
+               acceptedVals = fieldIndexMeta[idx]['acceptedVals']
             except:
                pass
             else:
+               # Convert acceptedVals to lowercase
                if ogrtype == OFTString:
-                  acceptedVals = [val.lower() for val in acceptedVals]
+                  fieldIndexMeta[idx][OccDataParser.FIELD_VALS_KEY] = [val.lower() for val in acceptedVals]
             # Find column index of important fields
             try:
-               role = idxdict[idx]['role'].lower()
+               role = fieldIndexMeta[idx][OccDataParser.FIELD_ROLE_KEY].lower()
             except:
                pass
             else:
+               # If role exists, convert to lowercase
+               fieldIndexMeta[idx]['role'] = role
                if role == OccDataParser.FIELD_ROLE_IDENTIFIER:
                   idIdx = idx
+                  print ('Found id index {}').format(idx)
                elif role == OccDataParser.FIELD_ROLE_LONGITUDE:
                   xIdx = idx
+                  print ('Found X index {}').format(idx)
                elif role == OccDataParser.FIELD_ROLE_LATITUDE:
                   yIdx = idx
+                  print ('Found Y index {}').format(idx)
                elif role == OccDataParser.FIELD_ROLE_GEOPOINT:
                   ptIdx = idx
+                  print ('Found point index {}').format(idx)
                elif role == OccDataParser.FIELD_ROLE_TAXANAME:
                   nameIdx = idx
-               # Group by may be the same as taxaname
-               if role == OccDataParser.FIELD_ROLE_GROUPBY:
+                  print ('Found name index {}').format(idx)
+               elif role == OccDataParser.FIELD_ROLE_GROUPBY:
                   groupByIdx = idx
-         fieldNames.append(shortname)
-         fieldTypes.append(ogrtype)
+                  print ('Found group index {}').format(idx)
          filters[idx] = acceptedVals
 
       # Check existence of required roles
       if nameIdx is None:
          nameIdx = groupByIdx
       if (xIdx is None or yIdx is None) and ptIdx is None:
+         print ('Found x {}, y {}, point {}').format(xIdx, yIdx, ptIdx)
          raise Exception('Missing `LATITUDE`-`LONGITUDE` pair or `GEOPOINT` roles in metadata')
       if groupByIdx is None:
          raise Exception('Missing `GROUPBY` required role in metadata')
-      return (fieldNames, fieldTypes, filters, 
-              idIdx, xIdx, yIdx, ptIdx, groupByIdx, nameIdx)
+      return (fieldIndexMeta, filters, idIdx, xIdx, yIdx, ptIdx, groupByIdx, nameIdx)
       
    # .............................................................................
    @staticmethod
    def getOgrFieldType(typeString):
       typestr = typeString.lower()
-      if typestr == 'integer':
+      if typestr == 'none':
+         return None
+      elif typestr in ('int', 'integer'):
          return OFTInteger
       elif typestr == 'string':
          return OFTString
       elif typestr == 'real':
          return OFTReal
       else:
-         raise Exception('Unsupported field type {} (requires int, string, real)'
+         raise Exception('Unsupported field type {} (requires None, int, string, real)'
                          .format(typeString))
    
    # ...............................................
@@ -642,7 +651,7 @@ class OccDataParser(object):
 
    # ...............................................
    def printStats(self):
-      if not self.eof():
+      if not self.closed:
          self.log.error('File is on line {}; printStats must be run after reading complete file' 
                         % self._csvreader.line_num)      
       else:
@@ -743,9 +752,9 @@ class OccDataParser(object):
          self.currLine = self.groupVal = None      
       return chunk
 
-   # ...............................................
-   def eof(self):
-      return self.currLine is None
+#    # ...............................................
+#    def eof(self):
+#       return self.currLine is None
    
 # ...............................................
    @property
@@ -779,7 +788,7 @@ if __name__ == '__main__':
    pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
    log = TestLogger('occparse_checkInput')
    op = OccDataParser(log, pthAndBasename + LMFormat.CSV.ext, 
-                      pthAndBasename + LMFormat.METADATA.ext)
+                      pthAndBasename + LMFormat.METADATA.ext, pullChunks=True)
    op.readAllRecs()
    op.printStats()
    op.close()
@@ -815,8 +824,8 @@ csvreader, _file = OccDataParser.getReader(data, delimiter)
 tmpList = csvreader.next()
 header = [fldname.strip() for fldname in tmpList]
 
-(fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, groupByIdx, 
- nameIdx) = OccDataParser.getMetadata(fieldmeta, header)
+(fieldIndexMeta, filters, idIdx, xIdx, yIdx, ptIdx, groupByIdx, 
+nameIdx) = OccDataParser.getCheckIndexedMetadata(fieldmeta, header)
 
 # open parser
 occparser = OccDataParser(log, data, metadata, delimiter=delimiter)
@@ -829,8 +838,8 @@ header = [fldname.strip() for fldname in tmpHeader]
 fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(metadata)
 
 
-(fieldNames, fieldTypes, filters, 
- idIdx, xIdx, yIdx, groupByIdx, nameIdx) = OccDataParser.getMetadata(fieldmeta, 
+(fieldIndexMeta, filters, 
+ idIdx, xIdx, yIdx, groupByIdx, nameIdx) = OccDataParser.getCheckIndexedMetadata(fieldmeta, 
                                                                   header)       
 op = OccDataParser(log, data, metadata, delimiter=',')
 op.readAllRecs()

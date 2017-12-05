@@ -60,13 +60,14 @@ def _getSmallestKeyAndPosition(sortedFiles):
 # ...............................................
 def checkMergedFile(log, mergefname, metafname):
    chunkCount = recCount = failSortCount = failChunkCount = 0
-   bigSortedData = OccDataParser(log, mergefname, metafname, delimiter=OUT_DELIMITER)
+   bigSortedData = OccDataParser(log, mergefname, metafname, 
+                                 delimiter=OUT_DELIMITER, pullChunks=True)
    bigSortedData.initializeMe()
    prevKey = bigSortedData.groupVal
    
    chunk, chunkGroup, chunkName = bigSortedData.pullCurrentChunk()
    try:
-      while not bigSortedData.eof() and len(chunk) > 0:
+      while not bigSortedData.closed() and len(chunk) > 0:
          if bigSortedData.groupVal > prevKey: 
             chunkCount += 1
             recCount += len(chunk)
@@ -120,7 +121,7 @@ def sortRecs(array, idx):
 # .............................................................................
 def splitIntoFiles(occparser, datapath, prefix, basename, maxFileSize):
    idx = 0
-   while not occparser.eof():
+   while not occparser.closed():
       chunk = occparser.getSizeChunk(maxFileSize)
       fname = _getOPFilename(datapath, prefix, basename, run=idx)
       newFile = open(fname, 'wb')
@@ -185,9 +186,6 @@ def _popChunkAndWrite(csvwriter, occPrsr):
    chunk, chunkGroup, chunkName = occPrsr.pullCurrentChunk()
    for rec in chunk:
       csvwriter.writerow(rec)
-
-   if occPrsr.eof():
-      occPrsr.close()
    return thiskey
 
 # ...............................................
@@ -220,7 +218,8 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
    sortedFiles = []
    srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
    while os.path.exists(srtFname):
-      op = OccDataParser(log, srtFname, metafname, delimiter=OUT_DELIMITER)
+      op = OccDataParser(log, srtFname, metafname, delimiter=OUT_DELIMITER, 
+                         pullChunks=True)
       op.initializeMe()
       sortedFiles.append(op)
       inIdx += 1
@@ -299,7 +298,8 @@ if __name__ == "__main__":
    log = ScriptLogger(logname)
    if cmd in ('split', 'sort', 'all'):   
       # Split into smaller unsorted files
-      occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter)
+      occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter,
+                                pullChunks=True)
       occparser.initializeMe()
       groupByIdx = occparser.groupByIdx
       print 'groupByIdx = ', groupByIdx
@@ -350,7 +350,7 @@ mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename,
    
 log = ScriptLogger('sortCSVTest')
 
-occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter)
+occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter, pullChunks=True)
 occparser.initializeMe()
 groupByIdx = occparser.groupByIdx
  

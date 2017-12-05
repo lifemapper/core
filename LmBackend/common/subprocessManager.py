@@ -156,7 +156,7 @@ class SubprocessRunner(object):
          
       if runTime >= self.killTime:
          myProc.kill()
-         raise Exception, 'Log running process, killed'
+         raise Exception, 'Killed long running process'
          
       # Get output
       exitCode = myProc.poll()

@@ -61,7 +61,8 @@ class ShapeShifter(object):
       @param processType: ProcessType constant, either GBIF_TAXA_OCCURRENCE,
                           BISON_TAXA_OCCURRENCE or IDIGBIO_TAXA_OCCURRENCE  
       @param rawdata: Either csv blob of GBIF, iDigBio, or User data 
-                      or list of dictionary records of BISON data
+                      or list of dictionary records of BISON data for which to
+                      create a single shapefile.
       """
       self._reader = None
       # If necessary, map provider dictionary keys to our field names
@@ -72,6 +73,7 @@ class ShapeShifter(object):
       self.rawdata = rawdata
       self.linkField = None
       self.linkUrl = None
+      self.providerKeyField = None
       self.computedProviderField = None
       self.op = None
       
@@ -84,14 +86,17 @@ class ShapeShifter(object):
          if not metadata:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                               'Failed to get metadata')
-         self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter)
+         self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter,
+                                 pullChunks=False)
          self.op.initializeMe()
+         if self.op.header is not None:
+            self._recCount = self._recCount - 1
          self.idField = self.op.idFieldName
          if self.op.xFieldName is not None: 
             self.xField = self.op.xFieldName
          else:
             self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
-         if self.op.yFieldName is None:
+         if self.op.yFieldName is not None:
             self.yField = self.op.yFieldName
          else:
             self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
@@ -145,56 +150,11 @@ class ShapeShifter(object):
          print('Failed to _createFillFeat, e = {}'.format(fromUnicode(toUnicode(e))))
          raise e
       else:
+         print ('Creating feature with wkt {}'.format(feat.GetField(LM_WKT_FIELD)))
          # Create new feature, setting FID, in this layer
          lyr.CreateFeature(feat)
          feat.Destroy()
 
-#    # .............................................................................
-#    def _getMetadata(self, origfldnames):
-#       fldmeta = self._readMetadata()
-#       
-#       for i in range(len(origfldnames)):         
-#          oname = origfldnames[i]
-#          shortname = fldmeta[oname][0]
-#          ogrtype = self.getOgrFieldType(fldmeta[oname][1])
-#          self.fieldNames.append(shortname)
-#          self.fieldTypes.append(ogrtype)
-#          
-#          if len(fldmeta[oname]) == 3:
-#             if type(fldmeta[oname][2]) in (ListType, TupleType):
-#                acceptedVals = fldmeta[oname][2]
-#                if ogrtype == ogr.OFTString:
-#                   acceptedVals = [val.lower() for val in fldmeta[oname][2]]
-#                self.filters[i] = acceptedVals 
-#             else:
-#                role = fldmeta[oname][2].lower()
-#                if role == 'id':
-#                   self._idIdx = i
-#                elif role == 'longitude':
-#                   self._xIdx = i
-#                elif role == 'latitude':
-#                   self._yIdx = i
-#                elif role == 'groupby':
-#                   self._groupByIdx = i
-#                elif role == 'dataname':
-#                   self._nameIdx = i
-#       self.fieldCount = len(self.fieldNames)
-#       
-#       if self._idIdx == None:
-#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                            'Missing \'id\' unique identifier field')
-#       if self._xIdx == None:
-#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                            'Missing \'longitude\' georeference field')
-#       if self._yIdx == None:
-#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                            'Missing \'latitude\' georeference field')
-#       if self._groupByIdx == None:
-#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                            'Missing \'groupby\' sorting field')
-#       if self._nameIdx == None:
-#          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                            'Missing \'dataname\' dataset name field')
 
 # .............................................................................
 # Public functions
@@ -238,10 +198,10 @@ class ShapeShifter(object):
                featCount = slyr.GetFeatureCount()
       if not goodData: 
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                           'Failed to create shapefile {}'.format(dlocation))
+                           'Failed to open dataset or layer {}'.format(dlocation))
       elif featCount == 0:
          raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
-                           'Failed to create shapefile {}'.format(dlocation))
+                           'Failed to create shapefile with > 0 points {}'.format(dlocation))
       return goodData, featCount
 
    # .............................................................................
@@ -260,7 +220,7 @@ class ShapeShifter(object):
          else:
             outLyr = self._addFieldDef(outDs)
          lyrDef = outLyr.GetLayerDefn()
-            
+
          # Do we need a BIG dataset?
          if len(discardIndices) > 0 and bigfname is not None:
             if not readyFilename(bigfname, overwrite=overwrite):
@@ -425,6 +385,7 @@ class ShapeShifter(object):
          # get BISON from web service
          recDict = self._getAPIResponseRec()
       if recDict is not None:
+#          print('recnum {} pt {}'.format(self._currRecum, recDict['geoPoint']))
          self._currRecum += 1
       return recDict
       
@@ -462,12 +423,13 @@ class ShapeShifter(object):
       recDict = None
       badRecCount = 0
       # skip lines w/o valid coordinates
-      while not success and not self.op.eof():
+      while not success and not self.op.closed:
          try:
             self.op.pullNextValidRec()
-            if not self.op.eof():
-               x, y = OccDataParser.getXY(self.op.currLine, 
-                                          self.op.xIdx, self.op.yIdx, self.op.ptIdx)
+            thisrec = self.op.currLine
+            if thisrec is not None:
+               x, y = OccDataParser.getXY(thisrec, self.op.xIdx, self.op.yIdx, 
+                                          self.op.ptIdx)
                # Unique identifier field is not required, default to FID
                # ignore records without valid lat/long; all occ jobs contain these fields
                tmpDict[self.xField] = float(x)
@@ -484,10 +446,10 @@ class ShapeShifter(object):
             print('Exception reading line {} ({})'.format(self.op.currRecnum, 
                                                      fromUnicode(toUnicode(e))))
       if success:
-         for i in range(len(self.op.fieldNames)):
-            # got x, y above
-            if i not in (self.op.xIdx, self.op.yIdx):
-               tmpDict[self.op.fieldNames[i]] = self.op.currLine[i]
+         for idx, vals in self.op.fieldIndexMeta.iteritems():
+            if vals is not None and idx not in (self.op.xIdx, self.op.yIdx):
+               fldname = self.op.fieldIndexMeta[idx][OccDataParser.FIELD_NAME_KEY]
+               tmpDict[fldname] = thisrec[idx]
          recDict = tmpDict
       if badRecCount > 0:
          print('Skipped over {} bad records'.format(badRecCount))
@@ -528,26 +490,28 @@ class ShapeShifter(object):
    def _addUserFieldDef(self, newDataset):
       spRef = osr.SpatialReference()
       spRef.ImportFromEPSG(DEFAULT_EPSG)
+      maxStrlen = LMFormat.getStrlenForDefaultOGR()
     
       newLyr = newDataset.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
       if newLyr is None:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                            'Layer creation failed')
-       
-      for pos in range(len(self.op.fieldNames)):
-         fldname = self.op.fieldNames[pos]
-         fldtype = self.op.fieldTypes[pos]
-         fldDef = ogr.FieldDefn(fldname, fldtype)
-         if fldtype == ogr.OFTString:
-            fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
-         returnVal = newLyr.CreateField(fldDef)
-         if returnVal != 0:
-            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                            'Failed to create field {}'.format(fldname))
+      
+      for idx, vals in self.op.fieldIndexMeta.iteritems():
+         if vals is not None:
+            fldname = vals[OccDataParser.FIELD_NAME_KEY]
+            fldtype = vals[OccDataParser.FIELD_TYPE_KEY] 
+            fldDef = ogr.FieldDefn(fldname, fldtype)
+            if fldtype == ogr.OFTString:
+               fldDef.SetWidth(maxStrlen)
+            returnVal = newLyr.CreateField(fldDef)
+            if returnVal != 0:
+               raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                               'Failed to create field {}'.format(fldname))
             
       # Add wkt field
       fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
-      fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
+      fldDef.SetWidth(maxStrlen)
       returnVal = newLyr.CreateField(fldDef)
       if returnVal != 0:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
@@ -613,30 +577,11 @@ class ShapeShifter(object):
     
       return newLyr
    
+
    # ...............................................
-   def _fillFeature(self, feat, recDict):
-      """
-      @note: This *should* return the modified feature
-      """
+   def _handleSpecialFields(self, feat, recDict):
       try:
-         x = recDict[self.op.fieldNames]
-         y = recDict[self.op.fieldNames]
-      except:
-         x = recDict[self.xField]
-         y = recDict[self.yField]
-         
-      try:
-         # Set LM added fields, geometry, geomwkt
-         wkt = 'POINT ({} {})'.format(x, y)
-         feat.SetField(LM_WKT_FIELD, wkt)
-         geom = ogr.CreateGeometryFromWkt(wkt)
-         feat.SetGeometryDirectly(geom)
-      except Exception, e:
-         print('Failed to create/set geometry, e = {}'.format(e))
-         raise e
-         
-      try:
-         # If data has a unique id for each point
+         # Find or assign a (dataset) unique id for each point
          if self.idField is not None:
             try:
                ptid = recDict[self.idField]
@@ -648,7 +593,7 @@ class ShapeShifter(object):
          # If data has a Url link field
          if self.linkField is not None:
             try:
-               searchid = recDict[self.linkIdField]
+               searchid = recDict[self.linkField]
             except:
                pass
             else:
@@ -670,19 +615,46 @@ class ShapeShifter(object):
          print('Failed to set optional field in rec {}, e = {}'.format(str(recDict), e))
          raise e
 
+   # ...............................................
+   def _fillFeature(self, feat, recDict):
+      """
+      @note: This *should* return the modified feature
+      """
+      try:
+         x = recDict[self.op.xIdx]
+         y = recDict[self.op.yIdx]
+      except:
+         x = recDict[self.xField]
+         y = recDict[self.yField]
+         
+      try:
+         # Set LM added fields, geometry, geomwkt
+         wkt = 'POINT ({} {})'.format(x, y)
+         feat.SetField(LM_WKT_FIELD, wkt)
+         geom = ogr.CreateGeometryFromWkt(wkt)
+         feat.SetGeometryDirectly(geom)
+      except Exception, e:
+         print('Failed to create/set geometry, e = {}'.format(e))
+         raise e
+         
+      specialFields = (self.idField, self.linkField, self.providerKeyField, 
+                       self.computedProviderField)
+      self._handleSpecialFields(feat, recDict)
+
       try:
          # Add values out of the line of data
          for name in recDict.keys():
-            # Handles reverse lookup for BISON metadata
-            # TODO: make this consistent!!!
-            # For User data, name = fldname
-            fldname = self._lookup(name)
-            if fldname is not None:
-               val = recDict[name]
-               if val is not None and val != 'None':
-                  if isinstance(val, UnicodeType):
-                     val = fromUnicode(val)
-                  feat.SetField(fldname, val)
+            if (name in feat.keys() and name not in specialFields):
+               # Handles reverse lookup for BISON metadata
+               # TODO: make this consistent!!!
+               # For User data, name = fldname
+               fldname = self._lookup(name)
+               if fldname is not None:
+                  val = recDict[name]
+                  if val is not None and val != 'None':
+                     if isinstance(val, UnicodeType):
+                        val = fromUnicode(val)
+                     feat.SetField(fldname, val)
       except Exception, e:
          print('Failed to fillFeature with recDict {}, e = {}'.format(str(recDict), e))
          raise e

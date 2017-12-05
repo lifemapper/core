@@ -29,9 +29,8 @@
           02110-1301, USA.
 """
 import argparse
-import ast
 
-from LmCommon.common.occparse import OccDataParser
+# from LmCommon.common.occparse import OccDataParser
 from LmCompute.plugins.single.occurrences.csvOcc import createUserShapefile
 
 # .............................................................................
@@ -53,59 +52,8 @@ if __name__ == "__main__":
                help="The maximum number of points for the modelable shapefile")
    args = parser.parse_args()
    
-   meta, _, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
-   createUserShapefile(args.pointsCsvFn, meta, args.outFile, 
+#    meta, _, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
+   print ('*** user_points, metafile = {}'.format(args.metadataFile))
+   createUserShapefile(args.pointsCsvFn, args.metadataFile, args.outFile, 
                        args.bigFile, args.maxPoints)
    
-"""
-$PYTHON /opt/lifemapper/LmCompute/tools/single/user_points.py \
-        /share/lm/data/archive/biotaphy/000/000/006/963/pt_6963.csv \
-        /share/lm/data/archive/biotaphy/saxifragales.meta \
-        /tmp/mf_7125/pt_6963/pt_6963.shp \
-        /tmp/mf_7125/pt_6963/bigpt_6963.shp \
-        500
-
-
-import json
-import os
-from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
-from LmCommon.common.occparse import OccDataParser
-from LmCommon.shapes.createshape import ShapeShifter
-from LmCommon.common.lmconstants import JobStatus, ProcessType
-from LmCommon.common.readyfile import readyFilename
-from LmCompute.common.lmObj import LmException
-from LmCompute.common.log import LmComputeLogger
-
-pointCsvFn = '/share/lm/data/archive/biotaphy/000/000/006/963/pt_6963.csv'
-meta='/share/lm/data/archive/biotaphy/saxifragales.meta'
-outFile = 'mf_7125/pt_6963/pt_6963.shp'
-bigFile = 'mf_7125/pt_6963/bigpt_6963.shp'
-readyFilename(outFile, overwrite=True)
-readyFilename(bigFile, overwrite=True)
-maxPoints = 500
-
-with open(pointCsvFn) as inF:
-   csvInputBlob = inF.read()
-
-meta, _, doMatchHeader = OccDataParser.readMetadata(meta)
-
-count = len(csvInputBlob.split('\n')) - 2
-
-parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
-                       bigFile, count, maxPoints, metadata=meta, isUser=True)
-
-logger = LmComputeLogger('testpoints')
-shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, csvInputBlob, 21, logger=logger, metadata=meta)
-op = shaper.op
-
-outDs = bigDs = None             
-outDs = shaper._createDataset(outFile)
-outLyr = shaper._addUserFieldDef(outDs)
-lyrDef = outLyr.GetLayerDefn()
-
-shaper.processType == ProcessType.USER_TAXA_OCCURRENCE
-
-
-
-
-"""

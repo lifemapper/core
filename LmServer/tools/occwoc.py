@@ -517,7 +517,8 @@ class UserWoC(_SpeciesWeaponOfChoice):
       try:
          self.occParser = OccDataParser(self.log, self._userOccCSV, 
                                         self._userOccMeta, 
-                                        delimiter=self._delimiter) 
+                                        delimiter=self._delimiter,
+                                        pullChunks=True) 
       except Exception, e:
          raise LMError('Failed to construct OccDataParser')
       
@@ -1046,7 +1047,7 @@ woc = UserWoC(scribe, userId, 'someArchiveName',
 op = woc.occParser         
 
 
-op = OccDataParser(logger, occCSV, occMeta)
+op = OccDataParser(logger, occCSV, occMeta, pullChunks=True)
 
 
 f = open(occCSV, 'r')
@@ -1061,7 +1062,7 @@ fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(occMeta)
  yIdx,
  geoIdx,
  groupByIdx, 
- nameIdx) = OccDataParser.getMetadata(fieldmeta, None)
+ nameIdx) = OccDataParser.getCheckIndexedMetadata(fieldmeta, None)
  
 line = cr.next()
 goodEnough = True
