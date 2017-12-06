@@ -20,7 +20,7 @@ from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.tree import Tree
 
 # .............................................................................
-def addToGridset(gridsetId, treeFilename=None, treeName=None, hypotheses=None, 
+def addToGridset(gridsetId, treeFilename=None, hypotheses=None, 
                  eventField=None):
    """
    @summary: Adds a tree and biogeographic hypotheses to a gridset 
@@ -60,7 +60,8 @@ def addToGridset(gridsetId, treeFilename=None, treeName=None, hypotheses=None,
          mtx.save(outF)
 
    # If a tree was provided
-   if treeFilename and treeName:
+   if treeFilename:
+      treeName = os.path.splitext(os.path.basename(treeFilename))[0]
       t = Tree(treeName, dlocation=treeFilename, userId=gs.getUserId())
 
       # Add squids
@@ -104,8 +105,6 @@ if __name__ == '__main__':
 
    parser.add_argument('-t', '--tree_filename', type=str, 
                        help="File path to a json tree file to add")
-   parser.add_argument('-tn', '--tree_name', type=str, 
-                       help='The name of the new tree')
    parser.add_argument('-e', '--event_field', type=str, 
                help='The name of the event field in the hypotheses shapefiles')
    parser.add_argument('gridsetId', type=int, help='The gridset id to use')
@@ -122,6 +121,5 @@ if __name__ == '__main__':
          print('{} does not exist'.format(fn))
    
    addToGridset(args.gridsetId, treeFilename=args.tree_filename, 
-                treeName=args.tree_name, hypotheses=hypotheses, 
-                eventField=args.event_field)
+                hypotheses=hypotheses, eventField=args.event_field)
    
