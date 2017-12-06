@@ -1,7 +1,12 @@
 """
 @summary: Add a tree and biogeographic hypotheses to a grid set
+
+
+@todo: How to specify multiple hypotheses with different event fields?
+
 """
 import argparse
+import numpy as np
 import os
 import sys
 
@@ -32,17 +37,27 @@ def addToGridset(gridsetId, treeFilename=None, treeName=None, hypotheses=None,
       enc.addLayers(hypotheses, eventField=eventField)
       encMtx = enc.encodeHypotheses()
       
-      # Insert matrix into db
-      newMtx = LMMatrix(encMtx.data, headers=encMtx.getHeaders(), 
+      # Check for an existing matrix
+      mtx = scribe.getMatrix(userId=gs.getUserId(), gridsetId=gs.getId(),
+                             MatrixType=MatrixType.BIOGEO_HYPOTHESES)
+      if mtx is None:
+         # Insert matrix into db
+         newMtx = LMMatrix(encMtx.data, headers=encMtx.getHeaders(), 
                         matrixType=MatrixType.BIOGEO_HYPOTHESES, 
                         processType=ProcessType.ENCODE_HYPOTHESES,
                         userId=gs.getUserId(), gridset=gs)
-      insertedMtx = scribe.findOrInsertMatrix(newMtx)
-      insertedMtx.updateStatus(JobStatus.COMPLETE)
-      scribe.updateObject(insertedMtx)
+         mtx = scribe.findOrInsertMatrix(newMtx)
+         mtx.data = encMtx.data
+         mtx.updateStatus(JobStatus.COMPLETE)
+         scribe.updateObject(mtx)
+      else:
+         mtx.data = np.append(mtx.data, encMtx.data, axis=1)
+         colHeaders = mtx.getColumnHeaders()
+         colHeaders.extend(encMtx.getColumnHeaders())
+         mtx.setColumnHeaders(colHeaders)
       # Write the encoded matrix to the new matrix dlocation
-      with open(insertedMtx.getDLocation(), 'w') as outF:
-         encMtx.save(outF)
+      with open(mtx.getDLocation(), 'w') as outF:
+         mtx.save(outF)
 
    # If a tree was provided
    if treeFilename and treeName:
