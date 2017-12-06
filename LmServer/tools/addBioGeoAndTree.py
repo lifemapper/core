@@ -39,7 +39,7 @@ def addToGridset(gridsetId, treeFilename=None, treeName=None, hypotheses=None,
       
       # Check for an existing matrix
       mtx = scribe.getMatrix(userId=gs.getUserId(), gridsetId=gs.getId(),
-                             MatrixType=MatrixType.BIOGEO_HYPOTHESES)
+                             mtxType=MatrixType.BIOGEO_HYPOTHESES)
       if mtx is None:
          # Insert matrix into db
          newMtx = LMMatrix(encMtx.data, headers=encMtx.getHeaders(), 
