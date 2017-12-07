@@ -35,7 +35,9 @@ def addToGridset(gridsetId, treeFilename=None, hypotheses=None,
    if hypotheses:
       enc = BioGeoEncoding(sg.getDLocation())
       enc.addLayers(hypotheses, eventField=eventField)
+      print "Encoding layers"
       encMtx = enc.encodeHypotheses()
+      print "Layers encoded"
       
       # Check for an existing matrix
       mtx = scribe.getMatrix(userId=gs.getUserId(), gridsetId=gs.getId(),
@@ -56,8 +58,10 @@ def addToGridset(gridsetId, treeFilename=None, hypotheses=None,
          colHeaders.extend(encMtx.getColumnHeaders())
          mtx.setColumnHeaders(colHeaders)
       # Write the encoded matrix to the new matrix dlocation
+      print "Saving encoded matrix to:", mtx.getDLocation()
       with open(mtx.getDLocation(), 'w') as outF:
          mtx.save(outF)
+      print "Saved"
 
    # If a tree was provided
    if treeFilename:
@@ -67,6 +71,7 @@ def addToGridset(gridsetId, treeFilename=None, hypotheses=None,
       # Add squids
       userId = gs.getUserId()
       
+      print "Adding squids to tree"
       squidDict = {}
       for label in t.getLabels():
          # TODO: Do we always need to do this?
@@ -77,21 +82,26 @@ def addToGridset(gridsetId, treeFilename=None, hypotheses=None,
 
       t.annotateTree(PhyloTreeKeys.SQUID, squidDict)
    
+      print "Adding interior node labels to tree"
       # Add node labels
       t.addNodeLabels()
       
+      print "Inserting tree"
       insertedTree = scribe.findOrInsertTree(t)
       insertedTree.clearDLocation()
       insertedTree.updateModtime()
       insertedTree.tree = t.tree
       scribe.updateObject(insertedTree)
+      print "Write tree to final location"
       insertedTree.writeTree()
 
       # Need to add tree to grid set
+      print "Add tree to grid set"
       gs.tree = insertedTree
       gs.updateModtime()
       scribe.updateObject(gs)
    
+   print "Done"
    scribe.closeConnections()
 
 # .............................................................................
