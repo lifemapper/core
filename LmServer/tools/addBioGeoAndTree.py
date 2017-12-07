@@ -51,7 +51,10 @@ def addHypotheses(gs, bgMtx, layers=[]):
          if eventField is not None:
             intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME: eventField,
                          MatrixColumn.INTERSECT_PARAM_VAL_VALUE: efValue}
-         metadata = {}
+         metadata = {
+            'description' : 'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
+            'title' : 'Biogeographic hypothesis column ({})'.format(col)
+         }
          mc = MatrixColumn(len(mtxCols), bgMtx.getId(), gs.getUserId(), layer=layer,
                            shapegrid=sg, intersectParams=intParams, 
                            metadata=metadata, postToSolr=False)
