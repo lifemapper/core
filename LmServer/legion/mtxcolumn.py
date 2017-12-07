@@ -47,6 +47,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
    INTERSECT_PARAM_FILTER_STRING = 'filterString'
    # Attribute used in layer intersect
    INTERSECT_PARAM_VAL_NAME = 'valName'
+   # Value of feature for layer intersect (for biogeographic hypotheses)
+   INTERSECT_PARAM_VAL_VALUE = 'valValue'
    # Units of measurement for attribute used in layer intersect
    INTERSECT_PARAM_VAL_UNITS = 'valUnits'
    # Minimum spatial coverage for gridcell intersect computation
