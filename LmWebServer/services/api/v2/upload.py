@@ -82,7 +82,7 @@ class UserUploadService(LmService):
          raise cherrypy.HTTPError(HTTPStatus.FORBIDDEN, 
                                   'Only logged in users can upload here')
       
-   
+   # ................................
    def _get_user_dir(self):
       """
       @summary: Get the user's workspace directory
@@ -91,6 +91,7 @@ class UserUploadService(LmService):
       """
       return os.path.join(ARCHIVE_PATH, self.getUserId())
    
+   # ................................
    def _upload_biogeo(self, bioGeoFilename):
       """
       @summary: Write the biogeographic hypotheses to the user's workspace
@@ -116,6 +117,7 @@ class UserUploadService(LmService):
          'status' : HTTPStatus.ACCEPTED
       }
          
+   # ................................
    def _upload_climate_data(self, climateDataFilename):
       """
       @summary: Write the climate data to the layers space
@@ -142,6 +144,7 @@ class UserUploadService(LmService):
          'status' : HTTPStatus.ACCEPTED
       }
          
+   # ................................
    def _upload_occurrence_data(self, occurrenceFilename):
       """
       @summary: Write the occurrence data to the user's workspace
@@ -166,6 +169,7 @@ class UserUploadService(LmService):
          'status' : HTTPStatus.ACCEPTED
       }
          
+   # ................................
    def _upload_tree(self, treeFilename):
       """
       @summary: Write the tree to the user's work space
