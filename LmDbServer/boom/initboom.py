@@ -301,6 +301,11 @@ class BOOMFiller(LMObject):
       maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
       if len(maskAlgList) == 1:
          maskAlg = maskAlgList.values()[0]
+         
+      # RAD stats
+      treeFname = self._getBoomOrDefault(config, 'TREE')
+      biogeoHypotheses = self._getBoomOrDefault(config, 'BIOGEO_HYPOTHESES')
+      doComputePAMStats = self._getBoomOrDefault(config, 'COMPUTE_PAM_STATS', isBool=True)
       
 #       mdlMaskName = self._getBoomOrDefault(config, 'MODEL_MASK_NAME')
 #       prjMaskName = self._getBoomOrDefault(config, 'PROJECTION_MASK_NAME')
@@ -355,6 +360,11 @@ class BOOMFiller(LMObject):
          for name, val in self.maskAlg.parameters.iteritems():
             config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
 
+      # TODO: Handle new RAD params
+#       treeFname = self._getBoomOrDefault(config, 'TREE')
+#       biogeoHypotheses = self._getBoomOrDefault(config, 'BIOGEO_HYPOTHESES')
+#       doComputePAMStats = self._getBoomOrDefault(config, 'COMPUTE_PAM_STATS', isBool=True)
+      
       email = self.usrEmail
       if email is None:
          email = ''
@@ -1302,6 +1312,7 @@ def initBoom(paramFname, isInitial=True):
    filler.scribe.log.info('')
    filler.scribe.log.info('******')
    filler.scribe.log.info('--config_file={}'.format(filler.outConfigFilename))   
+   filler.scribe.log.info('gridset ID = {}'.format(boomGridset.getId()))   
    filler.scribe.log.info('******')
    filler.scribe.log.info('')
          
