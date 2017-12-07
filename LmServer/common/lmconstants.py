@@ -301,7 +301,8 @@ class ReferenceType:
 
    @staticmethod
    def statusTypes():
-      tps = ReferenceType.progressTypes().append(ReferenceType.ShapeGrid)
+      tps = ReferenceType.progressTypes()
+      tps.append(ReferenceType.ShapeGrid)
       return tps
    
 
