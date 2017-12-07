@@ -106,6 +106,7 @@ class TreeService(LmService):
       """
       @summary: Posts a new tree
       @todo: Parameters
+      @todo: Update this for new trees
       """
       if name is None:
          raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 'Must provide name for tree')

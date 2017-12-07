@@ -130,6 +130,9 @@ QUERY_PARAMETERS = {
    'exceptions' : {
       'name' : 'exceptions'
    },
+   'filename' : {
+      'name' : 'fileName'
+   },
    'fillpoints' : {
       'name' : 'fillPoints',
       'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
@@ -329,6 +332,9 @@ QUERY_PARAMETERS = {
    },
    'treename' : {
       'name' : 'name' # Map to 'name' for processing
+   },
+   'uploadtype' : {
+      'name' : 'uploadType'
    },
    'url' : {
       'name' : 'url'
