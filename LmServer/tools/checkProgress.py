@@ -36,10 +36,12 @@ from LmServer.common.lmconstants import ReferenceType
 
 oneHourAgo = "{0:.2f}".format((DT.gmt() - ONE_HOUR).mjd)
 oneDayAgo = "{0:.2f}".format((DT.gmt() - ONE_DAY).mjd)
+oneWeekAgo = "{0:.2f}".format((DT.gmt() - ONE_DAY*7).mjd)
 oneMonthAgo = "{0:.2f}".format((DT.gmt() - ONE_MONTH).mjd)
 
 DISPLAY = {oneHourAgo: 'Hour', 
            oneDayAgo: 'Day', 
+           oneWeekAgo: 'Week', 
            oneMonthAgo: 'Month', None: 'Total'}
 USERS = (DEFAULT_POST_USER, PUBLIC_USER)
 TIMES = (oneHourAgo, oneMonthAgo, oneDayAgo, None)
