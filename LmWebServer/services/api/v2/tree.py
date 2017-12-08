@@ -29,12 +29,14 @@ import cherrypy
 import mx.DateTime
 import json
 
-from LmCommon.common.lmconstants import HTTPStatus
+from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_TREE_SCHEMA
 from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
+import dendropy
+from LmCommon.trees.lmTree import LmTree
 
 # .............................................................................
 @cherrypy.expose
@@ -102,22 +104,23 @@ class TreeService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, name=None):
+   def POST(self, name=None, treeSchema=DEFAULT_TREE_SCHEMA):
       """
       @summary: Posts a new tree
-      @todo: Parameters
-      @todo: Update this for new trees
+      @todo: Format
       """
       if name is None:
          raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 'Must provide name for tree')
-      treeJson = json.loads(cherrypy.request.body.read())
+      tree = dendropy.Tree.get(file=cherrypy.request.body, schema=treeSchema)
+      
       newTree = Tree(name, userId=self.getUserId())
       updatedTree = self.scribe.findOrInsertTree(newTree)
-      updatedTree.tree = treeJson
+      updatedTree.setTree(tree)
       updatedTree.writeTree()
       updatedTree.modTime = mx.DateTime.gmt().mjd
       self.scribe.updateObject(updatedTree)
-      return updatedTree.tree
+      
+      return updatedTree
    
    # ................................
    def _countTrees(self, userId, afterTime=None, beforeTime=None, 
