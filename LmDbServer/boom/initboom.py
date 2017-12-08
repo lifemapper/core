@@ -22,6 +22,7 @@
           02110-1301, USA.
 """
 import ConfigParser
+import json
 import mx.DateTime
 import os
 import time
@@ -63,10 +64,12 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
-from LmDbServer.boom.pamme import CURR_MJD
+from LmServer.legion.tree import Tree
+import LmServer.tools.boomInputs as boomInput 
+from LmServer.tools import boomInputs
+
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
-CURR_MJD = mx.DateTime.gmt().mjd
 
 # .............................................................................
 class BOOMFiller(LMObject):
@@ -127,7 +130,10 @@ class BOOMFiller(LMObject):
        self.cellsize,
        self.gridname, 
        self.intersectParams, 
-       self.maskAlg) = self.readParamVals()
+       self.maskAlg, 
+       self.treeFname, 
+       self.biogeoHypotheses, 
+       self.doComputePAMStats) = self.readParamVals()
        
       # Fill existing scenarios AND SDM mask layer from configured codes 
       # or create from ScenPackage metadata
@@ -301,6 +307,11 @@ class BOOMFiller(LMObject):
       maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
       if len(maskAlgList) == 1:
          maskAlg = maskAlgList.values()[0]
+         
+      # RAD stats
+      treeFname = self._getBoomOrDefault(config, 'TREE')
+      biogeoHypotheses = self._getBoomOrDefault(config, 'BIOGEO_HYPOTHESES')
+      doComputePAMStats = self._getBoomOrDefault(config, 'COMPUTE_PAM_STATS', isBool=True)
       
 #       mdlMaskName = self._getBoomOrDefault(config, 'MODEL_MASK_NAME')
 #       prjMaskName = self._getBoomOrDefault(config, 'PROJECTION_MASK_NAME')
@@ -333,10 +344,11 @@ class BOOMFiller(LMObject):
               occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
               userOccFname, userOccSep, minpoints, algs, 
               assemblePams, gridbbox, cellsides, cellsize, gridname, 
-              intersectParams, maskAlg)
+              intersectParams, maskAlg, treeFname, biogeoHypotheses, 
+              doComputePAMStats)
       
    # ...............................................
-   def writeConfigFile(self, fname=None):
+   def writeConfigFile(self, tree=None, biogeoMtx=None, fname=None):
       config = ConfigParser.SafeConfigParser()
       config.add_section(SERVER_BOOM_HEADING)
       
@@ -354,7 +366,7 @@ class BOOMFiller(LMObject):
          config.set(SERVER_SDM_MASK_HEADING_PREFIX, 'CODE', self.maskAlg.code)
          for name, val in self.maskAlg.parameters.iteritems():
             config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
-
+      
       email = self.usrEmail
       if email is None:
          email = ''
@@ -416,7 +428,21 @@ class BOOMFiller(LMObject):
       for k, v in self.intersectParams.iteritems():
          config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), str(v))
       # TODO: For now, this defaults to True
+      # TODO: Change to 0/1
       config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', str(True))
+
+      # TODO: Test these new RAD params
+      doHypotheses = doStats = 0
+      # Name/User is unique constraint, so add name here
+      # Only one allowed per gridset (aka archive), so this is 0/1
+      if biogeoMtx is not None:
+         doHypotheses = 1
+      if self.doComputePAMStats:
+         doStats = 1
+      config.set(SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES', doHypotheses)
+      config.set(SERVER_BOOM_HEADING, 'COMPUTE_PAM_STATS', doStats)
+      if tree is not None:
+         config.set(SERVER_BOOM_HEADING, 'TREE', tree.name)
             
       readyFilename(self.outConfigFilename, overwrite=True)
       with open(self.outConfigFilename, 'wb') as configfile:
@@ -493,9 +519,8 @@ class BOOMFiller(LMObject):
          userList.append((self.usr, email))
    
       for uinfo in userList:
-         
          try:
-            user = LMUser(uinfo[0], uinfo[1], uinfo[1], modTime=CURR_MJD)
+            user = LMUser(uinfo[0], uinfo[1], uinfo[1], modTime=mx.DateTime.gmt().mjd)
          except:
             pass
          else:
@@ -539,7 +564,7 @@ class BOOMFiller(LMObject):
                             epsgcode=epsg,
                             bbox=pkgMeta['bbox'],
                             mapunits=mapunits,
-                            modTime=CURR_MJD)
+                            modTime=mx.DateTime.gmt().mjd)
       # Current
       basescen, staticLayers = self._createBaselineScenario(pkgMeta, elyrMeta, 
                                                       SPMETA.LAYERTYPE_META,
@@ -665,7 +690,7 @@ class BOOMFiller(LMObject):
                        dataFormat=dformat, 
                        gdalType=dtype, 
                        bbox=bbox,
-                       modTime=CURR_MJD)
+                       modTime=mx.DateTime.gmt().mjd)
       return masklyr
    
    # ...............................................
@@ -673,6 +698,7 @@ class BOOMFiller(LMObject):
       """
       @summary Assembles layer metadata for a single layerset
       """
+      currtime = mx.DateTime.gmt().mjd
       layers = []
       staticLayers = {}
       dateCode = baseMeta['times'].keys()[0]
@@ -700,11 +726,11 @@ class BOOMFiller(LMObject):
                            mapunits=elyrMeta['mapunits'], 
                            resolution=elyrMeta['resolution'], 
                            bbox=pkgMeta['bbox'], 
-                           modTime=CURR_MJD, 
+                           modTime=currtime, 
                            envCode=envcode, 
                            dateCode=dateCode,
                            envMetadata=envmeta,
-                           envModTime=CURR_MJD)
+                           envModTime=currtime)
          layers.append(envlyr)
          if isStatic:
             staticLayers[envcode] = envlyr
@@ -737,6 +763,7 @@ class BOOMFiller(LMObject):
       """
       @summary Assembles layer metadata for a single layerset
       """
+      currtime = mx.DateTime.gmt().mjd
       mdlvals = observedPredictedMeta[predRpt]['models'][gcm]
       tmvals = observedPredictedMeta[predRpt]['times'][tm]
       layers = []
@@ -776,11 +803,11 @@ class BOOMFiller(LMObject):
                               mapunits=elyrMeta['mapunits'], 
                               resolution=elyrMeta['resolution'], 
                               bbox=pkgMeta['bbox'], 
-                              modTime=CURR_MJD,
+                              modTime=currtime,
                               envCode=envcode, 
                               gcmCode=gcm, altpredCode=altpred, dateCode=tm,
                               envMetadata=envmeta, 
-                              envModTime=CURR_MJD)
+                              envModTime=currtime)
          else:
             # Use the observed data
             envlyr = staticLayers[envcode]
@@ -814,7 +841,7 @@ class BOOMFiller(LMObject):
                       res=elyrMeta['resolution'], 
                       dateCode=dateCode,
                       bbox=pkgMeta['bbox'], 
-                      modTime=CURR_MJD,  
+                      modTime=mx.DateTime.gmt().mjd,  
                       layers=lyrs)
       return scen, staticLayers
    
@@ -824,6 +851,7 @@ class BOOMFiller(LMObject):
       """
       @summary Assemble predicted future scenarios defined by IPCC report
       """
+      currtime = mx.DateTime.gmt().mjd
       predScenarios = {}
       try:
          predScens = pkgMeta['predicted']
@@ -875,7 +903,7 @@ class BOOMFiller(LMObject):
                             res=elyrMeta['resolution'], 
                             gcmCode=gcm, altpredCode=altpred, dateCode=tm,
                             bbox=pkgMeta['bbox'], 
-                            modTime=CURR_MJD, 
+                            modTime=currtime, 
                             layers=lyrs)
             predScenarios[scencode] = scen
       return predScenarios
@@ -962,7 +990,8 @@ class BOOMFiller(LMObject):
    def _addIntersectGrid(self):
       shp = ShapeGrid(self.gridname, self.usr, self.epsg, self.cellsides, 
                       self.cellsize, self.mapunits, self.gridbbox,
-                      status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
+                      status=JobStatus.INITIALIZE, 
+                      statusModTime=mx.DateTime.gmt().mjd)
       newshp = self.scribe.findOrInsertShapeGrid(shp)
       validData = False
       if newshp: 
@@ -990,6 +1019,7 @@ class BOOMFiller(LMObject):
    def _findOrAddDefaultMatrices(self, gridset, scen):
       # Create Global PAM for this archive, scenario
       # Pam layers are added upon boom processing
+      currtime = mx.DateTime.gmt().mjd
       pamType = MatrixType.PAM
       if self.usr == PUBLIC_USER:
          pamType = MatrixType.ROLLING_PAM
@@ -1000,7 +1030,7 @@ class BOOMFiller(LMObject):
                          gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
                          dateCode=scen.dateCode, metadata=pamMeta, userId=self.usr, 
                          gridset=gridset, 
-                         status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+                         status=JobStatus.GENERAL, statusModTime=currtime)
       gpam = self.scribe.findOrInsertMatrix(tmpGpam)
       # Anonymous and simple SDM booms do not need GRIMs
       grim = None
@@ -1014,7 +1044,7 @@ class BOOMFiller(LMObject):
                             gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
                             dateCode=scen.dateCode, metadata=grimMeta, userId=self.usr, 
                             gridset=gridset, 
-                            status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+                            status=JobStatus.GENERAL, statusModTime=currtime)
          grim = self.scribe.findOrInsertMatrix(tmpGrim)
          for lyr in scen.layers:
             # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
@@ -1035,7 +1065,8 @@ class BOOMFiller(LMObject):
                          gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
                          dateCode=scen.dateCode, metadata=pamMeta, userId=self.usr, 
                          gridset=gridset, 
-                         status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+                         status=JobStatus.GENERAL, 
+                         statusModTime=mx.DateTime.gmt().mjd)
       gpam = self.scribe.findOrInsertMatrix(tmpGpam)
       return gpam
 
@@ -1050,7 +1081,8 @@ class BOOMFiller(LMObject):
                          gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
                          dateCode=scen.dateCode, metadata=grimMeta, userId=self.usr, 
                          gridset=gridset, 
-                         status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+                         status=JobStatus.GENERAL, 
+                         statusModTime=mx.DateTime.gmt().mjd)
       grim = self.scribe.findOrInsertMatrix(tmpGrim)
       for lyr in scen.layers:
          # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
@@ -1073,7 +1105,7 @@ class BOOMFiller(LMObject):
               ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
       grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
                        dlocation=self.scenPackageMetaFilename, epsgcode=self.epsg, 
-                       userId=self.usr, modTime=CURR_MJD)
+                       userId=self.usr, modTime=mx.DateTime.gmt().mjd)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       # "Global" PAM, GRIM (one each per scenario)
       for code, scen in self.scenPkg.scenarios.iteritems():
@@ -1087,6 +1119,7 @@ class BOOMFiller(LMObject):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
+      currtime = mx.DateTime.gmt().mjd
       mtxcol = None
       intersectParams = {MatrixColumn.INTERSECT_PARAM_WEIGHTED_MEAN: True}
 
@@ -1103,7 +1136,7 @@ class BOOMFiller(LMObject):
                 layer=lyr, shapegrid=self.shapegrid, 
                 intersectParams=intersectParams, 
                 squid=lyr.squid, ident=lyr.name, processType=ptype, 
-                status=JobStatus.GENERAL, statusModTime=CURR_MJD,
+                status=JobStatus.GENERAL, statusModTime=currtime,
                 postToSolr=False)
          mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
          
@@ -1150,11 +1183,12 @@ class BOOMFiller(LMObject):
    
    # .............................
    def addGRIMChains(self, defaultGrims):
+      currtime = mx.DateTime.gmt().mjd
       grimChains = []
 
       for code, grim in defaultGrims.iteritems():
          # Create MFChain for this GRIM
-         grimChain = self._createGrimMF(code, CURR_MJD)
+         grimChain = self._createGrimMF(code, currtime)
          targetDir = grimChain.getRelativeDirectory()
          mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
          self.scribe.log.info('  {} grim columns for scencode {}'
@@ -1189,7 +1223,6 @@ class BOOMFiller(LMObject):
 
    # .............................
    def addTNCEcoregions(self):
-
       meta = {Vector.META_IS_CATEGORICAL: TNCMetadata.isCategorical, 
               ServiceObject.META_TITLE: TNCMetadata.title, 
               ServiceObject.META_AUTHOR: TNCMetadata.author, 
@@ -1205,7 +1238,7 @@ class BOOMFiller(LMObject):
                           ogrType=TNCMetadata.ogrType,
                           valAttribute=TNCMetadata.valAttribute, 
                           mapunits=DEFAULT_MAPUNITS, bbox=TNCMetadata.bbox,
-                          modTime=CURR_MJD)
+                          modTime=mx.DateTime.gmt().mjd)
       updatedEcoregions = self.scribe.findOrInsertLayer(ecoregions)
       return updatedEcoregions
 
@@ -1236,7 +1269,7 @@ class BOOMFiller(LMObject):
       .format(self.usr, self.archiveName)}
       newMFC = MFChain(self.usr, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
-                       statusModTime=CURR_MJD)
+                       statusModTime=mx.DateTime.gmt().mjd)
       mfChain = self.scribe.insertMFChain(newMFC)
 
       baseAbsFilename, ext = os.path.splitext(self.outConfigFilename)
@@ -1253,6 +1286,80 @@ class BOOMFiller(LMObject):
       mfChain.updateStatus(JobStatus.INITIALIZE)
       self.scribe.updateObject(mfChain)
       return mfChain
+
+   # ...............................................
+   def addTree(self, gridset):
+      currtime = mx.DateTime.gmt().mjd
+      name = os.path.splitext(self.treeFname)
+      treeFilename = os.path.join(self.userPath(), self.treeFname) 
+      if os.path.exists(treeFilename):
+         baretree = Tree(name, dlocation=treeFilename, userId=self.usr, 
+                     modTime=currtime)
+         tree = self.scribe.findOrInsertTree(baretree)
+      else:
+         self.scribe.log.warning('No tree at {}'.format(treeFilename))
+
+      print "Add tree to grid set"
+      gridset.tree = tree
+      gridset.updateModtime(currtime)
+      self.scribe.updateObject(gridset)
+      return tree
+
+   # ...............................................
+   def _getBGMeta(self, bgFname):
+      # defaults for no metadata file
+      lyrMeta = {MatrixColumn.INTERSECT_PARAM_VAL_NAME: 'fid',
+                 ServiceObject.META_DESCRIPTION: 
+      'Biogeographic hypothesis based on layer {}'.format(bgFname)}
+      metaFname = os.path.join(os.path.basename(bgFname), LMFormat.JSON.ext)
+      if os.path.exists(metaFname):
+         with open(metaFname) as f:
+            meta = json.load(f)
+            if type(meta) is dict:
+               for k, v in meta.iteritems():
+                  lyrMeta[k.lower()] = v
+            else:
+               raise LMError('Metadata must be a dictionary or a JSON-encoded dictionary')
+      return lyrMeta
+   
+   # ...............................................
+   def addBioGeoHypotheses(self, shpgrid, gridset):
+      currtime = mx.DateTime.gmt().mjd
+      bghypFnames = []
+      bgpth = os.path.join(self.userPath(), self.biogeoHypotheses) 
+      if os.path.exists(bgpth + LMFormat.SHAPE.ext):
+         bghypFnames = [bgpth + LMFormat.SHAPE.ext]
+      elif os.path.isdir(bgpth):
+         import glob
+         pattern = os.path.join(bgpth, '*' + LMFormat.SHAPE.ext)
+         bghypFnames = glob.glob(pattern)
+      else:
+         self.scribe.log.warning('No biogeo shapefiles at {}'.format(bgpth))
+         
+      if len(bghypFnames) <= 0:
+         tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
+                           processType=ProcessType.ENCODE_HYPOTHESES,
+                           userId=self.usr, gridset=gridset, 
+                           status=JobStatus.INITIALIZE, statusModTime=currtime)
+         bgMtx = self.scribe.findOrInsertMatrix(tmpMtx)
+         layers = []
+         for bgFname in bghypFnames:
+            if os.path.exists(bgFname):
+               lyrMeta = self._getBGMeta(bgFname)
+               valAttr = lyrMeta[MatrixColumn.INTERSECT_PARAM_VAL_NAME]
+               try:
+                  name = lyrMeta['name']
+               except:
+                  name = os.path.splitext(os.path.basename(bgFname))[0]
+               lyr = Vector(name, self.usr, self.epsg, dlocation=bgFname, 
+                   metadata=lyrMeta, dataFormat=LMFormat.SHAPE.driver, 
+                   valAttribute=valAttr, modTime=currtime)
+               updatedLyr = self.scribe.findOrInsertBaseLayer(lyr)
+               layers.append(updatedLyr)
+      
+      boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
+                                         layers=layers) 
+      return bgMtx
 
 # ...............................................
 def initBoom(paramFname, isInitial=True):
@@ -1296,12 +1403,21 @@ def initBoom(paramFname, isInitial=True):
    scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
    # If there are Scenario GRIMs, create MFChain for each 
    filler.addGRIMChains(scenGrims)
+   # If there is a tree, add and biogeographic hypotheses, create MFChain for each
+   tree = biogeoMtx = None 
+   if filler.treeFname is not None:
+      tree = filler.addTree()
+   # If there is a tree, add and biogeographic hypotheses, create MFChain for each 
+   if filler.biogeoHypotheses is not None:
+      biogeoMtx = filler.addBioGeoHypotheses()
+   
    
    # Write config file for this archive
-   filler.writeConfigFile()
+   filler.writeConfigFile(tree, biogeoMtx)
    filler.scribe.log.info('')
    filler.scribe.log.info('******')
    filler.scribe.log.info('--config_file={}'.format(filler.outConfigFilename))   
+   filler.scribe.log.info('gridset ID = {}'.format(boomGridset.getId()))   
    filler.scribe.log.info('******')
    filler.scribe.log.info('')
          

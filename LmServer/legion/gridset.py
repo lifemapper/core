@@ -738,12 +738,12 @@ class Gridset(ServiceObject): #LMMap
       #LMMap.writeMap(self, mapfilename, shpGrid=self._shapeGrid, 
       #               matrices=self._matrices)
 
-   # ...............................................
-   def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
-      """
-      @copydoc LmServer.base.serviceobject2.ProcessObject::updateModtime()
-      """
-      ServiceObject.updateModtime(self, modTime)
+#    # ...............................................
+#    def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
+#       """
+#       @copydoc LmServer.base.serviceobject2.ProcessObject::updateModtime()
+#       """
+#       ServiceObject.updateModtime(self, modTime)
 
 # .............................................................................
 # Public methods

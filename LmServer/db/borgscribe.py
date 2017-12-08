@@ -489,15 +489,13 @@ class BorgScribe(LMObject):
                   parameters for which to retrieve the existing LMMatrix
       @note: if mtx parameter is present, it overrides individual parameters
       """
-      try:
+      if mtx is not None:
          mtxId = mtx.getId()
          mtxType = mtx.matrixType
          gridsetId = mtx.parentId
          gcmCode = mtx.gcmCode
          altpredCode = mtx.altpredCode
          dateCode = mtx.dateCode
-      except Exception, e:
-         self.log.info('Failed to get matrix attribute, {}'.format(e))
       fullMtx = self._borg.getMatrix(mtxId, gridsetId, gridsetName, userId, 
                                      mtxType, gcmCode, altpredCode, dateCode)
       return fullMtx

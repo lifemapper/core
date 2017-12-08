@@ -28,7 +28,7 @@ from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import JSON_INTERFACE, DEFAULT_TREE_SCHEMA
 from LmCommon.trees.lmTree import LmTree
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.lmconstants import LMServiceType, LMFileType, ID_PLACEHOLDER
+from LmServer.common.lmconstants import LMServiceType, LMFileType
    
 # .........................................................................
 class Tree(LmTree, ServiceObject):
@@ -141,9 +141,9 @@ class Tree(LmTree, ServiceObject):
                                              interface)
       return durl
 
-   # ...............................................
-   def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
-      """
-      @copydoc LmServer.base.serviceobject2.ProcessObject::updateModtime()
-      """
-      ServiceObject.updateModtime(self, modTime)
+#    # ...............................................
+#    def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
+#       """
+#       @copydoc LmServer.base.serviceobject2.ProcessObject::updateModtime()
+#       """
+#       ServiceObject.updateModtime(self, modTime)

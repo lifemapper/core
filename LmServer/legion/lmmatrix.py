@@ -273,4 +273,14 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                                status=JobStatus.COMPLETE)
       rules.append(spCmd.getMakeflowRule(local=True))
       return rules
-
+   
+   # .............................
+   def write(self, dlocation=None):
+      """
+      @summary: Writes this matrix to the file system
+      """
+      if dlocation is None:
+         dlocation = self.getDLocation()
+      
+      with open(dlocation, 'w') as outF:
+         self.save(outF)
