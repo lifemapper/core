@@ -41,7 +41,7 @@ def encodeHypothesesToMatrix(scribe, usr, shapegrid, bgMtx, layers=[]):
          valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
       except KeyError:
          valAttribute = None
-      lyrEnc.addLayers(lyr.getDLocation(), valAttribute)
+      lyrEnc.addLayers(lyr.getDLocation(), eventField=valAttribute)
       encMtx = lyrEnc.encodeHypotheses()
       
       # Add matrix columns for the newly encoded layers
@@ -49,12 +49,12 @@ def encodeHypothesesToMatrix(scribe, usr, shapegrid, bgMtx, layers=[]):
          # TODO: Fill in params and metadata
          efValue = col.split(' - ')[1]
          if valAttribute is not None:
-            intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME: valAttribute,
-                         MatrixColumn.INTERSECT_PARAM_VAL_VALUE: efValue}
+            intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
+                         MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue}
          metadata = {
-            ServiceObject.META_DESCRIPTION : 
+            ServiceObject.META_DESCRIPTION.lower() : 
          'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
-            ServiceObject.META_TITLE : 
+            ServiceObject.META_TITLE.lower() : 
          'Biogeographic hypothesis column ({})'.format(col)}
          mc = MatrixColumn(len(mtxCols), bgMtx.getId(), usr, layer=lyr,
                            shapegrid=shapegrid, intersectParams=intParams, 

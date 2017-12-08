@@ -1344,7 +1344,7 @@ class BOOMFiller(LMObject):
          
       if len(bghypFnames) > 0:
          mtxKeywords = ['biogeographic hypotheses']
-         layers = []
+         allLayers = []
          for bgFname in bghypFnames:
             if os.path.exists(bgFname):
                lyrMeta = self._getBGMeta(bgFname)
@@ -1358,9 +1358,9 @@ class BOOMFiller(LMObject):
                    metadata=lyrMeta, dataFormat=LMFormat.SHAPE.driver, 
                    valAttribute=valAttr, modTime=currtime)
                updatedLyr = self.scribe.findOrInsertLayer(lyr)
-               layers.append(updatedLyr)
+               allLayers.append(updatedLyr)
          self.scribe.log.info('  Added {} layers for biogeo hypotheses matrix'
-                       .format(len(layers)))
+                       .format(len(allLayers)))
          # Add the matrix to contain biogeo hypotheses layer intersections
          meta={ServiceObject.META_DESCRIPTION.lower(): 
                'Biogeographic Hypotheses for archive {}'.format(self.archiveName),
@@ -1378,7 +1378,7 @@ class BOOMFiller(LMObject):
       
             # Now encode the layers into the matrix, then update matrix
             boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
-                                               layers=layers) 
+                                                  layers=allLayers) 
       return bgMtx
 
 # ...............................................
