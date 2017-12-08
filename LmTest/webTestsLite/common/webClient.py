@@ -40,6 +40,7 @@ class _SERVICE:
    ENVLAYER = 'envlayer'
    GLOBAL_PAM = 'globalpam'
    GRIDSET = 'gridset'
+   LAYER = 'layer'
    LOGIN = 'login'
    LOGOUT = 'logout'
    SIGNUP = 'signup'
@@ -90,6 +91,17 @@ class LmWebClient(object):
                   beforeTime=beforeTime, epsgCode=epsgCode)
    
    # ............................
+   def count_layers(self, afterTime=None, beforeTime=None, epsgCode=None,
+                          squid=None, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to count layers 
+      """
+      return self._make_request(self._build_base_url(_SERVICE.LAYER,
+                                                responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
+                  beforeTime=beforeTime, epsgCode=epsgCode, squid=squid)
+   
+   # ............................
    def get_environmental_layer(self, layerId, headers=None, 
                                responseFormat=None):
       """
@@ -107,6 +119,14 @@ class LmWebClient(object):
                                                 objectId=gridsetId, 
                                                 responseFormat=responseFormat), 
                                              headers)
+   
+   # ............................
+   def get_layer(self, layerId, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a layer
+      """
+      return self._make_request(self._build_base_url(_SERVICE.LAYER, 
+                     objectId=layerId, responseFormat=responseFormat), headers)
    
    # ............................
    def list_environmental_layers(self, afterTime=None, altPredCode=None, 
@@ -137,6 +157,19 @@ class LmWebClient(object):
                   method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
                   beforeTime=beforeTime, epsgCode=epsgCode, limit=limit, 
                   metaString=metaString, offset=offset, shapegridId=shapegridId)
+   
+   # ............................
+   def list_layers(self, afterTime=None, beforeTime=None, epsgCode=None,
+                   limit=None, offset=None, squid=None, headers=None, 
+                   responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of layers 
+      """
+      return self._make_request(self._build_base_url(_SERVICE.LAYER,
+                                                responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
+                  beforeTime=beforeTime, epsgCode=epsgCode, squid=squid,
+                  limit=limit, offset=offset)
    
    # ............................
    def login(self, userId, passwd):
