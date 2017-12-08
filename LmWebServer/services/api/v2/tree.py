@@ -155,7 +155,7 @@ class TreeService(LmService):
          raise cherrypy.HTTPError(404, 
                         'Tree {} was not found'.format(pathTreeId))
       if checkUserPermission(self.getUserId(), tree, HTTPMethod.GET):
-         return tree.tree
+         return tree
       else:
          raise cherrypy.HTTPError(403, 
               'User {} does not have permission to access tree {}'.format(

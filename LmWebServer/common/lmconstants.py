@@ -333,6 +333,9 @@ QUERY_PARAMETERS = {
    'treename' : {
       'name' : 'name' # Map to 'name' for processing
    },
+   'treeschema' : {
+      'name' : 'treeSchema' 
+   },
    'uploadtype' : {
       'name' : 'uploadType'
    },
