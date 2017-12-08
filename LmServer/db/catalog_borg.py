@@ -250,11 +250,11 @@ class Borg(DbPostgresql):
    def _createGridset(self, row, idxs):
       """
       @summary: Create a Gridset from a database Gridset record or lm_gridset view
+      @note: This does not return tree object data, only treeId
       """
       grdset = None
       if row is not None:
          shp = self._createShapeGrid(row, idxs)
-         tree = self._createTree(row, idxs)
          shpId = self._getColumnValue(row, idxs, ['layerid'])
          grdid = self._getColumnValue(row, idxs, ['gridsetid'])
          treeid = self._getColumnValue(row, idxs, ['treeid'])
@@ -265,7 +265,7 @@ class Borg(DbPostgresql):
          meta = self._getColumnValue(row, idxs, ['grdmetadata', 'metadata'])
          mtime = self._getColumnValue(row, idxs, ['grdmodtime', 'modtime'])
          grdset = Gridset(name=name, metadata=meta, shapeGrid=shp, 
-                          shapeGridId=shpId, tree=tree, treeId=treeid, 
+                          shapeGridId=shpId, treeId=treeid, 
                           dlocation=dloc, epsgcode=epsg, userId=usr, 
                           gridsetId=grdid, modTime=mtime)
       return grdset
