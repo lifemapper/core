@@ -1308,14 +1308,17 @@ class BOOMFiller(LMObject):
    # ...............................................
    def _getBGMeta(self, bgFname):
       # defaults for no metadata file
-      lyrMeta = {MatrixColumn.INTERSECT_PARAM_VAL_NAME: None,
-                 ServiceObject.META_DESCRIPTION: 
+      # lower-case dict keys
+      lyrMeta = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): None,
+                 ServiceObject.META_DESCRIPTION.lower(): 
       'Biogeographic hypothesis based on layer {}'.format(bgFname)}
       metaFname = os.path.join(os.path.basename(bgFname), LMFormat.JSON.ext)
+      print('Biogeo layer metadata = {}'.format(metaFname))
       if os.path.exists(metaFname):
          with open(metaFname) as f:
             meta = json.load(f)
             if type(meta) is dict:
+               print('Biogeo layer meta = {}'.format(meta))
                for k, v in meta.iteritems():
                   lyrMeta[k.lower()] = v
             else:
@@ -1343,7 +1346,7 @@ class BOOMFiller(LMObject):
          for bgFname in bghypFnames:
             if os.path.exists(bgFname):
                lyrMeta = self._getBGMeta(bgFname)
-               valAttr = lyrMeta[MatrixColumn.INTERSECT_PARAM_VAL_NAME]
+               valAttr = lyrMeta[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
                try:
                   name = lyrMeta['name']
                except:
@@ -1355,9 +1358,9 @@ class BOOMFiller(LMObject):
                updatedLyr = self.scribe.findOrInsertLayer(lyr)
                layers.append(updatedLyr)
          # Add the matrix to contain biogeo hypotheses layer intersections
-         meta={ServiceObject.META_DESCRIPTION: 
+         meta={ServiceObject.META_DESCRIPTION.lower(): 
                'Biogeographic Hypotheses for archive {}'.format(self.archiveName),
-               ServiceObject.META_KEYWORDS: mtxKeywords}
+               ServiceObject.META_KEYWORDS.lower(): mtxKeywords}
          tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
                            processType=ProcessType.ENCODE_HYPOTHESES,
                            userId=self.usr, gridset=gridset, metadata=meta,
