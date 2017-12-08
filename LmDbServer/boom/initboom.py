@@ -1337,7 +1337,7 @@ class BOOMFiller(LMObject):
       else:
          self.scribe.log.warning('No biogeo shapefiles at {}'.format(bgpth))
          
-      if len(bghypFnames) <= 0:
+      if len(bghypFnames) > 0:
          tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
                            processType=ProcessType.ENCODE_HYPOTHESES,
                            userId=self.usr, gridset=gridset, 
@@ -1355,11 +1355,11 @@ class BOOMFiller(LMObject):
                lyr = Vector(name, self.usr, self.epsg, dlocation=bgFname, 
                    metadata=lyrMeta, dataFormat=LMFormat.SHAPE.driver, 
                    valAttribute=valAttr, modTime=currtime)
-               updatedLyr = self.scribe.findOrInsertBaseLayer(lyr)
+               updatedLyr = self.scribe.findOrInsertLayer(lyr)
                layers.append(updatedLyr)
       
-      boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
-                                         layers=layers) 
+         boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
+                                            layers=layers) 
       return bgMtx
 
 # ...............................................
