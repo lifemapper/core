@@ -1308,7 +1308,7 @@ class BOOMFiller(LMObject):
    # ...............................................
    def _getBGMeta(self, bgFname):
       # defaults for no metadata file
-      lyrMeta = {MatrixColumn.INTERSECT_PARAM_VAL_NAME: 'fid',
+      lyrMeta = {MatrixColumn.INTERSECT_PARAM_VAL_NAME: None,
                  ServiceObject.META_DESCRIPTION: 
       'Biogeographic hypothesis based on layer {}'.format(bgFname)}
       metaFname = os.path.join(os.path.basename(bgFname), LMFormat.JSON.ext)
@@ -1338,11 +1338,7 @@ class BOOMFiller(LMObject):
          self.scribe.log.warning('No biogeo shapefiles at {}'.format(bgpth))
          
       if len(bghypFnames) > 0:
-         tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
-                           processType=ProcessType.ENCODE_HYPOTHESES,
-                           userId=self.usr, gridset=gridset, 
-                           status=JobStatus.INITIALIZE, statusModTime=currtime)
-         bgMtx = self.scribe.findOrInsertMatrix(tmpMtx)
+         mtxKeywords = ['biogeographic hypotheses']
          layers = []
          for bgFname in bghypFnames:
             if os.path.exists(bgFname):
@@ -1352,12 +1348,23 @@ class BOOMFiller(LMObject):
                   name = lyrMeta['name']
                except:
                   name = os.path.splitext(os.path.basename(bgFname))[0]
+               mtxKeywords.append('Layer {}'.format(name))
                lyr = Vector(name, self.usr, self.epsg, dlocation=bgFname, 
                    metadata=lyrMeta, dataFormat=LMFormat.SHAPE.driver, 
                    valAttribute=valAttr, modTime=currtime)
                updatedLyr = self.scribe.findOrInsertLayer(lyr)
                layers.append(updatedLyr)
+         # Add the matrix to contain biogeo hypotheses layer intersections
+         meta={ServiceObject.META_DESCRIPTION: 
+               'Biogeographic Hypotheses for archive {}'.format(self.archiveName),
+               ServiceObject.META_KEYWORDS: mtxKeywords}
+         tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
+                           processType=ProcessType.ENCODE_HYPOTHESES,
+                           userId=self.usr, gridset=gridset, metadata=meta,
+                           status=JobStatus.INITIALIZE, statusModTime=currtime)
+         bgMtx = self.scribe.findOrInsertMatrix(tmpMtx)
       
+         # Now encode the layers into the matrix, then update matrix
          boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
                                             layers=layers) 
       return bgMtx
