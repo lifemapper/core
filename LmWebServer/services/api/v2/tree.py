@@ -26,8 +26,8 @@
           02110-1301, USA.
 """
 import cherrypy
+import dendropy
 import mx.DateTime
-import json
 
 from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_TREE_SCHEMA
 from LmServer.legion.tree import Tree
@@ -35,8 +35,6 @@ from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
-import dendropy
-from LmCommon.trees.lmTree import LmTree
 
 # .............................................................................
 @cherrypy.expose
