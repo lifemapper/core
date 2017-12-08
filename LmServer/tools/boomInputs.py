@@ -37,15 +37,16 @@ def encodeHypothesesToMatrix(scribe, usr, shapegrid, bgMtx, layers=[]):
    
    for lyr in layers:
       lyrEnc = BioGeoEncoding(shapegrid.getDLocation())
-      lyrEnc.addLayers(lyr.getDLocation(), lyr.valAttribute)
+      valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
+      lyrEnc.addLayers(lyr.getDLocation(), valAttribute)
       encMtx = lyrEnc.encodeHypotheses()
       
       # Add matrix columns for the newly encoded layers
       for col in encMtx.getColumnHeaders():
          # TODO: Fill in params and metadata
          efValue = col.split(' - ')[1]
-         if lyr.valAttribute is not None:
-            intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME: lyr.valAttribute,
+         if valAttribute is not None:
+            intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME: valAttribute,
                          MatrixColumn.INTERSECT_PARAM_VAL_VALUE: efValue}
          metadata = {
             ServiceObject.META_DESCRIPTION : 
