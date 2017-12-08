@@ -129,6 +129,27 @@ class LmWebClient(object):
       return resp
       
    # ............................
+   def query_global_pam(self, algorithmCode=None, bbox=None, gridSetId=None, 
+                 modelScenarioCode=None, pointMax=None, pointMin=None, 
+                 prjScenCode=None, squid=None, taxonKingdom=None, 
+                 taxonPhylum=None, taxonClass=None, taxonOrder=None, 
+                 taxonFamily=None, taxonGenus=None, taxonSpecies=None,
+                 headers=None):
+      """
+      @summary: Send a request to the server to get matching PAVs in the global
+                   PAM
+      """
+      return self._make_request(self._build_base_url(_SERVICE.GLOBAL_PAM), 
+                  method=HTTPMethod.GET, headers=headers, 
+                  algorithmCode=algorithmCode, bbox=bbox, gridSetId=gridSetId, 
+                  modelScenarioCode=modelScenarioCode, pointMax=pointMax,
+                  pointMin=pointMin, prjScenCode=prjScenCode, squid=squid,
+                  taxonKingdom=taxonKingdom, taxonPhylum=taxonPhylum,
+                  taxonClass=taxonClass, taxonOrder=taxonOrder,
+                  taxonFamily=taxonFamily, taxonGenus=taxonGenus, 
+                  taxonSpecies=taxonSpecies)
+   
+   # ............................
    def _build_base_url(self, service, objectId=None, responseFormat=None):
       """
       @summary: Build the base url for the service
