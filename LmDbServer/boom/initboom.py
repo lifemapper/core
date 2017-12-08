@@ -134,6 +134,8 @@ class BOOMFiller(LMObject):
        self.treeFname, 
        self.biogeoHypotheses, 
        self.doComputePAMStats) = self.readParamVals()
+      earl = EarlJr()
+      self._userPath = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
        
       # Fill existing scenarios AND SDM mask layer from configured codes 
       # or create from ScenPackage metadata
@@ -192,12 +194,10 @@ class BOOMFiller(LMObject):
          fname = None
       return fname
    
-   # ...............................................      
-   @property
-   def userPath(self):
-      earl = EarlJr()
-      pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
-      return pth
+#    # ...............................................      
+#    @property
+#    def userPath(self):
+#       return self._userPath
 
 # ...............................................
    def _warnPermissions(self):
@@ -1290,8 +1290,8 @@ class BOOMFiller(LMObject):
    # ...............................................
    def addTree(self, gridset):
       currtime = mx.DateTime.gmt().mjd
-      name = os.path.splitext(self.treeFname)
-      treeFilename = os.path.join(self.userPath(), self.treeFname) 
+      name = os.path.splitext(self.treeFname)[0]
+      treeFilename = os.path.join(self._userPath, self.treeFname) 
       if os.path.exists(treeFilename):
          baretree = Tree(name, dlocation=treeFilename, userId=self.usr, 
                      modTime=currtime)
@@ -1323,10 +1323,11 @@ class BOOMFiller(LMObject):
       return lyrMeta
    
    # ...............................................
-   def addBioGeoHypotheses(self, shpgrid, gridset):
+   def addBioGeoHypotheses(self, gridset):
       currtime = mx.DateTime.gmt().mjd
+      shpgrid = gridset.getShapegrid()
       bghypFnames = []
-      bgpth = os.path.join(self.userPath(), self.biogeoHypotheses) 
+      bgpth = os.path.join(self._userPath, self.biogeoHypotheses) 
       if os.path.exists(bgpth + LMFormat.SHAPE.ext):
          bghypFnames = [bgpth + LMFormat.SHAPE.ext]
       elif os.path.isdir(bgpth):
@@ -1406,10 +1407,10 @@ def initBoom(paramFname, isInitial=True):
    # If there is a tree, add and biogeographic hypotheses, create MFChain for each
    tree = biogeoMtx = None 
    if filler.treeFname is not None:
-      tree = filler.addTree()
+      tree = filler.addTree(boomGridset)
    # If there is a tree, add and biogeographic hypotheses, create MFChain for each 
    if filler.biogeoHypotheses is not None:
-      biogeoMtx = filler.addBioGeoHypotheses()
+      biogeoMtx = filler.addBioGeoHypotheses(boomGridset)
    
    
    # Write config file for this archive
