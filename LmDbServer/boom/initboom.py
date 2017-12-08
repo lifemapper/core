@@ -439,8 +439,8 @@ class BOOMFiller(LMObject):
          doHypotheses = 1
       if self.doComputePAMStats:
          doStats = 1
-      config.set(SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES', doHypotheses)
-      config.set(SERVER_BOOM_HEADING, 'COMPUTE_PAM_STATS', doStats)
+      config.set(SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES', str(doHypotheses))
+      config.set(SERVER_BOOM_HEADING, 'COMPUTE_PAM_STATS', str(doStats))
       if tree is not None:
          config.set(SERVER_BOOM_HEADING, 'TREE', tree.name)
             
@@ -1309,10 +1309,12 @@ class BOOMFiller(LMObject):
    def _getBGMeta(self, bgFname):
       # defaults for no metadata file
       # lower-case dict keys
+      
       lyrMeta = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): None,
                  ServiceObject.META_DESCRIPTION.lower(): 
       'Biogeographic hypothesis based on layer {}'.format(bgFname)}
-      metaFname = os.path.join(os.path.basename(bgFname), LMFormat.JSON.ext)
+      fpthbasename = os.path.splitext(bgFname)[0]
+      metaFname = fpthbasename + LMFormat.JSON.ext
       print('Biogeo layer metadata = {}'.format(metaFname))
       if os.path.exists(metaFname):
          with open(metaFname) as f:
@@ -1357,6 +1359,8 @@ class BOOMFiller(LMObject):
                    valAttribute=valAttr, modTime=currtime)
                updatedLyr = self.scribe.findOrInsertLayer(lyr)
                layers.append(updatedLyr)
+         self.scribe.log.info('  Added {} layers for biogeo hypotheses matrix'
+                       .format(len(layers)))
          # Add the matrix to contain biogeo hypotheses layer intersections
          meta={ServiceObject.META_DESCRIPTION.lower(): 
                'Biogeographic Hypotheses for archive {}'.format(self.archiveName),
@@ -1366,10 +1370,15 @@ class BOOMFiller(LMObject):
                            userId=self.usr, gridset=gridset, metadata=meta,
                            status=JobStatus.INITIALIZE, statusModTime=currtime)
          bgMtx = self.scribe.findOrInsertMatrix(tmpMtx)
+         if bgMtx is None:
+            self.scribe.log.info('  Failed to add biogeo hypotheses matrix')
+         else:
+            self.scribe.log.info('  Encode biogeo hypotheses matrix {} ...'
+                                 .format(bgMtx.getId()))
       
-         # Now encode the layers into the matrix, then update matrix
-         boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
-                                            layers=layers) 
+            # Now encode the layers into the matrix, then update matrix
+            boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
+                                               layers=layers) 
       return bgMtx
 
 # ...............................................
