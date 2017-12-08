@@ -37,7 +37,10 @@ def encodeHypothesesToMatrix(scribe, usr, shapegrid, bgMtx, layers=[]):
    
    for lyr in layers:
       lyrEnc = BioGeoEncoding(shapegrid.getDLocation())
-      valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
+      try:
+         valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
+      except KeyError:
+         valAttribute = None
       lyrEnc.addLayers(lyr.getDLocation(), valAttribute)
       encMtx = lyrEnc.encodeHypotheses()
       
