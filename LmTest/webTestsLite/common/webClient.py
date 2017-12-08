@@ -39,6 +39,7 @@ from LmWebServer.common.lmconstants import HTTPMethod
 class _SERVICE:
    ENVLAYER = 'envlayer'
    GLOBAL_PAM = 'globalpam'
+   GRIDSET = 'gridset'
    LOGIN = 'login'
    LOGOUT = 'logout'
    SIGNUP = 'signup'
@@ -76,6 +77,19 @@ class LmWebClient(object):
                   envTypeId=envTypeId, gcmCode=gcmCode, scenarioId=scenarioId)
    
    # ............................
+   def count_gridsets(self, afterTime=None, beforeTime=None, epsgCode=None, 
+                      metaString=None, shapegridId=None, headers=None,
+                      responseFormat=None):
+      """
+      @summary: Send a request to the server to count gridsets layers
+      """
+      return self._make_request(self._build_base_url(_SERVICE.GRIDSET, 
+                  objectId='count', responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
+                  metaString=metaString, shapegridId=shapegridId,
+                  beforeTime=beforeTime, epsgCode=epsgCode)
+   
+   # ............................
    def get_environmental_layer(self, layerId, headers=None, 
                                responseFormat=None):
       """
@@ -83,6 +97,16 @@ class LmWebClient(object):
       """
       return self._make_request(self._build_base_url(_SERVICE.ENVLAYER, 
                      objectId=layerId, responseFormat=responseFormat), headers)
+   
+   # ............................
+   def get_gridset(self, gridsetId, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a grid set
+      """
+      return self._make_request(self._build_base_url(_SERVICE.GRIDSET, 
+                                                objectId=gridsetId, 
+                                                responseFormat=responseFormat), 
+                                             headers)
    
    # ............................
    def list_environmental_layers(self, afterTime=None, altPredCode=None, 
@@ -100,6 +124,19 @@ class LmWebClient(object):
                   dateCode=dateCode, epsgCode=epsgCode, envCode=envCode, 
                   envTypeId=envTypeId, gcmCode=gcmCode, scenarioId=scenarioId,
                   limit=limit, offset=offset)
+   
+   # ............................
+   def list_gridsets(self, afterTime=None, beforeTime=None, epsgCode=None, 
+                     limit=None, metaString=None, offset=None, 
+                     shapegridId=None, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of gridsets 
+      """
+      return self._make_request(self._build_base_url(_SERVICE.GRIDSET,
+                                                responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
+                  beforeTime=beforeTime, epsgCode=epsgCode, limit=limit, 
+                  metaString=metaString, offset=offset, shapegridId=shapegridId)
    
    # ............................
    def login(self, userId, passwd):
