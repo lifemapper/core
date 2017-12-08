@@ -20,6 +20,7 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+@todo: Add method for setting tree value
 """
 import mx.DateTime
 import os
@@ -55,12 +56,13 @@ class Tree(LmTree, ServiceObject):
       self.treeMetadata = {}
       self.loadTreeMetadata(metadata)
          
-      # TODO: Do we always want to read the file??
-      #       Maybe just populate attributes saved in DB?
+      # Read tree if available
+      if dlocation is None:
+         dlocation = self.getDLocation()
+         
       if dlocation is not None:
-         LmTree.__init__(self, dlocation, schema)
-      elif self.getDLocation() is not None:
-         LmTree.__init__(self, self.getDLocation(), schema)
+         if os.path.exists(dlocation):
+            LmTree.__init__(self, dlocation, schema)
       
 # ...............................................
 # Properties
@@ -75,6 +77,16 @@ class Tree(LmTree, ServiceObject):
 #                                          usr=self.getUserId())
 #       return dloc
 
+   # ..............................
+   def read(self, dlocation=None, schema=DEFAULT_TREE_SCHEMA):
+      """
+      @summary: Reads tree data, either from the dlocation or getDLocation
+      """
+      if dlocation is None:
+         dlocation = self.getDLocation()
+      
+      LmTree.__init__(self, dlocation, schema)
+   
    # ..............................
    def writeTree(self):
       """
