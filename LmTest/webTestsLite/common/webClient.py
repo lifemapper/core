@@ -43,6 +43,7 @@ class _SERVICE:
    LAYER = 'layer'
    LOGIN = 'login'
    LOGOUT = 'logout'
+   OCCURRENCE = 'occurrence'
    SIGNUP = 'signup'
    
    # ............................
@@ -62,6 +63,9 @@ class LmWebClient(object):
       self.urlBase = urlBase
       self.version = version
    
+   # ==================
+   # = Count Services =
+   # ==================
    # ............................
    def count_environmental_layers(self, afterTime=None, altPredCode=None, 
            beforeTime=None, dateCode=None, epsgCode=None, envCode=None, 
@@ -102,6 +106,24 @@ class LmWebClient(object):
                   beforeTime=beforeTime, epsgCode=epsgCode, squid=squid)
    
    # ............................
+   def count_occurrence_sets(self, afterTime=None, beforeTime=None, 
+                  displayName=None, epsgCode=None, minimumNumberOfPoints=None, 
+                  status=None, gridSetId=None, headers=None, 
+                  responseFormat=None):
+      """
+      @summary: Send a request to the server to count occurrence sets
+      """
+      return self._make_request(self._build_base_url(_SERVICE.OCCURRENCE, 
+                  objectId='count', responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
+                  beforeTime=beforeTime, displayName=displayName, 
+                  epsgCode=epsgCode, gridSetId=gridSetId, status=status, 
+                  minimumNumberOfPoints=minimumNumberOfPoints)
+   
+   # ================
+   # = Get Services =
+   # ================
+   # ............................
    def get_environmental_layer(self, layerId, headers=None, 
                                responseFormat=None):
       """
@@ -128,6 +150,18 @@ class LmWebClient(object):
       return self._make_request(self._build_base_url(_SERVICE.LAYER, 
                      objectId=layerId, responseFormat=responseFormat), headers)
    
+   # ............................
+   def get_occurrence_set(self, occId, headers=None, 
+                               responseFormat=None):
+      """
+      @summary: Send a request to the server to get an occurrence set
+      """
+      return self._make_request(self._build_base_url(_SERVICE.OCCURRENCE, 
+                     objectId=occId, responseFormat=responseFormat), headers)
+   
+   # =================
+   # = List Services =
+   # =================
    # ............................
    def list_environmental_layers(self, afterTime=None, altPredCode=None, 
            beforeTime=None, dateCode=None, epsgCode=None, envCode=None, 
@@ -171,6 +205,25 @@ class LmWebClient(object):
                   beforeTime=beforeTime, epsgCode=epsgCode, squid=squid,
                   limit=limit, offset=offset)
    
+   # ............................
+   def list_occurrence_sets(self, afterTime=None, beforeTime=None, 
+           displayName=None, epsgCode=None, minimumNumberOfPoints=None, 
+           limit=None, offset=None, status=None, gridSetId=None,
+           fillPoints=None, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of occurrence sets
+      """
+      return self._make_request(self._build_base_url(_SERVICE.OCCURRENCE,
+                                                responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
+                  beforeTime=beforeTime, displayName=displayName,  
+                  epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints, 
+                  status=status, gridSetId=gridSetId, fillPoints=fillPoints,
+                  limit=limit, offset=offset)
+   
+   # =================
+   # = User Services =
+   # =================
    # ............................
    def login(self, userId, passwd):
       """
