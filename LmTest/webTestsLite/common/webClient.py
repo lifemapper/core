@@ -40,14 +40,22 @@ class _SERVICE:
    ENVLAYER = 'envlayer'
    GLOBAL_PAM = 'globalpam'
    GRIDSET = 'gridset'
+   HINT = 'hint'
    LAYER = 'layer'
    LOGIN = 'login'
    LOGOUT = 'logout'
    MATRIX = 'matrix'
    MATRIX_COLUMN = 'matrixcolumn'
    OCCURRENCE = 'occurrence'
+   OGC = 'ogc'
    SCENARIO = 'scenario'
+   SCENARIO_PACKAGE = 'scenpackage'
+   SDM_PROJECT = 'sdmproject'
+   SHAPEGRID = 'shapegrid'
    SIGNUP = 'signup'
+   SNIPPET = 'snippet'
+   TREE = 'tree'
+   UPLOAD = 'upload'
    
    # ............................
    @staticmethod
@@ -153,6 +161,18 @@ class LmWebClient(object):
                   beforeTime=beforeTime, dateCode=dateCode, epsgCode=epsgCode,  
                   gcmCode=gcmCode)
    
+   # ............................
+   def count_scenario_packages(self, afterTime=None, beforeTime=None, 
+                               scenarioId=None, headers=None, 
+                               responseFormat=None):
+      """
+      @summary: Send a request to the server to count scenario packages
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SCENARIO_PACKAGE, 
+                  objectId='count', responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
+                  beforeTime=beforeTime, scenarioId=scenarioId)
+      
    # ================
    # = Get Services =
    # ================
@@ -163,7 +183,8 @@ class LmWebClient(object):
       @summary: Send a request to the server to get an environmental layer
       """
       return self._make_request(self._build_base_url(_SERVICE.ENVLAYER, 
-                     objectId=layerId, responseFormat=responseFormat), headers)
+                     objectId=layerId, responseFormat=responseFormat), 
+                                method=HTTPMethod.GET, headers=headers)
    
    # ............................
    def get_gridset(self, gridsetId, headers=None, responseFormat=None):
@@ -173,7 +194,7 @@ class LmWebClient(object):
       return self._make_request(self._build_base_url(_SERVICE.GRIDSET, 
                                                 objectId=gridsetId, 
                                                 responseFormat=responseFormat), 
-                                             headers)
+                                       method=HTTPMethod.GET, headers=headers)
    
    # ............................
    def get_layer(self, layerId, headers=None, responseFormat=None):
@@ -181,7 +202,8 @@ class LmWebClient(object):
       @summary: Send a request to the server to get a layer
       """
       return self._make_request(self._build_base_url(_SERVICE.LAYER, 
-                     objectId=layerId, responseFormat=responseFormat), headers)
+                     objectId=layerId, responseFormat=responseFormat), 
+                                method=HTTPMethod.GET, headers=headers)
    
    # ............................
    def get_matrix(self, gridsetId, matrixId, headers=None, responseFormat=None):
@@ -190,7 +212,8 @@ class LmWebClient(object):
       """
       return self._make_request(self._build_base_url(_SERVICE.MATRIX, 
                      objectId=matrixId, parentObjectId=gridsetId, 
-                     responseFormat=responseFormat), headers)
+                     responseFormat=responseFormat), method=HTTPMethod.GET, 
+                                headers=headers)
    
    # ............................
    def get_occurrence_set(self, occId, headers=None, 
@@ -199,7 +222,8 @@ class LmWebClient(object):
       @summary: Send a request to the server to get an occurrence set
       """
       return self._make_request(self._build_base_url(_SERVICE.OCCURRENCE, 
-                     objectId=occId, responseFormat=responseFormat), headers)
+                     objectId=occId, responseFormat=responseFormat), 
+                                method=HTTPMethod.GET, headers=headers)
    
    # ............................
    def get_scenario(self, scnId, headers=None, responseFormat=None):
@@ -207,7 +231,17 @@ class LmWebClient(object):
       @summary: Send a request to the server to get a scenario
       """
       return self._make_request(self._build_base_url(_SERVICE.SCENARIO, 
-                     objectId=scnId, responseFormat=responseFormat), headers)
+                     objectId=scnId, responseFormat=responseFormat), 
+                                method=HTTPMethod.GET, headers=headers)
+   
+   # ............................
+   def get_scenario_package(self, scnPkgId, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a scenario package
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SCENARIO_PACKAGE, 
+                           objectId=scnPkgId, responseFormat=responseFormat), 
+                                method=HTTPMethod.GET, headers=headers)
    
    # =================
    # = List Services =
@@ -300,6 +334,19 @@ class LmWebClient(object):
                   alternatePredictionCode=alternatePredictionCode, 
                   beforeTime=beforeTime, dateCode=dateCode, epsgCode=epsgCode, 
                   gcmCode=gcmCode, limit=limit, offset=offset)
+   
+   # ............................
+   def list_scenario_packages(self, afterTime=None, beforeTime=None,  
+                 limit=100, offset=0, scenarioId=None, headers=None, 
+                 responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of scenario packages
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SCENARIO_PACKAGE,
+                                                responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime,
+                  scenarioId=scenarioId, beforeTime=beforeTime,  limit=limit, 
+                  offset=offset)
    
    # =================
    # = User Services =
