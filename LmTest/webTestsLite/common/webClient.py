@@ -44,6 +44,7 @@ class _SERVICE:
    LOGIN = 'login'
    LOGOUT = 'logout'
    OCCURRENCE = 'occurrence'
+   SCENARIO = 'scenario'
    SIGNUP = 'signup'
    
    # ............................
@@ -120,6 +121,20 @@ class LmWebClient(object):
                   epsgCode=epsgCode, gridSetId=gridSetId, status=status, 
                   minimumNumberOfPoints=minimumNumberOfPoints)
    
+   # ............................
+   def count_scenarios(self, afterTime=None, alternatePredictionCode=None,
+                 beforeTime=None, dateCode=None, epsgCode=None, gcmCode=None, 
+                 headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to count scenarios
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SCENARIO, 
+                  objectId='count', responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime,
+                  alternatePredictionCode=alternatePredictionCode, 
+                  beforeTime=beforeTime, dateCode=dateCode, epsgCode=epsgCode,  
+                  gcmCode=gcmCode)
+   
    # ================
    # = Get Services =
    # ================
@@ -158,6 +173,14 @@ class LmWebClient(object):
       """
       return self._make_request(self._build_base_url(_SERVICE.OCCURRENCE, 
                      objectId=occId, responseFormat=responseFormat), headers)
+   
+   # ............................
+   def get_scenario(self, scnId, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a scenario
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SCENARIO, 
+                     objectId=scnId, responseFormat=responseFormat), headers)
    
    # =================
    # = List Services =
@@ -220,6 +243,20 @@ class LmWebClient(object):
                   epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints, 
                   status=status, gridSetId=gridSetId, fillPoints=fillPoints,
                   limit=limit, offset=offset)
+   
+   # ............................
+   def list_scenarios(self, afterTime=None, alternatePredictionCode=None,
+                 beforeTime=None, dateCode=None, epsgCode=None, gcmCode=None, 
+                 limit=100, offset=0, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of scenarios
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SCENARIO,
+                                                responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
+                  alternatePredictionCode=alternatePredictionCode, 
+                  beforeTime=beforeTime, dateCode=dateCode, epsgCode=epsgCode, 
+                  gcmCode=gcmCode, limit=limit, offset=offset)
    
    # =================
    # = User Services =
