@@ -34,6 +34,9 @@ from urlparse import urlparse
 
 from LmServer.common.localconstants import PUBLIC_FQDN
 from LmWebServer.common.lmconstants import HTTPMethod
+from LmServer.legion import algorithm
+from LmTest.webTestsLite.api.v2 import occurrence
+from mx.Tools.Tools import projection
 
 # .............................................................................
 class _SERVICE:
@@ -173,6 +176,28 @@ class LmWebClient(object):
                   method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
                   beforeTime=beforeTime, scenarioId=scenarioId)
       
+   # ............................
+   def count_sdm_projection(self, afterStatus=None, afterTime=None, 
+                           algorithmCode=None, beforeStatus=None, 
+                           beforeTime=None, displayName=None, epsgCode=None, 
+                           modelScenarioCode=None, occurrenceSetId=None,  
+                           projectionScenarioCode=None, scenarioId=None, 
+                           status=None, gridSetId=None, headers=None, 
+                           responseFormat=None):
+      """
+      @summary: Send a request to the server to get a count of sdm projections
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SDM_PROJECT, 
+                              objectId='count', responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime,
+                  scenarioId=scenarioId, beforeTime=beforeTime, 
+                  afterStatus=afterStatus, algorithmCode=algorithmCode, 
+                  beforeStatus=beforeStatus, displayName=displayName, 
+                  epsgCode=epsgCode, modelScenarioCode=modelScenarioCode, 
+                  status=status, occurrenceSetId=occurrenceSetId, 
+                  projectionScenarioCode=projectionScenarioCode, 
+                  gridSetId=gridSetId)
+   
    # ================
    # = Get Services =
    # ================
@@ -241,6 +266,15 @@ class LmWebClient(object):
       """
       return self._make_request(self._build_base_url(_SERVICE.SCENARIO_PACKAGE, 
                            objectId=scnPkgId, responseFormat=responseFormat), 
+                                method=HTTPMethod.GET, headers=headers)
+   
+   # ............................
+   def get_sdm_projection(self, prjId, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a sdm projection
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SDM_PROJECT, 
+                           objectId=prjId, responseFormat=responseFormat), 
                                 method=HTTPMethod.GET, headers=headers)
    
    # =================
@@ -347,6 +381,30 @@ class LmWebClient(object):
                   method=HTTPMethod.GET, headers=headers, afterTime=afterTime,
                   scenarioId=scenarioId, beforeTime=beforeTime,  limit=limit, 
                   offset=offset)
+   
+   # ............................
+   def list_sdm_projections(self, afterStatus=None, afterTime=None, 
+                           algorithmCode=None, beforeStatus=None, 
+                           beforeTime=None, displayName=None, epsgCode=None, 
+                           limit=None, modelScenarioCode=None, 
+                           occurrenceSetId=None, offset=None, 
+                           projectionScenarioCode=None, scenarioId=None, 
+                           status=None, gridSetId=None, headers=None, 
+                 responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of sdm projections
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SDM_PROJECT,
+                                                responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime,
+                  scenarioId=scenarioId, beforeTime=beforeTime, limit=limit, 
+                  offset=offset, afterStatus=afterStatus, 
+                  algorithmCode=algorithmCode, beforeStatus=beforeStatus,
+                  displayName=displayName, epsgCode=epsgCode, 
+                  modelScenarioCode=modelScenarioCode, status=status, 
+                  occurrenceSetId=occurrenceSetId, 
+                  projectionScenarioCode=projectionScenarioCode, 
+                  gridSetId=gridSetId)
    
    # =================
    # = User Services =
