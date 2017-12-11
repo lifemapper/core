@@ -43,6 +43,8 @@ class _SERVICE:
    LAYER = 'layer'
    LOGIN = 'login'
    LOGOUT = 'logout'
+   MATRIX = 'matrix'
+   MATRIX_COLUMN = 'matrixcolumn'
    OCCURRENCE = 'occurrence'
    SCENARIO = 'scenario'
    SIGNUP = 'signup'
@@ -107,6 +109,22 @@ class LmWebClient(object):
                   beforeTime=beforeTime, epsgCode=epsgCode, squid=squid)
    
    # ............................
+   def count_matrices(self, gridsetId, afterTime=None, altPredCode=None, 
+                      beforeTime=None, dateCode=None, epsgCode=None, 
+                      gcmCode=None, keyword=None, matrixType=None,  
+                      status=None, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to count matrices
+      """
+      return self._make_request(self._build_base_url(_SERVICE.MATRIX, 
+                  objectId='count', responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
+                  altPredCode=altPredCode, beforeTime=beforeTime, 
+                  dateCode=dateCode, epsgCode=epsgCode, gridsetId=gridsetId,
+                  keyword=keyword, matrixType=matrixType, status=status, 
+                  gcmCode=gcmCode)
+   
+   # ............................
    def count_occurrence_sets(self, afterTime=None, beforeTime=None, 
                   displayName=None, epsgCode=None, minimumNumberOfPoints=None, 
                   status=None, gridSetId=None, headers=None, 
@@ -164,6 +182,15 @@ class LmWebClient(object):
       """
       return self._make_request(self._build_base_url(_SERVICE.LAYER, 
                      objectId=layerId, responseFormat=responseFormat), headers)
+   
+   # ............................
+   def get_matrix(self, gridsetId, matrixId, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a matrix
+      """
+      return self._make_request(self._build_base_url(_SERVICE.MATRIX, 
+                     objectId=matrixId, parentObjectId=gridsetId, 
+                     responseFormat=responseFormat), headers)
    
    # ............................
    def get_occurrence_set(self, occId, headers=None, 
@@ -226,6 +253,22 @@ class LmWebClient(object):
                                                 responseFormat=responseFormat), 
                   method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
                   beforeTime=beforeTime, epsgCode=epsgCode, squid=squid,
+                  limit=limit, offset=offset)
+   
+   # ............................
+   def list_matrices(self, gridsetId, afterTime=None, altPredCode=None, 
+                     beforeTime=None, dateCode=None, epsgCode=None, 
+                     gcmCode=None, keyword=None, limit=None, matrixType=None, 
+                     offset=None, status=None, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of matrices
+      """
+      return self._make_request(self._build_base_url(_SERVICE.MATRIX,
+                      parentObjectId=gridsetId, responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
+                  altPredCode=altPredCode, beforeTime=beforeTime, 
+                  dateCode=dateCode, epsgCode=epsgCode, keyword=keyword, 
+                  matrixType=matrixType, gcmCode=gcmCode, status=status,
                   limit=limit, offset=offset)
    
    # ............................
@@ -310,7 +353,8 @@ class LmWebClient(object):
                   taxonSpecies=taxonSpecies)
    
    # ............................
-   def _build_base_url(self, service, objectId=None, responseFormat=None):
+   def _build_base_url(self, service, objectId=None, parentObjectId=None, 
+                       responseFormat=None):
       """
       @summary: Build the base url for the service
       """
@@ -318,6 +362,13 @@ class LmWebClient(object):
       
       if service in _SERVICE.userServices():
          url = '{}/{}'.format(url, service)
+      elif service == _SERVICE.MATRIX:
+         if objectId is not None:
+            url = '{}/{}/{}/{}/{}'.format(url, _SERVICE.GRIDSET, parentObjectId,
+                                       _SERVICE.MATRIX, objectId)
+         else:
+            url = '{}/{}/{}/{}'.format(url, _SERVICE.GRIDSET, parentObjectId,
+                                       _SERVICE.MATRIX)
       else:
          url = '{}/{}/{}'.format(url, self.version, service)
          if objectId is not None:
