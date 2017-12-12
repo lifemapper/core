@@ -30,11 +30,11 @@ import json
 import unittest
 import warnings
 
-from LmServer.db.borgscribe import BorgScribe
+from LmCommon.common.lmconstants import JobStatus
 from LmServer.common.log import ConsoleLogger
+from LmServer.db.borgscribe import BorgScribe
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
-from LmCommon.common.lmconstants import JobStatus
 
 # .............................................................................
 class TestWebSpeciesHintService(UserTestCase):

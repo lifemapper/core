@@ -31,10 +31,10 @@ import json
 import unittest
 import warnings
 
-from LmTest.webTestsLite.common.userUnitTest import UserTestCase
-from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ConsoleLogger
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
+from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
 # .............................................................................
