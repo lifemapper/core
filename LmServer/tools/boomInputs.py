@@ -51,10 +51,16 @@ def encodeHypothesesToMatrix(scribe, usr, shapegrid, bgMtx, layers=[]):
       # Add matrix columns for the newly encoded layers
       for col in encMtx.getColumnHeaders():
          # TODO: Fill in params and metadata
-         efValue = col.split(' - ')[1]
+         try:
+            efValue = col.split(' - ')[1]
+         except:
+            efValue = col
+
          if valAttribute is not None:
             intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
                          MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue}
+         else:
+            intParams = None
          metadata = {
             ServiceObject.META_DESCRIPTION.lower() : 
          'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
