@@ -250,11 +250,11 @@ class Borg(DbPostgresql):
    def _createGridset(self, row, idxs):
       """
       @summary: Create a Gridset from a database Gridset record or lm_gridset view
+      @note: This does not return tree object data, only treeId
       """
       grdset = None
       if row is not None:
          shp = self._createShapeGrid(row, idxs)
-         tree = self._createTree(row, idxs)
          shpId = self._getColumnValue(row, idxs, ['layerid'])
          grdid = self._getColumnValue(row, idxs, ['gridsetid'])
          treeid = self._getColumnValue(row, idxs, ['treeid'])
@@ -265,7 +265,7 @@ class Borg(DbPostgresql):
          meta = self._getColumnValue(row, idxs, ['grdmetadata', 'metadata'])
          mtime = self._getColumnValue(row, idxs, ['grdmodtime', 'modtime'])
          grdset = Gridset(name=name, metadata=meta, shapeGrid=shp, 
-                          shapeGridId=shpId, tree=tree, treeId=treeid, 
+                          shapeGridId=shpId, treeId=treeid, 
                           dlocation=dloc, epsgcode=epsg, userId=usr, 
                           gridsetId=grdid, modTime=mtime)
       return grdset
@@ -546,42 +546,6 @@ class Borg(DbPostgresql):
       if row is not None:
          taxSourceId = self._getColumnValue(row,idxs,['taxonomysourceid'])
       return taxSourceId
-   
-# ...............................................
-   def findOrInsertBaseLayer(self, lyr):
-      """
-      @summary Finds or inserts a Layer record into the database
-      @param lyr: Raster or Vector to insert
-      @return: new or existing Raster or Vector object 
-      """
-      try:
-         min = lyr.minVal
-         max = lyr.maxVal
-         nodata = lyr.nodataVal
-      except:
-         min = max = nodata = wkt = None
-      meta = lyr.dumpLyrMetadata()
-      if lyr.epsgcode == DEFAULT_EPSG:
-         wkt = lyr.getWkt()
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer', 
-                           lyr.getId(),
-                           lyr.getLayerUserId(),
-                           lyr.squid,
-                           lyr.verify,
-                           lyr.name,
-                           lyr.getDLocation(),
-                           meta,
-                           lyr.dataFormat,
-                           lyr.gdalType,
-                           lyr.ogrType,
-                           lyr.valUnits, nodata, min, max,
-                           lyr.epsgcode,
-                           lyr.mapUnits,
-                           lyr.resolution,
-                           lyr.getCSVExtentString(), wkt,
-                           lyr.modTime)
-      updatedLyr = self._createLayer(row, idxs)
-      return updatedLyr
 
 # ...............................................
    def getBaseLayer(self, lyrid, lyrverify, lyruser, lyrname, epsgcode):
@@ -1916,7 +1880,7 @@ class Borg(DbPostgresql):
          # Check for existing id before pulling from db
          lyrid = mtxcol.layer.getLayerId()
          if lyrid is None:
-            newOrExistingLyr = self.findOrInsertBaseLayer(mtxcol.layer)
+            newOrExistingLyr = self.findOrInsertLayer(mtxcol.layer)
             lyrid = newOrExistingLyr.getLayerId()
 
             # Shapegrid is already in db
