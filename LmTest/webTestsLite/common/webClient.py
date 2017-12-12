@@ -205,7 +205,7 @@ class LmWebClient(object):
       """
       @summary: Send a request to the server to get a count of trees
       """
-      return self._make_request(self._build_base_url(_SERVICE.SDM_TREE,
+      return self._make_request(self._build_base_url(_SERVICE.TREE,
                               objectId='count', responseFormat=responseFormat), 
                   method=HTTPMethod.GET, headers=headers, afterTime=afterTime,
                   name=name, isBinary=isBinary, isUltrametric=isUltrametric,
@@ -430,6 +430,17 @@ class LmWebClient(object):
                   gridSetId=gridSetId)
    
    # ............................
+   def list_species_hints(self, searchString, limit=None, headers=None, 
+                                responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of species matching
+                   the provided string
+      """
+      return self._make_request(self._build_base_url(_SERVICE.HINT,
+                         objectId=searchString, responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, limit=limit)
+   
+   # ............................
    def list_trees(self, limit=None, offset=None, name=None, isBinary=None, 
                   isUltrametric=None, hasBranchLengths=None, metaString=None, 
                   afterTime=None, beforeTime=None, headers=None, 
@@ -437,7 +448,7 @@ class LmWebClient(object):
       """
       @summary: Send a request to the server to get a list of trees
       """
-      return self._make_request(self._build_base_url(_SERVICE.SDM_TREE,
+      return self._make_request(self._build_base_url(_SERVICE.TREE,
                                                 responseFormat=responseFormat), 
                   method=HTTPMethod.GET, headers=headers, afterTime=afterTime,
                   name=name, isBinary=isBinary, isUltrametric=isUltrametric,
