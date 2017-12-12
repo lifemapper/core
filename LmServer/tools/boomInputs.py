@@ -11,17 +11,19 @@ import numpy as np
 import os
 import sys
 
-from LmCommon.common.lmconstants import (JobStatus, MatrixType, PhyloTreeKeys,
-                                         ProcessType)
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (JobStatus, PhyloTreeKeys, SERVER_BOOM_HEADING)
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
 from LmServer.base.utilities import isCorrectUser
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import LMFileType
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.tree import Tree
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.common.localconstants import DEFAULT_EPSG
 
 # .................................
 def encodeHypothesesToMatrix(scribe, usr, shapegrid, bgMtx, layers=[]):
@@ -111,6 +113,32 @@ def squidifyTree(scribe, usr, tree):
    success = scribe.updateObject(tree)
    return tree
 
+def _getBoomBioGeoParams(scribe, gridname, usr):
+   epsg = DEFAULT_EPSG
+   layers = []
+   earl = EarlJr()
+   configFname = earl.createFilename(LMFileType.BOOM_CONFIG, 
+                                     objCode=gridname, usr=usr)
+   if configFname is not None and os.path.exists(configFname):
+      cfg = Config(siteFn=configFname)
+   else:
+      raise Exception('Missing config file {}'.format(configFname))
+
+   try:
+      epsg = cfg.get(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_EPSG')
+   except:
+      pass
+
+   try:
+      var = cfg.get(SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES_LAYERS')
+   except:
+      raise Exception('No configured Biogeographic Hypotheses layers')
+   else:
+      # May be one or more
+      lyrnameList = [v.strip() for v in var.split(',')]
+      for lname in lyrnameList:
+         layers.append(scribe.getLayer(userId=usr, lyrName=lname, epsg=epsg))
+   return epsg, layers
 
 # .............................................................................
 if __name__ == '__main__':
@@ -123,21 +151,34 @@ if __name__ == '__main__':
 
    parser.add_argument('-u', '--user', type=str, 
                        help="User name")
+   parser.add_argument('-g', '--gridset_name', type=str, 
+                       help="Gridset name for encoding Biogeographic Hypotheses")
    parser.add_argument('-t', '--tree_name', type=str, 
-                       help="Tree name to annotate")
+                       help="Tree name for squid, node annotation")
    
    args = parser.parse_args()
    usr = args.user
    treename = args.tree_name
+   gridname = args.gridset_name
+   
+#   boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
+#                                      layers=allLayers) 
 
    scribe = BorgScribe(ConsoleLogger())
    scribe.openConnections()
+   if gridname is not None:
+      epsg, layers = _getBoomBioGeoParams(scribe, gridname, usr)
+      gridset = scribe.getGridset(userId=usr, name=gridname, fillMatrices=True)
+      bgMtx = gridset.getBiogeographicHypotheses()
+      
+      encodeHypothesesToMatrix(scribe, usr, gridset.getShapegrid(), 
+                               gridset.getBiogeographicHypotheses(), 
+                              layers=layers) 
    
-   baretree = Tree(treename, userId=args.user)
-   
-   tree = scribe.getTree(tree=baretree)
-   
-   decoratedtree = squidifyTree(scribe, usr, tree)
+   if treename is not None:
+      baretree = Tree(treename, userId=args.user)
+      tree = scribe.getTree(tree=baretree)
+      decoratedtree = squidifyTree(scribe, usr, tree)
    
    scribe.closeConnections()
    

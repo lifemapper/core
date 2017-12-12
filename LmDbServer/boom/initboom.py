@@ -310,7 +310,8 @@ class BOOMFiller(LMObject):
          
       # RAD stats
       treeFname = self._getBoomOrDefault(config, 'TREE')
-      biogeoHypotheses = self._getBoomOrDefault(config, 'BIOGEO_HYPOTHESES')
+      biogeoName = self._getBoomOrDefault(config, 'BIOGEO_HYPOTHESES')
+      bghypFnames = self._getBioGeoHypothesesLayerFilenames(biogeoName)
       doComputePAMStats = self._getBoomOrDefault(config, 'COMPUTE_PAM_STATS', isBool=True)
       
 #       mdlMaskName = self._getBoomOrDefault(config, 'MODEL_MASK_NAME')
@@ -344,11 +345,11 @@ class BOOMFiller(LMObject):
               occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
               userOccFname, userOccSep, minpoints, algs, 
               assemblePams, gridbbox, cellsides, cellsize, gridname, 
-              intersectParams, maskAlg, treeFname, biogeoHypotheses, 
+              intersectParams, maskAlg, treeFname, bghypFnames, 
               doComputePAMStats)
       
    # ...............................................
-   def writeConfigFile(self, tree=None, biogeoMtx=None, fname=None):
+   def writeConfigFile(self, tree=None, biogeoMtx=None, biogeoLayers=[], fname=None):
       config = ConfigParser.SafeConfigParser()
       config.add_section(SERVER_BOOM_HEADING)
       
@@ -440,6 +441,8 @@ class BOOMFiller(LMObject):
       if self.doComputePAMStats:
          doStats = 1
       config.set(SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES', str(doHypotheses))
+      bioGeoLayerNames = ','.join(biogeoLayers)
+      config.set(SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES_LAYERS', bioGeoLayerNames)
       config.set(SERVER_BOOM_HEADING, 'COMPUTE_PAM_STATS', str(doStats))
       if tree is not None:
          config.set(SERVER_BOOM_HEADING, 'TREE', tree.name)
@@ -1309,7 +1312,7 @@ class BOOMFiller(LMObject):
    def _getBGMeta(self, bgFname):
       # defaults for no metadata file
       # lower-case dict keys
-      
+      bgkeyword = 'biogeographic hypothesis'
       lyrMeta = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): None,
                  ServiceObject.META_DESCRIPTION.lower(): 
       'Biogeographic hypothesis based on layer {}'.format(bgFname)}
@@ -1323,16 +1326,21 @@ class BOOMFiller(LMObject):
                print('Biogeo layer meta = {}'.format(meta))
                for k, v in meta.iteritems():
                   lyrMeta[k.lower()] = v
+               # Add keyword to metadata
+               try:
+                  kwdStr = meta[ServiceObject.META_KEYWORDS]
+                  keywords = kwdStr.split(',')
+                  if bgkeyword not in keywords:
+                     keywords.append(bgkeyword)
+               except:
+                  meta[ServiceObject.META_KEYWORDS] = bgkeyword
             else:
                raise LMError('Metadata must be a dictionary or a JSON-encoded dictionary')
       return lyrMeta
    
-   # ...............................................
-   def addBioGeoHypotheses(self, gridset):
-      currtime = mx.DateTime.gmt().mjd
-      shpgrid = gridset.getShapegrid()
+   def _getBioGeoHypothesesLayerFilenames(self, biogeoName):
       bghypFnames = []
-      bgpth = os.path.join(self._userPath, self.biogeoHypotheses) 
+      bgpth = os.path.join(self._userPath, biogeoName) 
       if os.path.exists(bgpth + LMFormat.SHAPE.ext):
          bghypFnames = [bgpth + LMFormat.SHAPE.ext]
       elif os.path.isdir(bgpth):
@@ -1341,11 +1349,26 @@ class BOOMFiller(LMObject):
          bghypFnames = glob.glob(pattern)
       else:
          self.scribe.log.warning('No biogeo shapefiles at {}'.format(bgpth))
-         
-      if len(bghypFnames) > 0:
+      return bghypFnames
+   
+   # ...............................................
+   def addBioGeoHypothesesMatrixAndLayers(self, gridset):
+      currtime = mx.DateTime.gmt().mjd
+      biogeoLayerNames = []
+#       shpgrid = gridset.getShapegrid()
+#       bghypFnames = []
+#       bgpth = os.path.join(self._userPath, self.biogeoHypotheses) 
+#       if os.path.exists(bgpth + LMFormat.SHAPE.ext):
+#          bghypFnames = [bgpth + LMFormat.SHAPE.ext]
+#       elif os.path.isdir(bgpth):
+#          import glob
+#          pattern = os.path.join(bgpth, '*' + LMFormat.SHAPE.ext)
+#          bghypFnames = glob.glob(pattern)
+#       else:
+#          self.scribe.log.warning('No biogeo shapefiles at {}'.format(bgpth))         
+      if len(self.bghypFnames) > 0:
          mtxKeywords = ['biogeographic hypotheses']
-         allLayers = []
-         for bgFname in bghypFnames:
+         for bgFname in self.bghypFnames:
             if os.path.exists(bgFname):
                lyrMeta = self._getBGMeta(bgFname)
                valAttr = lyrMeta[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
@@ -1358,9 +1381,9 @@ class BOOMFiller(LMObject):
                    metadata=lyrMeta, dataFormat=LMFormat.SHAPE.driver, 
                    valAttribute=valAttr, modTime=currtime)
                updatedLyr = self.scribe.findOrInsertLayer(lyr)
-               allLayers.append(updatedLyr)
+               biogeoLayerNames.append(updatedLyr.name)
          self.scribe.log.info('  Added {} layers for biogeo hypotheses matrix'
-                       .format(len(allLayers)))
+                       .format(len(biogeoLayerNames)))
          # Add the matrix to contain biogeo hypotheses layer intersections
          meta={ServiceObject.META_DESCRIPTION.lower(): 
                'Biogeographic Hypotheses for archive {}'.format(self.archiveName),
@@ -1375,11 +1398,10 @@ class BOOMFiller(LMObject):
          else:
             self.scribe.log.info('  Encode biogeo hypotheses matrix {} ...'
                                  .format(bgMtx.getId()))
-      
-            # Now encode the layers into the matrix, then update matrix
-            boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
-                                                  layers=allLayers) 
-      return bgMtx
+#             # Now encode the layers into the matrix, then update matrix
+#             boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
+#                                                   layers=allLayers) 
+      return bgMtx, biogeoLayerNames
 
 # ...............................................
 def initBoom(paramFname, isInitial=True):
@@ -1424,20 +1446,22 @@ def initBoom(paramFname, isInitial=True):
    # If there are Scenario GRIMs, create MFChain for each 
    filler.addGRIMChains(scenGrims)
    # If there is a tree, add and biogeographic hypotheses, create MFChain for each
-   tree = biogeoMtx = None 
+   tree = biogeoMtx = None
+   biogeoLayerNames = []
    if filler.treeFname is not None:
       tree = filler.addTree(boomGridset)
    # If there is a tree, add and biogeographic hypotheses, create MFChain for each 
    if filler.biogeoHypotheses is not None:
-      biogeoMtx = filler.addBioGeoHypotheses(boomGridset)
+      biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
    
    
    # Write config file for this archive
-   filler.writeConfigFile(tree, biogeoMtx)
+#    filler.writeConfigFile(tree, biogeoMtx, biogeoLayers)
+   filler.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, biogeoLayers=biogeoLayerNames)
    filler.scribe.log.info('')
    filler.scribe.log.info('******')
    filler.scribe.log.info('--config_file={}'.format(filler.outConfigFilename))   
-   filler.scribe.log.info('gridset ID = {}'.format(boomGridset.getId()))   
+   filler.scribe.log.info('gridset name = {}'.format(boomGridset.name))   
    filler.scribe.log.info('******')
    filler.scribe.log.info('')
          
