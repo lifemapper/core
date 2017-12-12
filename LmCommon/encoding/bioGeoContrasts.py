@@ -169,7 +169,7 @@ class BioGeoEncoding(object):
       except: # Second feature is optional
          pass
       
-      return [(feat1, feat2), os.path.basename(layerDL)]
+      return [((feat1, feat2), os.path.basename(layerDL))]
    
    # ..............................
    def _getFeaturesWithEvent(self, layerDL, eventField):

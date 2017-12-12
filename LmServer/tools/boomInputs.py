@@ -44,15 +44,23 @@ def encodeHypothesesToMatrix(scribe, usr, shapegrid, bgMtx, layers=[]):
       except KeyError:
          valAttribute = None
       lyrEnc.addLayers(lyr.getDLocation(), eventField=valAttribute)
+      print('layer name={}, eventField={}, dloc={}'
+            .format(lyr.name, valAttribute, lyr.getDLocation()))
       encMtx = lyrEnc.encodeHypotheses()
       
       # Add matrix columns for the newly encoded layers
       for col in encMtx.getColumnHeaders():
          # TODO: Fill in params and metadata
-         efValue = col.split(' - ')[1]
+         try:
+            efValue = col.split(' - ')[1]
+         except:
+            efValue = col
+
          if valAttribute is not None:
             intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
                          MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue}
+         else:
+            intParams = None
          metadata = {
             ServiceObject.META_DESCRIPTION.lower() : 
          'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
@@ -138,7 +146,7 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
       lyrnameList = [v.strip() for v in var.split(',')]
       for lname in lyrnameList:
          layers.append(scribe.getLayer(userId=usr, lyrName=lname, epsg=epsg))
-   return epsg, layers
+   return layers
 
 # .............................................................................
 if __name__ == '__main__':
@@ -167,13 +175,22 @@ if __name__ == '__main__':
    scribe = BorgScribe(ConsoleLogger())
    scribe.openConnections()
    if gridname is not None:
-      epsg, layers = _getBoomBioGeoParams(scribe, gridname, usr)
+      bgMtx = None
+      layers = _getBoomBioGeoParams(scribe, gridname, usr)
       gridset = scribe.getGridset(userId=usr, name=gridname, fillMatrices=True)
-      bgMtx = gridset.getBiogeographicHypotheses()
-      
-      encodeHypothesesToMatrix(scribe, usr, gridset.getShapegrid(), 
-                               gridset.getBiogeographicHypotheses(), 
-                              layers=layers) 
+      try:
+         bgMtxList = gridset.getBiogeographicHypotheses()
+         # TODO: There should be only one?!?
+         if len(bgMtxList) > 0:
+            bgMtx = bgMtxList[0]
+      except:
+         print ('No gridset for hypotheses')
+      else:
+         if bgMtx and layers:
+            encodeHypothesesToMatrix(scribe, usr, gridset.getShapegrid(), bgMtx, 
+                                     layers=layers)
+         else:
+            print ('No biogeo matrix or layers to encode as hypotheses')
    
    if treename is not None:
       baretree = Tree(treename, userId=args.user)

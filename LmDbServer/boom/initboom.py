@@ -107,7 +107,7 @@ class BOOMFiller(LMObject):
       # Allow reset configuration
       if paramFname is not None:
          self.inParamFname = paramFname
-      (self.usr,
+      (self.usr, self.usrPath,
        self.usrEmail,
        self.archiveName,
        self.priority,
@@ -132,10 +132,8 @@ class BOOMFiller(LMObject):
        self.intersectParams, 
        self.maskAlg, 
        self.treeFname, 
-       self.biogeoHypotheses, 
+       self.bghypFnames,
        self.doComputePAMStats) = self.readParamVals()
-      earl = EarlJr()
-      self._userPath = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
        
       # Fill existing scenarios AND SDM mask layer from configured codes 
       # or create from ScenPackage metadata
@@ -193,11 +191,6 @@ class BOOMFiller(LMObject):
       except:
          fname = None
       return fname
-   
-#    # ...............................................      
-#    @property
-#    def userPath(self):
-#       return self._userPath
 
 # ...............................................
    def _warnPermissions(self):
@@ -281,6 +274,8 @@ class BOOMFiller(LMObject):
    
       # Fill in missing or null variables for archive.config.ini
       usr = self._getBoomOrDefault(config, 'ARCHIVE_USER', defaultValue=PUBLIC_USER)
+      earl = EarlJr()
+      usrPath = earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
       usrEmail = self._getBoomOrDefault(config, 'ARCHIVE_USER_EMAIL')
       archiveName = self._getBoomOrDefault(config, 'ARCHIVE_NAME', 
                                            defaultValue=PUBLIC_ARCHIVE_NAME)
@@ -311,7 +306,7 @@ class BOOMFiller(LMObject):
       # RAD stats
       treeFname = self._getBoomOrDefault(config, 'TREE')
       biogeoName = self._getBoomOrDefault(config, 'BIOGEO_HYPOTHESES')
-      bghypFnames = self._getBioGeoHypothesesLayerFilenames(biogeoName)
+      bghypFnames = self._getBioGeoHypothesesLayerFilenames(biogeoName, usrPath)
       doComputePAMStats = self._getBoomOrDefault(config, 'COMPUTE_PAM_STATS', isBool=True)
       
 #       mdlMaskName = self._getBoomOrDefault(config, 'MODEL_MASK_NAME')
@@ -340,7 +335,7 @@ class BOOMFiller(LMObject):
          prjScenCodeList = self._getBoomOrDefault(config, 
                      'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', isList=True)
       
-      return (usr, usrEmail, archiveName, priority, scenPackageName, 
+      return (usr, usrPath, usrEmail, archiveName, priority, scenPackageName, 
               modelScenCode, prjScenCodeList, dataSource, 
               occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
               userOccFname, userOccSep, minpoints, algs, 
@@ -1292,20 +1287,22 @@ class BOOMFiller(LMObject):
 
    # ...............................................
    def addTree(self, gridset):
-      currtime = mx.DateTime.gmt().mjd
-      name = os.path.splitext(self.treeFname)[0]
-      treeFilename = os.path.join(self._userPath, self.treeFname) 
-      if os.path.exists(treeFilename):
-         baretree = Tree(name, dlocation=treeFilename, userId=self.usr, 
-                     modTime=currtime)
-         tree = self.scribe.findOrInsertTree(baretree)
-      else:
-         self.scribe.log.warning('No tree at {}'.format(treeFilename))
-
-      print "Add tree to grid set"
-      gridset.tree = tree
-      gridset.updateModtime(currtime)
-      self.scribe.updateObject(gridset)
+      tree = None
+      if self.treeFname is not None:
+         currtime = mx.DateTime.gmt().mjd
+         name = os.path.splitext(self.treeFname)[0]
+         treeFilename = os.path.join(self.usrPath, self.treeFname) 
+         if os.path.exists(treeFilename):
+            baretree = Tree(name, dlocation=treeFilename, userId=self.usr, 
+                        modTime=currtime)
+            tree = self.scribe.findOrInsertTree(baretree)
+         else:
+            self.scribe.log.warning('No tree at {}'.format(treeFilename))
+   
+         print "Add tree to grid set"
+         gridset.tree = tree
+         gridset.updateModtime(currtime)
+         self.scribe.updateObject(gridset)
       return tree
 
    # ...............................................
@@ -1318,12 +1315,10 @@ class BOOMFiller(LMObject):
       'Biogeographic hypothesis based on layer {}'.format(bgFname)}
       fpthbasename = os.path.splitext(bgFname)[0]
       metaFname = fpthbasename + LMFormat.JSON.ext
-      print('Biogeo layer metadata = {}'.format(metaFname))
       if os.path.exists(metaFname):
          with open(metaFname) as f:
             meta = json.load(f)
             if type(meta) is dict:
-               print('Biogeo layer meta = {}'.format(meta))
                for k, v in meta.iteritems():
                   lyrMeta[k.lower()] = v
                # Add keyword to metadata
@@ -1338,9 +1333,9 @@ class BOOMFiller(LMObject):
                raise LMError('Metadata must be a dictionary or a JSON-encoded dictionary')
       return lyrMeta
    
-   def _getBioGeoHypothesesLayerFilenames(self, biogeoName):
+   def _getBioGeoHypothesesLayerFilenames(self, biogeoName, usrPath):
       bghypFnames = []
-      bgpth = os.path.join(self._userPath, biogeoName) 
+      bgpth = os.path.join(usrPath, biogeoName) 
       if os.path.exists(bgpth + LMFormat.SHAPE.ext):
          bghypFnames = [bgpth + LMFormat.SHAPE.ext]
       elif os.path.isdir(bgpth):
@@ -1355,17 +1350,8 @@ class BOOMFiller(LMObject):
    def addBioGeoHypothesesMatrixAndLayers(self, gridset):
       currtime = mx.DateTime.gmt().mjd
       biogeoLayerNames = []
-#       shpgrid = gridset.getShapegrid()
-#       bghypFnames = []
-#       bgpth = os.path.join(self._userPath, self.biogeoHypotheses) 
-#       if os.path.exists(bgpth + LMFormat.SHAPE.ext):
-#          bghypFnames = [bgpth + LMFormat.SHAPE.ext]
-#       elif os.path.isdir(bgpth):
-#          import glob
-#          pattern = os.path.join(bgpth, '*' + LMFormat.SHAPE.ext)
-#          bghypFnames = glob.glob(pattern)
-#       else:
-#          self.scribe.log.warning('No biogeo shapefiles at {}'.format(bgpth))         
+      bgMtx = None
+        
       if len(self.bghypFnames) > 0:
          mtxKeywords = ['biogeographic hypotheses']
          for bgFname in self.bghypFnames:
@@ -1446,13 +1432,10 @@ def initBoom(paramFname, isInitial=True):
    # If there are Scenario GRIMs, create MFChain for each 
    filler.addGRIMChains(scenGrims)
    # If there is a tree, add and biogeographic hypotheses, create MFChain for each
-   tree = biogeoMtx = None
-   biogeoLayerNames = []
-   if filler.treeFname is not None:
-      tree = filler.addTree(boomGridset)
-   # If there is a tree, add and biogeographic hypotheses, create MFChain for each 
-   if filler.biogeoHypotheses is not None:
-      biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
+   tree = filler.addTree(boomGridset)
+   # If there are biogeographic hypotheses layers, add them and matrix 
+   # TODO: create MFChain 
+   biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
    
    
    # Write config file for this archive
@@ -1596,7 +1579,7 @@ filler.addUsers()
 # ...............................................
 # This updates the scenPkg with db objects for other operations
 filler.addPackageScenariosLayers()
-      
+      a
 # Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
 if filler.occIdFname:
    filler._checkOccurrenceSets()
