@@ -34,7 +34,7 @@ from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
 # .............................................................................
-class TestWebEnvLayerService(UserTestCase):
+class TestWebSnippetService(UserTestCase):
    """
    @summary: This is a test class for running web tests for the snippet service
    """
@@ -78,7 +78,7 @@ def get_test_classes():
                 parameterize tests appropriately
    """
    return [
-      TestWebEnvLayerService
+      TestWebSnippetService
    ]
 
 # .............................................................................
@@ -90,10 +90,10 @@ def get_test_suite(userId=None, pwd=None):
    @param pwd: The password of the specified user
    """
    suite = unittest.TestSuite()
-   suite.addTest(UserTestCase.parameterize(TestWebEnvLayerService))
+   suite.addTest(UserTestCase.parameterize(TestWebSnippetService))
 
    if userId is not None:
-      suite.addTest(UserTestCase.parameterize(TestWebEnvLayerService, 
+      suite.addTest(UserTestCase.parameterize(TestWebSnippetService, 
                                               userId=userId, pwd=pwd))
       
    return suite
