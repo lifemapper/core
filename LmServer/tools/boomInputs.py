@@ -138,7 +138,7 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
       lyrnameList = [v.strip() for v in var.split(',')]
       for lname in lyrnameList:
          layers.append(scribe.getLayer(userId=usr, lyrName=lname, epsg=epsg))
-   return epsg, layers
+   return layers
 
 # .............................................................................
 if __name__ == '__main__':
@@ -167,13 +167,21 @@ if __name__ == '__main__':
    scribe = BorgScribe(ConsoleLogger())
    scribe.openConnections()
    if gridname is not None:
-      epsg, layers = _getBoomBioGeoParams(scribe, gridname, usr)
+      layers = _getBoomBioGeoParams(scribe, gridname, usr)
       gridset = scribe.getGridset(userId=usr, name=gridname, fillMatrices=True)
-      bgMtx = gridset.getBiogeographicHypotheses()
-      
-      encodeHypothesesToMatrix(scribe, usr, gridset.getShapegrid(), 
-                               gridset.getBiogeographicHypotheses(), 
-                              layers=layers) 
+      try:
+         bgMtx = gridset.getBiogeographicHypotheses()
+         from types import ListType
+         if isinstance(bgMtx, ListType) and len(bgMtx) == 1:
+            bgMtx = bgMtx[0]
+      except:
+         print ('No gridset or matrix for hypotheses')
+      else:
+         if layers:
+            encodeHypothesesToMatrix(scribe, usr, gridset.getShapegrid(), bgMtx, 
+                                     layers=layers)
+         else:
+            print ('No layers to encode as hypotheses')
    
    if treename is not None:
       baretree = Tree(treename, userId=args.user)
