@@ -430,6 +430,22 @@ class LmWebClient(object):
                   gridSetId=gridSetId)
    
    # ............................
+   def list_snippets(self, ident1=None, provider=None, collection=None, 
+                     catalogNumber=None, operation=None, afterTime=None, 
+                     beforeTime=None, ident2=None, url=None, who=None,
+                     agent=None, why=None, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of usage snippets
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SNIPPET,
+                                                responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, ident1=ident1, 
+                  provider=provider, collection=collection, 
+                  catalogNumber=catalogNumber, operation=operation, 
+                  afterTime=afterTime, beforeTime=beforeTime, ident2=ident2,
+                  url=url, who=who, agent=agent, why=why)
+   
+   # ............................
    def list_species_hints(self, searchString, limit=None, headers=None, 
                                 responseFormat=None):
       """
