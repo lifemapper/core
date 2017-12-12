@@ -280,6 +280,25 @@ class LmWebClient(object):
                                 method=HTTPMethod.GET, headers=headers)
    
    # ............................
+   def get_ogc(self, mapName, bbox=None, bgcolor=None, color=None, 
+                     coverage=None, crs=None, exceptions=None, height=None,
+                     layer=None, layers=None, point=None, request=None, 
+                     format=None, service=None, sld=None, sld_body=None, 
+                     srs=None, styles=None, time=None, transparent=None,
+                     version=None, width=None, headers=None):
+      """
+      @summary: Send an OGC request tot he server
+      """
+      return self._make_request(self._build_base_url(_SERVICE.OGC), 
+                  method=HTTPMethod.GET, headers=headers, mapName=mapName,
+                  bbox=bbox, bgcolor=bgcolor, color=color, coverage=coverage,
+                  crs=crs, exceptions=exceptions, height=height, layer=layer,
+                  layers=layers, point=point, request=request, 
+                  format=format, service=service, sld=sld, sld_body=sld_body,
+                  srs=srs, styles=styles, time=time, transparent=transparent,
+                  version=version, width=width)
+      
+   # ............................
    def get_scenario(self, scnId, headers=None, responseFormat=None):
       """
       @summary: Send a request to the server to get a scenario
