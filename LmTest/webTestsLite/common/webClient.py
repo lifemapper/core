@@ -37,6 +37,7 @@ from LmWebServer.common.lmconstants import HTTPMethod
 from LmServer.legion import algorithm
 from LmTest.webTestsLite.api.v2 import occurrence
 from mx.Tools.Tools import projection
+from LmCommon.shapes.buildShapegrid import cellsides
 
 # .............................................................................
 class _SERVICE:
@@ -199,6 +200,20 @@ class LmWebClient(object):
                   gridSetId=gridSetId)
    
    # ............................
+   def count_shapegrids(self, afterTime=None, beforeTime=None, cellSides=None,
+                       cellSize=None, epsgCode=None, headers=None, 
+                       responseFormat=None):
+      """
+      @summary: Send a request to the server to get a count of shapegrids
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SHAPEGRID,
+                                                responseFormat=responseFormat), 
+                                method=HTTPMethod.GET, headers=headers, 
+                                afterTime=afterTime, beforeTime=beforeTime, 
+                                cellSides=cellSides, cellSize=cellSize, 
+                                epsgCode=epsgCode )
+   
+   # ............................
    def count_trees(self, name=None, isBinary=None, isUltrametric=None, 
                    hasBranchLengths=None, metaString=None, afterTime=None, 
                    beforeTime=None, headers=None, responseFormat=None):
@@ -289,6 +304,15 @@ class LmWebClient(object):
       """
       return self._make_request(self._build_base_url(_SERVICE.SDM_PROJECT, 
                            objectId=prjId, responseFormat=responseFormat), 
+                                method=HTTPMethod.GET, headers=headers)
+   
+   # ............................
+   def get_shapegrid(self, sgId, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a shapegrid
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SHAPEGRID, 
+                           objectId=sgId, responseFormat=responseFormat), 
                                 method=HTTPMethod.GET, headers=headers)
    
    # ............................
@@ -428,6 +452,20 @@ class LmWebClient(object):
                   occurrenceSetId=occurrenceSetId, 
                   projectionScenarioCode=projectionScenarioCode, 
                   gridSetId=gridSetId)
+   
+   # ............................
+   def list_shapegrids(self, afterTime=None, beforeTime=None, cellSides=None,
+                       cellSize=None, epsgCode=None, limit=None, offset=None,
+                       headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of shapegrids
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SHAPEGRID,
+                                                responseFormat=responseFormat), 
+                                method=HTTPMethod.GET, headers=headers, 
+                                afterTime=afterTime, beforeTime=beforeTime, 
+                                cellSides=cellSides, cellSize=cellSize, 
+                                limit=limit, offset=offset, epsgCode=epsgCode )
    
    # ............................
    def list_snippets(self, ident1=None, provider=None, collection=None, 
