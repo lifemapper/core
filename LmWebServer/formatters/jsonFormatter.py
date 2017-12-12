@@ -343,10 +343,13 @@ def formatShapegrid(sg):
 def formatTree(tree):
    """
    @summary: Convert a tree into a dictionary
+   @todo: CJG - Add more tree metadata.  Check notes from Ryan conversation
    """
    treeDict = _getLifemapperMetadata('tree', tree.getId(), tree.metadataUrl,
                                      tree.getUserId(), 
                                      metadata=tree.treeMetadata)
+   treeDict['ultrametric'] = tree.isUltrametric()
+   treeDict['binaery'] = tree.isBinary()
    return treeDict
 
 # .............................................................................

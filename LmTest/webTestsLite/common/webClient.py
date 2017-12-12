@@ -198,6 +198,20 @@ class LmWebClient(object):
                   projectionScenarioCode=projectionScenarioCode, 
                   gridSetId=gridSetId)
    
+   # ............................
+   def count_trees(self, name=None, isBinary=None, isUltrametric=None, 
+                   hasBranchLengths=None, metaString=None, afterTime=None, 
+                   beforeTime=None, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a count of trees
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SDM_TREE,
+                              objectId='count', responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime,
+                  name=name, isBinary=isBinary, isUltrametric=isUltrametric,
+                  hasBranchLengths=hasBranchLengths, metaString=metaString,
+                  beforeTime=beforeTime)
+   
    # ================
    # = Get Services =
    # ================
@@ -275,6 +289,15 @@ class LmWebClient(object):
       """
       return self._make_request(self._build_base_url(_SERVICE.SDM_PROJECT, 
                            objectId=prjId, responseFormat=responseFormat), 
+                                method=HTTPMethod.GET, headers=headers)
+   
+   # ............................
+   def get_tree(self, treeId, headers=None, responseFormat=None):
+      """
+      @summary: Send a request to the server to get a phylogenetic tree
+      """
+      return self._make_request(self._build_base_url(_SERVICE.TREE, 
+                           objectId=treeId, responseFormat=responseFormat), 
                                 method=HTTPMethod.GET, headers=headers)
    
    # =================
@@ -405,6 +428,21 @@ class LmWebClient(object):
                   occurrenceSetId=occurrenceSetId, 
                   projectionScenarioCode=projectionScenarioCode, 
                   gridSetId=gridSetId)
+   
+   # ............................
+   def list_trees(self, limit=None, offset=None, name=None, isBinary=None, 
+                  isUltrametric=None, hasBranchLengths=None, metaString=None, 
+                  afterTime=None, beforeTime=None, headers=None, 
+                  responseFormat=None):
+      """
+      @summary: Send a request to the server to get a list of trees
+      """
+      return self._make_request(self._build_base_url(_SERVICE.SDM_TREE,
+                                                responseFormat=responseFormat), 
+                  method=HTTPMethod.GET, headers=headers, afterTime=afterTime,
+                  name=name, isBinary=isBinary, isUltrametric=isUltrametric,
+                  hasBranchLengths=hasBranchLengths, metaString=metaString,
+                  beforeTime=beforeTime, limit=limit, offset=offset)
    
    # =================
    # = User Services =
