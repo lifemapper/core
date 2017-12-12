@@ -45,7 +45,7 @@ def encodeHypothesesToMatrix(scribe, usr, shapegrid, bgMtx, layers=[]):
          valAttribute = None
       lyrEnc.addLayers(lyr.getDLocation(), eventField=valAttribute)
       print('layer name={}, eventField={}, dloc={}'
-            .format(lyr.name, valAttribute, lyr.getDLocation(), )
+            .format(lyr.name, valAttribute, lyr.getDLocation()))
       encMtx = lyrEnc.encodeHypotheses()
       
       # Add matrix columns for the newly encoded layers
