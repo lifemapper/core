@@ -173,7 +173,7 @@ if __name__ == '__main__':
       layers = _getBoomBioGeoParams(scribe, gridname, usr)
       gridset = scribe.getGridset(userId=usr, name=gridname, fillMatrices=True)
       try:
-         bgMtxList = gridset.getBiogeographicHypothesesMatrix()
+         bgMtxList = gridset.getBiogeographicHypotheses()
          # TODO: There should be only one?!?
          if len(bgMtxList) > 0:
             bgMtx = bgMtxList[0]
