@@ -188,7 +188,8 @@ PARAMETERS = {
       'options' : {
                    '0' : 'raw',
                    '1' : 'logistic',
-                   '2' : 'cumulative'
+                   '2' : 'cumulative',
+                   '3' : 'cloglog'
                   },
       'process' : lambda x: x
    },
