@@ -1534,8 +1534,8 @@ ATT_MAXENT_PARAMETERS = {'code': 'ATT_MAXENT',
           {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
        'jackknife': 
           {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
-       'outputformat': # 0 - raw, 1 - logistic, 2 - cumulative
-          {'type' : IntType, 'min' : 0, 'max' : 2, 'default' : 1},
+       'outputformat': # 0 - raw, 1 - logistic, 2 - cumulative, 3 - cloglog
+          {'type' : IntType, 'min' : 0, 'max' : 3, 'default' : 3},
        'randomseed': 
           {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
        'logscale': 
