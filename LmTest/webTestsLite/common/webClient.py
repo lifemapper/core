@@ -34,10 +34,6 @@ from urlparse import urlparse
 
 from LmServer.common.localconstants import PUBLIC_FQDN
 from LmWebServer.common.lmconstants import HTTPMethod
-from LmServer.legion import algorithm
-from LmTest.webTestsLite.api.v2 import occurrence
-from mx.Tools.Tools import projection
-from LmCommon.shapes.buildShapegrid import cellsides
 
 # .............................................................................
 class _SERVICE:
