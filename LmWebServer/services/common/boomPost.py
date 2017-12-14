@@ -35,7 +35,7 @@ import random
 from LmCommon.common.lmconstants import (LMFormat, SERVER_BOOM_HEADING, 
                                          SERVER_SDM_MASK_HEADING_PREFIX)
 #from LmDbServer.boom.boominput import ArchiveFiller
-from LmDbServer.boom.init_boom import init_boom
+from LmDbServer.boom.initboom import initBoom
 from LmServer.common.lmconstants import TEMP_PATH, Priority
 
 # .............................................................................
@@ -150,7 +150,7 @@ class BoomPoster(object):
       with open(filename, 'w') as configOutF:
          self.config.write(configOutF)
       
-      gridset = init_boom(filename, isInitial=False)
+      gridset = initBboom(filename, isInitial=False)
       
       return gridset
          
