@@ -123,7 +123,7 @@ class TestScribeScenarioService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(scnObjs[0], Scenario)
-         self.assertEqual(scnObjs[0], self._get_session_user(), 
+         self.assertEqual(scnObjs[0].getUserId(), self._get_session_user(), 
                'User id on scenario = {}, session user = {}'.format(
                              scnObjs[0].getUserId(), self._get_session_user()))
 

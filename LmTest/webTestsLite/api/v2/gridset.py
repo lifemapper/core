@@ -122,7 +122,7 @@ class TestScribeGridsetService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(gsObjs[0], Gridset)
-         self.assertEqual(gsObjs[0], self._get_session_user(), 
+         self.assertEqual(gsObjs[0].getUserId(), self._get_session_user(), 
                'User id on gridset {} = {}, session user = {}'.format(
                   gsObjs[0].getId(), gsObjs[0].getUserId(), 
                   self._get_session_user()))

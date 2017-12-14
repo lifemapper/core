@@ -121,7 +121,7 @@ class TestScribeScenarioPackageService(UserTestCase):
                                                      self._get_session_user()))
       else:
          self.assertIsInstance(scnPkgObjs[0], ScenPackage)
-         self.assertEqual(scnPkgObjs[0], self._get_session_user(), 
+         self.assertEqual(scnPkgObjs[0].getUserId(), self._get_session_user(), 
                'User id on scenario package = {}, session user = {}'.format(
                           scnPkgObjs[0].getUserId(), self._get_session_user()))
 

@@ -115,7 +115,7 @@ class TestScribeTreeService(UserTestCase):
                                                      self._get_session_user()))
       else:
          self.assertIsInstance(treeObjs[0], LmTree)
-         self.assertEqual(treeObjs[0], self._get_session_user(), 
+         self.assertEqual(treeObjs[0].getUserId(), self._get_session_user(), 
                               'User id on tree = {}, session user = {}'.format(
                             treeObjs[0].getUserId(), self._get_session_user()))
 

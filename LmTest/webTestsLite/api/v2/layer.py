@@ -117,7 +117,7 @@ class TestScribeLayerService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(lyrObjs[0], (Raster, Vector))
-         self.assertEqual(lyrObjs[0], self._get_session_user(), 
+         self.assertEqual(lyrObjs[0].getUserId(), self._get_session_user(), 
                'User id on layer = {}, session user = {}'.format(
                   lyrObjs[0].getUserId(), self._get_session_user()))
 

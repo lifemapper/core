@@ -69,8 +69,7 @@ class TestWebGlobalPamService(UserTestCase):
          ret = json.load(x)
       
       if len(ret) == 0:
-         warnings.warn(
-            'Count returned 0 pavs for user: {}'.format(
+         warnings.warn('Count returned 0 pavs for user: {}'.format(
                self._get_session_user()))
    
 # .............................................................................

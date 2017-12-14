@@ -119,7 +119,7 @@ class TestScribeMatrixService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(mtxObjs[0], Matrix)
-         self.assertEqual(mtxObjs[0], self._get_session_user(), 
+         self.assertEqual(mtxObjs[0].getUserId(), self._get_session_user(), 
                           'User id on matrix = {}, session user = {}'.format(
                              mtxObjs[0].getUserId(), self._get_session_user()))
 

@@ -117,7 +117,7 @@ class TestScribeSdmProjectService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(prjObjs[0], SDMProjection)
-         self.assertEqual(prjObjs[0], self._get_session_user(), 
+         self.assertEqual(prjObjs[0].getUserId(), self._get_session_user(), 
                'User id on projection = {}, session user = {}'.format(
                   prjObjs[0].getUserId(), self._get_session_user()))
 

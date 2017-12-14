@@ -119,7 +119,7 @@ class TestScribeShapegridService(UserTestCase):
                                                      self._get_session_user()))
       else:
          self.assertIsInstance(sgObjs[0], ShapeGrid)
-         self.assertEqual(sgObjs[0], self._get_session_user(), 
+         self.assertEqual(sgObjs[0].getUserId(), self._get_session_user(), 
                          'User id on shapegrid = {}, session user = {}'.format(
                               sgObjs[0].getUserId(), self._get_session_user()))
 

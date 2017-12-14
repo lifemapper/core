@@ -123,7 +123,7 @@ class TestScribeOccurrenceService(UserTestCase):
                                                      self._get_session_user()))
       else:
          self.assertIsInstance(occObjs[0], OccurrenceLayer)
-         self.assertEqual(occObjs[0], self._get_session_user(), 
+         self.assertEqual(occObjs[0].getUserId(), self._get_session_user(), 
                'User id on occurrence set = {}, session user = {}'.format(
                              occObjs[0].getUserId(), self._get_session_user()))
 
