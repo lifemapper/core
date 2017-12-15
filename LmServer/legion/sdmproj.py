@@ -747,8 +747,8 @@ class SDMProjection(_ProjectionType, Raster):
             inputs=[maskFn],
             outputs=[tmpMaskFn])
          
-         modMaskCmd = ModifyAsciiHeadersCommand(tmpMaskFn, finalMaskFn)
-         rules.append(modMaskCmd.getMakeflowRule())
+         #modMaskCmd = ModifyAsciiHeadersCommand(tmpMaskFn, finalMaskFn)
+         #rules.append(modMaskCmd.getMakeflowRule())
          
          
          rules.append(convertCmd.getMakeflowRule(local=True))
