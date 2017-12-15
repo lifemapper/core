@@ -778,7 +778,7 @@ def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=7):
       xllLine = 'xllcorner   {}\n'.format(leftX)
       yllLine = 'yllcorner   {}\n'.format(leftY)
       cellsizeLine = 'cellsize   {}\n'.format(xres)
-      ndLine = 'NODATA_value   {}\n'.format(band.GetNoDataValue())
+      ndLine = 'NODATA_value   {}\n'.format(int(band.GetNoDataValue()))
       
       
       with open(asciiFn, 'r') as ascIn:
