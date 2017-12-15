@@ -79,6 +79,33 @@ class AddBioGeoAndTreeCommand(_LmCommand):
             self.optArgs, ' '.join(self.args))
 
 # .............................................................................
+class CreateBlankMaskTiffCommand(_LmCommand):
+   """
+   @summary: This command will create a mask Tiff file of all ones
+   """
+   relDir = SERVER_SCRIPTS_DIR
+   scriptName = 'create_blank_mask.py'
+
+   # ................................
+   def __init__(self, inRasterFilename, outRasterFilename):
+      """
+      @summary: Construct the command object
+      @param inRasterFilename: The input raster file to use
+      @param outRasterFilename: The file location to write the output raster
+      """
+      _LmCommand.__init__(self)
+      
+      self.args = '{} {} {}'.format(inRasterFilename, outRasterFilename)
+      self.outputs.append(outRasterFilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the concatenate matrices command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+# .............................................................................
 class CreateConvexHullShapefileCommand(_LmCommand):
    """
    @summary: This command will write a shapefile containing a feature with the 
@@ -113,6 +140,7 @@ class CreateConvexHullShapefileCommand(_LmCommand):
 class CreateMaskTiffCommand(_LmCommand):
    """
    @summary: This command will create a mask Tiff file
+   @todo: Probably should rename this to be more specific
    """
    relDir = SERVER_SCRIPTS_DIR
    scriptName = 'create_mask_tiff.py'
