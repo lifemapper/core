@@ -761,27 +761,50 @@ def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=7):
    if headerPrecision is not None:
       output = [] # Lines to output back to file
       cont = True
-      ndLine = None
+      
+      
+      # Get header information from tiff file instead of reading ascii for it
+      ds = gdal.Open(tiffFn)
+      band = ds.GetRasterBand(1)
+
+      leftX, xres, _, uly, _, yres = ds.GetGeoTransform()
+      
+      
+      
+      leftY = uly + (ds.RasterYSize * yres)
+      
+      nColsLine = 'ncols   {}\n'.format(ds.RasterXSize)
+      nRowsLine = 'nrows   {}\n'.format(ds.RasterYSize)
+      xllLine = 'xllcorner   {}\n'.format(leftX)
+      yllLine = 'yllcorner   {}\n'.format(leftY)
+      cellsizeLine = 'cellsize   {}\n'.format(xres)
+      ndLine = 'NODATA_value   {}\n'.format(band.GetNoDataValue())
+      
       
       with open(asciiFn, 'r') as ascIn:
          for line in ascIn:
             if cont:
                if line.lower().startswith('ncols'):
-                  nColsLine = line
+                  pass
                elif line.lower().startswith('nrows'):  
-                  nRowsLine = line
+                  pass
                elif line.lower().startswith('xllcorner'):
-                  xllLine = _processFloatHeader(line, numDigits=headerPrecision)
+                  pass
+                  #xllLine = _processFloatHeader(line, numDigits=headerPrecision)
                elif line.lower().startswith('yllcorner'):
-                  yllLine = _processFloatHeader(line, numDigits=headerPrecision)
+                  pass
+                  #yllLine = _processFloatHeader(line, numDigits=headerPrecision)
                elif line.lower().startswith('cellsize'):
-                  cellsizeLine = _processFloatHeader(line, numDigits=headerPrecision)
+                  #cellsizeLine = _processFloatHeader(line, numDigits=headerPrecision)
+                  pass
                elif line.lower().startswith('dx'):
-                  cellsizeLine = _processFloatHeader(line, numDigits=headerPrecision).replace('dx', 'cellsize')
+                  #cellsizeLine = _processFloatHeader(line, numDigits=headerPrecision).replace('dx', 'cellsize')
+                  pass
                elif line.lower().startswith('dy'):
                   pass
                elif line.lower().startswith('nodata_value'):
-                  ndLine = line
+                  #ndLine = line
+                  pass
                else: # Data line
                   cont = False
                   output.append(nColsLine)
@@ -796,5 +819,6 @@ def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=7):
                output.append(line)
       # Rewrite ASCII Grid
       with open(asciiFn, 'w') as ascOut:
-         ascOut.writelines(output)
+         for line in output:
+            ascOut.write(line)
 
