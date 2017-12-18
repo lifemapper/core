@@ -683,12 +683,15 @@ class SDMProjection(_ProjectionType, Raster):
       if workDir is None:
          workDir = ''
       
+      dirTouchFile = os.path.join(workDir, 'touch.out')
+      touchCmd = LmTouchCommand(dirTouchFile)
+      rules.append(touchCmd.getMakeflowRule(local=True))
+      
       if observed:
          occId = self.getOccurrenceSetId()
             
          convexHullFilename = os.path.join(workDir, 'occ_{}_convexHull.shp'.format(occId))
          
-         touchCmd = LmTouchCommand(os.path.join(workDir, 'touch.out'))
          
          convexHullCmd = CreateConvexHullShapefileCommand(occId, convexHullFilename, 
                                                           bufferDistance=.5)
@@ -707,6 +710,7 @@ class SDMProjection(_ProjectionType, Raster):
                                             ecoMaskFilename)
          #ecoMaskCmd.inputs.append(occSetFname)
          ecoMaskCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
+         ecoMaskCmd.inputs.append(dirTouchFile)
          
          #gdalwarp -of GTiff -cutline DATA/area_of_interest.shp \
          # -cl area_of_interest  -crop_to_cutline DATA/PCE_in_gw.asc  data_masked7.tiff
@@ -729,13 +733,14 @@ class SDMProjection(_ProjectionType, Raster):
          
          # Create a chain command so we don't have to know which shapefiles are 
          #    produced, try to define them if possible though
-         cmds = [touchCmd, ecoMaskCmd, convexHullCmd, maskCmd]
+         cmds = [ecoMaskCmd, convexHullCmd, maskCmd]
          createMaskCommand = ChainCommand(cmds)
          rules.append(createMaskCommand.getMakeflowRule(local=True))
       else:
          maskName = 'blankMask'
          maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
          maskCmd = CreateBlankMaskTiffCommand(maskLyr.getDLocation(), maskFn)
+         maskCmd.inputs.append(dirTouchFile)
          rules.append(maskCmd.getMakeflowRule(local=True))
       
       if self.isATT():
@@ -750,7 +755,6 @@ class SDMProjection(_ProjectionType, Raster):
          
          #modMaskCmd = ModifyAsciiHeadersCommand(tmpMaskFn, finalMaskFn)
          #rules.append(modMaskCmd.getMakeflowRule())
-         
          
          rules.append(convertCmd.getMakeflowRule(local=True))
          maskFn = finalMaskFn
@@ -791,7 +795,6 @@ class SDMProjection(_ProjectionType, Raster):
       touchFn = os.path.join(workDir, 'touch.out')
       dirTouchCmd = LmTouchCommand(touchFn)
       rules.append(dirTouchCmd.getMakeflowRule(local=True))
-      
       
       layersJsonFname = self.getLayersJsonFilename(self.modelScenario, 
                                                    self.modelMask)
@@ -918,9 +921,10 @@ class SDMProjection(_ProjectionType, Raster):
 
          layersJsonFname = self.getLayersJsonFilename(self.projScenario, 
                                                       self.projMask)
-         wsLyrsFn = os.path.join(workDir, os.path.basename(layersJsonFname))
+         wsLyrsFn = os.path.join(targetDir, os.path.basename(layersJsonFname))
          cpLyrJsonCommand = SystemCommand('cp', '{} {}'.format(layersJsonFname, 
                                                                wsLyrsFn), 
+                                          inputs=[touchFn],
                                           outputs=[wsLyrsFn])
          rules.append(cpLyrJsonCommand.getMakeflowRule(local=True))
          
