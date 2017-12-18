@@ -739,13 +739,13 @@ class SDMProjection(_ProjectionType, Raster):
       
       if self.isATT():
          # Need to convert to ASCII
-         tmpMaskFn = os.path.join(workDir, '{}_temp.asc'.format(maskName))
+         #tmpMaskFn = os.path.join(workDir, '{}_temp.asc'.format(maskName))
          finalMaskFn = os.path.join(workDir, '{}.asc'.format(maskName))
          convertCmd = SystemCommand('gdal_translate', 
             '-a_nodata -9999 -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
-               maskFn, tmpMaskFn),
+               maskFn, finalMaskFn),
             inputs=[maskFn],
-            outputs=[tmpMaskFn])
+            outputs=[finalMaskFn])
          
          #modMaskCmd = ModifyAsciiHeadersCommand(tmpMaskFn, finalMaskFn)
          #rules.append(modMaskCmd.getMakeflowRule())
