@@ -733,7 +733,8 @@ class SDMProjection(_ProjectionType, Raster):
          createMaskCommand = ChainCommand(cmds)
          rules.append(createMaskCommand.getMakeflowRule(local=True))
       else:
-         maskFn = os.path.join(workDir, 'blankMask.tif')
+         maskName = 'blankMask'
+         maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
          maskCmd = CreateBlankMaskTiffCommand(maskLyr.getDLocation(), maskFn)
          rules.append(maskCmd.getMakeflowRule(local=True))
       
