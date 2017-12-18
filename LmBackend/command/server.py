@@ -95,7 +95,7 @@ class CreateBlankMaskTiffCommand(_LmCommand):
       """
       _LmCommand.__init__(self)
       
-      self.args = '{} {} {}'.format(inRasterFilename, outRasterFilename)
+      self.args = '{} {}'.format(inRasterFilename, outRasterFilename)
       self.outputs.append(outRasterFilename)
          
    # ................................
