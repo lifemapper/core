@@ -71,49 +71,4 @@ PRJ_TOOL = 'density.Project'
 CONVERT_TOOL ='density.Convert'
 ME_VERSION = '3.3.3k'
 
-# ============================================================================
-# =                             Layer Constants                              =
-# ============================================================================
-RETRIEVED_LAYER_DIR = 'retrieved'
-INPUT_LAYER_DB = 'layers.db'
-DB_TIMEOUT = 30.0 # TODO: Consider moving this to config
-
-class LayerStatus:
-   """
-   @summary: This class contains possible layer statuses for LmCompute layers
-   """
-   ABSENT = 0
-   STORED = 1
-   RETRIEVING = 2
-   SEEDED = 3
-   TIFF_AVAILABLE = 4
-   
-class LayerFormat:
-   """
-   @summary: Class containing LmCompute compatible layer formats
-   """
-   GTIFF = 0
-   ASCII = 1
-   MXE = 2
-   SHAPE = 3
-
-class LayerAttributes:
-   """
-   @summary: Compute layer db table attributes
-   """
-   LAYER_ID = 'layerid'
-   FILE_PATH = 'filepath'
-   FILE_TYPE = 'filetype'
-   STATUS = 'status'
-   CREATE_TIME = 'createdate'
-   TOUCH_TIME = 'touchdate'
-   
-class SchemaMetadata:
-   """
-   @summary: Compute layers db schema metadata
-   """
-   TABLE_NAME = 'lmMetadata'
-   VERSION = '2.0'
-   VERSION_ATTRIBUTE = 'version'
-   CREATE_TIME_ATTRIBUTE = 'createTime'
    

@@ -30,22 +30,20 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import json
 import os
 from osgeo import ogr
 import shutil
 import time
 import zipfile
 
+from LmBackend.common.layerTools import convertAsciisToMxes, processLayersJSON
 from LmBackend.common.subprocessManager import SubprocessRunner
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
 
-from LmCompute.common.layerManager import LayerManager, convertAsciisToMxes
-from LmCompute.common.localconstants import SHARED_DATA_PATH
 from LmCompute.common.lmObj import LmException
 
-from LmCompute.common.lmconstants import (LayerFormat, ME_CMD, MDL_TOOL, 
+from LmCompute.common.lmconstants import (ME_CMD, MDL_TOOL, 
                                           PRJ_TOOL, JAVA_CMD)
 from LmCompute.common.log import LmComputeLogger
 from LmCompute.plugins.single.maxent.constants import PARAMETERS
@@ -105,7 +103,7 @@ class MaxentModel(object):
          os.makedirs(self.layersDir)
       except:
          pass
-      _, symMaskFn = self._processLayers(layersJson, self.layersDir)
+      _ = self._processLayers(layersJson, self.layersDir)
 
       # parameters
       self.params = self._processParameters(paramsJson)
@@ -210,10 +208,8 @@ class MaxentModel(object):
       @param layersJson: JSON string with layer information
       @param layersDir: The directory to create layer symbolic links
       """
-      lyrMgr = LayerManager(SHARED_DATA_PATH)
-      lyrs, mask = lyrMgr.processLayersJSON(layersJson, 
-                                 layerFormat=LayerFormat.MXE, symDir=layersDir)
-      return lyrs, mask
+      lyrs = processLayersJSON(layersJson, symDir=layersDir)
+      return lyrs
    
    # .................................
    def _processParameters(self, paramsJson):
@@ -367,7 +363,7 @@ class MaxentProjection(object):
          os.makedirs(self.layersDir)
       except:
          pass
-      _, symMaskFn = self._processLayers(layersJson, self.layersDir)
+      _ = self._processLayers(layersJson, self.layersDir)
 
       # parameters
       self.params = self._processParameters(paramsJson)
@@ -475,10 +471,8 @@ optional args can contain any flags understood by Maxent -- for example, a
       @param layersJson: JSON string with layer information
       @param layersDir: The directory to create layer symbolic links
       """
-      lyrMgr = LayerManager(SHARED_DATA_PATH)
-      lyrs, mask = lyrMgr.processLayersJSON(layersJson, 
-                                 layerFormat=LayerFormat.MXE, symDir=layersDir)
-      return lyrs, mask
+      lyrs = processLayersJSON(layersJson, symDir=layersDir)
+      return lyrs
    
    # .................................
    def _processParameters(self, paramsJson):

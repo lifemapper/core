@@ -477,20 +477,22 @@ class SDMProjection(_ProjectionType, Raster):
       return paramsFname
 
    # ...............................................
-   def getLayersJsonFilename(self, scenario, mask=None):
+   def getLayersJsonFilename(self, scenario):
       """
       @summary: Return a file name for a JSON file of layer information
       @note: Writes the file if it does not exists
       @param scenario: The scenario to get the JSON file for
-      @param mask: The mask to use for this projection
       """
-      if mask is not None:
-         baseName = "scn{0}mask{1}".format(scenario.getId(), mask.getId())
-      else:
-         baseName = "scn{0}".format(scenario.getId())
+      baseName = "scn{0}".format(scenario.getId())
          
       layerJsonFilename = self._earlJr.createFilename(LMFileType.TMP_JSON,
                                        objCode=baseName, usr=self.getUserId())
+      
+      # Decide what file extension to use
+      if self.isATT():
+         ext = LMFormat.MXE.ext
+      else:
+         ext = LMFormat.GTIFF.ext
       
       # If the file does not exist, write it
       if not os.path.exists(layerJsonFilename):
@@ -498,24 +500,12 @@ class SDMProjection(_ProjectionType, Raster):
             "layers" : [],
          }
       
-         # Add mask
-         #try:
-         #   layersObj["mask"] = {
-         #      "identifier" : mask.verify
-         #   }
-         #   layersObj["mask"]["url"] = mask.getURL(format=GEOTIFF_INTERFACE)
-         #except:
-         #   pass
-      
          for lyr in scenario.layers:
             lyrObj = {
-               "identifier" : lyr.verify
+               'identifier' : lyr.verify,
+               'path' : '{}{}'.format(
+                  os.path.splitext(lyr.getDLocation())[0], ext)
             }
-            try:
-               lyrObj["url"] = lyr.getURL(format=GEOTIFF_INTERFACE)
-            except:
-               # Don't have URL
-               pass
             layersObj["layers"].append(lyrObj)
       
          # Write out the JSON
@@ -796,8 +786,7 @@ class SDMProjection(_ProjectionType, Raster):
       dirTouchCmd = LmTouchCommand(touchFn)
       rules.append(dirTouchCmd.getMakeflowRule(local=True))
       
-      layersJsonFname = self.getLayersJsonFilename(self.modelScenario, 
-                                                   self.modelMask)
+      layersJsonFname = self.getLayersJsonFilename(self.modelScenario)
       
       wsLyrsFn = os.path.join(workDir, os.path.basename(layersJsonFname))
       cpLyrJsonCommand = SystemCommand('cp', '{} {}'.format(layersJsonFname, 
@@ -919,8 +908,7 @@ class SDMProjection(_ProjectionType, Raster):
          modelFname = os.path.join(occTargetDir, 
                                      os.path.basename(self.getModelFilename()))
 
-         layersJsonFname = self.getLayersJsonFilename(self.projScenario, 
-                                                      self.projMask)
+         layersJsonFname = self.getLayersJsonFilename(self.projScenario)
          wsLyrsFn = os.path.join(targetDir, os.path.basename(layersJsonFname))
          cpLyrJsonCommand = SystemCommand('cp', '{} {}'.format(layersJsonFname, 
                                                                wsLyrsFn), 

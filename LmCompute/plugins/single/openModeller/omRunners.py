@@ -37,12 +37,10 @@ import shutil
 import time
 import zipfile
 
+from LmBackend.common.layerTools import processLayersJSON
 from LmBackend.common.subprocessManager import SubprocessRunner
 from LmCommon.common.lmconstants import JobStatus, ProcessType
-from LmCompute.common.layerManager import LayerManager
 from LmCompute.common.lmObj import LmException
-from LmCompute.common.lmconstants import LayerFormat
-from LmCompute.common.localconstants import SHARED_DATA_PATH
 from LmCompute.common.log import LmComputeLogger
 from LmCompute.common.lmconstants import BIN_PATH
 from LmCompute.plugins.single.openModeller.constants import (OM_VERSION,
@@ -97,11 +95,10 @@ class OpenModellerModel(object):
       points, pointsWKT = self._processPoints(pointsFn)
 
       # layers
-      layerFns, maskFn = self._processLayers(layersJson)
+      layerFns = self._processLayers(layersJson)
       
       # If a mask was provided, use it
-      if mask is not None:
-         maskFn = mask
+      maskFn = mask
 
       # parameters
       algoParams = self._processParameters(paramsJson)
@@ -217,10 +214,8 @@ class OpenModellerModel(object):
       @param layersJson: JSON string with layer information
       @param layersDir: The directory to create layer symbolic links
       """
-      lyrMgr = LayerManager(SHARED_DATA_PATH)
-      lyrs, mask = lyrMgr.processLayersJSON(layersJson, 
-                                 layerFormat=LayerFormat.GTIFF)
-      return lyrs, mask
+      lyrs = processLayersJSON(layersJson)
+      return lyrs
    
    # .................................
    def _processParameters(self, paramsJson):
@@ -351,11 +346,10 @@ class OpenModellerProjection(object):
                                  logFilename=logFn)
    
       # layers
-      layerFns, maskFn = self._processLayers(layersJson)
+      layerFns = self._processLayers(layersJson)
       
       # If a mask was explicitly provided, use it
-      if mask is not None:
-         maskFn = mask
+      maskFn = mask
       
       # Other
       self.outTiffFn = outTiffFn
@@ -449,10 +443,8 @@ class OpenModellerProjection(object):
       @param layersJson: JSON string of layer information
       @param layersDir: The directory to create layer symbolic links
       """
-      lyrMgr = LayerManager(SHARED_DATA_PATH)
-      lyrs, mask = lyrMgr.processLayersJSON(layersJson, 
-                                 layerFormat=LayerFormat.GTIFF)
-      return lyrs, mask
+      lyrs = processLayersJSON(layersJson)
+      return lyrs
    
    # ...................................
    def run(self):
