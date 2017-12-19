@@ -544,7 +544,7 @@ class BorgScribe(LMObject):
       """
       existingTree = self._borg.getTree(tree, treeId)
       # access private attribute to see if it came back from db
-      if existingTree._dlocation is None:
+      if existingTree is not None and existingTree._dlocation is None:
          existingTree.setDLocation()
       return existingTree
 
