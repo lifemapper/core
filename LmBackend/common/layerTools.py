@@ -294,7 +294,35 @@ def convertAsciisToMxes(fnTups):
    shutil.rmtree(outDir)
 
 # .............................................................................
-def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=7):
+def convertLayersInDirectory(layerDir):
+   """
+   @summary: Converts all layers in directory from tiffs to asciis and mxes
+   @param layerDir: The directory to traverse through looking for layers to
+                       convert
+   """
+   mxeTups = []
+   for myDir, _ , files in os.walk(layerDir):
+      for fn in files:
+         tiffFn = os.path.join(myDir, fn)
+         basename, ext = os.path.splitext(tiffFn)
+         if ext.lower() == LMFormat.GTIFF.ext:
+            asciiFn = '{}{}'.format(basename, LMFormat.ASCII.ext)
+            mxeFn = '{}{}'.format(basename, LMFormat.MXE.ext)
+            
+            if not os.path.exists(asciiFn):
+               print 'Converting: {}'.format(tiffFn)
+               convertTiffToAscii(tiffFn, asciiFn)
+               
+            if not os.path.exists(mxeFn):
+               mxeTups.append((asciiFn, mxeFn))
+   
+   if len(mxeTups) > 0:
+      print "Converting ASCIIs to MXEs"
+      convertAsciisToMxes(mxeTups)
+         
+
+# .............................................................................
+def convertTiffToAscii(tiffFn, asciiFn):
    """
    @summary: Converts an existing GeoTIFF file into an ASCII grid
    @param tiffFn: The path to an existing GeoTIFF file
@@ -305,23 +333,6 @@ def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=7):
              floating point differences
    @todo: Evaluate if this can all be done with GDAL.  
    """
-   # ....................................
-   def _processFloatHeader(headerRow, numDigits):
-      """
-      @summary: This method will process a header row and truncate a floating 
-                   point value if necessary
-      @param headerRow: This is a string in the format 
-                           "{header name}   {header value}"
-      @param numDigits: Truncate a decimal after this many places, keep all if 
-                           this is None
-      """
-      # Split out header name and value (replace tabs with spaces and use 
-      #    regular expression to split
-      header, value = re.split(r' +', headerRow.replace('\t', ' '))
-      # Truncate the value by finding the decimal (if it exists) and adding numDigits places
-      truncatedValue = value[:value.find('.')+numDigits+1] if value.find('.') >= 0 else value
-      return "%s     %s\n" % (header, truncatedValue)
-   
    # Use GDAL to generate ASCII Grid 
    drv = gdal.GetDriverByName('AAIGrid')
    ds_in = gdal.Open(tiffFn)
@@ -338,67 +349,62 @@ def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=7):
    
    # Now go back and modify the output if necessary
    # Note, this will fail if any of the required headers are missing
-   if headerPrecision is not None:
-      output = [] # Lines to output back to file
-      cont = True
-      
-      
-      # Get header information from tiff file instead of reading ascii for it
-      ds = gdal.Open(tiffFn)
-      band = ds.GetRasterBand(1)
+   output = [] # Lines to output back to file
+   cont = True
+   
+   
+   # Get header information from tiff file instead of reading ascii for it
+   ds = gdal.Open(tiffFn)
+   band = ds.GetRasterBand(1)
 
-      leftX, xres, _, uly, _, yres = ds.GetGeoTransform()
-      
-      
-      
-      leftY = uly + (ds.RasterYSize * yres)
-      
-      nColsLine = 'ncols   {}\n'.format(ds.RasterXSize)
-      nRowsLine = 'nrows   {}\n'.format(ds.RasterYSize)
-      xllLine = 'xllcorner   {}\n'.format(leftX)
-      yllLine = 'yllcorner   {}\n'.format(leftY)
-      cellsizeLine = 'cellsize   {}\n'.format(xres)
-      ndLine = 'NODATA_value   {}\n'.format(int(band.GetNoDataValue()))
-      
-      
-      with open(asciiFn, 'r') as ascIn:
-         for line in ascIn:
-            if cont:
-               if line.lower().startswith('ncols'):
-                  pass
-               elif line.lower().startswith('nrows'):  
-                  pass
-               elif line.lower().startswith('xllcorner'):
-                  pass
-                  #xllLine = _processFloatHeader(line, numDigits=headerPrecision)
-               elif line.lower().startswith('yllcorner'):
-                  pass
-                  #yllLine = _processFloatHeader(line, numDigits=headerPrecision)
-               elif line.lower().startswith('cellsize'):
-                  #cellsizeLine = _processFloatHeader(line, numDigits=headerPrecision)
-                  pass
-               elif line.lower().startswith('dx'):
-                  #cellsizeLine = _processFloatHeader(line, numDigits=headerPrecision).replace('dx', 'cellsize')
-                  pass
-               elif line.lower().startswith('dy'):
-                  pass
-               elif line.lower().startswith('nodata_value'):
-                  #ndLine = line
-                  pass
-               else: # Data line
-                  cont = False
-                  output.append(nColsLine)
-                  output.append(nRowsLine)
-                  output.append(xllLine)
-                  output.append(yllLine)
-                  output.append(cellsizeLine)
-                  if ndLine is not None:
-                     output.append(ndLine)
-                  output.append(line)
-            else:
+   leftX, xres, _, uly, _, yres = ds.GetGeoTransform()
+   
+   
+   
+   leftY = uly + (ds.RasterYSize * yres)
+   
+   nColsLine = 'ncols   {}\n'.format(ds.RasterXSize)
+   nRowsLine = 'nrows   {}\n'.format(ds.RasterYSize)
+   xllLine = 'xllcorner   {}\n'.format(leftX)
+   yllLine = 'yllcorner   {}\n'.format(leftY)
+   cellsizeLine = 'cellsize   {}\n'.format(xres)
+   ndLine = 'NODATA_value   {}\n'.format(int(band.GetNoDataValue()))
+   
+   
+   with open(asciiFn, 'r') as ascIn:
+      for line in ascIn:
+         if cont:
+            if line.lower().startswith('ncols'):
+               pass
+            elif line.lower().startswith('nrows'):  
+               pass
+            elif line.lower().startswith('xllcorner'):
+               pass
+            elif line.lower().startswith('yllcorner'):
+               pass
+            elif line.lower().startswith('cellsize'):
+               pass
+            elif line.lower().startswith('dx'):
+               pass
+            elif line.lower().startswith('dy'):
+               pass
+            elif line.lower().startswith('nodata_value'):
+               #ndLine = line
+               pass
+            else: # Data line
+               cont = False
+               output.append(nColsLine)
+               output.append(nRowsLine)
+               output.append(xllLine)
+               output.append(yllLine)
+               output.append(cellsizeLine)
+               if ndLine is not None:
+                  output.append(ndLine)
                output.append(line)
-      # Rewrite ASCII Grid
-      with open(asciiFn, 'w') as ascOut:
-         for line in output:
-            ascOut.write(line)
+         else:
+            output.append(line)
+   # Rewrite ASCII Grid
+   with open(asciiFn, 'w') as ascOut:
+      for line in output:
+         ascOut.write(line)
 
