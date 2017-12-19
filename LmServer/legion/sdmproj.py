@@ -30,8 +30,9 @@ import os
 from LmBackend.command.common import ChainCommand, SystemCommand,\
    ModifyAsciiHeadersCommand
 from LmBackend.command.server import (LmTouchCommand, ShootSnippetsCommand,
-                                      StockpileCommand,
-   CreateConvexHullShapefileCommand, CreateMaskTiffCommand)
+                                 StockpileCommand, CreateBlankMaskTiffCommand,
+                                 CreateConvexHullShapefileCommand, 
+                                 CreateMaskTiffCommand)
 from LmBackend.command.single import SdmodelCommand, SdmProjectCommand
 from LmBackend.common.lmobj import LMError
 
@@ -670,7 +671,7 @@ class SDMProjection(_ProjectionType, Raster):
       return wmsUrl   
 
    # ................................
-   def _computeMyMask(self, maskLyr, workDir=None):
+   def _computeMyMask(self, maskLyr, workDir=None, observed=True):
       """
       @summary: Generate rules for creating a mask layer based on convex hull 
                    and ecoregions
@@ -682,73 +683,82 @@ class SDMProjection(_ProjectionType, Raster):
       if workDir is None:
          workDir = ''
       
-      occId = self.getOccurrenceSetId()
+      dirTouchFile = os.path.join(workDir, 'touch.out')
+      touchCmd = LmTouchCommand(dirTouchFile)
+      rules.append(touchCmd.getMakeflowRule(local=True))
+      
+      if observed:
+         occId = self.getOccurrenceSetId()
+            
+         convexHullFilename = os.path.join(workDir, 'occ_{}_convexHull.shp'.format(occId))
          
-      convexHullFilename = os.path.join(workDir, 'occ_{}_convexHull.shp'.format(occId))
-      
-      touchCmd = LmTouchCommand(os.path.join(workDir, 'touch.out'))
-      
-      convexHullCmd = CreateConvexHullShapefileCommand(occId, convexHullFilename, 
-                                                       bufferDistance=.5)
-      convexHullCmd.outputs = ['{}{}'.format(
-         os.path.splitext(convexHullFilename)[0], ext) for ext in ['.shp', '.shx', '.dbf']]
-
-      ecoMaskFilename = os.path.join(workDir, 'ecoMask.tif')
-      
-      # Ecoregions mask
-      occTargetDir = os.path.join(workDir, 
-               os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
-      occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
-      occSetFname = os.path.join(occTargetDir, occFileBasename)
-      ecoMaskCmd = CreateMaskTiffCommand(maskLyr.getDLocation(), 
-                                         occSetFname,
-                                         ecoMaskFilename)
-      #ecoMaskCmd.inputs.append(occSetFname)
-      ecoMaskCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
-      
-      #gdalwarp -of GTiff -cutline DATA/area_of_interest.shp \
-      # -cl area_of_interest  -crop_to_cutline DATA/PCE_in_gw.asc  data_masked7.tiff
-      
-      maskName = maskLyr.name
-      if maskName is None:
-         maskName = maskLyr.verify
-      
-      
-      # Need to create mask as GTiff always and conditionally translate to ASC
-      
-      outFormat = 'GTiff'
-      maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
-      
-      maskArgs = '-of {} -dstnodata -9999 -cutline {} {} {}'.format(outFormat, 
-                                                   convexHullFilename, 
-                                                   ecoMaskFilename,
-                                                   maskFn)
-      maskCmd = SystemCommand('gdalwarp', maskArgs, outputs=[maskFn])
-      
-      # Create a chain command so we don't have to know which shapefiles are 
-      #    produced, try to define them if possible though
-      cmds = [touchCmd, ecoMaskCmd, convexHullCmd, maskCmd]
+         
+         convexHullCmd = CreateConvexHullShapefileCommand(occId, convexHullFilename, 
+                                                          bufferDistance=.5)
+         convexHullCmd.outputs = ['{}{}'.format(
+            os.path.splitext(convexHullFilename)[0], ext) for ext in ['.shp', '.shx', '.dbf']]
+   
+         ecoMaskFilename = os.path.join(workDir, 'ecoMask.tif')
+         
+         # Ecoregions mask
+         occTargetDir = os.path.join(workDir, 
+                  os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
+         occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
+         occSetFname = os.path.join(occTargetDir, occFileBasename)
+         ecoMaskCmd = CreateMaskTiffCommand(maskLyr.getDLocation(), 
+                                            occSetFname,
+                                            ecoMaskFilename)
+         #ecoMaskCmd.inputs.append(occSetFname)
+         ecoMaskCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
+         ecoMaskCmd.inputs.append(dirTouchFile)
+         
+         #gdalwarp -of GTiff -cutline DATA/area_of_interest.shp \
+         # -cl area_of_interest  -crop_to_cutline DATA/PCE_in_gw.asc  data_masked7.tiff
+         
+         maskName = maskLyr.name
+         if maskName is None:
+            maskName = maskLyr.verify
+         
+         
+         # Need to create mask as GTiff always and conditionally translate to ASC
+         
+         outFormat = 'GTiff'
+         maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
+         
+         maskArgs = '-of {} -dstnodata -9999 -cutline {} {} {}'.format(outFormat, 
+                                                      convexHullFilename, 
+                                                      ecoMaskFilename,
+                                                      maskFn)
+         maskCmd = SystemCommand('gdalwarp', maskArgs, outputs=[maskFn])
+         
+         # Create a chain command so we don't have to know which shapefiles are 
+         #    produced, try to define them if possible though
+         cmds = [ecoMaskCmd, convexHullCmd, maskCmd]
+         createMaskCommand = ChainCommand(cmds)
+         rules.append(createMaskCommand.getMakeflowRule(local=True))
+      else:
+         maskName = 'blankMask'
+         maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
+         maskCmd = CreateBlankMaskTiffCommand(maskLyr.getDLocation(), maskFn)
+         maskCmd.inputs.append(dirTouchFile)
+         rules.append(maskCmd.getMakeflowRule(local=True))
       
       if self.isATT():
          # Need to convert to ASCII
-         tmpMaskFn = os.path.join(workDir, '{}_temp.asc'.format(maskName))
+         #tmpMaskFn = os.path.join(workDir, '{}_temp.asc'.format(maskName))
          finalMaskFn = os.path.join(workDir, '{}.asc'.format(maskName))
          convertCmd = SystemCommand('gdal_translate', 
             '-a_nodata -9999 -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
-               maskFn, tmpMaskFn),
+               maskFn, finalMaskFn),
             inputs=[maskFn],
-            outputs=[tmpMaskFn])
+            outputs=[finalMaskFn])
          
-         modMaskCmd = ModifyAsciiHeadersCommand(tmpMaskFn, finalMaskFn)
-         rules.append(modMaskCmd.getMakeflowRule())
-         
+         #modMaskCmd = ModifyAsciiHeadersCommand(tmpMaskFn, finalMaskFn)
+         #rules.append(modMaskCmd.getMakeflowRule())
          
          rules.append(convertCmd.getMakeflowRule(local=True))
          maskFn = finalMaskFn
       
-      createMaskCommand = ChainCommand(cmds)
-      
-      rules.append(createMaskCommand.getMakeflowRule(local=True))
       return rules, maskFn
 
    # .............................................................................
@@ -785,7 +795,6 @@ class SDMProjection(_ProjectionType, Raster):
       touchFn = os.path.join(workDir, 'touch.out')
       dirTouchCmd = LmTouchCommand(touchFn)
       rules.append(dirTouchCmd.getMakeflowRule(local=True))
-      
       
       layersJsonFname = self.getLayersJsonFilename(self.modelScenario, 
                                                    self.modelMask)
@@ -851,8 +860,9 @@ class SDMProjection(_ProjectionType, Raster):
          
          # Mask rules
          if self.projMask is not None:
+            observed = self.projScenario.id == self.modelScenario.id
             maskRules, wsMaskFn = self._computeMyMask(self.projMask, 
-                                                      workDir=workDir)
+                                            workDir=workDir, observed=observed)
             rules.extend(maskRules)
          else:
             wsMaskFn = None
@@ -912,9 +922,10 @@ class SDMProjection(_ProjectionType, Raster):
 
          layersJsonFname = self.getLayersJsonFilename(self.projScenario, 
                                                       self.projMask)
-         wsLyrsFn = os.path.join(workDir, os.path.basename(layersJsonFname))
+         wsLyrsFn = os.path.join(targetDir, os.path.basename(layersJsonFname))
          cpLyrJsonCommand = SystemCommand('cp', '{} {}'.format(layersJsonFname, 
                                                                wsLyrsFn), 
+                                          inputs=[touchFn],
                                           outputs=[wsLyrsFn])
          rules.append(cpLyrJsonCommand.getMakeflowRule(local=True))
          

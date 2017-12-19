@@ -99,5 +99,11 @@ server and what their current status is (as far as number of tasks, number
 completed, number waiting, etc).  It also shows the number of workers connected
 to each makeflow instance, but I do not think that number is very reliable.
 
-
+I am getting the message: "Unable to run job: denied: host "my machine name" is no submit host
+----------------------------------------------------------------------------------------------
+This message indicates that the machine you are submitting a job from (either with qsub or with worker factory) 
+is not set up as a submit host.  Try:
+   `qconf -as sge-qmaster`
+If it does not work with "sge-qmaster" change to the name of the machine you are trying to submit from and 
+update this document.
 

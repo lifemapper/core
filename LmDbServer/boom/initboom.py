@@ -1335,15 +1335,16 @@ class BOOMFiller(LMObject):
    
    def _getBioGeoHypothesesLayerFilenames(self, biogeoName, usrPath):
       bghypFnames = []
-      bgpth = os.path.join(usrPath, biogeoName) 
-      if os.path.exists(bgpth + LMFormat.SHAPE.ext):
-         bghypFnames = [bgpth + LMFormat.SHAPE.ext]
-      elif os.path.isdir(bgpth):
-         import glob
-         pattern = os.path.join(bgpth, '*' + LMFormat.SHAPE.ext)
-         bghypFnames = glob.glob(pattern)
-      else:
-         self.scribe.log.warning('No biogeo shapefiles at {}'.format(bgpth))
+      if biogeoName is not None:
+         bgpth = os.path.join(usrPath, biogeoName) 
+         if os.path.exists(bgpth + LMFormat.SHAPE.ext):
+            bghypFnames = [bgpth + LMFormat.SHAPE.ext]
+         elif os.path.isdir(bgpth):
+            import glob
+            pattern = os.path.join(bgpth, '*' + LMFormat.SHAPE.ext)
+            bghypFnames = glob.glob(pattern)
+         else:
+            self.scribe.log.warning('No biogeo shapefiles at {}'.format(bgpth))
       return bghypFnames
    
    # ...............................................
