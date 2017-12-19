@@ -36,7 +36,6 @@ from mx.DateTime import gmt
 import numpy
 import os
 from osgeo import gdal
-import re
 import shutil
 import subprocess
 from time import sleep
@@ -46,123 +45,6 @@ from LmCompute.common.lmconstants import (CONVERT_JAVA_CMD, CONVERT_TOOL,
                                           ME_CMD, TEMPORARY_FILE_PATH)
 
 WAIT_SECONDS = 30
-
-## .............................................................................
-#class LayerManager(object):
-#   """
-#   @summary: Manages the storage of layers on the file system through sqlite
-#   """
-#   # .................................
-#   def __init__(self, dataDir):
-#      dbFile = os.path.join(dataDir, ENV_LAYER_DIR, INPUT_LAYER_DB)
-#      self.lyrBasePath = os.path.join(dataDir, ENV_LAYER_DIR)
-#      createDb = False
-#      if not os.path.exists(dbFile):
-#         createDb = True
-#      self.con = sqlite3.connect(dbFile, timeout=DB_TIMEOUT, isolation_level=None)
-#      if createDb:
-#         print("Database does not exist, creating...")
-#         self._createMetadataTable()
-#         self._createLayerDb()
-   
-   ## .................................
-   #def seedLayers(self, layerTups, makeASCIIs=True, makeMXEs=True):
-   #   """
-   #   @summary: Seeds the layer database with a list of layers that are already
-   #                stored on the local system.  This prevents extra downloads
-   #                of data when it is already present
-   #   @param layerTups: A list of tuples (layer identifier, file path to TIFF)
-   #   @param makeASCIIs: Should ASCII files be generated (for Maxent)
-   #   @param makeMXEs: Should MXE files be generated (for Maxent)
-   #   """
-   #   print "Seeding GeoTiffs"
-   #   for layerId, layerPath in layerTups:
-   #      # Check for existing layer
-   #      if self._queryLayer(layerId, LayerFormat.GTIFF)[1] is None:
-   #         if verifyHash(layerId, dlocation=layerPath):
-   #            self._insertLayer(layerId, LayerFormat.GTIFF, layerPath, 
-   #                              LayerStatus.SEEDED)
-   #         else:
-   #            raise Exception, "Identifier of %s did not match %s" % (
-   #                                                            layerPath, layerId)
-   #   print "Done seeding GeoTiffs"
-   #   
-   #   # ASCII Grids
-   #   if makeASCIIs:
-   #      mxeTups = []
-   #      mxeLayers = [] # Identifiers for MXE layers we create
-   #      print "Seeding ASCII layers"
-   #      for layerId, layerPath in layerTups:
-   #         
-   #         # Generate desired ASCII and MXE file names
-   #         basename = os.path.splitext(layerPath)[0]
-   #         ascFn = '%s%s' % (basename, LMFormat.ASCII.ext)
-   #         mxeFn = '%s%s' % (basename, LMFormat.MXE.ext)
-   #         
-   #         # Query to see if ASCII is already inserted
-   #         ascStatus, _ = self._queryLayer(layerId, LayerFormat.ASCII)
-   #         # Query to see if MXE is already inserted
-   #         mxeStatus, _ = self._queryLayer(layerId, LayerFormat.MXE)
-   #
-   #         if ascStatus in (LayerStatus.ABSENT, LayerStatus.TIFF_AVAILABLE):
-   #            if not os.path.exists(ascFn): # Only create if file does not exist
-   #               convertTiffToAscii(layerPath, ascFn)
-   #            # Insert into DB if not there
-   #            self._insertLayer(layerId, LayerFormat.ASCII, ascFn, 
-   #                           LayerStatus.SEEDED)
-   #         
-   #         if mxeStatus in (LayerStatus.ABSENT, LayerStatus.TIFF_AVAILABLE):
-   #            # Only set MXE to generate if file does not exist
-   #            if not os.path.exists(mxeFn):
-   #               mxeTups.append((ascFn, mxeFn))
-   #            # Set to insert into db if not present in db
-   #            mxeLayers.append((layerId, mxeFn))
-   #         
-   #      print "Done converting ASCIIs"
-   #      # Only make MXEs if we make ASCIIs
-   #      if makeMXEs:
-   #         print "Seeding MXEs"
-   #         convertAsciisToMxes(mxeTups)
-   #         for layerId, mxeFn in mxeLayers:
-   #            self._insertLayer(layerId, LayerFormat.MXE, mxeFn, 
-   #                              LayerStatus.SEEDED)
-   #         print "Done seeding MXEs"
-         
-# .............................................................................
-def processLayersJSON(layerJSON, symDir=None):
-   """
-   @summary: Process layer JSON and return a list of file names and 
-                a mask filename
-   @param layerJSON: A JSON object with an entry for layers (list) and a 
-                        mask.  Each layer should be an object with an 
-                        identifier and / or url
-   @param layerFormat: The format for the returned layer file names
-   @param symDir: If provided, symbolically link the layers in this 
-                     directory
-   @note: Assumes that layerJSON is an object with layers and mask
-   @todo: Use constants
-   """
-   layers = []
-   for lyrObj in layerJSON['layers']:
-      #lyrId = None
-      #if lyrObj.has_key('identifier'):
-      #   lyrId = lyrObj['identifier']
-      
-      layers.append(lyrObj['path'])
-      #layers.append(self.getLayerFilename(lyrId, layerFormat, lyrUrl))
-   
-   #TODO: Do this with constants
-   lyrExt = os.path.splitext(layers[0])[1]
-
-   if symDir is not None:
-      newLayers = []
-      for i in range(len(layers)):
-         newFn = os.path.join(symDir, "layer{}{}".format(i, lyrExt))
-         os.symlink(layers[i], newFn)
-         newLayers.append(newFn)
-      return newLayers
-   else:
-      return layers
 
 # .............................................................................
 def convertAndModifyAsciiToTiff(ascFn, tiffFn, scale=None, multiplier=None,
@@ -407,4 +289,40 @@ def convertTiffToAscii(tiffFn, asciiFn):
    with open(asciiFn, 'w') as ascOut:
       for line in output:
          ascOut.write(line)
+
+# .............................................................................
+def processLayersJSON(layerJSON, symDir=None):
+   """
+   @summary: Process layer JSON and return a list of file names and 
+                a mask filename
+   @param layerJSON: A JSON object with an entry for layers (list) and a 
+                        mask.  Each layer should be an object with an 
+                        identifier and / or url
+   @param layerFormat: The format for the returned layer file names
+   @param symDir: If provided, symbolically link the layers in this 
+                     directory
+   @note: Assumes that layerJSON is an object with layers and mask
+   @todo: Use constants
+   """
+   layers = []
+   for lyrObj in layerJSON['layers']:
+      #lyrId = None
+      #if lyrObj.has_key('identifier'):
+      #   lyrId = lyrObj['identifier']
+      
+      layers.append(lyrObj['path'])
+      #layers.append(self.getLayerFilename(lyrId, layerFormat, lyrUrl))
+   
+   #TODO: Do this with constants
+   lyrExt = os.path.splitext(layers[0])[1]
+
+   if symDir is not None:
+      newLayers = []
+      for i in range(len(layers)):
+         newFn = os.path.join(symDir, "layer{}{}".format(i, lyrExt))
+         os.symlink(layers[i], newFn)
+         newLayers.append(newFn)
+      return newLayers
+   else:
+      return layers
 
