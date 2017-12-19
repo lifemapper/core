@@ -123,6 +123,18 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._mapFilename = None
       
 # ...............................................
+   @staticmethod
+   def isGeoSimilar(self, lyr1, lyr2):
+      if lyr1.epsgcode != lyr2.epsgcode:
+         return False
+      if lyr1.bbox != lyr2.bbox:
+         return False
+      if ((lyr1.resolution is not None and lyr2.resolution is not None) and
+          (lyr1.resolution != lyr2.resolution)):
+         return False
+      return True
+      
+# ...............................................
    def setLayerId(self, lyrid):
       """
       @summary: Sets the database id of the Layer record, which can be used  
