@@ -147,72 +147,84 @@ Check LmCompute
      * installComputeCronJobs.log
      * seedData.log (seedData must be run manually by user after reboot)
 
-Start Archive Booming
-~~~~~~~~~~~~~~~~~~~~~
-#. BOOM manually for direct testing
-   * Run boom daemon (as lmwriter) with output BOOM config file ::  
-    [lmwriter]$ $PYTHON /opt/lifemapper/LmDbServer/boom/daboom.py \
-                --config_file=<NEW_CONFIG_FILE>  \
-                start
-
-   * If needed, cleanup by deleting the makeflow record from the database and 
-     file from the filesystem.
-      borg=> SELECT * from mfprocess where metadata like '%GRIM%';
-
 Configure for new/test data
 ---------------------------
-#. Download and install test environmental data for both server and compute, 
-   species data and BOOM parameter file for server.  Bash script getTestPackage 
-   is in lmserver roll
-   * There are 2 good test packages, named **test_sax** and **test_heuchera**
-   * Run getTestPackage bash script with test package name.  This downloads
+#. Download and install test boom data for both server and compute:
+        * data package metadata file
+        * boom parameter file
+        * species tree
+        * biogeographic hypotheses
+        * species package containing data and metadata
+        * scenario package containing layers and metadata.  
+   Bash script getBoomPackage is in lmserver roll
+   * There are 2 good test packages, named 
+        * heuchera_boom_global_data (heuchera data (64sp) with multi-scenario, 
+          global, 10min environmental data)
+        * heuchera_boom_data (heuchera data with current scenario, 
+          Continental US, 30sec, 35-layers of environmental data)
+        * sax_boom_data (saxifragales data (~2300sp) with current scenario, 
+          global, 10min, 12-layers of environmental data)
+   * Run bash script getBoomPackage with boom package name.  This downloads
      data package, installs all into correct directories and sets permissions.::  
-     # /opt/lifemapper/rocks/bin/getTestPackage <TEST_PACKAGE_NAME>
+     # /opt/lifemapper/rocks/bin/getBoomPackage <BOOM_PACKAGE_NAME>
 
-#. (ONLY if not using getTestPackage) Copy species data for server into user dataspace ::  
-   # cp <SPECIES_DATA_FILES> /share/lm/data/archive/<user>/
+   * (ONLY if not using getBoomPackage) Copy species data for server into user 
+     dataspace ::  
+     # cp <SPECIES_DATA_FILES> /share/lm/data/archive/<user>/
            
-#. (ONLY if not using getTestPackage) Download and install environmental data 
-   for both server and compute. Bash script getClimateData is in lmserver roll.
-   * Run getClimateData bash script with scen package name.  This downloads
-     data package and sets permissions.::  
-     # /opt/lifemapper/rocks/bin/getClimateData <SCEN_PACKAGE_NAME>
+   * (ONLY if not using getBoomPackage) Download and install environmental data 
+     for both server and compute. Bash script getClimateData is in lmserver roll.
+     * Run getClimateData bash script with scen package name.  This downloads
+       data package and sets permissions.::  
+       # /opt/lifemapper/rocks/bin/getClimateData <BOOM_DATA_PACKAGE_NAME>
 
-#. (ONLY if not using getTestPackage) Catalog BOOM archive parameters, including 
-   environmental data, for Server
-   * Run fillDB bash script (as root) with boom parameter file pointing to
-     chosen environmental and species data. 
-   * If you installed data with getTestPackage, the boom parameter file
-     will be in the /state/partition1/lmscratch/temp directory
-   * When running this way, the script will not create a makeflow record and file. ::  
-     # /opt/lifemapper/rocks/bin/fillDB <BOOM_PARAM_FILE>
-     
+#. Create ASCII and MXE versions of env layers for Maxent, and seed Sqlite 
+   database with bash script and basename of Scenario Package (available in the 
+   data package metadata file and output with instructions after getBoomData)::
+       # /opt/lifemapper/rocks/bin/seedData <SCENARIO_PKG>
+       
+#. Catalog BOOM data inputs in database with bash script and filename of boom 
+   parameter file (available in the data package metadata file and output 
+   with instructions after getBoomData).  If you installed data with 
+   getBoomPackage, the boom parameter file will be in the 
+   /state/partition1/lmscratch/temp directory::
+       # /opt/lifemapper/rocks/bin/fillDB <BOOM_PARAM_FILE>
+   
    * Results of fillDB: 
-     * User data directory
-       * create if needed
-       * output a BOOM config file, to be used as input to the boomer script. 
-       * output new shapegrid 
-       * fix permissions
-     * print BOOM config filename to the screen and to the output logfile.
-     * (NOT in this case) insert a makeflow record and file to run the boomer script.  
+     * User data directory with correct permissions
+     * BOOM config file, to be used as input to the boomer script. 
+     * new shapegrid 
+     * print to screen and logfile:
+       * BOOM config filename
+       * BOOM command 
+       * Encoding command for biogeographic hypotheses (with parameters)
+       * Encoding command for tree (with parameters)
 
-#. Catalog environmental data for Compute: 
-   * Run seedData (as root) with scen package name.  This builds files in  
-     alternate data formats and creates/fills the LmCompute sqlite3 database 
-     with file locations so data does not need to be pulled from the server for 
-     computations. ::  
-     # /opt/lifemapper/rocks/bin/seedData <SCEN_PACKAGE_NAME>
+#. BOOM data inputs to create and catalog in the database data objects and 
+   makeflow scripts for a BOOM workflow.  Run python boom daemon (as lmwriter) 
+   with output BOOM config file created by fillDB.  The fillDB script will print 
+   the full filepath of the BOOM  config file it has created ::  
+    [lmwriter]$ $PYTHON /opt/lifemapper/LmDbServer/boom/daboom.py --config_file=<BOOM_CONFIG_FILE>  start
+
+#. Encode biogeographic hypotheses as lmwriter user with python script.  The 
+   fillDB script will print the command with user and gridset parameters::
+    [lmwriter]$ $PYTHON LmServer/tools/boomInputs.py  --user=<ARCHIVE_USER>  --gridset_name=<ARCHIVE_NAME>
      
+
 #. BOOM manually for direct testing
    * See instructions in **Start Archive Booming** above
          
 Clear user data
 ---------------
-#. Delete user data from database::
+#. Delete all user data from database::
       borg=> SELECT * from lm_clearUserData(<username>)
 
-#. Delete user data from filesystem::
+#. Delete all user data from filesystem::
       # rm -rf /share/lm/data/archive/<username>
+
+#. Delete computed user data (not input scenarios) from database::
+      borg=> SELECT * from lm_clearComputedUserData(<username>)
+
 
 
 Misc Data Info
@@ -225,7 +237,7 @@ Misc Data Info
    of the Lifemapper website (lifemapper.org/dl).
 
 #. Create a BOOM parameter file based on the template in 
-   /opt/lifemapper/config/boomInit.sample.ini as "alternate" data input to the 
+   /opt/lifemapper/config/boomInit.sample.ini as data input to the 
    fillDB script
 
 #. Either allow the makeflow produced by fillDB to be run automatically, 
@@ -235,7 +247,7 @@ Misc Data Info
 
    * to use a unique userId/archiveName combination.  
    * the SCENARIO_PACKAGE data must be installed in the ENV_DATA_PATH directory,
-     this will be correct if using the getClimateData script
+     this will be correct if using the getClimateData or getBoomPackage scripts
    * If the DATASOURCE is USER (anything except GBIF, IDIGBIO, or BISON),
     
      * the species data files USER_OCCURRENCE_DATA(.csv and .meta) must be 
@@ -244,5 +256,6 @@ Misc Data Info
 
    * If the DATASOURCE is GBIF, with CSV file and known column definitions, the
      default OCCURRENCE_FILENAME is gbif_subset.txt.  If this is KU 
-     production installation, override this with the latest full data dump 
-     by downloading the data from yeti into /share/lmserver/data/species/
+     production installation, override this in a config.site.ini file with the 
+     latest full data dump by downloading the data from yeti 
+     into /share/lmserver/data/species/
