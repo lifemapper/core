@@ -65,8 +65,6 @@ from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
-import LmServer.tools.boomInputs as boomInput 
-from LmServer.tools import boomInputs
 
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
@@ -1014,42 +1012,6 @@ class BOOMFiller(LMObject):
       return newshp
       
    # ...............................................
-   def _findOrAddDefaultMatrices(self, gridset, scen):
-      # Create Global PAM for this archive, scenario
-      # Pam layers are added upon boom processing
-      currtime = mx.DateTime.gmt().mjd
-      pamType = MatrixType.PAM
-      if self.usr == PUBLIC_USER:
-         pamType = MatrixType.ROLLING_PAM
-      desc = '{} for Scenario {}'.format(GPAM_KEYWORD, scen.code)
-      pamMeta = {ServiceObject.META_DESCRIPTION: desc,
-                 ServiceObject.META_KEYWORDS: [GPAM_KEYWORD, scen.code]}
-      tmpGpam = LMMatrix(None, matrixType=pamType, 
-                         gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
-                         dateCode=scen.dateCode, metadata=pamMeta, userId=self.usr, 
-                         gridset=gridset, 
-                         status=JobStatus.GENERAL, statusModTime=currtime)
-      gpam = self.scribe.findOrInsertMatrix(tmpGpam)
-      # Anonymous and simple SDM booms do not need GRIMs
-      grim = None
-      if not(self.usr == DEFAULT_POST_USER or self.assemblePams):
-         # Create Scenario-GRIM for this archive, scenario
-         # GRIM layers are added now
-         desc = '{} for Scenario {}'.format(GGRIM_KEYWORD, scen.code)
-         grimMeta = {ServiceObject.META_DESCRIPTION: desc,
-                    ServiceObject.META_KEYWORDS: [GGRIM_KEYWORD]}
-         tmpGrim = LMMatrix(None, matrixType=MatrixType.GRIM, 
-                            gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
-                            dateCode=scen.dateCode, metadata=grimMeta, userId=self.usr, 
-                            gridset=gridset, 
-                            status=JobStatus.GENERAL, statusModTime=currtime)
-         grim = self.scribe.findOrInsertMatrix(tmpGrim)
-         for lyr in scen.layers:
-            # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
-            mtxcol = self._initGRIMIntersect(lyr, grim)
-      return gpam, grim
-
-   # ...............................................
    def _findOrAddPAM(self, gridset, scen):
       # Create Global PAM for this archive, scenario
       # Pam layers are added upon boom processing
@@ -1382,12 +1344,6 @@ class BOOMFiller(LMObject):
          bgMtx = self.scribe.findOrInsertMatrix(tmpMtx)
          if bgMtx is None:
             self.scribe.log.info('  Failed to add biogeo hypotheses matrix')
-         else:
-            self.scribe.log.info('  Encode biogeo hypotheses matrix {} ...'
-                                 .format(bgMtx.getId()))
-#             # Now encode the layers into the matrix, then update matrix
-#             boomInput.encodeHypothesesToMatrix(self.scribe, self.usr, shpgrid, bgMtx, 
-#                                                   layers=allLayers) 
       return bgMtx, biogeoLayerNames
 
 # ...............................................
