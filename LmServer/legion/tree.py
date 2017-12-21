@@ -20,7 +20,6 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-@todo: Add method for setting tree value
 """
 import mx.DateTime
 import os
@@ -87,6 +86,16 @@ class Tree(LmTree, ServiceObject):
       
       LmTree.__init__(self, dlocation, schema)
    
+   # ..............................
+   def setTree(self, tree):
+      """
+      @summary: Sets the tree value to an instance of dendropy tree.  This 
+                   should be used if you have a dendropy tree created by some
+                   method other than reading a file directly
+      @param tree: An instance of dendropy 
+      """
+      self.tree = tree
+      
    # ..............................
    def writeTree(self):
       """

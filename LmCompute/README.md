@@ -1,4 +1,4 @@
-lmCompute
+LmCompute
 =========
 
 The Lifemapper compute package interacts with the Lifemapper job server.  It 

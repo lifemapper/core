@@ -99,19 +99,6 @@ class MatrixService(LmService):
          return self._getMatrix(pathGridSetId, pathMatrixId)
       
    # ................................
-   @lmFormatter
-   def POST(self, pathGridSetId, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout):
-      """
-      @summary: Posts a new layer
-      @todo: Add cutout
-      @todo: Take a completed matrix?
-      """
-      sg = LMMatrix(name, self.getUserId(), epsgCode, cellSides, cellSize, 
-                     mapUnits, bbox)
-      updatedSg = self.scribe.findOrInsertmatrix(sg, cutout=cutout)
-      return updatedSg
-   
-   # ................................
    def _countMatrices(self, userId, gridSetId, afterTime=None, altPredCode=None, 
                      beforeTime=None, dateCode=None, epsgCode=None, 
                      gcmCode=None, keyword=None, matrixType=None, status=None):
@@ -154,7 +141,7 @@ class MatrixService(LmService):
       """
       @summary: Attempt to get a matrix
       """
-      mtx = self.scribe.getMatrix(mtxId=pathMatrixId)
+      mtx = self.scribe.getMatrix(gridsetId=pathGridSetId, mtxId=pathMatrixId)
       if mtx is None:
          raise cherrypy.HTTPError(404, 
                         'matrix {} was not found'.format(pathMatrixId))

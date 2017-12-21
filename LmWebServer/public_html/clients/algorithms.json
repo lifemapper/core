@@ -505,6 +505,10 @@
                         {
                             "name": "Cumulative",
                             "value": "2"
+                        },
+                        {
+                            "name": "cLogLog",
+                            "value": "3"
                         }
                     ]
                 },

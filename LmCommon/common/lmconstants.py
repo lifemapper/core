@@ -110,7 +110,6 @@ class FileFormat:
 class LMFormat:
    """
    @summary: Class containing known formats to Lifemapper
-   @todo: Deprecate OutputFormat and instead use this
    """
    ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'],
                       driver='AAIGrid',
@@ -254,29 +253,6 @@ class LMFormat:
          return True
       return False
 
-# # .............................................................................
-# class OutputFormat:
-#    TAR_GZ = '.tar.gz'
-#    TXT = '.txt'
-#    XML = '.xml'
-#    ZIP = '.zip'
-#    TMP = '.tmp'
-#    MAP = '.map'
-#    CSV = '.csv'
-#    JSON = '.json'
-#    MXE = '.mxe'
-#    NUMPY = '.npy'
-#    PICKLE = '.pkl'
-#    GTIFF = '.tif'
-#    ASCII = '.asc'
-#    HFA = '.img'
-#    SHAPE = '.shp'
-#    LOG = '.log'
-#    MAKEFLOW = '.mf'
-#    METADATA = '.meta'
-#    PYTHON = '.py'
-#    CONFIG = '.ini'
-#    
 # SHAPEFILE_EXTENSIONS = [".shp", ".shx", ".dbf", ".prj", ".sbn", ".sbx", ".fbn", 
 #                         ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", 
 #                         ".shp.xml", ".cpg", ".qix"]

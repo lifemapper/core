@@ -27,6 +27,7 @@
           02110-1301, USA.
 """
 import argparse
+import json
 import glob
 import os
 import shutil
@@ -45,7 +46,8 @@ class Stockpile(LMObject):
    """
 # .............................................................................
    @classmethod
-   def testAndStash(cls, ptype, objId, status, successFname, outputFnameList):
+   def testAndStash(cls, ptype, objId, status, successFname, outputFnameList,
+                    metaFilename=None):
       """
       @summary: Test output files and update DB with status.  Only success for
                 all outputs = JobStatus.COMPLETE 
@@ -79,7 +81,8 @@ class Stockpile(LMObject):
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
       try:
-         cls._updateObject(scribe, ptype, objId, status, outputFnameList)
+         cls._updateObject(scribe, ptype, objId, status, outputFnameList,
+                           metaFilename=metaFilename)
       except:
          # TODO: raise exception, or write info to file?
          pass
@@ -90,12 +93,18 @@ class Stockpile(LMObject):
       
 # .............................................................................
    @classmethod
-   def _updateObject(cls, scribe, ptype, objId, status, fileNames):
+   def _updateObject(cls, scribe, ptype, objId, status, fileNames, 
+                     metaFilename=None):
       """
       @summary: Get object and update DB with status.  
       """
       msgs = []
       try:
+         # Get metadata
+         metadata = None
+         with open(metaFilename) as inMeta:
+            metadata = json.load(inMeta)
+         
          # Get object
          if ProcessType.isOccurrence(ptype):
             obj = scribe.getOccurrenceSet(occId=objId)
@@ -118,6 +127,8 @@ class Stockpile(LMObject):
             obj = scribe.getShapeGrid(lyrId=objId)
          elif ProcessType.isMatrix(ptype):
             obj = scribe.getMatrix(mtxId=objId)
+            if metadata is not None:
+               obj.addMtxMetadata(metadata)
             shutil.copy(fileNames[0], obj.getDLocation())
       except Exception, e:
          msg = 'Failed to get object {} for process {}'.format(objId, ptype)
@@ -204,6 +215,10 @@ if __name__ == "__main__":
                        help='The status to update the object with')
    parser.add_argument('-f', dest='status_file', type=str, 
                        help='A file containing the new object status')
+   
+   # Metadata filename
+   parser.add_argument('-m', dest='metadataFilename', type=str, 
+                      help='A JSON file containing metadata about this object')
    args = parser.parse_args()
    
    # Status comes in as an integer or file 
@@ -213,13 +228,19 @@ if __name__ == "__main__":
    elif args.status_file is not None:
       with open(args.status_file) as statusIn:
          status = int(statusIn.read())
+   
+   if args.metadataFilename is not None:
+      metaFilename = args.metadataFilename
+   else:
+      metaFilename = None
+      
    ptype = args.processType
    objId = args.objectId
    successFname = args.successFilename
    outputFnameList = args.objectOutput
    
    success = Stockpile.testAndStash(ptype, objId, status, successFname, 
-                                    outputFnameList)
+                                    outputFnameList, metaFilename=metaFilename)
       
    if success:
       # Only write success file if successfully updated an object with 

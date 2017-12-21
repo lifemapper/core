@@ -80,7 +80,8 @@ class ScenarioPackageService(LmService):
       """
       if pathScenarioPackageId is None:
          return self._listScenarioPackages(self.getUserId(urlUser=urlUser), 
-                       afterTime=afterTime, scenarioId=scenarioId, limit=limit)
+                       afterTime=afterTime, scenarioId=scenarioId, limit=limit,
+                       offset=offset)
       elif pathScenarioPackageId.lower() == 'count':
          return self._countScenarioPackages(self.getUserId(urlUser=urlUser), 
                                  afterTime=afterTime, beforeTime=beforeTime, 

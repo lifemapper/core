@@ -30,10 +30,10 @@ import os
 from StringIO import StringIO
 import zipfile
 
+from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.matrix import Matrix
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.legion.lmmatrix import LMMatrix
-from LmCommon.common.lmconstants import LMFormat
 
 # .............................................................................
 def file_formatter(filename, readMode='r', stream=False, contentType=None):

@@ -26,10 +26,10 @@
           02110-1301, USA.
 """
 import cherrypy
+import dendropy
 import mx.DateTime
-import json
 
-from LmCommon.common.lmconstants import HTTPStatus
+from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_TREE_SCHEMA
 from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
@@ -102,21 +102,23 @@ class TreeService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, name=None):
+   def POST(self, name=None, treeSchema=DEFAULT_TREE_SCHEMA):
       """
       @summary: Posts a new tree
-      @todo: Parameters
+      @todo: Format
       """
       if name is None:
          raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 'Must provide name for tree')
-      treeJson = json.loads(cherrypy.request.body.read())
+      tree = dendropy.Tree.get(file=cherrypy.request.body, schema=treeSchema)
+      
       newTree = Tree(name, userId=self.getUserId())
       updatedTree = self.scribe.findOrInsertTree(newTree)
-      updatedTree.tree = treeJson
+      updatedTree.setTree(tree)
       updatedTree.writeTree()
       updatedTree.modTime = mx.DateTime.gmt().mjd
       self.scribe.updateObject(updatedTree)
-      return updatedTree.tree
+      
+      return updatedTree
    
    # ................................
    def _countTrees(self, userId, afterTime=None, beforeTime=None, 
@@ -151,7 +153,7 @@ class TreeService(LmService):
          raise cherrypy.HTTPError(404, 
                         'Tree {} was not found'.format(pathTreeId))
       if checkUserPermission(self.getUserId(), tree, HTTPMethod.GET):
-         return tree.tree
+         return tree
       else:
          raise cherrypy.HTTPError(403, 
               'User {} does not have permission to access tree {}'.format(

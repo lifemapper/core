@@ -887,8 +887,9 @@ class SDMProjection(_ProjectionType, Raster):
             # TODO: Get this from db
             # CJG / AMS - 06/22/2017 - Always scale for now
             
+            # CJG - 11/28/2017 - No data value gets scaled as well, thus -32768 (min val for int16)
             convertCmd = SystemCommand(os.path.join(BIN_PATH, 'gdal_translate'),
-                           '-scale 0 1 {} {} -ot Int16 -of GTiff {} {}'.format(
+                           '-scale 0 1 {} {} -ot Int16 -a_nodata -32768 -of GTiff {} {}'.format(
                                  SCALE_PROJECTION_MINIMUM, 
                                  SCALE_PROJECTION_MAXIMUM,
                                  rawPrjRaster,
