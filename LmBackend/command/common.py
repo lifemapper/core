@@ -23,7 +23,6 @@
 """
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import CMD_PYBIN, COMMON_SCRIPTS_DIR
-import cmd
 
 # .............................................................................
 class ChainCommand(_LmCommand):

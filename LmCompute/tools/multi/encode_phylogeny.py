@@ -28,10 +28,11 @@
           02110-1301, USA.
 @note: If no indices mapping file is provided, assume that the tree already has 
           matrix indices in it
+@todo: Remove or reinstate mashed potato parameter
 """
 import argparse
 
-from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA, PhyloTreeKeys
+from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.phylo import PhyloEncoding
 from LmCommon.trees.lmTree import LmTree
@@ -67,29 +68,6 @@ if __name__ == "__main__":
    # Load the PAM
    pam = Matrix.load(args.pamFn)
 
-   # If we should insert matrix indices
-   if args.mashedPotato is not None:
-      idx = 0
-      squidDict = {}
-      with open(args.mashedPotato, 'r') as mashIn:
-         for line in mashIn:
-            squid, pav = line.split(':')
-            squidDict[squid.strip()] = idx
-            idx += 1
-   else:
-      squidDict = {}
-      squids = pam.getColumnHeaders()
-      if len(squids) == 0:
-         raise Exception, 'Cannot encode tree without squids in PAM or mashed potato'
-      for i in range(len(squids)):
-         squidDict[squids[i]] = i
-   
-   tree.annotateTree(PhyloTreeKeys.MTX_IDX, squidDict, 
-                     labelAttribute=PhyloTreeKeys.SQUID)
-   
-   # Prune tree
-   tree.pruneTipsWithoutAttribute(searchAttribute=PhyloTreeKeys.MTX_IDX)
-   
    encoder = PhyloEncoding(tree, pam)
 
    pMtx = encoder.encodePhylogeny()

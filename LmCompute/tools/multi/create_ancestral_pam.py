@@ -103,7 +103,7 @@ def build_ancestral_pam(pam, tree):
    
    # Initialize new matrix
    numRows = pam.data.shape[0]
-   nodeData = np.zeros((numRows, len(cladeDict.keys())))
+   nodeData = np.zeros((numRows, len(cladeDict.keys())), dtype=np.int8)
    
    col = 0
    cols = []

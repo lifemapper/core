@@ -116,7 +116,7 @@ def subsetGlobalPAM(archiveName, matches, userId, scribe=None):
       }
       
       # Assemble full matrix
-      pamData = np.zeros((origNrows, len(scnMatches)), dtype=bool)
+      pamData = np.zeros((origNrows, len(scnMatches)), dtype=int)
       squids = []
       
       for i in range(len(scnMatches)):

@@ -45,6 +45,7 @@ from LmWebServer.services.api.v2.shapegrid import ShapeGridService
 from LmWebServer.services.api.v2.snippet import SnippetService
 from LmWebServer.services.api.v2.speciesHint import SpeciesHintService
 from LmWebServer.services.api.v2.tree import TreeService
+from LmWebServer.services.api.v2.upload import UserUploadService
 
 # .............................................................................
 @cherrypy.expose
@@ -64,6 +65,7 @@ class ApiRootV2(object):
    shapegrid = ShapeGridService()
    snippet = SnippetService()
    tree = TreeService()
+   upload = UserUploadService()
    
    ogc = MapService()
 

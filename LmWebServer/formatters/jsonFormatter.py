@@ -26,8 +26,8 @@
           02110-1301, USA.
 @todo: Use constants
 @todo: Can we make this more elegant?
-@todo: Trees
 """
+
 import cherrypy
 from hashlib import md5
 import json
@@ -47,6 +47,7 @@ from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.legion.tree import Tree
 
 # Format object method looks at object type and calls formatters appropriately
 # Provide methods for direct calls to formatters
@@ -339,6 +340,19 @@ def formatShapegrid(sg):
    return sgDict
 
 # .............................................................................
+def formatTree(tree):
+   """
+   @summary: Convert a tree into a dictionary
+   @todo: CJG - Add more tree metadata.  Check notes from Ryan conversation
+   """
+   treeDict = _getLifemapperMetadata('tree', tree.getId(), tree.metadataUrl,
+                                     tree.getUserId(), 
+                                     metadata=tree.treeMetadata)
+   treeDict['ultrametric'] = tree.isUltrametric()
+   treeDict['binaery'] = tree.isBinary()
+   return treeDict
+
+# .............................................................................
 def formatVector(vlyr):
    """
    @summary: Convert a vector into a dictionary
@@ -394,6 +408,8 @@ def _formatObject(obj):
       return formatMatrix(obj)
    elif isinstance(obj, ShapeGrid):
       return formatShapegrid(obj)
+   elif isinstance(obj, Tree):
+      return formatTree(obj)
    elif isinstance(obj, Vector):
       return formatVector(obj)
    else:

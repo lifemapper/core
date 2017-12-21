@@ -33,7 +33,8 @@ from LmBackend.command.common import ChainCommand, SystemCommand
 from LmBackend.command.multi import (CalculateStatsCommand, 
                      EncodePhylogenyCommand, McpaAssembleCommand, 
                      McpaCorrectPValuesCommand, McpaObservedCommand, 
-                     McpaRandomCommand, CreateAncestralPamCommand)
+                     McpaRandomCommand, CreateAncestralPamCommand,
+   SyncPamAndTreeCommand)
 from LmBackend.command.server import (LmTouchCommand, SquidIncCommand, 
                                       StockpileCommand)
 from LmBackend.common.lmobj import LMError
@@ -350,18 +351,29 @@ class Gridset(ServiceObject): #LMMap
                                               divSuccessFilename,
                                               divStatsFilename)
             
-            rules.extend([statsCmd.getMakeflowRule(local=True),
+            rules.extend([statsCmd.getMakeflowRule(),
                           spSiteStatsCmd.getMakeflowRule(local=True),
                           spSpeciesStatsCmd.getMakeflowRule(local=True),
                           spDiversityStatsCmd.getMakeflowRule(local=True)])
             
          # MCPA
          if doMCPA:
+            # Sync PAM and tree
+            prunedPamFilename = os.path.join(pamWorkDir, 'prunedPAM.json')
+            prunedTreeFilename = os.path.join(pamWorkDir, 'prunedTree.nex')
+            pruneMetadataFilename = os.path.join(pamWorkDir, 'pruneMetadata.json')
+            
+            syncCmd = SyncPamAndTreeCommand(wsPamFilename, prunedPamFilename,
+                                         squidTreeFilename, prunedTreeFilename,
+                                         pruneMetadataFilename)
+            rules.append(syncCmd.getMakeflowRule())
+            
             # Encode tree
             encTreeFilename = os.path.join(pamWorkDir, 'tree.json')
             
-            encTreeCmd = EncodePhylogenyCommand(squidTreeFilename, 
-                                                wsPamFilename, encTreeFilename)
+            encTreeCmd = EncodePhylogenyCommand(prunedTreeFilename, 
+                                                prunedPamFilename, 
+                                                encTreeFilename)
             rules.append(encTreeCmd.getMakeflowRule())
             
             grim = pamDict[pamId][MatrixType.GRIM]
@@ -502,7 +514,8 @@ class Gridset(ServiceObject): #LMMap
             
             mcpaOutStockpileCmd = StockpileCommand(ProcessType.MCPA_ASSEMBLE,
                                     mcpaOutMtx.getId(), mcpaOutSuccessFilename, 
-                                    wsMcpaOutFilename)
+                                    wsMcpaOutFilename, 
+                                    metadataFilename=pruneMetadataFilename)
             rules.append(mcpaOutStockpileCmd.getMakeflowRule(local=True))
 
       return rules

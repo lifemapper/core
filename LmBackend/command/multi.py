@@ -644,3 +644,35 @@ class RandomizeSwapCommand(_LmCommand):
       return '{} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.pamFn, self.numSwaps, self.outFn)
 
+# .............................................................................
+class SyncPamAndTreeCommand(_LmCommand):
+   """
+   @summary: This command synchronizes a PAM and Tree for MCPA computations
+   """
+   relDir = MULTI_SPECIES_SCRIPTS_DIR
+   scriptName = 'sync_pam_and_tree.py'
+   
+   # ................................
+   def __init__(self, inPamFilename, outPamFilename, inTreeFilename, 
+                      outTreeFilename, metadataFilename):
+      """
+      @summary: Construct the command object
+      @param inPamFilename: The file location of the PAM to prune
+      @param outPamFilename: The file location to write the pruned PAM
+      @param inTreeFilename: The file location of the tree to prune
+      @param outTreeFilename: The file location to write the pruned tree
+      @param metadataFilename: The file location to write the summary metadata
+      """
+      _LmCommand.__init__(self)
+      self.inputs.extend([inPamFilename, inTreeFilename])
+      self.outputs.extend([outPamFilename, outTreeFilename, metadataFilename])
+      
+      self.args = [inPamFilename, outPamFilename, inTreeFilename, 
+                   outTreeFilename, metadataFilename]
+   
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the raw command to run on the system
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), ' '.join(self.args))

@@ -1,10 +1,7 @@
 """
-@summary: This script is used to purge layers that have not been used for some
-             amount of time.
+@summary: Converts the layers in a package directory to ASCIIs and MXEs
 @author: CJ Grady
-@version: 1.0.0
-@status: beta
-
+@status: alpha
 @license: gpl2
 @copyright: Copyright (C) 2017, University of Kansas Center for Research
 
@@ -28,23 +25,22 @@
           02110-1301, USA.
 """
 import argparse
-from mx.DateTime import gmt
+import os
 
-from LmCompute.common.layerManager import LayerManager
-from LmCompute.common.localconstants import SHARED_DATA_PATH
+from LmBackend.common.layerTools import convertLayersInDirectory
 
-# .............................................................................
-if __name__ == "__main__":
+# ................................................................
+if __name__ == '__main__':
+   parser = argparse.ArgumentParser(
+      description='This script converts all of the layers in a directory to ASCIIs and MXEs')
    
-   parser = argparse.ArgumentParser(prog="Lifemapper LmCompute Layer Purger",
-                           description="Purges old layers from the database",
-                           version="1.0.0")
-   parser.add_argument('-t', '--daysOld', type=int, default=30,
-      help="Purge (non-seeded) layers that haven't been touched in more than this many days")
-   
+   parser.add_argument('layerDirectory', type=str, 
+                       help='The directory with layer rasters')
    args = parser.parse_args()
-   
-   lm = LayerManager(SHARED_DATA_PATH)
-   lm.purgeLayers(gmt().mjd - args.daysOld)
-   lm.close()
-   
+
+   if os.path.exists(args.layerDirectory):
+      convertLayersInDirectory(args.layerDirectory)
+   else:
+      raise Exception, 'Layer directory: {}, does not exist'.format(
+                                                         args.layerDirectory)
+
