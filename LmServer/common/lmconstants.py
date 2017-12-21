@@ -1498,3 +1498,16 @@ class SOLR_FIELDS(object):
 SCALE_PROJECTION_MINIMUM = 0
 SCALE_PROJECTION_MAXIMUM = 100
 SCALE_DATA_TYPE = "int"
+
+# ============================================================================
+# =                            Processing Constants                          =
+# ============================================================================
+# TODO: AMS : Alter as necessary
+BUFFER_KEY = 'buffer'
+CODE_KEY = 'code'
+ECOREGION_MASK_METHOD = 'hull_region_intersect'
+MASK_KEY = 'mask'
+MASK_LAYER_KEY = 'mask_layer'
+MASK_LAYER_NAME_KEY = 'mask_name'
+PRE_PROCESS_KEY = 'preprocess'
+PROCESSING_KEY = 'processing'

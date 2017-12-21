@@ -44,15 +44,11 @@ from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
                            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType,
-                           SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM)
+                           SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM,
+                           BUFFER_KEY, PRE_PROCESS_KEY, MASK_KEY, 
+                           MASK_LAYER_KEY, CODE_KEY, ECOREGION_MASK_METHOD)
 from LmServer.common.lmconstants import SnippetOperations
 
-BUFFER_KEY = 'buffer'
-PRE_PROCESS_KEY = 'preprocess'
-MASK_KEY = 'mask'
-CODE_KEY = 'code'
-ECOREGION_MASK_METHOD = 'ecoreg'
-MASK_LAYER_KEY = 'maskLayer'
 
 
 # .........................................................................

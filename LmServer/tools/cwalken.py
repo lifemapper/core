@@ -20,6 +20,10 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+
+@note: Removed sel.sdmMaskInputLayer attribute and removed calls to pass it to
+          projection objects
+
 """
 # .............................................................................
 import glob
@@ -38,7 +42,10 @@ from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
-                                         Priority)
+                                         Priority, BUFFER_KEY, CODE_KEY,
+                                         ECOREGION_MASK_METHOD, MASK_KEY, 
+                                         MASK_LAYER_KEY, PRE_PROCESS_KEY,
+                                         PROCESSING_KEY, MASK_LAYER_NAME_KEY)
 from LmServer.common.localconstants import PUBLIC_USER, DEFAULT_EPSG
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -120,7 +127,8 @@ class ChristopherWalken(LMObject):
        self.algs, 
        self.mdlScen, 
        self.prjScens, 
-       self.sdmMaskInputLayer, 
+       # TODO: AMS - I removed mask layer from _getConfiguredObjects response
+       #self.sdmMaskInputLayer, 
        self.boomGridset, 
        self.intersectParams, 
        self.assemblePams) = self._getConfiguredObjects()
@@ -327,7 +335,7 @@ class ChristopherWalken(LMObject):
                val = self.cfg.get(algHeading, pname)
                # Some algorithms(mask) may have a parameter indicating a layer,
                # if so, add name to parameters and object to inputs
-               if acode == 'hull_region_intersect' and pname == 'region':
+               if acode == ECOREGION_MASK_METHOD and pname == 'region':
                   inputs[pname] = val
             alg.setParameter(pname, val)
       if inputs:
@@ -354,7 +362,10 @@ class ChristopherWalken(LMObject):
 # .............................................................................
    def _getProjParams(self, userId, epsg):
       prjScens = []
-      mdlScen = sdmMaskInputLayer = None
+      
+      # TODO: AMS - Removed sdmMaskInputLayer (CJG)
+      #mdlScen = sdmMaskInputLayer = None
+      mdlScen = None
       
       # Get environmental data model and projection scenarios
       mdlScenCode = self._getBoomOrDefault('SCENARIO_PACKAGE_MODEL_SCENARIO')
@@ -377,18 +388,20 @@ class ChristopherWalken(LMObject):
          raise LMError('Failed to retrieve ScenPackage for scenarios {}'
                        .format(prjScenCodes))
       # Should be only one or None
-      maskAlgList = self._getAlgorithms(sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
-      if len(maskAlgList) == 1:
-         sdmMaskAlg = maskAlgList[0]
-         # TODO: Handle if there is more than one input layer
-         if len(sdmMaskAlg.getInputs()) > 1:
-            raise LMError(currargs='Unable to process > 1 input SDM mask layer')
-         for inputKey, lyrname in sdmMaskAlg.getInputs().iteritems():
-            sdmMaskInputLayer = self._scribe.getLayer(userId=userId, 
-                                                      lyrName=lyrname, epsg=epsg) 
-            sdmMaskAlg.setInput(inputKey, sdmMaskInputLayer)
+      
+      # TODO: AMS - I removed the mask parameter since they are determined in gridset (CJG)
+      #maskAlgList = self._getAlgorithms(sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
+      #if len(maskAlgList) == 1:
+      #   sdmMaskAlg = maskAlgList[0]
+      #   # TODO: Handle if there is more than one input layer
+      #   if len(sdmMaskAlg.getInputs()) > 1:
+      #      raise LMError(currargs='Unable to process > 1 input SDM mask layer')
+      #   for inputKey, lyrname in sdmMaskAlg.getInputs().iteritems():
+      #      sdmMaskInputLayer = self._scribe.getLayer(userId=userId, 
+      #                                                lyrName=lyrname, epsg=epsg) 
+      #      sdmMaskAlg.setInput(inputKey, sdmMaskInputLayer)
             
-      return (mdlScen, prjScens, sdmMaskInputLayer)  
+      return (mdlScen, prjScens)#, sdmMaskInputLayer)  
 
 # .............................................................................
    def _getGlobalPamObjects(self, userId, archiveName, epsg):
@@ -422,6 +435,34 @@ class ChristopherWalken(LMObject):
             self._getBoomOrDefault('INTERSECT_MAXPRESENCE'),
          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 
             self._getBoomOrDefault('INTERSECT_MINPERCENT')}
+
+
+      maskAlgList = self._getAlgorithms(sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
+      if len(maskAlgList) == 1:
+         sdmMaskAlg = maskAlgList[0]
+         # TODO: Handle if there is more than one input layer
+         if len(sdmMaskAlg.getInputs()) > 1:
+            raise LMError(currargs='Unable to process > 1 input SDM mask layer')
+         for inputKey, lyrname in sdmMaskAlg.getInputs().iteritems():
+            sdmMaskInputLayer = self._scribe.getLayer(userId=userId, 
+                                                      lyrName=lyrname, epsg=epsg)
+            sdmMaskAlg.setInput(inputKey, sdmMaskInputLayer)
+
+         procParams = {
+            PROCESSING_KEY : {
+               PRE_PROCESS_KEY : {
+                  MASK_KEY : {
+                     MASK_LAYER_KEY : sdmMaskInputLayer,
+                     MASK_LAYER_NAME_KEY : sdmMaskAlg.getParameterValue('region'),
+                     CODE_KEY : ECOREGION_MASK_METHOD,
+                     BUFFER_KEY : sdmMaskAlg.getParameterValue(BUFFER_KEY)
+                  }
+               }
+            }
+         }
+         # TODO: AMS - If this will be saved, may need to remove the mask layer object
+         boomGridset.addGrdMetadata(procParams)
+      
 
       return (boomGridset, intersectParams)  
 
@@ -462,14 +503,17 @@ class ChristopherWalken(LMObject):
       minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
       algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
 
-      (mdlScen, prjScens, sdmMaskInputLayer) = self._getProjParams(userId, epsg)
+      # TODO: AMS - I removed sdmMaskInputLayer (CJG)
+      #(mdlScen, prjScens, sdmMaskInputLayer) = self._getProjParams(userId, epsg)
+      (mdlScen, prjScens) = self._getProjParams(userId, epsg)
       # Global PAM inputs
       (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                             archiveName, epsg)
       assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
 
+      # TODO: AMS - I removed sdmMaskInputLayer from response
       return (userId, archiveName, archivePriority, boompath, weaponOfChoice,  
-              epsg, minPoints, algorithms, mdlScen, prjScens, sdmMaskInputLayer, 
+              epsg, minPoints, algorithms, mdlScen, prjScens, #sdmMaskInputLayer, 
               boomGridset, intersectParams, assemblePams)  
 
    # ...............................
@@ -604,9 +648,10 @@ class ChristopherWalken(LMObject):
       """
       prj = None
       if occ is not None:
+         # TODO: AMS - I removed mask layer from projection (CJG)
          tmpPrj = SDMProjection(occ, alg, self.mdlScen, prjscen, 
-                        modelMask=self.sdmMaskInputLayer, 
-                        projMask=self.sdmMaskInputLayer, 
+                        #modelMask=self.sdmMaskInputLayer, 
+                        #projMask=self.sdmMaskInputLayer, 
                         dataFormat=LMFormat.GTIFF.driver,
                         status=JobStatus.GENERAL, statusModTime=currtime)
          prj = self._scribe.findOrInsertSDMProject(tmpPrj)
@@ -614,9 +659,9 @@ class ChristopherWalken(LMObject):
             self.log.debug('Found/inserted SDMProject {}'.format(prj.getId()))
             # Fill in projection with input scenario layers, masks
             prj._modelScenario = self.mdlScen
-            prj.setModelMask(self.sdmMaskInputLayer)
+            #prj.setModelMask(self.sdmMaskInputLayer)
             prj._projScenario = prjscen
-            prj.setProjMask(self.sdmMaskInputLayer)
+            #prj.setProjMask(self.sdmMaskInputLayer)
             # Rollback if obsolete or failed
             reset = self._doReset(prj.status, prj.statusModTime)
             if reset:
@@ -630,6 +675,10 @@ class ChristopherWalken(LMObject):
       updatedMFChain = None
       rules = []
       if objs:
+         
+         # Get gridset processing metadata
+         procParams = self.boomGridset.grdMetadata[PROCESSING_KEY]
+         
          for o in objs:
             # Create MFChain with metadata
             if updatedMFChain is None:
@@ -650,7 +699,15 @@ class ChristopherWalken(LMObject):
                   updatedMFChain = self._scribe.insertMFChain(newMFC)
             # Get rules for objects to be computed
             try:
-               rules.extend(o.computeMe(workDir=updatedMFChain.getRelativeDirectory()))
+               try:
+                  # Try to call projection compute me with process parameters
+                  objRules = o.computeMe(
+                                 workDir=updatedMFChain.getRelativeDirectory(), 
+                                 procParams=procParams)
+               except:
+                  objRules = o.computeMe(
+                                 workDir=updatedMFChain.getRelativeDirectory())
+               rules.extend(objRules)
             except Exception, e:
                self.log.info('Failed on object.compute {}, ({})'.format(type(o), 
                                                                         str(e)))
