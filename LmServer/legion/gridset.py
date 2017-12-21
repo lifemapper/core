@@ -69,7 +69,7 @@ class Gridset(ServiceObject): #LMMap
       @summary Constructor for the Gridset class
       @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
       @param gridsetId: dbId  for ServiceObject
-      @param name: Short identifier for this gridset, not required to be unique.
+      @param name: Short identifier for this gridset, unique for userid.
       @param shapeGrid: Vector layer with polygons representing geographic sites.
       @param siteIndices: A filename containing a dictionary with keys the 
              unique/record identifiers and values the x, y coordinates of the 
