@@ -47,6 +47,12 @@ from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
                            SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM)
 from LmServer.common.lmconstants import SnippetOperations
 
+BUFFER_KEY = 'buffer'
+PRE_PROCESS_KEY = 'preprocess'
+MASK_KEY = 'mask'
+CODE_KEY = 'code'
+ECOREGION_MASK_METHOD = 'ecoreg'
+MASK_LAYER_KEY = 'maskLayer'
 
 
 # .........................................................................
@@ -661,13 +667,12 @@ class SDMProjection(_ProjectionType, Raster):
       return wmsUrl   
 
    # ................................
-   def _computeMyMask(self, maskLyr, workDir=None, observed=True):
+   def _computeMyMask(self, maskProcDict, workDir=None, observed=True):
       """
-      @summary: Generate rules for creating a mask layer based on convex hull 
-                   and ecoregions
-      @param maskLyr: A layer object to use as the base mask layer.  Should be
-                         a categorical layer
-      @param workDir: A directory to store the amsk layer
+      @summary: Generate rules for creating a mask layer based on 
+                   pre-processing parameters
+      @param maskProcDict: A dictionary of mask parameters
+      @param workDir: A directory to store the mask layer
       """
       rules = []
       if workDir is None:
@@ -676,66 +681,74 @@ class SDMProjection(_ProjectionType, Raster):
       dirTouchFile = os.path.join(workDir, 'touch.out')
       touchCmd = LmTouchCommand(dirTouchFile)
       rules.append(touchCmd.getMakeflowRule(local=True))
+
+      # Get mask layer from dictionary
+      maskLyr = maskProcDict[MASK_LAYER_KEY]
       
-      if observed:
-         occId = self.getOccurrenceSetId()
+      if maskProcDict.has_key(CODE_KEY) and \
+                           maskProcDict[CODE_KEY] == ECOREGION_MASK_METHOD:
+         if observed:
+            bd = maskProcDict[BUFFER_KEY]
             
-         convexHullFilename = os.path.join(workDir, 'occ_{}_convexHull.shp'.format(occId))
-         
-         
-         convexHullCmd = CreateConvexHullShapefileCommand(occId, convexHullFilename, 
-                                                          bufferDistance=.5)
-         convexHullCmd.outputs = ['{}{}'.format(
-            os.path.splitext(convexHullFilename)[0], ext) for ext in ['.shp', '.shx', '.dbf']]
-   
-         ecoMaskFilename = os.path.join(workDir, 'ecoMask.tif')
-         
-         # Ecoregions mask
-         occTargetDir = os.path.join(workDir, 
-                  os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
-         occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
-         occSetFname = os.path.join(occTargetDir, occFileBasename)
-         ecoMaskCmd = CreateMaskTiffCommand(maskLyr.getDLocation(), 
-                                            occSetFname,
-                                            ecoMaskFilename)
-         #ecoMaskCmd.inputs.append(occSetFname)
-         ecoMaskCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
-         ecoMaskCmd.inputs.append(dirTouchFile)
-         
-         #gdalwarp -of GTiff -cutline DATA/area_of_interest.shp \
-         # -cl area_of_interest  -crop_to_cutline DATA/PCE_in_gw.asc  data_masked7.tiff
-         
-         maskName = maskLyr.name
-         if maskName is None:
-            maskName = maskLyr.verify
-         
-         
-         # Need to create mask as GTiff always and conditionally translate to ASC
-         
-         outFormat = 'GTiff'
-         maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
-         
-         maskArgs = '-of {} -dstnodata -9999 -cutline {} {} {}'.format(outFormat, 
-                                                      convexHullFilename, 
-                                                      ecoMaskFilename,
-                                                      maskFn)
-         maskCmd = SystemCommand('gdalwarp', maskArgs, outputs=[maskFn])
-         
-         # Create a chain command so we don't have to know which shapefiles are 
-         #    produced, try to define them if possible though
-         cmds = [ecoMaskCmd, convexHullCmd, maskCmd]
-         createMaskCommand = ChainCommand(cmds)
-         rules.append(createMaskCommand.getMakeflowRule(local=True))
-      else:
-         maskName = 'blankMask'
-         maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
-         maskCmd = CreateBlankMaskTiffCommand(maskLyr.getDLocation(), maskFn)
-         maskCmd.inputs.append(dirTouchFile)
-         rules.append(maskCmd.getMakeflowRule(local=True))
+            occId = self.getOccurrenceSetId()
+      
+            # Add command for generating convex hull for occurrence set
+            convexHullFilename = os.path.join(workDir, 
+                                         'occ_{}_convexHull.shp'.format(occId))
+            
+            convexHullCmd = CreateConvexHullShapefileCommand(occId, 
+                                                             convexHullFilename, 
+                                                             bufferDistance=bd)
+            convexHullCmd.outputs = ['{}{}'.format(
+               os.path.splitext(convexHullFilename)[0], ext) for ext in \
+                                     ['.shp', '.shx', '.dbf']]
+      
+            ecoMaskFilename = os.path.join(workDir, 'ecoMask.tif')
+            
+            # Ecoregions mask
+            occTargetDir = os.path.join(workDir, os.path.splitext(
+                                self._occurrenceSet.getRelativeDLocation())[0])
+            occFileBasename = os.path.basename(
+                                            self._occurrenceSet.getDLocation())
+            occSetFname = os.path.join(occTargetDir, occFileBasename)
+            ecoMaskCmd = CreateMaskTiffCommand(maskLyr.getDLocation(), 
+                                               occSetFname,
+                                               ecoMaskFilename)
+            #ecoMaskCmd.inputs.append(occSetFname)
+            ecoMaskCmd.inputs.extend(self._occurrenceSet.getTargetFiles(
+                                                              workDir=workDir))
+            ecoMaskCmd.inputs.append(dirTouchFile)
+            
+            maskName = maskLyr.name
+            if maskName is None:
+               maskName = maskLyr.verify
+            
+            # Need to create mask as GTiff always and conditionally translate to ASC
+            
+            outFormat = 'GTiff'
+            maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
+            
+            maskArgs = '-of {} -dstnodata -9999 -cutline {} {} {}'.format(
+                                                         outFormat, 
+                                                         convexHullFilename, 
+                                                         ecoMaskFilename,
+                                                         maskFn)
+            maskCmd = SystemCommand('gdalwarp', maskArgs, outputs=[maskFn])
+            
+            # Create a chain command so we don't have to know which shapefiles are 
+            #    produced, try to define them if possible though
+            cmds = [ecoMaskCmd, convexHullCmd, maskCmd]
+            createMaskCommand = ChainCommand(cmds)
+            rules.append(createMaskCommand.getMakeflowRule(local=True))
+         else:
+            maskName = 'blankMask'
+            maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
+            maskCmd = CreateBlankMaskTiffCommand(maskLyr.getDLocation(), maskFn)
+            maskCmd.inputs.append(dirTouchFile)
+            rules.append(maskCmd.getMakeflowRule(local=True))
       
       if self.isATT():
          # Need to convert to ASCII
-         #tmpMaskFn = os.path.join(workDir, '{}_temp.asc'.format(maskName))
          finalMaskFn = os.path.join(workDir, '{}.asc'.format(maskName))
          convertCmd = SystemCommand('gdal_translate', 
             '-a_nodata -9999 -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
@@ -743,19 +756,22 @@ class SDMProjection(_ProjectionType, Raster):
             inputs=[maskFn],
             outputs=[finalMaskFn])
          
-         #modMaskCmd = ModifyAsciiHeadersCommand(tmpMaskFn, finalMaskFn)
-         #rules.append(modMaskCmd.getMakeflowRule())
-         
          rules.append(convertCmd.getMakeflowRule(local=True))
          maskFn = finalMaskFn
       
       return rules, maskFn
 
    # .............................................................................
-   def _computeMyModel(self, workDir=None):
+   def _computeMyModel(self, workDir=None, procParams=None):
       """
-      @summary: Generate a command to create a SDM model ruleset for this projection
+      @summary: Generate a command to create a SDM model ruleset for this 
+                   projection
+      @param workDir: The work directory to use for the model
+      @param procParams: Pre / post processing metadata to be used with this 
+                            model
       """
+      if procParams is None:
+         procParams = {}
       rules = []
       if workDir is None:
          workDir = ''
@@ -766,13 +782,15 @@ class SDMProjection(_ProjectionType, Raster):
       occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
       occSetFname = os.path.join(occTargetDir, occFileBasename)
       
-      if self.modelMask is not None:
-         maskRules, wsMaskFn = self._computeMyMask(self.modelMask, 
-                                                   workDir=workDir)
+      # Look at processing parameters and decide if we need to do anything
+      if procParams.has_key(PRE_PROCESS_KEY) and \
+                        procParams[PRE_PROCESS_KEY].has_key(MASK_KEY):
+         maskRules, wsMaskFn = self._computeMyMask(
+                        procParams[PRE_PROCESS_KEY][MASK_KEY], workDir=workDir)
          rules.extend(maskRules)
       else:
          wsMaskFn = None
-      
+
       
       if self.isATT():
          ptype = ProcessType.ATT_MODEL
@@ -780,7 +798,8 @@ class SDMProjection(_ProjectionType, Raster):
          ptype = ProcessType.OM_MODEL
       
       mdlName = self.getModelTarget()
-      rulesetFname = os.path.join(occTargetDir, os.path.basename(self.getModelFilename()))
+      rulesetFname = os.path.join(occTargetDir, 
+                                  os.path.basename(self.getModelFilename()))
       
       touchFn = os.path.join(workDir, 'touch.out')
       dirTouchCmd = LmTouchCommand(touchFn)
@@ -815,15 +834,18 @@ class SDMProjection(_ProjectionType, Raster):
       return rules
 
    # ......................................
-   def computeMe(self, workDir=None):
+   def computeMe(self, workDir=None, procParams=None):
       """
       @todo: Consider producing layersFn and paramsFn with script
       """
+      if procParams is None:
+         procParams = {}
       rules = []
       if workDir is None:
          workDir = ''
          
-      targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
+      targetDir = os.path.join(workDir, os.path.splitext(
+                                               self.getRelativeDLocation())[0])
       
       touchFn = os.path.join(targetDir, 'touch.out')
       touchCmd = LmTouchCommand(touchFn)
@@ -832,10 +854,10 @@ class SDMProjection(_ProjectionType, Raster):
       
       if self.status == JobStatus.COMPLETE:
          # Just need to move the tiff into place
-         cpRaster = os.path.join(targetDir, os.path.basename(self.getDLocation()))
+         cpRaster = os.path.join(targetDir, os.path.basename(
+                                                         self.getDLocation()))
          
          #touch directory then copy file
-         
          cpCmd = SystemCommand('cp', 
                                '{} {}'.format(self.getDLocation(), cpRaster), 
                                inputs=[touchFn], 
@@ -843,15 +865,20 @@ class SDMProjection(_ProjectionType, Raster):
          
          rules.append(cpCmd.getMakeflowRule(local=True))
       else:
+         
          # Generate the model
-         modelRules = self._computeMyModel(workDir=workDir)
+         modelRules = self._computeMyModel(workDir=workDir, 
+                                           procParams=procParams)
          rules.extend(modelRules)
          
-         # Mask rules
-         if self.projMask is not None:
+         # Look at processing parameters and decide if we need to do anything
+         if procParams.has_key(PRE_PROCESS_KEY) and \
+                           procParams[PRE_PROCESS_KEY].has_key(MASK_KEY):
             observed = self.projScenario.id == self.modelScenario.id
-            maskRules, wsMaskFn = self._computeMyMask(self.projMask, 
-                                            workDir=workDir, observed=observed)
+            maskRules, wsMaskFn = self._computeMyMask(
+                                       procParams[PRE_PROCESS_KEY][MASK_KEY], 
+                                       workDir=workDir,
+                                       observed=observed)
             rules.extend(maskRules)
          else:
             wsMaskFn = None
