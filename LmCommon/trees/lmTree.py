@@ -181,7 +181,7 @@ class LmTree(object):
    # ..............................
    def getVarianceCovarianceMatrix(self, labelAttribute='label', orderedLabels=None):
       """
-      @summary: Get a Matrix object of phylogenetic distances between tips
+      @summary: Get a Matrix object of variance / covariance for tips in tree
       @param labelAttribute: The attribute of the tips to use as labels for 
                                 the matrix
       @param orderedLabels: If provided, use this order of labels
@@ -204,65 +204,37 @@ class LmTree(object):
       
       n = len(orderedLabels)
          
-      vcvMtx = np.zeros((n, n), dtype=float)
-      
-      # TODO: Get tips for each node
-      #pp <- prop.part(phy)
-    
-      # Dendropy has tail_node going up tree and head_node down
+      vcv = np.zeros((n, n), dtype=float)
       
       edges = []
-      for edge in tree.tree.postorder_edge_iter():
+      for edge in self.tree.postorder_edge_iter():
          edges.append(edge)
          
       edges.reverse()
-
-      # TODO: Determine how to match node / tip to index
       
-      xx = np.zeros(2 * n - 1)
-      
-      e1 = []
-      e2 = []
-      el = []
-      
-      
-      for edge in edges[1:]:
-         e1 = edge.tail_node
-         e2 = edge.head_node
-         el.append(edge.length)
-         
-      
-      # Parent node (tail nodes)
-      #e1 <- phy$edge[, 1]
-      # Child node (head nodes)
-      #e2 <- phy$edge[, 2]
-      #EL <- phy$edge.length
-      #xx <- numeric(n + phy$Nnode)
-      #vcv <- matrix(0, n, n)
-      
-      for i in range(len(edges) - 1, 0, -1):
-         var_cur_node = xx[edgeMapper(e1)]
-         xx[edgeMapper(e2)] = var_cur_node + el
-         j = i - 1
-         while e1[j] == e1[i] and j > 0:
-            if e2[j] > n:
-               lefts = pp[[e2[j] - n]]
+      for edge in edges:
+         try:
+            el = edge.head_node.distance_from_root()
+         except:
+            el = None
+         if el is not None:
+            childNodes = edge.head_node.child_nodes()
+            if len(childNodes) == 0:
+               idx = labelLookup[labelFn(edge.head_node.taxon)]
+               vcv[idx,idx] = edge.head_node.distance_from_root()
             else:
-               lefts = [e2[j]]
-            
-            if e2[i] > n:
-               rights = pp[[e2[j] - n]]
-            else:
-               rights = [e2[i]]
-            
-            for l in lefts:
-               for r in rights:
-                  vcv[l, r] = vcv[r, l] = var_cur_node
-            j = j - 1
+               leftChild, rightChild = edge.head_node.child_nodes()
+               leftTips = [labelLookup[labelFn(tipNode.taxon)] for tipNode in leftChild.leaf_nodes()]
+               rightTips = [labelLookup[labelFn(tipNode.taxon)] for tipNode in rightChild.leaf_nodes()]
+               #if len(leftTips) > 1 and len(rightTips) > 1:
+               for l in leftTips:
+                  for r in rightTips:
+                     vcv[l, r] = vcv[r, l] = el
+ 
+         for node in self.tree.leaf_nodes():
+            idx = labelLookup[labelFn(node.taxon)]
+            vcv[idx,idx] = node.distance_from_root()
 
-      for i in range(n):
-         vcv[i,i] = xx[i]
-      
       vcvMatrix = Matrix(vcv, headers={'0' : orderedLabels,
                                        '1' : orderedLabels})
       return vcvMatrix
