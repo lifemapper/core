@@ -67,7 +67,6 @@ class LmTree(object):
       """
       self._labelTreeNodes(self.tree.seed_node, len(self.getLabels()), 
                            prefix=prefix)
-      
          
    # ..............................
    def annotateTree(self, attributeName, annotationPairs, 
@@ -342,6 +341,7 @@ class LmTree(object):
             node.label = '{}{}'.format(prefix, i)
          else:
             node.label = i
+         i += 1
          # Loop through children and label nodes
          for child in cn:
             i = self._labelTreeNodes(child, i)
