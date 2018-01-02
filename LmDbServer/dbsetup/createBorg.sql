@@ -330,9 +330,7 @@ create table lm_v3.SDMProject
    algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode),
    algParams text,
    mdlscenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
-   mdlmaskId int REFERENCES lm_v3.Layer,
    prjscenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
-   prjmaskId int REFERENCES lm_v3.Layer,
    -- includes algorithmParams
    metadata text,
 
@@ -342,7 +340,7 @@ create table lm_v3.SDMProject
    status int,
    statusModTime double precision,
    UNIQUE (userId, occurrenceSetId, algorithmCode, algParams, 
-           mdlscenarioId, mdlmaskId, prjscenarioId, prjmaskId)
+           mdlscenarioId, prjscenarioId)
 );  
 CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProject(statusModTime);
 CREATE INDEX idx_prjStatus ON lm_v3.SDMProject(status);

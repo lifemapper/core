@@ -29,9 +29,56 @@
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 \c borg
--- ALTER TABLE lm_v3.Layer DROP COLUMN IF EXISTS mdlmaskId CASCADE;
--- ALTER TABLE lm_v3.Layer DROP COLUMN IF EXISTS prjmaskId CASCADE;
+ALTER TABLE lm_v3.Layer DROP COLUMN IF EXISTS mdlmaskId CASCADE;
+ALTER TABLE lm_v3.Layer DROP COLUMN IF EXISTS prjmaskId CASCADE;
 
+DROP FUNCTION IF EXISTS lm_v3.lm_insertSDMProject(prjid int,
+                                                           lyrid int,
+                                                           usr varchar, 
+                                                           occid int,
+                                                           algcode varchar,
+                                                           algstr text,
+                                                           mdlscenid int,
+                                                           mdlmskid int,
+                                                           prjscenid int,
+                                                           prjmskid int,
+                                                           prjmeta text, 
+                                                           ptype int, 
+                                                           stat int, 
+                                                           stattime double precision);
+DROP FUNCTION IF EXISTS lm_v3.lm_findOrInsertSDMProjectLayer(prjid int, 
+                                          lyrid int,
+                                          usr varchar,
+                                          lyrsquid varchar,
+                                          lyrverify varchar,
+                                          lyrname varchar, 
+                                          lyrdloc varchar,
+                                          lyrmeta varchar,
+                                          datafmt varchar,
+                                          rtype int,
+                                          vtype int,
+                                          vunits varchar,
+                                          vnodata double precision,
+                                          vmin double precision,
+                                          vmax double precision,
+                                          epsg int,
+                                          munits varchar,
+                                          res double precision,
+                                          bboxstr varchar,
+                                          bboxwkt varchar,
+                                          lyrmtime double precision,
+                                          -- sdmproject
+                                          occid int,
+                                          algcode varchar,
+                                          algstr text,
+                                          mdlscenid int,
+                                          mdlmskid int,
+                                          prjscenid int,
+                                          prjmskid int,
+                                          prjmeta text,
+                                          ptype int,
+                                          stat int,
+                                          stattime double precision);
 CREATE INDEX idx_layerid ON lm_v3.SDMProject(layerid);
 
 

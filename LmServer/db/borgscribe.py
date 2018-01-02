@@ -821,7 +821,6 @@ class BorgScribe(LMObject):
 
 # ...............................................
    def initOrRollbackSDMProjects(self, occ, mdlScen, projScenList, alg,  
-                          mdlMask=None, projMask=None, 
                           modtime=mx.DateTime.gmt().mjd, email=None):
       """
       @summary: Initialize or rollback existing LMArchive SDMProjection
@@ -832,24 +831,19 @@ class BorgScribe(LMObject):
       @param prjScenList: Scenarios for SDM project computations
       @param alg: List of algorithm objects for SDM computations on this 
                       OccurrenceSet
-      @param mdlMask: Layer mask for SDM model computations
-      @param projMask: Layer mask for SDM project computations
       @param modtime: timestamp of modification, in MJD format 
       @param email: email address for notifications 
       """
       prjs = []
       for projScen in projScenList:
          prj = SDMProjection(occ, alg, mdlScen, projScen, 
-                        modelMask=mdlMask, projMask=projMask, 
                         dataFormat=LMFormat.getDefaultGDAL().driver,
                         status=JobStatus.GENERAL, statusModTime=modtime)
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
-         # Instead of re-pulling unchanged scenario layers, masks, update 
+         # Instead of re-pulling unchanged scenario layers, update 
          # with input arguments
          newOrExistingPrj._modelScenario = mdlScen
-         newOrExistingPrj.setModelMask(mdlMask)
          newOrExistingPrj._projScenario = projScen
-         newOrExistingPrj.setProjMask(projMask)
          # Rollback if finished
          if JobStatus.finished(newOrExistingPrj.status):
             newOrExistingPrj.updateStatus(JobStatus.GENERAL, modTime=modtime)
@@ -860,7 +854,6 @@ class BorgScribe(LMObject):
 
 # ...............................................
    def initOrRollbackSDMChain(self, occ, algList, mdlScen, prjScenList, 
-                    mdlMask=None, projMask=None,
                     gridset=None, intersectParams=None, minPointCount=None):
       """
       @summary: Initialize or rollback existing LMArchive SDM chain 
@@ -871,8 +864,6 @@ class BorgScribe(LMObject):
                       OccurrenceSet
       @param mdlScen: Scenario for SDM model computations
       @param prjScenList: Scenarios for SDM project computations
-      @param mdlMask: Layer mask for SDM model computations
-      @param projMask: Layer mask for SDM project computations
       @param gridset: Gridset containing Global PAM for output of intersections
       @param minPointCount: Minimum number of points required for SDM 
       """
@@ -883,7 +874,6 @@ class BorgScribe(LMObject):
           occ.queryCount >= minPointCount): 
          for alg in algList:
             prjs = self.initOrRollbackSDMProjects(occ, mdlScen, prjScenList, alg, 
-                              mdlMask=mdlMask, projMask=projMask, 
                               modtime=currtime)
             objs.extend(prjs)
             # Intersect if intersectGrid is provided

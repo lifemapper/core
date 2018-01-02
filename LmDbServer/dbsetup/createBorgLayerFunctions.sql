@@ -652,9 +652,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_insertSDMProject(prjid int,
                                                            algcode varchar,
                                                            algstr text,
                                                            mdlscenid int,
-                                                           mdlmskid int,
                                                            prjscenid int,
-                                                           prjmskid int,
                                                            prjmeta text, 
                                                            ptype int, 
                                                            stat int, 
@@ -667,10 +665,10 @@ DECLARE
 BEGIN
    -- Already searched for existing before calling this function
    INSERT INTO lm_v3.sdmproject (layerid, userId, occurrenceSetId, 
-       algorithmCode, algParams, mdlscenarioId, mdlmaskId, prjscenarioId, 
-       prjmaskId, metadata, processType, status, statusModTime) 
-   VALUES (lyrid, usr, occid, algcode, algstr, mdlscenid, mdlmskid, 
-       prjscenid, prjmskid, prjmeta, ptype, stat, stattime);
+       algorithmCode, algParams, mdlscenarioId, prjscenarioId, 
+       metadata, processType, status, statusModTime) 
+   VALUES (lyrid, usr, occid, algcode, algstr, mdlscenid, 
+       prjscenid, prjmeta, ptype, stat, stattime);
           
    IF NOT FOUND THEN
       RAISE EXCEPTION 'Unable to insert SDMProject';
@@ -727,9 +725,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertSDMProjectLayer(prjid int,
                                           algcode varchar,
                                           algstr text,
                                           mdlscenid int,
-                                          mdlmskid int,
                                           prjscenid int,
-                                          prjmskid int,
                                           prjmeta text,
                                           ptype int,
                                           stat int,
@@ -760,18 +756,6 @@ BEGIN
                     '   AND algParams =  ' || quote_literal(algstr) ||
                     '   AND mdlscenarioId =  ' || quote_literal(mdlscenid) ||
                     '   AND prjscenarioId =  ' || quote_literal(prjscenid);
-
-         IF mdlmskid IS NOT NULL THEN
-            wherecls = wherecls || ' AND mdlmaskId =  ' || quote_literal(mdlmskid);
-         ELSE
-            wherecls = wherecls || ' AND mdlmaskId IS NULL ';
-         END IF;
-
-         IF prjmskid IS NOT NULL THEN
-            wherecls = wherecls || ' AND prjmaskId =  ' || quote_literal(prjmskid);
-         ELSE
-            wherecls = wherecls || ' AND prjmaskId IS NULL ';
-         END IF;
       end;
    END IF;
    
@@ -796,8 +780,8 @@ BEGIN
       
          -- get or insert sdmproject 
          SELECT * INTO rec_fullprj FROM lm_v3.lm_insertSDMProject(prjid, newlyrid, 
-                   usr, occid, algcode, algstr, mdlscenid, mdlmskid, prjscenid, 
-                   prjmskid, prjmeta, ptype, stat, stattime);
+                   usr, occid, algcode, algstr, mdlscenid, prjscenid, 
+                   prjmeta, ptype, stat, stattime);
          RAISE NOTICE 'Returned rec_fullprj % / %', 
                        rec_fullprj.layerid, rec_fullprj.sdmprojectId;
 
@@ -1758,7 +1742,7 @@ BEGIN
    SELECT count(*) INTO currTotal FROM lm_v3.envlayer WHERE layerid = lyrid;
    total = currTotal;
    SELECT count(*) INTO currTotal FROM lm_v3.sdmproject 
-      WHERE layerid = lyrid OR mdlmaskId = lyrid OR mdlmaskId = lyrid;
+      WHERE layerid = lyrid;
    total = total + currTotal;
    SELECT count(*) INTO currTotal FROM lm_v3.shapegrid WHERE layerid = lyrid;
    total = total + currTotal;
