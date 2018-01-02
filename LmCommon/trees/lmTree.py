@@ -57,16 +57,17 @@ class LmTree(object):
    
    # Public functions
    # ..........................................................................
+   
    # ..............................
-   def addNodeLabels(self):
+   def addNodeLabels(self, prefix=None):
       """
       @summary: Add labels to the internal nodes of a tree
-      @todo: Look to see if some or all nodes already have labels 
+      @param prefix: If provided, this will be prepended to the node label
+      @note: This labels nodes the way that R does
       """
-      i = 0
-      for node in self.tree.nodes():
-         node.label = 'Node_{}'.format(i)
-         i += 1
+      self._labelTreeNodes(self.tree.seed_node, len(self.getLabels()), 
+                           prefix=prefix)
+      
          
    # ..............................
    def annotateTree(self, attributeName, annotationPairs, 
@@ -327,3 +328,23 @@ class LmTree(object):
       """
       self.tree.write(path=fn, schema=schema)
          
+   # ..............................
+   def _labelTreeNodes(self, node, i, prefix=None):
+      """
+      @summary: Private function to do the work when labeling nodes
+      @note: Recursive
+      """
+      cn = node.child_nodes()
+      
+      # If we have children, label and recurse
+      if len(cn) > 0:
+         if prefix is not None:
+            node.label = '{}{}'.format(prefix, i)
+         else:
+            node.label = i
+         # Loop through children and label nodes
+         for child in cn:
+            i = self._labelTreeNodes(child, i)
+      # Return the current i value
+      return i
+   
