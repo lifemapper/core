@@ -611,6 +611,10 @@ class Gridset(ServiceObject): #LMMap
             mtx = mtxFileOrObj
             mtx.setUserId(usr)
          if mtx is not None:
+            # Make sure to set the parent Id and URL
+            if self.getId() is not None:
+               mtx.parentId = self.getId()
+               mtx.setParentMetadataUrl(self.metadataUrl)
             if mtx.getId() is None:
                self._matrices.append(mtx)
             else:

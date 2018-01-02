@@ -35,6 +35,7 @@ from LmCommon.common.matrix import Matrix
 
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMServiceType, LMFileType)
+from LmBackend.common.lmobj import LMError
 
 # .............................................................................
 class LMMatrix(Matrix, ServiceObject, ProcessObject):
@@ -173,6 +174,8 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       @note: If the object does not have an ID, this returns None
       """
       ftype = LMFileType.getMatrixFiletype(self.matrixType)
+      if self.parentId is None:
+         raise LMError('Must have parent gridset ID for filepath')
       dloc = self._earlJr.createFilename(ftype, gridsetId=self.parentId, 
                                         objCode=self.getId(), 
                                         usr=self.getUserId())
