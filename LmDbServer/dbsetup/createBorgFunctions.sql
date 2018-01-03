@@ -987,6 +987,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 -- Gridset
 -- ----------------------------------------------------------------------------
+-- TODO: return lm_tree instead of lm_gridset (with only treeId)
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertGridset(grdid int,
                                                         usr varchar, 
                                                         nm varchar,
@@ -1043,6 +1044,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- Get an existing gridset
+-- TODO: return lm_tree instead of lm_gridset (with only treeId)
 CREATE OR REPLACE FUNCTION lm_v3.lm_getGridset(grdid int,
                                                usr varchar, 
                                                nm varchar)
@@ -1168,6 +1170,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+-- TODO: return lm_tree instead of lm_gridset (with only treeId)
 CREATE OR REPLACE FUNCTION lm_v3.lm_listGridsetObjects(firstRecNum int, maxNum int, 
                                                        usr varchar,
                                                        shpgridlyrid int,
@@ -1252,7 +1255,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 
 -- ----------------------------------------------------------------------------
--- Gets a matrix with its lm_gridset (including optional shapegrid)
+-- Gets a lm_fullmatrix with its (matrix + gridset + shapegrid)
 -- Unique: gridsetId, matrixType, gcmCode, altpredCode, dateCode
 CREATE OR REPLACE FUNCTION lm_v3.lm_getMatrix(mtxid int, 
                                               mtxtype int, 
