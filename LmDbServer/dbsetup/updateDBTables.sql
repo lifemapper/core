@@ -31,6 +31,7 @@
 \c borg
 ALTER TABLE lm_v3.SDMProject DROP COLUMN IF EXISTS mdlmaskId CASCADE;
 ALTER TABLE lm_v3.SDMProject DROP COLUMN IF EXISTS prjmaskId CASCADE;
+CREATE INDEX idx_layerid ON lm_v3.SDMProject(layerid);
 
 DROP FUNCTION IF EXISTS lm_v3.lm_insertSDMProject(prjid int,
                                                            lyrid int,
@@ -79,7 +80,6 @@ DROP FUNCTION IF EXISTS lm_v3.lm_findOrInsertSDMProjectLayer(prjid int,
                                           ptype int,
                                           stat int,
                                           stattime double precision);
-CREATE INDEX idx_layerid ON lm_v3.SDMProject(layerid);
 
 
 -- -------------------------------

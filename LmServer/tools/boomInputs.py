@@ -236,5 +236,99 @@ if __name__ == '__main__':
    
    scribe.closeConnections()
    
+"""
+import argparse
+import mx.DateTime
+import os
+import sys
+
+from LmServer.tools.boomInputs import (_getBoomBioGeoParams, _getBioGeoMatrix, 
+     encodeHypothesesToMatrix, squidifyTree)
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (JobStatus, PhyloTreeKeys, MatrixType, 
+                                         ProcessType, SERVER_BOOM_HEADING)
+from LmCommon.common.matrix import Matrix
+from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
+from LmServer.base.utilities import isCorrectUser
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import LMFileType
+from LmServer.common.log import ConsoleLogger
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.lmmatrix import LMMatrix
+from LmServer.legion.mtxcolumn import MatrixColumn
+from LmServer.legion.tree import Tree
+from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.common.localconstants import DEFAULT_EPSG
+
+usr = 'biotaphy'
+treename = None
+gridname = 'biotaphy_heuchera_global'
+
+scribe = BorgScribe(ConsoleLogger())
+scribe.openConnections()
+# Biogeo
+layers = _getBoomBioGeoParams(scribe, gridname, usr)
+gridset = scribe.getGridset(userId=usr, name=gridname, fillMatrices=True)
+if not (gridset and layers):
+   print ('No gridset or layers to encode as hypotheses')
    
+# encodeHypothesesToMatrix(scribe, usr, gridset, layers=layers)
+mtxCols = []
+bgMtx = _getBioGeoMatrix(scribe, usr, gridset, layers)
+shapegrid = gridset.getShapegrid()
+
+lyr = layers[0]
+lyrEnc = BioGeoEncoding(shapegrid.getDLocation())
+try:
+   valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
+except KeyError:
+   valAttribute = None
+
+lyrEnc.addLayers(lyr.getDLocation(), eventField=valAttribute)
+print('layer name={}, eventField={}, dloc={}'
+      .format(lyr.name, valAttribute, lyr.getDLocation()))
+
+encMtx = lyrEnc.encodeHypotheses()
+
+for col in encMtx.getColumnHeaders():
+   try:
+      efValue = col.split(' - ')[1]
+   except:
+      efValue = col
+
+   if valAttribute is not None:
+      intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
+                   MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue}
+   else:
+      intParams = None
+   metadata = {
+      ServiceObject.META_DESCRIPTION.lower() : 
+   'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
+      ServiceObject.META_TITLE.lower() : 
+   'Biogeographic hypothesis column ({})'.format(col)}
+   mc = MatrixColumn(len(mtxCols), bgMtx.getId(), usr, layer=lyr,
+                     shapegrid=shapegrid, intersectParams=intParams, 
+                     metadata=metadata, postToSolr=False,
+                     status=JobStatus.COMPLETE, 
+                     statusModTime=mx.DateTime.gmt().mjd)
+   updatedMC = scribe.findOrInsertMatrixColumn(mc)
+   mtxCols.append(updatedMC)
+
+# Append to previous layer encodings 
+bgMtx = Matrix.concatenate([bgMtx, encMtx], axis=1)
+
+bgMtx.clearDLocation()
+bgMtx.setDLocation()
+bgMtx.write()
+bgMtx.updateStatus(JobStatus.COMPLETE, modTime=mx.DateTime.gmt().mjd)
+success = scribe.updateObject(bgMtx)
+return bgMtx
+
+# Tree
+baretree = Tree(treename, userId=args.user)
+tree = scribe.getTree(tree=baretree)
+decoratedtree = squidifyTree(scribe, usr, tree)
+
+scribe.closeConnections()
+"""
    
