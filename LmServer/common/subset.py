@@ -94,7 +94,7 @@ def subsetGlobalPAM(archiveName, matches, userId, scribe=None):
    updatedGS = scribe.findOrInsertGridset(gs)
    updatedGS.tree = origGS.tree
    log.debug("Tree for gridset {} is {}".format(updatedGS.getId(), updatedGS.tree.getId()))
-   updatedGS.updateModtime()
+   updatedGS.updateModtime(gmt().mjd)
    scribe.updateObject(updatedGS)
    
    for scnId, scnMatches in matchesByScen.iteritems():
