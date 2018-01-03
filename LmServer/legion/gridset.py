@@ -622,7 +622,9 @@ class Gridset(ServiceObject): #LMMap
                if mtx.getId() not in existingIds:
                   self._matrices.append(mtx)
                                        
-   def getMatrices(self, mtypes):
+   # TODO: Aimee, is the mtypes left over or not yet implemented?  Making it  
+   #          optional since it is not used
+   def getMatrices(self, mtypes=None):
       return self._matrices
 
    def _getMatrixTypes(self, mtypes):
