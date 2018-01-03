@@ -29,8 +29,8 @@
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 \c borg
-ALTER TABLE lm_v3.Layer DROP COLUMN IF EXISTS mdlmaskId CASCADE;
-ALTER TABLE lm_v3.Layer DROP COLUMN IF EXISTS prjmaskId CASCADE;
+ALTER TABLE lm_v3.SDMProject DROP COLUMN IF EXISTS mdlmaskId CASCADE;
+ALTER TABLE lm_v3.SDMProject DROP COLUMN IF EXISTS prjmaskId CASCADE;
 
 DROP FUNCTION IF EXISTS lm_v3.lm_insertSDMProject(prjid int,
                                                            lyrid int,
