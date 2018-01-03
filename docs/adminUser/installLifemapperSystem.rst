@@ -145,7 +145,7 @@ Check LmCompute
    * files in /state/partition1/lmscratch/log
      * initLMcompute.log 
      * installComputeCronJobs.log
-     * seedData.log (seedData must be run manually by user after reboot)
+     * transformData.log (transformData must be run manually by user after reboot)
 
 Configure for new/test data
 ---------------------------
@@ -181,7 +181,7 @@ Configure for new/test data
 #. Create ASCII and MXE versions of env layers for Maxent, and seed Sqlite 
    database with bash script and basename of Scenario Package (available in the 
    data package metadata file and output with instructions after getBoomData)::
-       # /opt/lifemapper/rocks/bin/seedData <SCENARIO_PKG>
+       # /opt/lifemapper/rocks/bin/transformData <Climate directory>
        
 #. Catalog BOOM data inputs in database with bash script and filename of boom 
    parameter file (available in the data package metadata file and output 
