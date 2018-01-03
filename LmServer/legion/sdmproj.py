@@ -88,8 +88,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
          
       _LayerParameters.__init__(self, userId, paramId=projectId, matrixIndex=-1, 
                                 metadata=projMetadata, modTime=statusModTime)
-      ProcessObject.__init__(self, objId=projectId, 
-                             processType=processType, parentId=None, 
+      ProcessObject.__init__(self, objId=projectId, processType=processType, 
                              status=status, statusModTime=statusModTime)
       self._occurrenceSet = occurrenceSet
       self._algorithm = algorithm

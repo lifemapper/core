@@ -57,7 +57,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 # .............................................................................
    def __init__(self, displayName, queryCount, modTime, userId, 
                 occurrenceSetId, metadata={}, sciName=None, 
-                rawDLocation=None, processType=None, parentId=None,
+                rawDLocation=None, processType=None, 
                 status=None, statusModTime=None):
       """
       @summary Initialize the _Occurrences class instance
@@ -76,7 +76,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
                                 matrixIndex=-1, metadata=metadata, 
                                 modTime=modTime)
       ProcessObject.__init__(self, objId=occurrenceSetId, 
-                             processType=processType, parentId=parentId,
+                             processType=processType, 
                              status=status, statusModTime=statusModTime)
       self.displayName = displayName
       self.queryCount = queryCount
@@ -137,7 +137,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 featureCount=0, featureAttributes={}, features={}, 
                 fidAttribute=None,                
                 occMetadata={}, sciName=None, objId=None, processType=None, 
-                parentId=None, status=None, statusModTime=None):
+                status=None, statusModTime=None):
       """
       @todo: calculate bbox from points upon population, update as appropriate
       @summary Initialize the OccurrenceSet class instance
@@ -149,7 +149,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       OccurrenceType.__init__(self, displayName, queryCount, statusModTime, 
                 userId, occurrenceSetId, metadata=occMetadata, sciName=sciName, 
                 rawDLocation=rawDLocation, processType=processType, 
-                parentId=parentId, status=status, statusModTime=statusModTime)
+                status=status, statusModTime=statusModTime)
       Vector.__init__(self, None, userId, epsgcode, lyrId=occurrenceSetId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
                 metadata=lyrMetadata, dataFormat=dataFormat, ogrType=ogr.wkbPoint,

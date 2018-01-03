@@ -92,11 +92,10 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                                 matrixIndex=matrixIndex, metadata=metadata, 
                                 modTime=statusModTime)
       ServiceObject.__init__(self,  userId, matrixColumnId, 
-                             LMServiceType.MATRIX_COLUMNS, 
+                             LMServiceType.MATRIX_COLUMNS, parentId=matrixId, 
                              modTime=statusModTime)
       ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
-                             parentId=matrixId, status=status, 
-                             statusModTime=statusModTime)
+                             status=status, statusModTime=statusModTime)
       self.layer = layer
       self.shapegrid = shapegrid
       self.intersectParams = {}

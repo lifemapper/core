@@ -60,7 +60,7 @@ class MFChain(ProcessObject):
       self.priority = priority
       self.mfMetadata = {}
       self.loadMfMetadata(metadata)
-      ProcessObject.__init__(self, objId=mfChainId, processType=None, parentId=None,
+      ProcessObject.__init__(self, objId=mfChainId, processType=None, 
                              status=status, statusModTime=statusModTime)
       
 # ...............................................

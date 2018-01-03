@@ -39,7 +39,8 @@ class Tree(LmTree, ServiceObject):
 # Constructor
 # .............................................................................
    def __init__(self, name, metadata={}, dlocation=None, schema=DEFAULT_TREE_SCHEMA,
-                metadataUrl=None, userId=None, treeId=None, modTime=None):
+                metadataUrl=None, userId=None, gridsetId=None, treeId=None, 
+                modTime=None):
       """
       @summary Constructor for the Tree class.  
       @copydoc LmCommon.trees.lmTree.LmTree::fromFile()
@@ -49,7 +50,8 @@ class Tree(LmTree, ServiceObject):
       @param treeId: dbId  for ServiceObject
       """
       ServiceObject.__init__(self, userId, treeId, LMServiceType.TREES, 
-                             metadataUrl=metadataUrl, modTime=modTime)
+                             metadataUrl=metadataUrl, parentId=gridsetId, 
+                             modTime=modTime)
       self.name = name
       self._dlocation = dlocation
       self.treeMetadata = {}

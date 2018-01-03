@@ -27,10 +27,8 @@
 import mx.DateTime 
 
 from LmBackend.common.lmobj import LMObject
-from LmCommon.common.lmconstants import ProcessType
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import ID_PLACEHOLDER, ProcessTool
-from LmBackend.common.cmd import MfRule
+from LmServer.common.lmconstants import ID_PLACEHOLDER
 
 # .............................................................................
 class ServiceObject(LMObject):
@@ -48,7 +46,7 @@ class ServiceObject(LMObject):
 # Constructor
 # .............................................................................
    def __init__(self, userId, dbId, serviceType, metadataUrl=None, 
-                parentMetadataUrl=None, modTime=None):
+                parentMetadataUrl=None, parentId=None, modTime=None):
       """
       @summary Constructor for the abstract ServiceObject class
       @param userId: id for the owner of these data
@@ -57,6 +55,8 @@ class ServiceObject(LMObject):
       @param metadataUrl: URL for retrieving the metadata
       @param parentMetadataUrl: URL for retrieving the metadata of a
                                  parent container object
+      @param parentId: Id of container, if any, associated with one instance of 
+                       this parameterized object
       @param modTime: Last modification Time/Date, in MJD format
       """
       LMObject.__init__(self)
@@ -66,6 +66,8 @@ class ServiceObject(LMObject):
       self._dbId = dbId
       self.serviceType = serviceType
       self._metadataUrl = metadataUrl
+      # Moved from ProcessObject
+      self.parentId = parentId
       self._parentMetadataUrl = parentMetadataUrl
       self.modTime = modTime
       if serviceType is None:
@@ -186,13 +188,11 @@ class ProcessObject(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................   
-   def __init__(self, objId=None, processType=None, parentId=None,
+   def __init__(self, objId=None, processType=None, 
                 status=None, statusModTime=None):
       """
       @param objId: Unique identifier for this parameterized object
       @param processType: Integer code LmCommon.common.lmconstants.ProcessType
-      @param parentId: Id of container, if any, associated with one instance of 
-                       this parameterized object
       @param status: status of processing
       @param statusModTime: last status modification time in MJD format 
       @note: The object with objId can be instantiated for each container, 
@@ -201,7 +201,6 @@ class ProcessObject(LMObject):
       """
       self.objId = objId
       self.processType = processType
-      self.parentId = parentId
       self._status = status
       self._statusmodtime = statusModTime
       

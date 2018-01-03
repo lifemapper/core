@@ -87,7 +87,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             fidAttribute=fidAttribute)
       ProcessObject.__init__(self, objId=lyrId, 
                              processType=ProcessType.RAD_BUILDGRID,
-                             parentId=None,
                              status=status, statusModTime=statusModTime)
       # Don't necessarily need centroids (requires reading shapegrid)
 #       self._setMapPrefix()

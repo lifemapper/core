@@ -89,9 +89,9 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
                              metadataUrl=metadataUrl, 
                              parentMetadataUrl=gridsetUrl,
+                             parentId=gridsetId, 
                              modTime=statusModTime)
       ProcessObject.__init__(self, objId=matrixId, processType=processType,
-                             parentId=gridsetId, 
                              status=status, statusModTime=statusModTime)       
 
 # ...............................................
