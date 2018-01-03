@@ -34,18 +34,18 @@ from LmBackend.command.multi import (CalculateStatsCommand,
                      EncodePhylogenyCommand, McpaAssembleCommand, 
                      McpaCorrectPValuesCommand, McpaObservedCommand, 
                      McpaRandomCommand, CreateAncestralPamCommand,
-   SyncPamAndTreeCommand)
+                     SyncPamAndTreeCommand)
 from LmBackend.command.server import (LmTouchCommand, SquidIncCommand, 
                                       StockpileCommand)
 from LmBackend.common.lmobj import LMError
 
 from LmCommon.common.lmconstants import MatrixType, JobStatus, ProcessType
 
-#from LmServer.base.lmmap import LMMap
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType, 
                                          LMServiceType)
 from LmServer.legion.lmmatrix import LMMatrix                                  
+from LmServer.legion.tree import Tree                                  
 
 # TODO: Move these to localconstants
 NUM_RAND_GROUPS = 30
@@ -111,7 +111,7 @@ class Gridset(ServiceObject): #LMMap
       self._setEPSG(epsgcode)
       self._matrices = []
       self.setMatrices(matrices, doRead=False)
-      self.tree = tree
+      self._tree = tree
       
 # ...............................................
    @classmethod
@@ -138,9 +138,13 @@ class Gridset(ServiceObject): #LMMap
    @property
    def treeId(self):
       try:
-         return self.tree.getId()
+         return self._tree.getId()
       except:
          return None
+         
+   @property
+   def tree(self):
+      return self._tree
          
 # ...............................................
    def setLocalMapFilename(self, mapfname=None):
@@ -596,6 +600,21 @@ class Gridset(ServiceObject): #LMMap
                raise LMError('Failed to add matrix {}'.format(mtx))
 
 # ...............................................
+   def addTree(self, tree, doRead=False):
+      """
+      @summary Fill the Tree object, updating the tree dlocation
+      """
+      if tree is not None:
+         usr = self.getUserId()
+         if isinstance(tree, Tree):
+            tree.setUserId(usr)
+            # Make sure to set the parent Id and URL
+            if self.getId() is not None:
+               tree.parentId = self.getId()
+               tree.setParentMetadataUrl(self.metadataUrl)
+            self._tree(tree)
+
+# ...............................................
    def addMatrix(self, mtxFileOrObj, doRead=False):
       """
       @summary Fill a Matrix object from Matrix or existing file
@@ -622,9 +641,7 @@ class Gridset(ServiceObject): #LMMap
                if mtx.getId() not in existingIds:
                   self._matrices.append(mtx)
                                        
-   # TODO: Aimee, is the mtypes left over or not yet implemented?  Making it  
-   #          optional since it is not used
-   def getMatrices(self, mtypes=None):
+   def getMatrices(self):
       return self._matrices
 
    def _getMatrixTypes(self, mtypes):

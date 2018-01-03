@@ -1255,14 +1255,16 @@ class BOOMFiller(LMObject):
          name = os.path.splitext(self.treeFname)[0]
          treeFilename = os.path.join(self.usrPath, self.treeFname) 
          if os.path.exists(treeFilename):
+            # TODO: save gridset link to tree???
             baretree = Tree(name, dlocation=treeFilename, userId=self.usr, 
-                        modTime=currtime)
+                            gridsetId=gridset.getId(), modTime=currtime)
             tree = self.scribe.findOrInsertTree(baretree)
          else:
             self.scribe.log.warning('No tree at {}'.format(treeFilename))
    
+         # Save tree link to gridset
          print "Add tree to grid set"
-         gridset.tree = tree
+         gridset.addTree(tree)
          gridset.updateModtime(currtime)
          self.scribe.updateObject(gridset)
       return tree
