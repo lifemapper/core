@@ -255,9 +255,10 @@ class Borg(DbPostgresql):
       grdset = None
       if row is not None:
          shp = self._createShapeGrid(row, idxs)
+         # TODO: return lm_tree instead of lm_gridset (with just treeId)
+         tree = self._createTree(row, idxs)
          shpId = self._getColumnValue(row, idxs, ['layerid'])
          grdid = self._getColumnValue(row, idxs, ['gridsetid'])
-         treeid = self._getColumnValue(row, idxs, ['treeid'])
          usr = self._getColumnValue(row, idxs, ['userid'])
          name = self._getColumnValue(row, idxs, ['grdname', 'name'])
          dloc = self._getColumnValue(row, idxs, ['grddlocation', 'dlocation'])
@@ -265,7 +266,7 @@ class Borg(DbPostgresql):
          meta = self._getColumnValue(row, idxs, ['grdmetadata', 'metadata'])
          mtime = self._getColumnValue(row, idxs, ['grdmodtime', 'modtime'])
          grdset = Gridset(name=name, metadata=meta, shapeGrid=shp, 
-                          shapeGridId=shpId, treeId=treeid, 
+                          shapeGridId=shpId, tree=tree, 
                           dlocation=dloc, epsgcode=epsg, userId=usr, 
                           gridsetId=grdid, modTime=mtime)
       return grdset
