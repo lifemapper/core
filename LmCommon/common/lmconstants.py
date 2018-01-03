@@ -118,6 +118,7 @@ class LMFormat:
    CSV = FileFormat('.csv', 'text/csv',
                     driver='CSV')
    CONFIG = FileFormat('.ini', 'text/plain')
+   EML = FileFormat('.eml', 'application/xml+eml')
    GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff', default=True)
    HFA = FileFormat('.img', 'image/octet-stream', driver='HFA')
    JSON = FileFormat('.json', 'application/json')
@@ -287,6 +288,7 @@ class MatrixType:
    GRIM = 2
    BIOGEO_HYPOTHESES = 3
    ANC_PAM = 4
+   ANC_STATE = 5
    ROLLING_PAM = 10
    # OUTPUTS
    OBSERVED_CALC = 101
