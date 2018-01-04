@@ -301,7 +301,8 @@ class Boomer(LMObject):
                                       '-X {}/worker/'.format(SCRATCH_PATH),
                                       '-a {}'.format(wsMfName)]),
                             inputs=[wsMfName])
-      arfCmd = LmTouchCommand(targetFname, inputs=dependencies)
+      arfCmd = LmTouchCommand(targetFname)
+      arfCmd.inputs.extend(dependencies)
       
       delCmd = SystemCommand('rm', '-rf {}'.format(mfchain.getRelativeDirectory()))
       
