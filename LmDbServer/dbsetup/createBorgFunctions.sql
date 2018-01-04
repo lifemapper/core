@@ -2316,9 +2316,10 @@ BEGIN
                mtxid, mtxidx;
          END IF;
       end;
+   END IF;
       
    -- Find unique combo of matrixid, layer, intersect params
-   ELSEIF lyrid IS NOT NULL THEN
+   IF NOT FOUND AND lyrid IS NOT NULL THEN
       begin
          RAISE NOTICE 'look for unique with lyr %', lyrid;
          SELECT * INTO rec_mtxcol FROM lm_v3.lm_lyrMatrixcolumn 
@@ -2327,22 +2328,25 @@ BEGIN
             RAISE NOTICE 
             'Returning existing MatrixColumn for Matrix/Layer/Params % / % / %',
                mtxid, lyrid, intparams;
-         -- or insert new column at location or undefined location for gpam
-         ELSE
-            INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
-                      metadata, layerId, intersectParams, status, statusmodtime)
-               VALUES (mtxid, mtxidx, sqd, idnt, meta, lyrid, intparams, 
-                       stat, stattime);
-            IF NOT FOUND THEN
-               RAISE EXCEPTION 'Unable to findOrInsertMatrixColumn';
-            ELSE
-               SELECT INTO newid last_value FROM lm_v3.matrixcolumn_matrixcolumnid_seq;
-               SELECT * INTO rec_mtxcol FROM lm_v3.lm_lyrMatrixcolumn 
-                  WHERE matrixColumnId = newid;
-            END IF;
          END IF;
       end;
    END IF;
+   
+   IF NOT FOUND THEN
+      -- or insert new column at location or undefined location for gpam
+      INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
+                 metadata, layerId, intersectParams, status, statusmodtime)
+         VALUES (mtxid, mtxidx, sqd, idnt, meta, lyrid, intparams, 
+                 stat, stattime);
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to findOrInsertMatrixColumn';
+      ELSE
+         SELECT INTO newid last_value FROM lm_v3.matrixcolumn_matrixcolumnid_seq;
+         SELECT * INTO rec_mtxcol FROM lm_v3.lm_lyrMatrixcolumn 
+            WHERE matrixColumnId = newid;
+      END IF;
+   END IF;
+
    RETURN rec_mtxcol;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
