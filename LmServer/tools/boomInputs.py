@@ -119,21 +119,17 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
          updatedMC = scribe.findOrInsertMatrixColumn(mc)
          mtxCols.append(updatedMC)
       
-      # Append to previous layer encodings 
-      bgMtx = Matrix.concatenate([bgMtx, encMtx], axis=1)
-#       if allEncodings is None:
-#          allEncodings = encMtx
-#       else:
-#          allEncodings = Matrix.concatenate([allEncodings, encMtx], axis=1)
-   
-#    # Update biogeo matrix with new data and headers
-#    bgMtx.data = allEncodings.data
-#    bgMtx.setHeaders(allEncodings.getHeaders())
+      if bgMtx.data is None:
+         allEncodings = encMtx
+      else:
+         # Append to previous layer encodings 
+         allEncodings = Matrix.concatenate([bgMtx, encMtx], axis=1)
+
+      bgMtx.data = allEncodings.data
+      bgMtx.setHeaders(allEncodings.getHeaders())
    
    # Save matrix and update record
-   bgMtx.clearDLocation()
-   bgMtx.setDLocation()
-   bgMtx.write()
+   bgMtx.write(overwrite=True)
    bgMtx.updateStatus(JobStatus.COMPLETE, modTime=mx.DateTime.gmt().mjd)
    success = scribe.updateObject(bgMtx)
    return bgMtx
@@ -283,19 +279,19 @@ try:
    valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
 except KeyError:
    valAttribute = None
-
+ 
 lyrEnc.addLayers(lyr.getDLocation(), eventField=valAttribute)
 print('layer name={}, eventField={}, dloc={}'
       .format(lyr.name, valAttribute, lyr.getDLocation()))
-
+ 
 encMtx = lyrEnc.encodeHypotheses()
-
+ 
 for col in encMtx.getColumnHeaders():
    try:
       efValue = col.split(' - ')[1]
    except:
       efValue = col
-
+ 
    if valAttribute is not None:
       intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
                    MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue}

@@ -278,12 +278,13 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return rules
    
    # .............................
-   def write(self, dlocation=None):
+   def write(self, dlocation=None, overwrite=False):
       """
       @summary: Writes this matrix to the file system
       """
       if dlocation is None:
          dlocation = self.getDLocation()
-      
+      self.readyFilename(dlocation, overwrite=overwrite)
+
       with open(dlocation, 'w') as outF:
          self.save(outF)

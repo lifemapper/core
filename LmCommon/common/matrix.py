@@ -116,18 +116,19 @@ class Matrix(object):
       for mtx in mtxList:
          if not isinstance(mtx, Matrix):
             mtx = Matrix(mtx)
-         # Make sure we reshape if necessary if adding new axis (stacking)
-         if mtx.data.ndim < axis + 1: # Add 1 since zero-based
-            newShape = list(mtx.data.shape) + [1]
-            mtx.data = mtx.data.reshape(newShape)
-            mtx.setHeaders([''], axis=str(axis))
-         
-         h = mtx.getHeaders(axis=str(axis))
-         if h is None:
-            h = ['']
-         axisHeaders.extend(h)
-         #axisHeaders.extend(mtx.getHeaders(axis=str(axis)))
-         mtxObjs.append(mtx.data)
+         if mtx.data is not None:
+            # Make sure we reshape if necessary if adding new axis (stacking)
+            if mtx.data.ndim < axis + 1: # Add 1 since zero-based
+               newShape = list(mtx.data.shape) + [1]
+               mtx.data = mtx.data.reshape(newShape)
+               mtx.setHeaders([''], axis=str(axis))
+            
+            h = mtx.getHeaders(axis=str(axis))
+            if h is None:
+               h = ['']
+            axisHeaders.extend(h)
+            #axisHeaders.extend(mtx.getHeaders(axis=str(axis)))
+            mtxObjs.append(mtx.data)
          
       # Create a new data matrix
       newData = np.concatenate(mtxObjs, axis=axis)

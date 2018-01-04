@@ -80,6 +80,7 @@ class LMObject(object):
             else:
                return True
          else:
+            print('File {} exists, overwrite=False'.format(fullfilename))
             return False
       else:
          pth, basename = os.path.split(fullfilename)
