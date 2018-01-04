@@ -2286,6 +2286,7 @@ DECLARE
    lyrcount int;
    mtxcount int;
    newid int;
+   recCount int := -1;
    rec_lyr lm_v3.layer%rowtype;
    rec_mtxcol lm_v3.lm_lyrMatrixcolumn%rowtype;
 BEGIN
@@ -2305,26 +2306,28 @@ BEGIN
       END IF;
    END IF;
    
-   -- Find unique combo of matrixid, matrixIndex
+   -- Look for unique combo of matrixid, matrixIndex
    IF mtxidx IS NOT NULL AND mtxidx > -1 THEN
       begin
          RAISE NOTICE 'look for unique with matrixid %, matrixIndex %', mtxid, mtxidx;
          SELECT * INTO rec_mtxcol FROM lm_v3.lm_lyrMatrixcolumn 
             WHERE matrixid = mtxid AND matrixIndex = mtxidx;
-         IF FOUND THEN
+         GET DIAGNOSTICS recCount = ROW_COUNT;
+         IF recCount > 0 THEN
             RAISE NOTICE 'Returning existing MatrixColumn for Matrix % and Column %',
                mtxid, mtxidx;
          END IF;
       end;
    END IF;
-      
-   -- Find unique combo of matrixid, layer, intersect params
-   IF NOT FOUND AND lyrid IS NOT NULL THEN
+   
+   -- If not found yet, look for unique combo of matrixid, layer, intersect params
+   IF recCount < 1 AND lyrid IS NOT NULL THEN
       begin
          RAISE NOTICE 'look for unique with lyr %', lyrid;
          SELECT * INTO rec_mtxcol FROM lm_v3.lm_lyrMatrixcolumn 
             WHERE matrixid = mtxid AND layerid = lyrid AND intersectParams = intparams;
-         IF FOUND THEN
+         GET DIAGNOSTICS recCount = ROW_COUNT;
+         IF recCount > 0 THEN
             RAISE NOTICE 
             'Returning existing MatrixColumn for Matrix/Layer/Params % / % / %',
                mtxid, lyrid, intparams;
@@ -2332,7 +2335,7 @@ BEGIN
       end;
    END IF;
    
-   IF NOT FOUND THEN
+   IF recCount = 0 THEN
       -- or insert new column at location or undefined location for gpam
       INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
                  metadata, layerId, intersectParams, status, statusmodtime)

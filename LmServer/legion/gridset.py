@@ -604,15 +604,13 @@ class Gridset(ServiceObject): #LMMap
       """
       @summary Fill the Tree object, updating the tree dlocation
       """
-      if tree is not None:
-         usr = self.getUserId()
-         if isinstance(tree, Tree):
-            tree.setUserId(usr)
-            # Make sure to set the parent Id and URL
-            if self.getId() is not None:
-               tree.parentId = self.getId()
-               tree.setParentMetadataUrl(self.metadataUrl)
-            self._tree(tree)
+      if isinstance(tree, Tree):
+         tree.setUserId(self.getUserId())
+         # Make sure to set the parent Id and URL
+         if self.getId() is not None:
+            tree.parentId = self.getId()
+            tree.setParentMetadataUrl(self.metadataUrl)
+         self._tree = tree
 
 # ...............................................
    def addMatrix(self, mtxFileOrObj, doRead=False):

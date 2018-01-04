@@ -646,7 +646,10 @@ class BOOMFiller(LMObject):
    # ...............................................
    def _createMaskLayer(self, SPMETA, pkgMeta, elyrMeta):
       """
-      @summary Assembles layer metadata for optional mask from scenario package
+      @summary Assembles layer metadata for input to optional 
+               pre-processing SDM Mask step identified in scenario package 
+               metadata. 
+               Currently only the 'hull_region_intersect' method is available.
       """
       # Required keys in SDM_MASK_INPUT: name, bbox, gdaltype, gdalformat, file
       maskMeta = SPMETA.SDM_MASK_INPUT
@@ -1486,51 +1489,21 @@ CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().d
 CURR_MJD = mx.DateTime.gmt().mjd
 
 cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
+cfname='/state/partition1/lmscratch/temp/heuchera_boom_params.ini'
+
 filler = BOOMFiller(configFname=cfname)
 filler.initializeInputs()
 
-
-filler = BOOMFiller()
-filler.initializeInputs()
-
-filler.usr
-filler.usrEmail,
-filler.archiveName,
-filler.priority,
-filler.scenPackageName,
-filler.modelScenCode,
-filler.prjScenCodeList,
-filler.dataSource,
-filler.occIdFname,
-filler.gbifFname,
-filler.idigFname,
-filler.idigOccSep,
-filler.bisonFname,
-filler.userOccFname,
-filler.userOccSep,   
-filler.minpoints,
-filler.algorithms,
-filler.assemblePams,
-filler.gridbbox,
-filler.cellsides,
-filler.cellsize,
-filler.gridname, 
-filler.intersectParams, 
-filler.maskAlg
 # ...............................................
 # Data for this instance (Taxonomy, algorithms, default users)
 # ...............................................
 if isInitial:
-   # Insert all taxonomic sources for now
    filler.scribe.log.info('  Insert taxonomy metadata ...')
    for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
       taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
-filler.initializeInputs()
-   filler.addAlgorithms()
-   filler.addTNCEcoregions()
-      
-# This user and default users
-# Add param user, PUBLIC_USER, DEFAULT_POST_USER users
+
+filler.addAlgorithms()
+filler.addTNCEcoregions()
 filler.addUsers()
 
 # ...............................................
@@ -1538,26 +1511,27 @@ filler.addUsers()
 # ...............................................
 # This updates the scenPkg with db objects for other operations
 filler.addPackageScenariosLayers()
-      a
+
+filler.addMaskLayer()
+      
 # Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
 if filler.occIdFname:
    filler._checkOccurrenceSets()
       
-# Add or get ShapeGrid, Global PAM, Gridset for this archive
-# This updates the gridset, shapegrid, default PAMs (rolling, with no 
-#     matrixColumns, default GRIMs with matrixColumns
-# Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
-scenGrims, gridset = filler.addShapeGridGPAMGridset()
+scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
 
-# If there are Scenario GRIMs, create MFChain for each 
 filler.addGRIMChains(scenGrims)
-   
+
+tree = filler.addTree(boomGridset)
+
+biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
+
+
 # Write config file for this archive
-filler.writeConfigFile()
+#    filler.writeConfigFile(tree, biogeoMtx, biogeoLayers)
+filler.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, biogeoLayers=biogeoLayerNames)
 
-# Create MFChain to run Boomer daemon on these inputs
 mfChain = filler.addBoomChain()
-filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
+   
 filler.close()
-
 """
