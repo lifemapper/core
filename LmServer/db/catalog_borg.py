@@ -2298,6 +2298,9 @@ class Borg(DbPostgresql):
          success = self.updateSDMProject(obj)
       elif isinstance(obj, ShapeGrid):
          success = self.updateShapeGrid(obj)
+      # TODO: Handle if MatrixColumn changes to inherit from LMMatrix
+      elif isinstance(obj, MatrixColumn):
+         success = self.updateMatrixColumn(obj)
       elif isinstance(obj, LMMatrix):
          success = self.updateMatrix(obj)
       elif isinstance(obj, Tree):
