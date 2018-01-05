@@ -85,7 +85,7 @@ class Stockpile(LMObject):
       try:
          obj = cls._getObject(scribe, ptype, objId)
          cls._copyObject(scribe, ptype, obj, outputFnameList, metaFilename)
-         cls._updateObject(scribe, ptype, obj, status)
+         cls._updateObject(scribe, obj, status)
       except Exception, e:
          print('Exception on Stockpile._updateObject ({})'.format(str(e)))
          success = False
@@ -112,6 +112,11 @@ class Stockpile(LMObject):
             obj = scribe.getShapeGrid(lyrId=objId)
          elif ProcessType.isMatrix(ptype):
             obj = scribe.getMatrix(mtxId=objId)
+         elif ProcessType.isIntersect(ptype):
+            obj = scribe.getMatrixColumn(mtxcolId=objId)
+         else:
+            raise LMError(currargs='Unsupported ProcessType {} for object {}'
+                          .format(ptype, objId))
       except Exception, e:
          raise LMError(currargs='Failed to get object {} for process {}, exception {}'
                        .format(objId, ptype, str(e)))
@@ -156,7 +161,7 @@ class Stockpile(LMObject):
 
 # .............................................................................
    @classmethod
-   def _updateObject(cls, scribe, obj):
+   def _updateObject(cls, scribe, obj, status):
       """
       @summary: Get object and update DB with status.  
       """
