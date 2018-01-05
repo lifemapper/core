@@ -54,13 +54,16 @@ class Stockpile(LMObject):
       @param ptype: LmCommon.common.lmconstants.ProcessType for the process
              being examined
       @param objId: Unique database ID for the object to update
-      @param status: Status returned by the computational process??
+      @param status: Not currently used, currently assign COMPLETE/ERROR from
+             success/failure of testFile function. TODO: Could be status 
+             returned by the computational process??
       @param successFname: Filename to be written IFF success=True. Contains  
              final status and testing results 
       @param outputFnameList: List of output files returned by the computational 
              process
-      @TODO: 'status' is currently unused. Are we getting a status file or 
-             integer for updated object?
+      @param metaFilename: filename for JSON matrix metadata 
+      @return: True on success, False on bad data or failure to get/copy/update
+      @todo: Use or delete status parameters
       """
       outputInfo = []
       success = True
@@ -71,7 +74,6 @@ class Stockpile(LMObject):
             success = False
             outputInfo.extend(msgs)
             
-      # TODO: Override status on failure?
       if not success:
          status = JobStatus.GENERAL_ERROR
       else:
@@ -81,11 +83,13 @@ class Stockpile(LMObject):
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
       try:
-         cls._updateObject(scribe, ptype, objId, status, outputFnameList,
-                           metaFilename=metaFilename)
-      except:
-         # TODO: raise exception, or write info to file?
-         pass
+         obj = cls._getObject(scribe, ptype, objId)
+         cls._copyObject(scribe, ptype, obj, outputFnameList, metaFilename)
+         cls._updateObject(scribe, ptype, obj, status)
+      except Exception, e:
+         print('Exception on Stockpile._updateObject ({})'.format(str(e)))
+         success = False
+         raise
       finally:
          scribe.closeConnections()
          
@@ -93,63 +97,83 @@ class Stockpile(LMObject):
       
 # .............................................................................
    @classmethod
-   def _updateObject(cls, scribe, ptype, objId, status, fileNames, 
-                     metaFilename=None):
+   def _getObject(cls, scribe, ptype, objId):
       """
       @summary: Get object and update DB with status.  
       """
-      msgs = []
+      # Get object
+      obj = None
       try:
-         # Get metadata
-         metadata = None
-         with open(metaFilename) as inMeta:
-            metadata = json.load(inMeta)
-         
-         # Get object
          if ProcessType.isOccurrence(ptype):
             obj = scribe.getOccurrenceSet(occId=objId)
-            # Move data file
-            baseOutDir = os.path.dirname(obj.getDLocation())
-            for fn in glob.glob('{}.*'.format(os.path.splitext(fileNames[0])[0])):
-               shutil.copy(fn, baseOutDir)
-            
-            # Try big data file
-            bigFname = fileNames[0].replace('/pt', '/bigpt')
-            if cls.testFile(bigFname)[0]:
-               shutil.copy(bigFname, obj.getDlocation(largeFile=True))
-         
-         
          elif ProcessType.isProject(ptype):
             obj = scribe.getSDMProject(objId)
-            shutil.copy(fileNames[0], obj.getDLocation())
-            shutil.copy(fileNames[1], obj.getProjPackageFilename())
          elif ptype == ProcessType.RAD_BUILDGRID:
             obj = scribe.getShapeGrid(lyrId=objId)
          elif ProcessType.isMatrix(ptype):
             obj = scribe.getMatrix(mtxId=objId)
+      except Exception, e:
+         raise LMError(currargs='Failed to get object {} for process {}, exception {}'
+                       .format(objId, ptype, str(e)))
+      if obj is None:
+         raise LMError(currargs='Failed to get object {} for process {}'
+                       .format(objId, ptype))
+      return obj
+
+# .............................................................................
+   @classmethod
+   def _copyObject(cls, scribe, ptype, obj, fileNames, metaFilename):
+      """
+      @summary: Get object and update DB with status.  
+      """
+      metadata = None
+      try:
+         with open(metaFilename) as inMeta:
+            metadata = json.load(inMeta)
+      except:
+         pass
+      # Copy data
+      try:
+         if ProcessType.isOccurrence(ptype):
+            # Move data file
+            baseOutDir = os.path.dirname(obj.getDLocation())
+            for fn in glob.glob('{}.*'.format(os.path.splitext(fileNames[0])[0])):
+               shutil.copy(fn, baseOutDir)
+            # Try big data file
+            bigFname = fileNames[0].replace('/pt', '/bigpt')
+            if cls.testFile(bigFname)[0]:
+               shutil.copy(bigFname, obj.getDlocation(largeFile=True))         
+         elif ProcessType.isProject(ptype):
+            shutil.copy(fileNames[0], obj.getDLocation())
+            shutil.copy(fileNames[1], obj.getProjPackageFilename())
+         elif ProcessType.isMatrix(ptype):
             if metadata is not None:
                obj.addMtxMetadata(metadata)
             shutil.copy(fileNames[0], obj.getDLocation())
       except Exception, e:
-         msg = 'Failed to get object {} for process {}'.format(objId, ptype)
-         msgs.append(msg)
-         raise LMError(currargs=msg)
-      
+         raise LMError(currargs='Exception copying primary {} or ancillary output, ({})'
+                       .format(obj.getDLocation(), str(e)))
+
+# .............................................................................
+   @classmethod
+   def _updateObject(cls, scribe, obj):
+      """
+      @summary: Get object and update DB with status.  
+      """
       # Update verify hash and modtime for layers
       try:
          obj.updateLayer()
       except:
          pass
-      
-      # Update object and db record
+
+      obj.updateStatus(status)
+
+      # Update database
       try:
-         obj.updateStatus(status)
          scribe.updateObject(obj)
       except Exception, e:
-         msg = ('Failed to update object {} for process {}, ({})'
-                .format(objId, ptype, str(e)))
-         msgs.append(msg)
-         raise LMError(currargs=msg)
+         raise LMError(currargs='Exception updating object {} for process {}, ({})'
+                       .format(objId, ptype, str(e)))
 
    # ...............................................
    @classmethod
@@ -199,6 +223,9 @@ class Stockpile(LMObject):
 
 # .............................................................................
 if __name__ == "__main__":
+   """
+   @todo: Use or delete status parameters
+   """
    parser = argparse.ArgumentParser(description='This script updates a Lifemapper object')
    # Inputs
    parser.add_argument('processType', type=int, 
@@ -266,13 +293,19 @@ from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.tools.stockpile import *
 
+scribe = BorgScribe(ConsoleLogger())
+scribe.openConnections()
+
+
+
 status = 999
 ptype = ProcessType.USER_TAXA_OCCURRENCE
 objId = 504
 successFname = 'pt_504.success'
 outputFnameList = ['/share/lm/data/archive/ryan/000/000/000/504/pt_504.shp']
 
-stp.testAndStash(ptype, objId, status, successFname, 
-                                    outputFnameList)
+Stockpile.testAndStash(ptype, objId, status, successFname, outputFnameList)
+
+scribe.closeConnections()
 """
    
