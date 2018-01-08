@@ -27,8 +27,9 @@
 """
 import argparse
 import numpy as np
-from osgeo import gdal
-import gdalconst
+from osgeo import gdal, gdalconst
+
+from LmCommon.common.lmconstants import DEFAULT_NODATA
 
 # .............................................................................
 def createMaskRaster(inRasterFn, outRasterFn):
@@ -43,7 +44,6 @@ def createMaskRaster(inRasterFn, outRasterFn):
    
    data = band.ReadAsArray(0, 0, cols, rows)
    
-   noData = -9999
    newData = np.ones(data.shape, dtype=int)
    
    drv = ds.GetDriver()
@@ -53,7 +53,7 @@ def createMaskRaster(inRasterFn, outRasterFn):
    # Write the data
    outBand.WriteArray(newData, 0, 0)
    outBand.FlushCache()
-   outBand.SetNoDataValue(noData)
+   outBand.SetNoDataValue(DEFAULT_NODATA)
    
    # Georeference the image and set the projection
    outDs.SetGeoTransform(ds.GetGeoTransform())

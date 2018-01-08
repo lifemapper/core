@@ -28,10 +28,11 @@ except:
    print 'Unable to import numpy'
    
 import os
-import osgeo.gdal as gdal
-import osgeo.gdalconst as gdalconst
+from osgeo import gdal
+from osgeo import gdalconst
 
 from LmBackend.common.lmobj import LMError, LMObject
+from LmCommon.common.lmconstants import DEFAULT_NODATA
 
 # ............................................................................
 class GeoFileInfo(LMObject):
@@ -466,7 +467,7 @@ class GeoFileInfo(LMObject):
       return False
   
 # ...............................................
-   def getZvalues(self, points, missingv=-9999.0):
+   def getZvalues(self, points, missingv=DEFAULT_NODATA):
       '''
       @summary: Given a set of [[x,y], ...], returns [[x,y,z], ... ]
       @param points: A sequence of points (tuples of x and y)

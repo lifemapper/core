@@ -40,7 +40,7 @@ import shutil
 import subprocess
 from time import sleep
 
-from LmCommon.common.lmconstants import (LMFormat)
+from LmCommon.common.lmconstants import (LMFormat, DEFAULT_NODATA)
 from LmCompute.common.lmconstants import (CONVERT_JAVA_CMD, CONVERT_TOOL, 
                                           ME_CMD, TEMPORARY_FILE_PATH)
 
@@ -59,7 +59,7 @@ def convertAndModifyAsciiToTiff(ascFn, tiffFn, scale=None, multiplier=None,
                     form (scaleMin, scaleMax)
    @param multiplier: If None, don't do anything.  If provided, multiply all
                          data values in the grid by this number
-   @param noDataVal: The no data value to use for the new layer
+   @param noDataVal: The no data value to use for the new value-adjusted layer
    @param dataType: The data type for the resulting raster
    """
    if dataType.lower() == "int":
@@ -104,7 +104,6 @@ def convertAndModifyAsciiToTiff(ascFn, tiffFn, scale=None, multiplier=None,
    driver = gdal.GetDriverByName('GTiff')
    dst_ds = driver.Create(tiffFn, src_ds.RasterXSize, src_ds.RasterYSize, 1, 
                           gdalType)
-    
    dst_ds.GetRasterBand(1).WriteArray(data)
    dst_ds.GetRasterBand(1).SetNoDataValue(noDataVal)
    dst_ds.GetRasterBand(1).ComputeStatistics(True)
@@ -201,7 +200,6 @@ def convertLayersInDirectory(layerDir):
    if len(mxeTups) > 0:
       print "Converting ASCIIs to MXEs"
       convertAsciisToMxes(mxeTups)
-         
 
 # .............................................................................
 def convertTiffToAscii(tiffFn, asciiFn):
@@ -218,72 +216,45 @@ def convertTiffToAscii(tiffFn, asciiFn):
    # Use GDAL to generate ASCII Grid 
    drv = gdal.GetDriverByName('AAIGrid')
    ds_in = gdal.Open(tiffFn)
-
-   # MXE creation fails if we don't have a NODATA value, so add one if missing
-   if ds_in.GetRasterBand(1).GetNoDataValue() is None:
-      ds_in.GetRasterBand(1).SetNoDataValue(-999)
-
+   # Get header information from tiff file
+   leftX, xres, _, uly, _, yres = ds_in.GetGeoTransform()
+   leftY = uly + (ds_in.RasterYSize * yres)
+   cols = ds_in.RasterXSize
+   rows = ds_in.RasterYSize
+   # Force a NODATA value if missing from TIFF before copying to ASCII 
+   nodata = ds_in.GetRasterBand(1).GetNoDataValue()
+   if nodata is None:
+      ds_in.GetRasterBand(1).SetNoDataValue(DEFAULT_NODATA)
+      nodata = DEFAULT_NODATA
    options = ['FORCE_CELLSIZE=True']
    ds_out = drv.CreateCopy(asciiFn, ds_in, 0, options)
-   #ds_out = drv.CreateCopy(asciiFn, ds_in)
    ds_in = None
    ds_out = None   
-   
-   # Now go back and modify the output if necessary
-   # Note, this will fail if any of the required headers are missing
-   output = [] # Lines to output back to file
-   cont = True
-   
-   
-   # Get header information from tiff file instead of reading ascii for it
-   ds = gdal.Open(tiffFn)
-   band = ds.GetRasterBand(1)
-
-   leftX, xres, _, uly, _, yres = ds.GetGeoTransform()
-   
-   
-   
-   leftY = uly + (ds.RasterYSize * yres)
-   
-   nColsLine = 'ncols   {}\n'.format(ds.RasterXSize)
-   nRowsLine = 'nrows   {}\n'.format(ds.RasterYSize)
-   xllLine = 'xllcorner   {}\n'.format(leftX)
-   yllLine = 'yllcorner   {}\n'.format(leftY)
-   cellsizeLine = 'cellsize   {}\n'.format(xres)
-   ndLine = 'NODATA_value   {}\n'.format(int(band.GetNoDataValue()))
-   
-   
+      
+   # Rewrite  ASCII header with tiff info      
+   output = [] 
+   output.append('ncols   {}\n'.format(cols))
+   output.append('nrows   {}\n'.format(rows))
+   output.append('xllcorner   {}\n'.format(leftX))
+   output.append('yllcorner   {}\n'.format(leftY))
+   output.append('cellsize   {}\n'.format(xres))
+   output.append('NODATA_value   {}\n'.format(int(nodata)))
+   pastHeader = False
    with open(asciiFn, 'r') as ascIn:
       for line in ascIn:
-         if cont:
-            if line.lower().startswith('ncols'):
-               pass
-            elif line.lower().startswith('nrows'):  
-               pass
-            elif line.lower().startswith('xllcorner'):
-               pass
-            elif line.lower().startswith('yllcorner'):
-               pass
-            elif line.lower().startswith('cellsize'):
-               pass
-            elif line.lower().startswith('dx'):
-               pass
-            elif line.lower().startswith('dy'):
-               pass
-            elif line.lower().startswith('nodata_value'):
-               #ndLine = line
-               pass
-            else: # Data line
-               cont = False
-               output.append(nColsLine)
-               output.append(nRowsLine)
-               output.append(xllLine)
-               output.append(yllLine)
-               output.append(cellsizeLine)
-               if ndLine is not None:
-                  output.append(ndLine)
-               output.append(line)
+         lowline = line.lower()
+         if (pastHeader or
+             lowline.startswith('ncols') or
+             lowline.startswith('nrows') or
+             lowline.startswith('xllcorner') or
+             lowline.startswith('yllcorner') or
+             lowline.startswith('cellsize') or
+             lowline.startswith('dx') or
+             lowline.startswith('dy') or 
+             lowline.startswith('nodata_value')):  
+            pass
          else:
+            pastHeader = True
             output.append(line)
    # Rewrite ASCII Grid
    with open(asciiFn, 'w') as ascOut:
@@ -326,3 +297,99 @@ def processLayersJSON(layerJSON, symDir=None):
    else:
       return layers
 
+"""
+from hashlib import md5
+from mx.DateTime import gmt
+import numpy
+import os
+from osgeo import gdal
+import shutil
+import subprocess
+from time import sleep
+
+from LmCommon.common.lmconstants import (LMFormat)
+from LmCompute.common.lmconstants import (CONVERT_JAVA_CMD, CONVERT_TOOL, 
+                                          ME_CMD, TEMPORARY_FILE_PATH)
+
+WAIT_SECONDS = 30
+
+
+tiffFn='/share/lm/data/layers/30sec-CONUS/worldclim1.4/alt.tif'
+basename, ext = os.path.splitext(tiffFn)
+asciiFn = '{}{}'.format(basename, LMFormat.ASCII.ext)
+
+
+drv = gdal.GetDriverByName('AAIGrid')
+ds_in = gdal.Open(tiffFn)
+if ds_in.GetRasterBand(1).GetNoDataValue() is None:
+   ds_in.GetRasterBand(1).SetNoDataValue(-999)
+
+options = ['FORCE_CELLSIZE=True']
+ds_out = drv.CreateCopy(asciiFn, ds_in, 0, options)
+#ds_out = drv.CreateCopy(asciiFn, ds_in)
+ds_in = None
+ds_out = None   
+
+# Now go back and modify the output if necessary
+# Note, this will fail if any of the required headers are missing
+output = [] # Lines to output back to file
+cont = True
+
+
+# Get header information from tiff file instead of reading ascii for it
+ds = gdal.Open(tiffFn)
+band = ds.GetRasterBand(1)
+
+leftX, xres, _, uly, _, yres = ds.GetGeoTransform()
+
+
+
+leftY = uly + (ds.RasterYSize * yres)
+
+nColsLine = 'ncols   {}\n'.format(ds.RasterXSize)
+nRowsLine = 'nrows   {}\n'.format(ds.RasterYSize)
+xllLine = 'xllcorner   {}\n'.format(leftX)
+yllLine = 'yllcorner   {}\n'.format(leftY)
+cellsizeLine = 'cellsize   {}\n'.format(xres)
+ndLine = 'NODATA_value   {}\n'.format(int(band.GetNoDataValue()))
+
+
+with open(asciiFn, 'r') as ascIn:
+   for line in ascIn:
+      if cont:
+         if line.lower().startswith('ncols'):
+            pass
+         elif line.lower().startswith('nrows'):  
+            pass
+         elif line.lower().startswith('xllcorner'):
+            pass
+         elif line.lower().startswith('yllcorner'):
+            pass
+         elif line.lower().startswith('cellsize'):
+            pass
+         elif line.lower().startswith('dx'):
+            pass
+         elif line.lower().startswith('dy'):
+            pass
+         elif line.lower().startswith('nodata_value'):
+            #ndLine = line
+            pass
+         else: # Data line
+            cont = False
+            output.append(nColsLine)
+            output.append(nRowsLine)
+            output.append(xllLine)
+            output.append(yllLine)
+            output.append(cellsizeLine)
+            if ndLine is not None:
+               output.append(ndLine)
+            output.append(line)
+      else:
+         output.append(line)
+# Rewrite ASCII Grid
+with open(asciiFn, 'w') as ascOut:
+   for line in output:
+      ascOut.write(line)
+
+
+"""

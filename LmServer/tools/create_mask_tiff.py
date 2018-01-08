@@ -29,6 +29,8 @@ import numpy as np
 from osgeo import gdal, ogr
 import gdalconst
 
+from LmCommon.common.lmconstants import DEFAULT_NODATA
+
 def getXYsForShapefile(filename):
    def getXY(wkt):
       startidx = wkt.find('(')
@@ -92,8 +94,7 @@ def createMaskRaster(inRasterFn, pointsFn, outRasterFn):
    listVals = list(vals)
    if len(listVals) == 0:
       raise Exception, 'No intersection between points and raster'
-   noData = -9999
-   newData = noData * np.ones(data.shape, dtype=int)
+   newData = DEFAULT_NODATA * np.ones(data.shape, dtype=int)
    
    for i in range(data.shape[0]):
       for j in range(data.shape[1]):
@@ -107,7 +108,7 @@ def createMaskRaster(inRasterFn, pointsFn, outRasterFn):
    # Write the data
    outBand.WriteArray(newData, 0, 0)
    outBand.FlushCache()
-   outBand.SetNoDataValue(noData)
+   outBand.SetNoDataValue(DEFAULT_NODATA)
    
    # Georeference the image and set the projection
    outDs.SetGeoTransform(ds.GetGeoTransform())

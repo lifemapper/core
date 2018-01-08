@@ -30,6 +30,7 @@ except:
    OFTReal = 2 
    OFTString = 4
    OFTBinary = 8
+from LmCommon.common.lmconstants import DEFAULT_NODATA
    
 # .............................................................................
 # .    Configuration file headings
@@ -1036,6 +1037,7 @@ DEFAULT_EPSG = 4326
 DEFAULT_MAPUNITS = 'dd'
 DEFAULT_CELLSIDES = 4
 DEFAULT_CELLSIZE = 1.0
+DEFAULT_NODATA = -9999
 
 # .............................................................................
 # .                             Instance constants                            .

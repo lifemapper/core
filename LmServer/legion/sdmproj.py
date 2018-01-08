@@ -37,7 +37,7 @@ from LmBackend.command.single import SdmodelCommand, SdmProjectCommand
 from LmBackend.common.lmobj import LMError
 
 from LmCommon.common.lmconstants import (GEOTIFF_INTERFACE, JobStatus, 
-                                         LMFormat, ProcessType)
+                                         LMFormat, ProcessType, DEFAULT_NODATA)
 from LmCommon.common.verify import computeHash
 
 from LmServer.base.layer2 import Raster, _LayerParameters
@@ -723,8 +723,9 @@ class SDMProjection(_ProjectionType, Raster):
             outFormat = 'GTiff'
             maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
             
-            maskArgs = '-of {} -dstnodata -9999 -cutline {} {} {}'.format(
+            maskArgs = '-of {} -dstnodata {} -cutline {} {} {}'.format(
                                                          outFormat, 
+                                                         DEFAULT_NODATA,
                                                          convexHullFilename, 
                                                          ecoMaskFilename,
                                                          maskFn)
@@ -746,8 +747,8 @@ class SDMProjection(_ProjectionType, Raster):
          # Need to convert to ASCII
          finalMaskFn = os.path.join(workDir, '{}.asc'.format(maskName))
          convertCmd = SystemCommand('gdal_translate', 
-            '-a_nodata -9999 -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
-               maskFn, finalMaskFn),
+            '-a_nodata {} -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
+               DEFAULT_NODATA, maskFn, finalMaskFn),
             inputs=[maskFn],
             outputs=[finalMaskFn])
          
