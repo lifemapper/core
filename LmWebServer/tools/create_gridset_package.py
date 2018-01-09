@@ -52,6 +52,7 @@ def assemble_package_for_gridset(gridset, outfile):
                         compression=zipfile.ZIP_DEFLATED,
                         allowZip64=True) as outZip:
       outZip.writestr('gridset_{}.eml'.format(gridset.getId()), gsEml)
+      outZip.write(gridset.tree.getDLocation(), os.path.basename(gridset.gree.getDLocation()))
       sg = gridset.getShapegrid()
       for mtx in gridset.getMatrices():
          # Need to get geojson where we can
