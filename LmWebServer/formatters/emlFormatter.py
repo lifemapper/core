@@ -28,6 +28,8 @@
 import cherrypy
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType
+from LmCommon.common.matrix import Matrix
+
 from LmServer.legion.gridset import Gridset
 from LmCommon.common.lmXml import Element, SubElement, tostring
 
@@ -49,7 +51,8 @@ def _createDataTable(dtObj):
       value='Lifemapper Matrix Json')
    
    alEl = SubElement(dtEl, 'attributeList')
-   for colHeader in dtObj.getColumnHeaders():
+   mtx = Matrix.load(dtObj.getDLocation())
+   for colHeader in mtx.getColumnHeaders():
       SubElement(alEl, 'attribute', value=colHeader)
    return dtEl
 
@@ -90,7 +93,8 @@ def _createSpatialVector(svObj):
       value='geojson')
    
    alEl = SubElement(svEl, 'attributeList')
-   for colHeader in svObj.getColumnHeaders():
+   mtx = Matrix.load(svObj.getDLocation())
+   for colHeader in mtx.getColumnHeaders():
       SubElement(alEl, 'attribute', value=colHeader)
       
    SubElement(svEl, 'geometry', value='polygon')
