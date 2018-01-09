@@ -188,7 +188,7 @@ def convertTiffToAscii(tiffFn, asciiFn):
    ds_in = None
    ds_out = None   
       
-   # Rewrite  ASCII header with tiff info      
+   # Rewrite  ASCII header with tiff info
    output = [] 
    output.append('ncols   {}\n'.format(cols))
    output.append('nrows   {}\n'.format(rows))
@@ -200,7 +200,7 @@ def convertTiffToAscii(tiffFn, asciiFn):
    with open(asciiFn, 'r') as ascIn:
       for line in ascIn:
          lowline = line.lower()
-         if (pastHeader or
+         if (not pastHeader and (
              lowline.startswith('ncols') or
              lowline.startswith('nrows') or
              lowline.startswith('xllcorner') or
@@ -208,7 +208,7 @@ def convertTiffToAscii(tiffFn, asciiFn):
              lowline.startswith('cellsize') or
              lowline.startswith('dx') or
              lowline.startswith('dy') or 
-             lowline.startswith('nodata_value')):  
+             lowline.startswith('nodata_value'))):  
             pass
          else:
             pastHeader = True
