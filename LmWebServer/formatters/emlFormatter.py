@@ -38,8 +38,8 @@ def _createDataTable(dtObj):
    """
    @summary: Create data table subsection for an object
    """
-   dtEl = Element('otherEntity', attrib={'id' : dtObj.name})
-   SubElement(dtEl, 'entityName', value=dtObj.name)
+   dtEl = Element('otherEntity', attrib={'id' : 'mtx_{}'.format(dtObj.getId())})
+   SubElement(dtEl, 'entityName', value='mtx_{}'.format(dtObj.getId()))
    phys = SubElement(dtEl, 'physical')
    SubElement(phys, 'objectName', value='mtx_{}.csv'.format(dtObj.getId()))
    SubElement(phys, 'encodingMethod', value='ASCII')
@@ -61,8 +61,8 @@ def _createOtherEntity(entityObj):
    """
    @summary: Create other entity subsection for an object
    """
-   oeEl = Element('otherEntity', attrib={'id' : entityObj.name})
-   SubElement(oeEl, 'entityName', value=entityObj.name)
+   oeEl = Element('otherEntity', attrib={'id' : 'mtx_{}'.format(entityObj.getId())})
+   SubElement(oeEl, 'entityName', value='mtx_{}'.format(entityObj.getId()))
    phys = SubElement(oeEl, 'physical')
    SubElement(phys, 'objectName', value='tree_{}.nex'.format(entityObj.getId()))
    SubElement(phys, 'encodingMethod', value='ASCII')
