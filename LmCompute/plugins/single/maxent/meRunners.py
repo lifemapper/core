@@ -114,8 +114,12 @@ class MaxentModel(object):
          #          the other layers or if we can mix
          maskFn = os.path.join(self.layersDir, 'mask{}'.format(LMFormat.MXE.ext))
          #os.symlink(mask, maskFn)
-         convertAsciisToMxes([(os.path.abspath(mask), maskFn)])
-         #os.symlink(maskFn, symMaskFn)
+         if not os.path.exists(maskFn):
+            convertAsciisToMxes(os.path.split(mask)[0])
+            
+            shutil.move('{}{}'.format(os.path.splitext(
+                                          os.path.abspath(mask))[0], 
+                                      LMFormat.MXE.ext), maskFn)
          
          self.params += ' togglelayertype=mask'
 
@@ -375,7 +379,12 @@ class MaxentProjection(object):
          maskFn = os.path.join(self.layersDir, 'mask{}'.format(
             LMFormat.MXE.ext))
          #os.symlink(mask, maskFn)
-         convertAsciisToMxes([(os.path.abspath(mask), maskFn)])
+         if not os.path.exists(maskFn):
+            convertAsciisToMxes(os.path.split(mask)[0])
+            
+            shutil.move('{}{}'.format(os.path.splitext(
+                                          os.path.abspath(mask))[0], 
+                                      LMFormat.MXE.ext), maskFn)
          #os.symlink(maskFn, symMaskFn)
          self.params += ' togglelayertype=mask'
 

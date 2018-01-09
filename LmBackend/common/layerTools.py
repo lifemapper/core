@@ -31,18 +31,15 @@
 
 @todo: Alphabetize
 """
-from hashlib import md5
-from mx.DateTime import gmt
 import numpy
 import os
 from osgeo import gdal
-import shutil
 import subprocess
 from time import sleep
 
 from LmCommon.common.lmconstants import (LMFormat, DEFAULT_NODATA)
 from LmCompute.common.lmconstants import (CONVERT_JAVA_CMD, CONVERT_TOOL, 
-                                          ME_CMD, TEMPORARY_FILE_PATH)
+                                          ME_CMD)
 
 WAIT_SECONDS = 30
 
@@ -116,64 +113,23 @@ def convertAndModifyAsciiToTiff(ascFn, tiffFn, scale=None, multiplier=None,
    src_ds = None
 
 # .............................................................................
-def convertAsciisToMxes(fnTups):
+def convertAsciisToMxes(lyrDir):
    """
    @summary: Converts a list of ASCII grids into a Maxent indexed environmental 
                 layers
-   @param fnTups: A list of tuples of (ASCII file name, new MXE file name)
+   @param lyrDir: A directory containing ASCII grids that should be converted
+                     to MXEs
    """
-   # Get temporary directories
-   t = md5(str(gmt())).hexdigest() # Should be roughly unique
-   
-   inDir = os.path.join(TEMPORARY_FILE_PATH, 'asciis-%s' % t)
-   outDir = os.path.join(TEMPORARY_FILE_PATH, 'mxes-%s' % t)
-
-   # Just in case we happen to collide
-   while os.path.exists(inDir):
-      t = md5(str(gmt())).hexdigest() # Should be roughly unique
-   
-      inDir = os.path.join(TEMPORARY_FILE_PATH, 'asciis-%s' % t)
-      outDir = os.path.join(TEMPORARY_FILE_PATH, 'mxes-%s' % t)
-   
-   os.makedirs(inDir)
-   os.makedirs(outDir)
-   
-   # Sym link all of the ASCII grids in the input directory
-   for asciiFn, _ in fnTups:
-      baseName = os.path.basename(asciiFn)
-      os.symlink(asciiFn, os.path.join(inDir, baseName))
-      
-      
    # Run Maxent converter
    meConvertCmd = "{javaCmd} {meCmd} {convertTool} -t {inDir} asc {outDir} mxe".format(
                      javaCmd=CONVERT_JAVA_CMD, meCmd=ME_CMD, 
-                     convertTool=CONVERT_TOOL, inDir=inDir, outDir=outDir)
+                     convertTool=CONVERT_TOOL, inDir=lyrDir, outDir=lyrDir)
    p = subprocess.Popen(meConvertCmd, shell=True)
    
    while p.poll() is None:
       print "Waiting for layer conversion (asc to mxe) to finish..."
       sleep(WAIT_SECONDS)
    
-   # Move all of the MXEs to the correct location
-   for asciiFn, mxeFn in fnTups:
-      
-      #TODO: Add a try except here
-      try:
-         # We used the ASCII base name.  This is probably the same as the MXE 
-         #    with a different extension, but just in case
-         baseName = os.path.basename(asciiFn)
-         tmpMxeFn = os.path.join(outDir, 
-                     '%s%s' % (os.path.splitext(baseName)[0], LMFormat.MXE.ext))
-         shutil.copy(tmpMxeFn, mxeFn)
-      except Exception, e:
-         print "Failed to rename layer: %s -> %s" % (tmpMxeFn, mxeFn)
-         print str(e)
-      
-   # Remove temporary directories
-   # TODO: Make this safer 
-   shutil.rmtree(inDir)
-   shutil.rmtree(outDir)
-
 # .............................................................................
 def convertLayersInDirectory(layerDir):
    """
@@ -181,7 +137,7 @@ def convertLayersInDirectory(layerDir):
    @param layerDir: The directory to traverse through looking for layers to
                        convert
    """
-   mxeTups = []
+   mxeDirs = set([])
    for myDir, _ , files in os.walk(layerDir):
       for fn in files:
          tiffFn = os.path.join(myDir, fn)
@@ -195,11 +151,11 @@ def convertLayersInDirectory(layerDir):
                convertTiffToAscii(tiffFn, asciiFn)
                
             if not os.path.exists(mxeFn):
-               mxeTups.append((asciiFn, mxeFn))
-   
-   if len(mxeTups) > 0:
-      print "Converting ASCIIs to MXEs"
-      convertAsciisToMxes(mxeTups)
+               mxeDirs.add(myDir)
+
+   for lyrDir in mxeDirs:
+      print 'Converting ASCIIs in {} to MXEs'.format(lyrDir)
+      convertAsciisToMxes(lyrDir)
 
 
 # .............................................................................
