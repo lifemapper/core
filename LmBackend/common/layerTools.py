@@ -157,6 +157,7 @@ def convertLayersInDirectory(layerDir):
       print 'Converting ASCIIs in {} to MXEs'.format(lyrDir)
       convertAsciisToMxes(lyrDir)
 
+
 # .............................................................................
 def convertTiffToAscii(tiffFn, asciiFn):
    """

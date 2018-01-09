@@ -27,23 +27,23 @@ notyeti sites if they are physically located there (to speed download time).
   
 For all clusters, install the following
 
+Rocks 7.0:
 * area51
 * base 
+* CentOS
+* core
 * ganglia
 * hpc
 * kernel
-* os
 * python
-* sge (LmCompute)
-* webserver (LmServer)
+* sge
+* Updates-CentOS
+* kvm (Physical clusters only)
+* zfs (Physical clusters only)
 
-Physical clusters only:
-  
-* kvm
-* zfs
+(6.2: area51, base, ganglia, hpc, kernel, os, python, sge, webserver)
 
 Other info:
-
 * Lawrence Geo:  N38.969  W95.245
 * Public Interface: assigned by Greg Smith for MAC address
   Note that since we are not using DHCP, any MAC address assigned on creation
