@@ -77,7 +77,7 @@ def _createSpatialVector(svObj):
    """
    @summary: Create spatial vector subsection for an object
    """
-   svId = 'mtx_{}'.svObj.getId()
+   svId = 'mtx_{}'.format(svObj.getId())
    svEl = Element('spatialVector', attrib={'id' : svId})
    phys = SubElement(svEl, 'physical')
    SubElement(phys, 'objectName', value='mtx_{}.geojson'.format(svObj.getId()))
