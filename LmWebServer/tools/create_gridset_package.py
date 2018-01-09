@@ -60,7 +60,9 @@ def assemble_package_for_gridset(gridset, outfile):
                             MatrixType.SITES_COV_RANDOM, 
                             MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM]:
             mtxObj = Matrix.load(mtx.getDLocation())
-            mtxFn = '{}{}'.format(os.path.splitext(mtx.getDLocation())[0], 
+            mtxFn = '{}{}'.format(
+               os.path.splitext(
+                  os.path.basename(mtx.getDLocation()))[0], 
                                   LMFormat.GEO_JSON.ext)
             outZip.writestr(mtxFn, json.dumps(geoJsonify(sg.getDLocation(), 
                                                          matrix=mtxObj, 
