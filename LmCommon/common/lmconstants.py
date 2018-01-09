@@ -30,7 +30,6 @@ except:
    OFTReal = 2 
    OFTString = 4
    OFTBinary = 8
-from LmCommon.common.lmconstants import DEFAULT_NODATA
    
 # .............................................................................
 # .    Configuration file headings

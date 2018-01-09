@@ -201,6 +201,7 @@ def convertLayersInDirectory(layerDir):
       print "Converting ASCIIs to MXEs"
       convertAsciisToMxes(mxeTups)
 
+
 # .............................................................................
 def convertTiffToAscii(tiffFn, asciiFn):
    """
