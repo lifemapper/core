@@ -27,15 +27,19 @@
 @todo: Probably want to split of EML generating code to separate module(s)
 """
 import argparse
+import json
 import os
 import zipfile
 
 from LmCommon.common.lmXml import tostring
+from LmCommon.common.matrix import Matrix
 
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 
 from LmWebServer.formatters.emlFormatter import makeEml
+from LmCommon.common.lmconstants import LMFormat, MatrixType
+from LmWebServer.formatters.geoJsonFormatter import geoJsonify
 
 # ..........................................................................
 def assemble_package_for_gridset(gridset, outfile):
@@ -48,8 +52,21 @@ def assemble_package_for_gridset(gridset, outfile):
                         compression=zipfile.ZIP_DEFLATED,
                         allowZip64=True) as outZip:
       outZip.writestr('gridset_{}.eml'.format(gridset.getId()), gsEml)
+      sg = gridset.getShapegrid()
       for mtx in gridset.getMatrices():
-         outZip.write(mtx.getDLocation(), 
+         # Need to get geojson where we can
+         if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM, 
+                            MatrixType.ANC_PAM, MatrixType.SITES_COV_OBSERVED, 
+                            MatrixType.SITES_COV_RANDOM, 
+                            MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM]:
+            mtxObj = Matrix.load(mtx.getDLocation())
+            mtxFn = '{}{}'.format(os.path.splitext(mtx.getDLocation())[0], 
+                                  LMFormat.GEO_JSON.ext)
+            outZip.writestr(mtxFn, json.dumps(geoJsonify(sg.getDLocation(), 
+                                                         matrix=mtxObj, 
+                                                         mtxJoinAttrib=0)))
+         else:
+            outZip.write(mtx.getDLocation(), 
                       os.path.basename(mtx.getDLocation()))
 
 # ..........................................................................
