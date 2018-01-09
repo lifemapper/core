@@ -81,7 +81,6 @@ def geoJsonify(shpFilename, matrix=None, mtxJoinAttrib=None):
       
       # Join matrix attributes
       if attLookup.has_key(joinAttrib):
-         print ft
          if not ft.has_key('properties'):
             ft['properties'] = {}
          ft['properties'].update(attLookup[joinAttrib])
