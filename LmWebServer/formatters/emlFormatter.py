@@ -113,7 +113,7 @@ def makeEml(myObj):
                         'system' : 'http://svc.lifemapper.org'
                        })
       dsEl = SubElement(topEl, 'dataset', 
-                        attrib={'id' : 'gridset_{}'.myObj.getId()})
+                        attrib={'id' : 'gridset_{}'.format(myObj.getId())})
       # Contact
       SubElement(SubElement(dsEl, 'contact'), 'organizationName', value='Lifemapper')
       
