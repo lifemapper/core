@@ -211,8 +211,8 @@ def formatProjection(prj):
    @todo: Taxon id
    @todo: Occurrence set metadata url
    """
-   prjDict = _getLifemapperMetadata('projection', prj.getId(), prj.getUserId(), 
-                                    prj.metadataUrl, status=prj.status, 
+   prjDict = _getLifemapperMetadata('projection', prj.getId(), prj.metadataUrl, 
+                                    prj.getUserId(), status=prj.status, 
                                     statusModTime=prj.statusModTime, 
                                     metadata=prj.lyrMetadata)
    occ = prj._occurrenceSet
