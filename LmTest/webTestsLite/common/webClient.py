@@ -178,7 +178,7 @@ class LmWebClient(object):
                   beforeTime=beforeTime, scenarioId=scenarioId)
       
    # ............................
-   def count_sdm_projection(self, afterStatus=None, afterTime=None, 
+   def count_sdm_projections(self, afterStatus=None, afterTime=None, 
                            algorithmCode=None, beforeStatus=None, 
                            beforeTime=None, displayName=None, epsgCode=None, 
                            modelScenarioCode=None, occurrenceSetId=None,  
