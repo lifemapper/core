@@ -555,8 +555,8 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::countTrees()
       """
-      count = self._borg.countMatrices(userId, name, isBinary, isUltrametric, 
-                           hasBranchLengths,metastring, afterTime, beforeTime)
+      count = self._borg.countTrees(userId, name, isBinary, isUltrametric, 
+                           hasBranchLengths, metastring, afterTime, beforeTime)
       return count
 
 # .............................................................................
