@@ -89,7 +89,8 @@ class TestWebOgcService(UserTestCase):
                                            epsg=occ.epsgcode)
    
          with contextlib.closing(self.cl.get_ogc(mapName, 
-                                    bbox=','.join(prj.bbox), color='#ff0000', 
+                                    bbox=','.join([str(i) for i in prj.bbox]), 
+                                    color='#ff0000', 
                                     height=200, layer=prj.name, 
                                     request='GetMap', format='image/png', 
                                     service='WMS', 
