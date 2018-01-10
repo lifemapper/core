@@ -675,7 +675,8 @@ class Borg(DbPostgresql):
                                                      afterTime, beforeTime, 
                                                      epsg, scenId)
          for r in rows:
-            objs.append(self._createScenario(r, idxs))
+            objs.append(self._createScenPackage(r, idxs))
+            #objs.append(self._createScenario(r, idxs))
       return objs
 
 
