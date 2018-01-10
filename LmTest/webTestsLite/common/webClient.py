@@ -208,7 +208,7 @@ class LmWebClient(object):
       @summary: Send a request to the server to get a count of shapegrids
       """
       return self._make_request(self._build_base_url(_SERVICE.SHAPEGRID,
-                                                responseFormat=responseFormat), 
+                              objectId='count', responseFormat=responseFormat), 
                                 method=HTTPMethod.GET, headers=headers, 
                                 afterTime=afterTime, beforeTime=beforeTime, 
                                 cellSides=cellSides, cellSize=cellSize, 
