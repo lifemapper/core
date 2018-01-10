@@ -593,11 +593,12 @@ class LmWebClient(object):
          url = '{}/{}'.format(url, service)
       elif service == _SERVICE.MATRIX:
          if objectId is not None:
-            url = '{}/{}/{}/{}/{}'.format(url, _SERVICE.GRIDSET, parentObjectId,
-                                       _SERVICE.MATRIX, objectId)
+            url = '{}/{}/{}/{}/{}/{}'.format(url, self.version, 
+                                             _SERVICE.GRIDSET, parentObjectId,
+                                             _SERVICE.MATRIX, objectId)
          else:
-            url = '{}/{}/{}/{}'.format(url, _SERVICE.GRIDSET, parentObjectId,
-                                       _SERVICE.MATRIX)
+            url = '{}/{}/{}/{}/{}'.format(url, self.version, _SERVICE.GRIDSET, 
+                                          parentObjectId, _SERVICE.MATRIX)
       else:
          url = '{}/{}/{}'.format(url, self.version, service)
          if objectId is not None:
