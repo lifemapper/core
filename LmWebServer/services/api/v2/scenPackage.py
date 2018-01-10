@@ -72,7 +72,8 @@ class ScenarioPackageService(LmService):
    # ................................
    @lmFormatter
    def GET(self, pathScenarioPackageId=None, afterTime=None, beforeTime=None,  
-                 limit=100, offset=0, urlUser=None, scenarioId=None):
+                 epsgCode=None, limit=100, offset=0, urlUser=None, 
+                 scenarioId=None):
       """
       @summary: Performs a GET request.  If a scenario package id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -81,11 +82,11 @@ class ScenarioPackageService(LmService):
       if pathScenarioPackageId is None:
          return self._listScenarioPackages(self.getUserId(urlUser=urlUser), 
                        afterTime=afterTime, scenarioId=scenarioId, limit=limit,
-                       offset=offset)
+                       offset=offset, epsgCode=epsgCode)
       elif pathScenarioPackageId.lower() == 'count':
          return self._countScenarioPackages(self.getUserId(urlUser=urlUser), 
                                  afterTime=afterTime, beforeTime=beforeTime, 
-                                 scenarioId=scenarioId)
+                                 scenarioId=scenarioId, epsgCode=epsgCode)
       else:
          return self._getScenarioPackage(pathScenarioPackageId)
    
@@ -138,14 +139,14 @@ class ScenarioPackageService(LmService):
    
    # ................................
    def _countScenarioPackages(self, userId, afterTime=None, beforeTime=None,  
-                             scenarioId=None):
+                             epsgCode=None, scenarioId=None):
       """
       @summary: Return the number of scenario packages that match the specified
                    criteria
       """
-      scnPkgCount = self.scribe.countScenarioPackages(userId=userId, 
+      scnPkgCount = self.scribe.countScenPackages(userId=userId, 
                                     beforeTime=beforeTime, afterTime=afterTime,
-                                    scenId=scenarioId)
+                                    epsg=epsgCode, scenId=scenarioId)
       return {'count' : scnPkgCount}
 
    # ................................
@@ -169,12 +170,12 @@ class ScenarioPackageService(LmService):
    
    # ................................
    def _listScenarioPackages(self, userId, afterTime=None, beforeTime=None,  
-                             scenarioId=None, limit=100, offset=0):
+                             epsgCode=None, scenarioId=None, limit=100, offset=0):
       """
       @summary: Return a list of scenarios matching the specified criteria
       """
       scnPkgAtoms = self.scribe.listScenPackages(offset, limit, userId=userId, 
                                     beforeTime=beforeTime, afterTime=afterTime,
-                                    scenId=scenarioId)
+                                    scenId=scenarioId, epsg=epsgCode)
       return scnPkgAtoms
 
