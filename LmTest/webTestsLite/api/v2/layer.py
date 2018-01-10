@@ -176,7 +176,7 @@ class TestWebLayerService(UserTestCase):
          with contextlib.closing(self.cl.get_layer(layerId)) as x:
             lyrMeta = json.load(x)
             
-         self.assertTrue(lyrMeta.has_key('name'))
+         self.assertTrue(lyrMeta.has_key('title'))
          self.assertEqual(lyrMeta['user'], self._get_session_user(), 
                'User id on layer = {}, session user = {}'.format(
                   lyrMeta['user'], self._get_session_user()))

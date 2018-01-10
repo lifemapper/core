@@ -116,7 +116,7 @@ class LmWebClient(object):
       @summary: Send a request to the server to count layers 
       """
       return self._make_request(self._build_base_url(_SERVICE.LAYER,
-                                                responseFormat=responseFormat), 
+                           objectId='count', responseFormat=responseFormat), 
                   method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
                   beforeTime=beforeTime, epsgCode=epsgCode, squid=squid)
    
