@@ -123,7 +123,7 @@ class TestScribeEnvLayerService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(envLyrObjs[0], EnvLayer)
-         self.assertEqual(envLyrObjs[0], self._get_session_user(), 
+         self.assertEqual(envLyrObjs[0].getUserId(), self._get_session_user(), 
                'User id on layer = {}, session user = {}'.format(
                   envLyrObjs[0].getUserId(), self._get_session_user()))
 

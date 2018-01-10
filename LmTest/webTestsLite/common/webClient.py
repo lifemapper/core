@@ -602,7 +602,8 @@ class LmWebClient(object):
             url = '{}/{}'.format(url, objectId)
          if responseFormat is not None:
             url = '{}/{}'.format(url, responseFormat)
-      return url.replace('//', '/')
+      return url
+      #return url.replace('//', '/')
       
    # ............................
    def _make_request(self, url, method=HTTPMethod.GET, body=None, headers=None,
