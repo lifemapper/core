@@ -129,10 +129,11 @@ class LmWebClient(object):
       @summary: Send a request to the server to count matrices
       """
       return self._make_request(self._build_base_url(_SERVICE.MATRIX, 
-                  objectId='count', responseFormat=responseFormat), 
+                  objectId='count', parentObjectId=gridsetId, 
+                  responseFormat=responseFormat), 
                   method=HTTPMethod.GET, headers=headers, afterTime=afterTime, 
                   altPredCode=altPredCode, beforeTime=beforeTime, 
-                  dateCode=dateCode, epsgCode=epsgCode, gridsetId=gridsetId,
+                  dateCode=dateCode, epsgCode=epsgCode, 
                   keyword=keyword, matrixType=matrixType, status=status, 
                   gcmCode=gcmCode)
    

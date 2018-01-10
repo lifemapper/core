@@ -199,7 +199,12 @@ class TestWebMatrixService(UserTestCase):
       @summary: Basic test that tries to get a list of matrix atoms from the 
                    web
       """
-      with contextlib.closing(self.cl.list_matrices()) as x:
+      scribe = BorgScribe(ConsoleLogger())
+      scribe.openConnections()
+      mtxAtoms = scribe.listMatrices(0, 1, userId=self._get_session_user(), 
+                                     atom=False)
+      scribe.closeConnections()
+      with contextlib.closing(self.cl.list_matrices(mtxAtoms[0].gridsetId)) as x:
          ret = json.load(x)
       
       if len(ret) == 0:
