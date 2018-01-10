@@ -620,21 +620,23 @@ class LmWebClient(object):
                                  function will be wrapped as query parameters
                                  for the request
       """
-      qParams = [(k, v) for k, v in dict(
-                                 queryParameters).iteritems() if v is not None]
-      urlParams = urllib.urlencode(qParams)
-
-      if body is None and len(qParams) > 0 and method.upper() == HTTPMethod.POST:
-         body = urlParams
-      else:
-         url = '{}?{}'.format(url, urlParams)
+      try:
+         qParams = [(k, v) for k, v in dict(
+                                    queryParameters).iteritems() if v is not None]
+         urlParams = urllib.urlencode(qParams)
+   
+         if body is None and len(qParams) > 0 and method.upper() == HTTPMethod.POST:
+            body = urlParams
+         else:
+            url = '{}?{}'.format(url, urlParams)
          
-      print 'Url:', url
-      
-      if headers is None:
-         headers = {}
-      req = urllib2.Request(url, data=body, headers=headers)
-      req.get_method = lambda: method.upper()
-      
-      return urllib2.urlopen(req)
+         if headers is None:
+            headers = {}
+         req = urllib2.Request(url, data=body, headers=headers)
+         req.get_method = lambda: method.upper()
+         
+         return urllib2.urlopen(req)
+      except Exception, e:
+         print 'The failed URL was:', url
+         raise e
       
