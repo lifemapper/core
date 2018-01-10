@@ -74,7 +74,7 @@ class EnvLayerService(LmService):
    def GET(self, pathLayerId=None, afterTime=None, altPredCode=None, 
            beforeTime=None, dateCode=None, epsgCode=None, envCode=None, 
            envTypeId=None, gcmCode=None, limit=100, offset=0, urlUser=None, 
-           scenarioId=None, squid=None):
+           scenarioCode=None, squid=None):
       """
       @summary: Performs a GET request.  If a layer id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -86,14 +86,14 @@ class EnvLayerService(LmService):
                             beforeTime=beforeTime, dateCode=dateCode, 
                             envCode=envCode, envTypeId=envTypeId, 
                             epsgCode=epsgCode, gcmCode=gcmCode, limit=limit, 
-                            offset=offset, scenarioId=scenarioId)
+                            offset=offset, scenarioCode=scenarioCode)
       elif pathLayerId.lower() == 'count':
          return self._countEnvLayers(self.getUserId(urlUser=urlUser), 
                            afterTime=afterTime, altPredCode=altPredCode, 
                            beforeTime=beforeTime, dateCode=dateCode, 
                            envCode=envCode, envTypeId=envTypeId, 
                            epsgCode=epsgCode, gcmCode=gcmCode, 
-                           scenarioId=scenarioId)
+                           scenarioCode=scenarioCode)
       else:
          return self._getEnvLayer(pathLayerId)
       
@@ -183,7 +183,7 @@ class EnvLayerService(LmService):
    def _listEnvLayers(self, userId, afterTime=None, altPredCode=None, 
                             beforeTime=None, dateCode=None, envCode=None, 
                             envTypeId=None, epsgCode=None, gcmCode=None, 
-                            limit=100, offset=0, scenarioId=None):
+                            limit=100, offset=0, scenarioCode=None):
       """
       @summary: List environmental layer objects matching the specified 
                    criteria
@@ -209,7 +209,7 @@ class EnvLayerService(LmService):
                                    altpredCode=altPredCode, dateCode=dateCode, 
                                    afterTime=afterTime, beforeTime=beforeTime,
                                    epsg=epsgCode, envTypeId=envTypeId,
-                                   scenCode=scenarioId)
+                                   scenCode=scenarioCode)
       # Format return
       # Set headers
       return lyrAtoms
