@@ -224,6 +224,15 @@ class LmTouchCommand(_LmCommand):
       """
       return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.filename)
 
+   # ................................
+   def getMakeflowRule(self, local=True):
+      """
+      @summary: Get a MfRule object for this command
+      @param local: Should this be a local command in a Makeflow DAG
+      @note: This differs from the superclass because the default local is True
+      """
+      return super(LmTouchCommand, self).getMakeflowRule(local=local)
+
 # .............................................................................
 class ShootSnippetsCommand(_LmCommand):
    """
