@@ -27,12 +27,27 @@ from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import CMD_PYBIN, SERVER_SCRIPTS_DIR
 
 # .............................................................................
-class AddBioGeoAndTreeCommand(_LmCommand):
+class _LmServerCommand(_LmCommand):
+   """
+   @summary: The _LmServerCommand class is an intermediate class that all 
+                server command classes should inherit from.
+   """
+   relDir = SERVER_SCRIPTS_DIR
+   # ................................
+   def getMakeflowRule(self, local=True):
+      """
+      @summary: Get a MfRule object for this command
+      @param local: Should this be a local command in a Makeflow DAG
+      @note: This differs from the superclass because the default local is True
+      """
+      return super(LmTouchCommand, self).getMakeflowRule(local=local)
+
+# .............................................................................
+class AddBioGeoAndTreeCommand(_LmServerCommand):
    """
    @summary: This command will add biogeographic hypotheses and a tree to a 
                 grid set
    """
-   relDir = SERVER_SCRIPTS_DIR
    scriptName = 'addBioGeoAndTree.py'
 
    # ................................
@@ -49,7 +64,7 @@ class AddBioGeoAndTreeCommand(_LmCommand):
       @param eventField: The name of the event field in the hypotheses 
                             shapefiles
       """
-      _LmCommand.__init__(self)
+      _LmServerCommand.__init__(self)
       
       self.args = [gridsetId]
       if isinstance(hypothesesFilenames, list):
@@ -79,11 +94,10 @@ class AddBioGeoAndTreeCommand(_LmCommand):
             self.optArgs, ' '.join(self.args))
 
 # .............................................................................
-class CreateBlankMaskTiffCommand(_LmCommand):
+class CreateBlankMaskTiffCommand(_LmServerCommand):
    """
    @summary: This command will create a mask Tiff file of all ones
    """
-   relDir = SERVER_SCRIPTS_DIR
    scriptName = 'create_blank_mask.py'
 
    # ................................
@@ -93,7 +107,7 @@ class CreateBlankMaskTiffCommand(_LmCommand):
       @param inRasterFilename: The input raster file to use
       @param outRasterFilename: The file location to write the output raster
       """
-      _LmCommand.__init__(self)
+      _LmServerCommand.__init__(self)
       
       self.args = '{} {}'.format(inRasterFilename, outRasterFilename)
       self.outputs.append(outRasterFilename)
@@ -106,12 +120,11 @@ class CreateBlankMaskTiffCommand(_LmCommand):
       return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
 
 # .............................................................................
-class CreateConvexHullShapefileCommand(_LmCommand):
+class CreateConvexHullShapefileCommand(_LmServerCommand):
    """
    @summary: This command will write a shapefile containing a feature with the 
                 convex hull of the occurrence set
    """
-   relDir = SERVER_SCRIPTS_DIR
    scriptName = 'create_convex_hull_shapefile.py'
 
    # ................................
@@ -122,7 +135,7 @@ class CreateConvexHullShapefileCommand(_LmCommand):
       @param outFilename: The file location to write the shapefile
       @param bufferDistance: A buffer, in map units, to include with the convex hull
       """
-      _LmCommand.__init__(self)
+      _LmServerCommand.__init__(self)
       self.args = '{} {}'.format(occId, outFilename)
       self.optArgs = ''
       if bufferDistance is not None:
@@ -137,12 +150,11 @@ class CreateConvexHullShapefileCommand(_LmCommand):
             self.optArgs, self.args)
 
 # .............................................................................
-class CreateMaskTiffCommand(_LmCommand):
+class CreateMaskTiffCommand(_LmServerCommand):
    """
    @summary: This command will create a mask Tiff file
    @todo: Probably should rename this to be more specific
    """
-   relDir = SERVER_SCRIPTS_DIR
    scriptName = 'create_mask_tiff.py'
 
    # ................................
@@ -153,7 +165,7 @@ class CreateMaskTiffCommand(_LmCommand):
       @param pointsFilename: The path to the points shapefile to use
       @param outRasterFilename: The file location to write the output raster
       """
-      _LmCommand.__init__(self)
+      _LmServerCommand.__init__(self)
       
       self.args = '{} {} {}'.format(inRasterFilename, pointsFilename, 
                                     outRasterFilename)
@@ -168,11 +180,10 @@ class CreateMaskTiffCommand(_LmCommand):
       return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
 
 # .............................................................................
-class IndexPAVCommand(_LmCommand):
+class IndexPAVCommand(_LmServerCommand):
    """
    @summary: This command will post PAV information to a solr index
    """
-   relDir = SERVER_SCRIPTS_DIR
    scriptName = 'indexPAV.py'
 
    # ................................
@@ -185,7 +196,7 @@ class IndexPAVCommand(_LmCommand):
       @param pamId: The database id of the PAM that the PAV belongs to
       @param pavIdxFilename: The file location to write the POST data
       """
-      _LmCommand.__init__(self)
+      _LmServerCommand.__init__(self)
       self.inputs.append(pavFilename)
       self.outputs.append(pavIdxFilename)
       
@@ -200,11 +211,10 @@ class IndexPAVCommand(_LmCommand):
       return '{} {} {}'.format(CMD_PYBIN, self.getScript(), ' '.join(self.args))
 
 # .............................................................................
-class LmTouchCommand(_LmCommand):
+class LmTouchCommand(_LmServerCommand):
    """
    @summary: This command will touch a file, creating necessary directories  
    """
-   relDir = SERVER_SCRIPTS_DIR
    scriptName = 'lmTouch.py'
 
    # ................................
@@ -213,7 +223,7 @@ class LmTouchCommand(_LmCommand):
       @summary: Construct the command object
       @param filename: The file location to touch
       """
-      _LmCommand.__init__(self)
+      _LmServerCommand.__init__(self)
       self.outputs.append(filename)
       self.filename = filename
 
@@ -224,21 +234,11 @@ class LmTouchCommand(_LmCommand):
       """
       return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.filename)
 
-   # ................................
-   def getMakeflowRule(self, local=True):
-      """
-      @summary: Get a MfRule object for this command
-      @param local: Should this be a local command in a Makeflow DAG
-      @note: This differs from the superclass because the default local is True
-      """
-      return super(LmTouchCommand, self).getMakeflowRule(local=local)
-
 # .............................................................................
-class ShootSnippetsCommand(_LmCommand):
+class ShootSnippetsCommand(_LmServerCommand):
    """
    @summary: This command will shoot snippets into an index
    """
-   relDir = SERVER_SCRIPTS_DIR
    scriptName = 'shootSnippets.py'
 
    # ................................
@@ -255,7 +255,7 @@ class ShootSnippetsCommand(_LmCommand):
       @param agent: The agent used to initiate this action
       @param why: Why this action was initiated
       """
-      _LmCommand.__init__(self)
+      _LmServerCommand.__init__(self)
       self.outputs.append(postFilename)
       
       self.args = [str(occSetId), operation, postFilename]
@@ -284,11 +284,10 @@ class ShootSnippetsCommand(_LmCommand):
             self.optArgs, ' '.join(self.args))
 
 # .............................................................................
-class SquidIncCommand(_LmCommand):
+class SquidIncCommand(_LmServerCommand):
    """
    @summary: This command will add squids to a tree
    """
-   relDir = SERVER_SCRIPTS_DIR
    scriptName = 'squid_inc.py'
 
    # ................................
@@ -299,7 +298,7 @@ class SquidIncCommand(_LmCommand):
       @param userId: The user id, used for generating squids
       @param outTreeFilename: The file location of the resulting tree
       """
-      _LmCommand.__init__(self)
+      _LmServerCommand.__init__(self)
       self.inputs.append(treeFilename)
       self.outputs.append(outTreeFilename)
       
@@ -313,11 +312,10 @@ class SquidIncCommand(_LmCommand):
       return '{} {} {}'.format(CMD_PYBIN, self.getScript(), ' '.join(self.args))
 
 # .............................................................................
-class StockpileCommand(_LmCommand):
+class StockpileCommand(_LmServerCommand):
    """
    @summary: This command will stockpile the outputs of a process
    """
-   relDir = SERVER_SCRIPTS_DIR
    scriptName = 'stockpile.py'
 
    # ................................
@@ -335,7 +333,7 @@ class StockpileCommand(_LmCommand):
                                 information for the object
       @param metadataFilename: The file location of metadata about this object
       """
-      _LmCommand.__init__(self)
+      _LmServerCommand.__init__(self)
       
       self.args = [str(pType), str(objectId), successFilename]
       self.outputs.append(successFilename)
@@ -368,12 +366,11 @@ class StockpileCommand(_LmCommand):
             self.optArgs, ' '.join(self.args))
 
 # .............................................................................
-class TriageCommand(_LmCommand):
+class TriageCommand(_LmServerCommand):
    """
    @summary: This command will determine which files referenced in the input
                 file exist and will output a file containing those references
    """
-   relDir = SERVER_SCRIPTS_DIR
    scriptName = 'triage.py'
 
    # ................................
@@ -385,7 +382,7 @@ class TriageCommand(_LmCommand):
       @param outFilename: The file location to write the output file indicating
                              which of the potential targets actually exist
       """
-      _LmCommand.__init__(self)
+      _LmServerCommand.__init__(self)
       self.inputs.append(inFilename)
       self.outputs.append(outFilename)
       
