@@ -543,7 +543,7 @@ class LmWebClient(object):
       urllib2.install_opener(opener)
       
       req = self._make_request(self._build_base_url(_SERVICE.LOGIN), 
-                               username=userId, pword=passwd)
+                               userid=userId, pword=passwd)
       resp = req.read()
       req.close()
       return resp
