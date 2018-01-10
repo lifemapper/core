@@ -627,6 +627,8 @@ class LmWebClient(object):
          body = urlParams
       else:
          url = '{}?{}'.format(url, urlParams)
+         
+      print 'Url:', url
       
       if headers is None:
          headers = {}
