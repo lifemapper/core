@@ -607,12 +607,12 @@ class LmWebClient(object):
       #return url.replace('//', '/')
       
    # ............................
-   def _make_request(self, url, method=HTTPMethod.GET, body=None, headers=None,
-                     **queryParameters):
+   def _make_request(self, req_url, method=HTTPMethod.GET, body=None, 
+                           headers=None, **queryParameters):
       """
       @summary: Makes a request from the server and returns an open file-like
                    object to be handled by the requester
-      @param url: The base url to make the request to
+      @param req_url: The base url to make the request to
       @param method: The HTTP method used to make the request
       @param body: The body of the request if desired
       @param headers: Headers to send with the request
@@ -628,15 +628,15 @@ class LmWebClient(object):
          if body is None and len(qParams) > 0 and method.upper() == HTTPMethod.POST:
             body = urlParams
          else:
-            url = '{}?{}'.format(url, urlParams)
+            req_url = '{}?{}'.format(req_url, urlParams)
          
          if headers is None:
             headers = {}
-         req = urllib2.Request(url, data=body, headers=headers)
+         req = urllib2.Request(req_url, data=body, headers=headers)
          req.get_method = lambda: method.upper()
          
          return urllib2.urlopen(req)
       except Exception, e:
-         print 'The failed URL was:', url
+         print 'The failed URL was:', req_url
          raise e
       
