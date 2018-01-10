@@ -71,6 +71,10 @@ class LmWebClient(object):
    # ............................
    def __init__(self, server=PUBLIC_FQDN, urlBase='api', version='v2'):
       self.server = server
+      # TODO: Enable secure connection when available
+      if not (self.server.lower().startswith('http://') or \
+            self.server.lower().startswith('https://')):
+         self.server = 'http://{}'.format(self.server)
       self.urlBase = urlBase
       self.version = version
    
