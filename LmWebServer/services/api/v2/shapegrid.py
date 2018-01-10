@@ -117,7 +117,7 @@ class ShapeGridService(LmService):
                             (Modified Julian Day)
       @param epsgCode: (optional) Return shapegrids with this EPSG code
       """
-      sgCount = self.scribe.countShapegrids(userId=userId, cellsides=cellSides,
+      sgCount = self.scribe.countShapeGrids(userId=userId, cellsides=cellSides,
                                             cellsize=cellSize, 
                                             afterTime=afterTime, 
                                             beforeTime=beforeTime, 
