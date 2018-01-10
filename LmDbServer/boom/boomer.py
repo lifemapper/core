@@ -307,7 +307,7 @@ class Boomer(LMObject):
       delCmd = SystemCommand('rm', '-rf {}'.format(mfchain.getRelativeDirectory()))
       
       mpCmd = ChainCommand([mfCmd, delCmd])
-      self.masterPotato.addCommands([arfCmd.getMakeflowRule(),
+      self.masterPotato.addCommands([arfCmd.getMakeflowRule(local=True),
                                      cpCmd.getMakeflowRule(local=True),
                                      mpCmd.getMakeflowRule(local=True)])
 
