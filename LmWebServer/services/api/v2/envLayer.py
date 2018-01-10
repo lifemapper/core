@@ -134,7 +134,7 @@ class EnvLayerService(LmService):
    def _countEnvLayers(self, userId, afterTime=None, altPredCode=None, 
                             beforeTime=None, dateCode=None, envCode=None, 
                             envTypeId=None, epsgCode=None, gcmCode=None, 
-                            scenarioId=None):
+                            scenarioCode=None):
       """
       @summary: Count environmental layer objects matching the specified 
                    criteria
@@ -151,14 +151,14 @@ class EnvLayerService(LmService):
       @param envTypeId: (optional) Return layers with this environmental type
       @param epsgCode: (optional) Return layers with this EPSG code
       @param gcmCode: (optional) Return layers with this GCM code
-      @param scenarioId: (optional) Return layers from this scenario
+      @param scenarioCode: (optional) Return layers from this scenario
       """
       lyrCount = self.scribe.countEnvLayers(userId=userId, 
                                    envCode=envCode, gcmcode=gcmCode,
                                    altpredCode=altPredCode, dateCode=dateCode, 
                                    afterTime=afterTime, beforeTime=beforeTime,
                                    epsg=epsgCode, envTypeId=envTypeId,
-                                   scenarioId=scenarioId)
+                                   scenarioCode=scenarioCode)
       # Format return
       # Set headers
       return {"count" : lyrCount}
@@ -168,7 +168,7 @@ class EnvLayerService(LmService):
       """
       @summary: Attempt to get a layer
       """
-      lyr = self.scribe.getEnvLayer(lyrId=pathLayerId)
+      lyr = self.scribe.getEnvLayer(envlyrId=pathLayerId)
       if lyr is None:
          raise cherrypy.HTTPError(404, 
                         'Environmental layer {} was not found'.format(pathLayerId))
