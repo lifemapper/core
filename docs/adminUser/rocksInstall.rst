@@ -50,27 +50,11 @@ Other info:
   will be fine.
 * Private Interface:  (notyeti VMs: available internal 192.168.xxx.1, where
   xxx is the last quartet of the public IP address)
-* Gateway:  129.237.201.254
+* Gateway:  129.237.201.254 (Dyche 129.237.183.126)
 * DNS:  129.237.133.1
 * NTP server:  time.ku.edu
 * Auto-Partitioning
 
-Update Python Roll
-~~~~~~~~~~~~~~~~~~
-**If** the sqlite3 module is not available in python2.7:
-
-* Get an updated python roll from pc-167.calit2.optiputer.net in /root/roll/ 
-  with sqlite3.so
-* Copy the iso, then remove old rpm, add roll making sure it will override 
-  existing::
-
-        rpm -el opt-python-27-2.7.9-1.x86_64
-        rocks add roll python-6.2….iso clean=1
-        rocks enable roll python
-        (cd /export/rocks/install; rocks create distro)
-        yum clean all
-        rocks run roll python > add-roll-python.sh
-        bash add-roll-python.sh > add-roll-python.out 2>&1
 
 Enable www access
 ~~~~~~~~~~~~~~~~~
@@ -89,7 +73,18 @@ All KU-Lifemapper Clusters
 Secure SSH
 ~~~~~~~~~~
 
-Add public key to new virtual frontend for key-based authentication::
+**IFF** you do not have an SSH key, generate a private/public key for 
+authentication (new ecdsa algorithm, 521 bit)::
+
+    ssh-keygen -t ecdsa -b 521 -f .ssh/zeppobarks_ecdsa  -C "zeppobarks@gmail.com"
+    
+**IFF** you want to ssh from this machine to others, start the ssh agent, add
+your private key to it, then copy your public key to the servers you want to access
+
+Add public key to new (or existing) virtual frontend for key-based 
+authentication from machines with your private key.  Make sure password 
+authentication is still enabled (disabled with next step) for sshd before 
+sending the key, or permission will be denied.::
 
     ssh-copy-id -i ~/.ssh/id_rsa.pub root@xxx.xxx.xxx.xxx
 
