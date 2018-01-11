@@ -40,7 +40,7 @@ class _LmServerCommand(_LmCommand):
       @param local: Should this be a local command in a Makeflow DAG
       @note: This differs from the superclass because the default local is True
       """
-      return super(LmTouchCommand, self).getMakeflowRule(local=local)
+      return super(_LmServerCommand, self).getMakeflowRule(local=local)
 
 # .............................................................................
 class AddBioGeoAndTreeCommand(_LmServerCommand):
