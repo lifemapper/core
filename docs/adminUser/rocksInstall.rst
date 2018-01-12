@@ -98,15 +98,26 @@ Then restart the sshd service::
 
     service sshd restart
 
-Setup for security updates
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Security updates
+~~~~~~~~~~~~~~~~
 
-Download, build, then install the security-updates roll into directory below. 
-Instructions at https://github.com/rocksclusters/security-updates ::
+Follow instructions at 
+http://www.rocksclusters.org/new/2018/2018/01/04/updates-meltdown-spectre.html
+Create a mirror with CentOS updates, using a nearby mirror from 
+https://www.centos.org/download/mirrors/.
 
-    cd /state/partition1/site-roll/rocks/src/roll 
-    git clone https://github.com/rocksclusters/security-updates.git
 
+    # baseurl=http://centos.gbeservers.com/
+    # osversion=7.4.1708
+    # version=`date +%F`
+    # rocks create mirror ${baseurl}/centos/${osversion}/updates/x86_64/Packages/ rollname=Updates-CentOS-${osversion} version=${version}
+    # rocks add roll Updates-CentOS-${osversion}-${version}*iso
+    # rocks enable roll Updates-CentOS-${osversion} version=${version}
+    # (cd /export/rocks/install; rocks create distro)
+    # yum clean all; yum update
+    
+KU Production roll (unfinished)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Install the KU Production (kuprod) roll. Download iso and sha files, current
 version is: 
 * http://svc.lifemapper.org/dl/kuprod-1.0-0.x86_64.disk1.iso
