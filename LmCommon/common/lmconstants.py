@@ -127,6 +127,7 @@ class LMFormat:
    LOG = FileFormat('.log', 'text/plain')
    MAKEFLOW = FileFormat('.mf', 'text/plain')
    MAP = FileFormat('.map', 'text/plain')
+   MATRIX = FileFormat('.lmm', 'application/octet-stream')
    METADATA = FileFormat('.meta', 'text/plain')
    MXE = FileFormat('.mxe', 'application/octet-stream')
    NEXUS = FileFormat('.nex', 'text/plain', allExtensions=['.nex', '.nxs'])

@@ -39,7 +39,8 @@ from LmBackend.command.server import (LmTouchCommand, SquidIncCommand,
                                       StockpileCommand)
 from LmBackend.common.lmobj import LMError
 
-from LmCommon.common.lmconstants import MatrixType, JobStatus, ProcessType
+from LmCommon.common.lmconstants import MatrixType, JobStatus, ProcessType,\
+   LMFormat
 
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType, 
@@ -238,7 +239,8 @@ class Gridset(ServiceObject): #LMMap
          if len(bgs) > 0:
             bgs = bgs[0] # Just get the first for now
          
-         wsBGFilename = os.path.join(targetDir, 'bg.json')
+         wsBGFilename = os.path.join(targetDir, 
+                                     'bg{}'.format(LMFormat.MATRIX.ext))
          
          if JobStatus.finished(bgs.status):
             # If the matrix is completed, copy it
@@ -286,7 +288,8 @@ class Gridset(ServiceObject): #LMMap
          pam = pamDict[pamId][MatrixType.PAM]
          pamWorkDir = os.path.join(targetDir, 'pam_{}_work'.format(pam.getId()))
          wsPamFilename = os.path.join(pamWorkDir, 
-                                            'pam_{}.json'.format(pam.getId()))
+                                       'pam_{}{}'.format(pam.getId(),
+                                                         LMFormat.MATRIX.ext))
          
          pamTouchCmd = LmTouchCommand(os.path.join(pamWorkDir, 'touch.out'))
          cpPamCmd = SystemCommand('cp', 
@@ -302,17 +305,21 @@ class Gridset(ServiceObject): #LMMap
             
             # Site stats files
             siteStatsMtx = pamDict[pamId][MatrixType.SITES_OBSERVED]
-            siteStatsFilename = os.path.join(pamWorkDir, 'siteStats.json')
+            siteStatsFilename = os.path.join(pamWorkDir, 
+                                    'siteStats{}'.format(LMFormat.MATRIX.ext))
             sitesSuccessFilename = os.path.join(pamWorkDir, 'sites.success')
             
             # Species stats files
             spStatsMtx = pamDict[pamId][MatrixType.SPECIES_OBSERVED]
-            spStatsFilename = os.path.join(pamWorkDir, 'spStats.json')
+            spStatsFilename = os.path.join(pamWorkDir, 
+                                       'spStats{}'.format(LMFormat.MATRIX.ext))
             spSuccessFilename = os.path.join(pamWorkDir, 'species.success')
 
             # Diversity stats files
             divStatsMtx = pamDict[pamId][MatrixType.DIVERSITY_OBSERVED]
-            divStatsFilename = os.path.join(pamWorkDir, 'divStats.json')
+            divStatsFilename = os.path.join(pamWorkDir, 
+                                            'divStats{}'.format(
+                                               LMFormat.MATRIX.ext))
             divSuccessFilename = os.path.join(pamWorkDir, 'diversity.success')
             
             # TODO: Site covariance, species covariance, schluter
@@ -324,7 +331,9 @@ class Gridset(ServiceObject): #LMMap
                #          Reorganize when this settles down
                ancPamMtx = pamDict[pamId][MatrixType.ANC_PAM]
                ancPamSuccessFilename = os.path.join(pamWorkDir, 'ancPam.success')
-               ancPamFilename = os.path.join(pamWorkDir, 'ancPam.json')
+               ancPamFilename = os.path.join(pamWorkDir, 
+                                             'ancPam{}'.format(
+                                                LMFormat.MATRIX.ext))
                
                
                ancestralCmd = CreateAncestralPamCommand(wsPamFilename, 
@@ -363,9 +372,15 @@ class Gridset(ServiceObject): #LMMap
          # MCPA
          if doMCPA:
             # Sync PAM and tree
-            prunedPamFilename = os.path.join(pamWorkDir, 'prunedPAM.json')
-            prunedTreeFilename = os.path.join(pamWorkDir, 'prunedTree.nex')
-            pruneMetadataFilename = os.path.join(pamWorkDir, 'pruneMetadata.json')
+            prunedPamFilename = os.path.join(pamWorkDir, 
+                                             'prunedPAM{}'.format(
+                                                LMFormat.MATRIX.ext))
+            prunedTreeFilename = os.path.join(pamWorkDir, 
+                                              'prunedTree{}'.format(
+                                                 LMFormat.NEXUS.ext))
+            pruneMetadataFilename = os.path.join(pamWorkDir, 
+                                                 'pruneMetadata{}'.format(
+                                                    LMFormat.JSON.ext))
             
             syncCmd = SyncPamAndTreeCommand(wsPamFilename, prunedPamFilename,
                                          squidTreeFilename, prunedTreeFilename,
@@ -373,7 +388,8 @@ class Gridset(ServiceObject): #LMMap
             rules.append(syncCmd.getMakeflowRule())
             
             # Encode tree
-            encTreeFilename = os.path.join(pamWorkDir, 'tree.json')
+            encTreeFilename = os.path.join(pamWorkDir, 'tree{}'.format(
+                                                         LMFormat.MATRIX.ext))
             
             encTreeCmd = EncodePhylogenyCommand(prunedTreeFilename, 
                                                 prunedPamFilename, 
@@ -384,7 +400,8 @@ class Gridset(ServiceObject): #LMMap
                
             # TODO: Add check for GRIM status and create if necessary
             # Assume GRIM exists and copy to workspace
-            wsGrimFilename = os.path.join(pamWorkDir, 'grim.json')
+            wsGrimFilename = os.path.join(pamWorkDir, 'grim{}'.format(
+                                                         LMFormat.MATRIX.ext))
             
             cpGrimCmd = SystemCommand('cp', 
                                       '{} {}'.format(grim.getDLocation(), 
@@ -400,17 +417,26 @@ class Gridset(ServiceObject): #LMMap
             mcpaOutMtx = pamDict[pamId][MatrixType.MCPA_OUTPUTS]
             
             # Get workspace filenames
-            wsEnvAdjRsqFilename = os.path.join(pamWorkDir, 'envAdjRsq.json')
-            wsEnvPartCorFilename = os.path.join(pamWorkDir, 'envPartCor.json')
-            wsEnvFglobalFilename = os.path.join(pamWorkDir, 'envFglobal.json')
-            wsEnvFpartialFilename = os.path.join(pamWorkDir, 'envFpartial.json')
+            wsEnvAdjRsqFilename = os.path.join(pamWorkDir, 
+                                     'envAdjRsq{}'.format(LMFormat.MATRIX.ext))
+            wsEnvPartCorFilename = os.path.join(pamWorkDir, 
+                                    'envPartCor{}'.format(LMFormat.MATRIX.ext))
+            wsEnvFglobalFilename = os.path.join(pamWorkDir, 
+                                    'envFglobal{}'.format(LMFormat.MATRIX.ext))
+            wsEnvFpartialFilename = os.path.join(pamWorkDir, 
+                                   'envFpartial{}'.format(LMFormat.MATRIX.ext))
             
-            wsBGAdjRsqFilename = os.path.join(pamWorkDir, 'bgAdjRsq.json')
-            wsBGPartCorFilename = os.path.join(pamWorkDir, 'bgPartCor.json')
-            wsBGFglobalFilename = os.path.join(pamWorkDir, 'bgFglobal.json')
-            wsBGFpartialFilename = os.path.join(pamWorkDir, 'bgFpartial.json')
+            wsBGAdjRsqFilename = os.path.join(pamWorkDir, 
+                                      'bgAdjRsq{}'.format(LMFormat.MATRIX.ext))
+            wsBGPartCorFilename = os.path.join(pamWorkDir, 
+                                     'bgPartCor{}'.format(LMFormat.MATRIX.ext))
+            wsBGFglobalFilename = os.path.join(pamWorkDir, 
+                                     'bgFglobal{}'.format(LMFormat.MATRIX.ext))
+            wsBGFpartialFilename = os.path.join(pamWorkDir, 
+                                    'bgFpartial{}'.format(LMFormat.MATRIX.ext))
             
-            wsMcpaOutFilename = os.path.join(pamWorkDir, 'mcpaOut.json')
+            wsMcpaOutFilename = os.path.join(pamWorkDir, 
+                                       'mcpaOut{}'.format(LMFormat.MATRIX.ext))
             
             # MCPA env observed command
             mcpaEnvObsCmd = McpaObservedCommand(wsPamFilename, encTreeFilename,
@@ -424,9 +450,9 @@ class Gridset(ServiceObject): #LMMap
             envFpartRands = []
             for i in range(NUM_RAND_GROUPS):
                envFglobRandFilename = os.path.join(pamWorkDir, 
-                                               'envFglobRand{}.json'.format(i))
+                             'envFglobRand{}{}'.format(i, LMFormat.MATRIX.ext))
                envFpartRandFilename = os.path.join(pamWorkDir, 
-                                               'envFpartRand{}.json'.format(i))
+                             'envFpartRand{}{}'.format(i, LMFormat.MATRIX.ext))
                envFglobRands.append(envFglobRandFilename)
                envFpartRands.append(envFpartRandFilename)
                
@@ -439,8 +465,10 @@ class Gridset(ServiceObject): #LMMap
             # TODO: Consider saving randomized matrices
             
             # Env F-global
-            envFglobFilename = os.path.join(pamWorkDir, 'envFglobP.json')
-            envFglobBHfilename = os.path.join(pamWorkDir, 'envFglobBH.json')
+            envFglobFilename = os.path.join(pamWorkDir, 
+                                    'envFglobP{}'.format(LMFormat.MATRIX.ext))
+            envFglobBHfilename = os.path.join(pamWorkDir, 
+                                    'envFglobBH{}'.format(LMFormat.MATRIX.ext))
             
             envFglobCmd = McpaCorrectPValuesCommand(wsEnvFglobalFilename,
                                                     envFglobFilename,
@@ -449,8 +477,10 @@ class Gridset(ServiceObject): #LMMap
             rules.append(envFglobCmd.getMakeflowRule())
             
             # Env F-semipartial
-            envFpartFilename = os.path.join(pamWorkDir, 'envFpartP.json')   
-            envFpartBHfilename = os.path.join(pamWorkDir, 'envFpartBH.json')
+            envFpartFilename = os.path.join(pamWorkDir, 
+                                    'envFpartP{}'.format(LMFormat.MATRIX.ext))   
+            envFpartBHfilename = os.path.join(pamWorkDir, 
+                                    'envFpartBH{}'.format(LMFormat.MATRIX.ext))
             envFpartCmd = McpaCorrectPValuesCommand(wsEnvFpartialFilename,
                                                     envFpartFilename,
                                                     envFpartBHfilename,
@@ -472,9 +502,9 @@ class Gridset(ServiceObject): #LMMap
             # TODO: This should be configurable 
             for i in range(NUM_RAND_GROUPS):
                bgFglobRandFilename = os.path.join(pamWorkDir, 
-                                               'bgFglobRand{}.json'.format(i))
+                              'bgFglobRand{}{}'.format(i, LMFormat.MATRIX.ext))
                bgFpartRandFilename = os.path.join(pamWorkDir, 
-                                               'bgFpartRand{}.json'.format(i))
+                              'bgFpartRand{}{}'.format(i, LMFormat.MATRIX.ext))
                bgFglobRands.append(bgFglobRandFilename)
                bgFpartRands.append(bgFpartRandFilename)
                
@@ -488,16 +518,20 @@ class Gridset(ServiceObject): #LMMap
             # TODO: Consider saving randomized matrices
             
             # BG F-global
-            bgFglobFilename = os.path.join(pamWorkDir, 'bgFglobP.json')
-            bgFglobBHfilename = os.path.join(pamWorkDir, 'bgFglobBH.json')
+            bgFglobFilename = os.path.join(pamWorkDir, 
+                                      'bgFglobP{}'.format(LMFormat.MATRIX.ext))
+            bgFglobBHfilename = os.path.join(pamWorkDir, 
+                                     'bgFglobBH{}'.format(LMFormat.MATRIX.ext))
             bgFglobCmd = McpaCorrectPValuesCommand(wsBGFglobalFilename,
                                    bgFglobFilename, bgFglobBHfilename,
                                    bgFglobRands)
             rules.append(bgFglobCmd.getMakeflowRule())
             
             # BG F-semipartial
-            bgFpartFilename = os.path.join(pamWorkDir, 'bgFpartP.json')   
-            bgFpartBHfilename = os.path.join(pamWorkDir, 'bgFpartBH.json')
+            bgFpartFilename = os.path.join(pamWorkDir, 
+                                      'bgFpartP{}'.format(LMFormat.MATRIX.ext))   
+            bgFpartBHfilename = os.path.join(pamWorkDir, 
+                                     'bgFpartBH{}'.format(LMFormat.MATRIX.ext))
             bgFpartCmd = McpaCorrectPValuesCommand(wsBGFpartialFilename,
                                    bgFpartFilename, bgFpartBHfilename,
                                    bgFpartRands)

@@ -263,7 +263,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       rules = []
       # Add concatenate command
       mtxOutputFname = os.path.join(workDir, 'mtx_{}{}'
-                                    .format(self.getId(), LMFormat.JSON.ext))
+                                    .format(self.getId(), LMFormat.MATRIX.ext))
       
       concatCmd = ConcatenateMatricesCommand(mtxcolFnames, '1', mtxOutputFname)
       rules.append(concatCmd.getMakeflowRule())
