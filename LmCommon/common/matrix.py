@@ -27,13 +27,17 @@
 @todo: Use https://docs.scipy.org/doc/numpy/user/basics.subclassing.html when
           changing this to subclass numpy.ndarray
 @todo: Handle multiple rows / columns / etc of headers (like PAM x, y, site ids)
+@todo: Load should handle compressed and not compressed
 """
 from copy import deepcopy
 import json
 import numpy as np
+from StringIO import StringIO
 
 HEADERS_KEY = 'headers'
 DATA_KEY = 'data'
+VERSION_KEY = 'version'
+VERSION = '2.0.0'
 
 # .............................................................................
 class Matrix(object):
@@ -74,17 +78,57 @@ class Matrix(object):
       """
       # Try loading Matrix
       try:
-         with open(fn) as inF:
-            obj = json.load(inF)
-         return cls.loadFromJsonOrDictionary(obj)
+         try:
+            # New method
+            return cls.load_new(fn)
+         except:
+            # Old method
+            with open(fn) as inF:
+               obj = json.load(inF)
+            return cls.loadFromJsonOrDictionary(obj)
       except:
          # Try loading numpy array
          try:
             data = np.load(fn)
             return cls(data)
-         except:
-            raise Exception("Cannot load file: {0}".format(fn))
+         except Exception, e:
+            raise Exception("Cannot load file: {0}, {1}".format(fn, str(e)))
          
+   # ...........................
+   @classmethod
+   def load_new(cls, filename):
+      """
+      @summary: Attempt to load a Matrix object from a file
+      @param fn: File location of a stored matrix
+      """
+      headerLines = []
+      dataLines = []
+      doHeaders = True
+      with open(filename) as inF:
+         for line in inF:
+            if doHeaders:
+               if line.startswith(DATA_KEY):
+                  doHeaders = False
+               else:
+                  headerLines.append(line)
+            else:
+               dataLines.append(line)
+      s = StringIO()
+      for line in dataLines:
+         s.write(line)
+      s.seek(0)
+      
+      myObj = json.loads(''.join(headerLines))
+         
+      headers = myObj[HEADERS_KEY]
+      # Load returns a tuple if compressed
+      tmp = np.load(s)
+      if isinstance(tmp, np.ndarray):
+         data = tmp
+      else:
+         data = tmp.items()[0][1]
+      return cls(data, headers=headers)
+   
    # ...........................
    @classmethod
    def loadFromCSV(cls, flo):
@@ -233,7 +277,7 @@ class Matrix(object):
       return self.getHeaders(axis=0)
    
    # ...........................
-   def save(self, flo):
+   def save_old(self, flo):
       """
       @summary: Saves the Matrix object as a JSON document to the file-like 
                    object
@@ -245,6 +289,20 @@ class Matrix(object):
       
       json.dump(writeObj, flo, indent=3, default=float)
    
+   # ...........................
+   def save(self, flo):
+      """
+      @summary: Saves the Matrix object in a JSON / Numpy hybrid format to the
+                   file-like object
+      @param flo: The file-like object to write to
+      """
+      myObj = {}
+      myObj[HEADERS_KEY] = self.headers
+      myObj[VERSION_KEY] = VERSION
+      flo.write('{}\n'.format(json.dumps(myObj, indent=3, default=float)))
+      flo.write('{}\n'.format(DATA_KEY))
+      np.savez_compressed(flo, self.data)
+      
    # ...........................
    def setColumnHeaders(self, headers):
       """
