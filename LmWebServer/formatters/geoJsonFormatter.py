@@ -27,6 +27,7 @@
 """
 import cherrypy
 import json
+import numpy as np
 import ogr
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType
@@ -80,7 +81,7 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
          i = rowLookup[joinAttrib]
          
          ft['properties'] = dict(
-                              [(k, castFunc(matrix.data[i,j])
+                              [(k, castFunc(matrix.data[i,j].item())
                                                       ) for j, k in colEnum])
          flo.write('{},\n'.format(json.dumps(ft)))
    ds = None
@@ -117,7 +118,7 @@ def geoJsonify(shpFilename, matrix=None, mtxJoinAttrib=None):
          
          for j in range(len(colHeaders)):
             try:
-               attLookup[joinAtt][colHeaders[j]] = castFunc(matrix.data[i,j])
+               attLookup[joinAtt][colHeaders[j]] = castFunc(matrix.data[i,j].item())
             except:
                pass
    
