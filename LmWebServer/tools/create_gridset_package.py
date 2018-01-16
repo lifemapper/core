@@ -40,7 +40,6 @@ from LmServer.db.borgscribe import BorgScribe
 
 from LmWebServer.formatters.emlFormatter import makeEml
 from LmWebServer.formatters.geoJsonFormatter import geoJsonify_flo
-import shutil
 
 # ..........................................................................
 def assemble_package_for_gridset(gridset, outfile):
@@ -87,12 +86,12 @@ def assemble_package_for_gridset(gridset, outfile):
             with open(tempFn, 'w') as tempF:
                print(' - Getting GeoJSON')
                geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
-                              mtxJoinAttrib=0, ident=1)
-            
+                              mtxJoinAttrib=0, ident=0)
+            print(' - Zipping {}'.format(tempFn))
             outZip.write(tempFn, mtxFn)
             
             print(' - Delete temp file')
-            shutil.rmtree(tempFn)
+            os.remove(tempFn)
          else:
             print(' - Write non Geo-JSON matrix')
             outZip.write(mtx.getDLocation(), 
