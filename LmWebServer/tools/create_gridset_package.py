@@ -46,30 +46,43 @@ def assemble_package_for_gridset(gridset, outfile):
    """
    @summary: Creates an output zip file from the gridset
    """
+   print('Assembling package: {}'.format(outfile))
+   print('Creating EML')
    gsEml = tostring(makeEml(gridset))
    with zipfile.ZipFile(outfile, 
                         mode='w', 
                         compression=zipfile.ZIP_DEFLATED,
                         allowZip64=True) as outZip:
+      print('Write out EML')
       outZip.writestr('gridset_{}.eml'.format(gridset.getId()), gsEml)
+      print('Write tree')
       outZip.write(gridset.tree.getDLocation(), 
                    os.path.basename(gridset.tree.getDLocation()))
+      print('Getting shapegrid')
       sg = gridset.getShapegrid()
+      print('{} matrices'.format(len(gridset.getMatrices())))
       for mtx in gridset.getMatrices():
+         print('Matrix: {}'.format(mtx.getDLocation()))
          # Need to get geojson where we can
          if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM, 
                             MatrixType.ANC_PAM, MatrixType.SITES_COV_OBSERVED, 
                             MatrixType.SITES_COV_RANDOM, 
                             MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM]:
+            print(' - Loading matrix')
             mtxObj = Matrix.load(mtx.getDLocation())
+            print(' - Loaded')
             mtxFn = '{}{}'.format(
                os.path.splitext(
                   os.path.basename(mtx.getDLocation()))[0], 
                                   LMFormat.GEO_JSON.ext)
-            outZip.writestr(mtxFn, json.dumps(geoJsonify(sg.getDLocation(), 
-                                                         matrix=mtxObj, 
-                                                         mtxJoinAttrib=0)))
+            print(' - Getting GeoJSON')
+            gj = geoJsonify(sg.getDLocation(), matrix=mtxObj, mtxJoinAttrib=0)
+            print(' - Getting JSON string')
+            jstr = json.dumps(gj)
+            print(' - Writing matrix')
+            outZip.writestr(mtxFn, jstr)
          else:
+            print(' - Write non Geo-JSON matrix')
             outZip.write(mtx.getDLocation(), 
                       os.path.basename(mtx.getDLocation()))
 
