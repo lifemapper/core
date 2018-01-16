@@ -28,7 +28,6 @@
 import cherrypy
 import json
 import ogr
-from cStringIO import StringIO
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmCommon.common.matrix import Matrix
@@ -39,7 +38,7 @@ from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.shapegrid import ShapeGrid
 
 # .............................................................................
-def geoJsonify_stringio(shpFilename, matrix=None, mtxJoinAttrib=None, 
+def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None, 
                                 ident=3):
    """
    @summary: A string generator for matrix GeoJSON
@@ -47,11 +46,9 @@ def geoJsonify_stringio(shpFilename, matrix=None, mtxJoinAttrib=None,
    if isinstance(ident, int):
       ident = ' '*ident
    
-   s = StringIO()
-   
-   s.write('{\n')
-   s.write('{}"type" : "FeatureCollection",\n'.format(ident))
-   s.write('{}"features" : [\n'.format(ident))
+   flo.write('{\n')
+   flo.write('{}"type" : "FeatureCollection",\n'.format(ident))
+   flo.write('{}"features" : [\n'.format(ident))
    
    rowLookup = {}
    
@@ -85,15 +82,12 @@ def geoJsonify_stringio(shpFilename, matrix=None, mtxJoinAttrib=None,
          ft['properties'] = dict(
                               [(k, castFunc(matrix.data[i,j])
                                                       ) for j, k in colEnum])
-         s.write('{},\n'.format(json.dumps(ft)))
+         flo.write('{},\n'.format(json.dumps(ft)))
    ds = None
 
 
-   s.write('{}]\n'.format(ident))
-   s.write('}')
-
-   s.seek(0)
-   return s
+   flo.write('{}]\n'.format(ident))
+   flo.write('}')
 
 # .............................................................................
 def geoJsonify(shpFilename, matrix=None, mtxJoinAttrib=None):

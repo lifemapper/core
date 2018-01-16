@@ -27,19 +27,20 @@
 @todo: Probably want to split of EML generating code to separate module(s)
 """
 import argparse
-import json
 import os
 import zipfile
 
+from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmCommon.common.lmXml import tostring
 from LmCommon.common.matrix import Matrix
 
+from LmServer.common.lmconstants import TEMP_PATH
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 
 from LmWebServer.formatters.emlFormatter import makeEml
-from LmCommon.common.lmconstants import LMFormat, MatrixType
-from LmWebServer.formatters.geoJsonFormatter import geoJsonify_stringio
+from LmWebServer.formatters.geoJsonFormatter import geoJsonify_flo
+import shutil
 
 # ..........................................................................
 def assemble_package_for_gridset(gridset, outfile):
@@ -79,11 +80,19 @@ def assemble_package_for_gridset(gridset, outfile):
                os.path.splitext(
                   os.path.basename(mtx.getDLocation()))[0], 
                                   LMFormat.GEO_JSON.ext)
-            print(' - Getting GeoJSON')
-            gj = geoJsonify_stringio(sg.getDLocation(), matrix=mtxObj, 
-                                     mtxJoinAttrib=0, ident=1)
-            outZip.write(gj, mtxFn)
-            gj = None # Clear memory
+            
+            # Make a temporary file
+            tempFn = os.path.join(TEMP_PATH, mtxFn)
+            print(' - Temporary file name: {}'.format(tempFn))
+            with open(tempFn, 'w') as tempF:
+               print(' - Getting GeoJSON')
+               geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
+                              mtxJoinAttrib=0, ident=1)
+            
+            outZip.write(tempFn, mtxFn)
+            
+            print(' - Delete temp file')
+            shutil.rmtree(tempFn)
          else:
             print(' - Write non Geo-JSON matrix')
             outZip.write(mtx.getDLocation(), 
