@@ -60,9 +60,13 @@ def assemble_package_for_gridset(gridset, outfile):
                    os.path.basename(gridset.tree.getDLocation()))
       print('Getting shapegrid')
       sg = gridset.getShapegrid()
-      print('{} matrices'.format(len(gridset.getMatrices())))
-      for mtx in gridset.getMatrices():
-         print('Matrix: {}'.format(mtx.getDLocation()))
+      matrices = gridset.getMatrices()
+      i = 0
+      print('{} matrices'.format(len(matrices)))
+      for mtx in matrices:
+         i += 1
+         print('Matrix: ({} of {}) {}'.format(i, len(matrices), 
+                                              mtx.getDLocation()))
          # Need to get geojson where we can
          if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM, 
                             MatrixType.ANC_PAM, MatrixType.SITES_COV_OBSERVED, 
