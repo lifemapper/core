@@ -83,8 +83,10 @@ def assemble_package_for_gridset(gridset, outfile):
             gj = geoJsonify(sg.getDLocation(), matrix=mtxObj, mtxJoinAttrib=0)
             print(' - Getting JSON string')
             jstr = json.dumps(gj)
+            gj = None # Clear memory
             print(' - Writing matrix')
             outZip.writestr(mtxFn, jstr)
+            jstr = None # Clear memory
          else:
             print(' - Write non Geo-JSON matrix')
             outZip.write(mtx.getDLocation(), 
