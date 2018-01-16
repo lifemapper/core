@@ -39,7 +39,7 @@ from LmServer.db.borgscribe import BorgScribe
 
 from LmWebServer.formatters.emlFormatter import makeEml
 from LmCommon.common.lmconstants import LMFormat, MatrixType
-from LmWebServer.formatters.geoJsonFormatter import geoJsonify
+from LmWebServer.formatters.geoJsonFormatter import geoJsonify_stringio
 
 # ..........................................................................
 def assemble_package_for_gridset(gridset, outfile):
@@ -80,13 +80,10 @@ def assemble_package_for_gridset(gridset, outfile):
                   os.path.basename(mtx.getDLocation()))[0], 
                                   LMFormat.GEO_JSON.ext)
             print(' - Getting GeoJSON')
-            gj = geoJsonify(sg.getDLocation(), matrix=mtxObj, mtxJoinAttrib=0)
-            print(' - Getting JSON string')
-            jstr = json.dumps(gj)
+            gj = geoJsonify_stringio(sg.getDLocation(), matrix=mtxObj, 
+                                     mtxJoinAttrib=0, ident=1)
+            outZip.write(gj, mtxFn)
             gj = None # Clear memory
-            print(' - Writing matrix')
-            outZip.writestr(mtxFn, jstr)
-            jstr = None # Clear memory
          else:
             print(' - Write non Geo-JSON matrix')
             outZip.write(mtx.getDLocation(), 

@@ -28,6 +28,7 @@
 import cherrypy
 import json
 import ogr
+from cStringIO import StringIO
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmCommon.common.matrix import Matrix
@@ -36,6 +37,63 @@ from LmServer.base.layer2 import Vector
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.shapegrid import ShapeGrid
+
+# .............................................................................
+def geoJsonify_stringio(shpFilename, matrix=None, mtxJoinAttrib=None, 
+                                ident=3):
+   """
+   @summary: A string generator for matrix GeoJSON
+   """
+   if isinstance(ident, int):
+      ident = ' '*ident
+   
+   s = StringIO()
+   
+   s.write('{\n')
+   s.write('{}"type" : "FeatureCollection",\n'.format(ident))
+   s.write('{}"features" : [\n'.format(ident))
+   
+   rowLookup = {}
+   
+   if matrix is not None:
+      colHeaders = matrix.getColumnHeaders()
+      colEnum = [(j, k) for j, k in enumerate(colHeaders)]
+      rowHeaders = matrix.getRowHeaders()
+      
+      for i in range(len(rowHeaders)):
+         rowLookup[rowHeaders[i][mtxJoinAttrib]] = i
+      
+      # Define cast function, necessary if matris if full of booleans
+      if matrix.data.dtype == bool:
+         castFunc = lambda x: int(x)
+      else:
+         castFunc = lambda x: x
+         
+   # Build features list
+   drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+   ds = drv.Open(shpFilename, 0)
+   lyr = ds.GetLayer()
+   for feat in lyr:
+      # Get the GeoJSON for the feature
+      ft = json.loads(feat.ExportToJson())
+      joinAttrib = feat.GetFID()
+      
+      # Join matrix attributes
+      if rowLookup.has_key(joinAttrib):
+         i = rowLookup[joinAttrib]
+         
+         ft['properties'] = dict(
+                              [(k, castFunc(matrix.data[i,j])
+                                                      ) for j, k in colEnum])
+         s.write('{},\n'.format(json.dumps(ft)))
+   ds = None
+
+
+   s.write('{}]\n'.format(ident))
+   s.write('}')
+
+   s.seek(0)
+   return s
 
 # .............................................................................
 def geoJsonify(shpFilename, matrix=None, mtxJoinAttrib=None):
