@@ -54,7 +54,7 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
    
    if matrix is not None:
       colHeaders = matrix.getColumnHeaders()
-      colEnum = [(j, k) for j, k in enumerate(colHeaders)]
+      colEnum = [(j, str(k)) for j, k in enumerate(colHeaders)]
       rowHeaders = matrix.getRowHeaders()
       
       for i in range(len(rowHeaders)):
