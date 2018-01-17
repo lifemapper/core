@@ -435,7 +435,10 @@ class Matrix(object):
          # Start with the header row, if we have one
          if mtx.headers.has_key('1') and mtx.headers['1']:
             # Add a blank entry if we have row headers
-            headerRow = ['']*len(rowHeaders[0]) if rowHeaders else []
+            try:
+               headerRow = ['']*len(rowHeaders[0]) if rowHeaders else []
+            except: # If single value
+               headerRow = ['']
             headerRow.extend(mtx.headers['1'])
             yield headerRow
          # For each row in the data set
