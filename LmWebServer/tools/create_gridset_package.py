@@ -67,14 +67,15 @@ def assemble_package_for_gridset(gridset, outfile):
          i += 1
          print('Matrix: ({} of {}) {}'.format(i, len(matrices), 
                                               mtx.getDLocation()))
+         print(' - Loading matrix')
+         mtxObj = Matrix.load(mtx.getDLocation())
+         print(' - Loaded')
+
          # Need to get geojson where we can
          if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM, 
                             MatrixType.ANC_PAM, MatrixType.SITES_COV_OBSERVED, 
                             MatrixType.SITES_COV_RANDOM, 
                             MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM]:
-            print(' - Loading matrix')
-            mtxObj = Matrix.load(mtx.getDLocation())
-            print(' - Loaded')
             mtxFn = '{}{}'.format(
                os.path.splitext(
                   os.path.basename(mtx.getDLocation()))[0], 
@@ -87,15 +88,24 @@ def assemble_package_for_gridset(gridset, outfile):
                print(' - Getting GeoJSON')
                geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
                               mtxJoinAttrib=0, ident=0)
-            print(' - Zipping {}'.format(tempFn))
-            outZip.write(tempFn, mtxFn)
-            
-            print(' - Delete temp file')
-            os.remove(tempFn)
          else:
             print(' - Write non Geo-JSON matrix')
-            outZip.write(mtx.getDLocation(), 
-                      os.path.basename(mtx.getDLocation()))
+            mtxFn = '{}{}'.format(
+               os.path.splitext(
+                  os.path.basename(mtx.getDLocation()))[0], 
+                                  LMFormat.CSV.ext)
+            # Make a temporary file
+            tempFn = os.path.join(TEMP_PATH, mtxFn)
+            print(' - Temporary file name: {}'.format(tempFn))
+            with open(tempFn, 'w') as tempF:
+               print(' - Getting CSV')
+               mtxObj.writeCSV(tempF)
+
+         print(' - Zipping {}'.format(tempFn))
+         outZip.write(tempFn, mtxFn)
+            
+         print(' - Delete temp file')
+         os.remove(tempFn)
 
 # ..........................................................................
 if __name__ == '__main__':
