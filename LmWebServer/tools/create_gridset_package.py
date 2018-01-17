@@ -152,7 +152,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
                geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
                            mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn)
             
-         if mtx.matrixType in [MatrixType.SITES_COV_OBSERVED, 
+         elif mtx.matrixType in [MatrixType.SITES_COV_OBSERVED, 
                             MatrixType.SITES_COV_RANDOM, 
                             MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM]:
             mtxFn = '{}{}'.format(
