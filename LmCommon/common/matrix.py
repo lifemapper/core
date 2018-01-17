@@ -430,7 +430,7 @@ class Matrix(object):
             rowHeaders = mtx.headers['0']
          except:
             # No row headers
-            rowHeaders = []
+            rowHeaders = [[] for _ in xrange(mtx.data.shape[0])]
          
          if isinstance(rowHeaders[0], list):
             listify = lambda x: x
