@@ -58,7 +58,7 @@ def createHeaderLookup(headers, squids=False, scribe=None, userId=None):
       ret = getHeaderDict(header, idx)
       
       for attrib, key in [('scientificName', 'scientific_name'),
-                          ('canoncialName', 'canonical_name'),
+                          ('canonicalName', 'canonical_name'),
                           ('rank', 'taxon_rank'),
                           ('kingdom', 'taxon_kingdom'),
                           ('phylum', 'taxon_phylum'),
