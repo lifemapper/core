@@ -432,20 +432,22 @@ class Matrix(object):
             # No row headers
             rowHeaders = []
          
+         if isinstance(rowHeaders[0], list):
+            listify = lambda x: x
+         else:
+            listify = lambda x: [x]
+         
          # Start with the header row, if we have one
          if mtx.headers.has_key('1') and mtx.headers['1']:
             # Add a blank entry if we have row headers
-            try:
-               headerRow = ['']*len(rowHeaders[0]) if rowHeaders else []
-            except: # If single value
-               headerRow = ['']
+            headerRow = ['']*len(listify(rowHeaders[0]) if rowHeaders else [])
             headerRow.extend(mtx.headers['1'])
             yield headerRow
          # For each row in the data set
          for i in xrange(mtx.data.shape[0]):
             # Add the row headers if exists
             row = []
-            row.extend(rowHeaders[i])
+            row.extend(listify(rowHeaders[i]))
             # Get the data from the data array
             row.extend(mtx.data[i].tolist())
             yield row
