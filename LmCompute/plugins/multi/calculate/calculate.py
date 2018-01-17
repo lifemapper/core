@@ -147,7 +147,8 @@ class PamStats(object):
                                self.psi.reshape(numSp, 1),
                                self.psiAvgProp.reshape(numSp, 1)],
                               axis=1)
-      spHeaders = {'1': [PamStatKeys.OMEGA, PamStatKeys.OMEGA_PROP, 
+      spHeaders = {'0' : self.pam.getColumnHeaders(),
+                   '1': [PamStatKeys.OMEGA, PamStatKeys.OMEGA_PROP, 
                        PamStatKeys.PSI, PamStatKeys.PSI_AVG_PROP]}
       # Return a Matrix
       return Matrix(spData, headers=spHeaders)
