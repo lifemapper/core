@@ -27,6 +27,7 @@
 @todo: Probably want to split of EML generating code to separate module(s)
 """
 import argparse
+import json
 import os
 import zipfile
 
@@ -41,8 +42,45 @@ from LmServer.db.borgscribe import BorgScribe
 from LmWebServer.formatters.emlFormatter import makeEml
 from LmWebServer.formatters.geoJsonFormatter import geoJsonify_flo
 
+# .............................................................................
+def createHeaderLookup(headers, squids=False, scribe=None, userId=None):
+   """
+   @summary: Generate a header lookup to be included in the package metadata
+   """
+   def getHeaderDict(header, idx):
+      return {
+         'header' : header,
+         'index' : idx
+      }
+      
+   def getSquidHeaderDict(header, idx, scribe, userId):
+      taxon = scribe.getTaxon(squid=header, userId=userId)
+      ret = getHeaderDict(header, idx)
+      
+      for attrib, key in [('scientificName', 'scientific_name'),
+                          ('canoncialName', 'canonical_name'),
+                          ('rank', 'taxon_rank'),
+                          ('kingdom', 'taxon_kingdom'),
+                          ('phylum', 'taxon_phylum'),
+                          ('txClass', 'taxon_class'),
+                          ('txorder', 'taxon_order'),
+                          ('family', 'taxon_family'),
+                          ('genus', 'taxon_genus')
+                         ]:
+         val = getattr(taxon, attrib)
+         if val is not None:
+            ret[key] = val
+      return ret
+   
+      
+   if squids and scribe and userId:
+      return [getSquidHeaderDict(
+                  headers[i], i, scribe, userId) for i in xrange(len(headers))]
+   else:
+      return [getHeaderDict(headers[i], i) for i in xrange(len(headers))]
+
 # ..........................................................................
-def assemble_package_for_gridset(gridset, outfile):
+def assemble_package_for_gridset(gridset, outfile, scribe, userId):
    """
    @summary: Creates an output zip file from the gridset
    """
@@ -72,8 +110,46 @@ def assemble_package_for_gridset(gridset, outfile):
          print(' - Loaded')
 
          # Need to get geojson where we can
-         if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM, 
-                            MatrixType.ANC_PAM, MatrixType.SITES_COV_OBSERVED, 
+         if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
+            mtxFn = '{}{}'.format(
+               os.path.splitext(
+                  os.path.basename(mtx.getDLocation()))[0], 
+                                  LMFormat.GEO_JSON.ext)
+            
+            print(' - Creating SQUID lookup')
+            hlfn = 'squidLookup.json'
+            outZip.writestr(hlfn, json.dumps(
+               createHeaderLookup(mtxObj.getColumnHeaders(), squids=True, 
+                                  scribe=scribe, userId=userId)))
+            
+            # Make a temporary file
+            tempFn = os.path.join(TEMP_PATH, mtxFn)
+            print(' - Temporary file name: {}'.format(tempFn))
+            with open(tempFn, 'w') as tempF:
+               print(' - Getting GeoJSON')
+               geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
+                           mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn)
+            
+         elif mtx.matrixType == MatrixType.ANC_PAM:
+            mtxFn = '{}{}'.format(
+               os.path.splitext(
+                  os.path.basename(mtx.getDLocation()))[0], 
+                                  LMFormat.GEO_JSON.ext)
+            
+            print(' - Creating node lookup')
+            hlfn = 'nodeLookup.json'
+            outZip.writestr(hlfn, json.dumps(createHeaderLookup(
+                                                   mtxObj.getColumnHeaders())))
+            
+            # Make a temporary file
+            tempFn = os.path.join(TEMP_PATH, mtxFn)
+            print(' - Temporary file name: {}'.format(tempFn))
+            with open(tempFn, 'w') as tempF:
+               print(' - Getting GeoJSON')
+               geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
+                           mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn)
+            
+         if mtx.matrixType in [MatrixType.SITES_COV_OBSERVED, 
                             MatrixType.SITES_COV_RANDOM, 
                             MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM]:
             mtxFn = '{}{}'.format(
@@ -122,7 +198,7 @@ if __name__ == '__main__':
    scribe.openConnections()
    
    gs = scribe.getGridset(gridsetId=args.gsId, fillMatrices=True)
+   
+   assemble_package_for_gridset(gs, args.out_file, scribe, gs.getUserId())
+
    scribe.closeConnections()
-   
-   assemble_package_for_gridset(gs, args.out_file)
-   

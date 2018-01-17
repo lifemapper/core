@@ -27,7 +27,6 @@
 """
 import cherrypy
 import json
-import numpy as np
 import ogr
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType
@@ -40,7 +39,7 @@ from LmServer.legion.shapegrid import ShapeGrid
 
 # .............................................................................
 def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None, 
-                                ident=3):
+                                ident=3, headerLookupFilename=None):
    """
    @summary: A string generator for matrix GeoJSON
    """
@@ -49,6 +48,9 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
    
    flo.write('{\n')
    flo.write('{}"type" : "FeatureCollection",\n'.format(ident))
+   if headerLookupFilename:
+      flo.write('{}"propertyLookupFilename" : "{}"\n'.format(ident, 
+                                                         headerLookupFilename))
    flo.write('{}"features" : [\n'.format(ident))
    
    rowLookup = {}
@@ -80,7 +82,13 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
       if rowLookup.has_key(joinAttrib):
          i = rowLookup[joinAttrib]
          
-         ft['properties'] = dict(
+         # Set data or individuals
+         if headerLookupFilename:
+            ft['properties'] = {
+               'data' : [castFunc(j) for j in matrix.data[i]]
+               }
+         else:
+            ft['properties'] = dict(
                               [(k, castFunc(matrix.data[i,j].item())
                                                       ) for j, k in colEnum])
          flo.write('{},\n'.format(json.dumps(ft)))
