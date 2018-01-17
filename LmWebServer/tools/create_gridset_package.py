@@ -118,9 +118,11 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
             
             print(' - Creating SQUID lookup')
             hlfn = 'squidLookup.json'
-            outZip.writestr(hlfn, json.dumps(
-               createHeaderLookup(mtxObj.getColumnHeaders(), squids=True, 
-                                  scribe=scribe, userId=userId)))
+            outZip.writestr(hlfn, json.dumps(createHeaderLookup(
+                                                mtxObj.getColumnHeaders(), 
+                                                squids=True, 
+                                                scribe=scribe, userId=userId),
+                                             indent=3))
             
             # Make a temporary file
             tempFn = os.path.join(TEMP_PATH, mtxFn)
@@ -139,7 +141,8 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
             print(' - Creating node lookup')
             hlfn = 'nodeLookup.json'
             outZip.writestr(hlfn, json.dumps(createHeaderLookup(
-                                                   mtxObj.getColumnHeaders())))
+                                                   mtxObj.getColumnHeaders()),
+                                             indent=3))
             
             # Make a temporary file
             tempFn = os.path.join(TEMP_PATH, mtxFn)

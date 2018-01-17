@@ -85,7 +85,7 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
          # Set data or individuals
          if headerLookupFilename:
             ft['properties'] = {
-               'data' : [castFunc(j) for j in matrix.data[i]]
+               'data' : [castFunc(j.item()) for j in matrix.data[i]]
                }
          else:
             ft['properties'] = dict(
