@@ -63,7 +63,7 @@ def createHeaderLookup(headers, squids=False, scribe=None, userId=None):
                           ('kingdom', 'taxon_kingdom'),
                           ('phylum', 'taxon_phylum'),
                           ('txClass', 'taxon_class'),
-                          ('txorder', 'taxon_order'),
+                          ('txOrder', 'taxon_order'),
                           ('family', 'taxon_family'),
                           ('genus', 'taxon_genus')
                          ]:
