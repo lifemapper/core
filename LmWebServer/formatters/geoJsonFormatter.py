@@ -49,7 +49,7 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
    flo.write('{\n')
    flo.write('{}"type" : "FeatureCollection",\n'.format(ident))
    if headerLookupFilename:
-      flo.write('{}"propertyLookupFilename" : "{}"\n'.format(ident, 
+      flo.write('{}"propertyLookupFilename" : "{}",\n'.format(ident, 
                                                          headerLookupFilename))
    flo.write('{}"features" : [\n'.format(ident))
    
