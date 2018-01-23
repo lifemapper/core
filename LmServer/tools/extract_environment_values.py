@@ -89,7 +89,7 @@ def get_metrics(points_filename, layer_info, identifier,
    metricsMatrix = Matrix(metricsData, headers={
       '0' : [h for h, _ in metrics],
       '1' : [lyr[0] for lyr in layer_info],
-      '2' : identifier
+      '2' : [identifier]
       })
    return metricsMatrix
 
