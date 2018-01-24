@@ -45,6 +45,13 @@ from osgeo import gdal,ogr
 from LmCommon.common.matrix import Matrix
 
 # .............................................................................
+def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
+   """
+   @summary: Test if two values are almost equal
+   """
+   return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+# .............................................................................
 def get_layer_info(layer_json_file):
    """
    @summary: Get layer information to use for metrics from the JSON file
@@ -110,8 +117,7 @@ def get_metrics_for_layer(points, layer_filename, metricFunctions):
       px = int((x - gt[0]) / gt[1])
       py = int((y - gt[3]) / gt[5])
       val = data[py, px]
-      # TODO: Needs to be safer.  This will only work for negative no data values
-      if val > nodataVal:
+      if not is_close(val, nodataVal):
          values.append(data[py, px])
       else:
          print 'Could not append value at ({}, {}): {}'.format(px, py, val)
