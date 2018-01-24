@@ -99,15 +99,20 @@ def get_metrics_for_layer(points, layer_filename, metricFunctions):
    @summary: Get layer values for each point and then generate metrics
    """
    ds = gdal.Open(layer_filename)
-   data = np.array(ds.GetRasterBand(1).ReadAsArray())
+   band = ds.GetRasterBand(1)
+   data = np.array(band.ReadAsArray())
    gt = ds.GetGeoTransform()
+   nodataVal = band.GetNoDataValue()
    
    values = []
    
    for x, y in points:
       px = int((x - gt[0]) / gt[1])
       py = int((y - gt[3]) / gt[5])
-      values.append(data[py, px])
+      val = data[py, px]
+      # TODO: Needs to be safer.  This will only work for negative no data values
+      if val > nodataVal:
+         values.append(data[py, px])
    
    arr = np.array(values)
    
