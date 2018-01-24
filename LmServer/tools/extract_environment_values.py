@@ -113,6 +113,8 @@ def get_metrics_for_layer(points, layer_filename, metricFunctions):
       # TODO: Needs to be safer.  This will only work for negative no data values
       if val > nodataVal:
          values.append(data[py, px])
+      else:
+         print 'Could not append value at ({}, {}): {}'.format(px, py, val)
    
    arr = np.array(values)
    
