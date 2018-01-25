@@ -102,7 +102,9 @@ Install nodes from Frontend
 
 Install bugfixes
 ----------------
-#. Compute Nodes - check/fix node group permissions on /state/partition1/lmscratch ::  
+
+#. Compute Nodes - check/fix node group permissions on /state/partition1/lmscratch ::
+
    # rocks run host compute "hostname; ls -lah /state/partition1/"
    # rocks run host compute "chgrp -R lmwriter /state/partition1/lmscratch"
    # rocks run host compute "chmod -R g+ws /state/partition1/lmscratch"
@@ -156,41 +158,49 @@ Configure for new/test data
         * biogeographic hypotheses
         * species package containing data and metadata
         * scenario package containing layers and metadata.  
-   Bash script getBoomPackage is in lmserver roll
+        
+#. Bash script getBoomPackage is in lmserver roll:
    * There are 2 good test packages, named 
-        * heuchera_boom_global_data (heuchera data (64sp) with multi-scenario, 
-          global, 10min environmental data)
-        * heuchera_boom_data (heuchera data with current scenario, 
-          Continental US, 30sec, 35-layers of environmental data)
-        * sax_boom_data (saxifragales data (~2300sp) with current scenario, 
-          global, 10min, 12-layers of environmental data)
+     * heuchera_boom_global_data (heuchera data (64sp) with multi-scenario, 
+       global, 10min environmental data)
+     * heuchera_boom_data (heuchera data with current scenario, 
+       Continental US, 30sec, 35-layers of environmental data)
+     * sax_boom_data (saxifragales data (~2300sp) with current scenario, 
+       global, 10min, 12-layers of environmental data)
+               
    * Run bash script getBoomPackage with boom package name.  This downloads
      data package, installs all into correct directories and sets permissions.::  
+     
      # /opt/lifemapper/rocks/bin/getBoomPackage <BOOM_PACKAGE_NAME>
 
    * (ONLY if not using getBoomPackage) Copy species data for server into user 
      dataspace ::  
+     
      # cp <SPECIES_DATA_FILES> /share/lm/data/archive/<user>/
            
    * (ONLY if not using getBoomPackage) Download and install environmental data 
      for both server and compute. Bash script getClimateData is in lmserver roll.
-     * Run getClimateData bash script with scen package name.  This downloads
-       data package and sets permissions.::  
-       # /opt/lifemapper/rocks/bin/getClimateData <BOOM_DATA_PACKAGE_NAME>
+     Run getClimateData bash script with scen package name.  This downloads
+     data package and sets permissions. ::  
+     
+     # /opt/lifemapper/rocks/bin/getClimateData <BOOM_DATA_PACKAGE_NAME>
 
 #. Create ASCII and MXE versions of env layers for Maxent, and seed Sqlite 
    database with bash script and basename of Scenario Package (available in the 
    data package metadata file and output with instructions after getBoomData)::
-       # /opt/lifemapper/rocks/bin/transformData <Climate directory>
+   
+     # /opt/lifemapper/rocks/bin/transformData <Climate directory>
        
 #. Catalog BOOM data inputs in database with bash script and filename of boom 
    parameter file (available in the data package metadata file and output 
    with instructions after getBoomData).  If you installed data with 
    getBoomPackage, the boom parameter file will be in the 
    /state/partition1/lmscratch/temp directory::
-       # /opt/lifemapper/rocks/bin/fillDB <BOOM_PARAM_FILE>
    
-   * Results of fillDB: 
+     # /opt/lifemapper/rocks/bin/fillDB <BOOM_PARAM_FILE>
+   
+   * Results of fillDB:
+   
      * User data directory with correct permissions
      * BOOM config file, to be used as input to the boomer script. 
      * new shapegrid 
@@ -218,6 +228,7 @@ Configure for new/test data
      
 
 #. BOOM manually for direct testing
+
    * See instructions in **Start Archive Booming** above
          
 Clear user data
