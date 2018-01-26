@@ -483,7 +483,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listScenarioObjects(firstRecNum int,
    RETURNS SETOF lm_v3.lm_scenPackageScenario AS
 $$
 DECLARE
-   rec lm_v3.scenario;
+   rec lm_v3.lm_scenPackageScenario;
    cmd varchar;
    wherecls varchar;
    ordercls varchar;
