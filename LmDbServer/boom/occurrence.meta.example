@@ -37,6 +37,7 @@
 #          determine the dataset displayname.  Records will be   
 #          named with GroupBy field if this role is undefined.
 #
+#    TODO: GroupBy could be optional if data is already parsed into files by taxa
 # .............................................................................
 
 0, gbifid, integer, uniqueid

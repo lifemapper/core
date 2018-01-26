@@ -258,6 +258,7 @@ class ChristopherWalken(LMObject):
          weaponOfChoice = ExistingWoC(self._scribe, userId, archiveName, 
                                       epsg, expDate, occIdFname, 
                                       logger=self.log)
+      # iDigBio or User
       else:
          # iDigBio data
          if datasource == SpeciesDatasource.IDIGBIO:
@@ -276,22 +277,6 @@ class ChristopherWalken(LMObject):
                occBasename = occUser
             occCSV = occBasename + LMFormat.CSV.ext
                
-            # Check for directory containing csv files in species or user path 
-            if occCSV is None:
-               if os.path.exists(occInstalled):
-                  occBasename = occInstalled
-               elif os.path.exists(occUser):
-                  occBasename = occUser
-               else:
-                  raise LMError('Failed to find file or directory {} in {} or {}'
-                                .format(SPECIES_DATA_PATH, boompath))
-
-               fnames = glob.glob(os.path.join(occBasename, '*' + LMFormat.CSV.ext))
-               if len(fnames) > 0:
-                  occCSV = fnames[0]
-                  if len(fnames) > 1:
-                     self.moreDataToProcess = True
-
             # Metadata file should be present with csv file/s 
             occMeta = occBasename + LMFormat.METADATA.ext
          # User data, anything not above
@@ -302,6 +287,22 @@ class ChristopherWalken(LMObject):
             occCSV = os.path.join(boompath, occData + LMFormat.CSV.ext)
             occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
             
+         # Either may have directory containing csv files in species or user path 
+         if occCSV is None:
+            if os.path.exists(occInstalled):
+               occBasename = occInstalled
+            elif os.path.exists(occUser):
+               occBasename = occUser
+            else:
+               raise LMError('Failed to find file or directory {} in {} or {}'
+                             .format(SPECIES_DATA_PATH, boompath))
+
+            fnames = glob.glob(os.path.join(occBasename, '*' + LMFormat.CSV.ext))
+            if len(fnames) > 0:
+               occCSV = fnames[0]
+               if len(fnames) > 1:
+                  self.moreDataToProcess = True
+
          weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
                                   epsg, expDate, occCSV, occMeta, 
                                   occDelimiter, logger=self.log, 

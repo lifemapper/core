@@ -645,8 +645,8 @@ class UserWoC(_SpeciesWeaponOfChoice):
 class GBIFWoC(_SpeciesWeaponOfChoice):
    """
    @summary: Parses a GBIF download of Occurrences by GBIF Taxon ID, writes the 
-             text chunk to a file, then creates an OccurrenceJob for it and 
-             updates the Occurrence record and inserts a job.
+             text chunk to a file, then creates and inserts a Makeflow for requested 
+             processes, and updates the Occurrence record .
    """
    def __init__(self, scribe, user, archiveName, epsg, expDate, occFname, 
                 providerFname=None, taxonSourceName=None, logger=None):
@@ -860,7 +860,180 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
       self.log.debug('Returning {} records for {} (starting on line {})' 
                      .format(len(currChunk), currKey, self._currKeyFirstRecnum))
       return currKey, currChunk
+       
+# ..............................................................................
+class TinyBubblesWoC(_SpeciesWeaponOfChoice):
+   """
+   @summary: Moves multiple csv occurrence files (pre-parsed by taxa, with or without 
+             headers).  A template for the metadata, with instructions, is at 
+             LmDbServer/tools/occurrence.meta.example.  
+             The WOC moves each rww to a file, inserts or updates  
+             the Occurrence record and inserts any dependent objects.
+   @note: If useGBIFTaxonomy is true, the 'GroupBy' field in the metadata
+             should name the field containing the GBIF TaxonID for the accepted 
+             Taxon of each record in the group. 
+   """
+   def __init__(self, scribe, user, archiveName, epsg, expDate, 
+                occCSVDir, occMeta, occDelimiter, dirContentsFname,
+                logger=None, processType=ProcessType.USER_TAXA_OCCURRENCE, 
+                useGBIFTaxonomy=False, taxonSourceName=None):
+      super(TinyBubblesWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
+                                    occCSVDir, metaFname=occMeta, 
+                                    taxonSourceName=taxonSourceName, 
+                                    logger=logger)
+      # specific attributes
+      self.processType = processType
+      self._dirContentsFile = None
+      self._updateFile(dirContentsFname, expDate)
+      try:
+         self._dirContentsFile = open(dirContentsFname, 'r')
+      except:
+         raise LMError(currargs='Unable to open {}'.format(dirContentsFname))
+      self.useGBIFTaxonomy = useGBIFTaxonomy
+      self._occCSVDir = occCSVDir
+      self._occMeta = occMeta
+      self._delimiter = occDelimiter
+
+# ...............................................
+   def  _parseBubbleFname(self, bubbleFname):
+      # remove .csv
+      # split on _
+      # name = 0 + 1
+      # OT id = 2
+      pass
+      
+      
+# ...............................................
+   def  _getInsertSciNameForTinyBubble(self, bubbleFname, tsnCount):
+      if bubbleFname is None:
+         return None
+      namestr, otid = self._parseBubbleFname(bubbleFname)
+      sciName = self._scribe.findTaxon(self._taxonSourceId, itisTsn)
          
+      if sciName is None:
+         try:
+            (itisname, king, tsnHier) = BisonAPI.getItisTSNValues(itisTsn)
+         except Exception, e:
+            self.log.error('Failed to get results for ITIS TSN {} ({})'
+                           .format(itisTsn, e))
+         else:
+            sleep(5)
+            if itisname is not None and itisname != '':
+               sciName = ScientificName(itisname, kingdom=king,
+                                     lastOccurrenceCount=tsnCount, 
+                                     taxonomySourceId=self._taxonSourceId, 
+                                     taxonomySourceKey=itisTsn, 
+                                     taxonomySourceSpeciesKey=itisTsn,
+                                     taxonomySourceKeyHierarchy=tsnHier)
+               self._scribe.insertTaxon(sciName)
+               self.log.info('Inserted sciName for ITIS tsn {}, {}'
+                             .format(itisTsn, sciName.scientificName))
+      return sciName
+   
+# ...............................................
+   def close(self):
+      try:
+         self._tsnfile.close()
+      except:
+         self.log.error('Unable to close tsnfile {}'.format(self._tsnfile))
+         
+# ...............................................
+   @property
+   def nextStart(self):
+      if self.complete:
+         return 0
+      else:
+         return self._linenum + 1
+
+# ...............................................
+   @property
+   def thisStart(self):
+      if self.complete:
+         return 0
+      else:
+         return self._linenum
+
+# ...............................................
+   @property
+   def complete(self):
+      try:
+         return self._tsnfile.closed
+      except:
+         return True
+      
+# ...............................................
+   def _updateFile(self, filename, expDate):
+      """
+      If file does not exist or is older than expDate, create a new file. 
+      """
+      if filename is None or not os.path.exists(filename):
+         self._recreateFile(filename)
+      elif expDate is not None:
+         ticktime = os.path.getmtime(filename)
+         modtime = dt.DateFromTicks(ticktime).mjd
+         if modtime < expDate:
+            self._recreateFile(filename)
+
+# ...............................................
+   def _recreateFile(self, filename):
+      """
+      Create a new file from BISON TSN query for binomials with > 20 points. 
+      """
+      tsnList = BisonAPI.getTsnListForBinomials()
+      with open(filename, 'w') as f:
+         for tsn, tsnCount in tsnList:
+            f.write('{}, {}\n'.format(tsn, tsnCount))
+      
+# ...............................................
+   def _getTsnRec(self):
+      tsn = tsnCount = None
+      line = self._getNextLine(self._tsnfile)
+      if line is not None:
+         try:               
+            first, second = line.split(',')
+            # Returns TSN, TSNCount
+            tsn, tsnCount = (int(first), int(second))
+         except Exception, e:
+            self.log.debug('Exception reading line {} ({})'
+                           .format(self._linenum, e))
+      return tsn, tsnCount
+
+# ...............................................
+   def getOne(self):
+      occ = None
+      setOrReset = False
+      tsn, tsnCount = self._getTsnRec()
+      if tsn is not None:
+         sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
+         if sciName is not None:
+            occ = self._createOrResetOccurrenceset(sciName, tsnCount,
+                                                   taxonSourceKey=tsn)
+         if occ:
+            self.log.info('Processed occset {}, tsn {}, with {} points; next start {}'
+                          .format(occ.getId(), tsn, tsnCount, self.nextStart))
+      return occ
+
+# ...............................................
+   def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
+      if taxonSourceKeyVal is None:
+         raise LMError(currargs='Missing taxonSourceKeyVal for BISON query url')
+      occAPI = BisonAPI(qFilters=
+                        {BISON.HIERARCHY_KEY: '*-{}-*'.format(taxonSourceKeyVal)}, 
+                        otherFilters=BISON_QUERY.OCC_FILTERS)
+      occAPI.clearOtherFilters()
+      return occAPI.url
+
+# ...............................................
+   def moveToStart(self):
+      startline = self._findStart()  
+      if startline < 1:
+         self._linenum = 0
+         self._currRec = None
+      else:
+         tsn, tsnCount = self._getTsnRec()      
+         while tsn is not None and self._linenum < startline-1:
+            tsn, tsnCount = self._getTsnRec()
+  
 # ..............................................................................
 class ExistingWoC(_SpeciesWeaponOfChoice):
    """
