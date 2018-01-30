@@ -167,7 +167,7 @@ from LmServer.common.lmconstants import SnippetOperations
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
                                          Priority)
 from LmServer.legion.processchain import MFChain
-from LmServer.tools.occwoc import BisonWoC, GBIFWoC, UserWoC, ExistingWoC
+from LmServer.tools.occwoc import *
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.lmconstants import (ENCODING, OFTInteger, OFTReal, 
                                          OFTString, LMFormat)
@@ -176,6 +176,7 @@ SPUD_LIMIT = 100
 
 configFname = '/share/lm/data/archive/tester/gbif500ktest.ini'
 configFname = '/share/lm/data/archive/biotaphytest/dirty_plants.ini'
+configFname = '/share/lm/data/archive/biona/biotaphy_global_plants.ini'
 
 log = ScriptLogger('debug_dabomb', level=logging.INFO)
 
@@ -198,6 +199,7 @@ taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
 expDate = dt.DateTime(chris._getBoomOrDefault('SPECIES_EXP_YEAR'), 
                       chris._getBoomOrDefault('SPECIES_EXP_MONTH'), 
                       chris._getBoomOrDefault('SPECIES_EXP_DAY')).mjd
+
 #if datasource == SpeciesDatasource.IDIGBIO:
 useGBIFTaxonIds = True
 occDelimiter = chris._getBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
@@ -209,6 +211,19 @@ if os.path.exists(occInstalled + LMFormat.CSV.ext):
    occBasename = occInstalled + LMFormat.CSV.ext
 elif os.path.exists(occUser + LMFormat.CSV.ext):
    occBasename = occUser
+   
+   
+# Biotaphy data, individual files, metadata in filenames
+occData = chris._getBoomOrDefault('USER_OCCURRENCE_DATA')
+occDelimiter = chris._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
+occDir= os.path.join(boompath, occData)
+occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
+dirContentsFname = os.path.join(boompath, occData + LMFormat.TXT.ext)
+weaponOfChoice = TinyBubblesWoC(chris._scribe, userId, archiveName, 
+                          epsg, expDate, occDir, occMeta, occDelimiter,
+                          dirContentsFname, 
+                          taxonSourceName=taxonSourceName, 
+                          logger=chris.log)
 
 occCSV = occBasename + LMFormat.CSV.ext   
 occMeta = occBasename + LMFormat.METADATA.ext
@@ -219,6 +234,9 @@ weaponOfChoice = UserWoC(chris._scribe, userId, archiveName,
                                   useGBIFTaxonomy=useGBIFTaxonIds,
                                   taxonSourceName=taxonSourceName)
 woc = weaponOfChoice
+bubbleFname = woc._getNextFilename()
+occ = woc.getOne()
+
 woc.occParser = OccDataParser(woc.log, woc._userOccCSV, 
                                         woc._userOccMeta, 
                                         delimiter=woc._delimiter, 

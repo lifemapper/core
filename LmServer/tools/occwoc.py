@@ -883,6 +883,9 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                                     logger=logger)
       # specific attributes
       self.processType = processType
+      self._occCSVDir = occCSVDir
+      self._occMeta = occMeta
+      self._delimiter = occDelimiter
       self._dirContentsFile = None
       self._updateFile(dirContentsFname, expDate)
       try:
@@ -890,9 +893,6 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
       except:
          raise LMError(currargs='Unable to open {}'.format(dirContentsFname))
       self.useGBIFTaxonomy = useGBIFTaxonomy
-      self._occCSVDir = occCSVDir
-      self._occMeta = occMeta
-      self._delimiter = occDelimiter
 
 # ...............................................
    def  _parseBubble(self, bubbleFname):
@@ -975,12 +975,17 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
          return True
       
 # ...............................................
-   def _updateFile(self, dirContentsFname):
+   def _updateFile(self, filename, expDate):
       """
       If file does not exist or is older than expDate, create a new file. 
       """
-      if dirContentsFname is None or not os.path.exists(dirContentsFname):
-         self._recreateFile(dirContentsFname)
+      if filename is None or not os.path.exists(filename):
+         self._recreateFile(filename)
+      elif expDate is not None:
+         ticktime = os.path.getmtime(filename)
+         modtime = dt.DateFromTicks(ticktime).mjd
+         if modtime < expDate:
+            self._recreateFile(filename)
 
 # ...............................................
    def _recreateFile(self, dirContentsFname):
@@ -1181,7 +1186,7 @@ import sys
 from time import sleep
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmBackend.common.occparse import OccDataParser
+from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
                                     ProcessType, JobStatus, ONE_HOUR, LMFormat, IDIG_DUMP) 
@@ -1191,6 +1196,7 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.tools.occwoc import *
+from LmServer.tools.cwalken import *
 from LmServer.db.borgscribe import BorgScribe
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
