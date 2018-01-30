@@ -186,7 +186,7 @@ class _SpeciesWeaponOfChoice(LMObject):
       @param dataCount: reported number of points for taxon in input dataset
       @param taxonSourceKey: unique identifier for this name in source 
              taxonomy database
-      @param data: raw point data 
+      @param data: raw point data, stream or filename
       """
       currtime = dt.gmt().mjd
       occ = None
@@ -214,11 +214,11 @@ class _SpeciesWeaponOfChoice(LMObject):
          occ.displayName = sciName.scientificName
          occ.queryCount = dataCount
          occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
-         # Update  raw data in new or reset object
+         # Update raw data in new or reset object
          rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKey, 
                                      data=data)
          if not rdloc:
-            raise LMError(currargs='   Failed to set raw data location')
+            raise LMError(currargs='   Failed to find raw data location')
          occ.setRawDLocation(rdloc, currtime)
          # TODO: remove Hack
          # Set scientificName, not pulled from DB, for alternate iDigBio query
@@ -895,39 +895,52 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
       self._delimiter = occDelimiter
 
 # ...............................................
-   def  _parseBubbleFname(self, bubbleFname):
-      # remove .csv
-      # split on _
-      # name = 0 + 1
-      # OT id = 2
-      pass
-      
-      
+   def  _parseBubble(self, bubbleFname):
+      """
+      @note: This method could either get OpenTree ID from filename or 
+             GBIF ID from record/s.
+      @return binomial: Binomial, genus + species, assigned to these data.
+      @return openTreeId: Integer key indicating the Open Tree of Life unique 
+              identifier for the phylogenetic record represented by these data. 
+      @return recordCount: number of records in the file (lines not including 
+              the header).
+      """
+      binomial = opentreeId = recordCount = None
+      pth, fname = os.path.split(bubbleFname)
+      basename, ext = os.path.splitext(fname)
+      parts = basename.split('_')
+      try:
+         genus, species, tmp = parts 
+         binomial = ' '.join((genus, species))
+      except:
+         self.log.error('Unable to parse filename {} into binomial and opentreeId'
+                        .format(basename))
+      try:
+         opentreeId = int(tmp)
+      except:
+         self.log.error('Unable to extract integer openTreeId from filename {}'
+                        .format(basename))
+      with open(bubbleFname) as f:
+         for i, l in enumerate(f):
+            pass
+      recordCount = i
+
+      return binomial, opentreeId, recordCount
+ 
 # ...............................................
-   def  _getInsertSciNameForTinyBubble(self, bubbleFname, tsnCount):
-      if bubbleFname is None:
-         return None
-      namestr, otid = self._parseBubbleFname(bubbleFname)
-      sciName = self._scribe.findTaxon(self._taxonSourceId, itisTsn)
-         
-      if sciName is None:
-         try:
-            (itisname, king, tsnHier) = BisonAPI.getItisTSNValues(itisTsn)
-         except Exception, e:
-            self.log.error('Failed to get results for ITIS TSN {} ({})'
-                           .format(itisTsn, e))
-         else:
-            sleep(5)
-            if itisname is not None and itisname != '':
-               sciName = ScientificName(itisname, kingdom=king,
-                                     lastOccurrenceCount=tsnCount, 
+   def  _getInsertSciNameForTinyBubble(self, binomial, opentreeId, recordCount):
+      if binomial is not None and opentreeId is not None:
+         sciName = self._scribe.findTaxon(self._taxonSourceId, opentreeId)
+            
+         if sciName is None:
+            sciName = ScientificName(binomial,
+                                     lastOccurrenceCount=recordCount,
                                      taxonomySourceId=self._taxonSourceId, 
-                                     taxonomySourceKey=itisTsn, 
-                                     taxonomySourceSpeciesKey=itisTsn,
-                                     taxonomySourceKeyHierarchy=tsnHier)
-               self._scribe.insertTaxon(sciName)
-               self.log.info('Inserted sciName for ITIS tsn {}, {}'
-                             .format(itisTsn, sciName.scientificName))
+                                     taxonomySourceKey=opentreeId, 
+                                     taxonomySourceSpeciesKey=opentreeId)
+            self._scribe.insertTaxon(sciName)
+            self.log.info('Inserted sciName for OpenTree UID {}, {}'
+                             .format(opentreeId, binomial))
       return sciName
    
 # ...............................................
@@ -962,66 +975,62 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
          return True
       
 # ...............................................
-   def _updateFile(self, filename, expDate):
+   def _updateFile(self, dirContentsFname):
       """
       If file does not exist or is older than expDate, create a new file. 
       """
-      if filename is None or not os.path.exists(filename):
-         self._recreateFile(filename)
-      elif expDate is not None:
-         ticktime = os.path.getmtime(filename)
-         modtime = dt.DateFromTicks(ticktime).mjd
-         if modtime < expDate:
-            self._recreateFile(filename)
+      if dirContentsFname is None or not os.path.exists(dirContentsFname):
+         self._recreateFile(dirContentsFname)
 
 # ...............................................
-   def _recreateFile(self, filename):
+   def _recreateFile(self, dirContentsFname):
       """
       Create a new file from BISON TSN query for binomials with > 20 points. 
       """
-      tsnList = BisonAPI.getTsnListForBinomials()
-      with open(filename, 'w') as f:
-         for tsn, tsnCount in tsnList:
-            f.write('{}, {}\n'.format(tsn, tsnCount))
-      
+      self.readyFilename(dirContentsFname, overwrite=True)
+      with open(dirContentsFname, 'w') as f:
+         for root, dirs, files in os.walk(self._occCSVDir):
+            for fname in files:
+               if fname.endswith(LMFormat.CSV.ext):
+                  fullFname = os.path.join(root, fname)
+                  f.write('{}\n'.format(fullFname))
+
 # ...............................................
-   def _getTsnRec(self):
-      tsn = tsnCount = None
-      line = self._getNextLine(self._tsnfile)
+   def _getNextFilename(self):
+      fullOccFname = None
+      line = self._getNextLine(self._dirContentsFile)
       if line is not None:
-         try:               
-            first, second = line.split(',')
-            # Returns TSN, TSNCount
-            tsn, tsnCount = (int(first), int(second))
+         try:           
+            fullOccFname = line.strip()
          except Exception, e:
             self.log.debug('Exception reading line {} ({})'
                            .format(self._linenum, e))
-      return tsn, tsnCount
+      return fullOccFname
 
 # ...............................................
    def getOne(self):
       occ = None
-      setOrReset = False
-      tsn, tsnCount = self._getTsnRec()
-      if tsn is not None:
-         sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
+      bubbleFname = self._getNextFilename()
+      binomial, opentreeId, recordCount = self._parseBubble(bubbleFname)
+      if binomial is not None and opentreeId is not None:
+         sciName = self._getInsertSciNameForTinyBubble(binomial, opentreeId, 
+                                                       recordCount)
          if sciName is not None:
-            occ = self._createOrResetOccurrenceset(sciName, tsnCount,
-                                                   taxonSourceKey=tsn)
+            occ = self._createOrResetOccurrenceset(sciName, recordCount,
+                                                   taxonSourceKey=opentreeId)
          if occ:
-            self.log.info('Processed occset {}, tsn {}, with {} points; next start {}'
-                          .format(occ.getId(), tsn, tsnCount, self.nextStart))
+            self.log.info('Processed occset {}, opentreeId {}, with {} points; next start {}'
+                          .format(occ.getId(), opentreeId, recordCount, self.nextStart))
       return occ
 
 # ...............................................
    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
-      if taxonSourceKeyVal is None:
-         raise LMError(currargs='Missing taxonSourceKeyVal for BISON query url')
-      occAPI = BisonAPI(qFilters=
-                        {BISON.HIERARCHY_KEY: '*-{}-*'.format(taxonSourceKeyVal)}, 
-                        otherFilters=BISON_QUERY.OCC_FILTERS)
-      occAPI.clearOtherFilters()
-      return occAPI.url
+      if data is None:
+         raise LMError(currargs='Missing data file for occurrenceSet')
+      rdloc = occ.createLocalDLocation(raw=True)
+      occ.readyFilename(rdloc, overwrite=True)
+      shutil.copyfile(data, rdloc)
+      return rdloc
 
 # ...............................................
    def moveToStart(self):
@@ -1030,9 +1039,9 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
          self._linenum = 0
          self._currRec = None
       else:
-         tsn, tsnCount = self._getTsnRec()      
-         while tsn is not None and self._linenum < startline-1:
-            tsn, tsnCount = self._getTsnRec()
+         fullOccFname = self._getNextFilename()
+         while fullOccFname is not None and self._linenum < startline-1:
+            fullOccFname = self._getNextFilename()
   
 # ..............................................................................
 class ExistingWoC(_SpeciesWeaponOfChoice):

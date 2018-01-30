@@ -56,10 +56,13 @@ USER_OCCURRENCE_META = os.path.join(SPECIES_DATA_PATH,
 
 class SpeciesDatasource:
    """
-   @summary: These are species data sources with defined data formats.
+   @summary: These are species data sources for either occurrence data with 
+             defined data formats or taxonomic/phylogenetic data for grouping 
+             data identified by species name.
              The default or boom config file must specify DATASOURCE as one of 
-             the specified strings., `Existing` indicates that existing OccurrenceSet ids 
-             the provided input, and, with proper permissions, are used as-is 
+             the below sources that provides occurrence data (NOT OpenTree).
+            `Existing` indicates that existing OccurrenceSet ids are 
+             provided as input, and, with proper permissions, are used as-is 
              or copied to the User's data space.
    @ivar IDIGBIO: The default or boom config file must specify the filename
              IDIG_OCCURRENCE_DATA (without extension) pointing to a CSV file,
@@ -86,12 +89,19 @@ class SpeciesDatasource:
    @ivar EXISTING: The default or boom config file must specify an 
              OCCURRENCE_ID_FILENAME containing OccurrenceSet database IDs 
              for public or user data to serve as input to a BOOM process. 
+   @ivar BIOTAFFY: The default or boom config file must specify 
+             a directory containing one or more CSV files (with extension)
+             one file per taxa.  The filename may be split on '_' to get the 
+             genus, species, and OpenTree UID.  Open Tree of Life provides 
+             phylogenetic tree data for scientific names that may also be tied to accepted taxonomic keys
+             in the GBIF backbone taxonomy. 
    """
    IDIGBIO = 'IDIGBIO'
    BISON = 'BISON'
    GBIF = 'GBIF'
    USER = 'USER'
    EXISTING = 'EXISTING'
+   BIOTAFFY = 'BIOTAFFY'
 # ...............................................
    @staticmethod
    def isUser(datasource):
@@ -101,8 +111,10 @@ class SpeciesDatasource:
       return True
       
 
-# Key must match DATASOURCE in config/config.ini
+# Key must match DATASOURCE in config/config.ini.  
 TAXONOMIC_SOURCE = {
+   SpeciesDatasource.OPENTREE: {'name':  'Open Tree of Life',
+            'url': 'https://api.opentreeoflife.org/v3/'},
    SpeciesDatasource.GBIF: {'name': 'GBIF Backbone Taxonomy',
             'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'},
    SpeciesDatasource.BISON: {'name':  'ITIS Taxonomy',

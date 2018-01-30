@@ -53,7 +53,8 @@ from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.tools.occwoc import BisonWoC, GBIFWoC, UserWoC, ExistingWoC
+from LmServer.tools.occwoc import (BisonWoC, GBIFWoC, UserWoC, ExistingWoC, 
+                                   TinyBubblesWoC)
 
 # .............................................................................
 class ChristopherWalken(LMObject):
@@ -258,6 +259,20 @@ class ChristopherWalken(LMObject):
          weaponOfChoice = ExistingWoC(self._scribe, userId, archiveName, 
                                       epsg, expDate, occIdFname, 
                                       logger=self.log)
+         
+      # Biotaphy data, individual files, metadata in filenames
+      elif datasource == SpeciesDatasource.BIOTAFFY:
+         occData = self._getBoomOrDefault('USER_OCCURRENCE_DATA')
+         occDelimiter = self._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
+         occDir= os.path.join(boompath, occData)
+         occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
+         dirContentsFname = os.path.join(boompath, occData + LMFormat.TXT.ext)
+         weaponOfChoice = TinyBubblesWoC(self._scribe, userId, archiveName, 
+                                   epsg, expDate, occDir, occMeta, occDelimiter,
+                                   dirContentsFname, 
+                                   taxonSourceName=taxonSourceName, 
+                                   logger=self.log)
+
       # iDigBio or User
       else:
          # iDigBio data
