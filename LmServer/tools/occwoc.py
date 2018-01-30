@@ -353,7 +353,8 @@ class BisonWoC(_SpeciesWeaponOfChoice):
    def  _getInsertSciNameForItisTSN(self, itisTsn, tsnCount):
       if itisTsn is None:
          return None
-      sciName = self._scribe.findTaxon(self._taxonSourceId, itisTsn)
+      sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
+                                               taxonKey=itisTsn)
          
       if sciName is None:
          try:
@@ -930,7 +931,8 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
 # ...............................................
    def  _getInsertSciNameForTinyBubble(self, binomial, opentreeId, recordCount):
       if binomial is not None and opentreeId is not None:
-         sciName = self._scribe.findTaxon(self._taxonSourceId, opentreeId)
+         sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
+                                                  taxonKey=opentreeId)
             
          if sciName is None:
             sciName = ScientificName(binomial,
