@@ -116,11 +116,14 @@ def get_metrics_for_layer(points, layer_filename, metricFunctions):
    for x, y in points:
       px = int((x - gt[0]) / gt[1])
       py = int((y - gt[3]) / gt[5])
-      val = data[py, px]
-      if not is_close(val, nodataVal):
-         values.append(data[py, px])
-      else:
-         print 'Could not append value at ({}, {}): {}'.format(px, py, val)
+      try:
+         val = data[py, px]
+         if not is_close(val, nodataVal):
+            values.append(data[py, px])
+         else:
+            print 'Could not append value at ({}, {}): {}'.format(px, py, val)
+      except Exception, e:
+            print 'Could not append value at ({}, {}): {}'.format(px, py, str(e))
    
    arr = np.array(values)
    
