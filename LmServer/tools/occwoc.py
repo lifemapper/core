@@ -34,6 +34,7 @@ from time import sleep
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
+from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
                                     ProcessType, JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
@@ -907,24 +908,31 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
               the header).
       """
       binomial = opentreeId = recordCount = None
-      pth, fname = os.path.split(bubbleFname)
-      basename, ext = os.path.splitext(fname)
-      parts = basename.split('_')
-      try:
-         genus, species, tmp = parts 
-         binomial = ' '.join((genus, species))
-      except:
-         self.log.error('Unable to parse filename {} into binomial and opentreeId'
-                        .format(basename))
-      try:
-         opentreeId = int(tmp)
-      except:
-         self.log.error('Unable to extract integer openTreeId from filename {}'
-                        .format(basename))
-      with open(bubbleFname) as f:
-         for i, l in enumerate(f):
-            pass
-      recordCount = i
+      if bubbleFname is not None:
+         pth, fname = os.path.split(bubbleFname)
+         basename, ext = os.path.splitext(fname)
+         parts = basename.split('_')
+         try:
+            genus, species, idstr = parts 
+            binomial = ' '.join((genus, species))
+         except:
+            self.log.error('Unable to parse filename {} into binomial and opentreeId'
+                           .format(basename))
+         try:
+            tmp = fromUnicode(toUnicode(binomial))
+         except Exception, e:
+            self.log.error('Failed to convert binomial to and from unicode')
+            binomial = None
+            
+         try:
+            opentreeId = int(idstr)
+         except:
+            self.log.error('Unable to extract integer openTreeId from filename {}'
+                           .format(basename))
+         with open(bubbleFname) as f:
+            for i, l in enumerate(f):
+               pass
+         recordCount = i
 
       return binomial, opentreeId, recordCount
  
@@ -948,9 +956,9 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
 # ...............................................
    def close(self):
       try:
-         self._tsnfile.close()
+         self._dirContentsFile.close()
       except:
-         self.log.error('Unable to close tsnfile {}'.format(self._tsnfile))
+         self.log.error('Unable to close dirContentsFile {}'.format(self._dirContentsFile))
          
 # ...............................................
    @property
@@ -972,7 +980,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
    @property
    def complete(self):
       try:
-         return self._tsnfile.closed
+         return self._dirContentsFile.closed
       except:
          return True
       
