@@ -186,6 +186,24 @@ boomer.christopher = ChristopherWalken(boomer.configFname,
                                               scribe=boomer._scribe)
 chris = boomer.christopher
 
+spud, potatoInputs = chris.startWalken()
+boomer.keepWalken = not chris.complete
+# TODO: Master process for occurrence only? SDM only? 
+if boomer.assemblePams and spud:
+   boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
+   spudArf = spud.getArfFilename(
+                    arfDir=boomer.masterPotato.getRelativeDirectory(), 
+                    prefix='spud')
+   boomer.spudArfFnames.append(spudArf)
+   squid = spud.mfMetadata[MFChain.META_SQUID]
+   if potatoInputs:
+      for scencode, (pc, triagePotatoFile) in boomer.potatoes.iteritems():
+         pavFname = potatoInputs[scencode]
+         triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
+   if len(boomer.spudArfFnames) >= SPUD_LIMIT:
+      boomer.rotatePotatoes()
+
+
 chris.moreDataToProcess = False
 userId = chris._getBoomOrDefault('ARCHIVE_USER')
 archiveName = chris._getBoomOrDefault('ARCHIVE_NAME')
