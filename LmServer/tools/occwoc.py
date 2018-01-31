@@ -371,7 +371,7 @@ class BisonWoC(_SpeciesWeaponOfChoice):
                                      taxonomySourceKey=itisTsn, 
                                      taxonomySourceSpeciesKey=itisTsn,
                                      taxonomySourceKeyHierarchy=tsnHier)
-               self._scribe.insertTaxon(sciName)
+               self._scribe.findOrInsertTaxon(sciName=sciName)
                self.log.info('Inserted sciName for ITIS tsn {}, {}'
                              .format(itisTsn, sciName.scientificName))
       return sciName
@@ -940,7 +940,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                                      taxonomySourceId=self._taxonSourceId, 
                                      taxonomySourceKey=opentreeId, 
                                      taxonomySourceSpeciesKey=opentreeId)
-            self._scribe.insertTaxon(sciName)
+            self._scribe.findOrInsertTaxon(sciName=sciName)
             self.log.info('Inserted sciName for OpenTree UID {}, {}'
                              .format(opentreeId, binomial))
       return sciName
@@ -1024,7 +1024,8 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                                                        recordCount)
          if sciName is not None:
             occ = self._createOrResetOccurrenceset(sciName, recordCount,
-                                                   taxonSourceKey=opentreeId)
+                                                   taxonSourceKey=opentreeId,
+                                                   data=bubbleFname)
          if occ:
             self.log.info('Processed occset {}, opentreeId {}, with {} points; next start {}'
                           .format(occ.getId(), opentreeId, recordCount, self.nextStart))
