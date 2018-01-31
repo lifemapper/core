@@ -5,7 +5,7 @@
 @status: release
 
 @license: gpl2
-@copyright: Copyright (C) 2017, University of Kansas Center for Research
+@copyright: Copyright (C) 2018, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -185,6 +185,8 @@ class LmTree(object):
       @param labelAttribute: The attribute of the tips to use as labels for 
                                 the matrix
       @param orderedLabels: If provided, use this order of labels
+      @todo: Consider using the node labeling function to get the indices.  
+                Haven't changed yet because this is producing the correct result
       """
       if not self.hasBranchLengths():
          raise Exception, 'Cannot create VCV without branch lengths'
@@ -317,13 +319,6 @@ class LmTree(object):
       """
       @summary: Writes the tree JSON to the specified file path
       @param fn: The file location to write the JSON tree
-      @param indent: Passed directly to json dump.  If provided and 
-                        non-negative integer, pretty prints with this number of 
-                        spaces per level
-      @todo: Possibly remove.  Unless we decide that the trees written to disk
-                should not include matrix index / path / maybe others.  We may
-                do that because those things can vary between loads.  We are 
-                already resetting the path on load
       """
       self.tree.write(path=fn, schema=schema)
          
