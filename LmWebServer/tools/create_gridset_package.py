@@ -27,6 +27,7 @@
 @todo: Probably want to split of EML generating code to separate module(s)
 """
 import argparse
+from collections import defaultdict
 import json
 import os
 import zipfile
@@ -79,7 +80,19 @@ def createHeaderLookup(headers, squids=False, scribe=None, userId=None):
    else:
       return [getHeaderDict(headers[i], i) for i in xrange(len(headers))]
 
-# ..........................................................................
+# .............................................................................
+def mung(data):
+   """
+   @summary: Replace a list of values with a map from the non-zero values to
+                the indexes at which they occur
+   """
+   munged = defaultdict(list)
+   for i, datum in enumerate(data):
+      if datum != 0:
+         munged[datum].append(i)
+   return munged
+
+# .............................................................................
 def assemble_package_for_gridset(gridset, outfile, scribe, userId):
    """
    @summary: Creates an output zip file from the gridset
@@ -130,7 +143,8 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
             with open(tempFn, 'w') as tempF:
                print(' - Getting GeoJSON')
                geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
-                           mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn)
+                           mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn,
+                           transform=mung)
             
          elif mtx.matrixType == MatrixType.ANC_PAM:
             mtxFn = '{}{}'.format(
@@ -150,7 +164,8 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
             with open(tempFn, 'w') as tempF:
                print(' - Getting GeoJSON')
                geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
-                           mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn)
+                           mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn,
+                           transform=mung)
             
          elif mtx.matrixType in [MatrixType.SITES_COV_OBSERVED, 
                             MatrixType.SITES_COV_RANDOM, 

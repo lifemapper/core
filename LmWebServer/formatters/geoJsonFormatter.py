@@ -39,7 +39,8 @@ from LmServer.legion.shapegrid import ShapeGrid
 
 # .............................................................................
 def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None, 
-                                ident=3, headerLookupFilename=None):
+                        ident=3, headerLookupFilename=None, 
+                        transform=lambda x: x):
    """
    @summary: A string generator for matrix GeoJSON
    """
@@ -63,7 +64,7 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
       for i in range(len(rowHeaders)):
          rowLookup[rowHeaders[i][mtxJoinAttrib]] = i
       
-      # Define cast function, necessary if matris if full of booleans
+      # Define cast function, necessary if matrix if full of booleans
       if matrix.data.dtype == bool:
          castFunc = lambda x: int(x)
       else:
@@ -85,11 +86,11 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
          # Set data or individuals
          if headerLookupFilename:
             ft['properties'] = {
-               'data' : [castFunc(j.item()) for j in matrix.data[i]]
+               'data' : transform([castFunc(j.item()) for j in matrix.data[i]])
                }
          else:
             ft['properties'] = dict(
-                              [(k, castFunc(matrix.data[i,j].item())
+                              [(k, transform(castFunc(matrix.data[i,j].item()))
                                                       ) for j, k in colEnum])
          flo.write('{},\n'.format(json.dumps(ft)))
    ds = None
