@@ -158,29 +158,42 @@ def gradyRandomize(mtx):
    
    unfilledRows = np.where(rowSums < rowTots[:,0])[0].tolist()
    unfilledCols = np.where(colSums < colTots[0,:])[0].tolist()
+   #unfilledRows = np.where(rowSums < rowTots[:,0])[0]
+   #unfilledCols = np.where(colSums < colTots[0,:])[0]
    
-   print "Unfilled rows: {}, unfilled columns: {}".format(len(unfilledRows), len(unfilledCols))
+   #print "Unfilled rows: {}, unfilled columns: {}".format(unfilledRows.shape, 
+   #                                                       unfilledCols.shape)
+   print "Unfilled rows: {}, unfilled columns: {}".format(len(unfilledRows), 
+                                                          len(unfilledCols))
    
-   while unfilledRows:
+   while len(unfilledRows) > 0:
       possibleCols = []
+      #r = np.random.choice(unfilledRows)
       r = choice(unfilledRows)
-      possibleCols = list(set(np.where(mtx1[r,:] == 0)[0].tolist()).intersection(set(unfilledCols)))
+      possibleCols = list(set(np.where(mtx1[r,:] == 0)[0].tolist()).intersection(
+         set(unfilledCols)))
+      #possibleCols = np.intersect1d(np.where(mtx1[r,:] == 0)[0], unfilledCols)
       
       if len(possibleCols) == 0:
+         #np.delete(unfilledRows, r)
          unfilledRows.remove(r)
          problemRows.append(r)
       else:
          c = choice(possibleCols)
+         #c = np.random.choice(possibleCols)
          mtx1[r,c] = 1
          rSum = np.sum(mtx1[r,:])
          cSum = np.sum(mtx1[:,c])
          
          if rSum == int(rowTots[r]):
             unfilledRows.remove(r)
+            #np.delete(unfilledRows, r)
          
          if cSum == int(colTots[0, c]):
             unfilledCols.remove(c)
+            #np.delete(unfilledCols, c)
    
+   #problemColumns = unfilledCols.tolist()
    problemColumns = unfilledCols
    
    bTime4 = time.time()
