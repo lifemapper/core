@@ -2,7 +2,7 @@
 @summary Module that contains the Matrix class
 @author Aimee Stewart
 @license: gpl2
-@copyright: Copyright (C) 2017, University of Kansas Center for Research
+@copyright: Copyright (C) 2018, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,

@@ -7,7 +7,7 @@
 @version: 4.0
 
 @license: gpl2
-@copyright: Copyright (C) 2017, University of Kansas Center for Research
+@copyright: Copyright (C) 2018, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
