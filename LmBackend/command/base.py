@@ -34,6 +34,9 @@ from LmServer.common.localconstants import APP_PATH
 class _LmCommand(object):
    """
    @summary: A wrapper class for Lifemapper commands to run scripts
+   @todo: Consider optional input / output parameters on base object so that
+             all commands can add to the input / output attributes with 
+             potentially unforeseen values
    """
    relDir = None
    scriptName = None

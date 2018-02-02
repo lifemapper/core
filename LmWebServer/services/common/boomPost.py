@@ -4,7 +4,7 @@
 @version: 1.0
 @status: alpha
 @license: gpl2
-@copyright: Copyright (C) 2017, University of Kansas Center for Research
+@copyright: Copyright (C) 2018, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -26,6 +26,7 @@
           02110-1301, USA.
 @todo: Process grids
 @todo: Constants instead of strings
+@todo: Testing
 """
 from ConfigParser import ConfigParser
 import json
@@ -119,9 +120,9 @@ class BoomPoster(object):
             self._process_mcpa(mcpaSec)
          
          
-         # Masks
-         # Pre / post processing (scaling)
-         # Randomizations
+         # TODO: Masks
+         # TODO: Pre / post processing (scaling)
+         # TODO: Randomizations
 
       
    
