@@ -47,5 +47,5 @@ if __name__ == '__main__':
       lmo = LMObject()
       lmo.readyFilename(fn)
       with open(fn, 'a') as outF:
-         os.utime(fn)
+         os.utime(fn, None)
          
