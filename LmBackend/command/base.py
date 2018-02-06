@@ -28,7 +28,7 @@ import os
 import subprocess
 
 from LmBackend.common.cmd import MfRule
-from LmBackend.common.lmconstants import CMD_PYBIN, COMMON_SCRIPTS_DIR
+from LmBackend.common.lmconstants import CMD_PYBIN, BACKEND_SCRIPTS_DIR
 from LmServer.common.localconstants import APP_PATH
 
 # .............................................................................
@@ -103,7 +103,7 @@ class LmWrapperCommand(_LmCommand):
                 the specified outputs
    @todo: Make this a base class that we can inherit from
    """
-   relDir = COMMON_SCRIPTS_DIR
+   relDir = BACKEND_SCRIPTS_DIR
    scriptName = 'lm_wrapper.py'
 
    # ................................
