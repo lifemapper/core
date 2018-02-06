@@ -377,10 +377,7 @@ class ChristopherWalken(LMObject):
 
 # .............................................................................
    def _getProjParams(self, userId, epsg):
-      prjScens = []
-      
-      # TODO: AMS - Removed sdmMaskInputLayer (CJG)
-      #mdlScen = sdmMaskInputLayer = None
+      prjScens = []      
       mdlScen = None
       
       # Get environmental data model and projection scenarios
@@ -403,21 +400,7 @@ class ChristopherWalken(LMObject):
       else:
          raise LMError('Failed to retrieve ScenPackage for scenarios {}'
                        .format(prjScenCodes))
-      # Should be only one or None
-      
-      # TODO: AMS - I removed the mask parameter since they are determined in gridset (CJG)
-      #maskAlgList = self._getAlgorithms(sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
-      #if len(maskAlgList) == 1:
-      #   sdmMaskAlg = maskAlgList[0]
-      #   # TODO: Handle if there is more than one input layer
-      #   if len(sdmMaskAlg.getInputs()) > 1:
-      #      raise LMError(currargs='Unable to process > 1 input SDM mask layer')
-      #   for inputKey, lyrname in sdmMaskAlg.getInputs().iteritems():
-      #      sdmMaskInputLayer = self._scribe.getLayer(userId=userId, 
-      #                                                lyrName=lyrname, epsg=epsg) 
-      #      sdmMaskAlg.setInput(inputKey, sdmMaskInputLayer)
-            
-      return (mdlScen, prjScens)#, sdmMaskInputLayer)  
+      return (mdlScen, prjScens)  
 
 # .............................................................................
    def _getGlobalPamObjects(self, userId, archiveName, epsg):
@@ -546,7 +529,7 @@ class ChristopherWalken(LMObject):
       pass
    
    # ...............................
-   def startWalken(self):
+   def startWalken(self, workdir):
       """
       @summary: Walks a list of Lifemapper objects for computation
       @return: Single-species MFChain (spud), dictionary of 
@@ -554,7 +537,7 @@ class ChristopherWalken(LMObject):
                MFChains (potatoInputs)
       """
       currtime = dt.gmt().mjd
-      spud = None
+      squid = None
       potatoInputs = {}
       pcount = prcount = icount = ircount = 0
       # WeaponOfChoice resets old or failed Occurrenceset
@@ -562,6 +545,7 @@ class ChristopherWalken(LMObject):
       if self.weaponOfChoice.finishedInput:
          self._writeDoneWalkenFile()
       if occ:
+         squid = occ.squid
          objs = []
          # Process existing OccurrenceLayer (copy if up-to-date and complete,
          # recompute if incomplete, obsolete, or failed)
@@ -591,8 +575,9 @@ class ChristopherWalken(LMObject):
             self.log.info('   Will compute {} projections, {} matrixColumns ( {}, {} reset)'
                           .format(pcount, icount, prcount, ircount))
          spudObjs = [o for o in objs if o is not None]
-         spud = self._createSpudMakeflow(spudObjs)
-      return spud, potatoInputs
+         # Creates MFChain with rules, does NOT write it
+         spudRules = self._createSpudRules(spudObjs, workdir)
+      return squid, spudRules, potatoInputs
       
    # ...............................
    def stopWalken(self):
@@ -664,10 +649,7 @@ class ChristopherWalken(LMObject):
       """
       prj = None
       if occ is not None:
-         # TODO: AMS - I removed mask layer from projection (CJG)
          tmpPrj = SDMProjection(occ, alg, self.mdlScen, prjscen, 
-                        #modelMask=self.sdmMaskInputLayer, 
-                        #projMask=self.sdmMaskInputLayer, 
                         dataFormat=LMFormat.GTIFF.driver,
                         status=JobStatus.GENERAL, statusModTime=currtime)
          prj = self._scribe.findOrInsertSDMProject(tmpPrj)
@@ -675,9 +657,7 @@ class ChristopherWalken(LMObject):
             self.log.debug('Found/inserted SDMProject {}'.format(prj.getId()))
             # Fill in projection with input scenario layers, masks
             prj._modelScenario = self.mdlScen
-            #prj.setModelMask(self.sdmMaskInputLayer)
             prj._projScenario = prjscen
-            #prj.setProjMask(self.sdmMaskInputLayer)
             # Rollback if obsolete or failed
             reset = self._doReset(prj.status, prj.statusModTime)
             if reset:
@@ -687,8 +667,7 @@ class ChristopherWalken(LMObject):
       return prj, reset
 
 # ...............................................
-   def _createSpudMakeflow(self, objs):
-      updatedMFChain = None
+   def _createSpudRules(self, objs, workdir):
       rules = []
       if objs:
          
@@ -696,43 +675,18 @@ class ChristopherWalken(LMObject):
          procParams = self.boomGridset.grdMetadata[PROCESSING_KEY]
          
          for o in objs:
-            # Create MFChain with metadata
-            if updatedMFChain is None:
-               try:
-                  # Present on OccurrenceLayer, SDMProjection, MatrixColumn
-                  squid = o.squid
-                  speciesName = o.displayName
-               except:
-                  pass
-               else:
-                  meta = {MFChain.META_CREATED_BY: self.name,
-                          MFChain.META_DESCRIPTION: 'Spud for User {}, Archive {}, Species {}'
-                          .format(self.userId, self.archiveName, speciesName),
-                          MFChain.META_SQUID: squid}
-                  newMFC = MFChain(self.userId, priority=self.priority, 
-                                    metadata=meta, status=JobStatus.GENERAL, 
-                                    statusModTime=dt.gmt().mjd)
-                  updatedMFChain = self._scribe.insertMFChain(newMFC)
             # Get rules for objects to be computed
             try:
                try:
                   # Try to call projection compute me with process parameters
-                  objRules = o.computeMe(
-                                 workDir=updatedMFChain.getRelativeDirectory(), 
-                                 procParams=procParams)
+                  objRules = o.computeMe(workDir=workdir, procParams=procParams)
                except:
-                  objRules = o.computeMe(
-                                 workDir=updatedMFChain.getRelativeDirectory())
+                  objRules = o.computeMe(workDir=workdir)
                rules.extend(objRules)
             except Exception, e:
                self.log.info('Failed on object.compute {}, ({})'.format(type(o), 
                                                                         str(e)))
-         updatedMFChain.addCommands(rules)
-         updatedMFChain.write()
-         updatedMFChain.updateStatus(JobStatus.INITIALIZE)
-         self._scribe.updateObject(updatedMFChain)
-         
-      return updatedMFChain
+      return rules
 
 # ...............................................
    def _writeDoneWalkenFile(self):

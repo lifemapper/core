@@ -128,22 +128,15 @@ class Boomer(LMObject):
    def processSpud(self):
       try:
          self.log.info('Next species ...')
-         # Get a Spud MFChain (single-species MF) and dict of 
-         # {scencode: pavFilename}
-         spud, potatoInputs = self.christopher.startWalken()
+         # Get Spud rules (single-species SDM) and dict of {scencode: pavFilename}
+         workdir = self.masterPotato.getRelativeDirectory()
+         squid, spudRules, potatoInputs = self.christopher.startWalken(workdir)
          self.keepWalken = not self.christopher.complete
          # TODO: Master process for occurrence only? SDM only? 
-         if self.assemblePams and spud:
+         if self.assemblePams and spudRules:
             self.log.debug('Processing spud for potatoes')
-            # Add MF rule for Spud execution to Master MF
-            self._addRuleToMasterPotatoHead(spud, prefix='spud')
-            # Gather species ARF dependency to delay start of multi-species MF
-            spudArf = spud.getArfFilename(
-                             arfDir=self.masterPotato.getRelativeDirectory(), 
-                             prefix='spud')
-            self.spudArfFnames.append(spudArf)
-            # Add PAV outputs to raw potato files for triage input
-            squid = spud.mfMetadata[MFChain.META_SQUID]
+            
+            self.masterPotato.addCommands(spudRules)
             if potatoInputs:
                for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
                   pavFname = potatoInputs[scencode]
@@ -271,45 +264,6 @@ class Boomer(LMObject):
          potatoes[scencode] = (potatoChain, triagePotatoFile) 
       return potatoes
 
-   # .............................
-   def _addRuleToMasterPotatoHead(self, mfchain, dependencies=None, prefix='spud'):
-      """
-      @summary: Create a Spud or Potato rule for the MasterPotatoHead MF 
-      """
-      if dependencies is None:
-         dependencies = []
-         
-      targetFname = mfchain.getArfFilename(
-                             arfDir=self.masterPotato.getRelativeDirectory(),
-                             prefix=prefix)
-      
-      origMfName = mfchain.getDLocation()
-      wsMfName = os.path.join(self.masterPotato.getRelativeDirectory(), 
-                              os.path.basename(origMfName))
-
-      # Copy makeflow to workspace
-      cpCmd = SystemCommand('cp', 
-                            '{} {}'.format(origMfName, wsMfName), 
-                            inputs=[targetFname], 
-                            outputs=wsMfName)
-      
-      
-      mfCmd = SystemCommand('makeflow', 
-                            ' '.join(['-T wq', 
-                                      '-N lifemapper-{}b'.format(mfchain.getId()),
-                                      '-C {}:9097'.format(PUBLIC_FQDN),
-                                      '-X {}/worker/'.format(SCRATCH_PATH),
-                                      '-a {}'.format(wsMfName)]),
-                            inputs=[wsMfName])
-      arfCmd = LmTouchCommand(targetFname)
-      arfCmd.inputs.extend(dependencies)
-      
-      delCmd = SystemCommand('rm', '-rf {}'.format(mfchain.getRelativeDirectory()))
-      
-      mpCmd = ChainCommand([mfCmd, delCmd])
-      self.masterPotato.addCommands([arfCmd.getMakeflowRule(local=True),
-                                     cpCmd.getMakeflowRule(local=True),
-                                     mpCmd.getMakeflowRule(local=True)])
 
    # .............................
    def _addDelayRuleToMasterPotatoHead(self, mfchain):
