@@ -28,6 +28,7 @@ import os
 import subprocess
 
 from LmBackend.common.cmd import MfRule
+from LmBackend.common.lmconstants import CMD_PYBIN, COMMON_SCRIPTS_DIR
 from LmServer.common.localconstants import APP_PATH
 
 # .............................................................................
@@ -61,12 +62,23 @@ class _LmCommand(object):
       raise Exception, 'Get command is not implemented in the base class'
    
    # ................................
+   #def getMakeflowRule(self, local=False):
+   #   """
+   #   @summary: Get a MfRule object for this command
+   #   """
+   #   cmd = '{local}{cmd}'.format(local='LOCAL ' if local else '', 
+   #                               cmd=self.getCommand())
+   #   rule = MfRule(cmd, self.outputs, dependencies=self.inputs)
+   #   return rule
+
+   # ................................
    def getMakeflowRule(self, local=False):
       """
       @summary: Get a MfRule object for this command
       """
-      cmd = '{local}{cmd}'.format(local='LOCAL ' if local else '', 
-                                  cmd=self.getCommand())
+      wrapCmd = LmWrapperCommand(self.getCommand(), self.inputs, self.outputs)
+      cmd = '{local}{cmd}'.format(local='LOCAL ' if local else '',
+                                  cmd=wrapCmd.getCommand())
       rule = MfRule(cmd, self.outputs, dependencies=self.inputs)
       return rule
 
@@ -83,3 +95,34 @@ class _LmCommand(object):
                    function will be passed through
       """
       return subprocess.Popen(self.getCommand(), **kwargs)
+
+# ............................................................................
+class LmWrapperCommand(_LmCommand):
+   """
+   @summary: This command wraps a command and ensures that it always creates 
+                the specified outputs
+   @todo: Make this a base class that we can inherit from
+   """
+   relDir = COMMON_SCRIPTS_DIR
+   scriptName = 'lm_wrapper.py'
+
+   # ................................
+   def __init__(self, wrap_command, inputs, outputs):
+      """
+      @summary: Construct the command object
+      """
+      _LmCommand.__init__(self)
+      
+      self.args = '"{}" {}'.format(wrap_command, ' '.join(outputs))
+      self.outputs = outputs
+      
+      self.inputs = inputs
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the concatenate matrices command
+      """
+      cmd = '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+      return cmd
+
