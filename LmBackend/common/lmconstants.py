@@ -27,6 +27,7 @@
 SINGLE_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/single'
 MULTI_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/multi'
 COMMON_SCRIPTS_DIR = 'LmCompute/tools/common'
+BACKEND_SCRIPTS_DIR = 'LmBackend/tools'
 BOOM_SCRIPTS_DIR = 'LmDbServer/boom'
 SERVER_SCRIPTS_DIR = 'LmServer/tools'
 
