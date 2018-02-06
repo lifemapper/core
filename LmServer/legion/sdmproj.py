@@ -698,7 +698,7 @@ class SDMProjection(_ProjectionType, Raster):
                os.path.splitext(convexHullFilename)[0], ext) for ext in \
                                      ['.shp', '.shx', '.dbf']]
       
-            ecoMaskFilename = os.path.join(workDir, 'ecoMask.tif')
+            ecoMaskFilename = os.path.join(workDir, 'ecoMask_occ_{}.tif'.format(occId))
             
             # Ecoregions mask
             occTargetDir = os.path.join(workDir, os.path.splitext(
@@ -721,7 +721,7 @@ class SDMProjection(_ProjectionType, Raster):
             # Need to create mask as GTiff always and conditionally translate to ASC
             
             outFormat = 'GTiff'
-            maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
+            maskFn = os.path.join(workDir, '{}_occ_{}.tif'.format(maskName, occId))
             
             maskArgs = '-of {} -dstnodata {} -cutline {} {} {}'.format(
                                                          outFormat, 
@@ -738,14 +738,14 @@ class SDMProjection(_ProjectionType, Raster):
             rules.append(createMaskCommand.getMakeflowRule(local=True))
          else:
             maskName = 'blankMask'
-            maskFn = os.path.join(workDir, '{}.tif'.format(maskName))
+            maskFn = os.path.join(workDir, '{}_occ_{}.tif'.format(maskName, occId))
             maskCmd = CreateBlankMaskTiffCommand(maskLyr.getDLocation(), maskFn)
             maskCmd.inputs.append(dirTouchFile)
             rules.append(maskCmd.getMakeflowRule(local=True))
       
       if self.isATT():
          # Need to convert to ASCII
-         finalMaskFn = os.path.join(workDir, '{}.asc'.format(maskName))
+         finalMaskFn = os.path.join(workDir, '{}_occ_{}.asc'.format(maskName, occId))
          convertCmd = SystemCommand('gdal_translate', 
             '-a_nodata {} -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
                DEFAULT_NODATA, maskFn, finalMaskFn),
