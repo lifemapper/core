@@ -44,8 +44,9 @@ if __name__ == '__main__':
       sleep(1)
    
    for fn in args.touch_files:
-      lmo = LMObject()
-      lmo.readyFilename(fn)
-      with open(fn, 'a') as outF:
-         os.utime(fn, None)
+      if not os.path.exists(fn):
+         lmo = LMObject()
+         lmo.readyFilename(fn)
+         with open(fn, 'a') as outF:
+            os.utime(fn, None)
          
