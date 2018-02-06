@@ -40,7 +40,7 @@ if __name__ == '__main__':
    args = parser.parse_args()
 
    try:
-      print subprocess.call(args.cmd)
+      subprocess.call(args.cmd, shell=True)
    except Exception, e:
       print str(e)
    
