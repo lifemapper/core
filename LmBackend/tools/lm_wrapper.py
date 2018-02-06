@@ -27,8 +27,7 @@
 
 import argparse
 import os
-from subprocess import Popen
-from time import sleep
+import subprocess
 
 from LmBackend.common.lmobj import LMObject
 
@@ -39,9 +38,11 @@ if __name__ == '__main__':
    parser.add_argument('touch_files', type=str, nargs='*', 
                help='These files will be created by this script if necessary')
    args = parser.parse_args()
-   p = Popen(args.cmd, shell=True)
-   while p.poll() is None:
-      sleep(1)
+
+   try:
+      print subprocess.call(args.cmd)
+   except Exception, e:
+      print str(e)
    
    for fn in args.touch_files:
       if not os.path.exists(fn):
