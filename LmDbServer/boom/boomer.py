@@ -81,7 +81,8 @@ class Boomer(LMObject):
       # MFChain for masterPotatoHead MF
       self.masterPotato = None
       # open file for writing Spud Arf filenames for Potato triage
-      self.spudArfFnames = None
+      #self.spudArfFnames = None
+      self.squidNames = None
       # Stop indicator
       self.keepWalken = False
 
@@ -117,7 +118,8 @@ class Boomer(LMObject):
                      .format(self.christopher.currRecnum))
       self.keepWalken = True
 
-      self.spudArfFnames = []
+      #self.spudArfFnames = []
+      self.squidNames = []
       # potatoes = {scencode: (potatoChain, triagePotatoFile)
       self.potatoes = {}
       # master MF chain
@@ -131,19 +133,26 @@ class Boomer(LMObject):
          # Get Spud rules (single-species SDM) and dict of {scencode: pavFilename}
          workdir = self.masterPotato.getRelativeDirectory()
          squid, spudRules, potatoInputs = self.christopher.startWalken(workdir)
+         
+         # TODO: Track squids
+         if squid is not None:
+            self.squidNames.append(squid)
+         
          self.keepWalken = not self.christopher.complete
          # TODO: Master process for occurrence only? SDM only? 
          if self.assemblePams and spudRules:
             self.log.debug('Processing spud for potatoes')
             
             self.masterPotato.addCommands(spudRules)
-            if potatoInputs:
-               for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
-                  pavFname = potatoInputs[scencode]
-                  triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
-               self.log.info('Wrote spud squid to {} triage files'
-                             .format(len(potatoInputs)))
-            if len(self.spudArfFnames) >= SPUD_LIMIT:
+            # TODO: Don't write triage file, but don't delete code
+            #if potatoInputs:
+            #   for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
+            #      pavFname = potatoInputs[scencode]
+            #      triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
+            #   self.log.info('Wrote spud squid to {} triage files'
+            #                 .format(len(potatoInputs)))
+            #if len(self.spudArfFnames) >= SPUD_LIMIT:
+            if len(self.squidNames) >= SPUD_LIMIT:
                self.rotatePotatoes()
       except Exception, e:
          self.log.debug('Exception {} on spud, closing ...'.format(str(e)))
@@ -159,23 +168,26 @@ class Boomer(LMObject):
          # Write each potato MFChain, then add the MFRule to execute it to the Master
          for scencode, (potatoChain, triagePotatoFile) in self.potatoes.iteritems():
             # Close this potato input file
-            triagePotatoFile.close()
-            # Create triage command for potato inputs, add to MF chain
-            mtx = self.christopher.globalPAMs[scencode]
+            # TODO: This is currently None, change back if we use it again
+            #triagePotatoFile.close()
             
-            targetDir = potatoChain.getRelativeDirectory()
-            triageIn = os.path.join(targetDir, triagePotatoFile.name)
-            triageOut = os.path.join(targetDir, 
-                         potatoChain.getTriageFilename(prefix='mashedPotato'))
-            rules = mtx.computeMe(triageIn, triageOut, workDir=targetDir)
-            potatoChain.addCommands(rules)
+            # TODO: Reenable or delete
+            # Create triage command for potato inputs, add to MF chain
+            #mtx = self.christopher.globalPAMs[scencode]
+            #targetDir = potatoChain.getRelativeDirectory()
+            #triageIn = os.path.join(targetDir, triagePotatoFile.name)
+            #triageOut = os.path.join(targetDir, 
+            #             potatoChain.getTriageFilename(prefix='mashedPotato'))
+            #rules = mtx.computeMe(triageIn, triageOut, workDir=targetDir)
+            #potatoChain.addCommands(rules)
             potatoChain.write()
 #             potatoChain.updateStatus(JobStatus.INITIALIZE)
             self._scribe.updateObject(potatoChain)
             # Add this potato to MasterPotato
-            self._addRuleToMasterPotatoHead(potatoChain, 
-                                            dependencies=self.spudArfFnames, 
-                                            prefix='potato')
+            # TODO: Possibly reenable this in a different form, comment for now
+            #self._addRuleToMasterPotatoHead(potatoChain, 
+            #                                dependencies=self.spudArfFnames, 
+            #                                prefix='potato')
             self.log.info('  Wrote potato {} for scencode {} and added to Master'
                           .format(potatoChain.objId, scencode))
          # Write the masterPotatoHead MFChain
@@ -184,7 +196,7 @@ class Boomer(LMObject):
          self._scribe.updateObject(self.masterPotato)
          self.log.info('   Wrote MasterPotato {} ({} potatoes and {} spuds)'
                        .format(self.masterPotato.objId, len(self.potatoes), 
-                               len(self.spudArfFnames)))
+                               len(self.squidNames)))
       
       # Create new potatoes
       if not self.christopher.complete:
@@ -193,7 +205,8 @@ class Boomer(LMObject):
             self.log.info('Create new potatoes')
             # Initialize new potatoes, MasterPotato
             # potatoes = {scencode: (potatoChain, triagePotatoFile)
-            self.spudArfFnames = []
+            #self.spudArfFnames = []
+            self.squidNames = []
             self.potatoes = self._createPotatoMakeflows()
             
    # .............................
@@ -252,16 +265,18 @@ class Boomer(LMObject):
                           statusModTime=dt.gmt().mjd)
          potatoChain = self._scribe.insertMFChain(newMFC)
          # Get triage input file from MFChain
-         triagePotatoFname = potatoChain.getTriageFilename(prefix='triage')
-         if not readyFilename(triagePotatoFname, overwrite=True):
-            raise LMError(currargs='{} is not ready for write (overwrite=True)'
-                              .format(triagePotatoFname))
-         try:
-            triagePotatoFile = open(triagePotatoFname, 'w')
-         except Exception, e:
-            raise LMError(currargs='Failed to open {} for writing ({})'
-                          .format(triagePotatoFname, str(e)))
-         potatoes[scencode] = (potatoChain, triagePotatoFile) 
+         # TODO: CJG - 2018-02-12 - Comment this out because we are not doing triage right now
+         #triagePotatoFname = potatoChain.getTriageFilename(prefix='triage')
+         #if not readyFilename(triagePotatoFname, overwrite=True):
+         #   raise LMError(currargs='{} is not ready for write (overwrite=True)'
+         #                     .format(triagePotatoFname))
+         #try:
+         #   triagePotatoFile = open(triagePotatoFname, 'w')
+         #except Exception, e:
+         #   raise LMError(currargs='Failed to open {} for writing ({})'
+         #                 .format(triagePotatoFname, str(e)))
+         #potatoes[scencode] = (potatoChain, triagePotatoFile) 
+         potatoes[scencode] = (potatoChain, None) 
       return potatoes
 
    # .............................
