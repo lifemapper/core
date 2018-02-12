@@ -36,7 +36,7 @@ from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat,
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, MAX_WORKERS, 
                               PUBLIC_FQDN, SHARED_DATA_PATH, LM_DISK,
                               SCRATCH_PATH, PID_PATH, DEFAULT_EPSG, 
-                              WEBSERVICES_ROOT)
+                              WEBSERVICES_ROOT, WORKER_PATH)
 
 WEB_SERVICE_VERSION = 'v2'
 API_PATH = 'api'
@@ -81,7 +81,6 @@ CS_OPTIONS = '-n {} -B {} -p {} -m 100 -o {} -O 100M -H {}'.format(
                PUBLIC_FQDN, CS_PID_FILE, CS_PORT, CS_LOG_FILE, CS_HISTORY_FILE)  
 
 # Worker options
-WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
 WORKER_OPTIONS = '-C {}:{} -s {}'.format(PUBLIC_FQDN, CS_PORT, WORKER_PATH)
 
 WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} --workers-per-cycle=0 -E "{}" -S {}'.format(

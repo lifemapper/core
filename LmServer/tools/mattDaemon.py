@@ -47,10 +47,11 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, CS_OPTIONS,
                                       LOG_PATH, MAKEFLOW_BIN, MAKEFLOW_OPTIONS,
                                       MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, 
-                                      WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS,
-   WORKER_PATH, RM_OLD_WORKER_DIRS_CMD)
+                                      WORKER_FACTORY_BIN, 
+                                      WORKER_FACTORY_OPTIONS,
+                                      RM_OLD_WORKER_DIRS_CMD)
 
-from LmServer.common.localconstants import MAX_MAKEFLOWS
+from LmServer.common.localconstants import MAX_MAKEFLOWS, WORKER_PATH
 from LmServer.common.log import LmServerLogger
 from mx.DateTime.DateTime import gmt
 

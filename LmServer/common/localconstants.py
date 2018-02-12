@@ -22,6 +22,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import os
+
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (SERVER_ENV_HEADING, 
       SERVER_PIPELINE_HEADING, SERVER_DB_HEADING, 
@@ -70,4 +72,9 @@ DB_HOSTNAME = cfg.get(SERVER_DB_HEADING, 'DB_HOSTNAME')
 # Makeflow
 MAX_MAKEFLOWS = cfg.getint(SERVER_MATT_DAEMON_HEADING, 'MAX_MAKEFLOWS')
 MAX_WORKERS = cfg.getint(SERVER_MATT_DAEMON_HEADING, 'MAX_WORKERS')
+try:
+   WORKER_PATH = cfg.get(SERVER_MATT_DAEMON_HEADING, 'WORKER_PATH')
+except:
+   WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
+
 
