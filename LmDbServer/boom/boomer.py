@@ -163,40 +163,41 @@ class Boomer(LMObject):
    def rotatePotatoes(self):
       # Finish up existing potatoes
       #   Write triage rule to each. then write potato to Master Potato      
+      if self.masterPotato:
       #if self.potatoes:
-      self.log.info('Rotate potatoes ...')
-      # Write each potato MFChain, then add the MFRule to execute it to the Master
-      #for scencode, (potatoChain, triagePotatoFile) in self.potatoes.iteritems():
-         # Close this potato input file
-         # TODO: This is currently None, change back if we use it again
-         #triagePotatoFile.close()
-         
-         # TODO: Reenable or delete
-         # Create triage command for potato inputs, add to MF chain
-         #mtx = self.christopher.globalPAMs[scencode]
-         #targetDir = potatoChain.getRelativeDirectory()
-         #triageIn = os.path.join(targetDir, triagePotatoFile.name)
-         #triageOut = os.path.join(targetDir, 
-         #             potatoChain.getTriageFilename(prefix='mashedPotato'))
-         #rules = mtx.computeMe(triageIn, triageOut, workDir=targetDir)
-         #potatoChain.addCommands(rules)
-         #potatoChain.write()
+         self.log.info('Rotate potatoes ...')
+         # Write each potato MFChain, then add the MFRule to execute it to the Master
+         #for scencode, (potatoChain, triagePotatoFile) in self.potatoes.iteritems():
+            # Close this potato input file
+            # TODO: This is currently None, change back if we use it again
+            #triagePotatoFile.close()
+            
+            # TODO: Reenable or delete
+            # Create triage command for potato inputs, add to MF chain
+            #mtx = self.christopher.globalPAMs[scencode]
+            #targetDir = potatoChain.getRelativeDirectory()
+            #triageIn = os.path.join(targetDir, triagePotatoFile.name)
+            #triageOut = os.path.join(targetDir, 
+            #             potatoChain.getTriageFilename(prefix='mashedPotato'))
+            #rules = mtx.computeMe(triageIn, triageOut, workDir=targetDir)
+            #potatoChain.addCommands(rules)
+            #potatoChain.write()
 #             potatoChain.updateStatus(JobStatus.INITIALIZE)
-         #self._scribe.updateObject(potatoChain)
-         # Add this potato to MasterPotato
-         # TODO: Possibly reenable this in a different form, comment for now
-         #self._addRuleToMasterPotatoHead(potatoChain, 
-         #                                dependencies=self.spudArfFnames, 
-         #                                prefix='potato')
-         #self.log.info('  Wrote potato {} for scencode {} and added to Master'
-         #              .format(potatoChain.objId, scencode))
-      # Write the masterPotatoHead MFChain
-      self.masterPotato.write()
-      self.masterPotato.updateStatus(JobStatus.INITIALIZE)
-      self._scribe.updateObject(self.masterPotato)
-      self.log.info('   Wrote MasterPotato {} ({} potatoes and {} spuds)'
-                    .format(self.masterPotato.objId, len(self.potatoes), 
-                            len(self.squidNames)))
+            #self._scribe.updateObject(potatoChain)
+            # Add this potato to MasterPotato
+            # TODO: Possibly reenable this in a different form, comment for now
+            #self._addRuleToMasterPotatoHead(potatoChain, 
+            #                                dependencies=self.spudArfFnames, 
+            #                                prefix='potato')
+            #self.log.info('  Wrote potato {} for scencode {} and added to Master'
+            #              .format(potatoChain.objId, scencode))
+         # Write the masterPotatoHead MFChain
+         self.masterPotato.write()
+         self.masterPotato.updateStatus(JobStatus.INITIALIZE)
+         self._scribe.updateObject(self.masterPotato)
+         self.log.info('   Wrote MasterPotato {} ({} potatoes and {} spuds)'
+                       .format(self.masterPotato.objId, len(self.potatoes), 
+                               len(self.squidNames)))
       
       # Create new potatoes
       if not self.christopher.complete:
