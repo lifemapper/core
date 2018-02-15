@@ -77,4 +77,8 @@ try:
 except:
    WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
 
-
+try:
+   MASTER_WORKER_PATH = cfg.get(SERVER_MATT_DAEMON_HEADING, 'MASTER_WORKER_PATH')
+except:
+   MASTER_WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
+   

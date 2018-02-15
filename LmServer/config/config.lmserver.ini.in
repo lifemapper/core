@@ -121,6 +121,7 @@ MAX_MAKEFLOWS: @MAX_MAKEFLOWS@
 ; MAX_WORKERS = total number of CPUs of cluster compute nodes
 MAX_WORKERS: @MAX_WORKERS@
 WORKER_PATH: @LMSCRATCHDISK@/worker/
+MASTER_WORKER_PATH: @LMSCRATCHDISK@/worker/
 
 ; .............................................................................
 [LmClient - Open Tree of Life]

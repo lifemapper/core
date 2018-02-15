@@ -33,10 +33,11 @@ from types import IntType, FloatType,StringType
 
 from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat, 
                                          ProcessType)
-from LmServer.common.localconstants import (APP_PATH, DATA_PATH, MAX_WORKERS, 
-                              PUBLIC_FQDN, SHARED_DATA_PATH, LM_DISK,
-                              SCRATCH_PATH, PID_PATH, DEFAULT_EPSG, 
-                              WEBSERVICES_ROOT, WORKER_PATH)
+from LmServer.common.localconstants import (APP_PATH, DATA_PATH, DEFAULT_EPSG,
+                                            LM_DISK, MASTER_WORKER_PATH, 
+                                            MAX_WORKERS, PID_PATH, PUBLIC_FQDN,
+                                            SCRATCH_PATH, SHARED_DATA_PATH, 
+                                            WEBSERVICES_ROOT, WORKER_PATH)
 
 WEB_SERVICE_VERSION = 'v2'
 API_PATH = 'api'
@@ -88,7 +89,7 @@ WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} --workers-per-cyc
 
 # Makeflow options
 MAKEFLOW_OPTIONS = '--local-cores=2 -T wq -t 600 -u 600 -X {} -a -C {}:{}'.format(
-   WORKER_PATH, PUBLIC_FQDN, CS_PORT) 
+   MASTER_WORKER_PATH, PUBLIC_FQDN, CS_PORT) 
 
 # Remove old worker directories command
 RM_OLD_WORKER_DIRS_CMD = 'rocks run host compute "rm -rf {}/worker-*"'.format(
