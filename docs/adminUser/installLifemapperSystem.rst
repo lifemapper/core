@@ -34,10 +34,12 @@ Current versions
 Update existing install
 ~~~~~~~~~~~~~~~~~~~~~~~
 #. Remove old rolls (without cleaning or removing individual rpms)::
+
    # rocks remove roll lifemapper-server lifemapper-compute
    
 #. Remove old elgis repository rpm (it will cause yum to fail and pull old 
    pgbouncer, postgresql, rpms from the roll.  TODO: update static rpms in roll) ::
+   
    # rpm -evl --quiet --nodeps elgis-release
    
 #. (Optional) When updating an existing install, it should always be true that  
@@ -47,6 +49,7 @@ Update existing install
    the configuration rpms must be manually removed so that configuration scripts 
    will be run on install. If the above is true on a lifemapper-compute 
    installation, do the same thing for every node::
+   
    # rpm -el rocks-lifemapper rocks-lmcompute
       
 
@@ -105,9 +108,10 @@ Install bugfixes
 
 #. Compute Nodes - check/fix node group permissions on /state/partition1/lmscratch ::
 
-   # rocks run host compute "hostname; ls -lah /state/partition1/"
-   # rocks run host compute "chgrp -R lmwriter /state/partition1/lmscratch"
-   # rocks run host compute "chmod -R g+ws /state/partition1/lmscratch"
+   # rocks run host compute "(hostname; \
+                              chgrp -R lmwriter /state/partition1/lmscratch; \
+                              chmod -R g+ws /state/partition1/lmscratch)"
+   # rocks run host compute "(hostname; ls -lahtr /state/partition1/lmscratch)"
       
 Look for Errors
 ---------------
@@ -160,13 +164,13 @@ Configure for new/test data
         * scenario package containing layers and metadata.  
         
 #. Bash script getBoomPackage is in lmserver roll:
-   * There are 2 good test packages, named 
-     * heuchera_boom_global_data (heuchera data (64sp) with multi-scenario, 
-       global, 10min environmental data)
-     * heuchera_boom_data (heuchera data with current scenario, 
-       Continental US, 30sec, 35-layers of environmental data)
-     * sax_boom_data (saxifragales data (~2300sp) with current scenario, 
-       global, 10min, 12-layers of environmental data)
+     * There are 2 good test packages, named 
+          * heuchera_boom_global_data (heuchera data (64sp) with multi-scenario, 
+            global, 10min environmental data)
+          * heuchera_boom_data (heuchera data with current scenario, 
+            Continental US, 30sec, 35-layers of environmental data)
+          * sax_boom_data (saxifragales data (~2300sp) with current scenario, 
+            global, 10min, 12-layers of environmental data)
                
    * Run bash script getBoomPackage with boom package name.  This downloads
      data package, installs all into correct directories and sets permissions.::  
