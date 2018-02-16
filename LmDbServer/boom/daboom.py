@@ -36,8 +36,6 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
 from LmServer.common.log import ScriptLogger
 
-SPUD_LIMIT = 100
-
 # .............................................................................
 class DaBoom(Daemon):
    """

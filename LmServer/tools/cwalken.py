@@ -539,7 +539,6 @@ class ChristopherWalken(LMObject):
       currtime = dt.gmt().mjd
       squid = None
       spudRules = []
-      potatoInputs = {}
       pcount = prcount = icount = ircount = 0
       # WeaponOfChoice resets old or failed Occurrenceset
       occ = self.weaponOfChoice.getOne()
@@ -571,14 +570,13 @@ class ChristopherWalken(LMObject):
                         icount += 1
                         if mReset: ircount += 1 
                         objs.append(mtxcol)
-                        potatoInputs[prjscen.code] = mtxcol.getTargetFilename()
    
             self.log.info('   Will compute {} projections, {} matrixColumns ( {}, {} reset)'
                           .format(pcount, icount, prcount, ircount))
          spudObjs = [o for o in objs if o is not None]
          # Creates MFChain with rules, does NOT write it
          spudRules = self._createSpudRules(spudObjs, workdir)
-      return squid, spudRules, potatoInputs
+      return squid, spudRules
       
    # ...............................
    def stopWalken(self):
