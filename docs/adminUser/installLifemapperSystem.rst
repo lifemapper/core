@@ -108,9 +108,7 @@ Install bugfixes
 
 #. Compute Nodes - check/fix node group permissions on /state/partition1/lmscratch ::
 
-   # rocks run host compute "(hostname; \
-     chgrp -R lmwriter /state/partition1/lmscratch; \
-     chmod -R g+ws /state/partition1/lmscratch)"
+   # rocks run host compute "(hostname; chgrp -R lmwriter /state/partition1/lmscratch; chmod -R g+ws /state/partition1/lmscratch)"
    # rocks run host compute "(hostname; ls -lahtr /state/partition1/lmscratch)"
       
 Look for Errors
