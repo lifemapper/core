@@ -27,6 +27,7 @@
 """
 import argparse
 from mx.DateTime import DateTimeFromMJD
+import os
 
 # TODO: Different logger
 from LmCommon.common.matrix import Matrix
@@ -156,6 +157,12 @@ if __name__ == '__main__':
                        help='A temporary file to be used for Solr POST')
    
    args = parser.parse_args()
+   
+   if not os.path.exists(args.pavFilename) or \
+        os.path.getsize(args.pavFilename) == 0:
+      raise Exception, 'There is a problem with the PAV file: {}'.format(
+                                                            args.pavFilename)
+   
    
    scribe = BorgScribe(ConsoleLogger())
    scribe.openConnections()

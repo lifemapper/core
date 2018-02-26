@@ -30,6 +30,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import glob
 import os
 from osgeo import ogr
 import shutil
@@ -132,6 +133,14 @@ class MaxentModel(object):
       self.pkgFn = packageFn
       self.metricsFn = metricsFn
       self.statusFn = statusFn
+      
+      # Check for zero length files
+      checkFiles = []
+      checkFiles.extend(glob.glob(os.path.join(self.layersDir, '*')))
+      checkFiles.append(self.samplesFile)
+      for fn in checkFiles:
+         if os.path.getsize(fn) == 0:
+            raise Exception, 'File: {} has size 0'.format(fn)
       
    # ...................................
    def _buildCommand(self):
@@ -396,6 +405,14 @@ class MaxentProjection(object):
       self.metricsFn = metricsFn
       self.statusFn = statusFn
       self.pkgFn = packageFn
+      
+      # Check for zero length files
+      checkFiles = []
+      checkFiles.extend(glob.glob(os.path.join(self.layersDir, '*')))
+      checkFiles.append(self.rulesetFn)
+      for fn in checkFiles:
+         if os.path.getsize(fn) == 0:
+            raise Exception, 'File: {} has size 0'.format(fn)
       
    # .......................................
    def _buildCommand(self):
