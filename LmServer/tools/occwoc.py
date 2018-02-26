@@ -226,9 +226,8 @@ class _SpeciesWeaponOfChoice(LMObject):
          occ.setScientificName(sciName)
          success = self._scribe.updateObject(occ)
       else:
-         # Ignore existing, complete
-         self.log.info('   Ignoring up to date OccLayer')
-         occ = None
+         # Return existing, complete
+         self.log.info('   Returning completed OccLayer')
       if occ is not None:
          # Set processType and metadata location (from config, not saved in DB)
          occ.processType = self.processType

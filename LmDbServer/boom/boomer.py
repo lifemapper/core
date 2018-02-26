@@ -43,7 +43,7 @@ from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 
 
-SPUD_LIMIT = 100
+SPUD_LIMIT = 200
 
 # .............................................................................
 class Boomer(LMObject):
