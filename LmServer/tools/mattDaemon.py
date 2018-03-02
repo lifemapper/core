@@ -126,8 +126,9 @@ class MattDaemon(Daemon):
                   procErr = open(os.path.join(LOG_PATH,
                                        'mf_{}.err'.format(mfObj.getId())), 'a')
                   
-                  self._mfPool.append([mfObj, mfDocFn, Popen(cmd, shell=True, 
-                                                      preexec_fn=os.setsid), 
+                  self._mfPool.append([mfObj, mfDocFn, 
+                                       Popen(cmd, shell=True, stdout=procOut, 
+                                          stderr=procErr, preexec_fn=os.setsid), 
                                        procOut, procErr])
                else:
                   self._cleanupMakeflow(mfObj, mfDocFn, exitStatus=2, 
@@ -352,11 +353,19 @@ class MattDaemon(Daemon):
       # If exit status is zero, remove from DB.  Otherwise update with error
       #    status
       if exitStatus == 0:
+         origMf = mfObj.getDLocation()
          self.scribe.deleteObject(mfObj)
          # Remove log files
          if logFiles is not None:
             for logFn in logFiles:
                os.remove(logFn)
+               
+         # Remove original makeflow file
+         try:
+            os.remove(origMf)
+         except Exception, e:
+            self.log.debug('Could not remove makeflow file: {}, {}'.format(
+                                                               origMf, str(e)))
       else:
          # Either killed by signal or error
          if lmStatus is None:
