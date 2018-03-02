@@ -236,7 +236,7 @@ class MaxentModel(object):
          paramName = param['name']
          paramValue = param['value']
          defParam = PARAMETERS[paramName]
-         if paramValue is not None and paramValue == 'None':
+         if paramValue is not None and paramValue != 'None':
             v = defParam['process'](paramValue)
             # Check for options
             if defParam.has_key('options'):
@@ -512,7 +512,7 @@ optional args can contain any flags understood by Maxent -- for example, a
          paramName = param['name']
          paramValue = param['value']
          defParam = PARAMETERS[paramName]
-         if paramValue is not None and paramValue == 'None':
+         if paramValue is not None and paramValue != 'None':
             v = defParam['process'](paramValue)
             # Check for options
             if defParam.has_key('options'):
