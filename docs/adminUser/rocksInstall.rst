@@ -58,13 +58,20 @@ Other info:
 
 Enable www access
 ~~~~~~~~~~~~~~~~~
-Follow procedure at http://yeti.lifemapper.org/roll-documentation/base/6.2/enable-www.html
+Follow procedure at http://central-7-0-x86-64.rocksclusters.org/roll-documentation/base/7.0/enable-www.html
 
 Insert compute nodes
 ~~~~~~~~~~~~~~~~~~~~
 Start insert-ethers process on the Frontend, then start each node.  Wait until 
 each node has been recognized ( ) and accepted (*) in the insert-ethers
 window before starting the next node.
+
+For VM host cluster (w/o LM roll install)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Install screen before doing a security-update roll so it gets added to the 
+distribution.  ::
+    yumdownloader --resolve --enablerepo base screen.x86_64;
+    rpm -i screen*.rpm
 
 **************************
 All KU-Lifemapper Clusters
@@ -104,13 +111,17 @@ Security updates
 Follow instructions at 
 http://www.rocksclusters.org/new/2018/2018/01/04/updates-meltdown-spectre.html
 Create a mirror with CentOS updates, using a nearby mirror from 
-https://www.centos.org/download/mirrors/.
-
+https://www.centos.org/download/mirrors/.  
+**Note**: Make sure the URL constructed in "rocks create mirror" command points 
+to an active update site. This command should bring back a variety of updates 
+while creating the mirror.  The site constructed below differs from the URL in
+the above instructions.
+**Note**: Make sure HTTP is enabled.
 
     # baseurl=http://centos.gbeservers.com/
     # osversion=7.4.1708
     # version=`date +%F`
-    # rocks create mirror ${baseurl}/centos/${osversion}/updates/x86_64/Packages/ rollname=Updates-CentOS-${osversion} version=${version}
+    # rocks create mirror ${baseurl}/${osversion}/updates/x86_64/Packages/ rollname=Updates-CentOS-${osversion} version=${version}
     # rocks add roll Updates-CentOS-${osversion}-${version}*iso
     # rocks enable roll Updates-CentOS-${osversion} version=${version}
     # (cd /export/rocks/install; rocks create distro)
