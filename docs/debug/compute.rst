@@ -93,7 +93,7 @@ You can use the work queue status process to query the catalog server to see
 a, more or less, up to date listing of the running makeflows and workers.  
 There is some caching that takes place so it is not absolutely correct, but it
 can give you a general idea if things are working or not.  To run this:
-   `work_queue_stats -C {server FQDN}:9097`
+   `work_queue_status -C {server FQDN}:9097`
 The results will show which makeflow instances have connected to the catalog 
 server and what their current status is (as far as number of tasks, number 
 completed, number waiting, etc).  It also shows the number of workers connected
