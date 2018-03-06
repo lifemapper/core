@@ -25,35 +25,32 @@ the installation screen) and the Python roll from notyeti.lifemapper.org
 (with the updated Python roll).  All other rolls should come from the yeti or 
 notyeti sites if they are physically located there (to speed download time).
   
-For all clusters, install the following
-
-Rocks 7.0:
-* area51
-* base 
-* CentOS
-* core
-* ganglia
-* hpc
-* kernel
-* python
-* sge
-* Updates-CentOS
-* kvm (Physical clusters only)
-* zfs (Physical clusters only)
+For all clusters, install the following (Rocks 7.0):
+ * area51
+ * base 
+ * CentOS
+ * core
+ * ganglia
+ * hpc
+ * kernel
+ * python
+ * sge
+ * Updates-CentOS
+ * kvm (Physical clusters only)
+ * zfs (Physical clusters only)
 
 (6.2: area51, base, ganglia, hpc, kernel, os, python, sge, webserver)
 
 Other info:
-* Lawrence Geo:  N38.969  W95.245
-* Public Interface: assigned by Greg Smith for MAC address
-  Note that since we are not using DHCP, any MAC address assigned on creation
-  will be fine.
-* Private Interface:  (notyeti VMs: available internal 192.168.xxx.1, where
-  xxx is the last quartet of the public IP address)
-* Gateway:  129.237.201.254 (Dyche 129.237.183.126)
-* DNS:  129.237.133.1
-* NTP server:  time.ku.edu
-* Auto-Partitioning
+ * Lawrence Geo:  N38.969  W95.245
+ * Public Interface: assigned by Greg Smith for MAC address
+   **Note** since we are not using DHCP, any MAC address assigned on creation is fine.
+ * Private Interface:  (notyeti VMs: available internal 192.168.xxx.1, where
+   xxx is the last quartet of the public IP address)
+ * Gateway:  129.237.201.254 (Dyche 129.237.183.126)
+ * DNS:  129.237.133.1
+ * NTP server:  time.ku.edu
+ * Auto-Partitioning
 
 
 Enable www access
@@ -143,7 +140,7 @@ https://www.centos.org/download/mirrors/.
 to an active update site. This command should bring back a variety of updates 
 while creating the mirror.  The site constructed below differs from the URL in
 the above instructions.
-**Note**: Make sure HTTP is enabled.
+**Note**: Make sure HTTP is enabled.::
 
     # baseurl=http://centos.gbeservers.com/
     # osversion=7.4.1708
