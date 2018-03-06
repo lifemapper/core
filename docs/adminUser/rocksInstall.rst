@@ -68,11 +68,38 @@ window before starting the next node.
 
 For VM host cluster (w/o LM roll install)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Install screen before doing a security-update roll so it gets added to the 
-distribution.  ::
+Install utilities before doing a security-update roll so it gets added to the 
+new distribution.  ::
+
+* Screen
+   Install screen from yum.  ::
     yumdownloader --resolve --enablerepo base screen.x86_64;
     rpm -i screen*.rpm
 
+* VNCServer
+   * Install VNCServer to use virt-manager and other graphic interfaces remotely. 
+    yum install tigervnc-server
+    
+   * Start/Stop on server::
+      vncserver :20 -geometry 1280x1024
+      vncserver -kill :20
+
+* (NO) VNCServer procedure not currently working, using instructions 
+  at https://www.tecmint.com/install-and-configure-vnc-server-in-centos-7/::
+    cp /lib/systemd/system/vncserver@.service  /etc/systemd/system/vncserver@:20.service
+            
+   * Edit config file
+     * Add USER
+     * Add "-geometry 1280x1024" to ExecStart command
+     
+   * Reload system config to pick up new config file
+        # systemctl daemon-reload
+        # systemctl start vncserver@:20
+        # systemctl status vncserver@:20
+        # systemctl enable vncserver@:20
+
+    
+    
 **************************
 All KU-Lifemapper Clusters
 **************************
