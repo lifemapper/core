@@ -124,6 +124,47 @@ the above instructions.
     # (cd /export/rocks/install; rocks create distro)
     # yum clean all; yum update
     
+    
+Troubleshooting
+~~~~~~~~~~~~~~~
+* SGE causes sync config to fail:
+  After adding the switch, the command "rocks sync config" failed.  After some 
+  searching, I tried starting the SGE service, and everything worked fine::
+
+    root@notyeti root]# rocks sync config
+    error: commlib error: got select error (Connection refused)
+    unable to send message to qmaster using port 536 on host "notyeti.local": got send error
+    [root@notyeti root]# /etc/init.d/sgemaster.notyeti start
+    Starting Grid Engine qmaster
+    [root@notyeti root]# rocks sync config
+    [root@notyeti root]# 
+
+* Enabling www access failed 
+  http://central-7-0-x86-64.rocksclusters.org/roll-documentation/base/7.0/enable-www.html 
+    * Failed on "rocks sync host firewall localhost” b/c iptables service was not 
+      running and could not be reloaded (or started)
+    * Rebooted - just in case
+    * Everything came up fine and "rocks sync host firewall localhost” worked
+    * The iptables/no web service access problem came up again when I tried to 
+      update the next time. Errors seemed to point to the opensm service as well
+
+* User creation
+    * The user I created on install (astewart) was created on the system, but I 
+      was unable to login to the GUI with that account.  I could ssh to it, 
+      and it showed that no home directory had been created. Deleted the user, 
+      and added it again at the command prompt.  It created the home directory, 
+      and I can login through the GUI
+      
+* Mouse - Switching the primary mouse button from left to right did not work,
+  but after a reboot several weeks later it magically did work
+
+* Enabling Auto-partition caused the creation of LVM partitions on NotYeti.  
+  The command "rocks list partition notyeti" did not recognize these partitions.
+
+New repositories
+~~~~~~~~~~~~~~~~
+http://repository.it4i.cz/mirrors/repoforge/redhat/el7/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el7.rf.x86_64.rpm
+
 KU Production roll (unfinished)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Install the KU Production (kuprod) roll. Download iso and sha files, current

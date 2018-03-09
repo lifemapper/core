@@ -1,6 +1,6 @@
----------------------------------------------------
+--------------------------------------------------
 Procedure on Yeti [slight differences on NotYeti]:
----------------------------------------------------
+--------------------------------------------------
 
 #. First build ZFS binary roll and install::
 
@@ -10,7 +10,7 @@ Procedure on Yeti [slight differences on NotYeti]:
      rocks enable roll zfs-linux
      (cd /export/rocks/install/; rocks create distro)
      rocks run roll zfs-linux > add-zfs.sh
-     bash add-bfs.sh 2>&1 | tee add-bfs.out
+     bash add-zfs.sh 2>&1 | tee add-zfs.out
 
 #. Create ZFS pool from your disk::
 
