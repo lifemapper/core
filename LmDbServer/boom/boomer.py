@@ -31,7 +31,6 @@ from LmBackend.command.server import LmTouchCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.lmconstants import JobStatus
-from LmCommon.common.readyfile import readyFilename
 
 from LmServer.base.utilities import isCorrectUser
 from LmServer.common.datalocator import EarlJr

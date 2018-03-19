@@ -25,40 +25,37 @@ the installation screen) and the Python roll from notyeti.lifemapper.org
 (with the updated Python roll).  All other rolls should come from the yeti or 
 notyeti sites if they are physically located there (to speed download time).
   
-For all clusters, install the following
-
-Rocks 7.0:
-* area51
-* base 
-* CentOS
-* core
-* ganglia
-* hpc
-* kernel
-* python
-* sge
-* Updates-CentOS
-* kvm (Physical clusters only)
-* zfs (Physical clusters only)
+For all clusters, install the following (Rocks 7.0):
+ * area51
+ * base 
+ * CentOS
+ * core
+ * ganglia
+ * hpc
+ * kernel
+ * python
+ * sge
+ * Updates-CentOS
+ * kvm (Physical clusters only)
+ * zfs (Physical clusters only)
 
 (6.2: area51, base, ganglia, hpc, kernel, os, python, sge, webserver)
 
 Other info:
-* Lawrence Geo:  N38.969  W95.245
-* Public Interface: assigned by Greg Smith for MAC address
-  Note that since we are not using DHCP, any MAC address assigned on creation
-  will be fine.
-* Private Interface:  (notyeti VMs: available internal 192.168.xxx.1, where
-  xxx is the last quartet of the public IP address)
-* Gateway:  129.237.201.254 (Dyche 129.237.183.126)
-* DNS:  129.237.133.1
-* NTP server:  time.ku.edu
-* Auto-Partitioning
+ * Lawrence Geo:  N38.969  W95.245
+ * Public Interface: assigned by Greg Smith for MAC address
+   **Note** since we are not using DHCP, any MAC address assigned on creation is fine.
+ * Private Interface:  (notyeti VMs: available internal 192.168.xxx.1, where
+   xxx is the last quartet of the public IP address)
+ * Gateway:  129.237.201.254 (Dyche 129.237.183.126)
+ * DNS:  129.237.133.1
+ * NTP server:  time.ku.edu
+ * Auto-Partitioning
 
 
 Enable www access
 ~~~~~~~~~~~~~~~~~
-Follow procedure at http://yeti.lifemapper.org/roll-documentation/base/6.2/enable-www.html
+Follow procedure at http://central-7-0-x86-64.rocksclusters.org/roll-documentation/base/7.0/enable-www.html
 
 Insert compute nodes
 ~~~~~~~~~~~~~~~~~~~~
@@ -66,6 +63,40 @@ Start insert-ethers process on the Frontend, then start each node.  Wait until
 each node has been recognized ( ) and accepted (*) in the insert-ethers
 window before starting the next node.
 
+For VM host cluster (w/o LM roll install)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Install utilities before doing a security-update roll so it gets added to the 
+new distribution.  ::
+
+* Screen
+   Install screen from yum.  ::
+    yumdownloader --resolve --enablerepo base screen.x86_64;
+    rpm -i screen*.rpm
+
+* VNCServer
+   * Install VNCServer to use virt-manager and other graphic interfaces remotely. 
+    yum install tigervnc-server
+    
+   * Start/Stop on server::
+      vncserver :20 -geometry 1280x1024
+      vncserver -kill :20
+
+* (NO) VNCServer procedure not currently working, using instructions 
+  at https://www.tecmint.com/install-and-configure-vnc-server-in-centos-7/::
+    cp /lib/systemd/system/vncserver@.service  /etc/systemd/system/vncserver@:20.service
+            
+   * Edit config file
+     * Add USER
+     * Add "-geometry 1280x1024" to ExecStart command
+     
+   * Reload system config to pick up new config file
+        # systemctl daemon-reload
+        # systemctl start vncserver@:20
+        # systemctl status vncserver@:20
+        # systemctl enable vncserver@:20
+
+    
+    
 **************************
 All KU-Lifemapper Clusters
 **************************
@@ -104,13 +135,17 @@ Security updates
 Follow instructions at 
 http://www.rocksclusters.org/new/2018/2018/01/04/updates-meltdown-spectre.html
 Create a mirror with CentOS updates, using a nearby mirror from 
-https://www.centos.org/download/mirrors/.
-
+https://www.centos.org/download/mirrors/.  
+**Note**: Make sure the URL constructed in "rocks create mirror" command points 
+to an active update site. This command should bring back a variety of updates 
+while creating the mirror.  The site constructed below differs from the URL in
+the above instructions.
+**Note**: Make sure HTTP is enabled.::
 
     # baseurl=http://centos.gbeservers.com/
     # osversion=7.4.1708
     # version=`date +%F`
-    # rocks create mirror ${baseurl}/centos/${osversion}/updates/x86_64/Packages/ rollname=Updates-CentOS-${osversion} version=${version}
+    # rocks create mirror ${baseurl}/${osversion}/updates/x86_64/Packages/ rollname=Updates-CentOS-${osversion} version=${version}
     # rocks add roll Updates-CentOS-${osversion}-${version}*iso
     # rocks enable roll Updates-CentOS-${osversion} version=${version}
     # (cd /export/rocks/install; rocks create distro)
