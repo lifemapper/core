@@ -107,3 +107,11 @@ is not set up as a submit host.  Try:
 If it does not work with "sge-qmaster" change to the name of the machine you are trying to submit from and 
 update this document.
 
+Qstat is reporting a bunch of old jobs with status like 'dt' or 'dr' that won't go away
+---------------------------------------------------------------------------------------
+
+  This seems to happen when nodes are shut off while jobs are running, but there
+  could be other reasons.  To clear these, you need to use `qdel -f`
+  
+  To remove all jobs for user lmwriter, use root and:
+    `# qdel -f -u lmwriter`
