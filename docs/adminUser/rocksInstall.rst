@@ -197,3 +197,62 @@ KU Production roll (unfinished)
 Install the KU Production (kuprod) roll. Download iso and sha files, current
 version is: 
 * http://svc.lifemapper.org/dl/kuprod-1.0-0.x86_64.disk1.iso
+
+
+history:
+ 1012  ping www.ucsd.edu
+ 1013  cat /var/log/messages | grep DHCP
+ 1014  ping 192.168.131.252
+ 1015  ssh 192.168.131.252
+ 1016  rocks list host interfacde | grep 192.168.131.252
+ 1017  rocks list host interface | grep 192.168.131.252
+ 1018  tail -n50 /var/log/messages
+ 1019  systemctl stop opensm
+ 1020  systemctl disable opensm
+ 1021  grep rockscommand /var/log/messages
+ 1022  cd /var/log/httpd/
+ 1023  ll
+ 1024  tail access_log
+ 1025  systemctl status httpd
+ 1026  systemctl stop httpd
+ 1027  systemctl start httpd
+ 1028  journalctl -xe
+ 1029  ll
+ 1030  pgrep httpd
+ 1031  rocks list network
+ 1032  ip route show
+ 1033  systemctl status httpd
+ 1034  systemctl start httpd
+ 1035  cd /etc/httpd/
+ 1036  ll
+ 1037  ls /run
+ 1038  mkdir /run/httpd
+ 1039  systemctl start httpd
+ 1040  systemctl status httpd
+ 1041  systemctl status named
+ 1042  insert-ethers
+ 1043  ~
+ 1044  systemctl start named
+ 1045  systemctl status named
+ 1046  systemctl stop httpd
+ 1047  insert-ethers
+ 1048  systemctl start httpd
+ 1049  insert-ethers
+ 1050  clear
+ 1051  rocks list host boot
+ 1052  rocks set host boot notyeti-191 action=install
+ 1053  rocks set host boot notyeti-191 action=os
+ 1054  zpool list
+ 1055  zfs list
+ 1056  ls -lah /state/partition1/apps/
+ 1057  rocks set host vm cdrom notyeti-191 cdrom=/state/partition1/apps/kernel-7.0-0.x86_64.disk1.iso
+ 1058  rocks report host vm config notyeti-191
+ 1059  rocks list host vm status=1
+ 1060  rocks start host vm notyeti-191
+ 
+ 
+  1022  rocks set host vm cdrom notyeti-191 cdrom=None
+ 1023  rocks report host vm config notyeti-191 
+ 1024  systemctl status
+ 1025  systemctl status foundation-mysql
+ 
