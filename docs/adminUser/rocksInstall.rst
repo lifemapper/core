@@ -151,8 +151,108 @@ the above instructions.
     # (cd /export/rocks/install; rocks create distro)
     # yum clean all; yum update
     
+    
+Troubleshooting
+~~~~~~~~~~~~~~~
+* SGE causes sync config to fail:
+  After adding the switch, the command "rocks sync config" failed.  After some 
+  searching, I tried starting the SGE service, and everything worked fine::
+
+    root@notyeti root]# rocks sync config
+    error: commlib error: got select error (Connection refused)
+    unable to send message to qmaster using port 536 on host "notyeti.local": got send error
+    [root@notyeti root]# /etc/init.d/sgemaster.notyeti start
+    Starting Grid Engine qmaster
+    [root@notyeti root]# rocks sync config
+    [root@notyeti root]# 
+
+* Enabling www access failed 
+  http://central-7-0-x86-64.rocksclusters.org/roll-documentation/base/7.0/enable-www.html 
+    * Failed on "rocks sync host firewall localhost” b/c iptables service was not 
+      running and could not be reloaded (or started)
+    * Rebooted - just in case
+    * Everything came up fine and "rocks sync host firewall localhost” worked
+    * The iptables/no web service access problem came up again when I tried to 
+      update the next time. Errors seemed to point to the opensm service as well
+
+* User creation
+    * The user I created on install (astewart) was created on the system, but I 
+      was unable to login to the GUI with that account.  I could ssh to it, 
+      and it showed that no home directory had been created. Deleted the user, 
+      and added it again at the command prompt.  It created the home directory, 
+      and I can login through the GUI
+      
+* Mouse - Switching the primary mouse button from left to right did not work,
+  but after a reboot several weeks later it magically did work
+
+* Enabling Auto-partition caused the creation of LVM partitions on NotYeti.  
+  The command "rocks list partition notyeti" did not recognize these partitions.
+
+New repositories
+~~~~~~~~~~~~~~~~
+http://repository.it4i.cz/mirrors/repoforge/redhat/el7/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el7.rf.x86_64.rpm
+
 KU Production roll (unfinished)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Install the KU Production (kuprod) roll. Download iso and sha files, current
 version is: 
 * http://svc.lifemapper.org/dl/kuprod-1.0-0.x86_64.disk1.iso
+
+
+history:
+ 1012  ping www.ucsd.edu
+ 1013  cat /var/log/messages | grep DHCP
+ 1014  ping 192.168.131.252
+ 1015  ssh 192.168.131.252
+ 1016  rocks list host interfacde | grep 192.168.131.252
+ 1017  rocks list host interface | grep 192.168.131.252
+ 1018  tail -n50 /var/log/messages
+ 1019  systemctl stop opensm
+ 1020  systemctl disable opensm
+ 1021  grep rockscommand /var/log/messages
+ 1022  cd /var/log/httpd/
+ 1023  ll
+ 1024  tail access_log
+ 1025  systemctl status httpd
+ 1026  systemctl stop httpd
+ 1027  systemctl start httpd
+ 1028  journalctl -xe
+ 1029  ll
+ 1030  pgrep httpd
+ 1031  rocks list network
+ 1032  ip route show
+ 1033  systemctl status httpd
+ 1034  systemctl start httpd
+ 1035  cd /etc/httpd/
+ 1036  ll
+ 1037  ls /run
+ 1038  mkdir /run/httpd
+ 1039  systemctl start httpd
+ 1040  systemctl status httpd
+ 1041  systemctl status named
+ 1042  insert-ethers
+ 1043  ~
+ 1044  systemctl start named
+ 1045  systemctl status named
+ 1046  systemctl stop httpd
+ 1047  insert-ethers
+ 1048  systemctl start httpd
+ 1049  insert-ethers
+ 1050  clear
+ 1051  rocks list host boot
+ 1052  rocks set host boot notyeti-191 action=install
+ 1053  rocks set host boot notyeti-191 action=os
+ 1054  zpool list
+ 1055  zfs list
+ 1056  ls -lah /state/partition1/apps/
+ 1057  rocks set host vm cdrom notyeti-191 cdrom=/state/partition1/apps/kernel-7.0-0.x86_64.disk1.iso
+ 1058  rocks report host vm config notyeti-191
+ 1059  rocks list host vm status=1
+ 1060  rocks start host vm notyeti-191
+ 
+ 
+  1022  rocks set host vm cdrom notyeti-191 cdrom=None
+ 1023  rocks report host vm config notyeti-191 
+ 1024  systemctl status
+ 1025  systemctl status foundation-mysql
+ 

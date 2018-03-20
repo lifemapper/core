@@ -275,15 +275,17 @@ class LmTree(object):
       return True
 
    # ..............................
-   def isUltrametric(self):
+   def isUltrametric(self, relTol=1e-03):
       """
       @summary: Check if the tree is ultrametric
+      @param relTol: The relative tolerance to determine if the min and max are
+                        equal.  We will say they are equal if they are 99.9%.
       @note: To be ultrametric, the branch length from root to tip must be 
                 equal for all tips
       """
       try:
          minBL, maxBL = self.tree.minmax_leaf_distance_from_root()
-         return np.isclose(minBL, maxBL)
+         return np.isclose(minBL, maxBL, rtol=relTol)
       except:
          pass
       return False
