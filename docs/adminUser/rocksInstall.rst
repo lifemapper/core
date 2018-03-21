@@ -8,11 +8,12 @@ Fresh Rocks Install:
 
 Start/restart a virtual cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Make sure that the boot action is "install", then start or restart an existing 
-cluster.  Open the "virt-manager" application in order to interact with
-the installation user-interface:: 
+Make sure that the boot action is "os", configure cdrom to the kernel roll on 
+the host system, then start or restart an existing cluster.  Open the 
+"virt-manager" application in order to interact with the installation 
+user-interface:: 
 
- * rocks set host boot <vm-name> action=install
+ * rocks set host boot <vm-name> action=os
  * (opt) rocks run host <vm-name> "shutdown -h now"
  * rocks start host vm <vm-name>
  * virt-manager
@@ -20,10 +21,7 @@ the installation user-interface::
 Install the rolls:
 ~~~~~~~~~~~~~~~~~~
 
-Make sure to get the SGE roll directly from SDSC download site (default on 
-the installation screen) and the Python roll from notyeti.lifemapper.org
-(with the updated Python roll).  All other rolls should come from the yeti or 
-notyeti sites if they are physically located there (to speed download time).
+All rolls should come from the vm host machine (notyeti) to speed download time.
   
 For all clusters, install the following (Rocks 7.0):
  * area51
@@ -41,16 +39,30 @@ For all clusters, install the following (Rocks 7.0):
 
 (6.2: area51, base, ganglia, hpc, kernel, os, python, sge, webserver)
 
-Other info:
- * Lawrence Geo:  N38.969  W95.245
- * Public Interface: assigned by Greg Smith for MAC address
-   **Note** since we are not using DHCP, any MAC address assigned on creation is fine.
- * Private Interface:  (notyeti VMs: available internal 192.168.xxx.1, where
-   xxx is the last quartet of the public IP address)
- * Gateway:  129.237.201.254 (Dyche 129.237.183.126)
- * DNS:  129.237.133.1
- * NTP server:  time.ku.edu
- * Auto-Partitioning
+Configuration params/screens:
+ * **Date/Time**
+   * NTP server:  time.ku.edu
+ * On **Network and Hostname**:
+   * Fill out FQDN
+   * Fill out only public interface, 
+   * Method = Manual
+   * IPv4 
+     * assigned by Greg Smith for MAC address
+     * Netmask: 255.255.255.0
+     * Gateway:  129.237.201.254 (Dyche 129.237.183.126)
+     * DNS:  129.237.133.1, 129.237.32.1
+     * Search domain: (optional) lifemapper.org
+   * IPv6 - link-local only
+ * On **Cluster Private Network**  
+   * Private Interface:  (notyeti VMs: available internal 192.168.xxx.1, where
+     xxx is the last quartet of the public IP address)
+ * **Cluster Config**
+   * Lawrence Geo:  N38.969  W95.245
+ * **Installation Destination**
+   * Manual partitioning
+   * Standard partitioning, Not LVM
+   * > 10gb for /state/partition1
+
 
 
 Enable www access
@@ -200,24 +212,32 @@ version is:
 
 
 history:
+* Check DNS
  1012  ping www.ucsd.edu
  1013  cat /var/log/messages | grep DHCP
  1014  ping 192.168.131.252
  1015  ssh 192.168.131.252
- 1016  rocks list host interfacde | grep 192.168.131.252
  1017  rocks list host interface | grep 192.168.131.252
+
+* Disable subnet manager opensm for InfiniBand
  1018  tail -n50 /var/log/messages
  1019  systemctl stop opensm
  1020  systemctl disable opensm
+
+* See who (VMs) has accessed notyeti via http
  1021  grep rockscommand /var/log/messages
  1022  cd /var/log/httpd/
  1023  ll
  1024  tail access_log
+ 
+ * Try to start httpd, figure out why failed
  1025  systemctl status httpd
  1026  systemctl stop httpd
  1027  systemctl start httpd
  1028  journalctl -xe
  1029  ll
+ 
+ * grep process table for httpd
  1030  pgrep httpd
  1031  rocks list network
  1032  ip route show
@@ -226,10 +246,14 @@ history:
  1035  cd /etc/httpd/
  1036  ll
  1037  ls /run
+ 
+ * Missing directory, should have been created by systemd
  1038  mkdir /run/httpd
  1039  systemctl start httpd
  1040  systemctl status httpd
  1041  systemctl status named
+
+* insert-ethers will fail if httpd is not running
  1042  insert-ethers
  1043  ~
  1044  systemctl start named
@@ -238,7 +262,8 @@ history:
  1047  insert-ethers
  1048  systemctl start httpd
  1049  insert-ethers
- 1050  clear
+
+* Install Vclusters with bootaction=os and cdrom pointing to kernel roll file on notyeti
  1051  rocks list host boot
  1052  rocks set host boot notyeti-191 action=install
  1053  rocks set host boot notyeti-191 action=os
@@ -250,9 +275,12 @@ history:
  1059  rocks list host vm status=1
  1060  rocks start host vm notyeti-191
  
- 
-  1022  rocks set host vm cdrom notyeti-191 cdrom=None
+* Clear cdrom before next boot
+* make sure to "stop", then "start" vm after install
+ 1022  rocks set host vm cdrom notyeti-191 cdrom=None
  1023  rocks report host vm config notyeti-191 
+ 
+* Check rocksdb 
  1024  systemctl status
  1025  systemctl status foundation-mysql
- 
+  
