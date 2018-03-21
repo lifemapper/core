@@ -34,6 +34,7 @@ import xml.etree.ElementTree as ET
 from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
                                          IDIGBIO, IDIGBIO_QUERY, 
                                          URL_ESCAPES, HTTPStatus, DWCNames)
+from LmCommon.common.lmXml import *
 
 # .............................................................................
 class APIQuery(object):
@@ -202,14 +203,17 @@ class APIQuery(object):
                .format(self.url, retcode, reason, str(e)))
        
       if response.status_code == 200:
-         try:
-            if outputType == 'json':
+         if outputType == 'json':
+            try:
                self.output = response.json()
-            else:
-               self.output = response.content
-         except Exception, e:
-            print('Failed to interpret output of URL {} ({})'
-                  .format(self.url, str(e)))
+            except Exception, e:
+               output = response.content
+               self.output = deserialize(fromstring(output))
+         elif outputType == 'xml':
+            output = response.text
+            self.output = deserialize(fromstring(output))
+         else:
+            print('Unrecognized output type {}'.format(outputType))
       else:
          print('Failed on URL {}, code = {}, reason = {}'
                .format(self.url, response.status_code, response.reason))
@@ -237,10 +241,16 @@ class APIQuery(object):
       if response.ok:
          try:
             if outputType == 'json':
-               self.output = response.json()
+               try:
+                  self.output = response.json()
+               except Exception, e:
+                  output = response.content
+                  self.output = deserialize(fromstring(output))
+#                   self.output = ET.fromstring(output)
             elif outputType == 'xml':
                output = response.text
-               self.output = ET.fromstring(output)
+               self.output = deserialize(fromstring(output))
+#                self.output = ET.fromstring(output)
             else:
                print('Unrecognized output type {}'.format(outputType))
          except Exception, e:
@@ -544,7 +554,7 @@ class GbifAPI(APIQuery):
       """
       @summary: Queries the API and sets 'output' attribute to a ElementTree object 
       """
-      APIQuery.queryByGet(self, outputType='json')
+      APIQuery.queryByGet(self, outputType='xml')
 
 # .............................................................................
 class IdigbioAPI(APIQuery):
