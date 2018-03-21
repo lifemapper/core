@@ -166,42 +166,45 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
       
 
 """
-$PYTHON /opt/lifemapper/LmCompute/tools/single/user_points.py \
-        /share/lm/data/archive/biotaphytest/000/000/006/277/pt_6277.csv \
-        /share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta \
-        /tmp/mf_6418/pt_6277/pt_6277.shp \
-        /tmp/mf_6418/pt_6277/bigpt_6277.shp \
-        500
-
-$PYTHON /opt/lifemapper/LmCompute/tools/single/user_points.py \
-        /share/lm/data/archive/biotaphytest/000/000/006/275/pt_6275.csv  \
-        /share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta \
-        /tmp/mf_6416/pt_6275/pt_6275.shp  \
-        /tmp/mf_6416/pt_6275/bigpt_6275.shp \
-        500
-
-from LmCompute.plugins.single.occurrences.csvOcc import createUserShapefile
-import json
 import os
+from osgeo import ogr, osr
+from types import UnicodeType, StringType
+import StringIO
+import json
+import requests
+from types import (BooleanType, DictionaryType, FloatType, IntType, ListType, 
+                   StringType, TupleType, UnicodeType)
+import urllib
+import xml.etree.ElementTree as ET
+
 from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
-from LmCommon.common.occparse import OccDataParser
 from LmCommon.shapes.createshape import ShapeShifter
-from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.lmconstants import JobStatus, ProcessType, ENCODING
 from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
-from LmCompute.plugins.single.occurrences.csvOcc import parseCsvData
-from osgeo import ogr, osr
-from LmCommon.common.lmconstants import *
-from types import UnicodeType, StringType
-import StringIO
 
-pointsCsvFn = '/share/lm/data/archive/biotaphytest/000/000/006/275/pt_6275.csv'
-metadataFile = '/share/lm/data/archive/biotaphytest/dirtyNAPlants_1m.meta'
-outFile = '/tmp/mf_6416/pt_6275/pt_6275.shp'
-bigFile = '/tmp/mf_6416/pt_6275/bigpt_6275.shp'
+from LmCompute.plugins.single.occurrences.csvOcc import *
+from LmCommon.common.lmconstants import *
+
 maxPoints = 500
-from LmCommon.common.readyfile import readyFilename
+
+url='https://bison.usgs.gov/solr/occurrences/select?q=decimalLongitude%3A%5B-125+TO+-66%5D+AND+decimalLatitude%3A%5B24+TO+50%5D+AND+hierarchy_homonym_string%3A%2A-1006869-%2A+NOT+basisOfRecord%3Aliving+NOT+basisOfRecord%3Afossil' 
+outfile='mf_17/pt_54/pt_54.shp' 
+bigfile='mf_17/pt_54/bigpt_54.shp'
+
+occAPI = BisonAPI.initFromUrl(url)
+occAPI.queryByGet(outputType='json')
+
+xmloutput = ET.fromstring(output)
+
+occList = occAPI.getTSNOccurrences()
+count = len(occList)
+parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, outFile,  
+                    bigFile, count, maxPoints)
+
+# createBisonShapefile(url, outFile, bigFile, maxPoints)
+
 
 # user_points.py
 meta, _, doMatchHeader = OccDataParser.readMetadata(metadataFile)
