@@ -246,7 +246,8 @@ class ChristopherWalken(LMObject):
       # Bison data
       elif datasource == SpeciesDatasource.BISON:
          bisonTsn = self._getBoomOrDefault('BISON_TSN_FILENAME')
-         bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
+         # Note: changed path from species dir to bison archive dir
+         bisonTsnFile = os.path.join(boompath, bisonTsn)
          weaponOfChoice = BisonWoC(self._scribe, userId, archiveName, 
                                    epsg, expDate, bisonTsnFile, 
                                    taxonSourceName=taxonSourceName, 

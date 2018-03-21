@@ -131,11 +131,11 @@ sending the key, or permission will be denied.::
 
     ssh-copy-id -i ~/.ssh/id_rsa.pub root@xxx.xxx.xxx.xxx
 
-Turn off password authentication by editing the values in /etc/ssh/sshd_config::
+Turn off password authentication by editing the values in /etc/ssh/sshd_config.
+Note that "UsePAM no" is not supported by RHLinux::
 
     PasswordAuthentication no
     ChallengeResponseAuthentication no
-    UsePAM no 
     
 Then restart the sshd service::
 
