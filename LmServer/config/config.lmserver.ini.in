@@ -123,6 +123,22 @@ MAX_WORKERS: @MAX_WORKERS@
 WORKER_PATH: @LMSCRATCHDISK@/worker/
 MASTER_WORKER_PATH: @LMSCRATCHDISK@/worker/
 
+CATALOG_SERVER_PORT: 9097
+; Use this to specify options other than the name, PID file, and log outputs
+EXTRA_CS_OPTIONS: -m 100 -O 100M
+
+; Use this to specify extra options for the workers other than catalog server 
+;    and worker path
+EXTRA_WORKER_OPTIONS : 
+
+; Use this to specify extra Makeflow options other than work directory, 
+;    advertise, and catalog server
+EXTRA_MAKEFLOW_OPTIONS : --local-cores=2 -T wq -t 600 -u 600
+
+; Use this option to specify extra worker factory options other than min / max
+;    workers and worker options
+EXTRA_WORKER_FACTORY_OPTIONS : -M lifemapper.\\* -T sge --workers-per-cycle=0
+
 ; .............................................................................
 [LmClient - Open Tree of Life]
 OTL_HINT_URL: http://api.opentreeoflife.org/v2/tnrs/autocomplete_name

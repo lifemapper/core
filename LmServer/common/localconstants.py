@@ -82,3 +82,14 @@ try:
 except:
    MASTER_WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
    
+# Catalog server
+CS_PORT = cfg.get(SERVER_MATT_DAEMON_HEADING, 'CATALOG_SERVER_PORT')
+EXTRA_CS_OPTIONS = cfg.get(SERVER_MATT_DAEMON_HEADING, 'EXTRA_CS_OPTIONS')
+
+# Extra options (appended to the default options
+EXTRA_WORKER_OPTIONS = cfg.get(SERVER_MATT_DAEMON_HEADING, 
+                                                      'EXTRA_WORKER_OPTIONS')
+EXTRA_MAKEFLOW_OPTIONS = cfg.get(SERVER_MATT_DAEMON_HEADING, 
+                                                      'EXTRA_MAKEFLOW_OPTIONS')
+EXTRA_WORKER_FACTORY_OPTIONS = cfg.get(SERVER_MATT_DAEMON_HEADING, 
+                                                'EXTRA_WORKER_FACTORY_OPTIONS')
