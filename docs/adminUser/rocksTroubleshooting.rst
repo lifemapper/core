@@ -39,3 +39,8 @@ On Development Appliance
     * rtld(GNU_HASH)
       
 
+Building a roll
+~~~~~~~~~~~~~~~~~~
+* Yum commands to inspect installed libs
+  * look for lib:  "rpm -qa | grep somelib"
+  
