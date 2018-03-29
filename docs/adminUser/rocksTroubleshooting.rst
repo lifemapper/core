@@ -37,5 +37,35 @@ On Development Appliance
     https://centos.pkgs.org/6/repoforge-x86_64/hdf4-4.2.6-1.el6.rf.x86_64.rpm.html:
     * libmfhdf.so.0()(64bit)
     * rtld(GNU_HASH)
-      
+  
+Try Me
+~~~~~~
+* Notyeti throws me off ssh when filling out install screen   
+16:50 
+17:38 throws me off ssh
 
+check services are running, httpd, named, rocks-kvm-vlan, random number generator
+systemctl list-units
+check status of dmesg
+/var/log/secure
+/var/log/messages
+/var/log/fail2ban
+
+directory listing through browser
+time on machine - 
+rocks list host attr | grep Timezone
+
+On Development Appliance
+~~~~~~~~~~~~~~~~~~~~~~~~
+* Interrupt-remapping with bad chipset, workaround with KVM
+
+  * Persist across reboots: https://wiki.debian.org/VGAPassthrough#Unsafe_interrupts_remapping: "If your 
+    hardware doesn't support remapping of interruptions, you have to 
+    enable the unsafe assignments. Create /etc/modprobe.d/kvm_iommu.conf with::
+     options kvm allow_unsafe_assigned_interrupts=1
+  * One-time only? https://gist.github.com/lisovy/1f737b1db2af55a153ea: run::
+     echo 1 > /sys/module/kvm/parameters/allow_unsafe_assigned_interrupts
+  * Redhat bug:  https://bugzilla.redhat.com/show_bug.cgi?id=715555 
+    references both methods
+
+* 
