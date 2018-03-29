@@ -33,11 +33,12 @@ from types import IntType, FloatType,StringType
 
 from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat, 
                                          ProcessType)
-from LmServer.common.localconstants import (APP_PATH, DATA_PATH, DEFAULT_EPSG,
-                                            LM_DISK, MASTER_WORKER_PATH, 
-                                            MAX_WORKERS, PID_PATH, PUBLIC_FQDN,
-                                            SCRATCH_PATH, SHARED_DATA_PATH, 
-                                            WEBSERVICES_ROOT, WORKER_PATH)
+from LmServer.common.localconstants import (APP_PATH, CS_PORT, DATA_PATH, 
+                        DEFAULT_EPSG, EXTRA_CS_OPTIONS, EXTRA_MAKEFLOW_OPTIONS, 
+                        EXTRA_WORKER_FACTORY_OPTIONS, EXTRA_WORKER_OPTIONS, 
+                        LM_DISK, MASTER_WORKER_PATH, MAX_WORKERS, PID_PATH, 
+                        PUBLIC_FQDN, SCRATCH_PATH, SHARED_DATA_PATH, 
+                        WEBSERVICES_ROOT, WORKER_PATH)
 
 WEB_SERVICE_VERSION = 'v2'
 API_PATH = 'api'
@@ -77,23 +78,27 @@ MAKEFLOW_WORKSPACE = os.path.join(SCRATCH_PATH, 'makeflow')
 CS_PID_FILE = os.path.join(PID_PATH, 'catalog_server.pid')
 CS_LOG_FILE = os.path.join(LOG_PATH, 'catalog_server.log')
 CS_HISTORY_FILE = os.path.join(SCRATCH_PATH, 'catalog.history')
-CS_PORT = 9097
-CS_OPTIONS = '-n {} -B {} -p {} -m 100 -o {} -O 100M -H {}'.format( 
-               PUBLIC_FQDN, CS_PID_FILE, CS_PORT, CS_LOG_FILE, CS_HISTORY_FILE)  
+
+CS_OPTIONS = '-n {} -B {} -p {} -o {} -H {} {}'.format(PUBLIC_FQDN, 
+                           CS_PID_FILE, CS_PORT, CS_LOG_FILE, CS_HISTORY_FILE, 
+                           EXTRA_CS_OPTIONS)  
 
 # Worker options
-WORKER_OPTIONS = '-C {}:{} -s {}'.format(PUBLIC_FQDN, CS_PORT, WORKER_PATH)
-
-WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} --workers-per-cycle=0 -E "{}" -S {}'.format(
-   MAX_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_SGE_PATH)
+WORKER_OPTIONS = '-C {}:{} -s {} {}'.format(PUBLIC_FQDN, CS_PORT, WORKER_PATH, 
+                                            EXTRA_WORKER_OPTIONS)
 
 # Makeflow options
-MAKEFLOW_OPTIONS = '--local-cores=2 -T wq -t 600 -u 600 -X {} -a -C {}:{}'.format(
-   MASTER_WORKER_PATH, PUBLIC_FQDN, CS_PORT) 
+MAKEFLOW_OPTIONS = '-X {} -a -C {}:{} {}'.format(MASTER_WORKER_PATH, 
+                                 PUBLIC_FQDN, CS_PORT, EXTRA_MAKEFLOW_OPTIONS) 
+
+# Worker factory options
+WORKER_FACTORY_OPTIONS = '-w {} -W {} -E "{}" -S {} {}'.format(MAX_WORKERS, 
+                                 MAX_WORKERS, WORKER_OPTIONS, SHARED_SGE_PATH, 
+                                 EXTRA_WORKER_FACTORY_OPTIONS)
 
 # Remove old worker directories command
 RM_OLD_WORKER_DIRS_CMD = 'rocks run host compute "rm -rf {}/worker-*"'.format(
-   WORKER_PATH)
+                           WORKER_PATH)
 
 
 DEFAULT_CONFIG = 'config'

@@ -68,4 +68,10 @@ On Development Appliance
   * Redhat bug:  https://bugzilla.redhat.com/show_bug.cgi?id=715555 
     references both methods
 
-* 
+ 
+=======
+Building a roll
+~~~~~~~~~~~~~~~~~~
+* Yum commands to inspect installed libs
+  * look for lib:  "rpm -qa | grep somelib"
+ 

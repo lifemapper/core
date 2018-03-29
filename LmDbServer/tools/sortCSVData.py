@@ -67,7 +67,7 @@ def checkMergedFile(log, mergefname, metafname):
    
    chunk, chunkGroup, chunkName = bigSortedData.pullCurrentChunk()
    try:
-      while not bigSortedData.closed() and len(chunk) > 0:
+      while not bigSortedData.closed and len(chunk) > 0:
          if bigSortedData.groupVal > prevKey: 
             chunkCount += 1
             recCount += len(chunk)
@@ -121,7 +121,7 @@ def sortRecs(array, idx):
 # .............................................................................
 def splitIntoFiles(occparser, datapath, prefix, basename, maxFileSize):
    idx = 0
-   while not occparser.closed():
+   while not occparser.closed:
       chunk = occparser.getSizeChunk(maxFileSize)
       fname = _getOPFilename(datapath, prefix, basename, run=idx)
       newFile = open(fname, 'wb')
