@@ -11,7 +11,9 @@ MAP
   EXTENT -180 -90 180 90
   UNITS dd
   IMAGECOLOR 0 0 0
-  SYMBOLSET "symbols.txt"
+  # TODO: Create an .in file and fill these in from environment
+  SYMBOLSET "/opt/lifemapper/LmWebServer/public_html/maps/symbols.txt"
+  CONFIG "PROJ_LIB" "/opt/lifemapper/share/proj/"
 
   PROJECTION
     "init=epsg:4326"
@@ -56,7 +58,7 @@ MAP
   # Blue Marble Next Generation, Global MODIS derived image, scaled to 8 bit
   LAYER
     NAME "BMNG"
-    DATA "/share/data/image/BMNG.geotiff"
+    DATA "/share/lmserver/data/image/BMNG.geotiff"
     TYPE RASTER 
     DUMP TRUE
     STATUS OFF
@@ -76,7 +78,8 @@ MAP
   # Blue Marble Next Generation, Global MODIS derived image, scaled to 8 bit
   LAYER
     NAME "bmnglowres"
-    DATA "/share/data/image/BMNG.8bit.geotiff"
+    #DATA "/share/data/image/BMNG.8bit.geotiff"
+    DATA "/share/lmserver/data/image/BMNG.geotiff"
     TYPE RASTER 
     DUMP TRUE
     STATUS ON
