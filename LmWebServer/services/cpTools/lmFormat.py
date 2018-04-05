@@ -28,19 +28,22 @@
 """
 import cherrypy
 
-from LmCommon.common.lmconstants import LMFormat, HTTPStatus, JSON_INTERFACE,\
-   SHAPEFILE_INTERFACE, CSV_INTERFACE
+from LmCommon.common.lmconstants import (CSV_INTERFACE, HTTPStatus, 
+                                         JSON_INTERFACE, LMFormat,
+                                         SHAPEFILE_INTERFACE)
 
-from LmWebServer.formatters.fileFormatter import (csvObjectFormatter,
-                                                  gtiffObjectFormatter,
-                                                  shapefileObjectFormatter,
-   file_formatter)
-from LmWebServer.formatters.geoJsonFormatter import geoJsonObjectFormatter
-from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
-from LmWebServer.formatters.kmlFormatter import kmlObjectFormatter
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmconstants import SnippetOperations
 from LmServer.common.snippet import SnippetShooter
+
+from LmWebServer.formatters.fileFormatter import (csvObjectFormatter,
+                                                  file_formatter,
+                                                  gtiffObjectFormatter,
+                                                  shapefileObjectFormatter)
+from LmWebServer.formatters.geoJsonFormatter import geoJsonObjectFormatter
+from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
+from LmWebServer.formatters.kmlFormatter import kmlObjectFormatter
+from LmWebServer.formatters.packageFormatter import gridsetPackageFormatter
 
 # .............................................................................
 def lmFormatter(f):
@@ -94,6 +97,8 @@ def lmFormatter(f):
                return csvObjectFormatter(handler_result)
             elif ah == LMFormat.NEXUS.getMimeType():
                return file_formatter(handler_result.getDLocation())
+            elif ah == LMFormat.ZIP.getMimeType():
+               return gridsetPackageFormatter(handler_result)
          except Exception, e:
             # Ignore and try next accept header
             raise cherrypy.HTTPError(500, 'Failed: {}'.format(str(e)))

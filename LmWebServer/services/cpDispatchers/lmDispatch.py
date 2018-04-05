@@ -37,7 +37,8 @@ from cherrypy._cpdispatch import MethodDispatcher
 from LmCommon.common.lmconstants import (LMFormat, CSV_INTERFACE, 
                                          GEO_JSON_INTERFACE,
                                          GEOTIFF_INTERFACE, JSON_INTERFACE, 
-                                         KML_INTERFACE, SHAPEFILE_INTERFACE)
+                                         KML_INTERFACE, PACKAGE_INTERFACE,
+                                         SHAPEFILE_INTERFACE)
 
 # .............................................................................
 class LmDispatcher(MethodDispatcher):
@@ -61,6 +62,8 @@ class LmDispatcher(MethodDispatcher):
          setAccept = LMFormat.GTIFF.getMimeType()
       elif lastSegment == SHAPEFILE_INTERFACE:
          setAccept = LMFormat.SHAPE.getMimeType()
+      elif lastSegment == PACKAGE_INTERFACE:
+         setAccept = LMFormat.ZIP.getMimeType()
       
       if setAccept is not None:
          cherrypy.request.headers['Accept'] = setAccept

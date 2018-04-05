@@ -267,6 +267,7 @@ GEOTIFF_INTERFACE = 'gtiff'
 JSON_INTERFACE = 'json'
 KML_INTERFACE = 'kml'
 OGC_INTERFACE = 'ogc'
+PACKAGE_INTERFACE = 'package'
 SHAPEFILE_INTERFACE = 'shapefile'
 
 # .............................................................................
