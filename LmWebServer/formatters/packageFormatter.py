@@ -32,7 +32,7 @@ import os
 from StringIO import StringIO
 import zipfile
 
-from LmCommon.common.lmconstants import LMFormat, MatrixType
+from LmCommon.common.lmconstants import LMFormat, MatrixType, JobStatus
 from LmCommon.common.matrix import Matrix
 from LmCommon.common.lmXml import tostring
 
@@ -146,115 +146,116 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
          matrices = gsObj.getMatrices()
          
          for mtx in matrices:
-            mtxObj = Matrix.load(mtx.getDLocation())
-            
-            if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
+            if mtx.status == JobStatus.COMPLETE:
+               mtxObj = Matrix.load(mtx.getDLocation())
                
-               # Write SQUID lookup
-               squidLookupFn = os.path.join(DYN_PACKAGE_DIR, 'squidLookup.json')
-               zipF.writestr(squidLookupFn, 'var squidLookup =\n{}'.format(
-                                             json.dumps(createHeaderLookup(
-                                                   mtxObj.getColumnHeaders(), 
-                                                   squids=True, 
-                                                   scribe=scribe, 
-                                                   userId=userId),
-                                                indent=3)))
-               
-               mtxStr = StringIO()
-               geoJsonify_flo(mtxStr, sg.getDLocation(), matrix=mtxObj, 
-                              mtxJoinAttrib=0, ident=0, 
-                              headerLookupFilename=squidLookupFn, 
-                              transform=mung)
-               mtxStr.seek(0)
-               
-               pamPkgFn = os.path.join(DYN_PACKAGE_DIR, 'pam.js')
-               zipF.writestr(pamPkgFn, "var pam = JSON.parse('{}'".format(
-                                                            mtxStr.getvalue()))
-               # Save memory
-               mtxStr = None
-               
-               csvMtxFn = os.path.join(MATRIX_DIR, 'pam_{}{}'.format(
-                                             mtxObj.getId(), LMFormat.CSV.ext))
-               
-            elif mtx.matrixType == MatrixType.ANC_PAM:
-               
-               # Write node lookup
-               nodeLookupFn = os.path.join(DYN_PACKAGE_DIR, 'nodeLookup.js')
-               zipF.writestr(nodeLookupFn, 'var nodeLookup = \n{}'.format(
-                                             json.dumps(createHeaderLookup(
-                                                   mtxObj.getColumnHeaders()),
-                                                indent=3)))
-
-               mtxStr = StringIO()
-               geoJsonify_flo(mtxStr, sg.getDLocation(), matrix=mtxObj, 
-                              mtxJoinAttrib=0, ident=0, 
-                              headerLookupFilename=nodeLookupFn, 
-                              transform=mung)
-               mtxStr.seek(0)
-               
-               ancPamPkgFn = os.path.join(DYN_PACKAGE_DIR, 'ancPam.js')
-               zipF.writestr(ancPamPkgFn, "var ancPam = JSON.parse('{}'".format(
-                                                            mtxStr.getvalue()))
-               # Save memory
-               mtxStr = None
-               
-               csvMtxFn = os.path.join(MATRIX_DIR, 'ancPam_{}{}'.format(
-                                             mtxObj.getId(), LMFormat.CSV.ext))
-               
-
-            elif mtx.matrixType in [MatrixType.SITES_COV_OBSERVED, 
-                                    MatrixType.SITES_COV_RANDOM, 
-                                    MatrixType.SITES_OBSERVED, 
-                                    MatrixType.SITES_RANDOM]:
-
-               if mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
-                  mtxName = 'sitesCovarianceObserved'
-               elif mtx.matrixType == MatrixType.SITES_COV_RANDOM:
-                  mtxName = 'sitesCovarianceRandom'
-               elif mtx.matrixType == MatrixType.SITES_OBSERVED:
-                  mtxName = 'sitesObserved'
+               if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
+                  
+                  # Write SQUID lookup
+                  squidLookupFn = os.path.join(DYN_PACKAGE_DIR, 'squidLookup.json')
+                  zipF.writestr(squidLookupFn, 'var squidLookup =\n{}'.format(
+                                                json.dumps(createHeaderLookup(
+                                                      mtxObj.getColumnHeaders(), 
+                                                      squids=True, 
+                                                      scribe=scribe, 
+                                                      userId=userId),
+                                                   indent=3)))
+                  
+                  mtxStr = StringIO()
+                  geoJsonify_flo(mtxStr, sg.getDLocation(), matrix=mtxObj, 
+                                 mtxJoinAttrib=0, ident=0, 
+                                 headerLookupFilename=squidLookupFn, 
+                                 transform=mung)
+                  mtxStr.seek(0)
+                  
+                  pamPkgFn = os.path.join(DYN_PACKAGE_DIR, 'pam.js')
+                  zipF.writestr(pamPkgFn, "var pam = JSON.parse('{}'".format(
+                                                               mtxStr.getvalue()))
+                  # Save memory
+                  mtxStr = None
+                  
+                  csvMtxFn = os.path.join(MATRIX_DIR, 'pam_{}{}'.format(
+                                                mtxObj.getId(), LMFormat.CSV.ext))
+                  
+               elif mtx.matrixType == MatrixType.ANC_PAM:
+                  
+                  # Write node lookup
+                  nodeLookupFn = os.path.join(DYN_PACKAGE_DIR, 'nodeLookup.js')
+                  zipF.writestr(nodeLookupFn, 'var nodeLookup = \n{}'.format(
+                                                json.dumps(createHeaderLookup(
+                                                      mtxObj.getColumnHeaders()),
+                                                   indent=3)))
+   
+                  mtxStr = StringIO()
+                  geoJsonify_flo(mtxStr, sg.getDLocation(), matrix=mtxObj, 
+                                 mtxJoinAttrib=0, ident=0, 
+                                 headerLookupFilename=nodeLookupFn, 
+                                 transform=mung)
+                  mtxStr.seek(0)
+                  
+                  ancPamPkgFn = os.path.join(DYN_PACKAGE_DIR, 'ancPam.js')
+                  zipF.writestr(ancPamPkgFn, "var ancPam = JSON.parse('{}'".format(
+                                                               mtxStr.getvalue()))
+                  # Save memory
+                  mtxStr = None
+                  
+                  csvMtxFn = os.path.join(MATRIX_DIR, 'ancPam_{}{}'.format(
+                                                mtxObj.getId(), LMFormat.CSV.ext))
+                  
+   
+               elif mtx.matrixType in [MatrixType.SITES_COV_OBSERVED, 
+                                       MatrixType.SITES_COV_RANDOM, 
+                                       MatrixType.SITES_OBSERVED, 
+                                       MatrixType.SITES_RANDOM]:
+   
+                  if mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
+                     mtxName = 'sitesCovarianceObserved'
+                  elif mtx.matrixType == MatrixType.SITES_COV_RANDOM:
+                     mtxName = 'sitesCovarianceRandom'
+                  elif mtx.matrixType == MatrixType.SITES_OBSERVED:
+                     mtxName = 'sitesObserved'
+                  else:
+                     mtxName = 'sitesRandom'        
+   
+                  mtxStr = StringIO()
+                  # TODO: Determine if we need to mung this data
+                  geoJsonify_flo(mtxStr, sg.getDLocation(), matrix=mtxObj, 
+                                 mtxJoinAttrib=0, ident=0)
+                  mtxStr.seek(0)
+                  
+                  mtxPkgFn = os.path.join(DYN_PACKAGE_DIR, '{}.js'.format(
+                                                                        mtxName))
+                  zipF.writestr(mtxPkgFn, "var {} = JSON.parse('{}'".format(
+                                                      mtxName, mtxStr.getvalue()))
+                  # Save memory
+                  mtxStr = None
+                  
+                  csvMtxFn = os.path.join(MATRIX_DIR, '{}_{}{}'.format(mtxName,
+                                                mtxObj.getId(), LMFormat.CSV.ext))
+                  
+                  
+               elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
+                  csvMtxStr = StringIO()
+                  mtxObj.writeCSV(csvMtxStr)
+                  csvMtxStr.seek(0)
+                  mcpaPkgFn = os.path.join(DYN_PACKAGE_DIR, 'mcpaMatrix.js')
+                  zipF.writestr(mcpaPkgFn, 'var mcpaMatrix = "{}"'.format(
+                                                            csvMtxStr.getvalue()))
+                  
+                  csvMtxFn = os.path.join(MATRIX_DIR, 'mcpa_{}{}'.format(
+                                                mtxObj.getId(), LMFormat.CSV.ext))
+                  
                else:
-                  mtxName = 'sitesRandom'        
-
-               mtxStr = StringIO()
-               # TODO: Determine if we need to mung this data
-               geoJsonify_flo(mtxStr, sg.getDLocation(), matrix=mtxObj, 
-                              mtxJoinAttrib=0, ident=0)
-               mtxStr.seek(0)
-               
-               mtxPkgFn = os.path.join(DYN_PACKAGE_DIR, '{}.js'.format(
-                                                                     mtxName))
-               zipF.writestr(mtxPkgFn, "var {} = JSON.parse('{}'".format(
-                                                   mtxName, mtxStr.getvalue()))
-               # Save memory
-               mtxStr = None
-               
-               csvMtxFn = os.path.join(MATRIX_DIR, '{}_{}{}'.format(mtxName,
-                                             mtxObj.getId(), LMFormat.CSV.ext))
-               
-               
-            elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
-               csvMtxStr = StringIO()
-               mtxObj.writeCSV(csvMtxStr)
-               csvMtxStr.seek(0)
-               mcpaPkgFn = os.path.join(DYN_PACKAGE_DIR, 'mcpaMatrix.js')
-               zipF.writestr(mcpaPkgFn, 'var mcpaMatrix = "{}"'.format(
-                                                         csvMtxStr.getvalue()))
-               
-               csvMtxFn = os.path.join(MATRIX_DIR, 'mcpa_{}{}'.format(
-                                             mtxObj.getId(), LMFormat.CSV.ext))
-               
-            else:
-               csvMtxFn = os.path.join(MATRIX_DIR, os.path.splitext(
-                     os.path.basename(mtx.getDLocation()))[0], 
-                                     LMFormat.CSV.ext)
-
-            # Write the Matrix CSV file if desired
-            if includeCSV:
-               csvMtxStr = StringIO()
-               mtxObj.writeCSV(csvMtxStr)
-               csvMtxStr.seek(0)
-               zipF.writestr(csvMtxFn, csvMtxStr.getvalue())
+                  csvMtxFn = os.path.join(MATRIX_DIR, os.path.splitext(
+                        os.path.basename(mtx.getDLocation()))[0], 
+                                        LMFormat.CSV.ext)
+   
+               # Write the Matrix CSV file if desired
+               if includeCSV:
+                  csvMtxStr = StringIO()
+                  mtxObj.writeCSV(csvMtxStr)
+                  csvMtxStr.seek(0)
+                  zipF.writestr(csvMtxFn, csvMtxStr.getvalue())
          
          # TODO: Write SDMs
       contentFLO.seek(0)
