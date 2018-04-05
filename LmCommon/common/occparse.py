@@ -163,8 +163,11 @@ class OccDataParser(object):
             f.write(datafile.encode(ENCODING))
             f.seek(0)
             csvreader = csv.reader(f, delimiter=delimiter)
+         except IOError, e:
+            raise 
          except Exception, e:
-            raise Exception('Failed to read or open {}'.format(datafile))
+            raise Exception('Failed to read or open {}, ({})'
+                            .format(datafile, str(e)))
       return csvreader, f
 
    # .............................................................................
@@ -294,6 +297,9 @@ class OccDataParser(object):
       metadataFname = None
       try:
          f = open(metadata, 'r')
+      except IOError, e:
+         print( 'Failed to open {} err: {}'.format(metadata, str(e)))
+         raise
       except Exception, e:
          fieldmeta = metadata  
       else:
