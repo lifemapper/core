@@ -34,10 +34,12 @@ import os
 import random
 
 from LmCommon.common.lmconstants import (LMFormat, SERVER_BOOM_HEADING, 
-                                         SERVER_SDM_MASK_HEADING_PREFIX)
+                                         SERVER_SDM_MASK_HEADING_PREFIX,
+   HTTPStatus)
 #from LmDbServer.boom.boominput import ArchiveFiller
 from LmDbServer.boom.initboom import initBoom
 from LmServer.common.lmconstants import TEMP_PATH, Priority
+from LmServer.base.lmobj import LmHTTPError
 
 # .............................................................................
 class BoomPoster(object):
@@ -365,19 +367,23 @@ class BoomPoster(object):
 
       # Masks
       HULL_REGION_KEY = 'hull_region_intersect_mask'
-      if sdmJson.has_key(HULL_REGION_KEY):
-         bufferVal = sdmJson[HULL_REGION_KEY]['buffer']
-         region = sdmJson[HULL_REGION_KEY]['region']
-         
-         self.config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
-         self.config.set(SERVER_SDM_MASK_HEADING_PREFIX, 'CODE', 
-                         'hull_region_intersect')
-         self.config.set(SERVER_SDM_MASK_HEADING_PREFIX, 'BUFFER', bufferVal)
-         self.config.set(SERVER_SDM_MASK_HEADING_PREFIX, 'REGION', region)
-         # Set the model and scenario mask options
-         #TODO: Take this out later
-         self.config.set(SERVER_BOOM_HEADING, 'MODEL_MASK_NAME', region)
-         self.config.set(SERVER_BOOM_HEADING, 'PROJECTION_MASK_NAME', region)
+      if sdmJson.has_key(HULL_REGION_KEY) and sdmJson[HULL_REGION_KEY] is not None:
+         try:
+            bufferVal = sdmJson[HULL_REGION_KEY]['buffer']
+            region = sdmJson[HULL_REGION_KEY]['region']
+            
+            self.config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
+            self.config.set(SERVER_SDM_MASK_HEADING_PREFIX, 'CODE', 
+                            'hull_region_intersect')
+            self.config.set(SERVER_SDM_MASK_HEADING_PREFIX, 'BUFFER', bufferVal)
+            self.config.set(SERVER_SDM_MASK_HEADING_PREFIX, 'REGION', region)
+            # Set the model and scenario mask options
+            #TODO: Take this out later
+            self.config.set(SERVER_BOOM_HEADING, 'MODEL_MASK_NAME', region)
+            self.config.set(SERVER_BOOM_HEADING, 'PROJECTION_MASK_NAME', region)
+         except KeyError, ke:
+            raise LmHTTPError(HTTPStatus.BAD_REQUEST, 
+                              'Missing key: {}'.format(str(ke)))
    
    # ................................
    def _process_tree(self, treeJson):
