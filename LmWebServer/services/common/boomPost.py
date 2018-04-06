@@ -28,6 +28,7 @@
 @todo: Constants instead of strings
 @todo: Testing
 """
+import cherrypy
 from ConfigParser import ConfigParser
 import json
 import os
@@ -39,7 +40,6 @@ from LmCommon.common.lmconstants import (LMFormat, SERVER_BOOM_HEADING,
 #from LmDbServer.boom.boominput import ArchiveFiller
 from LmDbServer.boom.initboom import initBoom
 from LmServer.common.lmconstants import TEMP_PATH, Priority
-from LmServer.base.lmobj import LmHTTPError
 
 # .............................................................................
 class BoomPoster(object):
@@ -382,8 +382,8 @@ class BoomPoster(object):
             self.config.set(SERVER_BOOM_HEADING, 'MODEL_MASK_NAME', region)
             self.config.set(SERVER_BOOM_HEADING, 'PROJECTION_MASK_NAME', region)
          except KeyError, ke:
-            raise LmHTTPError(HTTPStatus.BAD_REQUEST, 
-                              'Missing key: {}'.format(str(ke)))
+            raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 
+                                     'Missing key: {}'.format(str(ke)))
    
    # ................................
    def _process_tree(self, treeJson):

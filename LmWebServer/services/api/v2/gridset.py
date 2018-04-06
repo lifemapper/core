@@ -26,10 +26,13 @@
           02110-1301, USA.
 """
 import cherrypy
+import dendropy
 import json
 from mx.DateTime import gmt
 
+from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_TREE_SCHEMA
 from LmServer.base.atom import Atom
+from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.api.v2.matrix import MatrixService
@@ -39,6 +42,104 @@ from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
 @cherrypy.expose
+@cherrypy.popargs('pathTreeId')
+class GridsetTreeService(LmService):
+   """
+   @summary: This class is for the service representing a grid set tree.  The 
+                dispatcher is responsible for calling the correct method.
+   """
+   # ................................
+   def DELETE(self, pathTreeId):
+      """
+      @summary: Attempts to delete a tree
+      @param pathTreeId: The id of the tree to delete
+      """
+      tree = self.scribe.getTree(treeId=pathTreeId)
+
+      if tree is None:
+         raise cherrypy.HTTPError(404, "Tree {} not found".format(pathTreeId))
+      
+      # If allowed to, delete
+      if checkUserPermission(self.getUserId(), tree, HTTPMethod.DELETE):
+         success = self.scribe.deleteObject(tree)
+         if success:
+            cherrypy.response.status = 204
+            return 
+         else:
+            # TODO: How can this happen?  Make sure we catch those cases and 
+            #          respond appropriately.  We don't want 500 errors
+            raise cherrypy.HTTPError(500, 
+                        "Failed to delete tree")
+      else:
+         raise cherrypy.HTTPError(403, 
+                 "User does not have permission to delete this tree")
+
+   # ................................
+   @lmFormatter
+   def GET(self, pathGridSetId, pathTreeId=None):
+      """
+      @summary: At this time, there is no listing service for gridset trees.
+                   For now, we won't even take a tree id parameter and instead
+                   will just return the gridset's tree object
+      """
+      gs = self._getGridSet(pathGridSetId)
+      return gs.tree
+      
+   # ................................
+   @lmFormatter
+   def POST(self, pathGridSetId, pathTreeId=None, name=None, treeSchema=DEFAULT_TREE_SCHEMA):
+      """
+      @summary: Posts a new tree and adds it to the gridset
+      """
+      if pathTreeId is not None:
+         tree = self.scribe.getTree(treeId=pathTreeId)
+         if tree is None:
+            raise cherrypy.HTTPError(404, 
+                           'Tree {} was not found'.format(pathTreeId))
+         if checkUserPermission(self.getUserId(), tree, HTTPMethod.GET):
+            pass
+         else:
+            # Raise exception if user does not have permission
+            raise cherrypy.HTTPError(403, 
+                 'User {} does not have permission to access tree {}'.format(
+                        self.getUserId(), pathTreeId))
+      else:
+         if name is None:
+            raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 
+                                                'Must provide name for tree')
+         tree = dendropy.Tree.get(file=cherrypy.request.body, schema=treeSchema)
+         newTree = Tree(name, userId=self.getUserId())
+         updatedTree = self.scribe.findOrInsertTree(newTree)
+         updatedTree.setTree(tree)
+         updatedTree.writeTree()
+         updatedTree.modTime = gmt().mjd
+         self.scribe.updateObject(updatedTree)
+         
+      gridset = self._getGridSet(pathGridSetId)
+      gridset.addTree(tree)
+      gridset.updateModtime(gmt().mjd)
+      self.scribe.updateObject(gridset)
+      
+      return updatedTree
+
+   # ................................
+   def _getGridSet(self, pathGridSetId):
+      """
+      @summary: Attempt to get a GridSet
+      """
+      gs = self.scribe.getGridset(gridsetId=pathGridSetId, fillMatrices=True)
+      if gs is None:
+         raise cherrypy.HTTPError(404, 
+                        'GridSet {} was not found'.format(pathGridSetId))
+      if checkUserPermission(self.getUserId(), gs, HTTPMethod.GET):
+         return gs
+      else:
+         raise cherrypy.HTTPError(403, 
+              'User {} does not have permission to access GridSet {}'.format(
+                     self.getUserId(), pathGridSetId))
+   
+# .............................................................................
+@cherrypy.expose
 @cherrypy.popargs('pathGridSetId')
 class GridSetService(LmService):
    """
@@ -46,6 +147,7 @@ class GridSetService(LmService):
                 responsible for calling the correct method.
    """
    matrix = MatrixService()
+   tree = GridsetTreeService()
    
    # ................................
    def DELETE(self, pathGridSetId):
