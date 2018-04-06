@@ -68,6 +68,16 @@ On Development Appliance
   * Redhat bug:  https://bugzilla.redhat.com/show_bug.cgi?id=715555 
     references both methods
 
+
+Virtual cluster
+~~~~~~~~~~~~~~~
+* Error, missing boot files for vms::
+  Mar 31 16:40:02 notyeti.lifemapper.org libvirtd[5594]: 2018-03-31 21:40:02.506+0000: 5601: error : virSecurityDACSetOwnership:632 : unable to stat: /boot/kickstart/default/initrd.img-7.0-x86_64: No such file or directory
+
+* Copied files from PXE boot location to other boot location::
+   cp -p /tftpboot/pxelinux/vmlinuz-7.0-x86_64 /boot/kickstart/default/
+   cp -p /tftpboot/pxelinux/initrd.img-7.0-x86_64 /boot/kickstart/default/
+
  
 =======
 Building a roll

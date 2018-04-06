@@ -190,7 +190,7 @@ def _popChunkAndWrite(csvwriter, occPrsr):
 
 # ...............................................
 def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename, 
-                     metafname, maxFileSize=None):
+                     metafname, inIdx=0, maxFileSize=None):
    """
    @summary: Merge multiple files of csv records sorted on keyCol, with the 
              same keyCol values in one or more files, into a single file, 
@@ -205,11 +205,9 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
                        this results in multiple, numbered, sorted output files,  
                        with no keys in more than one file
    """
-   # Indexes begin with 0
-   inIdx = 0
-   outIdx = None
-   if maxFileSize is not None:
-      outIdx = 0
+#    outIdx = None
+#    if maxFileSize is not None:
+#       outIdx = 0
    # Open output sorted file
    mergeFile = open(mergefname, 'wb')
    csvwriter = csv.writer(mergeFile, delimiter=OUT_DELIMITER)
@@ -217,21 +215,30 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
    # Open all input split files
    sortedFiles = []
    srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
-   while os.path.exists(srtFname):
-      op = OccDataParser(log, srtFname, metafname, delimiter=OUT_DELIMITER, 
-                         pullChunks=True)
-      op.initializeMe()
-      sortedFiles.append(op)
-      inIdx += 1
-      srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
+   currIdx = inIdx
+   enoughAlready = False
+   while not enoughAlready and os.path.exists(srtFname):
+      try:
+         op = OccDataParser(log, srtFname, metafname, delimiter=OUT_DELIMITER, 
+                            pullChunks=True)
+         op.initializeMe()
+      except IOError, e:
+         log.warning('Enough already, IOError! Final file {}. Using only indices {} - {}, err {}'
+                     .format(srtFname, inIdx, currIdx, str(e)))
+         enoughAlready = True
+      except Exception, e:
+         log.warning('Enough already, Unknown error! Final file {}. Using only indices {} - {}, err {}'
+                     .format(srtFname, inIdx, currIdx, str(e)))
+         enoughAlready = True
+      else:
+         sortedFiles.append(op)
+         currIdx += 1
+         srtFname = _getOPFilename(datapath, inputPrefix, basename, run=currIdx)
       
    try:
       # Skip header (no longer written to files)
       # find file with record containing smallest key
       smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
-#       # Debug 2 badly sorted keys
-#       if smallKey in (5666, 9117):
-#          pass
       while pos is not None:
          # Output records in this file with smallKey 
          _popChunkAndWrite(csvwriter, sortedFiles[pos])
@@ -331,8 +338,9 @@ from LmCommon.common.occparse import OccDataParser
 from LmServer.common.log import ScriptLogger
 
 from LmDbServer.tools.sortCSVData import *
+from LmDbServer.tools.sortCSVData import _getOPFilename, _popChunkAndWrite
 
-cmd = 'split'
+cmd = 'merge'
 
 OUT_DELIMITER = '\t'
 unsortedPrefix = 'chunk'
@@ -340,6 +348,7 @@ sortedPrefix = 'smsort'
 mergedPrefix = 'sorted'
 
 datafname = '/state/partition1/lmscratch/temp/taiwan_occ.csv'
+datafname = '/tank/zdata/occ/gbif/aimee_export-2018-03-08.txt'
 inDelimiter = '\t'
 basepath, ext = os.path.splitext(datafname)
 pth, basename = os.path.split(basepath)
@@ -348,20 +357,13 @@ metafname = basepath + LMFormat.METADATA.ext
 mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename, 
                                                 LMFormat.CSV.ext))
    
-log = ScriptLogger('sortCSVTest')
+log = ScriptLogger(logname)
 
-occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter, pullChunks=True)
-occparser.initializeMe()
-groupByIdx = occparser.groupByIdx
- 
-splitIntoFiles(occparser, pth, unsortedPrefix, basename, 500000)
-occparser.close()
-print 'groupByIdx = ', groupByIdx
 
-sortFiles(groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
-
+sortedPrefix = 'sort2'
+startIdx = 1017
 mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, 
-                 metafname, maxFileSize=None)
+                 metafname, inIdx=startIdx, maxFileSize=None)
 
 checkMergedFile(log, mergefname, metafname)
 

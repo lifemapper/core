@@ -317,6 +317,7 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmDbServer.boom.boomer import *
+from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, 
           SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX,
@@ -346,6 +347,7 @@ logger = ScriptLogger(scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
 configFname='/share/lm/data/archive/biotaphy/biotaphy_heuchera_CONUS.ini'
 configFname = '/share/lm/data/archive/biona/biotaphy_global_plants.ini'
+configFname = '/share/lm/data/archive/kubi/BOOM_Archive.ini'
 
 boomer = Boomer(configFname, log=logger)
 boomer.initializeMe()                      
@@ -369,14 +371,43 @@ minPoints = chris._getBoomOrDefault('POINT_COUNT_MIN')
 algorithms = chris._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
 
 
-bubbleFname = woc._getNextFilename()
-binomial, opentreeId, recordCount = woc._parseBubble(bubbleFname)
-sciName = woc._getInsertSciNameForTinyBubble(binomial, opentreeId, 
-                                                 recordCount)
-occ = woc._createOrResetOccurrenceset(sciName, recordCount,
-                                    taxonSourceKey=opentreeId, data=bubbleFname)
+# bubbleFname = woc._getNextFilename()
+# binomial, opentreeId, recordCount = woc._parseBubble(bubbleFname)
+# sciName = woc._getInsertSciNameForTinyBubble(binomial, opentreeId, 
+#                                                  recordCount)
+                                                 
+                                                 
+# occ = woc._createOrResetOccurrenceset(sciName, recordCount,
+#                                     taxonSourceKey=opentreeId, data=bubbleFname)
 
-# squid, spudRules = boomer.christopher.startWalken()
+speciesKey, dataChunk = woc._getOccurrenceChunk()
+
+(taxonKey, taxonCount) = (speciesKey, len(dataChunk))
+(rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
+             nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
+             familyStr, genusStr, speciesStr, genusKey, speciesKey, 
+             loglines) = GbifAPI.getTaxonomy(taxonKey)
+             
+sciName = woc._scribe.findOrInsertTaxon(taxonSourceId=woc._taxonSourceId, 
+                                         taxonKey=taxonKey)
+
+
+sciName = woc._getInsertSciNameForGBIFSpeciesKey(speciesKey, 
+                                                  len(dataChunk))
+occ = woc._createOrResetOccurrenceset(sciName, 
+                                          len(dataChunk), 
+                                          taxonSourceKey=speciesKey, 
+                                          data=dataChunk)
+
+sciName = woc._getInsertSciNameForGBIFSpeciesKey(speciesKey, 
+                                                  len(dataChunk))
+if sciName is not None:
+   occ = woc._createOrResetOccurrenceset(sciName, 
+                                             len(dataChunk), 
+                                             taxonSourceKey=speciesKey, 
+                                             data=dataChunk)
+workdir = chris.potatoBushel.getRelativeDirectory()
+# squid, spudRules = boomer.christopher.startWalken(workdir)
 
 keepWalken = not christopher.complete
 if  spud:

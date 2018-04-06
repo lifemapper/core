@@ -26,10 +26,9 @@
 """
 import json
 import requests
-from types import (BooleanType, DictionaryType, FloatType, IntType, ListType, 
-                   StringType, TupleType, UnicodeType)
+from types import (BooleanType, DictionaryType, TupleType)
 import urllib
-import xml.etree.ElementTree as ET
+# import xml.etree.ElementTree as ET
 
 from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
                                          IDIGBIO, IDIGBIO_QUERY, 
@@ -554,7 +553,7 @@ class GbifAPI(APIQuery):
       """
       @summary: Queries the API and sets 'output' attribute to a ElementTree object 
       """
-      APIQuery.queryByGet(self, outputType='xml')
+      APIQuery.queryByGet(self, outputType='json')
 
 # .............................................................................
 class IdigbioAPI(APIQuery):
@@ -822,9 +821,17 @@ if __name__ == '__main__':
          print
          
 """
-from LmCommon.common.apiquery import *
-import idigbio
+import json
+import requests
+from types import (BooleanType, DictionaryType, TupleType)
+import urllib
+# import xml.etree.ElementTree as ET
 
+from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
+                                         IDIGBIO, IDIGBIO_QUERY, 
+                                         URL_ESCAPES, HTTPStatus, DWCNames)
+from LmCommon.common.lmXml import *
+from LmCommon.common.apiquery import *
 
 keys = {1967: 'Trichotria pocillum', 1034: 'Antiphonus conatus', 
 2350: 'Antheromorpha', 8133: 'Scytonotus piger', 1422: 'Helichus suturalis', 
@@ -847,5 +854,25 @@ for key, name in keys.iteritems():
    countkey = api.count_records(rq={'taxonid':key, 'basisofrecord': 'preservedspecimen'})
    countname = api.count_records(rq={'scientificname':name, 'basisofrecord': 'preservedspecimen'})
    print '{}: lm={}, iTaxonkey={}, iName={}'.format(key, len(olist), countkey, countname) 
+
+
+taxAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key=taxonKey)
+taxAPI.query()
+scinameStr = taxAPI._getOutputVal(taxAPI.output, 'scientificName')
+kingdomStr = taxAPI._getOutputVal(taxAPI.output, 'kingdom')
+phylumStr = taxAPI._getOutputVal(taxAPI.output, 'phylum')
+classStr = taxAPI._getOutputVal(taxAPI.output, 'class')
+orderStr = taxAPI._getOutputVal(taxAPI.output, 'order')
+familyStr = taxAPI._getOutputVal(taxAPI.output, 'family')
+genusStr = taxAPI._getOutputVal(taxAPI.output, 'genus')
+speciesStr = taxAPI._getOutputVal(taxAPI.output, 'species') 
+rankStr = taxAPI._getOutputVal(taxAPI.output, 'rank')
+genusKey = taxAPI._getOutputVal(taxAPI.output, 'genusKey')
+speciesKey = taxAPI._getOutputVal(taxAPI.output, 'speciesKey')
+acceptedKey = taxAPI._getOutputVal(taxAPI.output, 'acceptedKey')
+nubKey = taxAPI._getOutputVal(taxAPI.output, 'nubKey')
+taxStatus = taxAPI._getOutputVal(taxAPI.output, 'taxonomicStatus')
+acceptedStr = taxAPI._getOutputVal(taxAPI.output, 'accepted')
+canonicalStr = taxAPI._getOutputVal(taxAPI.output, 'canonicalName')
 
 """

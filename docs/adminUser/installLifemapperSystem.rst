@@ -80,7 +80,7 @@ run the cleanRoll scripts for each roll.
        bash add-server.sh 2>&1 | tee add-server.out; \
        bash add-compute.sh 2>&1 | tee add-compute.out)
 
-#. **IF** installing compute roll first or alone, manually set the 
+#. **IFF** installing compute roll first or alone, manually set the 
    LM_dbserver and LM_webserver attributes.  If this server will also
    host the web/db server, set the value=true otherwise, value=<ip or FQDN>::
    
