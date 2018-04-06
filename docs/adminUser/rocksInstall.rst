@@ -140,7 +140,16 @@ Note that "UsePAM no" is not supported by RHLinux::
 Then restart the sshd service::
 
     service sshd restart
+    
+To add your ssh key to the ssh-agent on your local machine::
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_rsa
 
+To change eclipse to use ssh login with key::
+    git remote set-url origin ssh://git@github.com/lifemapper/core.git
+    git config user.email "aimee.stewart@ku.edu"
+    git config user.name "zzeppozz"
+    
 Security updates
 ~~~~~~~~~~~~~~~~
 
