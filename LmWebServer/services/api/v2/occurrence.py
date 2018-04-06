@@ -116,7 +116,7 @@ class OccurrenceLayerService(LmService):
       archiveName = '{}_{}'.format(usr.userid, gmt().mjd)
       
       bp = BoomPoster(usr.userid, usr.email, archiveName, projectionData)
-      gridset = bp.initBoom()
+      gridset = bp.init_boom()
 
       # TODO: What do we return?
       cherrypy.response.status = 202
