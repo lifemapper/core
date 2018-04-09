@@ -175,7 +175,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                   mtxStr = None
                   
                   csvMtxFn = os.path.join(MATRIX_DIR, 'pam_{}{}'.format(
-                                                mtxObj.getId(), LMFormat.CSV.ext))
+                                                mtx.getId(), LMFormat.CSV.ext))
                   
                elif mtx.matrixType == MatrixType.ANC_PAM:
                   
@@ -200,7 +200,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                   mtxStr = None
                   
                   csvMtxFn = os.path.join(MATRIX_DIR, 'ancPam_{}{}'.format(
-                                                mtxObj.getId(), LMFormat.CSV.ext))
+                                                mtx.getId(), LMFormat.CSV.ext))
                   
    
                elif mtx.matrixType in [MatrixType.SITES_COV_OBSERVED, 
@@ -231,7 +231,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                   mtxStr = None
                   
                   csvMtxFn = os.path.join(MATRIX_DIR, '{}_{}{}'.format(mtxName,
-                                                mtxObj.getId(), LMFormat.CSV.ext))
+                                                mtx.getId(), LMFormat.CSV.ext))
                   
                   
                elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
@@ -243,7 +243,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                                                             csvMtxStr.getvalue()))
                   
                   csvMtxFn = os.path.join(MATRIX_DIR, 'mcpa_{}{}'.format(
-                                                mtxObj.getId(), LMFormat.CSV.ext))
+                                                mtx.getId(), LMFormat.CSV.ext))
                   
                else:
                   csvMtxFn = os.path.join(MATRIX_DIR, os.path.splitext(
