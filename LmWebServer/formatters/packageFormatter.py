@@ -121,7 +121,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
             for fn in fns:
                # Get relative and absolute paths for packaging
                a_path = os.path.join(f_dir, fn)
-               r_path = a_path.replace(f_dir, '')
+               r_path = a_path.replace(STATIC_PACKAGE_DIR, '')
                zipF.write(a_path, r_path)
          
          # Write gridset objects
