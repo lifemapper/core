@@ -74,7 +74,13 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
    drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
    ds = drv.Open(shpFilename, 0)
    lyr = ds.GetLayer()
+   
+   # Get number of features
+   num_feats = lyr.GetFeatureCount()
+   x = 0
+   
    for feat in lyr:
+      x += 1
       # Get the GeoJSON for the feature
       ft = json.loads(feat.ExportToJson())
       joinAttrib = feat.GetFID()
@@ -92,7 +98,11 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
             ft['properties'] = dict(
                               [(k, transform(castFunc(matrix.data[i,j].item()))
                                                       ) for j, k in colEnum])
-         flo.write('{},\n'.format(json.dumps(ft)))
+         # Need to conditionally write comma
+         if x >= num_feats:
+            flo.write('{}\n'.format(json.dumps(ft)))
+         else:
+            flo.write('{},\n'.format(json.dumps(ft)))
    ds = None
 
 

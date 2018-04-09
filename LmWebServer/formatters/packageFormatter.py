@@ -135,7 +135,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                treeStr = treeIn.read()
                
                zipF.writestr(os.path.join(DYN_PACKAGE_DIR, 'tree.js'),
-                             'var taxonTree = "{}"'.format(treeStr))
+                             'var taxonTree = `{}`;'.format(treeStr))
                
                # TODO: Write tree?
                zipF.writestr(os.path.join(GRIDSET_DIR, 'tree.tre'), treeStr)
@@ -169,7 +169,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                   mtxStr.seek(0)
                   
                   pamPkgFn = os.path.join(DYN_PACKAGE_DIR, 'pam.js')
-                  zipF.writestr(pamPkgFn, "var pam = JSON.parse('{}'".format(
+                  zipF.writestr(pamPkgFn, "var pam = JSON.parse('{}');".format(
                                                                mtxStr.getvalue()))
                   # Save memory
                   mtxStr = None
@@ -194,7 +194,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                   mtxStr.seek(0)
                   
                   ancPamPkgFn = os.path.join(DYN_PACKAGE_DIR, 'ancPam.js')
-                  zipF.writestr(ancPamPkgFn, "var ancPam = JSON.parse('{}'".format(
+                  zipF.writestr(ancPamPkgFn, "var ancPam = JSON.parse(`{});`".format(
                                                                mtxStr.getvalue()))
                   # Save memory
                   mtxStr = None
@@ -225,7 +225,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                   
                   mtxPkgFn = os.path.join(DYN_PACKAGE_DIR, '{}.js'.format(
                                                                         mtxName))
-                  zipF.writestr(mtxPkgFn, "var {} = JSON.parse('{}'".format(
+                  zipF.writestr(mtxPkgFn, "var {} = JSON.parse(`{}`);".format(
                                                       mtxName, mtxStr.getvalue()))
                   # Save memory
                   mtxStr = None
@@ -239,7 +239,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                   mtxObj.writeCSV(csvMtxStr)
                   csvMtxStr.seek(0)
                   mcpaPkgFn = os.path.join(DYN_PACKAGE_DIR, 'mcpaMatrix.js')
-                  zipF.writestr(mcpaPkgFn, 'var mcpaMatrix = "{}"'.format(
+                  zipF.writestr(mcpaPkgFn, 'var mcpaMatrix = `{}`;'.format(
                                                             csvMtxStr.getvalue()))
                   
                   csvMtxFn = os.path.join(MATRIX_DIR, 'mcpa_{}{}'.format(
