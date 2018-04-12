@@ -162,6 +162,14 @@ QUERY_PARAMETERS = {
    'ident2' : {
       'name' : 'ident2'
    },
+   'includecsvs' : {
+      'name' : 'includeCSVs',
+      'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+   },
+   'includesdms' : {
+      'name' : 'includeSDMs',
+      'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+   },
    'isbinary' : {
       'name' : 'isBinary',
       'processIn' : lambda x: bool(int(x)) # Zero is false, one is true

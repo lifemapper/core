@@ -98,7 +98,19 @@ def lmFormatter(f):
             elif ah == LMFormat.NEXUS.getMimeType():
                return file_formatter(handler_result.getDLocation())
             elif ah == LMFormat.ZIP.getMimeType():
-               return gridsetPackageFormatter(handler_result)
+               # TODO: use constants
+               try:
+                  csvs = cherrypy.request.params.get('includeCSVs')
+               except:
+                  csvs = False
+                  
+               try:
+                  sdms = cherrypy.request.params.get('includeSDMs')
+               except:
+                  sdms = False
+               
+               return gridsetPackageFormatter(handler_result, includeCSV=csvs, 
+                                              includeSDM=sdms)
          except Exception, e:
             # Ignore and try next accept header
             raise cherrypy.HTTPError(500, 'Failed: {}'.format(str(e)))

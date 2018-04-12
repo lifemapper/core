@@ -137,7 +137,6 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                zipF.writestr(os.path.join(DYN_PACKAGE_DIR, 'tree.js'),
                              'var taxonTree = `{}`;'.format(treeStr))
                
-               # TODO: Write tree?
                zipF.writestr(os.path.join(GRIDSET_DIR, 'tree.tre'), treeStr)
             treeStr = None
          
@@ -151,6 +150,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                
                if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
                   
+                  # TODO: Only do this for observed data
                   # Write SQUID lookup
                   squidLookupFn = os.path.join(DYN_PACKAGE_DIR, 'squidLookup.json')
                   zipF.writestr(squidLookupFn, 'var squidLookup =\n{}'.format(
@@ -179,6 +179,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                   
                elif mtx.matrixType == MatrixType.ANC_PAM:
                   
+                  # TODO: Only do this for observed data?
                   # Write node lookup
                   nodeLookupFn = os.path.join(DYN_PACKAGE_DIR, 'nodeLookup.js')
                   zipF.writestr(nodeLookupFn, 'var nodeLookup = \n{}'.format(
@@ -208,6 +209,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                                        MatrixType.SITES_OBSERVED, 
                                        MatrixType.SITES_RANDOM]:
    
+                  # TODO: Only do this for observed data?
                   if mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
                      mtxName = 'sitesCovarianceObserved'
                   elif mtx.matrixType == MatrixType.SITES_COV_RANDOM:
@@ -235,6 +237,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                   
                   
                elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
+                  # TODO: Only do this for observed data
                   csvMtxStr = StringIO()
                   mtxObj.writeCSV(csvMtxStr)
                   csvMtxStr.seek(0)

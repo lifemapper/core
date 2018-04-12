@@ -76,7 +76,8 @@ class GridsetTreeService(LmService):
 
    # ................................
    @lmFormatter
-   def GET(self, pathGridSetId, pathTreeId=None):
+   def GET(self, pathGridSetId, pathTreeId=None, includeCSV=None, 
+                                                            includeSDMs=None):
       """
       @summary: At this time, there is no listing service for gridset trees.
                    For now, we won't even take a tree id parameter and instead
