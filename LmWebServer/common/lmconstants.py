@@ -228,6 +228,9 @@ QUERY_PARAMETERS = {
       'name' : 'offset',
       'processIn' : lambda x: max(0, int(x)) # Integer, minimum is zero
    },
+   'pathbiogeoid' : {
+      'name' : 'pathBioGeoId'
+   },
    'pathgridsetid' : {
       'name' : 'pathGridSetId'
    },

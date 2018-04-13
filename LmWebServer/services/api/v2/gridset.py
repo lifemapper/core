@@ -29,10 +29,23 @@ import cherrypy
 import dendropy
 import json
 from mx.DateTime import gmt
+import os
+import zipfile
 
-from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_TREE_SCHEMA
+from LmCommon.common.lmconstants import (DEFAULT_TREE_SCHEMA, HTTPStatus, 
+                                         JobStatus, LMFormat, MatrixType, 
+                                         ProcessType)
+from LmCommon.common.matrix import Matrix
+from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
+
 from LmServer.base.atom import Atom
+from LmServer.base.layer2 import Vector
+from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.common.lmconstants import ARCHIVE_PATH
+from LmServer.legion.lmmatrix import LMMatrix
+from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.tree import Tree
+
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.api.v2.matrix import MatrixService
@@ -40,9 +53,18 @@ from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.common.boomPost import BoomPoster
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
+BG_REF_ID_KEY = 'identifier'
+BG_REF_KEY = 'hypothesis_package_reference'
+BG_REF_TYPE_KEY = 'reference_type'
+EVENT_FIELD_KEY = 'event_field'
+FILE_NAME_KEY = 'file_name'
+HYPOTHESIS_NAME_KEY = 'hypothesis_name'
+KEYWORD_KEY = 'keywords'
+LAYERS_KEY = 'layers'
+
 # .............................................................................
 @cherrypy.expose
-#@cherrypy.popargs('pathTreeId')
+@cherrypy.popargs('pathBioGeoId')
 class GridsetBioGeoService(LmService):
    """
    @summary: This class is for the service representing gridset biogeographic
@@ -78,15 +100,26 @@ class GridsetBioGeoService(LmService):
 
    # ................................
    @lmFormatter
-   def GET(self, pathGridSetId, pathTreeId=None, includeCSV=None, 
-                                                            includeSDMs=None):
+   def GET(self, pathGridSetId, pathBioGeoId=None):
       """
-      @summary: At this time, there is no listing service for gridset trees.
-                   For now, we won't even take a tree id parameter and instead
-                   will just return the gridset's tree object
+      @summary: There is not a true service for limiting the biogeographic
+                   hypothesis matrices in a gridset, but return all when listing
       """
       gs = self._getGridSet(pathGridSetId)
-      return gs.tree
+      
+      bgHyps = gs.getBiogeographicHypotheses()
+      
+      if pathBioGeoId is None:
+         return bgHyps
+      else:
+         for bg in bgHyps:
+            if bg.getId() == pathBioGeoId:
+               return bg
+      
+      # If not found 404...
+      raise cherrypy.HTTPError(404, 
+         'Biogeographic hypothesis matrix {} not found for gridset {}'.format(
+            pathBioGeoId, pathGridSetId))
       
    # ................................
    @lmFormatter
@@ -96,57 +129,150 @@ class GridsetBioGeoService(LmService):
       """
       # Get gridset
       gridset = self._getGridSet(pathGridSetId)
-      # Check permission and existance
-      if gridset is None:
-         raise cherrypy.HTTPError(404, 
-                     'Gridset {} was not found'.format(pathGridSetId))
-      elif not checkUserPermission(self.getUserId(), gridset, HTTPMethod.GET):
-         raise cherrypy.HTTPError(403,
-               'User {} does not have permission to access gridset {}'.format(
-                  self.getUserId(), pathGridSetId))
 
       # Process JSON
       hypothesisJson = json.loads(cherrypy.request.body.read())
 
       # Check reference to get file
-      # TODO: Correct
-      # TODO: Use constant
-      refObj = hypothesisJson['hypotheses_package_reference']
+      refObj = hypothesisJson[BG_REF_KEY]
       
       # If gridset,
-      # TODO: Constant
-      if refObj['type'].lower() == 'gridset':
+      if refObj[BG_REF_TYPE_KEY].lower() == 'gridset':
          #     copy hypotheses from gridset
-         # TODO: Validate int
-         refGsId = int(refObj['identifier'])
+         try:
+            refGsId = int(refObj[BG_REF_ID_KEY])
+         except:
+            # Probably not an integer or something
+            raise cherrypy.HTTPError(400, 
+                     'Cannot get gridset for reference identfier {}'.format(
+                        refObj[BG_REF_ID_KEY]))
          refGridset = self._getGridSet(refGsId)
-         # Check permission / existance
-         if refGridset is None:
-            raise cherrypy.HTTPError(404, 
-                    'Reference gridset {} does was not found'.format(refGsId))
-         elif not checkUserPermission(self.getUserId(), refGridset, HTTPMethod.GET):
-            raise cherrypy.HTTPError(403,
-               'User {} does not have permission to access gridset {}'.format(
-                  self.getUserId(), refGsId))
+
+         # Get hypotheses from other gridset
+         ret = []
+         for bg in refGridset.getBiogeographicHypotheses():
+            newBG = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
+                               processType=ProcessType.ENCODE_HYPOTHESES, 
+                               gcmCode=bg.gcmCode, altpredCode=bg.altpredCode,
+                               dateCode=bg.dateCode, metadata=bg.mtxMetadata,
+                               userId=gridset.getUserId(), gridset=gridset, 
+                               status=JobStatus.INITIALIZE)
+            insertedBG = self.scribe.findOrInsertMatrix(newBG)
+            insertedBG.updateStatus(JobStatus.COMPLETE)
+            self.scribe.updateObject(insertedBG)
+            # Save the original grim data into the new location
+            bgMtx = Matrix.load(bg.getDLocation())
+            with open(insertedBG.getDLocation(), 'w') as outF:
+               bgMtx.save(outF)
+            ret.append(insertedBG)
+      elif refObj[BG_REF_TYPE_KEY].lower() == 'upload':
+         currtime = gmt().mjd
+         # Check for uploaded biogeo package
+         packageName = refObj[BG_REF_ID_KEY]
+         packageFilename = os.path.join(self._get_user_dir(), 
+                                  '{}{}'.format(packageName, LMFormat.ZIP.ext))
+         
+         encoder = BioGeoEncoding(gridset.getShapegrid().getDLocation())
+         
+         if os.path.exists(packageFilename):
+            with open(packageFilename) as inF:
+               with zipfile.ZipFile(inF, allowZip64=True) as zipF:
+                  # Get file names in package
+                  availFiles = zipF.namelist()
+                  
+                  for hypLyr in refObj[LAYERS_KEY]:
+                     hypFilename = hypLyr[FILE_NAME_KEY]
+                     
+                     # Check to see if file is in zip package
+                     if hypFilename in availFiles or \
+                            '{}{}'.format(hypFilename, LMFormat.SHAPE.ext
+                                                               ) in availFiles:
+                        if hypLyr.has_key(HYPOTHESIS_NAME_KEY):
+                           hypName = hypLyr[HYPOTHESIS_NAME_KEY]
+                        else:
+                           hypName = os.path.splitext(os.path.basename(
+                                                                  hypFilename))[0]
+                                                                  
+                        if hypLyr.has_key(EVENT_FIELD_KEY):
+                           eventField = hypLyr[EVENT_FIELD_KEY]
+                        else:
+                           eventField = None
+                           
+                        lyrMeta = {
+                           'name' : hypName,
+                           MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower() : \
+                                                                       eventField,
+                           ServiceObject.META_DESCRIPTION.lower() : \
+                              'Biogeographic hypothesis based on layer {}'.format(
+                                 hypFilename),
+                           ServiceObject.META_KEYWORDS.lower() : [
+                              'biogeographic hypothesis'
+                           ]
+                        }
+                        
+                        if hypLyr.has_key(KEYWORD_KEY):
+                           lyrMeta[ServiceObject.META_KEYWORDS.lower()].extend(
+                                                           hypLyr[KEYWORD_KEY])
+                           
+                        lyr = Vector(hypName, gridset.getUserId(), gridset.epsg, 
+                                     dlocation=None, metadata=lyrMeta, 
+                                     dataFormat=LMFormat.SHAPE.driver,
+                                     valAttribute=eventField, modTime=currtime)
+                        updatedLyr = self.scribe.findOrInsertLayer(lyr)
+                        
+                        # Get dlocation
+                        # Loop through files to write all matching (ext) to out location
+                        baseOut = os.path.splitext(updatedLyr.getDLocation())[0]
+                        
+                        for ext in LMFormat.SHAPE.getExtensions():
+                           zFn = '{}{}'.format(hypFilename, ext)
+                           outFn = '{}{}'.format(baseOut, ext)
+                           if zFn in availFiles:
+                              zipF.extract(zFn, outFn)
+                              
+                        
+                        # Add it to the list of files to be encoded
+                        encoder.addLayers(updatedLyr.getDLocation(), 
+                                          eventField=eventField)
+                     else:
+                        raise cherrypy.HTTPError(400, 
+                                 '{} missing from package'.format(hypFilename))
+                  
+            # Create biogeo matrix
+            # Add the matrix to contain biogeo hypotheses layer intersections
+            meta = {
+               ServiceObject.META_DESCRIPTION.lower(): 
+                'Biogeographic Hypotheses from package {}'.format(packageName),
+               ServiceObject.META_KEYWORDS.lower(): [
+                  'biogeographic hypotheses'
+               ]
+            }
+            
+            tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
+                              processType=ProcessType.ENCODE_HYPOTHESES,
+                              userId=self.usr, gridset=gridset, metadata=meta,
+                              status=JobStatus.INITIALIZE, statusModTime=currtime)
+            bgMtx = self.scribe.findOrInsertMatrix(tmpMtx)
+            
+            # Encode the hypotheses
+            # TODO: May be better to leave this to the gridset computeMe to do
+            #          asynchronously
+            encMtx = encoder.encodeHypotheses()
+            with open(bgMtx.dlocation, 'w') as outF:
+               encMtx.save(outF)
+            
+            # We'll return the newly inserted biogeo matrix
+            ret = bgMtx
          else:
-            # Get hypotheses from other gridset
-            # TODO: Implement
-            pass
-      # TODO: Constant
-      elif refObj['type'].lower() == 'upload':
-      #   Get filenames in the package
-      #   Loop through files in JSON
-      #   Add files to gridset
-      #   Encode now?  Or submit workflow
+            raise cherrypy.HTTPError(404, 
+                  'Biogeography package: {} was not found'.format(packageName))
       else:
-         # TODO: Constant
          raise cherrypy.HTTPError(400, 
-                'Bad request.  Cannot add hypotheses with reference type: {}'.format(
-                          refObj['type']))
+          'Bad request.  Cannot add hypotheses with reference type: {}'.format(
+                 refObj[BG_REF_TYPE_KEY]))
       
-      # TODO: What to return?
-
-
+      # Return resulting matrix or list of matrices
+      return ret
 
    # ................................
    def _getGridSet(self, pathGridSetId):
@@ -163,6 +289,15 @@ class GridsetBioGeoService(LmService):
          raise cherrypy.HTTPError(403, 
               'User {} does not have permission to access GridSet {}'.format(
                      self.getUserId(), pathGridSetId))
+   
+   # ................................
+   def _get_user_dir(self):
+      """
+      @summary: Get the user's workspace directory
+      @todo: Change this to use something at a lower level.  This is using the
+                same path construction as the getBoomPackage script
+      """
+      return os.path.join(ARCHIVE_PATH, self.getUserId(), 'uploads', 'biogeo')
    
 # .............................................................................
 @cherrypy.expose
@@ -271,6 +406,7 @@ class GridSetService(LmService):
    @summary: This class is for the grid set service.  The dispatcher is 
                 responsible for calling the correct method.
    """
+   biogeo = GridsetBioGeoService()
    matrix = MatrixService()
    tree = GridsetTreeService()
    
