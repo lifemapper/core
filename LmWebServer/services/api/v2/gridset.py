@@ -42,6 +42,130 @@ from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
 @cherrypy.expose
+#@cherrypy.popargs('pathTreeId')
+class GridsetBioGeoService(LmService):
+   """
+   @summary: This class is for the service representing gridset biogeographic
+                hypotheses.  The dispatcher is responsible for calling the 
+                correct method.
+   """
+   # TODO: Enable delete.  Probably need an id or delete all
+   # ................................
+   #def DELETE(self, pathGridSetId):
+   #   """
+   #   @summary: Attempts to delete a tree
+   #   @param pathTreeId: The id of the tree to delete
+   #   """
+   #   tree = self.scribe.getTree(treeId=pathTreeId)
+   #
+   #   if tree is None:
+   #      raise cherrypy.HTTPError(404, "Tree {} not found".format(pathTreeId))
+   #   
+   #   # If allowed to, delete
+   #   if checkUserPermission(self.getUserId(), tree, HTTPMethod.DELETE):
+   #      success = self.scribe.deleteObject(tree)
+   #      if success:
+   #         cherrypy.response.status = 204
+   #         return 
+   #      else:
+   #         # TODO: How can this happen?  Make sure we catch those cases and 
+   #         #          respond appropriately.  We don't want 500 errors
+   #         raise cherrypy.HTTPError(500, 
+   #                     "Failed to delete tree")
+   #   else:
+   #      raise cherrypy.HTTPError(403, 
+   #              "User does not have permission to delete this tree")
+
+   # ................................
+   @lmFormatter
+   def GET(self, pathGridSetId, pathTreeId=None, includeCSV=None, 
+                                                            includeSDMs=None):
+      """
+      @summary: At this time, there is no listing service for gridset trees.
+                   For now, we won't even take a tree id parameter and instead
+                   will just return the gridset's tree object
+      """
+      gs = self._getGridSet(pathGridSetId)
+      return gs.tree
+      
+   # ................................
+   @lmFormatter
+   def POST(self, pathGridSetId):
+      """
+      @summary: Adds a set of biogeographic hypotheses to the gridset
+      """
+      # Get gridset
+      gridset = self._getGridSet(pathGridSetId)
+      # Check permission and existance
+      if gridset is None:
+         raise cherrypy.HTTPError(404, 
+                     'Gridset {} was not found'.format(pathGridSetId))
+      elif not checkUserPermission(self.getUserId(), gridset, HTTPMethod.GET):
+         raise cherrypy.HTTPError(403,
+               'User {} does not have permission to access gridset {}'.format(
+                  self.getUserId(), pathGridSetId))
+
+      # Process JSON
+      hypothesisJson = json.loads(cherrypy.request.body.read())
+
+      # Check reference to get file
+      # TODO: Correct
+      # TODO: Use constant
+      refObj = hypothesisJson['hypotheses_package_reference']
+      
+      # If gridset,
+      # TODO: Constant
+      if refObj['type'].lower() == 'gridset':
+         #     copy hypotheses from gridset
+         # TODO: Validate int
+         refGsId = int(refObj['identifier'])
+         refGridset = self._getGridSet(refGsId)
+         # Check permission / existance
+         if refGridset is None:
+            raise cherrypy.HTTPError(404, 
+                    'Reference gridset {} does was not found'.format(refGsId))
+         elif not checkUserPermission(self.getUserId(), refGridset, HTTPMethod.GET):
+            raise cherrypy.HTTPError(403,
+               'User {} does not have permission to access gridset {}'.format(
+                  self.getUserId(), refGsId))
+         else:
+            # Get hypotheses from other gridset
+            # TODO: Implement
+            pass
+      # TODO: Constant
+      elif refObj['type'].lower() == 'upload':
+      #   Get filenames in the package
+      #   Loop through files in JSON
+      #   Add files to gridset
+      #   Encode now?  Or submit workflow
+      else:
+         # TODO: Constant
+         raise cherrypy.HTTPError(400, 
+                'Bad request.  Cannot add hypotheses with reference type: {}'.format(
+                          refObj['type']))
+      
+      # TODO: What to return?
+
+
+
+   # ................................
+   def _getGridSet(self, pathGridSetId):
+      """
+      @summary: Attempt to get a GridSet
+      """
+      gs = self.scribe.getGridset(gridsetId=pathGridSetId, fillMatrices=True)
+      if gs is None:
+         raise cherrypy.HTTPError(404, 
+                        'GridSet {} was not found'.format(pathGridSetId))
+      if checkUserPermission(self.getUserId(), gs, HTTPMethod.GET):
+         return gs
+      else:
+         raise cherrypy.HTTPError(403, 
+              'User {} does not have permission to access GridSet {}'.format(
+                     self.getUserId(), pathGridSetId))
+   
+# .............................................................................
+@cherrypy.expose
 @cherrypy.popargs('pathTreeId')
 class GridsetTreeService(LmService):
    """
