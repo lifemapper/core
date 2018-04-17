@@ -95,6 +95,10 @@ def lmFormatter(f):
                shootSnippets(handler_result, SnippetOperations.DOWNLOADED, 
                              CSV_INTERFACE)
                return csvObjectFormatter(handler_result)
+            elif ah == LMFormat.NEWICK.getMimeType():
+               raise cherrypy.HTTPError(400, 'Newick response not enabled yet')
+               # TODO: Use dendropy to convert nexus to newick
+               return file_formatter(handler_result.getDLocation())
             elif ah == LMFormat.NEXUS.getMimeType():
                return file_formatter(handler_result.getDLocation())
             elif ah == LMFormat.ZIP.getMimeType():

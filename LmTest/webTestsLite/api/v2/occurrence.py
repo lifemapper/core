@@ -30,9 +30,20 @@ import json
 import unittest
 import warnings
 
+from LmCommon.common.lmconstants import (CSV_INTERFACE, EML_INTERFACE,
+                           GEO_JSON_INTERFACE, JSON_INTERFACE, KML_INTERFACE, 
+                           SHAPEFILE_INTERFACE)
+
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.occlayer import OccurrenceLayer
+
+from LmTest.formatTests.csvValidator import validate_csv
+from LmTest.formatTests.emlValidator import validate_eml
+from LmTest.formatTests.geoJsonValidator import validate_geojson
+from LmTest.formatTests.jsonValidator import validate_json
+from LmTest.formatTests.kmlValidator import validate_kml
+from LmTest.formatTests.shapefileValidator import validate_shapefile
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
@@ -190,6 +201,31 @@ class TestWebOccurrenceService(UserTestCase):
          self.assertEqual(occMeta['user'], self._get_session_user(), 
                'User id on occurrence set = {}, session user = {}'.format(
                                     occMeta['user'], self._get_session_user()))
+         
+         # CSV
+         with contextlib.closing(self.cl.get_occurrence_set(occId, 
+                                          responseFormat=CSV_INTERFACE)) as x:
+            self.assertTrue(validate_csv(x))
+         # EML
+         with contextlib.closing(self.cl.get_occurrence_set(occId, 
+                                          responseFormat=EML_INTERFACE)) as x:
+            self.assertTrue(validate_eml(x))
+         # GeoJSON
+         with contextlib.closing(self.cl.get_occurrence_set(occId, 
+                                    responseFormat=GEO_JSON_INTERFACE)) as x:
+            self.assertTrue(validate_geojson(x))
+         # JSON
+         with contextlib.closing(self.cl.get_occurrence_set(occId, 
+                                          responseFormat=JSON_INTERFACE)) as x:
+            self.assertTrue(validate_json(x))
+         # KML
+         with contextlib.closing(self.cl.get_occurrence_set(occId, 
+                                          responseFormat=KML_INTERFACE)) as x:
+            self.assertTrue(validate_kml(x))
+         # Shapefile
+         with contextlib.closing(self.cl.get_occurrence_set(occId, 
+                                    responseFormat=SHAPEFILE_INTERFACE)) as x:
+            self.assertTrue(validate_shapefile(x))
    
    # ............................
    def test_list(self):

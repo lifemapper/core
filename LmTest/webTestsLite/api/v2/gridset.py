@@ -31,9 +31,15 @@ import json
 import unittest
 import warnings
 
+from LmCommon.common.lmconstants import (EML_INTERFACE, JSON_INTERFACE,
+                                         PACKAGE_INTERFACE)
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
+
+from LmTest.formatTests.emlValidator import validate_eml
+from LmTest.formatTests.jsonValidator import validate_json
+from LmTest.formatTests.packageValidator import validate_package
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
@@ -180,15 +186,28 @@ class TestWebGridsetService(UserTestCase):
          self.fail(
             'Cannot get a gridset listing found none')
       else:
-         layerId = ret[0]['id']
+         gsId = ret[0]['id']
          
-         with contextlib.closing(self.cl.get_gridset(layerId)) as x:
+         with contextlib.closing(self.cl.get_gridset(gsId)) as x:
             gsMeta = json.load(x)
             
          self.assertTrue(gsMeta.has_key('name'))
          self.assertEqual(gsMeta['user'], self._get_session_user(), 
                'User id on gridset {} = {}, session user = {}'.format(
                   gsMeta['id'], gsMeta['user'], self._get_session_user()))
+         
+         # EML
+         with contextlib.closing(self.cl.get_gridset(gsId, 
+                                          responseFormat=EML_INTERFACE)) as x:
+            self.assertTrue(validate_eml(x))
+         # JSON
+         with contextlib.closing(self.cl.get_gridset(gsId, 
+                                          responseFormat=JSON_INTERFACE)) as x:
+            self.assertTrue(validate_json(x))
+         # Package
+         with contextlib.closing(self.cl.get_gridset(gsId, 
+                                       responseFormat=PACKAGE_INTERFACE)) as x:
+            self.assertTrue(validate_package(x))
    
    # ............................
    def test_list(self):

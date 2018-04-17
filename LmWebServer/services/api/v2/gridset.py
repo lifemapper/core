@@ -262,7 +262,7 @@ class GridsetBioGeoService(LmService):
                encMtx.save(outF)
             
             # We'll return the newly inserted biogeo matrix
-            ret = bgMtx
+            ret = [bgMtx]
          else:
             raise cherrypy.HTTPError(404, 
                   'Biogeography package: {} was not found'.format(packageName))
@@ -271,7 +271,7 @@ class GridsetBioGeoService(LmService):
           'Bad request.  Cannot add hypotheses with reference type: {}'.format(
                  refObj[BG_REF_TYPE_KEY]))
       
-      # Return resulting matrix or list of matrices
+      # Return resulting list of matrices
       return ret
 
    # ................................
