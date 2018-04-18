@@ -30,9 +30,17 @@ import json
 import unittest
 import warnings
 
+from LmCommon.common.lmconstants import (EML_INTERFACE, GEOTIFF_INTERFACE, 
+                                         JSON_INTERFACE, KML_INTERFACE)
+
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.envlayer import EnvLayer
+
+from LmTest.formatTests.emlValidator import validate_eml
+from LmTest.formatTests.jsonValidator import validate_json
+from LmTest.formatTests.kmlValidator import validate_kml
+from LmTest.formatTests.tiffValidator import validate_tiff
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
@@ -190,6 +198,26 @@ class TestWebEnvLayerService(UserTestCase):
          self.assertEqual(lyrMeta['user'], self._get_session_user(), 
                'User id on layer = {}, session user = {}'.format(
                   lyrMeta['user'], self._get_session_user()))
+
+         # Check formats
+         # JSON
+         with contextlib.closing(self.cl.get_layer(layerId, 
+                                               responseFormat=JSON_INTERFACE)):
+            self.assertTrue(validate_json(x))
+         # EML
+         with contextlib.closing(self.cl.get_layer(layerId, 
+                                                responseFormat=EML_INTERFACE)):
+            self.assertTrue(validate_eml(x))
+            
+         # File
+         # Tiff
+         with contextlib.closing(self.cl.get_layer(layerId, 
+                                         responseFormat=GEOTIFF_INTERFACE)):
+            self.assertTrue(validate_tiff(x))
+         # KML
+         with contextlib.closing(self.cl.get_layer(layerId, 
+                                                responseFormat=KML_INTERFACE)):
+            self.assertTrue(validate_kml(x))
    
    # ............................
    def test_list(self):

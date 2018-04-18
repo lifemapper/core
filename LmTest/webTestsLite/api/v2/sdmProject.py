@@ -30,9 +30,17 @@ import json
 import unittest
 import warnings
 
+from LmCommon.common.lmconstants import (EML_INTERFACE, GEOTIFF_INTERFACE,
+                                         JSON_INTERFACE, KML_INTERFACE)
+
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.sdmproj import SDMProjection
+
+from LmTest.formatTests.emlValidator import validate_eml
+from LmTest.formatTests.jsonValidator import validate_json
+from LmTest.formatTests.kmlValidator import validate_kml
+from LmTest.formatTests.tiffValidator import validate_tiff
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
@@ -182,6 +190,23 @@ class TestWebSdmProjectService(UserTestCase):
          self.assertEqual(prjMeta['user'], self._get_session_user(), 
                'User id on projection = {}, session user = {}'.format(
                   prjMeta['user'], self._get_session_user()))
+         
+         # EML
+         with contextlib.closing(self.cl.get_sdm_projection(prjId, 
+                                           responseFormat=EML_INTERFACE)) as x:
+            self.assertTrue(validate_eml(x))
+         # JSON
+         with contextlib.closing(self.cl.get_sdm_projection(prjId, 
+                                          responseFormat=JSON_INTERFACE)) as x:
+            self.assertTrue(validate_json(x))
+         # KML
+         with contextlib.closing(self.cl.get_sdm_projection(prjId, 
+                                          responseFormat=KML_INTERFACE)) as x:
+            self.assertTrue(validate_kml(x))
+         # Tiff
+         with contextlib.closing(self.cl.get_sdm_projection(prjId, 
+                                       responseFormat=GEOTIFF_INTERFACE)) as x:
+            self.assertTrue(validate_tiff(x))
    
    # ............................
    def test_list(self):

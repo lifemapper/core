@@ -30,9 +30,13 @@ import json
 import unittest
 import warnings
 
+from LmCommon.common.lmconstants import JSON_INTERFACE
+
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.scenario import ScenPackage
+
+from LmTest.formatTests.jsonValidator import validate_json
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
@@ -188,6 +192,10 @@ class TestWebScenarioPackageService(UserTestCase):
          self.assertEqual(scnMeta['user'], self._get_session_user(), 
                'User id on scenario package = {}, session user = {}'.format(
                   scnMeta['user'], self._get_session_user()))
+         
+         with contextlib.closing(self.cl.get_scenario_package(scnPkgId, 
+                                          responseFormat=JSON_INTERFACE)) as x:
+            self.assertTrue(validate_json(x))
    
    # ............................
    def test_list(self):

@@ -262,10 +262,14 @@ class LMFormat:
 
 # Web object interfaces
 CSV_INTERFACE = 'csv'
+EML_INTERFACE = 'eml'
+FILE_INTERFACE = 'file'
 GEO_JSON_INTERFACE = 'geojson'
 GEOTIFF_INTERFACE = 'gtiff'
 JSON_INTERFACE = 'json'
 KML_INTERFACE = 'kml'
+NEXUS_INTERFACE = 'nexus'
+NEWICK_INTERFACE = 'newick'
 OGC_INTERFACE = 'ogc'
 PACKAGE_INTERFACE = 'package'
 SHAPEFILE_INTERFACE = 'shapefile'

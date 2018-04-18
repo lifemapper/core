@@ -31,7 +31,7 @@ import cherrypy
 import os
 import zipfile
 
-from LmCommon.common.lmconstants import HTTPStatus
+from LmCommon.common.lmconstants import HTTPStatus, LMFormat
 from LmCommon.common.readyfile import readyFilename
 from LmServer.common.lmconstants import ARCHIVE_PATH, ENV_DATA_PATH
 from LmWebServer.common.lmconstants import HTTPMethod
@@ -89,7 +89,7 @@ class UserUploadService(LmService):
       @todo: Change this to use something at a lower level.  This is using the
                 same path construction as the getBoomPackage script
       """
-      return os.path.join(ARCHIVE_PATH, self.getUserId())
+      return os.path.join(ARCHIVE_PATH, self.getUserId(), 'uploads')
    
    # ................................
    def _upload_biogeo(self, bioGeoFilename):
@@ -98,18 +98,15 @@ class UserUploadService(LmService):
       @param bioGeoFilename: The name of the biogeographic hypotheses package
       @todo: Sanity checking
       """
-      outDir = os.path.join(self._get_user_dir(), bioGeoFilename)
+      # Determine where to write the file
+      outFilename = os.path.join(self._get_user_dir(), 'biogeo', '{}{}'.format(
+                                             bioGeoFilename, LMFormat.CSV.ext))
       
-      with zipfile.ZipFile(cherrypy.request.body, allowZip64=True) as zipF:
-         for zfname in zipF.namelist():
-            _, ext = os.path.splitext(zfname)
-            outFn = os.path.join(outDir, '{}{}'.format(bioGeoFilename, ext))
-            readyFilename(outFn)
-            if os.path.exists(outFn):
-               raise cherrypy.HTTPError(HTTPStatus.CONFLICT, 
-                                '{}{} exists'.format(bioGeoFilename, ext))
-            else:
-               zipF.extract(zfname, outFn)
+      if not os.path.exists(os.path.dirname(outFilename)):
+         os.makedirs(os.path.dirname(outFilename))
+         
+      with open(outFilename, 'wb') as outF:
+         outF.write(cherrypy.request.body)
       
       return {
          'package_name' : bioGeoFilename,

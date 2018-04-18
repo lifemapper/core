@@ -30,9 +30,19 @@ import json
 import unittest
 import warnings
 
+from LmCommon.common.lmconstants import (EML_INTERFACE, GEO_JSON_INTERFACE,
+                                         JSON_INTERFACE, KML_INTERFACE, 
+                                         SHAPEFILE_INTERFACE)
+ 
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.shapegrid import ShapeGrid
+
+from LmTest.formatTests.emlValidator import validate_eml
+from LmTest.formatTests.geoJsonValidator import validate_geojson
+from LmTest.formatTests.jsonValidator import validate_json
+from LmTest.formatTests.kmlValidator import validate_kml
+from LmTest.formatTests.shapefileValidator import validate_shapefile
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
@@ -184,6 +194,27 @@ class TestWebShapegridService(UserTestCase):
          self.assertEqual(sgMeta['user'], self._get_session_user(), 
                         'User id on shapegrid = {}, session user = {}'.format(
                                     sgMeta['user'], self._get_session_user()))
+         
+         # EML
+         with contextlib.closing(self.cl.get_shapegrid(sgId, 
+                                          responseFormat=EML_INTERFACE)) as x:
+            self.assertTrue(validate_eml(x))
+         # GeoJSON
+         with contextlib.closing(self.cl.get_shapegrid(sgId, 
+                                    responseFormat=GEO_JSON_INTERFACE)) as x:
+            self.assertTrue(validate_geojson(x))
+         # JSON
+         with contextlib.closing(self.cl.get_shapegrid(sgId, 
+                                          responseFormat=JSON_INTERFACE)) as x:
+            self.assertTrue(validate_json(x))
+         # KML?
+         with contextlib.closing(self.cl.get_shapegrid(sgId, 
+                                          responseFormat=KML_INTERFACE)) as x:
+            self.assertTrue(validate_kml(x))
+         # Shapefile
+         with contextlib.closing(self.cl.get_shapegrid(sgId, 
+                                          responseFormat=SHAPEFILE_INTERFACE)) as x:
+            self.assertTrue(validate_shapefile(x))
    
    # ............................
    def test_list(self):

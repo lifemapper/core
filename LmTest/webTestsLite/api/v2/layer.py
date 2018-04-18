@@ -30,9 +30,20 @@ import json
 import unittest
 import warnings
 
+from LmCommon.common.lmconstants import (EML_INTERFACE, GEO_JSON_INTERFACE,
+                                 GEOTIFF_INTERFACE, JSON_INTERFACE,
+                                 KML_INTERFACE, SHAPEFILE_INTERFACE)
+
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
+
+from LmTest.formatTests.emlValidator import validate_eml
+from LmTest.formatTests.geoJsonValidator import validate_geojson
+from LmTest.formatTests.jsonValidator import validate_json
+from LmTest.formatTests.kmlValidator import validate_kml
+from LmTest.formatTests.shapefileValidator import validate_shapefile
+from LmTest.formatTests.tiffValidator import validate_tiff
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
@@ -180,6 +191,39 @@ class TestWebLayerService(UserTestCase):
          self.assertEqual(lyrMeta['user'], self._get_session_user(), 
                'User id on layer = {}, session user = {}'.format(
                   lyrMeta['user'], self._get_session_user()))
+         
+         
+         # Check formats
+         # JSON
+         with contextlib.closing(self.cl.get_layer(layerId, 
+                                               responseFormat=JSON_INTERFACE)):
+            self.assertTrue(validate_json(x))
+         # EML
+         with contextlib.closing(self.cl.get_layer(layerId, 
+                                                responseFormat=EML_INTERFACE)):
+            self.assertTrue(validate_eml(x))
+            
+         # File
+         if lyrMeta.has_key('spatialRaster'):
+            # Tiff
+            with contextlib.closing(self.cl.get_layer(layerId, 
+                                            responseFormat=GEOTIFF_INTERFACE)):
+               self.assertTrue(validate_tiff(x))
+         else:
+            # Shapefile
+            with contextlib.closing(self.cl.get_layer(layerId, 
+                                          responseFormat=SHAPEFILE_INTERFACE)):
+               self.assertTrue(validate_shapefile(x))
+               
+            # GeoJSON
+            with contextlib.closing(self.cl.get_layer(layerId, 
+                                           responseFormat=GEO_JSON_INTERFACE)):
+               self.assertTrue(validate_geojson(x))
+
+         # KML
+         with contextlib.closing(self.cl.get_layer(layerId, 
+                                                responseFormat=KML_INTERFACE)):
+            self.assertTrue(validate_kml(x))
    
    # ............................
    def test_list(self):

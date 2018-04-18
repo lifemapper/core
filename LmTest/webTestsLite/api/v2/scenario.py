@@ -30,11 +30,16 @@ import json
 import unittest
 import warnings
 
+from LmCommon.common.lmconstants import EML_INTERFACE, JSON_INTERFACE
+
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.scenario import Scenario
+
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
+from LmTest.formatTests.emlValidator import validate_eml
+from LmTest.formatTests.jsonValidator import validate_json
 
 # .............................................................................
 class TestScribeScenarioService(UserTestCase):
@@ -190,6 +195,16 @@ class TestWebScenarioService(UserTestCase):
          self.assertEqual(scnMeta['user'], self._get_session_user(), 
                'User id on scenario = {}, session user = {}'.format(
                                     scnMeta['user'], self._get_session_user()))
+         
+         # EML
+         with contextlib.closing(self.cl.get_scenario(scnId, 
+                                          responseFormat=EML_INTERFACE)) as x:
+            self.assertTrue(validate_eml(x))
+
+         # JSON
+         with contextlib.closing(self.cl.get_scenario(scnId,
+                                          responseFormat=JSON_INTERFACE)) as x:
+            self.assertTrue(validate_json(x))
    
    # ............................
    def test_list(self):

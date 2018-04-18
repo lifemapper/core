@@ -30,9 +30,16 @@ import json
 import unittest
 import warnings
 
+from LmCommon.common.lmconstants import (EML_INTERFACE, JSON_INTERFACE, 
+                                         NEWICK_INTERFACE, NEXUS_INTERFACE)
+
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.tree import LmTree
+
+from LmTest.formatTests.emlValidator import validate_eml
+from LmTest.formatTests.jsonValidator import validate_json
+from LmTest.formatTests.treeValidator import validate_newick, validate_nexus
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
@@ -178,6 +185,23 @@ class TestWebTreeService(UserTestCase):
          self.assertEqual(treeMeta['user'], self._get_session_user(), 
                               'User id on tree = {}, session user = {}'.format(
                                  treeMeta['user'], self._get_session_user()))
+      
+         # EML
+         with contextlib.closing(self.cl.get_tree(treeId, 
+                                           responseFormat=EML_INTERFACE)) as x:
+            self.assertTrue(validate_eml(x))
+         # JSON
+         with contextlib.closing(self.cl.get_tree(treeId, 
+                                          responseFormat=JSON_INTERFACE)) as x:
+            self.assertTrue(validate_json(x))
+         # Newick
+         with contextlib.closing(self.cl.get_tree(treeId, 
+                                        responseFormat=NEWICK_INTERFACE)) as x:
+            self.assertTrue(validate_newick(x))
+         # Nexus
+         with contextlib.closing(self.cl.get_tree(treeId, 
+                                         responseFormat=NEXUS_INTERFACE)) as x:
+            self.assertTrue(validate_nexus(x))
    
    # ............................
    def test_list(self):

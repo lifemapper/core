@@ -30,9 +30,20 @@ import json
 import unittest
 import warnings
 
+from LmCommon.common.lmconstants import (CSV_INTERFACE, EML_INTERFACE, 
+                                         GEO_JSON_INTERFACE, JSON_INTERFACE, 
+                                         SHAPEFILE_INTERFACE)
+
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.lmmatrix import Matrix
+
+from LmTest.formatTests.csvValidator import validate_csv
+from LmTest.formatTests.emlValidator import validate_eml
+from LmTest.formatTests.fileValidator import validate_file
+from LmTest.formatTests.geoJsonValidator import validate_geojson
+from LmTest.formatTests.jsonValidator import validate_json
+from LmTest.formatTests.shapefileValidator import validate_shapefile
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
@@ -192,6 +203,27 @@ class TestWebMatrixService(UserTestCase):
          self.assertEqual(mtxMeta['user'], self._get_session_user(), 
                           'User id on matrix = {}, session user = {}'.format(
                              mtxMeta['user'], self._get_session_user()))
+         
+         # CSV
+         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId, 
+                                          responseFormat=CSV_INTERFACE)) as x:
+            self.assertTrue(validate_csv(x))
+         # EML
+         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId, 
+                                          responseFormat=EML_INTERFACE)) as x:
+            self.assertTrue(validate_eml(x))
+         # GeoJSON (sometimes)
+         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId, 
+                                    responseFormat=GEO_JSON_INTERFACE)) as x:
+            self.assertTrue(validate_geojson(x))
+         # JSON
+         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId, 
+                                          responseFormat=JSON_INTERFACE)) as x:
+            self.assertTrue(validate_json(x))
+         # Shapefile?
+         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId, 
+                                    responseFormat=SHAPEFILE_INTERFACE)) as x:
+            self.assertTrue(validate_shapefile(x))
    
    # ............................
    def test_list(self):
