@@ -90,7 +90,7 @@ def _query(collection, qParams=None, fqParams=None,
          if v is not None:
             if isinstance(v, list):
                if len(v) > 1:
-                  qParts.append('{}:({})'.format(k, ' '.join(v)))
+                  qParts.append('{}:({})'.format(k, '+OR+'.join(v)))
                else:
                   qParts.append('{}:{}'.format(k, v[0]))
             else:
