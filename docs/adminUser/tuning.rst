@@ -47,6 +47,9 @@ Number of concurrent Makeflow instances
   
   `number_of_concurrent_makeflows = number_of_cores_on_frontend / 2`
   
+  Add / edit the value of "MAX_MAKEFLOWS" in the [LmServer - Matt Daemon] section of the site config file with
+  this value.
+  
   There exists a threshold where adding additional Makeflow instances is no longer helpful and can, in fact,
   delay results for individual workflows.  Additionally, the number of concurrent Makeflows should not 
   oversubscribe the memory resources available on the machine.  So a more complete equation for the optimum
@@ -83,7 +86,61 @@ Number of concurrent Makeflow instances
         
 ----
 
-max connections
-size of makeflows
+Setting the maximum number of submitted workers
+-----------------------------------------------
+  The maximum number of workers parameter is the maximum number of workers to be submitted to the job scheduler.
+  This number should be larger than the maximum number of workers that will run at any given time as the job
+  scheduler acts as a hopper of sorts and will start a new worker when one stops and it is faster to have a new
+  worker available rather than waiting for a polling cycle to submit a new one through the scheduler.  I 
+  generally set this to be 1.5 times the maximum number of workers that can run.
+  
+  Add / edit the "MAX_WORKERS" parameter in the [LmServer Matt Daemon] subsection of the site config file.
 
-number of workers
+----
+
+Setting the size of the workflows (number of taxa)
+--------------------------------------------------
+  We have not determined an ideal tuning for this parameter.  Too small and the Makeflow instances cycle out too
+  quickly and add overhead.  Too big and the Makeflow instances take too long to initialize and the workers idle
+  too long.  We have set this to default at 100 and that seems to work fairly well for most instances.  This 
+  parameter really only becomes a problem if it is so large that it takes a long time to initialize a workflow.
+  The only time I have seen that was on Stampede where it was set to 60,000 and it took more than 30 minutes to
+  initialize.  I ended up reducing the number to 10,000 and dealt with the overhead of starting the task.  In 
+  the past, we set this to one and there was added overhead with workflows cycling out quickly and workers 
+  waiting to disconnect / give up on the, now finished, workflow and idling.  Perhaps an ideal parameter will
+  emerge with time.
+  
+  As of 2018-04-18, this must be changed by modifying the LmDbServer/boom/boomer.py module and changing SPUD_LIMIT.
+  
+----
+
+Setting the number of connections per user
+------------------------------------------
+  If there are even a modest number of client connections, the default pgbouncer configuration will cause problems
+  and database errors will appear in logs.  This happens because Lifemapper uses the same database user for all
+  web connections and pgbouncer is configured as if there will be multiple users connecting.  To tune, increase
+  the value of "default_pool_size" in /etc/pgbouncer/pgbouncer.ini.  This value should not be the same as
+  "max_client_conn" as there are other Lifemapper processes that connect to the database.  I generally set this to
+  80% of "max_client_conn" and set "reserve_pool_size" to be 10% of "max_client_conn".  If needed, increase these
+  values to match load and server capabilities.  See: https://pgbouncer.github.io/config.html for more information
+
+----
+
+
+Example configurations
+* saxifragales
+* NA data
+* Taiwan data
+* Heuchera
+
+virtual env parameters
+ * nodes
+   * number
+   * memory each
+   * cores each
+   * disk each
+ * front end
+   * memory
+   * cores
+   * disk
+   
