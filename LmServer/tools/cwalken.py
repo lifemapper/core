@@ -385,8 +385,8 @@ class ChristopherWalken(LMObject):
       mdlScenCode = self._getBoomOrDefault('SCENARIO_PACKAGE_MODEL_SCENARIO')
       prjScenCodes = self._getBoomOrDefault('SCENARIO_PACKAGE_PROJECTION_SCENARIOS', 
                                              isList=True)
-      if mdlScenCode not in prjScenCodes:
-         prjScenCodes.append(mdlScenCode)
+#       if mdlScenCode not in prjScenCodes:
+#          prjScenCodes.append(mdlScenCode)
 
       scenPkgs = self._scribe.getScenPackagesForUserCodes(userId, prjScenCodes, 
                                                           fillLayers=True)
@@ -625,8 +625,12 @@ class ChristopherWalken(LMObject):
             # Rollback if obsolete or failed
             reset = self._doReset(mtxcol.status, mtxcol.statusModTime)
             if reset:
+               if prj.status == JobStatus.COMPLETE:
+                  stat = JobStatus.INITIALIZE
+               else:
+                  stat = JobStatus.GENERAL
                self.log.debug('Reset MatrixColumn {}'.format(mtxcol.getId()))
-               mtxcol.updateStatus(JobStatus.GENERAL, modTime=currtime)
+               mtxcol.updateStatus(stat, modTime=currtime)
                success = self._scribe.updateObject(mtxcol)
       return mtxcol, reset
 
@@ -661,8 +665,12 @@ class ChristopherWalken(LMObject):
             # Rollback if obsolete or failed
             reset = self._doReset(prj.status, prj.statusModTime)
             if reset:
+               if occ.status == JobStatus.COMPLETE:
+                  stat = JobStatus.INITIALIZE
+               else:
+                  stat = JobStatus.GENERAL
                self.log.debug('Reset SDMProject {}'.format(prj.getId()))
-               prj.updateStatus(JobStatus.GENERAL, modTime=currtime)
+               prj.updateStatus(stat, modTime=currtime)
                success = self._scribe.updateObject(prj)
       return prj, reset
 

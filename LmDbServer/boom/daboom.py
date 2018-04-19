@@ -175,16 +175,18 @@ SPUD_LIMIT = 100
 configFname = '/share/lm/data/archive/tester/gbif500ktest.ini'
 configFname = '/share/lm/data/archive/biotaphytest/dirty_plants.ini'
 configFname = '/share/lm/data/archive/biona/biotaphy_global_plants.ini'
+configFname = '/share/lm/data/archive/nchc/taiwan.ini'
 
 log = ScriptLogger('debug_dabomb', level=logging.INFO)
 
 boomer = Boomer(configFname, assemblePams=True, log=log)
-boomer._scribe.openConnections()
-boomer.christopher = ChristopherWalken(boomer.configFname,
-                                              scribe=boomer._scribe)
+boomer.initializeMe()
+
 chris = boomer.christopher
 
-spud, potatoInputs = chris.startWalken()
+workdir = boomer.potatoBushel.getRelativeDirectory()
+spud, spudRules = chris.startWalken(workdir)
+
 boomer.keepWalken = not chris.complete
 # TODO: Master process for occurrence only? SDM only? 
 if boomer.assemblePams and spud:

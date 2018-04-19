@@ -567,16 +567,18 @@ class BOOMFiller(LMObject):
                             mapunits=mapunits,
                             modTime=mx.DateTime.gmt().mjd)
       # Current
+      baseMeta = SPMETA.OBSERVED_PREDICTED_META['baseline']
       basescen, staticLayers = self._createBaselineScenario(pkgMeta, elyrMeta, 
                                                       SPMETA.LAYERTYPE_META,
-                                                      SPMETA.OBSERVED_PREDICTED_META,
+                                                      baseMeta,
                                                       SPMETA.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Assembled base scenario {}'.format(basescen.code))
       scenPkg.addScenario(basescen)
       # Predicted Past and Future
+      predMeta = SPMETA.OBSERVED_PREDICTED_META['predicted']
       allScens = self._createPredictedScenarios(pkgMeta, elyrMeta, 
                                            SPMETA.LAYERTYPE_META, staticLayers,
-                                           SPMETA.OBSERVED_PREDICTED_META,
+                                           predMeta,
                                            SPMETA.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
       for scen in allScens.values():
@@ -623,12 +625,12 @@ class BOOMFiller(LMObject):
       self.scribe.log.info('  Bad ID: {} '.format(nonIntCount))
 
    # ...............................................
-   def _getbioName(self, obsOrPred, res, gcm=None, tm=None, altpred=None, 
+   def _getbioName(self, code, res, gcm=None, tm=None, altpred=None, 
                    lyrtype=None, suffix=None, isTitle=False):
       sep = '-'
       if isTitle: 
          sep = ', '
-      name = obsOrPred
+      name = code
       if lyrtype is not None:
          name = sep.join((lyrtype, name))
       for descriptor in (gcm, altpred, tm, res, suffix):
@@ -706,14 +708,16 @@ class BOOMFiller(LMObject):
       layers = []
       staticLayers = {}
       dateCode = baseMeta['times'].keys()[0]
-      resolution = baseMeta['res']
+      res_name = baseMeta['res'][0]
+      res_val = baseMeta['res'][1]
+#       resolution = baseMeta['res']
       region = baseMeta['region']
       for envcode in pkgMeta['layertypes']:
          ltmeta = lyrtypeMeta[envcode]
          envKeywords = [k for k in baseMeta['keywords']]
          relfname, isStatic = self._findFileFor(ltmeta, baseMeta['code'], 
                                            gcm=None, tm=None, altPred=None)
-         lyrname = self._getbioName(baseMeta['code'], resolution, 
+         lyrname = self._getbioName(baseMeta['code'], res_name, 
                                     lyrtype=envcode, suffix=pkgMeta['suffix'])
          lyrmeta = {'title': ' '.join((baseMeta['code'], ltmeta['title'])),
                     'description': ' '.join((baseMeta['code'], ltmeta['description']))}
@@ -730,7 +734,7 @@ class BOOMFiller(LMObject):
                            gdalType=elyrMeta['gdaltype'],
                            valUnits=ltmeta['valunits'],
                            mapunits=elyrMeta['mapunits'], 
-                           resolution=resolution, 
+                           resolution=res_val, 
                            bbox=region, 
                            modTime=currtime, 
                            envCode=envcode, 
@@ -762,32 +766,92 @@ class BOOMFiller(LMObject):
             .format(ltmeta['title'], basecode, gcm, altPred, tm))
       return None, None
          
+#    # ...............................................
+#    def _getPredictedLayers(self, pkgMeta, elyrMeta, lyrtypeMeta, staticLayers,
+#                            observedPredictedMeta, predRpt, tm, gcm=None, altpred=None):
+#       """
+#       @summary Assembles layer metadata for a single layerset
+#       """
+#       currtime = mx.DateTime.gmt().mjd
+#       mdlvals = observedPredictedMeta[predRpt]['models'][gcm]
+#       tmvals = observedPredictedMeta[predRpt]['times'][tm]
+#       layers = []
+#       rstType = None
+#       layertypes = pkgMeta['layertypes']
+#       for envcode in layertypes:
+#          keywords = [k for k in observedPredictedMeta[predRpt]['keywords']]
+#          ltmeta = lyrtypeMeta[envcode]
+#          relfname, isStatic = self._findFileFor(ltmeta, predRpt, 
+#                                            gcm=gcm, tm=tm, altPred=altpred)
+#          if not isStatic:
+#             lyrname = self._getbioName(predRpt, pkgMeta['res'], gcm=gcm, tm=tm, 
+#                                   altpred=altpred, lyrtype=envcode, 
+#                                   suffix=pkgMeta['suffix'], isTitle=False)
+#             lyrtitle = self._getbioName(predRpt, pkgMeta['res'], gcm=gcm, tm=tmvals['name'], 
+#                                    altpred=altpred, lyrtype=envcode, 
+#                                    suffix=pkgMeta['suffix'], isTitle=True)
+#             scentitle = self._getbioName(predRpt, pkgMeta['res'], gcm=mdlvals['name'], 
+#                                     tm=tmvals['name'], altpred=altpred, 
+#                                     suffix=pkgMeta['suffix'], isTitle=True)
+#             lyrdesc = '{} for {}'.format(ltmeta['description'], scentitle)
+#             
+#             lyrmeta = {'title': lyrtitle, 'description': lyrdesc}
+#             envmeta = {'title': ltmeta['title'],
+#                        'description': ltmeta['description'],
+#                        'keywords': keywords.extend(ltmeta['keywords'])}
+#             dloc = os.path.join(ENV_DATA_PATH, relfname)
+#             if not os.path.exists(dloc):
+#                print('Missing local data %s' % dloc)
+#                dloc = None
+#             envlyr = EnvLayer(lyrname, self.usr, elyrMeta['epsg'], 
+#                               dlocation=dloc, 
+#                               lyrMetadata=lyrmeta,
+#                               dataFormat=elyrMeta['gdalformat'], 
+#                               gdalType=rstType,
+#                               valUnits=ltmeta['valunits'],
+#                               mapunits=elyrMeta['mapunits'], 
+#                               resolution=elyrMeta['resolution'], 
+#                               bbox=pkgMeta['bbox'], 
+#                               modTime=currtime,
+#                               envCode=envcode, 
+#                               gcmCode=gcm, altpredCode=altpred, dateCode=tm,
+#                               envMetadata=envmeta, 
+#                               envModTime=currtime)
+#          else:
+#             # Use the observed data
+#             envlyr = staticLayers[envcode]
+#          layers.append(envlyr)
+#       return layers
    # ...............................................
    def _getPredictedLayers(self, pkgMeta, elyrMeta, lyrtypeMeta, staticLayers,
-                           observedPredictedMeta, predRpt, tm, gcm=None, altpred=None):
+                           scenMeta, basecode, tm, gcm=None, altpred=None):
       """
       @summary Assembles layer metadata for a single layerset
       """
       currtime = mx.DateTime.gmt().mjd
-      mdlvals = observedPredictedMeta[predRpt]['models'][gcm]
-      tmvals = observedPredictedMeta[predRpt]['times'][tm]
+      res_name = scenMeta['res'][0]
+      res_val = scenMeta['res'][1]
+      mdlname = tmname = None
+      if gcm is not None:
+         mdlname = scenMeta['models'][gcm]['name']
+         tmname = scenMeta['times'][tm]['name']
       layers = []
       rstType = None
       layertypes = pkgMeta['layertypes']
       for envcode in layertypes:
-         keywords = [k for k in observedPredictedMeta[predRpt]['keywords']]
+         keywords = [k for k in scenMeta['keywords']]
          ltmeta = lyrtypeMeta[envcode]
-         relfname, isStatic = self._findFileFor(ltmeta, predRpt, 
+         relfname, isStatic = self._findFileFor(ltmeta, basecode, 
                                            gcm=gcm, tm=tm, altPred=altpred)
          if not isStatic:
-            lyrname = self._getbioName(predRpt, pkgMeta['res'], gcm=gcm, tm=tm, 
+            lyrname = self._getbioName(basecode, res_name, gcm=gcm, tm=tm, 
                                   altpred=altpred, lyrtype=envcode, 
                                   suffix=pkgMeta['suffix'], isTitle=False)
-            lyrtitle = self._getbioName(predRpt, pkgMeta['res'], gcm=gcm, tm=tmvals['name'], 
+            lyrtitle = self._getbioName(basecode, res_name, gcm=gcm, tm=tmname, 
                                    altpred=altpred, lyrtype=envcode, 
                                    suffix=pkgMeta['suffix'], isTitle=True)
-            scentitle = self._getbioName(predRpt, pkgMeta['res'], gcm=mdlvals['name'], 
-                                    tm=tmvals['name'], altpred=altpred, 
+            scentitle = self._getbioName(basecode, res_name, gcm=mdlname, 
+                                    tm=tmname, altpred=altpred, 
                                     suffix=pkgMeta['suffix'], isTitle=True)
             lyrdesc = '{} for {}'.format(ltmeta['description'], scentitle)
             
@@ -806,8 +870,8 @@ class BOOMFiller(LMObject):
                               gdalType=rstType,
                               valUnits=ltmeta['valunits'],
                               mapunits=elyrMeta['mapunits'], 
-                              resolution=elyrMeta['resolution'], 
-                              bbox=pkgMeta['bbox'], 
+                              resolution=res_val, 
+                              bbox=scenMeta['region'], 
                               modTime=currtime,
                               envCode=envcode, 
                               gcmCode=gcm, altpredCode=altpred, dateCode=tm,
@@ -822,30 +886,29 @@ class BOOMFiller(LMObject):
    
    # ...............................................
    def _createBaselineScenario(self, pkgMeta, elyrMeta, lyrtypeMeta, 
-                              observedPredictedMeta, climKeywords):
+                              scenMeta, climKeywords):
       """
       @summary Assemble Worldclim/bioclim scenario
       """
-      baseMeta = observedPredictedMeta['baseline']
-      baseCode = baseMeta['code']
-      resolution = baseMeta['res']
-      region = baseMeta['region']
-   #    tm = baseMeta['times'].keys()[0]
+      baseCode = scenMeta['code']
+      res_name = scenMeta['res'][0]
+      res_val = scenMeta['res'][1]
+      region = scenMeta['region']
       basekeywords = [k for k in climKeywords]
-      basekeywords.extend(baseMeta['keywords'])
+      basekeywords.extend(scenMeta['keywords'])
       # there should only be one
-      dateCode = baseMeta['times'].keys()[0]
-      scencode = self._getbioName(baseCode, resolution, suffix=pkgMeta['suffix'])
-      lyrs, staticLayers = self._getBaselineLayers(pkgMeta, baseMeta, elyrMeta, 
+      dateCode = scenMeta['times'].keys()[0]
+      scencode = self._getbioName(baseCode, res_name, suffix=pkgMeta['suffix'])
+      lyrs, staticLayers = self._getBaselineLayers(pkgMeta, scenMeta, elyrMeta, 
                                               lyrtypeMeta)
-      scenmeta = {ServiceObject.META_TITLE: baseMeta['title'], 
-                  ServiceObject.META_AUTHOR: baseMeta['author'], 
-                  ServiceObject.META_DESCRIPTION: baseMeta['description'], 
+      scenmeta = {ServiceObject.META_TITLE: scenMeta['title'], 
+                  ServiceObject.META_AUTHOR: scenMeta['author'], 
+                  ServiceObject.META_DESCRIPTION: scenMeta['description'], 
                   ServiceObject.META_KEYWORDS: basekeywords}
       scen = Scenario(scencode, self.usr, elyrMeta['epsg'], 
                       metadata=scenmeta, 
                       units=elyrMeta['mapunits'], 
-                      res=resolution, 
+                      res=res_val, 
                       dateCode=dateCode,
                       bbox=region, 
                       modTime=mx.DateTime.gmt().mjd,  
@@ -853,30 +916,23 @@ class BOOMFiller(LMObject):
       return scen, staticLayers
    
    # ...............................................
-   def _createSimpleScenario(self, pkgPredScenCode, pkgMeta, elyrMeta, lyrtypeMeta, 
-                             staticLayers, observedPredictedMeta, climKeywords):
+   def _createSimpleScenario(self, code, pkgMeta, elyrMeta, lyrtypeMeta, 
+                             staticLayers, scenMeta, climKeywords):
       """
       @summary Assemble Worldclim/bioclim scenario
       """
-      scenMeta = observedPredictedMeta['predicted'][pkgPredScenCode]
-      code = scenMeta['code']
-      resolution = scenMeta['res']
+      res_name = scenMeta['res'][0]
+      res_val = scenMeta['res'][1]
       region = scenMeta['region']
-      try:
-         altpred = scenMeta['altpredcode']
-      except:
-         altpred = None
-   #    tm = baseMeta['times'].keys()[0]
       basekeywords = [k for k in climKeywords]
       basekeywords.extend(scenMeta['keywords'])
       # there should only be one
       dateCode = scenMeta['times'].keys()[0]
-      scencode = self._getbioName(code, resolution, altpred=altpred, 
+      scencode = self._getbioName(code, res_name, altpred=None, 
                                   suffix=pkgMeta['suffix'])
-      predRpt = None
       lyrs = self._getPredictedLayers(pkgMeta, elyrMeta, lyrtypeMeta, 
-                           staticLayers, observedPredictedMeta, predRpt, dateCode, 
-                           gcm=None, altpred=altpred)
+                           staticLayers, scenMeta, code, dateCode, 
+                           gcm=None, altpred=None)
 
       scenmeta = {ServiceObject.META_TITLE: scenMeta['title'], 
                   ServiceObject.META_AUTHOR: scenMeta['author'], 
@@ -885,7 +941,7 @@ class BOOMFiller(LMObject):
       scen = Scenario(scencode, self.usr, elyrMeta['epsg'], 
                       metadata=scenmeta, 
                       units=elyrMeta['mapunits'], 
-                      res=resolution, 
+                      res=res_val, 
                       dateCode=dateCode,
                       bbox=region, 
                       modTime=mx.DateTime.gmt().mjd,  
@@ -895,7 +951,7 @@ class BOOMFiller(LMObject):
    # ...............................................
    def _createModeledScenarios(self, pkgPredScenMeta, pkgMeta, elyrMeta, 
                                   lyrtypeMeta, staticLayers,
-                                  observedPredictedMeta, climKeywords):
+                                  predictedMeta, climKeywords):
       currtime = mx.DateTime.gmt().mjd
       predScenarios = {}
       for predRpt in pkgPredScenMeta.keys():
@@ -908,12 +964,12 @@ class BOOMFiller(LMObject):
                altpred = None
                altvals = {}
             else:
-               altvals = observedPredictedMeta[predRpt]['alternatePredictions'][altpred]
-            mdlvals = observedPredictedMeta[predRpt]['models'][gcm]
-            tmvals = observedPredictedMeta[predRpt]['times'][tm]
+               altvals = predictedMeta[predRpt]['alternatePredictions'][altpred]
+            mdlvals = predictedMeta[predRpt]['models'][gcm]
+            tmvals = predictedMeta[predRpt]['times'][tm]
             # Reset keywords
             scenkeywords = [k for k in climKeywords]
-            scenkeywords.extend(observedPredictedMeta[predRpt]['keywords'])
+            scenkeywords.extend(predictedMeta[predRpt]['keywords'])
             for vals in (mdlvals, tmvals, altvals):
                try:
                   scenkeywords.extend(vals['keywords'])
@@ -926,7 +982,7 @@ class BOOMFiller(LMObject):
             scentitle = self._getbioName(predRpt, pkgMeta['res'], gcm=mdlvals['name'], 
                                     tm=tmvals['name'], altpred=altpred, 
                                     suffix=pkgMeta['suffix'], isTitle=True)
-            obstitle = observedPredictedMeta['baseline']['title']
+            obstitle = predictedMeta['baseline']['title']
             scendesc =  ' '.join((obstitle, 
                      'and predicted climate calculated from {}'.format(scentitle)))
             scenmeta = {ServiceObject.META_TITLE: scentitle, 
@@ -934,7 +990,7 @@ class BOOMFiller(LMObject):
                         ServiceObject.META_DESCRIPTION: scendesc, 
                         ServiceObject.META_KEYWORDS: scenkeywords}
             lyrs = self._getPredictedLayers(pkgMeta, elyrMeta, lyrtypeMeta, 
-                                 staticLayers, observedPredictedMeta, predRpt, tm, 
+                                 staticLayers, predictedMeta, predRpt, tm, 
                                  gcm=gcm, altpred=altpred)
             
             scen = Scenario(scencode, self.usr, elyrMeta['epsg'], 
@@ -950,36 +1006,36 @@ class BOOMFiller(LMObject):
    
    # ...............................................
    def _createPredictedScenarios(self, pkgMeta, elyrMeta, lyrtypeMeta, staticLayers,
-                                observedPredictedMeta, climKeywords):
+                                predMeta, climKeywords):
       """
       @summary Assemble predicted future scenarios defined by IPCC report
       """
       predScenarios = {}
-      predictedMeta = observedPredictedMeta['predicted']
       try:
          pkgPredScenMeta = pkgMeta['predicted']
       except:
          return predScenarios
       
       if isinstance(pkgPredScenMeta, types.DictionaryType):
+         # Assemble scenarios from IPCC Report, GCM, RCP
          predScenarios = self._createModeledScenarios(pkgPredScenMeta, pkgMeta, 
                                 elyrMeta, lyrtypeMeta, staticLayers,
-                                predictedMeta, climKeywords)
+                                predMeta, climKeywords)
       elif (isinstance(pkgPredScenMeta, types.StringType) 
             or isinstance(pkgPredScenMeta, types.UnicodeType)):
-         thisScen = self._createSimpleScenario(pkgPredScenMeta, pkgMeta, 
-                                elyrMeta, lyrtypeMeta, staticLayers,
-                                predictedMeta, climKeywords)
-         predScenarios = [thisScen]
+         pkgPredScenMeta = [pkgPredScenMeta]
 
+      # Assemble one or more simply-defined scenarios
       if (isinstance(pkgPredScenMeta, types.TupleType) 
           or isinstance(pkgPredScenMeta, types.ListType)): 
          for code in pkgPredScenMeta:
+            thisPredMeta = predMeta[code]
             thisScen = self._createSimpleScenario(code, pkgMeta, 
                                 elyrMeta, lyrtypeMeta, staticLayers,
-                                predictedMeta, climKeywords)
-            predScenarios.append(thisScen)
-            
+                                thisPredMeta, climKeywords)
+            predScenarios[code] = thisScen
+      return predScenarios            
+   
    # ...............................................
    def addPackageScenariosLayers(self):
       """
