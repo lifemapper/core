@@ -129,7 +129,7 @@ EXTRA_CS_OPTIONS: -m 100 -O 100M
 
 ; Use this to specify extra options for the workers other than catalog server 
 ;    and worker path
-EXTRA_WORKER_OPTIONS : 
+EXTRA_WORKER_OPTIONS : ""
 
 ; Use this to specify extra Makeflow options other than work directory, 
 ;    advertise, and catalog server
