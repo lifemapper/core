@@ -438,7 +438,8 @@ class LMFileType:
    MCPA_ENV_RAND_F_GLOBAL = 340
    MCPA_ENV_RAND_F_PARTIAL = 341
    
-
+   GRIDSET_PACKAGE = 401
+   
    USER_LAYER = 510
    USER_SHAPEGRID = 511
    # TODO: delete?
