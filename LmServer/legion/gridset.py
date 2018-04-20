@@ -597,6 +597,7 @@ class Gridset(ServiceObject): #LMMap
       """
       dloc = self._earlJr.createFilename(LMFileType.GRIDSET_PACKAGE, 
                                          objCode=self.getId(), 
+                                         gridsetId=self.getId(), 
                                          usr=self.getUserId())
       return dloc
 

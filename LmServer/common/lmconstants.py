@@ -751,7 +751,8 @@ class FileFix:
                 LMFileType.MCPA_ENV_OBS_ADJ_R_SQ: LMFormat.MATRIX.ext,
                 LMFileType.MCPA_ENV_OBS_PARTIAL: LMFormat.MATRIX.ext, 
                 LMFileType.MCPA_ENV_RAND_F_GLOBAL: LMFormat.MATRIX.ext, 
-                LMFileType.MCPA_ENV_RAND_F_PARTIAL: LMFormat.MATRIX.ext
+                LMFileType.MCPA_ENV_RAND_F_PARTIAL: LMFormat.MATRIX.ext,
+                LMFileType.GRIDSET_PACKAGE: LMFormat.ZIP.ext
    }
    @staticmethod
    def getMaptypeFromName(prefix=None, ext=None):
