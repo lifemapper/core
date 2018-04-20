@@ -595,7 +595,7 @@ class Gridset(ServiceObject): #LMMap
       @summary: Create an absolute filepath from object attributes
       @note: If the object does not have an ID, this returns None
       """
-      dloc = self._earlJr.createFilename(LMFileType.BOOM_CONFIG, 
+      dloc = self._earlJr.createFilename(LMFileType.GRIDSET_PACKAGE, 
                                          objCode=self.getId(), 
                                          usr=self.getUserId())
       return dloc
