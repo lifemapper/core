@@ -628,8 +628,8 @@ class Gridset(ServiceObject): #LMMap
       @todo: Aimee, please change this as you see fit.  If you change the 
                 function name, modify the package formatter.
       """
-      return os.path.join(self.getDLocation(), 'gs_{}_package{}'.format(
-                                             self.getId(), LMFormat.ZIP.ext))
+      return os.path.join(os.path.dirname(self.getDLocation()), 
+                     'gs_{}_package{}'.format(self.getId(), LMFormat.ZIP.ext))
 
 # ...............................................
    def setMatrices(self, matrices, doRead=False):
