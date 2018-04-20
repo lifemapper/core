@@ -621,6 +621,16 @@ class Gridset(ServiceObject): #LMMap
    def clearDLocation(self): 
       self._dlocation = None
 
+   # .............................
+   def getPackageLocation(self):
+      """
+      @summary: Get the file path for storing or retrieving a gridset package
+      @todo: Aimee, please change this as you see fit.  If you change the 
+                function name, modify the package formatter.
+      """
+      return os.path.join(self.getDLocation(), 'gs_{}_package{}'.format(
+                                             self.getId(), LMFormat.ZIP.ext))
+
 # ...............................................
    def setMatrices(self, matrices, doRead=False):
       """
