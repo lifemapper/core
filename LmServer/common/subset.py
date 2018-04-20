@@ -43,9 +43,10 @@ from LmServer.common.log import LmPublicLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
+from LmServer.legion.shapegrid import ShapeGrid
 
 # .............................................................................
-def subsetGlobalPAM(archiveName, matches, userId, scribe=None):
+def subsetGlobalPAM(archiveName, matches, userId, bbox=None, scribe=None):
    """
    @summary: Create a subset of a global PAM and create a new grid set
    @param archiveName: The name of this new grid set
@@ -65,12 +66,38 @@ def subsetGlobalPAM(archiveName, matches, userId, scribe=None):
    origGSId = match1[SOLR_FIELDS.GRIDSET_ID]
    origGS = scribe.getGridset(gridsetId=origGSId, fillMatrices=True)
 
-   # Get the row headers
-   rowHeaders = getRowHeaders(origShp.getDLocation())
-
    # TODO: Subset / copy shapegrid
-   myShp = origShp
+   # If we should subset
+   if bbox is not None and bbox != origShp.bbox:
+      spatialSubset = True
+      
+      # Create a new shapegrid
+      mySgName = 'Shapegrid {} subset {}'.format(origShp.getId(), str(bbox))
+      newshp = ShapeGrid(mySgName, origGS.getUserId(), origGS.epsgcode, 
+                         origShp.cellsides, origShp.cellsize, origShp.mapUnits, 
+                         bbox, status=JobStatus.INITIALIZE, 
+                         statusModTime=gmt().mjd)
+      myShp = scribe.findOrInsertShapeGrid(newshp)
+      # Perform a cutout operation on the old shapegrid and store in new 
+      #    location
+      bboxWKT = 'POLYGON(({0} {1},{0} {3},{2} {3},{2} {1},{0} {1}))'.format(*bbox)
 
+      origShp.cutout(bboxWKT, dloc=myShp.getDLocation())
+      
+      # Get rows to keep
+      rowHeaders = getRowHeaders(myShp.getDLocation())
+      origRowHeaders = getRowHeaders(origShp.getDLocation())
+      
+      keepSites = []
+      for i in range(len(origRowHeaders)):
+         if origRowHeaders[i] in rowHeaders:
+            keepSites.append(i)
+   else:
+      myShp = origShp
+      spatialSubset = False
+      # Get the row headers
+      rowHeaders = getRowHeaders(origShp.getDLocation())
+   
    gsMeta = {
       ServiceObject.META_DESCRIPTION: 'Subset of Global PAM, gridset {}'.format(
          origGSId),
@@ -124,7 +151,10 @@ def subsetGlobalPAM(archiveName, matches, userId, scribe=None):
          pamData[:,i] = decompress(scnMatches[i][SOLR_FIELDS.COMPRESSED_PAV])
          squids.append(scnMatches[i][SOLR_FIELDS.SQUID])
       
-      # TODO: Subset PAM data
+      # Subset PAM data
+      if spatialSubset:
+         # Use numpy fancy indexing to cut out extra sites
+         pamData = pamData[keepSites, :]
       
       # Create object
       pamMtx = LMMatrix(pamData, matrixType=MatrixType.PAM, gcmCode=gcmCode, 
@@ -165,6 +195,11 @@ def subsetGlobalPAM(archiveName, matches, userId, scribe=None):
       # Save the original grim data into the new location
       # TODO: Add read / load method for LMMatrix
       grimMtx = Matrix.load(grim.getDLocation())
+      
+      # Subset
+      if spatialSubset:
+         grimMtx = grimMtx.slice(keepSites)
+      
       with open(insertedGrim.getDLocation(), 'w') as outF:
          grimMtx.save(outF)
       
@@ -183,6 +218,11 @@ def subsetGlobalPAM(archiveName, matches, userId, scribe=None):
       # Save the original grim data into the new location
       # TODO: Add read / load method for LMMatrix
       bgMtx = Matrix.load(bg.getDLocation())
+      
+      # Subset
+      if spatialSubset:
+         bgMtx = bgMtx.slice(keepSites)
+
       with open(insertedBG.getDLocation(), 'w') as outF:
          bgMtx.save(outF)
    

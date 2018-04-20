@@ -85,8 +85,10 @@ class GlobalPAMService(LmService):
                                  taxPhylum=taxonPhylum, taxClass=taxonClass,
                                  taxOrder=taxonOrder, taxFamily=taxonFamily,
                                  taxGenus=taxonGenus, taxSpecies=taxonSpecies)
+      # Make bbox tuple
+      bbox = tuple([float(i) for i in bbox.split(',')])
       
-      gridset = self._subsetGlobalPAM(archiveName, matches)
+      gridset = self._subsetGlobalPAM(archiveName, matches, bbox=bbox)
       cherrypy.response.status = 202
       return Atom(gridset.getId(), gridset.name, gridset.metadataUrl, 
                   gridset.modTime, epsg=gridset.epsgcode)
@@ -109,12 +111,12 @@ class GlobalPAMService(LmService):
                   taxSpecies=taxSpecies, userId=self.getUserId(urlUser=urlUser))
    
    # ................................
-   def _subsetGlobalPAM(self, archiveName, matches):
+   def _subsetGlobalPAM(self, archiveName, matches, bbox=None):
       """
       @summary: Create a subset of a global PAM and create a new grid set
       @param archiveName: The name of this new grid set
       @param matches: Solr hits to be used for subsetting
       """
       newGridSet = subsetGlobalPAM(archiveName, matches, self.getUserId(), 
-                                    scribe=self.scribe)
+                                    bbox=bbox, scribe=self.scribe)
       return newGridSet
