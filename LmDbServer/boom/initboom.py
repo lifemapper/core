@@ -1193,10 +1193,13 @@ class BOOMFiller(LMObject):
       shp = self._addIntersectGrid()
       self.shapegrid = shp
       # "BOOM" Archive
+      # TODO: change 'parameters' to ServiceObject.META_PARAMS
+
       meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
-              ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
+              ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD],
+              'parameters': self.inParamFname}
       grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
-                       dlocation=self.scenPackageMetaFilename, epsgcode=self.epsg, 
+                       epsgcode=self.epsg, 
                        userId=self.usr, modTime=mx.DateTime.gmt().mjd)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       # "Global" PAM, GRIM (one each per scenario)
