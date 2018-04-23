@@ -44,6 +44,7 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.legion.tree import Tree
 
 # .............................................................................
 def subsetGlobalPAM(archiveName, matches, userId, bbox=None, scribe=None):
@@ -66,14 +67,13 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, scribe=None):
    origGSId = match1[SOLR_FIELDS.GRIDSET_ID]
    origGS = scribe.getGridset(gridsetId=origGSId, fillMatrices=True)
 
-   # TODO: Subset / copy shapegrid
    # If we should subset
    if bbox is not None and bbox != origShp.bbox:
       spatialSubset = True
       
       # Create a new shapegrid
       mySgName = 'Shapegrid {} subset {}'.format(origShp.getId(), str(bbox))
-      newshp = ShapeGrid(mySgName, origGS.getUserId(), origGS.epsgcode, 
+      newshp = ShapeGrid(mySgName, userId, origGS.epsgcode, 
                          origShp.cellsides, origShp.cellsize, origShp.mapUnits, 
                          bbox, status=JobStatus.INITIALIZE, 
                          statusModTime=gmt().mjd)
@@ -93,7 +93,15 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, scribe=None):
          if origRowHeaders[i] in rowHeaders:
             keepSites.append(i)
    else:
-      myShp = origShp
+      if origShp.getUserId() == userId:
+         myShp = origShp
+      else:
+         newshp = ShapeGrid('Copy of shapegrid {}'.format(origShp.getId()),
+                           userId, origGS.epsgcode, origShp.cellsides, 
+                           origShp.cellsize, origShp.mapUnits, origShp.bbox,
+                           status=JobStatus.INITIALIZE, 
+                           statusModTime=gmt().mjd)
+         myShp = scribe.findOrInsertShapeGrid(newshp)
       spatialSubset = False
       # Get the row headers
       rowHeaders = getRowHeaders(origShp.getDLocation())
@@ -113,13 +121,27 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, scribe=None):
       else:
          matchesByScen[scnId] = [match]
    
-   # TODO: Copy tree?
    # Create grid set
    gs = Gridset(name=archiveName, metadata=gsMeta, shapeGrid=myShp, 
                 epsgcode=epsgCode, userId=userId, 
                 modTime=gmt().mjd, tree=origGS.tree)
    updatedGS = scribe.findOrInsertGridset(gs)
-   updatedGS.addTree(origGS.tree, doRead=True)
+   
+   # Copy tree if necessary
+   if origGS.tree.getId() != userId:
+      otree = origGS.tree
+      newTree = Tree('Copy of tree {}'.format(otree.getId(), 
+                                              metadata=otree.treeMetadata,
+                                              userId=userId, 
+                                              gridsetId=updatedGS.getId()))
+      insertedTree = scribe.findOrInsertTree(newTree)
+      treeData = otree.read().tree
+      insertedTree.setTree(treeData)
+      insertedTree.writeTree()
+      updatedGS.addTree(insertedTree, doRead=True)
+   else:
+      updatedGS.addTree(origGS.tree, doRead=True)
+      
    #updatedGS.tree = origGS.tree
    log.debug("Tree for gridset {} is {}".format(updatedGS.getId(), updatedGS.tree.getId()))
    updatedGS.updateModtime(gmt().mjd)
