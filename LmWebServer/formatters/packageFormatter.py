@@ -263,9 +263,12 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                                                          mtx.getId(), LMFormat.CSV.ext))
                            
                         else:
-                           csvMtxFn = os.path.join(MATRIX_DIR, os.path.splitext(
-                                 os.path.basename(mtx.getDLocation()))[0], 
-                                                 LMFormat.CSV.ext)
+                           csvMtxFn = os.path.join(MATRIX_DIR, 
+                                 '{}{}'.format(
+                                    os.path.splitext(
+                                       os.path.basename(
+                                          mtx.getDLocation()))[0], 
+                                                 LMFormat.CSV.ext))
             
                         # Write the Matrix CSV file if desired
                         if includeCSV:
