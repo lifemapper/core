@@ -123,6 +123,93 @@ class LmTree(object):
    def getDistanceMatrix(self, labelAttribute='label', orderedLabels=None):
       """
       @summary: Get a Matrix object of phylogenetic distances between tips
+                   using a lower memory footprint
+      @param labelAttribute: The attribute of the tips to use as labels for 
+                                the matrix
+      @param orderedLabels: If provided, use this order of labels
+      """
+      if labelAttribute == 'label':
+         labelFn = lambda taxon: taxon.label
+      else:
+         labelFn = lambda taxon: taxon.annotations.get_value(labelAttribute)
+      # Get list of labels
+      if orderedLabels is None:
+         orderedLabels = []
+         for taxon in self.tree.taxon_namespace:
+            orderedLabels.append(labelFn(taxon))
+      
+      labelLookup = dict(
+         [(orderedLabels[i], i) for i in range(len(orderedLabels))])
+      
+      
+      distMtx = np.zeros((len(orderedLabels), len(orderedLabels)), dtype=float)
+   
+      # Build path lookup dictionary
+      path_lookups = {}
+      for taxon in self.tree.taxon_namespace:
+         n = self.tree.find_node_for_taxon(taxon)
+         l = []
+         while n is not None:
+            if n.edge_length is not None:
+               # If this is still too big, drop id and do some logic with lengths
+               l.append((id(n), n.edge_length))
+            n = n.parent_node
+         path_lookups[taxon.label] = l
+         
+      num_taxa = len(self.tree.taxon_namespace)
+      for i_1 in xrange(num_taxa - 1):
+         taxon1 = self.tree.taxon_namespace[i_1]
+   
+         label = labelFn(taxon1)
+         # Check for matrix index
+         try:
+            idx1 = labelLookup[label]
+            
+            # Build path to root for taxon 1
+            #path_labels = []
+            oDist = 0.0
+            t_path = path_lookups[taxon1.label]
+            t_labels = []
+            for label, p_dist in t_path:
+               oDist += p_dist
+               t_labels.append(label)
+            
+            
+            for i_2 in xrange(i_1, num_taxa):
+               taxon2 = self.tree.taxon_namespace[i_2]
+            
+               try:
+                  idx2 = labelLookup[labelFn(taxon2)]
+                  
+                  # Initialize distance for these two taxa
+                  dist = oDist
+                  
+                  # Loop through path back to root
+                  t2_path = path_lookups[taxon2.label]
+                  
+                  for label, p_dist in t2_path:
+                     if label in t_labels:
+                        dist -= p_dist
+                     else:
+                        dist += p_dist
+                        
+                  #mrca = pdm.mrca(taxon1, taxon2)
+                  #dist = pdm.patristic_distance(taxon1, taxon2)
+                  distMtx[idx1, idx2] = dist
+                  distMtx[idx2, idx1] = dist
+               except:
+                  pass
+         except:
+            pass
+         
+      distanceMatrix = Matrix(distMtx, headers={'0' : orderedLabels, 
+                                                '1' : orderedLabels})
+      return distanceMatrix
+   
+   # ..............................
+   def getDistanceMatrix_dendropy(self, labelAttribute='label', orderedLabels=None):
+      """
+      @summary: Get a Matrix object of phylogenetic distances between tips
       @param labelAttribute: The attribute of the tips to use as labels for 
                                 the matrix
       @param orderedLabels: If provided, use this order of labels
