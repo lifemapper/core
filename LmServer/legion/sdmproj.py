@@ -411,6 +411,14 @@ class SDMProjection(_ProjectionType, Raster):
       ProcessObject.updateStatus(self, status, modTime)
       ServiceObject.updateModtime(self, modTime)
       _LayerParameters.updateParams(self, modTime, metadata=metadata)
+      
+      # If projection will be updated with a successful complete status,
+      #    clear the map file so that it can be regenerated
+      try:
+         if status == JobStatus.COMPLETE:
+            self.clearLocalMapfile()
+      except:
+         pass
          
 # ...............................................
    def clearProjectionFiles(self):
