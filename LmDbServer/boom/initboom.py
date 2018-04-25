@@ -1622,9 +1622,14 @@ CURR_MJD = mx.DateTime.gmt().mjd
 
 cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
 cfname='/state/partition1/lmscratch/temp/heuchera_boom_params.ini'
+cfname='/state/partition1/lmscratch/temp/taiwan_boom_params.ini'
 
 filler = BOOMFiller(configFname=cfname)
 filler.initializeInputs()
+scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
+tree = filler.addTree(boomGridset)
+biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
+filler.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, biogeoLayers=biogeoLayerNames)
 
 # ...............................................
 # Data for this instance (Taxonomy, algorithms, default users)
