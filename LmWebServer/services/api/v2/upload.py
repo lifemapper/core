@@ -89,7 +89,7 @@ class UserUploadService(LmService):
       @todo: Change this to use something at a lower level.  This is using the
                 same path construction as the getBoomPackage script
       """
-      return os.path.join(ARCHIVE_PATH, self.getUserId(), 'uploads')
+      return os.path.join(ARCHIVE_PATH, self.getUserId()
    
    # ................................
    def _upload_biogeo(self, bioGeoFilename):
@@ -142,26 +142,49 @@ class UserUploadService(LmService):
       }
          
    # ................................
-   def _upload_occurrence_data(self, occurrenceFilename):
+   def _upload_occurrence_data(self, packageName):
       """
       @summary: Write the occurrence data to the user's workspace
-      @param occurrenceFilename: The name of the occurrence data
+      @param packageName: The name of the occurrence data
       @todo: Sanity checking
       """
+      
+      csvFilename = os.path.join(self._get_user_dir(), 
+                           '{}{}'.format(packageName, LMFormat.CSV.ext))
+      metaFilename = os.path.join(self._get_user_dir(), 
+                      '{}{}'.format(packageName, LMFormat.METADATA.ext))
+      
+      # Check to see if files exist
+      if os.path.exists(csvFilename):
+         raise cherrypy.HTTPError(HTTPStatus.CONFLICT, 
+                             '{} exists'.format(os.path.basename(csvFilename)))
+      if os.path.exists(metaFilename):
+         raise cherrypy.HTTPError(HTTPStatus.CONFLICT, 
+                           '{} exists'.format(os.path.basename(metaFilename)))
+      
+      metaDone = False
+      csvDone = False
+      
+      # Unzip files and name provided name
       with zipfile.ZipFile(cherrypy.request.body, allowZip64=True) as zipF:
          for zfname in zipF.namelist():
             _, ext = os.path.splitext(zfname)
-            outFn = os.path.join(self._get_user_dir(), 
-                                 '{}{}'.format(occurrenceFilename, ext))
-            readyFilename(outFn)
-            if os.path.exists(outFn):
-               raise cherrypy.HTTPError(HTTPStatus.CONFLICT, 
-                                '{}{} exists'.format(occurrenceFilename, ext))
-            else:
-               zipF.extract(zfname, outFn)
-      
+            if ext == LMFormat.CSV.ext:
+               if csvDone:
+                  raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST,
+                                           'Must only provide one .csv file')
+               zipF.extract(zfname, csvFilename)
+               csvDone = True
+            if ext == LMFormat.METADATA.ext:
+               if metaDone:
+                  raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST,
+                                           'Must only provide one .meta file')
+               zipF.extract(zfname, metaFilename)
+               metaDone = True
+               
+      # Return
       return {
-         'package_name' : occurrenceFilename,
+         'package_name' : packageName,
          'upload_type' : OCCURRENCE_UPLOAD,
          'status' : HTTPStatus.ACCEPTED
       }
