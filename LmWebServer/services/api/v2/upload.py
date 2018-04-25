@@ -89,7 +89,7 @@ class UserUploadService(LmService):
       @todo: Change this to use something at a lower level.  This is using the
                 same path construction as the getBoomPackage script
       """
-      return os.path.join(ARCHIVE_PATH, self.getUserId()
+      return os.path.join(ARCHIVE_PATH, self.getUserId())
    
    # ................................
    def _upload_biogeo(self, bioGeoFilename):
