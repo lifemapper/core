@@ -29,15 +29,17 @@
 """
 import cherrypy
 import os
+from StringIO import StringIO
 import zipfile
 
-from LmCommon.common.lmconstants import HTTPStatus, LMFormat
+from LmCommon.common.lmconstants import HTTPStatus, LMFormat, DEFAULT_POST_USER
 from LmCommon.common.readyfile import readyFilename
 from LmServer.common.lmconstants import ARCHIVE_PATH, ENV_DATA_PATH
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmServer.common.localconstants import PUBLIC_USER
 
 BIOGEO_UPLOAD = 'biogeo'
 CLIMATE_UPLOAD = 'climate'
@@ -89,7 +91,10 @@ class UserUploadService(LmService):
       @todo: Change this to use something at a lower level.  This is using the
                 same path construction as the getBoomPackage script
       """
-      return os.path.join(ARCHIVE_PATH, self.getUserId())
+      userId = self.getUserId()
+      if userId == PUBLIC_USER:
+         userId = DEFAULT_POST_USER
+      return os.path.join(ARCHIVE_PATH, userId)
    
    # ................................
    def _upload_biogeo(self, bioGeoFilename):
@@ -122,7 +127,6 @@ class UserUploadService(LmService):
       @todo: Sanity checking
       """
       outDir = os.path.join(ENV_DATA_PATH, climateDataFilename)
-      
       with zipfile.ZipFile(cherrypy.request.body, allowZip64=True) as zipF:
          for zfname in zipF.namelist():
             _, ext = os.path.splitext(zfname)
@@ -164,22 +168,32 @@ class UserUploadService(LmService):
       
       metaDone = False
       csvDone = False
+
+      instr = StringIO()
+      instr.write(cherrypy.request.body.read())
+      instr.seek(0)
       
       # Unzip files and name provided name
-      with zipfile.ZipFile(cherrypy.request.body, allowZip64=True) as zipF:
+      with zipfile.ZipFile(instr, allowZip64=True) as zipF:
          for zfname in zipF.namelist():
             _, ext = os.path.splitext(zfname)
             if ext == LMFormat.CSV.ext:
                if csvDone:
                   raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST,
                                            'Must only provide one .csv file')
-               zipF.extract(zfname, csvFilename)
+               with zipF.open(zfname) as zf:
+                  with open(csvFilename, 'w') as outF:
+                     for line in zf:
+                        outF.write(line)
                csvDone = True
             if ext == LMFormat.METADATA.ext:
                if metaDone:
                   raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST,
                                            'Must only provide one .meta file')
-               zipF.extract(zfname, metaFilename)
+               with zipF.open(zfname) as zf:
+                  with open(metaFilename, 'w') as outF:
+                     for line in zf:
+                        outF.write(line)
                metaDone = True
                
       # Return

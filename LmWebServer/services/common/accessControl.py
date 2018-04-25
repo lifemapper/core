@@ -43,7 +43,7 @@ def checkUserPermission(sessionUser, obj, method):
    #      GET - session user, public, or anonymous
    #      PUT - session user - can't update public or anonymous
    #      DELETE - session user - can't delete public or anonymous
-   if method.upper() in [HTTPMethod.DELETE, HTTPMethod.PUT]:
+   if method.upper() in [HTTPMethod.DELETE, HTTPMethod.PUT, HTTPMethod.POST]:
       validUsers = [sessionUser]
    elif method.upper() == HTTPMethod.GET:
       validUsers = [sessionUser, PUBLIC_USER, DEFAULT_POST_USER]
