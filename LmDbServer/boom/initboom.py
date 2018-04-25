@@ -155,10 +155,12 @@ class BOOMFiller(LMObject):
       """
       @summary Find Scenarios from codes or create from ScenPackage metadata
       """
+      # TODO: Put optional masklayer into every Scenario
+      masklyr = None      
       # Configured codes for existing Scenarios
       if self.modelScenCode is not None:
-         SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()      
-         masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
+         SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
+#          masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
          self.scenPackageMetaFilename = None
          # Fill or reset epsgcode, mapunits, gridbbox
          self.scenPkg, self.epsg, self.mapunits = self._checkScenarios()
@@ -170,8 +172,9 @@ class BOOMFiller(LMObject):
 
          if not doMapBaseline:
             self.prjScenCodeList.remove(self.modelScenCode)
-      # Fill mask layer
+      # TODO: Need a mask layer for every scenario!!
       self.masklyr = masklyr
+
       # Fill grid bbox with scenario package if it is absent
       if self.gridbbox is None:
          self.gridbbox = self.scenPkg.bbox
@@ -556,7 +559,9 @@ class BOOMFiller(LMObject):
    def _createScenarios(self):
       # TODO move these next 2 commands into fillScenarios
       SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
-      masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
+      # TODO: Put optional masklayer into every Scenario
+#       masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
+      masklyr = None
 
       epsg = elyrMeta['epsg']
       mapunits = elyrMeta['mapunits']
@@ -650,8 +655,60 @@ class BOOMFiller(LMObject):
          pass
       return val
 
+#    # ...............................................
+#    def _createMaskLayer(self, SPMETA, pkgMeta, elyrMeta):
+#       """
+#       @summary Assembles layer metadata for input to optional 
+#                pre-processing SDM Mask step identified in scenario package 
+#                metadata. 
+#                Currently only the 'hull_region_intersect' method is available.
+#       """
+#       # Required keys in SDM_MASK_INPUT: name, bbox, gdaltype, gdalformat, file
+#       maskMeta = SPMETA.SDM_MASK_INPUT
+#       
+#       lyrmeta = {
+#          Vector.META_IS_CATEGORICAL: self._getOptionalMetadata(maskMeta, 'iscategorical'), 
+#          ServiceObject.META_TITLE: self._getOptionalMetadata(maskMeta, 'title'), 
+#          ServiceObject.META_AUTHOR: self._getOptionalMetadata(maskMeta, 'author'), 
+#          ServiceObject.META_DESCRIPTION: self._getOptionalMetadata(maskMeta, 'description'),
+#          ServiceObject.META_KEYWORDS: self._getOptionalMetadata(maskMeta, 'keywords'),
+#          ServiceObject.META_CITATION: self._getOptionalMetadata(maskMeta, 'citation')}
+#       # required
+#       try:
+#          name = maskMeta['name']
+#          bbox = maskMeta['bbox']
+#          relfname = maskMeta['file']
+#          dtype = maskMeta['gdaltype']
+#          dformat = maskMeta['gdalformat']
+#       except KeyError:
+#          raise LMError(currargs='Missing one of: name, bbox, file, gdaltype, '+ 
+#                        'gdalformat in SDM_MASK_INPUT in scenario package metadata')
+#       else:   
+#          dloc = os.path.join(ENV_DATA_PATH, relfname)
+#          if not os.path.exists(dloc):
+#             print('Missing local data %s' % dloc)
+# 
+#       # epsg, mapunits and resolution must match the Scenario Package
+#       epsg = elyrMeta['epsg']
+#       munits = elyrMeta['mapunits'] 
+#       res_name = baseMeta['res'][0]
+#       res_val = baseMeta['res'][1]
+#       bbox = baseMeta['region']
+# #       res = elyrMeta['resolution']
+#          
+#       masklyr = Raster(name, self.usr, 
+#                        epsg, 
+#                        mapunits=munits,  
+#                        resolution=res_val, 
+#                        dlocation=dloc, metadata=lyrmeta, 
+#                        dataFormat=dformat, 
+#                        gdalType=dtype, 
+#                        bbox=bbox,
+#                        modTime=mx.DateTime.gmt().mjd)
+#       return masklyr
+
    # ...............................................
-   def _createMaskLayer(self, SPMETA, pkgMeta, elyrMeta):
+   def _createScenMaskLayer(self, SPMETA, scenMeta, elyrMeta):
       """
       @summary Assembles layer metadata for input to optional 
                pre-processing SDM Mask step identified in scenario package 
@@ -683,21 +740,22 @@ class BOOMFiller(LMObject):
          if not os.path.exists(dloc):
             print('Missing local data %s' % dloc)
 
-      # epsg, mapunits and resolution must match the Scenario Package
+      # epsg, mapunits and resolution must match the Scenario
       epsg = elyrMeta['epsg']
       munits = elyrMeta['mapunits'] 
-      res = elyrMeta['resolution']
+      res_val = scenMeta['res'][1]
          
       masklyr = Raster(name, self.usr, 
                        epsg, 
                        mapunits=munits,  
-                       resolution=res, 
+                       resolution=res_val, 
                        dlocation=dloc, metadata=lyrmeta, 
                        dataFormat=dformat, 
                        gdalType=dtype, 
                        bbox=bbox,
                        modTime=mx.DateTime.gmt().mjd)
       return masklyr
+
    
    # ...............................................
    def _getBaselineLayers(self, pkgMeta, baseMeta, elyrMeta, lyrtypeMeta):
@@ -949,60 +1007,73 @@ class BOOMFiller(LMObject):
       return scen
             
    # ...............................................
-   def _createModeledScenarios(self, pkgPredScenMeta, pkgMeta, elyrMeta, 
-                                  lyrtypeMeta, staticLayers,
-                                  predictedMeta, climKeywords):
-      currtime = mx.DateTime.gmt().mjd
-      predScenarios = {}
-      for predRpt in pkgPredScenMeta.keys():
-         for modelDef in pkgPredScenMeta[predRpt]:
-            gcm = modelDef[0]
-            tm = modelDef[1]
-            try:
-               altpred = modelDef[2]
-            except:
-               altpred = None
-               altvals = {}
-            else:
-               altvals = predictedMeta[predRpt]['alternatePredictions'][altpred]
-            mdlvals = predictedMeta[predRpt]['models'][gcm]
-            tmvals = predictedMeta[predRpt]['times'][tm]
-            # Reset keywords
-            scenkeywords = [k for k in climKeywords]
-            scenkeywords.extend(predictedMeta[predRpt]['keywords'])
-            for vals in (mdlvals, tmvals, altvals):
-               try:
-                  scenkeywords.extend(vals['keywords'])
-               except:
-                  pass
-            # LM Scenario code, title, description
-            scencode = self._getbioName(predRpt, pkgMeta['res'], gcm=gcm, 
-                                   tm=tm, altpred=altpred, 
-                                   suffix=pkgMeta['suffix'], isTitle=False)
-            scentitle = self._getbioName(predRpt, pkgMeta['res'], gcm=mdlvals['name'], 
-                                    tm=tmvals['name'], altpred=altpred, 
-                                    suffix=pkgMeta['suffix'], isTitle=True)
-            obstitle = predictedMeta['baseline']['title']
-            scendesc =  ' '.join((obstitle, 
-                     'and predicted climate calculated from {}'.format(scentitle)))
-            scenmeta = {ServiceObject.META_TITLE: scentitle, 
-                        ServiceObject.META_AUTHOR: mdlvals['author'], 
-                        ServiceObject.META_DESCRIPTION: scendesc, 
-                        ServiceObject.META_KEYWORDS: scenkeywords}
-            lyrs = self._getPredictedLayers(pkgMeta, elyrMeta, lyrtypeMeta, 
-                                 staticLayers, predictedMeta, predRpt, tm, 
-                                 gcm=gcm, altpred=altpred)
-            
-            scen = Scenario(scencode, self.usr, elyrMeta['epsg'], 
-                            metadata=scenmeta, 
-                            units=elyrMeta['mapunits'], 
-                            res=elyrMeta['resolution'], 
-                            gcmCode=gcm, altpredCode=altpred, dateCode=tm,
-                            bbox=pkgMeta['bbox'], 
-                            modTime=currtime, 
-                            layers=lyrs)
-            predScenarios[scencode] = scen
-      return predScenarios
+#    def _createModeledScenarios(self, pkgPredScenMeta, pkgMeta, elyrMeta, 
+#                                   lyrtypeMeta, staticLayers,
+#                                   predictedMeta, climKeywords):
+#       """
+#       pkgPredScenMeta = 
+#       {'AR5': [('CCSM4', '2050', 'RCP4.5'),
+#                              ('CCSM4', '2070', 'RCP4.5'), 
+#                              ('CCSM4', '2050', 'RCP8.5'),
+#                              ('CCSM4', '2070', 'RCP8.5')],
+#                      'CMIP5': [('CCSM4', 'mid'),
+#                                ('CCSM4', 'lgm')]}
+#       """
+#       currtime = mx.DateTime.gmt().mjd
+#       predScenarios = {}
+#       for predRpt in pkgPredScenMeta.keys():
+#          predScenMeta = predictedMeta[predRpt]
+#          for gcm, modelMeta in predScenMeta['models'].iteritems():
+#             gcm = modelDef[0]
+#             tm = modelDef[1]
+#             try:
+#                altpred = modelDef[2]
+#             except:
+#                altpred = None
+#                altvals = {}
+#             else:
+#                altvals = predictedMeta[predRpt]['alternatePredictions'][altpred]
+#             mdlvals = predictedMeta[predRpt]['models'][gcm]
+#             tmvals = predictedMeta[predRpt]['times'][tm]
+#             res_name = predictedMeta[predRpt]['res'][0]
+#             res_val = predictedMeta[predRpt]['res'][1]
+#             bbox = predictedMeta[predRpt]['region']
+#             # Reset keywords
+#             scenkeywords = [k for k in climKeywords]
+#             scenkeywords.extend(predictedMeta[predRpt]['keywords'])
+#             for vals in (mdlvals, tmvals, altvals):
+#                try:
+#                   scenkeywords.extend(vals['keywords'])
+#                except:
+#                   pass
+#             # LM Scenario code, title, description
+#             scencode = self._getbioName(predRpt, pkgMeta['res'], gcm=gcm, 
+#                                    tm=tm, altpred=altpred, 
+#                                    suffix=pkgMeta['suffix'], isTitle=False)
+#             scentitle = self._getbioName(predRpt, pkgMeta['res'], gcm=mdlvals['name'], 
+#                                     tm=tmvals['name'], altpred=altpred, 
+#                                     suffix=pkgMeta['suffix'], isTitle=True)
+#             obstitle = predictedMeta['baseline']['title']
+#             scendesc =  ' '.join((obstitle, 
+#                      'and predicted climate calculated from {}'.format(scentitle)))
+#             scenmeta = {ServiceObject.META_TITLE: scentitle, 
+#                         ServiceObject.META_AUTHOR: mdlvals['author'], 
+#                         ServiceObject.META_DESCRIPTION: scendesc, 
+#                         ServiceObject.META_KEYWORDS: scenkeywords}
+#             lyrs = self._getPredictedLayers(pkgMeta, elyrMeta, lyrtypeMeta, 
+#                                  staticLayers, predictedMeta, predRpt, tm, 
+#                                  gcm=gcm, altpred=altpred)
+#             
+#             scen = Scenario(scencode, self.usr, elyrMeta['epsg'], 
+#                             metadata=scenmeta, 
+#                             units=elyrMeta['mapunits'], 
+#                             res=res_val, 
+#                             gcmCode=gcm, altpredCode=altpred, dateCode=tm,
+#                             bbox=bbox, 
+#                             modTime=currtime, 
+#                             layers=lyrs)
+#             predScenarios[scencode] = scen
+#       return predScenarios
    
    # ...............................................
    def _createPredictedScenarios(self, pkgMeta, elyrMeta, lyrtypeMeta, staticLayers,
@@ -1078,38 +1149,49 @@ class BOOMFiller(LMObject):
    
    # ...............................................
    def _pullClimatePackageMetadata(self):
+      """
+      All layers in a package must share these values
+      """
       SPMETA, scenPackageMetaFilename = self._findClimatePackageMetadata()
       # Combination of scenario and layer attributes making up these data 
       pkgMeta = SPMETA.CLIMATE_PACKAGES[self.scenPackageName]
       try:
-         epsg = SPMETA.EPSG
+         epsg = pkgMeta['epsg']
       except:
-         raise LMError('Failed to specify EPSG for {}'
-                       .format(self.scenPackageName))
+         try:
+            epsg = SPMETA.EPSG
+         except:
+            raise LMError('Failed to specify EPSG for {}'
+                          .format(self.scenPackageName))
       try:
-         mapunits = SPMETA.MAPUNITS
+         mapunits = pkgMeta['mapunits']
       except:
-         raise LMError('Failed to specify MAPUNITS for {}'
-                       .format(self.scenPackageName))
+         try:
+            mapunits = SPMETA.MAPUNITS
+         except:
+            raise LMError('Failed to specify MAPUNITS for {}'
+                          .format(self.scenPackageName))
       try:
-         resInMapunits = SPMETA.RESOLUTIONS[pkgMeta['res']]
+         gdaltype = pkgMeta['gdaltype']
       except:
-         raise LMError('Failed to specify res (or RESOLUTIONS values) for {}'
-                       .format(self.scenPackageName))
+         try:
+            gdaltype = SPMETA.ENVLYR_GDALTYPE
+         except:
+            raise LMError('Failed to specify ENVLYR_GDALTYPE for {}'
+                          .format(self.scenPackageName))
       try:
-         gdaltype = SPMETA.ENVLYR_GDALTYPE
+         gdalformat = pkgMeta['gdalformat']
       except:
-         raise LMError('Failed to specify ENVLYR_GDALTYPE for {}'
-                       .format(self.scenPackageName))
-      try:
-         gdalformat = SPMETA.ENVLYR_GDALFORMAT
-      except:
-         raise LMError(currargs='Failed to specify SPMETA.ENVLYR_GDALFORMAT for {}'
-                       .format(self.scenPackageName))
+         try:
+            gdalformat = SPMETA.ENVLYR_GDALFORMAT
+         except:
+            raise LMError(currargs='Failed to specify SPMETA.ENVLYR_GDALFORMAT for {}'
+                          .format(self.scenPackageName))
       # Spatial and format attributes of data files
+      # Resolution is in each scenario, not global for package
       elyrMeta = {'epsg': epsg, 
                     'mapunits': mapunits, 
-                    'resolution': resInMapunits, 
+#                     'resolution': resInMapunits, 
                     'gdaltype': gdaltype, 
                     'gdalformat': gdalformat}
       return SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta
@@ -1209,6 +1291,7 @@ class BOOMFiller(LMObject):
             scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
             scenGrims[code] = scenGrim
       return scenGrims, updatedGrdset
+   
 # ...............................................
    def _initGRIMIntersect(self, lyr, mtx):
       """

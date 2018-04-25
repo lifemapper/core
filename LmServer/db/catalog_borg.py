@@ -943,6 +943,10 @@ class Borg(DbPostgresql):
                                                          meta,
                                                          grdset.modTime)
       updatedGrdset = self._createGridset(row, idxs)
+      # Populate dlocation in obj then db if this is a new Gridset
+      if updatedGrdset._dlocation is None:
+         updatedGrdset.getDLocation()
+         success = self.updateGridset(updatedGrdset)
       return updatedGrdset
       
 # ...............................................

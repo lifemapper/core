@@ -108,7 +108,8 @@ class Gridset(ServiceObject): #LMMap
       self._shapeGrid = shapeGrid
       self._shapeGridId = shapeGridId
       self._dlocation = None
-      self.setDLocation(dlocation=dlocation)
+      if dlocation is not None:
+         self.setDLocation(dlocation=dlocation)
       self._setEPSG(epsgcode)
       self._matrices = []
       self.setMatrices(matrices, doRead=False)

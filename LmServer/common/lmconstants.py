@@ -484,7 +484,7 @@ class LMFileType:
                    LMFileType.SPECIES_RANDOM, LMFileType.DIVERSITY_RANDOM,
                    LMFileType.SCHLUTER_RANDOM, LMFileType.SPECIES_COV_RANDOM,
                    LMFileType.SITES_COV_RANDOM, LMFileType.MCPA_OUTPUTS,
-                   LMFileType.ANC_PAM]:
+                   LMFileType.GRIDSET_PACKAGE, LMFileType.ANC_PAM]:
          return True
       return False
 
@@ -679,7 +679,9 @@ class FileFix:
              LMFileType.MCPA_ENV_OBS_ADJ_R_SQ: 'envObsAdjRsq',
              LMFileType.MCPA_ENV_OBS_PARTIAL: 'envObsPart', 
              LMFileType.MCPA_ENV_RAND_F_GLOBAL: 'envRandFglob', 
-             LMFileType.MCPA_ENV_RAND_F_PARTIAL: 'envRandFpart'
+             LMFileType.MCPA_ENV_RAND_F_PARTIAL: 'envRandFpart',
+             
+             LMFileType.GRIDSET_PACKAGE: 'gsPkg',
    }
    # Postfix
    EXTENSION = {LMFileType.ANCILLARY_MAP: LMFormat.MAP.ext,
@@ -752,6 +754,7 @@ class FileFix:
                 LMFileType.MCPA_ENV_OBS_PARTIAL: LMFormat.MATRIX.ext, 
                 LMFileType.MCPA_ENV_RAND_F_GLOBAL: LMFormat.MATRIX.ext, 
                 LMFileType.MCPA_ENV_RAND_F_PARTIAL: LMFormat.MATRIX.ext,
+                
                 LMFileType.GRIDSET_PACKAGE: LMFormat.ZIP.ext
    }
    @staticmethod
