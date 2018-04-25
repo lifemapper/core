@@ -228,8 +228,12 @@ class SDMProjection(_ProjectionType, Raster):
                                projScenario, projMask, processType, 
                                projMetadata,
                                status, statusModTime, userId, sdmProjectionId)
-      lyrMetadata = self._createMetadata(lyrMetadata, title=title,
-                                         isDiscreteData=isDiscreteData)
+      if not lyrMetadata:
+         lyrMetadata = self._createMetadata(projScenario, 
+                                            occurrenceSet.displayName, 
+                                            algorithm.code, 
+                                            title=title,
+                                            isDiscreteData=isDiscreteData)
       Raster.__init__(self, name, userId, epsg, lyrId=lyrId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
                 metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType, 
@@ -326,35 +330,25 @@ class SDMProjection(_ProjectionType, Raster):
       return self._occurrenceSet.getAbsolutePath()
 
 # ...............................................
-   def _createMetadata(self, metadata, title=None, isDiscreteData=False):
+   def _createMetadata(self, prjScenario, speciesName, algorithmCode, 
+                       title=None, isDiscreteData=False):
       """
       @summary: Assemble SDMProjection metadata the first time it is created.
       """
-      try:
-         metadata[ServiceObject.META_KEYWORDS]
-      except:
-         keywds = ['SDM', 'potential habitat', self.speciesName, 
-                   self.algorithmCode]
-         prjKeywds = self._projScenario.scenMetadata[ServiceObject.META_KEYWORDS]
-         keywds.extend(prjKeywds)
-         # remove duplicates
-         keywds = list(set(keywds))
-         metadata[ServiceObject.META_KEYWORDS] = keywds
-      try:
-         metadata[ServiceObject.META_DESCRIPTION]
-      except:
-         metadata[ServiceObject.META_DESCRIPTION] = (
+      metadata = {}
+      keywds = ['SDM', 'potential habitat', speciesName, algorithmCode]
+      prjKeywds = prjScenario.scenMetadata[ServiceObject.META_KEYWORDS]
+      keywds.extend(prjKeywds)
+      # remove duplicates
+      keywds = list(set(keywds))
+      
+      metadata[ServiceObject.META_KEYWORDS] = keywds
+      metadata[ServiceObject.META_DESCRIPTION] = (
                            'Modeled habitat for {} projected onto {} datalayers'
-                           .format(self.speciesName, self._projScenario.name))
-      try:
-         metadata[Raster.META_IS_DISCRETE]
-      except:
-         metadata[Raster.META_IS_DISCRETE] = isDiscreteData
-      try:
-         metadata[Raster.META_TITLE]
-      except:
-         if title is not None:
-            metadata[Raster.META_TITLE] = title
+                           .format(speciesName, prjScenario.name))
+      metadata[Raster.META_IS_DISCRETE] = isDiscreteData
+      if title is not None:
+         metadata[Raster.META_TITLE] = title
       return metadata
    
 # ...............................................

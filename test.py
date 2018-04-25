@@ -36,14 +36,56 @@ from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
 from LmDbServer.boom.initboom import BOOMFiller
+from LmServer.legion.sdmproj import SDMProjection
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
 
-cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
-cfname='/state/partition1/lmscratch/temp/heuchera_boom_params.ini'
-cfname = '/state/partition1/lmscratch/temp/taiwan_boom_params.ini'
-filler = BOOMFiller(configFname=cfname)
-filler.initializeInputs()
+# cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
+# cfname='/state/partition1/lmscratch/temp/heuchera_boom_params.ini'
+# cfname = '/state/partition1/lmscratch/temp/taiwan_boom_params.ini'
+# filler = BOOMFiller(configFname=cfname)
+# filler.initializeInputs()
 
-              
+log = ScriptLogger('fixMetadata')
+scribe = BorgScribe(log)
+
+occ = scribe.getOccurrenceSet(occId=244)
+mscen = scribe.getScenario('global-10min', userId='nchc')
+pscen = scribe.getScenario('taiwan-30sec', userId='nchc')
+alg = Algorithm('ATT_MAXENT')
+
+prj = SDMProjection(occ, alg, mscen, pscen, 
+                        dataFormat=LMFormat.GTIFF.driver,
+                        status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+
+
+'''
+select l.metadata from layer l left join sdmproject p on l.layerid = p.layerid where p.userid = 'nchc' limit 2 ;
+
+update layer l 
+set l.metadata =  '{"keywords": ["bioclimatic variables", "climate", "elevation", "land cover", "soil", "topography", "observed", "present", "' 
+                   || quote_literal(p.displayname) || ',  "isDiscrete": false, "description": "Modeled habitat for '
+                   || quote_literal(p.displayname) || ' projected onto '
+                   || p.prjscenariocode  
+                   || ' datalayers", "title": "Taxon '
+                   || p.displayname || '  modeled with '
+                   || p.algorithmcode || ' and '
+                   || p.mdlscenariocode  || ' projected onto ' || p.prjscenariocode || "}'
+from lm_sdmproject p 
+where l.layerid = p.layerid and p.userid = 'nchc'
+
+
+update layer l 
+set l.metadata =  '{"keywords": ["bioclimatic variables", "climate", "elevation", "land cover", "soil", "topography", "observed", "present", "' 
+                   || quote_literal(p.displayname) || ',  "isDiscrete": false, "description": "Modeled habitat for '
+                   || quote_literal(p.displayname) || ' projected onto '
+                   || p.prjscenariocode  
+                   || ' datalayers", "title": "Taxon '
+                   || p.displayname || '  modeled with '
+                   || p.algorithmcode || ' and '
+                   || p.mdlscenariocode  || ' projected onto ' || p.prjscenariocode || "}'
+from lm_sdmproject p 
+where l.layerid = p.layerid and p.layerid = 606 
+
+'''
