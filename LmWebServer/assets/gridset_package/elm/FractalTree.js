@@ -13938,35 +13938,66 @@ var _user$project$ParseAncState$parseAncState = function (_p13) {
 			_periodic$elm_csv$Csv$parse(_p13)));
 };
 
+var _user$project$Newick$floatWithExp = A2(
+	_elm_community$parser_combinators$Combine$map,
+	function (str) {
+		var _p0 = _elm_lang$core$String$toFloat(str);
+		if (_p0.ctor === 'Ok') {
+			return _p0._0;
+		} else {
+			return _elm_lang$core$Native_Utils.crashCase(
+				'Newick',
+				{
+					start: {line: 150, column: 17},
+					end: {line: 155, column: 75}
+				},
+				_p0)(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					'impossible float: ',
+					_elm_lang$core$Basics$toString(_p0._0)));
+		}
+	},
+	_elm_community$parser_combinators$Combine$regex('[-+]?(?:\\d*\\.?\\d+|\\d+\\.?\\d*)(?:[eE][-+]?\\d+)?'));
 var _user$project$Newick$length = _elm_community$parser_combinators$Combine$maybe(
 	A2(
 		_elm_community$parser_combinators$Combine_ops['*>'],
 		_elm_community$parser_combinators$Combine$string(':'),
+		_user$project$Newick$floatWithExp));
+var _user$project$Newick$quotedName = A2(
+	_elm_community$parser_combinators$Combine_ops['<$>'],
+	_elm_lang$core$String$join(''),
+	_elm_community$parser_combinators$Combine$many(
 		_elm_community$parser_combinators$Combine$choice(
 			{
 				ctor: '::',
-				_0: _elm_community$parser_combinators$Combine_Num$float,
+				_0: A2(
+					_elm_community$parser_combinators$Combine_ops['$>'],
+					_elm_community$parser_combinators$Combine$string('\'\''),
+					'\''),
 				_1: {
 					ctor: '::',
-					_0: A2(_elm_community$parser_combinators$Combine$map, _elm_lang$core$Basics$toFloat, _elm_community$parser_combinators$Combine_Num$int),
+					_0: _elm_community$parser_combinators$Combine$regex('[^\']*'),
 					_1: {ctor: '[]'}
 				}
 			})));
 var _user$project$Newick$name = _elm_community$parser_combinators$Combine$choice(
 	{
 		ctor: '::',
-		_0: A3(
-			_elm_community$parser_combinators$Combine$between,
-			_elm_community$parser_combinators$Combine$string('\''),
-			_elm_community$parser_combinators$Combine$string('\''),
-			_elm_community$parser_combinators$Combine$regex('[^\']+')),
+		_0: A2(
+			_elm_community$parser_combinators$Combine_ops['<*'],
+			A2(
+				_elm_community$parser_combinators$Combine_ops['*>'],
+				_elm_community$parser_combinators$Combine$string('\''),
+				_user$project$Newick$quotedName),
+			_elm_community$parser_combinators$Combine$string('\'')),
 		_1: {
 			ctor: '::',
-			_0: _elm_community$parser_combinators$Combine$regex('[_a-zA-Z0-9\']*'),
+			_0: _elm_community$parser_combinators$Combine$regex('[^\\s;:]*'),
 			_1: {ctor: '[]'}
 		}
 	});
-var _user$project$Newick$unparseLength = function (_p0) {
+var _user$project$Newick$unparseLength = function (_p2) {
 	return A2(
 		_elm_lang$core$Maybe$withDefault,
 		'',
@@ -13978,13 +14009,13 @@ var _user$project$Newick$unparseLength = function (_p0) {
 					':',
 					_elm_lang$core$Basics$toString(l));
 			},
-			_p0));
+			_p2));
 };
 var _user$project$Newick$unparseName = _elm_lang$core$Basics$identity;
 var _user$project$Newick$unparseSubTree = function (st) {
-	var _p1 = st;
-	if (_p1.ctor === 'Leaf') {
-		return _user$project$Newick$unparseName(_p1._0);
+	var _p3 = st;
+	if (_p3.ctor === 'Leaf') {
+		return _user$project$Newick$unparseName(_p3._0);
 	} else {
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
@@ -13994,29 +14025,29 @@ var _user$project$Newick$unparseSubTree = function (st) {
 				A2(
 					_elm_lang$core$String$join,
 					',',
-					A2(_elm_lang$core$List$map, _user$project$Newick$unparseBranch, _p1._0)),
+					A2(_elm_lang$core$List$map, _user$project$Newick$unparseBranch, _p3._0)),
 				A2(
 					_elm_lang$core$Basics_ops['++'],
 					')',
-					_user$project$Newick$unparseName(_p1._1))));
+					_user$project$Newick$unparseName(_p3._1))));
 	}
 };
-var _user$project$Newick$unparseBranch = function (_p2) {
-	var _p3 = _p2;
+var _user$project$Newick$unparseBranch = function (_p4) {
+	var _p5 = _p4;
 	return A2(
 		_elm_lang$core$Basics_ops['++'],
-		_user$project$Newick$unparseSubTree(_p3._0),
-		_user$project$Newick$unparseLength(_p3._1));
+		_user$project$Newick$unparseSubTree(_p5._0),
+		_user$project$Newick$unparseLength(_p5._1));
 };
 var _user$project$Newick$unparse = function (tree) {
 	return A2(
 		_elm_lang$core$Basics_ops['++'],
 		function () {
-			var _p4 = tree;
-			if (_p4.ctor === 'SubTree') {
-				return _user$project$Newick$unparseSubTree(_p4._0);
+			var _p6 = tree;
+			if (_p6.ctor === 'SubTree') {
+				return _user$project$Newick$unparseSubTree(_p6._0);
 			} else {
-				return _user$project$Newick$unparseBranch(_p4._0);
+				return _user$project$Newick$unparseBranch(_p6._0);
 			}
 		}(),
 		';');
@@ -14035,8 +14066,8 @@ var _user$project$Newick$Leaf = function (a) {
 	return {ctor: 'Leaf', _0: a};
 };
 var _user$project$Newick$leaf = A2(_elm_community$parser_combinators$Combine$map, _user$project$Newick$Leaf, _user$project$Newick$name);
-var _user$project$Newick$subTree = function (_p5) {
-	var _p6 = _p5;
+var _user$project$Newick$subTree = function (_p7) {
+	var _p8 = _p7;
 	return _elm_community$parser_combinators$Combine$choice(
 		{
 			ctor: '::',
@@ -14048,8 +14079,8 @@ var _user$project$Newick$subTree = function (_p5) {
 			}
 		});
 };
-var _user$project$Newick$internal = function (_p7) {
-	var _p8 = _p7;
+var _user$project$Newick$internal = function (_p9) {
+	var _p10 = _p9;
 	return A2(
 		_elm_community$parser_combinators$Combine$andThen,
 		function (branches) {
@@ -14061,15 +14092,15 @@ var _user$project$Newick$internal = function (_p7) {
 		_elm_community$parser_combinators$Combine$parens(
 			_elm_community$parser_combinators$Combine$lazy(_user$project$Newick$branchSet)));
 };
-var _user$project$Newick$branchSet = function (_p9) {
-	var _p10 = _p9;
+var _user$project$Newick$branchSet = function (_p11) {
+	var _p12 = _p11;
 	return A2(
 		_elm_community$parser_combinators$Combine$sepBy1,
 		_elm_community$parser_combinators$Combine$string(','),
 		_elm_community$parser_combinators$Combine$lazy(_user$project$Newick$branch));
 };
-var _user$project$Newick$branch = function (_p11) {
-	var _p12 = _p11;
+var _user$project$Newick$branch = function (_p13) {
+	var _p14 = _p13;
 	return A2(
 		_elm_community$parser_combinators$Combine$andThen,
 		function (st) {
@@ -14116,17 +14147,36 @@ var _user$project$TaxLabels$squid = A2(
 		_elm_community$parser_combinators$Combine$string('[&squid='),
 		_elm_community$parser_combinators$Combine$regex('[0-9a-fA-F]*')),
 	_elm_community$parser_combinators$Combine$string(']'));
+var _user$project$TaxLabels$quotedName = A2(
+	_elm_community$parser_combinators$Combine_ops['<$>'],
+	_elm_lang$core$String$join(''),
+	_elm_community$parser_combinators$Combine$many(
+		_elm_community$parser_combinators$Combine$choice(
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_community$parser_combinators$Combine_ops['$>'],
+					_elm_community$parser_combinators$Combine$string('\'\''),
+					'\''),
+				_1: {
+					ctor: '::',
+					_0: _elm_community$parser_combinators$Combine$regex('[^\']+'),
+					_1: {ctor: '[]'}
+				}
+			})));
 var _user$project$TaxLabels$name = _elm_community$parser_combinators$Combine$choice(
 	{
 		ctor: '::',
-		_0: A3(
-			_elm_community$parser_combinators$Combine$between,
-			_elm_community$parser_combinators$Combine$string('\''),
-			_elm_community$parser_combinators$Combine$string('\''),
-			_elm_community$parser_combinators$Combine$regex('[^\']+')),
+		_0: A2(
+			_elm_community$parser_combinators$Combine_ops['<*'],
+			A2(
+				_elm_community$parser_combinators$Combine_ops['*>'],
+				_elm_community$parser_combinators$Combine$string('\''),
+				_user$project$TaxLabels$quotedName),
+			_elm_community$parser_combinators$Combine$string('\'')),
 		_1: {
 			ctor: '::',
-			_0: _elm_community$parser_combinators$Combine$regex('[_a-zA-Z0-9\']+'),
+			_0: _elm_community$parser_combinators$Combine$regex('[^\\s;]+'),
 			_1: {ctor: '[]'}
 		}
 	});
@@ -14265,8 +14315,8 @@ var _user$project$Newick2Binary$newick2Binary = F2(
 		}
 	});
 
-var _user$project$ParseNexusTree$tryParse = F2(
-	function (parser, input) {
+var _user$project$ParseNexusTree$tryParse = F3(
+	function (parserName, parser, input) {
 		var _p0 = A2(_elm_community$parser_combinators$Combine$parse, parser, input);
 		if (_p0.ctor === 'Ok') {
 			return _elm_lang$core$Result$Ok(_p0._0._2);
@@ -14274,11 +14324,17 @@ var _user$project$ParseNexusTree$tryParse = F2(
 			return _elm_lang$core$Result$Err(
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					A2(_elm_lang$core$String$left, 20, _p0._0._1.input),
+					parserName,
 					A2(
 						_elm_lang$core$Basics_ops['++'],
 						' ',
-						A2(_elm_lang$core$String$join, ' or ', _p0._0._2))));
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							A2(_elm_lang$core$String$left, 20, _p0._0._1.input),
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								' ',
+								A2(_elm_lang$core$String$join, ' or ', _p0._0._2))))));
 		}
 	});
 var _user$project$ParseNexusTree$treeRegex = _elm_lang$core$Regex$regex('TREE 1 = ([^;]*;)');
@@ -14286,7 +14342,7 @@ var _user$project$ParseNexusTree$taxLabelsRegex = _elm_lang$core$Regex$regex('TA
 var _user$project$ParseNexusTree$parseNexusTree = function (nexus) {
 	var tree = A2(
 		_elm_lang$core$Result$andThen,
-		_user$project$ParseNexusTree$tryParse(_user$project$Newick$tree),
+		A2(_user$project$ParseNexusTree$tryParse, 'Newick.tree', _user$project$Newick$tree),
 		A2(
 			_elm_lang$core$Result$fromMaybe,
 			'Couldn\'t find TREE 1 in Nexus',
@@ -14309,7 +14365,7 @@ var _user$project$ParseNexusTree$parseNexusTree = function (nexus) {
 								nexus)))))));
 	var taxa = A2(
 		_elm_lang$core$Result$andThen,
-		_user$project$ParseNexusTree$tryParse(_user$project$TaxLabels$taxLabels),
+		A2(_user$project$ParseNexusTree$tryParse, 'taxLabels', _user$project$TaxLabels$taxLabels),
 		A2(
 			_elm_lang$core$Result$fromMaybe,
 			'Couldn\'t find TAXLABELS in Nexus',
