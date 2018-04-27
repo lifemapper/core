@@ -198,7 +198,7 @@ class BOOMFiller(LMObject):
       # identify and construct from provided metadata 
       # Configured codes for existing Scenarios
       if self.scenPkg is not None:
-         s = self.scenPkg[self.modelScenCode]
+         s = self.scenPkg.getScenario(code=self.modelScenCode)
          self.epsg = s.epsgcode
          self.mapunits = s.mapUnits
       else:
@@ -216,8 +216,8 @@ class BOOMFiller(LMObject):
              self.scenPackageMetaFilename, masklyr) = self._createScenarios()
             self.prjScenCodeList = self.scenPkg.scenarios.keys()
 
-         if not doMapBaseline:
-            self.prjScenCodeList.remove(self.modelScenCode)
+      if not doMapBaseline:
+         self.prjScenCodeList.remove(self.modelScenCode)
       # TODO: Need a mask layer for every scenario!!
       self.masklyr = masklyr
 
@@ -1162,18 +1162,22 @@ class BOOMFiller(LMObject):
       @summary Add scenPackage, scenario and layer metadata to database, and 
                update the scenPkg attribute with newly inserted objects
       """
-      updatedScens = []
-      updatedScenPkg = self.scribe.findOrInsertScenPackage(self.scenPkg)
-      for scode, scen in self.scenPkg.scenarios.iteritems():
-         if scen.getId() is not None:
-            self.scribe.log.info('Scenario {} is present'.format(scode))
-            updatedScens.append(scen)
-         else:
-            self.scribe.log.info('Insert scenario {}'.format(scode))
-            newscen = self.scribe.findOrInsertScenario(scen, 
-                                                scenPkgId=updatedScenPkg.getId())
-            updatedScens.append(newscen)
-      self.scenPkg.setScenarios(updatedScens)
+      if self.scenPkg.getId() is not None:
+         self.scribe.log.info('ScenarioPackage {} is present'
+                              .format(self.scenPkg.name))
+      else:
+         updatedScens = []
+         updatedScenPkg = self.scribe.findOrInsertScenPackage(self.scenPkg)
+         for scode, scen in self.scenPkg.scenarios.iteritems():
+            if scen.getId() is not None:
+               self.scribe.log.info('Scenario {} is present'.format(scode))
+               updatedScens.append(scen)
+            else:
+               self.scribe.log.info('Insert scenario {}'.format(scode))
+               newscen = self.scribe.findOrInsertScenario(scen, 
+                                                   scenPkgId=updatedScenPkg.getId())
+               updatedScens.append(newscen)
+         self.scenPkg.setScenarios(updatedScens)
    
    # ...............................................
    def addMaskLayer(self):
@@ -1755,7 +1759,7 @@ CURR_MJD = mx.DateTime.gmt().mjd
 cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
 cfname='/state/partition1/lmscratch/temp/heuchera_boom_params.ini'
 cfname='/state/partition1/lmscratch/temp/taiwan_boom_params.ini'
-cfname='/state/partition1/lmscratch/temp/file_52216.ini'
+cfname='/state/partition1/lmscratch/temp/file_85752.ini'
 
 filler = BOOMFiller(configFname=cfname)
 filler.initializeInputs()
