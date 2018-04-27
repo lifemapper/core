@@ -61,29 +61,6 @@ prj = SDMProjection(occ, alg, mscen, pscen,
 
 
 '''
-select l.metadata from layer l left join sdmproject p on l.layerid = p.layerid where p.userid = 'nchc' limit 2 ;
-
-update layer l 
-set metadata =  '{"keywords": ["bioclimatic variables", "climate", "elevation", "land cover", "soil", "topography", "observed", "present", "' 
-from lm_sdmproject p 
-where l.layerid = p.layerid and p.userid = 'nchc'
-
-update layer l 
-set metadata =  l.metadata || quote_literal(p.displayname) || ',  "isDiscrete": false, "description": "Modeled habitat for '
-                   || quote_literal(p.displayname) || ' projected onto '
-from lm_sdmproject p 
-where l.layerid = p.layerid and p.userid = 'nchc';
-
-
-update layer l 
-set metadata =  l.metadata || p.prjscenariocode  || ' datalayers", "title": "Taxon ' || p.displayname || '  modeled with '
-from lm_sdmproject p 
-where l.layerid = p.layerid and p.userid = 'nchc';
-
-update layer l 
-set metadata =  l.metadata || p.algorithmcode || ' and ' || p.mdlscenariocode  || ' projected onto ' || p.prjscenariocode || '"}'
-from lm_sdmproject p 
-where l.layerid = p.layerid and p.userid = 'nchc'
 
 
 update layer l 
@@ -96,7 +73,7 @@ set metadata =  '{"keywords": ["bioclimatic variables", "climate", "elevation", 
                    || p.algorithmcode || ' and '
                    || p.mdlscenariocode  || ' projected onto ' || p.prjscenariocode || '"}'
 from lm_sdmproject p 
-where l.layerid = p.layerid and p.prjscenariocode = 'taiwan-30sec';
+where l.layerid = p.layerid and p.prjscenariocode in ('global-10min', 'taiwan-30sec');
 
 update layer l 
 set metadata =  '{"keywords": ["bioclimatic variables", "climate", "elevation", "observed", "present", "' 

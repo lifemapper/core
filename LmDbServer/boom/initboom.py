@@ -151,24 +151,70 @@ class BOOMFiller(LMObject):
                                                    usr=self.usr)
       
    # ...............................................
+   def _findScenariosFromCodes(self, doMapBaseline=1):
+      """
+      @summary Find Scenarios from codes or create from ScenPackage metadata
+      """
+      existingScenPkg = None
+      # TODO: Put optional masklayer into every Scenario
+      masklyr = None  
+      
+      # Check to see if these exist as public or user data first
+      if self.scenPackageName is not None:
+         existingScenPkg = self.scribe.getScenPackage(userId=PUBLIC_USER, 
+                                         scenPkgName=self.scenPackageName, 
+                                         fillLayers=False)
+         if not existingScenPkg:
+            existingScenPkg = self.scribe.getScenPackage(userId=self.usr, 
+                                            scenPkgName=self.scenPackageName, 
+                                            fillLayers=False)
+      # Required vals if not creating new from metadata and layers
+      # SCENARIO_PACKAGE_MODEL_SCENARIO
+      # SCENARIO_PACKAGE_PROJECTION_SCENARIOS
+      if not existingScenPkg and self.modelScenCode is not None:
+         codes = [self.modelScenCode]
+         for c in self.prjScenCodeList:
+            codes.append(c)
+         allsps = self.scribe.getScenPackagesForUserCodes(PUBLIC_USER, codes, fillLayers=False)
+         if not allsps:
+            allsps = self.scribe.getScenPackagesForUserCodes(self.usr, codes, fillLayers=False)
+         if len(allsps) > 0:
+            existingScenPkg = allsps[0]
+            
+      return existingScenPkg
+                
+   # ...............................................
    def _fillScenarios(self, doMapBaseline=1):
       """
       @summary Find Scenarios from codes or create from ScenPackage metadata
       """
       # TODO: Put optional masklayer into every Scenario
-      masklyr = None      
+      masklyr = None  
+      
+      # Check to see if these exist as public or user data first
+      self.scenPkg = self._findScenariosFromCodes(doMapBaseline=1)
+            
+      # if SCENARIO_PACKAGE_MODEL_SCENARIO is missing, 
+      # identify and construct from provided metadata 
       # Configured codes for existing Scenarios
-      if self.modelScenCode is not None:
-         SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
-#          masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
-         self.scenPackageMetaFilename = None
-         # Fill or reset epsgcode, mapunits, gridbbox
-         self.scenPkg, self.epsg, self.mapunits = self._checkScenarios()
+      if self.scenPkg is not None:
+         s = self.scenPkg[self.modelScenCode]
+         self.epsg = s.epsgcode
+         self.mapunits = s.mapUnits
       else:
-         # If new ScenPackage was provided (not SDM scenario codes), fill codes 
-         (self.scenPkg, self.modelScenCode, self.epsg, self.mapunits, 
-          self.scenPackageMetaFilename, masklyr) = self._createScenarios()
-         self.prjScenCodeList = self.scenPkg.scenarios.keys()
+         if self.modelScenCode is not None:
+            SPMETA, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
+#             masklyr = self._createMaskLayer(SPMETA, pkgMeta, elyrMeta)
+            self.scenPackageMetaFilename = None
+            # Fill or reset epsgcode, mapunits, gridbbox
+#             self.scenPkg, self.epsg, self.mapunits = self._checkScenarios()
+            if not self.prjScenCodeList:
+               self.prjScenCodeList = self.scenPkg.scenarios.keys()
+         else:
+            # If new ScenPackage was provided (not SDM scenario codes), fill codes 
+            (self.scenPkg, self.modelScenCode, self.epsg, self.mapunits, 
+             self.scenPackageMetaFilename, masklyr) = self._createScenarios()
+            self.prjScenCodeList = self.scenPkg.scenarios.keys()
 
          if not doMapBaseline:
             self.prjScenCodeList.remove(self.modelScenCode)
@@ -334,12 +380,15 @@ class BOOMFiller(LMObject):
                          MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
                          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
                          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
-      # Find package name or code list, check for scenarios and epsg, mapunits
+      # SCENARIO_PACKAGE_MODEL_SCENARIO and
+      # SCENARIO_PACKAGE_PROJECTION_SCENARIOS
+      # are required iff there is no environmental metadata from which to 
+      # construct scenarios (baseline = Model Scen, all scenarios = Proj Scens)
+      # Get epsg, mapunits from scenarios
       scenPackageName = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE')
-      if scenPackageName is not None:
-         modelScenCode = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
-         prjScenCodeList = self._getBoomOrDefault(config, 
-                     'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', isList=True)
+      modelScenCode = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
+      prjScenCodeList = self._getBoomOrDefault(config, 
+                  'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', isList=True)
       
       return (usr, usrPath, usrEmail, archiveName, priority, scenPackageName, 
               modelScenCode, prjScenCodeList, dataSource, 
@@ -533,27 +582,27 @@ class BOOMFiller(LMObject):
             if updatedUser.userid == self.usr and self.usrEmail is None:
                self.usrEmail = updatedUser.email
    
-   # ...............................................
-   def _checkScenarios(self):
-      epsg = mapunits = None
-      if self.modelScenCode not in self.prjScenCodeList:
-         self.prjScenCodeList.append(self.modelScenCode)
-      scenPkgs = self.scribe.getScenPackagesForUserCodes(self.usr, 
-                                                       self.prjScenCodeList)
-      if not scenPkgs:
-         scenPkgs = self.scribe.getScenPackagesForUserCodes(PUBLIC_USER, 
-                                                          self.prjScenCodeList)
-      if len(scenPkgs) == 0:
-         raise LMError('There are no matching scenPackages!')
-      elif len(scenPkgs) > 1:
-         raise LMError('I cannot handle multiple matching scenPackages!')
-      else:
-         scenPkg = scenPkgs[0]
-         scen = scenPkg.getScenario(code=self.prjScenCodeList[0])
-         epsg = scen.epsgcode
-         mapunits = scen.mapUnits
-
-      return scenPkg, epsg, mapunits
+#    # ...............................................
+#    def _checkScenarios(self):
+#       epsg = mapunits = None
+#       if self.modelScenCode not in self.prjScenCodeList:
+#          self.prjScenCodeList.append(self.modelScenCode)
+#       scenPkgs = self.scribe.getScenPackagesForUserCodes(self.usr, 
+#                                                        self.prjScenCodeList)
+#       if not scenPkgs:
+#          scenPkgs = self.scribe.getScenPackagesForUserCodes(PUBLIC_USER, 
+#                                                           self.prjScenCodeList)
+#       if len(scenPkgs) == 0:
+#          raise LMError('There are no matching scenPackages!')
+#       elif len(scenPkgs) > 1:
+#          raise LMError('I cannot handle multiple matching scenPackages!')
+#       else:
+#          scenPkg = scenPkgs[0]
+#          scen = scenPkg.getScenario(code=self.prjScenCodeList[0])
+#          epsg = scen.epsgcode
+#          mapunits = scen.mapUnits
+# 
+#       return scenPkg, epsg, mapunits
          
    # ...............................................
    def _createScenarios(self):
@@ -1706,6 +1755,7 @@ CURR_MJD = mx.DateTime.gmt().mjd
 cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
 cfname='/state/partition1/lmscratch/temp/heuchera_boom_params.ini'
 cfname='/state/partition1/lmscratch/temp/taiwan_boom_params.ini'
+cfname='/state/partition1/lmscratch/temp/file_52216.ini'
 
 filler = BOOMFiller(configFname=cfname)
 filler.initializeInputs()
