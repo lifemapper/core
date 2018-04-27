@@ -1763,6 +1763,9 @@ cfname='/state/partition1/lmscratch/temp/file_85752.ini'
 
 filler = BOOMFiller(configFname=cfname)
 filler.initializeInputs()
+
+
+filler.addPackageScenariosLayers()
 scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
 tree = filler.addTree(boomGridset)
 biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
