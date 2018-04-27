@@ -124,7 +124,7 @@ def _query(collection, qParams=None, fqParams=None,
    return resp
 
 # .............................................................................
-def queryArchiveIndex(algorithmCode=None, bbox=None, gridSetId=None, 
+def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None, gridSetId=None, 
                       modelScenarioCode=None, pointMax=None, pointMin=None, 
                       projectionScenarioCode=None, squid=None, taxKingdom=None, 
                       taxPhylum=None, taxClass=None, taxOrder=None, 
@@ -136,6 +136,7 @@ def queryArchiveIndex(algorithmCode=None, bbox=None, gridSetId=None,
    """
    qParams = [
       (SOLR_FIELDS.ALGORITHM_CODE, algorithmCode),
+      (SOLR_FIELDS.DISPLAY_NAME, displayName),
       (SOLR_FIELDS.GRIDSET_ID, gridSetId),
       (SOLR_FIELDS.USER_ID, userId),
       (SOLR_FIELDS.MODEL_SCENARIO_CODE, modelScenarioCode),

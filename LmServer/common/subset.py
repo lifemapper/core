@@ -127,6 +127,8 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, scribe=None):
                 modTime=gmt().mjd, tree=origGS.tree)
    updatedGS = scribe.findOrInsertGridset(gs)
    
+   # TODO: Probably should always copy tree and subset taxa
+   
    # Copy tree if necessary
    if origGS.tree.getId() != userId:
       otree = origGS.tree

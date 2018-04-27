@@ -43,7 +43,7 @@ class GlobalPAMService(LmService):
    """
    # ................................
    @lmFormatter
-   def GET(self, algorithmCode=None, bbox=None, gridSetId=None, 
+   def GET(self, algorithmCode=None, bbox=None, displayName=None, gridSetId=None, 
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
                  urlUser=None, prjScenCode=None, squid=None, 
                  taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
@@ -54,7 +54,7 @@ class GlobalPAMService(LmService):
                    entries matching the parameters, or a count of those
       """
       return self._makeSolrQuery(algorithmCode=algorithmCode, bbox=bbox, 
-                                 gridSetId=gridSetId, 
+                                 displayName=displayName, gridSetId=gridSetId, 
                                  modelScenarioCode=modelScenarioCode, 
                                  pointMax=pointMax, pointMin=pointMin, 
                                  urlUser=urlUser, 
@@ -71,12 +71,12 @@ class GlobalPAMService(LmService):
                  urlUser=None, prjScenCode=None, squid=None, 
                  taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
                  taxonOrder=None, taxonFamily=None, taxonGenus=None, 
-                 taxonSpecies=None):
+                 taxonSpecies=None, displayName=None):
       """
       @summary: A Global PAM post request will create a subset
       """
       matches = self._makeSolrQuery(algorithmCode=algorithmCode, bbox=bbox, 
-                                 gridSetId=gridSetId, 
+                                 displayName=displayName, gridSetId=gridSetId, 
                                  modelScenarioCode=modelScenarioCode, 
                                  pointMax=pointMax, pointMin=pointMin, 
                                  urlUser=urlUser, 
@@ -94,7 +94,8 @@ class GlobalPAMService(LmService):
                   gridset.modTime, epsg=gridset.epsgcode)
    
    # ................................
-   def _makeSolrQuery(self, algorithmCode=None, bbox=None, gridSetId=None, 
+   def _makeSolrQuery(self, algorithmCode=None, bbox=None, displayName=None, 
+                            gridSetId=None, 
                             modelScenarioCode=None, pointMax=None, 
                             pointMin=None, urlUser=None, 
                             projectionScenarioCode=None, squid=None,
@@ -103,8 +104,8 @@ class GlobalPAMService(LmService):
                             taxSpecies=None):
       
       return queryArchiveIndex(algorithmCode=algorithmCode, bbox=bbox, 
-                  gridSetId=gridSetId, modelScenarioCode=modelScenarioCode, 
-                  pointMax=pointMax, pointMin=pointMin,
+                  displayName=displayName, gridSetId=gridSetId, 
+                  modelScenarioCode=modelScenarioCode, pointMax=pointMax, pointMin=pointMin,
                   projectionScenarioCode=projectionScenarioCode, squid=squid,
                   taxKingdom=taxKingdom, taxPhylum=taxPhylum, taxClass=taxClass, 
                   taxOrder=taxOrder, taxFamily=taxFamily, taxGenus=taxGenus, 
