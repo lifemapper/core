@@ -781,7 +781,7 @@ class SDMProjection(_ProjectionType, Raster):
       occSetFname = os.path.join(occTargetDir, occFileBasename)
       
       if addOccRules:
-         self._occurrenceSet.computeMe(workDir=workDir)
+         rules.extend(self._occurrenceSet.computeMe(workDir=workDir))
       
       # Look at processing parameters and decide if we need to do anything
       if procParams.has_key(PRE_PROCESS_KEY) and \
