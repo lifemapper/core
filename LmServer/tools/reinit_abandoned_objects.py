@@ -78,7 +78,8 @@ def reinitProjections(beginStatus, endStatus, groupSize, log, procParams=None,
       
       rules = []
       for prj in prjs:
-         rules.extend(prj.computeMe(workDir=workDir, procParams=procParams))
+         rules.extend(prj.computeMe(workDir=workDir, procParams=procParams,
+                                    addOccRules=True))
       
       
       mfChain.addCommands(rules)

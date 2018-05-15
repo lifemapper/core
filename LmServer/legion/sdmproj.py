@@ -760,7 +760,7 @@ class SDMProjection(_ProjectionType, Raster):
       return rules, maskFn
 
    # .............................................................................
-   def _computeMyModel(self, workDir=None, procParams=None):
+   def _computeMyModel(self, workDir=None, procParams=None, addOccRules=False):
       """
       @summary: Generate a command to create a SDM model ruleset for this 
                    projection
@@ -779,6 +779,9 @@ class SDMProjection(_ProjectionType, Raster):
       # Ruleset file could go in occ directory
       occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
       occSetFname = os.path.join(occTargetDir, occFileBasename)
+      
+      if addOccRules:
+         self._occurrenceSet.computeMe(workDir=workDir)
       
       # Look at processing parameters and decide if we need to do anything
       if procParams.has_key(PRE_PROCESS_KEY) and \
@@ -832,7 +835,7 @@ class SDMProjection(_ProjectionType, Raster):
       return rules
 
    # ......................................
-   def computeMe(self, workDir=None, procParams=None):
+   def computeMe(self, workDir=None, procParams=None, addOccRules=False):
       """
       @todo: Consider producing layersFn and paramsFn with script
       """
@@ -866,7 +869,8 @@ class SDMProjection(_ProjectionType, Raster):
          
          # Generate the model
          modelRules = self._computeMyModel(workDir=workDir, 
-                                           procParams=procParams)
+                                           procParams=procParams,
+                                           addOccRules=addOccRules)
          rules.extend(modelRules)
          
          # Look at processing parameters and decide if we need to do anything
