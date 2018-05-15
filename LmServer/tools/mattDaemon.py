@@ -356,7 +356,7 @@ class MattDaemon(Daemon):
          origMf = mfObj.getDLocation()
          self.scribe.deleteObject(mfObj)
          # Remove log files
-         if logFiles is not None:
+         if logFiles is not None and not self.debug:
             for logFn in logFiles:
                os.remove(logFn)
                
