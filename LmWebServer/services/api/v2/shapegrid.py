@@ -71,7 +71,7 @@ class ShapeGridService(LmService):
    @lmFormatter
    def GET(self, pathShapegridId=None, afterTime=None, beforeTime=None, 
            cellSides=None, cellSize=None, epsgCode=None, limit=100, offset=0, 
-           urlUser=None):
+           urlUser=None, **params):
       """
       @summary: Performs a GET request.  If a shapegrid id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -93,7 +93,8 @@ class ShapeGridService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout):
+   def POST(self, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout,
+            **params):
       """
       @summary: Posts a new shapegrid
       @todo: Add cutout

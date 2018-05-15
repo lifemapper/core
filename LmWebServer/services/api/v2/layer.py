@@ -74,7 +74,7 @@ class LayerService(LmService):
    def GET(self, pathLayerId=None, afterTime=None, altPredCode=None, 
            beforeTime=None, dateCode=None, epsgCode=None, envCode=None, 
            envTypeId=None, gcmCode=None, layerType=None, limit=100, offset=0, 
-           urlUser=None, scenarioId=None, squid=None):
+           urlUser=None, scenarioId=None, squid=None, **params):
       """
       @summary: Performs a GET request.  If a layer id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -120,7 +120,7 @@ class LayerService(LmService):
    def POST(self, layerType, epsgCode, layerName, 
             envLayerTypeId=None, additionalMetadata=None, valUnits=None,
             envCode=None, gcmCode=None, alternatePredictionCode=None, 
-            dateCode=None):
+            dateCode=None, **params):
       """
       @summary: Posts a new layer
       @todo: Add file type parameter or look at headers?

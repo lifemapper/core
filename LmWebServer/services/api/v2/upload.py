@@ -55,7 +55,7 @@ class UserUploadService(LmService):
    """
    # ................................
    @lmFormatter
-   def POST(self, fileName=None, uploadType=None):
+   def POST(self, fileName=None, uploadType=None, **params):
       """
       @summary: Posts a new file to the user's space
       @todo: Add parameters to available

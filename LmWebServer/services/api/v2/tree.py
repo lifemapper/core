@@ -74,7 +74,8 @@ class TreeService(LmService):
    @lmFormatter
    def GET(self, pathTreeId=None, limit=100, offset=0, name=None, 
            isBinary=None, isUltrametric=None, hasBranchLengths=None, 
-           metaString=None, afterTime=None, beforeTime=None, urlUser=None):
+           metaString=None, afterTime=None, beforeTime=None, urlUser=None, 
+           **params):
       """
       @summary: Performs a GET request.  If a tree id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -102,7 +103,7 @@ class TreeService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, name=None, treeSchema=DEFAULT_TREE_SCHEMA):
+   def POST(self, name=None, treeSchema=DEFAULT_TREE_SCHEMA, **params):
       """
       @summary: Posts a new tree
       @todo: Format

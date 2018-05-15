@@ -100,7 +100,7 @@ class GridsetBioGeoService(LmService):
 
    # ................................
    @lmFormatter
-   def GET(self, pathGridSetId, pathBioGeoId=None):
+   def GET(self, pathGridSetId, pathBioGeoId=None, **params):
       """
       @summary: There is not a true service for limiting the biogeographic
                    hypothesis matrices in a gridset, but return all when listing
@@ -123,7 +123,7 @@ class GridsetBioGeoService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, pathGridSetId):
+   def POST(self, pathGridSetId, **params):
       """
       @summary: Adds a set of biogeographic hypotheses to the gridset
       """
@@ -336,7 +336,7 @@ class GridsetTreeService(LmService):
    # ................................
    @lmFormatter
    def GET(self, pathGridSetId, pathTreeId=None, includeCSV=None, 
-                                                            includeSDMs=None):
+                                                   includeSDMs=None, **params):
       """
       @summary: At this time, there is no listing service for gridset trees.
                    For now, we won't even take a tree id parameter and instead
@@ -347,7 +347,8 @@ class GridsetTreeService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, pathGridSetId, pathTreeId=None, name=None, treeSchema=DEFAULT_TREE_SCHEMA):
+   def POST(self, pathGridSetId, pathTreeId=None, name=None, 
+            treeSchema=DEFAULT_TREE_SCHEMA, **params):
       """
       @summary: Posts a new tree and adds it to the gridset
       """
@@ -440,7 +441,7 @@ class GridSetService(LmService):
    @lmFormatter
    def GET(self, pathGridSetId=None, afterTime=None, beforeTime=None, 
            epsgCode=None, limit=100, metaString=None, offset=0, urlUser=None, 
-           shapegridId=None):
+           shapegridId=None, **params):
       """
       @summary: Performs a GET request.  If a grid set id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -461,7 +462,7 @@ class GridSetService(LmService):
          return self._getGridSet(pathGridSetId)
       
    # ................................
-   def POST(self):
+   def POST(self, **params):
       """
       @summary: Posts a new grid set
       """

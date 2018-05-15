@@ -44,7 +44,7 @@ class SnippetService(LmService):
    def GET(self, ident1=None, provider=None, collection=None, 
                       catalogNumber=None, operation=None, afterTime=None,
                       beforeTime=None, ident2=None, url=None, who=None,
-                      agent=None, why=None):
+                      agent=None, why=None, **params):
       """
       @summary: A snippet get request will query the Lifemapper snippet index
                    and return matching entries.

@@ -48,7 +48,7 @@ class GlobalPAMService(LmService):
                  urlUser=None, prjScenCode=None, squid=None, 
                  taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
                  taxonOrder=None, taxonFamily=None, taxonGenus=None, 
-                 taxonSpecies=None):
+                 taxonSpecies=None, **params):
       """
       @summary: A Global PAM get request will query the global PAM and return
                    entries matching the parameters, or a count of those
@@ -71,7 +71,7 @@ class GlobalPAMService(LmService):
                  urlUser=None, prjScenCode=None, squid=None, 
                  taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
                  taxonOrder=None, taxonFamily=None, taxonGenus=None, 
-                 taxonSpecies=None, displayName=None):
+                 taxonSpecies=None, displayName=None, **params):
       """
       @summary: A Global PAM post request will create a subset
       """

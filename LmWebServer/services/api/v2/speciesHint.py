@@ -42,7 +42,7 @@ class SpeciesHintService(LmService):
    """
    # ................................
    @lmFormatter
-   def GET(self, searchString, limit=20, urlUser=None):#, taxonGenus=None, taxonSpecies=None):
+   def GET(self, searchString, limit=20, urlUser=None, **params):#, taxonGenus=None, taxonSpecies=None):
       """
       @summary: Search the index for occurrence sets matching the given search
                    string

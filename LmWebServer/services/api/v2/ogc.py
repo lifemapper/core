@@ -57,7 +57,7 @@ class MapService(LmService):
            crs=None, exceptions=None, height=None, layer=None, layers=None, 
            point=None, request=None, respFormat=None, service=None, sld=None, 
            sld_body=None, srs=None, styles=None, time=None, transparent=None, 
-           version=None, width=None):
+           version=None, width=None, **params):
       """
       @summary: GET method for all OGC services
       @param mapName: The map name to use for the request

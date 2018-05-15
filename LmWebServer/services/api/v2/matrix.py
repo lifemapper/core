@@ -76,7 +76,7 @@ class MatrixService(LmService):
    def GET(self, pathGridSetId, pathMatrixId=None, afterTime=None, 
            altPredCode=None, beforeTime=None, dateCode=None, epsgCode=None, 
            gcmCode=None, keyword=None, limit=100, matrixType=None, offset=0, 
-           urlUser=None, status=None):
+           urlUser=None, status=None, **params):
       """
       @summary: Performs a GET request.  If a matrix id is provided,
                    attempt to return that item.  If not, return a list of 

@@ -80,7 +80,7 @@ class SdmProjectService(LmService):
            algorithmCode=None, beforeStatus=None, beforeTime=None, 
            displayName=None, epsgCode=None, limit=100, modelScenarioCode=None, 
            occurrenceSetId=None, offset=0, projectionScenarioCode=None, 
-           urlUser=None, scenarioId=None, status=None, gridSetId=None):
+           urlUser=None, scenarioId=None, status=None, gridSetId=None, **params):
       """
       @summary: Performs a GET request.  If a projection id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -113,7 +113,7 @@ class SdmProjectService(LmService):
    #@cherrypy.tools.json_in
    #@cherrypy.tools.json_out
    @lmFormatter
-   def POST(self):
+   def POST(self, **params):
       """
       @summary: Posts a new projection
       """

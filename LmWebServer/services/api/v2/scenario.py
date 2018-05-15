@@ -73,7 +73,7 @@ class ScenarioService(LmService):
    @lmFormatter
    def GET(self, pathScenarioId=None, afterTime=None, alternatePredictionCode=None,
                  beforeTime=None, dateCode=None, epsgCode=None, gcmCode=None, 
-                 limit=100, offset=0, urlUser=None):
+                 limit=100, offset=0, urlUser=None, **params):
       """
       @summary: Performs a GET request.  If a scenario id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -97,7 +97,7 @@ class ScenarioService(LmService):
    #@cherrypy.tools.json_in
    #@cherrypy.tools.json_out
    @lmFormatter
-   def POST(self):
+   def POST(self, **params):
       """
       @summary: Posts a new scenario
       """
