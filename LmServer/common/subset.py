@@ -29,6 +29,7 @@
 from mx.DateTime import gmt
 import numpy as np
 from osgeo import ogr
+import random
 
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
                                          ProcessType)
@@ -132,12 +133,15 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, scribe=None):
    # Copy tree if necessary
    if origGS.tree.getId() != userId:
       otree = origGS.tree
-      newTree = Tree('Copy of tree {}'.format(otree.getId(), 
-                                              metadata=otree.treeMetadata,
-                                              userId=userId, 
-                                              gridsetId=updatedGS.getId()))
+      newTree = Tree('Copy of tree {}-{}'.format(
+                           otree.getId(), random.randint(0,1000)), 
+                           metadata=otree.treeMetadata,
+                           userId=userId, 
+                           gridsetId=updatedGS.getId())
       insertedTree = scribe.findOrInsertTree(newTree)
-      treeData = otree.read().tree
+      otree.read()
+      treeData = otree.tree
+      newTree.tree = treeData
       insertedTree.setTree(treeData)
       insertedTree.writeTree()
       updatedGS.addTree(insertedTree, doRead=True)

@@ -86,8 +86,9 @@ class GlobalPAMService(LmService):
                                  taxOrder=taxonOrder, taxFamily=taxonFamily,
                                  taxGenus=taxonGenus, taxSpecies=taxonSpecies)
       # Make bbox tuple
-      bbox = tuple([float(i) for i in bbox.split(',')])
-      
+      if bbox:
+         bbox = tuple([float(i) for i in bbox.split(',')])      
+
       gridset = self._subsetGlobalPAM(archiveName, matches, bbox=bbox)
       cherrypy.response.status = 202
       return Atom(gridset.getId(), gridset.name, gridset.metadataUrl, 
