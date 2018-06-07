@@ -132,7 +132,7 @@ class RADCaller(LMObject):
       return mfChain
    
    # ...............................................
-   def analyzeGrid(self, doCalc=False, doMCPA=False):
+   def analyzeGrid(self, doCalc=False, doMCPA=False, numPermutations=500):
       # For each PAM
       gridsetId = self._gridset.getId()
       
@@ -252,7 +252,7 @@ class RADCaller(LMObject):
       mfChain = self._createMF()
       rules = self._gridset.computeMe(workDir=mfChain.getRelativeDirectory(),
                                       doCalc=doCalc, doMCPA=doMCPA, 
-                                      pamDict=pamDict)
+                                      pamDict=pamDict, numPermutations=numPermutations)
       mfChain.addCommands(rules)
 
       mfChain.write()
