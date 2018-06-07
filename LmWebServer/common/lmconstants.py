@@ -116,6 +116,14 @@ QUERY_PARAMETERS = {
    'displayname' : {
       'name' : 'displayName'
    },
+   'docalc' : {
+      'name' : 'doCalc',
+      'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+   },
+   'domcpa' : {
+      'name' : 'doMcpa',
+      'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+   },
    'envcode' : {
       'name' : 'envCode'
    },
@@ -217,6 +225,10 @@ QUERY_PARAMETERS = {
       'name' : 'minimumNumberOfPoints',
       'processIn' : lambda x: max(1, int(x)) # Integer, minimum is one
    },
+   'numpermutations' : {
+      'name' : 'numPermutations',
+      'processIn' : int
+   },
    'occurrencesetid' : {
       'name' : 'occurrenceSetId',
       'processIn' : int
@@ -274,6 +286,9 @@ QUERY_PARAMETERS = {
    },
    'request' : {
       'name' : 'request'
+   },
+   'resolution' : {
+      'name' : 'resolution'
    },
    'scenariocode' : {
       'name' : 'scenarioCode'
