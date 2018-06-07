@@ -104,7 +104,8 @@ class GridsetAnalysisService(LmService):
       # If everything is ready and we have analyses to run, do so
       if doMcpa or doCalc:
          rc = RADCaller(gridset.getId())
-         rc.analyzeGrid(doCalc=doCalc, doMCPA=doMcpa)
+         rc.analyzeGrid(doCalc=doCalc, doMCPA=doMcpa, 
+                        numPermutations=numPermutations)
          rc.close()
          cherrypy.response.status = HTTPStatus.ACCEPTED
          return gridset
