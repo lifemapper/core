@@ -2036,7 +2036,7 @@ class Borg(DbPostgresql):
                                  firstRecNum, maxNum, userId, squid, ident, 
                                  afterTime, beforeTime, epsg, afterStatus, 
                                  beforeStatus, matrixId, layerId)
-         objs = self._getAtoms(rows, idxs)
+         objs = self._getAtoms(rows, idxs, LMServiceType.MATRIX_COLUMNS)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listMtxColObjects', 
