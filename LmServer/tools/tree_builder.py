@@ -122,3 +122,11 @@ if __name__ == '__main__':
    
    tree.writeTree(args.out_filename)
    
+   
+'''
+gbif_ids = []
+
+tree = get_tree_from_gbif_ids(gbif_ids)
+
+add_squids_to_tree(tree, scribe, userId=userId)
+'''
