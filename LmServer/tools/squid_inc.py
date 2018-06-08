@@ -50,7 +50,7 @@ if __name__ == "__main__":
    
    # Load tree
    userId = args.userName
-   tree = LmTree(args.treeFile, DEFAULT_TREE_SCHEMA)
+   tree = LmTree.initFromFile(args.treeFile, DEFAULT_TREE_SCHEMA)
    
    # Do stuff
    scribe = BorgScribe(ScriptLogger('squidInc'))

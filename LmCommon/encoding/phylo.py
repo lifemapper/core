@@ -69,7 +69,7 @@ class PhyloEncoding(object):
       @param pamDLoc: The location of the PAM (in numpy format)
       @raise IOError: If one or both of the files are not found
       """
-      tree = LmTree(treeDLoc, DEFAULT_TREE_SCHEMA)
+      tree = LmTree.initFromFile(treeDLoc, DEFAULT_TREE_SCHEMA)
       
       pam = Matrix.load(pamDLoc)
       

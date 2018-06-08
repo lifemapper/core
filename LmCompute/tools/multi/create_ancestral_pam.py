@@ -147,7 +147,7 @@ if __name__ == '__main__':
    
    # Read in inputs
    pam = Matrix.load(args.pamFn)
-   tree = LmTree(args.treeFn, DEFAULT_TREE_SCHEMA)
+   tree = LmTree.initFromFile(args.treeFn, DEFAULT_TREE_SCHEMA)
    
    # Build the Ancestral PAM
    ancPam = build_ancestral_pam(pam, tree)
