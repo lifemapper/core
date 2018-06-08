@@ -49,11 +49,49 @@ class LmTree(object):
    """
    
    # ..............................
-   def __init__(self, filename, schema):
+   def __init__(self, filename=None, data=None, tree=None, schema=None):
       """
-      @summary: Wrapper around dendropy
+      @summary: Tree object constructor
+      @param filename: A file location with tree data
+      @param data: Tree data in string format
+      @param schema: The corresponding format of the tree data or file
+      @note: Must provide one of: 1. filename and schema, 
+                                  2. data and schema, 
+                                  3. a Dendropy tree object
       """
-      self.tree = dendropy.Tree.get(path=filename, schema=schema)
+      if tree is not None:
+         self.tree = tree
+      elif filename is not None and schema is not None:
+         self.tree = dendropy.Tree.get(path=filename, schema=schema)
+      elif data is not None and schema is not None:
+         self.tree = dendropy.Tree.get(data=data, schema=schema)
+      else:
+         raise LmTreeException(
+            'Must provide a tree object or file or data with schema')
+      
+   # ..............................
+   @classmethod
+   def initFromData(cls, data, schema):
+      """
+      @summary: Class method to create a tree object from a tree string
+      """
+      return cls(data=data, schema=schema)
+   
+   # ..............................
+   @classmethod
+   def initFromFile(cls, filename, schema):
+      """
+      @summary: Class method for constructing a tree from a file
+      """
+      return cls(filename=filename, schema=schema)
+
+   # ..............................
+   @classmethod
+   def initFromTree(cls, tree):
+      """
+      @summary: Class method to create a Lifemapper tree from a Dendropy tree
+      """
+      return cls(tree=tree)
    
    # Public functions
    # ..........................................................................

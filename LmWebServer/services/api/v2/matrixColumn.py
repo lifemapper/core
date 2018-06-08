@@ -73,7 +73,7 @@ class MatrixColumnService(LmService):
    def GET(self, pathGridSetId, pathMatrixId, pathMatrixColumnId=None, 
            afterTime=None, beforeTime=None, epsgCode=None, ident=None, 
            layerId=None, limit=100, offset=0, urlUser=None, squid=None, 
-           status=None):
+           status=None, **params):
       """
       @summary: Performs a GET request.  If a matrix id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -97,7 +97,8 @@ class MatrixColumnService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout):
+   def POST(self, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout,
+            **params):
       """
       @summary: Posts a new layer
       @todo: Add cutout

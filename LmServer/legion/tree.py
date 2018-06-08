@@ -63,7 +63,7 @@ class Tree(LmTree, ServiceObject):
          
       if dlocation is not None:
          if os.path.exists(dlocation):
-            LmTree.__init__(self, dlocation, schema)
+            LmTree.__init__(self, filename=dlocation, schema=schema)
       
 # ...............................................
 # Properties
@@ -86,7 +86,7 @@ class Tree(LmTree, ServiceObject):
       if dlocation is None:
          dlocation = self.getDLocation()
       
-      LmTree.__init__(self, dlocation, schema)
+      LmTree.__init__(self, filename=dlocation, schema=schema)
    
    # ..............................
    def setTree(self, tree):
@@ -96,7 +96,7 @@ class Tree(LmTree, ServiceObject):
                    method other than reading a file directly
       @param tree: An instance of dendropy 
       """
-      self.tree = tree
+      LmTree.__init__(self, tree=tree)
       
    # ..............................
    def writeTree(self):

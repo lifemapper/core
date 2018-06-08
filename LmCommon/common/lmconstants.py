@@ -1696,6 +1696,9 @@ class PamStatKeys(object):
    MPD = 'mpd'
    # PEARSON is Pearson's Correlation Coefficient 
    PEARSON = 'pearson'
+   # PD is Phylogenetic Diversity as defined by sum of the branch lengths for 
+   #    the minimum spanning path of the involved taxa
+   PD = 'pd'
    
    # Species statistics
    # ..................

@@ -220,7 +220,8 @@ class Gridset(ServiceObject): #LMMap
 # Methods
 # .............................................................................
    # ............................................
-   def computeMe(self, workDir=None, doCalc=False, doMCPA=False, pamDict=None):
+   def computeMe(self, workDir=None, doCalc=False, doMCPA=False, pamDict=None,
+                 numPermutations=500):
       """
       @summary: Perform analyses on a grid set
       @todo: Better names for corrected matrices
@@ -501,7 +502,12 @@ class Gridset(ServiceObject): #LMMap
             bgFglobRands = []
             bgFpartRands = []
             # TODO: This should be configurable 
-            for i in range(NUM_RAND_GROUPS):
+            
+            i = 0
+            while i < numPermutations:
+               j = NUM_RAND_PER_GROUP
+               if i + j >= numPermutations:
+                  j = numPermutations - i
                bgFglobRandFilename = os.path.join(pamWorkDir, 
                               'bgFglobRand{}{}'.format(i, LMFormat.MATRIX.ext))
                bgFpartRandFilename = os.path.join(pamWorkDir, 
@@ -513,8 +519,9 @@ class Gridset(ServiceObject): #LMMap
                                    wsGrimFilename, bgFglobRandFilename,
                                    bgFpartRandFilename, 
                                    hypothesesFilename=wsBGFilename, 
-                                   numRadomizations=NUM_RAND_PER_GROUP)
+                                   numRadomizations=j)
                rules.append(randCmd.getMakeflowRule())
+               i += NUM_RAND_PER_GROUP
             
             # TODO: Consider saving randomized matrices
             

@@ -678,6 +678,9 @@ class SDMProjection(_ProjectionType, Raster):
       dirTouchFile = os.path.join(workDir, 'touch.out')
       touchCmd = LmTouchCommand(dirTouchFile)
       rules.append(touchCmd.getMakeflowRule(local=True))
+      
+      scn = self.projScenario
+      scnExt = '{}-{}'.format('.'.join(scn.bbox), scn.resolution)
 
       # Get mask layer from dictionary
       maskLyr = maskProcDict[MASK_LAYER_KEY]
@@ -700,7 +703,8 @@ class SDMProjection(_ProjectionType, Raster):
                os.path.splitext(convexHullFilename)[0], ext) for ext in \
                                      ['.shp', '.shx', '.dbf']]
       
-            ecoMaskFilename = os.path.join(workDir, 'ecoMask_occ_{}.tif'.format(occId))
+            ecoMaskFilename = os.path.join(workDir, 
+                                           'ecoMask_occ_{}.tif'.format(occId))
             
             # Ecoregions mask
             occTargetDir = os.path.join(workDir, os.path.splitext(
@@ -723,7 +727,10 @@ class SDMProjection(_ProjectionType, Raster):
             # Need to create mask as GTiff always and conditionally translate to ASC
             
             outFormat = 'GTiff'
-            maskFn = os.path.join(workDir, '{}_occ_{}.tif'.format(maskName, occId))
+            
+            # Add scenario extent for projecting on different areas
+            maskFn = os.path.join(workDir, '{}_occ_{}-{}.tif'.format(maskName, 
+                                                               occId, scnExt))
             
             maskArgs = '-of {} -dstnodata {} -cutline {} {} {}'.format(
                                                          outFormat, 
@@ -733,21 +740,23 @@ class SDMProjection(_ProjectionType, Raster):
                                                          maskFn)
             maskCmd = SystemCommand('gdalwarp', maskArgs, outputs=[maskFn])
             
-            # Create a chain command so we don't have to know which shapefiles are 
-            #    produced, try to define them if possible though
+            # Create a chain command so we don't have to know which shapefiles  
+            #    are produced, try to define them if possible though
             cmds = [ecoMaskCmd, convexHullCmd, maskCmd]
             createMaskCommand = ChainCommand(cmds)
             rules.append(createMaskCommand.getMakeflowRule(local=True))
          else:
             maskName = 'blankMask'
-            maskFn = os.path.join(workDir, '{}_occ_{}.tif'.format(maskName, occId))
+            maskFn = os.path.join(workDir, '{}_occ_{}-{}.tif'.format(maskName, 
+                                                               occId, scnExt))
             maskCmd = CreateBlankMaskTiffCommand(maskLyr.getDLocation(), maskFn)
             maskCmd.inputs.append(dirTouchFile)
             rules.append(maskCmd.getMakeflowRule(local=True))
       
       if self.isATT():
          # Need to convert to ASCII
-         finalMaskFn = os.path.join(workDir, '{}_occ_{}.asc'.format(maskName, occId))
+         finalMaskFn = os.path.join(workDir, '{}_occ_{}-{}.asc'.format(
+                                                      maskName, occId, scnExt))
          convertCmd = SystemCommand('gdal_translate', 
             '-a_nodata {} -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
                DEFAULT_NODATA, maskFn, finalMaskFn),
@@ -760,7 +769,7 @@ class SDMProjection(_ProjectionType, Raster):
       return rules, maskFn
 
    # .............................................................................
-   def _computeMyModel(self, workDir=None, procParams=None):
+   def _computeMyModel(self, workDir=None, procParams=None, addOccRules=False):
       """
       @summary: Generate a command to create a SDM model ruleset for this 
                    projection
@@ -779,6 +788,9 @@ class SDMProjection(_ProjectionType, Raster):
       # Ruleset file could go in occ directory
       occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
       occSetFname = os.path.join(occTargetDir, occFileBasename)
+      
+      if addOccRules:
+         rules.extend(self._occurrenceSet.computeMe(workDir=workDir))
       
       # Look at processing parameters and decide if we need to do anything
       if procParams.has_key(PRE_PROCESS_KEY) and \
@@ -832,7 +844,7 @@ class SDMProjection(_ProjectionType, Raster):
       return rules
 
    # ......................................
-   def computeMe(self, workDir=None, procParams=None):
+   def computeMe(self, workDir=None, procParams=None, addOccRules=False):
       """
       @todo: Consider producing layersFn and paramsFn with script
       """
@@ -866,7 +878,8 @@ class SDMProjection(_ProjectionType, Raster):
          
          # Generate the model
          modelRules = self._computeMyModel(workDir=workDir, 
-                                           procParams=procParams)
+                                           procParams=procParams,
+                                           addOccRules=addOccRules)
          rules.extend(modelRules)
          
          # Look at processing parameters and decide if we need to do anything

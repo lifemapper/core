@@ -78,7 +78,7 @@ class OccurrenceLayerService(LmService):
    def GET(self, pathOccSetId=None, afterTime=None, beforeTime=None, 
            displayName=None, epsgCode=None, minimumNumberOfPoints=1, 
            limit=100, offset=0, urlUser=None, status=None, gridSetId=None,
-           fillPoints=False):
+           fillPoints=False, **params):
       """
       @summary: Performs a GET request.  If an occurrence set id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -100,7 +100,7 @@ class OccurrenceLayerService(LmService):
    # ................................
    #@cherrypy.tools.json_out
    @lmFormatter
-   def POST(self):
+   def POST(self, **params):
       """
       @summary: Posts a new BOOM archive
       @todo: Do we want to enable single occurrence set posts still?

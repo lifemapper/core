@@ -1232,7 +1232,8 @@ SVM_PARAMS = {'svmtype': {'type': IntType,
               'Coef0': {'type': FloatType,
                          'min': None, 'default': 0.0, 
                          'max': None},
-              'Cost': {'type': FloatType,
+              # Cost
+              'C': {'type': FloatType,
                         'min': 0.001, 'default': 1.0, 
                         'max': None},
               'Nu': {'type': FloatType, 
@@ -1521,3 +1522,15 @@ MASK_LAYER_KEY = 'mask_layer'
 MASK_LAYER_NAME_KEY = 'mask_name'
 PRE_PROCESS_KEY = 'preprocess'
 PROCESSING_KEY = 'processing'
+
+class SubsetMethod(object):
+   """
+   """
+   COLUMN = 0 # Same shapegrid, just cut out columns
+   SPATIAL = 1 # Spatial subset of original shapegrid.  Column and row, 
+               #    cut out columns and remove sites
+   REINTERSECT = 2 # New shapegrid with possibly different resolution, 
+   #                    reintersect all columns 
+   
+   
+   

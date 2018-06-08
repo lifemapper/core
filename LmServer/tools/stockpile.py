@@ -139,7 +139,7 @@ class Stockpile(LMObject):
          pass
       # Copy data
       try:
-         if ProcessType.isOccurrence(ptype):
+         if ProcessType.isOccurrence(ptype) and os.path.getsize(fileNames[0]) > 0:
             # Move data file
             baseOutDir = os.path.dirname(obj.getDLocation())
             for fn in glob.glob('{}.*'.format(os.path.splitext(fileNames[0])[0])):
@@ -148,10 +148,10 @@ class Stockpile(LMObject):
             bigFname = fileNames[0].replace('/pt', '/bigpt')
             if cls.testFile(bigFname)[0]:
                shutil.copy(bigFname, obj.getDlocation(largeFile=True))         
-         elif ProcessType.isProject(ptype):
+         elif ProcessType.isProject(ptype) and os.path.getsize(fileNames[0]) > 0:
             shutil.copy(fileNames[0], obj.getDLocation())
             shutil.copy(fileNames[1], obj.getProjPackageFilename())
-         elif ProcessType.isMatrix(ptype):
+         elif ProcessType.isMatrix(ptype) and os.path.getsize(fileNames[0]) > 0:
             if metadata is not None:
                obj.addMtxMetadata(metadata)
             shutil.copy(fileNames[0], obj.getDLocation())

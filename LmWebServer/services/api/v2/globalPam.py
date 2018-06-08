@@ -48,7 +48,7 @@ class GlobalPAMService(LmService):
                  urlUser=None, prjScenCode=None, squid=None, 
                  taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
                  taxonOrder=None, taxonFamily=None, taxonGenus=None, 
-                 taxonSpecies=None):
+                 taxonSpecies=None, **params):
       """
       @summary: A Global PAM get request will query the global PAM and return
                    entries matching the parameters, or a count of those
@@ -67,11 +67,11 @@ class GlobalPAMService(LmService):
    # ................................
    @lmFormatter
    def POST(self, archiveName, gridSetId, algorithmCode=None, bbox=None,  
-                 modelScenarioCode=None, pointMax=None, pointMin=None, 
-                 urlUser=None, prjScenCode=None, squid=None, 
+                 cellSize=None, modelScenarioCode=None, pointMax=None, 
+                 pointMin=None, urlUser=None, prjScenCode=None, squid=None, 
                  taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
                  taxonOrder=None, taxonFamily=None, taxonGenus=None, 
-                 taxonSpecies=None, displayName=None):
+                 taxonSpecies=None, displayName=None, **params):
       """
       @summary: A Global PAM post request will create a subset
       """
@@ -86,9 +86,11 @@ class GlobalPAMService(LmService):
                                  taxOrder=taxonOrder, taxFamily=taxonFamily,
                                  taxGenus=taxonGenus, taxSpecies=taxonSpecies)
       # Make bbox tuple
-      bbox = tuple([float(i) for i in bbox.split(',')])
-      
-      gridset = self._subsetGlobalPAM(archiveName, matches, bbox=bbox)
+      if bbox:
+         bbox = tuple([float(i) for i in bbox.split(',')])      
+
+      gridset = self._subsetGlobalPAM(archiveName, matches, bbox=bbox, 
+                                      cellSize=cellSize)
       cherrypy.response.status = 202
       return Atom(gridset.getId(), gridset.name, gridset.metadataUrl, 
                   gridset.modTime, epsg=gridset.epsgcode)
@@ -112,12 +114,13 @@ class GlobalPAMService(LmService):
                   taxSpecies=taxSpecies, userId=self.getUserId(urlUser=urlUser))
    
    # ................................
-   def _subsetGlobalPAM(self, archiveName, matches, bbox=None):
+   def _subsetGlobalPAM(self, archiveName, matches, bbox=None, cellSize=None):
       """
       @summary: Create a subset of a global PAM and create a new grid set
       @param archiveName: The name of this new grid set
       @param matches: Solr hits to be used for subsetting
       """
       newGridSet = subsetGlobalPAM(archiveName, matches, self.getUserId(), 
-                                    bbox=bbox, scribe=self.scribe)
+                                   bbox=bbox, cellSize=cellSize, 
+                                   scribe=self.scribe)
       return newGridSet

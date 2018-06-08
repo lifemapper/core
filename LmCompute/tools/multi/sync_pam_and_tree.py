@@ -108,7 +108,7 @@ if __name__ == '__main__':
    
    # Get the inputs
    pam = Matrix.load(args.inPamFn)
-   tree = LmTree(args.inTreeFn, DEFAULT_TREE_SCHEMA)
+   tree = LmTree.initFromFile(args.inTreeFn, DEFAULT_TREE_SCHEMA)
    
    # Prune the PAM and tree
    outPam, outTree, metadata = prunePamAndTree(pam, tree)

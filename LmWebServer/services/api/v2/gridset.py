@@ -52,6 +52,7 @@ from LmWebServer.services.api.v2.matrix import MatrixService
 from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.common.boomPost import BoomPoster
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmDbServer.boom.radme import RADCaller
 
 BG_REF_ID_KEY = 'identifier'
 BG_REF_KEY = 'hypothesis_package_reference'
@@ -62,6 +63,81 @@ HYPOTHESIS_NAME_KEY = 'hypothesis_name'
 KEYWORD_KEY = 'keywords'
 LAYERS_KEY = 'layers'
 
+# .............................................................................
+@cherrypy.expose
+class GridsetAnalysisService(LmService):
+   """
+   @summary: This class is for the service representing gridset analyses.  The 
+                dispatcher is responsible for calling the correct method.
+   """
+   # ................................
+   # TODO: Enable DELETE? Could remove all existing analysis matrices
+   
+   # ................................
+   # TODO: Enable GET?  Could this just be the outputs?
+
+   # ................................
+   @lmFormatter
+   def POST(self, pathGridSetId, doMcpa=False, numPermutations=500, 
+            doCalc=False, **params):
+      """
+      @summary: Adds a set of biogeographic hypotheses to the gridset
+      """
+      # Get gridset
+      gridset = self._getGridSet(pathGridSetId, method=HTTPMethod.POST)
+
+      # Check status of all matrices
+      if not all(
+          [mtx.status == JobStatus.COMPLETE for mtx in gridset.getMatrices()]):
+         raise cherrypy.HTTPError(HTTPStatus.CONFLICT, 
+               'The gridset is not ready for analysis.  ' + 
+               'All matrices must be complete')
+
+      if doMcpa:
+         mcpaPossible = len(gridset.getBiogeographicHypotheses()) > 0 and \
+                           gridset.tree is not None
+         if not mcpaPossible:
+            raise cherrypy.HTTPError(HTTPStatus.CONFLICT, 
+                           'The gridset must have a tree and biogeographic ' +
+                           'hypotheses to perform MCPA')
+      
+      # If everything is ready and we have analyses to run, do so
+      if doMcpa or doCalc:
+         rc = RADCaller(gridset.getId())
+         rc.analyzeGrid(doCalc=doCalc, doMCPA=doMcpa, 
+                        numPermutations=numPermutations)
+         rc.close()
+         cherrypy.response.status = HTTPStatus.ACCEPTED
+         return gridset
+      else:
+         raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST,
+                              'Must specify at least one analysis to perform')
+
+   # ................................
+   def _getGridSet(self, pathGridSetId):
+      """
+      @summary: Attempt to get a GridSet
+      """
+      gs = self.scribe.getGridset(gridsetId=pathGridSetId, fillMatrices=True)
+      if gs is None:
+         raise cherrypy.HTTPError(404, 
+                        'GridSet {} was not found'.format(pathGridSetId))
+      if checkUserPermission(self.getUserId(), gs, HTTPMethod.GET):
+         return gs
+      else:
+         raise cherrypy.HTTPError(403, 
+              'User {} does not have permission to access GridSet {}'.format(
+                     self.getUserId(), pathGridSetId))
+   
+   # ................................
+   def _get_user_dir(self):
+      """
+      @summary: Get the user's workspace directory
+      @todo: Change this to use something at a lower level.  This is using the
+                same path construction as the getBoomPackage script
+      """
+      return os.path.join(ARCHIVE_PATH, self.getUserId(), 'uploads', 'biogeo')
+   
 # .............................................................................
 @cherrypy.expose
 @cherrypy.popargs('pathBioGeoId')
@@ -100,7 +176,7 @@ class GridsetBioGeoService(LmService):
 
    # ................................
    @lmFormatter
-   def GET(self, pathGridSetId, pathBioGeoId=None):
+   def GET(self, pathGridSetId, pathBioGeoId=None, **params):
       """
       @summary: There is not a true service for limiting the biogeographic
                    hypothesis matrices in a gridset, but return all when listing
@@ -123,7 +199,7 @@ class GridsetBioGeoService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, pathGridSetId):
+   def POST(self, pathGridSetId, **params):
       """
       @summary: Adds a set of biogeographic hypotheses to the gridset
       """
@@ -336,7 +412,7 @@ class GridsetTreeService(LmService):
    # ................................
    @lmFormatter
    def GET(self, pathGridSetId, pathTreeId=None, includeCSV=None, 
-                                                            includeSDMs=None):
+                                                   includeSDMs=None, **params):
       """
       @summary: At this time, there is no listing service for gridset trees.
                    For now, we won't even take a tree id parameter and instead
@@ -347,7 +423,8 @@ class GridsetTreeService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, pathGridSetId, pathTreeId=None, name=None, treeSchema=DEFAULT_TREE_SCHEMA):
+   def POST(self, pathGridSetId, pathTreeId=None, name=None, 
+            treeSchema=DEFAULT_TREE_SCHEMA, **params):
       """
       @summary: Posts a new tree and adds it to the gridset
       """
@@ -406,6 +483,7 @@ class GridSetService(LmService):
    @summary: This class is for the grid set service.  The dispatcher is 
                 responsible for calling the correct method.
    """
+   analysis = GridsetAnalysisService()
    biogeo = GridsetBioGeoService()
    matrix = MatrixService()
    tree = GridsetTreeService()
@@ -440,7 +518,7 @@ class GridSetService(LmService):
    @lmFormatter
    def GET(self, pathGridSetId=None, afterTime=None, beforeTime=None, 
            epsgCode=None, limit=100, metaString=None, offset=0, urlUser=None, 
-           shapegridId=None):
+           shapegridId=None, **params):
       """
       @summary: Performs a GET request.  If a grid set id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -461,7 +539,7 @@ class GridSetService(LmService):
          return self._getGridSet(pathGridSetId)
       
    # ................................
-   def POST(self):
+   def POST(self, **params):
       """
       @summary: Posts a new grid set
       """

@@ -29,8 +29,11 @@
 from math import sqrt
 import numpy as np
 
-from LmCommon.common.lmconstants import PamStatKeys
+from LmCommon.common.lmconstants import PamStatKeys, PhyloTreeKeys
 from LmCommon.common.matrix import Matrix
+
+from LmCompute.plugins.multi.calculate.pd import pd
+from LmCompute.plugins.multi.calculate import tree_reader
 
 # .............................................................................
 class PamStats(object):
@@ -61,6 +64,7 @@ class PamStats(object):
          phyloDistMtx = self.tree.getDistanceMatrix()
          self._calculateMNTD(phyloDistMtx)
          self._calculateTreeStats(phyloDistMtx)
+         self._calculateOTTreeStats()
    
    # ...........................
    def getCovarianceMatrices(self):
@@ -126,9 +130,9 @@ class PamStats(object):
       
       # Check if we have tree stats too
       if self.tree is not None:
-         statColumns.extend([self.mntd, self.mpd, self.pearson])
+         statColumns.extend([self.mntd, self.mpd, self.pearson, self.pd])
          sitesHeaders.extend([PamStatKeys.MNTD, PamStatKeys.MPD, 
-                              PamStatKeys.PEARSON])
+                              PamStatKeys.PEARSON, PamStatKeys.PD])
       
       # Return a matrix
       return Matrix(np.concatenate(statColumns, axis=1), 
@@ -294,3 +298,48 @@ class PamStats(object):
       self.mpd = np.nan_to_num(np.array(mpd).reshape((numSites, 1)))
       self.pearson = np.nan_to_num(np.array(pearson).reshape((numSites, 1)))
    
+   # ...........................
+   def _calculateOTTreeStats(self):
+      """
+      @summary: Calculate phylogenetic diversity stats from Stephen
+      """
+      # Get the Newick string from our tree object
+      tree = tree_reader.read_tree_string(self.tree.tree.as_newick_string())
+      
+      # Create squid dictionary
+      squid_annotations = self.tree.getAnnotations(PhyloTreeKeys.SQUID)
+      squid_dict = dict((squid, label) for label, squid in squid_annotations)
+      squid_headers = self.pam.getColumnHeaders()
+      
+      num_rows, num_cols = self.pamData.shape
+      # Need squid dictionary?
+      pd_stat = np.zeros((num_rows, 1), dtype=np.float)
+      
+      ndsdict = {}
+      for i in tree.leaves():
+         ndsdict[i.label] = i
+      
+      for i in xrange(num_rows):
+         # Get the species names that are present at this site
+         present_squids = [
+            squid_headers[j] for j in xrange(num_cols) if int(
+                                                            self.pamData[i,j])]
+         # Get the species names for the present squids
+         sp_tips = []
+         for squid in present_squids:
+            try:
+               if squid_dict.has_key(squid):
+                  sp_tips.append(ndsdict[squid_dict[squid]])
+            except:
+               print('Could not find: {}'.format(squid_dict[squid]))
+        
+        
+         # Site statistics
+         # ..............
+         if len(sp_tips) > 0:
+            pd_stat[i,0] = pd(tree, sp_tips)
+         else:
+            pd_stat[i,0] = 0.0
+        
+      self.pd = pd_stat
+      

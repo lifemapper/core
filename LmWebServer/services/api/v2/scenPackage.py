@@ -73,7 +73,7 @@ class ScenarioPackageService(LmService):
    @lmFormatter
    def GET(self, pathScenarioPackageId=None, afterTime=None, beforeTime=None,  
                  epsgCode=None, limit=100, offset=0, urlUser=None, 
-                 scenarioId=None):
+                 scenarioId=None, **params):
       """
       @summary: Performs a GET request.  If a scenario package id is provided,
                    attempt to return that item.  If not, return a list of 
