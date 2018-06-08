@@ -31,10 +31,10 @@ import os
 
 import ot_service_wrapper.open_tree as ot
 
-from LmCommon.trees.lmTree import LmTree
 from LmCommon.common.lmconstants import PhyloTreeKeys
-from LmServer.db.borgscribe import BorgScribe
+from LmCommon.trees.lmTree import LmTree
 from LmServer.common.log import ScriptLogger
+from LmServer.db.borgscribe import BorgScribe
 
 # .............................................................................
 def add_squids_to_tree(tree, scribe, userId=None):
