@@ -89,7 +89,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
   
    
    # If bounding box, resolution, or user is different, create a new shapegrid
-   if bbox != origShp.bbox or cellSize != origGS.cellsize or \
+   if bbox != origShp.bbox or cellSize != origShp.cellsize or \
             userId != origGS.getUserId():
        
       mySgName = 'Shapegrid {} - {}'.format(str(bbox), cellSize)
@@ -182,7 +182,10 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
          tree_name = otree.name
       else:
          tree_name = otree.getId()
-      newTree = Tree('Copy of {} tree at {}'.format(tree_name, gmt().mjd))
+      newTree = Tree('Copy of {} tree at {}'.format(tree_name, gmt().mjd),
+                     metadata={}, userId=userId, gridsetId=updatedGS.getId(),
+                     modTime=gmt().mjd)
+      newTree.setTree(otree)
       insertedTree = scribe.findOrInsertTree(newTree)
       otree.read()
       treeData = otree.tree
@@ -373,6 +376,9 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                                      postToSolr=True, status=JobStatus.GENERAL, 
                                      statusModTime=gmt().mjd)
                mtxCol = scribe.findOrInsertMatrixColumn(tmpCol)
+               
+               #log.debug('Matrix column shapegrid is: {}'.format(mtxCol.shapegrid))
+               #mtxCol.shapegrid = myShp
             
                # Call compute me for this intersect
                myWf.addCommands(mtxCol.computeMe(workDir=workDir))
