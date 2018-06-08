@@ -1882,6 +1882,8 @@ class Borg(DbPostgresql):
                      mcmeta, intparams, 
                      mtxcol.status, mtxcol.statusModTime)
       newOrExistingMtxCol = self._createMatrixColumn(row, idxs)
+      # Put shapegrid into updated matrixColumn 
+      newOrExistingMtxCol.shapegrid = mtxcol.shapegrid
       return newOrExistingMtxCol
 
 # ...............................................
