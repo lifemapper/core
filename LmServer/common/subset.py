@@ -364,24 +364,38 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
             
             # Insert matrix columns for each match
             for i in range(len(mtxMatches)):
-               prj = scribe.getSDMProject(int(mtxMatches[i][SOLR_FIELDS.PROJ_ID]))
-               prjMeta = {} # TODO: Add something here?
+               # For a while, and maybe still, it was possible that a projection
+               #    would be marked as complete when it failed an a zero-length
+               #    file would be written to the file system.  An exception is
+               #    thrown whenever those projections are access.  Catch that 
+               #    and move on
+               try:
+                  prj = scribe.getSDMProject(int(mtxMatches[i][
+                                                         SOLR_FIELDS.PROJ_ID]))
+               except Exception, e:
+                  prj = None
+                  log.debug('Could not add projection {}: {}'.format(
+                                 mtxMatches[i][SOLR_FIELDS.PROJ_ID], str(e)))
                
-               tmpCol = MatrixColumn(None, pam.getId(), userId, layer=prj,
-                                     shapegrid=myShp, 
-                                     intersectParams=intersectParams,
-                                     squid=prj.squid, ident=prj.ident, 
-                                     processType=ProcessType.INTERSECT_RASTER,
-                                     metadata=prjMeta, matrixColumnId=None, 
-                                     postToSolr=True, status=JobStatus.GENERAL, 
-                                     statusModTime=gmt().mjd)
-               mtxCol = scribe.findOrInsertMatrixColumn(tmpCol)
+               if prj is not None:
+                  prjMeta = {} # TODO: Add something here?
+                  
+                  tmpCol = MatrixColumn(None, pam.getId(), userId, layer=prj,
+                                        shapegrid=myShp, 
+                                        intersectParams=intersectParams,
+                                        squid=prj.squid, ident=prj.ident, 
+                                        processType=ProcessType.INTERSECT_RASTER,
+                                        metadata=prjMeta, matrixColumnId=None, 
+                                        postToSolr=True, status=JobStatus.GENERAL, 
+                                        statusModTime=gmt().mjd)
+                  mtxCol = scribe.findOrInsertMatrixColumn(tmpCol)
+                  
+                  #log.debug('Matrix column shapegrid is: {}'.format(mtxCol.shapegrid))
+                  #mtxCol.shapegrid = myShp
                
-               #log.debug('Matrix column shapegrid is: {}'.format(mtxCol.shapegrid))
-               #mtxCol.shapegrid = myShp
-            
-               # Call compute me for this intersect
-               myWf.addCommands(mtxCol.computeMe(workDir=workDir))
+                  # Call compute me for this intersect
+                  myWf.addCommands(mtxCol.computeMe(workDir=workDir))
+               
             
             # Initialize PAM after matrix columns inserted
             pam.updateStatus(JobStatus.INITIALIZE)
