@@ -92,7 +92,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
    if bbox != origShp.bbox or cellSize != origShp.cellsize or \
             userId != origGS.getUserId():
        
-      mySgName = 'Shapegrid {} - {}'.format(str(bbox), cellSize)
+      mySgName = 'Shapegrid_{}_{}'.format(str(bbox).replace(' ', '_'), cellSize)
       newshp = ShapeGrid(mySgName, userId, origGS.epsgcode, origShp.cellsides,
                          cellSize, origShp.mapUnits, bbox, 
                          status=JobStatus.INITIALIZE, statusModTime=gmt().mjd)
@@ -327,6 +327,9 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
       # TODO : Determine if we want a different work directory
       
       workDir = myWf.getRelativeDirectory()
+      
+      # Add shapegrid to workflow
+      myWf.addCommands(myShp.computeMe(workDir=workDir))
       
       # PAMs
       # --------

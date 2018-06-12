@@ -298,7 +298,8 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                                        self.cellsize, self.epsgcode, 
                                        self.cellsides, 
                                        cutoutWKTFilename=cutoutWktFilename)
-         rules.append(sgCmd.getMakeflowRule())
+         sgCmd.outputs = targetFiles
+         rules.append(sgCmd.getMakeflowRule(local=True))
          
       return rules
 
