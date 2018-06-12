@@ -432,7 +432,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                                   squid=oldCol.squid, ident=oldCol.ident,
                                   processType=ProcessType.INTERSECT_RASTER_GRIM,
                                   metadata=grimLyrMeta, matrixColumnId=None,
-                                  postToSolr=None, status=JobStatus.GENERAL,
+                                  postToSolr=False, status=JobStatus.GENERAL,
                                   statusModTime=gmt().mjd)
             mtxCol = scribe.findOrInsertMatrixColumn(tmpCol)
             
@@ -491,7 +491,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
                   ServiceObject.META_TITLE.lower() : 
                'Biogeographic hypothesis column ({})'.format(col)}
-               mc = MatrixColumn(len(mtxCols), bgMtx.getId(), userId, layer=lyr,
+               mc = MatrixColumn(len(mtxCols), insertedBG.getId(), userId, layer=lyr,
                                  shapegrid=myShp, intersectParams=intParams, 
                                  metadata=metadata, postToSolr=False,
                                  status=JobStatus.COMPLETE, 
@@ -504,7 +504,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                allEncodings = encMtx
             else:
                # Append to previous layer encodings 
-               allEncodings = Matrix.concatenate([bgMtx, encMtx], axis=1)
+               allEncodings = Matrix.concatenate([allEncodings, encMtx], axis=1)
             
             insertedBG.data = allEncodings.data
             insertedBG.setHeaders(allEncodings.getHeaders())
