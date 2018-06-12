@@ -28,11 +28,27 @@
 import cherrypy
 
 from LmServer.base.atom import Atom
-from LmServer.common.solr import queryArchiveIndex
+from LmServer.common.solr import facetArchiveOnGridset, queryArchiveIndex
 from LmServer.common.subset import subsetGlobalPAM
 
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
+
+# .............................................................................
+@cherrypy.expose
+class GridsetFacetService(LmService):
+   """
+   @summary: This is a (possibly temporary) service to retrieve the gridsets
+                within the solr index for the specified user
+   """
+   # ................................
+   @lmFormatter
+   def GET(self, urlUser=None, **params):
+      """
+      @summary: A Global PAM get request will query the global PAM and return
+                   entries matching the parameters, or a count of those
+      """
+      return facetArchiveOnGridset(userId=urlUser)
 
 # .............................................................................
 @cherrypy.expose
@@ -41,6 +57,8 @@ class GlobalPAMService(LmService):
    @summary: This class is responsible for the Global PAM services.  The 
                 dispatcher is responsible for calling the correct method
    """
+   gridset = GridsetFacetService()
+   
    # ................................
    @lmFormatter
    def GET(self, algorithmCode=None, bbox=None, displayName=None, gridSetId=None, 
@@ -107,7 +125,8 @@ class GlobalPAMService(LmService):
       
       return queryArchiveIndex(algorithmCode=algorithmCode, bbox=bbox, 
                   displayName=displayName, gridSetId=gridSetId, 
-                  modelScenarioCode=modelScenarioCode, pointMax=pointMax, pointMin=pointMin,
+                  modelScenarioCode=modelScenarioCode, pointMax=pointMax, 
+                  pointMin=pointMin,
                   projectionScenarioCode=projectionScenarioCode, squid=squid,
                   taxKingdom=taxKingdom, taxPhylum=taxPhylum, taxClass=taxClass, 
                   taxOrder=taxOrder, taxFamily=taxFamily, taxGenus=taxGenus, 

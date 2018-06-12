@@ -124,6 +124,25 @@ def _query(collection, qParams=None, fqParams=None,
    return resp
 
 # .............................................................................
+def facetArchiveOnGridset(userId=None):
+   """
+   @summary: Query the PAV archive Solr index to get the gridsets contained and
+                the number of matches for each
+   @todo: Consider integrating this with regular solr query
+   """
+   qParams = [
+      (SOLR_FIELDS.USER_ID, userId)
+   ]
+   
+   otherParams = '&facet=true&facet.field={}&wt=python&indent=true'.format(
+                                                      SOLR_FIELDS.GRIDSET_ID)
+   
+   rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams,
+                               otherParams=otherParams))
+   
+   return rDict['facet_counts']['facet_fields'][SOLR_FIELDS.GRIDSET_ID]
+
+# .............................................................................
 def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None, gridSetId=None, 
                       modelScenarioCode=None, pointMax=None, pointMin=None, 
                       projectionScenarioCode=None, squid=None, taxKingdom=None, 
