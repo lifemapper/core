@@ -63,9 +63,9 @@ class BuildShapegridCommand(_LmCommand):
       """
       return '{pyBin} {script} {optArgs} {posArgs}'.format(pyBin=CMD_PYBIN, 
          script=self.getScript(), optArgs=self.optArgs,
-         posArgs = ' '.join([self.sgFn, self.minX, self.minY, self.maxX, 
-                             self.maxY, self.cellSize, self.epsg, 
-                             self.cellSides]))
+         posArgs = '{} {} {} {} {} {} {} {}'.format(self.sgFn, self.minX, 
+                              self.minY, self.maxX, self.maxY, self.cellSize, 
+                              self.epsg, self.cellSides))
 
 # .............................................................................
 class CalculateStatsCommand(_LmCommand):
