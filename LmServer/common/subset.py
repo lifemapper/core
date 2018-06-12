@@ -428,7 +428,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
             grimLyrMeta = {}
             tmpCol = MatrixColumn(None, insertedGrim.getId(), userId, 
                                   layer=oldCol.layer, shapegrid=myShp, 
-                                  intersectParams=oldCol.insersectParams,
+                                  intersectParams=oldCol.intersectParams,
                                   squid=oldCol.squid, ident=oldCol.ident,
                                   processType=ProcessType.INTERSECT_RASTER_GRIM,
                                   metadata=grimLyrMeta, matrixColumnId=None,
