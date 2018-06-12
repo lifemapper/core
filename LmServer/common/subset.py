@@ -170,7 +170,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
    # Create grid set
    gs = Gridset(name=archiveName, metadata=gsMeta, shapeGrid=myShp, 
                 epsgcode=epsgCode, userId=userId, 
-                modTime=gmt().mjd, tree=origGS.tree)
+                modTime=gmt().mjd)
    updatedGS = scribe.findOrInsertGridset(gs)
    
    
@@ -185,7 +185,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
       newTree = Tree('Copy of {} tree at {}'.format(tree_name, gmt().mjd),
                      metadata={}, userId=userId, gridsetId=updatedGS.getId(),
                      modTime=gmt().mjd)
-      newTree.setTree(otree)
+      newTree.setTree(otree.tre)
       insertedTree = scribe.findOrInsertTree(newTree)
       otree.read()
       treeData = otree.tree
