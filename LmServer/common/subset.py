@@ -111,6 +111,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
          
          # Write shapefile
          myShp.buildShape()
+         myShp.writeShapefile(myShp.getDLocation())
 
       # Else, if the bounding box is different, we need to spatially subset
       elif bbox != origShp.bbox:
@@ -328,8 +329,13 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
       
       workDir = myWf.getRelativeDirectory()
       
+      # TODO: Make this asynchronous
       # Add shapegrid to workflow
-      myWf.addCommands(myShp.computeMe(workDir=workDir))
+      #myWf.addCommands(myShp.computeMe(workDir=workDir))
+      myShp.buildShape()
+      myShp.writeShapefile(myShp.getDLocation())
+      myShp.updateStatus(JobStatus.COMPLETE)
+      scribe.updateObject(myShp)
       
       # PAMs
       # --------
