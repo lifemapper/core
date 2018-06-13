@@ -131,7 +131,8 @@ def facetArchiveOnGridset(userId=None):
    @todo: Consider integrating this with regular solr query
    """
    qParams = [
-      (SOLR_FIELDS.USER_ID, userId)
+      (SOLR_FIELDS.USER_ID, userId),
+      ('*', '*')
    ]
    
    otherParams = '&facet=true&facet.field={}&wt=python&indent=true'.format(

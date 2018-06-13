@@ -28,6 +28,7 @@
 import cherrypy
 
 from LmServer.base.atom import Atom
+from LmServer.common.lmconstants import SOLR_FIELDS
 from LmServer.common.solr import facetArchiveOnGridset, queryArchiveIndex
 from LmServer.common.subset import subsetGlobalPAM
 
@@ -48,7 +49,17 @@ class GridsetFacetService(LmService):
       @summary: A Global PAM get request will query the global PAM and return
                    entries matching the parameters, or a count of those
       """
-      return facetArchiveOnGridset(userId=urlUser)
+      facets = facetArchiveOnGridset(userId=urlUser)
+      # NOTE: Response is list of id, count but not separated
+      i = 0
+      counts = {}
+      while i < len(facets):
+         counts[facets[i]] = facets[i+1]
+         i += 2
+
+      return {
+         SOLR_FIELDS.GRIDSET_ID: counts
+      }
 
 # .............................................................................
 @cherrypy.expose
