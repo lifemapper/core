@@ -52,9 +52,12 @@ class GridsetFacetService(LmService):
       facets = facetArchiveOnGridset(userId=urlUser)
       # NOTE: Response is list of id, count but not separated
       i = 0
-      counts = {}
+      counts = []
       while i < len(facets):
-         counts[facets[i]] = facets[i+1]
+         counts.append({
+            SOLR_FIELDS.GRIDSET_ID : str(facets[i]),
+            'count' : int(facets[i+1])
+         })
          i += 2
 
       return {
