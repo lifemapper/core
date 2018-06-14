@@ -5,6 +5,14 @@ Troubleshooting:
 YUM errors:
 ***********
 
+On all
+~~~~~~~~
+* Opt python module "breaks" yum, must unload before using Yum commands::
+     module load opt-python
+     do something
+     module unload opt-python
+     yum something 
+
 On Development Appliance
 ~~~~~~~~~~~~~~~~~~~~~~~~
 * Rocks-7.0 repo was disabled, "yum repolist all" produced error 
