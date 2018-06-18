@@ -281,11 +281,7 @@ history:
 
 * Install Vclusters with bootaction=os and cdrom pointing to kernel roll file on notyeti
  1051  rocks list host boot
- 1052  rocks set host boot notyeti-191 action=install
  1053  rocks set host boot notyeti-191 action=os
- 1054  zpool list
- 1055  zfs list
- 1056  ls -lah /state/partition1/apps/
  1057  rocks set host vm cdrom notyeti-191 cdrom=/tank/data/rolls/kernel-7.0-0.x86_64.disk1.iso
  1058  rocks report host vm config notyeti-191
  1059  rocks list host vm status=1
