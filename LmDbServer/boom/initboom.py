@@ -617,9 +617,9 @@ class BOOMFiller(LMObject):
       self.scribe.log.info('  Read ScenPackage {} metadata ...'.format(self.scenPackageName))
       scenPkg = ScenPackage(self.scenPackageName, self.usr, 
                             epsgcode=epsg,
-                            bbox=pkgMeta['bbox'],
                             mapunits=mapunits,
                             modTime=mx.DateTime.gmt().mjd)
+      
       # Current
       baseMeta = SPMETA.OBSERVED_PREDICTED_META['baseline']
       basescen, staticLayers = self._createBaselineScenario(pkgMeta, elyrMeta, 
@@ -628,15 +628,22 @@ class BOOMFiller(LMObject):
                                                       SPMETA.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Assembled base scenario {}'.format(basescen.code))
       scenPkg.addScenario(basescen)
+
       # Predicted Past and Future
-      predMeta = SPMETA.OBSERVED_PREDICTED_META['predicted']
-      allScens = self._createPredictedScenarios(pkgMeta, elyrMeta, 
-                                           SPMETA.LAYERTYPE_META, staticLayers,
-                                           predMeta,
-                                           SPMETA.CLIMATE_KEYWORDS)
-      self.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
-      for scen in allScens.values():
-         scenPkg.addScenario(scen)
+      try:
+         predMeta = SPMETA.OBSERVED_PREDICTED_META['predicted']
+      except:
+         pass
+      else:
+         allScens = self._createPredictedScenarios(pkgMeta, elyrMeta, 
+                                              SPMETA.LAYERTYPE_META, staticLayers,
+                                              predMeta,
+                                              SPMETA.CLIMATE_KEYWORDS)
+         self.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
+         for scen in allScens.values():
+            scenPkg.addScenario(scen)
+      
+      scenPkg.resetBBox()
       return scenPkg, basescen.code, epsg, mapunits, scenPackageMetaFilename, masklyr
    
    # ...............................................

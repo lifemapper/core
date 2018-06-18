@@ -63,6 +63,14 @@ class ScenPackage(ServiceObject, LMSpatialObject):
       
       self._scenarios = {}
       self.setScenarios(scenarios)
+      if self._bbox is None:
+         self.resetBBox()
+      
+# .............................................................................
+   def resetBBox(self):
+      bboxList = [scen.bbox for scen in self._scenarios.values()]
+      minBbox = self.intersectBoundingBoxes(bboxList)
+      self._setBBox(minBbox)
 
 # .............................................................................
    def addScenario(self, scen):
