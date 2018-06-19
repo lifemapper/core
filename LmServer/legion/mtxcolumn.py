@@ -97,6 +97,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
       ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
                              status=status, statusModTime=statusModTime)
       self.layer = layer
+      self._layerId = layerId
       self.shapegrid = shapegrid
       self.intersectParams = {}
       self.loadIntersectParams(intersectParams)
@@ -125,6 +126,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
    def getLayerId(self):
       if self.layer is not None:
          return self.layer.getId()
+      elif self._layerId is not None:
+         return self._layerId
       return None
    
 # ...............................................
