@@ -65,6 +65,7 @@ from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
+from test import allScens
 
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
@@ -204,20 +205,6 @@ class BOOMFiller(LMObject):
                           .format(self.scenPkg.getId(), self.scenPkg.name))
          self.epsg = s.epsgcode
          self.mapunits = s.mapUnits
-      else:
-         if self.modelScenCode is not None:
-            SPMETA, scenPackageMetaFilename, pkgMeta = self._pullClimatePackageMetadata()
-#             masklyr = self._createMaskLayer(SPMETA, pkgMeta)
-            self.scenPackageMetaFilename = None
-            # Fill or reset epsgcode, mapunits, gridbbox
-#             self.scenPkg, self.epsg, self.mapunits = self._checkScenarios()
-            if not self.prjScenCodeList:
-               self.prjScenCodeList = self.scenPkg.scenarios.keys()
-         else:
-            # If new ScenPackage was provided (not SDM scenario codes), fill codes 
-            (self.scenPkg, self.modelScenCode, self.epsg, self.mapunits, 
-             self.scenPackageMetaFilename, masklyr) = self._createScenarios()
-            self.prjScenCodeList = self.scenPkg.scenarios.keys()
 
       if not doMapBaseline:
          self.prjScenCodeList.remove(self.modelScenCode)
@@ -556,7 +543,6 @@ class BOOMFiller(LMObject):
                var.append(v)
       return var
 
-
    # ...............................................
    def addUsers(self, isInitial=True):
       """
@@ -612,35 +598,39 @@ class BOOMFiller(LMObject):
       # TODO move these next 2 commands into fillScenarios
       SPMETA, scenPackageMetaFilename, pkgMeta = self._pullClimatePackageMetadata()
       # TODO: Put optional masklayer into every Scenario
-#       masklyr = self._createMaskLayer(SPMETA, pkgMeta)
-      masklyr = None
+      try:
+         maskMeta = SPMETA.SDM_MASK_META
+      except:
+         masklyr = None
+      else:
+         masklyr = self._createMaskLayer(pkgMeta, maskMeta)
 
-      epsg = pkgMeta['epsg']
-      mapunits = pkgMeta['mapunits']
       self.scribe.log.info('  Read ScenPackage {} metadata ...'.format(self.scenPackageName))
       scenPkg = ScenPackage(self.scenPackageName, self.usr, 
-                            epsgcode=epsg,
-                            mapunits=mapunits,
+                            epsgcode=pkgMeta['epsg'],
+                            mapunits=pkgMeta['mapunits'],
                             modTime=mx.DateTime.gmt().mjd)
       
       # Current
-      basescen, staticLayers = self._createBaselineScenario(pkgMeta,  
-                                                      SPMETA.LAYERTYPE_META,
-                                                      SPMETA.BASELINE_META)
-      self.scribe.log.info('     Assembled base scenario {}'.format(basescen.code))
-      scenPkg.addScenario(basescen)
+      bscenCode = pkgMeta['baseline']
+      bscen = self._createScenario(pkgMeta, bscenCode, SPMETA.SCENARIO_META,
+                                   SPMETA.LAYERTYPE_META)
+      self.scribe.log.info('     Assembled base scenario {}'.format(bscenCode))
+      allScens = {bscenCode: bscen}
 
       # Predicted Past and Future
-      allScens = self._createPredictedScenarios(pkgMeta, 
-                                           SPMETA.LAYERTYPE_META, 
-                                           staticLayers,
-                                           SPMETA.PREDICTED_META)
+      for pscenCode in pkgMeta['predicted']:
+         pscen = self._createScenario(pkgMeta, pscenCode, SPMETA.SCENARIO_META,
+                                      SPMETA.LAYERTYPE_META)
+         allScens[pscenCode] = pscen
+ 
       self.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
       for scen in allScens.values():
-         scenPkg.addScenario(scen)
-      
+         scenPkg.addScenario(scen)      
       scenPkg.resetBBox()
-      return scenPkg, basescen.code, epsg, mapunits, scenPackageMetaFilename, masklyr
+      
+      return (scenPkg, bscenCode, pkgMeta['epsg'], pkgMeta['mapunits'], 
+              scenPackageMetaFilename, masklyr)
    
    # ...............................................
    def _checkOccurrenceSets(self, limit=10):
@@ -706,316 +696,6 @@ class BOOMFiller(LMObject):
       except:
          pass
       return val
-
-   # ...............................................
-   def _createScenMaskLayer(self, SPMETA, pkgMeta, scenMeta):
-      """
-      @summary Assembles layer metadata for input to optional 
-               pre-processing SDM Mask step identified in scenario package 
-               metadata. 
-               Currently only the 'hull_region_intersect' method is available.
-      """
-      # Required keys in SDM_MASK_INPUT: name, bbox, gdaltype, gdalformat, file
-      maskMeta = SPMETA.SDM_MASK_INPUT
-      
-      lyrmeta = {
-         Vector.META_IS_CATEGORICAL: self._getOptionalMetadata(maskMeta, 'iscategorical'), 
-         ServiceObject.META_TITLE: self._getOptionalMetadata(maskMeta, 'title'), 
-         ServiceObject.META_AUTHOR: self._getOptionalMetadata(maskMeta, 'author'), 
-         ServiceObject.META_DESCRIPTION: self._getOptionalMetadata(maskMeta, 'description'),
-         ServiceObject.META_KEYWORDS: self._getOptionalMetadata(maskMeta, 'keywords'),
-         ServiceObject.META_CITATION: self._getOptionalMetadata(maskMeta, 'citation')}
-      # required
-      try:
-         name = maskMeta['name']
-         bbox = maskMeta['bbox']
-         relfname = maskMeta['file']
-         dtype = maskMeta['gdaltype']
-         dformat = maskMeta['gdalformat']
-      except KeyError:
-         raise LMError(currargs='Missing one of: name, bbox, file, gdaltype, '+ 
-                       'gdalformat in SDM_MASK_INPUT in scenario package metadata')
-      else:   
-         dloc = os.path.join(ENV_DATA_PATH, relfname)
-         if not os.path.exists(dloc):
-            print('Missing local data %s' % dloc)
-
-      masklyr = Raster(name, self.usr, 
-                       pkgMeta['epsg'], 
-                       mapunits=pkgMeta['mapunits'],  
-                       resolution=scenMeta['res'][1], 
-                       dlocation=dloc, metadata=lyrmeta, 
-                       dataFormat=dformat, 
-                       gdalType=dtype, 
-                       bbox=bbox,
-                       modTime=mx.DateTime.gmt().mjd)
-      return masklyr
-
-   
-   # ...............................................
-   def _getBaselineLayers(self, pkgMeta, baseMeta, lyrtypeMeta):
-      """
-      @summary Assembles layer metadata for a single layerset
-      """
-      currtime = mx.DateTime.gmt().mjd
-      layers = []
-      staticLayers = {}
-      dateCode = baseMeta['times'].keys()[0]
-      res_name = baseMeta['res'][0]
-      res_val = baseMeta['res'][1]
-#       resolution = baseMeta['res']
-      region = baseMeta['region']
-      for envcode in pkgMeta['layertypes']:
-         ltmeta = lyrtypeMeta[envcode]
-         envKeywords = [k for k in baseMeta['keywords']]
-         relfname, isStatic = self._findFileFor(ltmeta, baseMeta['code'], 
-                                           gcm=None, tm=None, altPred=None)
-         lyrname = self._getbioName(baseMeta['code'], res_name, 
-                                    lyrtype=envcode, suffix=pkgMeta['suffix'])
-         lyrmeta = {'title': ' '.join((baseMeta['code'], ltmeta['title'])),
-                    'description': ' '.join((baseMeta['code'], ltmeta['description']))}
-         envmeta = {'title': ltmeta['title'],
-                    'description': ltmeta['description'],
-                    'keywords': envKeywords.extend(ltmeta['keywords'])}
-         dloc = os.path.join(ENV_DATA_PATH, relfname)
-         if not os.path.exists(dloc):
-            print('Missing local data %s' % dloc)
-         envlyr = EnvLayer(lyrname, self.usr, pkgMeta['epsg'], 
-                           dlocation=dloc, 
-                           lyrMetadata=lyrmeta,
-                           dataFormat=pkgMeta['gdalformat'], 
-                           gdalType=pkgMeta['gdaltype'],
-                           valUnits=ltmeta['valunits'],
-                           mapunits=pkgMeta['mapunits'], 
-                           resolution=res_val, 
-                           bbox=region, 
-                           modTime=currtime, 
-                           envCode=envcode, 
-                           dateCode=dateCode,
-                           envMetadata=envmeta,
-                           envModTime=currtime)
-         layers.append(envlyr)
-         if isStatic:
-            staticLayers[envcode] = envlyr
-      return layers, staticLayers
-
-   # ...............................................
-   def _findFileFor(self, ltmeta, basecode, gcm=None, tm=None, altPred=None):
-      isStatic = False
-      ltfiles = ltmeta['files']
-      if len(ltfiles) == 1:
-         isStatic = True
-         relFname = ltfiles.keys()[0]
-         if basecode in ltfiles[relFname]:
-            return relFname, isStatic
-      else:
-         for relFname, kList in ltfiles.iteritems():
-            if basecode in kList:
-               return relFname, isStatic
-            elif (gcm in kList and tm in kList and
-                  (altPred is None or altPred in kList)):
-               return relFname, isStatic
-      print('Failed to find layertype {} for basecode {}, gcm {}, altpred {}, time {}'
-            .format(ltmeta['title'], basecode, gcm, altPred, tm))
-      return None, None
-         
-
-   # ...............................................
-   def _getPredictedLayers(self, pkgMeta, lyrtypeMeta, staticLayers,
-                           scenMeta, basecode, tm, gcm=None, altpred=None):
-      """
-      @summary Assembles layer metadata for a single layerset
-      """
-      currtime = mx.DateTime.gmt().mjd
-      res_name = scenMeta['res'][0]
-      res_val = scenMeta['res'][1]
-      mdlname = tmname = None
-      if gcm is not None:
-         mdlname = scenMeta['models'][gcm]['name']
-         tmname = scenMeta['times'][tm]['name']
-      layers = []
-      rstType = None
-      layertypes = pkgMeta['layertypes']
-      for envcode in layertypes:
-         keywords = [k for k in scenMeta['keywords']]
-         ltmeta = lyrtypeMeta[envcode]
-         relfname, isStatic = self._findFileFor(ltmeta, basecode, 
-                                           gcm=gcm, tm=tm, altPred=altpred)
-         if not isStatic:
-            lyrname = self._getbioName(basecode, res_name, gcm=gcm, tm=tm, 
-                                  altpred=altpred, lyrtype=envcode, 
-                                  suffix=pkgMeta['suffix'], isTitle=False)
-            lyrtitle = self._getbioName(basecode, res_name, gcm=gcm, tm=tmname, 
-                                   altpred=altpred, lyrtype=envcode, 
-                                   suffix=pkgMeta['suffix'], isTitle=True)
-            scentitle = scenMeta['name']
-#             scentitle = self._getbioName(basecode, res_name, gcm=mdlname, 
-#                                     tm=tmname, altpred=altpred, 
-#                                     suffix=pkgMeta['suffix'], isTitle=True)
-            lyrdesc = '{} for {}'.format(ltmeta['description'], scentitle)
-            
-            lyrmeta = {'title': lyrtitle, 'description': lyrdesc}
-            envmeta = {'title': ltmeta['title'],
-                       'description': ltmeta['description'],
-                       'keywords': keywords.extend(ltmeta['keywords'])}
-            dloc = os.path.join(ENV_DATA_PATH, relfname)
-            if not os.path.exists(dloc):
-               print('Missing local data %s' % dloc)
-               dloc = None
-            envlyr = EnvLayer(lyrname, self.usr, pkgMeta['epsg'], 
-                              dlocation=dloc, 
-                              lyrMetadata=lyrmeta,
-                              dataFormat=pkgMeta['gdalformat'], 
-                              gdalType=rstType,
-                              valUnits=ltmeta['valunits'],
-                              mapunits=pkgMeta['mapunits'], 
-                              resolution=res_val, 
-                              bbox=scenMeta['region'], 
-                              modTime=currtime,
-                              envCode=envcode, 
-                              gcmCode=gcm, altpredCode=altpred, dateCode=tm,
-                              envMetadata=envmeta, 
-                              envModTime=currtime)
-         else:
-            # Use the observed data
-            envlyr = staticLayers[envcode]
-         layers.append(envlyr)
-      return layers
-   
-   
-   # ...............................................
-   def _createBaselineScenario(self, pkgMeta, lyrtypeMeta, 
-                              scenMeta, climKeywords):
-      """
-      @summary Assemble Worldclim/bioclim scenario
-      """
-      baseCode = scenMeta['code']
-      res_name = scenMeta['res'][0]
-      res_val = scenMeta['res'][1]
-      region = scenMeta['region']
-      basekeywords = [k for k in climKeywords]
-      basekeywords.extend(scenMeta['keywords'])
-      # there should only be one
-      dateCode = scenMeta['times'].keys()[0]
-      scencode = self._getbioName(baseCode, res_name, suffix=pkgMeta['suffix'])
-      lyrs, staticLayers = self._getBaselineLayers(pkgMeta, scenMeta, 
-                                              lyrtypeMeta)
-      scenmeta = {ServiceObject.META_TITLE: scenMeta['title'], 
-                  ServiceObject.META_AUTHOR: scenMeta['author'], 
-                  ServiceObject.META_DESCRIPTION: scenMeta['description'], 
-                  ServiceObject.META_KEYWORDS: basekeywords}
-      scen = Scenario(scencode, self.usr, pkgMeta['epsg'], 
-                      metadata=scenmeta, 
-                      units=pkgMeta['mapunits'], 
-                      res=res_val, 
-                      dateCode=dateCode,
-                      bbox=region, 
-                      modTime=mx.DateTime.gmt().mjd,  
-                      layers=lyrs)
-      return scen, staticLayers
-   
-   # ...............................................
-   def _createSimpleScenario(self, code, pkgMeta, lyrtypeMeta, 
-                             staticLayers, scenMeta):
-      """
-      @summary Assemble Worldclim/bioclim scenario
-      """
-      res_name = scenMeta['res'][0]
-      res_val = scenMeta['res'][1]
-      # there should only be one
-      lyrs = self._getPredictedLayers(pkgMeta, lyrtypeMeta, staticLayers, 
-                                      scenMeta, code, 
-                                      scenMeta['date'], 
-                                      gcm=scenMeta['gcm'], 
-                                      altpred=scenMeta['altpred'])
-
-      scenmeta = {ServiceObject.META_TITLE: scenMeta['name'], 
-                  ServiceObject.META_AUTHOR: scenMeta['author'], 
-                  ServiceObject.META_DESCRIPTION: scenMeta['description'], 
-                  ServiceObject.META_KEYWORDS: scenMeta['keywords']}
-      scen = Scenario(code, self.usr, pkgMeta['epsg'], 
-                      metadata=scenmeta, 
-                      units=pkgMeta['mapunits'], 
-                      res=res_val, 
-                      dateCode=scenMeta['date'],
-                      bbox=scenMeta['region'], 
-                      modTime=mx.DateTime.gmt().mjd,  
-                      layers=lyrs)
-      return scen
-            
-   
-   # ...............................................
-   def _createPredictedScenarios(self, pkgMeta, lyrtypeMeta, staticLayers,
-                                predMeta):
-      """
-      @summary Assemble predicted future scenarios defined by IPCC report
-      """
-      predScenarios = {}
-      for scode in pkgMeta['predicted']:
-         thisScenMeta = predMeta[scode]
-
-      # Assemble one or more simply-defined scenarios
-         thisScen = self._createSimpleScenario(scode, pkgMeta, 
-                             lyrtypeMeta, staticLayers,
-                             thisScenMeta)
-         predScenarios[scode] = thisScen
-      return predScenarios            
-   
-   # ...............................................
-   def addPackageScenariosLayers(self):
-      """
-      @summary Add scenPackage, scenario and layer metadata to database, and 
-               update the scenPkg attribute with newly inserted objects
-      """
-      if self.scenPkg.getId() is not None:
-         self.scribe.log.info('ScenarioPackage {} is present'
-                              .format(self.scenPkg.name))
-      else:
-         updatedScens = []
-         updatedScenPkg = self.scribe.findOrInsertScenPackage(self.scenPkg)
-         for scode, scen in self.scenPkg.scenarios.iteritems():
-            if scen.getId() is not None:
-               self.scribe.log.info('Scenario {} is present'.format(scode))
-               updatedScens.append(scen)
-            else:
-               self.scribe.log.info('Insert scenario {}'.format(scode))
-               newscen = self.scribe.findOrInsertScenario(scen, 
-                                                   scenPkgId=updatedScenPkg.getId())
-               updatedScens.append(newscen)
-         self.scenPkg.setScenarios(updatedScens)
-   
-   # ...............................................
-   def addMaskLayer(self):
-      if self.masklyr:
-         self.scribe.findOrInsertLayer(self.masklyr)
-
-   # ...............................................
-   def _findClimatePackageMetadata(self):
-      scenPackageMetaFilename = os.path.join(ENV_DATA_PATH, 
-                     '{}{}'.format(self.scenPackageName, LMFormat.PYTHON.ext))      
-      if not os.path.exists(scenPackageMetaFilename):
-         raise LMError(currargs='Climate metadata {} does not exist'
-                       .format(scenPackageMetaFilename))
-      # TODO: change to importlib on python 2.7 --> 3.3+  
-      try:
-         import imp
-         SPMETA = imp.load_source('currentmetadata', scenPackageMetaFilename)
-      except Exception, e:
-         raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                       .format(scenPackageMetaFilename, e))
-      return SPMETA, scenPackageMetaFilename
-   
-   # ...............................................
-   def _pullClimatePackageMetadata(self):
-      """
-      All layers in a package must share EPSG. mapunits, GDAL format
-      """
-      SPMETA, scenPackageMetaFilename = self._findClimatePackageMetadata()
-      # Combination of scenario and layer attributes making up these data 
-      pkgMeta = SPMETA.CLIMATE_PACKAGES[self.scenPackageName]
-      # Spatial and format attributes of data files
-      # Resolution and BBox is in each scenario, not global for package
-      return SPMETA, scenPackageMetaFilename, pkgMeta
 
    # ...............................................
    def _addIntersectGrid(self):
