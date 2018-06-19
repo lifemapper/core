@@ -232,12 +232,18 @@ class BorgScribe(LMObject):
    def findOrInsertScenPackage(self, scenPkg):
       """
       @copydoc LmServer.db.catalog_borg.Borg::findOrInsertScenPackage()
-      @note: This returns the updated ScenPackage filled with Scenarios and Layers
+      @note: This returns the updated ScenPackage **without** Scenarios and Layers
       """
       updatedScenPkg = self._borg.findOrInsertScenPackage(scenPkg)
-      for code, scen in updatedScenPkg.scenarios.iteritems():
-         updatedScen = self.findOrInsertScenario(scen, updatedScenPkg.getId())
-         updatedScenPkg.addScenario(updatedScen)
+#       # if existing, pull existing scenarios
+#       if updatedScenPkg.modTime == scenPkg.modTime:
+#          existingScens = self.getScenariosForScenPackage(
+#                                        scenPkgId=updatedScenPkg.getId())
+#          updatedScenPkg.setScenarios(existingScens)
+#       else:
+#          for code, scen in scenPkg.scenarios.iteritems():
+#             updatedScen = self.findOrInsertScenario(scen, updatedScenPkg.getId())
+#             updatedScenPkg.addScenario(updatedScen)
       return updatedScenPkg
 
 # ...............................................
