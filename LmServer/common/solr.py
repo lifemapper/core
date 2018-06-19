@@ -69,9 +69,26 @@ def postSolrDocument(collection, docFilename):
    @param collection: The name of the Solr core (index) to add this document to
    @param docFilename: The file location of the document to post
    """
-   cmd = '{cmd} -c {collection} -out no {filename}'.format(
-      cmd=SOLR_POST_COMMAND, collection=collection, filename=docFilename)
-   subprocess.call(cmd, shell=True)
+   #cmd = '{cmd} -c {collection} -out no {filename}'.format(
+   #   cmd=SOLR_POST_COMMAND, collection=collection, filename=docFilename)
+   #subprocess.call(cmd, shell=True)
+   return _post(collection, docFilename, 
+                headers={'Content-Type': 'application/xml'})
+   
+# .............................................................................
+def _post(collection, docFilename, headers=None):
+   """
+   @summary: Post a document to a Solr index
+   """
+   if not headers:
+      headers = {}
+   url = '{}{}/update'.format(SOLR_SERVER, collection)
+   
+   with open(docFilename) as inF:
+      data = inF.read()
+   
+   req = urllib2.Request(url, data=data, headers=headers)
+   return urllib2.urlopen(req).read()
    
 # .............................................................................
 def _query(collection, qParams=None, fqParams=None,
