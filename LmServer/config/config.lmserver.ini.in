@@ -64,10 +64,10 @@ BISON_TSN_FILENAME: bison_species_tsns.txt
 IDIG_OCCURRENCE_DATA: idig
 IDIG_OCCURRENCE_DATA_DELIMITER: ,
 
-;; The default SPECIES_DATA set on 'lifemapper-server' roll installation
+;; The default USER_SPECIES_DATA set on 'lifemapper-server' roll installation
 ;; Used only when DATASOURCE is <> GBIF, IDIGBIO, or BISON. 
 ;; Change defaults in @LMHOME@/config/site.ini
-USER_OCCURRENCE_DATA: @SPECIES_DATA@
+USER_OCCURRENCE_DATA: @USER_SPECIES_DATA@
 USER_OCCURRENCE_DATA_DELIMITER: ,
 
 ; ...................
@@ -93,6 +93,7 @@ ASSEMBLE_PAMS: True
 GRID_NAME: lmgrid_1d
 GRID_CELLSIZE: 1
 GRID_NUM_SIDES: 4
+COMPUTE_PAM_STATS: 0
 
 INTERSECT_FILTERSTRING: None
 INTERSECT_VALNAME: pixel
