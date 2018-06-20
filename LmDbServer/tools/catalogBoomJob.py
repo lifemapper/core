@@ -52,20 +52,18 @@ from LmServer.common.lmconstants import (Algorithms, ARCHIVE_KEYWORD,
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.base.layer2 import Vector, Raster
+from LmServer.base.layer2 import Vector
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.processchain import MFChain
-from LmServer.legion.scenario import Scenario, ScenPackage
+from LmServer.legion.scenario import ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
-from test import allScens
 
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
@@ -152,69 +150,44 @@ class BOOMFiller(LMObject):
                                                    usr=self.usr)
       
    # ...............................................
-   def _findScenariosFromCodes(self, doMapBaseline=1):
+   def findScenariosFromCodes(self, doMapBaseline=1):
       """
-      @summary Find Scenarios from codes or create from ScenPackage metadata
-      """
-      existingScenPkg = None
-      # TODO: Put optional masklayer into every Scenario
-      masklyr = None  
-      
-      # Check to see if these exist as public or user data first
-      if self.scenPackageName is not None:
-         existingScenPkg = self.scribe.getScenPackage(userId=PUBLIC_USER, 
-                                         scenPkgName=self.scenPackageName, 
-                                         fillLayers=False)
-         if not existingScenPkg:
-            existingScenPkg = self.scribe.getScenPackage(userId=self.usr, 
-                                            scenPkgName=self.scenPackageName, 
-                                            fillLayers=False)
-      # Required vals if not creating new from metadata and layers
-      # SCENARIO_PACKAGE_MODEL_SCENARIO
-      # SCENARIO_PACKAGE_PROJECTION_SCENARIOS
-      if not existingScenPkg and self.modelScenCode is not None:
-         codes = [self.modelScenCode]
-         for c in self.prjScenCodeList:
-            codes.append(c)
-         allsps = self.scribe.getScenPackagesForUserCodes(PUBLIC_USER, codes, fillLayers=False)
-         if not allsps:
-            allsps = self.scribe.getScenPackagesForUserCodes(self.usr, codes, fillLayers=False)
-         if len(allsps) > 0:
-            existingScenPkg = allsps[0]
-            
-      return existingScenPkg
-                
-   # ...............................................
-   def _fillScenarios(self, doMapBaseline=1):
-      """
-      @summary Find Scenarios from codes or create from ScenPackage metadata
+      @summary Find Scenarios from codes 
+      @note: Boom parameters must include SCENARIO_PACKAGE, 
+                                          SCENARIO_PACKAGE_MODEL_SCENARIO,
+                          and optionally, SCENARIO_PACKAGE_PROJECTION_SCENARIOS
+             If SCENARIO_PACKAGE_PROJECTION_SCENARIOS is not present, SDMs 
+             will be projected onto all scenarios
       """
       # TODO: Put optional masklayer into every Scenario
       masklyr = None  
-      
-      # Check to see if these exist as public or user data first
-      self.scenPkg = self._findScenariosFromCodes(doMapBaseline=1)
-            
-      # if SCENARIO_PACKAGE_MODEL_SCENARIO is missing, 
-      # identify and construct from provided metadata 
-      # Configured codes for existing Scenarios
-      if self.scenPkg is not None:
-         s = self.scenPkg.getScenario(code=self.modelScenCode)
-         if s is None:
-            raise LMError('Scenario Package {}: {} contains no scenarios'
-                          .format(self.scenPkg.getId(), self.scenPkg.name))
-         self.epsg = s.epsgcode
-         self.mapunits = s.mapUnits
 
-      if not doMapBaseline:
-         self.prjScenCodeList.remove(self.modelScenCode)
+      if self.scenPackageName is None:
+         raise LMError('SCENARIO_PACKAGE must be configured')
+      if self.modelScenCode is None:
+         raise LMError('SCENARIO_PACKAGE_MODEL_SCENARIO must be configured')
+
+      existingScenPkg = self.scribe.getScenPackage(userId=self.usr, 
+                                      scenPkgName=self.scenPackageName, 
+                                      fillLayers=False)
+      if existingScenPkg is None:
+         raise LMError('Scenario Package {} must exist for User {}'
+                       .format(self.scenPackageName, self.usr))
+      
+      if not self.prjScenCodeList:
+         self.prjScenCodeList = existingScenPkg.scenarios.keys()
+         if not doMapBaseline:
+            self.prjScenCodeList.remove(self.modelScenCode)
+
       # TODO: Need a mask layer for every scenario!!
       self.masklyr = masklyr
 
       # Fill grid bbox with scenario package if it is absent
       if self.gridbbox is None:
          self.gridbbox = self.scenPkg.bbox
-
+                     
+      return existingScenPkg
+                
    # ...............................................
    def open(self):
       success = self.scribe.openConnections()
@@ -1093,15 +1066,12 @@ def initBoom(paramFname, isInitial=True):
    # ...............................................
    # Data for this Boom archive
    # ...............................................
-   # This updates the scenPkg with db objects for other operations
-   filler.addPackageScenariosLayers()
+   filler.findScenariosFromCodes()
    
-   filler.addMaskLayer()
-         
    # Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
    if filler.occIdFname:
       filler._checkOccurrenceSets()
-         
+      
    # Add or get ShapeGrid, Global PAM, Gridset for this archive
    # This updates the gridset, shapegrid, default PAMs (rolling, with no 
    #     matrixColumns, default GRIMs with matrixColumns
@@ -1161,102 +1131,3 @@ if __name__ == '__main__':
 
 
     
-"""
-import mx.DateTime
-import os
-from osgeo.ogr import wkbPolygon
-import time
-from types import IntType, FloatType
-
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
-   ProcessType, JobStatus, MatrixType, SERVER_PIPELINE_HEADING, 
-   SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX, DEFAULT_MAPUNITS, DEFAULT_EPSG)
-from LmCommon.common.readyfile import readyFilename
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource,
-                                           TNCMetadata)
-from LmDbServer.common.localconstants import (GBIF_TAXONOMY_FILENAME, 
-                                              GBIF_PROVIDER_FILENAME)
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
-         GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
-         DEFAULT_EMAIL_POSTFIX, Priority, ProcessTool)
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.lmuser import LMUser
-from LmServer.common.log import ScriptLogger
-from LmServer.base.layer2 import Vector
-from LmServer.base.lmobj import LMSpatialObject
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isCorrectUser
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
-from LmBackend.common.cmd import MfRule
-from LmServer.legion.envlayer import EnvLayer
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix  
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.processchain import MFChain
-from LmServer.legion.scenario import Scenario, ScenPackage
-from LmServer.legion.shapegrid import ShapeGrid
-from LmDbServer.boom.initboom import BOOMFiller
-
-CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
-CURR_MJD = mx.DateTime.gmt().mjd
-
-cfname='/state/partition1/lmscratch/temp/sax_biotaphy.ini'
-cfname='/state/partition1/lmscratch/temp/heuchera_boom_params.ini'
-cfname='/state/partition1/lmscratch/temp/taiwan_boom_params.ini'
-cfname='/state/partition1/lmscratch/temp/file_85752.ini'
-
-filler = BOOMFiller(configFname=cfname)
-filler.initializeInputs()
-
-
-filler.addPackageScenariosLayers()
-scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
-tree = filler.addTree(boomGridset)
-biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
-filler.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, biogeoLayers=biogeoLayerNames)
-
-# ...............................................
-# Data for this instance (Taxonomy, algorithms, default users)
-# ...............................................
-if isInitial:
-   filler.scribe.log.info('  Insert taxonomy metadata ...')
-   for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-      taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
-
-filler.addAlgorithms()
-filler.addTNCEcoregions()
-filler.addUsers()
-
-# ...............................................
-# Data for this Boom archive
-# ...............................................
-# This updates the scenPkg with db objects for other operations
-filler.addPackageScenariosLayers()
-
-filler.addMaskLayer()
-      
-# Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
-if filler.occIdFname:
-   filler._checkOccurrenceSets()
-      
-scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
-
-filler.addGRIMChains(scenGrims)
-
-tree = filler.addTree(boomGridset)
-
-biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
-
-
-# Write config file for this archive
-#    filler.writeConfigFile(tree, biogeoMtx, biogeoLayers)
-filler.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, biogeoLayers=biogeoLayerNames)
-
-mfChain = filler.addBoomChain()
-   
-filler.close()
-"""

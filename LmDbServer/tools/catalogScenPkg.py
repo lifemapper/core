@@ -21,51 +21,23 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import ConfigParser
-import json
 import mx.DateTime
 import os
 import time
-import types
 
-from LmBackend.command.boom import BoomerCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, DEFAULT_MAPUNITS, 
-      DEFAULT_POST_USER, JobStatus, LMFormat, MatrixType, ProcessType, 
-      SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
-      SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
-      SERVER_PIPELINE_HEADING)
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.lmconstants import LMFormat
 
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE, 
-                                           TNCMetadata)
-from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
-                                              GBIF_TAXONOMY_FILENAME)
-
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (Algorithms, ARCHIVE_KEYWORD, 
-                           ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX, GGRIM_KEYWORD,
-                           GPAM_KEYWORD, LMFileType, Priority, 
-                           PUBLIC_ARCHIVE_NAME)
+from LmServer.common.lmconstants import (ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvLayer
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix  
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
-from LmServer.legion.shapegrid import ShapeGrid
-from LmServer.legion.tree import Tree
-
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 
@@ -116,14 +88,6 @@ class SPFiller(LMObject):
       except:
          fname = None
       return fname
-
-# ...............................................
-   def _warnPermissions(self):
-      if not isCorrectUser():
-         print("""
-               When not running this {} as `lmwriter`, make sure to fix
-               permissions on the newly created shapegrid {}
-               """.format(self.name, self.gridname))
          
    # ...............................................
    def _getDb(self):
@@ -419,3 +383,25 @@ if __name__ == '__main__':
          .format(scenpkg_meta_file, user_id, user_email))
    catalogScenPackage(scenpkg_meta_file, user_id, user_email)
 
+"""
+find . -name "*.in" -exec sed -i s%@LMHOME@%/opt/lifemapper%g {} \;
+
+
+
+find . -name "*.in" -exec sed -i \
+        -e 's%@LMHOME@%/opt/lifemapper%g' \
+        -e 's%@LMSCRATCHDISK@%/state/partition1/lmscratch%g' \
+        -e 's%@PYTHONVER@%python2.7%g' \
+        -e 's%@PYBIN@%/opt/python/bin%g' \
+        -e 's%@PKGROOT@%/opt/lifemapper%g' \
+        -e 's%@UNIXSOCKET@%$(UNIXSOCKET)%g' \
+        -e 's%@SCENARIO_PACKAGE@%$(SCENARIO_PACKAGE)%g' \
+        -e 's%@ENV_DATA_DIR@%layers%g' \
+        -e 's%@DATADIR_SERVER@%/share/lmserver/data%g' \
+        -e 's%@DATADIR_SHARED@%/share/lm/data%g' \
+        -e 's%@LMURL@%http://yeti.lifemapper.org/dl%g' \
+        -e 's%@TARBALL_POSTFIX@%tar.gz%g' \
+        -e 's%@LMCLIENT@%sdm%g' \
+{} \;
+
+"""
