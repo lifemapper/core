@@ -29,15 +29,14 @@ import argparse
 from mx.DateTime.DateTime import gmt
 import os
 
-from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmServer.common.lmconstants import Priority
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 
 # The number of matrix columns to pull at a time
-GROUP_SIZE = 100
+GROUP_SIZE = 1000
 
 # .............................................................................
 def rebuild_index_for_gridset(gridset_id):
@@ -51,24 +50,24 @@ def rebuild_index_for_gridset(gridset_id):
    
    # Get gridset and fill PAMs
    gs = scribe.getGridset(gridsetId=gridset_id, fillMatrices=True)
+   shapegrid = gs.getShapegrid()
    user_id = gs.getUserId()
-   
-   # Create makeflow
-   wfMeta = {
-      MFChain.META_CREATED_BY : os.path.basename(__file__),
-      MFChain.META_DESCRIPTION : 'Reindex PAMs for gridset {}'.format(
-                                                                  gridset_id)
-   }
-   new_wf = MFChain(user_id, priority=Priority.REQUESTED, metadata=wfMeta,
-                   status=JobStatus.GENERAL, statusModTime=gmt().mjd)
-   my_wf = scribe.insertMFChain(new_wf)
-   
-   # TODO: Determine what work directory should be
-   work_dir = my_wf.getRelativeDirectory()
-   
    
    # TODO: Should this only be rolling PAMs?
    for pam in gs.getPAMs():
+      # Create makeflow
+      wfMeta = {
+         MFChain.META_CREATED_BY : os.path.basename(__file__),
+         MFChain.META_DESCRIPTION : 'Reindex PAMs for gridset {}, PAM {}'.format(
+                                                       gridset_id, pam.getId())
+      }
+      new_wf = MFChain(user_id, priority=Priority.REQUESTED, metadata=wfMeta,
+                      status=JobStatus.GENERAL, statusModTime=gmt().mjd)
+      my_wf = scribe.insertMFChain(new_wf)
+      
+      # TODO: Determine what work directory should be
+      work_dir = my_wf.getRelativeDirectory()
+   
       matrix_id = pam.getId()
       num_columns = scribe.countMatrixColumns(userId=user_id, 
                                                             matrixId=matrix_id)
@@ -79,16 +78,22 @@ def rebuild_index_for_gridset(gridset_id):
          i += GROUP_SIZE
          for mc in mcs:
             # Get layer
-            lyr = scribe.getLayer(lyrId=mc.layerId)
-            mc.layer = lyr
-            
-            mc.updateStatus(JobStatus.INITIALIZE)
-            scribe.updateObject(mc)
-            my_wf.addCommands(mc.computeMe(workDir=work_dir))
+            lyr = scribe.getLayer(lyrId=mc.getLayerId())
+            if os.path.exists(lyr.getDLocation()):
+               if lyr.minVal == lyr.maxVal and lyr.minVal == 0.0:
+                  print('No prediction for layer {}, skipping'.format(lyr.getId()))
+               else:
+                  mc.layer = lyr
+                  mc.shapegrid = shapegrid
+                  mc.processType = ProcessType.INTERSECT_RASTER
+                  
+                  mc.updateStatus(JobStatus.INITIALIZE)
+                  scribe.updateObject(mc)
+                  my_wf.addCommands(mc.computeMe(workDir=work_dir))
    
-   my_wf.write()
-   my_wf.updateStatus(JobStatus.INITIALIZE)
-   scribe.updateObject(my_wf)
+      my_wf.write()
+      my_wf.updateStatus(JobStatus.INITIALIZE)
+      scribe.updateObject(my_wf)
    
    scribe.closeConnections()
 
