@@ -25,6 +25,7 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+@todo: Determine if we have duplicate tree statistics
 """
 from math import sqrt
 import numpy as np
@@ -32,8 +33,8 @@ import numpy as np
 from LmCommon.common.lmconstants import PamStatKeys, PhyloTreeKeys
 from LmCommon.common.matrix import Matrix
 
-from LmCompute.plugins.multi.calculate.pd import pd
-from LmCompute.plugins.multi.calculate import tree_reader
+from LmCompute.plugins.multi.calculate.ot_phylo import mnnd, mpd, pd, spd
+import LmCompute.plugins.multi.calculate.tree_reader as tree_reader
 
 # .............................................................................
 class PamStats(object):
@@ -130,9 +131,16 @@ class PamStats(object):
       
       # Check if we have tree stats too
       if self.tree is not None:
-         statColumns.extend([self.mntd, self.mpd, self.pearson, self.pd])
+         statColumns.extend([self.mntd, self.mean_pairwise_distance, 
+                             self.pearson, self.mean_nearest_neighbor_distance,
+                             self.mean_phylogenetic_distance,
+                             self.phylogenetic_diversity, 
+                             self.sum_phylogenetic_distance
+                             ])
          sitesHeaders.extend([PamStatKeys.MNTD, PamStatKeys.MPD, 
-                              PamStatKeys.PEARSON, PamStatKeys.PD])
+                              PamStatKeys.PEARSON, PamStatKeys.MNND,
+                              PamStatKeys.MPHYLODIST, PamStatKeys.PD,
+                              PamStatKeys.SPD])
       
       # Return a matrix
       return Matrix(np.concatenate(statColumns, axis=1), 
@@ -295,7 +303,7 @@ class PamStats(object):
 
       # Create numpy arrays
       numSites = len(mpd)
-      self.mpd = np.nan_to_num(np.array(mpd).reshape((numSites, 1)))
+      self.mean_pairwise_distance = np.nan_to_num(np.array(mpd).reshape((numSites, 1)))
       self.pearson = np.nan_to_num(np.array(pearson).reshape((numSites, 1)))
    
    # ...........................
@@ -313,7 +321,10 @@ class PamStats(object):
       
       num_rows, num_cols = self.pamData.shape
       # Need squid dictionary?
+      mnnd_stat = np.zeros((num_rows, 1), dtype=np.float)
+      mpd_stat = np.zeros((num_rows, 1), dtype=np.float)
       pd_stat = np.zeros((num_rows, 1), dtype=np.float)
+      spd_stat = np.zeros((num_rows, 1), dtype=np.float)
       
       ndsdict = {}
       for i in tree.leaves():
@@ -337,9 +348,18 @@ class PamStats(object):
          # Site statistics
          # ..............
          if len(sp_tips) > 0:
+            mnnd_stat[i,0] = mnnd(tree, sp_tips)
+            mpd_stat[i,0] = mpd(tree, sp_tips)
             pd_stat[i,0] = pd(tree, sp_tips)
+            spd_stat[i,0] = spd(tree, sp_tips)
          else:
+            mnnd_stat[i,0] = 0.0
+            mpd_stat[i,0] = 0.0
             pd_stat[i,0] = 0.0
+            spd_stat[i,0] = 0.0
         
-      self.pd = pd_stat
+      self.mean_nearest_neighbor_distance = mnnd_stat
+      self.mean_phylogenetic_distance = mpd_stat
+      self.phylogenetic_diversity = pd_stat
+      self.sum_phylogenetic_distance = spd_stat
       

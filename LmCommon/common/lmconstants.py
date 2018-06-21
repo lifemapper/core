@@ -1698,7 +1698,10 @@ class PamStatKeys(object):
    PEARSON = 'pearson'
    # PD is Phylogenetic Diversity as defined by sum of the branch lengths for 
    #    the minimum spanning path of the involved taxa
-   PD = 'pd'
+   PD = 'Phylogenetic Diversity'
+   MNND = 'Mean Nearest Neighbor Distance'
+   MPHYLODIST = 'Mean Phylogenetic Distance'
+   SPD = 'Sum of Phylogenetic Distance'
    
    # Species statistics
    # ..................
