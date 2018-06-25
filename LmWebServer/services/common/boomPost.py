@@ -31,6 +31,7 @@
 import cherrypy
 from ConfigParser import ConfigParser
 import json
+from mx.DateTime import gmt
 import os
 import random
 
@@ -48,7 +49,7 @@ class BoomPoster(object):
                 BOOM input config file to be used for creating a BOOM.
    """
    # ................................
-   def __init__(self, userId, userEmail, archiveName, reqJson):
+   def __init__(self, userId, userEmail, reqJson):
       """
       @todo: Make this more generic
       """
@@ -56,9 +57,14 @@ class BoomPoster(object):
       self.config.add_section(SERVER_BOOM_HEADING)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', userId)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER_EMAIL', userEmail)
-      self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', archiveName)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_PRIORITY', Priority.REQUESTED)
       
+      # Look for an archive name
+      if reqJson.has_key('archive_name'):
+         archiveName = reqJson['archive_name']
+      else:
+         archiveName = '{}_{}'.format(userId, gmt().mjd)
+      self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', archiveName)
       
       # Check for old parameters for backwards compatibility until Ben updates
       if reqJson.has_key('algorithms') and \

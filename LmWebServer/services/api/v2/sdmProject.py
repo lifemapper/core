@@ -30,7 +30,6 @@
 
 import cherrypy
 import json
-from mx.DateTime import gmt
 
 from LmCommon.common.lmconstants import JobStatus, DEFAULT_POST_USER
 from LmServer.base.atom import Atom
@@ -125,9 +124,7 @@ class SdmProjectService(LmService):
       else:
          usr = self.scribe.findUser(self.getUserId())
       
-      archiveName = '{}_{}'.format(usr.userid, gmt().mjd)
-      
-      bp = BoomPoster(usr.userid, usr.email, archiveName, projectionData)
+      bp = BoomPoster(usr.userid, usr.email, projectionData)
       gridset = bp.init_boom()
 
       # TODO: What do we return?

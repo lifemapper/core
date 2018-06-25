@@ -547,9 +547,7 @@ class GridSetService(LmService):
       
       usr = self.scribe.findUser(self.getUserId())
       
-      archiveName = '{}_{}'.format(usr.userid, gmt().mjd)
-      
-      bp = BoomPoster(usr.userid, usr.email, archiveName, gridsetData)
+      bp = BoomPoster(usr.userid, usr.email, gridsetData)
       gridset = bp.init_boom()
 
       # TODO: What do we return?
