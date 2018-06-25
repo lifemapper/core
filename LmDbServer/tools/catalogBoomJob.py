@@ -32,21 +32,19 @@ from LmBackend.command.boom import BoomerCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, DEFAULT_MAPUNITS, 
-      DEFAULT_POST_USER, JobStatus, LMFormat, MatrixType, ProcessType, 
+from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
+      ProcessType, DEFAULT_POST_USER,
       SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
       SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
       SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
 
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE, 
-                                           TNCMetadata)
+from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (Algorithms, ARCHIVE_KEYWORD, 
-                           ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX, GGRIM_KEYWORD,
+from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
                            GPAM_KEYWORD, LMFileType, Priority, 
                            PUBLIC_ARCHIVE_NAME)
 from LmServer.common.lmuser import LMUser
@@ -61,7 +59,6 @@ from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.processchain import MFChain
-from LmServer.legion.scenario import ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 
@@ -104,8 +101,8 @@ class BOOMFiller(LMObject):
       # Allow reset configuration
       if paramFname is not None:
          self.inParamFname = paramFname
-      (self.usr, self.usrPath,
-       self.usrEmail,
+      (self.userId, self.userIdPath,
+       self.userEmail,
        self.archiveName,
        self.priority,
        self.scenPackageName,
@@ -136,7 +133,12 @@ class BOOMFiller(LMObject):
       # or create from ScenPackage metadata
       config = Config(siteFn=self.inParamFname)
       doMapBaseline = self._getBoomOrDefault(config, 'MAP_BASELINE', defaultValue=1)
-      self._fillScenarios(doMapBaseline=doMapBaseline)
+      # Checks existence of environmental data for this user and fills
+      # self.prjScenCodeList if necessary.      
+      scenPkg = self.findScenariosFromCodes(doMapBaseline=doMapBaseline)
+      # Fill grid bbox with scenario package if it is absent
+      if self.gridbbox is None:
+         self.gridbbox = scenPkg.bbox
 
       # Created by addArchive
       self.shapegrid = None
@@ -147,8 +149,8 @@ class BOOMFiller(LMObject):
       earl = EarlJr()
       self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                    objCode=self.archiveName, 
-                                                   usr=self.usr)
-      
+                                                   usr=self.userId)
+
    # ...............................................
    def findScenariosFromCodes(self, doMapBaseline=1):
       """
@@ -167,24 +169,34 @@ class BOOMFiller(LMObject):
       if self.modelScenCode is None:
          raise LMError('SCENARIO_PACKAGE_MODEL_SCENARIO must be configured')
 
-      existingScenPkg = self.scribe.getScenPackage(userId=self.usr, 
+      # Make sure Scenario Package exists for this user
+      existingScenPkg = self.scribe.getScenPackage(userId=self.userId, 
                                       scenPkgName=self.scenPackageName, 
                                       fillLayers=False)
       if existingScenPkg is None:
-         raise LMError('Scenario Package {} must exist for User {}'
-                       .format(self.scenPackageName, self.usr))
+         raise LMError('ScenPackage {} must exist for User {}'
+                       .format(self.scenPackageName, self.userId))
+      validScenCodes = existingScenPkg.scenarios.keys()
       
-      if not self.prjScenCodeList:
+      # Make sure modeling Scenario exists in this package
+      if not self.modelScenCode in validScenCodes:
+         raise LMError('Scenario {} must exist in ScenPackage {} for User {}'
+                       .format(self.modelScenCode, self.scenPackageName, self.userId))
+      # Make sure (optionally) listed projection Scenarios exist in this package
+      if self.prjScenCodeList:
+         for pcode in self.prjScenCodeList:
+            if not pcode in validScenCodes:
+               raise LMError('Scenario {} must exist in ScenPackage {} for User {}'
+                             .format(pcode, self.scenPackageName, self.userId))
+      # Default to projecting onto all Scenarios in this package
+      else:
          self.prjScenCodeList = existingScenPkg.scenarios.keys()
-         if not doMapBaseline:
-            self.prjScenCodeList.remove(self.modelScenCode)
+
+      if not doMapBaseline:
+         self.prjScenCodeList.remove(self.modelScenCode)
 
       # TODO: Need a mask layer for every scenario!!
       self.masklyr = masklyr
-
-      # Fill grid bbox with scenario package if it is absent
-      if self.gridbbox is None:
-         self.gridbbox = self.scenPkg.bbox
                      
       return existingScenPkg
                 
@@ -297,6 +309,7 @@ class BOOMFiller(LMObject):
       priority = self._getBoomOrDefault(config, 'ARCHIVE_PRIORITY', 
                                         defaultValue=Priority.NORMAL)
       
+      # Species data inputs
       occIdFname = self._getBoomOrDefault(config, 'OCCURRENCE_ID_FILENAME')
       if occIdFname:
          dataSource = SpeciesDatasource.EXISTING
@@ -312,21 +325,19 @@ class BOOMFiller(LMObject):
       minpoints = self._getBoomOrDefault(config, 'POINT_COUNT_MIN')
       algs = self._getAlgorithms(config, sectionPrefix='ALGORITHM')
       
-      # Should be only one or None
+      # Should be None or one Mask for pre-processing
       maskAlg = None
       maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
       if len(maskAlgList) == 1:
          maskAlg = maskAlgList.values()[0]
          
-      # RAD stats
+      # optional MCPA inputs
       treeFname = self._getBoomOrDefault(config, 'TREE')
       biogeoName = self._getBoomOrDefault(config, 'BIOGEO_HYPOTHESES')
       bghypFnames = self._getBioGeoHypothesesLayerFilenames(biogeoName, usrPath)
+
+      # RAD/PAM params
       doComputePAMStats = self._getBoomOrDefault(config, 'COMPUTE_PAM_STATS', isBool=True)
-      
-#       mdlMaskName = self._getBoomOrDefault(config, 'MODEL_MASK_NAME')
-#       prjMaskName = self._getBoomOrDefault(config, 'PROJECTION_MASK_NAME')
-         
       assemblePams = self._getBoomOrDefault(config, 'ASSEMBLE_PAMS', isBool=True)
       gridbbox = self._getBoomOrDefault(config, 'GRID_BBOX', isList=True)
       cellsides = self._getBoomOrDefault(config, 'GRID_NUM_SIDES')
@@ -343,11 +354,7 @@ class BOOMFiller(LMObject):
                          MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
                          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
                          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
-      # SCENARIO_PACKAGE_MODEL_SCENARIO and
-      # SCENARIO_PACKAGE_PROJECTION_SCENARIOS
-      # are required iff there is no environmental metadata from which to 
-      # construct scenarios (baseline = Model Scen, all scenarios = Proj Scens)
-      # Get epsg, mapunits from scenarios
+
       scenPackageName = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE')
       modelScenCode = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
       prjScenCodeList = self._getBoomOrDefault(config, 
@@ -381,11 +388,11 @@ class BOOMFiller(LMObject):
          for name, val in self.maskAlg.parameters.iteritems():
             config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
       
-      email = self.usrEmail
+      email = self.userEmail
       if email is None:
          email = ''
 
-      config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', self.usr)
+      config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', self.userId)
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', self.archiveName)
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_PRIORITY', str(self.priority))
       config.set(SERVER_BOOM_HEADING, 'TROUBLESHOOTERS', email)
@@ -515,99 +522,24 @@ class BOOMFiller(LMObject):
                v = self._getVarValue(v)
                var.append(v)
       return var
+   
 
    # ...............................................
-   def addUsers(self, isInitial=True):
+   def addUser(self):
       """
-      @summary Adds PUBLIC_USER, DEFAULT_POST_USER and USER from metadata to the database
+      @summary Adds provided userid to the database
       """
-      userList = []
-      if isInitial:
-         userList.append((PUBLIC_USER,'{}{}'.format(PUBLIC_USER, 
-                                                    DEFAULT_EMAIL_POSTFIX)))
-         userList.append((DEFAULT_POST_USER,'{}{}'.format(DEFAULT_POST_USER, 
-                                                          DEFAULT_EMAIL_POSTFIX)))
-      if self.usr != PUBLIC_USER:
-         email = self.usrEmail
-         if email is None:
-            email = '{}{}'.format(self.usr, DEFAULT_EMAIL_POSTFIX)
-         userList.append((self.usr, email))
-   
-      for uinfo in userList:
-         try:
-            user = LMUser(uinfo[0], uinfo[1], uinfo[1], modTime=mx.DateTime.gmt().mjd)
-         except:
-            pass
-         else:
-            self.scribe.log.info('  Find or insert user {} ...'.format(uinfo[0]))
-            updatedUser = self.scribe.findOrInsertUser(user)
-            if updatedUser.userid == self.usr and self.usrEmail is None:
-               self.usrEmail = updatedUser.email
-   
-#    # ...............................................
-#    def _checkScenarios(self):
-#       epsg = mapunits = None
-#       if self.modelScenCode not in self.prjScenCodeList:
-#          self.prjScenCodeList.append(self.modelScenCode)
-#       scenPkgs = self.scribe.getScenPackagesForUserCodes(self.usr, 
-#                                                        self.prjScenCodeList)
-#       if not scenPkgs:
-#          scenPkgs = self.scribe.getScenPackagesForUserCodes(PUBLIC_USER, 
-#                                                           self.prjScenCodeList)
-#       if len(scenPkgs) == 0:
-#          raise LMError('There are no matching scenPackages!')
-#       elif len(scenPkgs) > 1:
-#          raise LMError('I cannot handle multiple matching scenPackages!')
-#       else:
-#          scenPkg = scenPkgs[0]
-#          scen = scenPkg.getScenario(code=self.prjScenCodeList[0])
-#          epsg = scen.epsgcode
-#          mapunits = scen.mapUnits
-# 
-#       return scenPkg, epsg, mapunits
-         
-   # ...............................................
-   def _createScenarios(self):
-      # TODO move these next 2 commands into fillScenarios
-      SPMETA, scenPackageMetaFilename, pkgMeta = self._pullClimatePackageMetadata()
-      # TODO: Put optional masklayer into every Scenario
-      try:
-         maskMeta = SPMETA.SDM_MASK_META
-      except:
-         masklyr = None
-      else:
-         masklyr = self._createMaskLayer(pkgMeta, maskMeta)
-
-      self.scribe.log.info('  Read ScenPackage {} metadata ...'.format(self.scenPackageName))
-      scenPkg = ScenPackage(self.scenPackageName, self.usr, 
-                            epsgcode=pkgMeta['epsg'],
-                            mapunits=pkgMeta['mapunits'],
-                            modTime=mx.DateTime.gmt().mjd)
-      
-      # Current
-      bscenCode = pkgMeta['baseline']
-      bscen = self._createScenario(pkgMeta, bscenCode, SPMETA.SCENARIO_META,
-                                   SPMETA.LAYERTYPE_META)
-      self.scribe.log.info('     Assembled base scenario {}'.format(bscenCode))
-      allScens = {bscenCode: bscen}
-
-      # Predicted Past and Future
-      for pscenCode in pkgMeta['predicted']:
-         pscen = self._createScenario(pkgMeta, pscenCode, SPMETA.SCENARIO_META,
-                                      SPMETA.LAYERTYPE_META)
-         allScens[pscenCode] = pscen
- 
-      self.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
-      for scen in allScens.values():
-         scenPkg.addScenario(scen)      
-      scenPkg.resetBBox()
-      
-      return (scenPkg, bscenCode, pkgMeta['epsg'], pkgMeta['mapunits'], 
-              scenPackageMetaFilename, masklyr)
+      user = LMUser(self.userId, self.userEmail, self.userEmail, 
+                    modTime=mx.DateTime.gmt().mjd)
+      self.scribe.log.info('  Find or insert user {} ...'.format(self.userId))
+      updatedUser = self.scribe.findOrInsertUser(user)
+      # If exists, found by unique Id or Email, update values
+      self.userId = updatedUser.userid
+      self.userEmail = updatedUser.email
    
    # ...............................................
    def _checkOccurrenceSets(self, limit=10):
-      legalUsers = [PUBLIC_USER, self.usr]
+      legalUsers = [PUBLIC_USER, self.userId]
       missingCount = 0
       wrongUserCount = 0
       nonIntCount = 0
@@ -643,36 +575,10 @@ class BOOMFiller(LMObject):
       self.scribe.log.info('  Missing: {} '.format(missingCount))
       self.scribe.log.info('  Unauthorized data: {} '.format(wrongUserCount))
       self.scribe.log.info('  Bad ID: {} '.format(nonIntCount))
-
-   # ...............................................
-   def _getbioName(self, code, res, gcm=None, tm=None, altpred=None, 
-                   lyrtype=None, suffix=None, isTitle=False):
-      sep = '-'
-      if isTitle: 
-         sep = ', '
-      name = code
-      if lyrtype is not None:
-         name = sep.join((lyrtype, name))
-      for descriptor in (gcm, altpred, tm, res, suffix):
-         if descriptor is not None:
-            name = sep.join((name, descriptor))
-      return name
     
    # ...............................................
-   def _getOptionalMetadata(self, metaDict, key):
-      """
-      @summary Assembles layer metadata for mask
-      """
-      val = None
-      try:
-         val = metaDict[key]
-      except:
-         pass
-      return val
-
-   # ...............................................
    def _addIntersectGrid(self):
-      shp = ShapeGrid(self.gridname, self.usr, self.epsg, self.cellsides, 
+      shp = ShapeGrid(self.gridname, self.userId, self.epsg, self.cellsides, 
                       self.cellsize, self.mapunits, self.gridbbox,
                       status=JobStatus.INITIALIZE, 
                       statusModTime=mx.DateTime.gmt().mjd)
@@ -704,14 +610,14 @@ class BOOMFiller(LMObject):
       # Create Global PAM for this archive, scenario
       # Pam layers are added upon boom processing
       pamType = MatrixType.PAM
-      if self.usr == PUBLIC_USER:
+      if self.userId == PUBLIC_USER:
          pamType = MatrixType.ROLLING_PAM
       desc = '{} for Scenario {}'.format(GPAM_KEYWORD, scen.code)
       pamMeta = {ServiceObject.META_DESCRIPTION: desc,
                  ServiceObject.META_KEYWORDS: [GPAM_KEYWORD, scen.code]}
       tmpGpam = LMMatrix(None, matrixType=pamType, 
                          gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
-                         dateCode=scen.dateCode, metadata=pamMeta, userId=self.usr, 
+                         dateCode=scen.dateCode, metadata=pamMeta, userId=self.userId, 
                          gridset=gridset, 
                          status=JobStatus.GENERAL, 
                          statusModTime=mx.DateTime.gmt().mjd)
@@ -727,7 +633,7 @@ class BOOMFiller(LMObject):
                  ServiceObject.META_KEYWORDS: [GGRIM_KEYWORD]}
       tmpGrim = LMMatrix(None, matrixType=MatrixType.GRIM, 
                          gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
-                         dateCode=scen.dateCode, metadata=grimMeta, userId=self.usr, 
+                         dateCode=scen.dateCode, metadata=grimMeta, userId=self.userId, 
                          gridset=gridset, 
                          status=JobStatus.GENERAL, 
                          statusModTime=mx.DateTime.gmt().mjd)
@@ -738,7 +644,6 @@ class BOOMFiller(LMObject):
       return grim
 
    # ...............................................
-#    def addArchive(self):
    def addShapeGridGPAMGridset(self):
       """
       @summary: Create a Gridset, Shapegrid, PAMs, GRIMs for this archive, and
@@ -756,12 +661,12 @@ class BOOMFiller(LMObject):
               'parameters': self.inParamFname}
       grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
                        epsgcode=self.epsg, 
-                       userId=self.usr, modTime=mx.DateTime.gmt().mjd)
+                       userId=self.userId, modTime=mx.DateTime.gmt().mjd)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       # "Global" PAM, GRIM (one each per scenario)
       for code, scen in self.scenPkg.scenarios.iteritems():
          gPam = self._findOrAddPAM(updatedGrdset, scen)
-         if not(self.usr == DEFAULT_POST_USER) and self.assemblePams:
+         if not(self.userId == DEFAULT_POST_USER) and self.assemblePams:
             scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
             scenGrims[code] = scenGrim
       return scenGrims, updatedGrdset
@@ -784,7 +689,7 @@ class BOOMFiller(LMObject):
                                   .format(mtxcol.getId()))
    
          # TODO: Change ident to lyr.ident when that is populated
-         tmpCol = MatrixColumn(None, mtx.getId(), self.usr, 
+         tmpCol = MatrixColumn(None, mtx.getId(), self.userId, 
                 layer=lyr, shapegrid=self.shapegrid, 
                 intersectParams=intersectParams, 
                 squid=lyr.squid, ident=lyr.name, processType=ptype, 
@@ -824,10 +729,10 @@ class BOOMFiller(LMObject):
    def _createGrimMF(self, scencode, currtime):
       # Create MFChain for this GPAM
       desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
-              .format(self.usr, self.archiveName, scencode))
+              .format(self.userId, self.archiveName, scencode))
       meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_DESCRIPTION: desc}
-      newMFC = MFChain(self.usr, priority=self.priority, 
+      newMFC = MFChain(self.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=currtime)
       grimChain = self.scribe.insertMFChain(newMFC)
@@ -873,43 +778,43 @@ class BOOMFiller(LMObject):
                
       return grimChains
 
-   # .............................
-   def addTNCEcoregions(self):
-      meta = {Vector.META_IS_CATEGORICAL: TNCMetadata.isCategorical, 
-              ServiceObject.META_TITLE: TNCMetadata.title, 
-              ServiceObject.META_AUTHOR: TNCMetadata.author, 
-              ServiceObject.META_DESCRIPTION: TNCMetadata.description,
-              ServiceObject.META_KEYWORDS: TNCMetadata.keywords,
-              ServiceObject.META_CITATION: TNCMetadata.citation,
-              }
-      dloc = os.path.join(ENV_DATA_PATH, 
-                          TNCMetadata.filename + LMFormat.getDefaultOGR().ext)
-      ecoregions = Vector(TNCMetadata.title, PUBLIC_USER, DEFAULT_EPSG, 
-                          ident=None, dlocation=dloc, 
-                          metadata=meta, dataFormat=LMFormat.getDefaultOGR().driver, 
-                          ogrType=TNCMetadata.ogrType,
-                          valAttribute=TNCMetadata.valAttribute, 
-                          mapunits=DEFAULT_MAPUNITS, bbox=TNCMetadata.bbox,
-                          modTime=mx.DateTime.gmt().mjd)
-      updatedEcoregions = self.scribe.findOrInsertLayer(ecoregions)
-      return updatedEcoregions
-
-   # ...............................................
-   def addAlgorithms(self):
-      """
-      @summary Adds algorithms to the database from the algorithm dictionary
-      """
-      algs = []
-      for alginfo in Algorithms.implemented():
-         meta = {'name': alginfo.name, 
-                 'isDiscreteOutput': alginfo.isDiscreteOutput,
-                 'outputFormat': alginfo.outputFormat,
-                 'acceptsCategoricalMaps': alginfo.acceptsCategoricalMaps}
-         alg = Algorithm(alginfo.code, metadata=meta)
-         self.scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
-         algid = self.scribe.findOrInsertAlgorithm(alg)
-         algs.append(algid)
-   
+#    # .............................
+#    def addTNCEcoregions(self):
+#       meta = {Vector.META_IS_CATEGORICAL: TNCMetadata.isCategorical, 
+#               ServiceObject.META_TITLE: TNCMetadata.title, 
+#               ServiceObject.META_AUTHOR: TNCMetadata.author, 
+#               ServiceObject.META_DESCRIPTION: TNCMetadata.description,
+#               ServiceObject.META_KEYWORDS: TNCMetadata.keywords,
+#               ServiceObject.META_CITATION: TNCMetadata.citation,
+#               }
+#       dloc = os.path.join(ENV_DATA_PATH, 
+#                           TNCMetadata.filename + LMFormat.getDefaultOGR().ext)
+#       ecoregions = Vector(TNCMetadata.title, PUBLIC_USER, DEFAULT_EPSG, 
+#                           ident=None, dlocation=dloc, 
+#                           metadata=meta, dataFormat=LMFormat.getDefaultOGR().driver, 
+#                           ogrType=TNCMetadata.ogrType,
+#                           valAttribute=TNCMetadata.valAttribute, 
+#                           mapunits=DEFAULT_MAPUNITS, bbox=TNCMetadata.bbox,
+#                           modTime=mx.DateTime.gmt().mjd)
+#       updatedEcoregions = self.scribe.findOrInsertLayer(ecoregions)
+#       return updatedEcoregions
+# 
+#    # ...............................................
+#    def addAlgorithms(self):
+#       """
+#       @summary Adds algorithms to the database from the algorithm dictionary
+#       """
+#       algs = []
+#       for alginfo in Algorithms.implemented():
+#          meta = {'name': alginfo.name, 
+#                  'isDiscreteOutput': alginfo.isDiscreteOutput,
+#                  'outputFormat': alginfo.outputFormat,
+#                  'acceptsCategoricalMaps': alginfo.acceptsCategoricalMaps}
+#          alg = Algorithm(alginfo.code, metadata=meta)
+#          self.scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
+#          algid = self.scribe.findOrInsertAlgorithm(alg)
+#          algs.append(algid)
+#    
    # ...............................................
    def addBoomChain(self):
       """
@@ -918,8 +823,8 @@ class BOOMFiller(LMObject):
       """
       meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
-      .format(self.usr, self.archiveName)}
-      newMFC = MFChain(self.usr, priority=self.priority, 
+      .format(self.userId, self.archiveName)}
+      newMFC = MFChain(self.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=mx.DateTime.gmt().mjd)
       mfChain = self.scribe.insertMFChain(newMFC)
@@ -945,10 +850,10 @@ class BOOMFiller(LMObject):
       if self.treeFname is not None:
          currtime = mx.DateTime.gmt().mjd
          name = os.path.splitext(self.treeFname)[0]
-         treeFilename = os.path.join(self.usrPath, self.treeFname) 
+         treeFilename = os.path.join(self.userIdPath, self.treeFname) 
          if os.path.exists(treeFilename):
             # TODO: save gridset link to tree???
-            baretree = Tree(name, dlocation=treeFilename, userId=self.usr, 
+            baretree = Tree(name, dlocation=treeFilename, userId=self.userId, 
                             gridsetId=gridset.getId(), modTime=currtime)
             tree = self.scribe.findOrInsertTree(baretree)
          else:
@@ -1020,7 +925,7 @@ class BOOMFiller(LMObject):
                except:
                   name = os.path.splitext(os.path.basename(bgFname))[0]
                mtxKeywords.append('Layer {}'.format(name))
-               lyr = Vector(name, self.usr, self.epsg, dlocation=bgFname, 
+               lyr = Vector(name, self.userId, self.epsg, dlocation=bgFname, 
                    metadata=lyrMeta, dataFormat=LMFormat.SHAPE.driver, 
                    valAttribute=valAttr, modTime=currtime)
                updatedLyr = self.scribe.findOrInsertLayer(lyr)
@@ -1033,7 +938,7 @@ class BOOMFiller(LMObject):
                ServiceObject.META_KEYWORDS.lower(): mtxKeywords}
          tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
                            processType=ProcessType.ENCODE_HYPOTHESES,
-                           userId=self.usr, gridset=gridset, metadata=meta,
+                           userId=self.userId, gridset=gridset, metadata=meta,
                            status=JobStatus.INITIALIZE, statusModTime=currtime)
          bgMtx = self.scribe.findOrInsertMatrix(tmpMtx)
          if bgMtx is None:
@@ -1041,33 +946,19 @@ class BOOMFiller(LMObject):
       return bgMtx, biogeoLayerNames
 
 # ...............................................
-def initBoom(paramFname, isInitial=True):
+def initBoom(paramFname):
    """
    @summary: Initialize an empty Lifemapper database and archive
    """
    filler = BOOMFiller(configFname=paramFname)
    filler.initializeInputs()
 
-   # This user and default users
-   # Add param user, PUBLIC_USER, DEFAULT_POST_USER users
-   filler.addUsers(isInitial=isInitial)
-
-   if isInitial:
-      # Insert all taxonomic sources for now
-      filler.scribe.log.info('  Insert taxonomy metadata ...')
-      for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-         taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],
-                                                             taxInfo['url'])
-      filler.addAlgorithms()
-      # Insert all taxonomic sources for now
-      filler.scribe.log.info('  Insert Algorithms ...')
-      filler.addTNCEcoregions()
+   # Add/find user for this Boom process (should exist)
+   filler.addUser()
 
    # ...............................................
    # Data for this Boom archive
    # ...............................................
-   filler.findScenariosFromCodes()
-   
    # Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
    if filler.occIdFname:
       filler._checkOccurrenceSets()
