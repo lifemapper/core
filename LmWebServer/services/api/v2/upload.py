@@ -103,16 +103,32 @@ class UserUploadService(LmService):
       @param bioGeoFilename: The name of the biogeographic hypotheses package
       @todo: Sanity checking
       """
-      # Determine where to write the file
-      outFilename = os.path.join(self._get_user_dir(), 'biogeo', '{}{}'.format(
-                                             bioGeoFilename, LMFormat.CSV.ext))
-      
-      if not os.path.exists(os.path.dirname(outFilename)):
-         os.makedirs(os.path.dirname(outFilename))
+      # Determine where to write the files
+      outDir = os.path.join(self._get_user_dir(), 'hypotheses', bioGeoFilename)
+      if not os.path.exists(outDir):
+         os.makedirs(outDir)
          
-      with open(outFilename, 'wb') as outF:
-         outF.write(cherrypy.request.body)
+      instr = StringIO()
+      instr.write(cherrypy.request.body.read())
+      instr.seek(0)
       
+      # Unzip files and name provided name
+      with zipfile.ZipFile(instr, allowZip64=True) as zipF:
+         for zfname in zipF.namelist():
+            #fn = os.path.basename(zfname)
+            _, ext = os.path.splitext(zfname)
+            if ext in LMFormat.SHAPE.getExtensions():
+               outFn = os.path.join(outDir, os.path.basename(zfname))
+               if os.path.exists(outFn):
+                  raise cherrypy.HTTPError(HTTPStatus.CONFLICT,
+                                        '{} exists, {}'.format(outFn, zfname))
+               else:
+                  #zipF.extract(zfname, outFn)
+                  with zipF.open(zfname) as zf:
+                     with open(outFn, 'w') as outF:
+                        for line in zf:
+                           outF.write(line)
+         
       return {
          'package_name' : bioGeoFilename,
          'upload_type' : BIOGEO_UPLOAD,
