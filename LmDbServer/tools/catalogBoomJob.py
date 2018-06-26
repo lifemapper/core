@@ -968,20 +968,20 @@ if __name__ == '__main__':
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('--config_file', default=None,
-            help=('Configuration file for the archive, gridset, and grid ' +
+   parser.add_argument('--param_file', default=None,
+            help=('Parameter file for the archive inputs and outputs ' +
                   'to be created from these data.'))
    parser.add_argument('--do_walk', type=bool, default=False,
             help=('Walk these species data to create Makeflow jobs immediately.'))
    args = parser.parse_args()
-   paramFname = args.config_file
+   paramFname = args.param_file
    doWalk = args.do_walk
          
    if paramFname is not None and not os.path.exists(paramFname):
       print ('Missing configuration file {}'.format(paramFname))
       exit(-1)
       
-   print('Running catalogBoomJob with configFname = {}'
+   print('Running catalogBoomJob with paramFname = {}'
          .format(paramFname))
    outConfigFilename = initBoom(paramFname, walkNow=doWalk)
    print('Completed catalogBoomJob creating boom parameters = {}'

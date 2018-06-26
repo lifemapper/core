@@ -121,7 +121,10 @@ if __name__ == "__main__":
    configFname = args.config_file
    cmd = args.cmd.lower()
    
-   print 'Running daboom with {} and command {}'.format(configFname, cmd)
+   print('')
+   print('Running daboom with configFilename={} and command={}'
+         .format(configFname, cmd))
+   print('')
    boomer = DaBoom(BOOM_PID_FILE, configFname)
    
    if cmd == 'start':
