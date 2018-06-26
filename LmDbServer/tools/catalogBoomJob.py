@@ -39,13 +39,13 @@ from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
       SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
 
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
+from LmDbServer.common.lmconstants import SpeciesDatasource
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
-                           GPAM_KEYWORD, LMFileType, Priority, 
+                           GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
                            PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
@@ -156,18 +156,13 @@ class BOOMFiller(LMObject):
       """
       @summary Find Scenarios from codes 
       @note: Boom parameters must include SCENARIO_PACKAGE, 
-                                          SCENARIO_PACKAGE_MODEL_SCENARIO,
-                          and optionally, SCENARIO_PACKAGE_PROJECTION_SCENARIOS
+                          and optionally, SCENARIO_PACKAGE_MODEL_SCENARIO,
+                                          SCENARIO_PACKAGE_PROJECTION_SCENARIOS
              If SCENARIO_PACKAGE_PROJECTION_SCENARIOS is not present, SDMs 
              will be projected onto all scenarios
       """
       # TODO: Put optional masklayer into every Scenario
       masklyr = None  
-
-      if self.scenPackageName is None:
-         raise LMError('SCENARIO_PACKAGE must be configured')
-      if self.modelScenCode is None:
-         raise LMError('SCENARIO_PACKAGE_MODEL_SCENARIO must be configured')
 
       # Make sure Scenario Package exists for this user
       existingScenPkg = self.scribe.getScenPackage(userId=self.userId, 
@@ -291,6 +286,40 @@ class BOOMFiller(LMObject):
       return algs
 
    # ...............................................
+   def _findScenPkgMeta(self, scenpkgName):
+      scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkgName + '.py')
+      if not os.path.exists(scenpkg_meta_file):
+         print ('Missing Scenario Package metadata file {}'.format(scenpkg_meta_file))
+         exit(-1)    
+
+      if not os.path.exists(self.spMetaFname):
+         raise LMError(currargs='Climate metadata {} does not exist'
+                       .format(self.spMetaFname))
+      # TODO: change to importlib on python 2.7 --> 3.3+  
+      try:
+         import imp
+         SPMETA = imp.load_source('currentmetadata', self.spMetaFname)
+      except Exception, e:
+         raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
+                       .format(self.spMetaFname, e))         
+      pkgMeta = SPMETA.CLIMATE_PACKAGES[scenpkgName]
+      return pkgMeta
+
+   # ...............................................
+   def _findScenPkgBaseline(self, scenpkgName):
+      pkgMeta = self._findScenPkgMeta(scenpkgName)
+      baseCode = pkgMeta['baseline']
+      return baseCode
+
+   # ...............................................
+   def _findScenPkgPredicted(self, scenpkgName):
+      pkgMeta = self._findScenPkgMeta(scenpkgName)
+      predCodes = pkgMeta['predicted']
+      baseCode = pkgMeta['baseline']
+      predCodes.extend(baseCode)
+      return predCodes
+
+   # ...............................................
    def readParamVals(self):
       if self.inParamFname is None or not os.path.exists(self.inParamFname):
          print('Missing config file {}, using defaults'.format(self.inParamFname))
@@ -358,9 +387,20 @@ class BOOMFiller(LMObject):
                          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
 
       scenPackageName = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE')
+      if scenPackageName is None:
+         raise LMError('SCENARIO_PACKAGE must be configured')
+
       modelScenCode = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
+      if modelScenCode is None:
+         modelScenCode = self._findScenPkgBaseline(scenPackageName)
+      if modelScenCode is None:
+         raise LMError('SCENARIO_PACKAGE_MODEL_SCENARIO must be configured in '+
+                       'configuration file or CLIMATE_PACKAGES[baseline] in '+ 
+                       'scenario package metadata file')
       prjScenCodeList = self._getBoomOrDefault(config, 
                   'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', isList=True)
+      if not prjScenCodeList:
+         prjScenCodeList = self._findScenPkgPredicted(scenPackageName)
       
       return (usr, usrPath, usrEmail, archiveName, priority, scenPackageName, 
               modelScenCode, prjScenCodeList, dataSource, 
