@@ -46,7 +46,7 @@ from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME,
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
                            GPAM_KEYWORD, LMFileType, Priority, 
-                           PUBLIC_ARCHIVE_NAME)
+                           PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
@@ -135,10 +135,10 @@ class BOOMFiller(LMObject):
       doMapBaseline = self._getBoomOrDefault(config, 'MAP_BASELINE', defaultValue=1)
       # Checks existence of environmental data for this user and fills
       # self.prjScenCodeList if necessary.      
-      scenPkg = self.findScenariosFromCodes(doMapBaseline=doMapBaseline)
+      self.scenPkg = self.findScenariosFromCodes(doMapBaseline=doMapBaseline)
       # Fill grid bbox with scenario package if it is absent
       if self.gridbbox is None:
-         self.gridbbox = scenPkg.bbox
+         self.gridbbox = self.scenPkg.bbox
 
       # Created by addArchive
       self.shapegrid = None
@@ -303,7 +303,9 @@ class BOOMFiller(LMObject):
       usr = self._getBoomOrDefault(config, 'ARCHIVE_USER', defaultValue=PUBLIC_USER)
       earl = EarlJr()
       usrPath = earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
-      usrEmail = self._getBoomOrDefault(config, 'ARCHIVE_USER_EMAIL')
+      defaultEmail = '{}{}'.format(usr, DEFAULT_EMAIL_POSTFIX)
+      usrEmail = self._getBoomOrDefault(config, 'ARCHIVE_USER_EMAIL', 
+                                        defaultValue=defaultEmail)
       archiveName = self._getBoomOrDefault(config, 'ARCHIVE_NAME', 
                                            defaultValue=PUBLIC_ARCHIVE_NAME)
       priority = self._getBoomOrDefault(config, 'ARCHIVE_PRIORITY', 
@@ -403,9 +405,9 @@ class BOOMFiller(LMObject):
                  pcodes)
       config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MODEL_SCENARIO', 
                  self.modelScenCode)
-      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MAPUNITS', self.mapunits)
-      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_EPSG', str(self.epsg))
-      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE', self.scenPackageName)
+      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MAPUNITS', self.scenPkg.mapUnits)
+      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_EPSG', str(self.scenPkg.epsgcode))
+      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE', self.scenPkg.name)
       
       # SDM input species source data and type (for processing)
       config.set(SERVER_BOOM_HEADING, 'DATASOURCE', self.dataSource)
@@ -578,8 +580,8 @@ class BOOMFiller(LMObject):
     
    # ...............................................
    def _addIntersectGrid(self):
-      shp = ShapeGrid(self.gridname, self.userId, self.epsg, self.cellsides, 
-                      self.cellsize, self.mapunits, self.gridbbox,
+      shp = ShapeGrid(self.gridname, self.userId, self.scenPkg.epsgcode, self.cellsides, 
+                      self.cellsize, self.scenPkg.mapUnits, self.gridbbox,
                       status=JobStatus.INITIALIZE, 
                       statusModTime=mx.DateTime.gmt().mjd)
       newshp = self.scribe.findOrInsertShapeGrid(shp)
@@ -660,7 +662,7 @@ class BOOMFiller(LMObject):
               ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD],
               'parameters': self.inParamFname}
       grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
-                       epsgcode=self.epsg, 
+                       epsgcode=self.scenPkg.epsgcode, 
                        userId=self.userId, modTime=mx.DateTime.gmt().mjd)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       # "Global" PAM, GRIM (one each per scenario)
@@ -778,43 +780,6 @@ class BOOMFiller(LMObject):
                
       return grimChains
 
-#    # .............................
-#    def addTNCEcoregions(self):
-#       meta = {Vector.META_IS_CATEGORICAL: TNCMetadata.isCategorical, 
-#               ServiceObject.META_TITLE: TNCMetadata.title, 
-#               ServiceObject.META_AUTHOR: TNCMetadata.author, 
-#               ServiceObject.META_DESCRIPTION: TNCMetadata.description,
-#               ServiceObject.META_KEYWORDS: TNCMetadata.keywords,
-#               ServiceObject.META_CITATION: TNCMetadata.citation,
-#               }
-#       dloc = os.path.join(ENV_DATA_PATH, 
-#                           TNCMetadata.filename + LMFormat.getDefaultOGR().ext)
-#       ecoregions = Vector(TNCMetadata.title, PUBLIC_USER, DEFAULT_EPSG, 
-#                           ident=None, dlocation=dloc, 
-#                           metadata=meta, dataFormat=LMFormat.getDefaultOGR().driver, 
-#                           ogrType=TNCMetadata.ogrType,
-#                           valAttribute=TNCMetadata.valAttribute, 
-#                           mapunits=DEFAULT_MAPUNITS, bbox=TNCMetadata.bbox,
-#                           modTime=mx.DateTime.gmt().mjd)
-#       updatedEcoregions = self.scribe.findOrInsertLayer(ecoregions)
-#       return updatedEcoregions
-# 
-#    # ...............................................
-#    def addAlgorithms(self):
-#       """
-#       @summary Adds algorithms to the database from the algorithm dictionary
-#       """
-#       algs = []
-#       for alginfo in Algorithms.implemented():
-#          meta = {'name': alginfo.name, 
-#                  'isDiscreteOutput': alginfo.isDiscreteOutput,
-#                  'outputFormat': alginfo.outputFormat,
-#                  'acceptsCategoricalMaps': alginfo.acceptsCategoricalMaps}
-#          alg = Algorithm(alginfo.code, metadata=meta)
-#          self.scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
-#          algid = self.scribe.findOrInsertAlgorithm(alg)
-#          algs.append(algid)
-#    
    # ...............................................
    def addBoomChain(self):
       """
@@ -925,7 +890,7 @@ class BOOMFiller(LMObject):
                except:
                   name = os.path.splitext(os.path.basename(bgFname))[0]
                mtxKeywords.append('Layer {}'.format(name))
-               lyr = Vector(name, self.userId, self.epsg, dlocation=bgFname, 
+               lyr = Vector(name, self.userId, self.scenPkg.epsgcode, dlocation=bgFname, 
                    metadata=lyrMeta, dataFormat=LMFormat.SHAPE.driver, 
                    valAttribute=valAttr, modTime=currtime)
                updatedLyr = self.scribe.findOrInsertLayer(lyr)
@@ -946,7 +911,7 @@ class BOOMFiller(LMObject):
       return bgMtx, biogeoLayerNames
 
 # ...............................................
-def initBoom(paramFname):
+def initBoom(paramFname, walkNow=False):
    """
    @summary: Initialize an empty Lifemapper database and archive
    """
@@ -987,13 +952,13 @@ def initBoom(paramFname):
    filler.scribe.log.info('******')
    filler.scribe.log.info('')
          
-   if not isInitial:
+   if walkNow is True:
       # Create MFChain to run Boomer on these inputs IFF not the initial archive 
       # If this is the initial archive, we will run the boomer as a daemon
       mfChain = filler.addBoomChain()
       
    filler.close()
-   return boomGridset
+   return filler.outConfigFilename
    
 # ...............................................
 if __name__ == '__main__':
@@ -1006,19 +971,20 @@ if __name__ == '__main__':
    parser.add_argument('--config_file', default=None,
             help=('Configuration file for the archive, gridset, and grid ' +
                   'to be created from these data.'))
-   parser.add_argument('--is_first_run', action='store_true',
-            help=('For first, public archive, compute "Global PAM" '))
+   parser.add_argument('--do_walk', type=bool, default=False,
+            help=('Walk these species data to create Makeflow jobs immediately.'))
    args = parser.parse_args()
    paramFname = args.config_file
-   isInitial = args.is_first_run
+   doWalk = args.do_walk
          
    if paramFname is not None and not os.path.exists(paramFname):
       print ('Missing configuration file {}'.format(paramFname))
       exit(-1)
       
-   print('Running initBoom with isInitial = {}, configFname = {}'
-         .format(isInitial, paramFname))
-   initBoom(paramFname, isInitial=isInitial)
-
+   print('Running catalogBoomJob with configFname = {}'
+         .format(paramFname))
+   outConfigFilename = initBoom(paramFname, walkNow=doWalk)
+   print('Completed catalogBoomJob creating boom parameters = {}'
+         .format(outConfigFilename))
 
     
