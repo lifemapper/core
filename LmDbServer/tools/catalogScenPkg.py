@@ -384,11 +384,9 @@ class SPFiller(LMObject):
       #Adds or finds PUBLIC_USER, DEFAULT_POST_USER 
       # Nothing changes if these are already present
       _ = self.addUser(PUBLIC_USER, 
-                       '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX), 
-                       currtime)
+                       '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
       _ = self.addUser(DEFAULT_POST_USER, 
-                       '{}{}'.format(DEFAULT_POST_USER, DEFAULT_EMAIL_POSTFIX), 
-                       currtime)
+                       '{}{}'.format(DEFAULT_POST_USER, DEFAULT_EMAIL_POSTFIX))
       # Insert all taxonomic sources for now
       self.scribe.log.info('  Insert taxonomy metadata ...')
       for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
@@ -415,7 +413,7 @@ def catalogScenPackages(spMetaFname, userId, userEmail):
    # ARCHIVE_USER and DEFAULT_POST_USER will be added if they are missing 
    # (i.e. this is the first time this script has been run)
       # If exists, found by unique Id or Email, update values
-   filler.userId = filler.addUser(userId, userEmail, mx.DateTime.gmt().mjd)
+   filler.userId = filler.addUser(filler.userId, filler.userEmail)
    
    updatedMask = None
    for spName in filler.spMeta.CLIMATE_PACKAGES.keys():
