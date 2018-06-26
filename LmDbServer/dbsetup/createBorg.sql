@@ -250,23 +250,6 @@ create table lm_v3.ScenarioLayer
 );
 
 -- -------------------------------
--- Process (for objects with more than one process)
--- after process is complete, move params/inputs to metadata on object, then delete
-create table lm_v3.Process
-(
-   processId serial UNIQUE PRIMARY KEY,
-   -- LmCommon.common.lmconstants.ProcessType
-   processType int,
-	--input
-   inputId int,
-   --output 
-   outputId int,
-
-   status int,
-   statusmodtime double precision
-);
-
--- -------------------------------
 -- Process and Output Object
 create table lm_v3.OccurrenceSet 
 (
