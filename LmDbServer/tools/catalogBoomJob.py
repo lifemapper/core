@@ -292,16 +292,16 @@ class BOOMFiller(LMObject):
          print ('Missing Scenario Package metadata file {}'.format(scenpkg_meta_file))
          exit(-1)    
 
-      if not os.path.exists(self.spMetaFname):
+      if not os.path.exists(scenpkg_meta_file):
          raise LMError(currargs='Climate metadata {} does not exist'
-                       .format(self.spMetaFname))
+                       .format(scenpkg_meta_file))
       # TODO: change to importlib on python 2.7 --> 3.3+  
       try:
          import imp
-         SPMETA = imp.load_source('currentmetadata', self.spMetaFname)
+         SPMETA = imp.load_source('currentmetadata', scenpkg_meta_file)
       except Exception, e:
          raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                       .format(self.spMetaFname, e))         
+                       .format(scenpkg_meta_file, e))         
       pkgMeta = SPMETA.CLIMATE_PACKAGES[scenpkgName]
       return pkgMeta
 
