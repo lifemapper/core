@@ -381,7 +381,21 @@ def escapeString(value, format):
    return value
 
 # .............................
-def isCorrectUser():
+def isRootUser():
+   """
+   @summary: Determine if current user is the non-root Lifemapper user 
+   """
+   import subprocess
+   cmd = "/usr/bin/whoami"
+   info, err = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE).communicate()
+   usr = info.split()[0]
+   if usr == 'root':
+      return True
+   return False
+
+# .............................
+def isLMUser():
    """
    @summary: Determine if current user is the non-root Lifemapper user 
    """

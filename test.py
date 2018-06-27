@@ -24,7 +24,7 @@ from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmBackend.common.cmd import MfRule
@@ -35,7 +35,7 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
-from LmDbServer.boom.initboom import BOOMFiller
+from LmDbServer.tools.catalogBoomJob import BOOMFiller
 from LmServer.legion.sdmproj import SDMProjection
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)

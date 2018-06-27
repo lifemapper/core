@@ -30,6 +30,7 @@
 """
 import argparse
 import glob
+from mx.DateTime.DateTime import gmt
 import os
 import shutil
 import signal
@@ -39,10 +40,10 @@ import sys
 from time import sleep
 import traceback
 
-from LmServer.base.utilities import isCorrectUser
 from LmBackend.common.daemon import Daemon, DaemonCommands
-from LmCommon.common.lmconstants import JobStatus
-#from LmServer.db.scribe import Scribe
+
+from LmCommon.common.lmconstants import LM_USER, JobStatus
+
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, CS_OPTIONS,
                                       LOG_PATH, MAKEFLOW_BIN, MAKEFLOW_OPTIONS,
@@ -50,10 +51,9 @@ from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, CS_OPTIONS,
                                       WORKER_FACTORY_BIN, 
                                       WORKER_FACTORY_OPTIONS,
                                       RM_OLD_WORKER_DIRS_CMD)
-
+from LmServer.base.utilities import isLMUser
 from LmServer.common.localconstants import MAX_MAKEFLOWS, WORKER_PATH
 from LmServer.common.log import LmServerLogger
-from mx.DateTime.DateTime import gmt
 
 # .............................................................................
 class MattDaemon(Daemon):
@@ -385,8 +385,8 @@ class MattDaemon(Daemon):
    
 # .............................................................................
 if __name__ == "__main__":
-   if not isCorrectUser():
-      print("Run this script as `lmwriter`")
+   if not isLMUser():
+      print("Run this script as `{}`".format(LM_USER))
       sys.exit(2)
       
    if os.path.exists(MATT_DAEMON_PID_FILE):

@@ -11,11 +11,11 @@ import os
 import sys
 
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (JobStatus, PhyloTreeKeys, MatrixType, 
-                                         ProcessType, SERVER_BOOM_HEADING)
+from LmCommon.common.lmconstants import (LM_USER, JobStatus, PhyloTreeKeys, 
+                                 MatrixType, ProcessType, SERVER_BOOM_HEADING)
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
 from LmServer.common.log import ConsoleLogger
@@ -196,8 +196,8 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
 
 # .............................................................................
 if __name__ == '__main__':
-   if not isCorrectUser():
-      print("Run this script as 'lmwriter'")
+   if not isLMUser():
+      print("Run this script as '{}'".format(LM_USER))
       sys.exit(2)
 
    parser = argparse.ArgumentParser(
@@ -245,7 +245,7 @@ from LmCommon.common.lmconstants import (JobStatus, PhyloTreeKeys, MatrixType,
                                          ProcessType, SERVER_BOOM_HEADING)
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
 from LmServer.common.log import ConsoleLogger

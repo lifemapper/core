@@ -33,7 +33,7 @@ from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
-      ProcessType, DEFAULT_POST_USER,
+      ProcessType, DEFAULT_POST_USER, LM_USER,
       SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
       SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
       SERVER_PIPELINE_HEADING)
@@ -52,7 +52,6 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
@@ -61,6 +60,7 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
+from LmServer.base.utilities import isRootUser
 
 # .............................................................................
 class BOOMFiller(LMObject):
@@ -213,11 +213,12 @@ class BOOMFiller(LMObject):
 
 # ...............................................
    def _warnPermissions(self):
-      if not isCorrectUser():
+      if isRootUser():
          print("""
-               When not running this {} as `lmwriter`, make sure to fix
-               permissions on the newly created shapegrid {}
-               """.format(self.name, self.gridname))
+               If not running {} from bash script `catalogBoomJob`  
+               make sure to set group to {} and rw permissions on the 
+               newly created shapegrid {}
+               """.format(LM_USER, self.name, self.gridname))
          
    # ...............................................
    def _getDb(self):
