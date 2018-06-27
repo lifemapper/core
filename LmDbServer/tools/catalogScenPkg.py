@@ -132,7 +132,7 @@ class SPFiller(LMObject):
          raise LMError(currargs='Missing `file` key in SDM_MASK_META in scenPkg metadata')
       else:
          if not os.path.exists(dloc):
-            print('Missing local data {}'.format(dloc))
+            raise LMError('Missing local data {}'.format(dloc))
  
       try:
          masklyr = Raster(maskMeta['name'], self.userId, 
@@ -295,7 +295,7 @@ class SPFiller(LMObject):
                     'keywords': lyrKeywords}
          dloc = os.path.join(ENV_DATA_PATH, relfname)
          if not os.path.exists(dloc):
-            print('Missing local data %s' % dloc)
+            raise LMError('Missing local data {}'.format(dloc))
          envlyr = EnvLayer(lyrname, self.userId, pkgMeta['epsg'], 
                            dlocation=dloc, 
                            lyrMetadata=lyrmeta,
@@ -424,6 +424,12 @@ def catalogScenPackages(spMetaFname, userId, userEmail):
       if updatedMask is None:
          filler.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
          updatedMask = filler.addMaskLayer(masklyr)
+         if updatedMask.getDLocation() != masklyr.getDLocation():
+            raise LMError('''Returned existing layer name {} for user {} with 
+                             filename {}, not expected filename {}'''
+                             .format(masklyr.name, filler.userId, 
+                                     updatedMask.getDLocation(), 
+                                     masklyr.getDLocation()))
       
       updatedScenPkg = filler.addPackageScenariosLayers(scenPkg)
       
