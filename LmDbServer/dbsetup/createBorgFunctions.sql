@@ -2788,9 +2788,6 @@ BEGIN
    UPDATE lm_v3.SDMModel SET dlocation = newdir || substr(dlocation, start)  
 	   WHERE dlocation like olddir || '%';
 
-   UPDATE lm_v3.Process SET dlocation = newdir || substr(dlocation, start)  
-	   WHERE dlocation like olddir || '%';
-   
 END;
 $$ LANGUAGE 'plpgsql' VOLATILE; 
 

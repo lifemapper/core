@@ -33,26 +33,25 @@ from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
-      ProcessType, DEFAULT_POST_USER,
+      ProcessType, DEFAULT_POST_USER, LM_USER,
       SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
       SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
       SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
 
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
+from LmDbServer.common.lmconstants import SpeciesDatasource
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
-                           GPAM_KEYWORD, LMFileType, Priority, 
+                           GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
                            PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
@@ -61,9 +60,7 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
-
-
-CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
+from LmServer.base.utilities import isRootUser
 
 # .............................................................................
 class BOOMFiller(LMObject):
@@ -156,18 +153,13 @@ class BOOMFiller(LMObject):
       """
       @summary Find Scenarios from codes 
       @note: Boom parameters must include SCENARIO_PACKAGE, 
-                                          SCENARIO_PACKAGE_MODEL_SCENARIO,
-                          and optionally, SCENARIO_PACKAGE_PROJECTION_SCENARIOS
+                          and optionally, SCENARIO_PACKAGE_MODEL_SCENARIO,
+                                          SCENARIO_PACKAGE_PROJECTION_SCENARIOS
              If SCENARIO_PACKAGE_PROJECTION_SCENARIOS is not present, SDMs 
              will be projected onto all scenarios
       """
       # TODO: Put optional masklayer into every Scenario
       masklyr = None  
-
-      if self.scenPackageName is None:
-         raise LMError('SCENARIO_PACKAGE must be configured')
-      if self.modelScenCode is None:
-         raise LMError('SCENARIO_PACKAGE_MODEL_SCENARIO must be configured')
 
       # Make sure Scenario Package exists for this user
       existingScenPkg = self.scribe.getScenPackage(userId=self.userId, 
@@ -221,11 +213,12 @@ class BOOMFiller(LMObject):
 
 # ...............................................
    def _warnPermissions(self):
-      if not isCorrectUser():
+      if isRootUser():
          print("""
-               When not running this {} as `lmwriter`, make sure to fix
-               permissions on the newly created shapegrid {}
-               """.format(self.name, self.gridname))
+               If not running {} from bash script `catalogBoomJob`  
+               make sure to set group to {} and rw permissions on the 
+               newly created shapegrid {}
+               """.format(LM_USER, self.name, self.gridname))
          
    # ...............................................
    def _getDb(self):
@@ -289,6 +282,40 @@ class BOOMFiller(LMObject):
       if len(algs) == 0:
          algs = defaultAlgs
       return algs
+
+   # ...............................................
+   def _findScenPkgMeta(self, scenpkgName):
+      scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkgName + '.py')
+      if not os.path.exists(scenpkg_meta_file):
+         print ('Missing Scenario Package metadata file {}'.format(scenpkg_meta_file))
+         exit(-1)    
+
+      if not os.path.exists(scenpkg_meta_file):
+         raise LMError(currargs='Climate metadata {} does not exist'
+                       .format(scenpkg_meta_file))
+      # TODO: change to importlib on python 2.7 --> 3.3+  
+      try:
+         import imp
+         SPMETA = imp.load_source('currentmetadata', scenpkg_meta_file)
+      except Exception, e:
+         raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
+                       .format(scenpkg_meta_file, e))         
+      pkgMeta = SPMETA.CLIMATE_PACKAGES[scenpkgName]
+      return pkgMeta
+
+   # ...............................................
+   def _findScenPkgBaseline(self, scenpkgName):
+      pkgMeta = self._findScenPkgMeta(scenpkgName)
+      baseCode = pkgMeta['baseline']
+      return baseCode
+
+   # ...............................................
+   def _findScenPkgPredicted(self, scenpkgName):
+      pkgMeta = self._findScenPkgMeta(scenpkgName)
+      predCodes = pkgMeta['predicted']
+      baseCode = pkgMeta['baseline']
+      predCodes.append(baseCode)
+      return predCodes
 
    # ...............................................
    def readParamVals(self):
@@ -358,9 +385,20 @@ class BOOMFiller(LMObject):
                          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
 
       scenPackageName = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE')
+      if scenPackageName is None:
+         raise LMError('SCENARIO_PACKAGE must be configured')
+
       modelScenCode = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
+      if modelScenCode is None:
+         modelScenCode = self._findScenPkgBaseline(scenPackageName)
+      if modelScenCode is None:
+         raise LMError('SCENARIO_PACKAGE_MODEL_SCENARIO must be configured in '+
+                       'configuration file or CLIMATE_PACKAGES[baseline] in '+ 
+                       'scenario package metadata file')
       prjScenCodeList = self._getBoomOrDefault(config, 
                   'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', isList=True)
+      if not prjScenCodeList:
+         prjScenCodeList = self._findScenPkgPredicted(scenPackageName)
       
       return (usr, usrPath, usrEmail, archiveName, priority, scenPackageName, 
               modelScenCode, prjScenCodeList, dataSource, 
@@ -434,9 +472,12 @@ class BOOMFiller(LMObject):
                     self.userOccSep)
 
       # Expiration date triggering re-query and computation
-      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_YEAR', str(CURRDATE[0]))
-      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_MONTH', str(CURRDATE[1]))
-      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_DAY', str(CURRDATE[2]))
+      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_YEAR', 
+                 str(mx.DateTime.gmt().year))
+      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_MONTH', 
+                 str(mx.DateTime.gmt().month))
+      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_DAY', 
+                 str(mx.DateTime.gmt().day))
       config.set(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN', str(self.minpoints))
 
       # .........................................      
@@ -988,3 +1029,95 @@ if __name__ == '__main__':
          .format(outConfigFilename))
 
     
+"""
+import ConfigParser
+import json
+import mx.DateTime
+import os
+import time
+import types
+
+from LmBackend.command.boom import BoomerCommand
+from LmBackend.common.lmobj import LMError, LMObject
+
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
+      ProcessType, DEFAULT_POST_USER,
+      SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
+      SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
+      SERVER_PIPELINE_HEADING)
+from LmCommon.common.readyfile import readyFilename
+
+from LmDbServer.common.lmconstants import SpeciesDatasource
+from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
+                                              GBIF_TAXONOMY_FILENAME)
+
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
+                           GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
+                           PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
+from LmServer.common.lmuser import LMUser
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.log import ScriptLogger
+from LmServer.base.layer2 import Vector
+from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.utilities import isCorrectUser
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.lmmatrix import LMMatrix  
+from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.processchain import MFChain
+from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.legion.tree import Tree
+
+from LmDbServer.tools.catalogBoomJob import *
+
+paramFname = '/share/lm/data/archive/biotaphy/sax_boom_params.ini'
+
+filler = BOOMFiller(configFname=paramFname)
+filler.initializeInputs()
+
+# Add/find user for this Boom process (should exist)
+filler.addUser()
+
+# ...............................................
+# Data for this Boom archive
+# ...............................................
+# Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
+if filler.occIdFname:
+   filler._checkOccurrenceSets()
+   
+# Add or get ShapeGrid, Global PAM, Gridset for this archive
+# This updates the gridset, shapegrid, default PAMs (rolling, with no 
+#     matrixColumns, default GRIMs with matrixColumns
+# Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
+scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
+# If there are Scenario GRIMs, create MFChain for each 
+filler.addGRIMChains(scenGrims)
+# If there is a tree, add and biogeographic hypotheses, create MFChain for each
+tree = filler.addTree(boomGridset)
+# If there are biogeographic hypotheses layers, add them and matrix 
+# TODO: create MFChain 
+biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
+
+
+# Write config file for this archive
+#    filler.writeConfigFile(tree, biogeoMtx, biogeoLayers)
+filler.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, biogeoLayers=biogeoLayerNames)
+filler.scribe.log.info('')
+filler.scribe.log.info('******')
+filler.scribe.log.info('--config_file={}'.format(filler.outConfigFilename))   
+filler.scribe.log.info('gridset name = {}'.format(boomGridset.name))   
+filler.scribe.log.info('******')
+filler.scribe.log.info('')
+      
+if walkNow is True:
+   # Create MFChain to run Boomer on these inputs IFF not the initial archive 
+   # If this is the initial archive, we will run the boomer as a daemon
+   mfChain = filler.addBoomChain()
+   
+filler.close()
+return filler.outConfigFilename
+
+"""

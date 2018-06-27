@@ -27,9 +27,9 @@ import sys
 import time
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import (JobStatus, MatrixType,
+from LmCommon.common.lmconstants import (JobStatus, MatrixType, LM_USER, 
    ProcessType,LMFormat)
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.common.lmconstants import Priority
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe 
@@ -247,7 +247,7 @@ class Pammer(LMObject):
 # ...............................................
 if __name__ == '__main__':
    if not isCorrectUser():
-      print("Run this script as `lmwriter`")
+      print("Run this script as `{}`".format(LM_USER))
       sys.exit(2)
 
    import argparse
@@ -290,7 +290,7 @@ import time
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import (JobStatus, MatrixType,
    ProcessType,LMFormat)
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.common.lmconstants import Priority
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe 

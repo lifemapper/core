@@ -27,12 +27,12 @@ import sys
 import time
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import (LMFormat, JobStatus, MatrixType,
+from LmCommon.common.lmconstants import (JobStatus, MatrixType,
    ProcessType)
-from LmServer.common.lmconstants import LMFileType, Priority
+from LmServer.common.lmconstants import Priority
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.db.borgscribe import BorgScribe 
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.lmmatrix import LMMatrix
@@ -285,8 +285,8 @@ class RADCaller(LMObject):
 
 # ...............................................
 if __name__ == '__main__':
-   if not isCorrectUser():
-      print("Run this script as `lmwriter`")
+   if not isLMUser():
+      print("Run this script as `{}`".format(LMUser))
       sys.exit(2)
 
    import argparse
@@ -320,7 +320,7 @@ from LmCommon.common.lmconstants import (LMFormat, JobStatus, MatrixType)
 from LmServer.common.lmconstants import LMFileType, Priority
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.db.borgscribe import BorgScribe 
 from LmServer.legion.processchain import MFChain
 CURR_MJD = mx.DateTime.gmt().mjd

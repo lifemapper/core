@@ -30,9 +30,9 @@ from LmBackend.command.common import ChainCommand, SystemCommand
 from LmBackend.command.server import LmTouchCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.lmconstants import JobStatus, LM_USER
 
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME) 
 from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
@@ -279,8 +279,8 @@ class Boomer(LMObject):
 
 # .............................................................................
 if __name__ == "__main__":
-   if not isCorrectUser():
-      print("Run this script as `lmwriter`")
+   if not isLMUser():
+      print("Run this script as `{}`".format(LM_USER))
       sys.exit(2)
    earl = EarlJr()
    defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG, 
@@ -324,7 +324,7 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_DEFAULT_HEADING_POSTFIX, MatrixType, IDIG_DUMP) 
 from LmCommon.common.readyfile import readyFilename
 from LmBackend.common.lmobj import LMError, LMObject
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
                                             SCRATCH_PATH)

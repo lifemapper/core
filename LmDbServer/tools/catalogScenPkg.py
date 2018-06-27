@@ -132,7 +132,7 @@ class SPFiller(LMObject):
          raise LMError(currargs='Missing `file` key in SDM_MASK_META in scenPkg metadata')
       else:
          if not os.path.exists(dloc):
-            print('Missing local data {}'.format(dloc))
+            raise LMError('Missing local data {}'.format(dloc))
  
       try:
          masklyr = Raster(maskMeta['name'], self.userId, 
@@ -295,7 +295,7 @@ class SPFiller(LMObject):
                     'keywords': lyrKeywords}
          dloc = os.path.join(ENV_DATA_PATH, relfname)
          if not os.path.exists(dloc):
-            print('Missing local data %s' % dloc)
+            raise LMError('Missing local data {}'.format(dloc))
          envlyr = EnvLayer(lyrname, self.userId, pkgMeta['epsg'], 
                            dlocation=dloc, 
                            lyrMetadata=lyrmeta,
@@ -424,6 +424,12 @@ def catalogScenPackages(spMetaFname, userId, userEmail):
       if updatedMask is None:
          filler.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
          updatedMask = filler.addMaskLayer(masklyr)
+         if updatedMask.getDLocation() != masklyr.getDLocation():
+            raise LMError('''Returned existing layer name {} for user {} with 
+                             filename {}, not expected filename {}'''
+                             .format(masklyr.name, filler.userId, 
+                                     updatedMask.getDLocation(), 
+                                     masklyr.getDLocation()))
       
       updatedScenPkg = filler.addPackageScenariosLayers(scenPkg)
       
@@ -451,20 +457,20 @@ if __name__ == '__main__':
    parser.add_argument('--user_email', default=None,
             help=('User email'))
    args = parser.parse_args()
-   scenpkg_meta_file = args.scen_package_meta
+   scen_package_meta = args.scen_package_meta
    user_id = args.user_id
    user_email = args.user_email
    
-   if not os.path.exists(scenpkg_meta_file):
+   if not os.path.exists(scen_package_meta):
       # if using package name, look in default location)
-      scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkg_meta_file + '.py')
-      if not os.path.exists(scenpkg_meta_file):
-         print ('Missing Scenario Package metadata file {}'.format(scenpkg_meta_file))
+      scen_package_meta = os.path.join(ENV_DATA_PATH, scen_package_meta + '.py')
+      if not os.path.exists(scen_package_meta):
+         print ('Missing Scenario Package metadata file {}'.format(scen_package_meta))
          exit(-1)    
    
-   print('Running catalogScenPkg with scenpkg_meta_file = {}, userid = {}, email = {}'
-         .format(scenpkg_meta_file, user_id, user_email))
-   catalogScenPackages(scenpkg_meta_file, user_id, user_email)
+   print('Running catalogScenPkg with scen_package_meta = {}, userid = {}, email = {}'
+         .format(scen_package_meta, user_id, user_email))
+   catalogScenPackages(scen_package_meta, user_id, user_email)
 
 """
 find . -name "*.in" -exec sed -i s%@LMHOME@%/opt/lifemapper%g {} \;

@@ -29,6 +29,9 @@
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 \c borg
+
+DROP TABLE IF EXISTS lm_v3.Process CASCADE;
+
 ALTER TABLE lm_v3.SDMProject DROP COLUMN IF EXISTS mdlmaskId CASCADE;
 ALTER TABLE lm_v3.SDMProject DROP COLUMN IF EXISTS prjmaskId CASCADE;
 CREATE INDEX idx_layerid ON lm_v3.SDMProject(layerid);

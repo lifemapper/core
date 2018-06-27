@@ -28,9 +28,10 @@ import time
 import traceback
 
 from LmBackend.common.daemon import Daemon
+from LmCommon.common.lmconstants import LM_USER
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmDbServer.boom.boomer import Boomer
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
@@ -96,8 +97,8 @@ class DaBoom(Daemon):
 
 # .............................................................................
 if __name__ == "__main__":
-   if not isCorrectUser():
-      print("Run this script as `lmwriter`")
+   if not isLMUser():
+      print("Run this script as `{}`".format(LM_USER))
       sys.exit(2)
    earl = EarlJr()
    defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG, 
@@ -149,7 +150,7 @@ from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import LMFormat
 from LmDbServer.common.lmconstants import BOOM_PID_FILE, TAXONOMIC_SOURCE
 from LmDbServer.boom.boomer import Boomer
-from LmServer.base.utilities import isCorrectUser
+from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
