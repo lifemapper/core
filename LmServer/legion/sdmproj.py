@@ -680,7 +680,7 @@ class SDMProjection(_ProjectionType, Raster):
       rules.append(touchCmd.getMakeflowRule(local=True))
       
       scn = self.projScenario
-      scnExt = '{}-{}'.format('.'.join([str(x) for x in scn.bbox]), 
+      scnExt = '{}_{}'.format('.'.join([str(x) for x in scn.bbox]), 
                               scn.resolution)
 
       # Get mask layer from dictionary
@@ -730,7 +730,7 @@ class SDMProjection(_ProjectionType, Raster):
             outFormat = 'GTiff'
             
             # Add scenario extent for projecting on different areas
-            maskFn = os.path.join(workDir, '{}_occ_{}-{}.tif'.format(maskName, 
+            maskFn = os.path.join(workDir, '{}_occ_{}_{}.tif'.format(maskName, 
                                                                occId, scnExt))
             
             maskArgs = '-of {} -dstnodata {} -cutline {} {} {}'.format(
@@ -748,7 +748,7 @@ class SDMProjection(_ProjectionType, Raster):
             rules.append(createMaskCommand.getMakeflowRule(local=True))
          else:
             maskName = 'blankMask'
-            maskFn = os.path.join(workDir, '{}_occ_{}-{}.tif'.format(maskName, 
+            maskFn = os.path.join(workDir, '{}_occ_{}_{}.tif'.format(maskName, 
                                                                occId, scnExt))
             maskCmd = CreateBlankMaskTiffCommand(maskLyr.getDLocation(), maskFn)
             maskCmd.inputs.append(dirTouchFile)
@@ -756,7 +756,7 @@ class SDMProjection(_ProjectionType, Raster):
       
       if self.isATT():
          # Need to convert to ASCII
-         finalMaskFn = os.path.join(workDir, '{}_occ_{}-{}.asc'.format(
+         finalMaskFn = os.path.join(workDir, '{}_occ_{}_{}.asc'.format(
                                                       maskName, occId, scnExt))
          convertCmd = SystemCommand('gdal_translate', 
             '-a_nodata {} -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
