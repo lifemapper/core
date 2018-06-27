@@ -680,7 +680,8 @@ class SDMProjection(_ProjectionType, Raster):
       rules.append(touchCmd.getMakeflowRule(local=True))
       
       scn = self.projScenario
-      scnExt = '{}-{}'.format('.'.join(scn.bbox), scn.resolution)
+      scnExt = '{}-{}'.format('.'.join([str(x) for x in scn.bbox]), 
+                              scn.resolution)
 
       # Get mask layer from dictionary
       maskLyr = maskProcDict[MASK_LAYER_KEY]
@@ -885,7 +886,7 @@ class SDMProjection(_ProjectionType, Raster):
          # Look at processing parameters and decide if we need to do anything
          if procParams.has_key(PRE_PROCESS_KEY) and \
                            procParams[PRE_PROCESS_KEY].has_key(MASK_KEY):
-            observed = self.projScenario.id == self.modelScenario.id
+            observed = self.projScenario.getId() == self.modelScenario.getId()
             maskRules, wsMaskFn = self._computeMyMask(
                                        procParams[PRE_PROCESS_KEY][MASK_KEY], 
                                        workDir=workDir,

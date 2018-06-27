@@ -682,6 +682,9 @@ class ChristopherWalken(LMObject):
          # Get gridset processing metadata
          procParams = self.boomGridset.grdMetadata[PROCESSING_KEY]
          
+         self.log.info('Using the following processing parameters: {}'.format(
+                                                              str(procParams)))
+         
          for o in objs:
             # Get rules for objects to be computed
             try:

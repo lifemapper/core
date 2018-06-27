@@ -66,7 +66,7 @@ class AddBioGeoAndTreeCommand(_LmServerCommand):
       """
       _LmServerCommand.__init__(self)
       
-      self.args = [gridsetId]
+      self.args = [str(gridsetId)]
       if isinstance(hypothesesFilenames, list):
          self.inputs.extend(hypothesesFilenames)
          self.args.extend(hypothesesFilenames)
