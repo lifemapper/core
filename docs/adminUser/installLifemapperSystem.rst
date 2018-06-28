@@ -177,6 +177,12 @@ Configure for new scenario data
 	     scenarios)
 	   * biotaphyCONUS (35 layers, worldclim, soils, landcover, 30 sec, CONUS,
 	     observed scenario only)
+	   * biotaphyCONUS12 (12 layers, worldclim, soils, landcover, 30 sec, CONUS,
+	     observed scenario only)
+	   * biotaphyNA (35 layers, worldclim, soils, landcover, 30 sec, NA,
+	     observed scenario only)
+	   * biotaphyNA12 (12 layers, worldclim, soils, landcover, 30 sec, NA,
+	     observed scenario only)
 
 #. Catalog test scenario data for **server**. Insert layers,
      scenarios, and scenario package in the database. Script is installed by the 
@@ -214,7 +220,7 @@ Configure for new boom job
 	        * biogeo hypotheses
 	   * heuchera_boom_data 
 	        * heuchera data (64sp) 
-	        * biotaphyCONUS (30 sec/CONUS)
+	        * biotaphyCONUS12 (30 sec/CONUS)
 	        * tree
 	        * biogeo hypotheses
                
