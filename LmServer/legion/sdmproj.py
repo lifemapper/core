@@ -688,10 +688,11 @@ class SDMProjection(_ProjectionType, Raster):
       
       if maskProcDict.has_key(CODE_KEY) and \
                            maskProcDict[CODE_KEY] == ECOREGION_MASK_METHOD:
+         
+         occId = self.getOccurrenceSetId()
+
          if observed:
             bd = maskProcDict[BUFFER_KEY]
-            
-            occId = self.getOccurrenceSetId()
       
             # Add command for generating convex hull for occurrence set
             convexHullFilename = os.path.join(workDir, 
@@ -754,18 +755,19 @@ class SDMProjection(_ProjectionType, Raster):
             maskCmd.inputs.append(dirTouchFile)
             rules.append(maskCmd.getMakeflowRule(local=True))
       
-      if self.isATT():
-         # Need to convert to ASCII
-         finalMaskFn = os.path.join(workDir, '{}_occ_{}_{}.asc'.format(
-                                                      maskName, occId, scnExt))
-         convertCmd = SystemCommand('gdal_translate', 
-            '-a_nodata {} -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
-               DEFAULT_NODATA, maskFn, finalMaskFn),
-            inputs=[maskFn],
-            outputs=[finalMaskFn])
-         
-         rules.append(convertCmd.getMakeflowRule(local=True))
-         maskFn = finalMaskFn
+         # If Maxent, need to convert to ASCII
+         if self.isATT():
+            # Need to convert to ASCII
+            finalMaskFn = os.path.join(workDir, '{}_occ_{}_{}.asc'.format(
+                                                         maskName, occId, scnExt))
+            convertCmd = SystemCommand('gdal_translate', 
+               '-a_nodata {} -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
+                  DEFAULT_NODATA, maskFn, finalMaskFn),
+               inputs=[maskFn],
+               outputs=[finalMaskFn])
+            
+            rules.append(convertCmd.getMakeflowRule(local=True))
+            maskFn = finalMaskFn
       
       return rules, maskFn
 
