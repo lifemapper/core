@@ -394,6 +394,7 @@ create table lm_v3.MFProcess
 (
    mfProcessId serial UNIQUE PRIMARY KEY,
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
    dlocation text,
    priority int,
    metadata text,
