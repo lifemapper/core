@@ -166,15 +166,17 @@ Configure for new scenario data
      by the rocks-lmcompute rpm into /opt/lifemapper/rocks/bin::
     # transformData <SCENARIO_PACKAGE>
 
-#. Downloaded data package <SCENARIO_PACKAGE>.tar.gz contains: 
-    * <SCENARIO_PACKAGE>.py file containing metadata for scenarioPackage, 
-      scenarios and layers
-    * raster layers for scenarios
-        
-#. Verified test packages include: 
-   * sax_layers_10min  (12 layers, worldclim,soil,etc, observed scenario only)
-   * 10min-past-present-future (20 layers, worldclim, observed, 2 past, 4 future 
-     scenarios)
+	* Downloaded data package <SCENARIO_PACKAGE>.tar.gz contains: 
+	    * <SCENARIO_PACKAGE>.py file containing metadata for scenarioPackage, 
+	      scenarios and layers
+	    * raster layers for scenarios
+	        
+	* Verified test packages include: 
+	   * sax_layers_10min  (12 layers, worldclim,soil,etc, observed scenario only)
+	   * 10min-past-present-future (20 layers, worldclim, observed, 2 past, 4 future 
+	     scenarios)
+	   * biotaphyCONUS (35 layers, worldclim, soils, landcover, 30 sec, CONUS,
+	     observed scenario only)
 
 #. Catalog test scenario data for **server**. Insert layers,
      scenarios, and scenario package in the database. Script is installed by the 
@@ -191,25 +193,30 @@ Configure for new boom job
      rocks-lifemapper rpm into /opt/lifemapper/rocks/bin::
     # getBoomPackageForUser  <BOOM_DATA>  <USERID>
 
-#. Downloaded data package <BOOM_DATA>.tar.gz contains: 
-    * <BOOM_DATA>.ini file containing names of datafiles in package
-    * <boom parameter>.ini file containing input data names and parameters
-    * species package containing data and metadata
-    * (optional) <species tree>.nex tree in nexus format
-    * (optional) <biogeographic hypotheses>.tar.gz containing one or more 
-      shapefiles in a directory named <biogeographic hypotheses>
+   * Downloaded data package <BOOM_DATA>.tar.gz contains: 
+	    * <BOOM_DATA>.ini file containing names of datafiles in package
+	    * <boom parameter>.ini file containing input data names and parameters
+	    * species package containing data and metadata
+	    * (optional) <species tree>.nex tree in nexus format
+	    * (optional) <biogeographic hypotheses>.tar.gz containing one or more 
+	      shapefiles in a directory named <biogeographic hypotheses>
 
-#. Verified test packages include: 
-    * sax_boom_data containing data and parameters to use 
-        * saxifragales data (~2300sp) 
-        * sax_layers_10min current scenario, 
-        * tree
-        * biogeo hypotheses
-   * heuchera_boom_global_data containing data and parameters to use
-        * heuchera data (64sp) 
-        * 10min-past-present-future
-        * tree
-        * biogeo hypotheses
+   * Verified test packages include: 
+	    * sax_boom_data : 
+	        * saxifragales data (~2300sp) 
+	        * sax_layers_10min current scenario, 
+	        * tree
+	        * biogeo hypotheses
+	   * heuchera_boom_global_data:  
+	        * heuchera data (64sp) 
+	        * 10min-past-present-future
+	        * tree
+	        * biogeo hypotheses
+	   * heuchera_boom_data 
+	        * heuchera data (64sp) 
+	        * biotaphyCONUS (30 sec/CONUS)
+	        * tree
+	        * biogeo hypotheses
                
 #. Catalog BOOM data inputs in database for **server**. Create and insert 
     gridset, and optional shapegrid, matrices, tree and biogeographic hypotheses
@@ -219,8 +226,7 @@ Configure for new boom job
     rpm into /opt/lifemapper/rocks/bin::
     # catalogBoomJob  <boom parameter>.ini  <do_walk>
    
-   * Results of fillDB:
-   
+   * Results of catalogBoomJob:
      * Verify scenario data exists for this user
      * Create gridset for Boom 
      * Optionally create shapegrid, matrices, tree, biogeographic hypotheses
