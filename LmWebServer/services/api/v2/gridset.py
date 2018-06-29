@@ -84,7 +84,7 @@ class GridsetAnalysisService(LmService):
       @summary: Adds a set of biogeographic hypotheses to the gridset
       """
       # Get gridset
-      gridset = self._getGridSet(pathGridSetId, method=HTTPMethod.POST)
+      gridset = self._getGridSet(pathGridSetId)#, method=HTTPMethod.POST)
 
       # Check status of all matrices
       if not all(
