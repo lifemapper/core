@@ -287,7 +287,7 @@ class BOOMFiller(LMObject):
    def _findScenPkgMeta(self, scenpkgName):
       scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkgName + '.py')
       if not os.path.exists(scenpkg_meta_file):
-         print ('Missing Scenario Package metadata file {}'.format(scenpkg_meta_file))
+         raise LMError('Missing Scenario Package metadata file {}'.format(scenpkg_meta_file))
          exit(-1)    
 
       if not os.path.exists(scenpkg_meta_file):
