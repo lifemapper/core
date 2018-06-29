@@ -150,8 +150,8 @@ To change eclipse to use ssh login with key::
     git config user.email "aimee.stewart@ku.edu"
     git config user.name "zzeppozz"
     
-Security updates
-~~~~~~~~~~~~~~~~
+Security updates ONLY for Rocks 7.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Follow instructions at 
 http://www.rocksclusters.org/new/2018/2018/01/04/updates-meltdown-spectre.html
