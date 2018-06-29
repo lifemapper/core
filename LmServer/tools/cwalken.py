@@ -541,6 +541,11 @@ class ChristopherWalken(LMObject):
       squid = None
       spudRules = []
       pcount = prcount = icount = ircount = 0
+      gsid = 0
+      try:
+         gsid = self.boomGridset.getId()
+      except:
+         self.log.warning('Missing self.boomGridset id!!')
       # WeaponOfChoice resets old or failed Occurrenceset
       occ = self.weaponOfChoice.getOne()
       if self.weaponOfChoice.finishedInput:
@@ -571,10 +576,8 @@ class ChristopherWalken(LMObject):
                         icount += 1
                         if mReset: ircount += 1 
                         objs.append(mtxcol)
-   
             self.log.info('   Will compute {} projections, {} matrixColumns for Grid {} ( {}, {} reset)'
-                          .format(pcount, icount, self.boomGridset.getId(), 
-                                  prcount, ircount))
+                          .format(pcount, icount, gsid, prcount, ircount))
          spudObjs = [o for o in objs if o is not None]
          # Creates MFChain with rules, does NOT write it
          spudRules = self._createSpudRules(spudObjs, workdir)
