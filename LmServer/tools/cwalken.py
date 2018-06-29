@@ -576,6 +576,7 @@ class ChristopherWalken(LMObject):
                         icount += 1
                         if mReset: ircount += 1 
                         objs.append(mtxcol)
+   
             self.log.info('   Will compute {} projections, {} matrixColumns for Grid {} ( {}, {} reset)'
                           .format(pcount, icount, gsid, prcount, ircount))
          spudObjs = [o for o in objs if o is not None]
