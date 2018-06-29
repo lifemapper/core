@@ -159,7 +159,7 @@ def convertLayersInDirectory(layerDir):
 
 
 # .............................................................................
-def convertTiffToAscii(tiffFn, asciiFn):
+def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=6):
    """
    @summary: Converts an existing GeoTIFF file into an ASCII grid
    @param tiffFn: The path to an existing GeoTIFF file
@@ -175,6 +175,7 @@ def convertTiffToAscii(tiffFn, asciiFn):
    ds_in = gdal.Open(tiffFn)
    # Get header information from tiff file
    leftX, xres, _, uly, _, yres = ds_in.GetGeoTransform()
+   
    leftY = uly + (ds_in.RasterYSize * yres)
    cols = ds_in.RasterXSize
    rows = ds_in.RasterYSize
@@ -183,6 +184,12 @@ def convertTiffToAscii(tiffFn, asciiFn):
    if nodata is None:
       ds_in.GetRasterBand(1).SetNoDataValue(DEFAULT_NODATA)
       nodata = DEFAULT_NODATA
+   # If header precision is not None, round vlaues
+   if headerPrecision is not None:
+      leftX = round(leftX, headerPrecision)
+      leftY = round(leftY, headerPrecision)
+      xres = round(xres, headerPrecision)
+   
    options = ['FORCE_CELLSIZE=True']
    ds_out = drv.CreateCopy(asciiFn, ds_in, 0, options)
    ds_in = None
