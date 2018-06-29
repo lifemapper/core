@@ -822,12 +822,13 @@ class BOOMFiller(LMObject):
       return grimChains
 
    # ...............................................
-   def addBoomChain(self):
+   def addBoomChain(self, boomGridsetId=None):
       """
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                 and configFile written by BOOMFiller.initBoom.
       """
       meta = {MFChain.META_CREATED_BY: self.name,
+              'GRIDSET': boomGridsetId,
               MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
       .format(self.userId, self.archiveName)}
       newMFC = MFChain(self.userId, priority=self.priority, 
@@ -996,7 +997,7 @@ def initBoom(paramFname, walkNow=False):
    if walkNow is True:
       # Create MFChain to run Boomer on these inputs IFF not the initial archive 
       # If this is the initial archive, we will run the boomer as a daemon
-      mfChain = filler.addBoomChain()
+      mfChain = filler.addBoomChain(boomGridsetId=boomGridset.getId())
       
    filler.close()
    return filler.outConfigFilename
