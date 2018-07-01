@@ -14,10 +14,17 @@ the host system, then start or restart an existing cluster.  Open the
 user-interface:: 
 
  * rocks set host boot <vm-name> action=os
+ * rocks set host vm cdrom <vm-name> cdrom=<kernel iso>
+ * rocks report host vm config <vm-name>
  * (opt) rocks run host <vm-name> "shutdown -h now"
  * rocks start host vm <vm-name>
  * virt-manager
 
+If installing 6.2, boot with Rocks 6.2 kernel iso in the CDROM, but choose 
+URL for installation image, then point to ::
+  
+  http://central-6-2-x86-64.rocksclusters.org/install/rolls/
+  
 Install the rolls:
 ~~~~~~~~~~~~~~~~~~
 
@@ -44,7 +51,7 @@ Configuration params/screens:
    * NTP server:  time.ku.edu
  * On **Network and Hostname**:
    * Fill out FQDN
-   * Fill out only public interface, 
+   * Fill out only public interface, eth1, 
    * Method = Manual
    * IPv4 
      * assigned by Greg Smith for MAC address
@@ -204,17 +211,13 @@ Troubleshooting
       update the next time. Errors seemed to point to the opensm service as well
 
 * User creation
-    * The user I created on install (astewart) was created on the system, but I 
-      was unable to login to the GUI with that account.  I could ssh to it, 
-      and it showed that no home directory had been created. Deleted the user, 
-      and added it again at the command prompt.  It created the home directory, 
-      and I can login through the GUI
+    * Don't
       
 * Mouse - Switching the primary mouse button from left to right did not work,
   but after a reboot several weeks later it magically did work
 
-* Enabling Auto-partition caused the creation of LVM partitions on NotYeti.  
-  The command "rocks list partition notyeti" did not recognize these partitions.
+* Enabling Auto-partition causes LVM partitions - unsupported.  Use 
+  standard partitions.
 
 New repositories
 ~~~~~~~~~~~~~~~~
