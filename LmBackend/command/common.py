@@ -22,7 +22,8 @@
           02110-1301, USA.
 """
 from LmBackend.command.base import _LmCommand
-from LmBackend.common.lmconstants import CMD_PYBIN, COMMON_SCRIPTS_DIR
+from LmBackend.common.lmconstants import CMD_PYBIN, COMMON_SCRIPTS_DIR,\
+   BACKEND_SCRIPTS_DIR
 
 # .............................................................................
 class ChainCommand(_LmCommand):
@@ -102,6 +103,37 @@ class ConcatenateMatricesCommand(_LmCommand):
       
       return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
                   optionalArgs, posArgs)
+
+# .............................................................................
+class ConvertLayerCommand(_LmCommand):
+   """
+   @summary: This command will convert a tiff to ascii
+   """
+   relDir = BACKEND_SCRIPTS_DIR
+   scriptName = 'convert_single_layer.py'
+
+   # ................................
+   def __init__(self, origAsciiFilename, modifiedAsciiFilename):
+      """
+      @summary: Construct the command object
+      @param origAsciiFilename: The original ASCII file
+      @param modifiedAsciiFilename: The modified ASCII file
+      """
+      _LmCommand.__init__(self)
+      
+      self.args = '{} {}'.format(origAsciiFilename, modifiedAsciiFilename)
+      
+      self.inputs.append(origAsciiFilename)
+      self.outputs.append(modifiedAsciiFilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the concatenate matrices command
+      """
+      cmd = '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs, 
+                                 self.args)
+      return cmd
 
 # .............................................................................
 class ModifyAsciiHeadersCommand(_LmCommand):

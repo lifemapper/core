@@ -28,7 +28,7 @@ import mx.DateTime
 import os
 
 from LmBackend.command.common import ChainCommand, SystemCommand,\
-   ModifyAsciiHeadersCommand
+   ModifyAsciiHeadersCommand, ConvertLayerCommand
 from LmBackend.command.server import (LmTouchCommand, ShootSnippetsCommand,
                                  StockpileCommand, CreateBlankMaskTiffCommand,
                                  CreateConvexHullShapefileCommand, 
@@ -760,13 +760,14 @@ class SDMProjection(_ProjectionType, Raster):
             # Need to convert to ASCII
             finalMaskFn = os.path.join(workDir, '{}_occ_{}_{}.asc'.format(
                                                          maskName, occId, scnExt))
-            convertCmd = SystemCommand('gdal_translate', 
-               '-a_nodata {} -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
-                  DEFAULT_NODATA, maskFn, finalMaskFn),
-               inputs=[maskFn],
-               outputs=[finalMaskFn])
+            convertCmd = ConvertLayerCommand(maskFn, finalMaskFn)
+            #convertCmd = SystemCommand('gdal_translate', 
+            #   '-a_nodata {} -of AAIGrid -co FORCE_CELLSIZE=TRUE {} {}'.format(
+            #      DEFAULT_NODATA, maskFn, finalMaskFn),
+            #   inputs=[maskFn],
+            #   outputs=[finalMaskFn])
             
-            rules.append(convertCmd.getMakeflowRule(local=True))
+            rules.append(convertCmd.getMakeflowRule())
             maskFn = finalMaskFn
       
       return rules, maskFn

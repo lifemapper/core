@@ -149,6 +149,7 @@ class Boomer(LMObject):
             #if len(self.spudArfFnames) >= SPUD_LIMIT:
             if len(self.squidNames) >= SPUD_LIMIT:
                self.rotatePotatoes()
+         self.log.info('-----------------')
       except Exception, e:
          self.log.debug('Exception {} on spud, closing ...'.format(str(e)))
          self.close()

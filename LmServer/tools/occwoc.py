@@ -455,7 +455,7 @@ class BisonWoC(_SpeciesWeaponOfChoice):
             occ = self._createOrResetOccurrenceset(sciName, tsnCount,
                                                    taxonSourceKey=tsn)
          if occ:
-            self.log.info('Processed occset {}, tsn {}, with {} points; next start {}'
+            self.log.info('WOC processed occset {}, tsn {}, with {} points; next start {}'
                           .format(occ.getId(), tsn, tsnCount, self.nextStart))
       return occ
 
@@ -620,7 +620,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
             occ = self._createOrResetOccurrenceset(sciName, len(dataChunk), 
                                                    data=dataChunk)
             if occ is not None:
-               self.log.info('Processed occset {}, name {}, with {} records; next start {}'
+               self.log.info('WOC processed occset {}, name {}, with {} records; next start {}'
                              .format(occ.getId(), taxonName, len(dataChunk), 
                                      self.nextStart))
       return occ
@@ -761,7 +761,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
                                                       taxonSourceKey=speciesKey, 
                                                       data=dataChunk)
             if occ:
-               self.log.info('Processed occset {} gbif key {} with {} records; next start {}'
+               self.log.info('WOC processed occset {} gbif key {} with {} records; next start {}'
                              .format(occ.getId(), speciesKey, len(dataChunk), 
                                      self.nextStart))
       return occ
@@ -1034,7 +1034,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                                                    taxonSourceKey=opentreeId,
                                                    data=bubbleFname)
          if occ:
-            self.log.info('Processed occset {}, opentreeId {}, with {} points; next start {}'
+            self.log.info('WOC processed occset {}, opentreeId {}, with {} points; next start {}'
                           .format(occ.getId(), opentreeId, recordCount, self.nextStart))
       return occ
 
