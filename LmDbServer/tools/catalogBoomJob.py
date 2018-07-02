@@ -164,7 +164,7 @@ class BOOMFiller(LMObject):
       # Make sure Scenario Package exists for this user
       existingScenPkg = self.scribe.getScenPackage(userId=self.userId, 
                                       scenPkgName=self.scenPackageName, 
-                                      fillLayers=False)
+                                      fillLayers=True)
       if existingScenPkg is None:
          raise LMError('ScenPackage {} must exist for User {}'
                        .format(self.scenPackageName, self.userId))
