@@ -87,6 +87,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
       MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 25
    }
   
+   origRowHeaders = getRowHeaders(origShp.getDLocation())
    
    # If bounding box, resolution, or user is different, create a new shapegrid
    if bbox != origShp.bbox or cellSize != origShp.cellsize or \
@@ -178,7 +179,22 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
    # Copy the tree if available.  It may be subsetted according to the data in
    #    the gridset and therefore should be separate
    if origGS.tree is not None:
+      
+      # Need to get and fill in tree
       otree = origGS.tree
+      
+      try:
+         treeData = otree.tree
+      except: # May need to be read
+         try:
+            otree.read()
+            treeData = otree.tree
+         # TODO: Remove this
+         except: # Handle bad dlocation from gridset tree
+            otree = scribe.getTree(treeId=otree.getId())
+            otree.read()
+            treeData = otree.tree
+      
       if otree.name:
          tree_name = otree.name
       else:
@@ -186,10 +202,8 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
       newTree = Tree('Copy of {} tree at {}'.format(tree_name, gmt().mjd),
                      metadata={}, userId=userId, gridsetId=updatedGS.getId(),
                      modTime=gmt().mjd)
-      newTree.setTree(otree.tre)
+      newTree.setTree(treeData)
       insertedTree = scribe.findOrInsertTree(newTree)
-      otree.read()
-      treeData = otree.tree
       newTree.tree = treeData
       insertedTree.setTree(treeData)
       insertedTree.writeTree()
