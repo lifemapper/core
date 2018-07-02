@@ -190,7 +190,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
             treeData = otree.tree
          # TODO: Remove this
          except: # Handle bad dlocation from gridset tree
-            otree = scribe.getTree(otree.getId())
+            otree = scribe.getTree(treeId=otree.getId())
             otree.read()
             treeData = otree.tree
       
@@ -201,7 +201,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
       newTree = Tree('Copy of {} tree at {}'.format(tree_name, gmt().mjd),
                      metadata={}, userId=userId, gridsetId=updatedGS.getId(),
                      modTime=gmt().mjd)
-      newTree.setTree(otree)
+      newTree.setTree(treeData)
       insertedTree = scribe.findOrInsertTree(newTree)
       newTree.tree = treeData
       insertedTree.setTree(treeData)
