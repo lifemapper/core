@@ -87,6 +87,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
       MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 25
    }
   
+   origRowHeaders = getRowHeaders(origShp.getDLocation())
    
    # If bounding box, resolution, or user is different, create a new shapegrid
    if bbox != origShp.bbox or cellSize != origShp.cellsize or \
