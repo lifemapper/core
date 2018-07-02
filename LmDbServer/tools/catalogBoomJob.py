@@ -863,6 +863,10 @@ class BOOMFiller(LMObject):
             baretree = Tree(name, dlocation=treeFilename, userId=self.userId, 
                             gridsetId=gridset.getId(), modTime=currtime)
             tree = self.scribe.findOrInsertTree(baretree)
+            tree.read()
+            tree.clearDLocation()
+            self.scribe.updateObject(tree)
+            tree.writeTree()
          else:
             self.scribe.log.warning('No tree at {}'.format(treeFilename))
    
