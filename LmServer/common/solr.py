@@ -73,7 +73,7 @@ def postSolrDocument(collection, docFilename):
    #   cmd=SOLR_POST_COMMAND, collection=collection, filename=docFilename)
    #subprocess.call(cmd, shell=True)
    return _post(collection, docFilename, 
-                headers={'Content-Type': 'application/xml'})
+                headers={'Content-Type': 'text/xml'})
    
 # .............................................................................
 def _post(collection, docFilename, headers=None):
@@ -82,7 +82,7 @@ def _post(collection, docFilename, headers=None):
    """
    if not headers:
       headers = {}
-   url = '{}{}/update'.format(SOLR_SERVER, collection)
+   url = '{}{}/update?commit=true'.format(SOLR_SERVER, collection)
    
    with open(docFilename) as inF:
       data = inF.read()

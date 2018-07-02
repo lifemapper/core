@@ -39,7 +39,8 @@ from LmCommon.common.lmconstants import (LMFormat, SERVER_BOOM_HEADING,
                                          SERVER_SDM_MASK_HEADING_PREFIX,
    HTTPStatus)
 #from LmDbServer.boom.boominput import ArchiveFiller
-from LmDbServer.boom.initboom import initBoom
+#from LmDbServer.boom.initboom import initBoom
+from LmDbServer.tools.catalogBoomJob import initBoom
 from LmServer.common.lmconstants import TEMP_PATH, Priority
 
 # .............................................................................

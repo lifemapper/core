@@ -65,9 +65,8 @@ class SPFiller(LMObject):
       self.spMetaFname = spMetaFname
       self.userId = userId
       self.userEmail = email
-      if self.userId != PUBLIC_USER:
-         if self.userEmail is None:
-            self.userEmail = '{}{}'.format(self.userId, DEFAULT_EMAIL_POSTFIX)
+      if self.userEmail is None:
+         self.userEmail = '{}{}'.format(self.userId, DEFAULT_EMAIL_POSTFIX)
       self.spMeta = self._findScenPkgMetadata()
             
       # Get database

@@ -164,7 +164,7 @@ class BOOMFiller(LMObject):
       # Make sure Scenario Package exists for this user
       existingScenPkg = self.scribe.getScenPackage(userId=self.userId, 
                                       scenPkgName=self.scenPackageName, 
-                                      fillLayers=False)
+                                      fillLayers=True)
       if existingScenPkg is None:
          raise LMError('ScenPackage {} must exist for User {}'
                        .format(self.scenPackageName, self.userId))
@@ -863,6 +863,10 @@ class BOOMFiller(LMObject):
             baretree = Tree(name, dlocation=treeFilename, userId=self.userId, 
                             gridsetId=gridset.getId(), modTime=currtime)
             tree = self.scribe.findOrInsertTree(baretree)
+            tree.read()
+            tree.clearDLocation()
+            self.scribe.updateObject(tree)
+            tree.writeTree()
          else:
             self.scribe.log.warning('No tree at {}'.format(treeFilename))
    
