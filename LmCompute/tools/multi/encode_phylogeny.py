@@ -55,7 +55,7 @@ if __name__ == "__main__":
    
    args = parser.parse_args()
    
-   tree = LmTree(args.treeFn, DEFAULT_TREE_SCHEMA)
+   tree = LmTree.initFromFile(args.treeFn, DEFAULT_TREE_SCHEMA)
    
    # Check if we can encode tree
    if tree.hasBranchLengths() and not tree.isUltrametric(relTol=0.01):

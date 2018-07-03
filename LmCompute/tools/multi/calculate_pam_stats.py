@@ -67,7 +67,7 @@ if __name__ == "__main__":
    
    # Load tree if exists
    if args.treeFn is not None:
-      tree = LmTree(args.treeFn, DEFAULT_TREE_SCHEMA)
+      tree = LmTree.initFromFile(args.treeFn, DEFAULT_TREE_SCHEMA)
    else:
       tree = None
    
