@@ -38,6 +38,17 @@ from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.shapegrid import ShapeGrid
 
 # .............................................................................
+def right_hand_rule(coordinates):
+   """
+   @summary: Converts the coordinates to right hand rule to meet GeoJSON spec
+   @todo: Handle cases that are not simply reversed polygon coordinates
+   @note: Coordinates will be a list of polygons lists where each is a list of 
+             x,y lists
+   """
+   for i in xrange(len(coordinates)):
+      coordinates[i].reverse()
+
+# .............................................................................
 def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None, 
                         ident=3, headerLookupFilename=None, 
                         transform=lambda x: x):
@@ -83,6 +94,7 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
       x += 1
       # Get the GeoJSON for the feature
       ft = json.loads(feat.ExportToJson())
+      right_hand_rule(ft['geometry']['coordinates'])
       joinAttrib = feat.GetFID()
       
       # Join matrix attributes
@@ -149,6 +161,7 @@ def geoJsonify(shpFilename, matrix=None, mtxJoinAttrib=None):
    for feat in lyr:
       # Get the GeoJSON for the feature
       ft = json.loads(feat.ExportToJson())
+      right_hand_rule(ft['geometry']['coordinates'])
       joinAttrib = feat.GetFID()
       
       # Join matrix attributes
