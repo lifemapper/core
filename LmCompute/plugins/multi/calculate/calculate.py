@@ -312,7 +312,7 @@ class PamStats(object):
       @summary: Calculate phylogenetic diversity stats from Stephen
       """
       # Get the Newick string from our tree object
-      tree = tree_reader.read_tree_string(self.tree.tree.as_newick_string())
+      tree = tree_reader.read_tree_string(self.tree.tree.as_string('newick'))
       
       # Create squid dictionary
       squid_annotations = self.tree.getAnnotations(PhyloTreeKeys.SQUID)
