@@ -49,7 +49,11 @@ def mnnd(tree, tips):
             distsd[lt[j]].append(m)
    dists = []
    for i in distsd:
-      dists.append(min(distsd[i]))
+      try:
+         dists.append(min(distsd[i]))
+      except Exception, e:
+         print('Could not append distance, {}, setting to 0.0'.format(str(e)))
+         dists.append(0.0)
    measure = np.mean(dists)
    return measure
 
