@@ -111,7 +111,7 @@ class PamStats(object):
          spVarRatio = float(self.sigmaSpecies.sum()) / self.sigmaSpecies.trace()
          siteVarRatio = float(self.sigmaSites.sum()) / self.sigmaSites.trace()
       
-      return Matrix(np.array([spVarRatio, siteVarRatio]).reshape((1, 2)),
+      return Matrix(np.nan_to_num(np.array([spVarRatio, siteVarRatio]).reshape((1, 2))),
                     headers={'0': ['Value'],
                              '1': [PamStatKeys.SPECIES_VARIANCE_RATIO,
                                  PamStatKeys.SITES_VARIANCE_RATIO]})
@@ -143,7 +143,7 @@ class PamStats(object):
                               PamStatKeys.SPD])
       
       # Return a matrix
-      return Matrix(np.concatenate(statColumns, axis=1), 
+      return Matrix(np.nan_to_num(np.concatenate(statColumns, axis=1)), 
                     headers={'0' : self.pam.getRowHeaders(),
                              '1': sitesHeaders})
       
@@ -163,7 +163,7 @@ class PamStats(object):
                    '1': [PamStatKeys.OMEGA, PamStatKeys.OMEGA_PROP, 
                        PamStatKeys.PSI, PamStatKeys.PSI_AVG_PROP]}
       # Return a Matrix
-      return Matrix(spData, headers=spHeaders)
+      return Matrix(np.nan_to_num(spData), headers=spHeaders)
    
    # ...........................
    def _calculateCoreStats(self):
