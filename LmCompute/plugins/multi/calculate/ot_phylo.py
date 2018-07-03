@@ -53,8 +53,10 @@ def mnnd(tree, tips):
          dists.append(min(distsd[i]))
       except Exception, e:
          print('Could not append distance, {}, setting to 0.0'.format(str(e)))
-         dists.append(0.0)
-   measure = np.mean(dists)
+   if len(dists) > 0:
+      measure = np.mean(dists)
+   else:
+      measure = 0.0
    return measure
 
 # .............................................................................
@@ -73,7 +75,10 @@ def mpd(tree, tips):
       for j in range(len(lt)):
          if i < j:
             dists.append(phylo_dist(lt[i],lt[j],tree))
-   measure = np.mean(dists)
+   if len(dists) > 0:
+      measure = np.mean(dists)
+   else:
+      measure = 0.0
    return measure
 
 # .............................................................................
@@ -141,5 +146,8 @@ def spd(tree, tips):
             m = phylo_dist(lt[i],lt[j],tree)
             dists.append(m)
             ncompared += 1
-   measure = ncompared * np.mean(dists)
+   if len(dists) > 0:
+      measure = ncompared * np.mean(dists)
+   else:
+      measure = 0.0
    return measure
