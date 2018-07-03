@@ -12409,229 +12409,6 @@ var _elm_community$parser_combinators$Combine$manyTill = F2(
 				{ctor: '[]'}));
 	});
 
-var _elm_community$parser_combinators$Combine_Char$crlf = A2(
-	_elm_community$parser_combinators$Combine_ops['<$'],
-	_elm_lang$core$Native_Utils.chr('\n'),
-	A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		_elm_community$parser_combinators$Combine$regex('\r\n'),
-		'expected crlf'));
-var _elm_community$parser_combinators$Combine_Char$satisfy = function (pred) {
-	return _elm_community$parser_combinators$Combine$primitive(
-		F2(
-			function (state, stream) {
-				var message = 'could not satisfy predicate';
-				var _p0 = _elm_lang$core$String$uncons(stream.input);
-				if (_p0.ctor === 'Just') {
-					var _p1 = _p0._0._0;
-					return pred(_p1) ? {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: _elm_lang$core$Native_Utils.update(
-							stream,
-							{input: _p0._0._1, position: stream.position + 1}),
-						_2: _elm_lang$core$Result$Ok(_p1)
-					} : {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$Result$Err(
-							{
-								ctor: '::',
-								_0: message,
-								_1: {ctor: '[]'}
-							})
-					};
-				} else {
-					return {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$Result$Err(
-							{
-								ctor: '::',
-								_0: message,
-								_1: {ctor: '[]'}
-							})
-					};
-				}
-			}));
-};
-var _elm_community$parser_combinators$Combine_Char$char = function (c) {
-	return A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		_elm_community$parser_combinators$Combine_Char$satisfy(
-			F2(
-				function (x, y) {
-					return _elm_lang$core$Native_Utils.eq(x, y);
-				})(c)),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			'expected ',
-			_elm_lang$core$Basics$toString(c)));
-};
-var _elm_community$parser_combinators$Combine_Char$anyChar = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(
-		_elm_lang$core$Basics$always(true)),
-	'expected any character');
-var _elm_community$parser_combinators$Combine_Char$oneOf = function (cs) {
-	return A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		_elm_community$parser_combinators$Combine_Char$satisfy(
-			A2(_elm_lang$core$Basics$flip, _elm_lang$core$List$member, cs)),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			'expected one of ',
-			_elm_lang$core$Basics$toString(cs)));
-};
-var _elm_community$parser_combinators$Combine_Char$noneOf = function (cs) {
-	return A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		_elm_community$parser_combinators$Combine_Char$satisfy(
-			function (_p2) {
-				return !A3(_elm_lang$core$Basics$flip, _elm_lang$core$List$member, cs, _p2);
-			}),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			'expected none of ',
-			_elm_lang$core$Basics$toString(cs)));
-};
-var _elm_community$parser_combinators$Combine_Char$space = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.eq(x, y);
-			})(
-			_elm_lang$core$Native_Utils.chr(' '))),
-	'expected space');
-var _elm_community$parser_combinators$Combine_Char$tab = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.eq(x, y);
-			})(
-			_elm_lang$core$Native_Utils.chr('\t'))),
-	'expected tab');
-var _elm_community$parser_combinators$Combine_Char$newline = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.eq(x, y);
-			})(
-			_elm_lang$core$Native_Utils.chr('\n'))),
-	'expected newline');
-var _elm_community$parser_combinators$Combine_Char$eol = A2(_elm_community$parser_combinators$Combine_ops['<|>'], _elm_community$parser_combinators$Combine_Char$newline, _elm_community$parser_combinators$Combine_Char$crlf);
-var _elm_community$parser_combinators$Combine_Char$lower = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(_elm_lang$core$Char$isLower),
-	'expected a lowercase character');
-var _elm_community$parser_combinators$Combine_Char$upper = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(_elm_lang$core$Char$isUpper),
-	'expected an uppercase character');
-var _elm_community$parser_combinators$Combine_Char$digit = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(_elm_lang$core$Char$isDigit),
-	'expected a digit');
-var _elm_community$parser_combinators$Combine_Char$octDigit = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(_elm_lang$core$Char$isOctDigit),
-	'expected an octal digit');
-var _elm_community$parser_combinators$Combine_Char$hexDigit = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(_elm_lang$core$Char$isHexDigit),
-	'expected a hexadecimal digit');
-
-var _elm_community$parser_combinators$Combine_Num$digit = function () {
-	var toDigit = function (c) {
-		return _elm_lang$core$Char$toCode(c) - _elm_lang$core$Char$toCode(
-			_elm_lang$core$Native_Utils.chr('0'));
-	};
-	return A2(
-		_elm_community$parser_combinators$Combine_ops['<$>'],
-		toDigit,
-		A2(_elm_community$parser_combinators$Combine_ops['<?>'], _elm_community$parser_combinators$Combine_Char$digit, 'expected a digit'));
-}();
-var _elm_community$parser_combinators$Combine_Num$sign = A2(
-	_elm_community$parser_combinators$Combine$optional,
-	1,
-	_elm_community$parser_combinators$Combine$choice(
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_community$parser_combinators$Combine_ops['<$'],
-				1,
-				_elm_community$parser_combinators$Combine$string('+')),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_community$parser_combinators$Combine_ops['<$'],
-					-1,
-					_elm_community$parser_combinators$Combine$string('-')),
-				_1: {ctor: '[]'}
-			}
-		}));
-var _elm_community$parser_combinators$Combine_Num$unwrap = F2(
-	function (f, s) {
-		var _p0 = f(s);
-		if (_p0.ctor === 'Ok') {
-			return _p0._0;
-		} else {
-			return _elm_lang$core$Native_Utils.crashCase(
-				'Combine.Num',
-				{
-					start: {line: 23, column: 5},
-					end: {line: 28, column: 83}
-				},
-				_p0)(
-				A2(
-					_elm_lang$core$Basics_ops['++'],
-					'impossible state in Combine.Num.unwrap: ',
-					_elm_lang$core$Basics$toString(_p0._0)));
-		}
-	});
-var _elm_community$parser_combinators$Combine_Num$toInt = _elm_community$parser_combinators$Combine_Num$unwrap(_elm_lang$core$String$toInt);
-var _elm_community$parser_combinators$Combine_Num$int = A2(
-	_elm_community$parser_combinators$Combine_ops['<*>'],
-	A2(
-		_elm_community$parser_combinators$Combine_ops['<$>'],
-		F2(
-			function (x, y) {
-				return x * y;
-			}),
-		_elm_community$parser_combinators$Combine_Num$sign),
-	A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		A2(
-			_elm_community$parser_combinators$Combine_ops['<$>'],
-			_elm_community$parser_combinators$Combine_Num$toInt,
-			_elm_community$parser_combinators$Combine$regex('(0|[1-9][0-9]*)')),
-		'expected an integer'));
-var _elm_community$parser_combinators$Combine_Num$toFloat = _elm_community$parser_combinators$Combine_Num$unwrap(_elm_lang$core$String$toFloat);
-var _elm_community$parser_combinators$Combine_Num$float = A2(
-	_elm_community$parser_combinators$Combine_ops['<*>'],
-	A2(
-		_elm_community$parser_combinators$Combine_ops['<$>'],
-		function (_p2) {
-			return F2(
-				function (x, y) {
-					return x * y;
-				})(
-				_elm_lang$core$Basics$toFloat(_p2));
-		},
-		_elm_community$parser_combinators$Combine_Num$sign),
-	A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		A2(
-			_elm_community$parser_combinators$Combine_ops['<$>'],
-			_elm_community$parser_combinators$Combine_Num$toFloat,
-			_elm_community$parser_combinators$Combine$regex('(0|[1-9][0-9]*)(\\.[0-9]+)')),
-		'expected a float'));
-
 var _elm_community$result_extra$Result_Extra$merge = function (r) {
 	var _p0 = r;
 	if (_p0.ctor === 'Ok') {
@@ -13760,10 +13537,13 @@ var _user$project$DecodeTree$treeDecoder = A2(
 				}))));
 
 var _user$project$ParseMcpa$nan = 0 / 0;
+var _user$project$ParseMcpa$nodeIdRegex = _elm_lang$core$Regex$caseInsensitive(
+	_elm_lang$core$Regex$regex('Node_(\\d+)'));
 var _user$project$ParseMcpa$parseRecord = F3(
 	function (variables, record, result) {
 		var _p0 = record;
 		if ((_p0.ctor === '::') && (_p0._1.ctor === '::')) {
+			var _p5 = _p0._0;
 			var makeDict = F2(
 				function (cladeId, values) {
 					return A2(
@@ -13795,15 +13575,36 @@ var _user$project$ParseMcpa$parseRecord = F3(
 			};
 			var values = _elm_community$result_extra$Result_Extra$combine(
 				A2(_elm_lang$core$List$map, valueToFloat, _p0._1._1));
-			var cladeId = _elm_lang$core$String$toInt(_p0._0);
+			var cladeId = function () {
+				var _p4 = A2(
+					_elm_lang$core$Debug$log,
+					'matches',
+					A3(
+						_elm_lang$core$Regex$find,
+						_elm_lang$core$Regex$AtMost(1),
+						_user$project$ParseMcpa$nodeIdRegex,
+						_p5));
+				if (_p4.ctor === '[]') {
+					return _elm_lang$core$String$toInt(_p5);
+				} else {
+					return A2(
+						_elm_lang$core$Maybe$withDefault,
+						_elm_lang$core$Result$Err('missing node_id'),
+						A2(
+							_elm_lang$core$Maybe$map,
+							_elm_lang$core$String$toInt,
+							_elm_community$maybe_extra$Maybe_Extra$join(
+								_elm_lang$core$List$head(_p4._0.submatches))));
+				}
+			}();
 			return A3(_elm_lang$core$Result$map2, makeDict, cladeId, values);
 		} else {
 			return _elm_lang$core$Result$Err('bad csv');
 		}
 	});
-var _user$project$ParseMcpa$parseCsv = function (_p4) {
-	var _p5 = _p4;
-	var variables = A2(_elm_lang$core$List$drop, 2, _p5.headers);
+var _user$project$ParseMcpa$parseCsv = function (_p6) {
+	var _p7 = _p6;
+	var variables = A2(_elm_lang$core$List$drop, 2, _p7.headers);
 	var data = A3(
 		_elm_lang$core$List$foldl,
 		function (record) {
@@ -13811,7 +13612,7 @@ var _user$project$ParseMcpa$parseCsv = function (_p4) {
 				A2(_user$project$ParseMcpa$parseRecord, variables, record));
 		},
 		_elm_lang$core$Result$Ok(_elm_lang$core$Dict$empty),
-		_p5.records);
+		_p7.records);
 	return A2(
 		_elm_lang$core$Result$map,
 		F2(
@@ -13820,14 +13621,14 @@ var _user$project$ParseMcpa$parseCsv = function (_p4) {
 			})(variables),
 		data);
 };
-var _user$project$ParseMcpa$parseMcpa = function (_p6) {
+var _user$project$ParseMcpa$parseMcpa = function (_p8) {
 	return A2(
 		_elm_lang$core$Result$andThen,
 		_user$project$ParseMcpa$parseCsv,
 		A2(
 			_elm_lang$core$Result$mapError,
 			_elm_lang$core$Basics$toString,
-			_periodic$elm_csv$Csv$parse(_p6)));
+			_periodic$elm_csv$Csv$parse(_p8)));
 };
 
 var _user$project$ParseAncState$updateRanges = F2(
@@ -13948,8 +13749,8 @@ var _user$project$Newick$floatWithExp = A2(
 			return _elm_lang$core$Native_Utils.crashCase(
 				'Newick',
 				{
-					start: {line: 150, column: 17},
-					end: {line: 155, column: 75}
+					start: {line: 151, column: 17},
+					end: {line: 156, column: 75}
 				},
 				_p0)(
 				A2(

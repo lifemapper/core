@@ -12627,229 +12627,6 @@ var _elm_community$parser_combinators$Combine$manyTill = F2(
 				{ctor: '[]'}));
 	});
 
-var _elm_community$parser_combinators$Combine_Char$crlf = A2(
-	_elm_community$parser_combinators$Combine_ops['<$'],
-	_elm_lang$core$Native_Utils.chr('\n'),
-	A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		_elm_community$parser_combinators$Combine$regex('\r\n'),
-		'expected crlf'));
-var _elm_community$parser_combinators$Combine_Char$satisfy = function (pred) {
-	return _elm_community$parser_combinators$Combine$primitive(
-		F2(
-			function (state, stream) {
-				var message = 'could not satisfy predicate';
-				var _p0 = _elm_lang$core$String$uncons(stream.input);
-				if (_p0.ctor === 'Just') {
-					var _p1 = _p0._0._0;
-					return pred(_p1) ? {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: _elm_lang$core$Native_Utils.update(
-							stream,
-							{input: _p0._0._1, position: stream.position + 1}),
-						_2: _elm_lang$core$Result$Ok(_p1)
-					} : {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$Result$Err(
-							{
-								ctor: '::',
-								_0: message,
-								_1: {ctor: '[]'}
-							})
-					};
-				} else {
-					return {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$Result$Err(
-							{
-								ctor: '::',
-								_0: message,
-								_1: {ctor: '[]'}
-							})
-					};
-				}
-			}));
-};
-var _elm_community$parser_combinators$Combine_Char$char = function (c) {
-	return A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		_elm_community$parser_combinators$Combine_Char$satisfy(
-			F2(
-				function (x, y) {
-					return _elm_lang$core$Native_Utils.eq(x, y);
-				})(c)),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			'expected ',
-			_elm_lang$core$Basics$toString(c)));
-};
-var _elm_community$parser_combinators$Combine_Char$anyChar = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(
-		_elm_lang$core$Basics$always(true)),
-	'expected any character');
-var _elm_community$parser_combinators$Combine_Char$oneOf = function (cs) {
-	return A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		_elm_community$parser_combinators$Combine_Char$satisfy(
-			A2(_elm_lang$core$Basics$flip, _elm_lang$core$List$member, cs)),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			'expected one of ',
-			_elm_lang$core$Basics$toString(cs)));
-};
-var _elm_community$parser_combinators$Combine_Char$noneOf = function (cs) {
-	return A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		_elm_community$parser_combinators$Combine_Char$satisfy(
-			function (_p2) {
-				return !A3(_elm_lang$core$Basics$flip, _elm_lang$core$List$member, cs, _p2);
-			}),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			'expected none of ',
-			_elm_lang$core$Basics$toString(cs)));
-};
-var _elm_community$parser_combinators$Combine_Char$space = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.eq(x, y);
-			})(
-			_elm_lang$core$Native_Utils.chr(' '))),
-	'expected space');
-var _elm_community$parser_combinators$Combine_Char$tab = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.eq(x, y);
-			})(
-			_elm_lang$core$Native_Utils.chr('\t'))),
-	'expected tab');
-var _elm_community$parser_combinators$Combine_Char$newline = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.eq(x, y);
-			})(
-			_elm_lang$core$Native_Utils.chr('\n'))),
-	'expected newline');
-var _elm_community$parser_combinators$Combine_Char$eol = A2(_elm_community$parser_combinators$Combine_ops['<|>'], _elm_community$parser_combinators$Combine_Char$newline, _elm_community$parser_combinators$Combine_Char$crlf);
-var _elm_community$parser_combinators$Combine_Char$lower = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(_elm_lang$core$Char$isLower),
-	'expected a lowercase character');
-var _elm_community$parser_combinators$Combine_Char$upper = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(_elm_lang$core$Char$isUpper),
-	'expected an uppercase character');
-var _elm_community$parser_combinators$Combine_Char$digit = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(_elm_lang$core$Char$isDigit),
-	'expected a digit');
-var _elm_community$parser_combinators$Combine_Char$octDigit = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(_elm_lang$core$Char$isOctDigit),
-	'expected an octal digit');
-var _elm_community$parser_combinators$Combine_Char$hexDigit = A2(
-	_elm_community$parser_combinators$Combine_ops['<?>'],
-	_elm_community$parser_combinators$Combine_Char$satisfy(_elm_lang$core$Char$isHexDigit),
-	'expected a hexadecimal digit');
-
-var _elm_community$parser_combinators$Combine_Num$digit = function () {
-	var toDigit = function (c) {
-		return _elm_lang$core$Char$toCode(c) - _elm_lang$core$Char$toCode(
-			_elm_lang$core$Native_Utils.chr('0'));
-	};
-	return A2(
-		_elm_community$parser_combinators$Combine_ops['<$>'],
-		toDigit,
-		A2(_elm_community$parser_combinators$Combine_ops['<?>'], _elm_community$parser_combinators$Combine_Char$digit, 'expected a digit'));
-}();
-var _elm_community$parser_combinators$Combine_Num$sign = A2(
-	_elm_community$parser_combinators$Combine$optional,
-	1,
-	_elm_community$parser_combinators$Combine$choice(
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_community$parser_combinators$Combine_ops['<$'],
-				1,
-				_elm_community$parser_combinators$Combine$string('+')),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_community$parser_combinators$Combine_ops['<$'],
-					-1,
-					_elm_community$parser_combinators$Combine$string('-')),
-				_1: {ctor: '[]'}
-			}
-		}));
-var _elm_community$parser_combinators$Combine_Num$unwrap = F2(
-	function (f, s) {
-		var _p0 = f(s);
-		if (_p0.ctor === 'Ok') {
-			return _p0._0;
-		} else {
-			return _elm_lang$core$Native_Utils.crashCase(
-				'Combine.Num',
-				{
-					start: {line: 23, column: 5},
-					end: {line: 28, column: 83}
-				},
-				_p0)(
-				A2(
-					_elm_lang$core$Basics_ops['++'],
-					'impossible state in Combine.Num.unwrap: ',
-					_elm_lang$core$Basics$toString(_p0._0)));
-		}
-	});
-var _elm_community$parser_combinators$Combine_Num$toInt = _elm_community$parser_combinators$Combine_Num$unwrap(_elm_lang$core$String$toInt);
-var _elm_community$parser_combinators$Combine_Num$int = A2(
-	_elm_community$parser_combinators$Combine_ops['<*>'],
-	A2(
-		_elm_community$parser_combinators$Combine_ops['<$>'],
-		F2(
-			function (x, y) {
-				return x * y;
-			}),
-		_elm_community$parser_combinators$Combine_Num$sign),
-	A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		A2(
-			_elm_community$parser_combinators$Combine_ops['<$>'],
-			_elm_community$parser_combinators$Combine_Num$toInt,
-			_elm_community$parser_combinators$Combine$regex('(0|[1-9][0-9]*)')),
-		'expected an integer'));
-var _elm_community$parser_combinators$Combine_Num$toFloat = _elm_community$parser_combinators$Combine_Num$unwrap(_elm_lang$core$String$toFloat);
-var _elm_community$parser_combinators$Combine_Num$float = A2(
-	_elm_community$parser_combinators$Combine_ops['<*>'],
-	A2(
-		_elm_community$parser_combinators$Combine_ops['<$>'],
-		function (_p2) {
-			return F2(
-				function (x, y) {
-					return x * y;
-				})(
-				_elm_lang$core$Basics$toFloat(_p2));
-		},
-		_elm_community$parser_combinators$Combine_Num$sign),
-	A2(
-		_elm_community$parser_combinators$Combine_ops['<?>'],
-		A2(
-			_elm_community$parser_combinators$Combine_ops['<$>'],
-			_elm_community$parser_combinators$Combine_Num$toFloat,
-			_elm_community$parser_combinators$Combine$regex('(0|[1-9][0-9]*)(\\.[0-9]+)')),
-		'expected a float'));
-
 var _elm_community$result_extra$Result_Extra$merge = function (r) {
 	var _p0 = r;
 	if (_p0.ctor === 'Ok') {
@@ -13682,8 +13459,8 @@ var _user$project$Newick$floatWithExp = A2(
 			return _elm_lang$core$Native_Utils.crashCase(
 				'Newick',
 				{
-					start: {line: 150, column: 17},
-					end: {line: 155, column: 75}
+					start: {line: 151, column: 17},
+					end: {line: 156, column: 75}
 				},
 				_p0)(
 				A2(
@@ -14386,7 +14163,7 @@ var _user$project$LinearTreeView$drawTree = F3(
 									_0: _elm_lang$svg$Svg_Attributes$y('0.45'),
 									_1: {
 										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$height('0.05'),
+										_0: _elm_lang$svg$Svg_Attributes$height('0.15'),
 										_1: {
 											ctor: '::',
 											_0: _elm_lang$svg$Svg_Attributes$fill(
@@ -14593,7 +14370,7 @@ var _user$project$LinearTreeView$drawTree = F3(
 												_elm_lang$core$Basics$toString(length)),
 											_1: {
 												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$height('0.05'),
+												_0: _elm_lang$svg$Svg_Attributes$height('0.15'),
 												_1: {
 													ctor: '::',
 													_0: _elm_lang$svg$Svg_Attributes$y(
@@ -14641,7 +14418,7 @@ var _user$project$LinearTreeView$drawTree = F3(
 															_elm_lang$core$Basics$toString(leftHeight + (rightHeight / 2))),
 														_1: {
 															ctor: '::',
-															_0: _elm_lang$svg$Svg_Attributes$strokeWidth('0.05'),
+															_0: _elm_lang$svg$Svg_Attributes$strokeWidth('0.15'),
 															_1: {
 																ctor: '::',
 																_0: _elm_lang$svg$Svg_Attributes$stroke(color),
@@ -14675,7 +14452,16 @@ var _user$project$LinearTreeView$drawTree = F3(
 																ctor: '::',
 																_0: _elm_lang$html$Html_Events$onClick(
 																	config.selectNode(_p7.cladeId)),
-																_1: {ctor: '[]'}
+																_1: {
+																	ctor: '::',
+																	_0: _elm_lang$html$Html_Attributes$style(
+																		{
+																			ctor: '::',
+																			_0: {ctor: '_Tuple2', _0: 'cursor', _1: 'pointer'},
+																			_1: {ctor: '[]'}
+																		}),
+																	_1: {ctor: '[]'}
+																}
 															}
 														}
 													}
@@ -14853,58 +14639,129 @@ var _user$project$MultiSpeciesView$drawVariable = F4(
 var _user$project$MultiSpeciesView$view = F7(
 	function (_p8, tableHead, showBarGraph, variableFormatter, vars, selectData, dataForVar) {
 		var _p9 = _p8;
-		var _p15 = _p9.treeInfo;
-		var _p14 = _p9.showBranchLengths;
-		var _p13 = _p9.selectedNode;
-		var variableTableRows = function () {
-			var _p10 = _p13;
-			if (_p10.ctor === 'Just') {
-				return A2(
-					_elm_lang$core$List$map,
-					function ($var) {
-						return A4(
-							_user$project$MultiSpeciesView$drawVariable,
-							showBarGraph,
-							variableFormatter,
-							$var,
-							dataForVar($var));
-					},
-					vars);
+		var _p18 = _p9.treeInfo;
+		var _p17 = _p9.showBranchLengths;
+		var _p16 = _p9.selectedNode;
+		var _p10 = function () {
+			var _p11 = A2(
+				_elm_community$list_extra$List_Extra$findIndex,
+				F2(
+					function (x, y) {
+						return _elm_lang$core$Native_Utils.eq(x, y);
+					})('ENV - Adjusted R-squared'),
+				vars);
+			if (_p11.ctor === 'Just') {
+				return A2(_elm_community$list_extra$List_Extra$splitAt, _p11._0 + 1, vars);
 			} else {
 				return {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$tr,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$td,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$colspan(2),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$style(
-											{
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-												_1: {ctor: '[]'}
-											}),
-										_1: {ctor: '[]'}
-									}
-								},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('No node selected.'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						}),
+					ctor: '_Tuple2',
+					_0: vars,
 					_1: {ctor: '[]'}
 				};
 			}
 		}();
+		var envVars = _p10._0;
+		var bgVars = _p10._1;
+		var _p12 = function () {
+			var _p13 = _p16;
+			if (_p13.ctor === 'Just') {
+				return {
+					ctor: '_Tuple2',
+					_0: A2(
+						_elm_lang$core$List$map,
+						function ($var) {
+							return A4(
+								_user$project$MultiSpeciesView$drawVariable,
+								showBarGraph,
+								variableFormatter,
+								$var,
+								dataForVar($var));
+						},
+						envVars),
+					_1: A2(
+						_elm_lang$core$List$map,
+						function ($var) {
+							return A4(
+								_user$project$MultiSpeciesView$drawVariable,
+								showBarGraph,
+								variableFormatter,
+								$var,
+								dataForVar($var));
+						},
+						bgVars)
+				};
+			} else {
+				return {
+					ctor: '_Tuple2',
+					_0: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$tr,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$td,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$colspan(2),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$style(
+												{
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+													_1: {ctor: '[]'}
+												}),
+											_1: {ctor: '[]'}
+										}
+									},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text('No node selected.'),
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					},
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$tr,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$td,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$colspan(2),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$style(
+												{
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+													_1: {ctor: '[]'}
+												}),
+											_1: {ctor: '[]'}
+										}
+									},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text('No node selected.'),
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
+				};
+			}
+		}();
+		var envVarTableRows = _p12._0;
+		var bgVarTableRows = _p12._1;
 		var toggleBranchLengths = A2(
 			_elm_lang$html$Html$div,
 			{ctor: '[]'},
@@ -14922,7 +14779,7 @@ var _user$project$MultiSpeciesView$view = F7(
 								_0: _elm_lang$html$Html_Attributes$type_('checkbox'),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$checked(_p14),
+									_0: _elm_lang$html$Html_Attributes$checked(_p17),
 									_1: {
 										ctor: '::',
 										_0: _elm_lang$html$Html_Attributes$readonly(true),
@@ -14943,7 +14800,7 @@ var _user$project$MultiSpeciesView$view = F7(
 					}),
 				_1: {ctor: '[]'}
 			});
-		var select = function (_p11) {
+		var select = function (_p14) {
 			return _user$project$McpaModel$SelectVariable(
 				A2(
 					_elm_lang$core$Maybe$withDefault,
@@ -14954,7 +14811,7 @@ var _user$project$MultiSpeciesView$view = F7(
 							return A2(_elm_community$list_extra$List_Extra$getAt, i, vars);
 						},
 						_elm_lang$core$Result$toMaybe(
-							_elm_lang$core$String$toInt(_p11)))));
+							_elm_lang$core$String$toInt(_p14)))));
 		};
 		var variableSelector = A2(
 			_elm_lang$html$Html$div,
@@ -14985,7 +14842,16 @@ var _user$project$MultiSpeciesView$view = F7(
 						{
 							ctor: '::',
 							_0: _elm_lang$html$Html_Events$onInput(select),
-							_1: {ctor: '[]'}
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$style(
+									{
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'max-width', _1: '355px'},
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							}
 						},
 						A2(
 							_elm_lang$core$List$indexedMap,
@@ -15024,14 +14890,14 @@ var _user$project$MultiSpeciesView$view = F7(
 						_user$project$LinearTreeView$computeColor(opacity),
 						selectData(cladeId)));
 			});
-		var _p12 = A3(
+		var _p15 = A3(
 			_user$project$LinearTreeView$drawTree,
-			{computeColor: computeColor_, showBranchLengths: _p14, treeDepth: _p15.depth, totalLength: _p15.length, selectedNode: _p13, selectNode: _user$project$McpaModel$SelectNode},
+			{computeColor: computeColor_, showBranchLengths: _p17, treeDepth: _p18.depth, totalLength: _p18.length, selectedNode: _p16, selectNode: _user$project$McpaModel$SelectNode},
 			'#ccc',
-			_p15.root);
-		var treeHeight = _p12._0;
-		var grads = _p12._1;
-		var treeSvg = _p12._2;
+			_p18.root);
+		var treeHeight = _p15._0;
+		var grads = _p15._1;
+		var treeSvg = _p15._2;
 		var gradDefs = _user$project$LinearTreeView$gradientDefinitions(grads);
 		return A2(
 			_elm_lang$html$Html$div,
@@ -15044,7 +14910,11 @@ var _user$project$MultiSpeciesView$view = F7(
 						_1: {
 							ctor: '::',
 							_0: {ctor: '_Tuple2', _0: 'font-family', _1: 'sans-serif'},
-							_1: {ctor: '[]'}
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'height', _1: '100vh'},
+								_1: {ctor: '[]'}
+							}
 						}
 					}),
 				_1: {ctor: '[]'}
@@ -15058,15 +14928,11 @@ var _user$project$MultiSpeciesView$view = F7(
 						_0: _elm_lang$html$Html_Attributes$style(
 							{
 								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'height', _1: '100vh'},
+								_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
 								_1: {
 									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
-										_1: {ctor: '[]'}
-									}
+									_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+									_1: {ctor: '[]'}
 								}
 							}),
 						_1: {ctor: '[]'}
@@ -15194,13 +15060,13 @@ var _user$project$MultiSpeciesView$view = F7(
 							_0: _elm_lang$html$Html_Attributes$style(
 								{
 									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'width', _1: '500px'},
+									_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
 									_1: {
 										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'flex-shrink', _1: '0'},
+										_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
 										_1: {
 											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'margin', _1: '0 12px'},
+											_0: {ctor: '_Tuple2', _0: 'flex-grow', _1: '1'},
 											_1: {ctor: '[]'}
 										}
 									}
@@ -15210,16 +15076,16 @@ var _user$project$MultiSpeciesView$view = F7(
 						{
 							ctor: '::',
 							_0: A2(
-								_elm_lang$html$Html$h3,
+								_elm_lang$html$Html$div,
 								{
 									ctor: '::',
 									_0: _elm_lang$html$Html_Attributes$style(
 										{
 											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+											_0: {ctor: '_Tuple2', _0: 'flex-shrink', _1: '0'},
 											_1: {
 												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
+												_0: {ctor: '_Tuple2', _0: 'margin', _1: '0 12px'},
 												_1: {ctor: '[]'}
 											}
 										}),
@@ -15227,8 +15093,70 @@ var _user$project$MultiSpeciesView$view = F7(
 								},
 								{
 									ctor: '::',
-									_0: _elm_lang$html$Html$text('Subtree Left (blue) vs. Right (red) of selected node'),
-									_1: {ctor: '[]'}
+									_0: A2(
+										_elm_lang$html$Html$h3,
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$style(
+												{
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+													_1: {
+														ctor: '::',
+														_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
+														_1: {ctor: '[]'}
+													}
+												}),
+											_1: {ctor: '[]'}
+										},
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html$text('Subtree Left (blue) vs. Right (red) of selected node'),
+											_1: {ctor: '[]'}
+										}),
+									_1: {
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$div,
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html_Attributes$class('leaflet-map'),
+												_1: {
+													ctor: '::',
+													_0: A2(
+														_elm_lang$html$Html_Attributes$attribute,
+														'data-map-column',
+														A2(
+															_elm_lang$core$Maybe$withDefault,
+															'',
+															A2(_elm_lang$core$Maybe$map, _elm_lang$core$Basics$toString, _p16))),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$html$Html_Attributes$style(
+															{
+																ctor: '::',
+																_0: {ctor: '_Tuple2', _0: 'max-width', _1: '900px'},
+																_1: {
+																	ctor: '::',
+																	_0: {ctor: '_Tuple2', _0: 'height', _1: '500px'},
+																	_1: {
+																		ctor: '::',
+																		_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
+																		_1: {
+																			ctor: '::',
+																			_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
+																			_1: {ctor: '[]'}
+																		}
+																	}
+																}
+															}),
+														_1: {ctor: '[]'}
+													}
+												}
+											},
+											{ctor: '[]'}),
+										_1: {ctor: '[]'}
+									}
 								}),
 							_1: {
 								ctor: '::',
@@ -15236,44 +15164,45 @@ var _user$project$MultiSpeciesView$view = F7(
 									_elm_lang$html$Html$div,
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('leaflet-map'),
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'overflow-y', _1: 'auto'},
+												_1: {
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+													_1: {
+														ctor: '::',
+														_0: {ctor: '_Tuple2', _0: 'justify-content', _1: 'space-around'},
+														_1: {
+															ctor: '::',
+															_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '10px'},
+															_1: {ctor: '[]'}
+														}
+													}
+												}
+											}),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$table,
+											{ctor: '[]'},
+											{ctor: '::', _0: tableHead, _1: envVarTableRows}),
 										_1: {
 											ctor: '::',
 											_0: A2(
-												_elm_lang$html$Html_Attributes$attribute,
-												'data-map-column',
-												A2(
-													_elm_lang$core$Maybe$withDefault,
-													'',
-													A2(_elm_lang$core$Maybe$map, _elm_lang$core$Basics$toString, _p13))),
-											_1: {
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$style(
-													{
-														ctor: '::',
-														_0: {ctor: '_Tuple2', _0: 'width', _1: '500px'},
-														_1: {
-															ctor: '::',
-															_0: {ctor: '_Tuple2', _0: 'height', _1: '500px'},
-															_1: {ctor: '[]'}
-														}
-													}),
-												_1: {ctor: '[]'}
-											}
+												_elm_lang$html$Html$table,
+												{ctor: '[]'},
+												{ctor: '::', _0: tableHead, _1: bgVarTableRows}),
+											_1: {ctor: '[]'}
 										}
-									},
-									{ctor: '[]'}),
+									}),
 								_1: {ctor: '[]'}
 							}
 						}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$table,
-							{ctor: '[]'},
-							{ctor: '::', _0: tableHead, _1: variableTableRows}),
-						_1: {ctor: '[]'}
-					}
+					_1: {ctor: '[]'}
 				}
 			});
 	});

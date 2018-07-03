@@ -45,7 +45,10 @@ function configureMap(element) {
         layers.forEach(function(layer) {  map.removeLayer(layer); });
     }
 
-    const node = nodeLookup.find(function(d) { return d.header == element.dataset["mapColumn"]; });
+    const node = nodeLookup.find(function(d) {
+        let mapColumn = element.dataset["mapColumn"];
+        return d.header == mapColumn || d.header.toLowerCase() == ("node_" + mapColumn);
+    });
     const dataColumn = node && node.index;
 
     console.log("adding layer");
@@ -116,10 +119,11 @@ var observer = new MutationObserver(function(mutations) {
 
             var elements = n.getElementsByClassName("leaflet-map");
             Array.prototype.forEach.call(elements, function(element) {
-                var map = L.map(element).fitBounds([
+                var map = L.map(element, {worldCopyJump: true}).fitBounds([
                     [bbox[1], bbox[0]], [bbox[3], bbox[2]]
                 ]);
                 L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: "© OpenStreetMap",
                     minZoom: 1,
                     maxZoom: 12
                 }).addTo(map);
