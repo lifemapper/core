@@ -130,7 +130,15 @@ EXTRA_CS_OPTIONS: -m 100 -O 100M
 
 ; Use this to specify extra options for the workers other than catalog server 
 ;    and worker path
-EXTRA_WORKER_OPTIONS : ""
+; A potentially useful option would be to use the worker's "--disk" parameter.
+;    This parameter tells the worker to stop and clean up once it has reached
+;    the specified size on disk.  Otherwise the workers will continue to grow
+;    in order to take advantage of caching.  I use a value that is the size of
+;    the disk that will be used for computations on each node divided by the 
+;    number of concurrent workers on each node.  For that value, I like to 
+;    leave some wiggle room and assume 80% of the disk space value in case a 
+;    computation goes over before completing.
+EXTRA_WORKER_OPTIONS : @EXTRA_WORKER_OPTIONS@
 
 ; Use this to specify extra Makeflow options other than work directory, 
 ;    advertise, and catalog server
