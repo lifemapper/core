@@ -138,7 +138,7 @@ EXTRA_CS_OPTIONS: -m 100 -O 100M
 ;    number of concurrent workers on each node.  For that value, I like to 
 ;    leave some wiggle room and assume 80% of the disk space value in case a 
 ;    computation goes over before completing.
-EXTRA_WORKER_OPTIONS : ""
+EXTRA_WORKER_OPTIONS : @EXTRA_WORKER_OPTIONS@
 
 ; Use this to specify extra Makeflow options other than work directory, 
 ;    advertise, and catalog server
