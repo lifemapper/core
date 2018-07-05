@@ -212,6 +212,7 @@ class _SpeciesWeaponOfChoice(LMObject):
          self.log.info('   Reseting OccLayer status and raw data')
          # Reset verify hash, name, count, status 
          occ.clearVerify()
+         occ.clearOutputFiles()
          occ.displayName = sciName.scientificName
          occ.queryCount = dataCount
          occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)

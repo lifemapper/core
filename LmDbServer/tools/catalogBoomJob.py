@@ -133,7 +133,7 @@ class BOOMFiller(LMObject):
       # Checks existence of environmental data for this user and fills
       # self.prjScenCodeList if necessary.      
       self.scenPkg = self.findScenariosFromCodes(doMapBaseline=doMapBaseline)
-      # Fill grid bbox with scenario package if it is absent
+      # Fill grid bbox with scenario package (intersection of all bboxes) if it is absent
       if self.gridbbox is None:
          self.gridbbox = self.scenPkg.bbox
 

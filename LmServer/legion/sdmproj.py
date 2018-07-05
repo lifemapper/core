@@ -427,13 +427,25 @@ class SDMProjection(_ProjectionType, Raster):
       self.clearDLocation()
       
 # ...............................................
+   def clearOutputFiles(self):
+      reqfname = self.getProjRequestFilename()
+      success, msg = self.deleteFile(reqfname)
+      pkgfname = self.getProjPackageFilename()
+      success, msg = self.deleteFile(pkgfname)
+      # metadata files
+      prjfnames = glob.glob(self._dlocation+'*')
+      for fname in prjfnames:
+         success, msg = self.deleteFile(fname)
+      self.clearDLocation()
+      
+# ...............................................
    def rollback(self, status=JobStatus.GENERAL):
       """
       @summary: Rollback processing
       @todo: remove currtime parameter
       """
       self.updateStatus(status)
-      self.clearProjectionFiles()
+      self.clearOutputFiles()
       self.clearLocalMapfile()
 
 # ...............................................

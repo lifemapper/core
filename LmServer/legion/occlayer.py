@@ -437,6 +437,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
          self.setLocalMapFilename()
       self.deleteLocalMapfile()
       self._mapFilename = None
+      
+# ...............................................
+   def clearOutputFiles(self):
+      self.deleteData()
+      self.clearDLocation()
  
 # ...............................................
    def deleteLocalMapfile(self):

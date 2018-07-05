@@ -276,48 +276,7 @@ class ChristopherWalken(LMObject):
 
       # iDigBio or User
       else:
-         # iDigBio data
-         if datasource == SpeciesDatasource.IDIGBIO:
-            useGBIFTaxonIds = True
-            occDelimiter = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
-            
-            occname = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
-            occInstalled = os.path.join(SPECIES_DATA_PATH, occname)
-            occUser = os.path.join(boompath, occname)
-            
-            # Check for CSV file installed into species or user path 
-            occCSV = None
-            if os.path.exists(occInstalled + LMFormat.CSV.ext):
-               occBasename = occInstalled + LMFormat.CSV.ext
-            elif os.path.exists(occUser + LMFormat.CSV.ext):
-               occBasename = occUser
-            occCSV = occBasename + LMFormat.CSV.ext
-               
-            # Metadata file should be present with csv file/s 
-            occMeta = occBasename + LMFormat.METADATA.ext
-         # User data, anything not above
-         else:
-            useGBIFTaxonIds = False
-            occData = self._getBoomOrDefault('USER_OCCURRENCE_DATA')
-            occDelimiter = self._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
-            occCSV = os.path.join(boompath, occData + LMFormat.CSV.ext)
-            occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
-            
-         # Either may have directory containing csv files in species or user path 
-         if occCSV is None:
-            if os.path.exists(occInstalled):
-               occBasename = occInstalled
-            elif os.path.exists(occUser):
-               occBasename = occUser
-            else:
-               raise LMError('Failed to find file or directory {} in {} or {}'
-                             .format(SPECIES_DATA_PATH, boompath))
-
-            fnames = glob.glob(os.path.join(occBasename, '*' + LMFormat.CSV.ext))
-            if len(fnames) > 0:
-               occCSV = fnames[0]
-               if len(fnames) > 1:
-                  self.moreDataToProcess = True
+         occCSV, occMeta, self.moreDataToProcess = self._findData(datasource, boompath)
 
          weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
                                   epsg, expDate, occCSV, occMeta, 
@@ -329,6 +288,46 @@ class ChristopherWalken(LMObject):
       weaponOfChoice.initializeMe()
          
       return weaponOfChoice
+
+# .............................................................................
+   def _findData(self, datasource, boompath):
+      # iDigBio data
+      if datasource == SpeciesDatasource.IDIGBIO:
+         occname = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
+      # User data, anything not above
+      elif datasource == SpeciesDatasource.USER:
+         occname = self._getBoomOrDefault('USER_OCCURRENCE_DATA')
+            
+      occInstalled = os.path.join(SPECIES_DATA_PATH, occname)
+      occUser = os.path.join(boompath, occname)
+            
+      # Check for CSV file installed into species or user path 
+      occCSV = occDir = None
+      if os.path.exists(occInstalled + LMFormat.CSV.ext):
+         occCSV = occInstalled + LMFormat.CSV.ext
+      elif os.path.exists(occUser + LMFormat.CSV.ext):
+         occCSV = occUser + LMFormat.CSV.ext
+      # Check for directory installed into species or user path 
+      elif os.path.isdir(occInstalled):
+         occDir = occInstalled
+      elif os.path.isdir(occUser):
+         occDir = occUser
+      # Missing 
+      else:
+         raise LMError('Failed to find file or directory {} in {} or {}'
+                       .format(occname, boompath, SPECIES_DATA_PATH))
+         
+      moreDataToProcess = False
+      if occDir is not None:
+         occMeta = occDir + LMFormat.METADATA.ext
+         fnames = glob.glob(os.path.join(occDir, '*' + LMFormat.CSV.ext))
+         if len(fnames) > 0:
+            occCSV = fnames[0]
+            if len(fnames) > 1:
+               moreDataToProcess = True
+      else:
+         occMeta = os.path.splitext(occCSV)[0] + LMFormat.METADATA.ext
+      return occCSV, occMeta, moreDataToProcess
 
 # .............................................................................
    def _getAlgorithm(self, algHeading):
@@ -385,9 +384,6 @@ class ChristopherWalken(LMObject):
       mdlScenCode = self._getBoomOrDefault('SCENARIO_PACKAGE_MODEL_SCENARIO')
       prjScenCodes = self._getBoomOrDefault('SCENARIO_PACKAGE_PROJECTION_SCENARIOS', 
                                              isList=True)
-#       if mdlScenCode not in prjScenCodes:
-#          prjScenCodes.append(mdlScenCode)
-
       scenPkgs = self._scribe.getScenPackagesForUserCodes(userId, prjScenCodes, 
                                                           fillLayers=True)
       if not scenPkgs:
@@ -551,6 +547,7 @@ class ChristopherWalken(LMObject):
       if self.weaponOfChoice.finishedInput:
          self._writeDoneWalkenFile()
       if occ:
+         # OccurrenceSet is created or reset by WOC
          squid = occ.squid
          objs = []
          # Process existing OccurrenceLayer (copy if up-to-date and complete,
