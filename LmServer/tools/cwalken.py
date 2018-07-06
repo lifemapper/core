@@ -276,7 +276,8 @@ class ChristopherWalken(LMObject):
 
       # iDigBio or User
       else:
-         occCSV, occMeta, self.moreDataToProcess = self._findData(datasource, boompath)
+         occCSV, occMeta, occDelimiter, self.moreDataToProcess = \
+                        self._findData(datasource, boompath)
 
          weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
                                   epsg, expDate, occCSV, occMeta, 
@@ -291,6 +292,7 @@ class ChristopherWalken(LMObject):
 
 # .............................................................................
    def _findData(self, datasource, boompath):
+      occDelimiter = self._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER')
       # iDigBio data
       if datasource == SpeciesDatasource.IDIGBIO:
          occname = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
@@ -327,7 +329,7 @@ class ChristopherWalken(LMObject):
                moreDataToProcess = True
       else:
          occMeta = os.path.splitext(occCSV)[0] + LMFormat.METADATA.ext
-      return occCSV, occMeta, moreDataToProcess
+      return occCSV, occMeta, occDelimiter, moreDataToProcess
 
 # .............................................................................
    def _getAlgorithm(self, algHeading):

@@ -149,7 +149,7 @@ from LmBackend.common.daemon import Daemon
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import LMFormat
 from LmDbServer.common.lmconstants import BOOM_PID_FILE, TAXONOMIC_SOURCE
-from LmDbServer.boom.boomer import Boomer
+from LmDbServer.boom.boomer import *
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
@@ -181,10 +181,11 @@ configFname = '/share/lm/data/archive/tester/gbif500ktest.ini'
 configFname = '/share/lm/data/archive/biotaphytest/dirty_plants.ini'
 configFname = '/share/lm/data/archive/biona/biotaphy_global_plants.ini'
 configFname = '/share/lm/data/archive/nchc/taiwan.ini'
+configFname = '/share/lm/data/archive/taffy/heuchera_CONUS.ini'
 
 log = ScriptLogger('debug_dabomb', level=logging.INFO)
 
-boomer = Boomer(configFname, assemblePams=True, log=log)
+boomer = Boomer(configFname, log=log)
 boomer.initializeMe()
 
 chris = boomer.christopher
