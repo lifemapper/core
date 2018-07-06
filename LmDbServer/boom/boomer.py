@@ -348,7 +348,7 @@ logger = ScriptLogger(scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
 configFname='/share/lm/data/archive/biotaphy/biotaphy_heuchera_CONUS.ini'
 configFname = '/share/lm/data/archive/biona/biotaphy_global_plants.ini'
-configFname = '/share/lm/data/archive/kubi/BOOM_Archive.ini'
+configFname = '/share/lm/data/archive/taffy/heuchera_CONUS.ini'
 
 boomer = Boomer(configFname, log=logger)
 boomer.initializeMe()                      
@@ -359,27 +359,38 @@ prjscen = chris.prjScens[0]
 scribe = boomer._scribe
 borg = scribe._borg
 
-# userId = chris._getBoomOrDefault('ARCHIVE_USER')
-# archiveName = chris._getBoomOrDefault('ARCHIVE_NAME')
-# archivePriority = chris._getBoomOrDefault('ARCHIVE_PRIORITY')
-# earl = EarlJr()
-# boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
-# epsg = chris._getBoomOrDefault('SCENARIO_PACKAGE_EPSG')
-# weaponOfChoice = chris._getOccWeaponOfChoice(userId, archiveName, epsg, 
-#                                             boompath)
-# SDM inputs
-minPoints = chris._getBoomOrDefault('POINT_COUNT_MIN')
-algorithms = chris._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
+occ = chris.weaponOfChoice.getOne()
+squid = occ.squid
+objs = []
+objs.append(occ)
+print 'pointCount = ', occ.queryCount
+alg = chris.algs[0]
+prjscen = chris.prjScens[0]
+prj, pReset = chris._createOrResetSDMProject(occ, alg, prjscen, 
+                                            currtime)
+objs.append(prj)
+mtx = chris.globalPAMs[prjscen.code]
+mtxcol, mReset = chris._createOrResetIntersect(prj, mtx, 
+                                              currtime)
+if mtxcol is not None:
+   icount += 1
+   if mReset: ircount += 1 
+   objs.append(mtxcol)
+
+   chris.log.info('   Will compute {} projections, {} matrixColumns for Grid {} ( {}, {} reset)'
+                 .format(pcount, icount, gsid, prcount, ircount))
+spudObjs = [o for o in objs if o is not None]
+# Creates MFChain with rules, does NOT write it
+spudRules = chris._createSpudRules(spudObjs, workdir)
 
 
-# bubbleFname = woc._getNextFilename()
-# binomial, opentreeId, recordCount = woc._parseBubble(bubbleFname)
-# sciName = woc._getInsertSciNameForTinyBubble(binomial, opentreeId, 
-#                                                  recordCount)
-                                                 
-                                                 
-# occ = woc._createOrResetOccurrenceset(sciName, recordCount,
-#                                     taxonSourceKey=opentreeId, data=bubbleFname)
+
+
+
+
+
+
+
 
 speciesKey, dataChunk = woc._getOccurrenceChunk()
 

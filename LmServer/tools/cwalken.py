@@ -567,7 +567,9 @@ class ChristopherWalken(LMObject):
                      if pReset: prcount += 1 
                      objs.append(prj)
                      mtx = self.globalPAMs[prjscen.code]
+                     # if projection was reset (pReset), force intersect reset
                      mtxcol, mReset = self._createOrResetIntersect(prj, mtx, 
+                                                                   pReset,
                                                                    currtime)
                      if mtxcol is not None:
                         icount += 1
@@ -595,7 +597,7 @@ class ChristopherWalken(LMObject):
          self.log.info('Christopher is done walken')
       
 # ...............................................
-   def _createOrResetIntersect(self, prj, mtx, currtime):
+   def _createOrResetIntersect(self, prj, mtx, forceReset, currtime):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
@@ -624,8 +626,11 @@ class ChristopherWalken(LMObject):
             # DB does not populate with shapegrid on insert
             mtxcol.shapegrid = self.boomGridset.getShapegrid()
             
-            # Rollback if obsolete or failed
-            reset = self._doReset(mtxcol.status, mtxcol.statusModTime)
+            # Rollback if obsolete or failed, or input projection was reset
+            if forceReset:
+               reset = True
+            else:
+               reset = self._doReset(mtxcol.status, mtxcol.statusModTime)
             if reset:
                if prj.status == JobStatus.COMPLETE:
                   stat = JobStatus.INITIALIZE
@@ -646,7 +651,7 @@ class ChristopherWalken(LMObject):
       return doReset
 
 # ...............................................
-   def _createOrResetSDMProject(self, occ, alg, prjscen, currtime):
+   def _createOrResetSDMProject(self, occ, alg, prjscen, forceReset, currtime):
       """
       @summary: Iterates through all input combinations to create or reset
                 SDMProjections for the given occurrenceset.
@@ -664,8 +669,11 @@ class ChristopherWalken(LMObject):
             # Fill in projection with input scenario layers, masks
             prj._modelScenario = self.mdlScen
             prj._projScenario = prjscen
-            # Rollback if obsolete or failed
-            reset = self._doReset(prj.status, prj.statusModTime)
+            # Rollback if obsolete or failed, or input occset was reset
+            if forceReset:
+               reset = True
+            else:
+               reset = self._doReset(prj.status, prj.statusModTime)
             if reset:
                if occ.status == JobStatus.COMPLETE:
                   stat = JobStatus.INITIALIZE
