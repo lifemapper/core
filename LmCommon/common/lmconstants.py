@@ -782,6 +782,13 @@ class JobStatus:
          return False
 
    @staticmethod
+   def incomplete(stat):
+      if stat < JobStatus.COMPLETE:
+         return True
+      else:
+         return False
+
+   @staticmethod
    def finished(stat):
       if stat >= JobStatus.COMPLETE:
          return True

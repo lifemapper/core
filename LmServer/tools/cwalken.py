@@ -545,7 +545,7 @@ class ChristopherWalken(LMObject):
       except:
          self.log.warning('Missing self.boomGridset id!!')
       # WeaponOfChoice resets old or failed Occurrenceset
-      occ = self.weaponOfChoice.getOne()
+      occ, occWillCompute = self.weaponOfChoice.getOne()
       if self.weaponOfChoice.finishedInput:
          self._writeDoneWalkenFile()
       if occ:
@@ -562,20 +562,20 @@ class ChristopherWalken(LMObject):
             for alg in self.algs:
                for prjscen in self.prjScens:
                   # Add to Spud - SDM Project and MatrixColumn
-                  prj, pReset = self._createOrResetSDMProject(occ, alg, prjscen, 
-                                                              currtime)
+                  prj, prjWillCompute = self._createOrResetSDMProject(occ, alg, prjscen, 
+                                                              occWillCompute, currtime)
                   if prj is not None:
                      pcount += 1
-                     if pReset: prcount += 1 
+                     if prjWillCompute: prcount += 1 
                      objs.append(prj)
                      mtx = self.globalPAMs[prjscen.code]
                      # if projection was reset (pReset), force intersect reset
-                     mtxcol, mReset = self._createOrResetIntersect(prj, mtx, 
-                                                                   pReset,
+                     mtxcol, mWillCompute = self._createOrResetIntersect(prj, mtx, 
+                                                                   prjWillCompute,
                                                                    currtime)
                      if mtxcol is not None:
                         icount += 1
-                        if mReset: ircount += 1 
+                        if mWillCompute: ircount += 1 
                         objs.append(mtxcol)
    
             self.log.info('   Will compute {} projections, {} matrixColumns for Grid {} ( {}, {} reset)'
@@ -632,7 +632,7 @@ class ChristopherWalken(LMObject):
             if forceReset:
                reset = True
             else:
-               reset = self._doReset(mtxcol.status, mtxcol.statusModTime)
+               willCompute = self._doReset(mtxcol.status, mtxcol.statusModTime)
             if reset:
                if prj.status == JobStatus.COMPLETE:
                   stat = JobStatus.INITIALIZE
@@ -645,12 +645,13 @@ class ChristopherWalken(LMObject):
 
 # ...............................................
    def _doReset(self, status, statusModTime):
-      doReset = False
-      if (JobStatus.failed(status) or 
+      willCompute = False
+      if (JobStatus.incomplete(status) or
+          JobStatus.failed(status) or 
           (status == JobStatus.COMPLETE and 
            statusModTime < self.weaponOfChoice.expirationDate)):
-         doReset = True
-      return doReset
+         willCompute = True
+      return willCompute
 
 # ...............................................
    def _createOrResetSDMProject(self, occ, alg, prjscen, forceReset, currtime):

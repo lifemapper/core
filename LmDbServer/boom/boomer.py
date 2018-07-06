@@ -341,7 +341,7 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, MatrixType) 
 from LmCommon.common.occparse import OccDataParser
 from LmServer.legion.occlayer import OccurrenceLayer
-
+PROCESSING_KEY = 'processing'
 
 scriptname = 'boomerTesting'
 logger = ScriptLogger(scriptname, level=logging.DEBUG)
@@ -351,6 +351,7 @@ configFname = '/share/lm/data/archive/biona/biotaphy_global_plants.ini'
 configFname = '/share/lm/data/archive/taffy/heuchera_CONUS.ini'
 
 boomer = Boomer(configFname, log=logger)
+workdir = boomer.potatoBushel.getRelativeDirectory()
 boomer.initializeMe()                      
 chris = boomer.christopher
 woc = chris.weaponOfChoice
@@ -359,32 +360,36 @@ prjscen = chris.prjScens[0]
 scribe = boomer._scribe
 borg = scribe._borg
 
-occ = chris.weaponOfChoice.getOne()
+occ, occReset = woc.getOne()
 squid = occ.squid
 objs = []
 objs.append(occ)
-print 'pointCount = ', occ.queryCount
-alg = chris.algs[0]
-prjscen = chris.prjScens[0]
+
 prj, pReset = chris._createOrResetSDMProject(occ, alg, prjscen, 
-                                            currtime)
+                                             occReset, currtime)
 objs.append(prj)
 mtx = chris.globalPAMs[prjscen.code]
-mtxcol, mReset = chris._createOrResetIntersect(prj, mtx, 
+mtxcol, mReset = chris._createOrResetIntersect(prj, mtx, pReset,
                                               currtime)
 if mtxcol is not None:
-   icount += 1
-   if mReset: ircount += 1 
    objs.append(mtxcol)
 
-   chris.log.info('   Will compute {} projections, {} matrixColumns for Grid {} ( {}, {} reset)'
-                 .format(pcount, icount, gsid, prcount, ircount))
 spudObjs = [o for o in objs if o is not None]
 # Creates MFChain with rules, does NOT write it
 spudRules = chris._createSpudRules(spudObjs, workdir)
 
 
+procParams = chris.boomGridset.grdMetadata[PROCESSING_KEY]
+o = occ
 
+try:
+   # Try to call projection compute me with process parameters
+   objRules = o.computeMe(workDir=workdir, procParams=procParams)
+except:
+   objRules = o.computeMe(workDir=workdir)
+
+for r in objRules:
+   print r.command
 
 
 
