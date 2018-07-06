@@ -26,8 +26,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-
+import os
 from subprocess import Popen, PIPE
+import signal
 from time import sleep
 import multiprocessing
 CONCURRENT_PROCESSES = max(1, multiprocessing.cpu_count() - 2)
@@ -139,6 +140,7 @@ class SubprocessRunner(object):
       self.cmd = cmd
       self.waitTime = waitSeconds
       self.killTime = killTime
+      self.myProc = None
    
    # .............................
    def run(self):
@@ -147,23 +149,32 @@ class SubprocessRunner(object):
       @return: exit status code, standard error
       """
       stdErr = None
-      myProc = Popen(self.cmd, shell=True, stderr=PIPE)
+      self.myProc = Popen(self.cmd, shell=True, stderr=PIPE, 
+                          preexec_fn=os.setsid)
       self._wait()
       runTime = 0
-      while myProc.poll() is None and runTime < self.killTime:
+      while self.myProc.poll() is None and runTime < self.killTime:
          self._wait()
          runTime += self.waitTime
          
       if runTime >= self.killTime:
-         myProc.kill()
+         self.signal(signal.SIGTERM)
          raise Exception, 'Killed long running process'
          
       # Get output
-      exitCode = myProc.poll()
-      if myProc.stderr is not None:
-         stdErr = myProc.stderr.read()
+      exitCode = self.myProc.poll()
+      if self.myProc.stderr is not None:
+         stdErr = self.myProc.stderr.read()
       return exitCode, stdErr
    
+   # .............................
+   def signal(self, signum):
+      """
+      @summary: Signal the running process
+      """
+      if self.myProc is not None:
+         os.killpg(os.getpgid(self.myProc.pid), signum)
+            
    # .............................
    def _wait(self):
       """

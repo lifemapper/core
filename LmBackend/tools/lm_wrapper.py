@@ -24,30 +24,54 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-
 import argparse
 import os
-import subprocess
+import signal
 
 from LmBackend.common.lmobj import LMObject
+from LmBackend.common.subprocessManager import SubprocessRunner
+
+# Need this to be module global for handling signals
+current_procs = set()
+shutdown = False
+
+# .............................................................................
+def handle_signal(signum, frame):
+   """
+   @summary: Handle a signal sent to the process and pass it on to subprocess
+   """
+   print("Received signal: {}".format(signum))
+   
+   for proc in current_procs:
+      print('Signaling: "{}"'.format(proc.cmd))
+      proc.signal(signum)
 
 # .............................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser()
-   parser.add_argument('cmd', type=str, help='This is the command to be wrapped')
+   parser.add_argument('cmd', type=str, 
+                                     help='This is the command to be wrapped')
    parser.add_argument('touch_files', type=str, nargs='*', 
                help='These files will be created by this script if necessary')
    args = parser.parse_args()
 
+   # Install signal handler
+   signal.signal(signal.SIGINT, handle_signal)
+   signal.signal(signal.SIGTERM, handle_signal)
+
    try:
-      subprocess.call(args.cmd, shell=True)
+      spr = SubprocessRunner(args.cmd)
+      current_procs.add(spr)
+      spr.run()
    except Exception, e:
       print str(e)
    
-   for fn in args.touch_files:
-      if not os.path.exists(fn):
-         lmo = LMObject()
-         lmo.readyFilename(fn)
-         with open(fn, 'a') as outF:
-            os.utime(fn, None)
+   # Don't try this if we were told to shut down
+   if not shutdown:
+      for fn in args.touch_files:
+         if not os.path.exists(fn):
+            lmo = LMObject()
+            lmo.readyFilename(fn)
+            with open(fn, 'a') as outF:
+               os.utime(fn, None)
          
