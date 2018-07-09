@@ -1037,6 +1037,8 @@ if __name__ == '__main__':
 
     
 """
+select * from lm_v3.lm_insertMFChain('blot',NULL,1,'{"GridsetId": 80, "createdBy": "boomfiller", "description": "GRIM Makeflow for User blot, Archive heuchera_NA, Scenario biotaphyNA12"}',0,58308.9543192);
+
 import ConfigParser
 import json
 import mx.DateTime
@@ -1081,36 +1083,75 @@ from LmServer.legion.tree import Tree
 from LmDbServer.tools.catalogBoomJob import *
 
 paramFname = '/share/lm/data/archive/biotaphy/sax_boom_params.ini'
+paramFname = '/share/lm/data/archive/blot/heuchera_boom_params.ini'
+
 
 filler = BOOMFiller(configFname=paramFname)
 filler.initializeInputs()
 
-# Add/find user for this Boom process (should exist)
 filler.addUser()
 
-# ...............................................
-# Data for this Boom archive
-# ...............................................
-# Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
 if filler.occIdFname:
    filler._checkOccurrenceSets()
    
-# Add or get ShapeGrid, Global PAM, Gridset for this archive
-# This updates the gridset, shapegrid, default PAMs (rolling, with no 
-#     matrixColumns, default GRIMs with matrixColumns
-# Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
 scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
-# If there are Scenario GRIMs, create MFChain for each 
-filler.addGRIMChains(scenGrims)
-# If there is a tree, add and biogeographic hypotheses, create MFChain for each
+
+# TESTING
+(defaultGrims, gridsetId) = (scenGrims, boomGridset.getId())
+currtime = mx.DateTime.gmt().mjd
+grimChains = []
+code, grim = defaultGrims.keys()[0], defaultGrims.values()[0]
+scencode = code
+
+desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
+        .format(filler.userId, filler.archiveName, scencode))
+meta = {MFChain.META_CREATED_BY: filler.name,
+        'GridsetId': gridsetId,
+        MFChain.META_DESCRIPTION: desc 
+        }
+newMFC = MFChain(filler.userId, priority=filler.priority, 
+                 metadata=meta, status=JobStatus.GENERAL, 
+                 statusModTime=currtime)
+grimChain = filler.scribe.insertMFChain(newMFC, gridsetId)
+
+# grimChain = filler._createGrimMF(code, gridsetId, currtime)
+targetDir = grimChain.getRelativeDirectory()
+mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
+self.scribe.log.info('  {} grim columns for scencode {}'
+              .format(grimChain.objId, code))
+
+colFilenames = []
+for mtxcol in mtxcols:
+   mtxcol.postToSolr = False
+   mtxcol.processType = self._getMCProcessType(mtxcol, grim.matrixType)
+   mtxcol.shapegrid = self.shapegrid
+
+   lyrRules = mtxcol.computeMe(workDir=targetDir)
+   grimChain.addCommands(lyrRules)
+   
+   # Keep track of intersection filenames for matrix concatenation
+   relDir = os.path.splitext(mtxcol.layer.getRelativeDLocation())[0]
+   outFname = os.path.join(targetDir, relDir, mtxcol.getTargetFilename())
+   colFilenames.append(outFname)
+               
+# Add concatenate command
+grimRules = grim.getConcatAndStockpileRules(colFilenames, workDir=targetDir)
+
+grimChain.addCommands(grimRules)
+grimChain.write()
+grimChain.updateStatus(JobStatus.INITIALIZE)
+self.scribe.updateObject(grimChain)
+grimChains.append(grimChain)
+self.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
+              .format(grimChain.objId, code))
+
+# filler.addGRIMChains(scenGrims, boomGridset.getId())
+# TESTING
+
 tree = filler.addTree(boomGridset)
-# If there are biogeographic hypotheses layers, add them and matrix 
-# TODO: create MFChain 
 biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
 
 
-# Write config file for this archive
-#    filler.writeConfigFile(tree, biogeoMtx, biogeoLayers)
 filler.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, biogeoLayers=biogeoLayerNames)
 filler.scribe.log.info('')
 filler.scribe.log.info('******')

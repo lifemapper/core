@@ -38,7 +38,7 @@ ALTER TABLE lm_v3.SDMProject DROP COLUMN IF EXISTS prjmaskId CASCADE;
 CREATE INDEX idx_layerid ON lm_v3.SDMProject(layerid);
 
 
-DROP FUNCTION IF EXISTS FUNCTION lm_v3.lm_insertMFChain(usr varchar,
+DROP FUNCTION IF EXISTS lm_v3.lm_insertMFChain(usr varchar,
                                                   dloc varchar,
                                                   prior int,
                                                   meta text,  

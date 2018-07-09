@@ -2296,21 +2296,13 @@ class Borg(DbPostgresql):
       @return: updated MFChain object
       """
       meta = mfchain.dumpMfMetadata()
-      try:
-         row, idxs = self.executeInsertAndSelectOneFunction('lm_insertMFChain', 
-                                                gridsetId,
-                                                mfchain.getUserId(), 
-                                                mfchain.getDLocation(), 
-                                                mfchain.priority, 
-                                                meta, mfchain.status, 
-                                                mfchain.statusModTime)
-      except:
-         row, idxs = self.executeInsertAndSelectOneFunction('lm_insertMFChain', 
-                                                mfchain.getUserId(), 
-                                                mfchain.getDLocation(), 
-                                                mfchain.priority, 
-                                                meta, mfchain.status, 
-                                                mfchain.statusModTime)
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_insertMFChain', 
+                                             mfchain.getUserId(), 
+                                             gridsetId,
+                                             mfchain.getDLocation(), 
+                                             mfchain.priority, 
+                                             meta, mfchain.status, 
+                                             mfchain.statusModTime)
       mfchain = self._createMFChain(row, idxs)
       return mfchain
 
