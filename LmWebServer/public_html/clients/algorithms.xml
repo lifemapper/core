@@ -321,7 +321,7 @@
                     min="0" 
                     max="1" 
                     type="Integer" 
-                    default="1">
+                    default="0">
             <doc>
                Apply clamping when projecting (0: no, 1: yes)
             </doc>
@@ -728,7 +728,7 @@
                     min="0" 
                     max="1" 
                     type="Integer" 
-                    default="1">
+                    default="0">
             <doc>
                Write a grid that shows the spatial distribution of clamping.  
                At each point, the value is the absolute difference between 
