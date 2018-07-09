@@ -1111,7 +1111,7 @@ ATT_MAXENT_PARAMS = {'responsecurves':
                      'removeduplicates': 
                          {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
                      'writeclampgrid': 
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
                      'writemess':
                          {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
                      'randomtestpoints':
