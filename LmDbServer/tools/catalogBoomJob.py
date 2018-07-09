@@ -769,26 +769,28 @@ class BOOMFiller(LMObject):
       return ptype
    
    # .............................
-   def _createGrimMF(self, scencode, currtime):
+   def _createGrimMF(self, scencode, gridsetId, currtime):
       # Create MFChain for this GPAM
       desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
               .format(self.userId, self.archiveName, scencode))
       meta = {MFChain.META_CREATED_BY: self.name,
-              MFChain.META_DESCRIPTION: desc}
+              'GridsetId': gridsetId,
+              MFChain.META_DESCRIPTION: desc 
+              }
       newMFC = MFChain(self.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=currtime)
-      grimChain = self.scribe.insertMFChain(newMFC)
+      grimChain = self.scribe.insertMFChain(newMFC, gridsetId)
       return grimChain
    
    # .............................
-   def addGRIMChains(self, defaultGrims):
+   def addGRIMChains(self, defaultGrims, gridsetId):
       currtime = mx.DateTime.gmt().mjd
       grimChains = []
-
+      
       for code, grim in defaultGrims.iteritems():
          # Create MFChain for this GRIM
-         grimChain = self._createGrimMF(code, currtime)
+         grimChain = self._createGrimMF(code, gridsetId, currtime)
          targetDir = grimChain.getRelativeDirectory()
          mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
          self.scribe.log.info('  {} grim columns for scencode {}'
@@ -822,7 +824,7 @@ class BOOMFiller(LMObject):
       return grimChains
 
    # ...............................................
-   def addBoomChain(self, boomGridsetId=None):
+   def addBoomChain(self, boomGridsetId):
       """
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                 and configFile written by BOOMFiller.initBoom.
@@ -834,7 +836,7 @@ class BOOMFiller(LMObject):
       newMFC = MFChain(self.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=mx.DateTime.gmt().mjd)
-      mfChain = self.scribe.insertMFChain(newMFC)
+      mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
 
       baseAbsFilename, ext = os.path.splitext(self.outConfigFilename)
       # Boomer.ChristopherWalken writes this file when finished walking through 
@@ -980,7 +982,7 @@ def initBoom(paramFname, walkNow=False):
    # Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
    scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
    # If there are Scenario GRIMs, create MFChain for each 
-   filler.addGRIMChains(scenGrims)
+   filler.addGRIMChains(scenGrims, boomGridset.getId())
    # If there is a tree, add and biogeographic hypotheses, create MFChain for each
    tree = filler.addTree(boomGridset)
    # If there are biogeographic hypotheses layers, add them and matrix 
@@ -1001,7 +1003,7 @@ def initBoom(paramFname, walkNow=False):
    if walkNow is True:
       # Create MFChain to run Boomer on these inputs IFF not the initial archive 
       # If this is the initial archive, we will run the boomer as a daemon
-      mfChain = filler.addBoomChain(boomGridsetId=boomGridset.getId())
+      mfChain = filler.addBoomChain(boomGridset.getId())
       
    filler.close()
    return filler.outConfigFilename
