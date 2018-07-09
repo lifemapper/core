@@ -109,6 +109,13 @@ class Boomer(LMObject):
       except Exception, e:
          raise LMError(currargs='Failed to initialize Chris with config {} ({})'
                        .format(self.configFname, e))
+      try:
+         self.gridsetId = self.christopher.boomGridset.getId()
+      except:
+         self.log.warning('Exception getting christopher.boomGridset id!!')
+      if self.gridsetId is None:
+         self.log.warning('Missing christopher.boomGridset id!!')
+
       self.priority = self.christopher.priority
       # Start where we left off 
       self.christopher.moveToStart()
@@ -202,11 +209,13 @@ class Boomer(LMObject):
    def _createMasterMakeflow(self):
       meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_DESCRIPTION: 'MasterPotatoHead for User {}, Archive {}'
-      .format(self.christopher.userId, self.christopher.archiveName)}
+                  .format(self.christopher.userId, self.christopher.archiveName),
+              'GridsetId': self.gridsetId 
+      }
       newMFC = MFChain(self.christopher.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=dt.gmt().mjd)
-      mfChain = self._scribe.insertMFChain(newMFC)
+      mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
       return mfChain
 
    # .............................

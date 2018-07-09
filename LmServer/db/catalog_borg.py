@@ -950,6 +950,49 @@ class Borg(DbPostgresql):
       return updatedGrdset
       
 # ...............................................
+   def deleteGridset(self, gridsetId):
+      """
+      @summary: Deletes Gridset, and all dependent Matrices, MatrixColumns, 
+               SDMProjectLayers, orphaned OccurrenceLayers, and all Makeflows
+      @param gridsetId: Gridset for which to delete SDM records and MatrixColumns
+      @return: True/False for success of operation
+      @note: GRIMs, Tree, Biogeographic Hypotheses will not be deleted 
+      @note: All makeflows will be deleted, regardless
+      """
+      success = False
+      delCount = self.executeModifyFunction('lm_deleteGridset', gridsetId)
+      self.log.info('''Deleted {} Gridset, SDM Matrices, MatrixColumns, Projections, 
+      orphaned Occurrencesets, and Makeflows for gridset {}'''
+                    .format(delCount, gridsetId))
+
+      if delCount > 0:
+         success = True
+      return success 
+      
+# ...............................................
+   def clearGridsetSDMs(self, gridsetId):
+      """
+      @summary: Clears Gridset SDM MatrixColumns, SDMProjectLayers, 
+                orphaned OccurrenceLayers, and all Makeflows
+      @param gridsetId: Gridset for which to delete SDM records and MatrixColumns
+      @return: True/False for success of operation
+      @note: Does not delete any matrix, and does not delete matrix columns
+             of GRIMs, Biogeographic Hypotheses.
+      @note: All makeflows will be deleted, regardless
+      """
+      success = False
+      doDeleteOrphanOccsets = True
+      delCount = self.executeModifyFunction('lm_clearGridsetSDMs', gridsetId, 
+                                            doDeleteOrphanOccsets)
+      self.log.info('''Deleted {} Gridset, Matrices, MatrixColumns, Projections, 
+      orphaned Occurrencesets, and Makeflows for gridset {}'''
+                    .format(delCount, gridsetId))
+
+      if delCount > 0:
+         success = True
+      return success 
+      
+# ...............................................
    def getGridset(self, gridsetId, userId, name, fillMatrices):
       """
       @summary: Retrieve a Gridset from the database
@@ -2247,18 +2290,27 @@ class Borg(DbPostgresql):
       return existingTree
 
 # ...............................................
-   def insertMFChain(self, mfchain):
+   def insertMFChain(self, mfchain, gridsetId):
       """
       @summary: Inserts a MFChain into database
       @return: updated MFChain object
       """
       meta = mfchain.dumpMfMetadata()
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_insertMFChain', 
-                                             mfchain.getUserId(), 
-                                             mfchain.getDLocation(), 
-                                             mfchain.priority, 
-                                             meta, mfchain.status, 
-                                             mfchain.statusModTime)
+      try:
+         row, idxs = self.executeInsertAndSelectOneFunction('lm_insertMFChain', 
+                                                gridsetId,
+                                                mfchain.getUserId(), 
+                                                mfchain.getDLocation(), 
+                                                mfchain.priority, 
+                                                meta, mfchain.status, 
+                                                mfchain.statusModTime)
+      except:
+         row, idxs = self.executeInsertAndSelectOneFunction('lm_insertMFChain', 
+                                                mfchain.getUserId(), 
+                                                mfchain.getDLocation(), 
+                                                mfchain.priority, 
+                                                meta, mfchain.status, 
+                                                mfchain.statusModTime)
       mfchain = self._createMFChain(row, idxs)
       return mfchain
 

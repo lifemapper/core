@@ -894,11 +894,11 @@ class BorgScribe(LMObject):
       return objs
    
 # ...............................................
-   def insertMFChain(self, mfchain):
+   def insertMFChain(self, mfchain, gridsetId):
       """
       @copydoc LmServer.db.catalog_borg.Borg::insertMFChain()
       """
-      mfchain = self._borg.insertMFChain(mfchain)
+      mfchain = self._borg.insertMFChain(mfchain, gridsetId)
       return mfchain
    
 # ...............................................

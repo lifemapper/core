@@ -32,12 +32,18 @@
 
 DROP TABLE IF EXISTS lm_v3.Process CASCADE;
 
-ALTER TABLE lm_v3.MFProcess ADD COLUMN gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE;
+ALTER TABLE lm_v3.MFProcess ADD COLUMN gridsetId int REFERENCES lm_v3.Gridset ON DELETE CASCADE;
 ALTER TABLE lm_v3.SDMProject DROP COLUMN IF EXISTS mdlmaskId CASCADE;
 ALTER TABLE lm_v3.SDMProject DROP COLUMN IF EXISTS prjmaskId CASCADE;
 CREATE INDEX idx_layerid ON lm_v3.SDMProject(layerid);
 
 
+DROP FUNCTION IF EXISTS FUNCTION lm_v3.lm_insertMFChain(usr varchar,
+                                                  dloc varchar,
+                                                  prior int,
+                                                  meta text,  
+                                                  stat int,
+                                                  stattime double precision);
 DROP FUNCTION IF EXISTS lm_v3.lm_insertSDMProject(prjid int,
                                                            lyrid int,
                                                            usr varchar, 
