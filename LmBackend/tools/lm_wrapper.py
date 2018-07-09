@@ -62,7 +62,9 @@ if __name__ == '__main__':
    try:
       spr = SubprocessRunner(args.cmd)
       current_procs.add(spr)
-      spr.run()
+      exitCode, stdErr = spr.run()
+      print('Exit code: {}'.format(exitCode))
+      print(stdErr)
    except Exception, e:
       print str(e)
    
