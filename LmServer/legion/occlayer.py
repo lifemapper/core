@@ -713,7 +713,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                                      'occ_{}.success'.format(self.getId()))
          
          spCmd = StockpileCommand(self.processType, self.getId(), successFname,
-                                  targetFiles)
+                                  targetFiles, statusFilename=statusFilename)
          rules.append(spCmd.getMakeflowRule(local=True))
          
          # Snippets
