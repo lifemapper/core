@@ -38,6 +38,7 @@ import time
 import zipfile
 
 from LmBackend.common.layerTools import processLayersJSON
+from LmBackend.common.metrics import LmMetricNames, LmMetrics
 from LmBackend.common.subprocessManager import SubprocessRunner
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCompute.common.lmObj import LmException
@@ -72,8 +73,8 @@ class OpenModellerModel(object):
       @param statusFn: If provided, write the status to this location
       @param mask: If provided, use this file as the mask
       """
-      self.metrics = {}
-      self.metrics['processType'] = self.PROCESS_TYPE
+      self.metrics = LmMetrics(metricsFn)
+      self.metrics.add_metric(LmMetricNames.PROCESS_TYPE, self.PROCESS_TYPE)
       # Process inputs
       if workDir is not None:
          self.workDir = workDir
@@ -102,7 +103,7 @@ class OpenModellerModel(object):
 
       # parameters
       algoParams = self._processParameters(paramsJson)
-      self.metrics['algorithmCode'] = self.algoCode
+      self.metrics.add_metric(LmMetricNames.ALGORITHM_CODE, self.algoCode)
       
       # Command inputs
       self.modelFile = os.path.join(self.workDir, 
@@ -114,7 +115,6 @@ class OpenModellerModel(object):
       # Output files
       self.rulesetFn = rulesetFn
       self.pkgFn = packageFn
-      self.metricsFn = metricsFn
       self.statusFn = statusFn
       
       # Build request here
@@ -250,7 +250,7 @@ class OpenModellerModel(object):
          points.append((i, ptGeom[0], ptGeom[1]))
          i += 1
 
-      self.metrics['numPoints'] = len(points)
+      self.metrics.add_metric(LmMetricNames.NUMBER_OF_FEATURES, len(points))
       
       return points, pointsWKT
    
@@ -265,7 +265,8 @@ class OpenModellerModel(object):
          startTime = time.time()
          procExitStatus, procStdErr = spr.run()
          endTime = time.time()
-         self.metrics['runningTime'] = endTime - startTime
+         self.metrics.add_metric(LmMetricNames.RUNNING_TIME, 
+                                 endTime - startTime)
          status = JobStatus.COMPUTED
          
          # Check for output
@@ -280,15 +281,10 @@ class OpenModellerModel(object):
       shutil.move(self.modelFile, self.rulesetFn)
       
       # Status
+      self.metrics.add_metric(LmMetricNames.STATUS, status)
       if self.statusFn is not None:
          with open(self.statusFn, 'w') as outStatus:
             outStatus.write(str(status))
-      
-      # Metrics
-      if self.metricsFn is not None:
-         with open(self.metricsFn, 'w') as outMetrics:
-            for k, v in self.metrics.iteritems():
-               outMetrics.write("{0}: {1}\n".format(k, v))
       
       # Package
       if self.pkgFn is not None:
@@ -300,6 +296,11 @@ class OpenModellerModel(object):
                   if f.find('.zip') == -1:
                      zf.write(os.path.join(base, f), 
                            os.path.relpath(os.path.join(base, f), self.workDir))
+                     
+      # Metrics
+      self.metrics.add_metric(LmMetricNames.OUTPUT_SIZE,
+                              self.metrics.get_dir_size(self.workDir))
+      self.metrics.write_metrics()
 
 # .............................................................................
 class OpenModellerProjection(object):
@@ -324,9 +325,10 @@ class OpenModellerProjection(object):
       @param statusFn: If provided, write the status to this location
       @param mask: If provided, use this file as a mask
       """
-      self.metrics = {}
-      self.metrics['algorithmCode'] = 'ATT_MAXENT'
-      self.metrics['processType'] = self.PROCESS_TYPE
+      self.metrics = LmMetrics(metricsFn)
+      self.metrics.add_metric(LmMetricNames.PROCESS_TYPE, self.PROCESS_TYPE)
+
+      # TODO: Algorithm code
       # Process inputs
       if workDir is not None:
          self.workDir = workDir
@@ -353,7 +355,6 @@ class OpenModellerProjection(object):
       
       # Other
       self.outTiffFn = outTiffFn
-      self.metricsFn = metricsFn
       self.statusFn = statusFn
       self.pkgFn = packageFn
 
@@ -459,7 +460,8 @@ class OpenModellerProjection(object):
          startTime = time.time()
          procExitStatus, procStdErr = spr.run()
          endTime = time.time()
-         self.metrics['runningTime'] = endTime - startTime
+         self.metrics.add_metric(LmMetricNames.RUNNING_TIME,
+                                 endTime - startTime)
          status = JobStatus.COMPUTED
          
          # Check outputs            
@@ -474,16 +476,11 @@ class OpenModellerProjection(object):
       shutil.move(self.projectionFile, self.outTiffFn)
       
       # Status
+      self.metrics.add_metric(LmMetricNames.STATUS, status)
       if self.statusFn is not None:
          with open(self.statusFn, 'w') as outStatus:
             outStatus.write(str(status))
       
-      # Metrics
-      if self.metricsFn is not None:
-         with open(self.metricsFn, 'w') as outMetrics:
-            for k, v in self.metrics.iteritems():
-               outMetrics.write("{0}: {1}\n".format(k, v))
-
       # Package
       if self.pkgFn is not None:
          with zipfile.ZipFile(self.pkgFn, 'w', compression=zipfile.ZIP_DEFLATED,
@@ -494,3 +491,8 @@ class OpenModellerProjection(object):
                   if f.find('.zip') == -1:
                      zf.write(os.path.join(base, f), 
                            os.path.relpath(os.path.join(base, f), self.workDir))
+
+      # Metrics
+      self.metrics.add_metric(LmMetricNames.OUTPUT_SIZE,
+                              self.metrics.get_dir_size(self.workDir))
+      self.metrics.write_metrics()

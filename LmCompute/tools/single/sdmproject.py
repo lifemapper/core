@@ -27,6 +27,7 @@
 """
 import argparse
 import json
+
 from LmCommon.common.lmconstants import ProcessType
 from LmCompute.plugins.single.maxent.meRunners import MaxentProjection
 from LmCompute.plugins.single.openModeller.omRunners import OpenModellerProjection
@@ -68,6 +69,9 @@ if __name__ == "__main__":
    
    with open(args.layersJsonFile) as layersIn:
       layersJson = json.load(layersIn)
+   
+   
+   # TODO: Look at input status file if exists, only continue if okay
    
    if args.processType == ProcessType.ATT_PROJECT:
    

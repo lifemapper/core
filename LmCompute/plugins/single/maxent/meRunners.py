@@ -38,6 +38,7 @@ import time
 import zipfile
 
 from LmBackend.common.layerTools import convertAsciisToMxes, processLayersJSON
+from LmBackend.common.metrics import LmMetricNames, LmMetrics
 from LmBackend.common.subprocessManager import SubprocessRunner
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
@@ -73,9 +74,10 @@ class MaxentModel(object):
       @param statusFn: If provided, write the status to this location
       @param mask: If provided, use this file as a mask
       """
-      self.metrics = {}
-      self.metrics['algorithmCode'] = 'ATT_MAXENT'
-      self.metrics['processType'] = self.PROCESS_TYPE
+      # Always track metrics, won't write if file name is None
+      self.metrics = LmMetrics(metricsFn)
+      self.metrics.add_metric(LmMetricNames.ALGORITHM_CODE, 'ATT_MAXENT')
+      self.metrics.add_metric(LmMetricNames.PROCESS_TYPE, self.PROCESS_TYPE)
       # Process inputs
       if workDir is not None:
          self.workDir = workDir
@@ -131,7 +133,6 @@ class MaxentModel(object):
       # Output files
       self.rulesetFn = rulesetFn
       self.pkgFn = packageFn
-      self.metricsFn = metricsFn
       self.statusFn = statusFn
       
       # Check for zero length files
@@ -261,7 +262,7 @@ class MaxentModel(object):
          # Append species name, x, y
          points.append((self.occName, ptGeom[0], ptGeom[1]))
 
-      self.metrics['numPoints'] = len(points)
+      self.metrics.add_metric(LmMetricNames.NUMBER_OF_FEATURES, len(points))
       
       with open(outPointsCsv, 'w') as outCsv:
          outCsv.write("Species, X, Y\n")
@@ -279,7 +280,8 @@ class MaxentModel(object):
          startTime = time.time()
          procExitStatus, procStdErr = spr.run()
          endTime = time.time()
-         self.metrics['runningTime'] = endTime - startTime
+         self.metrics.add_metric(LmMetricNames.RUNNING_TIME, 
+                                                         endTime - startTime)
          status = JobStatus.COMPUTED
          
          # Check outputs
@@ -301,15 +303,10 @@ class MaxentModel(object):
          shutil.move(self.lambdasFile, self.rulesetFn)
       
       # Status
+      self.metrics.add_metric(LmMetricNames.STATUS, status)
       if self.statusFn is not None:
          with open(self.statusFn, 'w') as outStatus:
             outStatus.write(str(status))
-      
-      # Metrics
-      if self.metricsFn is not None:
-         with open(self.metricsFn, 'w') as outMetrics:
-            for k, v in self.metrics.iteritems():
-               outMetrics.write("{0}: {1}\n".format(k, v))
       
       # Package
       if self.pkgFn is not None:
@@ -324,6 +321,13 @@ class MaxentModel(object):
                         zf.write(os.path.join(base, f), 
                               os.path.relpath(os.path.join(base, f), 
                                               self.workDir))
+
+      # Metrics
+      # Get size of output directory
+      # Metrics
+      self.metrics.add_metric(LmMetricNames.OUTPUT_SIZE,
+                              self.metrics.get_dir_size(self.workDir))
+      self.metrics.write_metrics()
 
 # .............................................................................
 class MaxentProjection(object):
@@ -349,9 +353,9 @@ class MaxentProjection(object):
       @param statusFn: If provided, write the status to this location
       @param mask: If provided, use this file as a mask
       """
-      self.metrics = {}
-      self.metrics['algorithmCode'] = 'ATT_MAXENT'
-      self.metrics['processType'] = self.PROCESS_TYPE
+      self.metrics = LmMetrics(metricsFn)
+      self.metrics.add_metric(LmMetricNames.ALGORITHM_CODE, 'ATT_MAXENT')
+      self.metrics.add_metric(LmMetricNames.PROCESS_TYPE, self.PROCESS_TYPE)
       # Process inputs
       if workDir is not None:
          self.workDir = workDir
@@ -402,7 +406,6 @@ class MaxentProjection(object):
       #self.asciiOut = os.path.join(self.workDir, 'output.asc')
       self.rulesetFn = rulesetFn
 
-      self.metricsFn = metricsFn
       self.statusFn = statusFn
       self.pkgFn = packageFn
       
@@ -532,7 +535,8 @@ optional args can contain any flags understood by Maxent -- for example, a
          startTime = time.time()
          procExitStatus, procStdErr = spr.run()
          endTime = time.time()
-         self.metrics['runningTime'] = endTime - startTime
+         self.metrics.add_metric(LmMetricNames.RUNNING_TIME,
+                                                         endTime - startTime)
          status = JobStatus.COMPUTED
          
          # Check outputs            
@@ -545,17 +549,12 @@ optional args can contain any flags understood by Maxent -- for example, a
       # Write outputs
       
       # Status
+      self.metrics.add_metric(LmMetricNames.STATUS, status)
       if self.statusFn is not None:
          with open(self.statusFn, 'w') as outStatus:
             outStatus.write(str(status))
       
-      # Metrics
-      if self.metricsFn is not None:
-         with open(self.metricsFn, 'w') as outMetrics:
-            for k, v in self.metrics.iteritems():
-               outMetrics.write("{0}: {1}\n".format(k, v))
- 
-       # Package
+      # Package
       if self.pkgFn is not None:
          with zipfile.ZipFile(self.pkgFn, 'w', compression=zipfile.ZIP_DEFLATED,
                                allowZip64=True) as zf:
@@ -569,4 +568,8 @@ optional args can contain any flags understood by Maxent -- for example, a
                               os.path.relpath(os.path.join(base, f), 
                                               self.workDir))
 
-     
+      # Metrics
+      self.metrics.add_metric(LmMetricNames.OUTPUT_SIZE,
+                              self.metrics.get_dir_size(self.workDir))
+      self.metrics.write_metrics()
+ 

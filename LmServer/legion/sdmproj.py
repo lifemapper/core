@@ -850,8 +850,13 @@ class SDMProjection(_ProjectionType, Raster):
                                           outputs=[algo])
       rules.append(cpAlgoParamsCommand.getMakeflowRule(local=True))
       
+      mdlMetricsFname = os.path.join(workDir, 'metrics', 
+                                          'pt_{}_{}_model_metrics.json'.format(
+                                                   self._occurrenceSet.getId(), 
+                                                   self._algorithm.code))
       mdlCmd = SdmodelCommand(ptype, mdlName, occSetFname, wsLyrsFn, 
                               rulesetFname, algo, workDir=occTargetDir, 
+                              metricsFilename=mdlMetricsFname,
                               maskFilename=wsMaskFn)
       mdlCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
       
@@ -962,6 +967,9 @@ class SDMProjection(_ProjectionType, Raster):
                os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
          modelFname = os.path.join(occTargetDir, 
                                      os.path.basename(self.getModelFilename()))
+         
+         prjMetricsFname = os.path.join(workDir, 'metrics', 
+                                    'prj_{}_metrics.json'.format(self.getId()))
 
          layersJsonFname = self.getLayersJsonFilename(self.projScenario)
          wsLyrsFn = os.path.join(targetDir, os.path.basename(layersJsonFname))
@@ -974,6 +982,7 @@ class SDMProjection(_ProjectionType, Raster):
          prjCmd = SdmProjectCommand(self.processType, prjName, modelFname,
                                     wsLyrsFn, rawPrjRaster, algo=algo,
                                     workDir=targetDir, 
+                                    metricsFilename=prjMetricsFname,
                                     packageFilename=packageFname, 
                                     statusFilename=statusFname, 
                                     maskFilename=wsMaskFn)
