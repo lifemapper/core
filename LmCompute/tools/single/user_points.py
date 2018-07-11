@@ -40,6 +40,9 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(
       description="This script attempts to generate a Lifemapper occurrence set from user CSV") 
    
+   parser.add_argument('-s', '--status_filename', type=str, 
+                       help='Write job status to this file')
+   
    parser.add_argument('pointsCsvFn', type=str,
                        help="A path to a raw user CSV file")
    parser.add_argument('metadataFile', type=str, 
@@ -54,5 +57,6 @@ if __name__ == "__main__":
    
 #    meta, _, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
    createUserShapefile(args.pointsCsvFn, args.metadataFile, args.outFile, 
-                       args.bigFile, args.maxPoints)
+                       args.bigFile, args.maxPoints, 
+                       statusFname=args.status_filename)
    

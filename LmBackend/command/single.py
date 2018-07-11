@@ -35,7 +35,7 @@ class BisonPointsCommand(_LmCommand):
    scriptName = 'bison_points.py'
 
    # ................................
-   def __init__(self, pointsUrl, outFile, bigFile, maxPoints):
+   def __init__(self, pointsUrl, outFile, bigFile, maxPoints, statusFname=None):
       """
       @summary: Construct the command object
       @param pointsUrl: A URL to query for occurrence data
@@ -49,14 +49,18 @@ class BisonPointsCommand(_LmCommand):
       self.outFile = outFile
       self.bigFile = bigFile
       self.maxPoints = maxPoints
+      if statusFname is not None:
+         self.optArgs = '-s {} '.format(statusFname)
+         self.outputs.append(statusFname)
 
    # ................................
    def getCommand(self):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
-                  self.pointsUrl, self.outFile, self.bigFile, self.maxPoints)
+      return '{} {} {}{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
+                  self.optArgs, self.pointsUrl, self.outFile, self.bigFile, 
+                  self.maxPoints)
 
 # .............................................................................
 class GbifPointsCommand(_LmCommand):
@@ -67,7 +71,8 @@ class GbifPointsCommand(_LmCommand):
    scriptName = 'gbif_points.py'
 
    # ................................
-   def __init__(self, csvFile, pointCount, outFile, bigFile, maxPoints):
+   def __init__(self, csvFile, pointCount, outFile, bigFile, maxPoints, 
+                statusFname=None):
       """
       @summary: Construct the command object
       @param csvFile: File location of raw CSV to use for data
@@ -85,15 +90,18 @@ class GbifPointsCommand(_LmCommand):
       self.outFile = outFile
       self.bigFile = bigFile
       self.maxPoints = maxPoints
+      if statusFname is not None:
+         self.optArgs = '-s {} '.format(statusFname)
+         self.outputs.append(statusFname)
 
    # ................................
    def getCommand(self):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
-               self.csvFile, self.pointCount, self.outFile, self.bigFile, 
-               self.maxPoints)
+      return '{} {} {}{} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
+               self.optArgs, self.csvFile, self.pointCount, self.outFile,  
+               self.bigFile, self.maxPoints)
 
 # .............................................................................
 class GrimRasterCommand(_LmCommand):
@@ -153,7 +161,7 @@ class IdigbioPointsCommand(_LmCommand):
    scriptName = 'idigbio_points.py'
 
    # ................................
-   def __init__(self, taxonKey, outFile, bigFile, maxPoints):
+   def __init__(self, taxonKey, outFile, bigFile, maxPoints, statusFname=None):
       """
       @summary: Construct the command object
       @param taxonKey: The taxon key to use when querying iDigBio
@@ -168,13 +176,16 @@ class IdigbioPointsCommand(_LmCommand):
       self.outFile = outFile
       self.bigFile = bigFile
       self.maxPoints = maxPoints
+      if statusFname is not None:
+         self.optArgs = '-s {} '.format(statusFname)
+         self.outputs.append(statusFname)
 
    # ................................
    def getCommand(self):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
+      return '{} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs,
                self.taxonKey, self.outFile, self.bigFile, self.maxPoints)
 
 # .............................................................................
@@ -447,7 +458,7 @@ class UserPointsCommand(_LmCommand):
 
    # ................................
    def __init__(self, inCsvFilename, metadataFilename, outFilename, 
-                bigFilename, maxPoints):
+                bigFilename, maxPoints, statusFname=None):
       """
       @summary: Construct the command object
       @param inCsvFilename: The file path to the raw user CSV
@@ -468,12 +479,16 @@ class UserPointsCommand(_LmCommand):
       self.outFn = outFilename
       self.bigFn = bigFilename
       self.maxPoints = maxPoints
+      if statusFname is not None:
+         self.optArgs = '-s {} '.format(statusFname)
+         self.outputs.append(statusFname)
 
    # ................................
    def getCommand(self):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
-            self.inCsvFn, self.metaFn, self.outFn, self.bigFn, self.maxPoints)
+      return '{} {} {}{} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
+            self.optArgs, self.inCsvFn, self.metaFn, self.outFn, self.bigFn, 
+            self.maxPoints)
 

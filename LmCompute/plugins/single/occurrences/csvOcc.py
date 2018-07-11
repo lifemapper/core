@@ -36,7 +36,7 @@ from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
 # .............................................................................
-def createBisonShapefile(url, outFile, bigFile, maxPoints):
+def createBisonShapefile(url, outFile, bigFile, maxPoints, statusFname=None):
    """
    @summary: Retrieves a BISON url, pulls in the data, and creates a shapefile
    @param url: The url to pull data from
@@ -44,15 +44,18 @@ def createBisonShapefile(url, outFile, bigFile, maxPoints):
    @param bigFile: The file location to write the full occurrence set 
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
+   @param statusFname: If provided, write out job status to this file
    """
    occAPI = BisonAPI.initFromUrl(url)
    occList = occAPI.getTSNOccurrences()
    count = len(occList)
-   return parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, outFile,  
-                       bigFile, count, maxPoints)
+   return parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, 
+                       outFile, bigFile, count, maxPoints, 
+                       statusFname=statusFname)
 
 # .............................................................................
-def createGBIFShapefile(pointCsvFn, outFile, bigFile, reportedCount, maxPoints):
+def createGBIFShapefile(pointCsvFn, outFile, bigFile, reportedCount, 
+                        maxPoints, statusFname=None):
    """
    @summary: Parses a CSV blob from GBIF and saves it to a shapefile
    @param pointCsvFn: The file location of the CSV data to process
@@ -61,6 +64,7 @@ def createGBIFShapefile(pointCsvFn, outFile, bigFile, reportedCount, maxPoints):
    @param reportedCount: The reported number of entries in the CSV file
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
+   @param statusFname: If provided, write out job status to this file
    """
    with open(pointCsvFn) as inF:
       csvInputBlob = inF.readlines()
@@ -68,11 +72,13 @@ def createGBIFShapefile(pointCsvFn, outFile, bigFile, reportedCount, maxPoints):
    if len(csvInputBlob) == 0:
       raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
                         "The provided CSV was empty")
-   return parseCsvData(''.join(csvInputBlob), ProcessType.GBIF_TAXA_OCCURRENCE, outFile, 
-                       bigFile, len(csvInputBlob), maxPoints)
+   return parseCsvData(''.join(csvInputBlob), ProcessType.GBIF_TAXA_OCCURRENCE, 
+                       outFile, bigFile, len(csvInputBlob), maxPoints, 
+                       statusFname=statusFname)
    
 # .............................................................................
-def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints):
+def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints, 
+                           statusFname=None):
    """
    @summary: Retrieves an iDigBio url, pulls in the data, and creates a 
                 shapefile
@@ -81,6 +87,7 @@ def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints):
    @param bigFile: The file location to write the full occurrence set 
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
+   @param statusFname: If provided, write out job status to this file
    @todo: Change this back to GBIF TaxonID when iDigBio API is fixed!
    """
    occAPI = IdigbioAPI()
@@ -88,11 +95,13 @@ def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints):
    # TODO: Un-hack this - here using canonical name instead
    occList = occAPI.queryBySciname(taxonKey)
    count = len(occList)
-   return parseCsvData(''.join(occList), ProcessType.IDIGBIO_TAXA_OCCURRENCE, outFile, 
-                       bigFile, count, maxPoints)
+   return parseCsvData(''.join(occList), ProcessType.IDIGBIO_TAXA_OCCURRENCE, 
+                       outFile, bigFile, count, maxPoints, 
+                       statusFname=statusFname)
    
 # .............................................................................
-def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints):
+def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints,
+                        statusFname=None):
    """
    @summary: Processes a user-provided CSV dataset
    @param pointCsvFn: CSV file of points
@@ -101,6 +110,7 @@ def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints):
    @param bigFile: The file location to write the full occurrence set 
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
+   @param statusFname: If provided, write out job status to this file
    """
    with open(pointCsvFn) as inF:
       csvInputBlob = inF.read()
@@ -124,11 +134,12 @@ def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints):
          .format(origCount, cleanCount))
       
    return parseCsvData(cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
-                       bigFile, cleanCount, maxPoints, metadata=metadata, isUser=True)
+                       bigFile, cleanCount, maxPoints, metadata=metadata, 
+                       isUser=True, statusFname=statusFname)
       
 # .............................................................................
 def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
-                 metadata=None, isUser=False):
+                 metadata=None, isUser=False, statusFname=None):
    """
    @summary: Parses a CSV-format dataset and saves it to a shapefile in the 
                 specified location
@@ -140,6 +151,7 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
    @param metadata: Metadata that can be used for processing the CSV
+   @param statusFname: If provided, write out job status to this file
    @todo: handle write exception before writing dummy file? 
    """
    # TODO: evaluate logging here
@@ -152,6 +164,7 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
       f = open(bigFile, 'w')
       f.write('Zero data points')
       f.close()
+      status = JobStatus.LM_RAW_POINT_DATA_ERROR
    else:
       logname, ext = os.path.splitext(os.path.basename(__file__))
       logger = LmComputeLogger(logname, addConsole=True)
@@ -163,6 +176,13 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
          f = open(bigFile, 'w')
          f.write('No excess data')
          f.close()
+      status = JobStatus.COMPUTED
+   
+   # Write status if requested
+   if statusFname is not None:
+      readyFilename(statusFname, overwrite=True)
+      with open(statusFname, 'w') as outF:
+         outF.write('{}'.format(status))
       
 
 """

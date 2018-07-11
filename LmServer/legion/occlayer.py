@@ -632,7 +632,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
 
    # ................................
-   def computeMe(self, workDir=None):
+   def computeMe(self, workDir=None, statusFilename=None):
       """
       @summary: Assemble command to create a shapefile from raw input
       @todo: Consider copying raw data file to the workspace and using it for
@@ -660,7 +660,12 @@ class OccurrenceLayer(OccurrenceType, Vector):
                                  targetDir),
                                outputs=targetFiles)
          
-         touchAndCopyCmd = ChainCommand([touchCmd, cpCmd])
+         # Echo complete status to status file
+         statusCmd = SystemCommand('echo {} > {}'.format(JobStatus.COMPLETE,
+                                                         statusFilename),
+                                   outputs=[statusFilename])
+         
+         touchAndCopyCmd = ChainCommand([touchCmd, cpCmd, statusCmd])
          
          rules.append(touchAndCopyCmd.getMakeflowRule(local=True))
       
@@ -672,20 +677,24 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
          if self.processType == ProcessType.BISON_TAXA_OCCURRENCE:
             occCmd = BisonPointsCommand(self.getRawDLocation(), outFile, 
-                                        bigFile, POINT_COUNT_MAX)
+                                        bigFile, POINT_COUNT_MAX, 
+                                        statusFname=statusFilename)
          elif self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
             occCmd = GbifPointsCommand(self.getRawDLocation(), self.queryCount, 
-                                       outFile, bigFile, POINT_COUNT_MAX)
+                                       outFile, bigFile, POINT_COUNT_MAX, 
+                                       statusFname=statusFilename)
          elif self.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
             # TODO: This is a hack using canoncial name instead of GBIFTaxonId
             #          for iDigBio
             name = self.getScientificName().canonicalName
             occCmd = IdigbioPointsCommand('\"{}\"'.format(name),
-                                          outFile, bigFile, POINT_COUNT_MAX)
+                                          outFile, bigFile, POINT_COUNT_MAX, 
+                                          statusFname=statusFilename)
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
             occCmd = UserPointsCommand(self.getRawDLocation(),
                                        self.rawMetaDLocation, outFile, bigFile, 
-                                       POINT_COUNT_MAX)
+                                       POINT_COUNT_MAX, 
+                                       statusFname=statusFilename)
          else:
             raise Exception, 'Unknown point process type: {}'.format(
                                                               self.processType)

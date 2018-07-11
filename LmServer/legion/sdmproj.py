@@ -805,8 +805,18 @@ class SDMProjection(_ProjectionType, Raster):
       occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
       occSetFname = os.path.join(occTargetDir, occFileBasename)
       
+      
+      # Create status file name
+      # Send status file to model, if we are3 adding occ rules
+      
+      occStatusFilename = None
+      
       if addOccRules:
-         rules.extend(self._occurrenceSet.computeMe(workDir=workDir))
+         occStatusFilename = os.path.join(occTargetDir, 
+                           'occ_{}.status'.format(self._occurrenceSet.getId()))
+
+         rules.extend(self._occurrenceSet.computeMe(workDir=workDir,
+                                             statusFilename=occStatusFilename))
       
       # Look at processing parameters and decide if we need to do anything
       if procParams.has_key(PRE_PROCESS_KEY) and \
