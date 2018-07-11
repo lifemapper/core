@@ -932,14 +932,13 @@ class SDMProjection(_ProjectionType, Raster):
          else:
             wsMaskFn = None
          
-         # Status file name
-         statusFname = os.path.join(targetDir, 
-                                   'prj{}.status'.format(self.getId()))
          packageFname = os.path.join(targetDir, 
                                os.path.basename(self.getProjPackageFilename()))
          
          
          prjName = os.path.basename(os.path.splitext(self.getDLocation())[0])
+         # Status file name
+         statusFname = os.path.join(targetDir, '{}.status'.format(prjName))
          
          # Generate the projection
          if self.isATT():

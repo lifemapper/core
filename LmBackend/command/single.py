@@ -199,7 +199,7 @@ class IntersectRasterCommand(_LmCommand):
    # ................................
    def __init__(self, shapegridFilename, rasterFilename, pavFilename, 
                 resolution, minPresence, maxPresence, percentPresence, 
-                squid=None):
+                squid=None, layerStatusFilename=None, statusFilename=None):
       """
       @summary: Construct the command object
       @param shapegridFilename: The file location of the shapegrid to intersect
@@ -212,6 +212,9 @@ class IntersectRasterCommand(_LmCommand):
       @param percentPresence: The percent of a shapegrid feature that must be 
                                  present to be considered present
       @param squid: If included, use this for a label on the PAV 
+      @param layerStatusFilename: If provided, check this for the status of the
+                                     input layer object
+      @param statusFilename: If provided, write out status to this location
       """
       _LmCommand.__init__(self)
       self.inputs.extend([shapegridFilename, rasterFilename])
@@ -224,17 +227,27 @@ class IntersectRasterCommand(_LmCommand):
       self.minPres = minPresence
       self.maxPres = maxPresence
       self.perPres = percentPresence
-      self.squid = squid
-
+      
+      self.optArgs = ''
+      if squid is not None:
+         self.optArgs += ' --squid={}'.format(squid)
+      
+      if layerStatusFilename is not None:
+         self.optArgs += '  --layer_status_file={}'.format(layerStatusFilename)
+         self.inputs.append(layerStatusFilename)
+         
+      if statusFilename is not None:
+         self.optArgs += ' -s {}'.format(statusFilename)
+         self.outputs.append(statusFilename)
+      
    # ................................
    def getCommand(self):
       """
       @summary: Get the raw command to run on the system
       """
       return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
-            ' --squid={}'.format(self.squid) if self.squid is not None else '',
-            self.sgFn, self.rastFn, self.pavFn, self.resolution, self.minPres, 
-            self.maxPres, self.perPres)
+                     self.optArgs, self.sgFn, self.rastFn, self.pavFn, 
+                     self.resolution, self.minPres, self.maxPres, self.perPres)
 
 # .............................................................................
 class IntersectVectorCommand(_LmCommand):

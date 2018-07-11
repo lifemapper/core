@@ -30,6 +30,7 @@
 import argparse
 
 from LmCompute.plugins.multi.intersect.radIntersect import pavRasterIntersect
+from LmCommon.common.lmconstants import JobStatus
 
 # .............................................................................
 if __name__ == "__main__":
@@ -54,16 +55,35 @@ if __name__ == "__main__":
         help="The percentage [0,100] of a cell that must be covered to be called present")
    parser.add_argument("--squid", type=str, dest="squid", 
        help="A species identifier to be attached to the PAV Matrix column as metadata")
+   
+   parser.add_argument('--layer_status_file', type=str, 
+                                          help='Status file for input layer')
+   parser.add_argument('-s', '--status_file', type=str, 
+                                                   help='Output status file')
 
    args = parser.parse_args()
    
-   squid = None
-   if args.squid is not None:
-      squid = args.squid
-   
-   pav = pavRasterIntersect(args.shapegridFn, args.rasterFn, args.resolution, 
-                            args.minPresence, args.maxPresence, 
-                            args.percentPresence, squid=squid)
-   
-   with open(args.pavFn, 'w') as pavOutF:
-      pav.save(pavOutF)
+   lyrStatus = JobStatus.GENERAL
+   if args.layer_status_file is not None:
+      with open(args.layer_status_file) as inF:
+         lyrStatus = int(inF.read().strip())
+         
+   if lyrStatus < JobStatus.GENERAL_ERROR:
+      
+      squid = None
+      if args.squid is not None:
+         squid = args.squid
+      
+      pav = pavRasterIntersect(args.shapegridFn, args.rasterFn, args.resolution, 
+                               args.minPresence, args.maxPresence, 
+                               args.percentPresence, squid=squid,
+                               statusFilename=args.status_file)
+      
+      if pav is not None:
+         with open(args.pavFn, 'w') as pavOutF:
+            pav.save(pavOutF)
+   else:
+      if args.status_file is not None:
+         with open(args.status_file, 'w') as outF:
+            outF.write('{}'.format(lyrStatus))
+            

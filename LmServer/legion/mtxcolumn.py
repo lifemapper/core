@@ -193,7 +193,9 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          
          inputLayerFname = os.path.join(targetDir,
                                    os.path.basename(self.layer.getDLocation()))
-            
+         
+         statusFname = '{}.status'.format(os.path.split(inputLayerFname)[0])
+         
          # Layer input
          try:
             status = self.layer.status
@@ -238,6 +240,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
 
          pavFname = os.path.join(targetDir, self.getTargetFilename())
 
+         statusFile = None
          
          if self.processType == ProcessType.INTERSECT_RASTER_GRIM:
             try:
@@ -264,6 +267,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             intCmd.inputs.extend(vectorFiles)
             
          else:
+            statusFile = os.path.join(targetDir, 
+                                      'mtxcol_{}.status'.format(self.getId()))
             intCmd = IntersectRasterCommand(shapegridFile, inputLayerFname,
                               pavFname, self.layer.resolution,
                               self.intersectParams[
@@ -272,7 +277,9 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                                  self.INTERSECT_PARAM_MAX_PRESENCE],
                               self.intersectParams[
                                  self.INTERSECT_PARAM_MIN_PERCENT],
-                              squid=self.squid)
+                              squid=self.squid,
+                              layerStatusFilename=statusFname,
+                              statusFilename=statusFile)
             
          intCmd.inputs.extend(self.shapegrid.getTargetFiles(workDir=workDir))
          rules.append(intCmd.getMakeflowRule())
@@ -281,7 +288,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          successFilename = os.path.join(targetDir, 
                                     'mtxcol_{}.success'.format(self.getId()))
          spCmd = StockpileCommand(self.processType, self.getId(), 
-                                  successFilename, [pavFname])
+                                  successFilename, [pavFname], 
+                                  statusFilename=statusFile)
          rules.append(spCmd.getMakeflowRule(local=True))
          
          # TODO: Post to Solr

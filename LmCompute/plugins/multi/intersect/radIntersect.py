@@ -29,7 +29,7 @@ import numpy as np
 from osgeo import ogr
 import rtree
 
-from LmCommon.common.lmconstants import LMFormat
+from LmCommon.common.lmconstants import LMFormat, JobStatus
 from LmCommon.common.matrix import Matrix
 
 from LmCompute.common.agoodle import AGoodle
@@ -160,7 +160,7 @@ def grimRasterIntersect(sgFn, rasterFn, resolution, minPercent=None,
 
 # .............................................................................
 def pavRasterIntersect(sgFn, rasterFn, resolution, minPresence, maxPresence, 
-                       percentPresence, squid=None):
+                       percentPresence, squid=None, statusFilename=None):
    """
    @summary: Intersects a raster layer with a shapegrid to create a PAV Matrix
                 column
@@ -175,29 +175,39 @@ def pavRasterIntersect(sgFn, rasterFn, resolution, minPresence, maxPresence,
    @todo: Evaluate
    @todo: Do we need resolution?  Couldn't we get that from the raster?
    """
-   # Get the area dictionary
-   areaDict = _getRasterAreaDictionary(sgFn, rasterFn, resolution)
-   percentPresenceDec = percentPresence / 100.0
-   rowcount = len(areaDict)
-   layerArray = np.zeros((rowcount, 1), dtype=bool)
-   counter = 0
-   rowHeaders = []
-   for siteId, (summary, cellarea, x, y) in sorted(areaDict.iteritems()):
-      rowHeaders.append([siteId, x, y])
-      mySum = 0
-      for pixelvalue in summary.keys():
-         if (pixelvalue >= minPresence) and (pixelvalue <= maxPresence):
-            mySum += + summary[pixelvalue]
-      if mySum > (cellarea * percentPresenceDec):
-         layerArray[counter, 0] = True
-      counter += 1
-   
-   headers = {'0' : rowHeaders}
-   
-   if squid is not None:
-      headers['1'] = [squid]
+   try:
+      # Get the area dictionary
+      areaDict = _getRasterAreaDictionary(sgFn, rasterFn, resolution)
+      percentPresenceDec = percentPresence / 100.0
+      rowcount = len(areaDict)
+      layerArray = np.zeros((rowcount, 1), dtype=bool)
+      counter = 0
+      rowHeaders = []
+      for siteId, (summary, cellarea, x, y) in sorted(areaDict.iteritems()):
+         rowHeaders.append([siteId, x, y])
+         mySum = 0
+         for pixelvalue in summary.keys():
+            if (pixelvalue >= minPresence) and (pixelvalue <= maxPresence):
+               mySum += + summary[pixelvalue]
+         if mySum > (cellarea * percentPresenceDec):
+            layerArray[counter, 0] = True
+         counter += 1
       
-   pav = Matrix(layerArray, headers=headers)
+      headers = {'0' : rowHeaders}
+      
+      if squid is not None:
+         headers['1'] = [squid]
+         
+      pav = Matrix(layerArray, headers=headers)
+      status = JobStatus.COMPUTED
+   except Exception, e:
+      status = JobStatus.RAD_INTERSECT_ERROR
+      print(str(e))
+      pav = None
+      
+   if statusFilename is not None:
+      with open(statusFilename, 'w') as outF:
+         outF.write('{}'.format(status))
    
    return pav
 
