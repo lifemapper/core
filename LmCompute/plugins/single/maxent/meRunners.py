@@ -31,6 +31,7 @@
           02110-1301, USA.
 """
 import glob
+import numpy as np
 import os
 from osgeo import ogr
 import shutil
@@ -251,7 +252,8 @@ class MaxentModel(object):
       """
       @summary: Read the points and write them in the appropriate format
       """
-      points = []
+      points = set([])
+      
       driver = ogr.GetDriverByName("ESRI Shapefile")
       dataSource = driver.Open(pointsShpFn, 0)
       layer = dataSource.GetLayer()
@@ -259,15 +261,15 @@ class MaxentModel(object):
       for feature in layer:
          geom = feature.GetGeometryRef()
          ptGeom = geom.GetPoint()
-         # Append species name, x, y
-         points.append((self.occName, ptGeom[0], ptGeom[1]))
+         # Add point to set
+         points.add((ptGeom[0], ptGeom[1]))
 
       self.metrics.add_metric(LmMetricNames.NUMBER_OF_FEATURES, len(points))
       
       with open(outPointsCsv, 'w') as outCsv:
          outCsv.write("Species, X, Y\n")
-         for name, x, y in points:
-            outCsv.write("{0}, {1}, {2}\n".format(name, x, y))
+         for x, y in list(points):
+            outCsv.write("{0}, {1}, {2}\n".format(self.occName, x, y))
    
    # ...................................
    def run(self):
