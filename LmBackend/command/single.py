@@ -297,7 +297,7 @@ class SdmodelCommand(_LmCommand):
    def __init__(self, pType, jobName, pointsFilename, layersJsonFilename, 
                 rulesetFilename, paramsJsonFilename, packageFilename=None,
                 workDir=None, metricsFilename=None, logFilename=None, 
-                statusFilename=None, maskFilename=None):
+                statusFilename=None, maskFilename=None, occStatusFilename=None):
       """
       @summary: Construct the command object
       @param pType: This parameter indicates which type of model to create
@@ -313,10 +313,10 @@ class SdmodelCommand(_LmCommand):
       @param metricsFilename: A file location to write metrics
       @param logFilename: A file location to write logging
       @param statusFilename: A file location to write the status of the 
-                                projection
+                                model
       @param packageFilename: A file location to write the projection package
       @param maskFilename: A file location of a mask layer to use for 
-                              projecting 
+                              modelling 
       """
       _LmCommand.__init__(self)
       self.inputs.extend([pointsFilename, layersJsonFilename, 
@@ -354,6 +354,10 @@ class SdmodelCommand(_LmCommand):
       if maskFilename is not None:
          self.inputs.append(maskFilename)
          self.optArgs += ' -m {}'.format(maskFilename)
+      
+      if occStatusFilename is not None:
+         self.inputs.append(occStatusFilename)
+         self.optArgs += ' --occ_status_file={}'.format(occStatusFilename)
 
    # ................................
    def getCommand(self):
@@ -378,7 +382,8 @@ class SdmProjectCommand(_LmCommand):
    def __init__(self, pType, jobName, rulesetFilename, layersJsonFilename, 
                 outputRasterFilename, algo=None, workDir=None, 
                 metricsFilename=None, logFilename=None, statusFilename=None, 
-                packageFilename=None, maskFilename=None):
+                packageFilename=None, maskFilename=None, 
+                modelStatusFilename=None):
       """
       @summary: Construct the command object
       @param pType: This parameter indicates which type of SDM projection to 
@@ -398,7 +403,9 @@ class SdmProjectCommand(_LmCommand):
                                 projection
       @param packageFilename: A file location to write the projection package
       @param maskFilename: A file location of a mask layer to use for 
-                              projecting 
+                              projecting
+      @param modelStatusFilename: If provided, this file will contain ths 
+                                     status of the model 
       """
       _LmCommand.__init__(self)
       self.inputs.extend([rulesetFilename, layersJsonFilename])
@@ -438,6 +445,10 @@ class SdmProjectCommand(_LmCommand):
       if maskFilename is not None:
          self.inputs.append(maskFilename)
          self.optArgs += ' -m {}'.format(maskFilename)
+         
+      if modelStatusFilename is not None:
+         self.inputs.append(modelStatusFilename)
+         self.optArgs += ' --model_status_file={}'.format(modelStatusFilename)
       
    # ................................
    def getCommand(self):

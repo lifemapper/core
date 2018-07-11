@@ -28,7 +28,7 @@
 import argparse
 import json
 
-from LmCommon.common.lmconstants import ProcessType
+from LmCommon.common.lmconstants import ProcessType, JobStatus
 from LmCompute.plugins.single.maxent.meRunners import MaxentProjection
 from LmCompute.plugins.single.openModeller.omRunners import OpenModellerProjection
 
@@ -65,33 +65,46 @@ if __name__ == "__main__":
              help="If provided, write the projection package to this location")
    parser.add_argument('-m', '--mask', type=str, help='A file to use as a mask')
    
+   parser.add_argument('--model_status_file', type=str, 
+                                       help='Status file for the input model')
+   
    args = parser.parse_args()
    
    with open(args.layersJsonFile) as layersIn:
       layersJson = json.load(layersIn)
    
-   
-   # TODO: Look at input status file if exists, only continue if okay
-   
-   if args.processType == ProcessType.ATT_PROJECT:
-   
-      if args.paramsJsonFile is not None:
-         with open(args.paramsJsonFile) as paramsIn:
-            paramsJson = json.load(paramsIn)
-      else:
-         paramsJson = None
-   
-      job = MaxentProjection(args.jobName, args.rulesetFn, layersJson, 
-                             args.outputRaster, paramsJson=paramsJson,
-                             workDir=args.work_dir, metricsFn=args.metrics_file,
-                             logFn=args.log_file, statusFn=args.status_file, 
-                             packageFn=args.package_file, mask=args.mask)
-   else:
-      job = OpenModellerProjection(args.jobName, args.rulesetFn, layersJson, 
-                             args.outputRaster, workDir=args.work_dir, 
-                             metricsFn=args.metrics_file, logFn=args.log_file, 
-                             statusFn=args.status_file, 
-                             packageFn=args.package_file, mask=args.mask)
+   # Look at input status file if exists, only continue if okay
+   mdlStatus = JobStatus.GENERAL
+   if args.model_status_file is not None:
+      with open(args.model_status_file) as inF:
+         mdlStatus = int(inF.read().strip()) 
+
+   if mdlStatus < JobStatus.GENERAL_ERROR:
       
-   job.run()
-   
+      if args.processType == ProcessType.ATT_PROJECT:
+      
+         if args.paramsJsonFile is not None:
+            with open(args.paramsJsonFile) as paramsIn:
+               paramsJson = json.load(paramsIn)
+         else:
+            paramsJson = None
+      
+         job = MaxentProjection(args.jobName, args.rulesetFn, layersJson, 
+                                args.outputRaster, paramsJson=paramsJson,
+                                workDir=args.work_dir, metricsFn=args.metrics_file,
+                                logFn=args.log_file, statusFn=args.status_file, 
+                                packageFn=args.package_file, mask=args.mask)
+      else:
+         job = OpenModellerProjection(args.jobName, args.rulesetFn, layersJson, 
+                                args.outputRaster, workDir=args.work_dir, 
+                                metricsFn=args.metrics_file, logFn=args.log_file, 
+                                statusFn=args.status_file, 
+                                packageFn=args.package_file, mask=args.mask)
+         
+      job.run()
+      
+   else:
+      # Error with occurrence set, forward error
+      if args.status_file is not None:
+         with open(args.status_file, 'w') as outF:
+            outF.write('{}\n'.format(mdlStatus))

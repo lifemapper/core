@@ -27,7 +27,7 @@
 """
 import argparse
 import json
-from LmCommon.common.lmconstants import ProcessType
+from LmCommon.common.lmconstants import ProcessType, JobStatus
 from LmCompute.plugins.single.maxent.meRunners import MaxentModel
 from LmCompute.plugins.single.openModeller.omRunners import OpenModellerModel
 
@@ -61,28 +61,42 @@ if __name__ == '__main__':
    parser.add_argument('-s', '--status_file', type=str,
                        help='Optional output job status file')
    parser.add_argument('-m', '--mask', type=str, help='A file to use as a mask')
+   parser.add_argument('--occ_status_file', type=str, 
+                              help='The status of the input occurrence set')
    
    args = parser.parse_args()
    
-   # Get algorithm parameters
-   with open(args.paramsJsonFile) as paramsIn:
-      paramsJson = json.load(paramsIn)
    
-   with open(args.layersJsonFile) as layersIn:
-      layersJson = json.load(layersIn)
+   # Check occurrence set status, skip if already error
+   occStatus = JobStatus.GENERAL
+   if args.occ_status_file is not None:
+      with open(args.occ_status_file) as inF:
+         occStatus = int(inF.read().strip())
    
-   if args.processType == ProcessType.ATT_MODEL:
-      job = MaxentModel(args.jobName, args.pointsFn, layersJson, 
-                        args.rulesetFn, paramsJson=paramsJson, 
-                        packageFn=args.package_file, workDir=args.work_dir,
-                        metricsFn=args.metrics_file, logFn=args.log_file,
-                        statusFn=args.status_file, mask=args.mask)
+   if occStatus < JobStatus.GENERAL_ERROR:
+      # Get algorithm parameters
+      with open(args.paramsJsonFile) as paramsIn:
+         paramsJson = json.load(paramsIn)
+      
+      with open(args.layersJsonFile) as layersIn:
+         layersJson = json.load(layersIn)
+      
+      if args.processType == ProcessType.ATT_MODEL:
+         job = MaxentModel(args.jobName, args.pointsFn, layersJson, 
+                           args.rulesetFn, paramsJson=paramsJson, 
+                           packageFn=args.package_file, workDir=args.work_dir,
+                           metricsFn=args.metrics_file, logFn=args.log_file,
+                           statusFn=args.status_file, mask=args.mask)
+      else:
+         job = OpenModellerModel(args.jobName, args.pointsFn, layersJson, 
+                           args.rulesetFn, paramsJson, 
+                           packageFn=args.package_file, workDir=args.work_dir,
+                           metricsFn=args.metrics_file, logFn=args.log_file,
+                           statusFn=args.status_file, mask=args.mask)
+      
+      job.run()
    else:
-      job = OpenModellerModel(args.jobName, args.pointsFn, layersJson, 
-                        args.rulesetFn, paramsJson, 
-                        packageFn=args.package_file, workDir=args.work_dir,
-                        metricsFn=args.metrics_file, logFn=args.log_file,
-                        statusFn=args.status_file, mask=args.mask)
-   
-   job.run()
-   
+      # Error with occurrence set, forward error
+      if args.status_file is not None:
+         with open(args.status_file, 'w') as outF:
+            outF.write('{}\n'.format(occStatus))

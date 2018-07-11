@@ -785,7 +785,8 @@ class SDMProjection(_ProjectionType, Raster):
       return rules, maskFn
 
    # .............................................................................
-   def _computeMyModel(self, workDir=None, procParams=None, addOccRules=False):
+   def _computeMyModel(self, workDir=None, procParams=None, addOccRules=False,
+                       modelStatusFilename=None):
       """
       @summary: Generate a command to create a SDM model ruleset for this 
                    projection
@@ -867,7 +868,9 @@ class SDMProjection(_ProjectionType, Raster):
       mdlCmd = SdmodelCommand(ptype, mdlName, occSetFname, wsLyrsFn, 
                               rulesetFname, algo, workDir=occTargetDir, 
                               metricsFilename=mdlMetricsFname,
-                              maskFilename=wsMaskFn)
+                              maskFilename=wsMaskFn, 
+                              statusFilename=modelStatusFilename,
+                              occStatusFilename=occStatusFilename)
       mdlCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
       
       rules.append(mdlCmd.getMakeflowRule())
@@ -906,11 +909,15 @@ class SDMProjection(_ProjectionType, Raster):
          
          rules.append(cpCmd.getMakeflowRule(local=True))
       else:
-         
+         mdlStatusFilename = os.path.join(workDir, 
+                                          'pt_{}_{}_model_metrics.json'.format(
+                                                   self._occurrenceSet.getId(), 
+                                                   self._algorithm.code))
          # Generate the model
          modelRules = self._computeMyModel(workDir=workDir, 
                                            procParams=procParams,
-                                           addOccRules=addOccRules)
+                                           addOccRules=addOccRules,
+                                           modelStatusFilename=mdlStatusFilename)
          rules.extend(modelRules)
          
          # Look at processing parameters and decide if we need to do anything
@@ -995,13 +1002,14 @@ class SDMProjection(_ProjectionType, Raster):
                                     metricsFilename=prjMetricsFname,
                                     packageFilename=packageFname, 
                                     statusFilename=statusFname, 
-                                    maskFilename=wsMaskFn)
+                                    maskFilename=wsMaskFn,
+                                    modelStatusFilename=mdlStatusFilename)
          rules.append(prjCmd.getMakeflowRule())
 
          # Rule for Test/Update 
          successFname = os.path.join(targetDir, '{}.success'.format(prjName))
          spCmd = StockpileCommand(self.processType, self.getId(), successFname,
-                                  [outTiff, packageFname])
+                           [outTiff, packageFname], statusFilename=statusFname)
          rules.append(spCmd.getMakeflowRule(local=True))
          
          # Snippets
