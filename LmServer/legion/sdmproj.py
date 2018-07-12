@@ -923,7 +923,7 @@ class SDMProjection(_ProjectionType, Raster):
          rules.append(cpAndStatusCmd.getMakeflowRule(local=True))
       else:
          mdlStatusFilename = os.path.join(workDir, 
-                                          'pt_{}_{}_model_metrics.json'.format(
+                                          'pt_{}_{}_model.status'.format(
                                                    self._occurrenceSet.getId(), 
                                                    self._algorithm.code))
          # Generate the model
