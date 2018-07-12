@@ -194,9 +194,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          inputLayerFname = os.path.join(targetDir,
                                    os.path.basename(self.layer.getDLocation()))
          
-         lyrStatusFname = os.path.join(targetDir, 
-                                    '{}.status'.format(os.path.split(
-                                       inputLayerFname)[0]))
+         lyrStatusFname = '{}.status'.format(
+                                 os.path.splitext(inputLayerFname)[0])
          # Layer input
          try:
             status = self.layer.status
