@@ -806,10 +806,6 @@ class SDMProjection(_ProjectionType, Raster):
       occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
       occSetFname = os.path.join(occTargetDir, occFileBasename)
       
-      
-      # Create status file name
-      # Send status file to model, if we are3 adding occ rules
-      
       occStatusFilename = None
       
       if addOccRules:
@@ -869,6 +865,7 @@ class SDMProjection(_ProjectionType, Raster):
                                           'pt_{}_{}_model_metrics.json'.format(
                                                    self._occurrenceSet.getId(), 
                                                    self._algorithm.code))
+      mxLogFname = os.path.join(occTargetDir, 'maxent.log')
       mdlCmd = SdmodelCommand(ptype, mdlName, occSetFname, wsLyrsFn, 
                               rulesetFname, algo, workDir=occTargetDir, 
                               metricsFilename=mdlMetricsFname,
@@ -876,6 +873,7 @@ class SDMProjection(_ProjectionType, Raster):
                               statusFilename=modelStatusFilename,
                               occStatusFilename=occStatusFilename)
       mdlCmd.inputs.extend(self._occurrenceSet.getTargetFiles(workDir=workDir))
+      mdlCmd.outputs.append(mxLogFname)
       
       rules.append(mdlCmd.getMakeflowRule())
 
@@ -922,7 +920,9 @@ class SDMProjection(_ProjectionType, Raster):
          
          rules.append(cpAndStatusCmd.getMakeflowRule(local=True))
       else:
-         mdlStatusFilename = os.path.join(targetDir, 
+         occTargetDir = os.path.join(workDir, 
+               os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
+         mdlStatusFilename = os.path.join(occTargetDir, 
                                           'pt_{}_{}_model.status'.format(
                                                    self._occurrenceSet.getId(), 
                                                    self._algorithm.code))
@@ -1003,6 +1003,8 @@ class SDMProjection(_ProjectionType, Raster):
                                           outputs=[wsLyrsFn])
          rules.append(cpLyrJsonCommand.getMakeflowRule(local=True))
          
+         mxLogFname = os.path.join(targetDir, 'maxent.log')
+         
          prjCmd = SdmProjectCommand(self.processType, prjName, modelFname,
                                     wsLyrsFn, rawPrjRaster, algo=algo,
                                     workDir=targetDir, 
@@ -1011,6 +1013,7 @@ class SDMProjection(_ProjectionType, Raster):
                                     statusFilename=statusFname, 
                                     maskFilename=wsMaskFn,
                                     modelStatusFilename=mdlStatusFilename)
+         prjCmd.outputs.append(mxLogFname)
          rules.append(prjCmd.getMakeflowRule())
 
          # Rule for Test/Update 
