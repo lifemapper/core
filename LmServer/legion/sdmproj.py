@@ -899,6 +899,9 @@ class SDMProjection(_ProjectionType, Raster):
       touchCmd = LmTouchCommand(touchFn)
       rules.append(touchCmd.getMakeflowRule(local=True))
       
+      prjName = os.path.basename(os.path.splitext(self.getDLocation())[0])
+      # Status file name
+      statusFname = os.path.join(targetDir, '{}.status'.format(prjName))
       
       if self.status == JobStatus.COMPLETE:
          # Just need to move the tiff into place
@@ -911,7 +914,13 @@ class SDMProjection(_ProjectionType, Raster):
                                inputs=[touchFn], 
                                outputs=[cpRaster])
          
-         rules.append(cpCmd.getMakeflowRule(local=True))
+         statusCmd = SystemCommand('echo', '{} > {}'.format(JobStatus.COMPLETE,
+                                                            statusFname),
+                                   outputs=[statusFname])
+         
+         cpAndStatusCmd = ChainCommand([cpCmd, statusCmd])
+         
+         rules.append(cpAndStatusCmd.getMakeflowRule(local=True))
       else:
          mdlStatusFilename = os.path.join(workDir, 
                                           'pt_{}_{}_model_metrics.json'.format(
@@ -938,11 +947,6 @@ class SDMProjection(_ProjectionType, Raster):
          
          packageFname = os.path.join(targetDir, 
                                os.path.basename(self.getProjPackageFilename()))
-         
-         
-         prjName = os.path.basename(os.path.splitext(self.getDLocation())[0])
-         # Status file name
-         statusFname = os.path.join(targetDir, '{}.status'.format(prjName))
          
          # Generate the projection
          if self.isATT():
