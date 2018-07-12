@@ -67,17 +67,24 @@ class Stockpile(LMObject):
       """
       outputInfo = []
       success = True
-      # Test each file
-      for fname in outputFnameList:
-         currSuccess, msgs = cls.testFile(fname)
-         if not currSuccess:
-            success = False
-            outputInfo.extend(msgs)
-            
-      if not success:
-         status = JobStatus.GENERAL_ERROR
+      
+      # Check incoming status
+      if status >= JobStatus.GENERAL_ERROR:
+         success = False
+         outputInfo.append('Incoming status value was {}'.format(success))
       else:
-         status = JobStatus.COMPLETE
+         
+         # Test each file
+         for fname in outputFnameList:
+            currSuccess, msgs = cls.testFile(fname)
+            if not currSuccess:
+               success = False
+               outputInfo.extend(msgs)
+               
+         if not success:
+            status = JobStatus.GENERAL_ERROR
+         else:
+            status = JobStatus.COMPLETE
 
       # Update database
       scribe = BorgScribe(ConsoleLogger())
