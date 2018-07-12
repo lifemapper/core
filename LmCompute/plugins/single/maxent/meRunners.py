@@ -180,7 +180,6 @@ class MaxentModel(object):
       if stdErr is not None:
          self.log.debug(stdErr)
          
-         status = JobStatus.GENERAL_ERROR
          if stdErr.find("Couldn't get file lock.") >= 0:
             status = JobStatus.ME_FILE_LOCK_ERROR
          elif stdErr.find("Could not reserve enough space for object heap") >= 0:
@@ -189,6 +188,9 @@ class MaxentModel(object):
             status = JobStatus.ME_HEAP_SPACE_ERROR
          elif stdErr.find("because it has 0 training samples") >= 0:
             status = JobStatus.ME_POINTS_ERROR
+         elif stdErr.find('Attempt to evaluate layer') >= 0: 
+            #1 at sample with no value
+            status = JobStatus.ME_CORRUPTED_LAYER
 
       self.log.debug("Checking output")
       errfname = os.path.join(self.workDir, 'maxent.log')
