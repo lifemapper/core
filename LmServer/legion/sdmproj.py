@@ -813,6 +813,10 @@ class SDMProjection(_ProjectionType, Raster):
       occStatusFilename = None
       
       if addOccRules:
+         
+         # TODO: Make this consistent and update occlayer compute me
+         
+         
          occStatusFilename = os.path.join(occTargetDir, 
                            'occ_{}.status'.format(self._occurrenceSet.getId()))
 

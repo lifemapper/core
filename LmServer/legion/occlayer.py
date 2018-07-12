@@ -647,8 +647,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
       
       outFileBasename = os.path.basename(self.getDLocation())
       bigFileBasename = os.path.basename(self.getDLocation(largeFile=True))
-
       
+      if statusFilename is None:
+         statusFilename = os.path.join(targetDir, 
+                                       'occ_{}.status'.format(self.getId()))
+
       # If already completed
       if JobStatus.finished(self.status):
          #touch directory then copy file
@@ -661,7 +664,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
                                outputs=targetFiles)
          
          # Echo complete status to status file
-         statusCmd = SystemCommand('echo {} > {}'.format(JobStatus.COMPLETE,
+         statusCmd = SystemCommand('echo', 
+                                   '{} > {}'.format(JobStatus.COMPLETE,
                                                          statusFilename),
                                    outputs=[statusFilename])
          

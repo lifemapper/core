@@ -194,8 +194,9 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          inputLayerFname = os.path.join(targetDir,
                                    os.path.basename(self.layer.getDLocation()))
          
-         statusFname = '{}.status'.format(os.path.split(inputLayerFname)[0])
-         
+         lyrStatusFname = os.path.join(targetDir, 
+                                    '{}.status'.format(os.path.split(
+                                       inputLayerFname)[0]))
          # Layer input
          try:
             status = self.layer.status
@@ -278,7 +279,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                               self.intersectParams[
                                  self.INTERSECT_PARAM_MIN_PERCENT],
                               squid=self.squid,
-                              layerStatusFilename=statusFname,
+                              layerStatusFilename=lyrStatusFname,
                               statusFilename=statusFile)
             
          intCmd.inputs.extend(self.shapegrid.getTargetFiles(workDir=workDir))
