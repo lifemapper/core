@@ -46,6 +46,8 @@ class _LmCommand(object):
    def __init__(self):
       self.inputs = []
       self.outputs = []
+      # If these are missing or empty, command won't run
+      self.required_inputs = []
       
    # ................................
    def call(self, **kwargs):
@@ -76,7 +78,8 @@ class _LmCommand(object):
       """
       @summary: Get a MfRule object for this command
       """
-      wrapCmd = LmWrapperCommand(self.getCommand(), self.inputs, self.outputs)
+      wrapCmd = LmWrapperCommand(self.getCommand(), self.inputs, self.outputs, 
+                                                         self.required_inputs)
       cmd = '{local}{cmd}'.format(local='LOCAL ' if local else '',
                                   cmd=wrapCmd.getCommand())
       rule = MfRule(cmd, self.outputs, dependencies=self.inputs)
@@ -88,6 +91,7 @@ class _LmCommand(object):
       @summary: Get the path to the script to run
       """
       return os.path.join(APP_PATH, self.relDir, self.scriptName)
+   
    # ................................
    def Popen(self, **kwargs):
       """
@@ -107,13 +111,16 @@ class LmWrapperCommand(_LmCommand):
    scriptName = 'lm_wrapper.py'
 
    # ................................
-   def __init__(self, wrap_command, inputs, outputs):
+   def __init__(self, wrap_command, inputs, outputs, required_inputs):
       """
       @summary: Construct the command object
       """
       _LmCommand.__init__(self)
       
-      self.args = '"{}" {}'.format(wrap_command, ' '.join(outputs))
+      optArgs = ''
+      for fn in required_inputs:
+         optArgs += '-i {} '.format(fn)
+      self.args = '{}"{}" {}'.format(optArgs, wrap_command, ' '.join(outputs))
       self.outputs = outputs
       
       self.inputs = inputs

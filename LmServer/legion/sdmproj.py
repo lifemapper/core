@@ -752,7 +752,9 @@ class SDMProjection(_ProjectionType, Raster):
                                                          convexHullFilename, 
                                                          ecoMaskFilename,
                                                          maskFn)
-            maskCmd = SystemCommand('gdalwarp', maskArgs, outputs=[maskFn])
+            maskCmd = SystemCommand('gdalwarp', maskArgs, 
+                                  nputs=[convexHullFilename, ecoMaskFilename], 
+                                  outputs=[maskFn])
             
             # Create a chain command so we don't have to know which shapefiles  
             #    are produced, try to define them if possible though

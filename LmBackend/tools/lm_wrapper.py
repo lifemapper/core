@@ -49,6 +49,8 @@ def handle_signal(signum, frame):
 # .............................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser()
+   parser.add_argument('-i', dest='input_files', action='append', 
+                                    help='These input files must be non-empty')
    parser.add_argument('cmd', type=str, 
                                      help='This is the command to be wrapped')
    parser.add_argument('touch_files', type=str, nargs='*', 
@@ -59,14 +61,25 @@ if __name__ == '__main__':
    signal.signal(signal.SIGINT, handle_signal)
    signal.signal(signal.SIGTERM, handle_signal)
 
-   try:
-      spr = SubprocessRunner(args.cmd)
-      current_procs.add(spr)
-      exitCode, stdErr = spr.run()
-      print('Exit code: {}'.format(exitCode))
-      print(stdErr)
-   except Exception, e:
-      print str(e)
+   skipComps = False
+   # Ensure required input files are not empty
+   if args.input_files is not None:
+      for fn in args.input_files:
+         if os.path.getsize(fn) <= 1:
+            print('File: {} has 0 length'.format(fn))
+            skipComps = True
+
+   if not skipComps:
+      try:
+         spr = SubprocessRunner(args.cmd)
+         current_procs.add(spr)
+         exitCode, stdErr = spr.run()
+         print('Exit code: {}'.format(exitCode))
+         print(stdErr)
+      except Exception, e:
+         print str(e)
+   else:
+      print('One or more required input files had zero length, skipping computations')
    
    # Don't try this if we were told to shut down
    if not shutdown:

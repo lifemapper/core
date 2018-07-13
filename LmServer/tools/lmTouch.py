@@ -17,6 +17,6 @@ if __name__ == '__main__':
    lmo.readyFilename(args.file_name)
    
    with open(args.file_name, 'w') as outF:
-      outF.write('')
+      outF.write('1')
    
 

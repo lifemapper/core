@@ -199,6 +199,10 @@ class SystemCommand(_LmCommand):
          
       self.script = script
       self.args = args
+      # System commands won't be able to handle empty inputs automatically,
+      #    therefore, we tell the wrapper about them and it can skip the 
+      #    command if these arguments are missing
+      self.required_inputs = inputs
       
    # ................................
    def getCommand(self):
