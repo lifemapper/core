@@ -96,6 +96,8 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
       ft = json.loads(feat.ExportToJson())
       right_hand_rule(ft['geometry']['coordinates'])
       joinAttrib = feat.GetFID()
+      # TODO: Remove this if updated library adds first id correctly
+      ft['id'] = feat.GetFID()
       
       # Join matrix attributes
       if rowLookup.has_key(joinAttrib):
@@ -161,6 +163,8 @@ def geoJsonify(shpFilename, matrix=None, mtxJoinAttrib=None):
    for feat in lyr:
       # Get the GeoJSON for the feature
       ft = json.loads(feat.ExportToJson())
+      # TODO: Remove this if updated library adds first id correctly
+      ft['id'] = feat.GetFID()
       right_hand_rule(ft['geometry']['coordinates'])
       joinAttrib = feat.GetFID()
       
