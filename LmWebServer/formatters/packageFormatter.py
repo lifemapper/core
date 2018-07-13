@@ -33,7 +33,7 @@ from StringIO import StringIO
 import zipfile
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType, JobStatus,\
-   HTTPStatus
+   HTTPStatus, PamStatKeys
 from LmCommon.common.matrix import Matrix
 from LmCommon.common.lmXml import tostring
 
@@ -53,6 +53,35 @@ MATRIX_DIR = os.path.join(GRIDSET_DIR, 'matrix')
 STATIC_PACKAGE_DIR = '/opt/lifemapper/LmWebServer/assets/gridset_package'
 DYN_PACKAGE_DIR = 'package'
    
+# .............................................................................
+def createStatHeaderLookup():
+   """
+   @summary: Create a statistic header lookup for all possible stats
+   """
+   return {
+      PamStatKeys.ALPHA : 'Alpha Diversity',
+      PamStatKeys.ALPHA_PROP : 'Proportional Alpha Diversity',
+      PamStatKeys.PHI : 'Range Size Per Site',
+      PamStatKeys.PHI_AVG_PROP : 'Proportional Range Size Per Site',
+      PamStatKeys.MNTD : 'Mean Nearest Taxon Distance',
+      PamStatKeys.MPD : 'Mean Pairwise Distance',
+      PamStatKeys.PEARSON : "Pearson's Correlation Coefficient",
+      PamStatKeys.PD : 'Phylogenetic Diversity',
+      PamStatKeys.MNND : 'Mean Nearest Neighbor Distance',
+      PamStatKeys.MPHYLODIST : 'Mean Phylogenetic Distance',
+      PamStatKeys.SPD : 'Sum of Phylogenetic Distance',
+      PamStatKeys.OMEGA : 'Species Range Size',
+      PamStatKeys.OMEGA_PROP : 'Proportional Species Range Size',
+      PamStatKeys.PSI : 'Species Range Richness',
+      PamStatKeys.PSI_AVG_PROP : 'Proportional Species Range Richness',
+      PamStatKeys.WHITTAKERS_BETA : 'Whittaker\'s Beta Diversity',
+      PamStatKeys.LANDES_ADDATIVE_BETA : 'Landes Addative Beta Diveristy',
+      PamStatKeys.LEGENDRES_BETA : 'Legendres Beta Diversity',
+      PamStatKeys.SITES_COVARIANCE : 'Sites Covariance',
+      PamStatKeys.SPECIES_COVARIANCE : 'Species Covariance',
+      PamStatKeys.SPECIES_VARIANCE_RATIO : 'Schluter\'s Species Variance Ratio',
+      PamStatKeys.SITES_VARIANCE_RATIO : 'Schluter\'s Sites Variance Ratio'
+   }
 
 # .............................................................................
 def createHeaderLookup(headers, squids=False, scribe=None, userId=None):
@@ -154,6 +183,11 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                sg = gsObj.getShapegrid()
                matrices = gsObj.getMatrices()
                
+               statLookupFn = os.path.join(DYN_PACKAGE_DIR, 
+                                           'statNameLookup.json')
+               zipF.writestr(statLookupFn, 'var statNameLookup =\n{}'.format(
+                                            json.dumps(createStatHeaderLookup(),
+                                                            indent=3)))
                for mtx in matrices:
                   if mtx.status == JobStatus.COMPLETE:
                      mtxObj = Matrix.load(mtx.getDLocation())
