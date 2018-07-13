@@ -121,6 +121,13 @@ def makeEml(myObj):
       # Contact
       SubElement(SubElement(dsEl, 'contact'), 'organizationName', value='Lifemapper')
       
+      try:
+         dsName = myObj.name
+      except:
+         dsName = 'Gridset {}'.format(myObj.getId())
+      
+      SubElement(dsEl, 'name', value=dsName)
+      
       for mtx in myObj.getMatrices():
          # TODO: Enable GRIMs
          if mtx.matrixType in [MatrixType.ANC_PAM, #MatrixType.GRIM, 
