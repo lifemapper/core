@@ -31,10 +31,10 @@
           02110-1301, USA.
 """
 import glob
-import numpy as np
 import os
 from osgeo import ogr
 import shutil
+import socket
 import time
 import zipfile
 
@@ -279,25 +279,38 @@ class MaxentModel(object):
       @summary: Run Maxent, create the model, write outputs appropriately
       """
       try:
-         cmd = self._buildCommand()
-         spr = SubprocessRunner(cmd)
-         startTime = time.time()
-         procExitStatus, procStdErr = spr.run()
-         endTime = time.time()
-         self.metrics.add_metric(LmMetricNames.RUNNING_TIME, 
-                                                         endTime - startTime)
-         status = JobStatus.COMPUTED
-         
-         # Check outputs
-         outputs = False
-         fnParts = os.path.splitext(self.lambdasFile)
-         multiLambda = "{0}_0{1}".format(fnParts[0], fnParts[1])
-         if os.path.exists(self.lambdasFile) or os.path.exists(multiLambda):
-            outputs = True
+         cont = True
+         triesLeft = 3
+         while cont:
+            cont = False
+            cmd = self._buildCommand()
+            spr = SubprocessRunner(cmd)
+            startTime = time.time()
+            procExitStatus, procStdErr = spr.run()
+            endTime = time.time()
+            self.metrics.add_metric(LmMetricNames.RUNNING_TIME, 
+                                                            endTime - startTime)
+            status = JobStatus.COMPUTED
             
-         if procExitStatus > 0 or not outputs:
-            # Error
-            status = self._findError(procStdErr)
+            # Check outputs
+            outputs = False
+            fnParts = os.path.splitext(self.lambdasFile)
+            multiLambda = "{0}_0{1}".format(fnParts[0], fnParts[1])
+            if os.path.exists(self.lambdasFile) or os.path.exists(multiLambda):
+               outputs = True
+               
+            if procExitStatus > 0 or not outputs:
+               # Error
+               status = self._findError(procStdErr)
+               
+               if status == JobStatus.ME_CORRUPTED_LAYER:
+                  self.log.debug('Status {}'.format(status))
+                  self.log.debug('Corrupted layer issue.  Retrying... ({})'.format(triesLeft))
+                  self.log.debug('Machine {}'.format(socket.gethostname()))
+                  if triesLeft > 0:
+                     cont = True
+                     triesLeft -= 1
+                     
       except LmException, lme:
          status = lme.status
          
