@@ -1006,7 +1006,9 @@ def initBoom(paramFname, walkNow=False):
       mfChain = filler.addBoomChain(boomGridset.getId())
       
    filler.close()
-   return filler.outConfigFilename
+   
+   # BOOM POST from web requires gridset object to be returned
+   return boomGridset
    
 # ...............................................
 if __name__ == '__main__':
@@ -1031,9 +1033,8 @@ if __name__ == '__main__':
       
    print('Running catalogBoomJob with paramFname = {}'
          .format(paramFname))
-   outConfigFilename = initBoom(paramFname, walkNow=doWalk)
-   print('Completed catalogBoomJob creating boom parameters = {}'
-         .format(outConfigFilename))
+   gs = initBoom(paramFname, walkNow=doWalk)
+   print('Completed catalogBoomJob creating gridset: {}'.format(gs.getId()))
 
     
 """
