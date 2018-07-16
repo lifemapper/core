@@ -160,7 +160,7 @@ class BoomPoster(object):
       with open(filename, 'w') as configOutF:
          self.config.write(configOutF)
       
-      gridset = initBoom(filename, isInitial=False)
+      gridset = initBoom(filename)
       
       return gridset
          
