@@ -1749,6 +1749,40 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateTaxon(tid int,
+                                              king varchar,
+                                              phyl varchar,
+                                              clss varchar,
+                                              ordr varchar,
+                                              fam  varchar,
+                                              gen  varchar,
+                                              rnk varchar,
+                                              can varchar,
+                                              gkey int,
+                                              skey int,
+                                              hierkey varchar,
+                                              cnt  int,
+                                              currtime double precision)
+RETURNS int AS
+$$
+DECLARE
+   success int = -1;
+BEGIN
+   UPDATE lm_v3.Taxon 
+      SET (kingdom, phylum, tx_class, tx_order, family, genus, rank, canonical, 
+           genuskey, specieskey, keyHierarchy, lastcount, modtime)
+        = (king, phyl, clss, ordr, fam, gen, rnk, can, gkey, skey, hierkey, 
+           cnt, currtime)  WHERE taxonid = tid;
+   IF FOUND THEN
+      success = 0;
+   ELSE
+      RAISE EXCEPTION 'Unable update Taxon %', tid;
+   END IF;
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
 
 -- ----------------------------------------------------------------------------
 -- OccurrenceSet

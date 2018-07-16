@@ -1496,6 +1496,32 @@ class Borg(DbPostgresql):
       return scientificname
 
 # ...............................................
+   def updateTaxon(self, sciName):
+      """
+      @summary: Update a taxon in the database.  
+      @param sciName: ScientificName object with taxonomy information for this taxon
+      @return: updated ScientificName
+      @note: Does not modify any foreign key (squid), or unique-constraint  
+             values, (taxonomySource, taxonKey, userId, sciname).
+      """
+      success = self.executeModifyFunction('lm_updateTaxon', 
+                                           sciName.getId(),
+                                           sciName.kingdom, 
+                                           sciName.phylum,
+                                           sciName.txClass, 
+                                           sciName.txOrder, 
+                                           sciName.family, 
+                                           sciName.genus, 
+                                           sciName.rank,
+                                           sciName.canonicalName, 
+                                           sciName.sourceGenusKey, 
+                                           sciName.sourceSpeciesKey,
+                                           sciName.sourceKeyHierarchy, 
+                                           sciName.lastOccurrenceCount, 
+                                           mx.DateTime.gmt().mjd)      
+      return success
+
+# ...............................................
    def getTaxon(self, squid, taxonSourceId, taxonKey, userId, taxonName):
       """
       @summary: Find a taxon associated with a TaxonomySource from database.
@@ -2355,6 +2381,8 @@ class Borg(DbPostgresql):
          success = self.updateMatrixColumn(obj)
       elif isinstance(obj, LMMatrix):
          success = self.updateMatrix(obj)
+      elif isinstance(obj, ScientificName):
+         success = self.updateTaxon(obj)
       elif isinstance(obj, Tree):
          meta = obj.dumpTreeMetadata()
          success = self.executeModifyFunction('lm_updateTree', obj.getId(),
