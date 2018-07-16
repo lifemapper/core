@@ -112,7 +112,7 @@ class OccurrenceLayerService(LmService):
       else:
          usr = self.scribe.findUser(self.getUserId())
       
-      bp = BoomPoster(usr.userid, usr.email, projectionData)
+      bp = BoomPoster(usr.userid, usr.email, projectionData, self.scribe)
       gridset = bp.init_boom()
 
       # TODO: What do we return?

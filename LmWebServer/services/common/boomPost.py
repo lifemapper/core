@@ -41,7 +41,10 @@ from LmCommon.common.lmconstants import (LMFormat, SERVER_BOOM_HEADING,
 #from LmDbServer.boom.boominput import ArchiveFiller
 #from LmDbServer.boom.initboom import initBoom
 from LmDbServer.tools.catalogBoomJob import initBoom
-from LmServer.common.lmconstants import TEMP_PATH, Priority
+from LmServer.common.lmconstants import TEMP_PATH, Priority, ENV_DATA_PATH
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.base.lmobj import LmHTTPError
+from LmDbServer.tools.catalogScenPkg import catalogScenPackages
 
 # .............................................................................
 class BoomPoster(object):
@@ -50,10 +53,12 @@ class BoomPoster(object):
                 BOOM input config file to be used for creating a BOOM.
    """
    # ................................
-   def __init__(self, userId, userEmail, reqJson):
+   def __init__(self, userId, userEmail, reqJson, scribe):
       """
       @todo: Make this more generic
       """
+      self.scribe = scribe
+      self.userId = userId
       self.config = ConfigParser()
       self.config.add_section(SERVER_BOOM_HEADING)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', userId)
@@ -344,15 +349,57 @@ class BoomPoster(object):
          self.config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE', 
                          scnsJson['scenario_package_filename'])
       else:
+         mdlScenCode = scnsJson['model_scenario']['scenario_code']
          self.config.set(SERVER_BOOM_HEADING, 
-                         'SCENARIO_PACKAGE_MODEL_SCENARIO', 
-                         scnsJson['model_scenario']['scenario_code'])
+                         'SCENARIO_PACKAGE_MODEL_SCENARIO', mdlScenCode)
          prjScnCodes = []
          for scn in scnsJson['projection_scenario']:
             prjScnCodes.append(scn['scenario_code'])
          self.config.set(SERVER_BOOM_HEADING, 
                          'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', 
                          ','.join(prjScnCodes))
+         
+         allScenCodes = set(prjScnCodes)
+         allScenCodes.add(mdlScenCode)
+         
+         if scnsJson.has_key('scenario_package_name'):
+            scnPkgName = scnsJson['scenario_package_name']
+         else:
+            
+            possiblePackages = self.scribe.getScenPackagesForScenario(
+                                    userId=self.userId, scenCode=mdlScenCode)
+            possiblePackages.extend(self.scribe.getScenPackagesForScenario(
+                                    userId=PUBLIC_USER, scenCode=mdlScenCode))
+            
+            scenPkg = None
+            # Find first scenario package that has scenarios matching the 
+            #    specified codes
+            for sp in possiblePackages:
+               # Verify that all scenarios are in this package
+               if all([i in sp.scenarios.keys() for i in allScenCodes]):
+                  scenPkg = sp
+                  break
+         
+            # TODO: If public user, copy into user space
+            if scenPkg.getUserId() == PUBLIC_USER:
+               # Need to copy the scenario package
+               scen_package_meta = os.path.join(ENV_DATA_PATH, 
+                                                '{}.py'.format(scenPkg.name))
+               if not os.path.exists(scen_package_meta):
+                  raise LmHTTPError(HTTPStatus.BAD_REQUEST, 
+                              'Scenario package metadata could not be found')
+               user = self.scribe.findUser(userId=self.userId)
+               user_email = user.email
+               
+               catalogScenPackages(scen_package_meta, self.userId, user_email)
+               #pass
+            
+            if scenPkg is None:
+               raise LmHTTPError(HTTPStatus.BAD_REQUEST, 
+                     'No acceptable scenario package could be found matching scenario inputs')
+            scnPkgName = scenPkg.name
+         
+         self.config.set(SERVER_BOOM_HEADING, 'scenario_package', scnPkgName)
    
    # ................................
    def _process_sdm(self, sdmJson):
