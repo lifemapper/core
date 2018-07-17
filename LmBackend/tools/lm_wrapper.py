@@ -65,7 +65,7 @@ if __name__ == '__main__':
    # Ensure required input files are not empty
    if args.input_files is not None:
       for fn in args.input_files:
-         if os.path.getsize(fn) <= 1:
+         if os.path.getsize(fn) < 1:
             print('File: {} has 0 length'.format(fn))
             skipComps = True
 
