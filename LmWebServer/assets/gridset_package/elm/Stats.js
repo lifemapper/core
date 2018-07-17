@@ -135,27 +135,6 @@ function A9(fun, a, b, c, d, e, f, g, h, i)
     : fun(a)(b)(c)(d)(e)(f)(g)(h)(i);
 }
 
-var _elm_lang$lazy$Native_Lazy = function() {
-
-function memoize(thunk)
-{
-    var value;
-    var isForced = false;
-    return function(tuple0) {
-        if (!isForced) {
-            value = thunk(tuple0);
-            isForced = true;
-        }
-        return value;
-    };
-}
-
-return {
-    memoize: memoize
-};
-
-}();
-
 //import Native.Utils //
 
 var _elm_lang$core$Native_Basics = function() {
@@ -3188,1215 +3167,6 @@ var _elm_lang$core$Platform$Program = {ctor: 'Program'};
 var _elm_lang$core$Platform$Task = {ctor: 'Task'};
 var _elm_lang$core$Platform$ProcessId = {ctor: 'ProcessId'};
 var _elm_lang$core$Platform$Router = {ctor: 'Router'};
-
-var _elm_lang$lazy$Lazy$force = function (_p0) {
-	var _p1 = _p0;
-	return _p1._0(
-		{ctor: '_Tuple0'});
-};
-var _elm_lang$lazy$Lazy$Lazy = function (a) {
-	return {ctor: 'Lazy', _0: a};
-};
-var _elm_lang$lazy$Lazy$lazy = function (thunk) {
-	return _elm_lang$lazy$Lazy$Lazy(
-		_elm_lang$lazy$Native_Lazy.memoize(thunk));
-};
-var _elm_lang$lazy$Lazy$map = F2(
-	function (f, a) {
-		return _elm_lang$lazy$Lazy$lazy(
-			function (_p2) {
-				var _p3 = _p2;
-				return f(
-					_elm_lang$lazy$Lazy$force(a));
-			});
-	});
-var _elm_lang$lazy$Lazy$map2 = F3(
-	function (f, a, b) {
-		return _elm_lang$lazy$Lazy$lazy(
-			function (_p4) {
-				var _p5 = _p4;
-				return A2(
-					f,
-					_elm_lang$lazy$Lazy$force(a),
-					_elm_lang$lazy$Lazy$force(b));
-			});
-	});
-var _elm_lang$lazy$Lazy$map3 = F4(
-	function (f, a, b, c) {
-		return _elm_lang$lazy$Lazy$lazy(
-			function (_p6) {
-				var _p7 = _p6;
-				return A3(
-					f,
-					_elm_lang$lazy$Lazy$force(a),
-					_elm_lang$lazy$Lazy$force(b),
-					_elm_lang$lazy$Lazy$force(c));
-			});
-	});
-var _elm_lang$lazy$Lazy$map4 = F5(
-	function (f, a, b, c, d) {
-		return _elm_lang$lazy$Lazy$lazy(
-			function (_p8) {
-				var _p9 = _p8;
-				return A4(
-					f,
-					_elm_lang$lazy$Lazy$force(a),
-					_elm_lang$lazy$Lazy$force(b),
-					_elm_lang$lazy$Lazy$force(c),
-					_elm_lang$lazy$Lazy$force(d));
-			});
-	});
-var _elm_lang$lazy$Lazy$map5 = F6(
-	function (f, a, b, c, d, e) {
-		return _elm_lang$lazy$Lazy$lazy(
-			function (_p10) {
-				var _p11 = _p10;
-				return A5(
-					f,
-					_elm_lang$lazy$Lazy$force(a),
-					_elm_lang$lazy$Lazy$force(b),
-					_elm_lang$lazy$Lazy$force(c),
-					_elm_lang$lazy$Lazy$force(d),
-					_elm_lang$lazy$Lazy$force(e));
-			});
-	});
-var _elm_lang$lazy$Lazy$apply = F2(
-	function (f, x) {
-		return _elm_lang$lazy$Lazy$lazy(
-			function (_p12) {
-				var _p13 = _p12;
-				return A2(
-					_elm_lang$lazy$Lazy$force,
-					f,
-					_elm_lang$lazy$Lazy$force(x));
-			});
-	});
-var _elm_lang$lazy$Lazy$andThen = F2(
-	function (callback, a) {
-		return _elm_lang$lazy$Lazy$lazy(
-			function (_p14) {
-				var _p15 = _p14;
-				return _elm_lang$lazy$Lazy$force(
-					callback(
-						_elm_lang$lazy$Lazy$force(a)));
-			});
-	});
-
-//import Maybe, Native.List //
-
-var _elm_lang$core$Native_Regex = function() {
-
-function escape(str)
-{
-	return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-}
-function caseInsensitive(re)
-{
-	return new RegExp(re.source, 'gi');
-}
-function regex(raw)
-{
-	return new RegExp(raw, 'g');
-}
-
-function contains(re, string)
-{
-	return string.match(re) !== null;
-}
-
-function find(n, re, str)
-{
-	n = n.ctor === 'All' ? Infinity : n._0;
-	var out = [];
-	var number = 0;
-	var string = str;
-	var lastIndex = re.lastIndex;
-	var prevLastIndex = -1;
-	var result;
-	while (number++ < n && (result = re.exec(string)))
-	{
-		if (prevLastIndex === re.lastIndex) break;
-		var i = result.length - 1;
-		var subs = new Array(i);
-		while (i > 0)
-		{
-			var submatch = result[i];
-			subs[--i] = submatch === undefined
-				? _elm_lang$core$Maybe$Nothing
-				: _elm_lang$core$Maybe$Just(submatch);
-		}
-		out.push({
-			match: result[0],
-			submatches: _elm_lang$core$Native_List.fromArray(subs),
-			index: result.index,
-			number: number
-		});
-		prevLastIndex = re.lastIndex;
-	}
-	re.lastIndex = lastIndex;
-	return _elm_lang$core$Native_List.fromArray(out);
-}
-
-function replace(n, re, replacer, string)
-{
-	n = n.ctor === 'All' ? Infinity : n._0;
-	var count = 0;
-	function jsReplacer(match)
-	{
-		if (count++ >= n)
-		{
-			return match;
-		}
-		var i = arguments.length - 3;
-		var submatches = new Array(i);
-		while (i > 0)
-		{
-			var submatch = arguments[i];
-			submatches[--i] = submatch === undefined
-				? _elm_lang$core$Maybe$Nothing
-				: _elm_lang$core$Maybe$Just(submatch);
-		}
-		return replacer({
-			match: match,
-			submatches: _elm_lang$core$Native_List.fromArray(submatches),
-			index: arguments[arguments.length - 2],
-			number: count
-		});
-	}
-	return string.replace(re, jsReplacer);
-}
-
-function split(n, re, str)
-{
-	n = n.ctor === 'All' ? Infinity : n._0;
-	if (n === Infinity)
-	{
-		return _elm_lang$core$Native_List.fromArray(str.split(re));
-	}
-	var string = str;
-	var result;
-	var out = [];
-	var start = re.lastIndex;
-	var restoreLastIndex = re.lastIndex;
-	while (n--)
-	{
-		if (!(result = re.exec(string))) break;
-		out.push(string.slice(start, result.index));
-		start = re.lastIndex;
-	}
-	out.push(string.slice(start));
-	re.lastIndex = restoreLastIndex;
-	return _elm_lang$core$Native_List.fromArray(out);
-}
-
-return {
-	regex: regex,
-	caseInsensitive: caseInsensitive,
-	escape: escape,
-
-	contains: F2(contains),
-	find: F3(find),
-	replace: F4(replace),
-	split: F3(split)
-};
-
-}();
-
-var _elm_lang$core$Regex$split = _elm_lang$core$Native_Regex.split;
-var _elm_lang$core$Regex$replace = _elm_lang$core$Native_Regex.replace;
-var _elm_lang$core$Regex$find = _elm_lang$core$Native_Regex.find;
-var _elm_lang$core$Regex$contains = _elm_lang$core$Native_Regex.contains;
-var _elm_lang$core$Regex$caseInsensitive = _elm_lang$core$Native_Regex.caseInsensitive;
-var _elm_lang$core$Regex$regex = _elm_lang$core$Native_Regex.regex;
-var _elm_lang$core$Regex$escape = _elm_lang$core$Native_Regex.escape;
-var _elm_lang$core$Regex$Match = F4(
-	function (a, b, c, d) {
-		return {match: a, submatches: b, index: c, number: d};
-	});
-var _elm_lang$core$Regex$Regex = {ctor: 'Regex'};
-var _elm_lang$core$Regex$AtMost = function (a) {
-	return {ctor: 'AtMost', _0: a};
-};
-var _elm_lang$core$Regex$All = {ctor: 'All'};
-
-var _Bogdanp$elm_combine$Combine$app = function (p) {
-	var _p0 = p;
-	if (_p0.ctor === 'Parser') {
-		return _p0._0;
-	} else {
-		return _elm_lang$lazy$Lazy$force(_p0._0);
-	}
-};
-var _Bogdanp$elm_combine$Combine$InputStream = F3(
-	function (a, b, c) {
-		return {data: a, input: b, position: c};
-	});
-var _Bogdanp$elm_combine$Combine$initStream = function (s) {
-	return A3(_Bogdanp$elm_combine$Combine$InputStream, s, s, 0);
-};
-var _Bogdanp$elm_combine$Combine$runParser = F3(
-	function (p, st, s) {
-		var _p1 = A3(
-			_Bogdanp$elm_combine$Combine$app,
-			p,
-			st,
-			_Bogdanp$elm_combine$Combine$initStream(s));
-		if (_p1._2.ctor === 'Ok') {
-			return _elm_lang$core$Result$Ok(
-				{ctor: '_Tuple3', _0: _p1._0, _1: _p1._1, _2: _p1._2._0});
-		} else {
-			return _elm_lang$core$Result$Err(
-				{ctor: '_Tuple3', _0: _p1._0, _1: _p1._1, _2: _p1._2._0});
-		}
-	});
-var _Bogdanp$elm_combine$Combine$parse = function (p) {
-	return A2(
-		_Bogdanp$elm_combine$Combine$runParser,
-		p,
-		{ctor: '_Tuple0'});
-};
-var _Bogdanp$elm_combine$Combine$ParseLocation = F3(
-	function (a, b, c) {
-		return {source: a, line: b, column: c};
-	});
-var _Bogdanp$elm_combine$Combine$currentLocation = function (stream) {
-	var find = F3(
-		function (position, currentLine, lines) {
-			find:
-			while (true) {
-				var _p2 = lines;
-				if (_p2.ctor === '[]') {
-					return A3(_Bogdanp$elm_combine$Combine$ParseLocation, '', 1, position);
-				} else {
-					if (_p2._1.ctor === '[]') {
-						return A3(_Bogdanp$elm_combine$Combine$ParseLocation, _p2._0, currentLine + 1, position);
-					} else {
-						var _p3 = _p2._0;
-						var length = _elm_lang$core$String$length(_p3);
-						if (_elm_lang$core$Native_Utils.cmp(position, length) > -1) {
-							var _v3 = (position - length) - 1,
-								_v4 = currentLine + 1,
-								_v5 = _p2._1;
-							position = _v3;
-							currentLine = _v4;
-							lines = _v5;
-							continue find;
-						} else {
-							if (_elm_lang$core$Native_Utils.eq(currentLine, 0)) {
-								return A3(_Bogdanp$elm_combine$Combine$ParseLocation, _p3, 1, position);
-							} else {
-								return A3(_Bogdanp$elm_combine$Combine$ParseLocation, _p3, currentLine, position - 1);
-							}
-						}
-					}
-				}
-			}
-		});
-	var lines = A2(_elm_lang$core$String$split, '\n', stream.data);
-	return A3(find, stream.position, 0, lines);
-};
-var _Bogdanp$elm_combine$Combine$currentSourceLine = function (_p4) {
-	return function (_) {
-		return _.source;
-	}(
-		_Bogdanp$elm_combine$Combine$currentLocation(_p4));
-};
-var _Bogdanp$elm_combine$Combine$currentLine = function (_p5) {
-	return function (_) {
-		return _.line;
-	}(
-		_Bogdanp$elm_combine$Combine$currentLocation(_p5));
-};
-var _Bogdanp$elm_combine$Combine$currentColumn = function (_p6) {
-	return function (_) {
-		return _.column;
-	}(
-		_Bogdanp$elm_combine$Combine$currentLocation(_p6));
-};
-var _Bogdanp$elm_combine$Combine$RecursiveParser = function (a) {
-	return {ctor: 'RecursiveParser', _0: a};
-};
-var _Bogdanp$elm_combine$Combine$lazy = function (t) {
-	return _Bogdanp$elm_combine$Combine$RecursiveParser(
-		_elm_lang$lazy$Lazy$lazy(
-			function (_p7) {
-				var _p8 = _p7;
-				return _Bogdanp$elm_combine$Combine$app(
-					t(
-						{ctor: '_Tuple0'}));
-			}));
-};
-var _Bogdanp$elm_combine$Combine$Parser = function (a) {
-	return {ctor: 'Parser', _0: a};
-};
-var _Bogdanp$elm_combine$Combine$primitive = _Bogdanp$elm_combine$Combine$Parser;
-var _Bogdanp$elm_combine$Combine$bimap = F3(
-	function (fok, ferr, p) {
-		return _Bogdanp$elm_combine$Combine$Parser(
-			F2(
-				function (state, stream) {
-					var _p9 = A3(_Bogdanp$elm_combine$Combine$app, p, state, stream);
-					if (_p9._2.ctor === 'Ok') {
-						return {
-							ctor: '_Tuple3',
-							_0: _p9._0,
-							_1: _p9._1,
-							_2: _elm_lang$core$Result$Ok(
-								fok(_p9._2._0))
-						};
-					} else {
-						return {
-							ctor: '_Tuple3',
-							_0: _p9._0,
-							_1: _p9._1,
-							_2: _elm_lang$core$Result$Err(
-								ferr(_p9._2._0))
-						};
-					}
-				}));
-	});
-var _Bogdanp$elm_combine$Combine$map = F2(
-	function (f, p) {
-		return A3(_Bogdanp$elm_combine$Combine$bimap, f, _elm_lang$core$Basics$identity, p);
-	});
-var _Bogdanp$elm_combine$Combine_ops = _Bogdanp$elm_combine$Combine_ops || {};
-_Bogdanp$elm_combine$Combine_ops['<$>'] = _Bogdanp$elm_combine$Combine$map;
-var _Bogdanp$elm_combine$Combine_ops = _Bogdanp$elm_combine$Combine_ops || {};
-_Bogdanp$elm_combine$Combine_ops['<$'] = function (res) {
-	return _Bogdanp$elm_combine$Combine$map(
-		_elm_lang$core$Basics$always(res));
-};
-var _Bogdanp$elm_combine$Combine$skip = function (p) {
-	return A2(
-		_Bogdanp$elm_combine$Combine_ops['<$'],
-		{ctor: '_Tuple0'},
-		p);
-};
-var _Bogdanp$elm_combine$Combine_ops = _Bogdanp$elm_combine$Combine_ops || {};
-_Bogdanp$elm_combine$Combine_ops['$>'] = _elm_lang$core$Basics$flip(
-	F2(
-		function (x, y) {
-			return A2(_Bogdanp$elm_combine$Combine_ops['<$'], x, y);
-		}));
-var _Bogdanp$elm_combine$Combine$mapError = _Bogdanp$elm_combine$Combine$bimap(_elm_lang$core$Basics$identity);
-var _Bogdanp$elm_combine$Combine_ops = _Bogdanp$elm_combine$Combine_ops || {};
-_Bogdanp$elm_combine$Combine_ops['<?>'] = F2(
-	function (p, m) {
-		return A2(
-			_Bogdanp$elm_combine$Combine$mapError,
-			_elm_lang$core$Basics$always(
-				{
-					ctor: '::',
-					_0: m,
-					_1: {ctor: '[]'}
-				}),
-			p);
-	});
-var _Bogdanp$elm_combine$Combine$withState = function (f) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				return A3(
-					_Bogdanp$elm_combine$Combine$app,
-					f(state),
-					state,
-					stream);
-			}));
-};
-var _Bogdanp$elm_combine$Combine$withLocation = function (f) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				return A3(
-					_Bogdanp$elm_combine$Combine$app,
-					f(
-						_Bogdanp$elm_combine$Combine$currentLocation(stream)),
-					state,
-					stream);
-			}));
-};
-var _Bogdanp$elm_combine$Combine$withLine = function (f) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				return A3(
-					_Bogdanp$elm_combine$Combine$app,
-					f(
-						_Bogdanp$elm_combine$Combine$currentLine(stream)),
-					state,
-					stream);
-			}));
-};
-var _Bogdanp$elm_combine$Combine$withColumn = function (f) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				return A3(
-					_Bogdanp$elm_combine$Combine$app,
-					f(
-						_Bogdanp$elm_combine$Combine$currentColumn(stream)),
-					state,
-					stream);
-			}));
-};
-var _Bogdanp$elm_combine$Combine$andThen = F2(
-	function (f, p) {
-		return _Bogdanp$elm_combine$Combine$Parser(
-			F2(
-				function (state, stream) {
-					var _p10 = A3(_Bogdanp$elm_combine$Combine$app, p, state, stream);
-					if (_p10._2.ctor === 'Ok') {
-						return A3(
-							_Bogdanp$elm_combine$Combine$app,
-							f(_p10._2._0),
-							_p10._0,
-							_p10._1);
-					} else {
-						return {
-							ctor: '_Tuple3',
-							_0: _p10._0,
-							_1: _p10._1,
-							_2: _elm_lang$core$Result$Err(_p10._2._0)
-						};
-					}
-				}));
-	});
-var _Bogdanp$elm_combine$Combine_ops = _Bogdanp$elm_combine$Combine_ops || {};
-_Bogdanp$elm_combine$Combine_ops['>>='] = _elm_lang$core$Basics$flip(_Bogdanp$elm_combine$Combine$andThen);
-var _Bogdanp$elm_combine$Combine$andMap = F2(
-	function (rp, lp) {
-		return A2(
-			_Bogdanp$elm_combine$Combine_ops['>>='],
-			lp,
-			A2(_elm_lang$core$Basics$flip, _Bogdanp$elm_combine$Combine$map, rp));
-	});
-var _Bogdanp$elm_combine$Combine_ops = _Bogdanp$elm_combine$Combine_ops || {};
-_Bogdanp$elm_combine$Combine_ops['<*>'] = _elm_lang$core$Basics$flip(_Bogdanp$elm_combine$Combine$andMap);
-var _Bogdanp$elm_combine$Combine_ops = _Bogdanp$elm_combine$Combine_ops || {};
-_Bogdanp$elm_combine$Combine_ops['<*'] = F2(
-	function (lp, rp) {
-		return A2(
-			_Bogdanp$elm_combine$Combine$andMap,
-			rp,
-			A2(_Bogdanp$elm_combine$Combine$map, _elm_lang$core$Basics$always, lp));
-	});
-var _Bogdanp$elm_combine$Combine_ops = _Bogdanp$elm_combine$Combine_ops || {};
-_Bogdanp$elm_combine$Combine_ops['*>'] = F2(
-	function (lp, rp) {
-		return A2(
-			_Bogdanp$elm_combine$Combine$andMap,
-			rp,
-			A2(
-				_Bogdanp$elm_combine$Combine$map,
-				_elm_lang$core$Basics$flip(_elm_lang$core$Basics$always),
-				lp));
-	});
-var _Bogdanp$elm_combine$Combine$between = F3(
-	function (lp, rp, p) {
-		return A2(
-			_Bogdanp$elm_combine$Combine_ops['<*'],
-			A2(_Bogdanp$elm_combine$Combine_ops['*>'], lp, p),
-			rp);
-	});
-var _Bogdanp$elm_combine$Combine$sequence = function (ps) {
-	var accumulate = F4(
-		function (acc, ps, state, stream) {
-			accumulate:
-			while (true) {
-				var _p11 = ps;
-				if (_p11.ctor === '[]') {
-					return {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$Result$Ok(
-							_elm_lang$core$List$reverse(acc))
-					};
-				} else {
-					var _p12 = A3(_Bogdanp$elm_combine$Combine$app, _p11._0, state, stream);
-					if (_p12._2.ctor === 'Ok') {
-						var _v11 = {ctor: '::', _0: _p12._2._0, _1: acc},
-							_v12 = _p11._1,
-							_v13 = _p12._0,
-							_v14 = _p12._1;
-						acc = _v11;
-						ps = _v12;
-						state = _v13;
-						stream = _v14;
-						continue accumulate;
-					} else {
-						return {
-							ctor: '_Tuple3',
-							_0: _p12._0,
-							_1: _p12._1,
-							_2: _elm_lang$core$Result$Err(_p12._2._0)
-						};
-					}
-				}
-			}
-		});
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				return A4(
-					accumulate,
-					{ctor: '[]'},
-					ps,
-					state,
-					stream);
-			}));
-};
-var _Bogdanp$elm_combine$Combine$fail = function (m) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				return {
-					ctor: '_Tuple3',
-					_0: state,
-					_1: stream,
-					_2: _elm_lang$core$Result$Err(
-						{
-							ctor: '::',
-							_0: m,
-							_1: {ctor: '[]'}
-						})
-				};
-			}));
-};
-var _Bogdanp$elm_combine$Combine$emptyErr = _Bogdanp$elm_combine$Combine$Parser(
-	F2(
-		function (state, stream) {
-			return {
-				ctor: '_Tuple3',
-				_0: state,
-				_1: stream,
-				_2: _elm_lang$core$Result$Err(
-					{ctor: '[]'})
-			};
-		}));
-var _Bogdanp$elm_combine$Combine$succeed = function (res) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				return {
-					ctor: '_Tuple3',
-					_0: state,
-					_1: stream,
-					_2: _elm_lang$core$Result$Ok(res)
-				};
-			}));
-};
-var _Bogdanp$elm_combine$Combine$putState = function (state) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (_p13, stream) {
-				return A3(
-					_Bogdanp$elm_combine$Combine$app,
-					_Bogdanp$elm_combine$Combine$succeed(
-						{ctor: '_Tuple0'}),
-					state,
-					stream);
-			}));
-};
-var _Bogdanp$elm_combine$Combine$modifyState = function (f) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				return A3(
-					_Bogdanp$elm_combine$Combine$app,
-					_Bogdanp$elm_combine$Combine$succeed(
-						{ctor: '_Tuple0'}),
-					f(state),
-					stream);
-			}));
-};
-var _Bogdanp$elm_combine$Combine$count = F2(
-	function (n, p) {
-		var accumulate = F2(
-			function (x, acc) {
-				return (_elm_lang$core$Native_Utils.cmp(x, 0) < 1) ? _Bogdanp$elm_combine$Combine$succeed(
-					_elm_lang$core$List$reverse(acc)) : A2(
-					_Bogdanp$elm_combine$Combine$andThen,
-					function (res) {
-						return A2(
-							accumulate,
-							x - 1,
-							{ctor: '::', _0: res, _1: acc});
-					},
-					p);
-			});
-		return A2(
-			accumulate,
-			n,
-			{ctor: '[]'});
-	});
-var _Bogdanp$elm_combine$Combine$string = function (s) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				if (A2(_elm_lang$core$String$startsWith, s, stream.input)) {
-					var len = _elm_lang$core$String$length(s);
-					var rem = A2(_elm_lang$core$String$dropLeft, len, stream.input);
-					var pos = stream.position + len;
-					return {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: _elm_lang$core$Native_Utils.update(
-							stream,
-							{input: rem, position: pos}),
-						_2: _elm_lang$core$Result$Ok(s)
-					};
-				} else {
-					return {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$Result$Err(
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$core$Basics_ops['++'],
-									'expected ',
-									_elm_lang$core$Basics$toString(s)),
-								_1: {ctor: '[]'}
-							})
-					};
-				}
-			}));
-};
-var _Bogdanp$elm_combine$Combine$parens = A2(
-	_Bogdanp$elm_combine$Combine$between,
-	_Bogdanp$elm_combine$Combine$string('('),
-	_Bogdanp$elm_combine$Combine$string(')'));
-var _Bogdanp$elm_combine$Combine$braces = A2(
-	_Bogdanp$elm_combine$Combine$between,
-	_Bogdanp$elm_combine$Combine$string('{'),
-	_Bogdanp$elm_combine$Combine$string('}'));
-var _Bogdanp$elm_combine$Combine$brackets = A2(
-	_Bogdanp$elm_combine$Combine$between,
-	_Bogdanp$elm_combine$Combine$string('['),
-	_Bogdanp$elm_combine$Combine$string(']'));
-var _Bogdanp$elm_combine$Combine$regex = function (pat) {
-	var pattern = A2(_elm_lang$core$String$startsWith, '^', pat) ? pat : A2(_elm_lang$core$Basics_ops['++'], '^', pat);
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				var _p14 = A3(
-					_elm_lang$core$Regex$find,
-					_elm_lang$core$Regex$AtMost(1),
-					_elm_lang$core$Regex$regex(pattern),
-					stream.input);
-				if ((_p14.ctor === '::') && (_p14._1.ctor === '[]')) {
-					var _p15 = _p14._0;
-					var len = _elm_lang$core$String$length(_p15.match);
-					var rem = A2(_elm_lang$core$String$dropLeft, len, stream.input);
-					var pos = stream.position + len;
-					return {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: _elm_lang$core$Native_Utils.update(
-							stream,
-							{input: rem, position: pos}),
-						_2: _elm_lang$core$Result$Ok(_p15.match)
-					};
-				} else {
-					return {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$Result$Err(
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$core$Basics_ops['++'],
-									'expected input matching Regexp /',
-									A2(_elm_lang$core$Basics_ops['++'], pattern, '/')),
-								_1: {ctor: '[]'}
-							})
-					};
-				}
-			}));
-};
-var _Bogdanp$elm_combine$Combine$whitespace = A2(
-	_Bogdanp$elm_combine$Combine_ops['<?>'],
-	_Bogdanp$elm_combine$Combine$regex('[ \t\r\n]*'),
-	'whitespace');
-var _Bogdanp$elm_combine$Combine$while = function (pred) {
-	var accumulate = F3(
-		function (acc, state, stream) {
-			accumulate:
-			while (true) {
-				var _p16 = _elm_lang$core$String$uncons(stream.input);
-				if (_p16.ctor === 'Just') {
-					var _p17 = _p16._0._0;
-					if (pred(_p17)) {
-						var pos = stream.position + 1;
-						var c = A2(_elm_lang$core$String$cons, _p17, '');
-						var _v17 = A2(_elm_lang$core$Basics_ops['++'], acc, c),
-							_v18 = state,
-							_v19 = _elm_lang$core$Native_Utils.update(
-							stream,
-							{input: _p16._0._1, position: pos});
-						acc = _v17;
-						state = _v18;
-						stream = _v19;
-						continue accumulate;
-					} else {
-						return {ctor: '_Tuple3', _0: state, _1: stream, _2: acc};
-					}
-				} else {
-					return {ctor: '_Tuple3', _0: state, _1: stream, _2: acc};
-				}
-			}
-		});
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				var _p18 = A3(accumulate, '', state, stream);
-				var rstate = _p18._0;
-				var rstream = _p18._1;
-				var res = _p18._2;
-				return {
-					ctor: '_Tuple3',
-					_0: rstate,
-					_1: rstream,
-					_2: _elm_lang$core$Result$Ok(res)
-				};
-			}));
-};
-var _Bogdanp$elm_combine$Combine$end = _Bogdanp$elm_combine$Combine$Parser(
-	F2(
-		function (state, stream) {
-			return _elm_lang$core$Native_Utils.eq(stream.input, '') ? {
-				ctor: '_Tuple3',
-				_0: state,
-				_1: stream,
-				_2: _elm_lang$core$Result$Ok(
-					{ctor: '_Tuple0'})
-			} : {
-				ctor: '_Tuple3',
-				_0: state,
-				_1: stream,
-				_2: _elm_lang$core$Result$Err(
-					{
-						ctor: '::',
-						_0: 'expected end of input',
-						_1: {ctor: '[]'}
-					})
-			};
-		}));
-var _Bogdanp$elm_combine$Combine$lookAhead = function (p) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				var _p19 = A3(_Bogdanp$elm_combine$Combine$app, p, state, stream);
-				if ((_p19.ctor === '_Tuple3') && (_p19._2.ctor === 'Ok')) {
-					return {
-						ctor: '_Tuple3',
-						_0: _p19._0,
-						_1: stream,
-						_2: _elm_lang$core$Result$Ok(_p19._2._0)
-					};
-				} else {
-					return _p19;
-				}
-			}));
-};
-var _Bogdanp$elm_combine$Combine$or = F2(
-	function (lp, rp) {
-		return _Bogdanp$elm_combine$Combine$Parser(
-			F2(
-				function (state, stream) {
-					var _p20 = A3(_Bogdanp$elm_combine$Combine$app, lp, state, stream);
-					if (_p20._2.ctor === 'Ok') {
-						return _p20;
-					} else {
-						var _p21 = A3(_Bogdanp$elm_combine$Combine$app, rp, state, stream);
-						if (_p21._2.ctor === 'Ok') {
-							return _p21;
-						} else {
-							return {
-								ctor: '_Tuple3',
-								_0: state,
-								_1: stream,
-								_2: _elm_lang$core$Result$Err(
-									A2(_elm_lang$core$Basics_ops['++'], _p20._2._0, _p21._2._0))
-							};
-						}
-					}
-				}));
-	});
-var _Bogdanp$elm_combine$Combine$choice = function (xs) {
-	return A3(_elm_lang$core$List$foldr, _Bogdanp$elm_combine$Combine$or, _Bogdanp$elm_combine$Combine$emptyErr, xs);
-};
-var _Bogdanp$elm_combine$Combine_ops = _Bogdanp$elm_combine$Combine_ops || {};
-_Bogdanp$elm_combine$Combine_ops['<|>'] = _Bogdanp$elm_combine$Combine$or;
-var _Bogdanp$elm_combine$Combine$optional = F2(
-	function (res, p) {
-		return A2(
-			_Bogdanp$elm_combine$Combine_ops['<|>'],
-			p,
-			_Bogdanp$elm_combine$Combine$succeed(res));
-	});
-var _Bogdanp$elm_combine$Combine$chainl = F2(
-	function (op, p) {
-		var accumulate = function (x) {
-			return A2(
-				_Bogdanp$elm_combine$Combine_ops['<|>'],
-				A2(
-					_Bogdanp$elm_combine$Combine$andThen,
-					function (f) {
-						return A2(
-							_Bogdanp$elm_combine$Combine$andThen,
-							function (y) {
-								return accumulate(
-									A2(f, x, y));
-							},
-							p);
-					},
-					op),
-				_Bogdanp$elm_combine$Combine$succeed(x));
-		};
-		return A2(_Bogdanp$elm_combine$Combine$andThen, accumulate, p);
-	});
-var _Bogdanp$elm_combine$Combine$chainr = F2(
-	function (op, p) {
-		var accumulate = function (x) {
-			return A2(
-				_Bogdanp$elm_combine$Combine_ops['<|>'],
-				A2(
-					_Bogdanp$elm_combine$Combine$andThen,
-					function (f) {
-						return A2(
-							_Bogdanp$elm_combine$Combine$andThen,
-							function (y) {
-								return _Bogdanp$elm_combine$Combine$succeed(
-									A2(f, x, y));
-							},
-							A2(_Bogdanp$elm_combine$Combine$andThen, accumulate, p));
-					},
-					op),
-				_Bogdanp$elm_combine$Combine$succeed(x));
-		};
-		return A2(_Bogdanp$elm_combine$Combine$andThen, accumulate, p);
-	});
-var _Bogdanp$elm_combine$Combine$maybe = function (p) {
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				var _p22 = A3(_Bogdanp$elm_combine$Combine$app, p, state, stream);
-				if ((_p22.ctor === '_Tuple3') && (_p22._2.ctor === 'Ok')) {
-					return {
-						ctor: '_Tuple3',
-						_0: _p22._0,
-						_1: _p22._1,
-						_2: _elm_lang$core$Result$Ok(
-							_elm_lang$core$Maybe$Just(_p22._2._0))
-					};
-				} else {
-					return {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$Result$Ok(_elm_lang$core$Maybe$Nothing)
-					};
-				}
-			}));
-};
-var _Bogdanp$elm_combine$Combine$many = function (p) {
-	var accumulate = F3(
-		function (acc, state, stream) {
-			accumulate:
-			while (true) {
-				var _p23 = A3(_Bogdanp$elm_combine$Combine$app, p, state, stream);
-				if ((_p23.ctor === '_Tuple3') && (_p23._2.ctor === 'Ok')) {
-					var _p25 = _p23._1;
-					var _p24 = _p23._0;
-					if (_elm_lang$core$Native_Utils.eq(stream, _p25)) {
-						return {
-							ctor: '_Tuple3',
-							_0: _p24,
-							_1: _p25,
-							_2: _elm_lang$core$List$reverse(acc)
-						};
-					} else {
-						var _v25 = {ctor: '::', _0: _p23._2._0, _1: acc},
-							_v26 = _p24,
-							_v27 = _p25;
-						acc = _v25;
-						state = _v26;
-						stream = _v27;
-						continue accumulate;
-					}
-				} else {
-					return {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$List$reverse(acc)
-					};
-				}
-			}
-		});
-	return _Bogdanp$elm_combine$Combine$Parser(
-		F2(
-			function (state, stream) {
-				var _p26 = A3(
-					accumulate,
-					{ctor: '[]'},
-					state,
-					stream);
-				var rstate = _p26._0;
-				var rstream = _p26._1;
-				var res = _p26._2;
-				return {
-					ctor: '_Tuple3',
-					_0: rstate,
-					_1: rstream,
-					_2: _elm_lang$core$Result$Ok(res)
-				};
-			}));
-};
-var _Bogdanp$elm_combine$Combine$many1 = function (p) {
-	return A2(
-		_Bogdanp$elm_combine$Combine_ops['<*>'],
-		A2(
-			_Bogdanp$elm_combine$Combine_ops['<$>'],
-			F2(
-				function (x, y) {
-					return {ctor: '::', _0: x, _1: y};
-				}),
-			p),
-		_Bogdanp$elm_combine$Combine$many(p));
-};
-var _Bogdanp$elm_combine$Combine$skipMany1 = function (p) {
-	return A2(
-		_Bogdanp$elm_combine$Combine_ops['<$'],
-		{ctor: '_Tuple0'},
-		_Bogdanp$elm_combine$Combine$many1(
-			_Bogdanp$elm_combine$Combine$skip(p)));
-};
-var _Bogdanp$elm_combine$Combine$sepBy1 = F2(
-	function (sep, p) {
-		return A2(
-			_Bogdanp$elm_combine$Combine_ops['<*>'],
-			A2(
-				_Bogdanp$elm_combine$Combine_ops['<$>'],
-				F2(
-					function (x, y) {
-						return {ctor: '::', _0: x, _1: y};
-					}),
-				p),
-			_Bogdanp$elm_combine$Combine$many(
-				A2(_Bogdanp$elm_combine$Combine_ops['*>'], sep, p)));
-	});
-var _Bogdanp$elm_combine$Combine$sepBy = F2(
-	function (sep, p) {
-		return A2(
-			_Bogdanp$elm_combine$Combine_ops['<|>'],
-			A2(_Bogdanp$elm_combine$Combine$sepBy1, sep, p),
-			_Bogdanp$elm_combine$Combine$succeed(
-				{ctor: '[]'}));
-	});
-var _Bogdanp$elm_combine$Combine$sepEndBy1 = F2(
-	function (sep, p) {
-		return A2(
-			_Bogdanp$elm_combine$Combine_ops['<*'],
-			A2(_Bogdanp$elm_combine$Combine$sepBy1, sep, p),
-			_Bogdanp$elm_combine$Combine$maybe(sep));
-	});
-var _Bogdanp$elm_combine$Combine$sepEndBy = F2(
-	function (sep, p) {
-		return A2(
-			_Bogdanp$elm_combine$Combine_ops['<|>'],
-			A2(_Bogdanp$elm_combine$Combine$sepEndBy1, sep, p),
-			_Bogdanp$elm_combine$Combine$succeed(
-				{ctor: '[]'}));
-	});
-var _Bogdanp$elm_combine$Combine$skipMany = function (p) {
-	return A2(
-		_Bogdanp$elm_combine$Combine_ops['<$'],
-		{ctor: '_Tuple0'},
-		_Bogdanp$elm_combine$Combine$many(
-			_Bogdanp$elm_combine$Combine$skip(p)));
-};
-var _Bogdanp$elm_combine$Combine$manyTill = F2(
-	function (p, end) {
-		var accumulate = F3(
-			function (acc, state, stream) {
-				accumulate:
-				while (true) {
-					var _p27 = A3(_Bogdanp$elm_combine$Combine$app, end, state, stream);
-					if (_p27._2.ctor === 'Ok') {
-						return {
-							ctor: '_Tuple3',
-							_0: _p27._0,
-							_1: _p27._1,
-							_2: _elm_lang$core$Result$Ok(
-								_elm_lang$core$List$reverse(acc))
-						};
-					} else {
-						var _p28 = A3(_Bogdanp$elm_combine$Combine$app, p, state, stream);
-						if ((_p28.ctor === '_Tuple3') && (_p28._2.ctor === 'Ok')) {
-							var _v30 = {ctor: '::', _0: _p28._2._0, _1: acc},
-								_v31 = _p28._0,
-								_v32 = _p28._1;
-							acc = _v30;
-							state = _v31;
-							stream = _v32;
-							continue accumulate;
-						} else {
-							return {
-								ctor: '_Tuple3',
-								_0: _p27._0,
-								_1: _p27._1,
-								_2: _elm_lang$core$Result$Err(_p27._2._0)
-							};
-						}
-					}
-				}
-			});
-		return _Bogdanp$elm_combine$Combine$Parser(
-			accumulate(
-				{ctor: '[]'}));
-	});
-
-var _Bogdanp$elm_combine$Combine_Char$crlf = A2(
-	_Bogdanp$elm_combine$Combine_ops['<$'],
-	_elm_lang$core$Native_Utils.chr('\n'),
-	A2(
-		_Bogdanp$elm_combine$Combine_ops['<?>'],
-		_Bogdanp$elm_combine$Combine$regex('\r\n'),
-		'expected crlf'));
-var _Bogdanp$elm_combine$Combine_Char$satisfy = function (pred) {
-	return _Bogdanp$elm_combine$Combine$primitive(
-		F2(
-			function (state, stream) {
-				var message = 'could not satisfy predicate';
-				var _p0 = _elm_lang$core$String$uncons(stream.input);
-				if (_p0.ctor === 'Just') {
-					var _p1 = _p0._0._0;
-					return pred(_p1) ? {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: _elm_lang$core$Native_Utils.update(
-							stream,
-							{input: _p0._0._1, position: stream.position + 1}),
-						_2: _elm_lang$core$Result$Ok(_p1)
-					} : {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$Result$Err(
-							{
-								ctor: '::',
-								_0: message,
-								_1: {ctor: '[]'}
-							})
-					};
-				} else {
-					return {
-						ctor: '_Tuple3',
-						_0: state,
-						_1: stream,
-						_2: _elm_lang$core$Result$Err(
-							{
-								ctor: '::',
-								_0: message,
-								_1: {ctor: '[]'}
-							})
-					};
-				}
-			}));
-};
-var _Bogdanp$elm_combine$Combine_Char$char = function (c) {
-	return A2(
-		_Bogdanp$elm_combine$Combine_ops['<?>'],
-		_Bogdanp$elm_combine$Combine_Char$satisfy(
-			F2(
-				function (x, y) {
-					return _elm_lang$core$Native_Utils.eq(x, y);
-				})(c)),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			'expected ',
-			_elm_lang$core$Basics$toString(c)));
-};
-var _Bogdanp$elm_combine$Combine_Char$anyChar = A2(
-	_Bogdanp$elm_combine$Combine_ops['<?>'],
-	_Bogdanp$elm_combine$Combine_Char$satisfy(
-		_elm_lang$core$Basics$always(true)),
-	'expected any character');
-var _Bogdanp$elm_combine$Combine_Char$oneOf = function (cs) {
-	return A2(
-		_Bogdanp$elm_combine$Combine_ops['<?>'],
-		_Bogdanp$elm_combine$Combine_Char$satisfy(
-			A2(_elm_lang$core$Basics$flip, _elm_lang$core$List$member, cs)),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			'expected one of ',
-			_elm_lang$core$Basics$toString(cs)));
-};
-var _Bogdanp$elm_combine$Combine_Char$noneOf = function (cs) {
-	return A2(
-		_Bogdanp$elm_combine$Combine_ops['<?>'],
-		_Bogdanp$elm_combine$Combine_Char$satisfy(
-			function (_p2) {
-				return !A3(_elm_lang$core$Basics$flip, _elm_lang$core$List$member, cs, _p2);
-			}),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			'expected none of ',
-			_elm_lang$core$Basics$toString(cs)));
-};
-var _Bogdanp$elm_combine$Combine_Char$space = A2(
-	_Bogdanp$elm_combine$Combine_ops['<?>'],
-	_Bogdanp$elm_combine$Combine_Char$satisfy(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.eq(x, y);
-			})(
-			_elm_lang$core$Native_Utils.chr(' '))),
-	'expected space');
-var _Bogdanp$elm_combine$Combine_Char$tab = A2(
-	_Bogdanp$elm_combine$Combine_ops['<?>'],
-	_Bogdanp$elm_combine$Combine_Char$satisfy(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.eq(x, y);
-			})(
-			_elm_lang$core$Native_Utils.chr('\t'))),
-	'expected tab');
-var _Bogdanp$elm_combine$Combine_Char$newline = A2(
-	_Bogdanp$elm_combine$Combine_ops['<?>'],
-	_Bogdanp$elm_combine$Combine_Char$satisfy(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.eq(x, y);
-			})(
-			_elm_lang$core$Native_Utils.chr('\n'))),
-	'expected newline');
-var _Bogdanp$elm_combine$Combine_Char$eol = A2(_Bogdanp$elm_combine$Combine_ops['<|>'], _Bogdanp$elm_combine$Combine_Char$newline, _Bogdanp$elm_combine$Combine_Char$crlf);
-var _Bogdanp$elm_combine$Combine_Char$lower = A2(
-	_Bogdanp$elm_combine$Combine_ops['<?>'],
-	_Bogdanp$elm_combine$Combine_Char$satisfy(_elm_lang$core$Char$isLower),
-	'expected a lowercase character');
-var _Bogdanp$elm_combine$Combine_Char$upper = A2(
-	_Bogdanp$elm_combine$Combine_ops['<?>'],
-	_Bogdanp$elm_combine$Combine_Char$satisfy(_elm_lang$core$Char$isUpper),
-	'expected an uppercase character');
-var _Bogdanp$elm_combine$Combine_Char$digit = A2(
-	_Bogdanp$elm_combine$Combine_ops['<?>'],
-	_Bogdanp$elm_combine$Combine_Char$satisfy(_elm_lang$core$Char$isDigit),
-	'expected a digit');
-var _Bogdanp$elm_combine$Combine_Char$octDigit = A2(
-	_Bogdanp$elm_combine$Combine_ops['<?>'],
-	_Bogdanp$elm_combine$Combine_Char$satisfy(_elm_lang$core$Char$isOctDigit),
-	'expected an octal digit');
-var _Bogdanp$elm_combine$Combine_Char$hexDigit = A2(
-	_Bogdanp$elm_combine$Combine_ops['<?>'],
-	_Bogdanp$elm_combine$Combine_Char$satisfy(_elm_lang$core$Char$isHexDigit),
-	'expected a hexadecimal digit');
 
 var _elm_lang$core$Dict$foldr = F3(
 	function (f, acc, t) {
@@ -11349,163 +10119,6 @@ var _elm_lang$svg$Svg_Attributes$accumulate = _elm_lang$virtual_dom$VirtualDom$a
 var _elm_lang$svg$Svg_Attributes$accelerate = _elm_lang$virtual_dom$VirtualDom$attribute('accelerate');
 var _elm_lang$svg$Svg_Attributes$accentHeight = _elm_lang$virtual_dom$VirtualDom$attribute('accent-height');
 
-var _periodic$elm_csv$Csv$textData = _Bogdanp$elm_combine$Combine_Char$noneOf(
-	{
-		ctor: '::',
-		_0: _elm_lang$core$Native_Utils.chr('\"'),
-		_1: {
-			ctor: '::',
-			_0: _elm_lang$core$Native_Utils.chr(','),
-			_1: {
-				ctor: '::',
-				_0: _elm_lang$core$Native_Utils.chr('\n'),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$core$Native_Utils.chr('\r'),
-					_1: {ctor: '[]'}
-				}
-			}
-		}
-	});
-var _periodic$elm_csv$Csv$nonEscaped = A2(
-	_Bogdanp$elm_combine$Combine$mapError,
-	_elm_lang$core$Basics$always(
-		{
-			ctor: '::',
-			_0: 'Expected non-escaped value.',
-			_1: {ctor: '[]'}
-		}),
-	A2(
-		_Bogdanp$elm_combine$Combine$map,
-		_elm_lang$core$String$fromList,
-		_Bogdanp$elm_combine$Combine$many(_periodic$elm_csv$Csv$textData)));
-var _periodic$elm_csv$Csv$lf = _Bogdanp$elm_combine$Combine_Char$char(
-	_elm_lang$core$Native_Utils.chr('\n'));
-var _periodic$elm_csv$Csv$cr = _Bogdanp$elm_combine$Combine_Char$char(
-	_elm_lang$core$Native_Utils.chr('\r'));
-var _periodic$elm_csv$Csv$lineSep = A2(
-	_Bogdanp$elm_combine$Combine_ops['<$'],
-	{ctor: '_Tuple0'},
-	A2(
-		_Bogdanp$elm_combine$Combine_ops['<?>'],
-		A2(
-			_Bogdanp$elm_combine$Combine_ops['<|>'],
-			A2(_Bogdanp$elm_combine$Combine_ops['*>'], _periodic$elm_csv$Csv$cr, _periodic$elm_csv$Csv$lf),
-			A2(_Bogdanp$elm_combine$Combine_ops['<|>'], _periodic$elm_csv$Csv$cr, _periodic$elm_csv$Csv$lf)),
-		'Expected new line.'));
-var _periodic$elm_csv$Csv$doubleQuote = _Bogdanp$elm_combine$Combine_Char$char(
-	_elm_lang$core$Native_Utils.chr('\"'));
-var _periodic$elm_csv$Csv$doubleDoubleQuote = A2(_Bogdanp$elm_combine$Combine_ops['*>'], _periodic$elm_csv$Csv$doubleQuote, _periodic$elm_csv$Csv$doubleQuote);
-var _periodic$elm_csv$Csv$comma = _Bogdanp$elm_combine$Combine_Char$char(
-	_elm_lang$core$Native_Utils.chr(','));
-var _periodic$elm_csv$Csv$escaped = function () {
-	var innerChar = _Bogdanp$elm_combine$Combine$choice(
-		{
-			ctor: '::',
-			_0: _periodic$elm_csv$Csv$textData,
-			_1: {
-				ctor: '::',
-				_0: _periodic$elm_csv$Csv$comma,
-				_1: {
-					ctor: '::',
-					_0: _periodic$elm_csv$Csv$cr,
-					_1: {
-						ctor: '::',
-						_0: _periodic$elm_csv$Csv$lf,
-						_1: {
-							ctor: '::',
-							_0: _periodic$elm_csv$Csv$doubleDoubleQuote,
-							_1: {ctor: '[]'}
-						}
-					}
-				}
-			}
-		});
-	var innerString = A2(
-		_Bogdanp$elm_combine$Combine$map,
-		_elm_lang$core$String$fromList,
-		_Bogdanp$elm_combine$Combine$many(innerChar));
-	return A2(
-		_Bogdanp$elm_combine$Combine$mapError,
-		_elm_lang$core$Basics$always(
-			{
-				ctor: '::',
-				_0: 'Expected escaped value.',
-				_1: {ctor: '[]'}
-			}),
-		A2(
-			_Bogdanp$elm_combine$Combine_ops['<*'],
-			A2(_Bogdanp$elm_combine$Combine_ops['*>'], _periodic$elm_csv$Csv$doubleQuote, innerString),
-			_periodic$elm_csv$Csv$doubleQuote));
-}();
-var _periodic$elm_csv$Csv$field = _Bogdanp$elm_combine$Combine$choice(
-	{
-		ctor: '::',
-		_0: _periodic$elm_csv$Csv$escaped,
-		_1: {
-			ctor: '::',
-			_0: _periodic$elm_csv$Csv$nonEscaped,
-			_1: {ctor: '[]'}
-		}
-	});
-var _periodic$elm_csv$Csv$name = _periodic$elm_csv$Csv$field;
-var _periodic$elm_csv$Csv$header = A2(_Bogdanp$elm_combine$Combine$sepBy, _periodic$elm_csv$Csv$comma, _periodic$elm_csv$Csv$name);
-var _periodic$elm_csv$Csv$record = A2(_Bogdanp$elm_combine$Combine$sepBy, _periodic$elm_csv$Csv$comma, _periodic$elm_csv$Csv$field);
-var _periodic$elm_csv$Csv$addTrailingLineSep = function (str) {
-	return (!(A2(_elm_lang$core$String$endsWith, '\n', str) || A2(_elm_lang$core$String$endsWith, '\r', str))) ? A2(_elm_lang$core$Basics_ops['++'], str, '\r\n') : str;
-};
-var _periodic$elm_csv$Csv$thrd = function (_p0) {
-	var _p1 = _p0;
-	return _p1._2;
-};
-var _periodic$elm_csv$Csv$Csv = F2(
-	function (a, b) {
-		return {headers: a, records: b};
-	});
-var _periodic$elm_csv$Csv$file = A2(
-	_Bogdanp$elm_combine$Combine_ops['<*'],
-	A2(
-		_Bogdanp$elm_combine$Combine_ops['<*>'],
-		A2(
-			_Bogdanp$elm_combine$Combine_ops['<*'],
-			A2(_Bogdanp$elm_combine$Combine_ops['<$>'], _periodic$elm_csv$Csv$Csv, _periodic$elm_csv$Csv$header),
-			A2(_Bogdanp$elm_combine$Combine_ops['<?>'], _periodic$elm_csv$Csv$lineSep, 'Unterminated header')),
-		_Bogdanp$elm_combine$Combine$many(
-			A2(
-				_Bogdanp$elm_combine$Combine_ops['<*'],
-				_periodic$elm_csv$Csv$record,
-				A2(_Bogdanp$elm_combine$Combine_ops['<?>'], _periodic$elm_csv$Csv$lineSep, 'Unterminated record')))),
-	_Bogdanp$elm_combine$Combine$end);
-var _periodic$elm_csv$Csv$parse = function (_p2) {
-	return A2(
-		_elm_lang$core$Result$map,
-		_periodic$elm_csv$Csv$thrd,
-		A2(
-			_elm_lang$core$Result$mapError,
-			_periodic$elm_csv$Csv$thrd,
-			A2(
-				_Bogdanp$elm_combine$Combine$parse,
-				_periodic$elm_csv$Csv$file,
-				_periodic$elm_csv$Csv$addTrailingLineSep(_p2))));
-};
-
-var _user$project$ExampleStats$exampleCsv = ',,,alpha,alphaProp,phi,phiProp\n0,-124.5,49.5,8.0,0.222222222222,538.0,0.0851265822785\n1,-123.5,49.5,7.0,0.194444444444,637.0,0.115189873418\n2,-122.5,49.5,8.0,0.222222222222,716.0,0.113291139241\n3,-121.5,49.5,10.0,0.277777777778,832.0,0.105316455696\n4,-120.5,49.5,8.0,0.222222222222,709.0,0.112183544304\n5,-119.5,49.5,4.0,0.111111111111,568.0,0.179746835443\n6,-118.5,49.5,4.0,0.111111111111,568.0,0.179746835443\n7,-117.5,49.5,5.0,0.138888888889,624.0,0.157974683544\n8,-116.5,49.5,5.0,0.138888888889,624.0,0.157974683544\n9,-115.5,49.5,5.0,0.138888888889,624.0,0.157974683544\n10,-114.5,49.5,7.0,0.194444444444,839.0,0.151717902351\n11,-113.5,49.5,5.0,0.138888888889,742.0,0.187848101266\n12,-112.5,49.5,4.0,0.111111111111,564.0,0.178481012658\n13,-111.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n14,-110.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n15,-109.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n16,-108.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n17,-107.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n18,-106.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n19,-105.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n20,-104.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n21,-103.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n22,-102.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n23,-101.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n24,-100.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n25,-99.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n26,-98.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n27,-97.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n28,-96.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n29,-95.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n30,-94.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n31,-93.5,49.5,1.0,0.0277777777778,246.0,0.311392405063\n32,-92.5,49.5,0.0,0.0,0.0,nan\n33,-91.5,49.5,0.0,0.0,0.0,nan\n34,-90.5,49.5,0.0,0.0,0.0,nan\n35,-89.5,49.5,0.0,0.0,0.0,nan\n36,-88.5,49.5,0.0,0.0,0.0,nan\n37,-87.5,49.5,0.0,0.0,0.0,nan\n38,-86.5,49.5,0.0,0.0,0.0,nan\n39,-85.5,49.5,0.0,0.0,0.0,nan\n40,-84.5,49.5,0.0,0.0,0.0,nan\n41,-83.5,49.5,0.0,0.0,0.0,nan\n42,-82.5,49.5,0.0,0.0,0.0,nan\n43,-81.5,49.5,0.0,0.0,0.0,nan\n44,-80.5,49.5,0.0,0.0,0.0,nan\n45,-79.5,49.5,0.0,0.0,0.0,nan\n46,-78.5,49.5,0.0,0.0,0.0,nan\n47,-77.5,49.5,0.0,0.0,0.0,nan\n48,-76.5,49.5,0.0,0.0,0.0,nan\n49,-75.5,49.5,0.0,0.0,0.0,nan\n50,-74.5,49.5,0.0,0.0,0.0,nan\n51,-73.5,49.5,0.0,0.0,0.0,nan\n52,-72.5,49.5,0.0,0.0,0.0,nan\n53,-71.5,49.5,0.0,0.0,0.0,nan\n54,-70.5,49.5,0.0,0.0,0.0,nan\n55,-69.5,49.5,0.0,0.0,0.0,nan\n56,-68.5,49.5,0.0,0.0,0.0,nan\n57,-67.5,49.5,0.0,0.0,0.0,nan\n58,-66.5,49.5,0.0,0.0,0.0,nan\n59,-124.5,48.5,9.0,0.25,560.0,0.0787623066104\n60,-123.5,48.5,9.0,0.25,560.0,0.0787623066104\n61,-122.5,48.5,10.0,0.277777777778,770.0,0.0974683544304\n62,-121.5,48.5,9.0,0.25,729.0,0.10253164557\n63,-120.5,48.5,10.0,0.277777777778,832.0,0.105316455696\n64,-119.5,48.5,6.0,0.166666666667,727.0,0.153375527426\n65,-118.5,48.5,6.0,0.166666666667,727.0,0.153375527426\n66,-117.5,48.5,7.0,0.194444444444,783.0,0.141591320072\n67,-116.5,48.5,7.0,0.194444444444,783.0,0.141591320072\n68,-115.5,48.5,7.0,0.194444444444,783.0,0.141591320072\n69,-114.5,48.5,5.0,0.138888888889,751.0,0.190126582278\n70,-113.5,48.5,6.0,0.166666666667,783.0,0.165189873418\n71,-112.5,48.5,5.0,0.138888888889,742.0,0.187848101266\n72,-111.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n73,-110.5,48.5,0.0,0.0,0.0,nan\n74,-109.5,48.5,2.0,0.0555555555556,429.0,0.271518987342\n75,-108.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n76,-107.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n77,-106.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n78,-105.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n79,-104.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n80,-103.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n81,-102.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n82,-101.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n83,-100.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n84,-99.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n85,-98.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n86,-97.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n87,-96.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n88,-95.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n89,-94.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n90,-93.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n91,-92.5,48.5,1.0,0.0277777777778,246.0,0.311392405063\n92,-91.5,48.5,0.0,0.0,0.0,nan\n93,-90.5,48.5,0.0,0.0,0.0,nan\n94,-89.5,48.5,0.0,0.0,0.0,nan\n95,-88.5,48.5,0.0,0.0,0.0,nan\n96,-87.5,48.5,0.0,0.0,0.0,nan\n97,-86.5,48.5,0.0,0.0,0.0,nan\n98,-85.5,48.5,0.0,0.0,0.0,nan\n99,-84.5,48.5,0.0,0.0,0.0,nan\n100,-83.5,48.5,0.0,0.0,0.0,nan\n101,-82.5,48.5,0.0,0.0,0.0,nan\n102,-81.5,48.5,0.0,0.0,0.0,nan\n103,-80.5,48.5,0.0,0.0,0.0,nan\n104,-79.5,48.5,0.0,0.0,0.0,nan\n105,-78.5,48.5,0.0,0.0,0.0,nan\n106,-77.5,48.5,0.0,0.0,0.0,nan\n107,-76.5,48.5,0.0,0.0,0.0,nan\n108,-75.5,48.5,0.0,0.0,0.0,nan\n109,-74.5,48.5,0.0,0.0,0.0,nan\n110,-73.5,48.5,0.0,0.0,0.0,nan\n111,-72.5,48.5,0.0,0.0,0.0,nan\n112,-71.5,48.5,0.0,0.0,0.0,nan\n113,-70.5,48.5,0.0,0.0,0.0,nan\n114,-69.5,48.5,0.0,0.0,0.0,nan\n115,-68.5,48.5,0.0,0.0,0.0,nan\n116,-67.5,48.5,0.0,0.0,0.0,nan\n117,-66.5,48.5,0.0,0.0,0.0,nan\n118,-124.5,47.5,9.0,0.25,560.0,0.0787623066104\n119,-123.5,47.5,10.0,0.277777777778,573.0,0.0725316455696\n120,-122.5,47.5,10.0,0.277777777778,770.0,0.0974683544304\n121,-121.5,47.5,12.0,0.333333333333,886.0,0.0934599156118\n122,-120.5,47.5,11.0,0.305555555556,912.0,0.104948216341\n123,-119.5,47.5,5.0,0.138888888889,650.0,0.164556962025\n124,-118.5,47.5,5.0,0.138888888889,650.0,0.164556962025\n125,-117.5,47.5,7.0,0.194444444444,759.0,0.137251356239\n126,-116.5,47.5,8.0,0.222222222222,815.0,0.128955696203\n127,-115.5,47.5,9.0,0.25,998.0,0.140365682138\n128,-114.5,47.5,8.0,0.222222222222,942.0,0.149050632911\n129,-113.5,47.5,5.0,0.138888888889,706.0,0.178734177215\n130,-112.5,47.5,6.0,0.166666666667,952.0,0.200843881857\n131,-111.5,47.5,3.0,0.0833333333333,639.0,0.269620253165\n132,-110.5,47.5,4.0,0.111111111111,671.0,0.212341772152\n133,-109.5,47.5,3.0,0.0833333333333,639.0,0.269620253165\n134,-108.5,47.5,2.0,0.0555555555556,429.0,0.271518987342\n135,-107.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n136,-106.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n137,-105.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n138,-104.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n139,-103.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n140,-102.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n141,-101.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n142,-100.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n143,-99.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n144,-98.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n145,-97.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n146,-96.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n147,-95.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n148,-94.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n149,-93.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n150,-92.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n151,-91.5,47.5,1.0,0.0277777777778,246.0,0.311392405063\n152,-90.5,47.5,0.0,0.0,0.0,nan\n153,-89.5,47.5,0.0,0.0,0.0,nan\n154,-88.5,47.5,0.0,0.0,0.0,nan\n155,-87.5,47.5,0.0,0.0,0.0,nan\n156,-86.5,47.5,0.0,0.0,0.0,nan\n157,-85.5,47.5,0.0,0.0,0.0,nan\n158,-84.5,47.5,0.0,0.0,0.0,nan\n159,-83.5,47.5,0.0,0.0,0.0,nan\n160,-82.5,47.5,0.0,0.0,0.0,nan\n161,-81.5,47.5,0.0,0.0,0.0,nan\n162,-80.5,47.5,0.0,0.0,0.0,nan\n163,-79.5,47.5,0.0,0.0,0.0,nan\n164,-78.5,47.5,0.0,0.0,0.0,nan\n165,-77.5,47.5,0.0,0.0,0.0,nan\n166,-76.5,47.5,0.0,0.0,0.0,nan\n167,-75.5,47.5,0.0,0.0,0.0,nan\n168,-74.5,47.5,0.0,0.0,0.0,nan\n169,-73.5,47.5,0.0,0.0,0.0,nan\n170,-72.5,47.5,0.0,0.0,0.0,nan\n171,-71.5,47.5,1.0,0.0277777777778,227.0,0.287341772152\n172,-70.5,47.5,0.0,0.0,0.0,nan\n173,-69.5,47.5,0.0,0.0,0.0,nan\n174,-68.5,47.5,0.0,0.0,0.0,nan\n175,-67.5,47.5,0.0,0.0,0.0,nan\n176,-66.5,47.5,0.0,0.0,0.0,nan\n177,-124.5,46.5,0.0,0.0,0.0,nan\n178,-123.5,46.5,9.0,0.25,560.0,0.0787623066104\n179,-122.5,46.5,11.0,0.305555555556,873.0,0.100460299194\n180,-121.5,46.5,12.0,0.333333333333,886.0,0.0934599156118\n181,-120.5,46.5,8.0,0.222222222222,807.0,0.127689873418\n182,-119.5,46.5,7.0,0.194444444444,749.0,0.135443037975\n183,-118.5,46.5,6.0,0.166666666667,682.0,0.14388185654\n184,-117.5,46.5,7.0,0.194444444444,749.0,0.135443037975\n185,-116.5,46.5,9.0,0.25,882.0,0.124050632911\n186,-115.5,46.5,8.0,0.222222222222,942.0,0.149050632911\n187,-114.5,46.5,8.0,0.222222222222,942.0,0.149050632911\n188,-113.5,46.5,8.0,0.222222222222,897.0,0.141930379747\n189,-112.5,46.5,5.0,0.138888888889,706.0,0.178734177215\n190,-111.5,46.5,5.0,0.138888888889,706.0,0.178734177215\n191,-110.5,46.5,5.0,0.138888888889,706.0,0.178734177215\n192,-109.5,46.5,4.0,0.111111111111,671.0,0.212341772152\n193,-108.5,46.5,3.0,0.0833333333333,639.0,0.269620253165\n194,-107.5,46.5,2.0,0.0555555555556,456.0,0.288607594937\n195,-106.5,46.5,2.0,0.0555555555556,456.0,0.288607594937\n196,-105.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n197,-104.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n198,-103.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n199,-102.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n200,-101.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n201,-100.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n202,-99.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n203,-98.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n204,-97.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n205,-96.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n206,-95.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n207,-94.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n208,-93.5,46.5,1.0,0.0277777777778,246.0,0.311392405063\n209,-92.5,46.5,2.0,0.0555555555556,473.0,0.299367088608\n210,-91.5,46.5,2.0,0.0555555555556,473.0,0.299367088608\n211,-90.5,46.5,2.0,0.0555555555556,473.0,0.299367088608\n212,-89.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n213,-88.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n214,-87.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n215,-86.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n216,-85.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n217,-84.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n218,-83.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n219,-82.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n220,-81.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n221,-80.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n222,-79.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n223,-78.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n224,-77.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n225,-76.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n226,-75.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n227,-74.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n228,-73.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n229,-72.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n230,-71.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n231,-70.5,46.5,1.0,0.0277777777778,227.0,0.287341772152\n232,-69.5,46.5,0.0,0.0,0.0,nan\n233,-68.5,46.5,0.0,0.0,0.0,nan\n234,-67.5,46.5,0.0,0.0,0.0,nan\n235,-66.5,46.5,0.0,0.0,0.0,nan\n236,-124.5,45.5,0.0,0.0,0.0,nan\n237,-123.5,45.5,9.0,0.25,560.0,0.0787623066104\n238,-122.5,45.5,11.0,0.305555555556,873.0,0.100460299194\n239,-121.5,45.5,13.0,0.361111111111,918.0,0.0893865628043\n240,-120.5,45.5,7.0,0.194444444444,749.0,0.135443037975\n241,-119.5,45.5,6.0,0.166666666667,682.0,0.14388185654\n242,-118.5,45.5,8.0,0.222222222222,826.0,0.130696202532\n243,-117.5,45.5,8.0,0.222222222222,826.0,0.130696202532\n244,-116.5,45.5,9.0,0.25,1009.0,0.141912798875\n245,-115.5,45.5,8.0,0.222222222222,942.0,0.149050632911\n246,-114.5,45.5,8.0,0.222222222222,942.0,0.149050632911\n247,-113.5,45.5,7.0,0.194444444444,865.0,0.156419529837\n248,-112.5,45.5,6.0,0.166666666667,786.0,0.16582278481\n249,-111.5,45.5,6.0,0.166666666667,786.0,0.16582278481\n250,-110.5,45.5,6.0,0.166666666667,714.0,0.150632911392\n251,-109.5,45.5,7.0,0.194444444444,960.0,0.173598553345\n252,-108.5,45.5,5.0,0.138888888889,849.0,0.214936708861\n253,-107.5,45.5,4.0,0.111111111111,671.0,0.212341772152\n254,-106.5,45.5,3.0,0.0833333333333,639.0,0.269620253165\n255,-105.5,45.5,2.0,0.0555555555556,456.0,0.288607594937\n256,-104.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n257,-103.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n258,-102.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n259,-101.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n260,-100.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n261,-99.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n262,-98.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n263,-97.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n264,-96.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n265,-95.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n266,-94.5,45.5,1.0,0.0277777777778,246.0,0.311392405063\n267,-93.5,45.5,2.0,0.0555555555556,473.0,0.299367088608\n268,-92.5,45.5,2.0,0.0555555555556,473.0,0.299367088608\n269,-91.5,45.5,2.0,0.0555555555556,473.0,0.299367088608\n270,-90.5,45.5,2.0,0.0555555555556,473.0,0.299367088608\n271,-89.5,45.5,2.0,0.0555555555556,473.0,0.299367088608\n272,-88.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n273,-87.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n274,-86.5,45.5,0.0,0.0,0.0,nan\n275,-85.5,45.5,0.0,0.0,0.0,nan\n276,-84.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n277,-83.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n278,-82.5,45.5,0.0,0.0,0.0,nan\n279,-81.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n280,-80.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n281,-79.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n282,-78.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n283,-77.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n284,-76.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n285,-75.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n286,-74.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n287,-73.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n288,-72.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n289,-71.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n290,-70.5,45.5,1.0,0.0277777777778,227.0,0.287341772152\n291,-69.5,45.5,0.0,0.0,0.0,nan\n292,-68.5,45.5,0.0,0.0,0.0,nan\n293,-67.5,45.5,0.0,0.0,0.0,nan\n294,-66.5,45.5,0.0,0.0,0.0,nan\n295,-124.5,44.5,0.0,0.0,0.0,nan\n296,-123.5,44.5,10.0,0.277777777778,574.0,0.0726582278481\n297,-122.5,44.5,12.0,0.333333333333,887.0,0.0935654008439\n298,-121.5,44.5,12.0,0.333333333333,886.0,0.0934599156118\n299,-120.5,44.5,6.0,0.166666666667,717.0,0.151265822785\n300,-119.5,44.5,7.0,0.194444444444,749.0,0.135443037975\n301,-118.5,44.5,7.0,0.194444444444,759.0,0.137251356239\n302,-117.5,44.5,5.0,0.138888888889,603.0,0.152658227848\n303,-116.5,44.5,8.0,0.222222222222,942.0,0.149050632911\n304,-115.5,44.5,8.0,0.222222222222,942.0,0.149050632911\n305,-114.5,44.5,6.0,0.166666666667,786.0,0.16582278481\n306,-113.5,44.5,6.0,0.166666666667,786.0,0.16582278481\n307,-112.5,44.5,6.0,0.166666666667,786.0,0.16582278481\n308,-111.5,44.5,6.0,0.166666666667,786.0,0.16582278481\n309,-110.5,44.5,7.0,0.194444444444,794.0,0.143580470163\n310,-109.5,44.5,6.0,0.166666666667,714.0,0.150632911392\n311,-108.5,44.5,2.0,0.0555555555556,361.0,0.228481012658\n312,-107.5,44.5,5.0,0.138888888889,611.0,0.154683544304\n313,-106.5,44.5,4.0,0.111111111111,671.0,0.212341772152\n314,-105.5,44.5,2.0,0.0555555555556,456.0,0.288607594937\n315,-104.5,44.5,2.0,0.0555555555556,456.0,0.288607594937\n316,-103.5,44.5,2.0,0.0555555555556,456.0,0.288607594937\n317,-102.5,44.5,1.0,0.0277777777778,246.0,0.311392405063\n318,-101.5,44.5,1.0,0.0277777777778,246.0,0.311392405063\n319,-100.5,44.5,1.0,0.0277777777778,246.0,0.311392405063\n320,-99.5,44.5,1.0,0.0277777777778,246.0,0.311392405063\n321,-98.5,44.5,1.0,0.0277777777778,246.0,0.311392405063\n322,-97.5,44.5,1.0,0.0277777777778,246.0,0.311392405063\n323,-96.5,44.5,1.0,0.0277777777778,246.0,0.311392405063\n324,-95.5,44.5,1.0,0.0277777777778,246.0,0.311392405063\n325,-94.5,44.5,1.0,0.0277777777778,246.0,0.311392405063\n326,-93.5,44.5,1.0,0.0277777777778,246.0,0.311392405063\n327,-92.5,44.5,2.0,0.0555555555556,473.0,0.299367088608\n328,-91.5,44.5,2.0,0.0555555555556,473.0,0.299367088608\n329,-90.5,44.5,2.0,0.0555555555556,473.0,0.299367088608\n330,-89.5,44.5,2.0,0.0555555555556,473.0,0.299367088608\n331,-88.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n332,-87.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n333,-86.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n334,-85.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n335,-84.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n336,-83.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n337,-82.5,44.5,0.0,0.0,0.0,nan\n338,-81.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n339,-80.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n340,-79.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n341,-78.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n342,-77.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n343,-76.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n344,-75.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n345,-74.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n346,-73.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n347,-72.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n348,-71.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n349,-70.5,44.5,1.0,0.0277777777778,227.0,0.287341772152\n350,-69.5,44.5,0.0,0.0,0.0,nan\n351,-68.5,44.5,0.0,0.0,0.0,nan\n352,-67.5,44.5,0.0,0.0,0.0,nan\n353,-66.5,44.5,0.0,0.0,0.0,nan\n354,-124.5,43.5,6.0,0.166666666667,426.0,0.0898734177215\n355,-123.5,43.5,9.0,0.25,735.0,0.103375527426\n356,-122.5,43.5,12.0,0.333333333333,876.0,0.0924050632911\n357,-121.5,43.5,10.0,0.277777777778,837.0,0.105949367089\n358,-120.5,43.5,5.0,0.138888888889,677.0,0.171392405063\n359,-119.5,43.5,5.0,0.138888888889,677.0,0.171392405063\n360,-118.5,43.5,4.0,0.111111111111,598.0,0.189240506329\n361,-117.5,43.5,5.0,0.138888888889,630.0,0.159493670886\n362,-116.5,43.5,8.0,0.222222222222,972.0,0.153797468354\n363,-115.5,43.5,8.0,0.222222222222,970.0,0.153481012658\n364,-114.5,43.5,6.0,0.166666666667,786.0,0.16582278481\n365,-113.5,43.5,6.0,0.166666666667,786.0,0.16582278481\n366,-112.5,43.5,4.0,0.111111111111,674.0,0.213291139241\n367,-111.5,43.5,5.0,0.138888888889,754.0,0.190886075949\n368,-110.5,43.5,5.0,0.138888888889,683.0,0.172911392405\n369,-109.5,43.5,6.0,0.166666666667,691.0,0.145780590717\n370,-108.5,43.5,2.0,0.0555555555556,361.0,0.228481012658\n371,-107.5,43.5,2.0,0.0555555555556,361.0,0.228481012658\n372,-106.5,43.5,3.0,0.0833333333333,639.0,0.269620253165\n373,-105.5,43.5,3.0,0.0833333333333,639.0,0.269620253165\n374,-104.5,43.5,2.0,0.0555555555556,456.0,0.288607594937\n375,-103.5,43.5,2.0,0.0555555555556,456.0,0.288607594937\n376,-102.5,43.5,1.0,0.0277777777778,246.0,0.311392405063\n377,-101.5,43.5,1.0,0.0277777777778,246.0,0.311392405063\n378,-100.5,43.5,1.0,0.0277777777778,246.0,0.311392405063\n379,-99.5,43.5,1.0,0.0277777777778,246.0,0.311392405063\n380,-98.5,43.5,1.0,0.0277777777778,246.0,0.311392405063\n381,-97.5,43.5,1.0,0.0277777777778,246.0,0.311392405063\n382,-96.5,43.5,1.0,0.0277777777778,246.0,0.311392405063\n383,-95.5,43.5,1.0,0.0277777777778,246.0,0.311392405063\n384,-94.5,43.5,1.0,0.0277777777778,246.0,0.311392405063\n385,-93.5,43.5,1.0,0.0277777777778,246.0,0.311392405063\n386,-92.5,43.5,2.0,0.0555555555556,473.0,0.299367088608\n387,-91.5,43.5,2.0,0.0555555555556,473.0,0.299367088608\n388,-90.5,43.5,2.0,0.0555555555556,473.0,0.299367088608\n389,-89.5,43.5,2.0,0.0555555555556,473.0,0.299367088608\n390,-88.5,43.5,2.0,0.0555555555556,473.0,0.299367088608\n391,-87.5,43.5,0.0,0.0,0.0,nan\n392,-86.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n393,-85.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n394,-84.5,43.5,2.0,0.0555555555556,413.0,0.261392405063\n395,-83.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n396,-82.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n397,-81.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n398,-80.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n399,-79.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n400,-78.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n401,-77.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n402,-76.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n403,-75.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n404,-74.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n405,-73.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n406,-72.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n407,-71.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n408,-70.5,43.5,1.0,0.0277777777778,227.0,0.287341772152\n409,-69.5,43.5,0.0,0.0,0.0,nan\n410,-68.5,43.5,0.0,0.0,0.0,nan\n411,-67.5,43.5,0.0,0.0,0.0,nan\n412,-66.5,43.5,0.0,0.0,0.0,nan\n413,-124.5,42.5,6.0,0.166666666667,426.0,0.0898734177215\n414,-123.5,42.5,12.0,0.333333333333,946.0,0.0997890295359\n415,-122.5,42.5,11.0,0.305555555556,945.0,0.108745684695\n416,-121.5,42.5,8.0,0.222222222222,843.0,0.133386075949\n417,-120.5,42.5,7.0,0.194444444444,821.0,0.148462929476\n418,-119.5,42.5,5.0,0.138888888889,677.0,0.171392405063\n419,-118.5,42.5,4.0,0.111111111111,598.0,0.189240506329\n420,-117.5,42.5,5.0,0.138888888889,781.0,0.197721518987\n421,-116.5,42.5,6.0,0.166666666667,861.0,0.18164556962\n422,-115.5,42.5,5.0,0.138888888889,781.0,0.197721518987\n423,-114.5,42.5,6.0,0.166666666667,861.0,0.18164556962\n424,-113.5,42.5,6.0,0.166666666667,861.0,0.18164556962\n425,-112.5,42.5,6.0,0.166666666667,861.0,0.18164556962\n426,-111.5,42.5,4.0,0.111111111111,651.0,0.206012658228\n427,-110.5,42.5,5.0,0.138888888889,683.0,0.172911392405\n428,-109.5,42.5,2.0,0.0555555555556,361.0,0.228481012658\n429,-108.5,42.5,2.0,0.0555555555556,361.0,0.228481012658\n430,-107.5,42.5,2.0,0.0555555555556,361.0,0.228481012658\n431,-106.5,42.5,2.0,0.0555555555556,361.0,0.228481012658\n432,-105.5,42.5,3.0,0.0833333333333,639.0,0.269620253165\n433,-104.5,42.5,2.0,0.0555555555556,429.0,0.271518987342\n434,-103.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n435,-102.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n436,-101.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n437,-100.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n438,-99.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n439,-98.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n440,-97.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n441,-96.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n442,-95.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n443,-94.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n444,-93.5,42.5,1.0,0.0277777777778,246.0,0.311392405063\n445,-92.5,42.5,2.0,0.0555555555556,473.0,0.299367088608\n446,-91.5,42.5,2.0,0.0555555555556,473.0,0.299367088608\n447,-90.5,42.5,2.0,0.0555555555556,473.0,0.299367088608\n448,-89.5,42.5,2.0,0.0555555555556,473.0,0.299367088608\n449,-88.5,42.5,2.0,0.0555555555556,473.0,0.299367088608\n450,-87.5,42.5,0.0,0.0,0.0,nan\n451,-86.5,42.5,2.0,0.0555555555556,413.0,0.261392405063\n452,-85.5,42.5,2.0,0.0555555555556,413.0,0.261392405063\n453,-84.5,42.5,2.0,0.0555555555556,413.0,0.261392405063\n454,-83.5,42.5,2.0,0.0555555555556,413.0,0.261392405063\n455,-82.5,42.5,2.0,0.0555555555556,413.0,0.261392405063\n456,-81.5,42.5,2.0,0.0555555555556,413.0,0.261392405063\n457,-80.5,42.5,2.0,0.0555555555556,413.0,0.261392405063\n458,-79.5,42.5,2.0,0.0555555555556,413.0,0.261392405063\n459,-78.5,42.5,1.0,0.0277777777778,227.0,0.287341772152\n460,-77.5,42.5,1.0,0.0277777777778,227.0,0.287341772152\n461,-76.5,42.5,1.0,0.0277777777778,227.0,0.287341772152\n462,-75.5,42.5,1.0,0.0277777777778,227.0,0.287341772152\n463,-74.5,42.5,1.0,0.0277777777778,227.0,0.287341772152\n464,-73.5,42.5,2.0,0.0555555555556,413.0,0.261392405063\n465,-72.5,42.5,2.0,0.0555555555556,413.0,0.261392405063\n466,-71.5,42.5,1.0,0.0277777777778,227.0,0.287341772152\n467,-70.5,42.5,0.0,0.0,0.0,nan\n468,-69.5,42.5,0.0,0.0,0.0,nan\n469,-68.5,42.5,0.0,0.0,0.0,nan\n470,-67.5,42.5,0.0,0.0,0.0,nan\n471,-66.5,42.5,0.0,0.0,0.0,nan\n472,-124.5,41.5,0.0,0.0,0.0,nan\n473,-123.5,41.5,10.0,0.277777777778,822.0,0.104050632911\n474,-122.5,41.5,11.0,0.305555555556,925.0,0.106444188723\n475,-121.5,41.5,8.0,0.222222222222,877.0,0.138765822785\n476,-120.5,41.5,5.0,0.138888888889,677.0,0.171392405063\n477,-119.5,41.5,5.0,0.138888888889,677.0,0.171392405063\n478,-118.5,41.5,4.0,0.111111111111,598.0,0.189240506329\n479,-117.5,41.5,5.0,0.138888888889,781.0,0.197721518987\n480,-116.5,41.5,5.0,0.138888888889,781.0,0.197721518987\n481,-115.5,41.5,6.0,0.166666666667,861.0,0.18164556962\n482,-114.5,41.5,5.0,0.138888888889,781.0,0.197721518987\n483,-113.5,41.5,3.0,0.0833333333333,500.0,0.210970464135\n484,-112.5,41.5,4.0,0.111111111111,580.0,0.183544303797\n485,-111.5,41.5,5.0,0.138888888889,758.0,0.191898734177\n486,-110.5,41.5,2.0,0.0555555555556,361.0,0.228481012658\n487,-109.5,41.5,2.0,0.0555555555556,361.0,0.228481012658\n488,-108.5,41.5,1.0,0.0277777777778,183.0,0.23164556962\n489,-107.5,41.5,2.0,0.0555555555556,361.0,0.228481012658\n490,-106.5,41.5,5.0,0.138888888889,683.0,0.172911392405\n491,-105.5,41.5,4.0,0.111111111111,574.0,0.18164556962\n492,-104.5,41.5,2.0,0.0555555555556,429.0,0.271518987342\n493,-103.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n494,-102.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n495,-101.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n496,-100.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n497,-99.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n498,-98.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n499,-97.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n500,-96.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n501,-95.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n502,-94.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n503,-93.5,41.5,1.0,0.0277777777778,246.0,0.311392405063\n504,-92.5,41.5,2.0,0.0555555555556,473.0,0.299367088608\n505,-91.5,41.5,2.0,0.0555555555556,473.0,0.299367088608\n506,-90.5,41.5,2.0,0.0555555555556,473.0,0.299367088608\n507,-89.5,41.5,3.0,0.0833333333333,659.0,0.27805907173\n508,-88.5,41.5,3.0,0.0833333333333,659.0,0.27805907173\n509,-87.5,41.5,3.0,0.0833333333333,659.0,0.27805907173\n510,-86.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n511,-85.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n512,-84.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n513,-83.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n514,-82.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n515,-81.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n516,-80.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n517,-79.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n518,-78.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n519,-77.5,41.5,1.0,0.0277777777778,227.0,0.287341772152\n520,-76.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n521,-75.5,41.5,1.0,0.0277777777778,227.0,0.287341772152\n522,-74.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n523,-73.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n524,-72.5,41.5,2.0,0.0555555555556,413.0,0.261392405063\n525,-71.5,41.5,1.0,0.0277777777778,227.0,0.287341772152\n526,-70.5,41.5,0.0,0.0,0.0,nan\n527,-69.5,41.5,0.0,0.0,0.0,nan\n528,-68.5,41.5,0.0,0.0,0.0,nan\n529,-67.5,41.5,0.0,0.0,0.0,nan\n530,-66.5,41.5,0.0,0.0,0.0,nan\n531,-124.5,40.5,0.0,0.0,0.0,nan\n532,-123.5,40.5,9.0,0.25,820.0,0.115330520394\n533,-122.5,40.5,9.0,0.25,820.0,0.115330520394\n534,-121.5,40.5,7.0,0.194444444444,774.0,0.139963833635\n535,-120.5,40.5,6.0,0.166666666667,718.0,0.151476793249\n536,-119.5,40.5,2.0,0.0555555555556,317.0,0.200632911392\n537,-118.5,40.5,2.0,0.0555555555556,317.0,0.200632911392\n538,-117.5,40.5,3.0,0.0833333333333,500.0,0.210970464135\n539,-116.5,40.5,3.0,0.0833333333333,500.0,0.210970464135\n540,-115.5,40.5,3.0,0.0833333333333,500.0,0.210970464135\n541,-114.5,40.5,3.0,0.0833333333333,500.0,0.210970464135\n542,-113.5,40.5,1.0,0.0277777777778,210.0,0.26582278481\n543,-112.5,40.5,4.0,0.111111111111,580.0,0.183544303797\n544,-111.5,40.5,5.0,0.138888888889,758.0,0.191898734177\n545,-110.5,40.5,5.0,0.138888888889,758.0,0.191898734177\n546,-109.5,40.5,4.0,0.111111111111,651.0,0.206012658228\n547,-108.5,40.5,2.0,0.0555555555556,361.0,0.228481012658\n548,-107.5,40.5,5.0,0.138888888889,683.0,0.172911392405\n549,-106.5,40.5,5.0,0.138888888889,683.0,0.172911392405\n550,-105.5,40.5,6.0,0.166666666667,662.0,0.139662447257\n551,-104.5,40.5,2.0,0.0555555555556,429.0,0.271518987342\n552,-103.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n553,-102.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n554,-101.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n555,-100.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n556,-99.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n557,-98.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n558,-97.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n559,-96.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n560,-95.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n561,-94.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n562,-93.5,40.5,1.0,0.0277777777778,246.0,0.311392405063\n563,-92.5,40.5,2.0,0.0555555555556,473.0,0.299367088608\n564,-91.5,40.5,3.0,0.0833333333333,659.0,0.27805907173\n565,-90.5,40.5,3.0,0.0833333333333,659.0,0.27805907173\n566,-89.5,40.5,3.0,0.0833333333333,659.0,0.27805907173\n567,-88.5,40.5,3.0,0.0833333333333,659.0,0.27805907173\n568,-87.5,40.5,3.0,0.0833333333333,659.0,0.27805907173\n569,-86.5,40.5,2.0,0.0555555555556,413.0,0.261392405063\n570,-85.5,40.5,2.0,0.0555555555556,413.0,0.261392405063\n571,-84.5,40.5,2.0,0.0555555555556,413.0,0.261392405063\n572,-83.5,40.5,2.0,0.0555555555556,413.0,0.261392405063\n573,-82.5,40.5,2.0,0.0555555555556,413.0,0.261392405063\n574,-81.5,40.5,2.0,0.0555555555556,413.0,0.261392405063\n575,-80.5,40.5,2.0,0.0555555555556,413.0,0.261392405063\n576,-79.5,40.5,2.0,0.0555555555556,413.0,0.261392405063\n577,-78.5,40.5,3.0,0.0833333333333,429.0,0.181012658228\n578,-77.5,40.5,3.0,0.0833333333333,429.0,0.181012658228\n579,-76.5,40.5,3.0,0.0833333333333,429.0,0.181012658228\n580,-75.5,40.5,2.0,0.0555555555556,413.0,0.261392405063\n581,-74.5,40.5,2.0,0.0555555555556,413.0,0.261392405063\n582,-73.5,40.5,0.0,0.0,0.0,nan\n583,-72.5,40.5,0.0,0.0,0.0,nan\n584,-71.5,40.5,0.0,0.0,0.0,nan\n585,-70.5,40.5,0.0,0.0,0.0,nan\n586,-69.5,40.5,0.0,0.0,0.0,nan\n587,-68.5,40.5,0.0,0.0,0.0,nan\n588,-67.5,40.5,0.0,0.0,0.0,nan\n589,-66.5,40.5,0.0,0.0,0.0,nan\n590,-124.5,39.5,0.0,0.0,0.0,nan\n591,-123.5,39.5,9.0,0.25,717.0,0.100843881857\n592,-122.5,39.5,9.0,0.25,820.0,0.115330520394\n593,-121.5,39.5,6.0,0.166666666667,695.0,0.146624472574\n594,-120.5,39.5,6.0,0.166666666667,695.0,0.146624472574\n595,-119.5,39.5,2.0,0.0555555555556,317.0,0.200632911392\n596,-118.5,39.5,0.0,0.0,0.0,nan\n597,-117.5,39.5,3.0,0.0833333333333,500.0,0.210970464135\n598,-116.5,39.5,3.0,0.0833333333333,500.0,0.210970464135\n599,-115.5,39.5,3.0,0.0833333333333,500.0,0.210970464135\n600,-114.5,39.5,3.0,0.0833333333333,500.0,0.210970464135\n601,-113.5,39.5,2.0,0.0555555555556,290.0,0.183544303797\n602,-112.5,39.5,3.0,0.0833333333333,500.0,0.210970464135\n603,-111.5,39.5,4.0,0.111111111111,548.0,0.173417721519\n604,-110.5,39.5,4.0,0.111111111111,548.0,0.173417721519\n605,-109.5,39.5,4.0,0.111111111111,548.0,0.173417721519\n606,-108.5,39.5,3.0,0.0833333333333,441.0,0.186075949367\n607,-107.5,39.5,4.0,0.111111111111,651.0,0.206012658228\n608,-106.5,39.5,6.0,0.166666666667,690.0,0.145569620253\n609,-105.5,39.5,7.0,0.194444444444,669.0,0.120976491863\n610,-104.5,39.5,3.0,0.0833333333333,436.0,0.183966244726\n611,-103.5,39.5,2.0,0.0555555555556,429.0,0.271518987342\n612,-102.5,39.5,1.0,0.0277777777778,246.0,0.311392405063\n613,-101.5,39.5,1.0,0.0277777777778,246.0,0.311392405063\n614,-100.5,39.5,1.0,0.0277777777778,246.0,0.311392405063\n615,-99.5,39.5,1.0,0.0277777777778,246.0,0.311392405063\n616,-98.5,39.5,1.0,0.0277777777778,246.0,0.311392405063\n617,-97.5,39.5,1.0,0.0277777777778,246.0,0.311392405063\n618,-96.5,39.5,1.0,0.0277777777778,246.0,0.311392405063\n619,-95.5,39.5,1.0,0.0277777777778,246.0,0.311392405063\n620,-94.5,39.5,1.0,0.0277777777778,246.0,0.311392405063\n621,-93.5,39.5,1.0,0.0277777777778,246.0,0.311392405063\n622,-92.5,39.5,3.0,0.0833333333333,659.0,0.27805907173\n623,-91.5,39.5,3.0,0.0833333333333,659.0,0.27805907173\n624,-90.5,39.5,3.0,0.0833333333333,659.0,0.27805907173\n625,-89.5,39.5,3.0,0.0833333333333,659.0,0.27805907173\n626,-88.5,39.5,3.0,0.0833333333333,659.0,0.27805907173\n627,-87.5,39.5,2.0,0.0555555555556,413.0,0.261392405063\n628,-86.5,39.5,2.0,0.0555555555556,413.0,0.261392405063\n629,-85.5,39.5,2.0,0.0555555555556,413.0,0.261392405063\n630,-84.5,39.5,2.0,0.0555555555556,413.0,0.261392405063\n631,-83.5,39.5,2.0,0.0555555555556,413.0,0.261392405063\n632,-82.5,39.5,2.0,0.0555555555556,413.0,0.261392405063\n633,-81.5,39.5,2.0,0.0555555555556,413.0,0.261392405063\n634,-80.5,39.5,2.0,0.0555555555556,413.0,0.261392405063\n635,-79.5,39.5,3.0,0.0833333333333,429.0,0.181012658228\n636,-78.5,39.5,3.0,0.0833333333333,429.0,0.181012658228\n637,-77.5,39.5,3.0,0.0833333333333,429.0,0.181012658228\n638,-76.5,39.5,3.0,0.0833333333333,429.0,0.181012658228\n639,-75.5,39.5,2.0,0.0555555555556,413.0,0.261392405063\n640,-74.5,39.5,2.0,0.0555555555556,413.0,0.261392405063\n641,-73.5,39.5,0.0,0.0,0.0,nan\n642,-72.5,39.5,0.0,0.0,0.0,nan\n643,-71.5,39.5,0.0,0.0,0.0,nan\n644,-70.5,39.5,0.0,0.0,0.0,nan\n645,-69.5,39.5,0.0,0.0,0.0,nan\n646,-68.5,39.5,0.0,0.0,0.0,nan\n647,-67.5,39.5,0.0,0.0,0.0,nan\n648,-66.5,39.5,0.0,0.0,0.0,nan\n649,-124.5,38.5,0.0,0.0,0.0,nan\n650,-123.5,38.5,5.0,0.138888888889,543.0,0.13746835443\n651,-122.5,38.5,6.0,0.166666666667,547.0,0.115400843882\n652,-121.5,38.5,3.0,0.0833333333333,333.0,0.140506329114\n653,-120.5,38.5,6.0,0.166666666667,695.0,0.146624472574\n654,-119.5,38.5,6.0,0.166666666667,822.0,0.173417721519\n655,-118.5,38.5,2.0,0.0555555555556,290.0,0.183544303797\n656,-117.5,38.5,1.0,0.0277777777778,183.0,0.23164556962\n657,-116.5,38.5,2.0,0.0555555555556,290.0,0.183544303797\n658,-115.5,38.5,2.0,0.0555555555556,290.0,0.183544303797\n659,-114.5,38.5,3.0,0.0833333333333,500.0,0.210970464135\n660,-113.5,38.5,2.0,0.0555555555556,290.0,0.183544303797\n661,-112.5,38.5,4.0,0.111111111111,678.0,0.214556962025\n662,-111.5,38.5,3.0,0.0833333333333,468.0,0.19746835443\n663,-110.5,38.5,2.0,0.0555555555556,290.0,0.183544303797\n664,-109.5,38.5,3.0,0.0833333333333,500.0,0.210970464135\n665,-108.5,38.5,5.0,0.138888888889,758.0,0.191898734177\n666,-107.5,38.5,4.0,0.111111111111,651.0,0.206012658228\n667,-106.5,38.5,5.0,0.138888888889,658.0,0.166582278481\n668,-105.5,38.5,4.0,0.111111111111,578.0,0.182911392405\n669,-104.5,38.5,3.0,0.0833333333333,436.0,0.183966244726\n670,-103.5,38.5,2.0,0.0555555555556,429.0,0.271518987342\n671,-102.5,38.5,1.0,0.0277777777778,246.0,0.311392405063\n672,-101.5,38.5,1.0,0.0277777777778,246.0,0.311392405063\n673,-100.5,38.5,1.0,0.0277777777778,246.0,0.311392405063\n674,-99.5,38.5,1.0,0.0277777777778,246.0,0.311392405063\n675,-98.5,38.5,1.0,0.0277777777778,246.0,0.311392405063\n676,-97.5,38.5,1.0,0.0277777777778,246.0,0.311392405063\n677,-96.5,38.5,1.0,0.0277777777778,246.0,0.311392405063\n678,-95.5,38.5,1.0,0.0277777777778,246.0,0.311392405063\n679,-94.5,38.5,1.0,0.0277777777778,246.0,0.311392405063\n680,-93.5,38.5,2.0,0.0555555555556,432.0,0.273417721519\n681,-92.5,38.5,3.0,0.0833333333333,659.0,0.27805907173\n682,-91.5,38.5,3.0,0.0833333333333,659.0,0.27805907173\n683,-90.5,38.5,3.0,0.0833333333333,659.0,0.27805907173\n684,-89.5,38.5,2.0,0.0555555555556,413.0,0.261392405063\n685,-88.5,38.5,2.0,0.0555555555556,413.0,0.261392405063\n686,-87.5,38.5,2.0,0.0555555555556,413.0,0.261392405063\n687,-86.5,38.5,3.0,0.0833333333333,469.0,0.197890295359\n688,-85.5,38.5,3.0,0.0833333333333,469.0,0.197890295359\n689,-84.5,38.5,4.0,0.111111111111,489.0,0.154746835443\n690,-83.5,38.5,4.0,0.111111111111,489.0,0.154746835443\n691,-82.5,38.5,2.0,0.0555555555556,413.0,0.261392405063\n692,-81.5,38.5,3.0,0.0833333333333,469.0,0.197890295359\n693,-80.5,38.5,4.0,0.111111111111,485.0,0.153481012658\n694,-79.5,38.5,3.0,0.0833333333333,429.0,0.181012658228\n695,-78.5,38.5,3.0,0.0833333333333,429.0,0.181012658228\n696,-77.5,38.5,3.0,0.0833333333333,429.0,0.181012658228\n697,-76.5,38.5,2.0,0.0555555555556,413.0,0.261392405063\n698,-75.5,38.5,1.0,0.0277777777778,186.0,0.235443037975\n699,-74.5,38.5,0.0,0.0,0.0,nan\n700,-73.5,38.5,0.0,0.0,0.0,nan\n701,-72.5,38.5,0.0,0.0,0.0,nan\n702,-71.5,38.5,0.0,0.0,0.0,nan\n703,-70.5,38.5,0.0,0.0,0.0,nan\n704,-69.5,38.5,0.0,0.0,0.0,nan\n705,-68.5,38.5,0.0,0.0,0.0,nan\n706,-67.5,38.5,0.0,0.0,0.0,nan\n707,-66.5,38.5,0.0,0.0,0.0,nan\n708,-124.5,37.5,0.0,0.0,0.0,nan\n709,-123.5,37.5,0.0,0.0,0.0,nan\n710,-122.5,37.5,3.0,0.0833333333333,333.0,0.140506329114\n711,-121.5,37.5,3.0,0.0833333333333,333.0,0.140506329114\n712,-120.5,37.5,2.0,0.0555555555556,277.0,0.175316455696\n713,-119.5,37.5,5.0,0.138888888889,639.0,0.161772151899\n714,-118.5,37.5,6.0,0.166666666667,822.0,0.173417721519\n715,-117.5,37.5,1.0,0.0277777777778,107.0,0.135443037975\n716,-116.5,37.5,1.0,0.0277777777778,107.0,0.135443037975\n717,-115.5,37.5,1.0,0.0277777777778,107.0,0.135443037975\n718,-114.5,37.5,3.0,0.0833333333333,500.0,0.210970464135\n719,-113.5,37.5,3.0,0.0833333333333,500.0,0.210970464135\n720,-112.5,37.5,4.0,0.111111111111,678.0,0.214556962025\n721,-111.5,37.5,2.0,0.0555555555556,290.0,0.183544303797\n722,-110.5,37.5,2.0,0.0555555555556,393.0,0.248734177215\n723,-109.5,37.5,4.0,0.111111111111,580.0,0.183544303797\n724,-108.5,37.5,5.0,0.138888888889,758.0,0.191898734177\n725,-107.5,37.5,4.0,0.111111111111,651.0,0.206012658228\n726,-106.5,37.5,4.0,0.111111111111,651.0,0.206012658228\n727,-105.5,37.5,2.0,0.0555555555556,190.0,0.120253164557\n728,-104.5,37.5,1.0,0.0277777777778,183.0,0.23164556962\n729,-103.5,37.5,1.0,0.0277777777778,183.0,0.23164556962\n730,-102.5,37.5,0.0,0.0,0.0,nan\n731,-101.5,37.5,0.0,0.0,0.0,nan\n732,-100.5,37.5,1.0,0.0277777777778,246.0,0.311392405063\n733,-99.5,37.5,1.0,0.0277777777778,246.0,0.311392405063\n734,-98.5,37.5,1.0,0.0277777777778,246.0,0.311392405063\n735,-97.5,37.5,1.0,0.0277777777778,246.0,0.311392405063\n736,-96.5,37.5,1.0,0.0277777777778,246.0,0.311392405063\n737,-95.5,37.5,1.0,0.0277777777778,246.0,0.311392405063\n738,-94.5,37.5,2.0,0.0555555555556,432.0,0.273417721519\n739,-93.5,37.5,2.0,0.0555555555556,432.0,0.273417721519\n740,-92.5,37.5,4.0,0.111111111111,666.0,0.210759493671\n741,-91.5,37.5,5.0,0.138888888889,722.0,0.182784810127\n742,-90.5,37.5,4.0,0.111111111111,715.0,0.226265822785\n743,-89.5,37.5,4.0,0.111111111111,715.0,0.226265822785\n744,-88.5,37.5,3.0,0.0833333333333,469.0,0.197890295359\n745,-87.5,37.5,3.0,0.0833333333333,469.0,0.197890295359\n746,-86.5,37.5,4.0,0.111111111111,489.0,0.154746835443\n747,-85.5,37.5,4.0,0.111111111111,489.0,0.154746835443\n748,-84.5,37.5,4.0,0.111111111111,489.0,0.154746835443\n749,-83.5,37.5,4.0,0.111111111111,489.0,0.154746835443\n750,-82.5,37.5,4.0,0.111111111111,489.0,0.154746835443\n751,-81.5,37.5,3.0,0.0833333333333,469.0,0.197890295359\n752,-80.5,37.5,4.0,0.111111111111,485.0,0.153481012658\n753,-79.5,37.5,4.0,0.111111111111,485.0,0.153481012658\n754,-78.5,37.5,3.0,0.0833333333333,429.0,0.181012658228\n755,-77.5,37.5,1.0,0.0277777777778,186.0,0.235443037975\n756,-76.5,37.5,1.0,0.0277777777778,186.0,0.235443037975\n757,-75.5,37.5,0.0,0.0,0.0,nan\n758,-74.5,37.5,0.0,0.0,0.0,nan\n759,-73.5,37.5,0.0,0.0,0.0,nan\n760,-72.5,37.5,0.0,0.0,0.0,nan\n761,-71.5,37.5,0.0,0.0,0.0,nan\n762,-70.5,37.5,0.0,0.0,0.0,nan\n763,-69.5,37.5,0.0,0.0,0.0,nan\n764,-68.5,37.5,0.0,0.0,0.0,nan\n765,-67.5,37.5,0.0,0.0,0.0,nan\n766,-66.5,37.5,0.0,0.0,0.0,nan\n767,-124.5,36.5,0.0,0.0,0.0,nan\n768,-123.5,36.5,0.0,0.0,0.0,nan\n769,-122.5,36.5,0.0,0.0,0.0,nan\n770,-121.5,36.5,3.0,0.0833333333333,281.0,0.118565400844\n771,-120.5,36.5,1.0,0.0277777777778,210.0,0.26582278481\n772,-119.5,36.5,1.0,0.0277777777778,210.0,0.26582278481\n773,-118.5,36.5,5.0,0.138888888889,639.0,0.161772151899\n774,-117.5,36.5,1.0,0.0277777777778,107.0,0.135443037975\n775,-116.5,36.5,0.0,0.0,0.0,nan\n776,-115.5,36.5,1.0,0.0277777777778,107.0,0.135443037975\n777,-114.5,36.5,0.0,0.0,0.0,nan\n778,-113.5,36.5,3.0,0.0833333333333,500.0,0.210970464135\n779,-112.5,36.5,3.0,0.0833333333333,500.0,0.210970464135\n780,-111.5,36.5,2.0,0.0555555555556,290.0,0.183544303797\n781,-110.5,36.5,2.0,0.0555555555556,290.0,0.183544303797\n782,-109.5,36.5,2.0,0.0555555555556,290.0,0.183544303797\n783,-108.5,36.5,1.0,0.0277777777778,183.0,0.23164556962\n784,-107.5,36.5,2.0,0.0555555555556,393.0,0.248734177215\n785,-106.5,36.5,3.0,0.0833333333333,441.0,0.186075949367\n786,-105.5,36.5,1.0,0.0277777777778,183.0,0.23164556962\n787,-104.5,36.5,1.0,0.0277777777778,183.0,0.23164556962\n788,-103.5,36.5,1.0,0.0277777777778,183.0,0.23164556962\n789,-102.5,36.5,0.0,0.0,0.0,nan\n790,-101.5,36.5,0.0,0.0,0.0,nan\n791,-100.5,36.5,0.0,0.0,0.0,nan\n792,-99.5,36.5,0.0,0.0,0.0,nan\n793,-98.5,36.5,0.0,0.0,0.0,nan\n794,-97.5,36.5,0.0,0.0,0.0,nan\n795,-96.5,36.5,1.0,0.0277777777778,246.0,0.311392405063\n796,-95.5,36.5,2.0,0.0555555555556,432.0,0.273417721519\n797,-94.5,36.5,3.0,0.0833333333333,488.0,0.205907172996\n798,-93.5,36.5,3.0,0.0833333333333,488.0,0.205907172996\n799,-92.5,36.5,5.0,0.138888888889,722.0,0.182784810127\n800,-91.5,36.5,5.0,0.138888888889,722.0,0.182784810127\n801,-90.5,36.5,5.0,0.138888888889,722.0,0.182784810127\n802,-89.5,36.5,1.0,0.0277777777778,186.0,0.235443037975\n803,-88.5,36.5,3.0,0.0833333333333,469.0,0.197890295359\n804,-87.5,36.5,3.0,0.0833333333333,469.0,0.197890295359\n805,-86.5,36.5,4.0,0.111111111111,489.0,0.154746835443\n806,-85.5,36.5,4.0,0.111111111111,489.0,0.154746835443\n807,-84.5,36.5,4.0,0.111111111111,489.0,0.154746835443\n808,-83.5,36.5,4.0,0.111111111111,489.0,0.154746835443\n809,-82.5,36.5,4.0,0.111111111111,489.0,0.154746835443\n810,-81.5,36.5,3.0,0.0833333333333,469.0,0.197890295359\n811,-80.5,36.5,4.0,0.111111111111,485.0,0.153481012658\n812,-79.5,36.5,2.0,0.0555555555556,202.0,0.127848101266\n813,-78.5,36.5,1.0,0.0277777777778,186.0,0.235443037975\n814,-77.5,36.5,1.0,0.0277777777778,186.0,0.235443037975\n815,-76.5,36.5,1.0,0.0277777777778,186.0,0.235443037975\n816,-75.5,36.5,0.0,0.0,0.0,nan\n817,-74.5,36.5,0.0,0.0,0.0,nan\n818,-73.5,36.5,0.0,0.0,0.0,nan\n819,-72.5,36.5,0.0,0.0,0.0,nan\n820,-71.5,36.5,0.0,0.0,0.0,nan\n821,-70.5,36.5,0.0,0.0,0.0,nan\n822,-69.5,36.5,0.0,0.0,0.0,nan\n823,-68.5,36.5,0.0,0.0,0.0,nan\n824,-67.5,36.5,0.0,0.0,0.0,nan\n825,-66.5,36.5,0.0,0.0,0.0,nan\n826,-124.5,35.5,0.0,0.0,0.0,nan\n827,-123.5,35.5,0.0,0.0,0.0,nan\n828,-122.5,35.5,0.0,0.0,0.0,nan\n829,-121.5,35.5,0.0,0.0,0.0,nan\n830,-120.5,35.5,2.0,0.0555555555556,277.0,0.175316455696\n831,-119.5,35.5,1.0,0.0277777777778,210.0,0.26582278481\n832,-118.5,35.5,2.0,0.0555555555556,317.0,0.200632911392\n833,-117.5,35.5,0.0,0.0,0.0,nan\n834,-116.5,35.5,0.0,0.0,0.0,nan\n835,-115.5,35.5,1.0,0.0277777777778,107.0,0.135443037975\n836,-114.5,35.5,0.0,0.0,0.0,nan\n837,-113.5,35.5,3.0,0.0833333333333,500.0,0.210970464135\n838,-112.5,35.5,3.0,0.0833333333333,500.0,0.210970464135\n839,-111.5,35.5,2.0,0.0555555555556,290.0,0.183544303797\n840,-110.5,35.5,2.0,0.0555555555556,290.0,0.183544303797\n841,-109.5,35.5,2.0,0.0555555555556,290.0,0.183544303797\n842,-108.5,35.5,1.0,0.0277777777778,183.0,0.23164556962\n843,-107.5,35.5,1.0,0.0277777777778,183.0,0.23164556962\n844,-106.5,35.5,1.0,0.0277777777778,183.0,0.23164556962\n845,-105.5,35.5,1.0,0.0277777777778,183.0,0.23164556962\n846,-104.5,35.5,1.0,0.0277777777778,183.0,0.23164556962\n847,-103.5,35.5,0.0,0.0,0.0,nan\n848,-102.5,35.5,0.0,0.0,0.0,nan\n849,-101.5,35.5,0.0,0.0,0.0,nan\n850,-100.5,35.5,0.0,0.0,0.0,nan\n851,-99.5,35.5,0.0,0.0,0.0,nan\n852,-98.5,35.5,0.0,0.0,0.0,nan\n853,-97.5,35.5,0.0,0.0,0.0,nan\n854,-96.5,35.5,0.0,0.0,0.0,nan\n855,-95.5,35.5,1.0,0.0277777777778,186.0,0.235443037975\n856,-94.5,35.5,2.0,0.0555555555556,242.0,0.153164556962\n857,-93.5,35.5,3.0,0.0833333333333,249.0,0.105063291139\n858,-92.5,35.5,3.0,0.0833333333333,249.0,0.105063291139\n859,-91.5,35.5,2.0,0.0555555555556,242.0,0.153164556962\n860,-90.5,35.5,1.0,0.0277777777778,186.0,0.235443037975\n861,-89.5,35.5,3.0,0.0833333333333,469.0,0.197890295359\n862,-88.5,35.5,3.0,0.0833333333333,469.0,0.197890295359\n863,-87.5,35.5,3.0,0.0833333333333,469.0,0.197890295359\n864,-86.5,35.5,4.0,0.111111111111,489.0,0.154746835443\n865,-85.5,35.5,4.0,0.111111111111,489.0,0.154746835443\n866,-84.5,35.5,3.0,0.0833333333333,469.0,0.197890295359\n867,-83.5,35.5,4.0,0.111111111111,489.0,0.154746835443\n868,-82.5,35.5,4.0,0.111111111111,489.0,0.154746835443\n869,-81.5,35.5,3.0,0.0833333333333,469.0,0.197890295359\n870,-80.5,35.5,1.0,0.0277777777778,186.0,0.235443037975\n871,-79.5,35.5,1.0,0.0277777777778,186.0,0.235443037975\n872,-78.5,35.5,1.0,0.0277777777778,186.0,0.235443037975\n873,-77.5,35.5,1.0,0.0277777777778,186.0,0.235443037975\n874,-76.5,35.5,1.0,0.0277777777778,186.0,0.235443037975\n875,-75.5,35.5,0.0,0.0,0.0,nan\n876,-74.5,35.5,0.0,0.0,0.0,nan\n877,-73.5,35.5,0.0,0.0,0.0,nan\n878,-72.5,35.5,0.0,0.0,0.0,nan\n879,-71.5,35.5,0.0,0.0,0.0,nan\n880,-70.5,35.5,0.0,0.0,0.0,nan\n881,-69.5,35.5,0.0,0.0,0.0,nan\n882,-68.5,35.5,0.0,0.0,0.0,nan\n883,-67.5,35.5,0.0,0.0,0.0,nan\n884,-66.5,35.5,0.0,0.0,0.0,nan\n885,-124.5,34.5,0.0,0.0,0.0,nan\n886,-123.5,34.5,0.0,0.0,0.0,nan\n887,-122.5,34.5,0.0,0.0,0.0,nan\n888,-121.5,34.5,0.0,0.0,0.0,nan\n889,-120.5,34.5,2.0,0.0555555555556,71.0,0.0449367088608\n890,-119.5,34.5,1.0,0.0277777777778,210.0,0.26582278481\n891,-118.5,34.5,2.0,0.0555555555556,317.0,0.200632911392\n892,-117.5,34.5,2.0,0.0555555555556,317.0,0.200632911392\n893,-116.5,34.5,1.0,0.0277777777778,107.0,0.135443037975\n894,-115.5,34.5,0.0,0.0,0.0,nan\n895,-114.5,34.5,0.0,0.0,0.0,nan\n896,-113.5,34.5,0.0,0.0,0.0,nan\n897,-112.5,34.5,2.0,0.0555555555556,185.0,0.117088607595\n898,-111.5,34.5,2.0,0.0555555555556,185.0,0.117088607595\n899,-110.5,34.5,2.0,0.0555555555556,290.0,0.183544303797\n900,-109.5,34.5,1.0,0.0277777777778,183.0,0.23164556962\n901,-108.5,34.5,1.0,0.0277777777778,183.0,0.23164556962\n902,-107.5,34.5,1.0,0.0277777777778,183.0,0.23164556962\n903,-106.5,34.5,1.0,0.0277777777778,183.0,0.23164556962\n904,-105.5,34.5,1.0,0.0277777777778,183.0,0.23164556962\n905,-104.5,34.5,1.0,0.0277777777778,183.0,0.23164556962\n906,-103.5,34.5,0.0,0.0,0.0,nan\n907,-102.5,34.5,0.0,0.0,0.0,nan\n908,-101.5,34.5,0.0,0.0,0.0,nan\n909,-100.5,34.5,0.0,0.0,0.0,nan\n910,-99.5,34.5,0.0,0.0,0.0,nan\n911,-98.5,34.5,0.0,0.0,0.0,nan\n912,-97.5,34.5,0.0,0.0,0.0,nan\n913,-96.5,34.5,0.0,0.0,0.0,nan\n914,-95.5,34.5,0.0,0.0,0.0,nan\n915,-94.5,34.5,1.0,0.0277777777778,186.0,0.235443037975\n916,-93.5,34.5,2.0,0.0555555555556,242.0,0.153164556962\n917,-92.5,34.5,2.0,0.0555555555556,242.0,0.153164556962\n918,-91.5,34.5,1.0,0.0277777777778,186.0,0.235443037975\n919,-90.5,34.5,1.0,0.0277777777778,186.0,0.235443037975\n920,-89.5,34.5,2.0,0.0555555555556,242.0,0.153164556962\n921,-88.5,34.5,3.0,0.0833333333333,469.0,0.197890295359\n922,-87.5,34.5,3.0,0.0833333333333,469.0,0.197890295359\n923,-86.5,34.5,4.0,0.111111111111,489.0,0.154746835443\n924,-85.5,34.5,4.0,0.111111111111,489.0,0.154746835443\n925,-84.5,34.5,2.0,0.0555555555556,242.0,0.153164556962\n926,-83.5,34.5,2.0,0.0555555555556,242.0,0.153164556962\n927,-82.5,34.5,2.0,0.0555555555556,242.0,0.153164556962\n928,-81.5,34.5,1.0,0.0277777777778,186.0,0.235443037975\n929,-80.5,34.5,1.0,0.0277777777778,186.0,0.235443037975\n930,-79.5,34.5,1.0,0.0277777777778,186.0,0.235443037975\n931,-78.5,34.5,1.0,0.0277777777778,186.0,0.235443037975\n932,-77.5,34.5,1.0,0.0277777777778,186.0,0.235443037975\n933,-76.5,34.5,0.0,0.0,0.0,nan\n934,-75.5,34.5,0.0,0.0,0.0,nan\n935,-74.5,34.5,0.0,0.0,0.0,nan\n936,-73.5,34.5,0.0,0.0,0.0,nan\n937,-72.5,34.5,0.0,0.0,0.0,nan\n938,-71.5,34.5,0.0,0.0,0.0,nan\n939,-70.5,34.5,0.0,0.0,0.0,nan\n940,-69.5,34.5,0.0,0.0,0.0,nan\n941,-68.5,34.5,0.0,0.0,0.0,nan\n942,-67.5,34.5,0.0,0.0,0.0,nan\n943,-66.5,34.5,0.0,0.0,0.0,nan\n944,-124.5,33.5,0.0,0.0,0.0,nan\n945,-123.5,33.5,0.0,0.0,0.0,nan\n946,-122.5,33.5,0.0,0.0,0.0,nan\n947,-121.5,33.5,0.0,0.0,0.0,nan\n948,-120.5,33.5,0.0,0.0,0.0,nan\n949,-119.5,33.5,0.0,0.0,0.0,nan\n950,-118.5,33.5,0.0,0.0,0.0,nan\n951,-117.5,33.5,2.0,0.0555555555556,317.0,0.200632911392\n952,-116.5,33.5,3.0,0.0833333333333,318.0,0.13417721519\n953,-115.5,33.5,0.0,0.0,0.0,nan\n954,-114.5,33.5,0.0,0.0,0.0,nan\n955,-113.5,33.5,0.0,0.0,0.0,nan\n956,-112.5,33.5,0.0,0.0,0.0,nan\n957,-111.5,33.5,0.0,0.0,0.0,nan\n958,-110.5,33.5,2.0,0.0555555555556,191.0,0.120886075949\n959,-109.5,33.5,2.0,0.0555555555556,191.0,0.120886075949\n960,-108.5,33.5,3.0,0.0833333333333,195.0,0.0822784810127\n961,-107.5,33.5,2.0,0.0555555555556,187.0,0.11835443038\n962,-106.5,33.5,1.0,0.0277777777778,183.0,0.23164556962\n963,-105.5,33.5,2.0,0.0555555555556,187.0,0.11835443038\n964,-104.5,33.5,0.0,0.0,0.0,nan\n965,-103.5,33.5,0.0,0.0,0.0,nan\n966,-102.5,33.5,0.0,0.0,0.0,nan\n967,-101.5,33.5,0.0,0.0,0.0,nan\n968,-100.5,33.5,0.0,0.0,0.0,nan\n969,-99.5,33.5,0.0,0.0,0.0,nan\n970,-98.5,33.5,0.0,0.0,0.0,nan\n971,-97.5,33.5,0.0,0.0,0.0,nan\n972,-96.5,33.5,0.0,0.0,0.0,nan\n973,-95.5,33.5,0.0,0.0,0.0,nan\n974,-94.5,33.5,0.0,0.0,0.0,nan\n975,-93.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n976,-92.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n977,-91.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n978,-90.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n979,-89.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n980,-88.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n981,-87.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n982,-86.5,33.5,2.0,0.0555555555556,206.0,0.130379746835\n983,-85.5,33.5,2.0,0.0555555555556,206.0,0.130379746835\n984,-84.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n985,-83.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n986,-82.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n987,-81.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n988,-80.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n989,-79.5,33.5,1.0,0.0277777777778,186.0,0.235443037975\n990,-78.5,33.5,0.0,0.0,0.0,nan\n991,-77.5,33.5,0.0,0.0,0.0,nan\n992,-76.5,33.5,0.0,0.0,0.0,nan\n993,-75.5,33.5,0.0,0.0,0.0,nan\n994,-74.5,33.5,0.0,0.0,0.0,nan\n995,-73.5,33.5,0.0,0.0,0.0,nan\n996,-72.5,33.5,0.0,0.0,0.0,nan\n997,-71.5,33.5,0.0,0.0,0.0,nan\n998,-70.5,33.5,0.0,0.0,0.0,nan\n999,-69.5,33.5,0.0,0.0,0.0,nan\n1000,-68.5,33.5,0.0,0.0,0.0,nan\n1001,-67.5,33.5,0.0,0.0,0.0,nan\n1002,-66.5,33.5,0.0,0.0,0.0,nan\n1003,-124.5,32.5,0.0,0.0,0.0,nan\n1004,-123.5,32.5,0.0,0.0,0.0,nan\n1005,-122.5,32.5,0.0,0.0,0.0,nan\n1006,-121.5,32.5,0.0,0.0,0.0,nan\n1007,-120.5,32.5,0.0,0.0,0.0,nan\n1008,-119.5,32.5,0.0,0.0,0.0,nan\n1009,-118.5,32.5,0.0,0.0,0.0,nan\n1010,-117.5,32.5,0.0,0.0,0.0,nan\n1011,-116.5,32.5,1.0,0.0277777777778,107.0,0.135443037975\n1012,-115.5,32.5,0.0,0.0,0.0,nan\n1013,-114.5,32.5,0.0,0.0,0.0,nan\n1014,-113.5,32.5,0.0,0.0,0.0,nan\n1015,-112.5,32.5,0.0,0.0,0.0,nan\n1016,-111.5,32.5,1.0,0.0277777777778,32.0,0.0405063291139\n1017,-110.5,32.5,2.0,0.0555555555556,40.0,0.0253164556962\n1018,-109.5,32.5,2.0,0.0555555555556,40.0,0.0253164556962\n1019,-108.5,32.5,3.0,0.0833333333333,195.0,0.0822784810127\n1020,-107.5,32.5,1.0,0.0277777777778,183.0,0.23164556962\n1021,-106.5,32.5,1.0,0.0277777777778,183.0,0.23164556962\n1022,-105.5,32.5,1.0,0.0277777777778,183.0,0.23164556962\n1023,-104.5,32.5,0.0,0.0,0.0,nan\n1024,-103.5,32.5,0.0,0.0,0.0,nan\n1025,-102.5,32.5,0.0,0.0,0.0,nan\n1026,-101.5,32.5,0.0,0.0,0.0,nan\n1027,-100.5,32.5,0.0,0.0,0.0,nan\n1028,-99.5,32.5,0.0,0.0,0.0,nan\n1029,-98.5,32.5,0.0,0.0,0.0,nan\n1030,-97.5,32.5,0.0,0.0,0.0,nan\n1031,-96.5,32.5,0.0,0.0,0.0,nan\n1032,-95.5,32.5,0.0,0.0,0.0,nan\n1033,-94.5,32.5,0.0,0.0,0.0,nan\n1034,-93.5,32.5,0.0,0.0,0.0,nan\n1035,-92.5,32.5,0.0,0.0,0.0,nan\n1036,-91.5,32.5,0.0,0.0,0.0,nan\n1037,-90.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1038,-89.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1039,-88.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1040,-87.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1041,-86.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1042,-85.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1043,-84.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1044,-83.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1045,-82.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1046,-81.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1047,-80.5,32.5,1.0,0.0277777777778,186.0,0.235443037975\n1048,-79.5,32.5,0.0,0.0,0.0,nan\n1049,-78.5,32.5,0.0,0.0,0.0,nan\n1050,-77.5,32.5,0.0,0.0,0.0,nan\n1051,-76.5,32.5,0.0,0.0,0.0,nan\n1052,-75.5,32.5,0.0,0.0,0.0,nan\n1053,-74.5,32.5,0.0,0.0,0.0,nan\n1054,-73.5,32.5,0.0,0.0,0.0,nan\n1055,-72.5,32.5,0.0,0.0,0.0,nan\n1056,-71.5,32.5,0.0,0.0,0.0,nan\n1057,-70.5,32.5,0.0,0.0,0.0,nan\n1058,-69.5,32.5,0.0,0.0,0.0,nan\n1059,-68.5,32.5,0.0,0.0,0.0,nan\n1060,-67.5,32.5,0.0,0.0,0.0,nan\n1061,-66.5,32.5,0.0,0.0,0.0,nan\n1062,-124.5,31.5,0.0,0.0,0.0,nan\n1063,-123.5,31.5,0.0,0.0,0.0,nan\n1064,-122.5,31.5,0.0,0.0,0.0,nan\n1065,-121.5,31.5,0.0,0.0,0.0,nan\n1066,-120.5,31.5,0.0,0.0,0.0,nan\n1067,-119.5,31.5,0.0,0.0,0.0,nan\n1068,-118.5,31.5,0.0,0.0,0.0,nan\n1069,-117.5,31.5,0.0,0.0,0.0,nan\n1070,-116.5,31.5,1.0,0.0277777777778,107.0,0.135443037975\n1071,-115.5,31.5,1.0,0.0277777777778,107.0,0.135443037975\n1072,-114.5,31.5,0.0,0.0,0.0,nan\n1073,-113.5,31.5,0.0,0.0,0.0,nan\n1074,-112.5,31.5,0.0,0.0,0.0,nan\n1075,-111.5,31.5,1.0,0.0277777777778,32.0,0.0405063291139\n1076,-110.5,31.5,1.0,0.0277777777778,32.0,0.0405063291139\n1077,-109.5,31.5,2.0,0.0555555555556,40.0,0.0253164556962\n1078,-108.5,31.5,2.0,0.0555555555556,40.0,0.0253164556962\n1079,-107.5,31.5,0.0,0.0,0.0,nan\n1080,-106.5,31.5,0.0,0.0,0.0,nan\n1081,-105.5,31.5,0.0,0.0,0.0,nan\n1082,-104.5,31.5,0.0,0.0,0.0,nan\n1083,-103.5,31.5,0.0,0.0,0.0,nan\n1084,-102.5,31.5,0.0,0.0,0.0,nan\n1085,-101.5,31.5,0.0,0.0,0.0,nan\n1086,-100.5,31.5,0.0,0.0,0.0,nan\n1087,-99.5,31.5,0.0,0.0,0.0,nan\n1088,-98.5,31.5,0.0,0.0,0.0,nan\n1089,-97.5,31.5,0.0,0.0,0.0,nan\n1090,-96.5,31.5,0.0,0.0,0.0,nan\n1091,-95.5,31.5,0.0,0.0,0.0,nan\n1092,-94.5,31.5,0.0,0.0,0.0,nan\n1093,-93.5,31.5,0.0,0.0,0.0,nan\n1094,-92.5,31.5,0.0,0.0,0.0,nan\n1095,-91.5,31.5,0.0,0.0,0.0,nan\n1096,-90.5,31.5,0.0,0.0,0.0,nan\n1097,-89.5,31.5,0.0,0.0,0.0,nan\n1098,-88.5,31.5,0.0,0.0,0.0,nan\n1099,-87.5,31.5,0.0,0.0,0.0,nan\n1100,-86.5,31.5,0.0,0.0,0.0,nan\n1101,-85.5,31.5,0.0,0.0,0.0,nan\n1102,-84.5,31.5,0.0,0.0,0.0,nan\n1103,-83.5,31.5,0.0,0.0,0.0,nan\n1104,-82.5,31.5,0.0,0.0,0.0,nan\n1105,-81.5,31.5,0.0,0.0,0.0,nan\n1106,-80.5,31.5,0.0,0.0,0.0,nan\n1107,-79.5,31.5,0.0,0.0,0.0,nan\n1108,-78.5,31.5,0.0,0.0,0.0,nan\n1109,-77.5,31.5,0.0,0.0,0.0,nan\n1110,-76.5,31.5,0.0,0.0,0.0,nan\n1111,-75.5,31.5,0.0,0.0,0.0,nan\n1112,-74.5,31.5,0.0,0.0,0.0,nan\n1113,-73.5,31.5,0.0,0.0,0.0,nan\n1114,-72.5,31.5,0.0,0.0,0.0,nan\n1115,-71.5,31.5,0.0,0.0,0.0,nan\n1116,-70.5,31.5,0.0,0.0,0.0,nan\n1117,-69.5,31.5,0.0,0.0,0.0,nan\n1118,-68.5,31.5,0.0,0.0,0.0,nan\n1119,-67.5,31.5,0.0,0.0,0.0,nan\n1120,-66.5,31.5,0.0,0.0,0.0,nan\n1121,-124.5,30.5,0.0,0.0,0.0,nan\n1122,-123.5,30.5,0.0,0.0,0.0,nan\n1123,-122.5,30.5,0.0,0.0,0.0,nan\n1124,-121.5,30.5,0.0,0.0,0.0,nan\n1125,-120.5,30.5,0.0,0.0,0.0,nan\n1126,-119.5,30.5,0.0,0.0,0.0,nan\n1127,-118.5,30.5,0.0,0.0,0.0,nan\n1128,-117.5,30.5,0.0,0.0,0.0,nan\n1129,-116.5,30.5,0.0,0.0,0.0,nan\n1130,-115.5,30.5,1.0,0.0277777777778,107.0,0.135443037975\n1131,-114.5,30.5,0.0,0.0,0.0,nan\n1132,-113.5,30.5,0.0,0.0,0.0,nan\n1133,-112.5,30.5,0.0,0.0,0.0,nan\n1134,-111.5,30.5,0.0,0.0,0.0,nan\n1135,-110.5,30.5,1.0,0.0277777777778,32.0,0.0405063291139\n1136,-109.5,30.5,1.0,0.0277777777778,32.0,0.0405063291139\n1137,-108.5,30.5,1.0,0.0277777777778,32.0,0.0405063291139\n1138,-107.5,30.5,1.0,0.0277777777778,32.0,0.0405063291139\n1139,-106.5,30.5,0.0,0.0,0.0,nan\n1140,-105.5,30.5,0.0,0.0,0.0,nan\n1141,-104.5,30.5,0.0,0.0,0.0,nan\n1142,-103.5,30.5,0.0,0.0,0.0,nan\n1143,-102.5,30.5,0.0,0.0,0.0,nan\n1144,-101.5,30.5,0.0,0.0,0.0,nan\n1145,-100.5,30.5,0.0,0.0,0.0,nan\n1146,-99.5,30.5,0.0,0.0,0.0,nan\n1147,-98.5,30.5,0.0,0.0,0.0,nan\n1148,-97.5,30.5,0.0,0.0,0.0,nan\n1149,-96.5,30.5,0.0,0.0,0.0,nan\n1150,-95.5,30.5,0.0,0.0,0.0,nan\n1151,-94.5,30.5,0.0,0.0,0.0,nan\n1152,-93.5,30.5,0.0,0.0,0.0,nan\n1153,-92.5,30.5,0.0,0.0,0.0,nan\n1154,-91.5,30.5,0.0,0.0,0.0,nan\n1155,-90.5,30.5,0.0,0.0,0.0,nan\n1156,-89.5,30.5,0.0,0.0,0.0,nan\n1157,-88.5,30.5,0.0,0.0,0.0,nan\n1158,-87.5,30.5,0.0,0.0,0.0,nan\n1159,-86.5,30.5,0.0,0.0,0.0,nan\n1160,-85.5,30.5,0.0,0.0,0.0,nan\n1161,-84.5,30.5,0.0,0.0,0.0,nan\n1162,-83.5,30.5,0.0,0.0,0.0,nan\n1163,-82.5,30.5,0.0,0.0,0.0,nan\n1164,-81.5,30.5,0.0,0.0,0.0,nan\n1165,-80.5,30.5,0.0,0.0,0.0,nan\n1166,-79.5,30.5,0.0,0.0,0.0,nan\n1167,-78.5,30.5,0.0,0.0,0.0,nan\n1168,-77.5,30.5,0.0,0.0,0.0,nan\n1169,-76.5,30.5,0.0,0.0,0.0,nan\n1170,-75.5,30.5,0.0,0.0,0.0,nan\n1171,-74.5,30.5,0.0,0.0,0.0,nan\n1172,-73.5,30.5,0.0,0.0,0.0,nan\n1173,-72.5,30.5,0.0,0.0,0.0,nan\n1174,-71.5,30.5,0.0,0.0,0.0,nan\n1175,-70.5,30.5,0.0,0.0,0.0,nan\n1176,-69.5,30.5,0.0,0.0,0.0,nan\n1177,-68.5,30.5,0.0,0.0,0.0,nan\n1178,-67.5,30.5,0.0,0.0,0.0,nan\n1179,-66.5,30.5,0.0,0.0,0.0,nan\n1180,-124.5,29.5,0.0,0.0,0.0,nan\n1181,-123.5,29.5,0.0,0.0,0.0,nan\n1182,-122.5,29.5,0.0,0.0,0.0,nan\n1183,-121.5,29.5,0.0,0.0,0.0,nan\n1184,-120.5,29.5,0.0,0.0,0.0,nan\n1185,-119.5,29.5,0.0,0.0,0.0,nan\n1186,-118.5,29.5,0.0,0.0,0.0,nan\n1187,-117.5,29.5,0.0,0.0,0.0,nan\n1188,-116.5,29.5,0.0,0.0,0.0,nan\n1189,-115.5,29.5,0.0,0.0,0.0,nan\n1190,-114.5,29.5,0.0,0.0,0.0,nan\n1191,-113.5,29.5,0.0,0.0,0.0,nan\n1192,-112.5,29.5,0.0,0.0,0.0,nan\n1193,-111.5,29.5,0.0,0.0,0.0,nan\n1194,-110.5,29.5,1.0,0.0277777777778,32.0,0.0405063291139\n1195,-109.5,29.5,1.0,0.0277777777778,32.0,0.0405063291139\n1196,-108.5,29.5,1.0,0.0277777777778,32.0,0.0405063291139\n1197,-107.5,29.5,1.0,0.0277777777778,32.0,0.0405063291139\n1198,-106.5,29.5,1.0,0.0277777777778,32.0,0.0405063291139\n1199,-105.5,29.5,0.0,0.0,0.0,nan\n1200,-104.5,29.5,0.0,0.0,0.0,nan\n1201,-103.5,29.5,0.0,0.0,0.0,nan\n1202,-102.5,29.5,0.0,0.0,0.0,nan\n1203,-101.5,29.5,0.0,0.0,0.0,nan\n1204,-100.5,29.5,0.0,0.0,0.0,nan\n1205,-99.5,29.5,0.0,0.0,0.0,nan\n1206,-98.5,29.5,0.0,0.0,0.0,nan\n1207,-97.5,29.5,0.0,0.0,0.0,nan\n1208,-96.5,29.5,0.0,0.0,0.0,nan\n1209,-95.5,29.5,0.0,0.0,0.0,nan\n1210,-94.5,29.5,0.0,0.0,0.0,nan\n1211,-93.5,29.5,0.0,0.0,0.0,nan\n1212,-92.5,29.5,0.0,0.0,0.0,nan\n1213,-91.5,29.5,0.0,0.0,0.0,nan\n1214,-90.5,29.5,0.0,0.0,0.0,nan\n1215,-89.5,29.5,0.0,0.0,0.0,nan\n1216,-88.5,29.5,0.0,0.0,0.0,nan\n1217,-87.5,29.5,0.0,0.0,0.0,nan\n1218,-86.5,29.5,0.0,0.0,0.0,nan\n1219,-85.5,29.5,0.0,0.0,0.0,nan\n1220,-84.5,29.5,0.0,0.0,0.0,nan\n1221,-83.5,29.5,0.0,0.0,0.0,nan\n1222,-82.5,29.5,0.0,0.0,0.0,nan\n1223,-81.5,29.5,0.0,0.0,0.0,nan\n1224,-80.5,29.5,0.0,0.0,0.0,nan\n1225,-79.5,29.5,0.0,0.0,0.0,nan\n1226,-78.5,29.5,0.0,0.0,0.0,nan\n1227,-77.5,29.5,0.0,0.0,0.0,nan\n1228,-76.5,29.5,0.0,0.0,0.0,nan\n1229,-75.5,29.5,0.0,0.0,0.0,nan\n1230,-74.5,29.5,0.0,0.0,0.0,nan\n1231,-73.5,29.5,0.0,0.0,0.0,nan\n1232,-72.5,29.5,0.0,0.0,0.0,nan\n1233,-71.5,29.5,0.0,0.0,0.0,nan\n1234,-70.5,29.5,0.0,0.0,0.0,nan\n1235,-69.5,29.5,0.0,0.0,0.0,nan\n1236,-68.5,29.5,0.0,0.0,0.0,nan\n1237,-67.5,29.5,0.0,0.0,0.0,nan\n1238,-66.5,29.5,0.0,0.0,0.0,nan\n1239,-124.5,28.5,0.0,0.0,0.0,nan\n1240,-123.5,28.5,0.0,0.0,0.0,nan\n1241,-122.5,28.5,0.0,0.0,0.0,nan\n1242,-121.5,28.5,0.0,0.0,0.0,nan\n1243,-120.5,28.5,0.0,0.0,0.0,nan\n1244,-119.5,28.5,0.0,0.0,0.0,nan\n1245,-118.5,28.5,0.0,0.0,0.0,nan\n1246,-117.5,28.5,0.0,0.0,0.0,nan\n1247,-116.5,28.5,0.0,0.0,0.0,nan\n1248,-115.5,28.5,0.0,0.0,0.0,nan\n1249,-114.5,28.5,0.0,0.0,0.0,nan\n1250,-113.5,28.5,1.0,0.0277777777778,107.0,0.135443037975\n1251,-112.5,28.5,0.0,0.0,0.0,nan\n1252,-111.5,28.5,0.0,0.0,0.0,nan\n1253,-110.5,28.5,0.0,0.0,0.0,nan\n1254,-109.5,28.5,1.0,0.0277777777778,32.0,0.0405063291139\n1255,-108.5,28.5,1.0,0.0277777777778,32.0,0.0405063291139\n1256,-107.5,28.5,1.0,0.0277777777778,32.0,0.0405063291139\n1257,-106.5,28.5,1.0,0.0277777777778,32.0,0.0405063291139\n1258,-105.5,28.5,0.0,0.0,0.0,nan\n1259,-104.5,28.5,0.0,0.0,0.0,nan\n1260,-103.5,28.5,0.0,0.0,0.0,nan\n1261,-102.5,28.5,0.0,0.0,0.0,nan\n1262,-101.5,28.5,0.0,0.0,0.0,nan\n1263,-100.5,28.5,0.0,0.0,0.0,nan\n1264,-99.5,28.5,0.0,0.0,0.0,nan\n1265,-98.5,28.5,0.0,0.0,0.0,nan\n1266,-97.5,28.5,0.0,0.0,0.0,nan\n1267,-96.5,28.5,0.0,0.0,0.0,nan\n1268,-95.5,28.5,0.0,0.0,0.0,nan\n1269,-94.5,28.5,0.0,0.0,0.0,nan\n1270,-93.5,28.5,0.0,0.0,0.0,nan\n1271,-92.5,28.5,0.0,0.0,0.0,nan\n1272,-91.5,28.5,0.0,0.0,0.0,nan\n1273,-90.5,28.5,0.0,0.0,0.0,nan\n1274,-89.5,28.5,0.0,0.0,0.0,nan\n1275,-88.5,28.5,0.0,0.0,0.0,nan\n1276,-87.5,28.5,0.0,0.0,0.0,nan\n1277,-86.5,28.5,0.0,0.0,0.0,nan\n1278,-85.5,28.5,0.0,0.0,0.0,nan\n1279,-84.5,28.5,0.0,0.0,0.0,nan\n1280,-83.5,28.5,0.0,0.0,0.0,nan\n1281,-82.5,28.5,0.0,0.0,0.0,nan\n1282,-81.5,28.5,0.0,0.0,0.0,nan\n1283,-80.5,28.5,0.0,0.0,0.0,nan\n1284,-79.5,28.5,0.0,0.0,0.0,nan\n1285,-78.5,28.5,0.0,0.0,0.0,nan\n1286,-77.5,28.5,0.0,0.0,0.0,nan\n1287,-76.5,28.5,0.0,0.0,0.0,nan\n1288,-75.5,28.5,0.0,0.0,0.0,nan\n1289,-74.5,28.5,0.0,0.0,0.0,nan\n1290,-73.5,28.5,0.0,0.0,0.0,nan\n1291,-72.5,28.5,0.0,0.0,0.0,nan\n1292,-71.5,28.5,0.0,0.0,0.0,nan\n1293,-70.5,28.5,0.0,0.0,0.0,nan\n1294,-69.5,28.5,0.0,0.0,0.0,nan\n1295,-68.5,28.5,0.0,0.0,0.0,nan\n1296,-67.5,28.5,0.0,0.0,0.0,nan\n1297,-66.5,28.5,0.0,0.0,0.0,nan\n1298,-124.5,27.5,0.0,0.0,0.0,nan\n1299,-123.5,27.5,0.0,0.0,0.0,nan\n1300,-122.5,27.5,0.0,0.0,0.0,nan\n1301,-121.5,27.5,0.0,0.0,0.0,nan\n1302,-120.5,27.5,0.0,0.0,0.0,nan\n1303,-119.5,27.5,0.0,0.0,0.0,nan\n1304,-118.5,27.5,0.0,0.0,0.0,nan\n1305,-117.5,27.5,0.0,0.0,0.0,nan\n1306,-116.5,27.5,0.0,0.0,0.0,nan\n1307,-115.5,27.5,0.0,0.0,0.0,nan\n1308,-114.5,27.5,0.0,0.0,0.0,nan\n1309,-113.5,27.5,0.0,0.0,0.0,nan\n1310,-112.5,27.5,1.0,0.0277777777778,107.0,0.135443037975\n1311,-111.5,27.5,0.0,0.0,0.0,nan\n1312,-110.5,27.5,0.0,0.0,0.0,nan\n1313,-109.5,27.5,0.0,0.0,0.0,nan\n1314,-108.5,27.5,1.0,0.0277777777778,32.0,0.0405063291139\n1315,-107.5,27.5,1.0,0.0277777777778,32.0,0.0405063291139\n1316,-106.5,27.5,1.0,0.0277777777778,32.0,0.0405063291139\n1317,-105.5,27.5,0.0,0.0,0.0,nan\n1318,-104.5,27.5,0.0,0.0,0.0,nan\n1319,-103.5,27.5,0.0,0.0,0.0,nan\n1320,-102.5,27.5,1.0,0.0277777777778,32.0,0.0405063291139\n1321,-101.5,27.5,0.0,0.0,0.0,nan\n1322,-100.5,27.5,0.0,0.0,0.0,nan\n1323,-99.5,27.5,0.0,0.0,0.0,nan\n1324,-98.5,27.5,0.0,0.0,0.0,nan\n1325,-97.5,27.5,0.0,0.0,0.0,nan\n1326,-96.5,27.5,0.0,0.0,0.0,nan\n1327,-95.5,27.5,0.0,0.0,0.0,nan\n1328,-94.5,27.5,0.0,0.0,0.0,nan\n1329,-93.5,27.5,0.0,0.0,0.0,nan\n1330,-92.5,27.5,0.0,0.0,0.0,nan\n1331,-91.5,27.5,0.0,0.0,0.0,nan\n1332,-90.5,27.5,0.0,0.0,0.0,nan\n1333,-89.5,27.5,0.0,0.0,0.0,nan\n1334,-88.5,27.5,0.0,0.0,0.0,nan\n1335,-87.5,27.5,0.0,0.0,0.0,nan\n1336,-86.5,27.5,0.0,0.0,0.0,nan\n1337,-85.5,27.5,0.0,0.0,0.0,nan\n1338,-84.5,27.5,0.0,0.0,0.0,nan\n1339,-83.5,27.5,0.0,0.0,0.0,nan\n1340,-82.5,27.5,0.0,0.0,0.0,nan\n1341,-81.5,27.5,0.0,0.0,0.0,nan\n1342,-80.5,27.5,0.0,0.0,0.0,nan\n1343,-79.5,27.5,0.0,0.0,0.0,nan\n1344,-78.5,27.5,0.0,0.0,0.0,nan\n1345,-77.5,27.5,0.0,0.0,0.0,nan\n1346,-76.5,27.5,0.0,0.0,0.0,nan\n1347,-75.5,27.5,0.0,0.0,0.0,nan\n1348,-74.5,27.5,0.0,0.0,0.0,nan\n1349,-73.5,27.5,0.0,0.0,0.0,nan\n1350,-72.5,27.5,0.0,0.0,0.0,nan\n1351,-71.5,27.5,0.0,0.0,0.0,nan\n1352,-70.5,27.5,0.0,0.0,0.0,nan\n1353,-69.5,27.5,0.0,0.0,0.0,nan\n1354,-68.5,27.5,0.0,0.0,0.0,nan\n1355,-67.5,27.5,0.0,0.0,0.0,nan\n1356,-66.5,27.5,0.0,0.0,0.0,nan\n1357,-124.5,26.5,0.0,0.0,0.0,nan\n1358,-123.5,26.5,0.0,0.0,0.0,nan\n1359,-122.5,26.5,0.0,0.0,0.0,nan\n1360,-121.5,26.5,0.0,0.0,0.0,nan\n1361,-120.5,26.5,0.0,0.0,0.0,nan\n1362,-119.5,26.5,0.0,0.0,0.0,nan\n1363,-118.5,26.5,0.0,0.0,0.0,nan\n1364,-117.5,26.5,0.0,0.0,0.0,nan\n1365,-116.5,26.5,0.0,0.0,0.0,nan\n1366,-115.5,26.5,0.0,0.0,0.0,nan\n1367,-114.5,26.5,0.0,0.0,0.0,nan\n1368,-113.5,26.5,0.0,0.0,0.0,nan\n1369,-112.5,26.5,0.0,0.0,0.0,nan\n1370,-111.5,26.5,0.0,0.0,0.0,nan\n1371,-110.5,26.5,0.0,0.0,0.0,nan\n1372,-109.5,26.5,0.0,0.0,0.0,nan\n1373,-108.5,26.5,0.0,0.0,0.0,nan\n1374,-107.5,26.5,0.0,0.0,0.0,nan\n1375,-106.5,26.5,1.0,0.0277777777778,32.0,0.0405063291139\n1376,-105.5,26.5,1.0,0.0277777777778,32.0,0.0405063291139\n1377,-104.5,26.5,0.0,0.0,0.0,nan\n1378,-103.5,26.5,1.0,0.0277777777778,32.0,0.0405063291139\n1379,-102.5,26.5,1.0,0.0277777777778,32.0,0.0405063291139\n1380,-101.5,26.5,1.0,0.0277777777778,32.0,0.0405063291139\n1381,-100.5,26.5,0.0,0.0,0.0,nan\n1382,-99.5,26.5,0.0,0.0,0.0,nan\n1383,-98.5,26.5,0.0,0.0,0.0,nan\n1384,-97.5,26.5,0.0,0.0,0.0,nan\n1385,-96.5,26.5,0.0,0.0,0.0,nan\n1386,-95.5,26.5,0.0,0.0,0.0,nan\n1387,-94.5,26.5,0.0,0.0,0.0,nan\n1388,-93.5,26.5,0.0,0.0,0.0,nan\n1389,-92.5,26.5,0.0,0.0,0.0,nan\n1390,-91.5,26.5,0.0,0.0,0.0,nan\n1391,-90.5,26.5,0.0,0.0,0.0,nan\n1392,-89.5,26.5,0.0,0.0,0.0,nan\n1393,-88.5,26.5,0.0,0.0,0.0,nan\n1394,-87.5,26.5,0.0,0.0,0.0,nan\n1395,-86.5,26.5,0.0,0.0,0.0,nan\n1396,-85.5,26.5,0.0,0.0,0.0,nan\n1397,-84.5,26.5,0.0,0.0,0.0,nan\n1398,-83.5,26.5,0.0,0.0,0.0,nan\n1399,-82.5,26.5,0.0,0.0,0.0,nan\n1400,-81.5,26.5,0.0,0.0,0.0,nan\n1401,-80.5,26.5,0.0,0.0,0.0,nan\n1402,-79.5,26.5,0.0,0.0,0.0,nan\n1403,-78.5,26.5,0.0,0.0,0.0,nan\n1404,-77.5,26.5,0.0,0.0,0.0,nan\n1405,-76.5,26.5,0.0,0.0,0.0,nan\n1406,-75.5,26.5,0.0,0.0,0.0,nan\n1407,-74.5,26.5,0.0,0.0,0.0,nan\n1408,-73.5,26.5,0.0,0.0,0.0,nan\n1409,-72.5,26.5,0.0,0.0,0.0,nan\n1410,-71.5,26.5,0.0,0.0,0.0,nan\n1411,-70.5,26.5,0.0,0.0,0.0,nan\n1412,-69.5,26.5,0.0,0.0,0.0,nan\n1413,-68.5,26.5,0.0,0.0,0.0,nan\n1414,-67.5,26.5,0.0,0.0,0.0,nan\n1415,-66.5,26.5,0.0,0.0,0.0,nan\n1416,-124.5,25.5,0.0,0.0,0.0,nan\n1417,-123.5,25.5,0.0,0.0,0.0,nan\n1418,-122.5,25.5,0.0,0.0,0.0,nan\n1419,-121.5,25.5,0.0,0.0,0.0,nan\n1420,-120.5,25.5,0.0,0.0,0.0,nan\n1421,-119.5,25.5,0.0,0.0,0.0,nan\n1422,-118.5,25.5,0.0,0.0,0.0,nan\n1423,-117.5,25.5,0.0,0.0,0.0,nan\n1424,-116.5,25.5,0.0,0.0,0.0,nan\n1425,-115.5,25.5,0.0,0.0,0.0,nan\n1426,-114.5,25.5,0.0,0.0,0.0,nan\n1427,-113.5,25.5,0.0,0.0,0.0,nan\n1428,-112.5,25.5,0.0,0.0,0.0,nan\n1429,-111.5,25.5,0.0,0.0,0.0,nan\n1430,-110.5,25.5,0.0,0.0,0.0,nan\n1431,-109.5,25.5,0.0,0.0,0.0,nan\n1432,-108.5,25.5,0.0,0.0,0.0,nan\n1433,-107.5,25.5,0.0,0.0,0.0,nan\n1434,-106.5,25.5,0.0,0.0,0.0,nan\n1435,-105.5,25.5,0.0,0.0,0.0,nan\n1436,-104.5,25.5,0.0,0.0,0.0,nan\n1437,-103.5,25.5,0.0,0.0,0.0,nan\n1438,-102.5,25.5,1.0,0.0277777777778,32.0,0.0405063291139\n1439,-101.5,25.5,1.0,0.0277777777778,32.0,0.0405063291139\n1440,-100.5,25.5,1.0,0.0277777777778,32.0,0.0405063291139\n1441,-99.5,25.5,0.0,0.0,0.0,nan\n1442,-98.5,25.5,0.0,0.0,0.0,nan\n1443,-97.5,25.5,0.0,0.0,0.0,nan\n1444,-96.5,25.5,0.0,0.0,0.0,nan\n1445,-95.5,25.5,0.0,0.0,0.0,nan\n1446,-94.5,25.5,0.0,0.0,0.0,nan\n1447,-93.5,25.5,0.0,0.0,0.0,nan\n1448,-92.5,25.5,0.0,0.0,0.0,nan\n1449,-91.5,25.5,0.0,0.0,0.0,nan\n1450,-90.5,25.5,0.0,0.0,0.0,nan\n1451,-89.5,25.5,0.0,0.0,0.0,nan\n1452,-88.5,25.5,0.0,0.0,0.0,nan\n1453,-87.5,25.5,0.0,0.0,0.0,nan\n1454,-86.5,25.5,0.0,0.0,0.0,nan\n1455,-85.5,25.5,0.0,0.0,0.0,nan\n1456,-84.5,25.5,0.0,0.0,0.0,nan\n1457,-83.5,25.5,0.0,0.0,0.0,nan\n1458,-82.5,25.5,0.0,0.0,0.0,nan\n1459,-81.5,25.5,0.0,0.0,0.0,nan\n1460,-80.5,25.5,0.0,0.0,0.0,nan\n1461,-79.5,25.5,0.0,0.0,0.0,nan\n1462,-78.5,25.5,0.0,0.0,0.0,nan\n1463,-77.5,25.5,0.0,0.0,0.0,nan\n1464,-76.5,25.5,0.0,0.0,0.0,nan\n1465,-75.5,25.5,0.0,0.0,0.0,nan\n1466,-74.5,25.5,0.0,0.0,0.0,nan\n1467,-73.5,25.5,0.0,0.0,0.0,nan\n1468,-72.5,25.5,0.0,0.0,0.0,nan\n1469,-71.5,25.5,0.0,0.0,0.0,nan\n1470,-70.5,25.5,0.0,0.0,0.0,nan\n1471,-69.5,25.5,0.0,0.0,0.0,nan\n1472,-68.5,25.5,0.0,0.0,0.0,nan\n1473,-67.5,25.5,0.0,0.0,0.0,nan\n1474,-66.5,25.5,0.0,0.0,0.0,nan';
-var _user$project$ExampleStats$exampleStats = function () {
-	var _p0 = _periodic$elm_csv$Csv$parse(_user$project$ExampleStats$exampleCsv);
-	if (_p0.ctor === 'Ok') {
-		return _p0._0;
-	} else {
-		return _elm_lang$core$Native_Utils.crashCase(
-			'ExampleStats',
-			{
-				start: {line: 30, column: 5},
-				end: {line: 35, column: 41}
-			},
-			_p0)(
-			_elm_lang$core$Basics$toString(_p0._0));
-	}
-}();
-
 var _user$project$StatsMain$svgViewBox2String = function (_p0) {
 	var _p1 = _p0;
 	var _p3 = _p1.minY;
@@ -11710,9 +10323,6 @@ var _user$project$StatsMain$agg = F2(
 				A3(_elm_lang$core$List$foldl, fn, _p6._0, _p6._1));
 		}
 	});
-var _user$project$StatsMain$variables = function (csv) {
-	return A2(_elm_lang$core$List$drop, 3, csv.headers);
-};
 var _user$project$StatsMain$inViewBox = F2(
 	function (_p8, _p7) {
 		var _p9 = _p8;
@@ -11774,6 +10384,82 @@ var _user$project$StatsMain$computeScale = function (data) {
 					data)))
 	};
 };
+var _user$project$StatsMain$requestStats = _elm_lang$core$Native_Platform.outgoingPort(
+	'requestStats',
+	function (v) {
+		return null;
+	});
+var _user$project$StatsMain$statsForSites = _elm_lang$core$Native_Platform.incomingPort(
+	'statsForSites',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (sitesObserved) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (statNameLookup) {
+					return _elm_lang$core$Json_Decode$succeed(
+						{sitesObserved: sitesObserved, statNameLookup: statNameLookup});
+				},
+				A2(
+					_elm_lang$core$Json_Decode$field,
+					'statNameLookup',
+					_elm_lang$core$Json_Decode$list(
+						A2(
+							_elm_lang$core$Json_Decode$andThen,
+							function (x0) {
+								return A2(
+									_elm_lang$core$Json_Decode$andThen,
+									function (x1) {
+										return _elm_lang$core$Json_Decode$succeed(
+											{ctor: '_Tuple2', _0: x0, _1: x1});
+									},
+									A2(_elm_lang$core$Json_Decode$index, 1, _elm_lang$core$Json_Decode$string));
+							},
+							A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string)))));
+		},
+		A2(
+			_elm_lang$core$Json_Decode$field,
+			'sitesObserved',
+			_elm_lang$core$Json_Decode$list(
+				A2(
+					_elm_lang$core$Json_Decode$andThen,
+					function (id) {
+						return A2(
+							_elm_lang$core$Json_Decode$andThen,
+							function (stats) {
+								return _elm_lang$core$Json_Decode$succeed(
+									{id: id, stats: stats});
+							},
+							A2(
+								_elm_lang$core$Json_Decode$field,
+								'stats',
+								_elm_lang$core$Json_Decode$list(
+									A2(
+										_elm_lang$core$Json_Decode$andThen,
+										function (x0) {
+											return A2(
+												_elm_lang$core$Json_Decode$andThen,
+												function (x1) {
+													return _elm_lang$core$Json_Decode$succeed(
+														{ctor: '_Tuple2', _0: x0, _1: x1});
+												},
+												A2(
+													_elm_lang$core$Json_Decode$index,
+													1,
+													_elm_lang$core$Json_Decode$oneOf(
+														{
+															ctor: '::',
+															_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+															_1: {
+																ctor: '::',
+																_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$float),
+																_1: {ctor: '[]'}
+															}
+														})));
+										},
+										A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string)))));
+					},
+					A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int))))));
 var _user$project$StatsMain$mouseEvent = _elm_lang$core$Native_Platform.incomingPort(
 	'mouseEvent',
 	A2(
@@ -11801,6 +10487,10 @@ var _user$project$StatsMain$mouseEvent = _elm_lang$core$Native_Platform.incoming
 var _user$project$StatsMain$sitesSelected = _elm_lang$core$Native_Platform.incomingPort(
 	'sitesSelected',
 	_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$int));
+var _user$project$StatsMain$StatsForSite = F2(
+	function (a, b) {
+		return {id: a, stats: b};
+	});
 var _user$project$StatsMain$DataScale = F4(
 	function (a, b, c, d) {
 		return {minX: a, minY: b, maxX: c, maxY: d};
@@ -11817,47 +10507,51 @@ var _user$project$StatsMain$MouseEvent = F4(
 	function (a, b, c, d) {
 		return {eventType: a, x: b, y: c, ctrlKey: d};
 	});
-var _user$project$StatsMain$Model = F5(
-	function (a, b, c, d, e) {
-		return {selected: a, selecting: b, data: c, xCol: d, yCol: e};
+var _user$project$StatsMain$Model = F9(
+	function (a, b, c, d, e, f, g, h, i) {
+		return {selected: a, selecting: b, variables: c, statNames: d, stats: e, displayedRecords: f, scale: g, xCol: h, yCol: i};
 	});
 var _user$project$StatsMain$Record = F3(
 	function (a, b, c) {
 		return {siteId: a, x: b, y: c};
 	});
 var _user$project$StatsMain$extractRecord = F3(
-	function (xCol, yCol, record) {
-		var y = A2(
-			_elm_lang$core$Result$andThen,
-			_elm_lang$core$String$toFloat,
-			A2(
+	function (xCol, yCol, stats) {
+		var getValue = function (col) {
+			return A2(
 				_elm_lang$core$Result$fromMaybe,
-				'missing column in CSV',
-				A2(_elm_community$list_extra$List_Extra$getAt, yCol + 3, record)));
-		var x = A2(
-			_elm_lang$core$Result$andThen,
-			_elm_lang$core$String$toFloat,
-			A2(
-				_elm_lang$core$Result$fromMaybe,
-				'missing column in CSV',
-				A2(_elm_community$list_extra$List_Extra$getAt, xCol + 3, record)));
-		var siteId = A2(
-			_elm_lang$core$Result$andThen,
-			_elm_lang$core$String$toInt,
-			A2(
-				_elm_lang$core$Result$fromMaybe,
-				'No SiteId in CSV',
-				A2(_elm_community$list_extra$List_Extra$getAt, 0, record)));
+				'missing value',
+				_elm_community$maybe_extra$Maybe_Extra$join(
+					A2(
+						_elm_lang$core$Maybe$map,
+						_elm_lang$core$Tuple$second,
+						A2(
+							_elm_community$list_extra$List_Extra$find,
+							function (_p13) {
+								return A2(
+									F2(
+										function (x, y) {
+											return _elm_lang$core$Native_Utils.eq(x, y);
+										}),
+									col,
+									_elm_lang$core$Tuple$first(_p13));
+							},
+							stats.stats))));
+		};
 		return _elm_lang$core$Result$toMaybe(
-			A4(_elm_lang$core$Result$map3, _user$project$StatsMain$Record, siteId, x, y));
+			A3(
+				_elm_lang$core$Result$map2,
+				_user$project$StatsMain$Record(stats.id),
+				getValue(xCol),
+				getValue(yCol)));
 	});
-var _user$project$StatsMain$recordsFromCsv = F3(
-	function (xCol, yCol, csv) {
+var _user$project$StatsMain$recordsFromStats = F3(
+	function (xCol, yCol, stats) {
 		return _elm_community$maybe_extra$Maybe_Extra$values(
 			A2(
 				_elm_lang$core$List$map,
 				A2(_user$project$StatsMain$extractRecord, xCol, yCol),
-				csv.records));
+				stats));
 	});
 var _user$project$StatsMain$PixelPoint = function (a) {
 	return {ctor: 'PixelPoint', _0: a};
@@ -11866,74 +10560,106 @@ var _user$project$StatsMain$SvgPoint = function (a) {
 	return {ctor: 'SvgPoint', _0: a};
 };
 var _user$project$StatsMain$data2svg = F2(
-	function (ds, _p13) {
-		var _p14 = _p13;
+	function (ds, _p14) {
+		var _p15 = _p14;
 		return _user$project$StatsMain$SvgPoint(
-			{x: (_p14._0.x - ds.minX) / (ds.maxX - ds.minX), y: 1 - ((_p14._0.y - ds.minY) / (ds.maxY - ds.minY))});
+			{x: (_p15._0.x - ds.minX) / (ds.maxX - ds.minX), y: 1 - ((_p15._0.y - ds.minY) / (ds.maxY - ds.minY))});
 	});
 var _user$project$StatsMain$pixel2svg = F2(
-	function (_p16, _p15) {
-		var _p17 = _p16;
-		var _p20 = _p17.minY;
-		var _p19 = _p17.minX;
-		var _p18 = _p15;
+	function (_p17, _p16) {
+		var _p18 = _p17;
+		var _p21 = _p18.minY;
+		var _p20 = _p18.minX;
+		var _p19 = _p16;
 		return _user$project$StatsMain$SvgPoint(
-			{x: ((_p18._0.x / _p17.width) * (_p17.maxX - _p19)) + _p19, y: ((_p18._0.y / _p17.height) * (_p17.maxY - _p20)) + _p20});
+			{x: ((_p19._0.x / _p18.width) * (_p18.maxX - _p20)) + _p20, y: ((_p19._0.y / _p18.height) * (_p18.maxY - _p21)) + _p21});
 	});
 var _user$project$StatsMain$DataPoint = function (a) {
 	return {ctor: 'DataPoint', _0: a};
 };
 var _user$project$StatsMain$svg2data = F2(
-	function (ds, _p21) {
-		var _p22 = _p21;
+	function (ds, _p22) {
+		var _p23 = _p22;
 		return _user$project$StatsMain$DataPoint(
-			{x: (_p22._0.x * (ds.maxX - ds.minX)) + ds.minX, y: ((1 - _p22._0.y) * (ds.maxY - ds.minY)) + ds.minY});
+			{x: (_p23._0.x * (ds.maxX - ds.minX)) + ds.minX, y: ((1 - _p23._0.y) * (ds.maxY - ds.minY)) + ds.minY});
 	});
 var _user$project$StatsMain$update = F2(
 	function (msg, model) {
-		var _p23 = msg;
-		switch (_p23.ctor) {
+		var _p24 = msg;
+		switch (_p24.ctor) {
+			case 'ReceivedStats':
+				var _p26 = _p24._0.sitesObserved;
+				var variables = _elm_lang$core$List$sort(
+					_elm_lang$core$Set$toList(
+						A3(
+							_elm_lang$core$List$foldl,
+							_elm_lang$core$Set$insert,
+							_elm_lang$core$Set$empty,
+							A2(
+								_elm_lang$core$List$concatMap,
+								function (_p25) {
+									return A2(
+										_elm_lang$core$List$map,
+										_elm_lang$core$Tuple$first,
+										function (_) {
+											return _.stats;
+										}(_p25));
+								},
+								_p26))));
+				var xCol = A2(
+					_elm_lang$core$Maybe$withDefault,
+					'',
+					A2(_elm_community$list_extra$List_Extra$getAt, 0, variables));
+				var yCol = A2(
+					_elm_lang$core$Maybe$withDefault,
+					'',
+					A2(_elm_community$list_extra$List_Extra$getAt, 1, variables));
+				var records = A3(_user$project$StatsMain$recordsFromStats, xCol, yCol, _p26);
+				var scale = _user$project$StatsMain$computeScale(records);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							variables: variables,
+							statNames: _elm_lang$core$Dict$fromList(_p24._0.statNameLookup),
+							stats: _p26,
+							xCol: xCol,
+							yCol: yCol,
+							displayedRecords: records,
+							scale: scale
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 			case 'XColSelectedMsg':
-				return A2(
-					_elm_lang$core$Maybe$withDefault,
-					{ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none},
-					A2(
-						_elm_lang$core$Maybe$map,
-						function (i) {
-							return {
-								ctor: '_Tuple2',
-								_0: _elm_lang$core$Native_Utils.update(
-									model,
-									{xCol: i}),
-								_1: _elm_lang$core$Platform_Cmd$none
-							};
-						},
-						_elm_lang$core$Result$toMaybe(
-							_elm_lang$core$String$toInt(_p23._0))));
+				var _p27 = _p24._0;
+				var records = A3(_user$project$StatsMain$recordsFromStats, _p27, model.yCol, model.stats);
+				var scale = _user$project$StatsMain$computeScale(records);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{xCol: _p27, displayedRecords: records, scale: scale}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 			case 'YColSelectedMsg':
-				return A2(
-					_elm_lang$core$Maybe$withDefault,
-					{ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none},
-					A2(
-						_elm_lang$core$Maybe$map,
-						function (i) {
-							return {
-								ctor: '_Tuple2',
-								_0: _elm_lang$core$Native_Utils.update(
-									model,
-									{yCol: i}),
-								_1: _elm_lang$core$Platform_Cmd$none
-							};
-						},
-						_elm_lang$core$Result$toMaybe(
-							_elm_lang$core$String$toInt(_p23._0))));
+				var _p28 = _p24._0;
+				var records = A3(_user$project$StatsMain$recordsFromStats, model.xCol, _p28, model.stats);
+				var scale = _user$project$StatsMain$computeScale(records);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{yCol: _p28, displayedRecords: records, scale: scale}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 			case 'SitesSelectedMsg':
 				var selected = A2(
 					_elm_lang$core$List$filter,
 					function (r) {
-						return A2(_elm_lang$core$List$member, r.siteId, _p23._0);
+						return A2(_elm_lang$core$List$member, r.siteId, _p24._0);
 					},
-					A3(_user$project$StatsMain$recordsFromCsv, model.xCol, model.yCol, model.data));
+					model.displayedRecords);
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -11942,15 +10668,15 @@ var _user$project$StatsMain$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
-				var _p30 = _p23._0;
-				var _p24 = _p30.eventType;
-				switch (_p24) {
+				var _p35 = _p24._0;
+				var _p29 = _p35.eventType;
+				switch (_p29) {
 					case 'mousedown':
 						var p = A2(
 							_user$project$StatsMain$pixel2svg,
 							_user$project$StatsMain$svgViewBox,
 							_user$project$StatsMain$PixelPoint(
-								{x: _p30.x, y: _p30.y}));
+								{x: _p35.x, y: _p35.y}));
 						var selecting = A2(_user$project$StatsMain$inViewBox, _user$project$StatsMain$svgViewBox, p) ? _elm_lang$core$Maybe$Just(
 							{ctor: '_Tuple2', _0: p, _1: p}) : _elm_lang$core$Maybe$Nothing;
 						return {
@@ -11961,15 +10687,15 @@ var _user$project$StatsMain$update = F2(
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					case 'mousemove':
-						var _p25 = model.selecting;
-						if (_p25.ctor === 'Just') {
+						var _p30 = model.selecting;
+						if (_p30.ctor === 'Just') {
 							var p2 = A2(
 								_user$project$StatsMain$pixel2svg,
 								_user$project$StatsMain$svgViewBox,
 								_user$project$StatsMain$PixelPoint(
-									{x: _p30.x, y: _p30.y}));
+									{x: _p35.x, y: _p35.y}));
 							var selecting = _elm_lang$core$Maybe$Just(
-								{ctor: '_Tuple2', _0: _p25._0._0, _1: p2});
+								{ctor: '_Tuple2', _0: _p30._0._0, _1: p2});
 							return {
 								ctor: '_Tuple2',
 								_0: _elm_lang$core$Native_Utils.update(
@@ -11981,43 +10707,41 @@ var _user$project$StatsMain$update = F2(
 							return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 						}
 					case 'mouseup':
-						var _p26 = model.selecting;
-						if (_p26.ctor === 'Just') {
+						var _p31 = model.selecting;
+						if (_p31.ctor === 'Just') {
 							var p2_ = A2(
 								_user$project$StatsMain$pixel2svg,
 								_user$project$StatsMain$svgViewBox,
 								_user$project$StatsMain$PixelPoint(
-									{x: _p30.x, y: _p30.y}));
-							var records = A3(_user$project$StatsMain$recordsFromCsv, model.xCol, model.yCol, model.data);
-							var scale = _user$project$StatsMain$computeScale(records);
-							var _p27 = {
+									{x: _p35.x, y: _p35.y}));
+							var _p32 = {
 								ctor: '_Tuple2',
-								_0: A2(_user$project$StatsMain$svg2data, scale, _p26._0._0),
-								_1: A2(_user$project$StatsMain$svg2data, scale, p2_)
+								_0: A2(_user$project$StatsMain$svg2data, model.scale, _p31._0._0),
+								_1: A2(_user$project$StatsMain$svg2data, model.scale, p2_)
 							};
-							var p1 = _p27._0._0;
-							var p2 = _p27._1._0;
-							var _p28 = {
+							var p1 = _p32._0._0;
+							var p2 = _p32._1._0;
+							var _p33 = {
 								ctor: '_Tuple2',
 								_0: A2(_elm_lang$core$Basics$min, p1.x, p2.x),
 								_1: A2(_elm_lang$core$Basics$min, p1.y, p2.y)
 							};
-							var x1 = _p28._0;
-							var y1 = _p28._1;
-							var _p29 = {
+							var x1 = _p33._0;
+							var y1 = _p33._1;
+							var _p34 = {
 								ctor: '_Tuple2',
 								_0: A2(_elm_lang$core$Basics$max, p1.x, p2.x),
 								_1: A2(_elm_lang$core$Basics$max, p1.y, p2.y)
 							};
-							var x2 = _p29._0;
-							var y2 = _p29._1;
+							var x2 = _p34._0;
+							var y2 = _p34._1;
 							var newlySelected = A2(
 								_elm_lang$core$List$filter,
 								function (d) {
 									return (_elm_lang$core$Native_Utils.cmp(d.x, x1) > 0) && ((_elm_lang$core$Native_Utils.cmp(d.x, x2) < 0) && ((_elm_lang$core$Native_Utils.cmp(d.y, y1) > 0) && (_elm_lang$core$Native_Utils.cmp(d.y, y2) < 0)));
 								},
-								records);
-							var selected = _p30.ctrlKey ? A2(_elm_lang$core$Basics_ops['++'], model.selected, newlySelected) : newlySelected;
+								model.displayedRecords);
+							var selected = _p35.ctrlKey ? A2(_elm_lang$core$Basics_ops['++'], model.selected, newlySelected) : newlySelected;
 							return {
 								ctor: '_Tuple2',
 								_0: _elm_lang$core$Native_Utils.update(
@@ -12034,15 +10758,13 @@ var _user$project$StatsMain$update = F2(
 		}
 	});
 var _user$project$StatsMain$drawScatter = function (model) {
-	var records = A3(_user$project$StatsMain$recordsFromCsv, model.xCol, model.yCol, model.data);
-	var scale = _user$project$StatsMain$computeScale(records);
 	var plot = function (record) {
-		var _p31 = A2(
+		var _p36 = A2(
 			_user$project$StatsMain$data2svg,
-			scale,
+			model.scale,
 			_user$project$StatsMain$DataPoint(
 				{x: record.x, y: record.y}));
-		var point = _p31._0;
+		var point = _p36._0;
 		return A2(
 			_elm_lang$svg$Svg$circle,
 			{
@@ -12070,22 +10792,16 @@ var _user$project$StatsMain$drawScatter = function (model) {
 			},
 			{ctor: '[]'});
 	};
-	var vars = _user$project$StatsMain$variables(model.data);
-	var xVar = A2(
-		_elm_lang$core$Maybe$withDefault,
-		'',
-		A2(_elm_community$list_extra$List_Extra$getAt, model.xCol, vars));
-	var yVar = A2(
-		_elm_lang$core$Maybe$withDefault,
-		'',
-		A2(_elm_community$list_extra$List_Extra$getAt, model.yCol, vars));
 	return A2(
 		_elm_lang$core$Basics_ops['++'],
-		A3(_user$project$StatsMain$drawXAxis, xVar, scale.minX, scale.maxX),
+		A3(_user$project$StatsMain$drawXAxis, model.xCol, model.scale.minX, model.scale.maxX),
 		A2(
 			_elm_lang$core$Basics_ops['++'],
-			A3(_user$project$StatsMain$drawYAxis, yVar, scale.minY, scale.maxY),
-			A2(_elm_lang$core$List$map, plot, records)));
+			A3(_user$project$StatsMain$drawYAxis, model.yCol, model.scale.minY, model.scale.maxY),
+			A2(_elm_lang$core$List$map, plot, model.displayedRecords)));
+};
+var _user$project$StatsMain$ReceivedStats = function (a) {
+	return {ctor: 'ReceivedStats', _0: a};
 };
 var _user$project$StatsMain$YColSelectedMsg = function (a) {
 	return {ctor: 'YColSelectedMsg', _0: a};
@@ -12094,7 +10810,6 @@ var _user$project$StatsMain$XColSelectedMsg = function (a) {
 	return {ctor: 'XColSelectedMsg', _0: a};
 };
 var _user$project$StatsMain$view = function (model) {
-	var availableVariables = _user$project$StatsMain$variables(model.data);
 	var variableSelector = F2(
 		function (selected, select) {
 			return A2(
@@ -12105,63 +10820,64 @@ var _user$project$StatsMain$view = function (model) {
 					_1: {ctor: '[]'}
 				},
 				A2(
-					_elm_lang$core$List$indexedMap,
-					F2(
-						function (i, v) {
-							return A2(
-								_elm_lang$html$Html$option,
-								{
+					_elm_lang$core$List$map,
+					function (v) {
+						return A2(
+							_elm_lang$html$Html$option,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$selected(
+									_elm_lang$core$Native_Utils.eq(v, selected)),
+								_1: {
 									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$selected(
-										_elm_lang$core$Native_Utils.eq(i, selected)),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$value(
-											_elm_lang$core$Basics$toString(i)),
-										_1: {ctor: '[]'}
-									}
-								},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text(v),
+									_0: _elm_lang$html$Html_Attributes$value(v),
 									_1: {ctor: '[]'}
-								});
-						}),
-					availableVariables));
+								}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text(
+									A2(
+										_elm_lang$core$Maybe$withDefault,
+										v,
+										A2(_elm_lang$core$Dict$get, v, model.statNames))),
+								_1: {ctor: '[]'}
+							});
+					},
+					model.variables));
 		});
-	var records = A3(_user$project$StatsMain$recordsFromCsv, model.xCol, model.yCol, model.data);
 	var selectedSiteIds = A2(
 		_elm_lang$core$String$join,
 		' ',
 		A2(
 			_elm_lang$core$List$map,
-			function (_p32) {
+			function (_p37) {
 				return _elm_lang$core$Basics$toString(
 					function (_) {
 						return _.siteId;
-					}(_p32));
+					}(_p37));
 			},
 			model.selected));
 	var selectionBox = A2(
 		_elm_lang$core$List$map,
-		function (_p33) {
-			var _p34 = _p33;
-			var _p38 = _p34._1._0;
-			var _p37 = _p34._0._0;
-			var _p35 = {
+		function (_p38) {
+			var _p39 = _p38;
+			var _p43 = _p39._1._0;
+			var _p42 = _p39._0._0;
+			var _p40 = {
 				ctor: '_Tuple2',
-				_0: _elm_lang$core$Basics$abs(_p38.x - _p37.x),
-				_1: _elm_lang$core$Basics$abs(_p38.y - _p37.y)
+				_0: _elm_lang$core$Basics$abs(_p43.x - _p42.x),
+				_1: _elm_lang$core$Basics$abs(_p43.y - _p42.y)
 			};
-			var w = _p35._0;
-			var h = _p35._1;
-			var _p36 = {
+			var w = _p40._0;
+			var h = _p40._1;
+			var _p41 = {
 				ctor: '_Tuple2',
-				_0: A2(_elm_lang$core$Basics$min, _p37.x, _p38.x),
-				_1: A2(_elm_lang$core$Basics$min, _p37.y, _p38.y)
+				_0: A2(_elm_lang$core$Basics$min, _p42.x, _p43.x),
+				_1: A2(_elm_lang$core$Basics$min, _p42.y, _p43.y)
 			};
-			var x_ = _p36._0;
-			var y_ = _p36._1;
+			var x_ = _p41._0;
+			var y_ = _p41._1;
 			return A2(
 				_elm_lang$svg$Svg$rect,
 				{
@@ -12207,7 +10923,11 @@ var _user$project$StatsMain$view = function (model) {
 					_1: {
 						ctor: '::',
 						_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'flex-row'},
-						_1: {ctor: '[]'}
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'font-family', _1: 'sans-serif'},
+							_1: {ctor: '[]'}
+						}
 					}
 				}),
 			_1: {
@@ -12220,38 +10940,122 @@ var _user$project$StatsMain$view = function (model) {
 			ctor: '::',
 			_0: A2(
 				_elm_lang$html$Html$div,
+				{ctor: '[]'},
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$class('leaflet-map'),
-					_1: {
-						ctor: '::',
-						_0: A2(_elm_lang$html$Html_Attributes$attribute, 'data-map-sites', selectedSiteIds),
-						_1: {
+					_0: A2(
+						_elm_lang$html$Html$h3,
+						{
 							ctor: '::',
 							_0: _elm_lang$html$Html_Attributes$style(
 								{
 									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'width', _1: '800px'},
+									_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
 									_1: {
 										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'height', _1: '800px'},
+										_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
 										_1: {ctor: '[]'}
+									}
+								}),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Site Based Stat Relationships'),
+							_1: {ctor: '[]'}
+						}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$svg$Svg$svg,
+							{
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$width(
+									_elm_lang$core$Basics$toString(_user$project$StatsMain$svgViewBox.width)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$height(
+										_elm_lang$core$Basics$toString(_user$project$StatsMain$svgViewBox.height)),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$viewBox(
+											_user$project$StatsMain$svgViewBox2String(_user$project$StatsMain$svgViewBox)),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$id('plot'),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
+							},
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								{
+									ctor: '::',
+									_0: A2(
+										_elm_lang$svg$Svg$g,
+										{
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$transform(''),
+											_1: {ctor: '[]'}
+										},
+										_user$project$StatsMain$drawScatter(model)),
+									_1: {ctor: '[]'}
+								},
+								selectionBox)),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$p,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$style(
+										{
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+											_1: {
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '-50px'},
+												_1: {ctor: '[]'}
+											}
+										}),
+									_1: {ctor: '[]'}
+								},
+								{
+									ctor: '::',
+									_0: A2(variableSelector, model.yCol, _user$project$StatsMain$YColSelectedMsg),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html$text(' vs '),
+										_1: {
+											ctor: '::',
+											_0: A2(variableSelector, model.xCol, _user$project$StatsMain$XColSelectedMsg),
+											_1: {ctor: '[]'}
+										}
 									}
 								}),
 							_1: {ctor: '[]'}
 						}
 					}
-				},
-				{ctor: '[]'}),
+				}),
 			_1: {
 				ctor: '::',
 				_0: A2(
 					_elm_lang$html$Html$div,
-					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$style(
+							{
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'flex-grow', _1: '1'},
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					},
 					{
 						ctor: '::',
 						_0: A2(
-							_elm_lang$html$Html$p,
+							_elm_lang$html$Html$h3,
 							{
 								ctor: '::',
 								_0: _elm_lang$html$Html_Attributes$style(
@@ -12260,7 +11064,7 @@ var _user$project$StatsMain$view = function (model) {
 										_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
 										_1: {
 											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '0'},
+											_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
 											_1: {ctor: '[]'}
 										}
 									}),
@@ -12268,56 +11072,44 @@ var _user$project$StatsMain$view = function (model) {
 							},
 							{
 								ctor: '::',
-								_0: A2(variableSelector, model.yCol, _user$project$StatsMain$YColSelectedMsg),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$html$Html$text(' vs '),
-									_1: {
-										ctor: '::',
-										_0: A2(variableSelector, model.xCol, _user$project$StatsMain$XColSelectedMsg),
-										_1: {ctor: '[]'}
-									}
-								}
+								_0: _elm_lang$html$Html$text('Site Map'),
+								_1: {ctor: '[]'}
 							}),
 						_1: {
 							ctor: '::',
 							_0: A2(
-								_elm_lang$svg$Svg$svg,
+								_elm_lang$html$Html$div,
 								{
 									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$width(
-										_elm_lang$core$Basics$toString(_user$project$StatsMain$svgViewBox.width)),
+									_0: _elm_lang$html$Html_Attributes$class('leaflet-map'),
 									_1: {
 										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$height(
-											_elm_lang$core$Basics$toString(_user$project$StatsMain$svgViewBox.height)),
+										_0: A2(_elm_lang$html$Html_Attributes$attribute, 'data-map-sites', selectedSiteIds),
 										_1: {
 											ctor: '::',
-											_0: _elm_lang$svg$Svg_Attributes$viewBox(
-												_user$project$StatsMain$svgViewBox2String(_user$project$StatsMain$svgViewBox)),
-											_1: {
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$id('plot'),
-												_1: {ctor: '[]'}
-											}
+											_0: _elm_lang$html$Html_Attributes$style(
+												{
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'max-width', _1: '900px'},
+													_1: {
+														ctor: '::',
+														_0: {ctor: '_Tuple2', _0: 'height', _1: '500px'},
+														_1: {
+															ctor: '::',
+															_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
+															_1: {
+																ctor: '::',
+																_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
+																_1: {ctor: '[]'}
+															}
+														}
+													}
+												}),
+											_1: {ctor: '[]'}
 										}
 									}
 								},
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$svg$Svg$g,
-											{
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$transform(''),
-												_1: {ctor: '[]'}
-											},
-											_user$project$StatsMain$drawScatter(model)),
-										_1: {ctor: '[]'}
-									},
-									selectionBox)),
+								{ctor: '[]'}),
 							_1: {ctor: '[]'}
 						}
 					}),
@@ -12338,11 +11130,16 @@ var _user$project$StatsMain$main = _elm_lang$html$Html$program(
 			_0: {
 				selected: {ctor: '[]'},
 				selecting: _elm_lang$core$Maybe$Nothing,
-				data: _user$project$ExampleStats$exampleStats,
-				xCol: 0,
-				yCol: 3
+				variables: {ctor: '[]'},
+				statNames: _elm_lang$core$Dict$empty,
+				stats: {ctor: '[]'},
+				displayedRecords: {ctor: '[]'},
+				scale: A4(_user$project$StatsMain$DataScale, 1, 1, 1, 1),
+				xCol: '',
+				yCol: ''
 			},
-			_1: _elm_lang$core$Platform_Cmd$none
+			_1: _user$project$StatsMain$requestStats(
+				{ctor: '_Tuple0'})
 		},
 		update: _user$project$StatsMain$update,
 		view: _user$project$StatsMain$view,
@@ -12354,7 +11151,11 @@ var _user$project$StatsMain$main = _elm_lang$html$Html$program(
 					_1: {
 						ctor: '::',
 						_0: _user$project$StatsMain$sitesSelected(_user$project$StatsMain$SitesSelectedMsg),
-						_1: {ctor: '[]'}
+						_1: {
+							ctor: '::',
+							_0: _user$project$StatsMain$statsForSites(_user$project$StatsMain$ReceivedStats),
+							_1: {ctor: '[]'}
+						}
 					}
 				}))
 	})();
