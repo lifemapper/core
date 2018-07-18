@@ -54,6 +54,104 @@ STATIC_PACKAGE_DIR = '/opt/lifemapper/LmWebServer/assets/gridset_package'
 DYN_PACKAGE_DIR = 'package'
    
 # .............................................................................
+def createStatsMeta():
+   """
+   @summary: Create a statistic metadata lookup for all stats
+   """
+   return {
+      PamStatKeys.ALPHA : {
+         'name' : 'Alpha Diversity',
+         'description' : 'Alpha Diversity is the species richness (number of species present) per site'
+      },
+      PamStatKeys.ALPHA_PROP : {
+         'name' : 'Proportional Alpha Diversity',
+         'description' : 'Proportional Alpha Diversity is the proportion of the entire population of species that are present per site'
+      },
+      PamStatKeys.PHI : {
+         'name' : 'Range Size Per Site',
+         'description' : 'Range Size per site is the sum of the range sizes of each species present at each site'
+      },
+      PamStatKeys.PHI_AVG_PROP : {
+         'name' : 'Proportional Range Size Per Site',
+         'description' : 'Proportional range size per site is the sum of the range sizes at each site as a proportion of the sum of the ranges of all species in the study pool'
+      },
+      PamStatKeys.MNTD : {
+         'name' : 'Mean Nearest Taxon Distance',
+         'description' : 'Mean Nearest Taxon Distance is the average of the distance between each present species and the (phylogenetically) nearest present species for each site'
+      },
+      PamStatKeys.MPD : {
+         'name' : 'Mean Pairwise Distance',
+         'description' : 'Mean pairwise distance is the average phylogenetic distance between all species present at each site'
+      },
+      PamStatKeys.PEARSON : {
+         'name' : "Pearson's Correlation Coefficient",
+         'description' : ''
+      },
+      PamStatKeys.PD : {
+         'name' : 'Phylogenetic Diversity',
+         'description' : 'Phylogenetic Diversity is the sum of the branch lengths for the minimum spanning tree for all species at a site'
+      },
+      PamStatKeys.MNND : {
+         'name' : 'Mean Nearest Neighbor Distance',
+         'description' : 'Mean nearest neighbor distance is the average phylogenetic distance to the nearest neighbor of each species present at a site'
+      },
+      PamStatKeys.MPHYLODIST : {
+         'name' : 'Mean Phylogenetic Distance',
+         'description' : 'Mean phylogenetic distance is the average phylogenetic distance between all species present at a site'
+      },
+      PamStatKeys.SPD : {
+         'name' : 'Sum of Phylogenetic Distance',
+         'description' : 'Sum of phylogenetic distance is the total phylogenetic distance between all species present at a site'
+      },
+      PamStatKeys.OMEGA : {
+         'name' : 'Species Range Size',
+         'description' : 'Species range size is the number of sites where each species is present'
+      },
+      PamStatKeys.OMEGA_PROP : {
+         'name' : 'Proportional Species Range Size',
+         'description' : 'Proportional species range size the the proportion of the number of sites where each species is present to the total number of sites in the study area'
+      },
+      # TODO: Verify and clarify
+      PamStatKeys.PSI : {
+         'name' : 'Species Range Richness',
+         'description' : 'Species range richness is the sum of the range sizes of all of the species present at a site'
+      },
+      # TODO: Verify and clarify
+      PamStatKeys.PSI_AVG_PROP : {
+         'name' : 'Mean Proportional Species Diversity',
+         'description' : 'Mean Proportional Species Diversity is the average species range richness proportional to the total species range richness'
+      },
+      PamStatKeys.WHITTAKERS_BETA : {
+         'name' : 'Whittaker\'s Beta Diversity',
+         'description' : 'Whittaker\'s Beta Diversity'
+      },
+      PamStatKeys.LANDES_ADDATIVE_BETA : {
+         'name' : 'Landes Addative Beta Diveristy',
+         'description' : 'Landes Addative Beta Diversity'
+      },
+      PamStatKeys.LEGENDRES_BETA : {
+         'name' : 'Legendres Beta Diversity',
+         'description' : 'Legendres Beta Diversity'
+      },
+      PamStatKeys.SITES_COVARIANCE : {
+         'name' : 'Sites Covariance',
+         'description' : 'Sites covariance'
+      },
+      PamStatKeys.SPECIES_COVARIANCE : {
+         'name' : 'Species Covariance',
+         'description' : 'Species covariance'
+      },
+      PamStatKeys.SPECIES_VARIANCE_RATIO : {
+         'name' : 'Schluter\'s Species Variance Ratio',
+         'description' : 'Schluter\'s species covariance'
+      },
+      PamStatKeys.SITES_VARIANCE_RATIO : {
+         'name' : 'Schluter\'s Sites Variance Ratio',
+         'description' : 'Schluter\'s sites covariance'
+      }
+   }
+   pass
+
 def createStatHeaderLookup():
    """
    @summary: Create a statistic header lookup for all possible stats
@@ -186,7 +284,7 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                statLookupFn = os.path.join(DYN_PACKAGE_DIR, 
                                            'statNameLookup.json')
                zipF.writestr(statLookupFn, 'var statNameLookup =\n{}'.format(
-                                            json.dumps(createStatHeaderLookup(),
+                                            json.dumps(createStatsMeta(),
                                                             indent=3)))
                for mtx in matrices:
                   if mtx.status == JobStatus.COMPLETE:
