@@ -14094,34 +14094,23 @@ var _user$project$LinearTreeView$gradientDefinitions = function (_p0) {
 			},
 			_p0));
 };
-var _user$project$LinearTreeView$logistic = function (x) {
-	return 1.0 / (1.0 + Math.pow(_elm_lang$core$Basics$e, -3.0 * x));
-};
 var _user$project$LinearTreeView$computeColor = F2(
 	function (opacity, value) {
-		var v = _elm_lang$core$Basics$round(
-			_user$project$LinearTreeView$logistic(value) * 256);
-		var r = _elm_lang$core$Basics$toString(256 - v);
-		var g = _elm_lang$core$Basics$toString(v);
+		var s = _elm_lang$core$Basics$toString(
+			A3(_elm_lang$core$Basics$clamp, 0, 100, value * 100));
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
-			'rgba(',
+			'hsla(10,',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
-				r,
+				s,
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					',',
+					'%,50%,',
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						g,
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							',0,',
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								_elm_lang$core$Basics$toString(opacity),
-								')'))))));
+						_elm_lang$core$Basics$toString(opacity),
+						')'))));
 	});
 var _user$project$LinearTreeView$scaleLength = F2(
 	function (totalLength, thisLength) {

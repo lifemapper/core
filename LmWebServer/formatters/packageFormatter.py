@@ -111,7 +111,7 @@ def createIndexHtml(gridset_name):
            <a href="./mcpa.html">MCPA</a>
         </td>
         <td style="text-align: center;">
-           <a href="./site-maps.html">Site Statistic Maps</a>
+           <a href="./statsHeatMap.html">Site Statistic Maps</a>
         </td>
         <td style="text-align: center;">
            <a href="./stats.html">Scatterplots</a>

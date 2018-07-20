@@ -13518,34 +13518,23 @@ var _user$project$LinearTreeView$gradientDefinitions = function (_p0) {
 			},
 			_p0));
 };
-var _user$project$LinearTreeView$logistic = function (x) {
-	return 1.0 / (1.0 + Math.pow(_elm_lang$core$Basics$e, -3.0 * x));
-};
 var _user$project$LinearTreeView$computeColor = F2(
 	function (opacity, value) {
-		var v = _elm_lang$core$Basics$round(
-			_user$project$LinearTreeView$logistic(value) * 256);
-		var r = _elm_lang$core$Basics$toString(256 - v);
-		var g = _elm_lang$core$Basics$toString(v);
+		var s = _elm_lang$core$Basics$toString(
+			A3(_elm_lang$core$Basics$clamp, 0, 100, value * 100));
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
-			'rgba(',
+			'hsla(10,',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
-				r,
+				s,
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					',',
+					'%,50%,',
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						g,
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							',0,',
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								_elm_lang$core$Basics$toString(opacity),
-								')'))))));
+						_elm_lang$core$Basics$toString(opacity),
+						')'))));
 	});
 var _user$project$LinearTreeView$scaleLength = F2(
 	function (totalLength, thisLength) {
@@ -15241,7 +15230,10 @@ var _user$project$ParseMcpa$parseRecord = F3(
 				if (_p3 === 'nan') {
 					return _elm_lang$core$Result$Ok(_user$project$ParseMcpa$nan);
 				} else {
-					return _elm_lang$core$String$toFloat(s);
+					return A2(
+						_elm_lang$core$Result$map,
+						_elm_lang$core$Basics$abs,
+						_elm_lang$core$String$toFloat(s));
 				}
 			};
 			var values = _elm_community$result_extra$Result_Extra$combine(
@@ -15304,20 +15296,10 @@ var _user$project$ParseMcpa$parseMcpa = function (_p8) {
 
 var _user$project$McpaView$variableFormatter = function (_p0) {
 	var _p1 = _p0;
-	return A3(
+	return A2(
 		_krisajenkins$formatting$Formatting$print,
-		A2(
-			_krisajenkins$formatting$Formatting_ops['<>'],
-			_krisajenkins$formatting$Formatting$roundTo(3),
-			A2(
-				_krisajenkins$formatting$Formatting_ops['<>'],
-				_krisajenkins$formatting$Formatting$s(' ('),
-				A2(
-					_krisajenkins$formatting$Formatting_ops['<>'],
-					_krisajenkins$formatting$Formatting$roundTo(3),
-					_krisajenkins$formatting$Formatting$s(') ')))),
-		_p1._0,
-		_p1._1);
+		_krisajenkins$formatting$Formatting$roundTo(3),
+		_p1._0);
 };
 var _user$project$McpaView$view = function (model) {
 	var tableHead = A2(
@@ -15365,7 +15347,7 @@ var _user$project$McpaView$view = function (model) {
 							{ctor: '[]'},
 							{
 								ctor: '::',
-								_0: _elm_lang$html$Html$text('Observed (p-value)'),
+								_0: _elm_lang$html$Html$text('Observed'),
 								_1: {ctor: '[]'}
 							}),
 						_1: {

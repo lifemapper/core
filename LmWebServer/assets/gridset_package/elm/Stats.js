@@ -10413,7 +10413,21 @@ var _user$project$StatsMain$statsForSites = _elm_lang$core$Native_Platform.incom
 										return _elm_lang$core$Json_Decode$succeed(
 											{ctor: '_Tuple2', _0: x0, _1: x1});
 									},
-									A2(_elm_lang$core$Json_Decode$index, 1, _elm_lang$core$Json_Decode$string));
+									A2(
+										_elm_lang$core$Json_Decode$index,
+										1,
+										A2(
+											_elm_lang$core$Json_Decode$andThen,
+											function (name) {
+												return A2(
+													_elm_lang$core$Json_Decode$andThen,
+													function (description) {
+														return _elm_lang$core$Json_Decode$succeed(
+															{name: name, description: description});
+													},
+													A2(_elm_lang$core$Json_Decode$field, 'description', _elm_lang$core$Json_Decode$string));
+											},
+											A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string))));
 							},
 							A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string)))));
 		},
@@ -10589,7 +10603,13 @@ var _user$project$StatsMain$update = F2(
 		switch (_p24.ctor) {
 			case 'ReceivedStats':
 				var _p26 = _p24._0.sitesObserved;
-				var variables = _elm_lang$core$List$sort(
+				var yCol = 'phi';
+				var xCol = 'alpha';
+				var records = A3(_user$project$StatsMain$recordsFromStats, xCol, yCol, _p26);
+				var scale = _user$project$StatsMain$computeScale(records);
+				var variables = A2(
+					_elm_lang$core$List$sortBy,
+					_elm_lang$core$String$toLower,
 					_elm_lang$core$Set$toList(
 						A3(
 							_elm_lang$core$List$foldl,
@@ -10606,16 +10626,6 @@ var _user$project$StatsMain$update = F2(
 										}(_p25));
 								},
 								_p26))));
-				var xCol = A2(
-					_elm_lang$core$Maybe$withDefault,
-					'',
-					A2(_elm_community$list_extra$List_Extra$getAt, 0, variables));
-				var yCol = A2(
-					_elm_lang$core$Maybe$withDefault,
-					'',
-					A2(_elm_community$list_extra$List_Extra$getAt, 1, variables));
-				var records = A3(_user$project$StatsMain$recordsFromStats, xCol, yCol, _p26);
-				var scale = _user$project$StatsMain$computeScale(records);
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -10840,7 +10850,12 @@ var _user$project$StatsMain$view = function (model) {
 									A2(
 										_elm_lang$core$Maybe$withDefault,
 										v,
-										A2(_elm_lang$core$Dict$get, v, model.statNames))),
+										A2(
+											_elm_lang$core$Maybe$map,
+											function (_) {
+												return _.name;
+											},
+											A2(_elm_lang$core$Dict$get, v, model.statNames)))),
 								_1: {ctor: '[]'}
 							});
 					},
