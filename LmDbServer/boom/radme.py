@@ -126,7 +126,7 @@ class RADCaller(LMObject):
       
       newMFC = MFChain(self.userId, metadata=meta, priority=self._priority,
                        status=JobStatus.GENERAL, statusModTime=CURR_MJD)
-      mfChain = self._scribe.insertMFChain(newMFC)
+      mfChain = self._scribe.insertMFChain(newMFC, self._gridset.getId())
 
       self._scribe.updateObject(mfChain)
       return mfChain
