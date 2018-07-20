@@ -29,11 +29,28 @@ var maps = {};
 var mapLayers = {};
 
 app.ports.requestStats.subscribe(function() {
+    const statRanges = sitesObserved.features.reduce(function(ranges, feature) {
+        return Object.entries(feature.properties).reduce(function(ranges, statValue) {
+            const name = statValue[0];
+            const value = statValue[1];
+            const curr = ranges[name];
+            if (curr == null) {
+                ranges[name] = {min: value, max: value};
+            } else {
+                ranges[name] = {min: Math.min(value, curr.min), max: Math.max(value, curr.max)};
+            }
+            return ranges;
+        }, ranges);
+    }, {});
+
+    const stats = sitesObserved.features.map(function(feature) {
+        return {id: feature.id, stats: Object.entries(feature.properties)};
+    });
+
     app.ports.statsForSites.send({
-        sitesObserved: sitesObserved.features.map(function(feature) {
-            return {id: feature.id, stats: Object.entries(feature.properties)};
-        }),
-        statNameLookup: Object.entries(statNameLookup)
+        sitesObserved: stats,
+        statNameLookup: Object.entries(statNameLookup),
+        statRanges: Object.entries(statRanges)
     });
 });
 
