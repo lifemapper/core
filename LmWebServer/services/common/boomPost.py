@@ -67,7 +67,7 @@ class BoomPoster(object):
       
       # Look for an archive name
       if reqJson.has_key('archive_name'):
-         archiveName = reqJson['archive_name']
+         archiveName = reqJson['archive_name'].replace(' ', '_')
       else:
          archiveName = '{}_{}'.format(userId, gmt().mjd)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', archiveName)
