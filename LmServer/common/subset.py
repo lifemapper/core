@@ -337,7 +337,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
       newWf = MFChain(userId, priority=Priority.REQUESTED, metadata=wfMeta,
                       status=JobStatus.GENERAL, statusModTime=gmt().mjd)
       
-      myWf = scribe.insertMFChain(newWf)
+      myWf = scribe.insertMFChain(newWf, updatedGS.getId())
    
       # TODO : Determine if we want a different work directory
       
