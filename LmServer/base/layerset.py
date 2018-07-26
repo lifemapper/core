@@ -713,10 +713,16 @@ class MapLayerSet(_LayerSet, ServiceObject):
    def _createProjectionInfo(self, epsgcode):
       prj = ''
       prj = '\n'.join([prj, '      PROJECTION'])
-      prj = '\n'.join([prj, '         \"init=epsg:%s\"' % epsgcode])
+      if epsgcode == '4326':
+         prj = '\n'.join([prj, '         \"proj=longlat"'])
+         prj = '\n'.join([prj, '         \"ellps=WGS84"'])
+         prj = '\n'.join([prj, '         \"datum=WGS84"'])
+         prj = '\n'.join([prj, '         \"no_defs"'])
+      else:
+         prj = '\n'.join([prj, '         \"init=epsg:%s\"' % epsgcode])
       prj = '\n'.join([prj, '      END'])
       return prj
-      
+
 # ...............................................
    def _getLayerMetadata(self, sdlLyr, metalines=[], isVector=False):
       meta = ''
