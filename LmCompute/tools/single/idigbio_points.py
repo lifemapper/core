@@ -39,9 +39,6 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(
       description="This script attempts to generate a Lifemapper occurrence set from the iDigBio API") 
    
-   parser.add_argument('-s', '--status_filename', type=str, 
-                       help='Write job status to this file')
-   
    parser.add_argument('taxonKey', type=str, help="The taxon key to use for API Query")
    parser.add_argument('outFile', type=str, 
                   help="The file location to write the shapefile for modeling")
@@ -52,5 +49,5 @@ if __name__ == "__main__":
    args = parser.parse_args()
    
    createIdigBioShapefile(args.taxonKey, args.outFile, args.bigFile, 
-                        args.maxPoints, statusFname=args.status_filename)
+                        args.maxPoints)
    

@@ -39,9 +39,6 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(
       description="This script attempts to generate a Lifemapper occurrence set from the BISON API") 
    
-   parser.add_argument('-s', '--status_filename', type=str, 
-                       help='Write job status to this file')
-   
    parser.add_argument('pointsUrl', type=str, 
                        help="The Bison URL to use with API Query")
    parser.add_argument('outFile', type=str, 
@@ -53,5 +50,5 @@ if __name__ == "__main__":
    args = parser.parse_args()
    
    createBisonShapefile(args.pointsUrl, args.outFile, args.bigFile, 
-                        args.maxPoints, statusFname=args.status_filename)
+                        args.maxPoints)
    
