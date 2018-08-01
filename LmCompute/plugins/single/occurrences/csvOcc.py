@@ -30,13 +30,14 @@ import os
 
 from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.shapes.createshape import ShapeShifter
-from LmCommon.common.lmconstants import JobStatus, ProcessType, ENCODING
+from LmCommon.common.lmconstants import JobStatus, ProcessType, ENCODING,\
+   LMFormat
 from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
 # .............................................................................
-def createBisonShapefile(url, outFile, bigFile, maxPoints, statusFname=None):
+def createBisonShapefile(url, outFile, bigFile, maxPoints, log=None):
    """
    @summary: Retrieves a BISON url, pulls in the data, and creates a shapefile
    @param url: The url to pull data from
@@ -44,18 +45,16 @@ def createBisonShapefile(url, outFile, bigFile, maxPoints, statusFname=None):
    @param bigFile: The file location to write the full occurrence set 
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
-   @param statusFname: If provided, write out job status to this file
+   @param log: If provided, use this logger
    """
    occAPI = BisonAPI.initFromUrl(url)
    occList = occAPI.getTSNOccurrences()
    count = len(occList)
    return parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, 
-                       outFile, bigFile, count, maxPoints, 
-                       statusFname=statusFname)
+                       outFile, bigFile, count, maxPoints, log=log)
 
 # .............................................................................
-def createGBIFShapefile(pointCsvFn, outFile, bigFile, reportedCount, 
-                        maxPoints, statusFname=None):
+def createGBIFShapefile(pointCsvFn, outFile, bigFile, maxPoints, log=None):
    """
    @summary: Parses a CSV blob from GBIF and saves it to a shapefile
    @param pointCsvFn: The file location of the CSV data to process
@@ -64,7 +63,7 @@ def createGBIFShapefile(pointCsvFn, outFile, bigFile, reportedCount,
    @param reportedCount: The reported number of entries in the CSV file
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
-   @param statusFname: If provided, write out job status to this file
+   @param log: If provided, use this logger
    """
    with open(pointCsvFn) as inF:
       csvInputBlob = inF.readlines()
@@ -73,12 +72,10 @@ def createGBIFShapefile(pointCsvFn, outFile, bigFile, reportedCount,
       raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
                         "The provided CSV was empty")
    return parseCsvData(''.join(csvInputBlob), ProcessType.GBIF_TAXA_OCCURRENCE, 
-                       outFile, bigFile, len(csvInputBlob), maxPoints, 
-                       statusFname=statusFname)
+                       outFile, bigFile, len(csvInputBlob), maxPoints, log=log)
    
 # .............................................................................
-def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints, 
-                           statusFname=None):
+def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints, log=None):
    """
    @summary: Retrieves an iDigBio url, pulls in the data, and creates a 
                 shapefile
@@ -87,7 +84,7 @@ def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints,
    @param bigFile: The file location to write the full occurrence set 
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
-   @param statusFname: If provided, write out job status to this file
+   @param log: If provided, use this logger
    @todo: Change this back to GBIF TaxonID when iDigBio API is fixed!
    """
    occAPI = IdigbioAPI()
@@ -96,12 +93,10 @@ def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints,
    occList = occAPI.queryBySciname(taxonKey)
    count = len(occList)
    return parseCsvData(''.join(occList), ProcessType.IDIGBIO_TAXA_OCCURRENCE, 
-                       outFile, bigFile, count, maxPoints, 
-                       statusFname=statusFname)
+                       outFile, bigFile, count, maxPoints, log=log)
    
 # .............................................................................
-def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints,
-                        statusFname=None):
+def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints, log=None):
    """
    @summary: Processes a user-provided CSV dataset
    @param pointCsvFn: CSV file of points
@@ -110,7 +105,7 @@ def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints,
    @param bigFile: The file location to write the full occurrence set 
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
-   @param statusFname: If provided, write out job status to this file
+   @param log: If provided, use this logger
    """
    with open(pointCsvFn) as inF:
       csvInputBlob = inF.read()
@@ -130,16 +125,20 @@ def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints,
    cleanCount = len(cleanLines)
    cleanBlob = '\n'.join(cleanLines)
    
-   print('createUserShapefile, Cleaned blob of non-encodable lines, orig {}, new {}'
-         .format(origCount, cleanCount))
+   msg = 'createUserShapefile, {}, orig {}, new {}'.format(
+                  'Cleaned blob of non-encodable lines', origCount, cleanCount)
+   if log is not None:
+      log.debug(msg)
+   else:
+      print(msg)
       
    return parseCsvData(cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
                        bigFile, cleanCount, maxPoints, metadata=metadata, 
-                       isUser=True, statusFname=statusFname)
+                       isUser=True, log=log)
       
 # .............................................................................
 def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
-                 metadata=None, isUser=False, statusFname=None):
+                 metadata=None, isUser=False, log=None):
    """
    @summary: Parses a CSV-format dataset and saves it to a shapefile in the 
                 specified location
@@ -151,38 +150,62 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
    @param metadata: Metadata that can be used for processing the CSV
-   @param statusFname: If provided, write out job status to this file
-   @todo: handle write exception before writing dummy file? 
+   @param log: If provided, use this logger.  If not, will create new
    """
-   # TODO: evaluate logging here
+   # Initialize logger if necessary
+   if log is None:
+      logname, _ = os.path.splitext(os.path.basename(__file__))
+      log = LmComputeLogger(logname, addConsole=True)
+   
+   # Ready file names
    readyFilename(outFile, overwrite=True)
    readyFilename(bigFile, overwrite=True)
+
    if count <= 0:
-      f = open(outFile, 'w')
-      f.write('Zero data points')
-      f.close()
-      f = open(bigFile, 'w')
-      f.write('Zero data points')
-      f.close()
       status = JobStatus.LM_RAW_POINT_DATA_ERROR
+      log.debug('Count was set to zero, return {}'.format(status))
    else:
-      logname, ext = os.path.splitext(os.path.basename(__file__))
-      logger = LmComputeLogger(logname, addConsole=True)
-      shaper = ShapeShifter(processType, rawData, count, logger=logger, 
-                            metadata=metadata)
-      shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
-                              isUser=isUser)
-      if not os.path.exists(bigFile):
-         f = open(bigFile, 'w')
-         f.write('No excess data')
-         f.close()
-      status = JobStatus.COMPUTED
-   
-   # Write status if requested
-   if statusFname is not None:
-      readyFilename(statusFname, overwrite=True)
-      with open(statusFname, 'w') as outF:
-         outF.write('{}'.format(status))
+      try:
+         shaper = ShapeShifter(processType, rawData, count, logger=log, 
+                               metadata=metadata)
+         shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
+                                 isUser=isUser)
+         status = JobStatus.COMPUTED
+         log.debug('Shaper wrote occurrences, return {}'.format(status))
+         
+         # Test generated shapefiles, throws exceptions if bad
+         ShapeShifter.testShapefile(outFile)
+         
+         # Test the big shapefile if it exists
+         if os.path.exists(bigFile):
+            ShapeShifter.testShapefile(bigFile)
+         
+      except LmException, lme:
+         log.debug(lme.msg)
+         status = lme.code
+         log.debug('Failed to write occurrences, return {}'.format(status))
+         log.debug('Delete shapefiles if they exist')
+         
+         # TODO: Find a better way to delete (existing function maybe?)
+         if os.path.exists(outFile):
+            out_base = os.path.splitext(outFile)[0]
+            for ext in LMFormat.SHAPE.getExtensions():
+               fn = '{}{}'.format(out_base, ext)
+               if os.path.exists(fn):
+                  os.remove(fn)
+                  
+         if os.path.exists(bigFile):
+            big_base = os.path.splitext(bigFile)[0]
+            for ext in LMFormat.SHAPE.getExtensions():
+               fn = '{}{}'.format(big_base, ext)
+               if os.path.exists(fn):
+                  os.remove(fn)
+      except Exception, e:
+         log.debug(str(e))
+         status = JobStatus.LM_POINT_DATA_ERROR
+         log.debug('Failed to write occurrences, return {}'.format(status))
+         
+   return status
       
 
 """
