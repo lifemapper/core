@@ -31,9 +31,13 @@ from osgeo import gdal, gdalconst, ogr, osr
 from LmCommon.common.lmconstants import DEFAULT_NODATA, LMFormat
 from LmCommon.common.readyfile import readyFilename
 
+# TODO: Move to constants probably
+NUM_QUAD_SEGS = 30
+
 # .............................................................................
 def create_convex_hull_region_intersect_mask(occ_shp_filename, 
-                                 region_layer_filename, nodata=DEFAULT_NODATA, 
+                                 region_layer_filename, buffer_distance,
+                                 nodata=DEFAULT_NODATA, 
                                  ascii_filename=None, tiff_filename=None):
    """
    @summary: Create a mask using the convex hull / region intersection method
@@ -87,9 +91,12 @@ def create_convex_hull_region_intersect_mask(occ_shp_filename,
       raise Exception, 'No intersection between points and raster'
    newData = nodata * np.ones(data.shape, dtype=np.int8)
    
+   convex_hull_raw = geom_coll.ConvexHull()
+   buffered_convex_hull = convex_hull_raw.Buffer(buffer_distance, NUM_QUAD_SEGS)
+   
    # Get convex hull array
    con_hull_data = create_convex_hull_array(
-               os.path.splitext(occ_shp_filename)[0], geom_coll.ConvexHull(), 
+               os.path.splitext(occ_shp_filename)[0], buffered_convex_hull, 
                bbox, cell_size, epsg, nodata=nodata)
    
    # Mask the layer to only regions that points fall within

@@ -23,6 +23,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 @todo: Consider adding constants for collected metric names
+@todo: Make file name optional or only used in write method
 """
 import json
 import os
@@ -40,6 +41,7 @@ class LmMetricNames(object):
    OUTPUT_SIZE = 'output_size'
    PROCESS_TYPE = 'process_type'
    RUNNING_TIME = 'running_time'
+   SOFTWARE_VERSION = 'software_version'
    STATUS = 'status'
 
 # .............................................................................

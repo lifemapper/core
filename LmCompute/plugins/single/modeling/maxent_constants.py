@@ -2,7 +2,7 @@
 @summary: Module containing MaxEnt constants
 
 @author: CJ Grady
-@version: 4.0.0
+@version: 5.0.0
 @status: beta
 
 @license: gpl2
@@ -27,8 +27,19 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+MAXENT_MODEL_TOOL = 'density.Maxent'
+MAXENT_PROJECT_TOOL = 'density.Project'
+MAXENT_CONVERT_TOOL = 'density.Convert'
+MAXENT_VERSION = '3.4.1'
 
-PARAMETERS = {
+DEFAULT_MAXENT_OPTIONS = [
+   'nowarnings',
+   'nocache',
+   'autorun',
+   '-z'
+]
+
+DEFAULT_MAXENT_PARAMETERS = {
    'addallsamplestobackground': {
       'default' : 'true',
       'process' : lambda x: str(bool(int(x))).lower()
