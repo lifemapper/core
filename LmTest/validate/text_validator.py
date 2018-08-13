@@ -1,5 +1,5 @@
 """
-@summary: This module contains functions for validating a zip file
+@summary: This module contains functions for validating text files
 @author: CJ Grady
 @version: 1.0
 @status: alpha
@@ -24,22 +24,25 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+@todo: Validate against something
 @todo: Determine if file or file-like object, then validate
 @todo: Generalize
 """
 import os
-import zipfile
+
 # .............................................................................
-def validate_zip_file(zip_filename):
+def validate_text_file(text_filename, read_lines=False):
    """
-   @summary: Validates a zip file by seeing if it can be loaded and inspected
+   @summary: Validates a text file by seeing if the lines can be loaded
    """
    msg = 'Valid'
    valid = False
-   if os.path.exists(zip_filename):
+   if os.path.exists(text_filename):
       try:
-         with zipfile.ZipFile(zip_filename) as zipF:
-            info = zipF.infolist()
+         with open(text_filename) as in_text:
+            if read_lines:
+               for line in in_text:
+                  line_text = unicode(line)
          valid = True
       except Exception, e:
          msg = str(e)
