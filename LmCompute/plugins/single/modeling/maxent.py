@@ -29,7 +29,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 @todo: Look for binaries
-@todo: Algorithm code cosntant
+@todo: Algorithm code constant
 """
 import os
 import shutil
@@ -43,6 +43,8 @@ from LmCompute.plugins.single.modeling.base import ModelSoftwareWrapper
 from LmCompute.plugins.single.modeling.maxent_constants import (
                         MAXENT_MODEL_TOOL, MAXENT_PROJECT_TOOL, MAXENT_VERSION, 
                         DEFAULT_MAXENT_OPTIONS, DEFAULT_MAXENT_PARAMETERS)
+from LmTest.validate.text_validator import validate_text_file
+from LmTest.validate.raster_validator import validate_raster_file
 
 # TODO: Should these be in constants somewhere?
 ALGO_PARAMETERS_KEY = 'parameters'
@@ -204,6 +206,25 @@ class MaxentWrapper(ModelSoftwareWrapper):
       self._run_tool(self._build_command(MAXENT_MODEL_TOOL, options), 
                                                                   num_tries=3)
 
+      # If success, check model output
+      if self.metrics[LmMetricNames.STATUS] < JobStatus.GENERAL_ERROR:
+         valid_model, model_msg = validate_text_file(
+                                                   self.get_ruleset_filename())
+         if not valid_model:
+            self.metrics.add_metric(LmMetricNames.STATUS, 
+                                                JobStatus.ME_EXEC_MODEL_ERROR)
+            self.logger.debug('Model failed: {}'.format(model_msg))
+
+      # If success, check projection output
+      if self.metrics[LmMetricNames.STATUS] < JobStatus.GENERAL_ERROR:
+         valid_prj, prj_msg = validate_raster_file(
+                                                self.get_projection_filename())
+         if not valid_prj:
+            self.metrics.add_metric(LmMetricNames.STATUS, 
+                                          JobStatus.ME_EXEC_PROJECTION_ERROR)
+            self.logger.debug('Projection failed: {}'.format(prj_msg))
+
+
    # ...................................
    def create_projection(self, ruleset_filename, layer_json, 
                                     parameters_json=None, mask_filename=None):
@@ -245,6 +266,15 @@ class MaxentWrapper(ModelSoftwareWrapper):
       
       self._run_tool(self._build_command(MAXENT_PROJECT_TOOL, options), 
                      num_tries=3)
+
+      # If success, check projection output
+      if self.metrics[LmMetricNames.STATUS] < JobStatus.GENERAL_ERROR:
+         valid_prj, prj_msg = validate_raster_file(
+                                                self.get_projection_filename())
+         if not valid_prj:
+            self.metrics.add_metric(LmMetricNames.STATUS, 
+                                          JobStatus.ME_EXEC_PROJECTION_ERROR)
+            self.logger.debug('Projection failed: {}'.format(prj_msg))
 
    # ...................................
    def get_log_filename(self):

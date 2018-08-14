@@ -37,6 +37,8 @@ from LmCompute.plugins.single.modeling.base import ModelSoftwareWrapper
 from LmCompute.plugins.single.modeling.openModeller_constants import (
                      DEFAULT_FILE_TYPE, OM_DEFAULT_LOG_LEVEL, OM_MODEL_TOOL, 
                      OM_PROJECT_TOOL, OM_VERSION)
+from LmTest.validate.xml_validator import validate_xml_file
+from LmTest.validate.raster_validator import validate_raster_file
 
 # TODO: Should these be in constants somewhere?
 ALGORITHM_CODE_KEY = 'algorithmCode'
@@ -148,6 +150,15 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
       
       self._run_tool(self._build_command(OM_MODEL_TOOL, model_options), 
                                                                   num_tries=3)
+      
+      # If success, check model output
+      if self.metrics[LmMetricNames.STATUS] < JobStatus.GENERAL_ERROR:
+         valid_model, model_msg = validate_xml_file(
+                                                   self.get_ruleset_filename())
+         if not valid_model:
+            self.metrics.add_metric(LmMetricNames.STATUS, 
+                                                JobStatus.OM_EXEC_MODEL_ERROR)
+            self.logger.debug('Model failed: {}'.format(model_msg))
 
    # ...................................
    def create_projection(self, ruleset_filename, layer_json, 
@@ -201,6 +212,15 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
       self._run_tool(self._build_command(OM_PROJECT_TOOL, prj_options), 
                                                                   num_tries=3)
       
+      # If success, check projection output
+      if self.metrics[LmMetricNames.STATUS] < JobStatus.GENERAL_ERROR:
+         valid_prj, prj_msg = validate_raster_file(
+                                                self.get_projection_filename())
+         if not valid_prj:
+            self.metrics.add_metric(LmMetricNames.STATUS, 
+                                          JobStatus.OM_EXEC_PROJECTION_ERROR)
+            self.logger.debug('Projection failed: {}'.format(prj_msg))
+
    # ...................................
    def get_log_filename(self):
       """
