@@ -534,6 +534,14 @@ class JobStatus:
    ME_LAYER_MISSING = 3603
    ME_FILE_LOCK_ERROR = 3604
    
+   # Error generating model
+   # ............................................
+   ME_EXEC_MODEL_ERROR = 3610
+   
+   # Error generating projection
+   # ............................................
+   ME_EXEC_PROJECTION_ERROR = 3620
+    
    # Maxent points issues
    # ............................................
    ME_POINTS_ERROR = 3740
