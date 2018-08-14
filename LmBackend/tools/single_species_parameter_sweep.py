@@ -49,6 +49,7 @@ from LmCompute.plugins.single.occurrences.csvOcc import (createBisonShapefile,
 from LmCompute.plugins.single.mask.create_mask import create_blank_mask_from_layer, create_convex_hull_region_intersect_mask
 from LmServer.common.localconstants import POINT_COUNT_MAX
 from LmCompute.common.lmObj import LmException
+from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 
 # .............................................................................
 # TODO: Move to constants
@@ -205,12 +206,28 @@ class SingleSpeciesParameterSweep(object):
                                        mdl_config['model_scenario'], 
                                        mask_filename=mdl_config['mask_filename_tiff'])
       
+      # TODO: Return model filename
+      # TODO: Return model metrics
+      # TODO: Return snippets
+      # TODO: Return projection information
+      # TODO: How should a model fail cascade?
+      # TODO: Models won't have snippets
+      # Projection info should be None or status, filename, snippets, metrics
+      
       return mdl_filename, mdl_metrics, mdl_snippets, projection_info
    
    # ..........................................................................
-   def _create_maxent_model(self, model_points, algorithm_config, 
-                                          scenario_json, mask_filename=None):
+   def _create_maxent_model(self, work_dir, species_name, model_points, 
+                                 algorithm_config, scenario_json, 
+                                 mask_filename=None, crs_wkt=None):
       """
+      @summary: This function creates a Maxent model and projection for the
+                   provided scenario
+      @param work_dir: A directory to use as a workspace for Maxent
+      @param species_name: A name associated with the occurrence data
+      @param model_points: The points [(local_id, x, y)] to be used for 
+                              creating the model
+      @todo: Document parameters
       This function should:
          * Create a maxent model
          * Probably create a projection for that model
@@ -226,7 +243,44 @@ class SingleSpeciesParameterSweep(object):
          status
          
          
+      @todo: Needs to skip projection storage if parameters are not provided
+      @todo: add projection informatin parameters
+         
+         
       """
+      projection_info = None
+      # Create model / projection
+      me_wrapper = MaxentWrapper(work_dir, species_name, logger=self.log)
+      me_wrapper.create_model(model_points, scenario_json, algorithm_config, 
+                              mask_filename=mask_filename, crs_wkt=crs_wkt)
+      
+      # Check status
+      status = me_wrapper.get_status()
+      if status is None or status >= JobStatus.GENERAL_ERROR:
+         # TODO: Handle error condition
+         pass
+      else:
+         # Model
+         ruleset_filename = me_wrapper.get_ruleset_filename()
+         mdl_metrics = me_wrapper.metrics
+         
+         # If we should do projection
+         if prj_id is not None and prj_dlocation is not None and \
+                  prj_package_filename is not None:
+            # Projection status
+            prj_status = (ProcessType.ATT_PROJECT, prj_id, status)
+            
+            # Convert the ASCII to Tiff and store in final location
+            self._convert_ascii_to_tiff(me_wrapper.get_projection_filename(), 
+                                        prj_dlocation)
+            # Get output package and write to final location
+            me_wrapper.get_output_package(prj_package_filename, overwrite=True)
+            projection_info = (prj_status, me_wrapper.snippets)
+         
+         return ruleset_filename, mdl_metrics, projection_info
+
+      
+   def _convert_ascii_to_tiff(self, ascii_filename, tiff_filename):
       pass
    
    def _create_maxent_projection(self):
@@ -243,11 +297,24 @@ class SingleSpeciesParameterSweep(object):
    
    def _create_openModeller_model(self):
       """
+      
+      
       * Create a model
       * Check outputs
       * Metrics
       * Logging
       """
+      
+      # TODO: Call code to create model
+      # TODO: Get status information from metrics
+      # TODO: Get snippet information
+      # TODO: Return metrics
+      # TODO: Return file name?
+      # TODO: Return status
+      # TODO: Return snippets
+      # TODO: Return projection information
+      
+      
       pass
    
    def _create_openModeller_projection(self):
