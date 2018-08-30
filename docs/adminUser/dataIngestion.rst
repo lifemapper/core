@@ -67,7 +67,7 @@ Configure for new boom job
            * sax_layers_10min current scenario, 
            * tree
            * biogeo hypotheses
-      * heuchera_boom_global_data:  
+      * heuchera_boom_global_data (smallest):  
            * heuchera data (64sp) 
            * 10min-past-present-future
            * tree
