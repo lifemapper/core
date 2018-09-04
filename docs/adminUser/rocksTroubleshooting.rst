@@ -2,16 +2,39 @@
 Troubleshooting:
 ################
 
-YUM errors:
-***********
+Yum errors
+~~~~~~~~~~~
 
-On all
-~~~~~~~~
 * Opt python module "breaks" yum, must unload before using Yum commands::
      module load opt-python
      do something
      module unload opt-python
      yum something 
+
+On Compute Nodes, lifemapper-compute roll
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+User share and shared FS problems
+#. Missing file /etc/411-security/shared.key on nodes. Copy 
+   /etc/411-security/shared.key to all nodes::
+   rocks sync host sharedkey compute
+
+#. rpcbind keeps dying, leaving behind lock and pid files 
+   (/var/run/rpcbind.lock, .pid)
+   
+#. Restart rpcbind with:: 
+   service rpcbind restart
+   service sec-channel restart
+   service nfs restart
+   
+   cd /var/411
+   make clean
+   make force
+   rocks sync users
+   rocks run host compute "411get --all; service autofs restart"   
+
+#. Test by logging into nodes as lmwriter user, home dir should be available with
+   lmwriter r/w permissions
 
 On Development Appliance
 ~~~~~~~~~~~~~~~~~~~~~~~~
