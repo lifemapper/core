@@ -25,23 +25,19 @@ import mx.DateTime
 import os
 import time
 
+from LmBackend.command.common import ChainCommand, SystemCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import (LMFormat, DEFAULT_POST_USER, 
-                                         DEFAULT_EPSG, DEFAULT_MAPUNITS) 
+from LmCommon.common.lmconstants import JobStatus
 
-from LmDbServer.common.lmconstants import TNCMetadata, TAXONOMIC_SOURCE
-
-from LmServer.common.lmconstants import Algorithms
 from LmServer.common.lmconstants import (ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
@@ -162,44 +158,6 @@ class SPFiller(LMObject):
       thisUser = self.scribe.findOrInsertUser(user)
       # If exists, found by unique Id or Email, update values
       return thisUser.userid
-
-#       
-   # .............................
-   def addTNCEcoregions(self):
-      meta = {Vector.META_IS_CATEGORICAL: TNCMetadata.isCategorical, 
-              ServiceObject.META_TITLE: TNCMetadata.title, 
-              ServiceObject.META_AUTHOR: TNCMetadata.author, 
-              ServiceObject.META_DESCRIPTION: TNCMetadata.description,
-              ServiceObject.META_KEYWORDS: TNCMetadata.keywords,
-              ServiceObject.META_CITATION: TNCMetadata.citation,
-              }
-      dloc = os.path.join(ENV_DATA_PATH, 
-                          TNCMetadata.filename + LMFormat.getDefaultOGR().ext)
-      ecoregions = Vector(TNCMetadata.title, PUBLIC_USER, DEFAULT_EPSG, 
-                          ident=None, dlocation=dloc, 
-                          metadata=meta, dataFormat=LMFormat.getDefaultOGR().driver, 
-                          ogrType=TNCMetadata.ogrType,
-                          valAttribute=TNCMetadata.valAttribute, 
-                          mapunits=DEFAULT_MAPUNITS, bbox=TNCMetadata.bbox,
-                          modTime=mx.DateTime.gmt().mjd)
-      updatedEcoregions = self.scribe.findOrInsertLayer(ecoregions)
-      return updatedEcoregions
-
-   # ...............................................
-   def addAlgorithms(self):
-      """
-      @summary Adds algorithms to the database from the algorithm dictionary
-      """
-      algs = []
-      for alginfo in Algorithms.implemented():
-         meta = {'name': alginfo.name, 
-                 'isDiscreteOutput': alginfo.isDiscreteOutput,
-                 'outputFormat': alginfo.outputFormat,
-                 'acceptsCategoricalMaps': alginfo.acceptsCategoricalMaps}
-         alg = Algorithm(alginfo.code, metadata=meta)
-         self.scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
-         algid = self.scribe.findOrInsertAlgorithm(alg)
-         algs.append(algid)
    
    # ...............................................
    def createScenPackage(self, spName):
@@ -370,36 +328,7 @@ class SPFiller(LMObject):
          raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
                        .format(self.spMetaFname, e))
       return SPMETA
-
-
-   # ...............................................
-   def addDefaults(self):
-      """
-      @summary Inserts or locates PUBLIC_USER, DEFAULT_POST_USER, 
-               TAXONOMIC_SOURCE, ALGORITHMS, and TNC_ECOREGIONS in the database
-      """
-      currtime = mx.DateTime.gmt().mjd
       
-      #Adds or finds PUBLIC_USER, DEFAULT_POST_USER 
-      # Nothing changes if these are already present
-      _ = self.addUser(PUBLIC_USER, 
-                       '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
-      _ = self.addUser(DEFAULT_POST_USER, 
-                       '{}{}'.format(DEFAULT_POST_USER, DEFAULT_EMAIL_POSTFIX))
-      # Insert all taxonomic sources for now
-      self.scribe.log.info('  Insert taxonomy metadata ...')
-      for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-         taxSourceId = self.scribe.findOrInsertTaxonSource(taxInfo['name'],
-                                                             taxInfo['url'])
-      # Insert all algorithms 
-      self.scribe.log.info('  Insert Algorithms ...')
-      self.addAlgorithms()
-   
-      # Insert all algorithms 
-      self.scribe.log.info('  Insert TNC Ecoregions ...')
-      self.addTNCEcoregions()
-      
-
 # ...............................................
 def catalogScenPackages(spMetaFname, userId, userEmail):
    """
@@ -439,7 +368,8 @@ def catalogScenPackages(spMetaFname, userId, userEmail):
          filler.scribe.log.info('Successfully added scenario package {} for user {}'
                                 .format(spName, filler.userId))
    
-   
+
+
    
 # ...............................................
 if __name__ == '__main__':

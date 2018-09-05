@@ -169,9 +169,9 @@ to an active update site. This command should bring back a variety of updates
 while creating the mirror.  The site constructed below differs from the URL in
 the above instructions.
 **Note**: Make sure HTTP is enabled.::
-
-    # baseurl=http://centos.gbeservers.com/
-    # osversion=7.4.1708
+    
+    # baseurl=http://mirror.oss.ou.edu/centos
+    # osversion=7
     # version=`date +%F`
     # rocks create mirror ${baseurl}/${osversion}/updates/x86_64/Packages/ rollname=Updates-CentOS-${osversion} version=${version}
     # rocks add roll Updates-CentOS-${osversion}-${version}*iso
@@ -179,7 +179,7 @@ the above instructions.
     # (cd /export/rocks/install; rocks create distro)
     # yum clean all; yum update
     
-    
+
 Troubleshooting
 ~~~~~~~~~~~~~~~
 * SGE causes sync config to fail:

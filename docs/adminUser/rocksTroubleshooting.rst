@@ -33,6 +33,8 @@ User share and shared FS problems
    rocks sync users
    rocks run host compute "411get --all; service autofs restart"   
 
+#. If lmwriter home dir is still unavailable, check status of rpcbind on nodes, restart if dead.
+
 #. Test by logging into nodes as lmwriter user, home dir should be available with
    lmwriter r/w permissions
 
