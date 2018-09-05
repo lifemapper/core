@@ -30,6 +30,7 @@ COMMON_SCRIPTS_DIR = 'LmCompute/tools/common'
 BACKEND_SCRIPTS_DIR = 'LmBackend/tools'
 BOOM_SCRIPTS_DIR = 'LmDbServer/boom'
 SERVER_SCRIPTS_DIR = 'LmServer/tools'
+DB_SERVER_SCRIPTS_DIR = 'LmDbServer/tools'
 
 # This is just for the command objects.  There is probably a better way 
 CMD_PYBIN = '$PYTHON'
