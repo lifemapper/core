@@ -29,67 +29,64 @@
 import argparse
 
 from LmCommon.common.matrix import Matrix
-from LmCompute.plugins.multi.mcpa.mcpa import mcpaRun
+from LmCompute.plugins.multi.mcpa.mcpa import mcpa_run
 
 # .............................................................................
 if __name__ == "__main__":
-   parser = argparse.ArgumentParser(
-                   description="This script calculates MCPA for observed data")
-   # Inputs
-   parser.add_argument("incidenceMtxFn", 
-                      help="Incidence matrix for the analysis (PAM) file name")
-   parser.add_argument("phyloEncodingFn", 
-                              help="Encoded phylogenetic matrix file location")
-   parser.add_argument("envFn", 
-                             help="Environment predictor matrix file location")
-   parser.add_argument('-b', dest='bio', 
-                           help="Biogeographic predictor matrix file location")
-   # Outputs
-   parser.add_argument("adjRsqFn", 
-                   help="The file path to store the adjusted R squared vector")
-   parser.add_argument("partCorMtxFn", 
-                  help="Where the partial correlation matrix should be stored")
-   parser.add_argument("fGlobalMtxFn", 
-                                  help="The file path for the f global matrix")
-   parser.add_argument("fPartialMtxFn", 
-                help="The file path for the f matrix for partial correlations")
-   
-   args = parser.parse_args()
-   
-   # Load the matrices
-   incidenceMtx = Matrix.load(args.incidenceMtxFn)
-   envMtx = Matrix.load(args.envFn)
-   phyloMtx = Matrix.load(args.phyloEncodingFn)
-   
-   if args.bio:
-      # I believe that Jeff may have made a mistake in his interpretation of 
-      #    how to handle BioGeo and they should not be concatenated here.
-      #    Will comment out in case we do need to do that
-      # If a biogeographic matrix is supplied, concatenate environment matrix
-      #bgMtx = Matrix.load(args.bio)
-      #predictorMtx = Matrix.concatenate([bgMtx, envMtx], axis=1)
-      
-      predictorMtx = Matrix.load(args.bio)
-      hp = 'BG - '
-   else:
-      predictorMtx = envMtx
-      hp = 'ENV - '
-   
-   adjRsq, fGlobal, semiPartialMtx, fSemiPartial = mcpaRun(incidenceMtx, 
-                                                           predictorMtx, 
-                                                           phyloMtx, 
-                                                           headerPrefix=hp)
+    parser = argparse.ArgumentParser(
+        description='This script calculates MCPA for observed data')
+    
+    # Optional outputs
+    parser.add_argument('-co', '--corr_output', type=str, 
+        help='File location to store semi-partial correlation outputs (only for observed')
+    parser.add_argument('-fo', '--freq_output', type=str, 
+        help='File location to store (stack of) semi-partial correlation outputs')
+    
+    # Randomizations
+    parser.add_argument('-n', '--num_permutations', type=int, default=1,
+                        help='Run this many permutations (only if random)')
+    parser.add_argument('--randomize', action='store_true', 
+                        help='Randomize the data')
+    
+    # Inputs
+    parser.add_argument(
+        'incidence_matrix_filename', 
+        help='Incidence matrix for the analysis (PAM) file name')
+    parser.add_argument('phylo_encoding_filename',
+                        help='Encoded phylogenetic matrix file location')
+    parser.add_argument('env_predictors_filename',
+                        help='Environment predictor matrix file location')
+    parser.add_argument('biogeo_preditors_filename',
+                        help='Biogeographic predictor matrix file location')
+    args = parser.parse_args()
 
-   # Write outputs
-   with open(args.adjRsqFn, 'w') as adjRsqF:
-      adjRsq.save(adjRsqF)
+    # Load the matrices
+    incidence_matrix = Matrix.load(args.incidence_matrix_filename)
+    phylo_matrix = Matrix.load(args.phylo_encoding_filename)
+    env_pred_matrix = Matrix.load(args.env_predictors_filename)
+    bg_pred_matrix = Matrix.load(args.biogeo_predictors_filename)
 
-   with open(args.partCorMtxFn, 'w') as outPartCorF:
-      semiPartialMtx.save(outPartCorF)
+    if not args.randomize:
+        obs_matrix, f_matrix = mcpa_run(incidence_matrix, phylo_matrix, 
+                                        env_pred_matrix, bg_pred_matrix)
+        if args.corr_output is not None:
+            with open(args.corr_output, 'w') as corr_f:
+                obs_matrix.save(corr_f)
+    else:
+        f_stack = []
 
-   with open(args.fGlobalMtxFn, 'w') as fGlobalF:
-      fGlobal.save(fGlobalF)
+        num_permutations = 1
+        if args.num_permutations > 1:
+            num_permutations = args.num_permutations
+        for i in range(num_permutations):
+            _, f_matrix = mcpa_run(incidence_matrix, phylo_matrix, 
+                                   env_pred_matrix, bg_pred_matrix,
+                                   randomize=True)
+            f_stack.append(f_matrix)
 
-   with open(args.fPartialMtxFn, 'w') as fPartialF:
-      fSemiPartial.save(fPartialF)
-      
+        f_matrix = Matrix.concatenate(f_stack, axis=2)
+
+    # Write F-matrix / stack
+    if args.freq_output is not None:
+        with open(args.freq_output, 'w') as f_vals_f:
+            f_matrix.save(f_vals_f)
