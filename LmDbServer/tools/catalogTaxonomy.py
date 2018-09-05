@@ -18,9 +18,8 @@ class TaxonFiller(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, taxonomySourceName=TAXONOMIC_SOURCE['GBIF']['name'], 
-                      taxonomyFname=GBIF_TAXONOMY_DUMP_FILE,
-                      delimiter='\t'):
+   def __init__(self, taxonomySourceName, taxonomyFname,
+                taxonomySourceUrl=None, delimiter='\t'):
       """
       @summary Constructor for ArchiveFiller class.
       
@@ -138,7 +137,37 @@ class TaxonFiller(LMObject):
 # MAIN
 # ...............................................
 if __name__ == '__main__':
-   filler = TaxonFiller()
+   import argparse
+   parser = argparse.ArgumentParser(
+            description=('Populate a Lifemapper archive with taxonomic ' +
+                         'data for one or more species, from a CSV file '))
+   parser.add_argument('taxon_source_name', type=str,
+            help=("""Identifier of taxonomy source to populate.  This must 
+                  either already exist in the database, or it will be added to
+                  the database with the (now required) optional parameter
+                  `taxon_source_url`."""))
+   parser.add_argument('taxon_data_filename', type=str,
+            help=("""Filename of CSV taxonomy data."""))
+   parser.add_argument('logname', type=str,
+            help=("""Base name of logfile """))
+   parser.add_argument('--taxon_source_url', type=str, default=None,
+            help=("""Optional URL of taxonomy source, required for a new source"""))
+   parser.add_argument('--delimiter', type=str, default='\t',
+            help=("""Delimiter in CSV taxon_data_filename.  Defaults to tab."""))
+   args = parser.parse_args()
+   sourceName = args.taxon_source_name
+   taxonFname = args.taxon_data_filename
+   sourceUrl = args.taxon_source_url
+   delimiter = args.delimiter
+                      
+#    sourceName = TAXONOMIC_SOURCE['GBIF']['name']
+#    sourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
+#    taxonFname = GBIF_TAXONOMY_DUMP_FILE
+#    delimiter = '\t'
+   
+   filler = TaxonFiller(sourceName, taxonFname,
+                        sourceUrl=sourceUrl,
+                        delimiter=delimiter)
    filler.open()
    filler.readAndInsertTaxonomy()
    filler.close()

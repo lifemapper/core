@@ -25,10 +25,7 @@ import mx.DateTime
 import os
 import time
 
-from LmBackend.command.common import ChainCommand, SystemCommand
 from LmBackend.common.lmobj import LMError, LMObject
-
-from LmCommon.common.lmconstants import JobStatus
 
 from LmServer.common.lmconstants import (ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
@@ -37,7 +34,6 @@ from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.envlayer import EnvLayer
-from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
@@ -52,22 +48,38 @@ class SPFiller(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, spMetaFname, userId, email=None):
+   def __init__(self, spMetaFname, userId, email=None, logname=None):
       """
       @summary Constructor for BOOMFiller class.
       """
       super(SPFiller, self).__init__()
       self.name = self.__class__.__name__.lower()
+      if not os.path.exists(spMetaFname):
+         raise LMError(currargs='Climate metadata {} does not exist'
+                       .format(spMetaFname))
+      spBasename, _ = os.path.splitext(os.path.basename(spMetaFname))
+      
+      # TODO: change to importlib on python 2.7 --> 3.3+  
+      try:
+         import imp
+         self.spMeta  = imp.load_source('currentmetadata', spMetaFname)
+      except Exception, e:
+         raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
+                       .format(spMetaFname, e))
+
       self.spMetaFname = spMetaFname
       self.userId = userId
       self.userEmail = email
       if self.userEmail is None:
          self.userEmail = '{}{}'.format(self.userId, DEFAULT_EMAIL_POSTFIX)
-      self.spMeta = self._findScenPkgMetadata()
-            
+      
+      # Logfile
+      if logname is None:
+         logname = '{}.{}.{}'.format(self.name, spBasename, userId)
+
       # Get database
       try:
-         self.scribe = self._getDb()
+         self.scribe = self._getDb(logname)
       except: 
          raise
       self.open()
@@ -92,14 +104,9 @@ class SPFiller(LMObject):
       return fname
          
    # ...............................................
-   def _getDb(self):
+   def _getDb(self, logname):
       import logging
-      loglevel = logging.INFO
-      # Logfile
-      secs = time.time()
-      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-      logname = '{}.{}'.format(self.name, timestamp)
-      logger = ScriptLogger(logname, level=loglevel)
+      logger = ScriptLogger(logname, level=logging.INFO)
       # DB connection
       scribe = BorgScribe(logger)
       return scribe
@@ -315,32 +322,14 @@ class SPFiller(LMObject):
          updatedMask = self.scribe.findOrInsertLayer(masklyr)
       return updatedMask
    
-   # ...............................................
-   def _findScenPkgMetadata(self):
-      if not os.path.exists(self.spMetaFname):
-         raise LMError(currargs='Climate metadata {} does not exist'
-                       .format(self.spMetaFname))
-      # TODO: change to importlib on python 2.7 --> 3.3+  
-      try:
-         import imp
-         SPMETA = imp.load_source('currentmetadata', self.spMetaFname)
-      except Exception, e:
-         raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                       .format(self.spMetaFname, e))
-      return SPMETA
-      
 # ...............................................
-def catalogScenPackages(spMetaFname, userId, userEmail):
+def catalogScenPackages(spMetaFname, userId, userEmail, logname):
    """
    @summary: Initialize an empty Lifemapper database and archive
    """
-   filler = SPFiller(spMetaFname, userId, userEmail)
+   filler = SPFiller(spMetaFname, userId, email=userEmail, logname=logname)
    
-   filler.addDefaults()
-   # If email is not provided, a dummy email will be created
-   # ARCHIVE_USER and DEFAULT_POST_USER will be added if they are missing 
-   # (i.e. this is the first time this script has been run)
-      # If exists, found by unique Id or Email, update values
+   # If exists, found by unique Id or Email, update values
    filler.userId = filler.addUser(filler.userId, filler.userEmail)
    
    updatedMask = None
@@ -379,27 +368,36 @@ if __name__ == '__main__':
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('--scen_package_meta', default=None,
+   # Required
+   parser.add_argument('scen_package_meta', type=str,
             help=('Metadata file for Scenario package to be cataloged in the database.'))
-   parser.add_argument('--user_id', default=None,
+   parser.add_argument('user_id', type=str,
             help=('User authorized for the scenario package'))
+   parser.add_argument('logname', type=str,
+            help=('Basename of the logfile, without extension'))
+   
+   # Optional
    parser.add_argument('--user_email', default=None,
             help=('User email'))
+   
    args = parser.parse_args()
    scen_package_meta = args.scen_package_meta
    user_id = args.user_id
+   logname = args.logname
    user_email = args.user_email
    
+   # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
    if not os.path.exists(scen_package_meta):
       # if using package name, look in default location)
       scen_package_meta = os.path.join(ENV_DATA_PATH, scen_package_meta + '.py')
       if not os.path.exists(scen_package_meta):
          print ('Missing Scenario Package metadata file {}'.format(scen_package_meta))
-         exit(-1)    
+         exit(-1)
+
+   print('Running script with scen_package_meta: {}, userid: {}, email: {}, logbasename: {}'
+         .format(scen_package_meta, user_id, user_email, logname))
    
-   print('Running catalogScenPkg with scen_package_meta = {}, userid = {}, email = {}'
-         .format(scen_package_meta, user_id, user_email))
-   catalogScenPackages(scen_package_meta, user_id, user_email)
+   catalogScenPackages(scen_package_meta, user_id, user_email, logname)
 
 """
 find . -name "*.in" -exec sed -i s%@LMHOME@%/opt/lifemapper%g {} \;

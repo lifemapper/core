@@ -52,7 +52,7 @@ class Defcat(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self):
+   def __init__(self, logname):
       """
       @summary Constructor for BOOMFiller class.
       """
@@ -61,7 +61,7 @@ class Defcat(LMObject):
             
       # Get database
       try:
-         self.scribe = self._getDb()
+         self.scribe = self._getDb(logname)
       except: 
          raise
       self.open()
@@ -86,14 +86,9 @@ class Defcat(LMObject):
       return fname
          
    # ...............................................
-   def _getDb(self):
+   def _getDb(self, logname):
       import logging
-      loglevel = logging.INFO
-      # Logfile
-      secs = time.time()
-      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-      logname = '{}.{}'.format(self.name, timestamp)
-      logger = ScriptLogger(logname, level=loglevel)
+      logger = ScriptLogger(logname, level=logging.INFO)
       # DB connection
       scribe = BorgScribe(logger)
       return scribe
@@ -193,7 +188,15 @@ class Defcat(LMObject):
    
 # ...............................................
 if __name__ == '__main__':
-   defcat = Defcat()
+   scriptname, _ = os.path.splitext(os.path.basename(__file__))
+   secs = time.time()
+   timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+   logname = '{}.{}.{}'.format(scriptname, timestamp)
+   
+   print('Running {} with logbasename: {}'
+         .format(scriptname, logname))
+   
+   defcat = Defcat(logname)
    defcat.addDefaults()
 
 """

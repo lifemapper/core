@@ -76,28 +76,27 @@ class BOOMFiller(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, configFname=None):
+   def __init__(self, paramFname, logname):
       """
       @summary Constructor for BOOMFiller class.
       """
       super(BOOMFiller, self).__init__()
-      self.name = self.__class__.__name__.lower()
-      self.inParamFname = configFname
+      scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      self.name = scriptname
+#       self.name = self.__class__.__name__.lower()
+      self.inParamFname = paramFname
       # Get database
       try:
-         self.scribe = self._getDb()
+         self.scribe = self._getDb(logname)
       except: 
          raise
       self.open()
       
    # ...............................................
-   def initializeInputs(self, paramFname=None):
+   def initializeInputs(self):
       """
       @summary Initialize configured and stored inputs for BOOMFiller class.
       """      
-      # Allow reset configuration
-      if paramFname is not None:
-         self.inParamFname = paramFname
       (self.userId, self.userIdPath,
        self.userEmail,
        self.archiveName,
@@ -221,14 +220,9 @@ class BOOMFiller(LMObject):
                """.format(LM_USER, self.name, self.gridname))
          
    # ...............................................
-   def _getDb(self):
+   def _getDb(self, logname):
       import logging
-      loglevel = logging.INFO
-      # Logfile
-      secs = time.time()
-      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-      logname = '{}.{}'.format(self.name, timestamp)
-      logger = ScriptLogger(logname, level=loglevel)
+      logger = ScriptLogger(logname, level=logging.INFO)
       # DB connection
       scribe = BorgScribe(logger)
       return scribe
@@ -959,11 +953,11 @@ class BOOMFiller(LMObject):
       return bgMtx, biogeoLayerNames
 
 # ...............................................
-def initBoom(paramFname, walkNow=False):
+def initBoom(paramFname, logname, walkNow=False):
    """
    @summary: Initialize an empty Lifemapper database and archive
    """
-   filler = BOOMFiller(configFname=paramFname)
+   filler = BOOMFiller(paramFname, logname)
    filler.initializeInputs()
 
    # Add/find user for this Boom process (should exist)
@@ -1018,13 +1012,16 @@ if __name__ == '__main__':
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('--param_file', default=None,
+   parser.add_argument('param_file', default=None,
             help=('Parameter file for the archive inputs and outputs ' +
                   'to be created from these data.'))
+   parser.add_argument('logname', type=str,
+            help=('Basename of the logfile, without extension'))
    parser.add_argument('--do_walk', type=bool, default=False,
             help=('Walk these species data to create Makeflow jobs immediately.'))
    args = parser.parse_args()
    paramFname = args.param_file
+   logname = args.logname
    doWalk = args.do_walk
          
    if paramFname is not None and not os.path.exists(paramFname):
@@ -1033,7 +1030,7 @@ if __name__ == '__main__':
       
    print('Running catalogBoomJob with paramFname = {}'
          .format(paramFname))
-   gs = initBoom(paramFname, walkNow=doWalk)
+   gs = initBoom(paramFname, logname, walkNow=doWalk)
    print('Completed catalogBoomJob creating gridset: {}'.format(gs.getId()))
 
     

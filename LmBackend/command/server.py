@@ -23,9 +23,13 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import os
+import time
+
 from LmBackend.command.base import _LmCommand
-from LmBackend.common.lmconstants import (CMD_PYBIN, DB_SERVER_SCRIPTS, 
+from LmBackend.common.lmconstants import (CMD_PYBIN, DB_SERVER_SCRIPTS_DIR, 
                                           SERVER_SCRIPTS_DIR)
+from LmCommon.common.lmconstants import LMFormat
 
 # .............................................................................
 class _LmServerCommand(_LmCommand):
@@ -128,12 +132,121 @@ class CatalogScenarioPackageCommand(_LmDbServerCommand):
       """
       _LmDbServerCommand.__init__(self)
       
-      self.args = '--scen_package_meta={} --user_id={}'.format(
-                package_metadata_filename, user_id)
+      # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
+      if not os.path.exists(package_metadata_filename):
+         raise Exception('Missing Scenario Package metadata file {}'.format(package_metadata_filename))
+      else:
+         spBasename, _ = os.path.splitext(os.path.basename(package_metadata_filename)) 
+         # file ends up in LOG_PATH
+         secs = time.time()
+         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+         logname = '{}.{}.{}.{}'.format(self.scriptName, spBasename, user_id, timestamp)
+         
+      # Required args
+      self.args = '{} {} {}'.format(package_metadata_filename, user_id, logname)
+      
+      # Optional arg, if user is not there, add with dummy email if not provided
       if user_email is not None:
-          self.args += ' --user_email={}'.format(user_email)
-      raise Exception('Need to define some output of this script')
-      # self.outputs.append()
+         self.args += ' --user_email={}'.format(user_email)
+         
+      # Logfile is created by script in LOG_DIR
+      logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+      self.outputs.append(logfilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+# .............................................................................
+class CatalogBoomCommand(_LmDbServerCommand):
+   """
+   @summary: This command will create makeflows to catalog boom archive inputs,
+             create GRIMs, create an archive ini file, and run the Boomer Daemon
+             to walk through the inputs
+   """
+   scriptName = 'catalogBoomJob.py'
+
+   # ................................
+   def __init__(self, config_filename, do_walk=False):
+      """
+      @summary: Construct the command object
+      @param config_filename: The file location of the ini file 
+             with parameters for a boom/gridset
+      """
+      _LmDbServerCommand.__init__(self)
+      
+      # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
+      if not os.path.exists(config_filename):
+         raise Exception('Missing Boom configuration file {}'.format(config_filename))
+      else:
+         boomBasename, _ = os.path.splitext(os.path.basename(config_filename)) 
+         # file ends up in LOG_PATH
+         secs = time.time()
+         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+         logname = '{}.{}.{}'.format(self.scriptName, boomBasename, timestamp)
+         
+      # Required args
+      self.args = '{} {}'.format(config_filename, logname)
+      
+      # Optional arg, defaults to False
+      if do_walk:
+         self.args += ' --do_walk=True'
+         
+      # Logfile is created by script in LOG_DIR
+      logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+      self.outputs.append(logfilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+# .............................................................................
+class CatalogTaxonomyCommand(_LmDbServerCommand):
+   """
+   @summary: This command will create makeflows to catalog boom archive inputs,
+             create GRIMs, create an archive ini file, and run the Boomer Daemon
+             to walk through the inputs
+   """
+   scriptName = 'catalogTaxonomy.py'
+
+   # ................................
+   def __init__(self, source_name, taxon_filename, 
+                source_url=None, delimiter='\t'):
+      """
+      @summary: Construct the command object
+      @param config_filename: The file location of the ini file 
+             with parameters for a boom/gridset
+      """
+      _LmDbServerCommand.__init__(self)
+      
+      # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
+      if not os.path.exists(taxon_filename):
+         raise Exception('Missing Taxonomy data file {}'.format(taxon_filename))
+      else:
+         dataBasename, _ = os.path.splitext(os.path.basename(taxon_filename)) 
+         # file ends up in LOG_PATH
+         secs = time.time()
+         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+         logname = '{}.{}.{}'.format(self.scriptName, dataBasename, timestamp)
+         
+      # Required args
+      self.args = '{} {} {}'.format(source_name, taxon_filename, logname)
+      
+      # Optional arg, defaults to False
+      if source_url:
+         self.args += ' --taxon_source_url={}'.format(source_url)
+      if delimiter != '\t': 
+         self.args += ' --delimiter={}'.format(delimiter)
+         
+      # Logfile is created by script in LOG_DIR
+      logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+      self.outputs.append(logfilename)
          
    # ................................
    def getCommand(self):
