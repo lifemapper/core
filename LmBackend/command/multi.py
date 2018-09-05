@@ -326,108 +326,57 @@ class McpaCorrectPValuesCommand(_LmCommand):
             self.obsFn, self.pValFn, self.bhFn, ' '.join(self.fValFns))
 
 # .............................................................................
-class McpaObservedCommand(_LmCommand):
+class McpaRunCommand(_LmCommand):
    """
-   @summary: This command will run an observed run of MCPA
+   @summary: This command will perform one run of MCPA
    """
    relDir = MULTI_SPECIES_SCRIPTS_DIR
-   scriptName = 'mcpa_observed.py'
+   scriptName = 'mcpa_run.py'
 
    # ................................
-   def __init__(self, pamFilename, treeMtxFilename, grimFilename, 
-                      adjRsqFilename, partCorMtxFilename, 
-                      fGlobalMtxFilename, fPartMtxFilename, 
-                      hypothesesFilename=None):
+   def __init__(self, pam_filename, tree_mtx_filename, grim_filename, 
+                bg_filename, obs_filename=None, f_mtx_filename=None, 
+                randomize=False, num_permutations=1):
       """
       @summary: Construct the command object
-      @param pamFilename: The file location of the PAM to use
-      @param treeMtxFilename: The file location of the encoded tree matrix
-      @param grimFilename: The file location of the environmental data matrix
-      @param fGlobalRandMtxFilename: The file location to write the random 
-                                        F-Global values matrix
-      @param fPartRandMtxFilename: The file location to write the random 
-                                      F-partial correlation values matrix
-      @param hypothesesFilename: The file location of the encoded biogeographic 
-                                    hypotheses matrix
-      @param numRandomizations: The number of randomization runs to perform
+      @param pam_filename: The file location of the PAM Matrix to use
+      @param tree_mtx_filename: The file location of the encoded phylogenetic
+                                    tree Matrix to use
+      @param grim_filename: The file location of the grim Matrix
+      @param bg_filename: The file location of the encoded biogeographic
+                              hypotheses Matrix to use
+      @param obs_filename: If provided, write the observed semi-partial
+                              correlation values Matrix here (only for observed
+                              runs).
+      @param f_mtx_filenam: If provided, write the F-values Matrix, or stack,
+                              to this location
+      @param randomize: If True, perform a randomized run
+      @param num_permutations: If randomizing, perform this many runs in this
+                                  call
       """
       _LmCommand.__init__(self)
-      self.inputs.extend([pamFilename, treeMtxFilename, grimFilename])
-      self.outputs.extend([adjRsqFilename, partCorMtxFilename, 
-                           fGlobalMtxFilename, fPartMtxFilename])
+      self.args = [pam_filename, tree_mtx_filename, grim_filename, bg_filename]
+      self.inputs.extend(self.args)
       
-      self.pamFn = pamFilename
-      self.treeMtxFn = treeMtxFilename
-      self.grimFn = grimFilename
-      self.adjRsqFn = adjRsqFilename
-      self.partCorMtxFn = partCorMtxFilename
-      self.fGlobFn = fGlobalMtxFilename
-      self.fPartFn = fPartMtxFilename
-
       self.optArgs = ''
-      if hypothesesFilename is not None:
-         self.inputs.append(hypothesesFilename)
-         self.optArgs += ' -b {}'.format(hypothesesFilename)
+      if obs_filename is not None:
+          self.outputs.append(obs_filename)
+          self.optArgs += ' -co {}'.format(obs_filename)
+    
+      if f_mtx_filename is not None:
+          self.outputs.append(f_mtx_filename)
+          self.optArgs += ' -fo {}'.format(f_mtx_filename)
+    
+      if randomize:
+          self.optArgs += ' --randomize -n {}'.format(num_permutations)
 
    # ................................
    def getCommand(self):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
-            self.optArgs, self.pamFn, self.treeMtxFn, self.grimFn, 
-            self.adjRsqFn, self.partCorMtxFn, self.fGlobFn, self.fPartFn)
-
-# .............................................................................
-class McpaRandomCommand(_LmCommand):
-   """
-   @summary: This command will compute MCPA on randomized data
-   """
-   relDir = MULTI_SPECIES_SCRIPTS_DIR
-   scriptName = 'mcpa_random.py'
-
-   # ................................
-   def __init__(self, pamFilename, treeMtxFilename, grimFilename, 
-                      fGlobalRandMtxFilename, fPartRandMtxFilename, 
-                      hypothesesFilename=None, numRadomizations=None):
-      """
-      @summary: Construct the command object
-      @param pamFilename: The file location of the PAM to use
-      @param treeMtxFilename: The file location of the encoded tree matrix
-      @param grimFilename: The file location of the environmental data matrix
-      @param fGlobalRandMtxFilename: The file location to write the random 
-                                        F-Global values matrix
-      @param fPartRandMtxFilename: The file location to write the random 
-                                      F-partial correlation values matrix
-      @param hypothesesFilename: The file location of the encoded biogeographic 
-                                    hypotheses matrix
-      @param numRandomizations: The number of randomization runs to perform
-      """
-      _LmCommand.__init__(self)
-      self.inputs.extend([pamFilename, treeMtxFilename, grimFilename])
-      self.outputs.extend([fGlobalRandMtxFilename, fPartRandMtxFilename])
-      
-      self.pamFn = pamFilename
-      self.treeMtxFn = treeMtxFilename
-      self.grimFn = grimFilename
-      self.fGlobFn = fGlobalRandMtxFilename
-      self.fPartFn = fPartRandMtxFilename
-
-      self.optArgs = ''
-      if hypothesesFilename is not None:
-         self.inputs.append(hypothesesFilename)
-         self.optArgs += ' -b {}'.format(hypothesesFilename)
-      if numRadomizations is not None:
-         self.optArgs += ' -n {}'.format(numRadomizations)
-
-   # ................................
-   def getCommand(self):
-      """
-      @summary: Get the raw command to run on the system
-      """
-      return '{} {} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
-            self.optArgs, self.pamFn, self.treeMtxFn, self.grimFn, 
-            self.fGlobFn, self.fPartFn)
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs,
+                                  ' '.join(self.args))
 
 # .............................................................................
 class OccurrenceBucketeerCommand(_LmCommand):
