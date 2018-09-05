@@ -24,7 +24,8 @@
           02110-1301, USA.
 """
 from LmBackend.command.base import _LmCommand
-from LmBackend.common.lmconstants import CMD_PYBIN, SERVER_SCRIPTS_DIR
+from LmBackend.common.lmconstants import (CMD_PYBIN, DB_SERVER_SCRIPTS, 
+                                          SERVER_SCRIPTS_DIR)
 
 # .............................................................................
 class _LmServerCommand(_LmCommand):
@@ -33,6 +34,22 @@ class _LmServerCommand(_LmCommand):
                 server command classes should inherit from.
    """
    relDir = SERVER_SCRIPTS_DIR
+   # ................................
+   def getMakeflowRule(self, local=True):
+      """
+      @summary: Get a MfRule object for this command
+      @param local: Should this be a local command in a Makeflow DAG
+      @note: This differs from the superclass because the default local is True
+      """
+      return super(_LmServerCommand, self).getMakeflowRule(local=local)
+
+# .............................................................................
+class _LmDbServerCommand(_LmCommand):
+   """
+   @summary: The _LmServerCommand class is an intermediate class that all 
+                server command classes should inherit from.
+   """
+   relDir = DB_SERVER_SCRIPTS_DIR
    # ................................
    def getMakeflowRule(self, local=True):
       """
@@ -92,6 +109,38 @@ class AddBioGeoAndTreeCommand(_LmServerCommand):
       """
       return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.optArgs, ' '.join(self.args))
+
+# .............................................................................
+class CatalogScenarioPackageCommand(_LmDbServerCommand):
+   """
+   @summary: This command will catalog a scenario package
+   """
+   scriptName = 'catalogScenPkg.py'
+
+   # ................................
+   def __init__(self, package_metadata_filename, user_id, user_email=None):
+      """
+      @summary: Construct the command object
+      @param package_metadata_filename: The file location of the metadata file 
+                for the scenario package to be cataloged in the database
+      @param user_id: The user id to use for this package
+      @param user_email: The user email for this package
+      """
+      _LmDbServerCommand.__init__(self)
+      
+      self.args = '--scen_package_meta={} --user_id={}'.format(
+                package_metadata_filename, user_id)
+      if user_email is not None:
+          self.args += ' --user_email={}'.format(user_email)
+      raise Exception('Need to define some output of this script')
+      # self.outputs.append()
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
 
 # .............................................................................
 class CreateBlankMaskTiffCommand(_LmServerCommand):
