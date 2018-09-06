@@ -19,20 +19,6 @@ SHARED_DATA_PATH: @DATADIR_SHARED@
 LM_DISK: @LMDISK@
 
 ; .............................................................................
-[LmServer - registeredcompute]
-COMPUTE_NAME: 
-COMPUTE_IP: 
-COMPUTE_IP_MASK: 
-COMPUTE_CONTACT_USERID:
-COMPUTE_CONTACT_EMAIL:
-COMPUTE_CONTACT_FIRSTNAME:
-COMPUTE_CONTACT_LASTNAME:
-COMPUTE_INSTITUTION:
-COMPUTE_ADDR1:
-COMPUTE_ADDR2: 
-COMPUTE_ADDR3: 
-
-; .............................................................................
 [LmServer - pipeline]
 ARCHIVE_USER: kubi
 TROUBLESHOOTERS: null@nowhere.com
@@ -41,9 +27,9 @@ DEFAULT_EPSG: @EPSG@
 ; ...................
 ; SDM Params
 ; ...................
-SPECIES_EXP_YEAR: 2017
-SPECIES_EXP_MONTH: 9
-SPECIES_EXP_DAY: 22
+SPECIES_EXP_YEAR: @SPECIES_EXP_YEAR@
+SPECIES_EXP_MONTH: @SPECIES_EXP_MONTH@
+SPECIES_EXP_DAY: @SPECIES_EXP_DAY@
 POINT_COUNT_MIN: 30
 POINT_COUNT_MAX: 500
 WORKER_JOB_LIMIT: 50
