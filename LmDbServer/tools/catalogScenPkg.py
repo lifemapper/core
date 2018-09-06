@@ -390,7 +390,7 @@ if __name__ == '__main__':
       scriptname, _ = os.path.splitext(os.path.basename(__file__))
       secs = time.time()
       timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-      logname = '{}.{}.{}'.format(scriptname, timestamp)
+      logname = '{}.{}'.format(scriptname, timestamp)
 
    
    # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
