@@ -756,28 +756,28 @@ def testIdigBio():
       print '   ', api._qFilters
       print
       
-# .............................................................................
-def testIdigbioClient():
-   gbifids = [1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
-              1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 
-              1000519, 1000525, 1000541, 1000543, 1000546, 1000575]
-   
-   # ******************* iDigBio ********************************
-   idigList = [4990907, 2437967, 4990907, 5158206, 2438635, 2394563, 2360481, 
-               5231132, 2350580, 2361357]
-   fields = IDIGBIO_QUERY.RETURN_FIELDS.keys()
-   for gid in gbifids:
-      # direct query
-      api = idigbio.json()
-      query = {'taxonid':str(gid)}
-      try:
-         output = api.search_records(rq=query, limit=100, offset=0, fields=fields)
-      except:
-         print 'Failed on {}'.format(gid)
-      else:
-         items = output['items']
-         print("Retrieved {} records for gbif taxonid {}"
-               .format(len(items), gid))
+# # .............................................................................
+# def testIdigbioClient():
+#    gbifids = [1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
+#               1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 
+#               1000519, 1000525, 1000541, 1000543, 1000546, 1000575]
+#    
+#    # ******************* iDigBio ********************************
+#    idigList = [4990907, 2437967, 4990907, 5158206, 2438635, 2394563, 2360481, 
+#                5231132, 2350580, 2361357]
+#    fields = IDIGBIO_QUERY.RETURN_FIELDS.keys()
+#    for gid in gbifids:
+#       # direct query
+#       api = idigbio.json()
+#       query = {'taxonid':str(gid)}
+#       try:
+#          output = api.search_records(rq=query, limit=100, offset=0, fields=fields)
+#       except:
+#          print 'Failed on {}'.format(gid)
+#       else:
+#          items = output['items']
+#          print("Retrieved {} records for gbif taxonid {}"
+#                .format(len(items), gid))
 
 # .............................................................................
 def testIdigbioTaxonIds():
@@ -835,8 +835,8 @@ def testIdigbioTaxonIds():
 # .............................................................................
 # .............................................................................
 if __name__ == '__main__':
-   idigbio = gbif = bison = False
-   testIdigBio()
+#    testIdigBio()
+   pass
 
          
 """
