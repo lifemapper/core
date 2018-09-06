@@ -69,9 +69,10 @@ CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH,'config', 'cherrypy.conf')
 MATT_DAEMON_PID_FILE = os.path.join(PID_PATH, 'mattDaemon.pid')
 
 # CC Tools constants
-CATALOG_SERVER_BIN = os.path.join(BIN_PATH, 'catalog_server')
-WORKER_FACTORY_BIN = os.path.join(BIN_PATH, 'work_queue_factory')
-MAKEFLOW_BIN = os.path.join(BIN_PATH, 'makeflow')
+CCTOOLS_BIN_PATH = os.path.join(APP_PATH, 'cctools', 'bin')
+CATALOG_SERVER_BIN = os.path.join(CCTOOLS_BIN_PATH, 'catalog_server')
+WORKER_FACTORY_BIN = os.path.join(CCTOOLS_BIN_PATH, 'work_queue_factory')
+MAKEFLOW_BIN = os.path.join(CCTOOLS_BIN_PATH, 'makeflow')
 MAKEFLOW_WORKSPACE = os.path.join(SCRATCH_PATH, 'makeflow')
 
 # Catalog server

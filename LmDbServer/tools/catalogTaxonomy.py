@@ -18,20 +18,20 @@ class TaxonFiller(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, taxonomySourceName=TAXONOMIC_SOURCE['GBIF']['name'], 
-                      taxonomyFname=GBIF_TAXONOMY_DUMP_FILE,
-                      delimiter='\t'):
+   def __init__(self, taxSrcName, taxonomyFname, logname,
+                taxSrcUrl=None, delimiter='\t'):
       """
       @summary Constructor for ArchiveFiller class.
       
       """
       super(TaxonFiller, self).__init__()
       try:
-         self.scribe = self._getDb()
+         self.scribe = self._getDb(logname)
       except: 
          raise
       self.taxonomyFname = taxonomyFname
-      self._taxonomySourceId, x, x = self.scribe.findTaxonSource(taxonomySourceName)
+      self._taxonomySourceId = self.scribe.findOrInsertTaxonSource(
+                                                      taxSrcName, taxSrcUrl)
       self._taxonFile = open(taxonomyFname, 'r')
       self._csvreader = csv.reader(self._taxonFile, delimiter=delimiter)
       
@@ -56,10 +56,8 @@ class TaxonFiller(LMObject):
       return fname
          
    # ...............................................
-   def _getDb(self):
-      basefilename = os.path.basename(__file__)
-      basename, ext = os.path.splitext(basefilename)
-      logger = ScriptLogger(basename)
+   def _getDb(self, logname):
+      logger = ScriptLogger(logname)
       scribe = BorgScribe(logger)
       return scribe
 
@@ -138,7 +136,54 @@ class TaxonFiller(LMObject):
 # MAIN
 # ...............................................
 if __name__ == '__main__':
-   filler = TaxonFiller()
+   import argparse
+   parser = argparse.ArgumentParser(
+            description=(""""Populate a Lifemapper archive with taxonomic 
+                             data for one or more species, from a CSV file """))
+   parser.add_argument('--taxon_source_name', type=str, 
+                       default=TAXONOMIC_SOURCE['GBIF']['name'],
+                       help=("""Identifier of taxonomy source to populate.  
+                                This must either already exist in the database, 
+                                or it will be added to the database with the 
+                                (now required) optional parameter 
+                                `taxon_source_url`."""))
+   parser.add_argument('--taxon_data_filename', type=str,
+                       default=None,
+                       help=('Filename of CSV taxonomy data.'))
+   parser.add_argument('--taxon_source_url', type=str, default=None,
+                       help=("""Optional URL of taxonomy source, required 
+                                for a new source"""))
+   parser.add_argument('--delimiter', type=str, default='\t',
+                       help=("""Delimiter in CSV taxon_data_filename. Defaults
+                                to tab."""))
+   parser.add_argument('--logname', type=str, default=None,
+            help=('Base name of logfile '))
+   args = parser.parse_args()
+   sourceName = args.taxon_source_name
+   taxonFname = args.taxon_data_filename
+   logname = args.logname
+   sourceUrl = args.taxon_source_url
+   delimiter = args.delimiter
+   
+   if sourceName == TAXONOMIC_SOURCE['GBIF']['name'] and taxonFname is None:
+      taxonFname = GBIF_TAXONOMY_DUMP_FILE
+
+   if logname is None:
+      import time
+      scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      logname = '{}.{}.{}'.format(scriptname, timestamp)
+                      
+#    sourceName = TAXONOMIC_SOURCE['GBIF']['name']
+#    sourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
+#    taxonFname = GBIF_TAXONOMY_DUMP_FILE
+#    delimiter = '\t'
+   
+   filler = TaxonFiller(sourceName, taxonFname, 
+                        sourceUrl=sourceUrl,
+                        delimiter=delimiter,
+                        logname=logname)
    filler.open()
    filler.readAndInsertTaxonomy()
    filler.close()

@@ -24,6 +24,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import idigbio
 import json
 import requests
 from types import (BooleanType, DictionaryType, TupleType)
@@ -675,9 +676,114 @@ class IdigbioAPI(APIQuery):
             specimenList.append(newitem)
       return specimenList
 
-# ...............................................
-# ...............................................
-def testIdigbioTaxonIds(testcount, infname):
+# .............................................................................
+def testBison():
+  # ******************* BISON ********************************
+#       tsnQuery = BisonAPI(qFilters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX}, 
+#                           otherFilters=BISON.TSN_FILTERS)
+#     
+#       qfilters = {'decimalLongitude': (-125, -66), 'decimalLatitude': (24, 50), 
+#                   'ITISscientificName': '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/', 
+#                   'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
+#       otherfilters = {'facet.mincount': 20, 'rows': 0, 'facet.field': 'TSNs', 
+#                   'facet': True, 'facet.limit': -1, 'wt': 'json', 'json.nl': 'arrarr'}
+#       headers = {'Content-Type': 'application/json'}
+#       tsnList = tsnQuery.getBinomialTSNs()
+#       print len(tsnList)
+      
+   tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
+   response = {u'facet_counts': 
+            {u'facet_ranges': {}, 
+             u'facet_fields': {u'TSNs': tsnList}
+             }
+            }
+   
+   loopCount = 0
+   occAPI = None
+   taxAPI = None
+    
+   #       tsnList = BisonAPI.getTsnListForBinomials()
+   for tsnPair in tsnList:
+      tsn = int(tsnPair[0])
+      count = int(tsnPair[1])
+              
+      newQ = {BISON.HIERARCHY_KEY: '*-{}-*'.format(tsn)}
+      occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_QUERY.OCC_FILTERS)
+      thisurl = occAPI.url
+      occList = occAPI.getTSNOccurrences()
+      count = None if not occList else len(occList)
+      print 'Received {} occurrences for TSN {}'.format(count, tsn)
+      
+      occAPI2 = BisonAPI.initFromUrl(thisurl)
+      occList2 = occAPI2.getTSNOccurrences()
+      count = None if not occList2 else len(occList2)
+      print 'Received {} occurrences from url init'.format(count)
+       
+      tsnAPI = BisonAPI(qFilters={BISON.HIERARCHY_KEY: '*-{}-'.format(tsn)}, 
+                        otherFilters={'rows': 1})
+      hier = tsnAPI.getFirstValueFor(BISON.HIERARCHY_KEY)
+      name = tsnAPI.getFirstValueFor(BISON.NAME_KEY)
+      print name, hier
+
+# .............................................................................
+def testGbif():
+   taxonid = 1000225
+   output = GbifAPI.getTaxonomy(taxonid)
+   print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
+
+# .............................................................................
+def testIdigBio():
+   gbifids = [1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
+              1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 
+              1000519, 1000525, 1000541, 1000543, 1000546, 1000575]
+   
+   # ******************* iDigBio ********************************
+   idigList = [4990907, 2437967, 4990907, 5158206, 2438635, 2394563, 2360481, 
+               5231132, 2350580, 2361357]
+   for gid in gbifids:
+      # direct query
+      api = IdigbioAPI()
+      try:
+         occList1 = api.queryByGBIFTaxonId(gid)
+      except:
+         print 'Failed on {}'.format(gid)
+      else:
+         print("Retrieved {} records for gbif taxonid {}"
+               .format(len(occList1), gid))
+         
+      print '   ', api.baseurl
+      print '   ', api._otherFilters
+      print '   ', api._qFilters
+      print
+      
+# .............................................................................
+def testIdigbioClient():
+   gbifids = [1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
+              1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 
+              1000519, 1000525, 1000541, 1000543, 1000546, 1000575]
+   
+   # ******************* iDigBio ********************************
+   idigList = [4990907, 2437967, 4990907, 5158206, 2438635, 2394563, 2360481, 
+               5231132, 2350580, 2361357]
+   fields = IDIGBIO_QUERY.RETURN_FIELDS.keys()
+   for gid in gbifids:
+      # direct query
+      api = idigbio.json()
+      query = {'taxonid':str(gid)}
+      try:
+         output = api.search_records(rq=query, limit=100, offset=0, fields=fields)
+      except:
+         print 'Failed on {}'.format(gid)
+      else:
+         items = output['items']
+         print("Retrieved {} records for gbif taxonid {}"
+               .format(len(items), gid))
+
+# .............................................................................
+def testIdigbioTaxonIds():
+   infname = '/tank/data/input/idigbio/taxon_ids.txt'
+   testcount = 20
+
    import os
 #    statii = {}
    # Output
@@ -730,95 +836,8 @@ def testIdigbioTaxonIds(testcount, infname):
 # .............................................................................
 if __name__ == '__main__':
    idigbio = gbif = bison = False
-   idigbio = True
-   
-   if bison:
-      # ******************* BISON ********************************
-#       tsnQuery = BisonAPI(qFilters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX}, 
-#                           otherFilters=BISON.TSN_FILTERS)
-#     
-#       qfilters = {'decimalLongitude': (-125, -66), 'decimalLatitude': (24, 50), 
-#                   'ITISscientificName': '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/', 
-#                   'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
-#       otherfilters = {'facet.mincount': 20, 'rows': 0, 'facet.field': 'TSNs', 
-#                   'facet': True, 'facet.limit': -1, 'wt': 'json', 'json.nl': 'arrarr'}
-#       headers = {'Content-Type': 'application/json'}
-#       tsnList = tsnQuery.getBinomialTSNs()
-#       print len(tsnList)
-          
-      tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
-      response = {u'facet_counts': 
-                  {u'facet_ranges': {}, 
-                   u'facet_fields': {u'TSNs': tsnList}
-                   }
-                  }
-       
-      loopCount = 0
-      occAPI = None
-      taxAPI = None
-          
-#       tsnList = BisonAPI.getTsnListForBinomials()
-      for tsnPair in tsnList:
-         tsn = int(tsnPair[0])
-         count = int(tsnPair[1])
-                 
-         newQ = {BISON.HIERARCHY_KEY: '*-{}-*'.format(tsn)}
-         occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_QUERY.OCC_FILTERS)
-         thisurl = occAPI.url
-         occList = occAPI.getTSNOccurrences()
-         count = None if not occList else len(occList)
-         print 'Received {} occurrences for TSN {}'.format(count, tsn)
- 
-         occAPI2 = BisonAPI.initFromUrl(thisurl)
-         occList2 = occAPI2.getTSNOccurrences()
-         count = None if not occList2 else len(occList2)
-         print 'Received {} occurrences from url init'.format(count)
-          
-         tsnAPI = BisonAPI(qFilters={BISON.HIERARCHY_KEY: '*-{}-'.format(tsn)}, 
-                           otherFilters={'rows': 1})
-         hier = tsnAPI.getFirstValueFor(BISON.HIERARCHY_KEY)
-         name = tsnAPI.getFirstValueFor(BISON.NAME_KEY)
-         print name, hier
-   
-   if gbif:
-      # ******************* GBIF ********************************
-      taxonid = 1000225
-      output = GbifAPI.getTaxonomy(taxonid)
-      print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
-         
-   if idigbio:
-      infname = '/tank/data/input/idigbio/taxon_ids.txt'
-      testcount = 20
-#       idigList =  testIdigbioTaxonIds(testcount, infname)
+   testIdigBio()
 
-      # ******************* iDigBio ********************************
-      idigList = [
-#                   (4990907, 65932, 'megascelis subtilis'), 
-#                   (5171118, 50533, 'gea argiopides'), 
-                  (2437967, 129988, 'peromyscus maniculatus'),
-                  (4990907, 65932, 'megascelis subtilis'),
-                  (5158206, 63971, 'urana'),
-                  (2438635, 0, ''), 
-                  (2394563, 0, ''), 
-                  (2360481, 0, ''),
-                  (5231132, 0, ''),
-                  (2350580, 0, ''),
-                  (2361357, 0, '')]
-      for currGbifTaxonId, currReportedCount, currName in idigList:
-         # direct query
-         api = IdigbioAPI()
-         try:
-            occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
-         except:
-            print 'Failed on {}'.format(currGbifTaxonId)
-         else:
-            print("Retrieved {} records for gbif taxonid {}"
-                  .format(len(occList1), currGbifTaxonId))
-            
-         print '   ', api.baseurl
-         print '   ', api._otherFilters
-         print '   ', api._qFilters
-         print
          
 """
 import json
@@ -842,6 +861,10 @@ keys = {1967: 'Trichotria pocillum', 1034: 'Antiphonus conatus',
 1298: 'Cicindela sexguttata', 1507: 'Cicindela ocellata', 
 1219: 'Cicindela formosa', 1042: 'Amara obesa', 927: 'Brachinus elongatulus', 
 1135: 'Brachinus mexicanus'}
+
+gbifids = [1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
+1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 1000519, 1000525, 
+1000541, 1000543, 1000546, 1000575]
 
 lmapi = IdigbioAPI()
 api = idigbio.json()
