@@ -23,7 +23,6 @@
 """
 import mx.DateTime
 import os
-import time
 
 from LmBackend.common.lmobj import LMError, LMObject
 
@@ -188,10 +187,23 @@ class Defcat(LMObject):
    
 # ...............................................
 if __name__ == '__main__':
-   scriptname, _ = os.path.splitext(os.path.basename(__file__))
-   secs = time.time()
-   timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-   logname = '{}.{}.{}'.format(scriptname, timestamp)
+   import argparse
+   parser = argparse.ArgumentParser(
+            description=("""Populate a Lifemapper archive with metadata 
+                            for default data and parameters """))
+   # Optional
+   parser.add_argument('--logname', type=str, default=None,
+            help=('Basename of the logfile, without extension'))
+   
+   args = parser.parse_args()
+   logname = args.logname
+   
+   if logname is None:
+      import time
+      scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      logname = '{}.{}.{}'.format(scriptname, timestamp)
    
    print('Running {} with logbasename: {}'
          .format(scriptname, logname))

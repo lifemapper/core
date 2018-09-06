@@ -23,7 +23,6 @@
 """
 import mx.DateTime
 import os
-import time
 
 from LmBackend.common.lmobj import LMError, LMObject
 
@@ -323,7 +322,7 @@ class SPFiller(LMObject):
       return updatedMask
    
 # ...............................................
-def catalogScenPackages(spMetaFname, userId, userEmail, logname):
+def catalogScenPackages(spMetaFname, userId, logname, userEmail=None):
    """
    @summary: Initialize an empty Lifemapper database and archive
    """
@@ -373,18 +372,26 @@ if __name__ == '__main__':
             help=('Metadata file for Scenario package to be cataloged in the database.'))
    parser.add_argument('user_id', type=str,
             help=('User authorized for the scenario package'))
-   parser.add_argument('logname', type=str,
-            help=('Basename of the logfile, without extension'))
    
    # Optional
-   parser.add_argument('--user_email', default=None,
+   parser.add_argument('--user_email', type=str, default=None,
             help=('User email'))
+   parser.add_argument('--logname', type=str, default=None,
+            help=('Basename of the logfile, without extension'))
    
    args = parser.parse_args()
    scen_package_meta = args.scen_package_meta
    user_id = args.user_id
    logname = args.logname
    user_email = args.user_email
+   
+   if logname is None:
+      import time
+      scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      logname = '{}.{}.{}'.format(scriptname, timestamp)
+
    
    # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
    if not os.path.exists(scen_package_meta):
@@ -397,7 +404,7 @@ if __name__ == '__main__':
    print('Running script with scen_package_meta: {}, userid: {}, email: {}, logbasename: {}'
          .format(scen_package_meta, user_id, user_email, logname))
    
-   catalogScenPackages(scen_package_meta, user_id, user_email, logname)
+   catalogScenPackages(scen_package_meta, user_id, logname, userEmail=user_email)
 
 """
 find . -name "*.in" -exec sed -i s%@LMHOME@%/opt/lifemapper%g {} \;

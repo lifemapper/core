@@ -141,16 +141,17 @@ class CatalogScenarioPackageCommand(_LmDbServerCommand):
          secs = time.time()
          timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
          logname = '{}.{}.{}.{}'.format(self.scriptName, spBasename, user_id, timestamp)
+         # Logfile is created by script in LOG_DIR
+         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
          
       # Required args
-      self.args = '{} {} {}'.format(package_metadata_filename, user_id, logname)
-      
+      self.args = '{} {}'.format(package_metadata_filename, user_id)
+      # Optional arg, we also want for output 
+      self.args += ' --logname={}'.format(logname)
       # Optional arg, if user is not there, add with dummy email if not provided
       if user_email is not None:
          self.args += ' --user_email={}'.format(user_email)
          
-      # Logfile is created by script in LOG_DIR
-      logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
       self.outputs.append(logfilename)
          
    # ................................
@@ -187,16 +188,17 @@ class CatalogBoomCommand(_LmDbServerCommand):
          secs = time.time()
          timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
          logname = '{}.{}.{}'.format(self.scriptName, boomBasename, timestamp)
+         # Logfile is created by script in LOG_DIR
+         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
          
       # Required args
-      self.args = '{} {}'.format(config_filename, logname)
-      
+      self.args = config_filename
+      # Optional arg, we also want for output 
+      self.args += ' --logname={}'.format(logname)
       # Optional arg, defaults to False
       if do_walk:
          self.args += ' --do_walk=True'
          
-      # Logfile is created by script in LOG_DIR
-      logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
       self.outputs.append(logfilename)
          
    # ................................
@@ -220,8 +222,11 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
                 source_url=None, delimiter='\t'):
       """
       @summary: Construct the command object
-      @param config_filename: The file location of the ini file 
-             with parameters for a boom/gridset
+      @param source_name: The taxonomic authority (locally unique) name/identifier 
+                          for the data 
+      @param taxon_filename: The file location of the taxonomy csv file 
+      @param source_url: The unique URL for the taxonomic authority
+      @param delimiter: Delimiter for the data file
       """
       _LmDbServerCommand.__init__(self)
       
@@ -234,18 +239,21 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
          secs = time.time()
          timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
          logname = '{}.{}.{}'.format(self.scriptName, dataBasename, timestamp)
-         
-      # Required args
-      self.args = '{} {} {}'.format(source_name, taxon_filename, logname)
+         # Logfile is created by script in LOG_DIR
+         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+
+      # Optional arg, we also want for output 
+      self.args = ' --logname={}'.format(logname)
       
-      # Optional arg, defaults to False
+      # Optional script arg, required here
+      self.args += '--taxon_source_name={} --taxon_data_filename={} {}'.format(
+         source_name, taxon_filename)
+      # Optional args
       if source_url:
          self.args += ' --taxon_source_url={}'.format(source_url)
       if delimiter != '\t': 
          self.args += ' --delimiter={}'.format(delimiter)
          
-      # Logfile is created by script in LOG_DIR
-      logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
       self.outputs.append(logfilename)
          
    # ................................
