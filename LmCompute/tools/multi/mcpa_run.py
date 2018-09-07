@@ -56,7 +56,7 @@ if __name__ == "__main__":
                         help='Encoded phylogenetic matrix file location')
     parser.add_argument('env_predictors_filename',
                         help='Environment predictor matrix file location')
-    parser.add_argument('biogeo_preditors_filename',
+    parser.add_argument('biogeo_predictors_filename',
                         help='Biogeographic predictor matrix file location')
     args = parser.parse_args()
 
