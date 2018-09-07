@@ -423,7 +423,7 @@ class Gridset(ServiceObject): #LMMap
             ws_obs_filename = os.path.join(
                 pamWorkDir, 'obs_cor{}'.format(LMFormat.MATRIX.ext))
             ws_obs_f_filename = os.path.join(
-                pamWorkDir, 'obs_f'.format(LMFormat.MATRIX.ext))
+                pamWorkDir, 'obs_f{}'.format(LMFormat.MATRIX.ext))
             
             
             
