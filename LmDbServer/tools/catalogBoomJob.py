@@ -25,10 +25,10 @@ import ConfigParser
 import json
 import mx.DateTime
 import os
-import time
 import types
 
 from LmBackend.command.boom import BoomerCommand
+from LmBackend.command.server import CatalogTaxonomyCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.config import Config
@@ -39,7 +39,8 @@ from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
       SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
 
-from LmDbServer.common.lmconstants import SpeciesDatasource
+from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE,
+                                           GBIF_TAXONOMY_DUMP_FILE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 
@@ -85,18 +86,20 @@ class BOOMFiller(LMObject):
       self.name = scriptname
 #       self.name = self.__class__.__name__.lower()
       self.inParamFname = paramFname
-      # Get database
-      try:
-         self.scribe = self._getDb(logname)
-      except: 
-         raise
-      self.open()
+      self.scribe = None
       
    # ...............................................
    def initializeInputs(self):
       """
       @summary Initialize configured and stored inputs for BOOMFiller class.
       """      
+      # Get database
+      try:
+         self.scribe = self._getDb(logname)
+      except: 
+         raise
+      self.open()
+
       (self.userId, self.userIdPath,
        self.userEmail,
        self.archiveName,
@@ -448,9 +451,6 @@ class BOOMFiller(LMObject):
                     self.occIdFname)
       elif self.dataSource == SpeciesDatasource.GBIF:
          config.set(SERVER_BOOM_HEADING, 'GBIF_OCCURRENCE_FILENAME', self.gbifFname)
-         # TODO: allow overwrite of these vars in initboom --> archive config file
-         config.set(SERVER_BOOM_HEADING, 'GBIF_TAXONOMY_FILENAME', 
-                    GBIF_TAXONOMY_FILENAME)
          config.set(SERVER_BOOM_HEADING, 'GBIF_PROVIDER_FILENAME', 
                     GBIF_PROVIDER_FILENAME)
       elif self.dataSource == SpeciesDatasource.BISON:
@@ -464,6 +464,11 @@ class BOOMFiller(LMObject):
                     self.userOccFname)
          config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA_DELIMITER',
                     self.userOccSep)
+
+      # Use GBIF taxonomy for iDigBio/Biotaphy also
+      if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
+         config.set(SERVER_BOOM_HEADING, 'GBIF_TAXONOMY_FILENAME', 
+                    GBIF_TAXONOMY_FILENAME)
 
       # Expiration date triggering re-query and computation
       config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_YEAR', 
@@ -818,7 +823,7 @@ class BOOMFiller(LMObject):
       return grimChains
 
    # ...............................................
-   def addBoomChain(self, boomGridsetId):
+   def createBoomMF(self, boomGridsetId):
       """
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                 and configFile written by BOOMFiller.initBoom.
@@ -847,6 +852,37 @@ class BOOMFiller(LMObject):
       self.scribe.updateObject(mfChain)
       return mfChain
 
+   # ...............................................
+   def createCatalogTaxonomyMF(self):
+      """
+      @summary: Create a Makeflow to initiate Boomer with inputs assembled 
+                and configFile written by BOOMFiller.initBoom.
+      """
+      taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
+      taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
+      scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      meta = {MFChain.META_CREATED_BY: scriptname,
+              MFChain.META_DESCRIPTION: 'Catalog Taxonomy task for source {}'
+      .format(PUBLIC_USER, taxSourceName)}
+      
+      newMFC = MFChain(self.userId, priority=Priority.HIGH, 
+                       metadata=meta, status=JobStatus.GENERAL, 
+                       statusModTime=mx.DateTime.gmt().mjd)
+      mfChain = self.scribe.insertMFChain(newMFC, None)
+   
+      # Create a rule from the MF and Arf file creation
+      cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
+                                         GBIF_TAXONOMY_DUMP_FILE,
+                                         source_url=taxSourceUrl,
+                                         delimiter='\t')
+   
+      mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
+      mfChain.write()
+      mfChain.updateStatus(JobStatus.INITIALIZE)
+      self.scribe.updateObject(mfChain)
+      
+      return mfChain
+      
    # ...............................................
    def addTree(self, gridset):
       tree = None
@@ -953,53 +989,59 @@ class BOOMFiller(LMObject):
       return bgMtx, biogeoLayerNames
 
 # ...............................................
-def initBoom(paramFname, logname, walkNow=False):
+def initBoom(paramFname, logname, initMakeflow=False):
    """
    @summary: Initialize an empty Lifemapper database and archive
    """
    filler = BOOMFiller(paramFname, logname)
-   filler.initializeInputs()
-
-   # Add/find user for this Boom process (should exist)
-   filler.addUser()
-
-   # ...............................................
-   # Data for this Boom archive
-   # ...............................................
-   # Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
-   if filler.occIdFname:
-      filler._checkOccurrenceSets()
-      
-   # Add or get ShapeGrid, Global PAM, Gridset for this archive
-   # This updates the gridset, shapegrid, default PAMs (rolling, with no 
-   #     matrixColumns, default GRIMs with matrixColumns
-   # Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
-   scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
-   # If there are Scenario GRIMs, create MFChain for each 
-   filler.addGRIMChains(scenGrims, boomGridset.getId())
-   # If there is a tree, add and biogeographic hypotheses, create MFChain for each
-   tree = filler.addTree(boomGridset)
-   # If there are biogeographic hypotheses layers, add them and matrix 
-   # TODO: create MFChain 
-   biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
+   try:
+      filler.initializeInputs()
    
+      # Add/find user for this Boom process (should exist)
+      filler.addUser()
    
-   # Write config file for this archive
-#    filler.writeConfigFile(tree, biogeoMtx, biogeoLayers)
-   filler.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, biogeoLayers=biogeoLayerNames)
-   filler.scribe.log.info('')
-   filler.scribe.log.info('******')
-   filler.scribe.log.info('--config_file={}'.format(filler.outConfigFilename))   
-   filler.scribe.log.info('gridset name = {}'.format(boomGridset.name))   
-   filler.scribe.log.info('******')
-   filler.scribe.log.info('')
+      # ...............................................
+      # Data for this Boom archive
+      # ...............................................
+      # Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
+      if filler.occIdFname:
+         filler._checkOccurrenceSets()
          
-   if walkNow is True:
-      # Create MFChain to run Boomer on these inputs IFF not the initial archive 
-      # If this is the initial archive, we will run the boomer as a daemon
-      mfChain = filler.addBoomChain(boomGridset.getId())
+      # Add or get ShapeGrid, Global PAM, Gridset for this archive
+      # This updates the gridset, shapegrid, default PAMs (rolling, with no 
+      #     matrixColumns, default GRIMs with matrixColumns
+      # Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
+      scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
+      # If there are Scenario GRIMs, create MFChain for each 
+      filler.addGRIMChains(scenGrims, boomGridset.getId())
+      # If there is a tree, add and biogeographic hypotheses, create MFChain for each
+      tree = filler.addTree(boomGridset)
+      # If there are biogeographic hypotheses layers, add them and matrix 
+      # TODO: create MFChain 
+      biogeoMtx, biogeoLayerNames = filler.addBioGeoHypothesesMatrixAndLayers(boomGridset)
       
-   filler.close()
+      
+      # Write config file for this archive
+   #    filler.writeConfigFile(tree, biogeoMtx, biogeoLayers)
+      filler.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, biogeoLayers=biogeoLayerNames)
+      filler.scribe.log.info('')
+      filler.scribe.log.info('******')
+      filler.scribe.log.info('--config_file={}'.format(filler.outConfigFilename))   
+      filler.scribe.log.info('gridset name = {}'.format(boomGridset.name))   
+      filler.scribe.log.info('******')
+      filler.scribe.log.info('')
+            
+      if initMakeflow is True:
+         # Create MFChain to run Boomer on these inputs IFF not the initial archive 
+         # If this is the initial archive, we will run the boomer as a daemon
+         boomMF = filler.createBoomMF(boomGridset.getId())
+         
+         # Make sure taxonomy is added before booming
+         if filler.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
+            taxMF = filler.createCatalogTaxonomyMF()
+            boomMF.addDependencies(taxMF.targets)
+   finally:
+      filler.close()
    
    # BOOM POST from web requires gridset object to be returned
    return boomGridset
@@ -1017,12 +1059,12 @@ if __name__ == '__main__':
                   'to be created from these data.'))
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
-   parser.add_argument('--do_walk', type=bool, default=False,
-            help=('Walk these species data to create Makeflow jobs immediately.'))
+   parser.add_argument('--init_makeflow', type=bool, default=True,
+            help=('Create a Makeflow task to walk these species data (and create Makeflow tasks).'))
    args = parser.parse_args()
    paramFname = args.param_file
    logname = args.logname
-   doWalk = args.do_walk
+   initMakeflow = args.init_makeflow
          
    if paramFname is not None and not os.path.exists(paramFname):
       print ('Missing configuration file {}'.format(paramFname))
@@ -1037,7 +1079,11 @@ if __name__ == '__main__':
 
    print('Running catalogBoomJob with paramFname = {}'
          .format(paramFname))
-   gs = initBoom(paramFname, logname, walkNow=doWalk)
+   
+   # Catalog inputs, create Makeflows for GRIMs, 
+   # then optionally create Makeflows for booming 
+   #   and GBIF taxonomy ingest if using GBIF or IDIGBIO data
+   gs = initBoom(paramFname, logname, initMakeflow=initMakeflow)
    print('Completed catalogBoomJob creating gridset: {}'.format(gs.getId()))
 
     

@@ -2,12 +2,19 @@ import csv
 import mx.DateTime
 import os
 
-from LmCommon.common.lmconstants import GBIF
-from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
-from LmServer.db.borgscribe import BorgScribe
+from LmBackend.command.server import CatalogTaxonomyCommand
 from LmBackend.common.lmobj import LMError, LMObject
+
+from LmCommon.common.lmconstants import GBIF, JobStatus, LMFormat
+
+from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
+
+from LmServer.common.lmconstants import Priority
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ScriptLogger
 from LmServer.base.taxon import ScientificName
+from LmServer.legion.processchain import MFChain
 
 # .............................................................................
 class TaxonFiller(LMObject):
@@ -25,15 +32,19 @@ class TaxonFiller(LMObject):
       
       """
       super(TaxonFiller, self).__init__()
+      scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      self.name = scriptname
       try:
          self.scribe = self._getDb(logname)
       except: 
          raise
       self.taxonomyFname = taxonomyFname
-      self._taxonomySourceId = self.scribe.findOrInsertTaxonSource(
-                                                      taxSrcName, taxSrcUrl)
-      self._taxonFile = open(taxonomyFname, 'r')
-      self._csvreader = csv.reader(self._taxonFile, delimiter=delimiter)
+      self._taxonomySourceName = taxSrcName
+      self._taxonomySourceUrl = taxSrcUrl
+      self._delimiter = delimiter
+      self._taxonomySourceId = None
+      self._taxonFile = None
+      self._csvreader = None
       
    # ...............................................
    def open(self):
@@ -45,6 +56,14 @@ class TaxonFiller(LMObject):
    def close(self):
       self._taxonFile.close()
       self.scribe.closeConnections()
+
+   # ...............................................
+   def initializeMe(self):
+      self._taxonomySourceId = self.scribe.findOrInsertTaxonSource(
+                                                      self._taxonomySourceName, 
+                                                      self._taxonomySourceUrl)
+      self._taxonFile = open(self.taxonomyFname, 'r')
+      self._csvreader = csv.reader(self._taxonFile, delimiter=delimiter)
 
    # ...............................................
    @property
@@ -131,7 +150,31 @@ class TaxonFiller(LMObject):
       self.scribe.log.info('Found or inserted {}; failed {}; wrongRank {}'
             .format(totalIn, totalOut, totalWrongRank))
    
-             
+   # ...............................................
+   def createCatalogTaxonomyMF(self):
+      """
+      @summary: Create a Makeflow to initiate Boomer with inputs assembled 
+                and configFile written by BOOMFiller.initBoom.
+      """
+      scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      meta = {MFChain.META_CREATED_BY: scriptname,
+              MFChain.META_DESCRIPTION: 'Catalog Taxonomy task for source {}'
+      .format(PUBLIC_USER, self._taxonomySourceName)}
+      newMFC = MFChain(PUBLIC_USER, priority=Priority.HIGH, 
+                       metadata=meta, status=JobStatus.GENERAL, 
+                       statusModTime=mx.DateTime.gmt().mjd)
+      mfChain = self.scribe.insertMFChain(newMFC, None)
+   
+      # Create a rule from the MF and Arf file creation
+      cattaxCmd = CatalogTaxonomyCommand(self._taxonomySourceName, 
+                                         self.taxonomyFname,
+                                         source_url=self._taxonomySourceUrl,
+                                         delimiter=self._delimiter)
+      mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
+      mfChain.write()
+      mfChain.updateStatus(JobStatus.INITIALIZE)
+      self.scribe.updateObject(mfChain)
+      
 # ...............................................
 # MAIN
 # ...............................................
@@ -157,13 +200,19 @@ if __name__ == '__main__':
                        help=("""Delimiter in CSV taxon_data_filename. Defaults
                                 to tab."""))
    parser.add_argument('--logname', type=str, default=None,
-            help=('Base name of logfile '))
+                       help=('Base name of logfile '))
+   # Taxonomy ingest Makeflows will generally be written as part of a BOOM job
+   # (not with this script) so new species boom data may be connected to taxonomy 
+   parser.add_argument('--init_makeflow', type=bool, default=False,
+                       help=("""Create a Makeflow task to walk these species data 
+                                (and create Makeflow tasks)."""))
    args = parser.parse_args()
    sourceName = args.taxon_source_name
    taxonFname = args.taxon_data_filename
    logname = args.logname
    sourceUrl = args.taxon_source_url
    delimiter = args.delimiter
+   initMakeflow = args.init_makeflow
    
    if sourceName == TAXONOMIC_SOURCE['GBIF']['name'] and taxonFname is None:
       taxonFname = GBIF_TAXONOMY_DUMP_FILE
@@ -175,17 +224,18 @@ if __name__ == '__main__':
       timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
       logname = '{}.{}.{}'.format(scriptname, timestamp)
                       
-#    sourceName = TAXONOMIC_SOURCE['GBIF']['name']
-#    sourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
-#    taxonFname = GBIF_TAXONOMY_DUMP_FILE
-#    delimiter = '\t'
-   
    filler = TaxonFiller(sourceName, taxonFname, 
                         sourceUrl=sourceUrl,
                         delimiter=delimiter,
                         logname=logname)
    filler.open()
-   filler.readAndInsertTaxonomy()
+
+   if initMakeflow:
+      filler.createCatalogTaxonomyMF()
+   else:
+      filler.initializeMe()
+      filler.readAndInsertTaxonomy()
+   
    filler.close()
 
 

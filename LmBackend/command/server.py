@@ -171,7 +171,7 @@ class CatalogBoomCommand(_LmDbServerCommand):
    scriptName = 'catalogBoomJob.py'
 
    # ................................
-   def __init__(self, config_filename, do_walk=False):
+   def __init__(self, config_filename, init_makeflow=False):
       """
       @summary: Construct the command object
       @param config_filename: The file location of the ini file 
@@ -196,8 +196,8 @@ class CatalogBoomCommand(_LmDbServerCommand):
       # Optional arg, we also want for output 
       self.args += ' --logname={}'.format(logname)
       # Optional arg, defaults to False
-      if do_walk:
-         self.args += ' --do_walk=True'
+      if init_makeflow:
+         self.args += ' --init_makeflow=True'
          
       self.outputs.append(logfilename)
          
@@ -262,6 +262,85 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
       @summary: Get the command
       """
       return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+   
+# .............................................................................
+class EncodeTreeCommand(_LmServerCommand):
+   """
+   @summary: This command will create a makeflow to encode a tree with 
+             species identifiers.
+   """
+   scriptName = 'encodeTree.py'
+
+   # ................................
+   def __init__(self, user_id, tree_name):
+      """
+      @summary: Construct the command object
+      @param user_id: User for the tree and gridset
+      @param tree_name: The unique tree name
+      """
+      _LmServerCommand.__init__(self)
+      
+      # file ends up in LOG_PATH
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      logname = '{}.{}'.format(self.scriptName, timestamp)
+      # Logfile is created by script in LOG_DIR
+      logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+         
+      # Required args
+      self.args = '{} {}'.format(user_id, tree_name)
+      # Optional arg, we also want for output 
+      self.args += ' --logname={}'.format(logname)
+
+      self.outputs.append(logfilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+
+# .............................................................................
+class EncodeBioGeoHypothesesCommand(_LmServerCommand):
+   """
+   @summary: This command will create a makeflow to encode a tree with 
+             species identifiers.
+   """
+   scriptName = 'encodeBioGeoHypotheses.py'
+
+   # ................................
+   def __init__(self, user_id, gridset_name):
+      """
+      @summary: Construct the command object
+      @param user_id: User for the gridset
+      @param gridset_name: The unique gridset name
+      """
+      _LmServerCommand.__init__(self)
+      
+      # file ends up in LOG_PATH
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      logname = '{}.{}'.format(self.scriptName, timestamp)
+      # Logfile is created by script in LOG_DIR
+      logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+         
+      # Required args
+      self.args = '{} {}'.format(user_id, gridset_name)
+      # Optional arg, we also want for output 
+      self.args += ' --logname={}'.format(logname)
+
+      self.outputs.append(logfilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+
 
 # .............................................................................
 class CreateBlankMaskTiffCommand(_LmServerCommand):

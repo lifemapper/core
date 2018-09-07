@@ -76,13 +76,17 @@ class SPFiller(LMObject):
       if logname is None:
          logname = '{}.{}.{}'.format(self.name, spBasename, userId)
 
+      self.scribe = None
+      
+   # ...............................................
+   def initializeMe(self):
       # Get database
       try:
          self.scribe = self._getDb(logname)
       except: 
          raise
       self.open()
-      
+
    # ...............................................
    def open(self):
       success = self.scribe.openConnections()
@@ -327,34 +331,37 @@ def catalogScenPackages(spMetaFname, userId, logname, userEmail=None):
    @summary: Initialize an empty Lifemapper database and archive
    """
    filler = SPFiller(spMetaFname, userId, email=userEmail, logname=logname)
-   
-   # If exists, found by unique Id or Email, update values
-   filler.userId = filler.addUser(filler.userId, filler.userEmail)
-   
-   updatedMask = None
-   for spName in filler.spMeta.CLIMATE_PACKAGES.keys():
-      filler.scribe.log.info('Creating scenario package {}'.format(spName))
-      scenPkg, masklyr = filler.createScenPackage(spName)
+   try:
+      filler.initializeMe()
+      # If exists, found by unique Id or Email, update values
+      filler.userId = filler.addUser(filler.userId, filler.userEmail)
       
-      # Only one Mask is included per scenario package
-      if updatedMask is None:
-         filler.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
-         updatedMask = filler.addMaskLayer(masklyr)
-         if updatedMask.getDLocation() != masklyr.getDLocation():
-            raise LMError('''Returned existing layer name {} for user {} with 
-                             filename {}, not expected filename {}'''
-                             .format(masklyr.name, filler.userId, 
-                                     updatedMask.getDLocation(), 
-                                     masklyr.getDLocation()))
-      
-      updatedScenPkg = filler.addPackageScenariosLayers(scenPkg)
-      
-      if (updatedScenPkg is not None 
-          and updatedScenPkg.getId() is not None
-          and updatedScenPkg.name == spName
-          and updatedScenPkg.getUserId() == filler.userId):
-         filler.scribe.log.info('Successfully added scenario package {} for user {}'
-                                .format(spName, filler.userId))
+      updatedMask = None
+      for spName in filler.spMeta.CLIMATE_PACKAGES.keys():
+         filler.scribe.log.info('Creating scenario package {}'.format(spName))
+         scenPkg, masklyr = filler.createScenPackage(spName)
+         
+         # Only one Mask is included per scenario package
+         if updatedMask is None:
+            filler.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
+            updatedMask = filler.addMaskLayer(masklyr)
+            if updatedMask.getDLocation() != masklyr.getDLocation():
+               raise LMError('''Returned existing layer name {} for user {} with 
+                                filename {}, not expected filename {}'''
+                                .format(masklyr.name, filler.userId, 
+                                        updatedMask.getDLocation(), 
+                                        masklyr.getDLocation()))
+         
+         updatedScenPkg = filler.addPackageScenariosLayers(scenPkg)
+         
+         if (updatedScenPkg is not None 
+             and updatedScenPkg.getId() is not None
+             and updatedScenPkg.name == spName
+             and updatedScenPkg.getUserId() == filler.userId):
+            filler.scribe.log.info('Successfully added scenario package {} for user {}'
+                                   .format(spName, filler.userId))
+   finally:
+      filler.close()
    
 
 
@@ -378,12 +385,15 @@ if __name__ == '__main__':
             help=('User email'))
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
+   parser.add_argument('--init_makeflow', type=bool, default=False,
+            help=('Create a Makeflow task to walk these species data (and create Makeflow tasks).'))
    
    args = parser.parse_args()
    scen_package_meta = args.scen_package_meta
    user_id = args.user_id
    logname = args.logname
    user_email = args.user_email
+   initMakeflow = args.init_makeflow
    
    if logname is None:
       import time

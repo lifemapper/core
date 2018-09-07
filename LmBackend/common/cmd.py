@@ -48,3 +48,10 @@ class MfRule(LMObject):
       else:
          self.dependencies = dependencies
       self.comment = comment
+      
+   # ...............................................
+   def addDependencies(self, dependencies):
+      if type(dependencies) in (list, tuple):
+         self.dependencies.extend(dependencies)
+      elif type(dependencies) in (unicode, str):
+         self.dependencies.append(dependencies)
