@@ -1015,7 +1015,7 @@ if __name__ == '__main__':
    parser.add_argument('param_file', default=None,
             help=('Parameter file for the archive inputs and outputs ' +
                   'to be created from these data.'))
-   parser.add_argument('logname', type=str,
+   parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
    parser.add_argument('--do_walk', type=bool, default=False,
             help=('Walk these species data to create Makeflow jobs immediately.'))
@@ -1028,6 +1028,13 @@ if __name__ == '__main__':
       print ('Missing configuration file {}'.format(paramFname))
       exit(-1)
       
+   if logname is None:
+      import time
+      scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      logname = '{}.{}'.format(scriptname, timestamp)
+
    print('Running catalogBoomJob with paramFname = {}'
          .format(paramFname))
    gs = initBoom(paramFname, logname, walkNow=doWalk)

@@ -173,12 +173,7 @@ if __name__ == '__main__':
       scriptname, _ = os.path.splitext(os.path.basename(__file__))
       secs = time.time()
       timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-      logname = '{}.{}.{}'.format(scriptname, timestamp)
-                      
-#    sourceName = TAXONOMIC_SOURCE['GBIF']['name']
-#    sourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
-#    taxonFname = GBIF_TAXONOMY_DUMP_FILE
-#    delimiter = '\t'
+      logname = '{}.{}'.format(scriptname, timestamp)
    
    filler = TaxonFiller(sourceName, taxonFname, 
                         sourceUrl=sourceUrl,

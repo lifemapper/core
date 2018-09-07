@@ -28,7 +28,6 @@ from LmCommon.common.lmconstants import MatrixType, LMFormat
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
-from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.lmconstants import DB_STORE, LM_SCHEMA_BORG, LMServiceType
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import DEFAULT_EPSG
@@ -76,19 +75,6 @@ class Borg(DbPostgresql):
                       modTime=row[idxs['modtime']])
       return usr
    
-# ...............................................
-   def _createComputeResource(self, row, idxs):
-      cr = None 
-      if row is not None:
-         cr = LMComputeResource(self._getColumnValue(row, idxs, ['name']), 
-                                self._getColumnValue(row, idxs, ['ipaddress']), 
-                                self._getColumnValue(row, idxs, ['userid']), 
-                                ipSignificantBits=self._getColumnValue(row, idxs, ['ipsigbits']), 
-                                FQDN=self._getColumnValue(row, idxs, ['fqdn']), 
-                                dbId=self._getColumnValue(row, idxs, ['computeresourceid']), 
-                                modTime=self._getColumnValue(row, idxs, ['modtime']), 
-                                hbTime=self._getColumnValue(row, idxs, ['lastheartbeat']))
-      return cr
 
 # ...............................................
    def _createScientificName(self, row, idxs):
@@ -1313,24 +1299,6 @@ class Borg(DbPostgresql):
       success = self.executeModifyFunction('lm_deleteEnvLayer', 
                                            envlyr.getId())         
       return success
-
-# ...............................................
-   def findOrInsertComputeResource(self, compResource):
-      """
-      @summary: Insert a compute resource of this Lifemapper system.  
-      @param usr: LMComputeResource object to insert
-      @return: new or existing ComputeResource
-      """
-      compResource.modTime = mx.DateTime.utc().mjd
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertCompute', 
-                                        compResource.name, 
-                                        compResource.ipAddress, 
-                                        compResource.ipSignificantBits, 
-                                        compResource.FQDN, 
-                                        compResource.getUserId(), 
-                                        compResource.modTime)
-      newOrExistingCR = self._createComputeResource(row, idxs)
-      return newOrExistingCR
 
 # ...............................................
    def findOrInsertUser(self, usr):
