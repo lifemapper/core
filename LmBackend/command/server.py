@@ -164,9 +164,12 @@ class CatalogScenarioPackageCommand(_LmDbServerCommand):
 # .............................................................................
 class CatalogBoomCommand(_LmDbServerCommand):
    """
-   @summary: This command will create makeflows to catalog boom archive inputs,
-             create GRIMs, create an archive ini file, and run the Boomer Daemon
-             to walk through the inputs
+   @summary: This command will create makeflows to:
+               * catalog boom archive inputs,
+               * catalog ScenarioPackage if necessary
+               * create GRIMs, 
+               * create an archive ini file, and 
+               * start the Boomer to walk through inputs
    """
    scriptName = 'catalogBoomJob.py'
 

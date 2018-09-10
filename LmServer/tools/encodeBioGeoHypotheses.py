@@ -13,7 +13,7 @@ import sys
 from LmBackend.command.server import EncodeBioGeoHypothesesCommand
 
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (LM_USER, JobStatus, PhyloTreeKeys, 
+from LmCommon.common.lmconstants import (LM_USER, JobStatus, 
                                  MatrixType, ProcessType, SERVER_BOOM_HEADING)
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
@@ -168,22 +168,22 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
 # ...............................................
 def createEncodeBioGeoMF(scribe, usr, gridname):
    """
-   @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-             and configFile written by BOOMFiller.initBoom.
+   @summary: Create a Makeflow to encode biogeographic hypotheses into a Matrix
    """
    scriptname, _ = os.path.splitext(os.path.basename(__file__))
    meta = {MFChain.META_CREATED_BY: scriptname,
-           MFChain.META_DESCRIPTION: 'Encode tree task for user {} tree {}'
-   .format(usr, gridname)}
+           MFChain.META_DESCRIPTION: 
+                     'Encode biogeographic hypotheses task for user {} grid {}'
+                     .format(usr, gridname)}
    newMFC = MFChain(usr, priority=Priority.HIGH, 
                     metadata=meta, status=JobStatus.GENERAL, 
                     statusModTime=mx.DateTime.gmt().mjd)
    mfChain = scribe.insertMFChain(newMFC, None)
 
-   # Create a rule from the MF and Arf file creation
-   treeCmd = EncodeBioGeoHypothesesCommand(usr, gridname)
+   # Create a rule from the MF 
+   bgCmd = EncodeBioGeoHypothesesCommand(usr, gridname)
 
-   mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
+   mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
    mfChain.write()
    mfChain.updateStatus(JobStatus.INITIALIZE)
    scribe.updateObject(mfChain)
