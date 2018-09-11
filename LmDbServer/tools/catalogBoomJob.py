@@ -872,13 +872,13 @@ class BOOMFiller(LMObject):
          else:
             self.scribe.log.warning('No biogeo shapefiles at {}'.format(bgpth))
       return bghypFnames
-   
+    
    # ...............................................
    def addBioGeoHypothesesMatrixAndLayers(self, gridset):
       currtime = mx.DateTime.gmt().mjd
       biogeoLayerNames = []
       bgMtx = None
-        
+         
       if len(self.bghypFnames) > 0:
          mtxKeywords = ['biogeographic hypotheses']
          for bgFname in self.bghypFnames:
@@ -909,7 +909,7 @@ class BOOMFiller(LMObject):
          if bgMtx is None:
             self.scribe.log.info('  Failed to add biogeo hypotheses matrix')
       return bgMtx, biogeoLayerNames
-   
+    
    # ...............................................
    def addEncodeBioGeoMF(self, gridset):
       """
@@ -925,10 +925,10 @@ class BOOMFiller(LMObject):
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=mx.DateTime.gmt().mjd)
       mfChain = self.scribe.insertMFChain(newMFC, None)
-   
+    
       # Create a rule from the MF 
       bgCmd = EncodeBioGeoHypothesesCommand(self.userId, gridset.name)
-   
+    
       mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
       mfChain.write()
       mfChain.updateStatus(JobStatus.INITIALIZE)
@@ -1011,6 +1011,8 @@ class BOOMFiller(LMObject):
       walkedArchiveFname = baseAbsFilename + LMFormat.LOG.ext
       boomCmd = BoomerCommand(configFile=self.outConfigFilename)
       boomCmd.outputs.append(walkedArchiveFname)
+      # Add boom command to this Makeflow
+      mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
       
       # Add taxonomy before Boom
       if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
@@ -1023,6 +1025,8 @@ class BOOMFiller(LMObject):
          taxOutFilename, ext = os.path.splitext(GBIF_TAXONOMY_DUMP_FILE)
          walkedTaxFname = taxOutFilename + LMFormat.LOG.ext
          cattaxCmd.outputs.append(walkedTaxFname)
+         # Add catalog taxonomy command to this Makeflow
+         mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
          # Boom requires catalog taxonomy completion
          boomCmd.inputs.extend(cattaxCmd.outputs)
                 
@@ -1032,10 +1036,11 @@ class BOOMFiller(LMObject):
          treeCmd = EncodeTreeCommand(self.userId, tree.name)
          walkedTreeFname = self.userId + tree.name + LMFormat.LOG.ext
          treeCmd.outputs.append(walkedTreeFname)
+         # Add encode tree command to this Makeflow
+         mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
          # Tree encoding requires Boom completion
          treeCmd.inputs.extend(boomCmd.outputs)
 
-      mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
       mfChain.write()
       mfChain.updateStatus(JobStatus.INITIALIZE)
       self.scribe.updateObject(mfChain)
@@ -1055,7 +1060,7 @@ class BOOMFiller(LMObject):
          # This updates the gridset, shapegrid, default PAMs (rolling, with no 
          #     matrixColumns, default GRIMs with matrixColumns
          scenGrims, boomGridset = self.addShapeGridGPAMGridset()
-         # Independent of Boom completion
+         # Add GRIM compute Makeflows, independent of Boom completion
          grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
 
          # If there is a tree, add db object
@@ -1064,29 +1069,18 @@ class BOOMFiller(LMObject):
          # If there are biogeographic hypotheses, add layers and matrix and create MFChain
          biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
          if biogeoMtx and len(biogeoLayerNames) > 0:
-            # Independent of Boom completion
+            # Add BG Hypotheses encoding Makeflows, independent of Boom completion
             bgMF = self.addEncodeBioGeoMF(boomGridset)
          
          # Write config file for this archive
          self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
                               biogeoLayers=biogeoLayerNames)
                
-         boomMF = None
          if initMakeflow is True:
-            # Create MFChain to run Boomer on these inputs IFF not the initial archive 
-            # If this is the initial archive, we will run the boomer as a daemon
+            # Create MFChain to run Boomer on these inputs IFF requested
+            # This also adds commands for taxonomy insertion before 
+            #   and tree encoding after Boom 
             boomMF = self.addBoomMF(boomGridset.getId(), tree)
-            
-            # Add taxonomy before Boom
-            if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
-               taxMF = self.addCatalogGBIFTaxonomyMF(boomMF)
-               boomMF.addDependencies(taxMF.targets)
-                
-            # Encode tree after Boom
-            if tree:
-               treeMF = self.addEncodeTreeMF(tree.name, boomMF)
-               treeMF.addDependencies(boomMF)
-            
             
       finally:
          self.close()
