@@ -24,15 +24,20 @@
 import mx.DateTime
 import os
 
+from LmBackend.command.server import CatalogScenarioPackageCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmServer.common.lmconstants import (ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX)
+from LmCommon.common.lmconstants import JobStatus
+
+from LmServer.common.lmconstants import (Priority, ENV_DATA_PATH, 
+                                         DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
@@ -47,7 +52,7 @@ class SPFiller(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, spMetaFname, userId, email=None, logname=None):
+   def __init__(self, spMetaFname, userId, email=None, logname=None, scribe=None):
       """
       @summary Constructor for BOOMFiller class.
       """
@@ -75,14 +80,20 @@ class SPFiller(LMObject):
       # Logfile
       if logname is None:
          logname = '{}.{}.{}'.format(self.name, spBasename, userId)
-
-      # Get database
-      try:
-         self.scribe = self._getDb(logname)
-      except: 
-         raise
-      self.open()
+      self.logname = logname
       
+      self.scribe = scribe
+      
+   # ...............................................
+   def initializeMe(self):
+      if not (self.scribe and self.scribe.isOpen()):
+         # Get database
+         try:
+            self.scribe = self._getDb(self.logname)
+         except: 
+            raise
+         self.open()
+
    # ...............................................
    def open(self):
       success = self.scribe.openConnections()
@@ -152,15 +163,15 @@ class SPFiller(LMObject):
       return masklyr
 
    # ...............................................
-   def addUser(self, userid, email):
+   def addUser(self):
       """
       @summary Adds or finds PUBLIC_USER, DEFAULT_POST_USER and USER arguments 
                in the database
       """
       currtime = mx.DateTime.gmt().mjd
       # Nothing changes if these are already present
-      user = LMUser(userid, email, email, modTime=currtime)
-      self.scribe.log.info('  Find or insert user {} ...'.format(userid))
+      user = LMUser(self.userId, self.userEmail, modTime=currtime)
+      self.scribe.log.info('  Find or insert user {} ...'.format(self.userId))
       thisUser = self.scribe.findOrInsertUser(user)
       # If exists, found by unique Id or Email, update values
       return thisUser.userid
@@ -238,9 +249,7 @@ class SPFiller(LMObject):
       """
       currtime = mx.DateTime.gmt().mjd
       layers = []
-      staticLayers = {}
       dateCode = scenMeta['date']
-      res_name = scenMeta['res'][0]
       res_val = scenMeta['res'][1]
       scenKeywords = [k for k in scenMeta['keywords']]
       region = scenMeta['region']
@@ -321,42 +330,73 @@ class SPFiller(LMObject):
          updatedMask = self.scribe.findOrInsertLayer(masklyr)
       return updatedMask
    
-# ...............................................
-def catalogScenPackages(spMetaFname, userId, logname, userEmail=None):
-   """
-   @summary: Initialize an empty Lifemapper database and archive
-   """
-   filler = SPFiller(spMetaFname, userId, email=userEmail, logname=logname)
-   
-   # If exists, found by unique Id or Email, update values
-   filler.userId = filler.addUser(filler.userId, filler.userEmail)
-   
-   updatedMask = None
-   for spName in filler.spMeta.CLIMATE_PACKAGES.keys():
-      filler.scribe.log.info('Creating scenario package {}'.format(spName))
-      scenPkg, masklyr = filler.createScenPackage(spName)
+   # ...............................................
+   def catalogScenPackages(self):
+      """
+      @summary: Initialize an empty Lifemapper database and archive
+      """
+      updatedScenPkg = None
+      try:
+         self.initializeMe()
+         # If exists, found by unique Id or Email, update values
+         userId = self.addUser()
+         
+         updatedMask = None
+         for spName in self.spMeta.CLIMATE_PACKAGES.keys():
+            self.scribe.log.info('Creating scenario package {}'.format(spName))
+            scenPkg, masklyr = self.createScenPackage(spName)
+            
+            # Only one Mask is included per scenario package
+            if updatedMask is None:
+               self.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
+               updatedMask = self.addMaskLayer(masklyr)
+               if updatedMask.getDLocation() != masklyr.getDLocation():
+                  raise LMError('''Returned existing layer name {} for user {} with 
+                                   filename {}, not expected filename {}'''
+                                   .format(masklyr.name, self.userId, 
+                                           updatedMask.getDLocation(), 
+                                           masklyr.getDLocation()))
+            updatedScenPkg = self.addPackageScenariosLayers(scenPkg)
+            if (updatedScenPkg is not None 
+                and updatedScenPkg.getId() is not None
+                and updatedScenPkg.name == spName
+                and updatedScenPkg.getUserId() == self.userId):
+               self.scribe.log.info('Successfully added scenario package {} for user {}'
+                                      .format(spName, self.userId))
+      finally:
+         self.close()
+         
+      return updatedScenPkg 
       
-      # Only one Mask is included per scenario package
-      if updatedMask is None:
-         filler.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
-         updatedMask = filler.addMaskLayer(masklyr)
-         if updatedMask.getDLocation() != masklyr.getDLocation():
-            raise LMError('''Returned existing layer name {} for user {} with 
-                             filename {}, not expected filename {}'''
-                             .format(masklyr.name, filler.userId, 
-                                     updatedMask.getDLocation(), 
-                                     masklyr.getDLocation()))
-      
-      updatedScenPkg = filler.addPackageScenariosLayers(scenPkg)
-      
-      if (updatedScenPkg is not None 
-          and updatedScenPkg.getId() is not None
-          and updatedScenPkg.name == spName
-          and updatedScenPkg.getUserId() == filler.userId):
-         filler.scribe.log.info('Successfully added scenario package {} for user {}'
-                                .format(spName, filler.userId))
    
-
+   # ...............................................
+   def createCatalogScenPkgMF(self):
+      """
+      @summary: Create a Makeflow to initiate Boomer with inputs assembled 
+                and configFile written by BOOMFiller.initBoom.
+      """
+      scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      spname, _ = os.path.splitext(os.path.basename(self.spMetaFname))
+      meta = {MFChain.META_CREATED_BY: scriptname,
+              MFChain.META_DESCRIPTION: 'Catalog scenario task for user {} scenpkg {}'
+      .format(self.userId, spname)}
+      try:
+         self.initializeMe()
+         newMFC = MFChain(self.userId, priority=Priority.HIGH, 
+                          metadata=meta, status=JobStatus.GENERAL, 
+                          statusModTime=mx.DateTime.gmt().mjd)
+         mfChain = self.scribe.insertMFChain(newMFC, None)
+      
+         # Create a rule from the MF and Arf file creation
+         spCmd = CatalogScenarioPackageCommand(self.spMetaFname, self.userId)
+      
+         mfChain.addCommands([spCmd.getMakeflowRule(local=True)])
+         mfChain.write()
+         mfChain.updateStatus(JobStatus.INITIALIZE)
+         self.scribe.updateObject(mfChain)
+      finally:
+         self.close()
+      return mfChain
 
    
 # ...............................................
@@ -368,22 +408,26 @@ if __name__ == '__main__':
                          'specific to the configured input data or the ' +
                          'data package named.'))
    # Required
-   parser.add_argument('scen_package_meta', type=str,
-            help=('Metadata file for Scenario package to be cataloged in the database.'))
    parser.add_argument('user_id', type=str,
             help=('User authorized for the scenario package'))
+   parser.add_argument('scen_package_meta', type=str,
+            help=('Metadata file for Scenario package to be cataloged in the database.'))
    
    # Optional
    parser.add_argument('--user_email', type=str, default=None,
             help=('User email'))
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
+   parser.add_argument('--init_makeflow', type=bool, default=False,
+            help=("""Create a Makeflow task to add this scenario package of 
+                     environmental data for this user"""))
    
    args = parser.parse_args()
-   scen_package_meta = args.scen_package_meta
    user_id = args.user_id
+   scen_package_meta = args.scen_package_meta
    logname = args.logname
    user_email = args.user_email
+   initMakeflow = args.init_makeflow
    
    if logname is None:
       import time
@@ -400,12 +444,19 @@ if __name__ == '__main__':
       if not os.path.exists(scen_package_meta):
          print ('Missing Scenario Package metadata file {}'.format(scen_package_meta))
          exit(-1)
+      else:
+         print('Running script with scen_package_meta: {}, userid: {}, email: {}, logbasename: {}'
+               .format(scen_package_meta, user_id, user_email, logname))
 
-   print('Running script with scen_package_meta: {}, userid: {}, email: {}, logbasename: {}'
-         .format(scen_package_meta, user_id, user_email, logname))
+      filler = SPFiller(scen_package_meta, user_id, email=user_email, 
+                        logname=logname)
+      filler.initializeMe()
+      
+      if initMakeflow:
+         filler.createCatalogScenPkgMF()
+      else:
+         filler.catalogScenPackages()
    
-   catalogScenPackages(scen_package_meta, user_id, logname, userEmail=user_email)
-
 """
 find . -name "*.in" -exec sed -i s%@LMHOME@%/opt/lifemapper%g {} \;
 
