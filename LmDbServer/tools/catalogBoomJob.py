@@ -64,7 +64,6 @@ from LmServer.legion.processchain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmServer.base.utilities import isRootUser
-from libxml2 import catalog
 
 # .............................................................................
 class BOOMFiller(LMObject):
@@ -214,7 +213,7 @@ class BOOMFiller(LMObject):
       # If model and/or projection Scenarios are not listed, use defaults in 
       # package metadata
       if modelScenCode is None:
-         modelScenCode = self._findScenPkgBaseline(self.scenPkg)
+         modelScenCode = self._findScenPkgBaseline(self.scenPackageName)
       if not prjScenCodeList:
          prjScenCodeList = validScenCodes      
 
@@ -228,12 +227,12 @@ class BOOMFiller(LMObject):
          raise LMError('Scenario {} must exist in ScenPackage {} for User {}'
                        .format(modelScenCode, self.scenPackageName, self.userId))
       if prjScenCodeList:
-         for pcode in self.prjScenCodeList:
+         for pcode in prjScenCodeList:
             if not pcode in validScenCodes:
                raise LMError('Scenario {} must exist in ScenPackage {} for User {}'
                              .format(pcode, self.scenPackageName, self.userId))
       if not doMapBaseline:
-         self.prjScenCodeList.remove(self.modelScenCode)
+         prjScenCodeList.remove(modelScenCode)
 
       # TODO: Need a mask layer for every scenario!!
       self.masklyr = masklyr
@@ -551,6 +550,12 @@ class BOOMFiller(LMObject):
    
    # ...............................................
    def _getVarValue(self, var):
+      # Remove spaces and empty strings
+      if var is not None and not bool(var):
+         var = var.strip()
+         if var == '':
+            var = None
+      # Convert to number if needed
       try:
          var = int(var)
       except:
@@ -581,6 +586,7 @@ class BOOMFiller(LMObject):
                var = config.get(SERVER_PIPELINE_HEADING, varname)
             except:
                var = None
+         
       # Take default if present
       if var is None:
          if defaultValue is not None:
@@ -1123,10 +1129,90 @@ if __name__ == '__main__':
          .format(paramFname))
    
    filler = BOOMFiller(paramFname, logname=logname)
-   filler.initializeMe()
    gs = filler.initBoom(initMakeflow=initMakeflow)
    print('Completed catalogBoomJob creating gridset: {}'.format(gs.getId()))
 
     
 """
+import ConfigParser
+import json
+import mx.DateTime
+import os
+import types
+
+from LmBackend.command.boom import BoomerCommand
+from LmBackend.command.server import (CatalogTaxonomyCommand, EncodeTreeCommand,
+                                      EncodeBioGeoHypothesesCommand)
+from LmBackend.common.lmobj import LMError, LMObject
+
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
+      ProcessType, DEFAULT_POST_USER, LM_USER,
+      SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
+      SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
+      SERVER_PIPELINE_HEADING)
+from LmCommon.common.readyfile import readyFilename
+
+from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE,
+                                           GBIF_TAXONOMY_DUMP_FILE)
+from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
+                                              GBIF_TAXONOMY_FILENAME)
+from LmDbServer.tools.catalogScenPkg import SPFiller
+
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
+                           GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
+                           PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
+from LmServer.common.lmuser import LMUser
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.log import ScriptLogger
+from LmServer.base.layer2 import Vector
+from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.lmmatrix import LMMatrix  
+from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.processchain import MFChain
+from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.legion.tree import Tree
+from LmServer.base.utilities import isRootUser
+
+from LmDbServer.tools.catalogBoomJob import *
+
+paramFname = '/opt/lifemapper/rocks/etc/defaultArchiveParams.ini'
+pname = os.path.splitext(os.path.basename(paramFname))
+import time
+secs = time.time()
+timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+logname = '{}.{}'.format(pname, timestamp)
+
+self = BOOMFiller(paramFname, logname=logname)
+self.initializeInputs()
+if self.occIdFname:
+   self._checkOccurrenceSets()
+
+
+scenGrims, boomGridset = self.addShapeGridGPAMGridset()
+grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
+
+tree = self.addTree(boomGridset)
+biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
+if biogeoMtx and len(biogeoLayerNames) > 0:
+   bgMF = self.addEncodeBioGeoMF(boomGridset)
+
+self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
+                     biogeoLayers=biogeoLayerNames)
+      
+if initMakeflow is True:
+   # Create MFChain to run Boomer on these inputs IFF requested
+   # This also adds commands for taxonomy insertion before 
+   #   and tree encoding after Boom 
+   boomMF = self.addBoomMF(boomGridset.getId(), tree)
+
+# gs = filler.initBoom(initMakeflow=initMakeflow)
+
+ 
+
+
 """

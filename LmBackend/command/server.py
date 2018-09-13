@@ -61,7 +61,7 @@ class _LmDbServerCommand(_LmCommand):
       @param local: Should this be a local command in a Makeflow DAG
       @note: This differs from the superclass because the default local is True
       """
-      return super(_LmServerCommand, self).getMakeflowRule(local=local)
+      return super(_LmDbServerCommand, self).getMakeflowRule(local=local)
 
 # .............................................................................
 class AddBioGeoAndTreeCommand(_LmServerCommand):
@@ -249,7 +249,7 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
       self.args = ' --logname={}'.format(logname)
       
       # Optional script arg, required here
-      self.args += '--taxon_source_name={} --taxon_data_filename={} {}'.format(
+      self.args += '--taxon_source_name={} --taxon_data_filename={}'.format(
          source_name, taxon_filename)
       # Optional args
       if source_url:

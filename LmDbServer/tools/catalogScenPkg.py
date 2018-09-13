@@ -86,7 +86,7 @@ class SPFiller(LMObject):
       
    # ...............................................
    def initializeMe(self):
-      if not (self.scribe and self.scribe.isOpen()):
+      if not (self.scribe and self.scribe.isOpen):
          # Get database
          try:
             self.scribe = self._getDb(self.logname)
@@ -170,7 +170,7 @@ class SPFiller(LMObject):
       """
       currtime = mx.DateTime.gmt().mjd
       # Nothing changes if these are already present
-      user = LMUser(self.userId, self.userEmail, modTime=currtime)
+      user = LMUser(self.userId, self.userEmail, self.userEmail, modTime=currtime)
       self.scribe.log.info('  Find or insert user {} ...'.format(self.userId))
       thisUser = self.scribe.findOrInsertUser(user)
       # If exists, found by unique Id or Email, update values
@@ -322,6 +322,7 @@ class SPFiller(LMObject):
                                              scenPkgId=updatedScenPkg.getId())
          updatedScens.append(newscen)
       updatedScenPkg.setScenarios(updatedScens)
+      return updatedScenPkg
    
    # ...............................................
    def addMaskLayer(self, masklyr):
@@ -495,21 +496,31 @@ from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.scenario import Scenario, ScenPackage
 from LmDbServer.tools.catalogScenPkg import *
 
-spMetaFname = '/share/lm/data/layers/sax_layers_10min.py'
-userid = 'aimee2'
-userEmail = None
+updatedScenPkg = None
+self.initializeMe()
+userId = self.addUser()
 
-filler = SPFiller(spMetaFname, userid, userEmail)
-filler.addUser()
-
-spName = filler.spMeta.CLIMATE_PACKAGES.keys()[0]
-scenPkg, masklyr = filler.createScenPackage(spName)
-
-scode = scenPkg.scenarios.keys()[0]
-scen = scenPkg.scenarios.values()[0]
-                      
-updatedMask = filler.addMaskLayer(masklyr)
-updatedScenPkg = filler.addPackageScenariosLayers(scenPkg)
-
-existingPkg = filler.scribe.getScenPackage(userId=userid, scenPkgName=spName, fillLayers=True)
+updatedMask = None
+# for spName in self.spMeta.CLIMATE_PACKAGES.keys():
+spName = '10min-past-present-future'
+scenPkg, masklyr = self.createScenPackage(spName)
+# if updatedMask is None:
+updatedMask = self.addMaskLayer(masklyr)
+# if updatedMask.getDLocation() != masklyr.getDLocation():
+#    raise LMError('''Returned existing layer name {} for user {} with 
+#                     filename {}, not expected filename {}'''
+#                     .format(masklyr.name, self.userId, 
+#                             updatedMask.getDLocation(), 
+#                             masklyr.getDLocation()))
+updatedScenPkg = self.addPackageScenariosLayers(scenPkg)
+if (updatedScenPkg is not None 
+    and updatedScenPkg.getId() is not None
+    and updatedScenPkg.name == spName
+    and updatedScenPkg.getUserId() == self.userId):
+   self.scribe.log.info('Successfully added scenario package {} for user {}'
+                          .format(spName, self.userId))
+finally:
+   self.close()
+   
+return updatedScenPkg 
 """
