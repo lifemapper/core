@@ -2937,6 +2937,12 @@ BEGIN
    RAISE NOTICE 'Deleted % Scenarios for User %', currCount, usr;
    total = total + currCount;
    
+   -- ScenPackage
+	DELETE FROM lm_v3.ScenPackage WHERE userid = usr;
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % ScenPackages for User %', currCount, usr;
+   total = total + currCount;
+
    -- Layers (Cascades to EnvLayer, ShapeGrid)
 	DELETE FROM lm_v3.Layer WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
