@@ -305,6 +305,19 @@ class SPFiller(LMObject):
       """
       res_val = scenMeta['res'][1]
       lyrs = self._getScenLayers(pkgMeta, scenCode, scenMeta, lyrMeta)
+      try:
+         dateCode = scenMeta['date']
+      except:
+         dateCode = None
+      try:
+         altpredCode = scenMeta['altpred']
+      except:
+         altpredCode = None
+      try:
+         gcmCode = scenMeta['gcm']
+      except:
+         gcmCode = None
+
       scenmeta = {ServiceObject.META_TITLE: scenMeta['name'], 
                   ServiceObject.META_AUTHOR: scenMeta['author'], 
                   ServiceObject.META_DESCRIPTION: scenMeta['description'], 
@@ -313,7 +326,9 @@ class SPFiller(LMObject):
                       metadata=scenmeta, 
                       units=pkgMeta['mapunits'], 
                       res=res_val, 
-                      dateCode=scenMeta['date'],
+                      gcmCode=gcmCode, 
+                      altpredCode=altpredCode, 
+                      dateCode=dateCode,
                       bbox=scenMeta['region'], 
                       modTime=mx.DateTime.gmt().mjd,  
                       layers=lyrs)
