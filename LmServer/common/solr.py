@@ -32,6 +32,7 @@ import urllib2
 from LmServer.common.lmconstants import (
      SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER, 
      SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
+from LmServer.common.localconstants import PUBLIC_USER
 
 # .............................................................................
 def buildSolrDocument(docPairs):
@@ -299,3 +300,34 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
 
     rDict = literal_eval(_query(SOLR_TAXONOMY_COLLECTION, qParams=q_params))
     return rDict['response']['docs']
+
+# .............................................................................
+def add_taxa_to_taxonomy_index(sciname_objects):
+    """Create a solr document and post it for the provided objects
+    """
+    doc_pairs = []
+    for sno in sciname_objects:
+        doc_pairs.append([
+                   [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, sno.canonicalName],
+                   [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, sno.scientificName],
+                   [SOLR_TAXONOMY_FIELDS.SQUID, sno.squid],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, sno.txClass],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, sno.family],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, sno.genus],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_KEY, sno.sourceTaxonKey],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sno.kingdom],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.txOrder],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_SPECIES, sno.sourceSpeciesKey],
+                   [SOLR_TAXONOMY_FIELDS.USER_ID, PUBLIC_USER],
+                   [SOLR_TAXONOMY_FIELDS.ID, sno.getId()]
+        ])
+    post_doc = buildSolrDocument(doc_pairs)
+    # Note: This is somewhat redundant.
+    # TODO: Modify _post to accept a string or file like object as well
+    url = '{}{}/update?commit=true'.format(SOLR_SERVER, 
+                                           SOLR_TAXONOMY_COLLECTION)
+    req = urllib2.Request(url, data=post_doc, 
+                          headers={'Content-Type' : 'text/xml'})
+    return urllib2.urlopen(req).read()
+    
