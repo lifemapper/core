@@ -93,6 +93,12 @@ class _LmCommand(object):
       return os.path.join(APP_PATH, self.relDir, self.scriptName)
    
    # ................................
+   @property
+   def scriptBasename(self):
+      scriptbase, _ = os.path.splitext(self.scriptName)
+      return scriptbase
+      
+   # ................................
    def Popen(self, **kwargs):
       """
       @summary: Wrapper around subprocess.Popen, named arguments sent to this
