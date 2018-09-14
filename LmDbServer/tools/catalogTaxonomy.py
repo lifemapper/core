@@ -5,12 +5,11 @@ import os
 from LmBackend.command.server import CatalogTaxonomyCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import GBIF, JobStatus, LMFormat
+from LmCommon.common.lmconstants import GBIF, JobStatus
 
 from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
 
-from LmServer.common.lmconstants import Priority, SOLR_TAXONOMY_COLLECTION,\
-    SOLR_TAXONOMY_FIELDS
+from LmServer.common.lmconstants import Priority
 from LmServer.common.localconstants import PUBLIC_USER
 import LmServer.common.solr as lm_solr
 from LmServer.db.borgscribe import BorgScribe
