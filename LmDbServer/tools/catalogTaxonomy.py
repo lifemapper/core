@@ -9,12 +9,16 @@ from LmCommon.common.lmconstants import GBIF, JobStatus, LMFormat
 
 from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
 
-from LmServer.common.lmconstants import Priority
+from LmServer.common.lmconstants import Priority, SOLR_TAXONOMY_COLLECTION,\
+    SOLR_TAXONOMY_FIELDS
 from LmServer.common.localconstants import PUBLIC_USER
+import LmServer.common.solr as lm_solr
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ScriptLogger
 from LmServer.base.taxon import ScientificName
 from LmServer.legion.processchain import MFChain
+
+NUM_DOCS_PER_POST = 100
 
 # .............................................................................
 class TaxonFiller(LMObject):
@@ -125,6 +129,7 @@ class TaxonFiller(LMObject):
          (taxonkey, kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
           scinameStr, genuskey, specieskey, count) = self._getTaxonValues(line)
           
+         sciname_objs = []
          if taxonkey not in (specieskey, genuskey): 
             totalWrongRank += 1
          else:
@@ -144,9 +149,17 @@ class TaxonFiller(LMObject):
             if upSciName:
                totalIn += 1
                self.scribe.log.info('Found or inserted {}'.format(scinameStr))
+               # Add object to list, post to solr if we reach threshold
+               sciname_objs.append(upSciName)
+               if len(sciname_objs) >= NUM_DOCS_PER_POST:
+                  lm_solr.add_taxa_to_taxonomy_index(sciname_objs)
+                  sciname_objs = []
             else:
                totalOut += 1
                self.scribe.log.info('Failed to insert or find {}'.format(scinameStr))
+      # Add any leftover taxonomy
+      lm_solr.add_taxa_to_taxonomy_index(sciname_objs)
+      
       self.scribe.log.info('Found or inserted {}; failed {}; wrongRank {}'
             .format(totalIn, totalOut, totalWrongRank))
    
