@@ -40,8 +40,7 @@ from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
       SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
 
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE,
-                                           GBIF_TAXONOMY_DUMP_FILE)
+from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 from LmDbServer.tools.catalogScenPkg import SPFiller
@@ -49,7 +48,8 @@ from LmDbServer.tools.catalogScenPkg import SPFiller
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
                            GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
-                           PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
+                           PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX,
+                           SPECIES_DATA_PATH)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
@@ -187,6 +187,7 @@ class BOOMFiller(LMObject):
             if os.path.exists(thisFname):
                spMetaFname = thisFname
                break
+#          spMetaFname = os.path.join(ENV_DATA_PATH, self.scenPackageName + '.py')
          if spMetaFname is None:
             raise LMError("""ScenPackage {} must be authorized for User {} 
                              or all users (with public metadata file {})"""
@@ -733,7 +734,7 @@ class BOOMFiller(LMObject):
                 update attributes with new or existing values from DB
       """
       scenGrims = {}
-      self.scribe.log.info('  Insert, build shapegrid {} ...'.format(self.gridname))
+      self.scribe.log.info('  Find or insert, build shapegrid {} ...'.format(self.gridname))
       shp = self._addIntersectGrid()
       self.shapegrid = shp
       # "BOOM" Archive
@@ -1022,19 +1023,27 @@ class BOOMFiller(LMObject):
       
       # Add taxonomy before Boom
       if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
-         taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
-         taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
-         cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
-                                            GBIF_TAXONOMY_DUMP_FILE,
-                                            source_url=taxSourceUrl,
-                                            delimiter='\t')
-         taxOutFilename, ext = os.path.splitext(GBIF_TAXONOMY_DUMP_FILE)
-         walkedTaxFname = taxOutFilename + LMFormat.LOG.ext
-         cattaxCmd.outputs.append(walkedTaxFname)
-         # Add catalog taxonomy command to this Makeflow
-         mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
-         # Boom requires catalog taxonomy completion
-         boomCmd.inputs.extend(cattaxCmd.outputs)
+         config = Config(siteFn=self.inParamFname)
+         taxDataBasename = self._getBoomOrDefault(config, 
+                              'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
+         taxData = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
+         taxDataBase, _ = os.path.splitext(taxDataBasename)
+         walkedTaxFname = taxDataBase + LMFormat.LOG.ext
+         if os.path.exists(os.path.join(SPECIES_DATA_PATH, walkedTaxFname)):
+            self.scribe.log.info('GBIF Taxonomy {} has already been cataloged'
+                                 .format(walkedTaxFname))
+         else:         
+            taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
+            taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
+            cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
+                                               taxData,
+                                               source_url=taxSourceUrl,
+                                               delimiter='\t')
+            cattaxCmd.outputs.append(walkedTaxFname)
+            # Add catalog taxonomy command to this Makeflow
+            mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
+            # Boom requires catalog taxonomy completion
+            boomCmd.inputs.extend(cattaxCmd.outputs)
                 
       # Encode tree after Boom
       if tree:
@@ -1181,6 +1190,8 @@ from LmServer.base.utilities import isRootUser
 from LmDbServer.tools.catalogBoomJob import *
 
 paramFname = '/opt/lifemapper/rocks/etc/defaultArchiveParams.ini'
+initMakeflow = True
+
 pname = os.path.splitext(os.path.basename(paramFname))
 import time
 secs = time.time()
@@ -1204,11 +1215,66 @@ if biogeoMtx and len(biogeoLayerNames) > 0:
 self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
                      biogeoLayers=biogeoLayerNames)
       
-if initMakeflow is True:
-   # Create MFChain to run Boomer on these inputs IFF requested
-   # This also adds commands for taxonomy insertion before 
-   #   and tree encoding after Boom 
-   boomMF = self.addBoomMF(boomGridset.getId(), tree)
+# if initMakeflow is True:
+#    boomMF = self.addBoomMF(boomGridset.getId(), tree)
+
+boomGridsetId = boomGridset.getId()
+meta = {MFChain.META_CREATED_BY: self.name,
+        'GRIDSET': boomGridsetId,
+        MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
+.format(self.userId, self.archiveName)}
+newMFC = MFChain(self.userId, priority=self.priority, 
+                 metadata=meta, status=JobStatus.GENERAL, 
+                 statusModTime=mx.DateTime.gmt().mjd)
+mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
+
+baseAbsFilename, ext = os.path.splitext(self.outConfigFilename)
+walkedArchiveFname = baseAbsFilename + LMFormat.LOG.ext
+boomCmd = BoomerCommand(configFile=self.outConfigFilename)
+boomCmd.outputs.append(walkedArchiveFname)
+# Add boom command to this Makeflow
+mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
+
+# Add taxonomy before Boom
+# if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
+config = Config(siteFn=self.inParamFname)
+taxDataBasename = self._getBoomOrDefault(config, 
+                     'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
+taxData = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
+taxDataBase, _ = os.path.splitext(taxDataBasename)
+walkedTaxFname = taxDataBase + LMFormat.LOG.ext
+if os.path.exists(os.path.join(SPECIES_DATA_PATH, walkedTaxFname)):
+   self.scribe.log.info('GBIF Taxonomy {} has already been cataloged'
+                        .format(walkedTaxFname))
+else:         
+   taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
+   taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
+   cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
+                                      taxData,
+                                      source_url=taxSourceUrl,
+                                      delimiter='\t')
+   cattaxCmd.outputs.append(walkedTaxFname)
+   # Add catalog taxonomy command to this Makeflow
+   mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
+   # Boom requires catalog taxonomy completion
+   boomCmd.inputs.extend(cattaxCmd.outputs)
+          
+# Encode tree after Boom
+if tree:
+   # Create a rule from the MF and Arf file creation
+   treeCmd = EncodeTreeCommand(self.userId, tree.name)
+   walkedTreeFname = self.userId + tree.name + LMFormat.LOG.ext
+   treeCmd.outputs.append(walkedTreeFname)
+   # Add encode tree command to this Makeflow
+   mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
+   # Tree encoding requires Boom completion
+   treeCmd.inputs.extend(boomCmd.outputs)
+
+mfChain.write()
+mfChain.updateStatus(JobStatus.INITIALIZE)
+self.scribe.updateObject(mfChain)
+return mfChain
+
 
 # gs = filler.initBoom(initMakeflow=initMakeflow)
 

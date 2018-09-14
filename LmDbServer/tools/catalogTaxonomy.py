@@ -220,9 +220,10 @@ if __name__ == '__main__':
    if logname is None:
       import time
       scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      dataname, _ = os.path.splitext(taxonFname)
       secs = time.time()
       timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-      logname = '{}.{}'.format(scriptname, timestamp)
+      logname = '{}.{}.{}'.format(scriptname, dataname, timestamp)
    
    filler = TaxonFiller(sourceName, taxonFname, 
                         sourceUrl=sourceUrl,

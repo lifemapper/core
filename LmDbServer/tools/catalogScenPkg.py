@@ -196,8 +196,8 @@ class SPFiller(LMObject):
       
       # Current
       baseCode = pkgMeta['baseline']
-      scenMeta = self.spMeta.SCENARIO_META[baseCode]
-      bscen = self._createScenario(pkgMeta, baseCode, scenMeta, lyrMeta)
+      baseMeta = self.spMeta.SCENARIO_META[baseCode]
+      bscen = self._createScenario(pkgMeta, baseCode, baseMeta, lyrMeta)
       self.scribe.log.info('     Assembled base scenario {}'.format(baseCode))
       allScens = {baseCode: bscen}
 
@@ -249,7 +249,18 @@ class SPFiller(LMObject):
       """
       currtime = mx.DateTime.gmt().mjd
       layers = []
-      dateCode = scenMeta['date']
+      try:
+         dateCode = scenMeta['date']
+      except:
+         dateCode = None
+      try:
+         altpredCode = scenMeta['altpred']
+      except:
+         altpredCode = None
+      try:
+         gcmCode = scenMeta['gcm']
+      except:
+         gcmCode = None
       res_val = scenMeta['res'][1]
       scenKeywords = [k for k in scenMeta['keywords']]
       region = scenMeta['region']
@@ -279,6 +290,8 @@ class SPFiller(LMObject):
                            bbox=region, 
                            modTime=currtime, 
                            envCode=envcode, 
+                           gcmCode=gcmCode, 
+                           altpredCode=altpredCode, 
                            dateCode=dateCode,
                            envMetadata=envmeta,
                            envModTime=currtime)
@@ -344,6 +357,7 @@ class SPFiller(LMObject):
          
          updatedMask = None
          for spName in self.spMeta.CLIMATE_PACKAGES.keys():
+#             spName = self.spMeta.CLIMATE_PACKAGES.keys()[0]
             self.scribe.log.info('Creating scenario package {}'.format(spName))
             scenPkg, masklyr = self.createScenPackage(spName)
             
@@ -481,20 +495,24 @@ find . -name "*.in" -exec sed -i \
 
 import mx.DateTime
 import os
-import time
 
+from LmBackend.command.server import CatalogScenarioPackageCommand
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import LMFormat
-from LmServer.common.lmconstants import (ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX)
+
+from LmCommon.common.lmconstants import JobStatus
+
+from LmServer.common.lmconstants import (Priority, ENV_DATA_PATH, 
+                                         DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
-from LmDbServer.tools.catalogScenPkg import *
+
+CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 
 updatedScenPkg = None
 self.initializeMe()
