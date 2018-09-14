@@ -140,7 +140,7 @@ class CatalogScenarioPackageCommand(_LmDbServerCommand):
          # file ends up in LOG_PATH
          secs = time.time()
          timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-         logname = '{}.{}.{}.{}'.format(self.scriptName, spBasename, user_id, timestamp)
+         logname = '{}.{}.{}.{}'.format(self.scriptBasename, spBasename, user_id, timestamp)
          # Logfile is created by script in LOG_DIR
          logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
          
@@ -190,7 +190,7 @@ class CatalogBoomCommand(_LmDbServerCommand):
          # file ends up in LOG_PATH
          secs = time.time()
          timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-         logname = '{}.{}.{}'.format(self.scriptName, boomBasename, timestamp)
+         logname = '{}.{}.{}'.format(self.scriptBasename, boomBasename, timestamp)
          # Logfile is created by script in LOG_DIR
          logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
          
@@ -241,7 +241,7 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
          # file ends up in LOG_PATH
          secs = time.time()
          timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-         logname = '{}.{}.{}'.format(self.scriptName, dataBasename, timestamp)
+         logname = '{}.{}.{}'.format(self.scriptBasename, dataBasename, timestamp)
          # Logfile is created by script in LOG_DIR
          logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
 
@@ -249,7 +249,7 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
       self.args = ' --logname={}'.format(logname)
       
       # Optional script arg, required here
-      self.args += '--taxon_source_name={} --taxon_data_filename={}'.format(
+      self.args += ' --taxon_source_name={} --taxon_data_filename={}'.format(
          source_name, taxon_filename)
       # Optional args
       if source_url:
@@ -286,7 +286,7 @@ class EncodeTreeCommand(_LmServerCommand):
       # file ends up in LOG_PATH
       secs = time.time()
       timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-      logname = '{}.{}'.format(self.scriptName, timestamp)
+      logname = '{}.{}'.format(self.scriptBasename, timestamp)
       # Logfile is created by script in LOG_DIR
       logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
          
@@ -325,7 +325,7 @@ class EncodeBioGeoHypothesesCommand(_LmServerCommand):
       # file ends up in LOG_PATH
       secs = time.time()
       timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-      logname = '{}.{}'.format(self.scriptName, timestamp)
+      logname = '{}.{}'.format(self.scriptBasename, timestamp)
       # Logfile is created by script in LOG_DIR
       logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
          
