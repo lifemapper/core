@@ -18,7 +18,7 @@
    <field name="taxon_species" type="string" indexed="true" stored="true" />
    <field name="taxon_key" type="string" indexed="true" stored="true" />
    <field name="scientific_name" type="taxonname" indexed="true" stored="true" />
-   <field name="canoncial_name" type="taxonname" indexed="true" stored="true" />
+   <field name="canonical_name" type="taxonname" indexed="true" stored="true" />
    <field name="squid" type="string" indexed="true" stored="true" />
    <field name="user_id" type="string" indexed="true" stored="true" />
    
