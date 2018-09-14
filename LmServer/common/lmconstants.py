@@ -1452,6 +1452,7 @@ class SnippetFields(object):
 # ============================================================================
 SOLR_ARCHIVE_COLLECTION = 'lmArchive'
 SOLR_SNIPPET_COLLECTION = 'snippets'
+SOLR_TAXONOMY_COLLECTION = 'taxonomy'
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 SOLR_SERVER = 'http://localhost:8983/solr/'
 
@@ -1503,6 +1504,24 @@ class SOLR_FIELDS(object):
    TAXON_PHYLUM = 'taxonPhylum'
    TAXON_SPECIES = 'taxonSpecies'
    USER_ID = 'userId'
+
+# .............................................................................
+class SOLR_TAXONOMY_FIELDS(object):
+   """Constants for Taxonomy Solr index fields
+   """
+   CANONICAL_NAME = 'canonical_name'
+   ID = 'id'
+   SCIENTIFIC_NAME = 'scientific_name'
+   SQUID = 'squid'
+   TAXON_CLASS = 'taxon_class'
+   TAXON_FAMILY = 'taxon_family'
+   TAXON_GENUS = 'taxon_genus'
+   TAXON_KEY = 'taxon_key'
+   TAXON_KINGDOM = 'taxon_kingdom'
+   TAXON_ORDER = 'taxon_order'
+   TAXON_PHYLUM = 'taxon_phylum'
+   TAXON_SPECIES = 'taxon_species'
+   USER_ID = 'user_id'
 
 # ============================================================================
 # =                             Scaling Constants                            =
