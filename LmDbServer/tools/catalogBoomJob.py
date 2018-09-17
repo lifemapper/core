@@ -815,7 +815,7 @@ class BOOMFiller(LMObject):
       tree = None
       if self.treeFname is not None:
          currtime = mx.DateTime.gmt().mjd
-         name = os.path.splitext(self.treeFname)[0]
+         name, _ = os.path.splitext(self.treeFname)
          treeFilename = os.path.join(self.userIdPath, self.treeFname) 
          if os.path.exists(treeFilename):
             # TODO: save gridset link to tree???
@@ -845,7 +845,7 @@ class BOOMFiller(LMObject):
       lyrMeta = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): None,
                  ServiceObject.META_DESCRIPTION.lower(): 
       'Biogeographic hypothesis based on layer {}'.format(bgFname)}
-      fpthbasename = os.path.splitext(bgFname)[0]
+      fpthbasename, _ = os.path.splitext(bgFname)
       metaFname = fpthbasename + LMFormat.JSON.ext
       if os.path.exists(metaFname):
          with open(metaFname) as f:
@@ -895,7 +895,7 @@ class BOOMFiller(LMObject):
                try:
                   name = lyrMeta['name']
                except:
-                  name = os.path.splitext(os.path.basename(bgFname))[0]
+                  name, _ = os.path.splitext(os.path.basename(bgFname))
                mtxKeywords.append('Layer {}'.format(name))
                lyr = Vector(name, self.userId, self.scenPkg.epsgcode, dlocation=bgFname, 
                    metadata=lyrMeta, dataFormat=LMFormat.SHAPE.driver, 
@@ -980,7 +980,7 @@ class BOOMFiller(LMObject):
             grimChain.addCommands(lyrRules)
             
             # Keep track of intersection filenames for matrix concatenation
-            relDir = os.path.splitext(mtxcol.layer.getRelativeDLocation())[0]
+            relDir, _ = os.path.splitext(mtxcol.layer.getRelativeDLocation())
             outFname = os.path.join(targetDir, relDir, mtxcol.getTargetFilename())
             colFilenames.append(outFname)
                         
@@ -1012,7 +1012,7 @@ class BOOMFiller(LMObject):
                        statusModTime=mx.DateTime.gmt().mjd)
       mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
 
-      baseAbsFilename, ext = os.path.splitext(self.outConfigFilename)
+      baseAbsFilename, _ = os.path.splitext(self.outConfigFilename)
       # Boomer.ChristopherWalken writes this file when finished walking through 
       # species data (initiated by this Makeflow).  
       walkedArchiveFname = baseAbsFilename + LMFormat.LOG.ext
@@ -1192,7 +1192,7 @@ from LmDbServer.tools.catalogBoomJob import *
 paramFname = '/opt/lifemapper/rocks/etc/defaultArchiveParams.ini'
 initMakeflow = True
 
-pname = os.path.splitext(os.path.basename(paramFname))
+pname, _ = os.path.splitext(os.path.basename(paramFname))
 import time
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
@@ -1200,9 +1200,9 @@ logname = '{}.{}'.format(pname, timestamp)
 
 self = BOOMFiller(paramFname, logname=logname)
 self.initializeInputs()
+
 if self.occIdFname:
    self._checkOccurrenceSets()
-
 
 scenGrims, boomGridset = self.addShapeGridGPAMGridset()
 grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
@@ -1215,65 +1215,28 @@ if biogeoMtx and len(biogeoLayerNames) > 0:
 self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
                      biogeoLayers=biogeoLayerNames)
       
-# if initMakeflow is True:
-#    boomMF = self.addBoomMF(boomGridset.getId(), tree)
+if initMakeflow is True:
+   boomMF = self.addBoomMF(boomGridset.getId(), tree)
 
-boomGridsetId = boomGridset.getId()
-meta = {MFChain.META_CREATED_BY: self.name,
-        'GRIDSET': boomGridsetId,
-        MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
-.format(self.userId, self.archiveName)}
-newMFC = MFChain(self.userId, priority=self.priority, 
-                 metadata=meta, status=JobStatus.GENERAL, 
-                 statusModTime=mx.DateTime.gmt().mjd)
-mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
 
-baseAbsFilename, ext = os.path.splitext(self.outConfigFilename)
-walkedArchiveFname = baseAbsFilename + LMFormat.LOG.ext
-boomCmd = BoomerCommand(configFile=self.outConfigFilename)
-boomCmd.outputs.append(walkedArchiveFname)
-# Add boom command to this Makeflow
-mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
-
-# Add taxonomy before Boom
-# if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
 config = Config(siteFn=self.inParamFname)
 taxDataBasename = self._getBoomOrDefault(config, 
                      'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
 taxData = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
 taxDataBase, _ = os.path.splitext(taxDataBasename)
 walkedTaxFname = taxDataBase + LMFormat.LOG.ext
-if os.path.exists(os.path.join(SPECIES_DATA_PATH, walkedTaxFname)):
-   self.scribe.log.info('GBIF Taxonomy {} has already been cataloged'
-                        .format(walkedTaxFname))
-else:         
-   taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
-   taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
-   cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
-                                      taxData,
-                                      source_url=taxSourceUrl,
-                                      delimiter='\t')
-   cattaxCmd.outputs.append(walkedTaxFname)
-   # Add catalog taxonomy command to this Makeflow
-   mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
-   # Boom requires catalog taxonomy completion
-   boomCmd.inputs.extend(cattaxCmd.outputs)
-          
-# Encode tree after Boom
-if tree:
-   # Create a rule from the MF and Arf file creation
-   treeCmd = EncodeTreeCommand(self.userId, tree.name)
-   walkedTreeFname = self.userId + tree.name + LMFormat.LOG.ext
-   treeCmd.outputs.append(walkedTreeFname)
-   # Add encode tree command to this Makeflow
-   mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
-   # Tree encoding requires Boom completion
-   treeCmd.inputs.extend(boomCmd.outputs)
+taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
+taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
+cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
+                                   taxData,
+                                   source_url=taxSourceUrl,
+                                   delimiter='\t')
+rule = cattaxCmd.getMakeflowRule(local=True)
+print rule.command
 
-mfChain.write()
-mfChain.updateStatus(JobStatus.INITIALIZE)
-self.scribe.updateObject(mfChain)
-return mfChain
+
+
+
 
 
 # gs = filler.initBoom(initMakeflow=initMakeflow)

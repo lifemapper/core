@@ -238,7 +238,7 @@ if __name__ == '__main__':
       logname = '{}.{}.{}'.format(scriptname, dataname, timestamp)
    
    filler = TaxonFiller(sourceName, taxonFname, 
-                        sourceUrl=sourceUrl,
+                        taxSrcUrl=sourceUrl,
                         delimiter=delimiter,
                         logname=logname)
    filler.open()

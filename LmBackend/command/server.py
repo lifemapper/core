@@ -249,7 +249,7 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
       self.args = ' --logname={}'.format(logname)
       
       # Optional script arg, required here
-      self.args += ' --taxon_source_name={} --taxon_data_filename={}'.format(
+      self.args += " --taxon_source_name='{}' --taxon_data_filename={}".format(
          source_name, taxon_filename)
       # Optional args
       if source_url:
