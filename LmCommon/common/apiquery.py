@@ -3,7 +3,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2018, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -24,12 +24,10 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import idigbio
 import json
 import requests
 from types import (BooleanType, DictionaryType, TupleType)
 import urllib
-# import xml.etree.ElementTree as ET
 
 from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
                                          IDIGBIO, IDIGBIO_QUERY, 
@@ -61,7 +59,7 @@ class APIQuery(object):
    @classmethod
    def initFromUrl(cls, url, headers={}):
       base, filters = url.split('?')
-      qry = APIQuery(base, filterString=filters)
+      qry = APIQuery(base, filterString=filters, headers=headers)
       return qry
       
    # .........................................
@@ -733,7 +731,7 @@ def testGbif():
 
 # .............................................................................
 def testIdigBio():
-   gbifids = [1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
+   gbifids = [2435099, 1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
               1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 
               1000519, 1000525, 1000541, 1000543, 1000546, 1000575]
    
@@ -756,29 +754,6 @@ def testIdigBio():
       print '   ', api._qFilters
       print
       
-# # .............................................................................
-# def testIdigbioClient():
-#    gbifids = [1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
-#               1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 
-#               1000519, 1000525, 1000541, 1000543, 1000546, 1000575]
-#    
-#    # ******************* iDigBio ********************************
-#    idigList = [4990907, 2437967, 4990907, 5158206, 2438635, 2394563, 2360481, 
-#                5231132, 2350580, 2361357]
-#    fields = IDIGBIO_QUERY.RETURN_FIELDS.keys()
-#    for gid in gbifids:
-#       # direct query
-#       api = idigbio.json()
-#       query = {'taxonid':str(gid)}
-#       try:
-#          output = api.search_records(rq=query, limit=100, offset=0, fields=fields)
-#       except:
-#          print 'Failed on {}'.format(gid)
-#       else:
-#          items = output['items']
-#          print("Retrieved {} records for gbif taxonid {}"
-#                .format(len(items), gid))
-
 # .............................................................................
 def testIdigbioTaxonIds():
    infname = '/tank/data/input/idigbio/taxon_ids.txt'
@@ -863,7 +838,7 @@ keys = {1967: 'Trichotria pocillum', 1034: 'Antiphonus conatus',
 1135: 'Brachinus mexicanus'}
 
 gbifids = [1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
-1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 1000519, 1000525, 
+1000461, 1000464, 1000483, 1000484, 1000488, 1000511,    testIdigBioClient()1000515, 1000519, 1000525, 
 1000541, 1000543, 1000546, 1000575]
 
 lmapi = IdigbioAPI()

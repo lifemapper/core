@@ -1085,7 +1085,7 @@ class DWCNames:
    YEAR = {'FULL': 'year', 'SHORT': 'year'}
    RECORDED_BY = {'FULL': 'recordedBy', 'SHORT': 'rec_by'}
    COUNTRY_CODE = {'FULL': 'countryCode', 'SHORT': 'ctrycode'}
-   STATE_PROVINCE = {'FULL': 'stateprovince', 'SHORT': 'stprov'}
+   STATE_PROVINCE = {'FULL': 'stateProvince', 'SHORT': 'stprov'}
    
    @staticmethod
    def _definedNames():
@@ -1336,7 +1336,7 @@ class IDIGBIO:
    SEARCH_LIMIT = 5000
    ID_FIELD = 'uuid'
    LINK_FIELD = 'idigbiourl'
-   GBIFID_FIELD = 'taxonID'
+   GBIFID_FIELD = 'taxonid'
    BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"
    OCCURRENCE_ITEMS_KEY = 'items'
    RECORD_CONTENT_KEY = 'data'
@@ -1517,7 +1517,7 @@ class IDIGBIO_QUERY:
    # Geopoint.lat and Geopoint.lon are modified on return to short names
    # Response record fields: https://search.idigbio.org/v2/meta/fields/records
    RETURN_FIELDS = {
-      IDIGBIO.ID_FIELD: (IDIGBIO.ID_FIELD, OFTString),
+      IDIGBIO.QUALIFIER + IDIGBIO.ID_FIELD: (IDIGBIO.ID_FIELD, OFTString),
       IDIGBIO.GBIFID_FIELD: ('taxonid', OFTString),
       DWC_QUALIFIER + DWCNames.SCIENTIFIC_NAME['FULL']: (DWCNames.SCIENTIFIC_NAME['SHORT'], 
                                                          OFTString),   
