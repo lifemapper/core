@@ -49,9 +49,9 @@ class BoomerCommand(_LmCommand):
    # ................................
    def getCommand(self):
       """
-      @summary: Get the raw command to run on the system
+      @summary: Get the raw command to run on the system **as lmwriter**
       """
-      return '{} {}{}'.format(CMD_PYBIN, self.getScript(), self.optArgs)
+      return "su -c '{} {} {}' lmwriter".format(CMD_PYBIN, self.getScript(), self.optArgs)
 
 # .............................................................................
 class InitBoomCommand(_LmCommand):
