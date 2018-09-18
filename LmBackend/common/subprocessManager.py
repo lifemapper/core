@@ -36,7 +36,7 @@ CONCURRENT_PROCESSES = max(1, multiprocessing.cpu_count() - 2)
 from LmCommon.common.lmXml import serialize, tostring
 
 WAIT_TIME = 10
-MAX_RUN_TIME = 60 * 60 * 4 # 4 hours
+MAX_RUN_TIME = 60 * 60 * 24 # 24 hours
 
 # .............................................................................
 class VariableContainer(object):
