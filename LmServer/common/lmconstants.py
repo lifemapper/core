@@ -38,7 +38,7 @@ from LmServer.common.localconstants import (APP_PATH, CS_PORT, DATA_PATH,
                         EXTRA_WORKER_FACTORY_OPTIONS, EXTRA_WORKER_OPTIONS, 
                         LM_DISK, MASTER_WORKER_PATH, MAX_WORKERS, PID_PATH, 
                         PUBLIC_FQDN, SCRATCH_PATH, SHARED_DATA_PATH, 
-                        WEBSERVICES_ROOT, WORKER_PATH)
+                        WEBSERVICES_ROOT, WORKER_PATH, SPECIES_DIR)
 
 WEB_SERVICE_VERSION = 'v2'
 API_PATH = 'api'
@@ -55,7 +55,7 @@ ARCHIVE_PATH = os.path.join(SHARED_DATA_PATH,'archive')
 # On shared sge directory
 SHARED_SGE_PATH = os.path.join(LM_DISK, 'sge')
 # On lmserver data directory
-SPECIES_DATA_PATH = os.path.join(DATA_PATH, 'species')
+SPECIES_DATA_PATH = os.path.join(DATA_PATH, SPECIES_DIR)
 TEST_DATA_PATH = os.path.join(DATA_PATH, 'test') 
 IMAGE_PATH = os.path.join(DATA_PATH, 'image')
 # On scratch disk
