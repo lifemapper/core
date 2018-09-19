@@ -236,6 +236,11 @@ class ChristopherWalken(LMObject):
          gbifOccFile = os.path.join(SPECIES_DATA_PATH, gbifOcc)
          if not os.path.exists(gbifOccFile):
             gbifOccFile = os.path.join(boompath, gbifOcc)
+            if not os.path.exists(gbifOccFile):
+               raise LMError("""
+               Species file {} does not exist in public data 
+               directory {} or user directory {}"""
+               .format(gbifOcc, SPECIES_DATA_PATH, boompath))
          gbifProv = self._getBoomOrDefault('GBIF_PROVIDER_FILENAME')
          gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          weaponOfChoice = GBIFWoC(self._scribe, userId, archiveName, 

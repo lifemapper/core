@@ -1219,26 +1219,6 @@ if initMakeflow is True:
    boomMF = self.addBoomMF(boomGridset.getId(), tree)
 
 
-config = Config(siteFn=self.inParamFname)
-taxDataBasename = self._getBoomOrDefault(config, 
-                     'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
-taxData = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
-taxDataBase, _ = os.path.splitext(taxDataBasename)
-walkedTaxFname = taxDataBase + LMFormat.LOG.ext
-taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
-taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
-cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
-                                   taxData,
-                                   source_url=taxSourceUrl,
-                                   delimiter='\t')
-rule = cattaxCmd.getMakeflowRule(local=True)
-print rule.command
-
-
-
-
-
-
 # gs = filler.initBoom(initMakeflow=initMakeflow)
 
  
