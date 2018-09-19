@@ -15,6 +15,7 @@ PYTHON_CMD: @PYBIN@
 [LmCompute - environment]
 LM_PATH: @LMHOME@
 SCRATCH_PATH: @LMSCRATCHDISK@
+ENV_DATA_DIR: @ENV_DATA_DIR@
 
 ;; These 3 variables are identical in config.lmserver.ini
 LM_DISK: @LMDISK@

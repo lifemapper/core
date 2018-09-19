@@ -17,6 +17,7 @@ SCRATCH_PATH: @LMSCRATCHDISK@
 PID_PATH: @LMSCRATCHDISK@/run
 SHARED_DATA_PATH: @DATADIR_SHARED@
 LM_DISK: @LMDISK@
+SPECIES_DATA_DIR: @SPECIES_DATA_DIR@
 
 ; .............................................................................
 [LmServer - pipeline]
@@ -37,8 +38,6 @@ WORKER_JOB_LIMIT: 50
 ; ...................
 ; Species data vals
 ; ...................
-SPECIES_DATA_DIR: @SPECIES_DATA_DIR@
-
 DATASOURCE: GBIF
 ;; Used when DATASOURCE is GBIF. 
 GBIF_TAXONOMY_FILENAME: @GBIF_TAXONOMY@-@GBIF_VERSION@.csv
