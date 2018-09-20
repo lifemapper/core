@@ -25,7 +25,6 @@
 """
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import BOOM_SCRIPTS_DIR, CMD_PYBIN
-from LmDbServer.tools.deleteOldAnonymous import success
 
 # .............................................................................
 class BoomerCommand(_LmCommand):
