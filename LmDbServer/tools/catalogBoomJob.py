@@ -1040,7 +1040,7 @@ class BOOMFiller(LMObject):
                                                source_url=taxSourceUrl,
                                                delimiter='\t')
             # Boom requires catalog taxonomy completion
-            boomCmd.inputs.extend(walkedTaxFname)
+            boomCmd.inputs.append(walkedTaxFname)
                 
       # Encode tree after Boom
       if tree:
