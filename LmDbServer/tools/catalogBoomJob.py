@@ -1040,7 +1040,7 @@ class BOOMFiller(LMObject):
                                                source_url=taxSourceUrl,
                                                delimiter='\t')
             # Boom requires catalog taxonomy completion
-            boomCmd.inputs.extend(walkedTaxFname)
+            boomCmd.inputs.append(walkedTaxFname)
                 
       # Encode tree after Boom
       if tree:
@@ -1065,6 +1065,8 @@ class BOOMFiller(LMObject):
       mfChain.write()
       mfChain.updateStatus(JobStatus.INITIALIZE)
       self.scribe.updateObject(mfChain)
+      self.scribe.log.info('  Wrote BOOM Makeflow {} for scencode {}'
+                    .format(mfChain.objId, boomGridsetId))
       return mfChain
 
    # ...............................................
