@@ -1018,8 +1018,7 @@ class BOOMFiller(LMObject):
       walkedArchiveFname = baseAbsFilename + LMFormat.LOG.ext
       boomCmd = BoomerCommand(configFile=self.outConfigFilename)
       boomCmd.outputs.append(walkedArchiveFname)
-      # Add boom command to this Makeflow
-      mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
+      boomCmd.inputs.append(self.outConfigFilename)
       
       # Add taxonomy before Boom
       if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
@@ -1040,8 +1039,6 @@ class BOOMFiller(LMObject):
                                                source_url=taxSourceUrl,
                                                delimiter='\t')
             cattaxCmd.outputs.append(walkedTaxFname)
-            # Add catalog taxonomy command to this Makeflow
-            mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
             # Boom requires catalog taxonomy completion
             boomCmd.inputs.extend(cattaxCmd.outputs)
                 
@@ -1051,10 +1048,21 @@ class BOOMFiller(LMObject):
          treeCmd = EncodeTreeCommand(self.userId, tree.name)
          walkedTreeFname = self.userId + tree.name + LMFormat.LOG.ext
          treeCmd.outputs.append(walkedTreeFname)
-         # Add encode tree command to this Makeflow
-         mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
          # Tree encoding requires Boom completion
          treeCmd.inputs.extend(boomCmd.outputs)
+
+      try:
+         # Add catalog taxonomy command to this Makeflow
+         mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
+      except:
+         pass
+      try:
+         # Add encode tree command to this Makeflow
+         mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
+      except:
+         pass
+      # Add boom command to this Makeflow
+      mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
 
       mfChain.write()
       mfChain.updateStatus(JobStatus.INITIALIZE)
