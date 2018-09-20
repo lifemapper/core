@@ -221,7 +221,7 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
    scriptName = 'catalogTaxonomy.py'
 
    # ................................
-   def __init__(self, source_name, taxon_filename, 
+   def __init__(self, source_name, taxon_data_filename, taxon_success_filename,
                 source_url=None, delimiter='\t'):
       """
       @summary: Construct the command object
@@ -234,23 +234,23 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
       _LmDbServerCommand.__init__(self)
       
       # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
-      if not os.path.exists(taxon_filename):
-         raise Exception('Missing Taxonomy data file {}'.format(taxon_filename))
+      if not os.path.exists(taxon_data_filename):
+         raise Exception('Missing Taxonomy data file {}'.format(taxon_data_filename))
       else:
-         dataBasename, _ = os.path.splitext(os.path.basename(taxon_filename)) 
+         dataBasename, _ = os.path.splitext(os.path.basename(taxon_data_filename)) 
          # file ends up in LOG_PATH
          secs = time.time()
          timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
          logname = '{}.{}.{}'.format(self.scriptBasename, dataBasename, timestamp)
          # Logfile is created by script in LOG_DIR
          logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+         
+      # Optional script args, required here
+      self.args = " --taxon_source_name='{}'".format(source_name)
+      self.args += " --taxon_data_filename={}".format(taxon_data_filename)
+      self.args += ' --taxon_success_filename={}'.format(--taxon_success_filename)     
+      self.args += ' --logname={}'.format(logname)
 
-      # Optional arg, we also want for output 
-      self.args = ' --logname={}'.format(logname)
-      
-      # Optional script arg, required here
-      self.args += " --taxon_source_name='{}' --taxon_data_filename={}".format(
-         source_name, taxon_filename)
       # Optional args
       if source_url:
          self.args += ' --taxon_source_url={}'.format(source_url)
@@ -258,6 +258,7 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
          self.args += ' --delimiter={}'.format(delimiter)
          
       self.outputs.append(logfilename)
+      self.outputs.append(taxon_success_filename)
          
    # ................................
    def getCommand(self):

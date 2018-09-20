@@ -5,7 +5,7 @@ import os
 from LmBackend.command.server import CatalogTaxonomyCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import GBIF, JobStatus
+from LmCommon.common.lmconstants import GBIF, JobStatus, LMFormat
 
 from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
 
@@ -28,8 +28,8 @@ class TaxonFiller(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, taxSrcName, taxonomyFname, logname,
-                taxSrcUrl=None, delimiter='\t'):
+   def __init__(self, taxSrcName, taxonomyFname, taxSuccessFname,
+                taxSrcUrl=None, delimiter='\t', logname=None):
       """
       @summary Constructor for ArchiveFiller class.
       
@@ -42,6 +42,8 @@ class TaxonFiller(LMObject):
       except: 
          raise
       self.taxonomyFname = taxonomyFname
+#       taxbasename, _ = os.path.splitext(taxonomyFname)
+      self.successFname = taxSuccessFname
       self._taxonomySourceName = taxSrcName
       self._taxonomySourceUrl = taxSrcUrl
       self._delimiter = delimiter
@@ -205,6 +207,9 @@ if __name__ == '__main__':
    parser.add_argument('--taxon_data_filename', type=str,
                        default=None,
                        help=('Filename of CSV taxonomy data.'))
+   parser.add_argument('--taxon_success_filename', type=str,
+                       default=None,
+                       help=('Filename to be written on successful completion of script.'))
    parser.add_argument('--taxon_source_url', type=str, default=None,
                        help=("""Optional URL of taxonomy source, required 
                                 for a new source"""))
@@ -215,19 +220,24 @@ if __name__ == '__main__':
                        help=('Base name of logfile '))
    # Taxonomy ingest Makeflows will generally be written as part of a BOOM job
    # (not with this script) so new species boom data may be connected to taxonomy 
-   parser.add_argument('--init_makeflow', type=bool, default=False,
-                       help=("""Create a Makeflow task to walk these species data 
-                                (and create Makeflow tasks)."""))
+#    parser.add_argument('--init_makeflow', type=bool, default=False,
+#                        help=("""Create a Makeflow task to walk these species data 
+#                                 (and create Makeflow tasks)."""))
    args = parser.parse_args()
    sourceName = args.taxon_source_name
    taxonFname = args.taxon_data_filename
+   taxonSuccessFname = args.taxon_success_filename
    logname = args.logname
    sourceUrl = args.taxon_source_url
    delimiter = args.delimiter
    initMakeflow = args.init_makeflow
    
-   if sourceName == TAXONOMIC_SOURCE['GBIF']['name'] and taxonFname is None:
-      taxonFname = GBIF_TAXONOMY_DUMP_FILE
+   if sourceName == TAXONOMIC_SOURCE['GBIF']['name']:
+      if taxonFname is None:
+         taxonFname = GBIF_TAXONOMY_DUMP_FILE
+      if taxonSuccessFname is None:
+         taxbasename, _ = os.path.splitext(taxonFname)
+         taxonSuccessFname = taxbasename + LMFormat.LOG.ext
 
    if logname is None:
       import time
@@ -237,7 +247,7 @@ if __name__ == '__main__':
       timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
       logname = '{}.{}.{}'.format(scriptname, dataname, timestamp)
    
-   filler = TaxonFiller(sourceName, taxonFname, 
+   filler = TaxonFiller(sourceName, taxonFname, taxonSuccessFname, 
                         taxSrcUrl=sourceUrl,
                         delimiter=delimiter,
                         logname=logname)

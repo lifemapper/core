@@ -1023,22 +1023,24 @@ class BOOMFiller(LMObject):
       # Add taxonomy before Boom
       if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
          config = Config(siteFn=self.inParamFname)
+         # look for data in public space (species dir) or user space
          taxDataBasename = self._getBoomOrDefault(config, 
                               'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
          taxData = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
          taxDataBase, _ = os.path.splitext(taxDataBasename)
-         walkedTaxFname = taxDataBase + LMFormat.LOG.ext
+         walkedTaxFname = taxDataBase + 'success' + LMFormat.LOG.ext
          if os.path.exists(os.path.join(SPECIES_DATA_PATH, walkedTaxFname)):
             self.scribe.log.info('GBIF Taxonomy {} has already been cataloged'
                                  .format(walkedTaxFname))
          else:         
             taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
             taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
+            # logfile, walkedTaxFname added to outputs in command construction
             cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
                                                taxData,
+                                               walkedTaxFname,
                                                source_url=taxSourceUrl,
                                                delimiter='\t')
-            cattaxCmd.outputs.append(walkedTaxFname)
             # Boom requires catalog taxonomy completion
             boomCmd.inputs.extend(cattaxCmd.outputs)
                 
