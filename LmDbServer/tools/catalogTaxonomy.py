@@ -250,7 +250,7 @@ if __name__ == '__main__':
          taxonFname = GBIF_TAXONOMY_DUMP_FILE
       if successFname is None:
          taxbasename, _ = os.path.splitext(taxonFname)
-         taxonSuccessFname = taxbasename + LMFormat.LOG.ext
+         taxonSuccessFname = taxbasename + '.success'
 
    if logname is None:
       import time

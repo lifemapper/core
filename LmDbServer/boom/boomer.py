@@ -329,7 +329,7 @@ if __name__ == "__main__":
       raise Exception('Configuration file {} does not exist'.format(configFname))
    if successFname is None:
       boombasename, _ = os.path.splitext(configFname)
-      successFname = boombasename + '-success' + LMFormat.LOG.ext
+      successFname = boombasename + '.success'
 
    secs = time.time()
    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
