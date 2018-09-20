@@ -69,7 +69,7 @@ def _getBioGeoMatrix(scribe, usr, gridset, layers=[]):
    return bgMtx
 
 # .................................
-def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
+def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=[]):
    """
    @summary: Encoding hypotheses to a BioGeo matrix
    @note: This adds to existing encoded hypotheses
@@ -134,6 +134,11 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
    bgMtx.write(overwrite=True)
    bgMtx.updateStatus(JobStatus.COMPLETE, modTime=mx.DateTime.gmt().mjd)
    success = scribe.updateObject(bgMtx)
+   
+   msg = 'Wrote matrix {} to final location and updated db'.format(bgMtx.getId())
+   print msg
+   _writeSuccessFile(msg, successFname)
+   
    return bgMtx
 
 
@@ -166,7 +171,20 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
    return layers
 
 # ...............................................
-def createEncodeBioGeoMF(scribe, usr, gridname):
+def _writeSuccessFile(message, successFname):
+   if os.path.exists(successFname):
+      os.remove(successFname)
+   try:
+      f = open(successFname, 'w')
+      f.write(message)
+   except:
+      raise
+   finally:
+      f.close()
+
+
+# ...............................................
+def createEncodeBioGeoMF(scribe, usr, gridname, success_file):
    """
    @summary: Create a Makeflow to encode biogeographic hypotheses into a Matrix
    """
@@ -181,7 +199,7 @@ def createEncodeBioGeoMF(scribe, usr, gridname):
    mfChain = scribe.insertMFChain(newMFC, None)
 
    # Create a rule from the MF 
-   bgCmd = EncodeBioGeoHypothesesCommand(usr, gridname)
+   bgCmd = EncodeBioGeoHypothesesCommand(usr, gridname, success_file)
 
    mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
    mfChain.write()
@@ -204,17 +222,21 @@ if __name__ == '__main__':
                        help=('User owner of the tree'))
    parser.add_argument('gridset_name', type=str, 
                        help="Gridset name for encoding Biogeographic Hypotheses")
-   
+   parser.add_argument('success_file', default=None,
+            help=('Filename to be written on successful completion of script.'))
+      
    # Optional
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
    parser.add_argument('--init_makeflow', type=bool, default=True,
-                       help=("""Create a Makeflow task to encode the tree
-                                with unique species identifiers (squids)."""))
+                       help=("""Create a Makeflow task to encode the Biogeographic
+                                Hypotheses for this gridset. Used only when adding 
+                                Hypotheses after initial `catalogBoomJob` has run"""))
    
    args = parser.parse_args()
    usr = args.user_id
-   gridname = args.gridset_name
+   grid_name = args.gridset_name
+   success_file = args.success_file
    logname = args.logname
    initMakeflow = args.init_makeflow
    
@@ -232,12 +254,12 @@ if __name__ == '__main__':
       scribe.openConnections()
       
       if initMakeflow:
-         createEncodeBioGeoMF(scribe, usr, gridname)
+         createEncodeBioGeoMF(scribe, usr, grid_name, success_file)
       else:
-         layers = _getBoomBioGeoParams(scribe, gridname, usr)
-         gridset = scribe.getGridset(userId=usr, name=gridname, fillMatrices=True)
+         layers = _getBoomBioGeoParams(scribe, grid_name, usr)
+         gridset = scribe.getGridset(userId=usr, name=grid_name, fillMatrices=True)
          if gridset and layers:
-            encodeHypothesesToMatrix(scribe, usr, gridset, layers=layers)
+            encodeHypothesesToMatrix(scribe, usr, gridset, success_file, layers=layers)
          else:
             print ('No gridset or layers to encode as hypotheses')
    finally:

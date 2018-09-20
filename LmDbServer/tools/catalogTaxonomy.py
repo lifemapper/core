@@ -125,7 +125,7 @@ class TaxonFiller(LMObject):
    def writeSuccessFile(self, message):
       self.readyFilename(self._successFname, overwrite=True)
       try:
-         f = open(self._successFname)
+         f = open(self._successFname, 'w')
          f.write(message)
       except:
          raise
@@ -220,7 +220,7 @@ if __name__ == '__main__':
    parser.add_argument('--taxon_data_filename', type=str,
                        default=None,
                        help=('Filename of CSV taxonomy data.'))
-   parser.add_argument('--taxon_success_filename', type=str,
+   parser.add_argument('--success_filename', type=str,
                        default=None,
                        help=('Filename to be written on successful completion of script.'))
    parser.add_argument('--taxon_source_url', type=str, default=None,
@@ -239,7 +239,7 @@ if __name__ == '__main__':
    args = parser.parse_args()
    sourceName = args.taxon_source_name
    taxonFname = args.taxon_data_filename
-   taxonSuccessFname = args.taxon_success_filename
+   successFname = args.success_filename
    logname = args.logname
    sourceUrl = args.taxon_source_url
    delimiter = args.delimiter
@@ -248,7 +248,7 @@ if __name__ == '__main__':
    if sourceName == TAXONOMIC_SOURCE['GBIF']['name']:
       if taxonFname is None:
          taxonFname = GBIF_TAXONOMY_DUMP_FILE
-      if taxonSuccessFname is None:
+      if successFname is None:
          taxbasename, _ = os.path.splitext(taxonFname)
          taxonSuccessFname = taxbasename + LMFormat.LOG.ext
 
@@ -260,7 +260,7 @@ if __name__ == '__main__':
       timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
       logname = '{}.{}.{}'.format(scriptname, dataname, timestamp)
    
-   filler = TaxonFiller(sourceName, taxonFname, taxonSuccessFname, 
+   filler = TaxonFiller(sourceName, taxonFname, successFname, 
                         taxSrcUrl=sourceUrl,
                         delimiter=delimiter,
                         logname=logname)

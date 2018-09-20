@@ -25,6 +25,7 @@
 """
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import BOOM_SCRIPTS_DIR, CMD_PYBIN
+from LmDbServer.tools.deleteOldAnonymous import success
 
 # .............................................................................
 class BoomerCommand(_LmCommand):
@@ -35,16 +36,18 @@ class BoomerCommand(_LmCommand):
    scriptName = 'boomer.py'
 
    # ................................
-   def __init__(self, configFile=None):
+   def __init__(self, configFile, successFile):
       """
       @summary: Construct the command object
       @param configFile: Configuration file for the boom run
       """
       _LmCommand.__init__(self)
       self.optArgs = ''
-      if configFile is not None:
+      if configFile is not None and successFile is not None:
          self.inputs.append(configFile)
+         self.outputs.append(successFile)
          self.optArgs += ' --config_file={}'.format(configFile)
+         self.optArgs += ' --success_file={}'.format(successFile)
 
    # ................................
    def getCommand(self):

@@ -30,7 +30,7 @@ from LmBackend.command.common import ChainCommand, SystemCommand
 from LmBackend.command.server import LmTouchCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import JobStatus, LM_USER
+from LmCommon.common.lmconstants import JobStatus, LM_USER, LMFormat
 
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
@@ -60,7 +60,7 @@ class Boomer(LMObject):
    appending new PAVs or re-assembling. 
    """
    # .............................
-   def __init__(self, configFname, assemblePams=True, log=None):      
+   def __init__(self, configFname, successFname, assemblePams=True, log=None):      
       self.name = self.__class__.__name__.lower()
       # Logfile
       if log is None:
@@ -71,6 +71,7 @@ class Boomer(LMObject):
       self.log = log
 
       self.configFname = configFname
+      self._successFname = successFname
       self.assemblePams = assemblePams
       # Send Database connection
       self._scribe = BorgScribe(self.log)
@@ -279,13 +280,27 @@ class Boomer(LMObject):
       #rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
       #self.potatoBushel.addCommands([rule])
 
+   # ...............................................
+   def writeSuccessFile(self, message):
+      self.readyFilename(self._successFname, overwrite=True)
+      try:
+         f = open(self._successFname, 'w')
+         f.write(message)
+      except:
+         raise
+      finally:
+         f.close()
+
    # .............................
    def processAll(self):
       print('processAll with configFname = {}'.format(self.configFname))
+      count = 0
       while self.keepWalken:
          self.processSpud()
+         count += 1
       if not self.keepWalken:
          self.close()
+      self.writeSuccessFile('Boomer finished walken {} species'.format(count))
 
 # .............................................................................
 if __name__ == "__main__":
@@ -301,22 +316,28 @@ if __name__ == "__main__":
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-', '--config_file', default=defaultConfigFile,
+   parser.add_argument('--config_file', default=defaultConfigFile,
             help=('Configuration file for the archive, gridset, and grid ' +
                   'to be created from these data.'))
+   parser.add_argument('--success_file', default=None,
+            help=('Filename to be written on successful completion of script.'))
 
    args = parser.parse_args()
    configFname = args.config_file
+   successFname = args.success_file
    if not os.path.exists(configFname):
       raise Exception('Configuration file {} does not exist'.format(configFname))
-   
+   if successFname is None:
+      boombasename, _ = os.path.splitext(configFname)
+      successFname = boombasename + '-success' + LMFormat.LOG.ext
+
    secs = time.time()
    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
    
    scriptname = os.path.splitext(os.path.basename(__file__))[0]
    logname = '{}.{}'.format(scriptname, timestamp)
    logger = ScriptLogger(logname, level=logging.INFO)
-   boomer = Boomer(configFname, log=logger)
+   boomer = Boomer(configFname, successFname, log=logger)
    boomer.initializeMe()
    boomer.processAll()
    

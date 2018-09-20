@@ -21,9 +21,21 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.tree import Tree
 
+# ...............................................
+def _writeSuccessFile(message, successFname):
+   if os.path.exists(successFname):
+      os.remove(successFname)
+   try:
+      f = open(successFname, 'w')
+      f.write(message)
+   except:
+      raise
+   finally:
+      f.close()
+
 
 # .................................
-def squidifyTree(scribe, usr, tree):
+def squidifyTree(scribe, usr, tree, successFname):
    """
    @summary: Annotate a tree with squids and node ids, then write to disk
    @note: Matching species must be present in the taxon table of the database
@@ -48,14 +60,19 @@ def squidifyTree(scribe, usr, tree):
    # Update tree properties
    tree.clearDLocation()
    tree.setDLocation()
-   print "Write tree to final location"
    tree.writeTree()
+   
+   # Update metadata
    tree.updateModtime(mx.DateTime.gmt().mjd)
    success = scribe.updateObject(tree)
+   
+   msg = 'Wrote tree {} to final location and updated db'.format(tree.getId())
+   print msg
+   _writeSuccessFile(msg, successFname)
    return tree
 
 # ...............................................
-def createEncodeTreeMF(scribe, usr, treename):
+def createEncodeTreeMF(scribe, usr, tree_name, success_file):
    """
    @summary: Create a Makeflow to initiate Boomer with inputs assembled 
              and configFile written by BOOMFiller.initBoom.
@@ -63,14 +80,14 @@ def createEncodeTreeMF(scribe, usr, treename):
    scriptname, _ = os.path.splitext(os.path.basename(__file__))
    meta = {MFChain.META_CREATED_BY: scriptname,
            MFChain.META_DESCRIPTION: 'Encode tree task for user {} tree {}'
-   .format(usr, treename)}
+   .format(usr, tree_name)}
    newMFC = MFChain(usr, priority=Priority.HIGH, 
                     metadata=meta, status=JobStatus.GENERAL, 
                     statusModTime=mx.DateTime.gmt().mjd)
    mfChain = scribe.insertMFChain(newMFC, None)
 
    # Create a rule from the MF and Arf file creation
-   treeCmd = EncodeTreeCommand(usr, treename)
+   treeCmd = EncodeTreeCommand(usr, tree_name, success_file)
 
    mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
    mfChain.write()
@@ -93,17 +110,22 @@ if __name__ == '__main__':
                        help=('User owner of the tree'))
    parser.add_argument('tree_name', type=str, 
                        help="Tree name for squid, node annotation")
+   parser.add_argument('success_file', default=None,
+            help=('Filename to be written on successful completion of script.'))
    
    # Optional
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
    parser.add_argument('--init_makeflow', type=bool, default=True,
                        help=("""Create a Makeflow task to encode the tree
-                                with unique species identifiers (squids)."""))
+                                with unique species identifiers (squids).
+                                Used only when adding Tree after initial 
+                                `catalogBoomJob` has run"""))
    
    args = parser.parse_args()
    usr = args.user_id
-   treename = args.tree_name
+   tree_name = args.tree_name
+   success_file = args.success_file
    logname = args.logname
    initMakeflow = args.init_makeflow
    
@@ -121,11 +143,11 @@ if __name__ == '__main__':
       scribe.openConnections()
       
       if initMakeflow:
-         createEncodeTreeMF(scribe, usr, treename)
+         createEncodeTreeMF(scribe, usr, tree_name, success_file)
       else:
-         baretree = Tree(treename, userId=usr)
+         baretree = Tree(tree_name, userId=usr)
          tree = scribe.getTree(tree=baretree)
-         decoratedtree = squidifyTree(scribe, usr, tree)
+         decoratedtree = squidifyTree(scribe, usr, tree, success_file)
    finally:
       scribe.closeConnections()
    
