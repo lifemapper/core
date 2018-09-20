@@ -25,6 +25,7 @@ import argparse
 import logging
 import mx.DateTime as dt
 import os, sys, time
+import signal
 
 from LmBackend.command.common import ChainCommand, SystemCommand
 from LmBackend.command.server import LmTouchCommand
@@ -85,6 +86,20 @@ class Boomer(LMObject):
       # Stop indicator
       self.keepWalken = False
 
+      signal.signal(signal.SIGTERM, self._receiveSignal) # Stop signal
+
+    # .............................
+    def _receiveSignal(self, sigNum, stack):
+        """
+        @summary: Handler used to receive signals
+        @param sigNum: The signal received
+        @param stack: The stack at the time of signal
+        """
+        if sigNum == signal.SIGTERM:
+            self.close()
+        else:
+            message = "Unknown signal: %s" % sigNum
+            self.log.error(message)
 
    # .............................
    def initializeMe(self):
