@@ -1015,7 +1015,7 @@ class BOOMFiller(LMObject):
       baseAbsFilename, _ = os.path.splitext(self.outConfigFilename)
       # Boomer.ChristopherWalken writes this file when finished walking through 
       # species data (initiated by this Makeflow).  
-      walkedArchiveFname = baseAbsFilename + '-success' + LMFormat.LOG.ext
+      walkedArchiveFname = baseAbsFilename + '.success'
       boomCmd = BoomerCommand(self.outConfigFilename, walkedArchiveFname)
       
       # Add taxonomy before Boom
@@ -1026,7 +1026,7 @@ class BOOMFiller(LMObject):
                               'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
          taxData = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
          taxDataBase, _ = os.path.splitext(taxDataBasename)
-         walkedTaxFname = taxDataBase + '-success' + LMFormat.LOG.ext
+         walkedTaxFname = taxDataBase + '.success'
          if os.path.exists(os.path.join(SPECIES_DATA_PATH, walkedTaxFname)):
             self.scribe.log.info('GBIF Taxonomy {} has already been cataloged'
                                  .format(walkedTaxFname))
@@ -1040,11 +1040,11 @@ class BOOMFiller(LMObject):
                                                source_url=taxSourceUrl,
                                                delimiter='\t')
             # Boom requires catalog taxonomy completion
-            boomCmd.inputs.extend(cattaxCmd.outputs)
+            boomCmd.inputs.extend(walkedTaxFname)
                 
       # Encode tree after Boom
       if tree:
-         walkedTreeFname = self.userId + tree.name + '-success' + LMFormat.LOG.ext
+         walkedTreeFname = self.userId + tree.name + '.success'
          treeCmd = EncodeTreeCommand(self.userId, tree.name, walkedTreeFname)
          # Tree encoding requires Boom completion
          treeCmd.inputs.extend(boomCmd.outputs)
