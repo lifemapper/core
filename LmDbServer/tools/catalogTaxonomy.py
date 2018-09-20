@@ -42,8 +42,7 @@ class TaxonFiller(LMObject):
       except: 
          raise
       self.taxonomyFname = taxonomyFname
-#       taxbasename, _ = os.path.splitext(taxonomyFname)
-      self.successFname = taxSuccessFname
+      self._successFname = taxSuccessFname
       self._taxonomySourceName = taxSrcName
       self._taxonomySourceUrl = taxSrcUrl
       self._delimiter = delimiter
@@ -123,6 +122,17 @@ class TaxonFiller(LMObject):
        scinameStr, genkey, spkey, occcount)
       
    # ...............................................
+   def writeSuccessFile(self, message):
+      self.readyFilename(self._successFname, overwrite=True)
+      try:
+         f = open(self._successFname)
+         f.write(message)
+      except:
+         raise
+      finally:
+         f.close()
+      
+   # ...............................................
    def readAndInsertTaxonomy(self):
       totalIn = totalOut = totalWrongRank = 0
       
@@ -161,12 +171,15 @@ class TaxonFiller(LMObject):
       # Add any leftover taxonomy
       lm_solr.add_taxa_to_taxonomy_index(sciname_objs)
       
-      self.scribe.log.info('Found or inserted {}; failed {}; wrongRank {}'
-            .format(totalIn, totalOut, totalWrongRank))
+      msg = 'Found or inserted {}; failed {}; wrongRank {}'.format(totalIn, 
+                                                totalOut, totalWrongRank)
+      self.writeSuccessFile(msg)
+      self.scribe.log.info(msg)
    
    # ...............................................
    def createCatalogTaxonomyMF(self):
       """
+      @note: Not currently used, MF is created in catalogBoomJob
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                 and configFile written by BOOMFiller.initBoom.
       """
