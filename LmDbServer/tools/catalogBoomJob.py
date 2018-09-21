@@ -1027,8 +1027,9 @@ class BOOMFiller(LMObject):
          taxDataBasename = self._getBoomOrDefault(config, 
                               'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
          taxData = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
-         taxDataBase, _ = os.path.splitext(taxDataBasename)
-         walkedTaxFname = os.path.join(ws_dir, taxDataBase + '.success')
+         taxDataBase, _ = os.path.splitext(taxData)
+         # put success file with input file, so only do once
+         walkedTaxFname = os.path.join(taxDataBase + '.success')
          if os.path.exists(os.path.join(SPECIES_DATA_PATH, walkedTaxFname)):
             self.scribe.log.info('GBIF Taxonomy {} has already been cataloged'
                                  .format(walkedTaxFname))
