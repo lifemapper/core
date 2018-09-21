@@ -243,7 +243,6 @@ if __name__ == '__main__':
    logname = args.logname
    sourceUrl = args.taxon_source_url
    delimiter = args.delimiter
-   initMakeflow = args.init_makeflow
    
    if sourceName == TAXONOMIC_SOURCE['GBIF']['name']:
       if taxonFname is None:
