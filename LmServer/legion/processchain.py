@@ -33,6 +33,7 @@ from LmBackend.common.cmd import MfRule
 class MFChain(ProcessObject):
 # .............................................................................
    META_CREATED_BY = 'createdBy'
+   META_GRIDSET = 'gridsetId'
    META_DESCRIPTION = 'description'
    META_SQUID = 'squid'
 # .............................................................................
