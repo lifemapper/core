@@ -933,9 +933,13 @@ class BOOMFiller(LMObject):
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=mx.DateTime.gmt().mjd)
       mfChain = self.scribe.insertMFChain(newMFC, None)
+      
+      ws_dir = mfChain.getRelativeDirectory()
+      baseFilename, _ = os.path.splitext(os.path.basename(self.outConfigFilename))
+      bghSuccessFname = os.path.join(ws_dir, baseFilename + '.success')
     
       # Create a rule from the MF 
-      bgCmd = EncodeBioGeoHypothesesCommand(self.userId, gridset.name)
+      bgCmd = EncodeBioGeoHypothesesCommand(self.userId, gridset.name, bghSuccessFname)
     
       mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
       mfChain.write()
@@ -949,7 +953,7 @@ class BOOMFiller(LMObject):
       desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
               .format(self.userId, self.archiveName, scencode))
       meta = {MFChain.META_CREATED_BY: self.name,
-              'GridsetId': gridsetId,
+              MFChain.META_GRIDSET: gridsetId,
               MFChain.META_DESCRIPTION: desc 
               }
       newMFC = MFChain(self.userId, priority=self.priority, 
@@ -1005,7 +1009,7 @@ class BOOMFiller(LMObject):
                 and configFile written by BOOMFiller.initBoom.
       @todo: Define format and enable ingest user taxonomy, commented out below
       """
-      cattaxCmd = taxSuccessFname = None
+      cattaxCmd = taxSuccessFname = taxDataFname = None
       config = Config(siteFn=self.inParamFname)
 #       # look for User data in user space or GBIF data in species dir
 #       taxDataBasename = self._getBoomOrDefault(config, 
@@ -1023,7 +1027,7 @@ class BOOMFiller(LMObject):
          taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
       
       # If there is taxonomy ...
-      if taxDataBasename is not None and os.path.exists(taxDataFname):
+      if taxDataFname and os.path.exists(taxDataFname):
          taxDataBase, _ = os.path.splitext(taxDataFname)
          taxSuccessFname = os.path.join(taxDataBase + '.success')
          if os.path.exists(taxSuccessFname):
@@ -1044,7 +1048,7 @@ class BOOMFiller(LMObject):
       @summary: Create a Makeflow to initiate taxonomy ingestion.
       """
       meta = {MFChain.META_CREATED_BY: self.name,
-              'GRIDSET': boomGridsetId,
+              MFChain.META_GRIDSET: boomGridsetId,
               MFChain.META_DESCRIPTION: 'Taxonomy ingest for User {}, Archive {}'
       .format(self.userId, self.archiveName)}
       newMFC = MFChain(self.userId, priority=self.priority, 
@@ -1066,7 +1070,7 @@ class BOOMFiller(LMObject):
                 and configFile written by BOOMFiller.initBoom.
       """
       meta = {MFChain.META_CREATED_BY: self.name,
-              'GRIDSET': boomGridsetId,
+              MFChain.META_GRIDSET: boomGridsetId,
               MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
       .format(self.userId, self.archiveName)}
       newMFC = MFChain(self.userId, priority=self.priority, 
