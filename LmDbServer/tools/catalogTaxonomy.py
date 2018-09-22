@@ -24,6 +24,7 @@ class TaxonFiller(LMObject):
    """
    Class to populates a Lifemapper database with taxonomy for accepted names
    in the GBIF Backbone Taxonomy as read from a text file provided by GBIF.
+   @todo: extend this script to add taxonomy for users
    """
 # .............................................................................
 # Constructor
@@ -32,7 +33,8 @@ class TaxonFiller(LMObject):
                 taxSrcUrl=None, delimiter='\t', logname=None):
       """
       @summary Constructor for ArchiveFiller class.
-      
+      @todo: allow taxSrcName to be a userId, and user taxonomy is allowed
+      @todo: define data format for user-provided taxonomy 
       """
       super(TaxonFiller, self).__init__()
       scriptname, _ = os.path.splitext(os.path.basename(__file__))
@@ -231,11 +233,8 @@ if __name__ == '__main__':
                                 to tab."""))
    parser.add_argument('--logname', type=str, default=None,
                        help=('Base name of logfile '))
-   # Taxonomy ingest Makeflows will generally be written as part of a BOOM job
-   # (not with this script) so new species boom data may be connected to taxonomy 
-#    parser.add_argument('--init_makeflow', type=bool, default=False,
-#                        help=("""Create a Makeflow task to walk these species data 
-#                                 (and create Makeflow tasks)."""))
+   # Taxonomy ingest Makeflows will generally be written as part of a BOOM job,
+   # calling this script, so new species boom data may be connected to taxonomy 
    args = parser.parse_args()
    sourceName = args.taxon_source_name
    taxonFname = args.taxon_data_filename
@@ -265,11 +264,8 @@ if __name__ == '__main__':
                         logname=logname)
    filler.open()
 
-   if initMakeflow:
-      filler.createCatalogTaxonomyMF()
-   else:
-      filler.initializeMe()
-      filler.readAndInsertTaxonomy()
+   filler.initializeMe()
+   filler.readAndInsertTaxonomy()
    
    filler.close()
 

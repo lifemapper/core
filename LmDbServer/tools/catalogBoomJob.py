@@ -736,10 +736,10 @@ class BOOMFiller(LMObject):
       scenGrims = {}
       self.scribe.log.info('  Find or insert, build shapegrid {} ...'.format(self.gridname))
       shp = self._addIntersectGrid()
+      self.scribe.log.info('  Found or inserted shapegrid')
       self.shapegrid = shp
       # "BOOM" Archive
       # TODO: change 'parameters' to ServiceObject.META_PARAMS
-
       meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
               ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD],
               'parameters': self.inParamFname}
@@ -747,6 +747,7 @@ class BOOMFiller(LMObject):
                        epsgcode=self.scenPkg.epsgcode, 
                        userId=self.userId, modTime=mx.DateTime.gmt().mjd)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
+      self.scribe.log.info('  Found or insert gridset {}'.format(updatedGrdset.getId()))
       # "Global" PAM, GRIM (one each per scenario)
       for code, scen in self.scenPkg.scenarios.iteritems():
          gPam = self._findOrAddPAM(updatedGrdset, scen)
@@ -996,6 +997,67 @@ class BOOMFiller(LMObject):
                        .format(grimChain.objId, code))
                
       return grimChains
+   
+   # ...............................................
+   def _getTaxonomyCommand(self):
+      """
+      @summary: Create a Makeflow to initiate Boomer with inputs assembled 
+                and configFile written by BOOMFiller.initBoom.
+      @todo: Define format and enable ingest user taxonomy, commented out below
+      """
+      cattaxCmd = taxSuccessFname = None
+      config = Config(siteFn=self.inParamFname)
+#       # look for User data in user space or GBIF data in species dir
+#       taxDataBasename = self._getBoomOrDefault(config, 
+#                            'USER_TAXONOMY_FILENAME', None)
+#       if taxDataBasename is not None:
+#          taxDataFname = os.path.join(self.userIdPath, taxDataBasename)
+#          taxSourceName = self.userId
+#          taxSourceUrl = None
+#       elif self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
+      if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
+         taxDataBasename = self._getBoomOrDefault(config, 
+                              'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
+         taxDataFname = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
+         taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
+         taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
+      
+      # If there is taxonomy ...
+      if taxDataBasename is not None and os.path.exists(taxDataFname):
+         taxDataBase, _ = os.path.splitext(taxDataFname)
+         taxSuccessFname = os.path.join(taxDataBase + '.success')
+         if os.path.exists(taxSuccessFname):
+            self.scribe.log.info('Taxonomy {} has already been cataloged'
+                                 .format(taxDataFname))
+         else:         
+            # logfile, walkedTaxFname added to outputs in command construction
+            cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
+                                               taxDataFname,
+                                               taxSuccessFname,
+                                               source_url=taxSourceUrl,
+                                               delimiter='\t')
+      return cattaxCmd, taxSuccessFname
+                
+   # ...............................................
+   def addTaxonomyMF(self, boomGridsetId):
+      """
+      @summary: Create a Makeflow to initiate taxonomy ingestion.
+      """
+      meta = {MFChain.META_CREATED_BY: self.name,
+              'GRIDSET': boomGridsetId,
+              MFChain.META_DESCRIPTION: 'Taxonomy ingest for User {}, Archive {}'
+      .format(self.userId, self.archiveName)}
+      newMFC = MFChain(self.userId, priority=self.priority, 
+                       metadata=meta, status=JobStatus.GENERAL, 
+                       statusModTime=mx.DateTime.gmt().mjd)
+      mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
+      cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
+      mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
+      mfChain.write()
+      mfChain.updateStatus(JobStatus.INITIALIZE)
+      self.scribe.updateObject(mfChain)
+      self.scribe.log.info('  Wrote Taxonomy Makeflow {} for gridset {}'
+                    .format(mfChain.objId, boomGridsetId))
 
    # ...............................................
    def addBoomMF(self, boomGridsetId, tree):
@@ -1013,63 +1075,38 @@ class BOOMFiller(LMObject):
       mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
       # Workspace directory
       ws_dir = mfChain.getRelativeDirectory()
-
-      baseAbsFilename, _ = os.path.splitext(self.outConfigFilename)
-      # Boomer.ChristopherWalken writes this file when finished walking through 
+      baseAbsFilename, _ = os.path.splitext(os.path.basename(self.outConfigFilename))
+      # ChristopherWalken writes when finished walking through 
       # species data (initiated by this Makeflow).  
-      walkedArchiveFname = os.path.join(ws_dir, baseAbsFilename + '.success')
-      boomCmd = BoomerCommand(self.outConfigFilename, walkedArchiveFname)
-      
-      # Add taxonomy before Boom
-      if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
-         config = Config(siteFn=self.inParamFname)
-         # look for data in public space (species dir) or user space
-         taxDataBasename = self._getBoomOrDefault(config, 
-                              'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
-         taxData = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
-         taxDataBase, _ = os.path.splitext(taxData)
-         # put success file with input file, so only do once
-         walkedTaxFname = os.path.join(taxDataBase + '.success')
-         if os.path.exists(os.path.join(SPECIES_DATA_PATH, walkedTaxFname)):
-            self.scribe.log.info('GBIF Taxonomy {} has already been cataloged'
-                                 .format(walkedTaxFname))
-         else:         
-            taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
-            taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
-            # logfile, walkedTaxFname added to outputs in command construction
-            cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
-                                               taxData,
-                                               walkedTaxFname,
-                                               source_url=taxSourceUrl,
-                                               delimiter='\t')
-            # Boom requires catalog taxonomy completion
-            boomCmd.inputs.append(walkedTaxFname)
+      boomSuccessFname = os.path.join(ws_dir, baseAbsFilename + '.success')
+      boomCmd = BoomerCommand(self.outConfigFilename, boomSuccessFname)
                 
-      # Encode tree after Boom
-      if tree:
-         walkedTreeFname = os.path.join(ws_dir, 
-                                        self.userId + tree.name + '.success')
-         treeCmd = EncodeTreeCommand(self.userId, tree.name, walkedTreeFname)
-         # Tree encoding requires Boom completion
-         treeCmd.inputs.extend(boomCmd.outputs)
-
-      try:
+      # Add taxonomy before Boom, if taxonomy is specified
+      cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
+      if cattaxCmd:
          # Add catalog taxonomy command to this Makeflow
          mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
-      except:
-         pass
+         # Boom requires catalog taxonomy completion
+         boomCmd.inputs.append(taxSuccessFname)
+
+      # Encode tree after Boom, if tree exists
       try:
-         # Add encode tree command to this Makeflow
-         mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
+         walkedTreeFname = os.path.join(ws_dir, self.userId+tree.name+'.success')
+         treeCmd = EncodeTreeCommand(self.userId, tree.name, walkedTreeFname)
       except:
          pass
+      else:
+         # Tree requires Boom completion
+         treeCmd.inputs.append(boomSuccessFname)
+         # Add tree encoding command to this Makeflow
+         mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
+
       # Add boom command to this Makeflow
       mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
-
       mfChain.write()
       mfChain.updateStatus(JobStatus.INITIALIZE)
       self.scribe.updateObject(mfChain)
-      self.scribe.log.info('  Wrote BOOM Makeflow {} for scencode {}'
+      self.scribe.log.info('  Wrote BOOM Makeflow {} for gridset {}'
                     .format(mfChain.objId, boomGridsetId))
       return mfChain
 
@@ -1130,6 +1167,8 @@ if __name__ == '__main__':
             help=('Basename of the logfile, without extension'))
    parser.add_argument('--init_makeflow', type=bool, default=True,
             help=('Create a Makeflow task to walk these species data (and create Makeflow tasks).'))
+   parser.add_argument('--taxonomy_only', type=bool, default=False,
+            help=('Add taxonomy, without extension'))
    args = parser.parse_args()
    paramFname = args.param_file
    logname = args.logname

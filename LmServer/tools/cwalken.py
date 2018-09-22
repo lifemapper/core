@@ -51,7 +51,6 @@ from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.processchain import MFChain
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.tools.occwoc import (BisonWoC, GBIFWoC, UserWoC, ExistingWoC, 
                                    TinyBubblesWoC)
