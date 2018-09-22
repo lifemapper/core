@@ -37,7 +37,7 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmAttObject import LmAttObj
 from LmCommon.common.lmconstants import (GEOTIFF_INTERFACE, 
                         SHAPEFILE_INTERFACE, OFTInteger, OFTString)
-from LmCommon.common.verify import computeHash, verifyHash
+# from LmCommon.common.verify import computeHash, verifyHash
 
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
@@ -119,7 +119,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._dlocation = None
       self.setDLocation(dlocation)
       self._verify = None
-      self.setVerify(verify=verify)
+#       self.setVerify(verify=verify)
       self._mapFilename = None
       
 # ...............................................
@@ -742,12 +742,12 @@ class Raster(_Layer):
       uly = geoTransform[3]
       yPixelSize = geoTransform[5]
       
-      newVerify = self.computeHash(dlocation=dlocation)
-      if verify is not None and verify <> newVerify:
-         pass
+#       newVerify = self.computeHash(dlocation=dlocation)
+#       if verify is not None and verify <> newVerify:
+#          pass
 #          msgs.append('Computed hash value for {} ({}) does not match {}'
 #                      .format(dlocation, newVerify, verify))
-      verify = newVerify
+#       verify = newVerify
       
       drv = dataset.GetDriver()
       gdalFormat = drv.GetDescription()
