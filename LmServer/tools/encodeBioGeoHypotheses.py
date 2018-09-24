@@ -223,11 +223,10 @@ if __name__ == '__main__':
                        help="Gridset name for encoding Biogeographic Hypotheses")
    parser.add_argument('success_file', default=None,
             help=('Filename to be written on successful completion of script.'))
-      
    # Optional
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
-   
+      
    args = parser.parse_args()
    usr = args.user_id
    grid_name = args.gridset_name

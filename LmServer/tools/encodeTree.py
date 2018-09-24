@@ -83,8 +83,7 @@ if __name__ == '__main__':
    parser.add_argument('tree_name', type=str, 
                        help="Tree name for squid, node annotation")
    parser.add_argument('success_file', default=None,
-            help=('Filename to be written on successful completion of script.'))
-   
+            help=('Filename to be written on successful completion of script.'))   
    # Optional
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
