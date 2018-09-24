@@ -517,7 +517,8 @@ class SDMProjection(_ProjectionType, Raster):
       
          for lyr in scenario.layers:
             lyrObj = {
-               'identifier' : lyr.verify,
+               'identifier' : 'layer-{}'.format(lyr.getId()),
+               #'identifier' : lyr.verify,
                'path' : '{}{}'.format(
                   os.path.splitext(lyr.getDLocation())[0], ext)
             }
