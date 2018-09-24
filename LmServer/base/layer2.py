@@ -37,7 +37,7 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmAttObject import LmAttObj
 from LmCommon.common.lmconstants import (GEOTIFF_INTERFACE, 
                         SHAPEFILE_INTERFACE, OFTInteger, OFTString)
-# from LmCommon.common.verify import computeHash, verifyHash
+from LmCommon.common.verify import computeHash, verifyHash
 
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
@@ -236,9 +236,9 @@ class _Layer(LMSpatialObject, ServiceObject):
          if dlocation is None:
             dlocation = self._dlocation
          value = computeHash(dlocation=dlocation)
-
+ 
       return value
-
+ 
 # ...............................................
    def verifyHash(self, hashval, dlocation=None, content=None):
       """
@@ -252,7 +252,7 @@ class _Layer(LMSpatialObject, ServiceObject):
             dlocation = self._dlocation
          verified = verifyHash(hashval, dlocation=dlocation)
       return verified
-   
+    
 # ...............................................
    def setVerify(self, verify=None, dlocation=None, content=None):
       value = None
@@ -1983,7 +1983,6 @@ class Vector(_Layer):
                 DO NOT delete temporary files or reset dlocation 
       @raise LMError: on failure to write file.
       """
-      import mx.DateTime
       currtime = str(mx.DateTime.gmt().mjd)
       pid = str(os.getpid())
       dumpname = os.path.join(UPLOAD_PATH, '%s_%s_dump.csv' % (currtime, pid))
