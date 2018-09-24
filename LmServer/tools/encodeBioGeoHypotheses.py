@@ -10,7 +10,7 @@ import mx.DateTime
 import os
 import sys
 
-from LmBackend.command.server import EncodeBioGeoHypothesesCommand
+# from LmBackend.command.server import EncodeBioGeoHypothesesCommand
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (LM_USER, JobStatus, 
@@ -19,12 +19,11 @@ from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import LMFileType, Priority
+from LmServer.common.lmconstants import LMFileType
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn
-from LmServer.legion.processchain import MFChain
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.localconstants import DEFAULT_EPSG
 
@@ -183,29 +182,29 @@ def _writeSuccessFile(message, successFname):
       f.close()
 
 
-# ...............................................
-def createEncodeBioGeoMF(scribe, usr, gridname, success_file):
-   """
-   @summary: Create a Makeflow to encode biogeographic hypotheses into a Matrix
-   """
-   scriptname, _ = os.path.splitext(os.path.basename(__file__))
-   meta = {MFChain.META_CREATED_BY: scriptname,
-           MFChain.META_DESCRIPTION: 
-                     'Encode biogeographic hypotheses task for user {} grid {}'
-                     .format(usr, gridname)}
-   newMFC = MFChain(usr, priority=Priority.HIGH, 
-                    metadata=meta, status=JobStatus.GENERAL, 
-                    statusModTime=mx.DateTime.gmt().mjd)
-   mfChain = scribe.insertMFChain(newMFC, None)
-
-   # Create a rule from the MF 
-   bgCmd = EncodeBioGeoHypothesesCommand(usr, gridname, success_file)
-
-   mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
-   mfChain.write()
-   mfChain.updateStatus(JobStatus.INITIALIZE)
-   scribe.updateObject(mfChain)
-   return mfChain
+# # ...............................................
+# def createEncodeBioGeoMF(scribe, usr, gridname, success_file):
+#    """
+#    @summary: Create a Makeflow to encode biogeographic hypotheses into a Matrix
+#    """
+#    scriptname, _ = os.path.splitext(os.path.basename(__file__))
+#    meta = {MFChain.META_CREATED_BY: scriptname,
+#            MFChain.META_DESCRIPTION: 
+#                      'Encode biogeographic hypotheses task for user {} grid {}'
+#                      .format(usr, gridname)}
+#    newMFC = MFChain(usr, priority=Priority.HIGH, 
+#                     metadata=meta, status=JobStatus.GENERAL, 
+#                     statusModTime=mx.DateTime.gmt().mjd)
+#    mfChain = scribe.insertMFChain(newMFC, None)
+# 
+#    # Create a rule from the MF 
+#    bgCmd = EncodeBioGeoHypothesesCommand(usr, gridname, success_file)
+# 
+#    mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
+#    mfChain.write()
+#    mfChain.updateStatus(JobStatus.INITIALIZE)
+#    scribe.updateObject(mfChain)
+#    return mfChain
 
 
 # .............................................................................
@@ -228,17 +227,12 @@ if __name__ == '__main__':
    # Optional
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
-   parser.add_argument('--init_makeflow', type=bool, default=True,
-                       help=("""Create a Makeflow task to encode the Biogeographic
-                                Hypotheses for this gridset. Used only when adding 
-                                Hypotheses after initial `catalogBoomJob` has run"""))
    
    args = parser.parse_args()
    usr = args.user_id
    grid_name = args.gridset_name
    success_file = args.success_file
    logname = args.logname
-   initMakeflow = args.init_makeflow
    
    if logname is None:
       import time
@@ -251,17 +245,13 @@ if __name__ == '__main__':
    logger = ScriptLogger(logname, level=logging.INFO)
    scribe = BorgScribe(logger)
    try:
-      scribe.openConnections()
-      
-      if initMakeflow:
-         createEncodeBioGeoMF(scribe, usr, grid_name, success_file)
+      scribe.openConnections()      
+      layers = _getBoomBioGeoParams(scribe, grid_name, usr)
+      gridset = scribe.getGridset(userId=usr, name=grid_name, fillMatrices=True)
+      if gridset and layers:
+         encodeHypothesesToMatrix(scribe, usr, gridset, success_file, layers=layers)
       else:
-         layers = _getBoomBioGeoParams(scribe, grid_name, usr)
-         gridset = scribe.getGridset(userId=usr, name=grid_name, fillMatrices=True)
-         if gridset and layers:
-            encodeHypothesesToMatrix(scribe, usr, gridset, success_file, layers=layers)
-         else:
-            print ('No gridset or layers to encode as hypotheses')
+         print ('No gridset or layers to encode as hypotheses')
    finally:
       scribe.closeConnections()
 
