@@ -116,7 +116,8 @@ if __name__ == '__main__':
    # Optional
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
-   parser.add_argument('--init_makeflow', type=bool, default=True,
+   # TODO: Probably want to change this to a store_true field
+   parser.add_argument('--init_makeflow', type=bool, default=False,
                        help=("""Create a Makeflow task to encode the tree
                                 with unique species identifiers (squids).
                                 Used only when adding Tree after initial 
