@@ -397,37 +397,6 @@ class SPFiller(LMObject):
          self.close()
          
       return updatedScenPkg 
-      
-   
-   # ...............................................
-   def createCatalogScenPkgMF(self):
-      """
-      @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-                and configFile written by BOOMFiller.initBoom.
-      """
-      scriptname, _ = os.path.splitext(os.path.basename(__file__))
-      spname, _ = os.path.splitext(os.path.basename(self.spMetaFname))
-      meta = {MFChain.META_CREATED_BY: scriptname,
-              MFChain.META_DESCRIPTION: 'Catalog scenario task for user {} scenpkg {}'
-      .format(self.userId, spname)}
-      try:
-         self.initializeMe()
-         newMFC = MFChain(self.userId, priority=Priority.HIGH, 
-                          metadata=meta, status=JobStatus.GENERAL, 
-                          statusModTime=mx.DateTime.gmt().mjd)
-         mfChain = self.scribe.insertMFChain(newMFC, None)
-      
-         # Create a rule from the MF and Arf file creation
-         spCmd = CatalogScenarioPackageCommand(self.spMetaFname, self.userId)
-      
-         mfChain.addCommands([spCmd.getMakeflowRule(local=True)])
-         mfChain.write()
-         mfChain.updateStatus(JobStatus.INITIALIZE)
-         self.scribe.updateObject(mfChain)
-      finally:
-         self.close()
-      return mfChain
-
    
 # ...............................................
 if __name__ == '__main__':
@@ -441,23 +410,18 @@ if __name__ == '__main__':
    parser.add_argument('user_id', type=str,
             help=('User authorized for the scenario package'))
    parser.add_argument('scen_package_meta', type=str,
-            help=('Metadata file for Scenario package to be cataloged in the database.'))
-   
+            help=('Metadata file for Scenario package to be cataloged in the database.'))   
    # Optional
    parser.add_argument('--user_email', type=str, default=None,
             help=('User email'))
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
-   parser.add_argument('--init_makeflow', type=bool, default=False,
-            help=("""Create a Makeflow task to add this scenario package of 
-                     environmental data for this user"""))
    
    args = parser.parse_args()
    user_id = args.user_id
    scen_package_meta = args.scen_package_meta
    logname = args.logname
    user_email = args.user_email
-   initMakeflow = args.init_makeflow
    
    if logname is None:
       import time
@@ -481,11 +445,7 @@ if __name__ == '__main__':
       filler = SPFiller(scen_package_meta, user_id, email=user_email, 
                         logname=logname)
       filler.initializeMe()
-      
-      if initMakeflow:
-         filler.createCatalogScenPkgMF()
-      else:
-         filler.catalogScenPackages()
+      filler.catalogScenPackages()
    
 """
 find . -name "*.in" -exec sed -i s%@LMHOME@%/opt/lifemapper%g {} \;

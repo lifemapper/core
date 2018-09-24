@@ -110,6 +110,7 @@ class BOOMFiller(LMObject):
       """      
       (self.userId, self.userIdPath,
        self.userEmail,
+       self.userTaxonomyBasename,
        self.archiveName,
        self.priority,
        self.scenPackageName,
@@ -368,11 +369,13 @@ class BOOMFiller(LMObject):
       defaultEmail = '{}{}'.format(usr, DEFAULT_EMAIL_POSTFIX)
       usrEmail = self._getBoomOrDefault(config, 'ARCHIVE_USER_EMAIL', 
                                         defaultValue=defaultEmail)
+      userTaxonomyBasename = self._getBoomOrDefault(config, 
+                           'USER_TAXONOMY_FILENAME', None)
       archiveName = self._getBoomOrDefault(config, 'ARCHIVE_NAME', 
                                            defaultValue=PUBLIC_ARCHIVE_NAME)
       priority = self._getBoomOrDefault(config, 'ARCHIVE_PRIORITY', 
                                         defaultValue=Priority.NORMAL)
-      
+            
       # Species data inputs
       occIdFname = self._getBoomOrDefault(config, 'OCCURRENCE_ID_FILENAME')
       if occIdFname:
@@ -428,7 +431,7 @@ class BOOMFiller(LMObject):
                   'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', isList=True)
       doMapBaseline = self._getBoomOrDefault(config, 'MAP_BASELINE', defaultValue=1)
    
-      return (usr, usrPath, usrEmail, archiveName, priority, scenPackageName, 
+      return (usr, usrPath, usrEmail, userTaxonomyBasename, archiveName, priority, scenPackageName, 
               modelScenCode, prjScenCodeList, doMapBaseline, dataSource, 
               occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
               userOccFname, userOccSep, minpoints, algs, 
@@ -477,6 +480,7 @@ class BOOMFiller(LMObject):
       
       # SDM input species source data and type (for processing)
       config.set(SERVER_BOOM_HEADING, 'DATASOURCE', self.dataSource)
+         
       if self.dataSource == SpeciesDatasource.EXISTING:
          config.set(SERVER_BOOM_HEADING, 'OCCURRENCE_ID_FILENAME', 
                     self.occIdFname)
@@ -496,6 +500,8 @@ class BOOMFiller(LMObject):
          config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA_DELIMITER',
                     self.userOccSep)
 
+      if self.userTaxonomyBasename is not None:
+         config.set(SERVER_BOOM_HEADING, 'USER_TAXONOMY_FILENAME')
       # Use GBIF taxonomy for iDigBio/Biotaphy also
       if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
          config.set(SERVER_BOOM_HEADING, 'GBIF_TAXONOMY_FILENAME', 
@@ -1136,15 +1142,15 @@ class BOOMFiller(LMObject):
 
          # If there are biogeographic hypotheses, add layers and matrix and create MFChain
          biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
-         if biogeoMtx and len(biogeoLayerNames) > 0:
-            # Add BG Hypotheses encoding Makeflows, independent of Boom completion
-            bgMF = self.addEncodeBioGeoMF(boomGridset)
          
          # Write config file for this archive
          self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
                               biogeoLayers=biogeoLayerNames)
                
          if initMakeflow is True:
+            if biogeoMtx and len(biogeoLayerNames) > 0:
+               # Add BG Hypotheses encoding Makeflows, independent of Boom completion
+               bgMF = self.addEncodeBioGeoMF(boomGridset)
             # Create MFChain to run Boomer on these inputs IFF requested
             # This also adds commands for taxonomy insertion before 
             #   and tree encoding after Boom 
@@ -1242,7 +1248,7 @@ from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmServer.base.utilities import isRootUser
 
-from LmDbServer.tools.catalogBoomJob import *
+from LmDbServer.tools.catalogWriteBoomMakeflows import *
 
 paramFname = '/opt/lifemapper/rocks/etc/defaultArchiveParams.ini'
 initMakeflow = True
@@ -1269,10 +1275,6 @@ if biogeoMtx and len(biogeoLayerNames) > 0:
 
 self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
                      biogeoLayers=biogeoLayerNames)
-      
-if initMakeflow is True:
-   boomMF = self.addBoomMF(boomGridset.getId(), tree)
-
 
 # gs = filler.initBoom(initMakeflow=initMakeflow)
 

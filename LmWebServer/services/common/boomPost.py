@@ -40,11 +40,11 @@ from LmCommon.common.lmconstants import (LMFormat, SERVER_BOOM_HEADING,
    HTTPStatus)
 #from LmDbServer.boom.boominput import ArchiveFiller
 #from LmDbServer.boom.initboom import initBoom
-from LmDbServer.tools.catalogBoomJob import initBoom
+from LmDbServer.tools.catalogBoomInputs import BOOMFiller
 from LmServer.common.lmconstants import TEMP_PATH, Priority, ENV_DATA_PATH
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.base.lmobj import LmHTTPError
-from LmDbServer.tools.catalogScenPkg import catalogScenPackages
+from LmDbServer.tools.catalogScenPkg import SPFiller
 
 # .............................................................................
 class BoomPoster(object):
@@ -165,7 +165,9 @@ class BoomPoster(object):
       with open(filename, 'w') as configOutF:
          self.config.write(configOutF)
       
-      gridset = initBoom(filename, walkNow=True)
+#       gridset = initBoom(filename, walkNow=True)
+      filler = BOOMFiller(configOutF)
+      gridset = filler.initBoom(initMakeflow=True)
       
       return gridset
          
@@ -391,7 +393,10 @@ class BoomPoster(object):
                user = self.scribe.findUser(userId=self.userId)
                user_email = user.email
                
-               catalogScenPackages(scen_package_meta, self.userId, user_email)
+               filler = SPFiller(scen_package_meta, user, email=user_email)
+               filler.initializeMe()      
+               filler.catalogScenPackages()
+#                catalogScenPackages(scen_package_meta, self.userId, user_email)
                #pass
             
             if scenPkg is None:
