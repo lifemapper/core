@@ -622,6 +622,14 @@ class BorgScribe(LMObject):
       txSourceId, url, moddate = self._borg.findTaxonSource(taxonSourceName)
       return txSourceId, url, moddate
    
+# # ...............................................
+#    def getTaxonSource(self, tsId=None, tsName=None, tsUrl=None):
+#       """
+#       @copydoc LmServer.db.catalog_borg.Borg::findTaxonSource()
+#       """
+#       txSourceId, url, moddate = self._borg.getTaxonSource(tsId, tsName, tsUrl)
+#       return txSourceId, url, moddate
+   
 # ...............................................
    def findOrInsertTaxon(self, taxonSourceId=None, taxonKey=None, sciName=None):
       """

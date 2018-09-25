@@ -1402,6 +1402,32 @@ class Borg(DbPostgresql):
       return txSourceId, url, moddate
    
 # ...............................................
+   def getTaxonSource(self, tsId, tsName, tsUrl):
+      """
+      @summary: Return the taxonomy source info given the name
+      @param taxonSourceName: unique name of this taxonomy source
+      @return: database id, url, and modification time of this source
+      """
+      txSourceId = txSrcName = txSrcUrl = moddate = None
+      if tsName is not None:
+         try:
+            row, idxs = self.executeSelectOneFunction('lm_getTaxonSource', 
+                                                      tsId, tsName, tsUrl)
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            raise e
+         if row is not None:
+            import collections
+            collections.namedtuple(typename, field_names)
+            txSourceId = self._getColumnValue(row, idxs, ['taxonomysourceid'])
+            url = self._getColumnValue(row, idxs, ['url'])
+            moddate =  self._getColumnValue(row, idxs, ['modtime'])
+      return txSourceId, url, moddate
+   
+
+   
+# ...............................................
    def findTaxon(self, taxonSourceId, taxonkey):
       try:
          row, idxs = self.executeSelectOneFunction('lm_findOrInsertTaxon', 
