@@ -1455,6 +1455,8 @@ SOLR_SNIPPET_COLLECTION = 'snippets'
 SOLR_TAXONOMY_COLLECTION = 'taxonomy'
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 SOLR_SERVER = 'http://localhost:8983/solr/'
+# TODO: Consider moving to localconstants
+NUM_DOCS_PER_POST = 100
 
 class SOLR_FIELDS(object):
    """
@@ -1522,6 +1524,7 @@ class SOLR_TAXONOMY_FIELDS(object):
    TAXON_PHYLUM = 'taxon_phylum'
    TAXON_SPECIES = 'taxon_species'
    USER_ID = 'user_id'
+   TAXONOMY_SOURCE_ID = 'taxon_source_id'
 
 # ============================================================================
 # =                             Scaling Constants                            =
