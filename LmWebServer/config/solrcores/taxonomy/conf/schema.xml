@@ -21,6 +21,7 @@
    <field name="canonical_name" type="taxonname" indexed="true" stored="true" />
    <field name="squid" type="string" indexed="true" stored="true" />
    <field name="user_id" type="string" indexed="true" stored="true" />
+   <field name="taxon_source_id" type="string" indexed="true" stored="true" />
    
    <uniqueKey>id</uniqueKey>
    

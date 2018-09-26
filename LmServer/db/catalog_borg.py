@@ -1409,7 +1409,8 @@ class Borg(DbPostgresql):
       @param tsId: database id of this taxonomy source
       @param tsName: unique name of this taxonomy source
       @param tsName: unique url of this taxonomy source
-      @return: named tuple with database id, name, url, and modification time of this source
+      @return: named tuple with database id, name, url, and 
+               modification time of this source
       """
       ts = None
       try:

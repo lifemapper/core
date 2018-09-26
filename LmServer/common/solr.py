@@ -319,8 +319,56 @@ def add_taxa_to_taxonomy_index(sciname_objects):
                    [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.txOrder],
                    [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
                    [SOLR_TAXONOMY_FIELDS.TAXON_SPECIES, sno.sourceSpeciesKey],
-                   [SOLR_TAXONOMY_FIELDS.USER_ID, PUBLIC_USER],
+                   [SOLR_TAXONOMY_FIELDS.USER_ID, sno.getUserId()],
+                   [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID, sno.taxonomySourceId()],
                    [SOLR_TAXONOMY_FIELDS.ID, sno.getId()]
+        ])
+    post_doc = buildSolrDocument(doc_pairs)
+    # Note: This is somewhat redundant.
+    # TODO: Modify _post to accept a string or file like object as well
+    url = '{}{}/update?commit=true'.format(SOLR_SERVER, 
+                                           SOLR_TAXONOMY_COLLECTION)
+    req = urllib2.Request(url, data=post_doc, 
+                          headers={'Content-Type' : 'text/xml'})
+    return urllib2.urlopen(req).read()
+    
+# .............................................................................
+def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
+    """Create a solr document and post it for the provided objects
+    
+    Note:
+        Should have the following keys
+            taxonid,
+            taxonomysourceid,
+            userid,
+            taxonomykey,
+            squid,
+            kingdom,
+            phylum,
+            tx_class,
+            tx_order,
+            family,
+            genus,
+            canonical,
+            sciname
+    """
+    doc_pairs = []
+    for taxon_info in taxon_dicts:
+        doc_pairs.append([
+            [SOLR_TAXONOMY_FIELDS.ID, taxon_info['taxonid']],
+            [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID, taxon_info['taxonomysourceid']],
+            [SOLR_TAXONOMY_FIELDS.USER_ID, taxon_info['userid']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_KEY, taxon_info['taxonomykey']],
+            [SOLR_TAXONOMY_FIELDS.SQUID, taxon_info['squid']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, taxon_info['kingdom']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, taxon_info['phylum']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, taxon_info['tx_class']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, taxon_info['tx_order']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, taxon_info['family']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, taxon_info['genus']],
+            [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, taxon_info['canonical']],
+            [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, taxon_info['sciname']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_SPECIES, taxon_info['specieskey']],
         ])
     post_doc = buildSolrDocument(doc_pairs)
     # Note: This is somewhat redundant.

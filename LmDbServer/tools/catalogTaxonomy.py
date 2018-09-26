@@ -9,15 +9,13 @@ from LmCommon.common.lmconstants import GBIF, JobStatus, LMFormat
 
 from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
 
-from LmServer.common.lmconstants import Priority
+from LmServer.common.lmconstants import NUM_DOCS_PER_POST, Priority
 from LmServer.common.localconstants import PUBLIC_USER
 import LmServer.common.solr as lm_solr
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ScriptLogger
 from LmServer.base.taxon import ScientificName
 from LmServer.legion.processchain import MFChain
-
-NUM_DOCS_PER_POST = 100
 
 # .............................................................................
 class TaxonFiller(LMObject):
