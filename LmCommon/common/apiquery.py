@@ -841,18 +841,6 @@ gbifids = [1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454,
 1000461, 1000464, 1000483, 1000484, 1000488, 1000511,    testIdigBioClient()1000515, 1000519, 1000525, 
 1000541, 1000543, 1000546, 1000575]
 
-lmapi = IdigbioAPI()
-api = idigbio.json()
-
-for taxonKey in keys:
-   occList = lmapi.queryByGBIFTaxonId(taxonKey)
-   
-for key, name in keys.iteritems():
-   olist = lmapi.queryByGBIFTaxonId(key)
-   countkey = api.count_records(rq={'taxonid':key, 'basisofrecord': 'preservedspecimen'})
-   countname = api.count_records(rq={'scientificname':name, 'basisofrecord': 'preservedspecimen'})
-   print '{}: lm={}, iTaxonkey={}, iName={}'.format(key, len(olist), countkey, countname) 
-
 
 taxAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key=taxonKey)
 taxAPI.query()

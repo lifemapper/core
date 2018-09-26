@@ -42,6 +42,7 @@ from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.tree import Tree
+from collections import namedtuple
 
 # .............................................................................
 class Borg(DbPostgresql):
@@ -1386,7 +1387,7 @@ class Borg(DbPostgresql):
       @param taxonSourceName: unique name of this taxonomy source
       @return: database id, url, and modification time of this source
       """
-      txSourceId = url = createdate = moddate = None
+      txSourceId = url = moddate = None
       if taxonSourceName is not None:
          try:
             row, idxs = self.executeSelectOneFunction('lm_findTaxonSource', 
@@ -1400,6 +1401,32 @@ class Borg(DbPostgresql):
             url = self._getColumnValue(row, idxs, ['url'])
             moddate =  self._getColumnValue(row, idxs, ['modtime'])
       return txSourceId, url, moddate
+   
+# ...............................................
+   def getTaxonSource(self, tsId, tsName, tsUrl):
+      """
+      @summary: Return the taxonomy source info given the id, name or url
+      @param tsId: database id of this taxonomy source
+      @param tsName: unique name of this taxonomy source
+      @param tsName: unique url of this taxonomy source
+      @return: named tuple with database id, name, url, and modification time of this source
+      """
+      ts = None
+      try:
+         row, idxs = self.executeSelectOneFunction('lm_getTaxonSource', 
+                                                   tsId, tsName, tsUrl)
+      except Exception, e:
+         if not isinstance(e, LMError):
+            e = LMError(currargs=e.args, lineno=self.getLineno())
+         raise e
+      if row is not None:
+         import collections
+         fldnames = []
+         for key, _ in sorted(idxs.iteritems(), key=lambda (k,v): (v,k)):
+            fldnames.append(key)
+         TaxonSource = collections.namedtuple('TaxonSource', fldnames)
+         ts = TaxonSource(*row)
+      return ts
    
 # ...............................................
    def findTaxon(self, taxonSourceId, taxonkey):
