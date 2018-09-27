@@ -215,6 +215,9 @@ QUERY_PARAMETERS = {
       'name' : 'matrixType',
       'processIn' : int
    },
+   'metadata' : {
+      'name' : 'metadata'
+   },
    'metastring' : {
       'name' : 'metaString'
    },

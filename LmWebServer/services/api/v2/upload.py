@@ -28,6 +28,7 @@
              discover limitations
 """
 import cherrypy
+import json
 import os
 from StringIO import StringIO
 import zipfile
@@ -171,7 +172,6 @@ class UserUploadService(LmService):
         @todo: Use constants
         @todo: Case insensitive
         """
-        
         csvFilename = os.path.join(self._get_user_dir(), 
                                     '{}{}'.format(packageName, LMFormat.CSV.ext))
         metaFilename = os.path.join(self._get_user_dir(), 
@@ -190,25 +190,27 @@ class UserUploadService(LmService):
             raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 
                                     'Must provide metadata with occurrence data upload')
         else:
+            metadata = json.loads(metadata)
             meta_str = ''
             if 'field' not in metadata.keys() or 'role' not in metadata.keys():
                 raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 
                                                   'Metadata not in expected format')
             else:
+                roles = metadata['role']
                 for f in metadata['field']:
                     line = '{}, {}, {}'.format(f['key'], 
                                                f['shortName'], f['fieldType'])
-                    if f['key'] == f['role']['geopoint']:
+                    if 'geopoint' in roles.keys() and f['key'] == roles['geopoint']:
                         line += ', geopoint'
-                    elif f['key'] == f['role']['groupBy']:
+                    elif 'groupBy' in roles.keys() and f['key'] == roles['groupBy']:
                         line += ', groupby'
-                    elif f['key'] == f['role']['latitude']:
+                    elif 'latitude' in roles.keys() and f['key'] == roles['latitude']:
                         line += ', latitude'
-                    elif f['key'] == f['role']['longitude']:
+                    elif 'longitude' in roles.keys() and f['key'] == roles['longitude']:
                         line += ', longitude'
-                    elif f['key'] == f['role']['taxaName']:
+                    elif 'taxaName' in roles.keys() and f['key'] == roles['taxaName']:
                         line += ', taxaname'
-                    elif f['key'] == f['role']['uniqueId']:
+                    elif 'uniqueId' in roles.keys() and f['key'] == roles['uniqueId']:
                         line += ', uniqueid'
                     meta_str += line
                     meta_str += '\n'
