@@ -95,7 +95,7 @@ class Boomer(LMObject):
       @param sigNum: The signal received
       @param stack: The stack at the time of signal
       """
-      if sigNum == signal.SIGTERM:
+      if sigNum in (signal.SIGTERM, signal.SIGKILL):
          self.close()
       else:
          message = "Unknown signal: %s" % sigNum
