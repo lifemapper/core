@@ -35,7 +35,7 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
-from LmDbServer.tools.catalogBoomJob import BOOMFiller
+from LmDbServer.tools.catalogWriteBoomMakeflows import BOOMFiller
 from LmServer.legion.sdmproj import SDMProjection
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)

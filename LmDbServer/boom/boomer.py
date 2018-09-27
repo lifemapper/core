@@ -386,6 +386,9 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, MatrixType) 
 from LmCommon.common.occparse import OccDataParser
 from LmServer.legion.occlayer import OccurrenceLayer
+
+from LmDbServer.boom.boomer import *
+
 PROCESSING_KEY = 'processing'
 
 scriptname = 'boomerTesting'
@@ -394,8 +397,13 @@ currtime = dt.gmt().mjd
 configFname='/share/lm/data/archive/biotaphy/biotaphy_heuchera_CONUS.ini'
 configFname = '/share/lm/data/archive/biona/biotaphy_global_plants.ini'
 configFname = '/share/lm/data/archive/taffy/heuchera_CONUS.ini'
+configFname = '/share/lm/data/archive/taffy/heuchera_boom_global_current_params.ini'
+successFname = '/share/lm/data/archive/taffy/heuchera_boom_global_current_params.success'
 
-boomer = Boomer(configFname, log=logger)
+
+self = Boomer(configFname, log=logger)
+
+
 workdir = boomer.potatoBushel.getRelativeDirectory()
 boomer.initializeMe()                      
 chris = boomer.christopher
