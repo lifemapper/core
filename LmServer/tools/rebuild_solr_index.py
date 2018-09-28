@@ -63,7 +63,7 @@ def rebuild_index_for_gridset(gridset_id):
       }
       new_wf = MFChain(user_id, priority=Priority.REQUESTED, metadata=wfMeta,
                       status=JobStatus.GENERAL, statusModTime=gmt().mjd)
-      my_wf = scribe.insertMFChain(new_wf)
+      my_wf = scribe.insertMFChain(new_wf, gridset_id)
       
       # TODO: Determine what work directory should be
       work_dir = my_wf.getRelativeDirectory()

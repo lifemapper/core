@@ -42,7 +42,7 @@ from LmServer.legion.processchain import MFChain
 
 # .............................................................................
 def reinitProjections(beginStatus, endStatus, groupSize, log, procParams=None,
-                                           gridsetId=None, userId=PUBLIC_USER):
+                                           gridsetId, userId=PUBLIC_USER):
    """
    @summary: Reinitializes projections for computation
    """
@@ -71,7 +71,7 @@ def reinitProjections(beginStatus, endStatus, groupSize, log, procParams=None,
       
       newMFC = MFChain(userId, metadata=meta, priority=Priority.REQUESTED,
                        status=JobStatus.GENERAL, statusModTime=gmt().mjd)
-      mfChain = scribe.insertMFChain(newMFC)
+      mfChain = scribe.insertMFChain(newMFC, gridsetId)
       scribe.updateObject(mfChain)
       
       workDir = 'mf_{}'.format(mfChain.getId())
@@ -118,17 +118,14 @@ if __name__ == '__main__':
                        help='Reset projections that have at most this status')
    parser.add_argument('groupSize', type=int, 
                    help='Group this many projections together for computation')
-   parser.add_argument('-g', '--gridsetId', type=int, 
-                  help='If provided, only reset projections from this gridset')
+   parser.add_argument('gridsetId', type=int, 
+                  help='Reset projections from this gridset')
    parser.add_argument('-u', '--userId', type=str, 
                   help='Reset projections for this user, defaults to public')
    
    args = parser.parse_args()
    
-   if args.gridsetId is None:
-      gsId = None
-   else:
-      gsId = args.gridsetId
+   gsId = args.gridsetId
       
    if args.userId is None:
       userId = PUBLIC_USER
