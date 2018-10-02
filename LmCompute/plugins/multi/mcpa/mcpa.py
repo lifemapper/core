@@ -33,7 +33,7 @@
 @todo: New method, randomize first
 @author: cjgrady
 """
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import numpy as np
 try:
     from cmath import sqrt
@@ -42,7 +42,8 @@ except:
 
 from LmCommon.common.matrix import Matrix
 
-NUM_THREADS = 100
+#NUM_THREADS = 100
+NUM_THREADS = 4
 
 # .............................................................................
 def _predicted_calc(pred_std, r_div_q_transverse, site_weights, p_sigma_std):
@@ -109,7 +110,225 @@ def _standardize_matrix(mtx, weights):
     return std_mtx
 
 # .............................................................................
-def get_node_mcpa_func(purged_incidence, env_predictors, bg_predictors, 
+def cj_func(phylo_column, purged_incidence, raw_env_predictors, raw_bg_predictors, 
+                       num_env_predictors, num_bg_predictors, randomize=False):
+    """
+    I duplicated the MCPA work function because I was having a hard time with
+    the ProcessPoolExecutor and just in time defined functions.
+    
+    TODO: Address this by combining or getting rid of the duplicate version
+    """
+    # Initialize numpy objects
+    # Semi partial correlation column (observed only)
+    env_semi_partial_col = np.zeros((num_env_predictors),
+                                       dtype=float)
+    bg_semi_partial_col = np.zeros((num_bg_predictors),
+                                      dtype=float)
+    
+    # F semi partial matrices
+    env_f_semi_partial_col = np.zeros((num_env_predictors),
+                                         dtype=float)
+    bg_f_semi_partial_col = np.zeros((num_bg_predictors),
+                                        dtype=float)
+    
+    
+    # TODO: Consider a logger
+    # Get species present in clade
+    species_present_at_node = np.where(phylo_column != 0)[0]
+    
+    if randomize:
+        # Shuffle species around
+        species_present_at_node = np.random.permutation(
+            species_present_at_node)
+    
+    # Incidence full is a subset of the PAM where clade species are present  
+    #incidence_full = pam.data[:,species_present_at_node]
+    incidence = purged_incidence[:, species_present_at_node]
+    
+    sites_present = np.where(incidence.sum(axis=1) > 0)
+    incidence = incidence[sites_present]
+    
+    env_predictors = raw_env_predictors[sites_present]
+    bg_predictors = raw_bg_predictors[sites_present]
+    
+    # Get the number of sites and predictors from the shape of the 
+    #     predictors matrices
+    num_sites = env_predictors.shape[0]
+    # Check that the number of sites matches in both predictor matrices
+    assert env_predictors.shape[0] == bg_predictors.shape[0]
+    
+    # Get site weights
+    site_weights = np.sum(incidence, axis=1)
+    
+    # Get species weights
+    species_weights = np.sum(incidence, axis=0)
+    
+    # Standardize predictor matrices
+    env_pred_std = _standardize_matrix(env_predictors, site_weights)
+    bg_pred_std = _standardize_matrix(bg_predictors, site_weights)
+    
+    # Standardize P-matrix
+    p_std = _standardize_matrix(
+        phylo_column[species_present_at_node], 
+        species_weights)
+    # Get standardized P-Sigma
+    p_sigma_std = np.dot(incidence, p_std)
+    
+    # Regression
+    env_q, env_r = np.linalg.qr(
+        (env_pred_std.T * site_weights).dot(env_pred_std))
+    bg_q, bg_r = np.linalg.qr(
+        (bg_pred_std.T * site_weights).dot(bg_pred_std))
+    
+    # r / q.T - Least squares
+    env_r_div_q_transverse = np.linalg.lstsq(env_r, env_q.T)[0]
+    bg_r_div_q_transverse = np.linalg.lstsq(bg_r, bg_q.T)[0]
+    
+    # H is Beta(all)
+    # Note: I use predicted_calc to minimize the memory footprint so it 
+    #           appears to deviate from the original code.  In reality, the 
+    #           'H' variable is wrapped in the computation and the 
+    #           resulting 'predicted' matrix is the same
+    env_predicted = _predicted_calc(env_pred_std, env_r_div_q_transverse,
+                                    site_weights, p_sigma_std)
+    bg_predicted = _predicted_calc(bg_pred_std, bg_r_div_q_transverse,
+                                   site_weights, p_sigma_std)
+    
+    env_total_p_sigma_residual = np.sum(
+        (p_sigma_std - env_predicted).T.dot(p_sigma_std - env_predicted))
+    bg_total_p_sigma_residual = np.sum(
+        (p_sigma_std - bg_predicted).T.dot(p_sigma_std - bg_predicted))
+    
+    # Calculate R-squared values
+    env_r_sq = 1.0 * np.sum(
+        env_predicted.T.dot(env_predicted)) / np.sum(
+            p_sigma_std.T.dot(p_sigma_std))
+    bg_r_sq = 1.0 * np.sum(
+        bg_predicted.T.dot(bg_predicted)) / np.sum(
+            p_sigma_std.T.dot(p_sigma_std))
+    
+    # Calculate adjusted R-squared
+    # (Classic method) Should be interpreted with some caution as the
+    #     degrees of freedom for weighted models are different from
+    #     non-weighted models adjustments based on effective degrees of 
+    #     freedom should be considered
+    try:
+        env_adj_r_sq = 1.0 - (
+            (num_sites - 1.0) / (num_sites - num_env_predictors - 1.0)) * (
+                1.0 - env_r_sq)    
+    except Exception as e:
+        env_adj_r_sq = 0.0
+        
+    try:
+        bg_adj_r_sq = 1.0 - ((num_sites - 1.0) / (
+            num_sites - num_bg_predictors - 1.0)) * (1.0 - bg_r_sq)
+    except Exception as e:
+        bg_adj_r_sq = 0.0
+    
+    # F-global values
+    env_f_global = np.sum(
+        env_predicted.T.dot(env_predicted)) / env_total_p_sigma_residual
+    bg_f_global = np.sum(
+        bg_predicted.T.dot(bg_predicted)) / bg_total_p_sigma_residual
+                                                            
+    # Environmental predictors
+    for i in xrange(num_env_predictors):
+        print(' - Environment predictor {} of {}'.format(
+            i+1, num_env_predictors))
+        # Get the ith predictor, needs to be a column
+        ith_predictor = env_predictors[:,i].reshape(
+            env_predictors.shape[0], 1)
+        # Get predictors without ith
+        wo_ith_predictor = np.delete(env_predictors, i, axis=1)
+        
+        # Slope for ith predictor
+        ith_q, ith_r = np.linalg.qr(
+            (ith_predictor.T * site_weights).dot(ith_predictor))
+        ith_r_div_q_transverse = np.linalg.lstsq(ith_r, ith_q.T)[0]
+        ith_slope = (
+            ith_r_div_q_transverse.dot(ith_predictor.T) * site_weights
+            ).dot(p_sigma_std)
+        
+        # Regression for remaining predictors
+        wo_ith_q, wo_ith_r = np.linalg.qr(
+            (wo_ith_predictor.T * site_weights).dot(wo_ith_predictor))
+        wo_ith_r_div_q_transverse = np.linalg.lstsq(wo_ith_r, 
+                                                    wo_ith_q.T)[0]
+        
+        predicted = _predicted_calc(wo_ith_predictor, 
+                                    wo_ith_r_div_q_transverse, 
+                                    site_weights, p_sigma_std)
+        # Get remaining r squared
+        remaining_r_sq = np.sum(
+            predicted.T.dot(predicted)) / np.sum(p_sigma_std.T.dot(
+                p_sigma_std))
+        
+        # Calculate the semi-partial correlation
+        try:
+            env_semi_partial_col[i] = (
+                ith_slope * sqrt(env_r_sq - remaining_r_sq)) / abs(
+                    ith_slope)
+        except ValueError as e: # Square root of a negative
+            env_semi_partial_col[i] = 0.0
+            
+        # Calculate F semi-partial
+        env_f_semi_partial_col[i] = (
+            env_r_sq - remaining_r_sq) / env_total_p_sigma_residual
+    
+    all_predictors = np.concatenate((bg_predictors, env_predictors), 
+                                    axis=1)
+    
+    # Biogeo predictors
+    for i in xrange(num_bg_predictors):
+        print(' - Biogeographic hypothesis {} of {}'.format(
+            i+1, num_bg_predictors))
+        # Get the ith predictor, needs to be a column
+        ith_predictor = all_predictors[:,i].reshape(
+            all_predictors.shape[0], 1)
+        # Get predictors without ith
+        wo_ith_predictor = np.delete(all_predictors, i, axis=1)
+        
+        # Slope for ith predictor
+        ith_q, ith_r = np.linalg.qr((ith_predictor.T * site_weights).dot(
+            ith_predictor))
+        ith_r_div_q_transverse = np.linalg.lstsq(ith_r, ith_q.T)[0]
+        ith_slope = (
+            ith_r_div_q_transverse.dot(ith_predictor.T) * site_weights
+            ).dot(p_sigma_std)
+        
+        # Regression for remaining predictors
+        wo_ith_q, wo_ith_r = np.linalg.qr(
+            (wo_ith_predictor.T * site_weights).dot(wo_ith_predictor))
+        wo_ith_r_div_q_transverse = np.linalg.lstsq(
+            wo_ith_r, wo_ith_q.T)[0]
+        
+        predicted = _predicted_calc(wo_ith_predictor,
+                                    wo_ith_r_div_q_transverse,
+                                    site_weights, p_sigma_std)
+        # Get remaining r squared
+        remaining_r_sq = np.sum(
+            predicted.T.dot(predicted)) / np.sum(p_sigma_std.T.dot(
+                p_sigma_std))
+        
+        # Calculate the semi-partial correlation
+        try:
+            bg_semi_partial_col[i] = (
+                ith_slope * sqrt(bg_r_sq - remaining_r_sq)) / abs(
+                    ith_slope)
+        except ValueError as e: # Square root of a negative
+            bg_semi_partial_col[i] = 0.0
+            
+        # Calculate F semi-partial
+        bg_f_semi_partial_col[i] = (
+            bg_r_sq - remaining_r_sq) / bg_total_p_sigma_residual
+            
+    return (env_adj_r_sq, bg_adj_r_sq, env_f_global, bg_f_global, 
+            env_semi_partial_col, bg_semi_partial_col, 
+            env_f_semi_partial_col, bg_f_semi_partial_col)
+
+
+# .............................................................................
+def get_node_mcpa_func(purged_incidence, raw_env_predictors, raw_bg_predictors, 
                        num_env_predictors, num_bg_predictors, randomize=False):
     """Get the MCPA function for nodes
     """
@@ -146,6 +365,11 @@ def get_node_mcpa_func(purged_incidence, env_predictors, bg_predictors,
         #incidence_full = pam.data[:,species_present_at_node]
         incidence = purged_incidence[:, species_present_at_node]
         
+        sites_present = np.where(incidence.sum(axis=1) > 0)
+        incidence = incidence[sites_present]
+        
+        env_predictors = raw_env_predictors[sites_present]
+        bg_predictors = raw_bg_predictors[sites_present]
         
         # Get the number of sites and predictors from the shape of the 
         #     predictors matrices
@@ -429,27 +653,31 @@ def mcpa_run(pam, phylo_matrix, env_matrix, biogeo_matrix, randomize=False):
     func = get_node_mcpa_func(purged_incidence, env_predictors, bg_predictors, 
                               num_env_predictors, num_bg_predictors, randomize)
 
-    with ThreadPoolExecutor(NUM_THREADS) as executor:
-    #with ProcessPoolExecutor(NUM_THREADS) as executor:
-        #for col in phylo_matrix.data.T:
-        #    executor.submit(cj_func, col, purged_incidence, env_predictors, bg_predictors, 
-        #                      num_env_predictors, num_bg_predictors, randomize)
-        ret = executor.map(func, phylo_matrix.data.T)
+    ret = []
 
-    i = 0
-    for (col_env_adj_r_sq, col_bg_adj_r_sq, col_env_f_global, col_bg_f_global, 
-         col_env_semi_partial, col_bg_semi_partial, col_env_f_semi_partial, 
-         col_bg_f_semi_partial) in ret:
-        
-        env_adj_r_sq[i, 0] = col_env_adj_r_sq
-        bg_adj_r_sq[i, 0] = col_bg_adj_r_sq
-        env_f_global[i, 0] = col_env_f_global
-        bg_f_global[i, 0] = col_bg_f_global
-        env_semi_partial_matrix[i] = col_env_semi_partial
-        bg_semi_partial_matrix[i] = col_bg_semi_partial
-        env_f_semi_partial_matrix[i] = col_env_f_semi_partial
-        bg_f_semi_partial_matrix[i] = col_bg_f_semi_partial
-        i += 1
+    #with ThreadPoolExecutor(NUM_THREADS) as executor:
+    with ProcessPoolExecutor(NUM_THREADS) as executor:
+        for col in phylo_matrix.data.T:
+            ret.append(
+                executor.submit(cj_func, col, purged_incidence, 
+                                env_predictors, bg_predictors, 
+                              num_env_predictors, num_bg_predictors, randomize))
+        #ret = executor.map(func, phylo_matrix.data.T)
+
+        i = 0
+        for (col_env_adj_r_sq, col_bg_adj_r_sq, col_env_f_global, col_bg_f_global, 
+             col_env_semi_partial, col_bg_semi_partial, col_env_f_semi_partial, 
+             col_bg_f_semi_partial) in [t.result() for t in ret]:
+            
+            env_adj_r_sq[i, 0] = col_env_adj_r_sq
+            bg_adj_r_sq[i, 0] = col_bg_adj_r_sq
+            env_f_global[i, 0] = col_env_f_global
+            bg_f_global[i, 0] = col_bg_f_global
+            env_semi_partial_matrix[i] = col_env_semi_partial
+            bg_semi_partial_matrix[i] = col_bg_semi_partial
+            env_f_semi_partial_matrix[i] = col_env_f_semi_partial
+            bg_f_semi_partial_matrix[i] = col_bg_f_semi_partial
+            i += 1
         
 
 
