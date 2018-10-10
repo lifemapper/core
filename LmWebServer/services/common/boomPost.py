@@ -166,7 +166,7 @@ class BoomPoster(object):
          self.config.write(configOutF)
       
 #       gridset = initBoom(filename, walkNow=True)
-      filler = BOOMFiller(configOutF)
+      filler = BOOMFiller(filename)
       gridset = filler.initBoom(initMakeflow=True)
       
       return gridset
