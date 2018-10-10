@@ -66,7 +66,7 @@ from LmServer.legion.tree import Tree
 from LmServer.base.utilities import isRootUser
 
 # .............................................................................
-class BOOMFiller(LMObject):
+class WorkflowCreator(LMObject):
    """
    @summary 
    Class to: 
@@ -84,9 +84,9 @@ class BOOMFiller(LMObject):
 # .............................................................................
    def __init__(self, paramFname, logname=None):
       """
-      @summary Constructor for BOOMFiller class.
+      @summary Constructor for WorkflowCreator class.
       """
-      super(BOOMFiller, self).__init__()
+      super(WorkflowCreator, self).__init__()
       scriptname, _ = os.path.splitext(os.path.basename(__file__))
       self.name = scriptname
       # Logfile
@@ -106,10 +106,13 @@ class BOOMFiller(LMObject):
    # ...............................................
    def initializeInputs(self):
       """
-      @summary Initialize configured and stored inputs for BOOMFiller class.
+      @summary Initialize configured and stored inputs for WorkflowCreator class.
+      usr, usrPath, userTaxonomyBasename, archiveName, 
+              priority, scenPackageName, 
+              modelScenCode, prjScenCodeList, doMapBaseline, 
+              cellsize, gridname
       """      
       (self.userId, self.userIdPath,
-       self.userEmail,
        self.userTaxonomyBasename,
        self.archiveName,
        self.priority,
@@ -117,33 +120,15 @@ class BOOMFiller(LMObject):
        modelScenCode,
        prjScenCodeList,
        doMapBaseline,
-       self.dataSource,
-       self.occIdFname,
-       self.gbifFname,
-       self.idigFname,
-       self.idigOccSep,
-       self.bisonFname,
-       self.userOccFname,
-       self.userOccSep,   
-       self.minpoints,
-       self.algorithms,
        self.assemblePams,
-       self.gridbbox,
-       self.cellsides,
        self.cellsize,
-       self.gridname, 
-       self.intersectParams, 
-       self.maskAlg, 
-       self.treeFname, 
-       self.bghypFnames,
-       self.doComputePAMStats) = self.readParamVals()
+       self.gridname,
+       self.treename,
+       self.bgLyrnames) = self.readParamVals()
       earl = EarlJr()
       self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                    objCode=self.archiveName, 
                                                    usr=self.userId)
-       
-      # Add/find user for this Boom process (should exist)
-      self.addUser()
        
       # Find existing scenarios or create from user or public ScenPackage metadata
       self.scenPkg = self.findOrAddScenarioPackage()
@@ -151,52 +136,23 @@ class BOOMFiller(LMObject):
        self.prjScenCodeList) = self.findMdlProjScenarios(modelScenCode, 
                                  prjScenCodeList, doMapBaseline=doMapBaseline)
       
-      # Fill grid bbox with scenario package (intersection of all bboxes) if it is absent
-      if self.gridbbox is None:
-         self.gridbbox = self.scenPkg.bbox
-
-      # Created by addArchive
-      self.shapegrid = None
-      
-      # If running as root, new user filespace must have permissions corrected
-      self._warnPermissions()
-
       earl = EarlJr()
       self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                    objCode=self.archiveName, 
                                                    usr=self.userId)
 
    # ...............................................
-   def findOrAddScenarioPackage(self):
+   def findScenarioPackage(self):
       """
       @summary Find Scenarios from codes 
       @note: Boom parameters must include SCENARIO_PACKAGE, 
                           and optionally, SCENARIO_PACKAGE_MODEL_SCENARIO,
                                           SCENARIO_PACKAGE_PROJECTION_SCENARIOS
-             If SCENARIO_PACKAGE_PROJECTION_SCENARIOS is not present, SDMs 
-             will be projected onto all scenarios
       """
       # Make sure Scenario Package exists for this user
       scenPkg = self.scribe.getScenPackage(userId=self.userId, 
                                       scenPkgName=self.scenPackageName, 
-                                      fillLayers=True)
-      if scenPkg is None:
-         # See if metadata exists in user or public environmental directory
-         spMetaFname = None
-         for pth in (self.userIdPath, ENV_DATA_PATH):
-            thisFname = os.path.join(pth, self.scenPackageName + '.py')
-            if os.path.exists(thisFname):
-               spMetaFname = thisFname
-               break
-#          spMetaFname = os.path.join(ENV_DATA_PATH, self.scenPackageName + '.py')
-         if spMetaFname is None:
-            raise LMError("""ScenPackage {} must be authorized for User {} 
-                             or all users (with public metadata file {})"""
-                         .format(self.scenPackageName, self.userId, spMetaFname))
-         else:
-            spFiller = SPFiller(spMetaFname, self.userId, scribe=self.scribe)
-            scenPkg = spFiller.catalogScenPackages()
-         
+                                      fillLayers=True)         
       return scenPkg
                 
    # ...............................................
@@ -260,15 +216,6 @@ class BOOMFiller(LMObject):
          fname = None
       return fname
 
-# ...............................................
-   def _warnPermissions(self):
-      if isRootUser():
-         print("""
-               If not running {} from bash script `catalogBoomJob`  
-               make sure to set group to {} and rw permissions on the 
-               newly created shapegrid {}
-               """.format(LM_USER, self.name, self.gridname))
-         
    # ...............................................
    def _getDb(self, logname):
       import logging
@@ -277,55 +224,6 @@ class BOOMFiller(LMObject):
       scribe = BorgScribe(logger)
       return scribe
    
-# .............................................................................
-   def _getAlgorithm(self, config, algHeading):
-      """
-      @note: Returns configured algorithm
-      """
-      acode =  config.get(algHeading, 'CODE')
-      alg = Algorithm(acode)
-      alg.fillWithDefaults()
-      inputs = {}
-      # override defaults with any option specified
-      algoptions = config.getoptions(algHeading)
-      for name in algoptions:
-         pname, ptype = alg.findParamNameType(name)
-         if pname is not None:
-            if ptype == types.IntType:
-               val = config.getint(algHeading, pname)
-            elif ptype == types.FloatType:
-               val = config.getfloat(algHeading, pname)
-            else:
-               val = config.get(algHeading, pname)
-               # Some algorithms(mask) may have a parameter indicating a layer,
-               # if so, add name to parameters and object to inputs
-               if acode == 'hull_region_intersect' and pname == 'region':
-                  inputs[pname] = val
-            alg.setParameter(pname, val)
-      if inputs:
-         alg.setInputs(inputs)
-      return alg
-      
-# .............................................................................
-   def _getAlgorithms(self, config, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX):
-      """
-      @note: Returns configured algorithms, uses default algorithms only 
-             if no others exist
-      """
-      algs = {}
-      defaultAlgs = {}
-      # Get algorithms for SDM modeling or SDM mask
-      sections = config.getsections(sectionPrefix)
-      for algHeading in sections:
-         alg = self._getAlgorithm(config, algHeading)
-         
-         if algHeading.endswith(SERVER_DEFAULT_HEADING_POSTFIX):
-            defaultAlgs[algHeading] = alg
-         else:
-            algs[algHeading] = alg
-      if len(algs) == 0:
-         algs = defaultAlgs
-      return algs
 
    # ...............................................
    def _findScenPkgMeta(self, scenpkgName):
@@ -366,61 +264,16 @@ class BOOMFiller(LMObject):
       usr = self._getBoomOrDefault(config, 'ARCHIVE_USER', defaultValue=PUBLIC_USER)
       earl = EarlJr()
       usrPath = earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
-      defaultEmail = '{}{}'.format(usr, DEFAULT_EMAIL_POSTFIX)
-      usrEmail = self._getBoomOrDefault(config, 'ARCHIVE_USER_EMAIL', 
-                                        defaultValue=defaultEmail)
       userTaxonomyBasename = self._getBoomOrDefault(config, 
                            'USER_TAXONOMY_FILENAME', None)
       archiveName = self._getBoomOrDefault(config, 'ARCHIVE_NAME', 
                                            defaultValue=PUBLIC_ARCHIVE_NAME)
       priority = self._getBoomOrDefault(config, 'ARCHIVE_PRIORITY', 
                                         defaultValue=Priority.NORMAL)
-            
-      # Species data inputs
-      occIdFname = self._getBoomOrDefault(config, 'OCCURRENCE_ID_FILENAME')
-      if occIdFname:
-         dataSource = SpeciesDatasource.EXISTING
-      else:
-         dataSource = self._getBoomOrDefault(config, 'DATASOURCE')
-         dataSource = dataSource.upper()
-      gbifFname = self._getBoomOrDefault(config, 'GBIF_OCCURRENCE_FILENAME')
-      idigFname = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA')
-      idigOccSep = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA_DELIMITER')
-      bisonFname = self._getBoomOrDefault(config, 'BISON_TSN_FILENAME') 
-      userOccFname = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA')
-      userOccSep = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA_DELIMITER')
-      minpoints = self._getBoomOrDefault(config, 'POINT_COUNT_MIN')
-      algs = self._getAlgorithms(config, sectionPrefix='ALGORITHM')
-      
-      # Should be None or one Mask for pre-processing
-      maskAlg = None
-      maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
-      if len(maskAlgList) == 1:
-         maskAlg = maskAlgList.values()[0]
-         
-      # optional MCPA inputs
-      treeFname = self._getBoomOrDefault(config, 'TREE')
-      biogeoName = self._getBoomOrDefault(config, 'BIOGEO_HYPOTHESES')
-      bghypFnames = self._getBioGeoHypothesesLayerFilenames(biogeoName, usrPath)
-
+                     
       # RAD/PAM params
-      doComputePAMStats = self._getBoomOrDefault(config, 'COMPUTE_PAM_STATS', isBool=True)
-      assemblePams = self._getBoomOrDefault(config, 'ASSEMBLE_PAMS', isBool=True)
-      gridbbox = self._getBoomOrDefault(config, 'GRID_BBOX', isList=True)
-      cellsides = self._getBoomOrDefault(config, 'GRID_NUM_SIDES')
       cellsize = self._getBoomOrDefault(config, 'GRID_CELLSIZE')
       gridname = '{}-Grid-{}'.format(archiveName, cellsize)
-      # TODO: allow filter
-      gridFilter = self._getBoomOrDefault(config, 'INTERSECT_FILTERSTRING')
-      gridIntVal = self._getBoomOrDefault(config, 'INTERSECT_VALNAME')
-      gridMinPct = self._getBoomOrDefault(config, 'INTERSECT_MINPERCENT')
-      gridMinPres = self._getBoomOrDefault(config, 'INTERSECT_MINPRESENCE')
-      gridMaxPres = self._getBoomOrDefault(config, 'INTERSECT_MAXPRESENCE')
-      intersectParams = {MatrixColumn.INTERSECT_PARAM_FILTER_STRING: gridFilter,
-                         MatrixColumn.INTERSECT_PARAM_VAL_NAME: gridIntVal,
-                         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
-                         MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
-                         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
 
       scenPackageName = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE')
       if scenPackageName is None:
@@ -430,14 +283,14 @@ class BOOMFiller(LMObject):
       prjScenCodeList = self._getBoomOrDefault(config, 
                   'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', isList=True)
       doMapBaseline = self._getBoomOrDefault(config, 'MAP_BASELINE', defaultValue=1)
+      assemblePams = self._getBoomOrDefault(config, 'ASSEMBLE_PAMS', isBool=True)
+      treename = self._getBoomOrDefault(config, 'TREE')
+      bglyrnames = self._getBoomOrDefault(config, 'biogeo_hypotheses_layers', isList=True)
    
-      return (usr, usrPath, usrEmail, userTaxonomyBasename, archiveName, priority, scenPackageName, 
-              modelScenCode, prjScenCodeList, doMapBaseline, dataSource, 
-              occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
-              userOccFname, userOccSep, minpoints, algs, 
-              assemblePams, gridbbox, cellsides, cellsize, gridname, 
-              intersectParams, maskAlg, treeFname, bghypFnames, 
-              doComputePAMStats)
+      return (usr, usrPath, userTaxonomyBasename, archiveName, 
+              priority, scenPackageName, 
+              modelScenCode, prjScenCodeList, doMapBaseline, assemblePams,
+              cellsize, gridname, treename, bglyrnames)
       
    
    # ...............................................
@@ -498,58 +351,6 @@ class BOOMFiller(LMObject):
                var.append(v)
       return var
    
-
-   # ...............................................
-   def addUser(self):
-      """
-      @summary Adds provided userid to the database
-      """
-      user = LMUser(self.userId, self.userEmail, self.userEmail, 
-                    modTime=mx.DateTime.gmt().mjd)
-      self.scribe.log.info('  Find or insert user {} ...'.format(self.userId))
-      updatedUser = self.scribe.findOrInsertUser(user)
-      # If exists, found by unique Id or Email, update values
-      self.userId = updatedUser.userid
-      self.userEmail = updatedUser.email
-   
-   # ...............................................
-   def _checkOccurrenceSets(self, limit=10):
-      legalUsers = [PUBLIC_USER, self.userId]
-      missingCount = 0
-      wrongUserCount = 0
-      nonIntCount = 0
-      if not os.path.exists(self.occIdFname):
-         raise LMError('Missing OCCURRENCE_ID_FILENAME {}'.format(self.occIdFname))
-      else:
-         count = 0
-         for line in open(self.occIdFname, 'r'):
-            count += 1
-            try:
-               tmp = line.strip()
-            except Exception, e:
-               self.scribe.log.info('Error reading line {} ({}), stopping'
-                               .format(count, str(e)))
-               break
-            try:
-               occid = int(tmp)
-            except Exception, e:
-               self.scribe.log.info('Unable to get Id from data {} on line {}'
-                               .format(tmp, count))
-               nonIntCount += 1
-            else:
-               occ = self.scribe.getOccurrenceSet(occId=occid)
-               if occ is None:
-                  missingCount += 1
-               elif occ.getUserId() not in legalUsers:
-                  self.scribe.log.info('Unauthorized user {} for ID {}'
-                                  .format(occ.getUserId(), occid))
-                  wrongUserCount += 1
-            if count >= limit:
-               break
-      self.scribe.log.info('Errors out of {} read OccurrenceSets (limit {}):'.format(count, limit))
-      self.scribe.log.info('  Missing: {} '.format(missingCount))
-      self.scribe.log.info('  Unauthorized data: {} '.format(wrongUserCount))
-      self.scribe.log.info('  Bad ID: {} '.format(nonIntCount))
 
    # ...............................................
    def _getMCProcessType(self, mtxColumn, mtxType):
@@ -654,7 +455,7 @@ class BOOMFiller(LMObject):
    def addEncodeBioGeoMF(self, gridset):
       """
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-                and configFile written by BOOMFiller.initBoom.
+                and configFile written by WorkflowCreator.initBoom.
       """
       scriptname, _ = os.path.splitext(os.path.basename(__file__))
       meta = {MFChain.META_CREATED_BY: scriptname,
@@ -678,6 +479,26 @@ class BOOMFiller(LMObject):
       mfChain.updateStatus(JobStatus.INITIALIZE)
       self.scribe.updateObject(mfChain)
       return mfChain   
+
+   # ...............................................
+   def _findGRIM(self, gridset, scen):
+      # Create Scenario-GRIM for this archive, scenario
+      # GRIM layers are added now
+      desc = '{} for Scenario {}'.format(GGRIM_KEYWORD, scen.code)
+      grimMeta = {ServiceObject.META_DESCRIPTION: desc,
+                 ServiceObject.META_KEYWORDS: [GGRIM_KEYWORD]}
+      tmpGrim = LMMatrix(None, matrixType=MatrixType.GRIM, 
+                         gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
+                         dateCode=scen.dateCode, metadata=grimMeta, userId=self.userId, 
+                         gridset=gridset, 
+                         status=JobStatus.GENERAL, 
+                         statusModTime=mx.DateTime.gmt().mjd)
+      grim = self.scribe.findOrInsertMatrix(tmpGrim)
+      for lyr in scen.layers:
+         # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
+         mtxcol = self._initGRIMIntersect(lyr, grim)
+      return grim
+
 
    # .............................
    def _addGrimMF(self, scencode, gridsetId, currtime):
@@ -738,7 +559,7 @@ class BOOMFiller(LMObject):
    def _getTaxonomyCommand(self):
       """
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-                and configFile written by BOOMFiller.initBoom.
+                and configFile written by WorkflowCreator.initBoom.
       @todo: Define format and enable ingest user taxonomy, commented out below
       """
       cattaxCmd = taxSuccessFname = taxDataFname = None
@@ -799,7 +620,7 @@ class BOOMFiller(LMObject):
    def addBoomMF(self, boomGridsetId, tree):
       """
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-                and configFile written by BOOMFiller.initBoom.
+                and configFile written by WorkflowCreator.initBoom.
       """
       meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_GRIDSET: boomGridsetId,
@@ -858,21 +679,18 @@ class BOOMFiller(LMObject):
          if not(self.userId == DEFAULT_POST_USER) and self.assemblePams:
             scenGrims = {}
             for code, scen in self.scenPkg.scenarios.iteritems():
-               scenGrim = self._findOrAddGRIM(boomGridset, scen)
+               scenGrim = self._findGRIM(boomGridset, scen)
                scenGrims[code] = scenGrim
          
             # Add GRIM compute Makeflows, independent of Boom completion
             grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
 
-         # If there are biogeographic hypotheses, add layers and matrix and create MFChain
-         biogeoMtx = self.scribe.getMatrix(gridsetId=boomGridset.getId, 
-                               mtxType=MatrixType.BIOGEO_HYPOTHESES)
-      
-         if biogeoMtx and len(self.bghypFnames) > 0:
+         if len(self.bgLyrnames) > 0:
             bgMF = self.addEncodeBioGeoMF(boomGridset)
             
-         tname, _ = os.path.splitext(self.treeFname)
-         tree = Tree(tname, userId=self.userId, gridsetId=boomGridset.getId())
+         tree = None
+         if self.treename:
+            tree = Tree(self.treename, userId=self.userId, gridsetId=boomGridset.getId())
          # This also adds commands for taxonomy insertion before 
          #   and tree encoding after Boom 
          boomMF = self.addBoomMF(boomGridset.getId(), tree)
@@ -917,7 +735,7 @@ if __name__ == '__main__':
    print('Running catalogBoomJob with paramFname = {}'
          .format(paramFname))
    
-   filler = BOOMFiller(paramFname, logname=logname)
+   filler = WorkflowCreator(paramFname, logname=logname)
    gs = filler.initBoom(initMakeflow=initMakeflow)
    print('Completed catalogBoomJob creating gridset: {}'.format(gs.getId()))
 
@@ -978,7 +796,7 @@ secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 logname = '{}.{}'.format(pname, timestamp)
 
-self = BOOMFiller(paramFname, logname=logname)
+self = WorkflowCreator(paramFname, logname=logname)
 self.initializeInputs()
 
 if self.occIdFname:
