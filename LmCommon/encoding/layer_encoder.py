@@ -188,7 +188,8 @@ class LayerEncoder(object):
         if num_columns == 1:
             column_headers = [column_name]
         else:
-            column_headers = ['{}-{}'.format(column_name, val) for val in range(num_columns)]
+            column_headers = [
+                '{}-{}'.format(column_name, val) for val in range(num_columns)]
         
         row_headers = []
         
@@ -278,7 +279,8 @@ class LayerEncoder(object):
             uly, ulx = get_rc(x - x_size_2, y + y_size_2) # Upper left corner
             lry, lrx = get_rc(x + x_size_2, y - y_size_2) # Lower right corner
             
-            return data[max(0, uly):min(y_size, lry), max(0, ulx):min(x_size, lrx)]
+            return data[max(0, uly):min(y_size, lry),
+                        max(0, ulx):min(x_size, lrx)]
             
         return window_function
 
@@ -429,7 +431,8 @@ class LayerEncoder(object):
         vector_layer = vector_ds.GetLayer()
         
         raster_drv = gdal.GetDriverByName('MEM')
-        raster_ds = raster_drv.Create('temp', x_size, y_size, 1, gdal.GDT_Float32)
+        raster_ds = raster_drv.Create('temp', x_size, y_size, 1, 
+                                      gdal.GDT_Float32)
         raster_ds.SetGeoTransform((min_x, x_res, 0, max_y, 0, -1.0 * y_res))
         band = raster_ds.GetRasterBand(1)
         band.SetNoDataValue(nodata)
@@ -499,8 +502,8 @@ class LayerEncoder(object):
     # ...............................
     def encode_presence_absence(self, layer_filename, column_name, 
                                 min_presence, max_presence, min_coverage, 
-                                resolution=None, bbox=None, nodata=DEFAULT_NODATA, 
-                                attribute_name=None):
+                                resolution=None, bbox=None, 
+                                nodata=DEFAULT_NODATA, attribute_name=None):
         """Encodes a distribution layer into a presence absence column
 
         Args:
@@ -528,8 +531,8 @@ class LayerEncoder(object):
     
     # ...............................
     def encode_mean_value(self, layer_filename, column_name, 
-                                resolution=None, bbox=None, nodata=DEFAULT_NODATA, 
-                                attribute_name=None):
+                                resolution=None, bbox=None,
+                                nodata=DEFAULT_NODATA, attribute_name=None):
         """Encodes a layer based on the mean value for each data window.
 
         Args:
@@ -552,8 +555,8 @@ class LayerEncoder(object):
     
     # ...............................
     def encode_largest_class(self, layer_filename, column_name, min_coverage,
-                                resolution=None, bbox=None, nodata=DEFAULT_NODATA, 
-                                attribute_name=None):
+                                resolution=None, bbox=None,
+                                nodata=DEFAULT_NODATA, attribute_name=None):
         """Encodes a layer based on the largest class in each data window.
 
         Args:
