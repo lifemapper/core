@@ -1,41 +1,19 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+"""This module provides functionality for subsetting a gridset using Solr
 """
-@summary: This module provides functionality for subsetting a grid set based on
-             matches from Solr
-@author: CJ Grady
-@version: 1.0
-@status: alpha
-@license: gpl2
-@copyright: Copyright (C) 2018, University of Kansas Center for Research
 
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
-"""
 from mx.DateTime import gmt
-import numpy as np
 import os
+
+import numpy as np
 from osgeo import ogr
 
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
                                          ProcessType)
 from LmCommon.common.matrix import Matrix
 from LmCommon.compression.binaryList import decompress
-
+from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import SOLR_FIELDS, SubsetMethod, Priority
 from LmServer.common.log import LmPublicLogger
@@ -46,7 +24,6 @@ from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
-from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
 
 # .............................................................................
 def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
@@ -478,11 +455,14 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
          mtxCols = []
          oldCols = scribe.getColumnsForMatrix(bg.getId())
          
+         encoder = LayerEncoder(myShp.getDLocation())
+         # TODO(CJ): This should be pulled from a default config or the
+         #    database or somewhere
+         min_coverage = .25
+         # Do this for each layer because we need to have the layer object
+         #    do create a matrix column
+         num_existing_cols = 0
          for oldCol in oldCols:
-            # Do this for each layer because we need to have the layer object
-            #    do create a matrix column
-            lyrEnc = BioGeoEncoding(myShp.getDLocation())
-            
             lyr = oldCol.layer
             
             try:
@@ -490,12 +470,14 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                                  MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
             except KeyError:
                valAttribute = None
-               
-            lyrEnc.addLayers(lyr.getDLocation(), eventField=valAttribute)
             
-            encMtx = lyrEnc.encodeHypotheses()
+            encoder.encode_biogeographic_hypothesis(lyr.getDLocation(), 
+                                                    lyr.name, min_coverage, 
+                                                    event_field=valAttribute)
             
-            for col in encMtx.getColumnHeaders():
+            enc_mtx = encoder.get_encoded_matrix()
+            
+            for col in enc_mtx.getColumnHeaders()[num_existing_cols:]:
                try:
                   efValue = col.split(' - ')[1]
                except:
@@ -504,7 +486,8 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                if valAttribute is not None:
                   intParams = {
                      MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
-                     MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue
+                     # TODO(CJ): Pick a better name if we need to do this
+                     MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): lyr.name
                   }
                else:
                   intParams = None
@@ -521,18 +504,13 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                                  statusModTime=gmt().mjd)
                updatedMC = scribe.findOrInsertMatrixColumn(mc)
                mtxCols.append(updatedMC)
+            num_existing_cols = len(enc_mtx.getColumnHeaders())
                
-            # TODO: Make sure this gets the inserted matrix data object
-            if insertedBG.data is None:
-               allEncodings = encMtx
-            else:
-               # Append to previous layer encodings 
-               allEncodings = Matrix.concatenate([allEncodings, encMtx], axis=1)
-            
-            insertedBG.data = allEncodings.data
-            insertedBG.setHeaders(allEncodings.getHeaders())
          
          # Write matrix
+         # TODO(CJ): Evaluate if this is how we want to do it
+         insertedBG.data = enc_mtx.data
+         insertedBG.setHeaders(enc_mtx.getHeaders())
          insertedBG.write(overwrite=True)
          insertedBG.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
          scribe.updateObject(insertedBG)
