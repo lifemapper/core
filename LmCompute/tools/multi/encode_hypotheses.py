@@ -1,63 +1,54 @@
-#!/bin/bash
-"""
-@summary: This script encodes a Biogeographic hypothesis shapefile into a matrix
-             by utilizing a shapegrid
-@author: CJ Grady
-@version: 4.0.0
-@status: beta
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+"""This script encodes biogeographic hypothesis shapefiles into a Matrix
 
-@license: gpl2
-@copyright: Copyright (C) 2018, University of Kansas Center for Research
+Note:
+    If you want to encode multiple layers with different event fields, call
+        this script for each set of layers and then use the
+        concatenate_matrices script to stitch the results together.
 
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
-@note: If you want to encode multiple layers with different event fields, call
-          this script for each set of layers and then use the 
-          concatenate_matrices script to stitch the results togther.
-@todo: Consider providing option other than shapegrid, ex. (site id, x, y)
+Todo:
+    Consider providing an option other than shapegrid, ex. (site id, x, y)
+    Provide a method for naming layers and providing event field in one
 """
 import argparse
+import os
 
-from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
+from LmCommon.encoding.layer_encoder import LayerEncoder
 
 # .............................................................................
 if __name__ == "__main__":
-   # Set up the argument parser
-   parser = argparse.ArgumentParser(
-      description="This script encodes a biogeographic hypothesis shapegrid") 
+    # Set up the argument parser
+    parser = argparse.ArgumentParser(
+        description="This script encodes a biogeographic hypothesis shapegrid")
 
-   parser.add_argument('-e', '--eventField', dest='eventField', type=str,
-                    help="Use this field in the layer to determine events")
-   parser.add_argument('shapegridFn', type=str, 
-                 help="The file location of the shapegrid to use for encoding")
-   parser.add_argument("outFn", type=str, 
+    parser.add_argument('-e', '--event_field', dest='event_field', type=str,
+                        help="Use this field in the layer to determine events")
+    parser.add_argument(
+        '-m', '--min_coverage', dest='min_coverage', type=float, default=0.25,
+        help=('The minimum proportion of a shapegrid cell that must be covered'
+              ' by a hypothesis value (0.0 - 1.0]'))
+    parser.add_argument(
+        'shapegrid_filename', type=str,
+        help="The file location of the shapegrid to use for encoding")
+    parser.add_argument("out_filename", type=str, 
                         help="The file location to write the resulting matrix")
-   parser.add_argument("lyr", type=str, nargs='+', 
-      help="A file location of a shapegrid with one or more BioGeo hypotheses")
-   
-   args = parser.parse_args()
-   
-   encoder = BioGeoEncoding(args.shapegridFn)
-   encoder.addLayers(args.lyr, eventField=args.eventField)
-   
-   bgEncoding = encoder.encodeHypotheses()
+    parser.add_argument(
+        "layer", type=str, nargs='+',
+        help=('A file location of a shapegrid with one or more BioGeo '
+              'hypotheses'))
 
-   # Use Matrix save
-   with open(args.outFn, 'w') as outF:
-      bgEncoding.save(outF)
+    args = parser.parse_args()
+
+    encoder = LayerEncoder(args.shapegrid_filename)
+    for layer in args.layer:
+        # Use the base file name as the column name
+        column_name = os.path.splitext(os.path.basename(layer))[0]
+        encoder.encode_biogeographic_hypothesis(
+            layer, column_name, args.min_coverage,
+            event_field=args.event_field)
+
+    bg_mtx = encoder.get_encoded_matrix()
+
+    with open(args.out_filename, 'w') as out_f:
+        bg_mtx.save(out_f)
