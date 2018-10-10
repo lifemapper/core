@@ -1,4 +1,5 @@
 """
+@deprecated: Use LmCommon.encoding.layer_encoder.LayerEncoder instead
 @summary: Module containing methods used to intersect a layer with a shapegrid
 @author: CJ Grady (original Jeff Cavner)
 @version: 4.0.0
