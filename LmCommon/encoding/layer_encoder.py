@@ -180,6 +180,9 @@ class LayerEncoder(object):
                 'encode_func'.  This can be non-zero if we are testing for
                 multiple biogeographic hypotheses in a single vector layer for
                 example.
+        
+        Returns:
+            A list of column headers for the newly encoded columns
         """
         shapegrid_dataset = ogr.Open(self.shapegrid_filename)
         shapegrid_layer = shapegrid_dataset.GetLayer()
@@ -216,6 +219,8 @@ class LayerEncoder(object):
         else:
             self.encoded_matrix = Matrix.concatenate(
                 [self.encoded_matrix, col], axis=1)
+        # Return column headers for added columns
+        return column_headers
     
     # ...............................
     def _get_window_function(self, data, layer_bbox, cell_size, 
@@ -487,6 +492,9 @@ class LayerEncoder(object):
                 grid nodata value.
             event_field: If the layer is a vector and contains multiple
                 hypotheses, use this field to separate the vector file.
+
+        Returns:
+            A list of column headers for the newly encoded columns
         """
         window_func, nodata, distinct_events = self._read_layer(
             layer_filename, resolution=resolution, bbox=bbox, nodata=nodata, 
@@ -496,7 +504,7 @@ class LayerEncoder(object):
             distinct_events = [tuple(distinct_events)]
         encode_func = _get_encode_hypothesis_method(distinct_events,
                                                    min_coverage, nodata)
-        self._encode_layer(window_func, encode_func, column_name,
+        return self._encode_layer(window_func, encode_func, column_name,
                            num_columns=len(distinct_events))
     
     # ...............................
@@ -521,13 +529,16 @@ class LayerEncoder(object):
                 grid nodata value.
             attribute_name: If the layer is a vector, use this field to
                 determine presence.
+
+        Returns:
+            A list of column headers for the newly encoded columns
         """
         window_func, nodata, _ = self._read_layer(
             layer_filename, resolution=resolution, bbox=bbox, nodata=nodata, 
             event_field=attribute_name)
         encode_func = _get_presence_absence_method(min_presence, max_presence, 
                                                   min_coverage, nodata)
-        self._encode_layer(window_func, encode_func, column_name)
+        return self._encode_layer(window_func, encode_func, column_name)
     
     # ...............................
     def encode_mean_value(self, layer_filename, column_name, 
@@ -546,12 +557,15 @@ class LayerEncoder(object):
                 grid nodata value.
             attribute_name: If the layer is a vector, use this field to
                 determine value.
+
+        Returns:
+            A list of column headers for the newly encoded columns
         """
         window_func, nodata, _ = self._read_layer(
             layer_filename, resolution=resolution, bbox=bbox, nodata=nodata, 
             event_field=attribute_name)
         encode_func = _get_mean_value_method(nodata)
-        self._encode_layer(window_func, encode_func, column_name)
+        return self._encode_layer(window_func, encode_func, column_name)
     
     # ...............................
     def encode_largest_class(self, layer_filename, column_name, min_coverage,
@@ -572,12 +586,15 @@ class LayerEncoder(object):
                 grid nodata value.
             attribute_name: If the layer is a vector, use this field to
                 determine largest class.
+
+        Returns:
+            A list of column headers for the newly encoded columns
         """
         window_func, nodata, _ = self._read_layer(
             layer_filename, resolution=resolution, bbox=bbox, nodata=nodata, 
             event_field=attribute_name)
         encode_func = _get_largest_class_method(min_coverage, nodata)
-        self._encode_layer(window_func, encode_func, column_name)
+        return self._encode_layer(window_func, encode_func, column_name)
 
     # ...............................
     def get_encoded_matrix(self):
