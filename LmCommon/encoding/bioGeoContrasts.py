@@ -1,4 +1,5 @@
 """
+@deprecated: This module has been replaced by LmCommon.common.layer_encoder
 @summary: Module containing a class for encoding BioGeographic hypotheses into 
              a contrasts matrix
 @author: CJ Grady (originally by Jeff Cavner)
