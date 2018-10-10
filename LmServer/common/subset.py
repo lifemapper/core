@@ -461,7 +461,6 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
          min_coverage = .25
          # Do this for each layer because we need to have the layer object
          #    do create a matrix column
-         num_existing_cols = 0
          for oldCol in oldCols:
             lyr = oldCol.layer
             
@@ -471,13 +470,11 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
             except KeyError:
                valAttribute = None
             
-            encoder.encode_biogeographic_hypothesis(lyr.getDLocation(), 
-                                                    lyr.name, min_coverage, 
-                                                    event_field=valAttribute)
+            new_cols = encoder.encode_biogeographic_hypothesis(
+                lyr.getDLocation(), lyr.name, min_coverage, 
+                event_field=valAttribute)
             
-            enc_mtx = encoder.get_encoded_matrix()
-            
-            for col in enc_mtx.getColumnHeaders()[num_existing_cols:]:
+            for col in new_cols:
                try:
                   efValue = col.split(' - ')[1]
                except:
@@ -504,9 +501,8 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                                  statusModTime=gmt().mjd)
                updatedMC = scribe.findOrInsertMatrixColumn(mc)
                mtxCols.append(updatedMC)
-            num_existing_cols = len(enc_mtx.getColumnHeaders())
                
-         
+         enc_mtx = encoder.get_encoded_matrix()
          # Write matrix
          # TODO(CJ): Evaluate if this is how we want to do it
          insertedBG.data = enc_mtx.data
