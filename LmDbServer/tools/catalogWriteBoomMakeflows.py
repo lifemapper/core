@@ -668,7 +668,7 @@ class WorkflowCreator(LMObject):
       return mfChain
 
    # ...............................................
-   def initBoom(self, initMakeflow=False):
+   def writeMakeflows(self):
       try:
          # Also adds user
          self.initializeInputs()
@@ -699,30 +699,25 @@ class WorkflowCreator(LMObject):
          self.close()
          
       # BOOM POST from web requires gridset object to be returned
-      return boomGridset
+      return boomMF
    
 # ...............................................
 if __name__ == '__main__':
    import argparse
    parser = argparse.ArgumentParser(
-            description=('Populate a Lifemapper archive with metadata ' +
-                         'for single- or multi-species computations ' + 
-                         'specific to the configured input data or the ' +
-                         'data package named.'))
-   parser.add_argument('param_file', default=None,
-            help=('Parameter file for the workflow with inputs and outputs ' +
-                  'to be created from these data.'))
+            description=("""Create makeflows for single- or multi-species 
+            computations for the configuration file provided"""))
+   parser.add_argument('config_file', default=None,
+            help=('Configuration file for the workflow with parameters ' +
+                  'to be used for the workflow.'))
    parser.add_argument('--logname', type=str, default=None,
             help=('Basename of the logfile, without extension'))
-   parser.add_argument('--taxonomy_only', type=bool, default=False,
-            help=('Add taxonomy, without extension'))
    args = parser.parse_args()
-   paramFname = args.param_file
+   configFname = args.param_file
    logname = args.logname
-   initMakeflow = args.init_makeflow
          
-   if paramFname is not None and not os.path.exists(paramFname):
-      print ('Missing configuration file {}'.format(paramFname))
+   if configFname is not None and not os.path.exists(configFname):
+      print ('Missing configuration file {}'.format(configFname))
       exit(-1)
       
    if logname is None:
@@ -732,94 +727,14 @@ if __name__ == '__main__':
       timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
       logname = '{}.{}'.format(scriptname, timestamp)
 
-   print('Running catalogBoomJob with paramFname = {}'
-         .format(paramFname))
+   print('Running catalogWriteBoomMakeflows with configFname = {}'
+         .format(configFname))
    
-   filler = WorkflowCreator(paramFname, logname=logname)
-   gs = filler.initBoom(initMakeflow=initMakeflow)
-   print('Completed catalogBoomJob creating gridset: {}'.format(gs.getId()))
+   filler = WorkflowCreator(configFname, logname=logname)
+   boomMF = filler.writeMakeflows()
+   print('Completed catalogWriteBoomMakeflows creating Master Makeflow: {}'.format(boomMF.getId()))
 
     
 """
-import ConfigParser
-import json
-import mx.DateTime
-import os
-import types
-
-from LmBackend.command.boom import BoomerCommand
-from LmBackend.command.server import (CatalogTaxonomyCommand, EncodeTreeCommand,
-                                      EncodeBioGeoHypothesesCommand)
-from LmBackend.common.lmobj import LMError, LMObject
-
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
-      ProcessType, DEFAULT_POST_USER, LM_USER,
-      SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
-      SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
-      SERVER_PIPELINE_HEADING)
-from LmCommon.common.readyfile import readyFilename
-
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE,
-                                           GBIF_TAXONOMY_DUMP_FILE)
-from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
-                                              GBIF_TAXONOMY_FILENAME)
-from LmDbServer.tools.catalogScenPkg import SPFiller
-
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
-                           GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
-                           PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
-from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.log import ScriptLogger
-from LmServer.base.layer2 import Vector
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix  
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.processchain import MFChain
-from LmServer.legion.shapegrid import ShapeGrid
-from LmServer.legion.tree import Tree
-from LmServer.base.utilities import isRootUser
-
-from LmDbServer.tools.catalogBoomJob import *
-
-paramFname = '/opt/lifemapper/rocks/etc/defaultArchiveParams.ini'
-initMakeflow = True
-
-pname, _ = os.path.splitext(os.path.basename(paramFname))
-import time
-secs = time.time()
-timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-logname = '{}.{}'.format(pname, timestamp)
-
-self = WorkflowCreator(paramFname, logname=logname)
-self.initializeInputs()
-
-if self.occIdFname:
-   self._checkOccurrenceSets()
-
-scenGrims, boomGridset = self.addShapeGridGPAMGridset()
-grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
-
-tree = self.addTree(boomGridset)
-biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
-if biogeoMtx and len(biogeoLayerNames) > 0:
-   bgMF = self.addEncodeBioGeoMF(boomGridset)
-
-self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
-                     biogeoLayers=biogeoLayerNames)
-      
-if initMakeflow is True:
-   boomMF = self.addBoomMF(boomGridset.getId(), tree)
-
-
-# gs = filler.initBoom(initMakeflow=initMakeflow)
-
- 
-
 
 """
