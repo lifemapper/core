@@ -498,16 +498,16 @@ class SDMProjection(_ProjectionType, Raster):
       @note: Writes the file if it does not exists
       @param scenario: The scenario to get the JSON file for
       """
-      baseName = "scn{0}".format(scenario.getId())
-         
-      layerJsonFilename = self._earlJr.createFilename(LMFileType.TMP_JSON,
-                                       objCode=baseName, usr=self.getUserId())
-      
       # Decide what file extension to use
       if self.isATT():
          ext = LMFormat.MXE.ext
+         baseName = "scn{}_maxent".format(scenario.getId(), ext)
       else:
          ext = LMFormat.GTIFF.ext
+         baseName = "scn{}_om".format(scenario.getId(), ext)
+         
+      layerJsonFilename = self._earlJr.createFilename(LMFileType.TMP_JSON,
+                                       objCode=baseName, usr=self.getUserId())
       
       # If the file does not exist, write it
       if not os.path.exists(layerJsonFilename):
