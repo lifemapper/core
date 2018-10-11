@@ -212,8 +212,8 @@ class IntersectRasterCommand(_LmCommand):
       self.inputs.extend([shapegridFilename, rasterFilename])
       self.outputs.append(pavFilename)
       
-      self.args = [shapegridFilename, rasterFilename, 
-                   pavFilename, minPresence, maxPresence, percentPresence]
+      self.args = [shapegridFilename, rasterFilename, pavFilename, 
+                   str(minPresence), str(maxPresence), str(percentPresence)]
       
       self.optArgs = ''
       if squid is not None:
@@ -266,7 +266,8 @@ class IntersectVectorCommand(_LmCommand):
       self.outputs.append(pavFilename)
       
       self.args = [shapegridFilename, vectorFilename, pavFilename, 
-                   minPresence, maxPresence, percentPresence, presenceAttrib]
+                   str(minPresence), str(maxPresence), str(percentPresence), 
+                   presenceAttrib]
       self.optArgs = ''
       if squid is not None:
           self.optArgs += ' --squid={}'.format(squid)
