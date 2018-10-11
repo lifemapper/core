@@ -558,7 +558,7 @@ class BOOMFiller(LMObject):
    # ...............................................
    def _getVarValue(self, var):
       # Remove spaces and empty strings
-      if var is not None and not bool(var):
+      if var is not None and not isinstance(var, bool):
          var = var.strip()
          if var == '':
             var = None
