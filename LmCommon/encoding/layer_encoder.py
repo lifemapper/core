@@ -92,7 +92,22 @@ def _get_largest_class_method(min_coverage, nodata):
                     and num > min_num:
                 largest_class = cl
         return largest_class
-    return get_largest_class
+
+    # ...............................
+    def get_largest_class_1_8(window):
+        """Get largest class for numpy 1.8
+        """
+        min_num = min_coverage * window.size
+        largest_count = 0
+        largest_class = nodata
+        unique_values = np.unique(window)
+        for cl in unique_values:
+            num = np.where(window == cl)[0].size
+            if not np.isclose(cl, nodata) and num > largest_count \
+                    and num > min_num:
+                largest_class = cl
+        return largest_class
+    return get_largest_class_1_8
 
 # .............................................................................
 def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
@@ -148,7 +163,28 @@ def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
                 counts[val_map[v]['index']] = num
                 ret[val_map[v]['index']] = val_map[v]['val']
         return ret
-    return encode_method
+    # ...............................
+    def encode_method_1_8(window):
+        """Encode method for Numpy 1.8
+        """
+        min_vals = int(min_coverage * window.size)
+        # Set default min count to min_vals
+        # Note: This will cause last one to win if they are equal, change to
+        #     '>' below and set this to * (min_vals - 1) to have first one win
+        counts = np.zeros((i), dtype=int) * min_vals
+        ret = np.zeros((i))
+        
+        unique_values = np.unique(window)
+        
+        # Check unique values in window
+        for v in unique_values:
+            num = np.where(window == v)[0].size
+            if not np.isclose(v, nodata) and v in val_map.keys() and \
+                    num >= counts[val_map[v]['index']]:
+                counts[val_map[v]['index']] = num
+                ret[val_map[v]['index']] = val_map[v]['val']
+        return ret
+    return encode_method_1_8
     
 # .............................................................................
 class LayerEncoder(object):
