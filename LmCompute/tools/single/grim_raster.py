@@ -37,7 +37,7 @@ if __name__ == "__main__":
     if args.ident is not None:
         ident = args.ident
 
-    encoder = LayerEncoder(args.shapefile_filename)
+    encoder = LayerEncoder(args.shapegrid_filename)
     if args.method == 'largest_class':
         encoder.encode_largest_class(args.raster_filename, args.ident)
     else:
