@@ -24,7 +24,6 @@ if __name__ == "__main__":
         'grim_column_filename', type=str, 
         help='Location to write the GRIM column Matrix object')
 
-    # TODO(CJ): Change this parameter to something like 'method'
     parser.add_argument('-m', '--method', dest='method', 
                         choices=['largest_class', 'mean'], default='mean', 
                         help='Use this method for encoding the GRIM layer')
@@ -37,10 +36,6 @@ if __name__ == "__main__":
     ident = os.path.splitext(os.path.basename(args.raster_filename))[0]
     if args.ident is not None:
         ident = args.ident
-
-    minPercent = None
-    if args.minPercent is not None:
-        minPercent = args.minPercent
 
     encoder = LayerEncoder(args.shapefile_filename)
     if args.method == 'largest_class':
