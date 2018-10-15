@@ -41,8 +41,8 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.processchain import MFChain
 
 # .............................................................................
-def reinitProjections(beginStatus, endStatus, groupSize, log, procParams=None,
-                                           gridsetId, userId=PUBLIC_USER):
+def reinitProjections(gridsetId, beginStatus, endStatus, groupSize, log, 
+                      procParams=None, userId=PUBLIC_USER):
    """
    @summary: Reinitializes projections for computation
    """
@@ -132,7 +132,7 @@ if __name__ == '__main__':
    else:
       userId = args.userId 
    
-   reinitProjections(args.beginStatus, args.endStatus, args.groupSize, log, 
-                     procParams=procParams, gridsetId=gsId, userId=userId)
+   reinitProjections(gsId, args.beginStatus, args.endStatus, args.groupSize, 
+                     log, procParams=procParams, userId=userId)
    
    
