@@ -2,7 +2,7 @@
 ; LmServer
 ; .............................................................................
 [LmServer - environment]
-PUBLIC_USER: kubi
+PUBLIC_USER: @PUBLIC_USER@
 PUBLIC_FQDN: @PUBLIC_FQDN@
 WEBSERVICES_ROOT: http://@PUBLIC_FQDN@
 
