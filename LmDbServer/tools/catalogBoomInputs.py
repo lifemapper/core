@@ -175,6 +175,7 @@ class BOOMFiller(LMObject):
                                           SCENARIO_PACKAGE_PROJECTION_SCENARIOS
              If SCENARIO_PACKAGE_PROJECTION_SCENARIOS is not present, SDMs 
              will be projected onto all scenarios
+      @note: This code can only parse scenario metadata marked as version 2.0 
       """
       # Make sure Scenario Package exists for this user
       scenPkg = self.scribe.getScenPackage(userId=self.userId, 

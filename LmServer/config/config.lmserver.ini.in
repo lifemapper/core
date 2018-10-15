@@ -21,7 +21,6 @@ SPECIES_DATA_DIR: @SPECIES_DATA_DIR@
 
 ; .............................................................................
 [LmServer - pipeline]
-ARCHIVE_USER: kubi
 TROUBLESHOOTERS: null@nowhere.com
 DEFAULT_EPSG: @EPSG@
  

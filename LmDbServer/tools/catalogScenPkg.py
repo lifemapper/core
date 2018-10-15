@@ -24,20 +24,15 @@
 import mx.DateTime
 import os
 
-from LmBackend.command.server import CatalogScenarioPackageCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import JobStatus
-
-from LmServer.common.lmconstants import (Priority, ENV_DATA_PATH, 
-                                         DEFAULT_EMAIL_POSTFIX)
+from LmServer.common.lmconstants import (ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.envlayer import EnvLayer
-from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
@@ -45,10 +40,12 @@ CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().d
 # .............................................................................
 class SPFiller(LMObject):
    """
-   @summary 
-   Class to: 
-     1) populate a Lifemapper database with scenario package for a BOOM archive
+   @summary Class to: populate a Lifemapper database with scenario metadata for 
+            a BOOM archive
+   @version: 2.0 
+   @note: This code can only parse scenario metadata marked as version 2.0 
    """
+   version = 2.0
 # .............................................................................
 # Constructor
 # .............................................................................
@@ -70,6 +67,17 @@ class SPFiller(LMObject):
       except Exception, e:
          raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
                        .format(spMetaFname, e))
+      
+      spkgNames = ','.join(self.spMeta.CLIMATE_PACKAGES.keys())
+      
+      # version is a string
+      try:
+         if self.spMeta.VERSION != self.version:
+            raise LMError('SPFiller version {} cannot parse {} metadata version {}'
+                          .format(self.version, spkgNames, self.spMeta.VERSION))
+      except: 
+         raise LMError('SPFiller version {} cannot parse {} non-versioned metadata'
+                       .format(spkgNames, self.version))
 
       self.spMetaFname = spMetaFname
       self.userId = userId
