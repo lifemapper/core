@@ -485,7 +485,7 @@ class ChristopherWalken(LMObject):
       @summary: Get configured string values and any corresponding db objects 
       @TODO: Make all archive/default config keys consistent
       """
-      userId = self._getBoomOrDefault('ARCHIVE_USER')
+      userId = self._getBoomOrDefault('ARCHIVE_USER', defaultValue=PUBLIC_USER)
       archiveName = self._getBoomOrDefault('ARCHIVE_NAME')
       archivePriority = self._getBoomOrDefault('ARCHIVE_PRIORITY')
       if archivePriority is None:
