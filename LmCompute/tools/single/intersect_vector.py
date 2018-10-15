@@ -58,7 +58,7 @@ if __name__ == '__main__':
     if min_coverage > 1.0:
         min_coverage = min_coverage / 100.0
     
-    encoder = LayerEncoder(args.shapefile_filename)
+    encoder = LayerEncoder(args.shapegrid_filename)
     encoder.encode_presence_absence(
             args.vector_filename, squid, args.min_presence, args.max_presence, 
             min_coverage, attribute_name=args.event_field)
