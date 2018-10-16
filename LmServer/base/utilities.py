@@ -31,9 +31,12 @@ from types import (BuiltinFunctionType, BuiltinMethodType, CodeType,
          StringType, TypeType, UnicodeType)
 
 from LmBackend.common.lmobj import LMObject
+
 from LmCommon.common.lmconstants import (LM_USER, ISO_8601_TIME_FORMAT_FULL, 
          ISO_8601_TIME_FORMAT_TRUNCATED, LM_NAMESPACE, YMD_HH_MM_SS, ENCODING)
+
 from LmServer.common.lmconstants import STRING_ESCAPE_FORMATS
+from LmServer.common.localconstants import PUBLIC_USER
 
 # ..............................................................................
 class ObjectAttributeIterator(LMObject):
@@ -256,7 +259,7 @@ def getPackageId(item, separator='.'):
    """
    @summary: Gets the package id of an object, useful for EML or UUID
    """
-   parts = ['kubi', 'lifemapper', item.serviceType, str(item.getId())]
+   parts = [PUBLIC_USER, 'lifemapper', item.serviceType, str(item.getId())]
    return separator.join(parts)
 
 # ..............................................................................

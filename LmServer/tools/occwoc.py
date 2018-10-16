@@ -1225,7 +1225,7 @@ scriptname = 'wocTesting'
 logger = ScriptLogger(scriptname)
 scribe = BorgScribe(logger)
 scribe.openConnections()
-userId = 'kubi'
+userId = PUBLIC_USER
 expDate = dt.DateTime(2017,9,20).mjd
 
 if os.path.isfile(occData):
