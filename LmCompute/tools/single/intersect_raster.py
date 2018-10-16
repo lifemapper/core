@@ -71,8 +71,10 @@ if __name__ == "__main__":
         if pav is not None:
             with open(args.pav_filename, 'w') as pav_out_f:
                 pav.save(pav_out_f)
+        if args.status_file is not None:
+            with open(args.status_file, 'w') as outF:
+                outF.write('{}'.format(JobStatus.COMPUTED))
     else:
         if args.status_file is not None:
             with open(args.status_file, 'w') as outF:
                 outF.write('{}'.format(lyrStatus))
-            
