@@ -69,7 +69,7 @@ if __name__ == "__main__":
         pav = encoder.get_encoded_matrix()
         
         if pav is not None:
-            with open(args.pav_filenamen, 'w') as pav_out_f:
+            with open(args.pav_filename, 'w') as pav_out_f:
                 pav.save(pav_out_f)
     else:
         if args.status_file is not None:
