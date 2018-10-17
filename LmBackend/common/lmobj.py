@@ -23,8 +23,6 @@
 """
 import inspect
 import json
-import mx.DateTime
-from osgeo.osr import CoordinateTransformation, SpatialReference
 import sys
 import traceback
 from types import TupleType, ListType

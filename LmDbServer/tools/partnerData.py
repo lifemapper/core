@@ -60,6 +60,8 @@ def get_ottids_from_gbifids(gbif_ids):
    @param gbif_ids: A list of GBIF identifiers.  They will be converted to
                        integers in the request.
    """
+   if not(isinstance(gbif_ids, list)):
+      gbif_ids = [gbif_ids]
    # Ids need to be integers
    processed_ids = [int(gid) for gid in gbif_ids]
       
@@ -118,12 +120,14 @@ class PartnerQuery(object):
    """
    def __init__(self):
       """
-      @summary Constructor for the APIQuery class
+      @summary Constructor for the PartnerQuery class
       """
-      pass
+      self.name = self.__class__.__name__.lower()
+      unicodecsv.field_size_limit(sys.maxsize)
+      self.encoding = 'utf-8'
 
    # .............................................................................
-   def getCSVWriter(self, datafile, delimiter, doAppend=True):
+   def _getCSVWriter(self, datafile, delimiter, doAppend=True):
       '''
       @summary: Get a CSV writer that can handle encoding
       '''
@@ -135,7 +139,8 @@ class PartnerQuery(object):
          
       try:
          f = open(datafile, mode) 
-         writer = unicodecsv.writer(f, delimiter=delimiter, encoding='utf-8')
+         writer = unicodecsv.writer(f, delimiter=delimiter, 
+                                    encoding=self.encoding)
    
       except Exception, e:
          raise Exception('Failed to read or open {}, ({})'
@@ -151,6 +156,7 @@ class PartnerQuery(object):
       api = idigbio.json()
       limit = 100
       offset = 0
+      currcount = 0
       total = 0
       while offset <= total:
          try:
@@ -161,7 +167,7 @@ class PartnerQuery(object):
          else:
             total = output['itemCount']
             items = output['items']
-            total += len(items)
+            currcount += len(items)
             print("Retrieved {}/{} records for gbif taxonid {}"
                   .format(len(items), total, gbifTaxonId))
             for itm in items:
@@ -181,13 +187,12 @@ class PartnerQuery(object):
    
    # .............................................................................
    def assembleIdigbioData(self, gbifTaxonIds, outfname):
-      try:
-         list(gbifTaxonIds)
-      except:
+      if not(isinstance(gbifTaxonIds, list)):
          gbifTaxonIds = [gbifTaxonIds]
          
       if os.path.exists(outfname):
-         raise LMError('Output file {} already exists'.format(outfname))
+         print('Deleting existing file {} ...'.format(outfname))
+         os.remove(outfname)
       
       fields = IDIGBIO_QUERY.RETURN_FIELDS.keys()
       writer, f = self._getCSVWriter(outfname, '\t', doAppend=False)
@@ -199,7 +204,8 @@ class PartnerQuery(object):
    # .............................................................................
    def assembleOTOLData(self, gbifTaxonIds):
       gbifOTT = get_ottids_from_gbifids(gbifTaxonIds)
-      return gbifOTT
+      tree = induced_subtree(gbifOTT)
+      return tree
             
 
   
@@ -214,9 +220,12 @@ def testBoth():
               '3032660', '3754294', '3032687', '3032686', '3032681', '3032680', 
               '3032689', '3032688', '3032678', '3032679', '3032672', '3032673', 
               '3032670', '3032671', '3032676', '3032674', '3032675']
-   pquery = PartnerQuery()
-   pquery.assembleIdigbioData(gbifids, 'testIdigbioData.csv')
-   gbifOTT = pquery.assembleOTOLData(gbifids)
+   ptFname = 'testIdigbioData.csv'
+   iquery = PartnerQuery()
+   if not(os.path.exists(ptFname)):
+      iquery.assembleIdigbioData(gbifids, ptFname)
+   tree = iquery.assembleOTOLData(gbifids)
+   print ('Now what?')
             
             
          
