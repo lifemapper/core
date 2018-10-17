@@ -1,28 +1,8 @@
-"""
-@summary Module containing phylogenetic statistics from Stephen Smith 
-            (rewritten by CJ)
-@author Stephen Smith / CJ Grady
-@license: gpl2
-@copyright: Copyright (C) 2018, University of Kansas Center for Research
+"""Module containing phylogenetic statistics
 
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+Note:
+    The code is originally from Stephen Smith and has been written to work with
+        Lifemapper by CJ Grady
 """
 import numpy as np
 
@@ -76,7 +56,7 @@ def sum_pairwise_distance(pam, phylo_dist_mtx):
     """Calculates the sum pairwise distance for all species present at a site
     
     TODO:
-        Consider combining with MPD / Pearson / etc
+        * Consider combining with MPD / Pearson / etc
     """
     num_sites = pam.data.shape[0]
     spd = np.zeros((num_sites, 1), dtype=float)
@@ -97,11 +77,10 @@ def sum_pairwise_distance(pam, phylo_dist_mtx):
 # .............................................................................
 def pearson_correlation(pam, phylo_dist_mtx):
     """Calculates the Pearson correlation coef. for each site
+
     TODO:
-    -----
-        Consider combining with MPD
-        
-        Check for NaNs
+        * Consider combining with MPD
+        * Check for NaNs
     """
     num_sites = pam.data.shape[0]
     pearson = np.zeros((num_sites, 1), dtype=float)

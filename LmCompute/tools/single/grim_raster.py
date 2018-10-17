@@ -35,7 +35,8 @@ if __name__ == "__main__":
     
     ident = os.path.splitext(os.path.basename(args.raster_filename))[0]
     if args.ident is not None:
-        ident = args.ident
+        if args.ident.lower() is not 'none':
+            ident = args.ident
 
     encoder = LayerEncoder(args.shapegrid_filename)
     if args.method == 'largest_class':

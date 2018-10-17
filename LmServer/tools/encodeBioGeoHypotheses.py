@@ -69,7 +69,7 @@ def _getBioGeoMatrix(scribe, usr, gridset, layers=[]):
    return bgMtx
 
 # .................................
-def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=[]):
+def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
    """
    @summary: Encoding hypotheses to a BioGeo matrix
    @note: This adds to existing encoded hypotheses
@@ -92,7 +92,10 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=[]):
    for lyr in layers:
       try:
          valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
-         column_name = valAttribute
+         if valAttribute is not None:
+            column_name = valAttribute
+         else:
+            column_name = lyr.name
       except KeyError:
          valAttribute = None
          column_name = lyr.name
