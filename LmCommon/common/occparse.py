@@ -22,8 +22,8 @@
           02110-1301, USA.
 """
 
-import ast
 import csv
+import json
 import os
 import sys
 import StringIO
@@ -31,7 +31,7 @@ from types import DictionaryType, DictType
 
 from LmCommon.common.lmconstants import (ENCODING, OFTInteger, OFTReal, 
                                          OFTString, LMFormat)
-from LmBackend.common.lmobj import LMError
+
 # .............................................................................
 class OccDataParser(object):
    """
@@ -125,14 +125,15 @@ class OccDataParser(object):
       """
       @summary: Initializes CSV Reader and interprets metadata
       """
-      fieldmeta, self._metadataFname, doMatchHeader = self.readMetadata(self._rawMetadata)
+#       fieldmeta, self._metadataFname, doMatchHeader = self.readMetadata(self._rawMetadata)
+      fieldmeta, doMatchHeader = self.readMetadata2(self._rawMetadata)
       if doMatchHeader:
          # Read CSV header
          tmpList = self._csvreader.next()
          print ('Header = {}'.format(tmpList))
          self.header = [fldname.strip() for fldname in tmpList]
 
-      (self.fieldIndexMeta,
+      (self.columnMeta,
        self.filters,
        self._idIdx,
        self._xIdx,
@@ -140,7 +141,7 @@ class OccDataParser(object):
        self._geoIdx,
        self._groupByIdx, 
        self._nameIdx) = self.getCheckIndexedMetadata(fieldmeta, self.header)
-      self.fieldCount = len(self.fieldIndexMeta)
+      self.fieldCount = len(self.columnMeta)
       
       # Start by pulling line 1; populates groupVal, currLine and currRecnum
       if self._doPreFetch:
@@ -239,7 +240,7 @@ class OccDataParser(object):
       if self._idIdx is None:
          return None
       else:
-         return self.fieldIndexMeta[self._idIdx][self.FIELD_NAME_KEY]
+         return self.columnMeta[self._idIdx][self.FIELD_NAME_KEY]
    
    @property
    def idIdx(self):
@@ -248,7 +249,7 @@ class OccDataParser(object):
    @property
    def xFieldName(self):
       try:
-         return self.fieldIndexMeta[self._xIdx][self.FIELD_NAME_KEY]
+         return self.columnMeta[self._xIdx][self.FIELD_NAME_KEY]
       except:
          return None
 
@@ -260,7 +261,7 @@ class OccDataParser(object):
    @property
    def yFieldName(self):
       try:
-         return self.fieldIndexMeta[self._yIdx][self.FIELD_NAME_KEY]
+         return self.columnMeta[self._yIdx][self.FIELD_NAME_KEY]
       except:
          return None
       
@@ -271,7 +272,7 @@ class OccDataParser(object):
    @property
    def ptFieldName(self):
       try:
-         return self.fieldIndexMeta[self._geoIdx][self.FIELD_NAME_KEY]
+         return self.columnMeta[self._geoIdx][self.FIELD_NAME_KEY]
       except:
          return None
 
@@ -279,6 +280,51 @@ class OccDataParser(object):
    def ptIdx(self):
       return self._geoIdx
    
+
+   # .............................................................................
+   @staticmethod
+   def readMetadata2(metadata):
+      """
+      @summary: Reads a stream/string of metadata describing a CSV file of  
+                species occurrence point data, and converts roles to lowercase
+      @return: a dictionary with 
+         Key = column name or column index
+         Value = dictionary of keys 'name', 'type', 'role', and 'acceptedVals'
+                               values 
+      @note: A full description of the input data is at 
+             LmDbServer/boom/occurrence.meta.example
+      """
+      # Read file contents 
+      try:
+         with open(metadata) as f:
+            meta = json.load(f)
+      except IOError, e:
+         print( 'Failed to open {} err: {}'.format(metadata, str(e)))
+         raise
+      except Exception, e:
+         # or string
+         try:
+            meta = json.loads(metadata)
+         # parse as oldstyle
+         except:
+            with open(metadata) as f:
+               metalines = f.readlines()
+            meta = OccDataParser.readOldMetadata(metalines)
+         
+      # If keys are column indices, change to ints
+      doMatchHeader = False
+      columnMeta = {}
+      for k, v in meta.iteritems():
+         try:
+            columnMeta[int(k)] = v
+         except:
+            doMatchHeader = True
+            break
+      if not(doMatchHeader):
+         meta = columnMeta
+         
+      return meta, doMatchHeader
+      
 
    # .............................................................................
    @staticmethod
@@ -294,7 +340,6 @@ class OccDataParser(object):
              LmDbServer/boom/occurrence.meta.example
       """
       doMatchHeader = False
-      metadataFname = None
       try:
          f = open(metadata, 'r')
       except IOError, e:
@@ -304,7 +349,6 @@ class OccDataParser(object):
          fieldmeta = metadata  
       else:
          fieldmeta = {} 
-         metadataFname = metadata
          try:
             for line in f:
                if not line.startswith('#'):
@@ -354,8 +398,8 @@ class OccDataParser(object):
                               if len(rest) >= 1:
                                  fieldmeta[key][OccDataParser.FIELD_VALS_KEY] = rest
          except Exception, e:
-            raise Exception('Failed to evaluate contents of metadata file {}, ({})'
-                            .format(metadataFname, e))
+            raise Exception('Failed to evaluate contents of metadata {}, ({})'
+                            .format(metadata, e))
          finally:
             f.close()
             
@@ -369,8 +413,75 @@ class OccDataParser(object):
             doMatchHeader = True
             break
             
-      return fieldmeta, metadataFname, doMatchHeader
+      return fieldmeta, doMatchHeader
          
+   # .............................................................................
+   @staticmethod
+   def readOldMetadata(metalines):
+      """
+      @summary: Reads a stream/string of metadata describing a CSV file of  
+                species occurrence point data, and converts roles to lowercase
+      @return: a dictionary with 
+         Key = column name or column index
+         Value = dictionary of keys 'name', 'type', 'role', and 'acceptedVals'
+                               values 
+      @note: A full description of the input data is at 
+             LmDbServer/boom/occurrence.meta.example
+      """
+      fieldmeta = {} 
+      try:
+         for line in metalines:
+            if not line.startswith('#'):
+               tmp = line.split(',')
+               parts = [p.strip() for p in tmp]
+               # First value is original fieldname or column index
+               key = parts[0]
+               try:
+                  key = int(parts[0])
+               except:
+                  if len(key) == 0:
+                     key = None
+               if key is not None:
+                  if len(tmp) < 3:
+                     print('Skipping field {} without name or type'.format(key))
+                     fieldmeta[key] = None
+                  else:
+                     # Required second value is fieldname, must 
+                     # be 10 chars or less to write to a shapefile
+                     # Required third value is string/real/integer or None to ignore
+                     name = parts[1]
+                     ftype = parts[2]
+                     # Convert to OGR field type
+                     ogrtype = OccDataParser.getOgrFieldType(ftype)
+                     if ogrtype is None:
+                        # Skip field without OGR type
+                        fieldmeta[key] = None
+                     else:
+                        fieldmeta[key] = {OccDataParser.FIELD_NAME_KEY: name, 
+                                          OccDataParser.FIELD_TYPE_KEY: ogrtype}
+                        # Optional remaining values are role and/or allowable values
+                        if len(parts) >= 4:
+                           # Convert to lowercase 
+                           rest = []
+                           for val in parts[3:]:
+                              try:
+                                 rest.append(val.lower())
+                              except:
+                                 rest.append(val)
+                           # If there are 4+ values, fourth may be role of this field: 
+                           #   longitude, latitude, geopoint, groupby, taxaname, uniqueid
+                           # Convert to lowercase
+                           if rest[0] in OccDataParser.FIELD_ROLES:
+                              fieldmeta[key][OccDataParser.FIELD_ROLE_KEY] = rest[0]
+                              rest = rest[1:]
+                           # Remaining values are acceptable values for this field
+                           if len(rest) >= 1:
+                              fieldmeta[key][OccDataParser.FIELD_VALS_KEY] = rest
+      except Exception, e:
+         raise Exception('Failed to parse metadata, ({})'.format(e))
+                     
+      return fieldmeta
+
    # .............................................................................
    @staticmethod
    def getCheckIndexedMetadata(fldmeta, header):
@@ -380,12 +491,13 @@ class OccDataParser(object):
                 in the fldmeta dictionary from column names to column indices.
       @param fldmeta: Dictionary of field names, types, roles, and accepted values.
                       If the first level 'Value' is None, this field will be ignored
-                         Key = original name or column index
+                         Key = name in header or column index
                          Value = None or
                                  Dictionary of 
-                                   key = ['name', 'type', 
-                                           optional 'role', and 
-                                           optional 'acceptedVals']
+                                   key = ['name', 
+                                          'type', 
+                                          optional 'role', and 
+                                          optional 'acceptedVals']
                                    values for those items
                       Keywords identify roles for x, y, id, grouping, taxa name.
       @param header: First row of data file containing field names for values 

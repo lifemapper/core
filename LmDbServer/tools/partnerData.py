@@ -24,6 +24,15 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from LmBackend.common.lmobj import LMError
+try:
+   from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
+except:
+   OFTInteger = 0 
+   OFTReal = 2 
+   OFTString = 4
+   OFTBinary = 8
+
 import idigbio
 import json
 import os
@@ -31,8 +40,10 @@ import sys
 import unicodecsv
 import urllib2
 
-from LmCommon.common.lmconstants import IDIGBIO_QUERY
-from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import (IDIGBIO_QUERY, IDIGBIO, DWC_QUALIFIER, 
+                                         DWCNames)
+from LmCommon.common.occparse import OccDataParser
+from LmServer.common.log import ScriptLogger
 
 DEV_SERVER = 'http://141.211.236.35:10999'
 INDUCED_SUBTREE_BASE_URL = '{}/induced_subtree'.format(DEV_SERVER)
@@ -59,6 +70,8 @@ def get_ottids_from_gbifids(gbif_ids):
    @note: Any GBIF ID that was not found will have a value of None
    @param gbif_ids: A list of GBIF identifiers.  They will be converted to
                        integers in the request.
+   @return: a dictionary with each key is an 'ACCEPTED' TaxonId from the GBIF 
+            Backbone Taxonomy and the value is the corresponding OpenTree id.
    """
    if not(isinstance(gbif_ids, list)):
       gbif_ids = [gbif_ids]
@@ -118,11 +131,14 @@ class PartnerQuery(object):
    Class to query iDigBio for species data and OTOL for phylogenetic trees 
    using 'ACCEPTED' TaxonIDs from the GBIF Backbone Taxonomy
    """
-   def __init__(self):
+   def __init__(self, logger=None):
       """
       @summary Constructor for the PartnerQuery class
       """
       self.name = self.__class__.__name__.lower()
+      if logger is None:
+         logger = ScriptLogger(self.name)
+      self.log = logger
       unicodecsv.field_size_limit(sys.maxsize)
       self.encoding = 'utf-8'
 
@@ -146,7 +162,42 @@ class PartnerQuery(object):
          raise Exception('Failed to read or open {}, ({})'
                          .format(datafile, str(e)))
       return writer, f
+
+   # .............................................................................
+   def _convertType(self, ogrtype):
+      if ogrtype == OFTInteger:
+         return 'int'
+      elif ogrtype == OFTString:
+         return 'str'
+      elif ogrtype == OFTReal:
+         return 'float'
+      else:
+         raise LMError('Unknown field type {}'.format(ogrtype))
    
+   # .............................................................................
+   def writeIdigbioMetadata(self, origFldnames, basename):
+      ptFname = basename + '.csv'
+      metaFname = basename + '.json'
+      newMeta = {}
+      for colIdx in range(len(origFldnames)):
+         ofname = origFldnames[colIdx]
+         (shortname, ogrtype) = IDIGBIO_QUERY.RETURN_FIELDS[ofname]
+         valdict = {'name': shortname, 
+                    'type': self._convertType(ogrtype)}
+         if ofname == IDIGBIO.QUALIFIER + IDIGBIO.ID_FIELD:
+            valdict['role'] = 'uniqueid'
+         elif ofname == IDIGBIO.GBIFID_FIELD:
+            valdict['role'] = 'groupby'
+         elif ofname == DWC_QUALIFIER + DWCNames.DECIMAL_LONGITUDE['FULL']:
+            valdict['role'] = 'longitude'
+         elif ofname == DWC_QUALIFIER + DWCNames.DECIMAL_LATITUDE['FULL']:
+            valdict['role'] = 'latitude'
+         elif ofname == DWC_QUALIFIER + DWCNames.SCIENTIFIC_NAME['FULL']:            
+            valdict['role'] = 'taxaname'
+         newMeta[str(colIdx)] = valdict
+      with open(metaFname, 'w') as outf:
+         json.dump(newMeta, outf)
+      return newMeta
    
    # .............................................................................
    def getIdigbioRecords(self, gbifTaxonId, fields, writer):
@@ -168,7 +219,7 @@ class PartnerQuery(object):
             total = output['itemCount']
             items = output['items']
             currcount += len(items)
-            print("Retrieved {}/{} records for gbif taxonid {}"
+            print("  Retrieved {}/{} records for gbif taxonid {}"
                   .format(len(items), total, gbifTaxonId))
             for itm in items:
                vals = []
@@ -180,26 +231,53 @@ class PartnerQuery(object):
                         vals.append(itm['indexTerms'][fldname])
                      except:
                         vals.append('')
-                     
                writer.writerow(vals)
             offset += limit
-                     
+      print('Retrieved {} of {} reported records for {}'.format(currcount, total))
+      return currcount
    
    # .............................................................................
-   def assembleIdigbioData(self, gbifTaxonIds, outfname):
+   def assembleIdigbioData(self, gbifTaxonIds, ptFname, metaFname):      
       if not(isinstance(gbifTaxonIds, list)):
          gbifTaxonIds = [gbifTaxonIds]
          
-      if os.path.exists(outfname):
-         print('Deleting existing file {} ...'.format(outfname))
-         os.remove(outfname)
+      for fname in (ptFname, metaFname):
+         if os.path.exists(fname):
+            print('Deleting existing file {} ...'.format(fname))
+            os.remove(fname)
+         
+      summary = {}
+      writer, f = self._getCSVWriter(ptFname, '\t', doAppend=False)
       
-      fields = IDIGBIO_QUERY.RETURN_FIELDS.keys()
-      writer, f = self._getCSVWriter(outfname, '\t', doAppend=False)
-      writer.writerow(fields)
+      # Make sure metadata reflects data column order 
+      # by pulling and using same fieldnames  
+      origFldnames = IDIGBIO_QUERY.RETURN_FIELDS.keys()
+      origFldnames.sort()
+
+      # do not write header, put column indices in metadata
+#       writer.writerow(origFldnames)
+      meta = self.writeIdigbioMetadata(origFldnames, metaFname)
+      
       for gid in gbifTaxonIds:
-         self.getIdigbioRecords(gid, fields, writer)
+         ptCount = self.getIdigbioRecords(gid, origFldnames, writer)
+         summary[gid] = ptCount
+      return summary, meta
+   
+   # .............................................................................
+   def summarizeIdigbioData(self, ptFname, metaFname):
+      summary = {}
+      if os.path.exists(ptFname):
+         occParser = OccDataParser(self.log, ptFname, metaFname, 
+                                        delimiter=self._delimiter,
+                                        pullChunks=True)
+         while not done:
+            dataChunk, taxonKey, taxonName = occParser.pullCurrentChunk()
+      except Exception, e:
+         raise LMError('Failed to construct OccDataParser')
       
+      self._fieldNames = self.occParser.header
+      self.occParser.initializeMe()       
+      return summary
             
    # .............................................................................
    def assembleOTOLData(self, gbifTaxonIds):
@@ -210,7 +288,9 @@ class PartnerQuery(object):
 
   
 # .............................................................................
-def testBoth():
+def testBoth(dataname):
+   ptFname = basename + '.csv'
+   metaFname = basename + '.json'
    gbifids = ['3752543', '3753319', '3032690', '3752610', '3755291', '3754671', 
               '8109411', '3753512', '3032647', '3032649', '3032648', '8365087', 
               '4926214', '7516328', '7588669', '7554971', '3754743', '3754395', 
@@ -220,10 +300,11 @@ def testBoth():
               '3032660', '3754294', '3032687', '3032686', '3032681', '3032680', 
               '3032689', '3032688', '3032678', '3032679', '3032672', '3032673', 
               '3032670', '3032671', '3032676', '3032674', '3032675']
-   ptFname = 'testIdigbioData.csv'
    iquery = PartnerQuery()
-   if not(os.path.exists(ptFname)):
-      iquery.assembleIdigbioData(gbifids, ptFname)
+   if os.path.exists(ptFname) and os.path.exists(metaFname):
+      iquery.summarizeIdigbioData(ptFname, metaFname)
+   else:
+      iquery.assembleIdigbioData(gbifids, dataname)
    tree = iquery.assembleOTOLData(gbifids)
    print ('Now what?')
             
@@ -232,7 +313,8 @@ def testBoth():
 # .............................................................................
 # .............................................................................
 if __name__ == '__main__':
-   testBoth()
+   ptdataname = 'testIdigbioData'
+   testBoth(ptdataname)
    pass
 
          

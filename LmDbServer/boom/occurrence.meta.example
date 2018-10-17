@@ -1,8 +1,8 @@
 # .............................................................................
 ##   Columns
-##   1) key: required, original name or zero-based column index,
-##   2) shortname: required, <= 10 chars,
-##   3) type: required, integer, string, or real, 
+##   1) key: required, column/header name or zero-based column index,
+##   2) name: required, <= 10 chars,
+##   3) type: required, int, str, or float
 ##   4) role: optional for TaxaName, UniqueID field,
 ##            required for Longitude, Latitude, Geopoint, GroupBy fields,
 ##   4or5..n) optional, all additional values are acceptedvalues , 
@@ -12,10 +12,10 @@
 # '#' indicates a comment line, all others must contain comma-separated values:
 #  IFF a field performs a specific role in these data, role name should be the 
 #      4th value on a line
-#   1st column:  Key = original field name (matching the header in data file) 
+#   1st column:  Key = field name (in file header) 
 #                     or column index (Zero-based)
 #   2nd column:  Shortname = a new field name, 10 chars or less
-#   3rd column:  Type = integer, string, or real
+#   3rd column:  Type = int, str, or float
 #   4th column:  Role = if applicable for this field, Longitude, Latitude, Geopoint, 
 #                                              GroupBy, TaxaName, UniqueID
 #   All following columns (starting at 4 or 5):  accepted values for this field 
@@ -32,10 +32,10 @@
 #       UniqueID field contains a unique ID for each record. Values will be 
 #          generated if missing. 
 #    Optional:
-#       TaxaName field contains the taxa name for the recordset. If records
-#          for a dataset have different values, the first record will
-#          determine the dataset displayname.  Records will be   
-#          named with GroupBy field if this role is undefined.
+#       TaxaName field contains the taxa name for the recordset. If role is not
+#          present, records will be named with GroupBy field . If role is 
+#          present and records in a group have different values, the first 
+#          record be used as the dataset displayname.  
 #
 #    TODO: GroupBy could be optional if data is already parsed into files by taxa
 # .............................................................................
