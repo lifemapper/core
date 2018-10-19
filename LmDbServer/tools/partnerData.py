@@ -176,9 +176,7 @@ class PartnerQuery(object):
          raise LMError('Unknown field type {}'.format(ogrtype))
    
    # .............................................................................
-   def writeIdigbioMetadata(self, origFldnames, basename):
-      ptFname = basename + '.csv'
-      metaFname = basename + '.json'
+   def writeIdigbioMetadata(self, origFldnames, metaFname):
       newMeta = {}
       for colIdx in range(len(origFldnames)):
          ofname = origFldnames[colIdx]
@@ -220,8 +218,8 @@ class PartnerQuery(object):
             total = output['itemCount']
             items = output['items']
             currcount += len(items)
-            print("  Retrieved {}/{} records for gbif taxonid {}"
-                  .format(len(items), total, gbifTaxonId))
+#             print("  Retrieved {}/{} records for gbif taxonid {}"
+#                   .format(len(items), total, gbifTaxonId))
             for itm in items:
                vals = []
                for fldname in fields:
@@ -234,7 +232,7 @@ class PartnerQuery(object):
                         vals.append('')
                writer.writerow(vals)
             offset += limit
-      print('Retrieved {} of {} reported records for {}'.format(currcount, total))
+      print('Retrieved {} of {} reported records for {}'.format(currcount, total, gbifTaxonId))
       return currcount
    
    # .............................................................................
@@ -248,7 +246,7 @@ class PartnerQuery(object):
             os.remove(fname)
          
       summary = {}
-      writer, f = self._getCSVWriter(ptFname, '\t', doAppend=False)
+      writer, f = self._getCSVWriter(ptFname, doAppend=False)
       
       # Make sure metadata reflects data column order 
       # by pulling and using same fieldnames  
@@ -304,9 +302,11 @@ def testBoth(dataname):
               '3032670', '3032671', '3032676', '3032674', '3032675']
    iquery = PartnerQuery()
    if os.path.exists(ptFname) and os.path.exists(metaFname):
-      iquery.summarizeIdigbioData(ptFname, metaFname)
+      summary = iquery.summarizeIdigbioData(ptFname, metaFname)
+      for gbifid, (name, total) in summary.iteritems():
+         print ('Found gbifid {} with name {} and {} records'.format(gbifid, name, total))
    else:
-      iquery.assembleIdigbioData(gbifids, dataname)
+      iquery.assembleIdigbioData(gbifids, ptFname, metaFname)
    tree = iquery.assembleOTOLData(gbifids)
    print ('Now what?')
             
@@ -341,15 +341,34 @@ from LmCommon.common.lmconstants import (IDIGBIO_QUERY, IDIGBIO, DWC_QUALIFIER,
                                          DWCNames)
 from LmCommon.common.occparse import OccDataParser
 from LmServer.common.log import ScriptLogger
+from LmDbServer.tools.partnerData import PartnerQuery
 
 DEV_SERVER = 'http://141.211.236.35:10999'
 INDUCED_SUBTREE_BASE_URL = '{}/induced_subtree'.format(DEV_SERVER)
 OTTIDS_FROM_GBIFIDS_URL = '{}/ottids_from_gbifids'.format(DEV_SERVER)
 logger = ScriptLogger('partnerData.test')
-delimiter = ','
-ptFname  = '/share/lm/data/archive/biota/heuchera.csv'
-metaFname  = '/share/lm/data/archive/biota/heuchera.meta'
-jsonFname  = '/share/lm/data/archive/biota/heuchera.json'
+delimiter = '\t'
+dataname  = '/tmp/idigTest'
+
+ptFname = dataname + '.csv'
+metaFname = dataname + '.json'
+gbifids = ['3752543', '3753319', '3032690', '3752610', '3755291', '3754671', 
+           '8109411', '3753512', '3032647', '3032649', '3032648', '8365087', 
+           '4926214', '7516328', '7588669', '7554971', '3754743', '3754395', 
+           '3032652', '3032653', '3032654', '3032655', '3032656', '3032658', 
+           '3032662', '7551031', '8280496', '7462054', '3032651', '3755546', 
+           '3032668', '3032665', '3032664', '3032667', '3032666', '3032661', 
+           '3032660', '3754294', '3032687', '3032686', '3032681', '3032680', 
+           '3032689', '3032688', '3032678', '3032679', '3032672', '3032673', 
+           '3032670', '3032671', '3032676', '3032674', '3032675']
+iquery = PartnerQuery()
+if os.path.exists(ptFname) and os.path.exists(metaFname):
+   iquery.summarizeIdigbioData(ptFname, metaFname)
+else:
+   iquery.assembleIdigbioData(gbifids, ptFname, metaFname)
+tree = iquery.assembleOTOLData(gbifids)
+print ('Now what?')
+
 
 self = OccDataParser(logger, ptFname, jsonFname, 
                                delimiter=delimiter,
