@@ -85,6 +85,9 @@ QUERY_PARAMETERS = {
       'name' : 'bgcolor',
       'processIn' : lambda x: getColor(x, allowRamp=False)
    },
+   'canonicalname' : {
+      'name' : 'canonicalName'
+   },
    'catalognumber' : {
       'name' : 'catalogNumber'
    },
@@ -299,6 +302,9 @@ QUERY_PARAMETERS = {
    'scenarioid' : {
       'name' : 'scenarioId',
       'processIn' : int
+   },
+   'scientificname' : {
+      'name' : 'scientificName' 
    },
    'searchstring' : {
       'name' : 'searchString'

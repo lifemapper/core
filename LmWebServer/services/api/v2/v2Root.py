@@ -44,6 +44,7 @@ from LmWebServer.services.api.v2.sdmProject import SdmProjectService
 from LmWebServer.services.api.v2.shapegrid import ShapeGridService
 from LmWebServer.services.api.v2.snippet import SnippetService
 from LmWebServer.services.api.v2.speciesHint import SpeciesHintService
+from LmWebServer.services.api.v2.taxonomy import TaxonomyHintService
 from LmWebServer.services.api.v2.tree import TreeService
 from LmWebServer.services.api.v2.upload import UserUploadService
 
@@ -64,6 +65,7 @@ class ApiRootV2(object):
    sdmproject = SdmProjectService()
    shapegrid = ShapeGridService()
    snippet = SnippetService()
+   taxonomy = TaxonomyHintService()
    tree = TreeService()
    upload = UserUploadService()
    
