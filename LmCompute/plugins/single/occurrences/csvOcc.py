@@ -227,7 +227,7 @@ parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, outFile,
 
 
 # user_points.py
-meta, _, doMatchHeader = OccDataParser.readMetadata(metadataFile)
+meta, doMatchHeader = OccDataParser.readMetadata(metadataFile)
 # createUserShapefile(pointsCsvFn, meta, outFile, 
 #                        bigFile, maxPoints)
 isUser=True
@@ -285,7 +285,7 @@ lyrDef = outLyr.GetLayerDefn()
 
 
 
-meta, _, doMatchHeader = OccDataParser.readMetadata(metadataFile)
+meta, doMatchHeader = OccDataParser.readMetadata(metadataFile)
 
 (rawData, processType, outFile, bigFile, count, maxPoints,
  metadata=None, isUser=False = (pointsCsvFn, meta, outFile, bigFile, 500)

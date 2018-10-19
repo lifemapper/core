@@ -267,14 +267,18 @@ class PartnerQuery(object):
    # .............................................................................
    def summarizeIdigbioData(self, ptFname, metaFname):
       summary = {}
-      if os.path.exists(ptFname):
+      if not(os.path.exists(ptFname)):
+         print ('Point data {} does not exist')
+      elif not(os.path.exists(metaFname)):
+         print ('Metadata {} does not exist')
+      else:
          occParser = OccDataParser(self.log, ptFname, metaFname, 
                                         delimiter=self.delimiter,
                                         pullChunks=True)
+         occParser.initializeMe()       
          summary = occParser.readAllChunks()
 
-      self._fieldNames = self.occParser.header
-      self.occParser.initializeMe()       
+#       fieldNames = self.occParser.header
       return summary
             
    # .............................................................................
@@ -317,5 +321,46 @@ if __name__ == '__main__':
 
          
 """
+from LmBackend.common.lmobj import LMError
+try:
+   from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
+except:
+   OFTInteger = 0 
+   OFTReal = 2 
+   OFTString = 4
+   OFTBinary = 8
+
+import idigbio
+import json
+import os
+import sys
+import unicodecsv
+import urllib2
+
+from LmCommon.common.lmconstants import (IDIGBIO_QUERY, IDIGBIO, DWC_QUALIFIER, 
+                                         DWCNames)
+from LmCommon.common.occparse import OccDataParser
+from LmServer.common.log import ScriptLogger
+
+DEV_SERVER = 'http://141.211.236.35:10999'
+INDUCED_SUBTREE_BASE_URL = '{}/induced_subtree'.format(DEV_SERVER)
+OTTIDS_FROM_GBIFIDS_URL = '{}/ottids_from_gbifids'.format(DEV_SERVER)
+logger = ScriptLogger('partnerData.test')
+delimiter = ','
+ptFname  = '/share/lm/data/archive/biota/heuchera.csv'
+metaFname  = '/share/lm/data/archive/biota/heuchera.meta'
+jsonFname  = '/share/lm/data/archive/biota/heuchera.json'
+
+self = OccDataParser(logger, ptFname, jsonFname, 
+                               delimiter=delimiter,
+                               pullChunks=True)
+self.initializeMe()       
+sm = self.readAllChunks()
+
+op2 = OccDataParser(logger, ptFname, metaFname, 
+                               delimiter=delimiter,
+                               pullChunks=True)
+op2.initializeMe()       
+sm2 = op2.readAllChunks()
 
 """

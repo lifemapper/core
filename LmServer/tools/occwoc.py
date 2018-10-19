@@ -1255,7 +1255,7 @@ op = OccDataParser(logger, occCSV, occMeta, pullChunks=True)
 
 f = open(occCSV, 'r')
 cr = csv.reader(f, delimiter=',')
-fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(occMeta)
+fieldmeta, doMatchHeader = OccDataParser.readMetadata(occMeta)
                
 (fieldNames,
  fieldTypes,
