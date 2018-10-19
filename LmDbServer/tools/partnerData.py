@@ -141,9 +141,10 @@ class PartnerQuery(object):
       self.log = logger
       unicodecsv.field_size_limit(sys.maxsize)
       self.encoding = 'utf-8'
+      self.delimiter = '\t'
 
    # .............................................................................
-   def _getCSVWriter(self, datafile, delimiter, doAppend=True):
+   def _getCSVWriter(self, datafile, doAppend=True):
       '''
       @summary: Get a CSV writer that can handle encoding
       '''
@@ -155,7 +156,7 @@ class PartnerQuery(object):
          
       try:
          f = open(datafile, mode) 
-         writer = unicodecsv.writer(f, delimiter=delimiter, 
+         writer = unicodecsv.writer(f, delimiter=self.delimiter, 
                                     encoding=self.encoding)
    
       except Exception, e:
@@ -268,13 +269,10 @@ class PartnerQuery(object):
       summary = {}
       if os.path.exists(ptFname):
          occParser = OccDataParser(self.log, ptFname, metaFname, 
-                                        delimiter=self._delimiter,
+                                        delimiter=self.delimiter,
                                         pullChunks=True)
-         while not done:
-            dataChunk, taxonKey, taxonName = occParser.pullCurrentChunk()
-      except Exception, e:
-         raise LMError('Failed to construct OccDataParser')
-      
+         summary = occParser.readAllChunks()
+
       self._fieldNames = self.occParser.header
       self.occParser.initializeMe()       
       return summary

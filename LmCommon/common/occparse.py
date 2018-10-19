@@ -841,13 +841,15 @@ class OccDataParser(object):
       """
       @note: Does not check for goodEnough line
       """
-      chunkCount = 0
+      summary = {}
       while self.currLine is not None:
-         chunk = self.pullCurrentChunk()
-         self.log.info('Pulled chunk with {} records'.format(len(chunk)))
-         chunkCount += 1
-      self.log.info('Pulled {} total chunks'.format(chunkCount))
-      return chunkCount
+         chunk, chunkGroup, chunkName = self.pullCurrentChunk()
+         summary[chunkGroup] = (chunkName, len(chunk))
+         self.log.info('Pulled chunk {} for name {} with {} records'.format(
+            chunkGroup, chunkName, len(chunk)))
+      count = len(summary.keys())
+      self.log.info('Pulled {} total chunks'.format(count))
+      return summary
 
    # ...............................................
    def getSizeChunk(self, maxsize):

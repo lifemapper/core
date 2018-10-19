@@ -36,12 +36,20 @@ Using
 
 Data available on yeti (data packages are .tar.gz files)
 ~~~~~~~~~~~~~~~~~~~~~~
-# heuchera_boom_global_10min 
+#. heuchera_boom_global_10min 
   * heuchera_boom_global_10min.contents 
   * heuchera_boom_global_10min.params (scenpkg = sax_layers_10min)
   * heuchera.tar.gz
   * heuchera.nex
   * global_hypotheses-2.0.tar.gz
+  
+#. heuchera_boom_na_10min
+  * heuchera_boom_na_10min.contents 
+  * heuchera_boom_na_10min.params (scenpkg = obs12_na_10min)
+  * heuchera.tar.gz
+  * heuchera.nex
+  * na_hypotheses-2.0.tar.gz
+
 #. heuchera_boom_global_30sec
   * heuchera_boom_global_30sec.contents
   * heuchera_boom_global_30sec.params (scenpkg = biotaphy12global)
@@ -108,6 +116,16 @@ Data available on yeti (all version 2.0)
 #. sax_layers_10min
   * 10min
   * global extent (-180, -56, 180, 90)
+  * 10min ecoregion
+  * present scenario
+     * 4 bioclim variables 
+     * 2 GTOPO
+     * 4 soils 
+     * 2 landcover
+     
+#. obs12_na_10min
+  * 10min
+  * na extent (-178.3333, -7.1667, -12.3333, 83.6667)
   * 10min ecoregion
   * present scenario
      * 4 bioclim variables 
