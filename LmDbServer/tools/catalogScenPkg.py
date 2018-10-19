@@ -45,7 +45,7 @@ class SPFiller(LMObject):
    @version: 2.0 
    @note: This code can only parse scenario metadata marked as version 2.0 
    """
-   version = 2.0
+   version = '2.0'
 # .............................................................................
 # Constructor
 # .............................................................................
