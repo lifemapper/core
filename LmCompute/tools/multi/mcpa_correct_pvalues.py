@@ -1,31 +1,6 @@
-#!/bin/bash
-"""
-@summary: This script calculates corrected P-values for F-Global or 
-             F-Semi-partial
-@author: CJ Grady
-@version: 4.0.0
-@status: beta
-@license: gpl2
-@copyright: Copyright (C) 2018, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+"""This script calculates corrected P-values for F-pseudo values.
 """
 import argparse
 
@@ -38,14 +13,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
                    description="This script calculates and corrects P-Values")
 
-    parser.add_argument('observed_filename',
-                        help='File location of observed values to test')
-    parser.add_argument('p_values_filename',
-                        help='File location to store the P-Values')
-    parser.add_argument('bh_values_filename', 
-            help='File location to store the Benjamini-Hochberg output matrix')
-    parser.add_argument('f_value_filename', nargs='+', 
-                        help='A file of F-values or a stack of F-Values')
+    parser.add_argument(
+        'observed_filename', type=str,
+        help='File location of observed values to test')
+    parser.add_argument(
+        'p_values_filename', type=str,
+        help='File location to store the P-Values')
+    parser.add_argument(
+        'bh_values_filename', type=str,
+        help='File location to store the Benjamini-Hochberg output matrix')
+    parser.add_argument(
+        'f_value_filename', nargs='+', type=str,
+        help='A file of F-values or a stack of F-Values')
    
     args = parser.parse_args()
    
@@ -76,5 +55,3 @@ if __name__ == "__main__":
       
     with open(args.bh_values_filename, 'w') as bh_val_f:
         bh_values.save(bh_val_f)
-
-   
