@@ -17,7 +17,7 @@ lock = threading.Lock()
 
 # Note: This will depend on the executor class used and is subject to tuning.
 #    Threads should have a higher level of concurrency than processes.
-CONCURRENCY_FACTOR = 20
+CONCURRENCY_FACTOR = 5
 
 # .............................................................................
 def _calculate_beta(pred_std, weights, phylo_std, use_lock=True):
@@ -103,7 +103,7 @@ def _calculate_y_hat(pred_std, beta):
     return pred_std.dot(beta)
 
 # .............................................................................
-def _mcpa_for_node(incidence_mtx, env_mtx, bg_mtx, phylo_col):
+def _mcpa_for_node(incidence_mtx, env_mtx, bg_mtx, phylo_col, use_locks=False):
     """Runs MCPA computations for a single tree node.
 
     Args:
@@ -112,6 +112,8 @@ def _mcpa_for_node(incidence_mtx, env_mtx, bg_mtx, phylo_col):
         bg_mtx (numpy array): A matrix of encoded Biogeographic hypotheses.
         phylo_col (numpy array): A column from the phylo matrix for a
             single node.
+        use_locks (boolean): Indicator if locks are needed for larger
+            computations.  This is probably only true for parallel runs.
     """
     species_present_at_node = np.where(phylo_col != 0)[0]
     phylo_col = phylo_col[species_present_at_node, :]
@@ -132,87 +134,93 @@ def _mcpa_for_node(incidence_mtx, env_mtx, bg_mtx, phylo_col):
     
     obs_values = np.zeros((1, num_env_predictors + num_bg_predictors + 2))
     f_values = np.zeros((1, num_env_predictors + num_bg_predictors + 2))
-    
-    if len(sites_present) > 0:
-        # Standardize matrices
-        site_weights = np.sum(incidence, axis=1)
-        species_weights = np.sum(incidence, axis=0)
-    
-        e_std = _standardize_matrix(env_predictors, site_weights)
-        b_std = _standardize_matrix(bg_predictors, site_weights)
-        all_std = np.concatenate([b_std, e_std], axis=1)
-        p_std = _standardize_matrix(phylo_col, species_weights)
-        p_sigma_std = np.dot(incidence, p_std)
-        # Get Beta, Y(hat), Rho, R-squared, F-pseudo
-        beta_env_all = _calculate_beta(e_std, site_weights, p_sigma_std)
-        y_hat_env_all = _calculate_y_hat(e_std, beta_env_all)
-        beta_bg_all = _calculate_beta(all_std, site_weights, p_sigma_std)
-        y_hat_bg_all = _calculate_y_hat(all_std, beta_bg_all)
-        env_r2 = _calculate_r_squared(y_hat_env_all, p_sigma_std)
-        bg_r2 = _calculate_r_squared(y_hat_bg_all, p_sigma_std)
-        env_adj_r2 = 1.0 - ((num_sites - 1.0) / (
-            num_sites - num_env_predictors - 1.0)) * (1.0 - env_r2)
-        bg_adj_r2 = 1.0 - ((num_sites - 1.0) / (
-            num_sites - num_bg_predictors - 1.0)) * (1.0 - bg_r2)
-    
-        #env_f_pseudo_numerator = np.trace(y_hat_env_all.T.dot(y_hat_env_all))
-        env_f_pseudo_numerator = _trace_mtx_by_transverse(y_hat_env_all.T)
-        #bg_f_pseudo_numerator = np.trace(y_hat_bg_all.T.dot(y_hat_bg_all))
-        bg_f_pseudo_numerator = _trace_mtx_by_transverse(y_hat_bg_all.T)
-    
-        # Pre-calculate the denominator for the F-pseudo stats
-        env_denom_temp = p_sigma_std.T - y_hat_env_all.T
-        #env_f_pseudo_denominator = np.trace(env_denom_temp.T.dot(env_denom_temp))
-        env_f_pseudo_denominator = _trace_mtx_by_transverse(env_denom_temp.T)
-        bg_denom_temp = p_sigma_std.T - y_hat_bg_all.T
-        #bg_f_pseudo_denominator = np.trace(bg_denom_temp.T.dot(bg_denom_temp))
-        bg_f_pseudo_denominator = _trace_mtx_by_transverse(bg_denom_temp.T)
-    
-        x = 0
-        # Environment
-        # For each environmental predictor, compute the semi-partial correlation
-        #    and the F-pseudo value
-        for i in range(num_env_predictors):
-            wo_predictor = np.delete(e_std, i, axis=1)
-            predictor = e_std[:,[i]]
-            
-            # Semi-partial correlation
-            beta_wo_pred = _calculate_beta(
-                wo_predictor, site_weights, p_sigma_std)
-            y_hat_wo_pred = _calculate_y_hat(wo_predictor, beta_wo_pred)
-            beta_j_i = _calculate_beta(
-                predictor, site_weights, p_sigma_std, use_lock=False)
-            r2_j_i = _calculate_r_squared(y_hat_wo_pred, p_sigma_std)
-            sp = beta_j_i * np.sqrt(env_r2 - r2_j_i) / np.abs(beta_j_i)
-            f_pseudo_env_i = (env_r2 - r2_j_i) / env_f_pseudo_denominator
-            obs_values[0, x] = sp
-            f_values[0, x] = f_pseudo_env_i
+
+    try:
+        if len(sites_present) > 0:
+            # Standardize matrices
+            site_weights = np.sum(incidence, axis=1)
+            species_weights = np.sum(incidence, axis=0)
+        
+            e_std = _standardize_matrix(env_predictors, site_weights)
+            b_std = _standardize_matrix(bg_predictors, site_weights)
+            all_std = np.concatenate([b_std, e_std], axis=1)
+            p_std = _standardize_matrix(phylo_col, species_weights)
+            p_sigma_std = np.dot(incidence, p_std)
+            # Get Beta, Y(hat), Rho, R-squared, F-pseudo
+            beta_env_all = _calculate_beta(e_std, site_weights, p_sigma_std,
+                                           use_lock=use_locks)
+            y_hat_env_all = _calculate_y_hat(e_std, beta_env_all)
+            beta_bg_all = _calculate_beta(all_std, site_weights, p_sigma_std,
+                                          use_lock=use_locks)
+            y_hat_bg_all = _calculate_y_hat(all_std, beta_bg_all)
+            env_r2 = _calculate_r_squared(y_hat_env_all, p_sigma_std)
+            bg_r2 = _calculate_r_squared(y_hat_bg_all, p_sigma_std)
+            env_adj_r2 = 1.0 - ((num_sites - 1.0) / (
+                num_sites - num_env_predictors - 1.0)) * (1.0 - env_r2)
+            bg_adj_r2 = 1.0 - ((num_sites - 1.0) / (
+                num_sites - num_bg_predictors - 1.0)) * (1.0 - bg_r2)
+        
+            #env_f_pseudo_numerator = np.trace(y_hat_env_all.T.dot(y_hat_env_all))
+            env_f_pseudo_numerator = _trace_mtx_by_transverse(y_hat_env_all.T)
+            #bg_f_pseudo_numerator = np.trace(y_hat_bg_all.T.dot(y_hat_bg_all))
+            bg_f_pseudo_numerator = _trace_mtx_by_transverse(y_hat_bg_all.T)
+        
+            # Pre-calculate the denominator for the F-pseudo stats
+            env_denom_temp = p_sigma_std.T - y_hat_env_all.T
+            #env_f_pseudo_denominator = np.trace(env_denom_temp.T.dot(env_denom_temp))
+            env_f_pseudo_denominator = _trace_mtx_by_transverse(env_denom_temp.T)
+            bg_denom_temp = p_sigma_std.T - y_hat_bg_all.T
+            #bg_f_pseudo_denominator = np.trace(bg_denom_temp.T.dot(bg_denom_temp))
+            bg_f_pseudo_denominator = _trace_mtx_by_transverse(bg_denom_temp.T)
+        
+            x = 0
+            # Environment
+            # For each environmental predictor, compute the semi-partial correlation
+            #    and the F-pseudo value
+            for i in range(num_env_predictors):
+                wo_predictor = np.delete(e_std, i, axis=1)
+                predictor = e_std[:,[i]]
+                
+                # Semi-partial correlation
+                beta_wo_pred = _calculate_beta(
+                    wo_predictor, site_weights, p_sigma_std, use_lock=use_locks)
+                y_hat_wo_pred = _calculate_y_hat(wo_predictor, beta_wo_pred)
+                beta_j_i = _calculate_beta(
+                    predictor, site_weights, p_sigma_std, use_lock=False)
+                r2_j_i = _calculate_r_squared(y_hat_wo_pred, p_sigma_std)
+                sp = beta_j_i * np.sqrt(env_r2 - r2_j_i) / np.abs(beta_j_i)
+                f_pseudo_env_i = (env_r2 - r2_j_i) / env_f_pseudo_denominator
+                obs_values[0, x] = sp
+                f_values[0, x] = f_pseudo_env_i
+                x += 1
+            # Add Environment adjusted R squared
+            obs_values[0, x] = env_adj_r2
+            f_values[0, x] = env_f_pseudo_numerator / env_f_pseudo_denominator
             x += 1
-        # Add Environment adjusted R squared
-        obs_values[0, x] = env_adj_r2
-        f_values[0, x] = env_f_pseudo_numerator / env_f_pseudo_denominator
-        x += 1
-    
-        # Biogeography
-        for i in range(num_bg_predictors):
-            wo_predictor = np.delete(all_std, i, axis=1)
-            predictor = all_std[:,[i]]
-            
-            # Semi-partial correlation
-            beta_wo_pred = _calculate_beta(
-                wo_predictor, site_weights, p_sigma_std)
-            y_hat_wo_pred = _calculate_y_hat(wo_predictor, beta_wo_pred)
-            beta_j_i = _calculate_beta(
-                predictor, site_weights, p_sigma_std, use_lock=False)
-            r2_j_i = _calculate_r_squared(y_hat_wo_pred, p_sigma_std)
-            sp = beta_j_i * np.sqrt(bg_r2 - r2_j_i) / np.abs(beta_j_i)
-            f_pseudo_bg_i = (bg_r2 - r2_j_i) / bg_f_pseudo_denominator
-            obs_values[0, x] = sp
-            f_values[0, x] = f_pseudo_bg_i
-            x += 1
-        # Add Biogeography adjusted R squared
-        obs_values[0, x] = bg_adj_r2
-        f_values[0, x] = bg_f_pseudo_numerator / bg_f_pseudo_denominator
+        
+            # Biogeography
+            for i in range(num_bg_predictors):
+                wo_predictor = np.delete(all_std, i, axis=1)
+                predictor = all_std[:,[i]]
+                
+                # Semi-partial correlation
+                beta_wo_pred = _calculate_beta(
+                    wo_predictor, site_weights, p_sigma_std, use_lock=use_locks)
+                y_hat_wo_pred = _calculate_y_hat(wo_predictor, beta_wo_pred)
+                beta_j_i = _calculate_beta(
+                    predictor, site_weights, p_sigma_std, use_lock=False)
+                r2_j_i = _calculate_r_squared(y_hat_wo_pred, p_sigma_std)
+                sp = beta_j_i * np.sqrt(bg_r2 - r2_j_i) / np.abs(beta_j_i)
+                f_pseudo_bg_i = (bg_r2 - r2_j_i) / bg_f_pseudo_denominator
+                obs_values[0, x] = sp
+                f_values[0, x] = f_pseudo_bg_i
+                x += 1
+            # Add Biogeography adjusted R squared
+            obs_values[0, x] = bg_adj_r2
+            f_values[0, x] = bg_f_pseudo_numerator / bg_f_pseudo_denominator
+    except np.linalg.linalg.LinAlgError:
+        # Singular matrix that does not have inverse
+        pass
     
     return (obs_values, f_values)
 
@@ -309,12 +317,17 @@ def get_p_values(observed_value, test_values, num_permutations=None):
         else:
             p_vals += np.abs(np.round(test_mtx.data, 5)
                              ) >= np.abs(np.round(observed_value.data, 5))
+    # Reshape and adding depth header
+    if len(p_vals.shape) == 2:
+        p_vals = np.expand_dims(p_vals, axis=2)
+    headers = observed_value.headers
+    headers['2'] = 'P-values'
     # Scale and return the pVals matrix
     if num_permutations:
         return Matrix(p_vals / num_permutations, 
-                      headers=observed_value.headers)
+                      headers=headers)
     else:
-        return Matrix(p_vals, headers=observed_value.headers)
+        return Matrix(p_vals, headers=headers)
 
 # .............................................................................
 def mcpa(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
@@ -361,16 +374,26 @@ def mcpa(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
         obs_results[i] = obs
         f_results[i] = f_vals
 
+    # Correct any nans and add depth
+    obs_results = np.expand_dims(np.nan_to_num(obs_results), axis=2)
+    f_results = np.expand_dims(np.nan_to_num(f_results), axis=2)
+
     column_headers = env_mtx.getColumnHeaders()
     column_headers.append('Env - Adjusted R-squared')
     column_headers.extend(bg_mtx.getColumnHeaders())
     column_headers.append('BG - Adjusted R-squared')
-    headers = {
+    obs_headers = {
         '0' : phylo_mtx.getColumnHeaders(),
-        '1' : column_headers
+        '1' : column_headers,
+        '2' : 'Observed'
     }
-    obs_mtx = Matrix(obs_results, headers=headers)
-    f_mtx = Matrix(f_results, headers=headers)
+    f_headers = {
+        '0' : phylo_mtx.getColumnHeaders(),
+        '1' : column_headers,
+        '2' : 'F-values'
+    }
+    obs_mtx = Matrix(obs_results, headers=obs_headers)
+    f_mtx = Matrix(f_results, headers=f_headers)
     return (obs_mtx, f_mtx)
 
 # .............................................................................
@@ -414,7 +437,8 @@ def mcpa_parallel(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
     f_results = np.empty((num_nodes, num_predictors + 2))
     
     func = partial(
-        _mcpa_for_node, init_incidence, env_predictors, bg_predictors)
+        _mcpa_for_node, init_incidence, env_predictors, bg_predictors,
+        use_locks=True)
     
     # Use an Executor to parallelize the computations over each tree node
     # Note: The executor class is determined at the module level, so see top of
@@ -426,6 +450,10 @@ def mcpa_parallel(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
         for obs, f in r:
             obs_results[i] = obs
             f_results[i] = f
+
+    # Correct any nans
+    obs_results = np.nan_to_num(obs_results)
+    f_results = np.nan_to_num(f_results)
 
     column_headers = env_mtx.getColumnHeaders()
     column_headers.append('Env - Adjusted R-squared')

@@ -51,7 +51,7 @@ from LmServer.legion.tree import Tree
 
 # TODO: Move these to localconstants
 NUM_RAND_GROUPS = 30
-NUM_RAND_PER_GROUP = 10
+NUM_RAND_PER_GROUP = 2
 
 
 # .............................................................................
