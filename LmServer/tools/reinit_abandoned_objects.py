@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 """This script will reinitialize objects that have been abandoned
 
 Note:
