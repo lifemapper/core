@@ -312,7 +312,7 @@ def get_p_values(observed_value, test_values, num_permutations=None):
         # If this is a stack
         if test_mtx.data.ndim == 3:
             for i in range(test_mtx.data.shape[2]):
-                p_vals += np.abs(np.round(test_mtx.data[:,:,i], 5)
+                p_vals += np.abs(np.round(test_mtx.data[:,:,[i]], 5)
                                  ) >= np.abs(np.round(observed_value.data, 5))
         else:
             p_vals += np.abs(np.round(test_mtx.data, 5)
