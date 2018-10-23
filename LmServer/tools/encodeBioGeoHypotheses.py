@@ -17,6 +17,7 @@ from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (LM_USER, JobStatus, 
                                  MatrixType, ProcessType, SERVER_BOOM_HEADING)
 from LmCommon.common.matrix import Matrix
+from LmCommon.common.readyfile import readyFilename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
@@ -178,8 +179,7 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
 
 # ...............................................
 def _writeSuccessFile(message, successFname):
-   if os.path.exists(successFname):
-      os.remove(successFname)
+   readyFilename(successFname, overwrite=True)
    try:
       with open(successFname, 'w') as f:
          f.write(message)
