@@ -321,7 +321,7 @@ def get_p_values(observed_value, test_values, num_permutations=None):
     if len(p_vals.shape) == 2:
         p_vals = np.expand_dims(p_vals, axis=2)
     headers = observed_value.headers
-    headers['2'] = 'P-values'
+    headers['2'] = ['P-values']
     # Scale and return the pVals matrix
     if num_permutations:
         return Matrix(p_vals / num_permutations, 
@@ -385,12 +385,12 @@ def mcpa(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
     obs_headers = {
         '0' : phylo_mtx.getColumnHeaders(),
         '1' : column_headers,
-        '2' : 'Observed'
+        '2' : ['Observed']
     }
     f_headers = {
         '0' : phylo_mtx.getColumnHeaders(),
         '1' : column_headers,
-        '2' : 'F-values'
+        '2' : ['F-values']
     }
     obs_mtx = Matrix(obs_results, headers=obs_headers)
     f_mtx = Matrix(f_results, headers=f_headers)
@@ -459,10 +459,16 @@ def mcpa_parallel(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
     column_headers.append('Env - Adjusted R-squared')
     column_headers.extend(bg_mtx.getColumnHeaders())
     column_headers.append('BG - Adjusted R-squared')
-    headers = {
+    obs_headers = {
         '0' : phylo_mtx.getColumnHeaders(),
-        '1' : column_headers
+        '1' : column_headers,
+        '2' : ['Observed']
     }
-    obs_mtx = Matrix(obs_results, headers=headers)
-    f_mtx = Matrix(f_results, headers=headers)
+    f_headers = {
+        '0' : phylo_mtx.getColumnHeaders(),
+        '1' : column_headers,
+        '2' : ['F-values']
+    }
+    obs_mtx = Matrix(obs_results, headers=obs_headers)
+    f_mtx = Matrix(f_results, headers=f_headers)
     return (obs_mtx, f_mtx)
