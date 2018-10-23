@@ -1,12 +1,15 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 """This script calculates MCPA for a set of matrices.
+
+Todo:
+    * Add an option to use parallel vs sequential MCPA
 """
 import argparse
 import numpy as np
 
 from LmCommon.common.matrix import Matrix
-from LmCompute.plugins.multi.mcpa.mcpa import mcpa_parallel
+from LmCompute.plugins.multi.mcpa.mcpa import mcpa, mcpa_parallel
 
 # .............................................................................
 if __name__ == "__main__":
@@ -21,6 +24,9 @@ if __name__ == "__main__":
         '-fo', '--freq_output', type=str, 
         help=('File location to store (stack of) semi-partial correlation'
               ' outputs'))
+    parser.add_argument(
+        '-p', '--parallel', action='store_true',
+        help='Use the parallel version of MCPA')
     
     # Randomizations
     parser.add_argument(
@@ -50,8 +56,13 @@ if __name__ == "__main__":
     env_pred_matrix = Matrix.load(args.env_predictors_filename)
     bg_pred_matrix = Matrix.load(args.biogeo_predictors_filename)
 
+    if args.parallel:
+        mcpa_method = mcpa_parallel
+    else:
+        mcpa_method = mcpa
+
     if not args.randomize:
-        obs_matrix, f_matrix = mcpa_parallel(
+        obs_matrix, f_matrix = mcpa_method(
             incidence_matrix, phylo_matrix, env_pred_matrix, bg_pred_matrix)
         if args.corr_output is not None:
             with open(args.corr_output, 'w') as corr_f:
@@ -82,7 +93,7 @@ if __name__ == "__main__":
             np.random.shuffle(phylo_order)
             phylo_matrix.data = phylo_matrix.data[:, phylo_order]
 
-            _, f_matrix = mcpa_parallel(incidence_matrix, phylo_matrix,
+            _, f_matrix = mcpa_method(incidence_matrix, phylo_matrix,
                                         env_pred_matrix, bg_pred_matrix)
             
             f_stack.append(f_matrix)
