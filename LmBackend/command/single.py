@@ -134,7 +134,7 @@ class GrimRasterCommand(_LmCommand):
       if minPercent:
           self.optArgs += ' -m largest_class'
       if ident is not None:
-          self.optArgs += ' -ident {}'.format(ident)
+          self.optArgs += '-i {}'.format(ident)
 
    # ................................
    def getCommand(self):
