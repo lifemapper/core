@@ -181,12 +181,10 @@ def _writeSuccessFile(message, successFname):
    if os.path.exists(successFname):
       os.remove(successFname)
    try:
-      f = open(successFname, 'w')
-      f.write(message)
+      with open(successFname, 'w') as f:
+         f.write(message)
    except:
       raise
-   finally:
-      f.close()
 
 
 # # ...............................................
