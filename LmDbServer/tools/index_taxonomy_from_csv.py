@@ -5,6 +5,7 @@
 import argparse
 import csv
 import os
+import time
 
 from LmServer.common.lmconstants import NUM_DOCS_PER_POST
 import LmServer.common.solr as lm_solr
@@ -20,6 +21,12 @@ def index_taxonomy_csv_flo(taxonomy_flo, num_per_post=NUM_DOCS_PER_POST):
         if len(taxonomy_dicts) >= num_per_post:
             lm_solr.add_taxa_to_taxonomy_index_dicts(taxonomy_dicts)
             taxonomy_dicts = []
+            print('{} - Posted {} taxonomy documents to solr index'.format(
+                time.strftime('%Y/%m/%d %H:%M:%S %Z'), num_per_post))
+    if len(taxonomy_dicts) > 0:
+        lm_solr.add_taxa_to_taxonomy_index_dicts(taxonomy_dicts)
+        print('{} - Posted {} taxonomy documents to solr index'.format(
+            time.strftime('%Y/%m/%d %H:%M:%S %Z'), len(taxonomy_dicts)))
 
 # .............................................................................
 if __name__ == '__main__':
