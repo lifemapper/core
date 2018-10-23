@@ -445,7 +445,7 @@
        <str name="echoParams">explicit</str>
        <str name="wt">json</str>
        <str name="indent">true</str>
-       <str name="df">scientific_name</str>
+       <str name="df">taxon_species</str>
      </lst>
   </requestHandler>
 
@@ -468,7 +468,7 @@
 
   <initParams path="/update/**,/query,/select,/tvrh,/elevate,/spell">
     <lst name="defaults">
-      <str name="df">scientific_name</str>
+      <str name="df">taxon_species</str>
     </lst>
   </initParams>
 
