@@ -56,12 +56,14 @@ Data available on yeti (data packages are .tar.gz files)
   * heuchera.tar.gz
   * heuchera.nex
   * global_hypotheses-2.0.tar.gz
+  
 #. sax_boom_global_10min
   * sax_boom_global_10min.contents
   * sax_boom_global_10min.params  (scenpkg = sax_layers_10min)
   * saxifragales.tar.gz
   * saxifragales.nex
   * global_hypotheses-2.0.tar.gz
+  
 #. sax_boom_conus_30sec
   * sax_boom_conus_30sec.contents
   * sax_boom_conus_30sec.params  (scenpkg = biotaphyCONUS12)
