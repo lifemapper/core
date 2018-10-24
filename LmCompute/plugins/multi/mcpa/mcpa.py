@@ -280,6 +280,11 @@ def _trace_mtx_by_transverse(mtx):
 
     Args:
         mtx (numpy array): A matrix to use to calculate the trace(M . M_T).
+
+    Note:
+        * There was an error in the formula that called for a dot product of
+            each matrix transverse with itself.  This was a typo as that would
+            only work with square matrices.
     """
     return np.sum([row.dot(row.T) for row in mtx])
 
