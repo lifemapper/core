@@ -15,7 +15,6 @@
    <field name="taxon_order" type="taxonname" indexed="true" stored="true" />
    <field name="taxon_family" type="taxonname" indexed="true" stored="true" />
    <field name="taxon_genus" type="taxonname" indexed="true" stored="true" />
-   <field name="taxon_species" type="taxonname" indexed="true" stored="true" />
    <field name="taxon_key" type="string" indexed="true" stored="true" />
    <field name="scientific_name" type="taxonname" indexed="true" stored="true" />
    <field name="canonical_name" type="taxonname" indexed="true" stored="true" />

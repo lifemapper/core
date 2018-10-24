@@ -16,13 +16,12 @@ class TaxonomyHintService(LmService):
     @lmFormatter
     def GET(self, taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
             taxonOrder=None, taxonFamily=None, taxonGenus=None, 
-            taxonSpecies=None, taxonKey=None, scientificName=None,
-            canonicalName=None, squid=None, limit=100, urlUser=None, **params):
+            taxonKey=None, scientificName=None, canonicalName=None, squid=None,
+            limit=100, urlUser=None, **params):
         docs = query_taxonomy_index(
             taxon_kingdom=taxonKingdom, taxon_phylum=taxonPhylum,
             taxon_class=taxonClass, taxon_order=taxonOrder,
             taxon_family=taxonFamily, taxon_genus=taxonGenus,
-            taxon_species=taxonSpecies, taxon_key=taxonKey,
-            scientific_name=scientificName, canonical_name=canonicalName,
-            squid=squid, user_id=urlUser)
+            taxon_key=taxonKey, scientific_name=scientificName, 
+            canonical_name=canonicalName, squid=squid, user_id=urlUser)
         return docs[:limit]
