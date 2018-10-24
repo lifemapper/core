@@ -14476,18 +14476,10 @@ var _user$project$MultiSpeciesView$barGraph = function (_p0) {
 	var _p2 = _p1._0;
 	var opacity = 1.0 - (_p1._1 / 1.2);
 	var background = A2(_user$project$LinearTreeView$computeColor, opacity, _p2);
-	var width = A2(
+	var height = A2(
 		_elm_lang$core$Basics_ops['++'],
 		_elm_lang$core$Basics$toString(
-			A2(
-				F2(
-					function (x, y) {
-						return x * y;
-					}),
-				100,
-				1.0 - Math.pow(
-					_elm_lang$core$Basics$e,
-					-1.0 * _elm_lang$core$Basics$abs(_p2)))),
+			100 * _elm_lang$core$Basics$abs(_p2)),
 		'%');
 	return A2(
 		_elm_lang$html$Html$div,
@@ -14496,16 +14488,16 @@ var _user$project$MultiSpeciesView$barGraph = function (_p0) {
 			_0: _elm_lang$html$Html_Attributes$style(
 				{
 					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: 'width', _1: width},
+					_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
 					_1: {
 						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'height', _1: '100%'},
+						_0: {ctor: '_Tuple2', _0: 'height', _1: height},
 						_1: {
 							ctor: '::',
 							_0: {ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
 							_1: {
 								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'top', _1: '0'},
+								_0: {ctor: '_Tuple2', _0: 'bottom', _1: '0'},
 								_1: {
 									ctor: '::',
 									_0: {ctor: '_Tuple2', _0: 'background-color', _1: background},
@@ -14570,60 +14562,30 @@ var _user$project$MultiSpeciesView$drawVariable = F4(
 					})(0.5),
 				_p4._2)) ? {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'} : {ctor: '_Tuple2', _0: 'font-weight', _1: 'normal'};
 		return A2(
-			_elm_lang$html$Html$tr,
-			{ctor: '[]'},
+			_elm_lang$html$Html$td,
 			{
 				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$td,
+				_0: _elm_lang$html$Html_Attributes$style(
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$style(
-							{
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'right'},
-								_1: {
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'padding-right', _1: '12px'},
-									_1: {ctor: '[]'}
-								}
-							}),
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text(values),
-						_1: {ctor: '[]'}
+						_0: {ctor: '_Tuple2', _0: 'position', _1: 'relative'},
+						_1: {
+							ctor: '::',
+							_0: fontWeight,
+							_1: {ctor: '[]'}
+						}
 					}),
 				_1: {
 					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$td,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$style(
-								{
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'position', _1: 'relative'},
-									_1: {
-										ctor: '::',
-										_0: fontWeight,
-										_1: {ctor: '[]'}
-									}
-								}),
-							_1: {ctor: '[]'}
-						},
+					_0: _elm_lang$html$Html_Attributes$title(
 						A2(
 							_elm_lang$core$Basics_ops['++'],
-							bar,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text($var),
-								_1: {ctor: '[]'}
-							})),
+							$var,
+							A2(_elm_lang$core$Basics_ops['++'], '\n', values))),
 					_1: {ctor: '[]'}
 				}
-			});
+			},
+			bar);
 	});
 var _user$project$MultiSpeciesView$view = F7(
 	function (_p8, tableHead, showBarGraph, variableFormatter, vars, selectData, dataForVar) {
@@ -14657,95 +14619,127 @@ var _user$project$MultiSpeciesView$view = F7(
 				return {
 					ctor: '_Tuple2',
 					_0: A2(
-						_elm_lang$core$List$map,
-						function ($var) {
-							return A4(
-								_user$project$MultiSpeciesView$drawVariable,
-								showBarGraph,
-								variableFormatter,
-								$var,
-								dataForVar($var));
+						_elm_lang$html$Html$tr,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'height', _1: '400px'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'border-bottom', _1: '1px solid'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'border-right', _1: '1px solid'},
+											_1: {ctor: '[]'}
+										}
+									}
+								}),
+							_1: {ctor: '[]'}
 						},
-						envVars),
+						A2(
+							_elm_lang$core$List$map,
+							function ($var) {
+								return A4(
+									_user$project$MultiSpeciesView$drawVariable,
+									showBarGraph,
+									variableFormatter,
+									$var,
+									dataForVar($var));
+							},
+							envVars)),
 					_1: A2(
-						_elm_lang$core$List$map,
-						function ($var) {
-							return A4(
-								_user$project$MultiSpeciesView$drawVariable,
-								showBarGraph,
-								variableFormatter,
-								$var,
-								dataForVar($var));
+						_elm_lang$html$Html$tr,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'height', _1: '400px'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'border-bottom', _1: '1px solid'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'border-left', _1: '1px solid'},
+											_1: {ctor: '[]'}
+										}
+									}
+								}),
+							_1: {ctor: '[]'}
 						},
-						bgVars)
+						A2(
+							_elm_lang$core$List$map,
+							function ($var) {
+								return A4(
+									_user$project$MultiSpeciesView$drawVariable,
+									showBarGraph,
+									variableFormatter,
+									$var,
+									dataForVar($var));
+							},
+							_elm_lang$core$List$reverse(bgVars)))
 				};
 			} else {
 				return {
 					ctor: '_Tuple2',
-					_0: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$tr,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$td,
-									{
+					_0: A2(
+						_elm_lang$html$Html$tr,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$td,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$colspan(2),
+									_1: {
 										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$colspan(2),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$style(
-												{
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-													_1: {ctor: '[]'}
-												}),
-											_1: {ctor: '[]'}
-										}
-									},
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html$text('No node selected.'),
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+												_1: {ctor: '[]'}
+											}),
 										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					},
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$tr,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$td,
-									{
+									}
+								},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('No node selected.'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}),
+					_1: A2(
+						_elm_lang$html$Html$tr,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$td,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$colspan(2),
+									_1: {
 										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$colspan(2),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$style(
-												{
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-													_1: {ctor: '[]'}
-												}),
-											_1: {ctor: '[]'}
-										}
-									},
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html$text('No node selected.'),
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+												_1: {ctor: '[]'}
+											}),
 										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					}
+									}
+								},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('No node selected.'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						})
 				};
 			}
 		}();
@@ -15150,45 +15144,193 @@ var _user$project$MultiSpeciesView$view = F7(
 							_1: {
 								ctor: '::',
 								_0: A2(
-									_elm_lang$html$Html$div,
+									_elm_lang$html$Html$h3,
 									{
 										ctor: '::',
 										_0: _elm_lang$html$Html_Attributes$style(
 											{
 												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'overflow-y', _1: 'auto'},
+												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
 												_1: {
 													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-													_1: {
-														ctor: '::',
-														_0: {ctor: '_Tuple2', _0: 'justify-content', _1: 'space-around'},
-														_1: {
-															ctor: '::',
-															_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '10px'},
-															_1: {ctor: '[]'}
-														}
-													}
+													_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
+													_1: {ctor: '[]'}
 												}
 											}),
 										_1: {ctor: '[]'}
 									},
 									{
 										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$table,
-											{ctor: '[]'},
-											{ctor: '::', _0: tableHead, _1: envVarTableRows}),
-										_1: {
+										_0: _elm_lang$html$Html$text('Semipartial Correlations b/w Clade and Predictors'),
+										_1: {ctor: '[]'}
+									}),
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$div,
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$style(
+												{
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
+													_1: {ctor: '[]'}
+												}),
+											_1: {ctor: '[]'}
+										},
+										{
 											ctor: '::',
 											_0: A2(
-												_elm_lang$html$Html$table,
-												{ctor: '[]'},
-												{ctor: '::', _0: tableHead, _1: bgVarTableRows}),
+												_elm_lang$html$Html$div,
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html_Attributes$style(
+														{
+															ctor: '::',
+															_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+															_1: {
+																ctor: '::',
+																_0: {ctor: '_Tuple2', _0: 'justify-content', _1: 'center'},
+																_1: {
+																	ctor: '::',
+																	_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '10px'},
+																	_1: {
+																		ctor: '::',
+																		_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
+																		_1: {
+																			ctor: '::',
+																			_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
+																			_1: {
+																				ctor: '::',
+																				_0: {ctor: '_Tuple2', _0: 'max-width', _1: '900px'},
+																				_1: {ctor: '[]'}
+																			}
+																		}
+																	}
+																}
+															}
+														}),
+													_1: {ctor: '[]'}
+												},
+												{
+													ctor: '::',
+													_0: A2(
+														_elm_lang$html$Html$table,
+														{
+															ctor: '::',
+															_0: _elm_lang$html$Html_Attributes$style(
+																{
+																	ctor: '::',
+																	_0: {
+																		ctor: '_Tuple2',
+																		_0: 'width',
+																		_1: A3(
+																			_elm_lang$core$Basics$flip,
+																			F2(
+																				function (x, y) {
+																					return A2(_elm_lang$core$Basics_ops['++'], x, y);
+																				}),
+																			'%',
+																			_elm_lang$core$Basics$toString(
+																				(100 * _elm_lang$core$Basics$toFloat(
+																					_elm_lang$core$List$length(envVars))) / _elm_lang$core$Basics$toFloat(
+																					_elm_lang$core$List$length(vars))))
+																	},
+																	_1: {ctor: '[]'}
+																}),
+															_1: {ctor: '[]'}
+														},
+														{
+															ctor: '::',
+															_0: envVarTableRows,
+															_1: {
+																ctor: '::',
+																_0: A2(
+																	_elm_lang$html$Html$tr,
+																	{ctor: '[]'},
+																	{
+																		ctor: '::',
+																		_0: A2(
+																			_elm_lang$html$Html$th,
+																			{
+																				ctor: '::',
+																				_0: _elm_lang$html$Html_Attributes$colspan(
+																					_elm_lang$core$List$length(envVars)),
+																				_1: {ctor: '[]'}
+																			},
+																			{
+																				ctor: '::',
+																				_0: _elm_lang$html$Html$text('Environmental Variables'),
+																				_1: {ctor: '[]'}
+																			}),
+																		_1: {ctor: '[]'}
+																	}),
+																_1: {ctor: '[]'}
+															}
+														}),
+													_1: {
+														ctor: '::',
+														_0: A2(
+															_elm_lang$html$Html$table,
+															{
+																ctor: '::',
+																_0: _elm_lang$html$Html_Attributes$style(
+																	{
+																		ctor: '::',
+																		_0: {
+																			ctor: '_Tuple2',
+																			_0: 'width',
+																			_1: A3(
+																				_elm_lang$core$Basics$flip,
+																				F2(
+																					function (x, y) {
+																						return A2(_elm_lang$core$Basics_ops['++'], x, y);
+																					}),
+																				'%',
+																				_elm_lang$core$Basics$toString(
+																					(100 * _elm_lang$core$Basics$toFloat(
+																						_elm_lang$core$List$length(bgVars))) / _elm_lang$core$Basics$toFloat(
+																						_elm_lang$core$List$length(vars))))
+																		},
+																		_1: {ctor: '[]'}
+																	}),
+																_1: {ctor: '[]'}
+															},
+															{
+																ctor: '::',
+																_0: bgVarTableRows,
+																_1: {
+																	ctor: '::',
+																	_0: A2(
+																		_elm_lang$html$Html$tr,
+																		{ctor: '[]'},
+																		{
+																			ctor: '::',
+																			_0: A2(
+																				_elm_lang$html$Html$th,
+																				{
+																					ctor: '::',
+																					_0: _elm_lang$html$Html_Attributes$colspan(
+																						_elm_lang$core$List$length(bgVars)),
+																					_1: {ctor: '[]'}
+																				},
+																				{
+																					ctor: '::',
+																					_0: _elm_lang$html$Html$text('Biogeographic Hypotheses'),
+																					_1: {ctor: '[]'}
+																				}),
+																			_1: {ctor: '[]'}
+																		}),
+																	_1: {ctor: '[]'}
+																}
+															}),
+														_1: {ctor: '[]'}
+													}
+												}),
 											_1: {ctor: '[]'}
-										}
-									}),
-								_1: {ctor: '[]'}
+										}),
+									_1: {ctor: '[]'}
+								}
 							}
 						}),
 					_1: {ctor: '[]'}
