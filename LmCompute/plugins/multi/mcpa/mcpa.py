@@ -20,6 +20,24 @@ lock = threading.Lock()
 CONCURRENCY_FACTOR = 5
 
 # .............................................................................
+def _beta_helper(mtx1, mtx2, weights):
+    """This helper function avoids creating large temporary matrices
+
+    Args:
+        mtx1 (numpy array): A (n [sites] by i [predictors]) standardized matrix.
+        mtx2 (numpy array): A (
+        weights (numpy array): A (n [sites]) array of site weights
+    """
+    _, num_predictors = mtx1.shape
+    _, num_k = mtx2.shape
+    out_mtx = np.empty((num_predictors, num_k))
+    for i in range(num_predictors):
+        for j in range(i, num_k):
+            v = np.sum(mtx1[:, i] * weights * mtx2[:, j])
+            out_mtx[i, j] = v
+    return out_mtx
+
+# .............................................................................
 def _calculate_beta(pred_std, weights, phylo_std, use_lock=True):
     """Calculates the regression model (beta) for the provided inputs
 
@@ -54,11 +72,15 @@ def _calculate_beta(pred_std, weights, phylo_std, use_lock=True):
     """
     if use_lock:
         lock.acquire()
-    tmp = pred_std.T.dot(np.diag(weights))
-    tmp2 = tmp.dot(pred_std)
-    tmp3 = np.linalg.inv(tmp2)
-    tmp4 = tmp3.dot(tmp)
-    beta = tmp4.dot(phylo_std)
+    #tmp = pred_std.T.dot(np.diag(weights))
+    #tmp2 = tmp.dot(pred_std)
+    #tmp3 = np.linalg.inv(tmp2)
+    #tmp4 = tmp3.dot(tmp)
+    #beta = tmp4.dot(phylo_std)
+    temp1 = _beta_helper(pred_std, pred_std, weights)
+    tmp1_inv = np.linalg.inv(temp1)
+    temp2 = _beta_helper(pred_std, phylo_std, weights)
+    beta = tmp1_inv.dot(temp2)
     if len(beta.shape) == 1:
         beta = beta.reshape((beta.shape[0], 1))
     if use_lock:
