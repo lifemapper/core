@@ -1,29 +1,4 @@
-"""
-@summary: This module wraps interactions with Solr
-@author: CJ Grady
-@version: 1.0
-@status: alpha
-@license: gpl2
-@copyright: Copyright (C) 2018, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
+"""This module wraps interactions with Solr
 """
 from ast import literal_eval
 from mx.DateTime import DateTimeFromMJD
@@ -265,7 +240,7 @@ def querySnippetIndex(ident1=None, provider=None, collection=None,
 # .............................................................................
 def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None, 
                          taxon_class=None, taxon_order=None, taxon_family=None, 
-                         taxon_genus=None, taxon_species=None, taxon_key=None, 
+                         taxon_genus=None, taxon_key=None, 
                          scientific_name=None, canonical_name=None, squid=None, 
                          user_id=None):
     """Query the Taxonomy index
@@ -276,7 +251,6 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
         taxon_class:
         taxon_family:
         taxon_genus:
-        taxon_species:
         taxon_key:
         scientific_name:
         canonical_name:
@@ -294,7 +268,6 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
         (SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, taxon_kingdom),
         (SOLR_TAXONOMY_FIELDS.TAXON_ORDER, taxon_order),
         (SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, taxon_phylum),
-        (SOLR_TAXONOMY_FIELDS.TAXON_SPECIES, taxon_species),
         (SOLR_TAXONOMY_FIELDS.USER_ID, user_id)
         ]
 
@@ -318,7 +291,6 @@ def add_taxa_to_taxonomy_index(sciname_objects):
                    [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sno.kingdom],
                    [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.txOrder],
                    [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_SPECIES, sno.sourceSpeciesKey],
                    [SOLR_TAXONOMY_FIELDS.USER_ID, sno.getUserId()],
                    [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID, sno.taxonomySourceId()],
                    [SOLR_TAXONOMY_FIELDS.ID, sno.getId()]
@@ -367,8 +339,7 @@ def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
             [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, taxon_info['family']],
             [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, taxon_info['genus']],
             [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, taxon_info['canonical']],
-            [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, taxon_info['sciname']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_SPECIES, taxon_info['specieskey']],
+            [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, taxon_info['sciname']]
         ])
     post_doc = buildSolrDocument(doc_pairs)
     # Note: This is somewhat redundant.

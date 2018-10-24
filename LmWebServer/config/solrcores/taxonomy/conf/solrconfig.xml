@@ -445,7 +445,7 @@
        <str name="echoParams">explicit</str>
        <str name="wt">json</str>
        <str name="indent">true</str>
-       <str name="df">taxon_species</str>
+       <str name="df">canonical_name</str>
      </lst>
   </requestHandler>
 
