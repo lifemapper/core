@@ -298,8 +298,11 @@ class MaxentModel(object):
             multiLambda = "{0}_0{1}".format(fnParts[0], fnParts[1])
             if os.path.exists(self.lambdasFile) or os.path.exists(multiLambda):
                outputs = True
-               
-            if procExitStatus > 0 or not outputs:
+            
+            if procExitStatus > 0:
+                self.log.debug('Process exit status: {}'.format(procExitStatus))
+                
+            if not outputs:
                # Error
                status = self._findError(procStdErr)
                
@@ -556,8 +559,10 @@ optional args can contain any flags understood by Maxent -- for example, a
                                                          endTime - startTime)
          status = JobStatus.COMPUTED
          
-         # Check outputs            
-         if procExitStatus > 0 or not os.path.exists(self.asciiOut):
+         # Check outputs
+         if procExitStatus > 0:
+             self.log.debug('Process exit status: {}'.format(procExitStatus))
+         if not os.path.exists(self.asciiOut):
             # Error
             status = self._findError(procStdErr)
       except LmException, lme:
