@@ -28,62 +28,30 @@ from LmBackend.common.lmconstants import BOOM_SCRIPTS_DIR, CMD_PYBIN
 
 # .............................................................................
 class BoomerCommand(_LmCommand):
-   """
-   @summary: This command will run the boomer
-   """
-   relDir = BOOM_SCRIPTS_DIR
-   scriptName = 'boomer.py'
+    """
+    @summary: This command will run the boomer
+    """
+    relDir = BOOM_SCRIPTS_DIR
+    scriptName = 'boomer.py'
 
-   # ................................
-   def __init__(self, configFile, successFile):
-      """
-      @summary: Construct the command object
-      @param configFile: Configuration file for the boom run
-      """
-      _LmCommand.__init__(self)
-      self.optArgs = ''
-      if configFile is not None and successFile is not None:
-         self.inputs.append(configFile)
-         self.outputs.append(successFile)
-         self.optArgs += ' --config_file={}'.format(configFile)
-         self.optArgs += ' --success_file={}'.format(successFile)
+    # ................................
+    def __init__(self, configFile, successFile):
+        """
+        @summary: Construct the command object
+        @param configFile: Configuration file for the boom run
+        """
+        _LmCommand.__init__(self)
+        self.optArgs = ''
+        if configFile is not None and successFile is not None:
+            self.inputs.append(configFile)
+            self.outputs.append(successFile)
+            self.optArgs += ' --config_file={}'.format(configFile)
+            self.optArgs += ' --success_file={}'.format(successFile)
 
-   # ................................
-   def getCommand(self):
-      """
-      @summary: Get the raw command to run 
-      """
-      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs)
-
-# .............................................................................
-class InitBoomCommand(_LmCommand):
-   """
-   @summary: This command will run the initboom script
-   """
-   relDir = BOOM_SCRIPTS_DIR
-   scriptName = 'initboom.py'
-
-   # ................................
-   def __init__(self, configFile=None, isFirstRun=False):
-      """
-      @summary: Construct the command object
-      @param configFile: A configuration file to sue for the archive, gridset, 
-                            and grid to be created
-      @param isFirstRun: Compute multi-species matrix outputs for the matrices
-      """
-      _LmCommand.__init__(self)
-      self.optArgs = ''
-      if configFile is not None:
-         self.inputs.append(configFile)
-         self.optArgs += ' --config_file={}'.format(configFile)
-      
-      if isFirstRun:
-         self.optArgs += ' --is_first_run'
-
-   # ................................
-   def getCommand(self):
-      """
-      @summary: Get the raw command to run on the system
-      """
-      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs)
+    # ................................
+    def getCommand(self):
+        """
+        @summary: Get the raw command to run 
+        """
+        return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs)
 
