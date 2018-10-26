@@ -38,7 +38,8 @@ class Tree(LmTree, ServiceObject):
     # .............................................................................
     # Constructor
     # .............................................................................
-    def __init__(self, name, metadata={}, dlocation=None, schema=DEFAULT_TREE_SCHEMA,
+    def __init__(self, name, metadata={}, dlocation=None, data=None, 
+                 schema=DEFAULT_TREE_SCHEMA,
                  metadataUrl=None, userId=None, gridsetId=None, treeId=None, 
                  modTime=None):
         """
@@ -61,9 +62,12 @@ class Tree(LmTree, ServiceObject):
         if dlocation is None:
             dlocation = self.getDLocation()
            
-        if dlocation is not None:
+        if data is not None:
+            LmTree.__init__(self, data=data, schema=schema)
+        elif dlocation is not None:
             if os.path.exists(dlocation):
                 LmTree.__init__(self, filename=dlocation, schema=schema)
+            
       
     # ..............................
     def read(self, dlocation=None, schema=DEFAULT_TREE_SCHEMA):
