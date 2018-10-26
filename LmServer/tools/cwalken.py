@@ -728,7 +728,7 @@ class ChristopherWalken(LMObject):
                         # Try to call projection compute me with process parameters
                         objRules = o.computeMe(workDir=workdir, procParams=procParams)
                     except:
-                        Rules = o.computeMe(workDir=workdir)
+                        objRules = o.computeMe(workDir=workdir)
                     rules.extend(objRules)
                 except Exception, e:
                     self.log.info('Failed on object.compute {}, ({})'
