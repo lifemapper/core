@@ -65,11 +65,6 @@ class Tree(LmTree, ServiceObject):
             if os.path.exists(dlocation):
                 LmTree.__init__(self, filename=dlocation, schema=schema)
       
-# ...............................................
-# Properties
-# ...............................................
-
-
     # ..............................
     def read(self, dlocation=None, schema=DEFAULT_TREE_SCHEMA):
         """
