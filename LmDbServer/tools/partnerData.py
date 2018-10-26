@@ -42,12 +42,10 @@ import urllib2
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.apiquery import GbifAPI
-# from LmCommon.common.lmconstants import (IDIGBIO_QUERY, IDIGBIO, DWC_QUALIFIER, 
-#                                          DWCNames)
+from LmCommon.common.lmconstants import PhyloTreeKeys
 from LmCommon.common.occparse import OccDataParser
 
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource,
-                                           PhyloTreeKeys)
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 
 from LmServer.base.taxon import ScientificName
 from LmServer.db.borgscribe import BorgScribe
