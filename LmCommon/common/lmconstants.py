@@ -183,8 +183,8 @@ class LMFormat:
                    LMFormat.NEWICK, LMFormat.NUMPY, LMFormat.PICKLE, 
                    LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, LMFormat.TXT, 
                    LMFormat.XML, LMFormat.ZIP):
-        if ext == ff.ext:
-            return ff
+            if ext == ff.ext:
+                return ff
         return None
     
     @staticmethod
@@ -722,10 +722,10 @@ class JobStatus:
     
     @staticmethod
     def inProcess(stat):
-    if stat > JobStatus.INITIALIZE and stat < JobStatus.COMPLETE:
-        return True
-    else:
-        return False
+        if stat > JobStatus.INITIALIZE and stat < JobStatus.COMPLETE:
+            return True
+        else:
+            return False
     
     @staticmethod
     def incomplete(stat):
@@ -807,10 +807,9 @@ class ProcessType:
     BOOMER = 720
     
     # .........................
-    # TODO: deleteMe
+    # TODO: deleteMe?
     # .........................
     RAD_INTERSECT = 310
-    RAD_COMPRESS = 320
     
     @staticmethod
     def isSingle(ptype):
@@ -834,7 +833,7 @@ class ProcessType:
                      ProcessType.IDIGBIO_TAXA_OCCURRENCE,
                      ProcessType.USER_TAXA_OCCURRENCE]:
             return True
-       return False
+        return False
     
     @staticmethod
     def isModel(ptype):
@@ -858,7 +857,7 @@ class ProcessType:
     @staticmethod
     def isRAD(ptype):
         if ptype in [ProcessType.SMTP, ProcessType.RAD_BUILDGRID, 
-                     ProcessType.RAD_INTERSECT, ProcessType.RAD_COMPRESS, 
+                     ProcessType.RAD_INTERSECT, 
                      ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
                      ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY,
                      ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
@@ -885,52 +884,52 @@ class ProcessType:
     
     @staticmethod
     def isMatrix(ptype):
-    if ptype in [ProcessType.CONCATENATE_MATRICES, ProcessType.RAD_CALCULATE, 
-                 ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY, 
-                 ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
-                 ProcessType.RAD_GRADY, ProcessType.MCPA_ASSEMBLE,
-                 ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
-                 ProcessType.MCPA_RANDOM, ProcessType.BUILD_ANC_PAM]:
-       return True
-    return False  
+        if ptype in [ProcessType.CONCATENATE_MATRICES, ProcessType.RAD_CALCULATE, 
+                     ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY, 
+                     ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
+                     ProcessType.RAD_GRADY, ProcessType.MCPA_ASSEMBLE,
+                     ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
+                     ProcessType.MCPA_RANDOM, ProcessType.BUILD_ANC_PAM]:
+            return True
+        return False  
     
     @staticmethod
     def isAggregate(ptype):
-    return ptype in [ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER, 
-                     ProcessType.OCC_SPLITTER]
+        return ptype in [ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER, 
+                         ProcessType.OCC_SPLITTER]
     
     @staticmethod
     def randomTypes():
-    return [ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
-            ProcessType.RAD_GRADY]
+        return [ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
+                ProcessType.RAD_GRADY]
     
     @staticmethod
     def isRandom(ptype):
-    if ptype in ProcessType.randomTypes():
-       return True
-    return False
+        if ptype in ProcessType.randomTypes():
+            return True
+        return False
     
     @staticmethod
     def encodeTypes():
-    return [ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]
+        return [ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]
     
     @staticmethod
     def isEncode(ptype):
-    if ptype in ProcessType.encodeTypes():
-       return True
-    return False
+        if ptype in ProcessType.encodeTypes():
+            return True
+        return False
     
     @staticmethod
     def mcpaTypes():
-    return [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
-            ProcessType.MCPA_RANDOM, ProcessType.MCPA_ASSEMBLE]
+        return [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
+                ProcessType.MCPA_RANDOM, ProcessType.MCPA_ASSEMBLE]
     
     @staticmethod
     def isMCPA(ptype):
-    if ptype in [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
-                 ProcessType.MCPA_RANDOM, ProcessType.MCPA_ASSEMBLE]:
-       return True
-    return False
+        if ptype in [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
+                     ProcessType.MCPA_RANDOM, ProcessType.MCPA_ASSEMBLE]:
+            return True
+        return False
    
 # .............................................................................
 # .                               RAD constants                               .
