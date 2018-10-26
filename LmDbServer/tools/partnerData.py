@@ -24,7 +24,6 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmBackend.common.lmobj import LMError
 try:
     from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
 except:
@@ -35,19 +34,36 @@ except:
 
 import idigbio
 import json
+import mx.DateTime
 import os
 import sys
 import unicodecsv
 import urllib2
 
-from LmCommon.common.lmconstants import (IDIGBIO_QUERY, IDIGBIO, DWC_QUALIFIER, 
-                                         DWCNames)
+from LmBackend.common.lmobj import LMError
+from LmCommon.common.apiquery import GbifAPI
+# from LmCommon.common.lmconstants import (IDIGBIO_QUERY, IDIGBIO, DWC_QUALIFIER, 
+#                                          DWCNames)
 from LmCommon.common.occparse import OccDataParser
+
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource,
+                                           PhyloTreeKeys)
+
+from LmServer.base.taxon import ScientificName
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ScriptLogger
+from LmServer.legion.tree import Tree
 
 DEV_SERVER = 'http://141.211.236.35:10999'
 INDUCED_SUBTREE_BASE_URL = '{}/induced_subtree'.format(DEV_SERVER)
 OTTIDS_FROM_GBIFIDS_URL = '{}/ottids_from_gbifids'.format(DEV_SERVER)
+
+# .............................................................................
+class Partners(object):
+    OTT_MISSING_KEY = 'unmatched_ott_ids'
+    OTT_TREE_KEY = 'newick'
+    OTT_TREE_FORMAT = 'newick'
+    IDIG_MISSING_KEY = 'unmatched_gbif_ids'
 
 # .............................................................................
 class LABEL_FORMAT(object):
@@ -286,13 +302,8 @@ class PartnerQuery(object):
                 print('Deleting existing file {} ...'.format(fname))
                 os.remove(fname)
            
-        summary = {}
+        summary = {'unmatched_gbif_ids': []}
         writer, f = self._getCSVWriter(ptFname, doAppend=False)
-        
-#         # Make sure metadata reflects data column order 
-#         # by pulling and using same fieldnames  
-#         origFldnames = IDIGBIO_QUERY.RETURN_FIELDS.keys()
-#         origFldnames.sort()
         
         # Keep trying in case no records are available
         tryidx = 0
@@ -309,7 +320,10 @@ class PartnerQuery(object):
         
         for gid in gbifTaxonIds:
             ptCount = self.getIdigbioRecords(gid, origFldnames, writer)
-            summary[gid] = ptCount
+            if ptCount > 0:
+                summary[gid] = ptCount
+            else:
+                summary['unmatched_gbif_ids'].append(gid)
         return summary, meta
    
     # .............................................................................
@@ -317,9 +331,9 @@ class PartnerQuery(object):
         summary = {}
         colMeta = {}
         if not(os.path.exists(ptFname)):
-            print ('Point data {} does not exist')
+            print ('Point data {} does not exist'.format(ptFname))
         elif not(os.path.exists(metaFname)):
-            print ('Metadata {} does not exist')
+            print ('Metadata {} does not exist'.format(metaFname))
         else:
             occParser = OccDataParser(self.log, ptFname, metaFname, 
                                       delimiter=self.delimiter,
@@ -330,12 +344,138 @@ class PartnerQuery(object):
         return summary, colMeta
           
     # .............................................................................
-    def assembleOTOLData(self, gbifTaxonIds):
+    def assembleOTOLData(self, gbifTaxonIds, dataname):
+        tree = None
         gbifOTT = get_ottids_from_gbifids(gbifTaxonIds)
-        tree = induced_subtree(gbifOTT)
-        return tree
+        ottids = gbifOTT.values()
+        output = induced_subtree(ottids)
+                
+        try:
+            missingFromOTOL = output[Partners.OTT_MISSING_KEY]
+        except:
+            missingFromOTOL = []
             
+        try:
+            otree = output[Partners.OTT_TREE_KEY]
+        except:
+            raise LMError('Failed to retrieve OTT tree')
+        else:
+            tree = Tree(dataname, data=otree, schema=Partners.OTT_TREE_FORMAT)
+        
+        updatedtree = self.encodeOTTTreeForGBIF(otree, gbifOTT)
+    
+        return updatedtree, missingFromOTOL
+            
+    # ...............................................
+    def _getInsertSciNameForGBIFSpeciesKey(self, gbifSrcId, taxonKey):
+        """
+        Returns an existing or newly inserted ScientificName
+        """
+        sciName = self._scribe.getTaxon(taxonSourceId=gbifSrcId, 
+                                                 taxonKey=taxonKey)
+        if sciName is None:
+            # Use API to get and insert species name 
+            try:
+                (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
+                 nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
+                 familyStr, genusStr, speciesStr, genusKey, speciesKey, 
+                 loglines) = GbifAPI.getTaxonomy(taxonKey)
+            except Exception, e:
+                self.log.info('Failed lookup for key {}, ({})'.format(
+                                                      taxonKey, e))
+            else:
+                # if no species key, this is not a species
+                if rankStr in ('SPECIES', 'GENUS') and taxStatus == 'ACCEPTED':
+                    currtime = mx.DateTime.gmt().mjd
+                    sname = ScientificName(scinameStr, 
+                                  rank=rankStr, 
+                                  canonicalName=canonicalStr,
+                                  kingdom=kingdomStr, phylum=phylumStr, 
+                                  txClass=classStr, txOrder=orderStr, 
+                                  family=familyStr, genus=genusStr, 
+                                  modTime=currtime, 
+                                  taxonomySourceId=gbifSrcId, 
+                                  taxonomySourceKey=taxonKey, 
+                                  taxonomySourceGenusKey=genusKey, 
+                                  taxonomySourceSpeciesKey=speciesKey)
+                    try:
+                        sciName = self._scribe.findOrInsertTaxon(sciName=sname)
+                        self.log.info('Inserted sciName for taxonKey {}, {}'
+                                      .format(taxonKey, sciName.scientificName))
+                    except Exception, e:
+                        if not isinstance(e, LMError):
+                            e = LMError(currargs='Failed on taxonKey {}'
+                                        .format(taxonKey), 
+                                        prevargs=e.args, lineno=self.getLineno())
+                            raise e
+                else:
+                    self.log.info('taxonKey {} is not an accepted genus or species'
+                                  .format(taxonKey))
+        return sciName
+            
+    # .............................................................................
+    def reverseLookup(self, gbifott, ott):
+        matches = []
+        for g, o in gbifott.iteritems():
+            if o == ott:
+                matches.append(g)
+        return matches
+                 
+        
+    # .............................................................................
+    def _relabelOttTree(self, scribe, otree, gbifott):
+        taxSrc = scribe.getTaxonSource(tsName=
+                    TAXONOMIC_SOURCE[SpeciesDatasource.GBIF]['name'])
+        gbifSrcId = taxSrc.taxonomysourceid   
+           
+        squidDict = {}
+        for ottlabel in otree.getLabels():
+            gbifids = self.reverseLookup(gbifott, ottlabel)
+            if len(gbifids) == 0:
+                print('No gbifids for OTT {}'.format(ottlabel))                
+            elif len(gbifids) > 1:
+                print('Multiple matches (gbifids {}) for OTT {}'
+                      .format(gbifids, ottlabel))
+                squidDict[ottlabel] = []
+                for gid in gbifids:
+                    sno = self._getInsertSciNameForGBIFSpeciesKey(gbifSrcId, gid)
+                    if sno:
+                        squidDict[ottlabel].append(sno.squid)
+            else:
+                sno = self._getInsertSciNameForGBIFSpeciesKey(gbifids[0])
+                if sno is not None:
+                    squidDict[ottlabel] = sno.squid
+        
+        otree.annotateTree(PhyloTreeKeys.SQUID, squidDict)
+        
+        print "Adding interior node labels to tree"
+        # Add node labels
+        otree.addNodeLabels()
+        
+        # Update tree properties
+        otree.clearDLocation()
+        otree.setDLocation()
+        otree.writeTree()
+        
+        # Update metadata
+        otree.updateModtime(mx.DateTime.gmt().mjd)
+        success = scribe.updateObject(otree)        
+        print 'Wrote tree {} to final location and updated db'.format(otree.getId())
+        
+        return otree
 
+    # .............................................................................
+    def _encodeOTTTreeForGBIF(self, otree, gbifott):
+        updatedtree = None
+        scribe = BorgScribe(self.log)
+        try:    
+            scribe.openConnections()
+            updatedtree = self._relabelOttTree(scribe, otree, gbifott)
+        except Exception, e:
+            raise LMError('Failed to relabel tree ({})'.format(e))
+        finally:
+            scribe.closeConnections()
+        return updatedtree
   
 # .............................................................................
 def testBoth(dataname):
@@ -368,7 +508,11 @@ def testBoth(dataname):
     else:
         # Reads keys as integers
         summary, colMeta = iquery.assembleIdigbioData(gbifids, ptFname, metaFname)
-    gbifOTT = iquery.assembleOTOLData(gbifids)
+        missingFromIdigbio = summary[Partners.IDIG_MISSING_KEY]
+    
+    ottTreeForGBIFIds, missingFromOTOL = iquery.assembleOTOLData(gbifids, dataname)
+    
+    
     print ('Now what?')
             
             
@@ -401,6 +545,7 @@ from LmCommon.common.lmconstants import (IDIGBIO_QUERY, IDIGBIO, DWC_QUALIFIER,
                                          DWCNames)
 from LmCommon.common.occparse import OccDataParser
 from LmServer.common.log import ScriptLogger
+from LmServer.legion.tree import Tree
 from LmDbServer.tools.partnerData import PartnerQuery
 
 DEV_SERVER = 'http://141.211.236.35:10999'
@@ -412,6 +557,8 @@ dataname  = '/tmp/idigTest'
 
 ptFname = dataname + '.csv'
 metaFname = dataname + '.json'
+treeFname = dataname + '.newick'
+
 gbifids = ['3752543', '3753319', '3032690', '3752610', '3755291', '3754671', 
            '8109411', '3753512', '3032647', '3032649', '3032648', '8365087', 
            '4926214', '7516328', '7588669', '7554971', '3754743', '3754395', 
@@ -422,87 +569,22 @@ gbifids = ['3752543', '3753319', '3032690', '3752610', '3755291', '3754671',
            '3032689', '3032688', '3032678', '3032679', '3032672', '3032673', 
            '3032670', '3032671', '3032676', '3032674', '3032675']
 iquery = PartnerQuery()
+
 if os.path.exists(ptFname) and os.path.exists(metaFname):
    summary2, colMeta2 = iquery.summarizeIdigbioData(ptFname, metaFname)
 else:
    summary, colMeta = iquery.assembleIdigbioData(gbifids, ptFname, metaFname)
-tree = iquery.assembleOTOLData(gbifids)
+
+
+missingGbifIds, newicktree = iquery.assembleOTOLData(gbifids)
+f = open(treeFname, 'w')
+json.dump(newicktree, f)
+f.close()
+t = Tree(dataname, dlocation=treeFname, schema='newick')
+
+
+tree = Tree('ptree', 
 print ('Now what?')
 
-summary3 = {}
-op = OccDataParser(logger, ptFname, metaFname, 
-                               delimiter=delimiter,
-                               pullChunks=True)
-op.initializeMe()
-id = op._idIdx
-x = op._xIdx
-y = op._yIdx
-gp = op._groupByIdx
-nm = op._nameIdx
-
-missing = [3032651, 4926214]
-
-groups = []
-print 
-print op.currRecnum, op.getLineno(), op.currLine[op._groupByIdx]
-chunk, chunkGroup, chunkName = op.pullCurrentChunk() 
-print chunkGroup
-groups.append(chunkGroup)
-print 'Next up'
-print op.currRecnum, op.getLineno(), op.currLine[op._groupByIdx]
-print 
-
-while op.currRecnum < 2572:
-    line = op._csvreader.next()
-    goodEnough = op._testLine(line)
-    print goodEnough, op.currRecnum
-
-line = op._csvreader.next()
-goodEnough = op._testLine(line)
-print goodEnough, op.currRecnum
-
-summary3 = op.readAllChunks()
-
-probids = ['3032651', '4926214']
-goodid = '7554971'
-gid = probids[0]
-
-api = idigbio.json()
-currcount = 0
-total = 0
-recordQuery = {'taxonid': gid, 
-               'geopoint': {'type': 'exists'}}
-output = api.search_records(rq=recordQuery, limit=2, offset=0)
-total = output['itemCount']
-items = output['items']
-currcount += len(items)
-print("  Retrieved {} records, {} records starting at {}"
-      .format(len(items), limit, offset))
-for itm in items:
-    vals = []
-    for fldname in fields:
-        try:
-            vals.append(itm['indexTerms']['indexData'][fldname])
-        except:
-            try:
-                vals.append(itm['indexTerms'][fldname])
-            except:
-                vals.append('')
-
-
-
-
-
-self = OccDataParser(logger, ptFname, jsonFname, 
-                               delimiter=delimiter,
-                               pullChunks=True)
-self.initializeMe()       
-sm = self.readAllChunks()
-
-op2 = OccDataParser(logger, ptFname, metaFname, 
-                               delimiter=delimiter,
-                               pullChunks=True)
-op2.initializeMe()       
-sm2 = op2.readAllChunks()
 
 """
