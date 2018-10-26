@@ -267,7 +267,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                                userId=self.userId, squid=None,
                                lastOccurrenceCount=taxonCount,
                                kingdom=kingdomStr, phylum=phylumStr, 
-                               txClass=None, txOrder=orderStr, 
+                               txClass=classStr, txOrder=orderStr, 
                                family=familyStr, genus=genusStr, 
                                modTime=currtime, 
                                taxonomySourceId=self._taxonSourceId, 
