@@ -388,6 +388,37 @@ class PartnerQuery(object):
         
         return otree
 
+    # .............................................................................
+    """
+    nm = 'Sphagnum capillifolium var. capillifolium'
+    """
+    def assembleGBIFData(self, names, gbifidFname):      
+        unmatched_names = []
+        if not(isinstance(names, list)):
+            names = [names]
+           
+        if os.path.exists(gbifidFname):
+            print('Deleting existing file {} ...'.format(gbifidFname))
+            os.remove(gbifidFname)
+           
+        writer, f = self._getCSVWriter(gbifidFname, doAppend=False)
+        header = ['originalName']
+        header.extend(GbifAPI.NameMatchFieldnames)
+        writer.writerow(header)
+        
+        for origname in names:
+            goodnames = GbifAPI.getAcceptedNames(origname)
+            if len(goodnames) == 0:
+                unmatched_names.append(origname)
+            else:
+                for gudname in goodnames:
+                    rec = [origname]
+                    for fld in GbifAPI.NameMatchFieldnames:
+                        rec.append(gudname[fld])
+                    writer.writerow(rec)
+                
+        return unmatched_names
+
    
     # .............................................................................
     def assembleIdigbioData(self, gbifTaxonIds, ptFname, metaFname):      
@@ -478,18 +509,11 @@ class PartnerQuery(object):
         return updatedtree
   
 # .............................................................................
-def testBoth(dataname):
+# .............................................................................
+if __name__ == '__main__':
+    dataname = '/tmp/testIdigbioData'
     ptFname = dataname + '.csv'
     metaFname = dataname + '.json'
-    #    gbifids = ['3752543', '3753319', '3032690', '3752610', '3755291', '3754671', 
-    #               '8109411', '3753512', '3032647', '3032649', '3032648', '8365087', 
-    #               '4926214', '7516328', '7588669', '7554971', '3754743', '3754395', 
-    #               '3032652', '3032653', '3032654', '3032655', '3032656', '3032658', 
-    #               '3032662', '7551031', '8280496', '7462054', '3032651', '3755546', 
-    #               '3032668', '3032665', '3032664', '3032667', '3032666', '3032661', 
-    #               '3032660', '3754294', '3032687', '3032686', '3032681', '3032680', 
-    #               '3032689', '3032688', '3032678', '3032679', '3032672', '3032673', 
-    #               '3032670', '3032671', '3032676', '3032674', '3032675']
     gbifids = [3752543, 3753319, 3032690, 3752610, 3755291, 3754671, 
                8109411, 3753512, 3032647, 3032649, 3032648, 8365087, 
                4926214, 7516328, 7588669, 7554971, 3754743, 3754395, 
@@ -514,14 +538,6 @@ def testBoth(dataname):
     updatedTree = iquery.encodeOTTTreeToGBIF(otree, gbifOTT)
     
     print ('Now what?')
-            
-            
-         
-# .............................................................................
-# .............................................................................
-if __name__ == '__main__':
-    ptdataname = 'testIdigbioData'
-    testBoth(ptdataname)
 
          
 """
@@ -541,16 +557,23 @@ import sys
 import unicodecsv
 import urllib2
 
-from LmCommon.common.lmconstants import (IDIGBIO_QUERY, IDIGBIO, DWC_QUALIFIER, 
-                                         DWCNames)
+from LmBackend.common.lmobj import LMError
+from LmCommon.common.apiquery import GbifAPI
+from LmCommon.common.lmconstants import PhyloTreeKeys, GBIF
 from LmCommon.common.occparse import OccDataParser
+
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
+
+from LmServer.base.taxon import ScientificName
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ScriptLogger
 from LmServer.legion.tree import Tree
-from LmDbServer.tools.partnerData import PartnerQuery
 
 DEV_SERVER = 'http://141.211.236.35:10999'
 INDUCED_SUBTREE_BASE_URL = '{}/induced_subtree'.format(DEV_SERVER)
 OTTIDS_FROM_GBIFIDS_URL = '{}/ottids_from_gbifids'.format(DEV_SERVER)
+
+
 logger = ScriptLogger('partnerData.test')
 delimiter = '\t'
 dataname  = '/tmp/idigTest'
