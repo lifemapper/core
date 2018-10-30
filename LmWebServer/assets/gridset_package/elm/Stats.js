@@ -10165,10 +10165,10 @@ var _user$project$StatsMain$drawYAxis = F3(
 								_0: _elm_lang$svg$Svg_Attributes$x1('0'),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$x2('-0.02'),
+									_0: _elm_lang$svg$Svg_Attributes$x2('-20'),
 									_1: {
 										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$strokeWidth('0.001'),
+										_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1'),
 										_1: {
 											ctor: '::',
 											_0: _elm_lang$svg$Svg_Attributes$stroke('black'),
@@ -10190,13 +10190,13 @@ var _user$project$StatsMain$drawYAxis = F3(
 								function (x, y) {
 									return x - y;
 								}),
-							1,
+							1000,
 							A2(
 								F2(
 									function (x, y) {
 										return x * y;
 									}),
-								0.1,
+								100,
 								_elm_lang$core$Basics$toFloat(_p4))));
 				},
 				A2(_elm_lang$core$List$range, 1, 10)));
@@ -10209,7 +10209,7 @@ var _user$project$StatsMain$drawYAxis = F3(
 					_0: _elm_lang$svg$Svg_Attributes$y1('0'),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$y2('1'),
+						_0: _elm_lang$svg$Svg_Attributes$y2('1000'),
 						_1: {
 							ctor: '::',
 							_0: _elm_lang$svg$Svg_Attributes$x1('0'),
@@ -10218,7 +10218,7 @@ var _user$project$StatsMain$drawYAxis = F3(
 								_0: _elm_lang$svg$Svg_Attributes$x2('0'),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$strokeWidth('0.001'),
+									_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1'),
 									_1: {
 										ctor: '::',
 										_0: _elm_lang$svg$Svg_Attributes$stroke('black'),
@@ -10248,13 +10248,13 @@ var _user$project$StatsMain$drawXAxis = F3(
 							_0: _elm_lang$svg$Svg_Attributes$x2(x),
 							_1: {
 								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$y1('1'),
+								_0: _elm_lang$svg$Svg_Attributes$y1('1000'),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$y2('1.02'),
+									_0: _elm_lang$svg$Svg_Attributes$y2('1020'),
 									_1: {
 										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$strokeWidth('0.001'),
+										_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1'),
 										_1: {
 											ctor: '::',
 											_0: _elm_lang$svg$Svg_Attributes$stroke('black'),
@@ -10276,7 +10276,7 @@ var _user$project$StatsMain$drawXAxis = F3(
 								function (x, y) {
 									return x * y;
 								}),
-							0.1,
+							100,
 							_elm_lang$core$Basics$toFloat(_p5)));
 				},
 				A2(_elm_lang$core$List$range, 1, 10)));
@@ -10289,16 +10289,16 @@ var _user$project$StatsMain$drawXAxis = F3(
 					_0: _elm_lang$svg$Svg_Attributes$x1('0'),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$x2('1'),
+						_0: _elm_lang$svg$Svg_Attributes$x2('1000'),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$y1('1'),
+							_0: _elm_lang$svg$Svg_Attributes$y1('1000'),
 							_1: {
 								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$y2('1'),
+								_0: _elm_lang$svg$Svg_Attributes$y2('1000'),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$strokeWidth('0.001'),
+									_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1'),
 									_1: {
 										ctor: '::',
 										_0: _elm_lang$svg$Svg_Attributes$stroke('black'),
@@ -10331,7 +10331,7 @@ var _user$project$StatsMain$inViewBox = F2(
 		var _p11 = _p10._0.x;
 		return (_elm_lang$core$Native_Utils.cmp(_p9.minX, _p11) < 1) && ((_elm_lang$core$Native_Utils.cmp(_p9.maxX, _p11) > -1) && ((_elm_lang$core$Native_Utils.cmp(_p9.minY, _p12) < 1) && (_elm_lang$core$Native_Utils.cmp(_p9.maxY, _p12) > -1)));
 	});
-var _user$project$StatsMain$svgViewBox = {width: 800, height: 800, minX: -0.1, minY: 0, maxX: 1.1, maxY: 1.1};
+var _user$project$StatsMain$svgViewBox = {width: 800, height: 800, minX: -100, minY: 0, maxX: 1020, maxY: 1020};
 var _user$project$StatsMain$computeScale = function (data) {
 	return {
 		minX: A2(
@@ -10577,7 +10577,7 @@ var _user$project$StatsMain$data2svg = F2(
 	function (ds, _p14) {
 		var _p15 = _p14;
 		return _user$project$StatsMain$SvgPoint(
-			{x: (_p15._0.x - ds.minX) / (ds.maxX - ds.minX), y: 1 - ((_p15._0.y - ds.minY) / (ds.maxY - ds.minY))});
+			{x: (1000 * (_p15._0.x - ds.minX)) / (ds.maxX - ds.minX), y: 1000 * (1 - ((_p15._0.y - ds.minY) / (ds.maxY - ds.minY)))});
 	});
 var _user$project$StatsMain$pixel2svg = F2(
 	function (_p17, _p16) {
@@ -10595,7 +10595,7 @@ var _user$project$StatsMain$svg2data = F2(
 	function (ds, _p22) {
 		var _p23 = _p22;
 		return _user$project$StatsMain$DataPoint(
-			{x: (_p23._0.x * (ds.maxX - ds.minX)) + ds.minX, y: ((1 - _p23._0.y) * (ds.maxY - ds.minY)) + ds.minY});
+			{x: ((_p23._0.x / 1000) * (ds.maxX - ds.minX)) + ds.minX, y: ((1 - (_p23._0.y / 1000)) * (ds.maxY - ds.minY)) + ds.minY});
 	});
 var _user$project$StatsMain$update = F2(
 	function (msg, model) {
@@ -10664,17 +10664,13 @@ var _user$project$StatsMain$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SitesSelectedMsg':
-				var selected = A2(
-					_elm_lang$core$List$filter,
-					function (r) {
-						return A2(_elm_lang$core$List$member, r.siteId, _p24._0);
-					},
-					model.displayedRecords);
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{selected: selected}),
+						{
+							selected: _elm_lang$core$Set$fromList(_p24._0)
+						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
@@ -10745,13 +10741,19 @@ var _user$project$StatsMain$update = F2(
 							};
 							var x2 = _p34._0;
 							var y2 = _p34._1;
-							var newlySelected = A2(
-								_elm_lang$core$List$filter,
-								function (d) {
-									return (_elm_lang$core$Native_Utils.cmp(d.x, x1) > 0) && ((_elm_lang$core$Native_Utils.cmp(d.x, x2) < 0) && ((_elm_lang$core$Native_Utils.cmp(d.y, y1) > 0) && (_elm_lang$core$Native_Utils.cmp(d.y, y2) < 0)));
-								},
-								model.displayedRecords);
-							var selected = _p35.ctrlKey ? A2(_elm_lang$core$Basics_ops['++'], model.selected, newlySelected) : newlySelected;
+							var newlySelected = _elm_lang$core$Set$fromList(
+								A2(
+									_elm_lang$core$List$map,
+									function (_) {
+										return _.siteId;
+									},
+									A2(
+										_elm_lang$core$List$filter,
+										function (d) {
+											return (_elm_lang$core$Native_Utils.cmp(d.x, x1) > 0) && ((_elm_lang$core$Native_Utils.cmp(d.x, x2) < 0) && ((_elm_lang$core$Native_Utils.cmp(d.y, y1) > 0) && (_elm_lang$core$Native_Utils.cmp(d.y, y2) < 0)));
+										},
+										model.displayedRecords)));
+							var selected = _p35.ctrlKey ? A2(_elm_lang$core$Set$union, model.selected, newlySelected) : newlySelected;
 							return {
 								ctor: '_Tuple2',
 								_0: _elm_lang$core$Native_Utils.update(
@@ -10787,13 +10789,13 @@ var _user$project$StatsMain$drawScatter = function (model) {
 						_elm_lang$core$Basics$toString(point.y)),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$r('0.006'),
+						_0: _elm_lang$svg$Svg_Attributes$r('6'),
 						_1: {
 							ctor: '::',
 							_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.8'),
 							_1: {
 								ctor: '::',
-								_0: A2(_elm_lang$core$List$member, record, model.selected) ? _elm_lang$svg$Svg_Attributes$fill('red') : _elm_lang$svg$Svg_Attributes$fill('black'),
+								_0: A2(_elm_lang$core$Set$member, record.siteId, model.selected) ? _elm_lang$svg$Svg_Attributes$fill('red') : _elm_lang$svg$Svg_Attributes$fill('black'),
 								_1: {ctor: '[]'}
 							}
 						}
@@ -10866,33 +10868,28 @@ var _user$project$StatsMain$view = function (model) {
 		' ',
 		A2(
 			_elm_lang$core$List$map,
-			function (_p37) {
-				return _elm_lang$core$Basics$toString(
-					function (_) {
-						return _.siteId;
-					}(_p37));
-			},
-			model.selected));
+			_elm_lang$core$Basics$toString,
+			_elm_lang$core$Set$toList(model.selected)));
 	var selectionBox = A2(
 		_elm_lang$core$List$map,
-		function (_p38) {
-			var _p39 = _p38;
-			var _p43 = _p39._1._0;
-			var _p42 = _p39._0._0;
+		function (_p37) {
+			var _p38 = _p37;
+			var _p42 = _p38._1._0;
+			var _p41 = _p38._0._0;
+			var _p39 = {
+				ctor: '_Tuple2',
+				_0: _elm_lang$core$Basics$abs(_p42.x - _p41.x),
+				_1: _elm_lang$core$Basics$abs(_p42.y - _p41.y)
+			};
+			var w = _p39._0;
+			var h = _p39._1;
 			var _p40 = {
 				ctor: '_Tuple2',
-				_0: _elm_lang$core$Basics$abs(_p43.x - _p42.x),
-				_1: _elm_lang$core$Basics$abs(_p43.y - _p42.y)
+				_0: A2(_elm_lang$core$Basics$min, _p41.x, _p42.x),
+				_1: A2(_elm_lang$core$Basics$min, _p41.y, _p42.y)
 			};
-			var w = _p40._0;
-			var h = _p40._1;
-			var _p41 = {
-				ctor: '_Tuple2',
-				_0: A2(_elm_lang$core$Basics$min, _p42.x, _p43.x),
-				_1: A2(_elm_lang$core$Basics$min, _p42.y, _p43.y)
-			};
-			var x_ = _p41._0;
-			var y_ = _p41._1;
+			var x_ = _p40._0;
+			var y_ = _p40._1;
 			return A2(
 				_elm_lang$svg$Svg$rect,
 				{
@@ -11028,11 +11025,7 @@ var _user$project$StatsMain$view = function (model) {
 										{
 											ctor: '::',
 											_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-											_1: {
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '-50px'},
-												_1: {ctor: '[]'}
-											}
+											_1: {ctor: '[]'}
 										}),
 									_1: {ctor: '[]'}
 								},
@@ -11143,7 +11136,7 @@ var _user$project$StatsMain$main = _elm_lang$html$Html$program(
 		init: {
 			ctor: '_Tuple2',
 			_0: {
-				selected: {ctor: '[]'},
+				selected: _elm_lang$core$Set$empty,
 				selecting: _elm_lang$core$Maybe$Nothing,
 				variables: {ctor: '[]'},
 				statNames: _elm_lang$core$Dict$empty,

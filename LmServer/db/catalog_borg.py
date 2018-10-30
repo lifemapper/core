@@ -28,7 +28,6 @@ from LmCommon.common.lmconstants import MatrixType, LMFormat
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
-from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.lmconstants import DB_STORE, LM_SCHEMA_BORG, LMServiceType
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import DEFAULT_EPSG
@@ -43,6 +42,7 @@ from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.tree import Tree
+from collections import namedtuple
 
 # .............................................................................
 class Borg(DbPostgresql):
@@ -76,19 +76,6 @@ class Borg(DbPostgresql):
                       modTime=row[idxs['modtime']])
       return usr
    
-# ...............................................
-   def _createComputeResource(self, row, idxs):
-      cr = None 
-      if row is not None:
-         cr = LMComputeResource(self._getColumnValue(row, idxs, ['name']), 
-                                self._getColumnValue(row, idxs, ['ipaddress']), 
-                                self._getColumnValue(row, idxs, ['userid']), 
-                                ipSignificantBits=self._getColumnValue(row, idxs, ['ipsigbits']), 
-                                FQDN=self._getColumnValue(row, idxs, ['fqdn']), 
-                                dbId=self._getColumnValue(row, idxs, ['computeresourceid']), 
-                                modTime=self._getColumnValue(row, idxs, ['modtime']), 
-                                hbTime=self._getColumnValue(row, idxs, ['lastheartbeat']))
-      return cr
 
 # ...............................................
    def _createScientificName(self, row, idxs):
@@ -332,8 +319,8 @@ class Borg(DbPostgresql):
          mtxcolid = self._getColumnValue(row,idxs,['matrixcolumnid']) 
          mtxid = self._getColumnValue(row,idxs,['matrixid']) 
          mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
-         squid = self._getColumnValue(row,idxs,['squid'])
-         ident = self._getColumnValue(row,idxs,['ident'])
+         squid = self._getColumnValue(row,idxs,['mtxcolsquid','squid'])
+         ident = self._getColumnValue(row,idxs,['mtxcolident', 'ident'])
          mtxcolmeta = self._getColumnValue(row,idxs,['mtxcolmetatadata'])
          intparams = self._getColumnValue(row,idxs,['intersectparams'])
          mtxcolstat = self._getColumnValue(row,idxs,['mtxcolstatus']) 
@@ -1315,24 +1302,6 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
-   def findOrInsertComputeResource(self, compResource):
-      """
-      @summary: Insert a compute resource of this Lifemapper system.  
-      @param usr: LMComputeResource object to insert
-      @return: new or existing ComputeResource
-      """
-      compResource.modTime = mx.DateTime.utc().mjd
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertCompute', 
-                                        compResource.name, 
-                                        compResource.ipAddress, 
-                                        compResource.ipSignificantBits, 
-                                        compResource.FQDN, 
-                                        compResource.getUserId(), 
-                                        compResource.modTime)
-      newOrExistingCR = self._createComputeResource(row, idxs)
-      return newOrExistingCR
-
-# ...............................................
    def findOrInsertUser(self, usr):
       """
       @summary: Insert a user of the Lifemapper system. 
@@ -1418,7 +1387,7 @@ class Borg(DbPostgresql):
       @param taxonSourceName: unique name of this taxonomy source
       @return: database id, url, and modification time of this source
       """
-      txSourceId = url = createdate = moddate = None
+      txSourceId = url = moddate = None
       if taxonSourceName is not None:
          try:
             row, idxs = self.executeSelectOneFunction('lm_findTaxonSource', 
@@ -1432,6 +1401,33 @@ class Borg(DbPostgresql):
             url = self._getColumnValue(row, idxs, ['url'])
             moddate =  self._getColumnValue(row, idxs, ['modtime'])
       return txSourceId, url, moddate
+   
+# ...............................................
+   def getTaxonSource(self, tsId, tsName, tsUrl):
+      """
+      @summary: Return the taxonomy source info given the id, name or url
+      @param tsId: database id of this taxonomy source
+      @param tsName: unique name of this taxonomy source
+      @param tsName: unique url of this taxonomy source
+      @return: named tuple with database id, name, url, and 
+               modification time of this source
+      """
+      ts = None
+      try:
+         row, idxs = self.executeSelectOneFunction('lm_getTaxonSource', 
+                                                   tsId, tsName, tsUrl)
+      except Exception, e:
+         if not isinstance(e, LMError):
+            e = LMError(currargs=e.args, lineno=self.getLineno())
+         raise e
+      if row is not None:
+         import collections
+         fldnames = []
+         for key, _ in sorted(idxs.iteritems(), key=lambda (k,v): (v,k)):
+            fldnames.append(key)
+         TaxonSource = collections.namedtuple('TaxonSource', fldnames)
+         ts = TaxonSource(*row)
+      return ts
    
 # ...............................................
    def findTaxon(self, taxonSourceId, taxonkey):

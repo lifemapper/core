@@ -106,7 +106,7 @@ class GrimRasterCommand(_LmCommand):
 
    # ................................
    def __init__(self, shapegridFilename, rasterFilename, grimColFilename, 
-                resolution, minPercent=None, ident=None):
+                minPercent=None, ident=None):
       """
       @summary: Construct the command object
       @param shapegridFilename: The file location of the shapegrid to intersect
@@ -122,28 +122,20 @@ class GrimRasterCommand(_LmCommand):
       self.inputs.extend([shapegridFilename, rasterFilename])
       self.outputs.append(grimColFilename)
       
-      self.sgFn = shapegridFilename
-      self.rastFn = rasterFilename
-      self.grimColFn = grimColFilename
-      self.resolution = resolution
-      self.minPercent = minPercent
+      self.args = [shapegridFilename, rasterFilename, grimColFilename]
+      self.optArgs = ''
+      if minPercent:
+          self.optArgs += ' -m largest_class'
       if ident is not None:
-         self.ident = ident
-      else:
-         self.ident = os.path.splitext(os.path.basename(rasterFilename))[0]
+          self.optArgs += '-i {}'.format(ident)
 
    # ................................
    def getCommand(self):
       """
       @summary: Get the raw command to run on the system
       """
-      optArgs = ''
-      if self.minPercent is not None:
-         optArgs += ' -m {}'.format(self.minPercent)
-      if self.ident is not None:
-         optArgs += ' -i {}'.format(self.ident)
-      return '{} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
-            optArgs, self.sgFn, self.rastFn, self.grimColFn, self.resolution)
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs, 
+                                  ' '.join(self.args))
 
 # .............................................................................
 class IdigbioPointsCommand(_LmCommand):
@@ -188,7 +180,7 @@ class IntersectRasterCommand(_LmCommand):
 
    # ................................
    def __init__(self, shapegridFilename, rasterFilename, pavFilename, 
-                resolution, minPresence, maxPresence, percentPresence, 
+                minPresence, maxPresence, percentPresence, 
                 squid=None, layerStatusFilename=None, statusFilename=None):
       """
       @summary: Construct the command object
@@ -210,13 +202,8 @@ class IntersectRasterCommand(_LmCommand):
       self.inputs.extend([shapegridFilename, rasterFilename])
       self.outputs.append(pavFilename)
       
-      self.sgFn = shapegridFilename
-      self.rastFn = rasterFilename
-      self.pavFn = pavFilename
-      self.resolution = resolution
-      self.minPres = minPresence
-      self.maxPres = maxPresence
-      self.perPres = percentPresence
+      self.args = [shapegridFilename, rasterFilename, pavFilename, 
+                   str(minPresence), str(maxPresence), str(percentPresence)]
       
       self.optArgs = ''
       if squid is not None:
@@ -235,9 +222,8 @@ class IntersectRasterCommand(_LmCommand):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
-                     self.optArgs, self.sgFn, self.rastFn, self.pavFn, 
-                     self.resolution, self.minPres, self.maxPres, self.perPres)
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(),
+                     self.optArgs, ' '.join(self.args))
 
 # .............................................................................
 class IntersectVectorCommand(_LmCommand):
@@ -269,24 +255,20 @@ class IntersectVectorCommand(_LmCommand):
       self.inputs.extend([shapegridFilename, vectorFilename])
       self.outputs.append(pavFilename)
       
-      self.sgFn = shapegridFilename
-      self.vectFn = vectorFilename
-      self.pavFn = pavFilename
-      self.presAttrib = presenceAttrib
-      self.minPres = minPresence
-      self.maxPres = maxPresence
-      self.perPres = percentPresence
-      self.squid = squid
+      self.args = [shapegridFilename, vectorFilename, pavFilename, 
+                   str(minPresence), str(maxPresence), str(percentPresence), 
+                   presenceAttrib]
+      self.optArgs = ''
+      if squid is not None:
+          self.optArgs += ' --squid={}'.format(squid)
 
    # ................................
    def getCommand(self):
       """
       @summary: Get the raw command to run on the system
       """
-      return '{} {} {} {} {} {} {} {} {} {}'.format(CMD_PYBIN, self.getScript(),
-            ' --squid={}'.format(self.squid) if self.squid is not None else '',
-            self.sgFn, self.vectFn, self.pavFn, self.presAttrib, self.minPres, 
-            self.maxPres, self.perPres)
+      return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs, 
+                                  ' '.join(self.args))
 
 # .............................................................................
 class SdmodelCommand(_LmCommand):

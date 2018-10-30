@@ -250,7 +250,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                minPercent = None
                
             intCmd = GrimRasterCommand(shapegridFile, inputLayerFname,
-                                       pavFname, self.layer.resolution,
+                                       pavFname, 
                                        minPercent=minPercent, ident=self.ident)
          elif self.layer.ogrType is not None:
             intCmd = IntersectVectorCommand(shapegridFile, inputLayerFname,
@@ -270,7 +270,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             statusFile = os.path.join(targetDir, 
                                       'mtxcol_{}.status'.format(self.getId()))
             intCmd = IntersectRasterCommand(shapegridFile, inputLayerFname,
-                              pavFname, self.layer.resolution,
+                              pavFname, 
                               self.intersectParams[
                                  self.INTERSECT_PARAM_MIN_PRESENCE],
                               self.intersectParams[

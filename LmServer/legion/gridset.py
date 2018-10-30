@@ -23,24 +23,25 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import mx.DateTime
 import os
 from osgeo import ogr
 import subprocess
 from types import StringType
 
-from LmBackend.command.common import ChainCommand, SystemCommand
-from LmBackend.command.multi import (CalculateStatsCommand, 
-                     EncodePhylogenyCommand, McpaAssembleCommand, 
-                     McpaCorrectPValuesCommand, McpaObservedCommand, 
-                     McpaRandomCommand, CreateAncestralPamCommand,
-                     SyncPamAndTreeCommand)
+from LmBackend.command.common import (ChainCommand,
+                                      ConcatenateMatricesCommand,
+                                      SystemCommand)
+from LmBackend.command.multi import (CalculateStatsCommand,
+                                     EncodePhylogenyCommand,
+                                     McpaCorrectPValuesCommand,
+                                     CreateAncestralPamCommand,
+                                     SyncPamAndTreeCommand, McpaRunCommand)
 from LmBackend.command.server import (LmTouchCommand, SquidIncCommand, 
                                       StockpileCommand)
 from LmBackend.common.lmobj import LMError
 
-from LmCommon.common.lmconstants import MatrixType, JobStatus, ProcessType,\
-   LMFormat
+from LmCommon.common.lmconstants import (JobStatus, LMFormat, 
+                                         MatrixType, ProcessType)
 
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType, 
@@ -50,7 +51,7 @@ from LmServer.legion.tree import Tree
 
 # TODO: Move these to localconstants
 NUM_RAND_GROUPS = 30
-NUM_RAND_PER_GROUP = 10
+NUM_RAND_PER_GROUP = 2
 
 
 # .............................................................................
@@ -419,142 +420,96 @@ class Gridset(ServiceObject): #LMMap
             mcpaOutMtx = pamDict[pamId][MatrixType.MCPA_OUTPUTS]
             
             # Get workspace filenames
-            wsEnvAdjRsqFilename = os.path.join(pamWorkDir, 
-                                     'envAdjRsq{}'.format(LMFormat.MATRIX.ext))
-            wsEnvPartCorFilename = os.path.join(pamWorkDir, 
-                                    'envPartCor{}'.format(LMFormat.MATRIX.ext))
-            wsEnvFglobalFilename = os.path.join(pamWorkDir, 
-                                    'envFglobal{}'.format(LMFormat.MATRIX.ext))
-            wsEnvFpartialFilename = os.path.join(pamWorkDir, 
-                                   'envFpartial{}'.format(LMFormat.MATRIX.ext))
+            ws_obs_filename = os.path.join(
+                pamWorkDir, 'obs_cor{}'.format(LMFormat.MATRIX.ext))
+            ws_obs_f_filename = os.path.join(
+                pamWorkDir, 'obs_f{}'.format(LMFormat.MATRIX.ext))
             
-            wsBGAdjRsqFilename = os.path.join(pamWorkDir, 
-                                      'bgAdjRsq{}'.format(LMFormat.MATRIX.ext))
-            wsBGPartCorFilename = os.path.join(pamWorkDir, 
-                                     'bgPartCor{}'.format(LMFormat.MATRIX.ext))
-            wsBGFglobalFilename = os.path.join(pamWorkDir, 
-                                     'bgFglobal{}'.format(LMFormat.MATRIX.ext))
-            wsBGFpartialFilename = os.path.join(pamWorkDir, 
-                                    'bgFpartial{}'.format(LMFormat.MATRIX.ext))
+            
+            
             
             wsMcpaOutFilename = os.path.join(pamWorkDir, 
                                        'mcpaOut{}'.format(LMFormat.MATRIX.ext))
             
-            # MCPA env observed command
-            mcpaEnvObsCmd = McpaObservedCommand(wsPamFilename, encTreeFilename,
-                                 wsGrimFilename, wsEnvAdjRsqFilename,
-                                 wsEnvPartCorFilename, wsEnvFglobalFilename,
-                                 wsEnvFpartialFilename)
-            rules.append(mcpaEnvObsCmd.getMakeflowRule())
-               
-            # Env Randomizations
-            envFglobRands = []
-            envFpartRands = []
-            for i in range(NUM_RAND_GROUPS):
-               envFglobRandFilename = os.path.join(pamWorkDir, 
-                             'envFglobRand{}{}'.format(i, LMFormat.MATRIX.ext))
-               envFpartRandFilename = os.path.join(pamWorkDir, 
-                             'envFpartRand{}{}'.format(i, LMFormat.MATRIX.ext))
-               envFglobRands.append(envFglobRandFilename)
-               envFpartRands.append(envFpartRandFilename)
-               
-               randCmd = McpaRandomCommand(wsPamFilename, encTreeFilename,
-                                           wsGrimFilename, envFglobRandFilename,
-                                           envFpartRandFilename, 
-                                           numRadomizations=NUM_RAND_PER_GROUP)
-               rules.append(randCmd.getMakeflowRule())
+            # MCPA observed command
+            mcpa_obs_cmd = McpaRunCommand(wsPamFilename, encTreeFilename,
+                                          wsGrimFilename, wsBGFilename,
+                                          obs_filename=ws_obs_filename,
+                                          f_mtx_filename=ws_obs_f_filename)
+            rules.append(mcpa_obs_cmd.getMakeflowRule())
             
-            # TODO: Consider saving randomized matrices
-            
-            # Env F-global
-            envFglobFilename = os.path.join(pamWorkDir, 
-                                    'envFglobP{}'.format(LMFormat.MATRIX.ext))
-            envFglobBHfilename = os.path.join(pamWorkDir, 
-                                    'envFglobBH{}'.format(LMFormat.MATRIX.ext))
-            
-            envFglobCmd = McpaCorrectPValuesCommand(wsEnvFglobalFilename,
-                                                    envFglobFilename,
-                                                    envFglobBHfilename,
-                                                    envFglobRands)
-            rules.append(envFglobCmd.getMakeflowRule())
-            
-            # Env F-semipartial
-            envFpartFilename = os.path.join(pamWorkDir, 
-                                    'envFpartP{}'.format(LMFormat.MATRIX.ext))   
-            envFpartBHfilename = os.path.join(pamWorkDir, 
-                                    'envFpartBH{}'.format(LMFormat.MATRIX.ext))
-            envFpartCmd = McpaCorrectPValuesCommand(wsEnvFpartialFilename,
-                                                    envFpartFilename,
-                                                    envFpartBHfilename,
-                                                    envFpartRands)
-            rules.append(envFpartCmd.getMakeflowRule())
-            
-            # Bio geo
-            # MCPA bg observed command
-            mcpaBGObsCmd = McpaObservedCommand(wsPamFilename, encTreeFilename,
-                              wsGrimFilename, wsBGAdjRsqFilename,
-                              wsBGPartCorFilename, wsBGFglobalFilename,
-                              wsBGFpartialFilename, 
-                              hypothesesFilename=wsBGFilename)
-            rules.append(mcpaBGObsCmd.getMakeflowRule())
-               
-            # BG Randomizations
-            bgFglobRands = []
-            bgFpartRands = []
-            # TODO: This should be configurable 
+            # MCPA randomized runs
             
             i = 0
+            rand_f_mtxs = []
             while i < numPermutations:
                j = NUM_RAND_PER_GROUP
                if i + j >= numPermutations:
                   j = numPermutations - i
-               bgFglobRandFilename = os.path.join(pamWorkDir, 
-                              'bgFglobRand{}{}'.format(i, LMFormat.MATRIX.ext))
-               bgFpartRandFilename = os.path.join(pamWorkDir, 
-                              'bgFpartRand{}{}'.format(i, LMFormat.MATRIX.ext))
-               bgFglobRands.append(bgFglobRandFilename)
-               bgFpartRands.append(bgFpartRandFilename)
-               
-               randCmd = McpaRandomCommand(wsPamFilename, encTreeFilename,
-                                   wsGrimFilename, bgFglobRandFilename,
-                                   bgFpartRandFilename, 
-                                   hypothesesFilename=wsBGFilename, 
-                                   numRadomizations=j)
-               rules.append(randCmd.getMakeflowRule())
+            
+               rand_f_mtx_filename = os.path.join(
+                   pamWorkDir, 'f_mtx_rand{}{}'.format(i, LMFormat.MATRIX.ext))
+               rand_f_mtxs.append(rand_f_mtx_filename)
+               rand_cmd = McpaRunCommand(wsPamFilename, encTreeFilename,
+                                         wsGrimFilename, wsBGFilename,
+                                         f_mtx_filename=rand_f_mtx_filename,
+                                         randomize=True, 
+                                         num_permutations=NUM_RAND_PER_GROUP)
+               rules.append(rand_cmd.getMakeflowRule())
                i += NUM_RAND_PER_GROUP
             
-            # TODO: Consider saving randomized matrices
-            
-            # BG F-global
-            bgFglobFilename = os.path.join(pamWorkDir, 
-                                      'bgFglobP{}'.format(LMFormat.MATRIX.ext))
-            bgFglobBHfilename = os.path.join(pamWorkDir, 
-                                     'bgFglobBH{}'.format(LMFormat.MATRIX.ext))
-            bgFglobCmd = McpaCorrectPValuesCommand(wsBGFglobalFilename,
-                                   bgFglobFilename, bgFglobBHfilename,
-                                   bgFglobRands)
-            rules.append(bgFglobCmd.getMakeflowRule())
-            
-            # BG F-semipartial
-            bgFpartFilename = os.path.join(pamWorkDir, 
-                                      'bgFpartP{}'.format(LMFormat.MATRIX.ext))   
-            bgFpartBHfilename = os.path.join(pamWorkDir, 
-                                     'bgFpartBH{}'.format(LMFormat.MATRIX.ext))
-            bgFpartCmd = McpaCorrectPValuesCommand(wsBGFpartialFilename,
-                                   bgFpartFilename, bgFpartBHfilename,
-                                   bgFpartRands)
-            rules.append(bgFpartCmd.getMakeflowRule())
+            i = 0
+            # TODO: Consider a different constant for this
+            group_size = NUM_RAND_PER_GROUP  
+            while len(rand_f_mtxs) > group_size:
+               i += 1
+               agg_filename = os.path.join(
+                    pamWorkDir, 'f_rand_agg{}{}'.format(i, 
+                                                        LMFormat.MATRIX.ext))
+               # Create a concatenate command for this group
+               concat_cmd = ConcatenateMatricesCommand(
+                    rand_f_mtxs[:group_size], 2, agg_filename)
+               rules.append(concat_cmd.getMakeflowRule())
 
-            # Assemble outputs
-            assembleCmd = McpaAssembleCommand(wsEnvPartCorFilename,
-                                 wsEnvAdjRsqFilename, envFglobFilename,
-                                 envFpartFilename, envFglobBHfilename,
-                                 envFpartBHfilename, wsBGPartCorFilename,
-                                 wsBGAdjRsqFilename, bgFglobFilename,
-                                 bgFpartFilename, bgFglobBHfilename,
-                                 bgFpartBHfilename, wsMcpaOutFilename)
-            rules.append(assembleCmd.getMakeflowRule())
-
+               # Remove these from list and append new file
+               rand_f_mtxs = rand_f_mtxs[group_size:]
+               rand_f_mtxs.append(agg_filename)
+            
+            """
+            # If we have multiple files left, aggregate them
+            if len(rand_f_mtxs) > 1:
+               i += 1
+               f_rand_agg_filename = os.path.join(
+                    pamWorkDir, 'f_rand_agg{}{}'.format(i, 
+                                                        LMFormat.MATRIX.ext))
+               # Create a concatenate command for this group
+               concat_cmd = ConcatenateMatricesCommand(
+                    rand_f_mtxs[:group_size], axis=2, agg_filename)
+               rules.append(concat_cmd.getMakeflowRule())
+            else:
+               f_rand_agg_filename = rand_f_mtxs[0]
+            """
+            
+            # TODO: Correct P-Values
+            out_p_values_filename = os.path.join(
+                pamWorkDir, 'p_values{}'.format(LMFormat.MATRIX.ext))
+            out_bh_values_filename = os.path.join(
+                pamWorkDir, 'bh_values{}'.format(LMFormat.MATRIX.ext))
+            
+            # TODO: Use ws_obs_filename?
+            corr_p_cmd = McpaCorrectPValuesCommand(ws_obs_f_filename,
+                                                   out_p_values_filename,
+                                                   out_bh_values_filename,
+                                                   rand_f_mtxs)
+            rules.append(corr_p_cmd.getMakeflowRule())
+            
+            # Assemble final MCPA matrix
+            mcpa_concat_cmd = ConcatenateMatricesCommand(
+                [ws_obs_filename, 
+                 out_p_values_filename, 
+                 out_bh_values_filename], 2, wsMcpaOutFilename)
+            rules.append(mcpa_concat_cmd.getMakeflowRule())
+            
             # Stockpile matrix
             mcpaOutSuccessFilename = os.path.join(pamWorkDir, 'mcpaOut.success')
             

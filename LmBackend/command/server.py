@@ -23,8 +23,13 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import os
+import time
+
 from LmBackend.command.base import _LmCommand
-from LmBackend.common.lmconstants import CMD_PYBIN, SERVER_SCRIPTS_DIR
+from LmBackend.common.lmconstants import (CMD_PYBIN, DB_SERVER_SCRIPTS_DIR, 
+                                          SERVER_SCRIPTS_DIR)
+from LmCommon.common.lmconstants import LMFormat
 
 # .............................................................................
 class _LmServerCommand(_LmCommand):
@@ -41,6 +46,22 @@ class _LmServerCommand(_LmCommand):
       @note: This differs from the superclass because the default local is True
       """
       return super(_LmServerCommand, self).getMakeflowRule(local=local)
+
+# .............................................................................
+class _LmDbServerCommand(_LmCommand):
+   """
+   @summary: The _LmServerCommand class is an intermediate class that all 
+                server command classes should inherit from.
+   """
+   relDir = DB_SERVER_SCRIPTS_DIR
+   # ................................
+   def getMakeflowRule(self, local=True):
+      """
+      @summary: Get a MfRule object for this command
+      @param local: Should this be a local command in a Makeflow DAG
+      @note: This differs from the superclass because the default local is True
+      """
+      return super(_LmDbServerCommand, self).getMakeflowRule(local=local)
 
 # .............................................................................
 class AddBioGeoAndTreeCommand(_LmServerCommand):
@@ -92,6 +113,239 @@ class AddBioGeoAndTreeCommand(_LmServerCommand):
       """
       return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(), 
             self.optArgs, ' '.join(self.args))
+
+# .............................................................................
+class CatalogScenarioPackageCommand(_LmDbServerCommand):
+   """
+   @summary: This command will catalog a scenario package
+   """
+   scriptName = 'catalogScenPkg.py'
+
+   # ................................
+   def __init__(self, package_metadata_filename, user_id, user_email=None):
+      """
+      @summary: Construct the command object
+      @param package_metadata_filename: The file location of the metadata file 
+                for the scenario package to be cataloged in the database
+      @param user_id: The user id to use for this package
+      @param user_email: The user email for this package
+      """
+      _LmDbServerCommand.__init__(self)
+      
+      # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
+      if not os.path.exists(package_metadata_filename):
+         raise Exception('Missing Scenario Package metadata file {}'.format(package_metadata_filename))
+      else:
+         spBasename, _ = os.path.splitext(os.path.basename(package_metadata_filename)) 
+         # file ends up in LOG_PATH
+         secs = time.time()
+         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+         logname = '{}.{}.{}.{}'.format(self.scriptBasename, spBasename, user_id, timestamp)
+         # Logfile is created by script in LOG_DIR
+         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+         
+      # Required args
+      self.args = '{} {}'.format(package_metadata_filename, user_id)
+      # Optional arg, we also want for output 
+      self.args += ' --logname={}'.format(logname)
+      # Optional arg, if user is not there, add with dummy email if not provided
+      if user_email is not None:
+         self.args += ' --user_email={}'.format(user_email)
+         
+      self.outputs.append(logfilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+# .............................................................................
+class CatalogBoomCommand(_LmDbServerCommand):
+   """
+   @summary: This command will create makeflows to:
+               * catalog boom archive inputs,
+               * catalog ScenarioPackage if necessary
+               * create GRIMs, 
+               * create an archive ini file, and 
+               * start the Boomer to walk through inputs
+   """
+   scriptName = 'catalogBoomJob.py'
+
+   # ................................
+   def __init__(self, config_filename, init_makeflow=False):
+      """
+      @summary: Construct the command object
+      @param config_filename: The file location of the ini file 
+             with parameters for a boom/gridset
+      """
+      _LmDbServerCommand.__init__(self)
+      
+      # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
+      if not os.path.exists(config_filename):
+         raise Exception('Missing Boom configuration file {}'.format(config_filename))
+      else:
+         boomBasename, _ = os.path.splitext(os.path.basename(config_filename)) 
+         # file ends up in LOG_PATH
+         secs = time.time()
+         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+         logname = '{}.{}.{}'.format(self.scriptBasename, boomBasename, timestamp)
+         # Logfile is created by script in LOG_DIR
+         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+         
+      # Required args
+      self.args = config_filename
+      # Optional arg, we also want for output 
+      self.args += ' --logname={}'.format(logname)
+      # Optional arg, defaults to False
+      if init_makeflow:
+         self.args += ' --init_makeflow=True'
+         
+      self.outputs.append(logfilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+# .............................................................................
+class CatalogTaxonomyCommand(_LmDbServerCommand):
+   """
+   @summary: This command will create makeflows to catalog boom archive inputs,
+             create GRIMs, create an archive ini file, and run the Boomer Daemon
+             to walk through the inputs
+   """
+   scriptName = 'catalogTaxonomy.py'
+
+   # ................................
+   def __init__(self, source_name, taxon_data_filename, taxon_success_filename,
+                source_url=None, delimiter='\t'):
+      """
+      @summary: Construct the command object
+      @param source_name: The taxonomic authority (locally unique) name/identifier 
+                          for the data 
+      @param taxon_filename: The file location of the taxonomy csv file 
+      @param source_url: The unique URL for the taxonomic authority
+      @param delimiter: Delimiter for the data file
+      """
+      _LmDbServerCommand.__init__(self)
+      
+      # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
+      if not os.path.exists(taxon_data_filename):
+         raise Exception('Missing Taxonomy data file {}'.format(taxon_data_filename))
+      else:
+         dataBasename, _ = os.path.splitext(os.path.basename(taxon_data_filename)) 
+         # file ends up in LOG_PATH
+         secs = time.time()
+         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+         logname = '{}.{}.{}'.format(self.scriptBasename, dataBasename, timestamp)
+         # Logfile is created by script in LOG_DIR
+         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+         
+      # Optional script args, required here
+      self.args = " --taxon_source_name='{}'".format(source_name)
+      self.args += " --taxon_data_filename={}".format(taxon_data_filename)
+      self.args += ' --success_filename={}'.format(taxon_success_filename)     
+      self.args += ' --logname={}'.format(logname)
+
+      # Optional args
+      if source_url:
+         self.args += ' --taxon_source_url={}'.format(source_url)
+      if delimiter != '\t': 
+         self.args += ' --delimiter={}'.format(delimiter)
+         
+      self.outputs.append(logfilename)
+      self.outputs.append(taxon_success_filename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+   
+# .............................................................................
+class EncodeTreeCommand(_LmServerCommand):
+   """
+   @summary: This command will create a makeflow to encode a tree with 
+             species identifiers.
+   """
+   scriptName = 'encodeTree.py'
+
+   # ................................
+   def __init__(self, user_id, tree_name, success_file):
+      """
+      @summary: Construct the command object
+      @param user_id: User for the tree and gridset
+      @param tree_name: The unique tree name
+      """
+      _LmServerCommand.__init__(self)
+      
+      # file ends up in LOG_PATH
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      log_name = '{}.{}'.format(self.scriptBasename, timestamp)
+      # Logfile is created by script in LOG_DIR
+      log_file = '{}{}'.format(log_name, LMFormat.LOG.ext)
+         
+      # Required args
+      self.args = '{} {} {}'.format(user_id, tree_name, success_file)
+      # Optional arg, we also want for output 
+      self.args += ' --logname={}'.format(log_name)
+
+      self.outputs.append(log_file)
+      self.outputs.append(success_file)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+
+# .............................................................................
+class EncodeBioGeoHypothesesCommand(_LmServerCommand):
+   """
+   @summary: This command will create a makeflow to encode a tree with 
+             species identifiers.
+   """
+   scriptName = 'encodeBioGeoHypotheses.py'
+
+   # ................................
+   def __init__(self, user_id, gridset_name, success_file):
+      """
+      @summary: Construct the command object
+      @param user_id: User for the gridset
+      @param gridset_name: The unique gridset name
+      """
+      _LmServerCommand.__init__(self)
+      
+      # file ends up in LOG_PATH
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      logname = '{}.{}'.format(self.scriptBasename, timestamp)
+      # Logfile is created by script in LOG_DIR
+      logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+         
+      # Required args
+      self.args = '{} {} {}'.format(user_id, gridset_name, success_file)
+      # Optional arg, we also want for output 
+      self.args += ' --logname={}'.format(logname)
+
+      self.outputs.append(logfilename)
+         
+   # ................................
+   def getCommand(self):
+      """
+      @summary: Get the command
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+
 
 # .............................................................................
 class CreateBlankMaskTiffCommand(_LmServerCommand):

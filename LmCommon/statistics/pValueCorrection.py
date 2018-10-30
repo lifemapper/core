@@ -97,6 +97,8 @@ def correctPValues(pValues, correctionType=CorrectionTypes.BENJAMINI_HOCHBERG):
       
       rank += 1
    
+   headers = pValues.headers
+   headers['2'] = ['BH Corrected']
    sigValues = (pValues.data <= cmpP).astype(int)
    return Matrix(sigValues, headers=pValues.headers)
       

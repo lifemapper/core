@@ -13,8 +13,7 @@ import sys
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (LM_USER, JobStatus, PhyloTreeKeys, 
                                  MatrixType, ProcessType, SERVER_BOOM_HEADING)
-from LmCommon.common.matrix import Matrix
-from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
+from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
@@ -82,24 +81,31 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
    # Find or create the matrix
    bgMtx = _getBioGeoMatrix(scribe, usr, gridset, layers)
    shapegrid = gridset.getShapegrid()
+   encoder = LayerEncoder(shapegrid.getDLocation())
+   
+   # TODO(CJ): Minimum coverage should be pulled from config or database
+   min_coverage = 0.25
+   
    for lyr in layers:
-      lyrEnc = BioGeoEncoding(shapegrid.getDLocation())
       try:
          valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
+         column_name = valAttribute
       except KeyError:
          valAttribute = None
-      lyrEnc.addLayers(lyr.getDLocation(), eventField=valAttribute)
+         column_name = lyr.name
+      new_cols = encoder.encode_biogeographic_hypothesis(
+          lyr.getDLocation(), column_name, min_coverage, 
+          event_field=valAttribute)
       print('layer name={}, eventField={}, dloc={}'
             .format(lyr.name, valAttribute, lyr.getDLocation()))
-      encMtx = lyrEnc.encodeHypotheses()
       
       # Add matrix columns for the newly encoded layers
-      for col in encMtx.getColumnHeaders():
+      for col_name in new_cols:
          # TODO: Fill in params and metadata
          try:
-            efValue = col.split(' - ')[1]
+            efValue = col_name.split(' - ')[1]
          except:
-            efValue = col
+            efValue = col_name
 
          if valAttribute is not None:
             intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
@@ -110,7 +116,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
             ServiceObject.META_DESCRIPTION.lower() : 
          'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
             ServiceObject.META_TITLE.lower() : 
-         'Biogeographic hypothesis column ({})'.format(col)}
+         'Biogeographic hypothesis column ({})'.format(col_name)}
          mc = MatrixColumn(len(mtxCols), bgMtx.getId(), usr, layer=lyr,
                            shapegrid=shapegrid, intersectParams=intParams, 
                            metadata=metadata, postToSolr=False,
@@ -119,14 +125,10 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
          updatedMC = scribe.findOrInsertMatrixColumn(mc)
          mtxCols.append(updatedMC)
       
-      if bgMtx.data is None:
-         allEncodings = encMtx
-      else:
-         # Append to previous layer encodings 
-         allEncodings = Matrix.concatenate([bgMtx, encMtx], axis=1)
+      enc_mtx = encoder.get_encoded_matrix()
 
-      bgMtx.data = allEncodings.data
-      bgMtx.setHeaders(allEncodings.getHeaders())
+      bgMtx.data = enc_mtx.data
+      bgMtx.setHeaders(enc_mtx.getHeaders())
    
    # Save matrix and update record
    bgMtx.write(overwrite=True)
@@ -244,7 +246,6 @@ from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, PhyloTreeKeys, MatrixType, 
                                          ProcessType, SERVER_BOOM_HEADING)
 from LmCommon.common.matrix import Matrix
-from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
@@ -273,49 +274,56 @@ mtxCols = []
 bgMtx = _getBioGeoMatrix(scribe, usr, gridset, layers)
 shapegrid = gridset.getShapegrid()
 
-lyr = layers[0]
-lyrEnc = BioGeoEncoding(shapegrid.getDLocation())
-try:
-   valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
-except KeyError:
-   valAttribute = None
- 
-lyrEnc.addLayers(lyr.getDLocation(), eventField=valAttribute)
-print('layer name={}, eventField={}, dloc={}'
-      .format(lyr.name, valAttribute, lyr.getDLocation()))
- 
-encMtx = lyrEnc.encodeHypotheses()
- 
-for col in encMtx.getColumnHeaders():
+encoder = LayerEncoder(shapegrid.getDLocation())
+
+# TODO(CJ): Minimum coverage should be pulled from config or database
+min_coverage = 0.25
+for lyr in layers:
    try:
-      efValue = col.split(' - ')[1]
-   except:
-      efValue = col
- 
-   if valAttribute is not None:
-      intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
-                   MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue}
-   else:
-      intParams = None
-   metadata = {
-      ServiceObject.META_DESCRIPTION.lower() : 
-   'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
-      ServiceObject.META_TITLE.lower() : 
-   'Biogeographic hypothesis column ({})'.format(col)}
-   mc = MatrixColumn(len(mtxCols), bgMtx.getId(), usr, layer=lyr,
-                     shapegrid=shapegrid, intersectParams=intParams, 
-                     metadata=metadata, postToSolr=False,
-                     status=JobStatus.COMPLETE, 
-                     statusModTime=mx.DateTime.gmt().mjd)
-   updatedMC = scribe.findOrInsertMatrixColumn(mc)
-   mtxCols.append(updatedMC)
+      valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
+      column_name = valAttribute
+   except KeyError:
+      valAttribute = None
+      column_name = lyr.name
+   new_cols = encoder.encode_biogeographic_hypothesis(
+       lyr.getDLocation(), column_name, min_coverage, 
+       event_field=valAttribute)
+   print('layer name={}, eventField={}, dloc={}'
+         .format(lyr.name, valAttribute, lyr.getDLocation()))
+   
+   # Add matrix columns for the newly encoded layers
+   for col_name in new_cols:
+      # TODO: Fill in params and metadata
+      try:
+         efValue = col_name.split(' - ')[1]
+      except:
+         efValue = col_name
 
-# Append to previous layer encodings 
-bgMtx = Matrix.concatenate([bgMtx, encMtx], axis=1)
+      if valAttribute is not None:
+         intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
+                      MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue}
+      else:
+         intParams = None
+      metadata = {
+         ServiceObject.META_DESCRIPTION.lower() : 
+      'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
+         ServiceObject.META_TITLE.lower() : 
+      'Biogeographic hypothesis column ({})'.format(col_name)}
+      mc = MatrixColumn(len(mtxCols), bgMtx.getId(), usr, layer=lyr,
+                        shapegrid=shapegrid, intersectParams=intParams, 
+                        metadata=metadata, postToSolr=False,
+                        status=JobStatus.COMPLETE, 
+                        statusModTime=mx.DateTime.gmt().mjd)
+      updatedMC = scribe.findOrInsertMatrixColumn(mc)
+      mtxCols.append(updatedMC)
+   
+   enc_mtx = encoder.get_encoded_matrix()
 
-bgMtx.clearDLocation()
-bgMtx.setDLocation()
-bgMtx.write()
+   bgMtx.data = enc_mtx.data
+   bgMtx.setHeaders(enc_mtx.getHeaders())
+   
+# Save matrix and update record
+bgMtx.write(overwrite=True)
 bgMtx.updateStatus(JobStatus.COMPLETE, modTime=mx.DateTime.gmt().mjd)
 success = scribe.updateObject(bgMtx)
 return bgMtx

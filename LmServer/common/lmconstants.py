@@ -38,7 +38,7 @@ from LmServer.common.localconstants import (APP_PATH, CS_PORT, DATA_PATH,
                         EXTRA_WORKER_FACTORY_OPTIONS, EXTRA_WORKER_OPTIONS, 
                         LM_DISK, MASTER_WORKER_PATH, MAX_WORKERS, PID_PATH, 
                         PUBLIC_FQDN, SCRATCH_PATH, SHARED_DATA_PATH, 
-                        WEBSERVICES_ROOT, WORKER_PATH)
+                        WEBSERVICES_ROOT, WORKER_PATH, SPECIES_DIR)
 
 WEB_SERVICE_VERSION = 'v2'
 API_PATH = 'api'
@@ -55,7 +55,7 @@ ARCHIVE_PATH = os.path.join(SHARED_DATA_PATH,'archive')
 # On shared sge directory
 SHARED_SGE_PATH = os.path.join(LM_DISK, 'sge')
 # On lmserver data directory
-SPECIES_DATA_PATH = os.path.join(DATA_PATH, 'species')
+SPECIES_DATA_PATH = os.path.join(DATA_PATH, SPECIES_DIR)
 TEST_DATA_PATH = os.path.join(DATA_PATH, 'test') 
 IMAGE_PATH = os.path.join(DATA_PATH, 'image')
 # On scratch disk
@@ -69,9 +69,10 @@ CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH,'config', 'cherrypy.conf')
 MATT_DAEMON_PID_FILE = os.path.join(PID_PATH, 'mattDaemon.pid')
 
 # CC Tools constants
-CATALOG_SERVER_BIN = os.path.join(BIN_PATH, 'catalog_server')
-WORKER_FACTORY_BIN = os.path.join(BIN_PATH, 'work_queue_factory')
-MAKEFLOW_BIN = os.path.join(BIN_PATH, 'makeflow')
+CCTOOLS_BIN_PATH = os.path.join(APP_PATH, 'cctools', 'bin')
+CATALOG_SERVER_BIN = os.path.join(CCTOOLS_BIN_PATH, 'catalog_server')
+WORKER_FACTORY_BIN = os.path.join(CCTOOLS_BIN_PATH, 'work_queue_factory')
+MAKEFLOW_BIN = os.path.join(CCTOOLS_BIN_PATH, 'makeflow')
 MAKEFLOW_WORKSPACE = os.path.join(SCRATCH_PATH, 'makeflow')
 
 # Catalog server
@@ -1451,8 +1452,11 @@ class SnippetFields(object):
 # ============================================================================
 SOLR_ARCHIVE_COLLECTION = 'lmArchive'
 SOLR_SNIPPET_COLLECTION = 'snippets'
+SOLR_TAXONOMY_COLLECTION = 'taxonomy'
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 SOLR_SERVER = 'http://localhost:8983/solr/'
+# TODO: Consider moving to localconstants
+NUM_DOCS_PER_POST = 100
 
 class SOLR_FIELDS(object):
    """
@@ -1502,6 +1506,25 @@ class SOLR_FIELDS(object):
    TAXON_PHYLUM = 'taxonPhylum'
    TAXON_SPECIES = 'taxonSpecies'
    USER_ID = 'userId'
+
+# .............................................................................
+class SOLR_TAXONOMY_FIELDS(object):
+   """Constants for Taxonomy Solr index fields
+   """
+   CANONICAL_NAME = 'canonical_name'
+   ID = 'id'
+   SCIENTIFIC_NAME = 'scientific_name'
+   SQUID = 'squid'
+   TAXON_CLASS = 'taxon_class'
+   TAXON_FAMILY = 'taxon_family'
+   TAXON_GENUS = 'taxon_genus'
+   TAXON_KEY = 'taxon_key'
+   TAXON_KINGDOM = 'taxon_kingdom'
+   TAXON_ORDER = 'taxon_order'
+   TAXON_PHYLUM = 'taxon_phylum'
+   TAXON_SPECIES = 'taxon_species'
+   USER_ID = 'user_id'
+   TAXONOMY_SOURCE_ID = 'taxon_source_id'
 
 # ============================================================================
 # =                             Scaling Constants                            =

@@ -1,67 +1,69 @@
-#!/bin/bash
-"""
-@summary: This script intersects a shapegrid and a vector layer to create a 
-             Presence Absence Vector (PAV)
-@author: CJ Grady
-@version: 4.0.0
-@status: beta
-@license: gpl2
-@copyright: Copyright (C) 2018, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+"""This script intersects a shapegrid and a vector layer to create a PAV
 """
 import argparse
+import os
 
-from LmCompute.plugins.multi.intersect.radIntersect import pavVectorIntersect
+from LmCommon.encoding.layer_encoder import LayerEncoder
 
 # .............................................................................
-if __name__ == "__main__":
-   parser = argparse.ArgumentParser(
-      description="This script performs a vector intersect with a shapegrid to produce a PAV")
-   
-   parser.add_argument("shapegridFn", type=str, 
-                      help="This is the shapegrid to intersect the layer with")
-   parser.add_argument("vectorFn", 
-         type=str, help="This is the file location of the vector file to use for intersection")
-   parser.add_argument("pavFn", type=str, 
-                       help="Location to write the PAV Matrix object")
-   parser.add_argument("presenceAttrib", type=str, 
-                     help="The vector attribute used for determining presence")
-   parser.add_argument("minPresence", type=float, 
-                       help="The minimum value to be considered present")
-   parser.add_argument("maxPresence", type=float, 
-                       help="The maximum value to be considered present")
-   parser.add_argument("percentPresence", type=int, 
-        help="The percentage [0,100] of a cell that must be covered to be called present")
-   parser.add_argument("--squid", type=str, dest="squid", 
-       help="A species identifier to be attached to the PAV Matrix column as metadata")
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description=('This script performs a vector intersect with a shapegrid'
+                     ' to produce a PAV'))
+    
+    parser.add_argument(
+        'shapegrid_filename', type=str, 
+        help='This is the shapegrid to intersect the layer with')
+    parser.add_argument(
+        'vector_filename', type=str, 
+        help='The file location of the vector file to use for intersection')
+    parser.add_argument(
+        'pav_filename', type=str,
+        help='The file location to write the output PAV Matrix object')
+    
+    parser.add_argument(
+        'min_presence', type=float, 
+        help='The minimum value to consider present')
+    parser.add_argument(
+        'max_presence', type=float, 
+        help='The maximum value to consider present')
+    parser.add_argument(
+        'min_coverage', type=float, 
+        help=('The proportion of a cell that must be present to determine '
+              'the cell is present (0.0 - 1.0]'))
+    parser.add_argument(
+        'event_field', type=str, 
+        help='Use this attribute to determine presence')
+    
+    parser.add_argument(
+        '--squid', type=str, dest='squid', 
+        help=('A species identifier to be attached to the PAV Matrix column as'
+              ' metadata'))
+    
+    parser.add_argument(
+        '--layer_status_file', type=str, help='Status file for input layer')
+    parser.add_argument(
+        '-s', '--status_file', type=str, help='Output status file')
 
-   args = parser.parse_args()
-   
-   squid = None
-   if args.squid is not None:
-      squid = args.squid
-      
-   pav = pavVectorIntersect(args.shapegridFn, args.vectorFn, 
-                            args.presenceAttrib, args.minPresence, 
-                            args.maxPresence, args.percentPresence, squid=squid)
-   
-   with open(args.pavFn, 'w') as pavOutF:
-      pav.save(pavOutF)
+    args = parser.parse_args()
+
+    squid = os.path.basename(os.path.splitext(args.vector_filename)[0])
+    if args.squid is not None:
+        squid = args.squid
+        
+    # Scale percent presence if necessary
+    min_coverage = args.min_coverage
+    if min_coverage > 1.0:
+        min_coverage = min_coverage / 100.0
+    
+    encoder = LayerEncoder(args.shapegrid_filename)
+    encoder.encode_presence_absence(
+            args.vector_filename, squid, args.min_presence, args.max_presence, 
+            min_coverage, attribute_name=args.event_field)
+    pav = encoder.get_encoded_matrix()
+        
+    if pav is not None:
+        with open(args.pav_filenamen, 'w') as pav_out_f:
+            pav.save(pav_out_f)

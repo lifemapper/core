@@ -67,7 +67,7 @@ Configure for new boom job
            * sax_layers_10min current scenario, 
            * tree
            * biogeo hypotheses
-      * heuchera_boom_global_data:  
+      * heuchera_boom_global_data (smallest):  
            * heuchera data (64sp) 
            * 10min-past-present-future
            * tree
@@ -81,10 +81,10 @@ Configure for new boom job
 #. Catalog BOOM data inputs in database for **server**. Create and insert 
     gridset, and optional shapegrid, matrices, tree and biogeographic hypotheses
     in the database and write the configuration file for this boom job.
-    if do_walk is 1, a boom script will immediately process species data to 
+    if init_makeflow is 1, a boom script will immediately process species data to 
     create Makeflows for boom job. Script is installed by the rocks-lifemapper 
     rpm into /opt/lifemapper/rocks/bin::
-    # catalogBoomJob  <boom parameter>.ini  <do_walk>
+    # catalogBoomJob  <boom parameter>.ini  <init_makeflow>
    
    * Results of catalogBoomJob:
      * Verify scenario data exists for this user

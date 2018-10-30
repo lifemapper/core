@@ -23,24 +23,15 @@
 """
 import mx.DateTime
 import os
-import time
 
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import (LMFormat, DEFAULT_POST_USER, 
-                                         DEFAULT_EPSG, DEFAULT_MAPUNITS) 
-
-from LmDbServer.common.lmconstants import TNCMetadata, TAXONOMIC_SOURCE
-
-from LmServer.common.lmconstants import Algorithms
 from LmServer.common.lmconstants import (ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.scenario import Scenario, ScenPackage
 
@@ -49,33 +40,68 @@ CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().d
 # .............................................................................
 class SPFiller(LMObject):
    """
-   @summary 
-   Class to: 
-     1) populate a Lifemapper database with scenario package for a BOOM archive
+   @summary Class to: populate a Lifemapper database with scenario metadata for 
+            a BOOM archive
+   @version: 2.0 
+   @note: This code can only parse scenario metadata marked as version 2.0 
    """
+   version = '2.0'
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, spMetaFname, userId, email=None):
+   def __init__(self, spMetaFname, userId, email=None, logname=None, scribe=None):
       """
       @summary Constructor for BOOMFiller class.
       """
       super(SPFiller, self).__init__()
       self.name = self.__class__.__name__.lower()
+      if not os.path.exists(spMetaFname):
+         raise LMError(currargs='Climate metadata {} does not exist'
+                       .format(spMetaFname))
+      spBasename, _ = os.path.splitext(os.path.basename(spMetaFname))
+      
+      # TODO: change to importlib on python 2.7 --> 3.3+  
+      try:
+         import imp
+         self.spMeta  = imp.load_source('currentmetadata', spMetaFname)
+      except Exception, e:
+         raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
+                       .format(spMetaFname, e))
+      
+      spkgNames = ','.join(self.spMeta.CLIMATE_PACKAGES.keys())
+      
+      # version is a string
+      try:
+         if self.spMeta.VERSION != self.version:
+            raise LMError('SPFiller version {} cannot parse {} metadata version {}'
+                          .format(self.version, spkgNames, self.spMeta.VERSION))
+      except: 
+         raise LMError('SPFiller version {} cannot parse {} non-versioned metadata'
+                       .format(spkgNames, self.version))
+
       self.spMetaFname = spMetaFname
       self.userId = userId
       self.userEmail = email
       if self.userEmail is None:
          self.userEmail = '{}{}'.format(self.userId, DEFAULT_EMAIL_POSTFIX)
-      self.spMeta = self._findScenPkgMetadata()
-            
-      # Get database
-      try:
-         self.scribe = self._getDb()
-      except: 
-         raise
-      self.open()
       
+      # Logfile
+      if logname is None:
+         logname = '{}.{}.{}'.format(self.name, spBasename, userId)
+      self.logname = logname
+      
+      self.scribe = scribe
+      
+   # ...............................................
+   def initializeMe(self):
+      if not (self.scribe and self.scribe.isOpen):
+         # Get database
+         try:
+            self.scribe = self._getDb(self.logname)
+         except: 
+            raise
+         self.open()
+
    # ...............................................
    def open(self):
       success = self.scribe.openConnections()
@@ -96,14 +122,9 @@ class SPFiller(LMObject):
       return fname
          
    # ...............................................
-   def _getDb(self):
+   def _getDb(self, logname):
       import logging
-      loglevel = logging.INFO
-      # Logfile
-      secs = time.time()
-      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-      logname = '{}.{}'.format(self.name, timestamp)
-      logger = ScriptLogger(logname, level=loglevel)
+      logger = ScriptLogger(logname, level=logging.INFO)
       # DB connection
       scribe = BorgScribe(logger)
       return scribe
@@ -150,56 +171,18 @@ class SPFiller(LMObject):
       return masklyr
 
    # ...............................................
-   def addUser(self, userid, email):
+   def addUser(self):
       """
       @summary Adds or finds PUBLIC_USER, DEFAULT_POST_USER and USER arguments 
                in the database
       """
       currtime = mx.DateTime.gmt().mjd
       # Nothing changes if these are already present
-      user = LMUser(userid, email, email, modTime=currtime)
-      self.scribe.log.info('  Find or insert user {} ...'.format(userid))
+      user = LMUser(self.userId, self.userEmail, self.userEmail, modTime=currtime)
+      self.scribe.log.info('  Find or insert user {} ...'.format(self.userId))
       thisUser = self.scribe.findOrInsertUser(user)
       # If exists, found by unique Id or Email, update values
       return thisUser.userid
-
-#       
-   # .............................
-   def addTNCEcoregions(self):
-      meta = {Vector.META_IS_CATEGORICAL: TNCMetadata.isCategorical, 
-              ServiceObject.META_TITLE: TNCMetadata.title, 
-              ServiceObject.META_AUTHOR: TNCMetadata.author, 
-              ServiceObject.META_DESCRIPTION: TNCMetadata.description,
-              ServiceObject.META_KEYWORDS: TNCMetadata.keywords,
-              ServiceObject.META_CITATION: TNCMetadata.citation,
-              }
-      dloc = os.path.join(ENV_DATA_PATH, 
-                          TNCMetadata.filename + LMFormat.getDefaultOGR().ext)
-      ecoregions = Vector(TNCMetadata.title, PUBLIC_USER, DEFAULT_EPSG, 
-                          ident=None, dlocation=dloc, 
-                          metadata=meta, dataFormat=LMFormat.getDefaultOGR().driver, 
-                          ogrType=TNCMetadata.ogrType,
-                          valAttribute=TNCMetadata.valAttribute, 
-                          mapunits=DEFAULT_MAPUNITS, bbox=TNCMetadata.bbox,
-                          modTime=mx.DateTime.gmt().mjd)
-      updatedEcoregions = self.scribe.findOrInsertLayer(ecoregions)
-      return updatedEcoregions
-
-   # ...............................................
-   def addAlgorithms(self):
-      """
-      @summary Adds algorithms to the database from the algorithm dictionary
-      """
-      algs = []
-      for alginfo in Algorithms.implemented():
-         meta = {'name': alginfo.name, 
-                 'isDiscreteOutput': alginfo.isDiscreteOutput,
-                 'outputFormat': alginfo.outputFormat,
-                 'acceptsCategoricalMaps': alginfo.acceptsCategoricalMaps}
-         alg = Algorithm(alginfo.code, metadata=meta)
-         self.scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
-         algid = self.scribe.findOrInsertAlgorithm(alg)
-         algs.append(algid)
    
    # ...............................................
    def createScenPackage(self, spName):
@@ -221,8 +204,8 @@ class SPFiller(LMObject):
       
       # Current
       baseCode = pkgMeta['baseline']
-      scenMeta = self.spMeta.SCENARIO_META[baseCode]
-      bscen = self._createScenario(pkgMeta, baseCode, scenMeta, lyrMeta)
+      baseMeta = self.spMeta.SCENARIO_META[baseCode]
+      bscen = self._createScenario(pkgMeta, baseCode, baseMeta, lyrMeta)
       self.scribe.log.info('     Assembled base scenario {}'.format(baseCode))
       allScens = {baseCode: bscen}
 
@@ -274,9 +257,18 @@ class SPFiller(LMObject):
       """
       currtime = mx.DateTime.gmt().mjd
       layers = []
-      staticLayers = {}
-      dateCode = scenMeta['date']
-      res_name = scenMeta['res'][0]
+      try:
+         dateCode = scenMeta['date']
+      except:
+         dateCode = None
+      try:
+         altpredCode = scenMeta['altpred']
+      except:
+         altpredCode = None
+      try:
+         gcmCode = scenMeta['gcm']
+      except:
+         gcmCode = None
       res_val = scenMeta['res'][1]
       scenKeywords = [k for k in scenMeta['keywords']]
       region = scenMeta['region']
@@ -306,6 +298,8 @@ class SPFiller(LMObject):
                            bbox=region, 
                            modTime=currtime, 
                            envCode=envcode, 
+                           gcmCode=gcmCode, 
+                           altpredCode=altpredCode, 
                            dateCode=dateCode,
                            envMetadata=envmeta,
                            envModTime=currtime)
@@ -319,6 +313,19 @@ class SPFiller(LMObject):
       """
       res_val = scenMeta['res'][1]
       lyrs = self._getScenLayers(pkgMeta, scenCode, scenMeta, lyrMeta)
+      try:
+         dateCode = scenMeta['date']
+      except:
+         dateCode = None
+      try:
+         altpredCode = scenMeta['altpred']
+      except:
+         altpredCode = None
+      try:
+         gcmCode = scenMeta['gcm']
+      except:
+         gcmCode = None
+
       scenmeta = {ServiceObject.META_TITLE: scenMeta['name'], 
                   ServiceObject.META_AUTHOR: scenMeta['author'], 
                   ServiceObject.META_DESCRIPTION: scenMeta['description'], 
@@ -327,7 +334,9 @@ class SPFiller(LMObject):
                       metadata=scenmeta, 
                       units=pkgMeta['mapunits'], 
                       res=res_val, 
-                      dateCode=scenMeta['date'],
+                      gcmCode=gcmCode, 
+                      altpredCode=altpredCode, 
+                      dateCode=dateCode,
                       bbox=scenMeta['region'], 
                       modTime=mx.DateTime.gmt().mjd,  
                       layers=lyrs)
@@ -349,6 +358,7 @@ class SPFiller(LMObject):
                                              scenPkgId=updatedScenPkg.getId())
          updatedScens.append(newscen)
       updatedScenPkg.setScenarios(updatedScens)
+      return updatedScenPkg
    
    # ...............................................
    def addMaskLayer(self, masklyr):
@@ -358,88 +368,43 @@ class SPFiller(LMObject):
       return updatedMask
    
    # ...............................................
-   def _findScenPkgMetadata(self):
-      if not os.path.exists(self.spMetaFname):
-         raise LMError(currargs='Climate metadata {} does not exist'
-                       .format(self.spMetaFname))
-      # TODO: change to importlib on python 2.7 --> 3.3+  
+   def catalogScenPackages(self):
+      """
+      @summary: Initialize an empty Lifemapper database and archive
+      """
+      updatedScenPkg = None
       try:
-         import imp
-         SPMETA = imp.load_source('currentmetadata', self.spMetaFname)
-      except Exception, e:
-         raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                       .format(self.spMetaFname, e))
-      return SPMETA
-
-
-   # ...............................................
-   def addDefaults(self):
-      """
-      @summary Inserts or locates PUBLIC_USER, DEFAULT_POST_USER, 
-               TAXONOMIC_SOURCE, ALGORITHMS, and TNC_ECOREGIONS in the database
-      """
-      currtime = mx.DateTime.gmt().mjd
-      
-      #Adds or finds PUBLIC_USER, DEFAULT_POST_USER 
-      # Nothing changes if these are already present
-      _ = self.addUser(PUBLIC_USER, 
-                       '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
-      _ = self.addUser(DEFAULT_POST_USER, 
-                       '{}{}'.format(DEFAULT_POST_USER, DEFAULT_EMAIL_POSTFIX))
-      # Insert all taxonomic sources for now
-      self.scribe.log.info('  Insert taxonomy metadata ...')
-      for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-         taxSourceId = self.scribe.findOrInsertTaxonSource(taxInfo['name'],
-                                                             taxInfo['url'])
-      # Insert all algorithms 
-      self.scribe.log.info('  Insert Algorithms ...')
-      self.addAlgorithms()
-   
-      # Insert all algorithms 
-      self.scribe.log.info('  Insert TNC Ecoregions ...')
-      self.addTNCEcoregions()
-      
-
-# ...............................................
-def catalogScenPackages(spMetaFname, userId, userEmail):
-   """
-   @summary: Initialize an empty Lifemapper database and archive
-   """
-   filler = SPFiller(spMetaFname, userId, userEmail)
-   
-   filler.addDefaults()
-   # If email is not provided, a dummy email will be created
-   # ARCHIVE_USER and DEFAULT_POST_USER will be added if they are missing 
-   # (i.e. this is the first time this script has been run)
-      # If exists, found by unique Id or Email, update values
-   filler.userId = filler.addUser(filler.userId, filler.userEmail)
-   
-   updatedMask = None
-   for spName in filler.spMeta.CLIMATE_PACKAGES.keys():
-      filler.scribe.log.info('Creating scenario package {}'.format(spName))
-      scenPkg, masklyr = filler.createScenPackage(spName)
-      
-      # Only one Mask is included per scenario package
-      if updatedMask is None:
-         filler.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
-         updatedMask = filler.addMaskLayer(masklyr)
-         if updatedMask.getDLocation() != masklyr.getDLocation():
-            raise LMError('''Returned existing layer name {} for user {} with 
-                             filename {}, not expected filename {}'''
-                             .format(masklyr.name, filler.userId, 
-                                     updatedMask.getDLocation(), 
-                                     masklyr.getDLocation()))
-      
-      updatedScenPkg = filler.addPackageScenariosLayers(scenPkg)
-      
-      if (updatedScenPkg is not None 
-          and updatedScenPkg.getId() is not None
-          and updatedScenPkg.name == spName
-          and updatedScenPkg.getUserId() == filler.userId):
-         filler.scribe.log.info('Successfully added scenario package {} for user {}'
-                                .format(spName, filler.userId))
-   
-   
+         self.initializeMe()
+         # If exists, found by unique Id or Email, update values
+         userId = self.addUser()
+         
+         updatedMask = None
+         for spName in self.spMeta.CLIMATE_PACKAGES.keys():
+#             spName = self.spMeta.CLIMATE_PACKAGES.keys()[0]
+            self.scribe.log.info('Creating scenario package {}'.format(spName))
+            scenPkg, masklyr = self.createScenPackage(spName)
+            
+            # Only one Mask is included per scenario package
+            if updatedMask is None:
+               self.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
+               updatedMask = self.addMaskLayer(masklyr)
+               if updatedMask.getDLocation() != masklyr.getDLocation():
+                  raise LMError('''Returned existing layer name {} for user {} with 
+                                   filename {}, not expected filename {}'''
+                                   .format(masklyr.name, self.userId, 
+                                           updatedMask.getDLocation(), 
+                                           masklyr.getDLocation()))
+            updatedScenPkg = self.addPackageScenariosLayers(scenPkg)
+            if (updatedScenPkg is not None 
+                and updatedScenPkg.getId() is not None
+                and updatedScenPkg.name == spName
+                and updatedScenPkg.getUserId() == self.userId):
+               self.scribe.log.info('Successfully added scenario package {} for user {}'
+                                      .format(spName, self.userId))
+      finally:
+         self.close()
+         
+      return updatedScenPkg 
    
 # ...............................................
 if __name__ == '__main__':
@@ -449,28 +414,47 @@ if __name__ == '__main__':
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('--scen_package_meta', default=None,
-            help=('Metadata file for Scenario package to be cataloged in the database.'))
-   parser.add_argument('--user_id', default=None,
+   # Required
+   parser.add_argument('user_id', type=str,
             help=('User authorized for the scenario package'))
-   parser.add_argument('--user_email', default=None,
+   parser.add_argument('scen_package_meta', type=str,
+            help=('Metadata file for Scenario package to be cataloged in the database.'))   
+   # Optional
+   parser.add_argument('--user_email', type=str, default=None,
             help=('User email'))
+   parser.add_argument('--logname', type=str, default=None,
+            help=('Basename of the logfile, without extension'))
+   
    args = parser.parse_args()
-   scen_package_meta = args.scen_package_meta
    user_id = args.user_id
+   scen_package_meta = args.scen_package_meta
+   logname = args.logname
    user_email = args.user_email
    
+   if logname is None:
+      import time
+      scriptname, _ = os.path.splitext(os.path.basename(__file__))
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      logname = '{}.{}'.format(scriptname, timestamp)
+
+   
+   # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
    if not os.path.exists(scen_package_meta):
       # if using package name, look in default location)
       scen_package_meta = os.path.join(ENV_DATA_PATH, scen_package_meta + '.py')
       if not os.path.exists(scen_package_meta):
          print ('Missing Scenario Package metadata file {}'.format(scen_package_meta))
-         exit(-1)    
-   
-   print('Running catalogScenPkg with scen_package_meta = {}, userid = {}, email = {}'
-         .format(scen_package_meta, user_id, user_email))
-   catalogScenPackages(scen_package_meta, user_id, user_email)
+         exit(-1)
+      else:
+         print('Running script with scen_package_meta: {}, userid: {}, email: {}, logbasename: {}'
+               .format(scen_package_meta, user_id, user_email, logname))
 
+      filler = SPFiller(scen_package_meta, user_id, email=user_email, 
+                        logname=logname)
+      filler.initializeMe()
+      filler.catalogScenPackages()
+   
 """
 find . -name "*.in" -exec sed -i s%@LMHOME@%/opt/lifemapper%g {} \;
 
@@ -494,36 +478,50 @@ find . -name "*.in" -exec sed -i \
 
 import mx.DateTime
 import os
-import time
 
+from LmBackend.command.server import CatalogScenarioPackageCommand
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import LMFormat
-from LmServer.common.lmconstants import (ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX)
+
+from LmCommon.common.lmconstants import JobStatus
+
+from LmServer.common.lmconstants import (Priority, ENV_DATA_PATH, 
+                                         DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
-from LmDbServer.tools.catalogScenPkg import *
 
-spMetaFname = '/share/lm/data/layers/sax_layers_10min.py'
-userid = 'aimee2'
-userEmail = None
+CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 
-filler = SPFiller(spMetaFname, userid, userEmail)
-filler.addUser()
+updatedScenPkg = None
+self.initializeMe()
+userId = self.addUser()
 
-spName = filler.spMeta.CLIMATE_PACKAGES.keys()[0]
-scenPkg, masklyr = filler.createScenPackage(spName)
-
-scode = scenPkg.scenarios.keys()[0]
-scen = scenPkg.scenarios.values()[0]
-                      
-updatedMask = filler.addMaskLayer(masklyr)
-updatedScenPkg = filler.addPackageScenariosLayers(scenPkg)
-
-existingPkg = filler.scribe.getScenPackage(userId=userid, scenPkgName=spName, fillLayers=True)
+updatedMask = None
+# for spName in self.spMeta.CLIMATE_PACKAGES.keys():
+spName = '10min-past-present-future'
+scenPkg, masklyr = self.createScenPackage(spName)
+# if updatedMask is None:
+updatedMask = self.addMaskLayer(masklyr)
+# if updatedMask.getDLocation() != masklyr.getDLocation():
+#    raise LMError('''Returned existing layer name {} for user {} with 
+#                     filename {}, not expected filename {}'''
+#                     .format(masklyr.name, self.userId, 
+#                             updatedMask.getDLocation(), 
+#                             masklyr.getDLocation()))
+updatedScenPkg = self.addPackageScenariosLayers(scenPkg)
+if (updatedScenPkg is not None 
+    and updatedScenPkg.getId() is not None
+    and updatedScenPkg.name == spName
+    and updatedScenPkg.getUserId() == self.userId):
+   self.scribe.log.info('Successfully added scenario package {} for user {}'
+                          .format(spName, self.userId))
+finally:
+   self.close()
+   
+return updatedScenPkg 
 """

@@ -52,7 +52,7 @@ if __name__ == "__main__":
                help="The maximum number of points for the modelable shapefile")
    args = parser.parse_args()
    
-#    meta, _, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
+#    meta, doMatchHeader = OccDataParser.readMetadata(args.metadataFile)
    createUserShapefile(args.pointsCsvFn, args.metadataFile, args.outFile, 
                        args.bigFile, args.maxPoints)
    

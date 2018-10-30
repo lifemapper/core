@@ -621,6 +621,14 @@ class BorgScribe(LMObject):
       """
       txSourceId, url, moddate = self._borg.findTaxonSource(taxonSourceName)
       return txSourceId, url, moddate
+
+# ...............................................
+   def getTaxonSource(self, tsId=None, tsName=None, tsUrl=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getTaxonSource()
+      """
+      ts = self._borg.getTaxonSource(tsId, tsName, tsUrl)
+      return ts
    
 # ...............................................
    def findOrInsertTaxon(self, taxonSourceId=None, taxonKey=None, sciName=None):
@@ -1025,6 +1033,8 @@ class BorgScribe(LMObject):
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.datalocator import EarlJr
+from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
+                                            PUBLIC_USER)
 
 pamid = 15
 grimid = 16
@@ -1049,7 +1059,7 @@ colPrjPairs3 = scribe.getSDMColumnsForGridset(grdid)
 for (col, prj) in colPrjPairs3:
    print col.getId(), prj.getId()
 
-usr = 'kubi'
+usr = PUBLIC_USER
 cellsides = 4
 cellsize = 1
 shplyrid = 135

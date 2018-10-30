@@ -1650,7 +1650,36 @@ BEGIN
             RAISE NOTICE 'TaxonomySource % not found', tsourcename;
          WHEN TOO_MANY_ROWS THEN
             RAISE EXCEPTION 'TaxonomySource % not unique', tsourcename;
-      end;
+   end;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getTaxonSource(tsid int, tsname varchar, tsurl varchar)
+RETURNS lm_v3.TaxonomySource AS
+$$
+DECLARE
+   rec lm_v3.TaxonomySource%ROWTYPE;
+BEGIN
+   begin
+      IF tsid IS NOT NULL THEN
+         SELECT taxonomySourceId, url, datasetIdentifier, modTime INTO STRICT rec 
+            FROM lm_v3.TaxonomySource WHERE taxonomysourceid = tsid;   
+      ELSEIF tsname IS NOT NULL THEN
+         SELECT taxonomySourceId, url, datasetIdentifier, modTime INTO STRICT rec 
+            FROM lm_v3.TaxonomySource WHERE datasetIdentifier = tsname;   
+      ELSEIF tsurl IS NOT NULL THEN
+         SELECT taxonomySourceId, url, datasetIdentifier, modTime INTO STRICT rec 
+            FROM lm_v3.TaxonomySource WHERE url = tsurl;   
+      END IF; 
+     
+      EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+            RAISE NOTICE 'TaxonomySource % not found', tsourcename;
+         WHEN TOO_MANY_ROWS THEN
+            RAISE EXCEPTION 'TaxonomySource % not unique', tsourcename;
+   end;
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
@@ -2937,6 +2966,12 @@ BEGIN
    RAISE NOTICE 'Deleted % Scenarios for User %', currCount, usr;
    total = total + currCount;
    
+   -- ScenPackage
+	DELETE FROM lm_v3.ScenPackage WHERE userid = usr;
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % ScenPackages for User %', currCount, usr;
+   total = total + currCount;
+
    -- Layers (Cascades to EnvLayer, ShapeGrid)
 	DELETE FROM lm_v3.Layer WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
@@ -3014,6 +3049,18 @@ BEGIN
    SELECT metadata INTO metastr FROM lm_v3.Scenario WHERE scenarioId = scenId;
    SELECT * INTO val FROM lm_v3.lm_getMetadataField(metastr, 'title');
    RETURN val;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getTaxonTable()
+   RETURNS void AS
+$$
+DECLARE
+   val varchar;
+BEGIN
+   copy lm_v3.Taxon to '/tmp/taxon.csv' WITH CSV HEADER;
+   RETURN;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
 

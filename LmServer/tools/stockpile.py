@@ -265,8 +265,12 @@ if __name__ == "__main__":
    if args.status is not None:
       status = args.status
    elif args.status_file is not None:
-      with open(args.status_file) as statusIn:
-         status = int(statusIn.read())
+      try:
+         with open(args.status_file) as statusIn:
+            status = int(statusIn.read())
+      except:
+         # Need to catch empty status file
+         status = JobStatus.GENERAL_ERROR
    
    if args.metadataFilename is not None:
       metaFilename = args.metadataFilename

@@ -119,7 +119,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._dlocation = None
       self.setDLocation(dlocation)
       self._verify = None
-      self.setVerify(verify=verify)
+#       self.setVerify(verify=verify)
       self._mapFilename = None
       
 # ...............................................
@@ -236,9 +236,9 @@ class _Layer(LMSpatialObject, ServiceObject):
          if dlocation is None:
             dlocation = self._dlocation
          value = computeHash(dlocation=dlocation)
-
+ 
       return value
-
+ 
 # ...............................................
    def verifyHash(self, hashval, dlocation=None, content=None):
       """
@@ -252,7 +252,7 @@ class _Layer(LMSpatialObject, ServiceObject):
             dlocation = self._dlocation
          verified = verifyHash(hashval, dlocation=dlocation)
       return verified
-   
+    
 # ...............................................
    def setVerify(self, verify=None, dlocation=None, content=None):
       value = None
@@ -742,12 +742,12 @@ class Raster(_Layer):
       uly = geoTransform[3]
       yPixelSize = geoTransform[5]
       
-      newVerify = self.computeHash(dlocation=dlocation)
-      if verify is not None and verify <> newVerify:
-         pass
+#       newVerify = self.computeHash(dlocation=dlocation)
+#       if verify is not None and verify <> newVerify:
+#          pass
 #          msgs.append('Computed hash value for {} ({}) does not match {}'
 #                      .format(dlocation, newVerify, verify))
-      verify = newVerify
+#       verify = newVerify
       
       drv = dataset.GetDriver()
       gdalFormat = drv.GetDescription()
@@ -1983,7 +1983,6 @@ class Vector(_Layer):
                 DO NOT delete temporary files or reset dlocation 
       @raise LMError: on failure to write file.
       """
-      import mx.DateTime
       currtime = str(mx.DateTime.gmt().mjd)
       pid = str(os.getpid())
       dumpname = os.path.join(UPLOAD_PATH, '%s_%s_dump.csv' % (currtime, pid))

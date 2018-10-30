@@ -267,7 +267,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                                userId=self.userId, squid=None,
                                lastOccurrenceCount=taxonCount,
                                kingdom=kingdomStr, phylum=phylumStr, 
-                               txClass=None, txOrder=orderStr, 
+                               txClass=classStr, txOrder=orderStr, 
                                family=familyStr, genus=genusStr, 
                                modTime=currtime, 
                                taxonomySourceId=self._taxonSourceId, 
@@ -1225,7 +1225,7 @@ scriptname = 'wocTesting'
 logger = ScriptLogger(scriptname)
 scribe = BorgScribe(logger)
 scribe.openConnections()
-userId = 'kubi'
+userId = PUBLIC_USER
 expDate = dt.DateTime(2017,9,20).mjd
 
 if os.path.isfile(occData):
@@ -1255,7 +1255,7 @@ op = OccDataParser(logger, occCSV, occMeta, pullChunks=True)
 
 f = open(occCSV, 'r')
 cr = csv.reader(f, delimiter=',')
-fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(occMeta)
+fieldmeta, doMatchHeader = OccDataParser.readMetadata(occMeta)
                
 (fieldNames,
  fieldTypes,

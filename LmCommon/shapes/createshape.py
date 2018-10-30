@@ -445,9 +445,9 @@ class ShapeShifter(object):
             print('Exception reading line {} ({})'.format(self.op.currRecnum, 
                                                      fromUnicode(toUnicode(e))))
       if success:
-         for idx, vals in self.op.fieldIndexMeta.iteritems():
+         for idx, vals in self.op.columnMeta.iteritems():
             if vals is not None and idx not in (self.op.xIdx, self.op.yIdx):
-               fldname = self.op.fieldIndexMeta[idx][OccDataParser.FIELD_NAME_KEY]
+               fldname = self.op.columnMeta[idx][OccDataParser.FIELD_NAME_KEY]
                tmpDict[fldname] = thisrec[idx]
          recDict = tmpDict
       if badRecCount > 0:
@@ -496,7 +496,7 @@ class ShapeShifter(object):
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                            'Layer creation failed')
       
-      for idx, vals in self.op.fieldIndexMeta.iteritems():
+      for idx, vals in self.op.columnMeta.iteritems():
          if vals is not None:
             fldname = vals[OccDataParser.FIELD_NAME_KEY]
             fldtype = vals[OccDataParser.FIELD_TYPE_KEY] 
