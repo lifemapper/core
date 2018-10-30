@@ -72,11 +72,6 @@ def _calculate_beta(pred_std, weights, phylo_std, use_lock=True):
     """
     if use_lock:
         lock.acquire()
-    #tmp = pred_std.T.dot(np.diag(weights))
-    #tmp2 = tmp.dot(pred_std)
-    #tmp3 = np.linalg.inv(tmp2)
-    #tmp4 = tmp3.dot(tmp)
-    #beta = tmp4.dot(phylo_std)
     temp1 = _beta_helper(pred_std, pred_std, weights)
     tmp1_inv = np.linalg.inv(temp1)
     temp2 = _beta_helper(pred_std, phylo_std, weights)
