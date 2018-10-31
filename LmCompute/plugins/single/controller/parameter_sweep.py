@@ -132,19 +132,14 @@ class ParameterSweep(object):
         """
         for mdl_config in self.sweep_config.get_model_config():
             
-            (process_type, occ_set_id, algorithm_filename, 
-             model_scenario_filename, mask_id) = mdl_config[:4]
+            (process_type, model_id, occ_set_id, algorithm_filename, 
+             model_scenario_filename, mask_id) = mdl_config[:5]
             
             ruleset_filename = None
             occ_cont = True
             mask_cont = True
             mdl_metrics = None
             mdl_snippets = None
-            
-            model_id = '{}-{}-{}'.format(
-                occ_set_id,
-                os.path.basename(algorithm_filename).split('.')[0],
-                os.path.basename(model_scenario_filename).split('.')[0])
             
             occ_shp_filename, occ_status = self._get_registry_output(
                 REGISTRY_KEY.OCCURRENCE, occ_set_id)
@@ -176,11 +171,12 @@ class ParameterSweep(object):
                 # TODO(CJ): Get species name and CRS WKT from somewhere
                 species_name = 'species'
                 crs_wkt = None
-            
+                
+                # If Maxent
                 if process_type in [ProcessType.ATT_MODEL,
                                     ProcessType.ATT_PROJECT]:
                     
-                    projection_id, scale_params, multiplier = mdl_config[4:]
+                    projection_id, scale_params, multiplier = mdl_config[5:]
                     
                     mask_filename = '{}{}'.format(
                         mask_filename_base, LMFormat.ASCII.ext)
@@ -224,6 +220,7 @@ class ParameterSweep(object):
                             secondary_outputs=mdl_secondary_outputs,
                             metrics=mdl_metrics, snippets=mdl_snippets)
                     
+                # If openModeller
                 elif process_type in [ProcessType.OM_MODEL,
                                       ProcessType.OM_PROJECT]:
                     mask_filename = '{}{}'.format(
@@ -246,7 +243,8 @@ class ParameterSweep(object):
                         mdl_secondary_outputs = [log_filename, 
                                                  package_filename]
                         mdl_metrics = wrapper.get_metrics()
-                        
+                
+                # If other
                 else:
                     status = JobStatus.UNKNOWN_ERROR
                     mdl_secondary_outputs = []
@@ -308,7 +306,127 @@ class ParameterSweep(object):
 
     # ........................................
     def _create_projections(self):
-        pass
+        """Create projections from configuration
+
+        Todo:
+            * Get species name from somewhere
+        """
+        for prj_config in self.sweep_config.get_projection_config():
+            
+            (process_type, projection_id, model_id, algorithm_filename,
+             prj_scenario_filename, mask_id, scale_params, multiplier
+             ) = prj_config
+            
+            mask_cont = True
+            prj_metrics = None
+            prj_snippets = None
+            
+            # If this projection was already completed, skip
+            prj_raster_filename, _ = self._get_registry_output(
+                REGISTRY_KEY.PROJECTION, projection_id)
+            if prj_raster_filename is None:
+
+                if mask_id is not None:
+                    mask_filename_base, mask_status = self._get_registry_output(
+                        REGISTRY_KEY.MASK, mask_id)
+                    # We can only compute if (needed) mask was created
+                    #    successfully
+                    if mask_status >= JobStatus.GENERAL_ERROR:
+                        mask_cont = False
+                
+                # We can only continue if mask (if needed) was created successfully
+                if mask_cont:
+                    # Get points
+                    work_dir = os.path.join(self.work_dir, 'prj_{}'.format(
+                        projection_id))
+                    readyFilename(work_dir)
+                    # Load algorithm parameters
+                    with open(algorithm_filename) as algo_f:
+                        parameters_json = json.load(algo_f)
+                    # Load model scenario layer json
+                    with open(prj_scenario_filename) as prj_scn_f:
+                        layer_json = json.load(prj_scn_f)
+    
+                    # TODO(CJ): Get species name from somewhere
+                    species_name = 'species'
+                    
+                    ruleset_filename = self._get_registry_output(
+                        REGISTRY_KEY.MODEL, model_id)
+                    
+                    # If Maxent
+                    if process_type == ProcessType.ATT_PROJECT:
+                        
+                        mask_filename = '{}{}'.format(
+                            mask_filename_base, LMFormat.ASCII.ext)
+                        wrapper = MaxentWrapper(
+                            work_dir, species_name, logger=self.log)
+                        
+                        wrapper.create_projection(
+                            ruleset_filename, layer_json, parameters_json,
+                            mask_filename)
+                        
+                        # Get outputs
+                        out_prj_filename = None
+                        status = wrapper.get_status()
+                        if status < JobStatus.GENERAL_ERROR:
+                            
+                            raw_prj_filename = wrapper.get_projection_filename()
+                            out_prj_filename = '{}{}'.format(
+                                os.path.splitext(raw_prj_filename),
+                                LMFormat.GTIFF.ext)
+                            # Convert layer and scale layer
+                            layer_tools.convertAndModifyAsciiToTiff(
+                                raw_prj_filename, out_prj_filename,
+                                scale=scale_params, multiplier=multiplier)
+                            
+                            log_filename = wrapper.get_log_filename()
+                            package_filename = os.path.join(
+                                work_dir, 'package.zip')
+                            wrapper.get_output_package(package_filename,
+                                                       overwrite=True)
+                            prj_secondary_outputs = [log_filename, 
+                                                     package_filename]
+                            prj_metrics = wrapper.get_metrics()
+    
+                    # If openModeller
+                    elif process_type in [ProcessType.OM_MODEL,
+                                          ProcessType.OM_PROJECT]:
+                        mask_filename = '{}{}'.format(
+                            mask_filename_base, LMFormat.GTIFF.ext)
+                        wrapper = OpenModellerWrapper(
+                            work_dir, species_name, logger=self.log)
+                        wrapper.create_projection(
+                            ruleset_filename, layer_json, parameters_json,
+                            mask_filename)
+                        
+                        # Get outputs
+                        status = wrapper.get_status()
+                        if status < JobStatus.GENERAL_ERROR:
+                            
+                            out_prj_filename = wrapper.get_projection_filename()
+                            
+                            log_filename = wrapper.get_log_filename()
+                            package_filename = os.path.join(
+                                work_dir, 'package.zip')
+                            wrapper.get_output_package(package_filename,
+                                                       overwrite=True)
+                            prj_secondary_outputs = [log_filename, 
+                                                     package_filename]
+                            prj_metrics = wrapper.get_metrics()
+    
+                    # If other
+                    else:
+                        status = JobStatus.UNKNOWN_ERROR
+                        prj_secondary_outputs = []
+                        self.log.error(
+                            'Unknown process type: {} for proj {}'.format(
+                                process_type, projection_id))
+    
+                # Register model output
+                self._register_output_object(
+                    REGISTRY_KEY.PROJECTION, projection_id, status,
+                    out_prj_filename, secondary_outputs=prj_secondary_outputs,
+                    metrics=prj_metrics, snippets=prj_snippets)
     
     # ........................................
     def _get_model_points(self, occ_shp_filename):
