@@ -1,12 +1,18 @@
 """This module contains methods for performing a single species parameter sweep
 """
+import json
 import os
+from osgeo import ogr
 
+import LmBackend.common.layerTools as layer_tools
 
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
+from LmCommon.common.readyfile import readyFilename
 
 import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
 import LmCompute.plugins.single.mask.create_mask as create_mask
+from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
+from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
 
 # process config file
 # Do each portion
@@ -42,16 +48,18 @@ class ParameterSweep(object):
     """This class performs a parameter sweep for a single species
     """
     # ........................................
-    def __init__(self, sweep_config):
+    def __init__(self, sweep_config, work_dir):
         """Constructor
 
         Args:
-            sweep_config: A parameter sweep configuration object used to
+            sweep_config : A parameter sweep configuration object used to
                 determine what should be done.
+            work_dir : A top directory where work should be performed.
         """
         # TODO: Use a logger
         self.log = None
         self.sweep_config = sweep_config
+        self.work_dir = work_dir
         # Note: The registry is a place for registering outputs
         # TODO: How should this work?
         self.registry = {}
@@ -117,13 +125,140 @@ class ParameterSweep(object):
     # ........................................
     def _create_models(self):
         """Create models from configuration
+
+        Todo:
+            * Get species name from somewhere.
+            * Get CRS_WKT from somewhere.
         """
         for mdl_config in self.sweep_config.get_model_config():
-            process_type, occ_set_id, algorithm_file, model_scenario, mask_id, projection_id, processing_options
-            # Create model
-            # Conditionally create / get projection
-            # Conditionally process projection
-        pass
+            
+            (process_type, occ_set_id, algorithm_filename, 
+             model_scenario_filename, mask_id) = mdl_config[:4]
+            
+            ruleset_filename = None
+            occ_cont = True
+            mask_cont = True
+            mdl_metrics = None
+            mdl_snippets = None
+            
+            model_id = '{}-{}-{}'.format(
+                occ_set_id,
+                os.path.basename(algorithm_filename).split('.')[0],
+                os.path.basename(model_scenario_filename).split('.')[0])
+            
+            occ_shp_filename, occ_status = self._get_registry_output(
+                REGISTRY_KEY.OCCURRENCE, occ_set_id)
+            # We can only compute if occurrence set was created successfully
+            if occ_status >= JobStatus.GENERAL_ERROR:
+                occ_cont = False
+
+            if mask_id is not None:
+                mask_filename_base, mask_status = self._get_registry_output(
+                    REGISTRY_KEY.MASK, mask_id)
+                # We can only compute if (needed) mask was created successfully
+                if mask_status >= JobStatus.GENERAL_ERROR:
+                    mask_cont = False
+                
+            # We can only continue if occurrence set and mask (if needed) were
+            #    created successfully
+            if occ_cont and mask_cont:
+                # Get points
+                points = self._get_model_points(occ_shp_filename)
+                work_dir = os.path.join(self.work_dir, model_id)
+                readyFilename(work_dir)
+                # Load algorithm parameters
+                with open(algorithm_filename) as algo_f:
+                    parameters_json = json.load(algo_f)
+                # Load model scenario layer json
+                with open(model_scenario_filename) as mdl_scn_f:
+                    layer_json = json.load(mdl_scn_f)
+
+                # TODO(CJ): Get species name and CRS WKT from somewhere
+                species_name = 'species'
+                crs_wkt = None
+            
+                if process_type in [ProcessType.ATT_MODEL,
+                                    ProcessType.ATT_PROJECT]:
+                    
+                    projection_id, scale_params, multiplier = mdl_config[4:]
+                    
+                    mask_filename = '{}{}'.format(
+                        mask_filename_base, LMFormat.ASCII.ext)
+                    wrapper = MaxentWrapper(
+                        work_dir, species_name, logger=self.log)
+                    wrapper.create_model(
+                        points, layer_json, parameters_json,
+                        mask_filename=mask_filename, crs_wkt=crs_wkt)
+                    
+                    # Get outputs
+                    status = wrapper.get_status()
+                    if status < JobStatus.GENERAL_ERROR:
+                        ruleset_filename = wrapper.get_ruleset_filename()
+                        log_filename = wrapper.get_log_filename()
+                        package_filename = os.path.join(
+                            work_dir, 'package.zip')
+                        wrapper.get_output_package(package_filename,
+                                                   overwrite=True)
+                        mdl_secondary_outputs = [log_filename, 
+                                                 package_filename]
+                        mdl_metrics = wrapper.get_metrics()
+
+                    # Get / process projection
+                    if projection_id is not None:
+                        out_prj_filename = None
+                        # Only convert if success, else we'll register failure
+                        if status < JobStatus.GENERAL_ERROR:
+                            
+                            raw_prj_filename = wrapper.get_projection_filename()
+                            out_prj_filename = '{}{}'.format(
+                                os.path.splitext(raw_prj_filename),
+                                LMFormat.GTIFF.ext)
+                            # Convert layer and scale layer
+                            layer_tools.convertAndModifyAsciiToTiff(
+                                raw_prj_filename, out_prj_filename,
+                                scale=scale_params, multiplier=multiplier)
+                        # Use same secondary outputs as model and register
+                        self._register_output_object(
+                            REGISTRY_KEY.PROJECTION, projection_id, status,
+                            out_prj_filename,
+                            secondary_outputs=mdl_secondary_outputs,
+                            metrics=mdl_metrics, snippets=mdl_snippets)
+                    
+                elif process_type in [ProcessType.OM_MODEL,
+                                      ProcessType.OM_PROJECT]:
+                    mask_filename = '{}{}'.format(
+                        mask_filename_base, LMFormat.GTIFF.ext)
+                    wrapper = OpenModellerWrapper(
+                        work_dir, species_name, logger=self.log)
+                    wrapper.create_model(
+                        points, layer_json, parameters_json,
+                        mask_filename=mask_filename, crs_wkt=crs_wkt)
+                    
+                    # Get outputs
+                    status = wrapper.get_status()
+                    if status < JobStatus.GENERAL_ERROR:
+                        ruleset_filename = wrapper.get_ruleset_filename()
+                        log_filename = wrapper.get_log_filename()
+                        package_filename = os.path.join(
+                            work_dir, 'package.zip')
+                        wrapper.get_output_package(package_filename,
+                                                   overwrite=True)
+                        mdl_secondary_outputs = [log_filename, 
+                                                 package_filename]
+                        mdl_metrics = wrapper.get_metrics()
+                        
+                else:
+                    status = JobStatus.UNKNOWN_ERROR
+                    mdl_secondary_outputs = []
+                    self.log.error(
+                        'Unknown process type: {} for model {}'.format(
+                            process_type, model_id))
+
+            # Register model output
+            self._register_output_object(
+                REGISTRY_KEY.MODEL, model_id, status, ruleset_filename, 
+                secondary_outputs=mdl_secondary_outputs, metrics=mdl_metrics,
+                snippets=mdl_snippets)
 
     # ........................................
     def _create_occurrence_sets(self):
@@ -132,6 +267,7 @@ class ParameterSweep(object):
         Todo:
             * Generate metrics
             * Generate snippets
+            * Do we need a work directory?
         """
         for occ_config in self.sweep_config.get_occurrence_set_config():
             (process_type, occ_set_id, url_fn_or_key, out_file, big_out_file,
@@ -174,6 +310,35 @@ class ParameterSweep(object):
     def _create_projections(self):
         pass
     
+    # ........................................
+    def _get_model_points(self, occ_shp_filename):
+        """Get minimal point csv to be used for modeling.
+
+        Args:
+            occ_shp_filename : The file location of a point shapefile.
+        
+        Note:
+            * Removes duplicate point locations
+        """
+        points = set([])
+        drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
+        ds = drv.Open(occ_shp_filename, 0)
+        lyr = ds.GetLayer()
+
+        for feature in lyr:
+            geom = feature.GetGeometryRef()
+            pt_geom = geom.GetPoint()
+            points.add((pt_geom[0], pt_geom[1]))
+            
+        # Add identifiers and create list
+        i = 0
+        ret_points = []
+        for x, y in points:
+            ret_points.append((i, x, y))
+            i += 1
+
+        return ret_points
+
     # ........................................
     def _get_registry_output(self, object_type, object_id):
         """Gets the primary output filename and status for an object
