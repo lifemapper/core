@@ -494,6 +494,8 @@ class JobStatus:
     # Other Maxent problems
     # ............................................
     ME_HEAP_SPACE_ERROR = 3801
+    ME_EXEC_MODEL_ERROR = 3802
+    ME_EXEC_PROJECTION_ERROR = 3803
     
     # .......................................
     #  Occurrence set job errors
