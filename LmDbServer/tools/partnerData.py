@@ -397,12 +397,16 @@ class PartnerQuery(object):
         rec = [origname]
         for fld in GbifAPI.NameMatchFieldnames:
             rec.append(goodnames[0][fld])
+            writer.writerow(rec)
         # Alternate matches
         alternatives = goodnames[1:]
         for gudname in alternatives:
             rec = [origname]
             for fld in GbifAPI.NameMatchFieldnames:
-                rec.append(gudname[fld])
+                try:
+                    rec.append(gudname[fld])
+                except:
+                    rec.append('')
             writer.writerow(rec)
             print('origname {}, canonical {}, speciesKey, usageKey :  {}, {}'
                   .format(origname, gudname['canonicalName'], 
@@ -412,7 +416,7 @@ class PartnerQuery(object):
     
     # .............................................................................
     def readGBIFTaxonIds(self, gbifidFname):
-        summary = {}
+        taxon_ids = []
         try:
             f = open(gbifidFname, 'r') 
             csvreader = unicodecsv.reader(f, delimiter=self.delimiter, 
@@ -420,8 +424,46 @@ class PartnerQuery(object):
         except Exception, e:
             raise Exception('Failed to read or open {}, ({})'
                             .format(gbifidFname, str(e)))
+        header = csvreader.next()
         line = csvreader.next()
+        currname = toptaxonid = topscore = None
         while line is not None:
+            try:
+                thisname = line[header.index('providedName')]
+                thistaxonid = line[header.index('speciesKey')]
+                thisscore = line[header.index('confidence')]
+            except KeyError, e:
+                self.log.error('Failed on line {} finding key {}'.format(line, str(e)))
+            except Exception, e:
+                self.log.error('Failed on line {}, {}'.format(line, str(e)))                
+            else:
+                # If starting a new set of matches, save last winner and reset
+                if currname != thisname:
+                    # Set default winner values on first line
+                    if currname is None:
+                        currname = thisname
+                        toptaxonid = thistaxonid
+                        topscore = thisscore
+                    else:
+                        # Save winner from last name
+                        taxon_ids.append(toptaxonid)
+                        self.log.info('Found id {} for name {}, score {}'
+                                      .format(toptaxonid, currname, topscore))
+                        # Reset current values
+                        currname = thisname
+                        toptaxonid = thistaxonid
+                        topscore = thisscore
+                        
+                # Test this match score against winner, save if new winner
+                self.log.info('  Testing id {} for name {}, score {}'
+                              .format(line[header.index('speciesKey')], currname, line[header.index('confidence')]))
+                if thisscore > topscore:
+                    toptaxonid = thistaxonid
+                    topscore = thisscore
+                    self.log.info('   New winner id {} for name {}, score {}'
+                                  .format(toptaxonid, currname, topscore))
+
+            # Get next one
             try:
                 line = csvreader.next()
             except OverflowError, e:
@@ -432,15 +474,7 @@ class PartnerQuery(object):
                 line = None
             except Exception, e:
                 self.log.warning('Bad record {}'.format(e))
-            
-            name = line['providedName']
-            taxonid = line['speciesKey']
-            score = line['confidence']
-            if summary.has_key(name):
-                summary[name].append((taxonid, score))
-            else:
-                summary[name] = [(taxonid, score)]
-        return summary
+        return taxon_ids
               
     # .............................................................................
     """
@@ -586,21 +620,36 @@ if __name__ == '__main__':
 #                3032689, 3032688, 3032678, 3032679, 3032672, 3032673, 
 #                3032670, 3032671, 3032676, 3032674, 3032675]
     iquery = PartnerQuery()
+
+    # ............................
+    # Get GBIF ACCEPTED TaxonIDs for names
+    if os.path.exists(gbifidFname):
+        summary = iquery.readGBIFTaxonIds(gbifidFname)
+        for name, matchList in summary.iteritems():
+            
+            for match in matchList:
+                (taxonid, score) = match
+    else:
+        unmatched_names, gbifids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
+
+    # ............................
+    # Get iDigBio point data for TaxonIDs
     if os.path.exists(ptFname) and os.path.exists(metaFname):
         # Reads keys as integers
-        summary, colMeta = iquery.summarizeIdigbioData(ptFname, metaFname)
-        gbifids = []
-        for gbifid, (name, total) in summary.iteritems():
-            print ('Found gbifid {} with name {} and {} records'.format(gbifid, name, total))
-            if total > 0:
-                gbifids.append(gbifid)
+        summary, colMeta = iquery.readIdigbioData(ptFname, metaFname)
     else:
-        gbifids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
-        # Reads keys as integers
-        summary, colMeta = iquery.assembleIdigbioData(gbifids, ptFname, metaFname)
-        missingFromIdigbio = summary[Partners.IDIG_MISSING_KEY]
+        summary, colMeta = iquery.assembleIdigbioData(gbifids, ptFname, metaFname)                
+    gbifids = []
+    for gbifid, (name, total) in summary.iteritems():
+        print ('Found gbifid {} with name {} and {} records'.format(gbifid, name, total))
+        if total > 0:
+            gbifids.append(gbifid)
+    missingFromIdigbio = summary[Partners.IDIG_MISSING_KEY]
     
+    # ............................
+    # Get OpenTree tree and map for OTT Ids to GBIF TaxonIDs
     otree, gbifOTT, missingFromOTOL = iquery.assembleOTOLData(gbifids, dataname)
+    # Update Tree with TaxonIDs
     updatedTree = iquery.encodeOTTTreeToGBIF(otree, gbifOTT)
     
     print ('Now what?')
@@ -660,7 +709,32 @@ names = ['Methanococcoides burtonii', 'Methanogenium frigidum',
 
 iquery = PartnerQuery(logger=logger)
 
-gbifids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
+# ............................
+# Get GBIF ACCEPTED TaxonIDs for names
+if os.path.exists(gbifidFname):
+    summary = iquery.readGBIFTaxonIds(gbifidFname)
+else:
+    unmatched_names, taxon_ids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
+
+# ............................
+# Get iDigBio point data for TaxonIDs
+if os.path.exists(ptFname) and os.path.exists(metaFname):
+    # Reads keys as integers
+    summary, colMeta = iquery.readIdigbioData(ptFname, metaFname)
+else:
+    summary, colMeta = iquery.assembleIdigbioData(gbifids, ptFname, metaFname)                
+gbifids = []
+for gbifid, (name, total) in summary.iteritems():
+    print ('Found gbifid {} with name {} and {} records'.format(gbifid, name, total))
+    if total > 0:
+        gbifids.append(gbifid)
+missingFromIdigbio = summary[Partners.IDIG_MISSING_KEY]
+
+# ............................
+# Get OpenTree tree and map for OTT Ids to GBIF TaxonIDs
+otree, gbifOTT, missingFromOTOL = iquery.assembleOTOLData(gbifids, dataname)
+# Update Tree with TaxonIDs
+updatedTree = iquery.encodeOTTTreeToGBIF(otree, gbifOTT)
 
 # .........................................
 namestr = names[0]
