@@ -13,6 +13,7 @@ import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
 import LmCompute.plugins.single.mask.create_mask as create_mask
 from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
+from LmCommon.encoding.layer_encoder import LayerEncoder
 
 # process config file
 # Do each portion
@@ -302,7 +303,41 @@ class ParameterSweep(object):
 
     # ........................................
     def _create_pavs(self):
-        pass
+        """Create presence absence vectors from configuration
+
+        Todo:
+            * Add metrics
+            * Add snippets
+        """
+        for pav_config in self.sweep_config.get_pav_config():
+            (shapegrid_filename, pav_id, projection_id, pav_filename, squid,
+             min_presence, max_presence, min_coverage) = pav_config
+            
+            # TODO(CJ) : Consider if we can reuse the encoder
+            encoder = LayerEncoder(shapegrid_filename)
+            
+            # Initialize status, only set to success if successful
+            status = JobStatus.GENERAL_ERROR
+            prj_filename, prj_status = self._get_registry_output(
+                REGISTRY_KEY.PROJECTION, projection_id)
+            if prj_filename is not None and \
+                prj_status < JobStatus.GENERAL_ERROR:
+
+                encoder.encode_presence_absence(
+                    prj_filename, squid, min_presence, max_presence,
+                    min_coverage)
+                pav = encoder.get_encoded_matrix()
+                if pav is not None:
+                    status = JobStatus.COMPUTED
+                    with open(pav_filename, 'w') as pav_out_f:
+                        pav.save(pav_out_f)
+            else:
+                if prj_status >= JobStatus.GENERAL_ERROR:
+                    status = prj_status
+            # Register output
+            self._register_output_object(REGISTRY_KEY.PAV, pav_id, status,
+                                         pav_filename)
+            
 
     # ........................................
     def _create_projections(self):
