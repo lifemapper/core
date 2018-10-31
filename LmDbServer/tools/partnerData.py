@@ -392,8 +392,63 @@ class PartnerQuery(object):
     """
     nm = 'Sphagnum capillifolium var. capillifolium'
     """
-    def assembleGBIFData(self, names, gbifidFname):      
+    def _getNameMatches(self, origname, goodnames, writer):
+        # Top Match
+        rec = [origname]
+        for fld in GbifAPI.NameMatchFieldnames:
+            rec.append(goodnames[0][fld])
+        # Alternate matches
+        alternatives = goodnames[1:]
+        for gudname in alternatives:
+            rec = [origname]
+            for fld in GbifAPI.NameMatchFieldnames:
+                rec.append(gudname[fld])
+            writer.writerow(rec)
+            print('origname {}, canonical {}, speciesKey, usageKey :  {}, {}'
+                  .format(origname, gudname['canonicalName'], 
+                          gudname['speciesKey'], gudname['usageKey']))
+        # Return only top match
+        return goodnames[0]['speciesKey']
+    
+    # .............................................................................
+    def readGBIFTaxonIds(self, gbifidFname):
+        summary = {}
+        try:
+            f = open(gbifidFname, 'r') 
+            csvreader = unicodecsv.reader(f, delimiter=self.delimiter, 
+                                          encoding=self.encoding)        
+        except Exception, e:
+            raise Exception('Failed to read or open {}, ({})'
+                            .format(gbifidFname, str(e)))
+        line = csvreader.next()
+        while line is not None:
+            try:
+                line = csvreader.next()
+            except OverflowError, e:
+                self.log.debug( 'Overflow on line {}, ({}))'
+                                .format(csvreader.line_num, str(e)))
+            except StopIteration:
+                self.log.debug('EOF after line {}'.format(csvreader.line_num))
+                line = None
+            except Exception, e:
+                self.log.warning('Bad record {}'.format(e))
+            
+            name = line['providedName']
+            taxonid = line['speciesKey']
+            score = line['confidence']
+            if summary.has_key(name):
+                summary[name].append((taxonid, score))
+            else:
+                summary[name] = [(taxonid, score)]
+        return summary
+              
+    # .............................................................................
+    """
+    nm = 'Sphagnum capillifolium var. capillifolium'
+    """
+    def assembleGBIFTaxonIds(self, names, gbifidFname):
         unmatched_names = []
+        taxon_ids = []
         if not(isinstance(names, list)):
             names = [names]
            
@@ -402,7 +457,7 @@ class PartnerQuery(object):
             os.remove(gbifidFname)
            
         writer, f = self._getCSVWriter(gbifidFname, doAppend=False)
-        header = ['originalName']
+        header = ['providedName']
         header.extend(GbifAPI.NameMatchFieldnames)
         writer.writerow(header)
         
@@ -411,13 +466,10 @@ class PartnerQuery(object):
             if len(goodnames) == 0:
                 unmatched_names.append(origname)
             else:
-                for gudname in goodnames:
-                    rec = [origname]
-                    for fld in GbifAPI.NameMatchFieldnames:
-                        rec.append(gudname[fld])
-                    writer.writerow(rec)
+                top_id_match = self._getNameMatches(origname, goodnames, writer)
+                taxon_ids.append(top_id_match)
                 
-        return unmatched_names
+        return unmatched_names, taxon_ids
 
    
     # .............................................................................
@@ -455,7 +507,7 @@ class PartnerQuery(object):
         return summary, meta
    
     # .............................................................................
-    def summarizeIdigbioData(self, ptFname, metaFname):
+    def readIdigbioData(self, ptFname, metaFname):
         summary = {}
         colMeta = {}
         if not(os.path.exists(ptFname)):
@@ -512,24 +564,38 @@ class PartnerQuery(object):
 # .............................................................................
 if __name__ == '__main__':
     dataname = '/tmp/testIdigbioData'
+    gbifidFname = dataname + '.gids'
     ptFname = dataname + '.csv'
     metaFname = dataname + '.json'
-    gbifids = [3752543, 3753319, 3032690, 3752610, 3755291, 3754671, 
-               8109411, 3753512, 3032647, 3032649, 3032648, 8365087, 
-               4926214, 7516328, 7588669, 7554971, 3754743, 3754395, 
-               3032652, 3032653, 3032654, 3032655, 3032656, 3032658, 
-               3032662, 7551031, 8280496, 7462054, 3032651, 3755546, 
-               3032668, 3032665, 3032664, 3032667, 3032666, 3032661, 
-               3032660, 3754294, 3032687, 3032686, 3032681, 3032680, 
-               3032689, 3032688, 3032678, 3032679, 3032672, 3032673, 
-               3032670, 3032671, 3032676, 3032674, 3032675]
+    names = ['Methanococcoides burtonii', 'Methanogenium frigidum', 
+             'Hexarthra fennica', 'Hexarthra longicornicula', 
+             'Hexarthra intermedia', 'Hexarthra mira', 'Horaella thomassoni', 
+             'Filinia longiseta', 'Filinia opoliensis', 'Filinia novaezealandiae', 
+             'Filinia terminalis', 'Trochosphaera aequatorialis', 
+             'Ptygura linguata', 'Ptygura barbata', 'Ptygura crystallina', 
+             'Ptygura libera', 'Floscularia janus', 'Floscularia conifera', 
+             'Floscularia ringens', 'Sinantherina semibullata']
+    
+#     gbifids = [3752543, 3753319, 3032690, 3752610, 3755291, 3754671, 
+#                8109411, 3753512, 3032647, 3032649, 3032648, 8365087, 
+#                4926214, 7516328, 7588669, 7554971, 3754743, 3754395, 
+#                3032652, 3032653, 3032654, 3032655, 3032656, 3032658, 
+#                3032662, 7551031, 8280496, 7462054, 3032651, 3755546, 
+#                3032668, 3032665, 3032664, 3032667, 3032666, 3032661, 
+#                3032660, 3754294, 3032687, 3032686, 3032681, 3032680, 
+#                3032689, 3032688, 3032678, 3032679, 3032672, 3032673, 
+#                3032670, 3032671, 3032676, 3032674, 3032675]
     iquery = PartnerQuery()
     if os.path.exists(ptFname) and os.path.exists(metaFname):
         # Reads keys as integers
         summary, colMeta = iquery.summarizeIdigbioData(ptFname, metaFname)
+        gbifids = []
         for gbifid, (name, total) in summary.iteritems():
             print ('Found gbifid {} with name {} and {} records'.format(gbifid, name, total))
+            if total > 0:
+                gbifids.append(gbifid)
     else:
+        gbifids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
         # Reads keys as integers
         summary, colMeta = iquery.assembleIdigbioData(gbifids, ptFname, metaFname)
         missingFromIdigbio = summary[Partners.IDIG_MISSING_KEY]
@@ -541,6 +607,8 @@ if __name__ == '__main__':
 
          
 """
+from LmDbServer.tools.partnerData import *
+
 from LmBackend.common.lmobj import LMError
 try:
    from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
@@ -576,38 +644,50 @@ OTTIDS_FROM_GBIFIDS_URL = '{}/ottids_from_gbifids'.format(DEV_SERVER)
 
 logger = ScriptLogger('partnerData.test')
 delimiter = '\t'
-dataname  = '/tmp/idigTest'
 
+dataname = '/tmp/testIdigbioData'
+gbifidFname = dataname + '.gids'
 ptFname = dataname + '.csv'
 metaFname = dataname + '.json'
-treeFname = dataname + '.newick'
+names = ['Methanococcoides burtonii', 'Methanogenium frigidum', 
+         'Hexarthra fennica', 'Hexarthra longicornicula', 
+         'Hexarthra intermedia', 'Hexarthra mira', 'Horaella thomassoni', 
+         'Filinia longiseta', 'Filinia opoliensis', 'Filinia novaezealandiae', 
+         'Filinia terminalis', 'Trochosphaera aequatorialis', 
+         'Ptygura linguata', 'Ptygura barbata', 'Ptygura crystallina', 
+         'Ptygura libera', 'Floscularia janus', 'Floscularia conifera', 
+         'Floscularia ringens', 'Sinantherina semibullata']
 
-gbifids = ['3752543', '3753319', '3032690', '3752610', '3755291', '3754671', 
-           '8109411', '3753512', '3032647', '3032649', '3032648', '8365087', 
-           '4926214', '7516328', '7588669', '7554971', '3754743', '3754395', 
-           '3032652', '3032653', '3032654', '3032655', '3032656', '3032658', 
-           '3032662', '7551031', '8280496', '7462054', '3032651', '3755546', 
-           '3032668', '3032665', '3032664', '3032667', '3032666', '3032661', 
-           '3032660', '3754294', '3032687', '3032686', '3032681', '3032680', 
-           '3032689', '3032688', '3032678', '3032679', '3032672', '3032673', 
-           '3032670', '3032671', '3032676', '3032674', '3032675']
-iquery = PartnerQuery()
+iquery = PartnerQuery(logger=logger)
 
-if os.path.exists(ptFname) and os.path.exists(metaFname):
-   summary2, colMeta2 = iquery.summarizeIdigbioData(ptFname, metaFname)
-else:
-   summary, colMeta = iquery.assembleIdigbioData(gbifids, ptFname, metaFname)
+gbifids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
+
+# .........................................
+namestr = names[0]
+goodnames = []
+otherFilters={'name': namestr, 'rank': 'species', 'verbose': 'true'}
+nameAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key='match', 
+                  otherFilters=otherFilters)
+nameAPI.query()
+output = nameAPI.output
+        
+if output['status'] == 'ACCEPTED':
+    smallrec = nameAPI._getFldVals(output)
+    goodnames.append(smallrec)
+alternatives = nameAPI.output['alternatives']
+for alt in alternatives:
+    if alt['status'] == 'ACCEPTED':
+        smallrec = nameAPI._getFldVals(output)
+        goodnames.append(smallrec)
+# .........................................
 
 
-missingGbifIds, newicktree = iquery.assembleOTOLData(gbifids)
-f = open(treeFname, 'w')
-json.dump(newicktree, f)
-f.close()
-t = Tree(dataname, dlocation=treeFname, schema='newick')
 
-
-tree = Tree('ptree', 
-print ('Now what?')
+summary, colMeta = iquery.assembleIdigbioData(gbifids, ptFname, metaFname)
+missingFromIdigbio = summary[Partners.IDIG_MISSING_KEY]
+    
+otree, gbifOTT, missingFromOTOL = iquery.assembleOTOLData(gbifids, dataname)
+updatedTree = iquery.encodeOTTTreeToGBIF(otree, gbifOTT)
 
 
 """

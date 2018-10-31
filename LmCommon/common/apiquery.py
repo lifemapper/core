@@ -469,10 +469,7 @@ class GbifAPI(APIQuery):
         url = '/'.join((GBIF.REST_URL, service))
         if key is not None:
             url = '/'.join((url, str(key)))
-            APIQuery.__init__(self, url)
-        else:
-            APIQuery.__init__(self, url, otherFilters=otherFilters)
-    
+        APIQuery.__init__(self, url, otherFilters=otherFilters)
     
     # ...............................................
     @staticmethod
@@ -562,11 +559,20 @@ class GbifAPI(APIQuery):
             print ('Failed to get a response for species match on {}, ({})'
                    .format(namestr, str(e)))
             raise
+        
+        try:
+            status = output['status']
+        except:
+            raise
+        
+        try:
+            alternatives = output['alternatives']
+        except:
+            alternatives = []
                 
-        if output['status'] == 'ACCEPTED':
+        if status == 'ACCEPTED':
             smallrec = nameAPI._getFldVals(output)
             goodnames.append(smallrec)
-        alternatives = nameAPI.output['alternatives']
         for alt in alternatives:
             if alt['status'] == 'ACCEPTED':
                 smallrec = nameAPI._getFldVals(output)
