@@ -221,6 +221,12 @@ class ModelSoftwareWrapper(object):
         raise Exception('Not implemented in base class')
     
     # ...................................
+    def get_metrics(self):
+        """Returns the metrics from the computation.
+        """
+        return self.metrics
+    
+    # ...................................
     def get_projection_filename(self):
         """Return the projection raster filename generated
 
@@ -280,6 +286,7 @@ class ModelSoftwareWrapper(object):
         self._copy_file(
             self.get_projection_filename(), destination_filename,
             overwrite=overwrite)
+
     # ...................................
     def copy_log_file(self, destination_filename, overwrite=False):
         """Copy the log to the specified destination
