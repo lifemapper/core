@@ -2,78 +2,48 @@
 """
 import json
 import os
+
 from osgeo import ogr
 
 import LmBackend.common.layerTools as layer_tools
+from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmCommon.common.readyfile import readyFilename
+from LmCommon.encoding.layer_encoder import LayerEncoder
 
-import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
+from LmCompute.common.log import LmComputeLogger
 import LmCompute.plugins.single.mask.create_mask as create_mask
 from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
-from LmCommon.encoding.layer_encoder import LayerEncoder
-
-# process config file
-# Do each portion
-# Output
-# TODO: Generate stockpile information
-# TODO: Method for retrieving metrics
-
-# TODO: Move to constants
-class MaskMethod(object):
-    HULL_REGION_INTERSECT = 'hull_region_intersect'
-    BLANK_MASK = 'blank_mask'
-
-# .............................................................................
-# TODO: Move to constants
-class REGISTRY_KEY(object):
-    ID = 'id'
-    METRICS = 'metrics'
-    PRIMARY_OUTPUT = 'primary'
-    SECONDARY_OUTPUTS = 'secondary'
-    SNIPPETS = 'snippets'
-    STATUS = 'status'
-    # ..................
-    # Types
-    # ..................
-    OCCURRENCE = 'occurrence'
-    MASK = 'mask'
-    MODEL = 'model'
-    PROJECTION = 'projection'
-    PAV = 'pav'
+import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
 
 # .............................................................................
 class ParameterSweep(object):
     """This class performs a parameter sweep for a single species
     """
     # ........................................
-    def __init__(self, sweep_config, work_dir):
+    def __init__(self, sweep_config, work_dir, logger=None, log_name=None):
         """Constructor
 
         Args:
             sweep_config : A parameter sweep configuration object used to
                 determine what should be done.
             work_dir : A top directory where work should be performed.
+            logger : Optional.  If provided, use this logger.
+            log_name : Optional.  If provided (and logger is not) use this as
+                the name of the logger to be used for this parameter sweep.
         """
-        # TODO: Use a logger
-        self.log = None
+        if logger is not None:
+            self.log = logger
+        else:
+            if log_name is None:
+                log_name = 'sdm_parmeter_sweep-{}'.format(os.getpid())
+            self.log = LmComputeLogger(log_name, addConsole=True, addFile=True)
         self.sweep_config = sweep_config
         self.work_dir = work_dir
         # Note: The registry is a place for registering outputs
-        # TODO: How should this work?
         self.registry = {}
-
-    # ........................................
-    def run(self):
-        """Runs the parameter sweep
-        """
-        self._create_occurrence_sets()
-        self._create_masks()
-        self._create_models()
-        self._create_projections()
-        self._create_pavs()
 
     # ........................................
     def _create_masks(self):
@@ -97,7 +67,7 @@ class ParameterSweep(object):
                  ) = mask_config[5:]
                 # Get occurrence set shapefile
                 occ_shp_filename, occ_status = self._get_registry_output(
-                    REGISTRY_KEY.OCCURRENCE, occ_set_id)
+                    RegistryKey.OCCURRENCE, occ_set_id)
                 if occ_status < JobStatus.GENERAL_ERROR and occ_shp_filename:
                     create_mask.create_convex_hull_region_intersect_mask(
                         occ_shp_filename, region_layer_filename, 
@@ -121,7 +91,7 @@ class ParameterSweep(object):
             # TODO: Consider adding rasters as secondary outputs
             # TODO: Add metrics and snippets
             self._register_output_object(
-                REGISTRY_KEY.MASK, mask_id, status, out_mask_base_filename)
+                RegistryKey.MASK, mask_id, status, out_mask_base_filename)
 
     # ........................................
     def _create_models(self):
@@ -143,14 +113,14 @@ class ParameterSweep(object):
             mdl_snippets = None
             
             occ_shp_filename, occ_status = self._get_registry_output(
-                REGISTRY_KEY.OCCURRENCE, occ_set_id)
+                RegistryKey.OCCURRENCE, occ_set_id)
             # We can only compute if occurrence set was created successfully
             if occ_status >= JobStatus.GENERAL_ERROR:
                 occ_cont = False
 
             if mask_id is not None:
                 mask_filename_base, mask_status = self._get_registry_output(
-                    REGISTRY_KEY.MASK, mask_id)
+                    RegistryKey.MASK, mask_id)
                 # We can only compute if (needed) mask was created successfully
                 if mask_status >= JobStatus.GENERAL_ERROR:
                     mask_cont = False
@@ -216,9 +186,10 @@ class ParameterSweep(object):
                                 scale=scale_params, multiplier=multiplier)
                         # Use same secondary outputs as model and register
                         self._register_output_object(
-                            REGISTRY_KEY.PROJECTION, projection_id, status,
+                            RegistryKey.PROJECTION, projection_id, status,
                             out_prj_filename,
                             secondary_outputs=mdl_secondary_outputs,
+                            process_type=ProcessType.ATT_PROJECT,
                             metrics=mdl_metrics, snippets=mdl_snippets)
                     
                 # If openModeller
@@ -255,7 +226,7 @@ class ParameterSweep(object):
 
             # Register model output
             self._register_output_object(
-                REGISTRY_KEY.MODEL, model_id, status, ruleset_filename, 
+                RegistryKey.MODEL, model_id, status, ruleset_filename, 
                 secondary_outputs=mdl_secondary_outputs, metrics=mdl_metrics,
                 snippets=mdl_snippets)
 
@@ -297,9 +268,9 @@ class ParameterSweep(object):
                         occ_set_id, process_type))
                 status = JobStatus.UNKNOWN_ERROR
             self._register_output_object(
-                REGISTRY_KEY.OCCURRENCE, occ_set_id, status, out_file, 
-                secondary_outputs=[big_out_file], metrics=occ_metrics,
-                snippets=occ_snippets)
+                RegistryKey.OCCURRENCE, occ_set_id, status, out_file, 
+                secondary_outputs=[big_out_file], process_type=process_type,
+                metrics=occ_metrics, snippets=occ_snippets)
 
     # ........................................
     def _create_pavs(self):
@@ -319,7 +290,7 @@ class ParameterSweep(object):
             # Initialize status, only set to success if successful
             status = JobStatus.GENERAL_ERROR
             prj_filename, prj_status = self._get_registry_output(
-                REGISTRY_KEY.PROJECTION, projection_id)
+                RegistryKey.PROJECTION, projection_id)
             if prj_filename is not None and \
                 prj_status < JobStatus.GENERAL_ERROR:
 
@@ -335,8 +306,9 @@ class ParameterSweep(object):
                 if prj_status >= JobStatus.GENERAL_ERROR:
                     status = prj_status
             # Register output
-            self._register_output_object(REGISTRY_KEY.PAV, pav_id, status,
-                                         pav_filename)
+            self._register_output_object(
+                RegistryKey.PAV, pav_id, status, pav_filename,
+                process_type=ProcessType.INTERSECT_RASTER)
             
 
     # ........................................
@@ -358,12 +330,12 @@ class ParameterSweep(object):
             
             # If this projection was already completed, skip
             prj_raster_filename, _ = self._get_registry_output(
-                REGISTRY_KEY.PROJECTION, projection_id)
+                RegistryKey.PROJECTION, projection_id)
             if prj_raster_filename is None:
 
                 if mask_id is not None:
                     mask_filename_base, mask_status = self._get_registry_output(
-                        REGISTRY_KEY.MASK, mask_id)
+                        RegistryKey.MASK, mask_id)
                     # We can only compute if (needed) mask was created
                     #    successfully
                     if mask_status >= JobStatus.GENERAL_ERROR:
@@ -386,7 +358,7 @@ class ParameterSweep(object):
                     species_name = 'species'
                     
                     ruleset_filename = self._get_registry_output(
-                        REGISTRY_KEY.MODEL, model_id)
+                        RegistryKey.MODEL, model_id)
                     
                     # If Maxent
                     if process_type == ProcessType.ATT_PROJECT:
@@ -459,9 +431,10 @@ class ParameterSweep(object):
     
                 # Register model output
                 self._register_output_object(
-                    REGISTRY_KEY.PROJECTION, projection_id, status,
+                    RegistryKey.PROJECTION, projection_id, status,
                     out_prj_filename, secondary_outputs=prj_secondary_outputs,
-                    metrics=prj_metrics, snippets=prj_snippets)
+                    process_type=process_type, metrics=prj_metrics,
+                    snippets=prj_snippets)
     
     # ........................................
     def _get_model_points(self, occ_shp_filename):
@@ -504,9 +477,9 @@ class ParameterSweep(object):
         status = JobStatus.GENERAL_ERROR
         try:
             obj = self.registry[object_type][object_id]
-            status = obj[REGISTRY_KEY.STATUS]
+            status = obj[RegistryKey.STATUS]
             if status == JobStatus.COMPUTED:
-                ret_file = obj[REGISTRY_KEY.PRIMARY_OUTPUT]
+                ret_file = obj[RegistryKey.PRIMARY_OUTPUT]
         except:
             status = JobStatus.NOT_FOUND
             pass
@@ -515,28 +488,86 @@ class ParameterSweep(object):
     # ........................................
     def _register_output_object(self, object_type, object_id, status,
                                 primary_output, secondary_outputs=None, 
-                                metrics=None, snippets=None):
+                                process_type=None, metrics=None,
+                                snippets=None):
         """Adds an output object to the registry
 
         Args:
             object_type : The type of object being added (should be one of the
-                REGISTRY_KEY type values).
+                RegistryKey type values).
             object_id : An identifier for this object
             status : The status of this object (JobStatus value).
             primary_output : The primary output of the object. This file may be
                 used for follow up computations.
             secondary_outputs : Optional. These are other output files
                 generated by the computation.
+            process_type : Optional. The process type of the operation used to
+                generate this object.
             metrics : Optional. Metrics generated by the computation.
             snippets : Optional. Snippets generated by the computation.
         """
         if object_type not in self.registry.keys():
             self.registry[object_type] = []
         self.registry[object_type][object_id] = {
-            REGISTRY_KEY.ID : object_id,
-            REGISTRY_KEY.METRICS : metrics,
-            REGISTRY_KEY.PRIMARY_OUTPUT : primary_output,
-            REGISTRY_KEY.SECONDARY_OUTPUTS : secondary_outputs,
-            REGISTRY_KEY.SNIPPETS : snippets,
-            REGISTRY_KEY.STATUS : status
+            RegistryKey.ID : object_id,
+            RegistryKey.METRICS : metrics,
+            RegistryKey.PRIMARY_OUTPUT : primary_output,
+            RegistryKey.PROCESS_TYPE : process_type,
+            RegistryKey.SECONDARY_OUTPUTS : secondary_outputs,
+            RegistryKey.SNIPPETS : snippets,
+            RegistryKey.STATUS : status
         }
+
+    # ........................................
+    def get_metrics(self):
+        """Generates a report of the metrics generated in this run
+        """
+        metrics = []
+        for group_key in RegistryKey.group_keys():
+            if group_key in self.registry.keys():
+                for object_id in self.registry[group_key].keys():
+                    obj_metrics = self.registry[
+                        group_key][object_id][RegistryKey.METRICS]
+                    if obj_metrics is not None:
+                        metrics.extend(obj_metrics)
+        return metrics
+
+    # ........................................
+    def get_snippets(self):
+        """Generates a report of the snippets generated in this run
+        """
+        snippets = []
+        for group_key in RegistryKey.group_keys():
+            if group_key in self.registry.keys():
+                for object_id in self.registry[group_key].keys():
+                    obj_snippets = self.registry[
+                        group_key][object_id][RegistryKey.SNIPPETS]
+                    if obj_snippets is not None:
+                        snippets.extend(obj_snippets)
+        return snippets
+
+    # ........................................
+    def get_stockpile_info(self):
+        """Generates a report that can be used by stockpile script
+
+        Returns:
+            * A list of dictionaries that have a process type
+        """
+        stockpile = []
+        for group_key in RegistryKey.group_keys():
+            if group_key in self.registry.keys():
+                for object_id in self.registry[group_key].keys():
+                    obj = self.registry[group_key][object_id]
+                    if obj[RegistryKey.PROCESS_TYPE] is not None:
+                        stockpile.append(obj)
+        return stockpile
+
+    # ........................................
+    def run(self):
+        """Runs the parameter sweep
+        """
+        self._create_occurrence_sets()
+        self._create_masks()
+        self._create_models()
+        self._create_projections()
+        self._create_pavs()
