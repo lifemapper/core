@@ -1,26 +1,4 @@
-"""
-@summary: Lifemapper backend constants module
-@license: gpl2
-@copyright: Copyright (C) 2018, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+"""Lifemapper backend constants module
 """
 # Relative paths
 # For LmCompute command construction by LmServer (for Makeflow)
@@ -34,3 +12,39 @@ DB_SERVER_SCRIPTS_DIR = 'LmDbServer/tools'
 
 # This is just for the command objects.  There is probably a better way 
 CMD_PYBIN = '$PYTHON'
+
+# Constants for configuration and processing of single species processes
+# .............................................................................
+class MaskMethod(object):
+    """Constants for SDM masking methods
+    """
+    HULL_REGION_INTERSECT = 'hull_region_intersect'
+    BLANK_MASK = 'blank_mask'
+
+# .............................................................................
+class RegistryKey(object):
+    """Constants for dictionary keys used when processing single species SDMs
+    """
+    ID = 'id'
+    METRICS = 'metrics'
+    PRIMARY_OUTPUT = 'primary'
+    PROCESS_TYPE = 'process_type'
+    SECONDARY_OUTPUTS = 'secondary'
+    SNIPPETS = 'snippets'
+    STATUS = 'status'
+    # ..................
+    # Types
+    # ..................
+    MASK = 'mask'
+    MODEL = 'model'
+    OCCURRENCE = 'occurrence'
+    PAV = 'pav'
+    PROJECTION = 'projection'
+    
+    # ........................................
+    @staticmethod
+    def group_keys():
+        """Returns the group level keys
+        """
+        return [RegistryKey.MASK, RegistryKey.MODEL, RegistryKey.OCCURRENCE,
+                RegistryKey.PAV, RegistryKey.PROJECTION]
