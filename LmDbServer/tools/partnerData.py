@@ -389,15 +389,20 @@ class PartnerQuery(object):
         return otree
 
     # .............................................................................
-    """
-    nm = 'Sphagnum capillifolium var. capillifolium'
-    """
-    def _getNameMatches(self, origname, goodnames, writer):
+    def _writeNameMatches(self, origname, goodnames, writer):
         # Top Match
         rec = [origname]
+        gudname = goodnames[0]
         for fld in GbifAPI.NameMatchFieldnames:
-            rec.append(goodnames[0][fld])
-            writer.writerow(rec)
+            try:
+                rec.append(gudname[fld])
+            except:
+                rec.append('')
+        print('origname {}, canonical {}, speciesKey, usageKey :  {}, {}'
+              .format(origname, gudname['canonicalName'], 
+                      gudname['speciesKey'], gudname['usageKey']))
+        writer.writerow(rec)
+        
         # Alternate matches
         alternatives = goodnames[1:]
         for gudname in alternatives:
@@ -455,8 +460,6 @@ class PartnerQuery(object):
                         topscore = thisscore
                         
                 # Test this match score against winner, save if new winner
-                self.log.info('  Testing id {} for name {}, score {}'
-                              .format(line[header.index('speciesKey')], currname, line[header.index('confidence')]))
                 if thisscore > topscore:
                     toptaxonid = thistaxonid
                     topscore = thisscore
@@ -500,7 +503,7 @@ class PartnerQuery(object):
             if len(goodnames) == 0:
                 unmatched_names.append(origname)
             else:
-                top_id_match = self._getNameMatches(origname, goodnames, writer)
+                top_id_match = self._writeNameMatches(origname, goodnames, writer)
                 taxon_ids.append(top_id_match)
                 
         return unmatched_names, taxon_ids
@@ -624,13 +627,9 @@ if __name__ == '__main__':
     # ............................
     # Get GBIF ACCEPTED TaxonIDs for names
     if os.path.exists(gbifidFname):
-        summary = iquery.readGBIFTaxonIds(gbifidFname)
-        for name, matchList in summary.iteritems():
-            
-            for match in matchList:
-                (taxonid, score) = match
+        user_gbif_ids = iquery.readGBIFTaxonIds(gbifidFname)
     else:
-        unmatched_names, gbifids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
+        unmatched_names, user_gbif_ids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
 
     # ............................
     # Get iDigBio point data for TaxonIDs
@@ -638,17 +637,18 @@ if __name__ == '__main__':
         # Reads keys as integers
         summary, colMeta = iquery.readIdigbioData(ptFname, metaFname)
     else:
-        summary, colMeta = iquery.assembleIdigbioData(gbifids, ptFname, metaFname)                
-    gbifids = []
+        summary, colMeta = iquery.assembleIdigbioData(user_gbif_ids, ptFname, metaFname)   
+                     
+    idig_gbif_ids = []
     for gbifid, (name, total) in summary.iteritems():
         print ('Found gbifid {} with name {} and {} records'.format(gbifid, name, total))
         if total > 0:
-            gbifids.append(gbifid)
+            idig_gbif_ids.append(gbifid)
     missingFromIdigbio = summary[Partners.IDIG_MISSING_KEY]
     
     # ............................
     # Get OpenTree tree and map for OTT Ids to GBIF TaxonIDs
-    otree, gbifOTT, missingFromOTOL = iquery.assembleOTOLData(gbifids, dataname)
+    otree, gbifOTT, missingFromOTOL = iquery.assembleOTOLData(idig_gbif_ids, dataname)
     # Update Tree with TaxonIDs
     updatedTree = iquery.encodeOTTTreeToGBIF(otree, gbifOTT)
     
@@ -712,9 +712,9 @@ iquery = PartnerQuery(logger=logger)
 # ............................
 # Get GBIF ACCEPTED TaxonIDs for names
 if os.path.exists(gbifidFname):
-    summary = iquery.readGBIFTaxonIds(gbifidFname)
+    user_gbif_ids = iquery.readGBIFTaxonIds(gbifidFname)
 else:
-    unmatched_names, taxon_ids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
+    unmatched_names, user_gbif_ids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
 
 # ............................
 # Get iDigBio point data for TaxonIDs
@@ -722,19 +722,22 @@ if os.path.exists(ptFname) and os.path.exists(metaFname):
     # Reads keys as integers
     summary, colMeta = iquery.readIdigbioData(ptFname, metaFname)
 else:
-    summary, colMeta = iquery.assembleIdigbioData(gbifids, ptFname, metaFname)                
-gbifids = []
+    summary, colMeta = iquery.assembleIdigbioData(user_gbif_ids, ptFname, metaFname)   
+                 
+idig_gbif_ids = []
 for gbifid, (name, total) in summary.iteritems():
     print ('Found gbifid {} with name {} and {} records'.format(gbifid, name, total))
     if total > 0:
-        gbifids.append(gbifid)
+        idig_gbif_ids.append(gbifid)
 missingFromIdigbio = summary[Partners.IDIG_MISSING_KEY]
 
 # ............................
 # Get OpenTree tree and map for OTT Ids to GBIF TaxonIDs
-otree, gbifOTT, missingFromOTOL = iquery.assembleOTOLData(gbifids, dataname)
+otree, gbifOTT, missingFromOTOL = iquery.assembleOTOLData(idig_gbif_ids, dataname)
 # Update Tree with TaxonIDs
 updatedTree = iquery.encodeOTTTreeToGBIF(otree, gbifOTT)
+
+
 
 # .........................................
 namestr = names[0]
