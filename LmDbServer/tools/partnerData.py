@@ -471,6 +471,7 @@ class PartnerQuery(object):
                     topscore = thisscore
                     self.log.info('   New winner id {} for name {}, score {}'
                                   .format(toptaxonid, currname, topscore))
+            
 
             # Get next one
             try:
@@ -483,6 +484,13 @@ class PartnerQuery(object):
                 line = None
             except Exception, e:
                 self.log.warning('Bad record {}'.format(e))
+        
+        # Save winner from final name
+        taxon_ids.append(toptaxonid)
+        name_to_gbif_ids[currname] = (toptaxonid, topcanonical)
+        self.log.info('Found final id {} for name {}, score {}'
+                      .format(toptaxonid, currname, topscore))
+        
         return name_to_gbif_ids
               
     # .............................................................................
