@@ -107,13 +107,15 @@ class ParameterSweep(object):
         Todo:
             * Get species name from somewhere.
             * Get CRS_WKT from somewhere.
+            
+            * Log, package, ruleset from config
         """
         for mdl_config in self.sweep_config.get_model_config():
             
             (process_type, model_id, occ_set_id, algorithm, model_scenario,
-             mask_id) = mdl_config[:5]
+             mask_id, mdl_log_path, mdl_package_path, mdl_ruleset_path
+             ) = mdl_config[:8]
             
-            ruleset_filename = None
             occ_cont = True
             mask_cont = True
             mdl_metrics = None
@@ -148,7 +150,8 @@ class ParameterSweep(object):
                 if process_type in [ProcessType.ATT_MODEL,
                                     ProcessType.ATT_PROJECT]:
                     
-                    projection_id, scale_params, multiplier = mdl_config[5:]
+                    (projection_id, projection_path, scale_params, multiplier
+                     ) = mdl_config[8:]
                     
                     mask_filename = '{}{}'.format(
                         mask_filename_base, LMFormat.ASCII.ext)
@@ -161,34 +164,28 @@ class ParameterSweep(object):
                     # Get outputs
                     status = wrapper.get_status()
                     if status < JobStatus.GENERAL_ERROR:
-                        ruleset_filename = wrapper.get_ruleset_filename()
-                        log_filename = wrapper.get_log_filename()
-                        package_filename = os.path.join(
-                            work_dir, 'package.zip')
-                        wrapper.get_output_package(package_filename,
+                        wrapper.copy_ruleset(mdl_ruleset_path, overwrite=True)
+                        wrapper.copy_log_file(mdl_log_path, overwrite=True)
+                        wrapper.get_output_package(mdl_package_path,
                                                    overwrite=True)
-                        mdl_secondary_outputs = [log_filename, 
-                                                 package_filename]
+                        mdl_secondary_outputs = [mdl_log_path, 
+                                                 mdl_package_path]
                         mdl_metrics = wrapper.get_metrics()
 
                     # Get / process projection
                     if projection_id is not None:
-                        out_prj_filename = None
                         # Only convert if success, else we'll register failure
                         if status < JobStatus.GENERAL_ERROR:
                             
                             raw_prj_filename = wrapper.get_projection_filename()
-                            out_prj_filename = '{}{}'.format(
-                                os.path.splitext(raw_prj_filename),
-                                LMFormat.GTIFF.ext)
                             # Convert layer and scale layer
                             layer_tools.convertAndModifyAsciiToTiff(
-                                raw_prj_filename, out_prj_filename,
+                                raw_prj_filename, projection_path,
                                 scale=scale_params, multiplier=multiplier)
                         # Use same secondary outputs as model and register
                         self._register_output_object(
                             RegistryKey.PROJECTION, projection_id, status,
-                            out_prj_filename,
+                            projection_path,
                             secondary_outputs=mdl_secondary_outputs,
                             process_type=ProcessType.ATT_PROJECT,
                             metrics=mdl_metrics, snippets=mdl_snippets)
@@ -207,14 +204,12 @@ class ParameterSweep(object):
                     # Get outputs
                     status = wrapper.get_status()
                     if status < JobStatus.GENERAL_ERROR:
-                        ruleset_filename = wrapper.get_ruleset_filename()
-                        log_filename = wrapper.get_log_filename()
-                        package_filename = os.path.join(
-                            work_dir, 'package.zip')
-                        wrapper.get_output_package(package_filename,
+                        wrapper.copy_ruleset(mdl_ruleset_path, overwrite=True)
+                        wrapper.copy_log_file(mdl_log_path, overwrite=True)
+                        wrapper.get_output_package(mdl_package_path,
                                                    overwrite=True)
-                        mdl_secondary_outputs = [log_filename, 
-                                                 package_filename]
+                        mdl_secondary_outputs = [mdl_log_path, 
+                                                 mdl_package_path]
                         mdl_metrics = wrapper.get_metrics()
                 
                 # If other
@@ -227,7 +222,7 @@ class ParameterSweep(object):
 
             # Register model output
             self._register_output_object(
-                RegistryKey.MODEL, model_id, status, ruleset_filename, 
+                RegistryKey.MODEL, model_id, status, mdl_ruleset_path, 
                 secondary_outputs=mdl_secondary_outputs, metrics=mdl_metrics,
                 snippets=mdl_snippets)
 
