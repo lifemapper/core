@@ -2,6 +2,7 @@
 
 Todo:
     Get the files that will be generated
+    Get the input files needed
 """
 from hashlib import md5
 import json
@@ -226,24 +227,44 @@ class ParameterSweepConfiguration(object):
 
         # Check if model has been defined and define if necessary
         if not model_id in self.models.keys():
+            # Create output paths
+            mdl_package_path = os.path.join(
+                self.work_dir, model_id, 'package.zip')
+            mdl_log_path = os.path.join(
+                self.work_dir, model_id, '{}{}'.format(
+                    model_id, LMFormat.LOG.ext))
+            
             if process_type == ProcessType.ATT_PROJECT:
                 mdl_process_type = ProcessType.ATT_MODEL
+                mdl_ruleset_path = os.path.join(
+                    self.work_dir, model_id, '{}_ruleset{}'.format(
+                        model_id, LMFormat.TXT.ext))
             else:
                 mdl_process_type = ProcessType.OM_PROJECT
+                mdl_ruleset_path = os.path.join(
+                    self.work_dir, model_id, '{}_ruleset{}'.format(
+                        model_id, LMFormat.XML.ext))
             self.models[model_id] = {
                 RegistryKey.PROCESS_TYPE : mdl_process_type,
                 RegistryKey.OCCURRENCE_SET_ID : occ_set_id,
                 RegistryKey.ALGORITHM : algo,
                 RegistryKey.SCENARIO : mdl_scn,
-                RegistryKey.MASK_ID : mdl_mask_id
+                RegistryKey.MASK_ID : mdl_mask_id,
+                RegistryKey.PACKAGE_PATH : mdl_package_path,
+                RegistryKey.RULESET_PATH : mdl_ruleset_path,
+                RegistryKey.LOG_PATH : mdl_log_path
             }
 
         # Check if model and projection scenarios match, if so, update model
         if mdl_scn_id == prj_scn_id:
+            projection_path = os.path.join(
+                self.work_dir, model_id, '{}{}'.format(
+                    projection_id, LMFormat.GTIFF.ext))
             self.models[model_id].update({
                 RegistryKey.PROJECTION_ID : projection_id,
                 RegistryKey.SCALE_PARAMETERS : scale_parameters,
-                RegistryKey.MULTIPLIER : multiplier
+                RegistryKey.MULTIPLIER : multiplier,
+                RegistryKey.PROJECTION_PATH : projection_path
             })
         else:
             self.projections.append([
@@ -351,9 +372,31 @@ class ParameterSweepConfiguration(object):
                 all_files.append(
                     '{}{}'.format(mask_basename, LMFormat.GTIFF.ext))
         # Models
+        for model_id in self.models.keys():
+            all_files.add(self.models[model_id][RegistryKey.LOG_PATH])
+            all_files.add(self.models[model_id][RegistryKey.PACKAGE_PATH])
+            all_files.add(self.models[model_id][RegistryKey.RULESET_PATH])
+            if self.models[model_id][RegistryKey.PROJECTION_ID] is not None:
+                all_files.add(
+                    self.models[model_id][RegistryKey.PROJECTION_PATH])
+
         # Occurrence sets
+        for occ_config in self.occurrence_sets:
+            # Shapefile
+            # Big shapefile
+            pass
+
         # PAVs
+        for pav_config in self.pavs:
+            all_files.add(pav_config[3]) # pav_filename
+
         # Projections
+        for prj_config in self.projections:
+            # Raster
+            # Log
+            # Package
+            pass
+        
 
     # ........................................
     def get_pav_config(self):
