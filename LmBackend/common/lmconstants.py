@@ -51,6 +51,10 @@ class RegistryKey(object):
     BUFFER = 'buffer'
     TEMPLATE_LAYER_PATH = 'template_path'
     WORK_DIR = 'work_dir'
+    PACKAGE_PATH = 'package_path'
+    RULESET_PATH = 'ruleset_path'
+    LOG_PATH = 'log_path'
+    PROJECTION_PATH = 'projection_path'
     
     # ..................
     # Types
