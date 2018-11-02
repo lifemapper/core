@@ -50,6 +50,7 @@ class RegistryKey(object):
     REGION_LAYER_PATH = 'region_path'
     BUFFER = 'buffer'
     TEMPLATE_LAYER_PATH = 'template_path'
+    WORK_DIR = 'work_dir'
     
     # ..................
     # Types
