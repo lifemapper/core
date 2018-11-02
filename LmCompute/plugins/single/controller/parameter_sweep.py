@@ -1,4 +1,11 @@
 """This module contains methods for performing a single species parameter sweep
+
+Todo:
+    * All out file paths should be determined by config
+    * Update how algorithm and layers are handled and use constants
+    * Use json instead of file names for algorithm and scenarios
+    * Make sure open modeller projections on model scenario can be done at same time
+    * Ready all filenames up front?
 """
 import json
 import os
@@ -103,8 +110,8 @@ class ParameterSweep(object):
         """
         for mdl_config in self.sweep_config.get_model_config():
             
-            (process_type, model_id, occ_set_id, algorithm_filename, 
-             model_scenario_filename, mask_id) = mdl_config[:5]
+            (process_type, model_id, occ_set_id, algorithm, model_scenario,
+             mask_id) = mdl_config[:5]
             
             ruleset_filename = None
             occ_cont = True
@@ -132,12 +139,6 @@ class ParameterSweep(object):
                 points = self._get_model_points(occ_shp_filename)
                 work_dir = os.path.join(self.work_dir, model_id)
                 readyFilename(work_dir)
-                # Load algorithm parameters
-                with open(algorithm_filename) as algo_f:
-                    parameters_json = json.load(algo_f)
-                # Load model scenario layer json
-                with open(model_scenario_filename) as mdl_scn_f:
-                    layer_json = json.load(mdl_scn_f)
 
                 # TODO(CJ): Get species name and CRS WKT from somewhere
                 species_name = 'species'
@@ -154,7 +155,7 @@ class ParameterSweep(object):
                     wrapper = MaxentWrapper(
                         work_dir, species_name, logger=self.log)
                     wrapper.create_model(
-                        points, layer_json, parameters_json,
+                        points, model_scenario, algorithm,
                         mask_filename=mask_filename, crs_wkt=crs_wkt)
                     
                     # Get outputs
@@ -200,7 +201,7 @@ class ParameterSweep(object):
                     wrapper = OpenModellerWrapper(
                         work_dir, species_name, logger=self.log)
                     wrapper.create_model(
-                        points, layer_json, parameters_json,
+                        points, model_scenario, algorithm,
                         mask_filename=mask_filename, crs_wkt=crs_wkt)
                     
                     # Get outputs
