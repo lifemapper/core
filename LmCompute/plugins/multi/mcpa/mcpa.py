@@ -322,6 +322,9 @@ def get_p_values(observed_value, test_values, num_permutations=None):
         num_permutations: (optional) The total number of randomizations 
             performed.  Divide the P-values by this if provided.
     """
+    if num_permutations is None:
+        num_permutations = 1.0
+
     # Create the P-Values matrix
     p_vals = np.zeros(observed_value.data.shape, dtype=float)
     # For each matrix in test values
@@ -344,12 +347,9 @@ def get_p_values(observed_value, test_values, num_permutations=None):
         p_vals = np.expand_dims(p_vals, axis=2)
     headers = observed_value.headers
     headers['2'] = ['P-values']
-    # Scale and return the pVals matrix
-    if num_permutations:
-        return Matrix(p_vals / num_permutations, 
-                      headers=headers)
-    else:
-        return Matrix(p_vals, headers=headers)
+    # Scale and return the p-values matrix
+    ret_data_tmp = np.nan_to_num(p_vals / num_permutations)
+    return Matrix(np.clip(ret_data_tmp, -1.0, 1.0), headers=headers)
 
 # .............................................................................
 def mcpa(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
