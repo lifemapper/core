@@ -48,10 +48,10 @@ if __name__ == "__main__":
     p_values = get_p_values(obs_vals, test_values,
                             num_permutations=num_values)
    
-    bh_values = correctPValues(p_values)
-   
     with open(args.p_values_filename, 'w') as p_val_f:
         p_values.save(p_val_f)
       
+    bh_values = correctPValues(p_values)
+   
     with open(args.bh_values_filename, 'w') as bh_val_f:
         bh_values.save(bh_val_f)

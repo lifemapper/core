@@ -28,6 +28,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from copy import deepcopy
 import numpy as np
 
 from LmCommon.common.matrix import Matrix
@@ -97,10 +98,10 @@ def correctPValues(pValues, correctionType=CorrectionTypes.BENJAMINI_HOCHBERG):
       
       rank += 1
    
-   headers = pValues.headers
+   headers = deepcopy(pValues.headers)
    headers['2'] = ['BH Corrected']
    sigValues = (pValues.data <= cmpP).astype(int)
-   return Matrix(sigValues, headers=pValues.headers)
+   return Matrix(sigValues, headers=headers)
       
    # Old code, probably remove
    #values = [(pvalue, i) for i, pvalue in enumerate(pFlat)]                                      
