@@ -462,7 +462,7 @@ class LMFileType:
                      LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
                      LMFileType.PROJECTION_LAYER]:
             return True
-    return False
+        return False
    
     @staticmethod
     def isRAD(rtype):
