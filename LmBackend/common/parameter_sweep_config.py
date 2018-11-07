@@ -1,8 +1,4 @@
 """This module contains a class for processing parameter sweep configurations
-
-Todo:
-    Get the files that will be generated
-    Get the input files needed
 """
 from hashlib import md5
 import json
@@ -14,6 +10,12 @@ from LmCommon.common.lmconstants import LMFormat, ProcessType
 # Local dictionary keys for determining the type of masks to create
 DO_ASCII = 'do_ascii'
 DO_TIFF = 'do_tiff'
+
+# Local filename constants.  The final path is accessible through an attribute.
+LOG_FILENAME = 'species.log'
+METRICS_FILENAME = 'metrics.txt'
+SNIPPETS_FILENAME = 'snippets.xml'
+STOCKPILE_FILENAME = 'stockpile.json'
 
 # .............................................................................
 class ParameterSweepConfiguration(object):
@@ -29,6 +31,11 @@ class ParameterSweepConfiguration(object):
         self.occurrence_sets = []
         self.pavs = []
         self.projections = []
+        self.log_filename = os.path.join(self.work_dir, LOG_FILENAME)
+        self.metrics_filename = os.path.join(self.work_dir, METRICS_FILENAME)
+        self.snippets_filename = os.path.join(self.work_dir, SNIPPETS_FILENAME)
+        self.stockpile_filename = os.path.join(
+            self.work_dir, STOCKPILE_FILENAME)
 
     # ........................................
     @classmethod
@@ -155,7 +162,8 @@ class ParameterSweepConfiguration(object):
     
     # ........................................
     def add_pav_intersect(self, shapegrid_filename, pav_id, projection_id,
-                          squid,min_presence, max_presence, min_coverage):
+                          pav_filename, squid, min_presence, max_presence,
+                          min_coverage):
         """Adds a presence absence vector configuration to the parameter sweep
 
         Args:
@@ -164,6 +172,7 @@ class ParameterSweepConfiguration(object):
             pav_id : The identifier of this PAV or matrix column.
             projection_id : The identifier of the projection to be intersected
                 for this PAV.
+            pav_filename : The file location to store the generated PAV.
             squid : A species identifier for this PAV that will be used as a
                 column header in the resulting vector (single column matrix).
             min_presence : The minimum value in the projection that should be
@@ -174,8 +183,6 @@ class ParameterSweepConfiguration(object):
                 must be classified as "present" to determine that the cell is
                 present.
         """
-        pav_filename = os.path.join(
-            'pavs', '{}{}'.format(pav_id, LMFormat.MATRIX.ext))
         self.pavs.append(
             [shapegrid_filename, pav_id, projection_id, pav_filename, squid,
              min_presence, max_presence, min_coverage])
@@ -183,8 +190,9 @@ class ParameterSweepConfiguration(object):
     # ........................................
     def add_projection(self, process_type, projection_id, occ_set_id,
                        algorithm, model_scenario, projection_scenario,
-                       model_mask=None, projection_mask=None,
-                       scale_parameters=None, multiplier=None):
+                       projection_path, package_path, model_mask=None,
+                       projection_mask=None, scale_parameters=None,
+                       multiplier=None):
         """Adds a projection (and dependencies) through the configuration
 
         Args:
@@ -198,6 +206,10 @@ class ParameterSweepConfiguration(object):
                 generate the model to use for this projection.
             projection_scenario : A Scenario object, with populated layers, to
                 use for projecting the model.
+            projection_path : This is the final file location to store the
+                generated projection.
+            package_path : This is the final file location to store the output
+                package from the projection computation.
             model_mask : Optional. A dictionary of model mask parameters.
             projection_mask : Optional. A dictionary of projection mask
                 parameters.
@@ -227,13 +239,6 @@ class ParameterSweepConfiguration(object):
 
         # Check if model has been defined and define if necessary
         if not model_id in self.models.keys():
-            # Create output paths
-            mdl_package_path = os.path.join(
-                self.work_dir, model_id, 'package.zip')
-            mdl_log_path = os.path.join(
-                self.work_dir, model_id, '{}{}'.format(
-                    model_id, LMFormat.LOG.ext))
-            
             if process_type == ProcessType.ATT_PROJECT:
                 mdl_process_type = ProcessType.ATT_MODEL
                 mdl_ruleset_path = os.path.join(
@@ -250,26 +255,61 @@ class ParameterSweepConfiguration(object):
                 RegistryKey.ALGORITHM : algo,
                 RegistryKey.SCENARIO : mdl_scn,
                 RegistryKey.MASK_ID : mdl_mask_id,
-                RegistryKey.PACKAGE_PATH : mdl_package_path,
-                RegistryKey.RULESET_PATH : mdl_ruleset_path,
-                RegistryKey.LOG_PATH : mdl_log_path
+                RegistryKey.RULESET_PATH : mdl_ruleset_path
             }
 
         # Check if model and projection scenarios match, if so, update model
         if mdl_scn_id == prj_scn_id:
-            projection_path = os.path.join(
-                self.work_dir, model_id, '{}{}'.format(
-                    projection_id, LMFormat.GTIFF.ext))
             self.models[model_id].update({
                 RegistryKey.PROJECTION_ID : projection_id,
                 RegistryKey.SCALE_PARAMETERS : scale_parameters,
                 RegistryKey.MULTIPLIER : multiplier,
-                RegistryKey.PROJECTION_PATH : projection_path
+                RegistryKey.PROJECTION_PATH : projection_path,
+                RegistryKey.PACKAGE_PATH : package_path
             })
         else:
             self.projections.append([
                 process_type, projection_id, model_id, algo, prj_scn,
-                prj_mask_id, scale_parameters, multiplier])
+                projection_path, package_path, prj_mask_id, scale_parameters,
+                multiplier])
+
+    # ........................................
+    def get_input_files(self):
+        """Returns a list of input files required for for this configuration.
+
+        Returns a list of input files required for this configuration.  These
+        should be input files that would need to be added to a workspace for
+        remote computations and not intermediate products.
+        """
+        input_files = set([])
+
+        # Mask layers
+        for mask_id in self.masks.keys():
+            mask_config = self.masks[mask_id]
+            if mask_config[RegistryKey.METHOD
+                           ] == MaskMethod.HULL_REGION_INTERSECT:
+                input_files.add(mask_config[RegistryKey.REGION_LAYER_PATH])
+            elif mask_config[RegistryKey.METHOD] == MaskMethod.BLANK_MASK:
+                input_files.add(mask_config[RegistryKey.TEMPLATE_LAYER_PATH])
+
+        # Occurrence set inputs
+        for occ_config in self.occurrence_sets:
+            # occ_config = (process_type, occ_set_id, url_fn_or_key, out_file,
+            #                big_out_file, max_points, metadata)
+            (process_type, _, url_fn_or_key, _, _, _, _) = occ_config
+            # If GBIF or user, add the input csv file
+            if process_type in [ProcessType.GBIF_TAXA_OCCURRENCE,
+                                ProcessType.USER_TAXA_OCCURRENCE]:
+                input_files.add(url_fn_or_key)
+        
+        # Shapegrids
+        for pav_config in self.pavs:
+            # pav_config = (shapegrid filename, pav id, projection id,
+            #                pav filename, squid, min presence, max presence
+            #                min coverage)
+            input_files.add(pav_config[0])
+        
+        return list(input_files)
 
     # ........................................
     def get_mask_config(self):
@@ -321,7 +361,8 @@ class ParameterSweepConfiguration(object):
                 self.models[model_id][RegistryKey.OCCURRENCE_SET_ID],
                 self.models[model_id][RegistryKey.ALGORITHM],
                 self.models[model_id][RegistryKey.SCENARIO],
-                self.models[model_id][RegistryKey.MASK_ID]
+                self.models[model_id][RegistryKey.MASK_ID],
+                self.models[model_id][RegistryKey.RULESET_PATH]
             ]
             
             # If we are projecting onto the same scenario, these keys will be
@@ -330,6 +371,10 @@ class ParameterSweepConfiguration(object):
                 # Projection id, scaling parameters, multiplier
                 model_config.append(
                     self.models[model_id][RegistryKey.PROJECTION_ID])
+                model_config.append(
+                    self.models[model_id][RegistryKey.PROJECTION_PATH])
+                model_config.append(
+                    self.models[model_id][RegistryKey.PACKAGE_PATH])
                 model_config.append(
                     self.models[model_id][RegistryKey.SCALE_PARAMETERS])
                 model_config.append(
@@ -358,45 +403,22 @@ class ParameterSweepConfiguration(object):
 
         Returns a list of all of the files that should be generated by a
         parameter sweep that is given this configuration.
+
+        Note:
+            * These are only the files that would not be written to their final
+                location.
+            * This includes metrics, snippets, stockpile information, and PAVs
         """
-        # Use a set because there is some duplication with metrics for example
-        all_files = set([])
-        # Masks
-        for mask_id in self.masks.keys():
-            mask_config = self.masks[mask_id]
-            mask_basename = mask_config[RegistryKey.PATH]
-            if DO_ASCII in mask_config.keys() and mask_config[DO_ASCII]:
-                all_files.append(
-                    '{}{}'.format(mask_basename, LMFormat.ASCII.ext))
-            if DO_TIFF in mask_config.keys() and mask_config[DO_TIFF]:
-                all_files.append(
-                    '{}{}'.format(mask_basename, LMFormat.GTIFF.ext))
-        # Models
-        for model_id in self.models.keys():
-            all_files.add(self.models[model_id][RegistryKey.LOG_PATH])
-            all_files.add(self.models[model_id][RegistryKey.PACKAGE_PATH])
-            all_files.add(self.models[model_id][RegistryKey.RULESET_PATH])
-            if self.models[model_id][RegistryKey.PROJECTION_ID] is not None:
-                all_files.add(
-                    self.models[model_id][RegistryKey.PROJECTION_PATH])
-
-        # Occurrence sets
-        for occ_config in self.occurrence_sets:
-            # Shapefile
-            # Big shapefile
-            pass
-
+        output_files = [
+            self.metrics_filename,
+            self.snippets_filename,
+            self.stockpile_filename]
+        
         # PAVs
         for pav_config in self.pavs:
-            all_files.add(pav_config[3]) # pav_filename
+            output_files.append(pav_config[3]) # pav_filename
 
-        # Projections
-        for prj_config in self.projections:
-            # Raster
-            # Log
-            # Package
-            pass
-        
+        return output_files
 
     # ........................................
     def get_pav_config(self):

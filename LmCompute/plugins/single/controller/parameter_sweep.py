@@ -1,13 +1,5 @@
 """This module contains methods for performing a single species parameter sweep
-
-Todo:
-    * All out file paths should be determined by config
-    * Update how algorithm and layers are handled and use constants
-    * Use json instead of file names for algorithm and scenarios
-    * Make sure open modeller projections on model scenario can be done at same time
-    * Ready all filenames up front?
 """
-import json
 import os
 
 from osgeo import ogr
@@ -30,7 +22,7 @@ class ParameterSweep(object):
     """This class performs a parameter sweep for a single species
     """
     # ........................................
-    def __init__(self, sweep_config, work_dir, logger=None, log_name=None):
+    def __init__(self, sweep_config):
         """Constructor
 
         Args:
@@ -41,14 +33,14 @@ class ParameterSweep(object):
             log_name : Optional.  If provided (and logger is not) use this as
                 the name of the logger to be used for this parameter sweep.
         """
-        if logger is not None:
-            self.log = logger
-        else:
-            if log_name is None:
-                log_name = 'sdm_parmeter_sweep-{}'.format(os.getpid())
-            self.log = LmComputeLogger(log_name, addConsole=True, addFile=True)
         self.sweep_config = sweep_config
-        self.work_dir = work_dir
+        self.work_dir = self.sweep_config.work_dir
+        
+        log_name = os.path.basename(self.work_dir)
+        self.log = LmComputeLogger(
+            log_name, addConsole=True, addFile=True,
+            logFilename=self.sweep_config.log_filename)
+        
         # Note: The registry is a place for registering outputs
         self.registry = {}
 
@@ -107,14 +99,12 @@ class ParameterSweep(object):
         Todo:
             * Get species name from somewhere.
             * Get CRS_WKT from somewhere.
-            
-            * Log, package, ruleset from config
         """
         for mdl_config in self.sweep_config.get_model_config():
             
             (process_type, model_id, occ_set_id, algorithm, model_scenario,
-             mask_id, mdl_log_path, mdl_package_path, mdl_ruleset_path
-             ) = mdl_config[:8]
+             mask_id, mdl_ruleset_path, projection_id, projection_path,
+             package_path, scale_params, multiplier) = mdl_config
             
             occ_cont = True
             mask_cont = True
@@ -150,9 +140,6 @@ class ParameterSweep(object):
                 if process_type in [ProcessType.ATT_MODEL,
                                     ProcessType.ATT_PROJECT]:
                     
-                    (projection_id, projection_path, scale_params, multiplier
-                     ) = mdl_config[8:]
-                    
                     mask_filename = '{}{}'.format(
                         mask_filename_base, LMFormat.ASCII.ext)
                     wrapper = MaxentWrapper(
@@ -165,11 +152,14 @@ class ParameterSweep(object):
                     status = wrapper.get_status()
                     if status < JobStatus.GENERAL_ERROR:
                         wrapper.copy_ruleset(mdl_ruleset_path, overwrite=True)
-                        wrapper.copy_log_file(mdl_log_path, overwrite=True)
-                        wrapper.get_output_package(mdl_package_path,
-                                                   overwrite=True)
-                        mdl_secondary_outputs = [mdl_log_path, 
-                                                 mdl_package_path]
+                        
+                        # Append log
+                        with open(wrapper.get_log_filename()) as log_f:
+                            self.log.debug('---------------------------------')
+                            self.log.debug(wrapper.get_log_filename())
+                            self.log.debug('---------------------------------')
+                            self.log.debug(log_f.read())
+                        
                         mdl_metrics = wrapper.get_metrics()
 
                     # Get / process projection
@@ -182,11 +172,12 @@ class ParameterSweep(object):
                             layer_tools.convertAndModifyAsciiToTiff(
                                 raw_prj_filename, projection_path,
                                 scale=scale_params, multiplier=multiplier)
+                            wrapper.get_output_package(
+                                package_path, overwrite=True)
                         # Use same secondary outputs as model and register
                         self._register_output_object(
                             RegistryKey.PROJECTION, projection_id, status,
                             projection_path,
-                            secondary_outputs=mdl_secondary_outputs,
                             process_type=ProcessType.ATT_PROJECT,
                             metrics=mdl_metrics, snippets=mdl_snippets)
                     
@@ -202,20 +193,50 @@ class ParameterSweep(object):
                         mask_filename=mask_filename, crs_wkt=crs_wkt)
                     
                     # Get outputs
-                    status = wrapper.get_status()
-                    if status < JobStatus.GENERAL_ERROR:
+                    prj_status = wrapper.get_status()
+                    if prj_status < JobStatus.GENERAL_ERROR:
                         wrapper.copy_ruleset(mdl_ruleset_path, overwrite=True)
-                        wrapper.copy_log_file(mdl_log_path, overwrite=True)
-                        wrapper.get_output_package(mdl_package_path,
-                                                   overwrite=True)
-                        mdl_secondary_outputs = [mdl_log_path, 
-                                                 mdl_package_path]
+
+                        # Append log
+                        with open(wrapper.get_log_filename()) as log_f:
+                            self.log.debug('---------------------------------')
+                            self.log.debug(wrapper.get_log_filename())
+                            self.log.debug('---------------------------------')
+                            self.log.debug(log_f.read())
+                        
+                        # Generate projection for openModeller model
+                        wrapper.create_projection(
+                            wrapper.get_ruleset_filename(), model_scenario,
+                            algorithm, mask_filename)
+                        
                         mdl_metrics = wrapper.get_metrics()
+                        status = wrapper.get_status()
+                        if status < JobStatus.GENERAL_ERROR:
+                            # Append log
+                            with open(wrapper.get_log_filename()) as log_f:
+                                self.log.debug('-----------------------------')
+                                self.log.debug('Projection log')
+                                self.log.debug(wrapper.get_log_filename())
+                                self.log.debug('-----------------------------')
+                                self.log.debug(log_f.read())
+                            # Move raster
+                            wrapper.copy_projection(
+                                projection_path, overwrite=True)
+                            # Package
+                            wrapper.get_output_package(
+                                package_path, overwrite=True)
+                            prj_metrics = wrapper.get_metrics()
+                            prj_snippets = None
+                            # Use same secondary outputs as model and register
+                            self._register_output_object(
+                                RegistryKey.PROJECTION, projection_id,
+                                prj_status, projection_path,
+                                process_type=ProcessType.OM_PROJECT,
+                                metrics=prj_metrics, snippets=prj_snippets)
                 
                 # If other
                 else:
                     status = JobStatus.UNKNOWN_ERROR
-                    mdl_secondary_outputs = []
                     self.log.error(
                         'Unknown process type: {} for model {}'.format(
                             process_type, model_id))
@@ -223,8 +244,7 @@ class ParameterSweep(object):
             # Register model output
             self._register_output_object(
                 RegistryKey.MODEL, model_id, status, mdl_ruleset_path, 
-                secondary_outputs=mdl_secondary_outputs, metrics=mdl_metrics,
-                snippets=mdl_snippets)
+                metrics=mdl_metrics, snippets=mdl_snippets)
 
     # ........................................
     def _create_occurrence_sets(self):
@@ -295,6 +315,7 @@ class ParameterSweep(object):
                     min_coverage)
                 pav = encoder.get_encoded_matrix()
                 if pav is not None:
+                    readyFilename(pav_filename, overwrite=True)
                     status = JobStatus.COMPUTED
                     with open(pav_filename, 'w') as pav_out_f:
                         pav.save(pav_out_f)
@@ -313,12 +334,13 @@ class ParameterSweep(object):
 
         Todo:
             * Get species name from somewhere
+            * Use projection path and package path
         """
         for prj_config in self.sweep_config.get_projection_config():
             
-            (process_type, projection_id, model_id, algorithm_filename,
-             prj_scenario_filename, mask_id, scale_params, multiplier
-             ) = prj_config
+            (process_type, projection_id, model_id, algorithm,
+             prj_scenario, projection_path, package_path, mask_id,
+             scale_params, multiplier) = prj_config
             
             mask_cont = True
             prj_metrics = None
@@ -343,12 +365,6 @@ class ParameterSweep(object):
                     work_dir = os.path.join(self.work_dir, 'prj_{}'.format(
                         projection_id))
                     readyFilename(work_dir)
-                    # Load algorithm parameters
-                    with open(algorithm_filename) as algo_f:
-                        parameters_json = json.load(algo_f)
-                    # Load model scenario layer json
-                    with open(prj_scenario_filename) as prj_scn_f:
-                        layer_json = json.load(prj_scn_f)
     
                     # TODO(CJ): Get species name from somewhere
                     species_name = 'species'
@@ -365,30 +381,27 @@ class ParameterSweep(object):
                             work_dir, species_name, logger=self.log)
                         
                         wrapper.create_projection(
-                            ruleset_filename, layer_json, parameters_json,
+                            ruleset_filename, prj_scenario, algorithm,
                             mask_filename)
                         
                         # Get outputs
-                        out_prj_filename = None
                         status = wrapper.get_status()
                         if status < JobStatus.GENERAL_ERROR:
                             
                             raw_prj_filename = wrapper.get_projection_filename()
-                            out_prj_filename = '{}{}'.format(
-                                os.path.splitext(raw_prj_filename),
-                                LMFormat.GTIFF.ext)
                             # Convert layer and scale layer
                             layer_tools.convertAndModifyAsciiToTiff(
-                                raw_prj_filename, out_prj_filename,
+                                raw_prj_filename, projection_path,
                                 scale=scale_params, multiplier=multiplier)
                             
-                            log_filename = wrapper.get_log_filename()
-                            package_filename = os.path.join(
-                                work_dir, 'package.zip')
-                            wrapper.get_output_package(package_filename,
+                            # Append log
+                            with open(wrapper.get_log_filename()) as log_f:
+                                self.log.debug('-----------------------------')
+                                self.log.debug(wrapper.get_log_filename())
+                                self.log.debug('-----------------------------')
+                                self.log.debug(log_f.read())
+                            wrapper.get_output_package(package_path,
                                                        overwrite=True)
-                            prj_secondary_outputs = [log_filename, 
-                                                     package_filename]
                             prj_metrics = wrapper.get_metrics()
     
                     # If openModeller
@@ -399,28 +412,29 @@ class ParameterSweep(object):
                         wrapper = OpenModellerWrapper(
                             work_dir, species_name, logger=self.log)
                         wrapper.create_projection(
-                            ruleset_filename, layer_json, parameters_json,
+                            ruleset_filename, prj_scenario, algorithm,
                             mask_filename)
                         
                         # Get outputs
                         status = wrapper.get_status()
                         if status < JobStatus.GENERAL_ERROR:
                             
-                            out_prj_filename = wrapper.get_projection_filename()
+                            wrapper.copy_projection(
+                                projection_path, overwrite=True)
                             
-                            log_filename = wrapper.get_log_filename()
-                            package_filename = os.path.join(
-                                work_dir, 'package.zip')
-                            wrapper.get_output_package(package_filename,
+                            # Append log
+                            with open(wrapper.get_log_filename()) as log_f:
+                                self.log.debug('-----------------------------')
+                                self.log.debug(wrapper.get_log_filename())
+                                self.log.debug('-----------------------------')
+                                self.log.debug(log_f.read())
+                            wrapper.get_output_package(package_path,
                                                        overwrite=True)
-                            prj_secondary_outputs = [log_filename, 
-                                                     package_filename]
                             prj_metrics = wrapper.get_metrics()
     
                     # If other
                     else:
                         status = JobStatus.UNKNOWN_ERROR
-                        prj_secondary_outputs = []
                         self.log.error(
                             'Unknown process type: {} for proj {}'.format(
                                 process_type, projection_id))
@@ -428,9 +442,8 @@ class ParameterSweep(object):
                 # Register model output
                 self._register_output_object(
                     RegistryKey.PROJECTION, projection_id, status,
-                    out_prj_filename, secondary_outputs=prj_secondary_outputs,
-                    process_type=process_type, metrics=prj_metrics,
-                    snippets=prj_snippets)
+                    projection_path, process_type=process_type,
+                    metrics=prj_metrics, snippets=prj_snippets)
     
     # ........................................
     def _get_model_points(self, occ_shp_filename):
