@@ -47,7 +47,6 @@ def getUserName():
    try:
       sessionFn = os.path.join(SESSION_PATH, 
                                'session-{}'.format(cherrypy.session.id))
-      print sessionFn
       if os.path.isfile(sessionFn):
          user = cherrypy.session.get(SESSION_KEY)
          if user is None:
@@ -55,9 +54,7 @@ def getUserName():
          log = UserLogger(user)
    except Exception, e:
       log.debug("Exception in getUserName: {}".format(str(e)))
-      print str(e)
       
    cherrypy.session.user = user
    cherrypy.session.log = log
-   print user
    
