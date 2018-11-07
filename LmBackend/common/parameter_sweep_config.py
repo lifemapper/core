@@ -162,7 +162,8 @@ class ParameterSweepConfiguration(object):
     
     # ........................................
     def add_pav_intersect(self, shapegrid_filename, pav_id, projection_id,
-                          squid, min_presence, max_presence, min_coverage):
+                          pav_filename, squid, min_presence, max_presence,
+                          min_coverage):
         """Adds a presence absence vector configuration to the parameter sweep
 
         Args:
@@ -171,6 +172,7 @@ class ParameterSweepConfiguration(object):
             pav_id : The identifier of this PAV or matrix column.
             projection_id : The identifier of the projection to be intersected
                 for this PAV.
+            pav_filename : The file path to store this PAV.
             squid : A species identifier for this PAV that will be used as a
                 column header in the resulting vector (single column matrix).
             min_presence : The minimum value in the projection that should be
@@ -181,8 +183,6 @@ class ParameterSweepConfiguration(object):
                 must be classified as "present" to determine that the cell is
                 present.
         """
-        pav_filename = os.path.join(
-            'pavs', '{}{}'.format(pav_id, LMFormat.MATRIX.ext))
         self.pavs.append(
             [shapegrid_filename, pav_id, projection_id, pav_filename, squid,
              min_presence, max_presence, min_coverage])
@@ -233,9 +233,9 @@ class ParameterSweepConfiguration(object):
         model_id = '{}-{}-{}'.format(
             occ_set_id, algorithm_identifier, mdl_scn_id)
         # Process masks
-        mdl_mask_id = self._process_mask(model_mask)
+        mdl_mask_id = self._process_mask(model_mask, ext)
         
-        prj_mask_id = self._process_mask(projection_mask)
+        prj_mask_id = self._process_mask(projection_mask, ext)
 
         # Check if model has been defined and define if necessary
         if not model_id in self.models.keys():
