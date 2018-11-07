@@ -519,7 +519,7 @@ class ParameterSweep(object):
         if object_type not in self.registry.keys():
             self.registry[object_type] = []
         self.registry[object_type][object_id] = {
-            RegistryKey.ID : object_id,
+            RegistryKey.IDENTIFIER : object_id,
             RegistryKey.METRICS : metrics,
             RegistryKey.PRIMARY_OUTPUT : primary_output,
             RegistryKey.PROCESS_TYPE : process_type,
