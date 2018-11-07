@@ -489,6 +489,30 @@ class LmTouchCommand(_LmServerCommand):
       return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.filename)
 
 # .............................................................................
+class MultiStockpileCommand(_LmServerCommand):
+   """This command stockpiles multiple objects in one call
+   """
+   scriptName = 'multi_stockpile.py'
+
+   # ..............................
+   def __init__(self, stockpile_filename, success_filename):
+      """Construct the command object
+
+      Args:
+         stockpile_filename : A JSON file with stockpile information
+         success_filename : A file location to write success or failure
+      """
+      self.inputs.append(stockpile_filename)
+      self.outputs.append(success_filename)
+      self.args = '{} {}'.format(stockpile_filename, success_filename)
+
+   # ..............................
+   def getCommand(self):
+      """Get the raw command to run on the system
+      """
+      return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
+
+# .............................................................................
 class ShootSnippetsCommand(_LmServerCommand):
    """
    @summary: This command will shoot snippets into an index
