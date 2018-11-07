@@ -1,5 +1,6 @@
 """This module contains methods for performing a single species parameter sweep
 """
+import json
 import os
 
 from osgeo import ogr
@@ -580,3 +581,15 @@ class ParameterSweep(object):
         self._create_models()
         self._create_projections()
         self._create_pavs()
+        
+        # Write metrics
+        with open(self.sweep_config.metrics_filename, 'w') as out_metrics:
+            json.dump(self.get_metrics(), out_metrics)
+
+        # Write snippets
+        with open(self.sweep_config.snippets_filename, 'w') as out_snippets:
+            json.dump(self.get_snippets(), out_snippets)
+
+        # Write stockpile information
+        with open(self.sweep_config.stockpile_filename, 'w') as out_stockpile:
+            json.dump(self.get_stockpile_info(), out_stockpile)
