@@ -273,8 +273,20 @@ class MaxentWrapper(ModelSoftwareWrapper):
 
     # ...................................
     def get_log_filename(self):
-        """
-        @summary: Return the log file name
+        """Return the log file name
         """
         return os.path.join(self.work_dir, 'maxent.log')
     
+    # ...................................
+    def get_ruleset_filename(self):
+        """Override method in base class
+        """
+        return os.path.join(
+            self.work_dir, '{}{}'.format(self.species_name, '.lambdas'))
+
+    # ...................................
+    def get_projection_filename(self):
+        """Override method in base class
+        """
+        return os.path.join(
+            self.work_dir, '{}{}'.format(self.species_name, LMFormat.ASCII.ext))
