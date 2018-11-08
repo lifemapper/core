@@ -854,7 +854,7 @@ class LMServiceType:
     LAYERS = 'layer'
     LAYERSETS = 'layersets' # TODO: Remove, obsolete?
     MATRICES = 'matrix'
-MATRIX_COLUMNS = 'column'
+    MATRIX_COLUMNS = 'column'
    
 # Archive and Global PAM descriptions
 GPAM_KEYWORD = 'Global PAM'
