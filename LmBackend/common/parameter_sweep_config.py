@@ -110,7 +110,7 @@ class ParameterSweepConfiguration(object):
                 self.masks[mask_id][
                     RegistryKey.PATH] = os.path.join(
                         self.work_dir, 'masks', mask_id)
-            if ext == LMFormat.ASCII.ext:
+            if ext == LMFormat.MXE.ext:
                 self.masks[mask_id][DO_ASCII] = True
             elif ext == LMFormat.GTIFF.ext:
                 self.masks[mask_id][DO_TIFF] = True
@@ -223,7 +223,7 @@ class ParameterSweepConfiguration(object):
         # Process algorithm
         algorithm_identifier, algo = self._process_algorithm(algorithm)
         if algo[RegistryKey.ALGORITHM_CODE].lower() == 'att_maxent':
-            ext = LMFormat.ASCII.ext
+            ext = LMFormat.MXE.ext
         else:
             ext = LMFormat.GTIFF.ext
 
