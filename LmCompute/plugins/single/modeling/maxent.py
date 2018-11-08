@@ -13,17 +13,18 @@ import os
 import shutil
 
 from LmBackend.common.layerTools import convertAsciisToMxes
+from LmBackend.common.lmconstants import RegistryKey
 from LmBackend.common.metrics import LmMetricNames
 
 from LmCommon.common.lmconstants import JobStatus, LMFormat, ProcessType
 
 from LmCompute.plugins.single.modeling.base import ModelSoftwareWrapper
 from LmCompute.plugins.single.modeling.maxent_constants import (
-                                MAXENT_MODEL_TOOL, MAXENT_PROJECT_TOOL, MAXENT_VERSION, 
-                                DEFAULT_MAXENT_OPTIONS, DEFAULT_MAXENT_PARAMETERS)
+    DEFAULT_MAXENT_OPTIONS, DEFAULT_MAXENT_PARAMETERS, MAXENT_MODEL_TOOL,
+    MAXENT_PROJECT_TOOL, MAXENT_VERSION)
 from LmTest.validate.text_validator import validate_text_file
 from LmTest.validate.raster_validator import validate_raster_file
-from LmBackend.common.lmconstants import RegistryKey
+from LmCompute.common.lmconstants import JAVA_CMD, ME_CMD
 
 # TODO: Should these be in constants somewhere?
 ALGO_PARAMETERS_KEY = 'parameters'
@@ -177,6 +178,8 @@ class MaxentWrapper(ModelSoftwareWrapper):
         _ = self._process_layers(layer_json, layer_dir)
         
         options = [
+            ME_CMD,
+            MAXENT_MODEL_TOOL,
             '-s {points}'.format(points=points_csv),
             '-o {work_dir}'.format(work_dir=self.work_dir),
             '-e {layer_dir}'.format(layer_dir=layer_dir),
@@ -189,8 +192,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
         options.extend(self._process_parameters(parameters_json))
         options.extend(DEFAULT_MAXENT_OPTIONS)
         
-        self._run_tool(
-            self._build_command(MAXENT_MODEL_TOOL, options), num_tries=3)
+        self._run_tool(self._build_command(JAVA_CMD, options), num_tries=3)
 
         # If success, check model output
         if self.metrics.get_metric(
@@ -243,6 +245,8 @@ class MaxentWrapper(ModelSoftwareWrapper):
         
         
         options = [
+            ME_CMD,
+            MAXENT_PROJECT_TOOL,
             ruleset_filename, 
             layer_dir, 
             self.get_ascii_output_filename(), 
@@ -255,8 +259,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
         options.extend(self._process_parameters(parameters_json))
         options.extend(DEFAULT_MAXENT_OPTIONS)
         
-        self._run_tool(self._build_command(MAXENT_PROJECT_TOOL, options), 
-                            num_tries=3)
+        self._run_tool(self._build_command(JAVA_CMD, options), num_tries=3)
 
         # If success, check projection output
         if self.metrics.get_metric(
