@@ -449,7 +449,7 @@ class SpeciesParameterSweepCommand(_LmCommand):
     """This command will perform a parameter sweep for a single species
     """
     relDir = SINGLE_SPECIES_SCRIPTS_DIR
-    scriptName = 'species_control.py'
+    scriptName = 'species_controller.py'
 
     # ...............................
     def __init__(self, config_filename, inputs, outputs):
