@@ -121,6 +121,8 @@ class MaxentWrapper(ModelSoftwareWrapper):
 
         Args:
             parameter_json : A JSON dictionary of algorithm parameters.
+        Todo:
+            * Use a common set of constants for keys
         """
         algo_param_options = []
         for param in parameter_json[RegistryKey.PARAMETER]:
