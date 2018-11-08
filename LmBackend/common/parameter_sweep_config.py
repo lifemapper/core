@@ -59,6 +59,13 @@ class ParameterSweepConfiguration(object):
         my_obj.pavs = config[RegistryKey.PAV]
         my_obj.projections = config[RegistryKey.PROJECTION]
         my_obj.work_dir = config[RegistryKey.WORK_DIR]
+        my_obj.log_filename = os.path.join(my_obj.work_dir, LOG_FILENAME)
+        my_obj.metrics_filename = os.path.join(
+            my_obj.work_dir, METRICS_FILENAME)
+        my_obj.snippets_filename = os.path.join(
+            my_obj.work_dir, SNIPPETS_FILENAME)
+        my_obj.stockpile_filename = os.path.join(
+            my_obj.work_dir, STOCKPILE_FILENAME)
         return my_obj
 
     # ........................................
