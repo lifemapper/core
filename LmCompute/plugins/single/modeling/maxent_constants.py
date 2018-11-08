@@ -1,5 +1,6 @@
 """Module containing MaxEnt constants
 """
+# TODO: Remove or resolve with LmCompute/common/lmconstants
 MAXENT_MODEL_TOOL = 'density.Maxent'
 MAXENT_PROJECT_TOOL = 'density.Project'
 MAXENT_CONVERT_TOOL = 'density.Convert'
@@ -44,17 +45,17 @@ DEFAULT_MAXENT_PARAMETERS = {
    'applythresholdrule' : {
       'default' : "'None'",
       'options' : {
-                   '0' : "'None'",
-                   '1' : "'Fixed cumulative value 1'",
-                   '2' : "'Fixed cumulative value 5'",
-                   '3' : "'Fixed cumulative value 10'",
-                   '4' : "'Minimum training presence'",
-                   '5' : "'10 percentile training presence'",
-                   '6' : "'Equal training sensitivity and specificity'",
-                   '7' : "'Maximum training sensitivity plus specificity'",
-                   '8' : "'Equal test sensitivity and specificity'",
-                   '9' : "'Maximum test sensitivity plus specificity'",
-                   '10' : "'Equate entropy of thresholded and origial distributions'"
+                   0 : "'None'",
+                   1 : "'Fixed cumulative value 1'",
+                   2 : "'Fixed cumulative value 5'",
+                   3 : "'Fixed cumulative value 10'",
+                   4 : "'Minimum training presence'",
+                   5 : "'10 percentile training presence'",
+                   6 : "'Equal training sensitivity and specificity'",
+                   7 : "'Maximum training sensitivity plus specificity'",
+                   8 : "'Equal test sensitivity and specificity'",
+                   9 : "'Maximum test sensitivity plus specificity'",
+                   10 : "'Equate entropy of thresholded and origial distributions'"
                   },
       'process' : lambda x: x
    },
@@ -170,10 +171,10 @@ DEFAULT_MAXENT_PARAMETERS = {
    'outputformat': {
       'default' : 'logistic',
       'options' : {
-                   '0' : 'raw',
-                   '1' : 'logistic',
-                   '2' : 'cumulative',
-                   '3' : 'cloglog'
+                   0 : 'raw',
+                   1 : 'logistic',
+                   2 : 'cumulative',
+                   3 : 'cloglog'
                   },
       'process' : lambda x: x
    },
@@ -224,9 +225,9 @@ DEFAULT_MAXENT_PARAMETERS = {
    'replicatetype': {
       'default' : 'crossvalidate',
       'options' : {
-                   '0' : 'crossvalidate',
-                   '1' : 'bootstrap',
-                   '2' : 'subsample'
+                   0 : 'crossvalidate',
+                   1 : 'bootstrap',
+                   2 : 'subsample'
                   },
       'process' : lambda x: x
    },
