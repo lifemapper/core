@@ -62,3 +62,11 @@ CONVERT_JAVA_CMD = '{} -Xms{} -Xmx{} -Djava.util.prefs.systemRoot={} -Djava.util
                     CONVERT_JAVA_MAX_MEM_OPTION, JAVA_SYSTEM_ROOT, JAVA_USER_ROOT)
 GDALINFO_CMD = os.path.join(BIN_PATH, 'gdalinfo')
 
+# ============================================================================
+# =                             Commands                                     =
+# ============================================================================
+# Maxent
+MDL_TOOL = 'density.MaxEnt'
+PRJ_TOOL = 'density.Project'
+CONVERT_TOOL ='density.Convert'
+ME_VERSION = '3.3.3k'
