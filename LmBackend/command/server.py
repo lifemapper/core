@@ -502,6 +502,7 @@ class MultiStockpileCommand(_LmServerCommand):
          stockpile_filename : A JSON file with stockpile information
          success_filename : A file location to write success or failure
       """
+      _LmServerCommand.__init__(self)
       self.inputs.append(stockpile_filename)
       self.outputs.append(success_filename)
       self.args = '{} {}'.format(stockpile_filename, success_filename)
