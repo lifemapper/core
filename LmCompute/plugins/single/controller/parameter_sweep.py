@@ -518,6 +518,8 @@ class ParameterSweep(object):
         """
         if object_type not in self.registry.keys():
             self.registry[object_type] = {}
+        if metrics is not None:
+            metrics = metrics.get_metrics_dictionary()
         self.registry[object_type][object_id] = {
             RegistryKey.IDENTIFIER : object_id,
             RegistryKey.METRICS : metrics,
@@ -539,7 +541,7 @@ class ParameterSweep(object):
                     obj_metrics = self.registry[
                         group_key][object_id][RegistryKey.METRICS]
                     if obj_metrics is not None:
-                        metrics.extend(obj_metrics)
+                        metrics.append(obj_metrics)
         return metrics
 
     # ........................................
