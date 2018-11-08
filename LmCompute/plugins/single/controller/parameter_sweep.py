@@ -36,6 +36,7 @@ class ParameterSweep(object):
         """
         self.sweep_config = sweep_config
         self.work_dir = self.sweep_config.work_dir
+        readyFilename(self.sweep_config.log_filename)
         
         log_name = os.path.basename(self.work_dir)
         self.log = LmComputeLogger(
