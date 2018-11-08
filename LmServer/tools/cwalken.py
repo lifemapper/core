@@ -42,13 +42,12 @@ from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
-                                         Priority, BUFFER_KEY, CODE_KEY,
-                                         ECOREGION_MASK_METHOD, MASK_KEY, 
-                                         MASK_LAYER_KEY, PRE_PROCESS_KEY,
-                                         PROCESSING_KEY, MASK_LAYER_NAME_KEY,
-    SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM)
-from LmServer.common.localconstants import PUBLIC_USER, DEFAULT_EPSG,\
-    POINT_COUNT_MAX
+            Priority, BUFFER_KEY, CODE_KEY, ECOREGION_MASK_METHOD, MASK_KEY, 
+            MASK_LAYER_KEY, PRE_PROCESS_KEY, PROCESSING_KEY, 
+            MASK_LAYER_NAME_KEY,SCALE_PROJECTION_MINIMUM, 
+            SCALE_PROJECTION_MAXIMUM)
+from LmServer.common.localconstants import (PUBLIC_USER, DEFAULT_EPSG, 
+                                            POINT_COUNT_MAX)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
@@ -576,9 +575,12 @@ class ChristopherWalken(LMObject):
             
         # Get processing parameters for masking
         proc_params = self.sdmMaskParams
-        if PRE_PROCESS_KEY in proc_params.keys() and \
-                MASK_KEY in proc_params[PRE_PROCESS_KEY].keys():
-            mask_layer = proc_params[PRE_PROCESS_KEY][MASK_KEY][MASK_LAYER_KEY]
+        if (PRE_PROCESS_KEY in proc_params.keys() 
+            and MASK_KEY in proc_params[PRE_PROCESS_KEY].keys()):
+            
+            mask_layer_name = proc_params[PRE_PROCESS_KEY][MASK_KEY][MASK_LAYER_KEY]
+            mask_layer = self._scribe.getLayer(userId=self.userId, 
+                                    lyrName=mask_layer_name, epsg=self.epsg)
             model_mask_base = {
                 RegistryKey.REGION_LAYER_PATH : mask_layer.getDLocation(),
                 RegistryKey.BUFFER : proc_params[PRE_PROCESS_KEY][MASK_KEY][
@@ -600,7 +602,7 @@ class ChristopherWalken(LMObject):
             sweep_config.add_occurrence_set(
                 occ.processType, occ.getId(), occ.getRawDLocation(),
                 occ.getDLocation(), occ.getDLocation(largeFile=True),
-                POINT_COUNT_MAX, metadata=self.rawMetaDLocation)
+                POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
             
             # If we have enough points to model
             if occ.queryCount >= self.minPoints:
