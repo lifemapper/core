@@ -240,7 +240,7 @@ def processLayersJSON(layerJSON, symDir=None):
    @todo: Use constants
    """
    layers = []
-   for lyrObj in layerJSON['layers']:
+   for lyrObj in layerJSON['layer']:
       #lyrId = None
       #if lyrObj.has_key('identifier'):
       #   lyrId = lyrObj['identifier']
