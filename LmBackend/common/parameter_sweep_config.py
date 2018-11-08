@@ -454,7 +454,7 @@ class ParameterSweepConfiguration(object):
         config = {
             RegistryKey.MASK : self.masks,
             RegistryKey.MODEL : self.models,
-            RegistryKey.OCCURRENCE : self.occurence_sets,
+            RegistryKey.OCCURRENCE : self.occurrence_sets,
             RegistryKey.PAV : self.pavs,
             RegistryKey.PROJECTION : self.projections,
             RegistryKey.WORK_DIR : self.work_dir
