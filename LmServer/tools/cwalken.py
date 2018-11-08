@@ -607,7 +607,7 @@ class ChristopherWalken(LMObject):
                     mtxcol.getId(), LMFormat.MATRIX.ext))
             post_xml_filename = os.path.join(
                 workdir, 'pavs', 'solr_pav_{}{}'.format(
-                    mtxcol.getId(), LMFormat.MATRIX.ext))
+                    mtxcol.getId(), LMFormat.XML.ext))
             sweep_config.add_pav_intersect(
                 mtxcol.shapegrid.getDLocation(),
                 mtxcol.getId(), prj.getId(), pav_filename,
