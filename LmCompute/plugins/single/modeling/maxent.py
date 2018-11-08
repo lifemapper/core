@@ -193,7 +193,8 @@ class MaxentWrapper(ModelSoftwareWrapper):
             self._build_command(MAXENT_MODEL_TOOL, options), num_tries=3)
 
         # If success, check model output
-        if self.metrics[LmMetricNames.STATUS] < JobStatus.GENERAL_ERROR:
+        if self.metrics.get_metric(
+                LmMetricNames.STATUS) < JobStatus.GENERAL_ERROR:
             valid_model, model_msg = validate_text_file(
                 self.get_ruleset_filename())
             if not valid_model:
@@ -202,7 +203,8 @@ class MaxentWrapper(ModelSoftwareWrapper):
                 self.logger.debug('Model failed: {}'.format(model_msg))
 
         # If success, check projection output
-        if self.metrics[LmMetricNames.STATUS] < JobStatus.GENERAL_ERROR:
+        if self.metrics.get_metric(
+                LmMetricNames.STATUS) < JobStatus.GENERAL_ERROR:
             valid_prj, prj_msg = validate_raster_file(
                 self.get_projection_filename())
             if not valid_prj:
@@ -257,7 +259,8 @@ class MaxentWrapper(ModelSoftwareWrapper):
                             num_tries=3)
 
         # If success, check projection output
-        if self.metrics[LmMetricNames.STATUS] < JobStatus.GENERAL_ERROR:
+        if self.metrics.get_metric(
+                LmMetricNames.STATUS) < JobStatus.GENERAL_ERROR:
             valid_prj, prj_msg = validate_raster_file(
                 self.get_projection_filename())
             if not valid_prj:
