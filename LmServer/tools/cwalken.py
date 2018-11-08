@@ -32,12 +32,17 @@ from osgeo.ogr import wkbPoint
 import os
 from types import IntType, FloatType
 
+from LmBackend.common.lmconstants import RegistryKey, MaskMethod
 from LmBackend.common.lmobj import LMError, LMObject
+from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
+from LmBackend.command.server import IndexPAVCommand, MultiStockpileCommand
+from LmBackend.command.single import SpeciesParameterSweepCommand
+
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, 
           SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX,
-          SERVER_DEFAULT_HEADING_POSTFIX, MatrixType, IDIG_DUMP) 
+          SERVER_DEFAULT_HEADING_POSTFIX, MatrixType) 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
 
 from LmServer.common.datalocator import EarlJr
@@ -55,10 +60,6 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.tools.occwoc import (BisonWoC, GBIFWoC, UserWoC, ExistingWoC, 
                                    TinyBubblesWoC)
-from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
-from LmBackend.common.lmconstants import RegistryKey, MaskMethod
-from LmBackend.command.server import IndexPAVCommand, MultiStockpileCommand
-from LmBackend.command.single import SpeciesParameterSweepCommand
 
 # .............................................................................
 class ChristopherWalken(LMObject):
@@ -554,6 +555,79 @@ class ChristopherWalken(LMObject):
         [prjscens]
         """
         pass
+    
+    # ...............................
+    def _processProjection(self, prj, prjWillCompute, alg, model_mask_base, 
+                           sweep_config, workdir):
+        currtime = dt.gmt().mjd
+        pcount = prcount = icount = ircount = 0        
+        pcount += 1
+        if prjWillCompute: prcount += 1
+        # Add projection
+        # Masking
+        if model_mask_base is not None:
+            model_mask = model_mask_base.copy()
+            model_mask[RegistryKey.OCCURRENCE_SET_ID] = prj.getOccurrenceSetId()
+            projection_mask = {
+                RegistryKey.METHOD : MaskMethod.BLANK_MASK,
+                RegistryKey.TEMPLATE_LAYER_PATH : prj.projScenario.layers[
+                    0].getDLocation()
+            }
+        else:
+            model_mask = None
+            projection_mask = None
+        
+        if prj.isATT():
+            scale_parameters = (SCALE_PROJECTION_MINIMUM,
+                                SCALE_PROJECTION_MAXIMUM)
+            #TODO: This should be in config somewhere
+            multiplier = None
+        
+        sweep_config.add_projection(
+            prj.processType, prj.getId(), prj.getOccurrenceSetId(),
+            alg, prj.modelScenario, prj.projScenario,
+            prj.getDLocation(), self.boomGridset.getPackageLocation(),
+            model_mask=model_mask,
+            projection_mask=projection_mask,
+            scale_parameters=scale_parameters,
+            multiplier=multiplier)
+
+        mtx = self.globalPAMs[prj.projScenarioCode]
+        # If projection was reset (pReset), force intersect
+        #    reset
+        (mtxcol,
+         mWillCompute) = self._createOrResetIntersect(
+             prj, mtx, prjWillCompute, currtime)
+        if mtxcol is not None:
+            icount += 1
+            if mWillCompute: ircount += 1
+            # Todo: Add intersect
+            pav_filename = os.path.join(
+                workdir, 'pavs', 'pav_{}{}'.format(
+                    mtxcol.getId(), LMFormat.MATRIX.ext))
+            post_xml_filename = os.path.join(
+                workdir, 'pavs', 'solr_pav_{}{}'.format(
+                    mtxcol.getId(), LMFormat.MATRIX.ext))
+            sweep_config.add_pav_intersect(
+                mtxcol.shapegrid.getDLocation(),
+                mtxcol.getId(), prj.getId(), pav_filename,
+                prj.squid,
+                mtxcol.intersectParams[
+                    mtxcol.INTERSECT_PARAM_MIN_PRESENCE],
+                mtxcol.intersectParams[
+                    mtxcol.INTERSECT_PARAM_MAX_PRESENCE],
+                mtxcol.intersectParams[
+                    mtxcol.INTERSECT_PARAM_MIN_PERCENT])
+            # Add the rest of the intersect command
+            solrCmd = IndexPAVCommand(
+                pav_filename, mtxcol.getId(), prj.getId(),
+                mtx.getId(), post_xml_filename)
+            solr_rule = solrCmd.getMakeflowRule(local=True)
+#             spudRules.append(
+#                 solrCmd.getMakeflowRule(local=True))
+            self.log.info('      {} projections, {} matrixColumns ( {}, {} reset)'
+                        .format(pcount, icount, prcount, ircount))
+        return sweep_config, solr_rule
    
     # ...............................
     def startWalken(self, workdir):
@@ -563,10 +637,9 @@ class ChristopherWalken(LMObject):
                  scenarioCode: PAV filename for input into multi-species
                  MFChains (potatoInputs)
         """
-        currtime = dt.gmt().mjd
         squid = None
         spudRules = []
-        pcount = prcount = icount = ircount = 0
+#         pcount = prcount = icount = ircount = 0
         gsid = 0
         try:
             gsid = self.boomGridset.getId()
@@ -606,84 +679,85 @@ class ChristopherWalken(LMObject):
             
             # If we have enough points to model
             if occ.queryCount >= self.minPoints:
+                self.log.info('   Will compute for Grid {}:'.format(gsid))
                 for alg in self.algs:
                     for prj_scen in self.prjScens:
                         prj, prjWillCompute = self._createOrResetSDMProject(
-                            occ, alg, prj_scen, occWillCompute, currtime)
+                            occ, alg, prj_scen, occWillCompute, dt.gmt().mjd)
                         if prj is not None:
-                            pcount += 1
-                            if prjWillCompute: prcount += 1
-                            # Add projection
-                            algorithm = alg.getDictionary()
-                            
-                            # Masking
-                            if model_mask_base is not None:
-                                model_mask = model_mask_base.copy()
-                                model_mask[RegistryKey.OCCURRENCE_SET_ID] = occ.getId()
-                                projection_mask = {
-                                    RegistryKey.METHOD : MaskMethod.BLANK_MASK,
-                                    RegistryKey.TEMPLATE_LAYER_PATH : prj.projScenario.layers[
-                                        0].getDLocation()
-                                }
-                            else:
-                                model_mask = None
-                                projection_mask = None
-                            
-                            if prj.isATT():
-                                scale_parameters = (SCALE_PROJECTION_MINIMUM,
-                                                    SCALE_PROJECTION_MAXIMUM)
-                                #TODO: This should be in config somewhere
-                                multiplier = None
-                            
-                            sweep_config.add_projection(
-                                prj.processType, prj.getId(), occ.getId(),
-                                algorithm, prj.modelScenario, prj.projScenario,
-                                prj.getDLocation(), prj.getPackageLocation(),
-                                model_mask=model_mask,
-                                projection_mask=projection_mask,
-                                scale_parameters=scale_parameters,
-                                multiplier=multiplier)
+                            sweep_config, solr_rule = self._processProjection(
+                                prj, prjWillCompute, alg, model_mask_base, 
+                                sweep_config, workdir)
+                            spudRules.append(solr_rule)
 
-                            mtx = self.globalPAMs[prj_scen.code]
-                            # If projection was reset (pReset), force intersect
-                            #    reset
-                            (mtxcol,
-                             mWillCompute) = self._createOrResetIntersect(
-                                 prj, mtx, prjWillCompute, currtime)
-                            if mtxcol is not None:
-                                icount += 1
-                                if mWillCompute: ircount += 1
-                                # Todo: Add intersect
-                                pav_filename = os.path.join(
-                                    workdir, 'pavs', 'pav_{}{}'.format(
-                                        mtxcol.getId(), LMFormat.MATRIX.ext))
-                                post_xml_filename = os.path.join(
-                                    workdir, 'pavs', 'solr_pav_{}{}'.format(
-                                        mtxcol.getId(), LMFormat.MATRIX.ext))
-                                sweep_config.add_pav_intersect(
-                                    mtxcol.shapegrid.getDLocation(),
-                                    mtxcol.getId(), prj.getId(), pav_filename,
-                                    squid,
-                                    mtxcol.intersectParams[
-                                        mtxcol.INTERSECT_PARAM_MIN_PRESENCE],
-                                    mtxcol.intersectParams[
-                                        mtxcol.INTERSECT_PARAM_MAx_PRESENCE],
-                                    mtxcol.intersectParams[
-                                        mtxcol.INTERSECT_PARAM_MIN_PERCENT])
-                                # Add the rest of the intersect command
-                                solrCmd = IndexPAVCommand(
-                                    pav_filename, mtxcol.getId(), prj.getId(),
-                                    mtx.getId(), post_xml_filename)
-                                spudRules.append(
-                                    solrCmd.getMakeflowRule(local=True))
-            
-                self.log.info('   Will compute {} projections, {} matrixColumns for Grid {} ( {}, {} reset)'
-                            .format(pcount, icount, gsid, prcount, ircount))
+#                             pcount += 1
+#                             if prjWillCompute: prcount += 1
+#                             # Add projection
+#                             # Masking
+#                             if model_mask_base is not None:
+#                                 model_mask = model_mask_base.copy()
+#                                 model_mask[RegistryKey.OCCURRENCE_SET_ID] = occ.getId()
+#                                 projection_mask = {
+#                                     RegistryKey.METHOD : MaskMethod.BLANK_MASK,
+#                                     RegistryKey.TEMPLATE_LAYER_PATH : prj.projScenario.layers[
+#                                         0].getDLocation()
+#                                 }
+#                             else:
+#                                 model_mask = None
+#                                 projection_mask = None
+#                             
+#                             if prj.isATT():
+#                                 scale_parameters = (SCALE_PROJECTION_MINIMUM,
+#                                                     SCALE_PROJECTION_MAXIMUM)
+#                                 #TODO: This should be in config somewhere
+#                                 multiplier = None
+#
+#                             sweep_config.add_projection(
+#                                 prj.processType, prj.getId(), occ.getId(),
+#                                 alg, prj.modelScenario, prj.projScenario,
+#                                 prj.getDLocation(), self.boomGridset.getPackageLocation(),
+#                                 model_mask=model_mask,
+#                                 projection_mask=projection_mask,
+#                                 scale_parameters=scale_parameters,
+#                                 multiplier=multiplier)
+# 
+#                             mtx = self.globalPAMs[prj_scen.code]
+#                             # If projection was reset (pReset), force intersect
+#                             #    reset
+#                             (mtxcol,
+#                              mWillCompute) = self._createOrResetIntersect(
+#                                  prj, mtx, prjWillCompute, currtime)
+#                             if mtxcol is not None:
+#                                 icount += 1
+#                                 if mWillCompute: ircount += 1
+#                                 # Todo: Add intersect
+#                                 pav_filename = os.path.join(
+#                                     workdir, 'pavs', 'pav_{}{}'.format(
+#                                         mtxcol.getId(), LMFormat.MATRIX.ext))
+#                                 post_xml_filename = os.path.join(
+#                                     workdir, 'pavs', 'solr_pav_{}{}'.format(
+#                                         mtxcol.getId(), LMFormat.MATRIX.ext))
+#                                 sweep_config.add_pav_intersect(
+#                                     mtxcol.shapegrid.getDLocation(),
+#                                     mtxcol.getId(), prj.getId(), pav_filename,
+#                                     squid,
+#                                     mtxcol.intersectParams[
+#                                         mtxcol.INTERSECT_PARAM_MIN_PRESENCE],
+#                                     mtxcol.intersectParams[
+#                                         mtxcol.INTERSECT_PARAM_MAX_PRESENCE],
+#                                     mtxcol.intersectParams[
+#                                         mtxcol.INTERSECT_PARAM_MIN_PERCENT])
+#                                 # Add the rest of the intersect command
+#                                 solrCmd = IndexPAVCommand(
+#                                     pav_filename, mtxcol.getId(), prj.getId(),
+#                                     mtx.getId(), post_xml_filename)
+#                                 spudRules.append(
+#                                     solrCmd.getMakeflowRule(local=True))
+#             
             # Write config file
             species_config_filename = os.path.join(
-                os.path.dirname(
-                    occ.getDLocation(), 'species_config_{}{}'.format(
-                        occ.getId(), LMFormat.JSON.ext)))
+                os.path.dirname(occ.getDLocation()), 
+                'species_config_{}{}'.format(occ.getId(), LMFormat.JSON.ext))
             sweep_config.save_config(species_config_filename)
             
             # Add sweep rule
