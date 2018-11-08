@@ -41,7 +41,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
     RETRY_STATUSES = [JobStatus.ME_CORRUPTED_LAYER]
     
     # ...................................
-    def _findError(self, std_err):
+    def _find_error(self, std_err):
         """Checks for information about the error
 
         Args:
