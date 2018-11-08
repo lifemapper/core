@@ -467,7 +467,8 @@ class SpeciesParameterSweepCommand(_LmCommand):
                 outputs
         """
         _LmCommand.__init__(self)
-        self.inputs.append(config_filename)
+        if not os.path.isabs(config_filename):
+            self.inputs.append(config_filename)
         self.inputs.extend(inputs)
         self.outputs.extend(outputs)
         
