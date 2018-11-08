@@ -247,7 +247,7 @@ def get_layer_dimensions(template_layer_filename):
 
 # .............................................................................
 def write_ascii(out_filename, bbox, cell_size, data, epsg,
-                nodata=DEFAULT_NODATA):
+                nodata=DEFAULT_NODATA, header_precision=6):
     """
     @summary: Write an ASCII raster layer from a numpy array
     @param out_filename: The file location to write the raster to
@@ -257,10 +257,16 @@ def write_ascii(out_filename, bbox, cell_size, data, epsg,
     @param epsg: The epsg code of the map projection to use for this raster
     @param nodata: A value to use for NODATA
     @todo: Probably should establish a common layer package in LmCommon
+    @todo: Needs to use the same code we use for conversions
     """
     minx, miny, maxx, maxy = bbox
     
     (num_rows, num_cols) = data.shape
+    
+    if header_precision is not None:
+        minx = round(minx, header_precision)
+        miny = round(miny, header_precision)
+        cell_size = round(cell_size, header_precision)
 
     readyFilename(out_filename, overwrite=True)
     with open(out_filename, 'w') as outF:
