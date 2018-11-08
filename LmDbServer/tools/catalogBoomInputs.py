@@ -326,8 +326,8 @@ class BOOMFiller(LMObject):
                 defaultAlgs[algHeading] = alg
             else:
                 algs[algHeading] = alg
-            if len(algs) == 0:
-                algs = defaultAlgs
+        if len(algs) == 0:
+            algs = defaultAlgs
         return algs
 
     # ...............................................
@@ -1201,7 +1201,7 @@ if __name__ == '__main__':
     
     filler = BOOMFiller(paramFname, logname=logname)
     gs = filler.initBoom(initMakeflow=initMakeflow)
-    print('Completed catalogBoomJob creating gridset: {}'.format(gs.getId()))
+    print('Completed catalogBoomInputs creating gridset: {}'.format(gs.getId()))
 
     
 """
@@ -1249,11 +1249,13 @@ from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmServer.base.utilities import isRootUser
 
-from LmDbServer.tools.catalogWriteBoomMakeflows import *
+from LmDbServer.tools.catalogBoomInputs import *
+
+paramFname = '/share/lm/data/archive/modem/heuchera_boom_na_10min.params'
 
 paramFname = '/opt/lifemapper/rocks/etc/defaultArchiveParams.ini'
-initMakeflow = True
 
+initMakeflow = True
 pname, _ = os.path.splitext(os.path.basename(paramFname))
 import time
 secs = time.time()
@@ -1265,17 +1267,27 @@ self.initializeInputs()
 
 if self.occIdFname:
    self._checkOccurrenceSets()
-
+   
 scenGrims, boomGridset = self.addShapeGridGPAMGridset()
 grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
 
 tree = self.addTree(boomGridset)
+
 biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
-if biogeoMtx and len(biogeoLayerNames) > 0:
-   bgMF = self.addEncodeBioGeoMF(boomGridset)
 
 self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
                      biogeoLayers=biogeoLayerNames)
+      
+if initMakeflow is True:
+    if biogeoMtx and len(biogeoLayerNames) > 0:
+        # Add BG Hypotheses encoding Makeflows, independent of Boom completion
+        bgMF = self.addEncodeBioGeoMF(boomGridset)
+    # Create MFChain to run Boomer on these inputs IFF requested
+    # This also adds commands for taxonomy insertion before 
+    #   and tree encoding after Boom 
+    boomMF = self.addBoomMF(boomGridset.getId(), tree)
+   
+
 
 # gs = filler.initBoom(initMakeflow=initMakeflow)
 
