@@ -59,6 +59,7 @@ class ParameterSweepConfiguration(object):
         my_obj.pavs = config[RegistryKey.PAV]
         my_obj.projections = config[RegistryKey.PROJECTION]
         my_obj.work_dir = config[RegistryKey.WORK_DIR]
+        return my_obj
 
     # ........................................
     def _process_algorithm(self, algorithm):
