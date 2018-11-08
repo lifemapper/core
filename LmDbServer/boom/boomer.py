@@ -360,7 +360,15 @@ if __name__ == "__main__":
 $PYTHON LmDbServer/boom/boom.py --help
 
 import mx.DateTime as dt
+import logging
 import os, sys, time
+
+from LmBackend.common.lmconstants import RegistryKey, MaskMethod
+from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
+from LmBackend.command.server import IndexPAVCommand, MultiStockpileCommand
+from LmBackend.command.single import SpeciesParameterSweepCommand
+from LmServer.common.localconstants import (PUBLIC_USER, DEFAULT_EPSG, 
+                                            POINT_COUNT_MAX)
 
 from LmDbServer.boom.boomer import *
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
@@ -374,7 +382,12 @@ from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
                                             SCRATCH_PATH)
-from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME, 
+from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
+                                         Priority, BUFFER_KEY, CODE_KEY,
+                                         ECOREGION_MASK_METHOD, MASK_KEY, 
+                                         MASK_LAYER_KEY, PRE_PROCESS_KEY,
+                                         PROCESSING_KEY, MASK_LAYER_NAME_KEY,
+    SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM, LMFileType, PUBLIC_ARCHIVE_NAME, 
                                          ProcessTool)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -394,113 +407,29 @@ PROCESSING_KEY = 'processing'
 scriptname = 'boomerTesting'
 logger = ScriptLogger(scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
-configFname='/share/lm/data/archive/biotaphy/biotaphy_heuchera_CONUS.ini'
-configFname = '/share/lm/data/archive/biona/biotaphy_global_plants.ini'
-configFname = '/share/lm/data/archive/taffy/heuchera_CONUS.ini'
-configFname = '/share/lm/data/archive/taffy/heuchera_boom_global_current_params.ini'
-successFname = '/share/lm/data/archive/taffy/heuchera_boom_global_current_params.success'
+
+configFname='/share/lm/data/archive/modem/heuchera_na_10min.ini'
+successFname='/share/lm/data/archive/modem/heuchera_na_10min.success'
+
+boomer = Boomer(configFname, successFname, log=logger)
 
 
-self = Boomer(configFname, log=logger)
-
-
-workdir = boomer.potatoBushel.getRelativeDirectory()
 boomer.initializeMe()                      
-chris = boomer.christopher
-woc = chris.weaponOfChoice
-alg = chris.algs[0]
-prjscen = chris.prjScens[0]
+self = boomer.christopher
+woc = self.weaponOfChoice
 scribe = boomer._scribe
 borg = scribe._borg
 
-occ, occReset = woc.getOne()
-squid = occ.squid
-objs = []
-objs.append(occ)
+workdir = boomer.potatoBushel.getRelativeDirectory()
+squid, spudRules = self.startWalken(workdir)
 
-prj, pReset = chris._createOrResetSDMProject(occ, alg, prjscen, 
-                                             occReset, currtime)
-objs.append(prj)
-mtx = chris.globalPAMs[prjscen.code]
-mtxcol, mReset = chris._createOrResetIntersect(prj, mtx, pReset,
-                                              currtime)
-if mtxcol is not None:
-   objs.append(mtxcol)
-
-spudObjs = [o for o in objs if o is not None]
-# Creates MFChain with rules, does NOT write it
-spudRules = chris._createSpudRules(spudObjs, workdir)
+alg = self.algs[0]
+prj_scen = self.prjScens[0]
 
 
-procParams = chris.boomGridset.grdMetadata[PROCESSING_KEY]
-o = occ
+# ##########################################################################
 
-try:
-   # Try to call projection compute me with process parameters
-   objRules = o.computeMe(workDir=workdir, procParams=procParams)
-except:
-   objRules = o.computeMe(workDir=workdir)
+# ##########################################################################
 
-for r in objRules:
-   print r.command
-
-
-
-
-
-
-
-speciesKey, dataChunk = woc._getOccurrenceChunk()
-
-(taxonKey, taxonCount) = (speciesKey, len(dataChunk))
-(rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
-             nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
-             familyStr, genusStr, speciesStr, genusKey, speciesKey, 
-             loglines) = GbifAPI.getTaxonomy(taxonKey)
-             
-sciName = woc._scribe.findOrInsertTaxon(taxonSourceId=woc._taxonSourceId, 
-                                         taxonKey=taxonKey)
-
-
-sciName = woc._getInsertSciNameForGBIFSpeciesKey(speciesKey, 
-                                                  len(dataChunk))
-occ = woc._createOrResetOccurrenceset(sciName, 
-                                          len(dataChunk), 
-                                          taxonSourceKey=speciesKey, 
-                                          data=dataChunk)
-
-sciName = woc._getInsertSciNameForGBIFSpeciesKey(speciesKey, 
-                                                  len(dataChunk))
-if sciName is not None:
-   occ = woc._createOrResetOccurrenceset(sciName, 
-                                             len(dataChunk), 
-                                             taxonSourceKey=speciesKey, 
-                                             data=dataChunk)
-workdir = chris.potatoBushel.getRelativeDirectory()
-# squid, spudRules = boomer.christopher.startWalken(workdir)
-
-keepWalken = not christopher.complete
-if  spud:
-   # Gather species ARF dependency to delay start of multi-species MF
-   spudArf = spud.getArfFilename(arfDir=self.potatoBushel.getRelativeDirectory(), 
-                                 prefix='spud')
-   chris.spudArfFnames.append(spudArf)
-   # Add PAV outputs to raw potato files for triage input
-   squid = spud.mfMetadata[MFChain.META_SQUID]
-   if potatoInputs:
-      for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
-         pavFname = potatoInputs[scencode]
-         triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
-      self.log.info('Wrote spud squid to {} arf files'
-                    .format(len(potatoInputs)))
-   if len(self.spudArfFnames) >= SPUD_LIMIT:
-      self.rotatePotatoes()
-
-ptype = ProcessType.INTERSECT_RASTER
-
-# squid, spudRules = chris.startWalken()
-# boomer.keepWalken = not chris.complete
-
-Daemon.onShutdown(boomer)
        
 """

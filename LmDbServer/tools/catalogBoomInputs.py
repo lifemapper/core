@@ -1215,6 +1215,8 @@ from LmBackend.command.boom import BoomerCommand
 from LmBackend.command.server import (CatalogTaxonomyCommand, EncodeTreeCommand,
                                       EncodeBioGeoHypothesesCommand)
 from LmBackend.common.lmobj import LMError, LMObject
+from LmBackend.common.lmconstants import RegistryKey, MaskMethod
+
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
