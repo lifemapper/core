@@ -245,7 +245,7 @@ class ModelSoftwareWrapper(object):
         """Return the status of the model
         """
         try:
-            return self.metrics[LmMetricNames.STATUS]
+            return self.metrics.get_metric(LmMetricNames.STATUS)
         except:
             return None
 
