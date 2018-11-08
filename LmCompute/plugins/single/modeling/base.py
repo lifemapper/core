@@ -50,6 +50,8 @@ class ModelSoftwareWrapper(object):
         
         if logger is None:
             self.logger = LmComputeLogger(self.LOGGER_NAME, addConsole=True)
+        else:
+            self.logger = logger
     
     # ...................................
     def _build_command(self, tool, option_list):
