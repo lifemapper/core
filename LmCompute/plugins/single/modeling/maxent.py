@@ -23,6 +23,7 @@ from LmCompute.plugins.single.modeling.maxent_constants import (
                                 DEFAULT_MAXENT_OPTIONS, DEFAULT_MAXENT_PARAMETERS)
 from LmTest.validate.text_validator import validate_text_file
 from LmTest.validate.raster_validator import validate_raster_file
+from LmBackend.common.lmconstants import RegistryKey
 
 # TODO: Should these be in constants somewhere?
 ALGO_PARAMETERS_KEY = 'parameters'
@@ -111,7 +112,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
             convertAsciisToMxes(os.path.split(mask_filename)[0])
             shutil.move('{}{}'.format(
                 os.path.splitext(os.path.abspath(mask_filename))[0], 
-                LMFormat.MXE.ext, work_mask_filename))
+                LMFormat.MXE.ext), work_mask_filename)
         return 'togglelayertype=mask'
         
     # ...................................
@@ -122,7 +123,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
             parameter_json : A JSON dictionary of algorithm parameters.
         """
         algo_param_options = []
-        for param in parameter_json[ALGO_PARAMETERS_KEY]:
+        for param in parameter_json[RegistryKey.PARAMETER]:
             param_name = param[PARAM_NAME_KEY]
             param_value = param[PARAM_VALUE_KEY]
             default_param = DEFAULT_MAXENT_PARAMETERS[param_name]
