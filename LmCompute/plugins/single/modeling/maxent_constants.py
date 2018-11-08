@@ -1,7 +1,7 @@
 """Module containing MaxEnt constants
 """
 # TODO: Remove or resolve with LmCompute/common/lmconstants
-MAXENT_MODEL_TOOL = 'density.Maxent'
+MAXENT_MODEL_TOOL = 'density.MaxEnt'
 MAXENT_PROJECT_TOOL = 'density.Project'
 MAXENT_CONVERT_TOOL = 'density.Convert'
 MAXENT_VERSION = '3.4.1'
