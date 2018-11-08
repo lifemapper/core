@@ -317,8 +317,10 @@ class ParameterSweepConfiguration(object):
             #                min coverage)
             input_files.add(pav_config[0])
         
-        return list(input_files)
-
+        # Only return relative paths.  Makeflow doesn't want absolute paths.
+        relative_input_files = [
+            fn for fn in list(input_files) if not os.path.isabs(fn)]
+        return relative_input_files
     # ........................................
     def get_mask_config(self):
         """Returns a generator for mask creation
