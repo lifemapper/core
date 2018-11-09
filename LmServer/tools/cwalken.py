@@ -669,7 +669,8 @@ class ChristopherWalken(LMObject):
             self._writeDoneWalkenFile()
         if occ:
             squid = occ.squid
-            sweep_config = ParameterSweepConfiguration(work_dir=workdir)
+            occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
+            sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
             
             # Add occurrence set
             sweep_config.add_occurrence_set(
@@ -687,7 +688,7 @@ class ChristopherWalken(LMObject):
                         if prj is not None:
                             sweep_config, solr_rule = self._processProjection(
                                 prj, prjWillCompute, alg, model_mask_base, 
-                                sweep_config, workdir)
+                                sweep_config, occ_work_dir)
                             spudRules.append(solr_rule)
 
 #                             pcount += 1
@@ -732,10 +733,10 @@ class ChristopherWalken(LMObject):
 #                                 if mWillCompute: ircount += 1
 #                                 # Todo: Add intersect
 #                                 pav_filename = os.path.join(
-#                                     workdir, 'pavs', 'pav_{}{}'.format(
+#                                     occ_work_dir, 'pavs', 'pav_{}{}'.format(
 #                                         mtxcol.getId(), LMFormat.MATRIX.ext))
 #                                 post_xml_filename = os.path.join(
-#                                     workdir, 'pavs', 'solr_pav_{}{}'.format(
+#                                     occ_work_dir, 'pavs', 'solr_pav_{}{}'.format(
 #                                         mtxcol.getId(), LMFormat.MATRIX.ext))
 #                                 sweep_config.add_pav_intersect(
 #                                     mtxcol.shapegrid.getDLocation(),
@@ -768,7 +769,7 @@ class ChristopherWalken(LMObject):
             
             # Add stockpile rule
             stockpile_success_filename = os.path.join(
-                workdir, 'stockpile.success')
+                occ_work_dir, 'occ_{}stockpile.success'.format(occ.getId()))
             stockpile_cmd = MultiStockpileCommand(
                 sweep_config.stockpile_filename, stockpile_success_filename)
             spudRules.append(stockpile_cmd.getMakeflowRule(local=True))
