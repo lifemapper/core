@@ -1,5 +1,6 @@
 """Tools for creating masks
 """
+import math
 import numpy as np
 import os
 from osgeo import gdal, gdalconst, ogr, osr
@@ -133,11 +134,11 @@ def create_convex_hull_array(base_path, convex_hull, bbox, cell_size, epsg,
     # Rasterize the shapefile
     # --------------------------------------
     minx, miny, maxx, maxy = bbox
-    num_cols = float(maxx - minx) / cell_size
-    num_rows = float(maxy - miny) / cell_size
+    num_cols = int(math.ceil(float(maxx - minx) / cell_size))
+    num_rows = int(math.ceil(float(maxy - miny) / cell_size))
     
     tiff_drv = gdal.GetDriverByName(LMFormat.GTIFF.driver)
-    rst_ds = tiff_drv.Create(tmp_raster_filename, int(num_cols), int(num_rows), 1, 
+    rst_ds = tiff_drv.Create(tmp_raster_filename, num_cols, num_rows, 1, 
                                      gdalconst.GDT_Int16)
     rst_ds.SetGeoTransform([minx, cell_size, 0, maxy, 0, -cell_size])
 
@@ -247,7 +248,7 @@ def get_layer_dimensions(template_layer_filename):
 
 # .............................................................................
 def write_ascii(out_filename, bbox, cell_size, data, epsg,
-                nodata=DEFAULT_NODATA):
+                nodata=DEFAULT_NODATA, header_precision=6):
     """
     @summary: Write an ASCII raster layer from a numpy array
     @param out_filename: The file location to write the raster to
@@ -257,10 +258,16 @@ def write_ascii(out_filename, bbox, cell_size, data, epsg,
     @param epsg: The epsg code of the map projection to use for this raster
     @param nodata: A value to use for NODATA
     @todo: Probably should establish a common layer package in LmCommon
+    @todo: Needs to use the same code we use for conversions
     """
     minx, miny, maxx, maxy = bbox
     
     (num_rows, num_cols) = data.shape
+    
+    if header_precision is not None:
+        minx = round(minx, header_precision)
+        miny = round(miny, header_precision)
+        cell_size = round(cell_size, header_precision)
 
     readyFilename(out_filename, overwrite=True)
     with open(out_filename, 'w') as outF:

@@ -36,6 +36,7 @@ class ParameterSweep(object):
         """
         self.sweep_config = sweep_config
         self.work_dir = self.sweep_config.work_dir
+        readyFilename(self.sweep_config.log_filename)
         
         log_name = os.path.basename(self.work_dir)
         self.log = LmComputeLogger(
@@ -62,32 +63,40 @@ class ParameterSweep(object):
                 tif_filename = '{}{}'.format(
                     out_mask_base_filename, LMFormat.GTIFF.ext)
 
-            if mask_method == MaskMethod.HULL_REGION_INTERSECT:
-                (region_layer_filename, buffer_distance, occ_set_id
-                 ) = mask_config[5:]
-                # Get occurrence set shapefile
-                occ_shp_filename, occ_status = self._get_registry_output(
-                    RegistryKey.OCCURRENCE, occ_set_id)
-                if occ_status < JobStatus.GENERAL_ERROR and occ_shp_filename:
-                    create_mask.create_convex_hull_region_intersect_mask(
-                        occ_shp_filename, region_layer_filename, 
-                        buffer_distance, ascii_filename=asc_filename,
+            try:
+                if mask_method == MaskMethod.HULL_REGION_INTERSECT:
+                    (region_layer_filename, buffer_distance, occ_set_id
+                     ) = mask_config[5:]
+                    # Get occurrence set shapefile
+                    occ_shp_filename, occ_status = self._get_registry_output(
+                        RegistryKey.OCCURRENCE, occ_set_id)
+                    if occ_status < JobStatus.GENERAL_ERROR and \
+                            occ_shp_filename:
+                        create_mask.create_convex_hull_region_intersect_mask(
+                            occ_shp_filename, region_layer_filename, 
+                            buffer_distance, ascii_filename=asc_filename,
+                            tiff_filename=tif_filename)
+                elif mask_method == MaskMethod.BLANK_MASK:
+                    template_layer_filename = mask_config[5]
+                    create_mask.create_blank_mask_from_layer(
+                        template_layer_filename, ascii_filename=asc_filename,
                         tiff_filename=tif_filename)
-            elif mask_method == MaskMethod.BLANK_MASK:
-                template_layer_filename = mask_config[5]
-                create_mask.create_blank_mask_from_layer(
-                    template_layer_filename, ascii_filename=asc_filename,
-                    tiff_filename=tif_filename)
-            else:
-                self.log.error('Could not create mask for method: {}'.format(
-                    mask_method))
-            status = JobStatus.COMPUTED
-            if asc_filename is not None:
-                if not os.path.exists(asc_filename):
-                    status = JobStatus.GENERAL_ERROR
-            if tif_filename is not None:
-                if not os.path.exists(tif_filename):
-                    status = JobStatus.GENERAL_ERROR
+                else:
+                    self.log.error(
+                        'Could not create mask for method: {}'.format(
+                            mask_method))
+                status = JobStatus.COMPUTED
+                if asc_filename is not None:
+                    if not os.path.exists(asc_filename):
+                        status = JobStatus.GENERAL_ERROR
+                if tif_filename is not None:
+                    if not os.path.exists(tif_filename):
+                        status = JobStatus.GENERAL_ERROR
+            except Exception as e:
+                self.log.error(
+                    'Could not create mask {} : {}'.format(mask_id, str(e)))
+                status = JobStatus.MASK_ERROR
+
             # TODO: Consider adding rasters as secondary outputs
             # TODO: Add metrics and snippets
             self._register_output_object(
@@ -234,6 +243,8 @@ class ParameterSweep(object):
                                 prj_status, projection_path,
                                 process_type=ProcessType.OM_PROJECT,
                                 metrics=prj_metrics, snippets=prj_snippets)
+                    else:
+                        status = prj_status
                 
                 # If other
                 else:
@@ -241,6 +252,8 @@ class ParameterSweep(object):
                     self.log.error(
                         'Unknown process type: {} for model {}'.format(
                             process_type, model_id))
+            else:
+                status = occ_status
 
             # Register model output
             self._register_output_object(
@@ -518,6 +531,8 @@ class ParameterSweep(object):
         """
         if object_type not in self.registry.keys():
             self.registry[object_type] = {}
+        if metrics is not None:
+            metrics = metrics.get_metrics_dictionary()
         self.registry[object_type][object_id] = {
             RegistryKey.IDENTIFIER : object_id,
             RegistryKey.METRICS : metrics,
@@ -539,7 +554,7 @@ class ParameterSweep(object):
                     obj_metrics = self.registry[
                         group_key][object_id][RegistryKey.METRICS]
                     if obj_metrics is not None:
-                        metrics.extend(obj_metrics)
+                        metrics.append(obj_metrics)
         return metrics
 
     # ........................................

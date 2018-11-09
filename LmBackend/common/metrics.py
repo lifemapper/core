@@ -86,6 +86,12 @@ class LmMetrics(LMObject):
         return total_size
     
     # ................................
+    def get_metrics_dictionary(self):
+        """Return a dictionary of metrics.
+        """
+        return self._metrics
+    
+    # ................................
     def write_metrics(self):
         """Write the metrics to the specified file
         """
