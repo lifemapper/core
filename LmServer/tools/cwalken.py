@@ -577,6 +577,7 @@ class ChristopherWalken(LMObject):
             model_mask = None
             projection_mask = None
         
+        scale_parameters = multiplier = None
         if prj.isATT():
             scale_parameters = (SCALE_PROJECTION_MINIMUM,
                                 SCALE_PROJECTION_MAXIMUM)

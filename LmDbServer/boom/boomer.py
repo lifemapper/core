@@ -408,23 +408,35 @@ scriptname = 'boomerTesting'
 logger = ScriptLogger(scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
 
-configFname='/share/lm/data/archive/modem/heuchera_na_10min.ini'
-successFname='/share/lm/data/archive/modem/heuchera_na_10min.success'
+config_file='/share/lm/data/archive/noob/heuchera_global_10min.ini'
+success_file='/share/lm/data/archive/noob/heuchera_global_10min.success'
 
-boomer = Boomer(configFname, successFname, log=logger)
+boomer = Boomer(config_file, success_file, log=logger)
 
 
 boomer.initializeMe()                      
-self = boomer.christopher
-woc = self.weaponOfChoice
-scribe = boomer._scribe
+chris = boomer.christopher
+woc = chris.weaponOfChoice
+scribe = self._scribe
 borg = scribe._borg
 
 workdir = boomer.potatoBushel.getRelativeDirectory()
-squid, spudRules = self.startWalken(workdir)
 
-alg = self.algs[0]
-prj_scen = self.prjScens[0]
+squid, spudRules = boomer.christopher.startWalken(workdir)
+boomer.squidNames.append(squid)
+boomer.potatoBushel.addCommands(spudRules)
+
+# ############# STOP and write and rotate
+boomer.rotatePotatoes()
+
+# ############# STOP completely and write
+boomer.christopher.stopWalken()
+boomer.rotatePotatoes()
+
+
+
+alg = boomer.algs[0]
+prj_scen = boomer.prjScens[0]
 
 
 # ##########################################################################
