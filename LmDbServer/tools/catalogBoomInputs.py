@@ -159,14 +159,6 @@ class BOOMFiller(LMObject):
         # Created by addArchive
         self.shapegrid = None
         
-        # If running as root, new user filespace must have permissions corrected
-        self._warnPermissions()
-        
-#         earl = EarlJr()
-#         self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
-#                                                      objCode=self.archiveName, 
-#                                                      usr=self.userId)
-
     # ...............................................
     def findOrAddScenarioPackage(self):
         """
@@ -962,6 +954,7 @@ class BOOMFiller(LMObject):
         """
         scriptname, _ = os.path.splitext(os.path.basename(__file__))
         meta = {MFChain.META_CREATED_BY: scriptname,
+                MFChain.META_GRIDSET: gridset.getId(),
                 MFChain.META_DESCRIPTION: 
                           'Encode biogeographic hypotheses task for user {} grid {}'
                           .format(self.userId, gridset.name)}
@@ -1082,10 +1075,17 @@ class BOOMFiller(LMObject):
         # Set as ready to go
         mfchain.updateStatus(JobStatus.INITIALIZE)
         self.scribe.updateObject(mfchain)
+        try:
+            desc = mfchain.mfMetadata[MFChain.META_DESCRIPTION]
+        except:
+            desc = ''
+        try:
+            gid = mfchain.mfMetadata[MFChain.META_GRIDSET]
+        except:
+            gid = ''
+
         self.scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
-            .format(mfchain.objId, 
-                    mfchain.mfMetadata[MFChain.META_DESCRIPTION], 
-                    mfchain.mfMetadata[MFChain.META_GRIDSET]))
+            .format(mfchain.objId, desc, gid))
         return mfchain
                 
     # ...............................................
@@ -1295,7 +1295,9 @@ from LmDbServer.tools.catalogBoomInputs import *
 paramFname = '/share/lm/data/archive/modem/heuchera_boom_na_10min.params'
 
 paramFname = '/opt/lifemapper/rocks/etc/defaultArchiveParams.ini'
-
+paramFname = '/share/lm/data/archive/onemore/heuchera_boom_global_10min.params'
+ 
+heuchera_boom_global_10min.params
 initMakeflow = True
 pname, _ = os.path.splitext(os.path.basename(paramFname))
 import time
@@ -1321,11 +1323,9 @@ self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx,
       
 if initMakeflow is True:
     if biogeoMtx and len(biogeoLayerNames) > 0:
-        # Add BG Hypotheses encoding Makeflows, independent of Boom completion
+
         bgMF = self.addEncodeBioGeoMF(boomGridset)
-    # Create MFChain to run Boomer on these inputs IFF requested
-    # This also adds commands for taxonomy insertion before 
-    #   and tree encoding after Boom 
+
     boomMF = self.addBoomMF(boomGridset.getId(), tree)
    
 
