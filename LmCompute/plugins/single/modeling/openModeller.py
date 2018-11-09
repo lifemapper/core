@@ -4,7 +4,7 @@ import os
 
 from LmBackend.common.metrics import LmMetricNames
 
-from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
 from LmCommon.common.lmXml import (Element, fromstring, SubElement, tostring)
 
 from LmCompute.plugins.single.modeling.base import ModelSoftwareWrapper
@@ -13,6 +13,7 @@ from LmCompute.plugins.single.modeling.openModeller_constants import (
     OM_VERSION)
 from LmTest.validate.xml_validator import validate_xml_file
 from LmTest.validate.raster_validator import validate_raster_file
+from LmBackend.common.lmconstants import RegistryKey
 
 # TODO: Should these be in constants somewhere?
 ALGORITHM_CODE_KEY = 'algorithmCode'
@@ -98,7 +99,8 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         self.metrics.add_metric(
             LmMetricNames.PROCESS_TYPE, ProcessType.OM_MODEL)
         self.metrics.add_metric(
-            LmMetricNames.ALGORITHM_CODE, parameters_json[ALGORITHM_CODE_KEY])
+            LmMetricNames.ALGORITHM_CODE,
+            parameters_json[RegistryKey.ALGORITHM_CODE])
         self.metrics.add_metric(LmMetricNames.NUMBER_OF_FEATURES, len(points))
         self.metrics.add_metric(LmMetricNames.SOFTWARE_VERSION, OM_VERSION)
         
@@ -108,7 +110,7 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         # Create request
         omr = OmModelRequest(
             points, self.species_name, crs_wkt, layer_filenames,
-            parameters_json, maskFn=mask_filename)
+            parameters_json, mask_filename=mask_filename)
         # Generate the model request XML file
         model_request_filename = os.path.join(
             self.work_dir, 'model_request.xml')
@@ -132,7 +134,8 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
             self._build_command(OM_MODEL_TOOL, model_options), num_tries=3)
         
         # If success, check model output
-        if self.metrics[LmMetricNames.STATUS] < JobStatus.GENERAL_ERROR:
+        if self.metrics.get_metric(
+                LmMetricNames.STATUS) < JobStatus.GENERAL_ERROR:
             valid_model, model_msg = validate_xml_file(
                 self.get_ruleset_filename())
             if not valid_model:
@@ -157,10 +160,9 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         """
         self.metrics.add_metric(
             LmMetricNames.PROCESS_TYPE, ProcessType.ATT_PROJECT)
-        if parameters_json is not None and \
-                parameters_json.has_key(ALGORITHM_CODE_KEY):
-            self.metrics.add_metric(LmMetricNames.ALGORITHM_CODE, 
-                                    parameters_json[ALGORITHM_CODE_KEY])
+        self.metrics.add_metric(
+            LmMetricNames.ALGORITHM_CODE, 
+            parameters_json[RegistryKey.ALGORITHM_CODE])
         self.metrics.add_metric(LmMetricNames.SOFTWARE_VERSION, OM_VERSION)
         
         # Process layers
@@ -195,7 +197,8 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
             self._build_command(OM_PROJECT_TOOL, prj_options), num_tries=3)
         
         # If success, check projection output
-        if self.metrics[LmMetricNames.STATUS] < JobStatus.GENERAL_ERROR:
+        if self.metrics.get_metric(
+                LmMetricNames.STATUS) < JobStatus.GENERAL_ERROR:
             valid_prj, prj_msg = validate_raster_file(
                 self.get_projection_filename())
             if not valid_prj:
@@ -209,6 +212,20 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         @summary: Return the log file name
         """
         return os.path.join(self.work_dir, 'om.log')
+
+    # ...................................
+    def get_projection_filename(self):
+        """Gets the projection filename
+        """
+        return os.path.join(
+            self.work_dir, 'projction{}'.format(LMFormat.GTIFF.ext))
+    
+    # ...................................
+    def get_ruleset_filename(self):
+        """Gets the ruleset filename
+        """
+        return os.path.join(
+            self.work_dir, 'ruleset{}'.format(LMFormat.XML.ext))
     
 # .............................................................................
 class OmRequest(object):
@@ -266,8 +283,8 @@ class OmModelRequest(OmRequest):
         self.points_label = points_label
         self.crs_wkt = crs_wkt
         self.layer_filenames = layer_filenames
-        self.algorithm_code = algorithm_json[ALGORITHM_CODE_KEY]
-        self.algorithm_parameters = algorithm_json['parameters']
+        self.algorithm_code = algorithm_json[RegistryKey.ALGORITHM_CODE]
+        self.algorithm_parameters = algorithm_json[RegistryKey.PARAMETER]
         self.mask_filename = mask_filename
         
     # .................................
@@ -297,7 +314,7 @@ class OmModelRequest(OmRequest):
         presence_element = SubElement(
             sampler_element, 'Presence', attrib={'Label' : self.points_label})
 
-        SubElement(presence_element, 'CoordinateSystem', value=self.crs_wkt)
+        #SubElement(presence_element, 'CoordinateSystem', value=self.crs_wkt)
         
         for local_id, x, y in self.points:
             SubElement(presence_element, 'Point',
