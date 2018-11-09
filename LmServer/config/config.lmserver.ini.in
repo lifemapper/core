@@ -41,7 +41,7 @@ DATASOURCE: GBIF
 ;; Used when DATASOURCE is GBIF. 
 GBIF_TAXONOMY_FILENAME: @GBIF_TAXONOMY@-@GBIF_VERSION@.csv
 GBIF_OCCURRENCE_FILENAME: @GBIF_OCCURRENCES@-@GBIF_VERSION@.csv
-GBIF_PROVIDER_FILENAME: @GBIF_PROVIDER@-@GBIF_VERSION@.txt
+GBIF_PROVIDER_FILENAME: @GBIF_PROVIDER@-@GBIF_VERSION@.csv
 
 ;; Used when DATASOURCE is BISON. 
 BISON_TSN_FILENAME: bison_species_tsns.txt
@@ -94,7 +94,8 @@ CODE: ATT_MAXENT
 [PREPROCESSING SDM_MASK - DEFAULT]
 CODE: hull_region_intersect
 buffer: .5
-region: ecoreg_10min_global
+;;; Must be the same layer contained in @SCENARIO_PACKAGE@ and metadata 
+region: @ECOREGION_LAYER@
 
 ; .............................................................................
 [LmServer - dbserver]

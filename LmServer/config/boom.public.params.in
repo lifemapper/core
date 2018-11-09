@@ -9,16 +9,18 @@
 
 [BOOM]
 
-ARCHIVE_NAME: kubi_boom
-ARCHIVE_USER: kubi
+ARCHIVE_NAME: public_boom
+ARCHIVE_USER: @PUBLIC_USER@
 ARCHIVE_USER_EMAIL: aimee.stewart@ku.edu
 
-SCENARIO_PACKAGE: 10min-past-present-future
+SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
 
 DATASOURCE: GBIF
-GBIF_TAXONOMY_FILENAME: gbif_taxonomy-2018.09.14.csv
-GBIF_OCCURRENCE_FILENAME: gbif_occ-2018.09.14.csv
-GBIF_PROVIDER_FILENAME: gbif_orgs-2018.09.14.txt
+
+;;; Edit, removing "_subset" from occurrences for KU production installation
+GBIF_TAXONOMY_FILENAME: @GBIF_TAXONOMY@-@GBIF_VERSION@.csv
+GBIF_OCCURRENCE_FILENAME: @GBIF_OCCURRENCES@-@GBIF_VERSION@.csv
+GBIF_PROVIDER_FILENAME: @GBIF_PROVIDER@-@GBIF_VERSION@.csv
 
 POINT_COUNT_MIN: 30
 
@@ -37,7 +39,8 @@ INTERSECT_MINPERCENT: 25
 [PREPROCESSING SDM_MASK]
 CODE: hull_region_intersect
 buffer: .5
-region: ecoreg_10min_global
+;;; Must be the same layer contained in @SCENARIO_PACKAGE@ and metadata 
+region: @ECOREGION_LAYER@
 
 
 [ALGORITHM - 1]
