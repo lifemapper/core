@@ -368,8 +368,7 @@ sortFiles(groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
 occparser.close()
 
 
-mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, 
-                 metafname, inIdx=startIdx, maxFileSize=None)
+mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, metafname)
 
 checkMergedFile(log, mergefname, metafname)
 
