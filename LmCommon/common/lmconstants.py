@@ -410,6 +410,9 @@ class JobStatus:
     # ==========================================================================
     # General model error, previously 1002
     MODEL_ERROR = 2000
+    
+    # Mask error
+    MASK_ERROR = 2500
     # openModeller errors
     # ............................................
     OM_GENERAL_ERROR = 3000
