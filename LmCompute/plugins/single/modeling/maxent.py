@@ -48,54 +48,59 @@ class MaxentWrapper(ModelSoftwareWrapper):
         Args:
             std_err : Standard error output from the application.
         """
-        status = JobStatus.ME_GENERAL_ERROR
-        
-        # Log standard error
-        self.logger.debug('Checking standard error')
-        if std_err is not None:
-            self.logger.debug(std_err)
+        if not os.path.exists(self.get_projection_filename()):
             
-            if std_err.find('Couldn\'t get file lock.') >= 0:
-                status = JobStatus.ME_FILE_LOCK_ERROR
-            elif std_err.find(
-                'Could not reserve enough space for object heap') >= 0:
-                status = JobStatus.ME_HEAP_SPACE_ERROR
-            elif std_err.find(
-                'Too small initial heap for new size specified') >= 0:
-                status = JobStatus.ME_HEAP_SPACE_ERROR
-            elif std_err.find('because it has 0 training samples') >= 0:
-                status = JobStatus.ME_POINTS_ERROR
-            elif std_err.find('Attempt to evaluate layer') >= 0: 
-                #1 at sample with no value
-                status = JobStatus.ME_CORRUPTED_LAYER
-
-        self.logger.debug('Checking output')
-        errfname = self.get_log_filename()
-
-        # Look at Maxent error (might be more specific)
-        if os.path.exists(errfname):
-            with open(errfname, 'r') as f:
-                log_content = f.read()
-            self.logger.debug('---------------------------------------')
-            self.logger.debug(log_content)
-            self.logger.debug('---------------------------------------')
-
-            if log_content.find('have different geographic dimensions') >= 0:
-                status = JobStatus.ME_MISMATCHED_LAYER_DIMENSIONS
-            elif log_content.find('NumberFormatException') >= 0:
-                status = JobStatus.ME_CORRUPTED_LAYER
-            elif log_content.find('because it has 0 training samples') >= 0:
-                status = JobStatus.ME_POINTS_ERROR
-            elif log_content.find('is missing from') >= 0: 
-                # ex: Layer vap6190_ann is missing from layers/projectionScn
-                status = JobStatus.ME_LAYER_MISSING
-            elif log_content.find(
-                'No background points with data in all layers') >= 0:
-                status = JobStatus.ME_POINTS_ERROR
-            elif log_content.find(
-                'No features available: select more feature types') >= 0:
-                status = JobStatus.ME_NO_FEATURES_CLASSES_AVAILABLE
-
+            status = JobStatus.ME_GENERAL_ERROR
+            
+            # Log standard error
+            self.logger.debug('Checking standard error')
+            if std_err is not None:
+                self.logger.debug(std_err)
+                
+                if std_err.find('Couldn\'t get file lock.') >= 0:
+                    status = JobStatus.ME_FILE_LOCK_ERROR
+                elif std_err.find(
+                    'Could not reserve enough space for object heap') >= 0:
+                    status = JobStatus.ME_HEAP_SPACE_ERROR
+                elif std_err.find(
+                    'Too small initial heap for new size specified') >= 0:
+                    status = JobStatus.ME_HEAP_SPACE_ERROR
+                elif std_err.find('because it has 0 training samples') >= 0:
+                    status = JobStatus.ME_POINTS_ERROR
+                elif std_err.find('Attempt to evaluate layer') >= 0: 
+                    #1 at sample with no value
+                    status = JobStatus.ME_CORRUPTED_LAYER
+    
+            self.logger.debug('Checking output')
+            errfname = self.get_log_filename()
+    
+            # Look at Maxent error (might be more specific)
+            if os.path.exists(errfname):
+                with open(errfname, 'r') as f:
+                    log_content = f.read()
+                self.logger.debug('---------------------------------------')
+                self.logger.debug(log_content)
+                self.logger.debug('---------------------------------------')
+    
+                if log_content.find(
+                        'have different geographic dimensions') >= 0:
+                    status = JobStatus.ME_MISMATCHED_LAYER_DIMENSIONS
+                elif log_content.find('NumberFormatException') >= 0:
+                    status = JobStatus.ME_CORRUPTED_LAYER
+                elif log_content.find('because it has 0 training samples') >= 0:
+                    status = JobStatus.ME_POINTS_ERROR
+                elif log_content.find('is missing from') >= 0: 
+                    # ex: Layer vap6190_ann is missing from layers/projectionScn
+                    status = JobStatus.ME_LAYER_MISSING
+                elif log_content.find(
+                    'No background points with data in all layers') >= 0:
+                    status = JobStatus.ME_POINTS_ERROR
+                elif log_content.find(
+                    'No features available: select more feature types') >= 0:
+                    status = JobStatus.ME_NO_FEATURES_CLASSES_AVAILABLE
+        else:
+            # Computed but process terminated with status 1, seems to be fine
+            status = JobStatus.COMPUTED
         return status
     
     # ...................................
