@@ -63,32 +63,40 @@ class ParameterSweep(object):
                 tif_filename = '{}{}'.format(
                     out_mask_base_filename, LMFormat.GTIFF.ext)
 
-            if mask_method == MaskMethod.HULL_REGION_INTERSECT:
-                (region_layer_filename, buffer_distance, occ_set_id
-                 ) = mask_config[5:]
-                # Get occurrence set shapefile
-                occ_shp_filename, occ_status = self._get_registry_output(
-                    RegistryKey.OCCURRENCE, occ_set_id)
-                if occ_status < JobStatus.GENERAL_ERROR and occ_shp_filename:
-                    create_mask.create_convex_hull_region_intersect_mask(
-                        occ_shp_filename, region_layer_filename, 
-                        buffer_distance, ascii_filename=asc_filename,
+            try:
+                if mask_method == MaskMethod.HULL_REGION_INTERSECT:
+                    (region_layer_filename, buffer_distance, occ_set_id
+                     ) = mask_config[5:]
+                    # Get occurrence set shapefile
+                    occ_shp_filename, occ_status = self._get_registry_output(
+                        RegistryKey.OCCURRENCE, occ_set_id)
+                    if occ_status < JobStatus.GENERAL_ERROR and \
+                            occ_shp_filename:
+                        create_mask.create_convex_hull_region_intersect_mask(
+                            occ_shp_filename, region_layer_filename, 
+                            buffer_distance, ascii_filename=asc_filename,
+                            tiff_filename=tif_filename)
+                elif mask_method == MaskMethod.BLANK_MASK:
+                    template_layer_filename = mask_config[5]
+                    create_mask.create_blank_mask_from_layer(
+                        template_layer_filename, ascii_filename=asc_filename,
                         tiff_filename=tif_filename)
-            elif mask_method == MaskMethod.BLANK_MASK:
-                template_layer_filename = mask_config[5]
-                create_mask.create_blank_mask_from_layer(
-                    template_layer_filename, ascii_filename=asc_filename,
-                    tiff_filename=tif_filename)
-            else:
-                self.log.error('Could not create mask for method: {}'.format(
-                    mask_method))
-            status = JobStatus.COMPUTED
-            if asc_filename is not None:
-                if not os.path.exists(asc_filename):
-                    status = JobStatus.GENERAL_ERROR
-            if tif_filename is not None:
-                if not os.path.exists(tif_filename):
-                    status = JobStatus.GENERAL_ERROR
+                else:
+                    self.log.error(
+                        'Could not create mask for method: {}'.format(
+                            mask_method))
+                status = JobStatus.COMPUTED
+                if asc_filename is not None:
+                    if not os.path.exists(asc_filename):
+                        status = JobStatus.GENERAL_ERROR
+                if tif_filename is not None:
+                    if not os.path.exists(tif_filename):
+                        status = JobStatus.GENERAL_ERROR
+            except Exception as e:
+                self.log.error(
+                    'Could not create mask {} : {}'.format(mask_id, str(e)))
+                status = JobStatus.MASK_ERROR
+
             # TODO: Consider adding rasters as secondary outputs
             # TODO: Add metrics and snippets
             self._register_output_object(
