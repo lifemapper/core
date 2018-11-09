@@ -243,6 +243,8 @@ class ParameterSweep(object):
                                 prj_status, projection_path,
                                 process_type=ProcessType.OM_PROJECT,
                                 metrics=prj_metrics, snippets=prj_snippets)
+                    else:
+                        status = prj_status
                 
                 # If other
                 else:
@@ -250,6 +252,8 @@ class ParameterSweep(object):
                     self.log.error(
                         'Unknown process type: {} for model {}'.format(
                             process_type, model_id))
+            else:
+                status = occ_status
 
             # Register model output
             self._register_output_object(
