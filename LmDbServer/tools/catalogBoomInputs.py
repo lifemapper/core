@@ -1076,16 +1076,12 @@ class BOOMFiller(LMObject):
         mfchain.updateStatus(JobStatus.INITIALIZE)
         self.scribe.updateObject(mfchain)
         try:
-            desc = mfchain.mfMetadata[MFChain.META_DESCRIPTION]
+            self.scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
+                .format(mfchain.objId, 
+                        mfchain.mfMetadata[MFChain.META_DESCRIPTION], 
+                        mfchain.mfMetadata[MFChain.META_GRIDSET]))
         except:
-            desc = ''
-        try:
-            gid = mfchain.mfMetadata[MFChain.META_GRIDSET]
-        except:
-            gid = ''
-
-        self.scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
-            .format(mfchain.objId, desc, gid))
+            self.scribe.log.info('  Wrote Makeflow {}'.format(mfchain.objId))
         return mfchain
                 
     # ...............................................
