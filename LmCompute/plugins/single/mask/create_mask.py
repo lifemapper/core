@@ -1,5 +1,6 @@
 """Tools for creating masks
 """
+import math
 import numpy as np
 import os
 from osgeo import gdal, gdalconst, ogr, osr
@@ -133,11 +134,11 @@ def create_convex_hull_array(base_path, convex_hull, bbox, cell_size, epsg,
     # Rasterize the shapefile
     # --------------------------------------
     minx, miny, maxx, maxy = bbox
-    num_cols = float(maxx - minx) / cell_size
-    num_rows = float(maxy - miny) / cell_size
+    num_cols = int(math.ceil(float(maxx - minx) / cell_size))
+    num_rows = int(math.ceil(float(maxy - miny) / cell_size))
     
     tiff_drv = gdal.GetDriverByName(LMFormat.GTIFF.driver)
-    rst_ds = tiff_drv.Create(tmp_raster_filename, int(num_cols), int(num_rows), 1, 
+    rst_ds = tiff_drv.Create(tmp_raster_filename, num_cols, num_rows, 1, 
                                      gdalconst.GDT_Int16)
     rst_ds.SetGeoTransform([minx, cell_size, 0, maxy, 0, -cell_size])
 
