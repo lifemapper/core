@@ -25,6 +25,7 @@ import ConfigParser
 import json
 import mx.DateTime
 import os
+import stat
 import types
 
 from LmBackend.command.boom import BoomerCommand
@@ -63,7 +64,7 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
-from LmServer.base.utilities import isRootUser
+from LmServer.base.utilities import isRootUser, isLMUser
 
 # .............................................................................
 class BOOMFiller(LMObject):
@@ -94,7 +95,7 @@ class BOOMFiller(LMObject):
         if logname is None:
             logname = '{}.{}'.format(self.name, bsname)
         self.logname = logname
-      
+        
         self.inParamFname = paramFname
         # Get database
         try:
@@ -158,14 +159,6 @@ class BOOMFiller(LMObject):
         # Created by addArchive
         self.shapegrid = None
         
-        # If running as root, new user filespace must have permissions corrected
-        self._warnPermissions()
-        
-        earl = EarlJr()
-        self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
-                                                     objCode=self.archiveName, 
-                                                     usr=self.userId)
-
     # ...............................................
     def findOrAddScenarioPackage(self):
         """
@@ -262,13 +255,36 @@ class BOOMFiller(LMObject):
         return fname
 
     # ...............................................
-    def _warnPermissions(self):
-        if isRootUser():
-            print("""
-            If not running {} from bash script `catalogBoomJob`  
-            make sure to set group to {} and rw permissions on the 
-            newly created shapegrid {}
-            """.format(LM_USER, self.name, self.gridname))
+    def _fixPermissions(self, files=[], dirs=[]):
+        if isLMUser:
+            print('Permissions created correctly by LMUser')
+        else:
+            dirname = os.path.dirname(self.outConfigFilename)
+            stats = os.stat(dirname)
+            # item 5 is group id; get for lmwriter
+            gid = stats[5]
+            if files is not None:
+                if not (isinstance(files, list) or 
+                        isinstance(files, tuple)):
+                    files = [files]
+                    for fd in files:
+                        try:
+                            os.chown(fd, -1, gid)
+                            os.chmod(fd, 0664)
+                        except Exception, e:
+                            print('Failed to fix permissions on {}'.format(fd))
+            if dirs is not None:
+                if not (isinstance(dirs, list) or 
+                        isinstance(dirs, tuple)):
+                    dirs = [dirs]
+                    for d in dirs:
+                        currperms = oct(os.stat(d)[stat.ST_MODE])[-3:]
+                        if currperms != '775':
+                            try:
+                                os.chown(d, -1, gid)
+                                os.chmod(d, 0775)
+                            except Exception, e:
+                                print('Failed to fix permissions on {}'.format(d))
          
     # ...............................................
     def _getDb(self, logname):
@@ -326,8 +342,8 @@ class BOOMFiller(LMObject):
                 defaultAlgs[algHeading] = alg
             else:
                 algs[algHeading] = alg
-            if len(algs) == 0:
-                algs = defaultAlgs
+        if len(algs) == 0:
+            algs = defaultAlgs
         return algs
 
     # ...............................................
@@ -548,6 +564,8 @@ class BOOMFiller(LMObject):
         readyFilename(self.outConfigFilename, overwrite=True)
         with open(self.outConfigFilename, 'wb') as configfile:
             config.write(configfile)
+            
+        self._fixPermissions(files=[self.outConfigFilename])
            
         self.scribe.log.info('******')
         self.scribe.log.info('--config_file={}'.format(self.outConfigFilename))   
@@ -678,9 +696,11 @@ class BOOMFiller(LMObject):
             validData, _ = ShapeGrid.testVector(newshp.getDLocation())
             if not validData:
                 try:
+                    # Write new shapegrid
                     dloc = newshp.getDLocation()
                     newshp.buildShape(overwrite=True)
                     validData, _ = ShapeGrid.testVector(dloc)
+                    self._fixPermissions(files=newshp.getShapefiles())
                 except Exception, e:
                     self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
                 if not validData:
@@ -833,6 +853,7 @@ class BOOMFiller(LMObject):
                 tree.clearDLocation()
                 self.scribe.updateObject(tree)
                 tree.writeTree()
+                self._fixPermissions(files=[tree.getDLocation()])
             else:
                 self.scribe.log.warning('No tree at {}'.format(treeFilename))
             
@@ -933,6 +954,7 @@ class BOOMFiller(LMObject):
         """
         scriptname, _ = os.path.splitext(os.path.basename(__file__))
         meta = {MFChain.META_CREATED_BY: scriptname,
+                MFChain.META_GRIDSET: gridset.getId(),
                 MFChain.META_DESCRIPTION: 
                           'Encode biogeographic hypotheses task for user {} grid {}'
                           .format(self.userId, gridset.name)}
@@ -949,9 +971,7 @@ class BOOMFiller(LMObject):
         bgCmd = EncodeBioGeoHypothesesCommand(self.userId, gridset.name, bghSuccessFname)
         
         mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
-        mfChain.write()
-        mfChain.updateStatus(JobStatus.INITIALIZE)
-        self.scribe.updateObject(mfChain)
+        mfChain = self._write_update_MF(mfChain)
         return mfChain   
 
     # .............................
@@ -1000,9 +1020,7 @@ class BOOMFiller(LMObject):
             grimRules = grim.getConcatAndStockpileRules(colFilenames, workDir=targetDir)
             
             grimChain.addCommands(grimRules)
-            grimChain.write()
-            grimChain.updateStatus(JobStatus.INITIALIZE)
-            self.scribe.updateObject(grimChain)
+            grimChain = self._write_update_MF(grimChain)            
             grimChains.append(grimChain)
             self.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
                                  .format(grimChain.objId, code))
@@ -1048,6 +1066,23 @@ class BOOMFiller(LMObject):
                                                    source_url=taxSourceUrl,
                                                    delimiter='\t')
         return cattaxCmd, taxSuccessFname
+    
+    # ...............................................
+    def _write_update_MF(self, mfchain):
+        mfchain.write()
+        # Give lmwriter rw access (this script may be run as root)
+        self._fixPermissions(files=[mfchain.getDLocation()])
+        # Set as ready to go
+        mfchain.updateStatus(JobStatus.INITIALIZE)
+        self.scribe.updateObject(mfchain)
+        try:
+            self.scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
+                .format(mfchain.objId, 
+                        mfchain.mfMetadata[MFChain.META_DESCRIPTION], 
+                        mfchain.mfMetadata[MFChain.META_GRIDSET]))
+        except:
+            self.scribe.log.info('  Wrote Makeflow {}'.format(mfchain.objId))
+        return mfchain
                 
     # ...............................................
     def addTaxonomyMF(self, boomGridsetId):
@@ -1064,11 +1099,7 @@ class BOOMFiller(LMObject):
         mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
         cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
         mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
-        mfChain.write()
-        mfChain.updateStatus(JobStatus.INITIALIZE)
-        self.scribe.updateObject(mfChain)
-        self.scribe.log.info('  Wrote Taxonomy Makeflow {} for gridset {}'
-                             .format(mfChain.objId, boomGridsetId))
+        mfChain = self._write_update_MF(mfChain)
 
     # ...............................................
     def addBoomMF(self, boomGridsetId, tree):
@@ -1114,11 +1145,7 @@ class BOOMFiller(LMObject):
         
         # Add boom command to this Makeflow
         mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
-        mfChain.write()
-        mfChain.updateStatus(JobStatus.INITIALIZE)
-        self.scribe.updateObject(mfChain)
-        self.scribe.log.info('  Wrote BOOM Makeflow {} for gridset {}'
-                      .format(mfChain.objId, boomGridsetId))
+        mfChain = self._write_update_MF(mfChain)
         return mfChain
 
     # ...............................................
@@ -1138,15 +1165,22 @@ class BOOMFiller(LMObject):
             # Add GRIM compute Makeflows, independent of Boom completion
             grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
             
+            # Fix directory permissions
+            lyrdir = os.path.dirname(boomGridset.getShapegrid().getDLocation())
+            mfdir = os.path.dirname(grimMFs[0].getDLocation())
+            self._fixPermissions(dirs=[lyrdir])
+            self._fixPermissions(dirs=[mfdir])
+            
             # If there is a tree, add db object
             tree = self.addTree(boomGridset)
             
             # If there are biogeographic hypotheses, add layers and matrix and create MFChain
             biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
             
-            # Write config file for this archive
+            # Write config file for archive, update permissions
             self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
                                  biogeoLayers=biogeoLayerNames)
+            
                   
             if initMakeflow is True:
                 if biogeoMtx and len(biogeoLayerNames) > 0:
@@ -1167,17 +1201,18 @@ class BOOMFiller(LMObject):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(
-             description=('Populate a Lifemapper archive with metadata ' +
-                          'for single- or multi-species computations ' + 
-                          'specific to the configured input data or the ' +
-                          'data package named.'))
+             description=(""""Populate a Lifemapper archive with metadata for 
+                              single- or multi-species computations specific to 
+                              the configured input data or the data package 
+                              named."""))
     parser.add_argument('param_file', default=None,
              help=('Parameter file for the workflow with inputs and outputs ' +
                    'to be created from these data.'))
     parser.add_argument('--logname', type=str, default=None,
              help=('Basename of the logfile, without extension'))
     parser.add_argument('--init_makeflow', type=bool, default=True,
-             help=('Create a Makeflow task to walk these species data (and create Makeflow tasks).'))
+             help=("""Create a Makeflow task to walk these species data and 
+                      create additional Makeflow tasks."""))
     parser.add_argument('--taxonomy_only', type=bool, default=False,
              help=('Add taxonomy, without extension'))
     args = parser.parse_args()
@@ -1201,7 +1236,7 @@ if __name__ == '__main__':
     
     filler = BOOMFiller(paramFname, logname=logname)
     gs = filler.initBoom(initMakeflow=initMakeflow)
-    print('Completed catalogBoomJob creating gridset: {}'.format(gs.getId()))
+    print('Completed catalogBoomInputs creating gridset: {}'.format(gs.getId()))
 
     
 """
@@ -1215,6 +1250,8 @@ from LmBackend.command.boom import BoomerCommand
 from LmBackend.command.server import (CatalogTaxonomyCommand, EncodeTreeCommand,
                                       EncodeBioGeoHypothesesCommand)
 from LmBackend.common.lmobj import LMError, LMObject
+from LmBackend.common.lmconstants import RegistryKey, MaskMethod
+
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
@@ -1249,11 +1286,15 @@ from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmServer.base.utilities import isRootUser
 
-from LmDbServer.tools.catalogWriteBoomMakeflows import *
+from LmDbServer.tools.catalogBoomInputs import *
+
+paramFname = '/share/lm/data/archive/modem/heuchera_boom_na_10min.params'
 
 paramFname = '/opt/lifemapper/rocks/etc/defaultArchiveParams.ini'
+paramFname = '/share/lm/data/archive/onemore/heuchera_boom_global_10min.params'
+ 
+heuchera_boom_global_10min.params
 initMakeflow = True
-
 pname, _ = os.path.splitext(os.path.basename(paramFname))
 import time
 secs = time.time()
@@ -1265,17 +1306,25 @@ self.initializeInputs()
 
 if self.occIdFname:
    self._checkOccurrenceSets()
-
+   
 scenGrims, boomGridset = self.addShapeGridGPAMGridset()
 grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
 
 tree = self.addTree(boomGridset)
+
 biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
-if biogeoMtx and len(biogeoLayerNames) > 0:
-   bgMF = self.addEncodeBioGeoMF(boomGridset)
 
 self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
                      biogeoLayers=biogeoLayerNames)
+      
+if initMakeflow is True:
+    if biogeoMtx and len(biogeoLayerNames) > 0:
+
+        bgMF = self.addEncodeBioGeoMF(boomGridset)
+
+    boomMF = self.addBoomMF(boomGridset.getId(), tree)
+   
+
 
 # gs = filler.initBoom(initMakeflow=initMakeflow)
 

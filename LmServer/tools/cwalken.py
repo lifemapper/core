@@ -32,21 +32,27 @@ from osgeo.ogr import wkbPoint
 import os
 from types import IntType, FloatType
 
+from LmBackend.common.lmconstants import RegistryKey, MaskMethod
 from LmBackend.common.lmobj import LMError, LMObject
+from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
+from LmBackend.command.server import IndexPAVCommand, MultiStockpileCommand
+from LmBackend.command.single import SpeciesParameterSweepCommand
+
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, 
           SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX,
-          SERVER_DEFAULT_HEADING_POSTFIX, MatrixType, IDIG_DUMP) 
+          SERVER_DEFAULT_HEADING_POSTFIX, MatrixType) 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
-                                         Priority, BUFFER_KEY, CODE_KEY,
-                                         ECOREGION_MASK_METHOD, MASK_KEY, 
-                                         MASK_LAYER_KEY, PRE_PROCESS_KEY,
-                                         PROCESSING_KEY, MASK_LAYER_NAME_KEY)
-from LmServer.common.localconstants import PUBLIC_USER, DEFAULT_EPSG
+            Priority, BUFFER_KEY, CODE_KEY, ECOREGION_MASK_METHOD, MASK_KEY, 
+            MASK_LAYER_KEY, PRE_PROCESS_KEY, PROCESSING_KEY, 
+            MASK_LAYER_NAME_KEY,SCALE_PROJECTION_MINIMUM, 
+            SCALE_PROJECTION_MAXIMUM)
+from LmServer.common.localconstants import (PUBLIC_USER, DEFAULT_EPSG, 
+                                            POINT_COUNT_MAX)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
@@ -549,6 +555,80 @@ class ChristopherWalken(LMObject):
         [prjscens]
         """
         pass
+    
+    # ...............................
+    def _processProjection(self, prj, prjWillCompute, alg, model_mask_base, 
+                           sweep_config, workdir):
+        currtime = dt.gmt().mjd
+        pcount = prcount = icount = ircount = 0        
+        pcount += 1
+        if prjWillCompute: prcount += 1
+        # Add projection
+        # Masking
+        if model_mask_base is not None:
+            model_mask = model_mask_base.copy()
+            model_mask[RegistryKey.OCCURRENCE_SET_ID] = prj.getOccurrenceSetId()
+            projection_mask = {
+                RegistryKey.METHOD : MaskMethod.BLANK_MASK,
+                RegistryKey.TEMPLATE_LAYER_PATH : prj.projScenario.layers[
+                    0].getDLocation()
+            }
+        else:
+            model_mask = None
+            projection_mask = None
+        
+        scale_parameters = multiplier = None
+        if prj.isATT():
+            scale_parameters = (SCALE_PROJECTION_MINIMUM,
+                                SCALE_PROJECTION_MAXIMUM)
+            #TODO: This should be in config somewhere
+            multiplier = None
+        
+        sweep_config.add_projection(
+            prj.processType, prj.getId(), prj.getOccurrenceSetId(),
+            alg, prj.modelScenario, prj.projScenario,
+            prj.getDLocation(), self.boomGridset.getPackageLocation(),
+            model_mask=model_mask,
+            projection_mask=projection_mask,
+            scale_parameters=scale_parameters,
+            multiplier=multiplier)
+
+        mtx = self.globalPAMs[prj.projScenarioCode]
+        # If projection was reset (pReset), force intersect
+        #    reset
+        (mtxcol,
+         mWillCompute) = self._createOrResetIntersect(
+             prj, mtx, prjWillCompute, currtime)
+        if mtxcol is not None:
+            icount += 1
+            if mWillCompute: ircount += 1
+            # Todo: Add intersect
+            pav_filename = os.path.join(
+                workdir, 'pavs', 'pav_{}{}'.format(
+                    mtxcol.getId(), LMFormat.MATRIX.ext))
+            post_xml_filename = os.path.join(
+                workdir, 'pavs', 'solr_pav_{}{}'.format(
+                    mtxcol.getId(), LMFormat.XML.ext))
+            sweep_config.add_pav_intersect(
+                mtxcol.shapegrid.getDLocation(),
+                mtxcol.getId(), prj.getId(), pav_filename,
+                prj.squid,
+                mtxcol.intersectParams[
+                    mtxcol.INTERSECT_PARAM_MIN_PRESENCE],
+                mtxcol.intersectParams[
+                    mtxcol.INTERSECT_PARAM_MAX_PRESENCE],
+                mtxcol.intersectParams[
+                    mtxcol.INTERSECT_PARAM_MIN_PERCENT])
+            # Add the rest of the intersect command
+            solrCmd = IndexPAVCommand(
+                pav_filename, mtxcol.getId(), prj.getId(),
+                mtx.getId(), post_xml_filename)
+            solr_rule = solrCmd.getMakeflowRule(local=True)
+#             spudRules.append(
+#                 solrCmd.getMakeflowRule(local=True))
+            self.log.info('      {} projections, {} matrixColumns ( {}, {} reset)'
+                        .format(pcount, icount, prcount, ircount))
+        return sweep_config, solr_rule
    
     # ...............................
     def startWalken(self, workdir):
@@ -558,54 +638,144 @@ class ChristopherWalken(LMObject):
                  scenarioCode: PAV filename for input into multi-species
                  MFChains (potatoInputs)
         """
-        currtime = dt.gmt().mjd
         squid = None
         spudRules = []
-        pcount = prcount = icount = ircount = 0
+#         pcount = prcount = icount = ircount = 0
         gsid = 0
         try:
             gsid = self.boomGridset.getId()
         except:
             self.log.warning('Missing self.boomGridset id!!')
+            
+        # Get processing parameters for masking
+        proc_params = self.sdmMaskParams
+        if (PRE_PROCESS_KEY in proc_params.keys() 
+            and MASK_KEY in proc_params[PRE_PROCESS_KEY].keys()):
+            
+            mask_layer_name = proc_params[PRE_PROCESS_KEY][MASK_KEY][MASK_LAYER_KEY]
+            mask_layer = self._scribe.getLayer(userId=self.userId, 
+                                    lyrName=mask_layer_name, epsg=self.epsg)
+            model_mask_base = {
+                RegistryKey.REGION_LAYER_PATH : mask_layer.getDLocation(),
+                RegistryKey.BUFFER : proc_params[PRE_PROCESS_KEY][MASK_KEY][
+                    BUFFER_KEY],
+                RegistryKey.METHOD : MaskMethod.HULL_REGION_INTERSECT
+            }
+        else:
+            model_mask_base = None
+            
         # WeaponOfChoice resets old or failed Occurrenceset
         occ, occWillCompute = self.weaponOfChoice.getOne()
         if self.weaponOfChoice.finishedInput:
             self._writeDoneWalkenFile()
         if occ:
-            # OccurrenceSet is created or reset by WOC
             squid = occ.squid
-            objs = []
-            # Process existing OccurrenceLayer (copy if up-to-date and complete,
-            # recompute if incomplete, obsolete, or failed)
-            objs.append(occ)
-            # Sweep over input options
-            # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.
-            #       Change this for BOOM jobs!! 
+            occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
+            sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
+            
+            # Add occurrence set
+            sweep_config.add_occurrence_set(
+                occ.processType, occ.getId(), occ.getRawDLocation(),
+                occ.getDLocation(), occ.getDLocation(largeFile=True),
+                POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
+            
+            # If we have enough points to model
             if occ.queryCount >= self.minPoints:
+                self.log.info('   Will compute for Grid {}:'.format(gsid))
                 for alg in self.algs:
-                    for prjscen in self.prjScens:
-                        # Add to Spud - SDM Project and MatrixColumn
-                        prj, prjWillCompute = self._createOrResetSDMProject(occ, alg, prjscen, 
-                                                                    occWillCompute, currtime)
+                    for prj_scen in self.prjScens:
+                        prj, prjWillCompute = self._createOrResetSDMProject(
+                            occ, alg, prj_scen, occWillCompute, dt.gmt().mjd)
                         if prj is not None:
-                            pcount += 1
-                            if prjWillCompute: prcount += 1 
-                            objs.append(prj)
-                            mtx = self.globalPAMs[prjscen.code]
-                            # if projection was reset (pReset), force intersect reset
-                            mtxcol, mWillCompute = self._createOrResetIntersect(prj, mtx, 
-                                                                          prjWillCompute,
-                                                                          currtime)
-                            if mtxcol is not None:
-                                icount += 1
-                                if mWillCompute: ircount += 1 
-                                objs.append(mtxcol)
-        
-                self.log.info('   Will compute {} projections, {} matrixColumns for Grid {} ( {}, {} reset)'
-                            .format(pcount, icount, gsid, prcount, ircount))
-            spudObjs = [o for o in objs if o is not None]
-            # Creates MFChain with rules, does NOT write it
-            spudRules = self._createSpudRules(spudObjs, workdir)
+                            sweep_config, solr_rule = self._processProjection(
+                                prj, prjWillCompute, alg, model_mask_base, 
+                                sweep_config, occ_work_dir)
+                            spudRules.append(solr_rule)
+
+#                             pcount += 1
+#                             if prjWillCompute: prcount += 1
+#                             # Add projection
+#                             # Masking
+#                             if model_mask_base is not None:
+#                                 model_mask = model_mask_base.copy()
+#                                 model_mask[RegistryKey.OCCURRENCE_SET_ID] = occ.getId()
+#                                 projection_mask = {
+#                                     RegistryKey.METHOD : MaskMethod.BLANK_MASK,
+#                                     RegistryKey.TEMPLATE_LAYER_PATH : prj.projScenario.layers[
+#                                         0].getDLocation()
+#                                 }
+#                             else:
+#                                 model_mask = None
+#                                 projection_mask = None
+#                             
+#                             if prj.isATT():
+#                                 scale_parameters = (SCALE_PROJECTION_MINIMUM,
+#                                                     SCALE_PROJECTION_MAXIMUM)
+#                                 #TODO: This should be in config somewhere
+#                                 multiplier = None
+#
+#                             sweep_config.add_projection(
+#                                 prj.processType, prj.getId(), occ.getId(),
+#                                 alg, prj.modelScenario, prj.projScenario,
+#                                 prj.getDLocation(), self.boomGridset.getPackageLocation(),
+#                                 model_mask=model_mask,
+#                                 projection_mask=projection_mask,
+#                                 scale_parameters=scale_parameters,
+#                                 multiplier=multiplier)
+# 
+#                             mtx = self.globalPAMs[prj_scen.code]
+#                             # If projection was reset (pReset), force intersect
+#                             #    reset
+#                             (mtxcol,
+#                              mWillCompute) = self._createOrResetIntersect(
+#                                  prj, mtx, prjWillCompute, currtime)
+#                             if mtxcol is not None:
+#                                 icount += 1
+#                                 if mWillCompute: ircount += 1
+#                                 # Todo: Add intersect
+#                                 pav_filename = os.path.join(
+#                                     occ_work_dir, 'pavs', 'pav_{}{}'.format(
+#                                         mtxcol.getId(), LMFormat.MATRIX.ext))
+#                                 post_xml_filename = os.path.join(
+#                                     occ_work_dir, 'pavs', 'solr_pav_{}{}'.format(
+#                                         mtxcol.getId(), LMFormat.MATRIX.ext))
+#                                 sweep_config.add_pav_intersect(
+#                                     mtxcol.shapegrid.getDLocation(),
+#                                     mtxcol.getId(), prj.getId(), pav_filename,
+#                                     squid,
+#                                     mtxcol.intersectParams[
+#                                         mtxcol.INTERSECT_PARAM_MIN_PRESENCE],
+#                                     mtxcol.intersectParams[
+#                                         mtxcol.INTERSECT_PARAM_MAX_PRESENCE],
+#                                     mtxcol.intersectParams[
+#                                         mtxcol.INTERSECT_PARAM_MIN_PERCENT])
+#                                 # Add the rest of the intersect command
+#                                 solrCmd = IndexPAVCommand(
+#                                     pav_filename, mtxcol.getId(), prj.getId(),
+#                                     mtx.getId(), post_xml_filename)
+#                                 spudRules.append(
+#                                     solrCmd.getMakeflowRule(local=True))
+#             
+            # Write config file
+            species_config_filename = os.path.join(
+                os.path.dirname(occ.getDLocation()), 
+                'species_config_{}{}'.format(occ.getId(), LMFormat.JSON.ext))
+            sweep_config.save_config(species_config_filename)
+            
+            # Add sweep rule
+            param_sweep_cmd = SpeciesParameterSweepCommand(
+                species_config_filename, sweep_config.get_input_files(),
+                sweep_config.get_output_files())
+            spudRules.append(param_sweep_cmd.getMakeflowRule())
+            
+            # Add stockpile rule
+            stockpile_success_filename = os.path.join(
+                occ_work_dir, 'occ_{}stockpile.success'.format(occ.getId()))
+            stockpile_cmd = MultiStockpileCommand(
+                sweep_config.stockpile_filename, stockpile_success_filename)
+            spudRules.append(stockpile_cmd.getMakeflowRule(local=True))
+            
+            # TODO: Add metrics / snippets processing
         return squid, spudRules
       
     # ...............................
@@ -709,31 +879,6 @@ class ChristopherWalken(LMObject):
                     prj.updateStatus(stat, modTime=currtime)
                     success = self._scribe.updateObject(prj)
         return prj, reset
-
-    # ...............................................
-    def _createSpudRules(self, objs, workdir):
-        rules = []
-        if objs:
-        
-            # Get gridset processing metadata
-            procParams = self.boomGridset.grdMetadata[PROCESSING_KEY]
-            
-            self.log.info('Using the following processing parameters: {}'.format(
-                                                                 str(procParams)))
-            
-            for o in objs:
-                # Get rules for objects to be computed
-                try:
-                    try:
-                        # Try to call projection compute me with process parameters
-                        objRules = o.computeMe(workDir=workdir, procParams=procParams)
-                    except:
-                        objRules = o.computeMe(workDir=workdir)
-                    rules.extend(objRules)
-                except Exception, e:
-                    self.log.info('Failed on object.compute {}, ({})'
-                                  .format(type(o), str(e)))
-        return rules
 
     # ...............................................
     def _writeDoneWalkenFile(self):

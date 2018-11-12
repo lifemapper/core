@@ -410,6 +410,9 @@ class JobStatus:
     # ==========================================================================
     # General model error, previously 1002
     MODEL_ERROR = 2000
+    
+    # Mask error
+    MASK_ERROR = 2500
     # openModeller errors
     # ............................................
     OM_GENERAL_ERROR = 3000
@@ -494,6 +497,8 @@ class JobStatus:
     # Other Maxent problems
     # ............................................
     ME_HEAP_SPACE_ERROR = 3801
+    ME_EXEC_MODEL_ERROR = 3802
+    ME_EXEC_PROJECTION_ERROR = 3803
     
     # .......................................
     #  Occurrence set job errors

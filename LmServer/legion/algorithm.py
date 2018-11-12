@@ -367,3 +367,20 @@ class Algorithm(LMObject):
             elif self._parameters is None and other._parameters is None:
                return True
       return False
+
+   # .............................................
+   def getDictionary(self):
+      """
+      @summary: Get the algorithm as a dictionary
+      """
+      algoObj = {
+         "algorithmCode" : self.code,
+         "parameters" : []
+      }
+         
+      for param in self._parameters.keys():
+         algoObj["parameters"].append(
+            {"name" : param, 
+             "value" : str(self._parameters[param])})
+      return algoObj
+  

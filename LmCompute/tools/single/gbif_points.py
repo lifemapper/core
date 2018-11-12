@@ -39,9 +39,6 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(
       description="This script attempts to generate a Lifemapper occurrence set from a GBIF csv dump") 
    
-   parser.add_argument('-s', '--status_filename', type=str, 
-                       help='Write job status to this file')
-   
    parser.add_argument('pointsCsvFn', type=str, 
                        help="A path to a CSV file with raw GBIF points")
    parser.add_argument('pointCount', type=int, 
@@ -56,8 +53,7 @@ if __name__ == "__main__":
    args = parser.parse_args()
    
    createGBIFShapefile(args.pointsCsvFn, args.outFile, args.bigFile, 
-                       args.pointCount, args.maxPoints, 
-                       statusFname=args.status_filename)
+                       args.pointCount, args.maxPoints)
    
 """
 from LmCompute.plugins.single.occurrences.csvOcc import createGBIFShapefile

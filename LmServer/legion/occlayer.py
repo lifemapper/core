@@ -648,10 +648,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
       outFileBasename = os.path.basename(self.getDLocation())
       bigFileBasename = os.path.basename(self.getDLocation(largeFile=True))
       
-      if statusFilename is None:
-         statusFilename = os.path.join(targetDir, 
-                                       'occ_{}.status'.format(self.getId()))
-
       # If already completed
       if JobStatus.finished(self.status):
          #touch directory then copy file
@@ -681,24 +677,20 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
          if self.processType == ProcessType.BISON_TAXA_OCCURRENCE:
             occCmd = BisonPointsCommand(self.getRawDLocation(), outFile, 
-                                        bigFile, POINT_COUNT_MAX, 
-                                        statusFname=statusFilename)
+                                        bigFile, POINT_COUNT_MAX)
          elif self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
             occCmd = GbifPointsCommand(self.getRawDLocation(), self.queryCount, 
-                                       outFile, bigFile, POINT_COUNT_MAX, 
-                                       statusFname=statusFilename)
+                                       outFile, bigFile, POINT_COUNT_MAX)
          elif self.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
             # TODO: This is a hack using canoncial name instead of GBIFTaxonId
             #          for iDigBio
             name = self.getScientificName().canonicalName
             occCmd = IdigbioPointsCommand('\"{}\"'.format(name),
-                                          outFile, bigFile, POINT_COUNT_MAX, 
-                                          statusFname=statusFilename)
+                                          outFile, bigFile, POINT_COUNT_MAX)
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
             occCmd = UserPointsCommand(self.getRawDLocation(),
                                        self.rawMetaDLocation, outFile, bigFile, 
-                                       POINT_COUNT_MAX, 
-                                       statusFname=statusFilename)
+                                       POINT_COUNT_MAX)
          else:
             raise Exception, 'Unknown point process type: {}'.format(
                                                               self.processType)

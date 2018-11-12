@@ -1,34 +1,19 @@
+"""Module containing MaxEnt constants
 """
-@summary: Module containing MaxEnt constants
+# TODO: Remove or resolve with LmCompute/common/lmconstants
+MAXENT_MODEL_TOOL = 'density.MaxEnt'
+MAXENT_PROJECT_TOOL = 'density.Project'
+MAXENT_CONVERT_TOOL = 'density.Convert'
+MAXENT_VERSION = '3.4.1'
 
-@author: CJ Grady
-@version: 4.0.0
-@status: beta
+DEFAULT_MAXENT_OPTIONS = [
+   'nowarnings',
+   'nocache',
+   'autorun',
+   '-z'
+]
 
-@license: gpl2
-@copyright: Copyright (C) 2018, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
-"""
-
-PARAMETERS = {
+DEFAULT_MAXENT_PARAMETERS = {
    'addallsamplestobackground': {
       'default' : 'true',
       'process' : lambda x: str(bool(int(x))).lower()
@@ -60,17 +45,17 @@ PARAMETERS = {
    'applythresholdrule' : {
       'default' : "'None'",
       'options' : {
-                   '0' : "'None'",
-                   '1' : "'Fixed cumulative value 1'",
-                   '2' : "'Fixed cumulative value 5'",
-                   '3' : "'Fixed cumulative value 10'",
-                   '4' : "'Minimum training presence'",
-                   '5' : "'10 percentile training presence'",
-                   '6' : "'Equal training sensitivity and specificity'",
-                   '7' : "'Maximum training sensitivity plus specificity'",
-                   '8' : "'Equal test sensitivity and specificity'",
-                   '9' : "'Maximum test sensitivity plus specificity'",
-                   '10' : "'Equate entropy of thresholded and origial distributions'"
+                   0 : "'None'",
+                   1 : "'Fixed cumulative value 1'",
+                   2 : "'Fixed cumulative value 5'",
+                   3 : "'Fixed cumulative value 10'",
+                   4 : "'Minimum training presence'",
+                   5 : "'10 percentile training presence'",
+                   6 : "'Equal training sensitivity and specificity'",
+                   7 : "'Maximum training sensitivity plus specificity'",
+                   8 : "'Equal test sensitivity and specificity'",
+                   9 : "'Maximum test sensitivity plus specificity'",
+                   10 : "'Equate entropy of thresholded and origial distributions'"
                   },
       'process' : lambda x: x
    },
@@ -186,10 +171,10 @@ PARAMETERS = {
    'outputformat': {
       'default' : 'logistic',
       'options' : {
-                   '0' : 'raw',
-                   '1' : 'logistic',
-                   '2' : 'cumulative',
-                   '3' : 'cloglog'
+                   0 : 'raw',
+                   1 : 'logistic',
+                   2 : 'cumulative',
+                   3 : 'cloglog'
                   },
       'process' : lambda x: x
    },
@@ -240,9 +225,9 @@ PARAMETERS = {
    'replicatetype': {
       'default' : 'crossvalidate',
       'options' : {
-                   '0' : 'crossvalidate',
-                   '1' : 'bootstrap',
-                   '2' : 'subsample'
+                   0 : 'crossvalidate',
+                   1 : 'bootstrap',
+                   2 : 'subsample'
                   },
       'process' : lambda x: x
    },

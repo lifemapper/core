@@ -461,6 +461,7 @@ class SDMProjection(_ProjectionType, Raster):
       @summary: Return a file name for algorithm parameters JSON.  Write if 
                    necessary
       @param algorithm: An algorithm object
+      @deprecated: Remove this
       """
       # This is a list of algorithm information that will be used for hashing
       algoInfo = []

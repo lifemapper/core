@@ -70,5 +70,3 @@ MDL_TOOL = 'density.MaxEnt'
 PRJ_TOOL = 'density.Project'
 CONVERT_TOOL ='density.Convert'
 ME_VERSION = '3.3.3k'
-
-   
