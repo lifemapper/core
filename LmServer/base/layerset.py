@@ -423,11 +423,10 @@ class MapLayerSet(_LayerSet, ServiceObject):
             try:
                 self._writeBaseMap(mapstr)
             except Exception, e:
-                raise LMError('Failed to write %s: %s' % (self._mapFilename, str(e)))
+                raise LMError('Failed to write {}; {}'.format(self._mapFilename, e))
 
     # ...............................................
     def _writeBaseMap(self, mapstr):
-        dir = os.path.dirname(self._mapFilename)
         self.readyFilename(self._mapFilename, overwrite=True)
         
         try:
@@ -435,9 +434,9 @@ class MapLayerSet(_LayerSet, ServiceObject):
             # make sure that group is set correctly
             f.write(mapstr)
             f.close()
-            print('Wrote %s' % (self._mapFilename))
+            print('Wrote {}'.format((self._mapFilename)))
         except Exception, e:
-            raise LMError('Failed to write %s; %s' % (self._mapFilename, str(e)))
+            raise LMError('Failed to write {}; {}'.format(self._mapFilename, e))
       
     # ...............................................
     def _getBaseMap(self, fname):
@@ -447,7 +446,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
             map = f.read()
             f.close()
         except Exception, e:
-            raise LMError('Failed to read %s' % fname)
+            raise LMError('Failed to read {}; {}'.format(fname, e))
         return map
          
 # ...............................................
@@ -492,15 +491,14 @@ class MapLayerSet(_LayerSet, ServiceObject):
         mapprj = self._createProjectionInfo(self.epsgcode)
         mapstr = mapstr.replace('##_PROJECTION_##',  mapprj)
         
-        # Mapserver 5.6 & 6.0
-        meta = ''
-        meta = '\n'.join([meta, '      METADATA'])
-        meta = '\n'.join([meta, '         ows_srs   \"epsg:%s\"' % self.epsgcode])
-        meta = '\n'.join([meta, '         ows_enable_request   \"*\"'])
-        meta = '\n'.join([meta, '         ows_label   \"%s\"' % label])
-        meta = '\n'.join([meta, '         ows_title   \"%s\"' % self.title])
-        meta = '\n'.join([meta, '         ows_onlineresource   \"%s\"' % onlineUrl])
-        meta = '\n'.join([meta, '      END'])
+        parts = ['      METADATA', 
+                 '         ows_srs   \"epsg:{}\"'.format(self.epsgcode),
+                 '         ows_enable_request   \"*\"', 
+                 '         ows_label   \"{}\"'.format(label),
+                 '         ows_title   \"{}\"'.format(self.title),
+                 '         ows_onlineresource   \"{}\"'.format(onlineUrl),
+                 '      END']
+        meta = '\n'.join(parts)
         
         mapstr = mapstr.replace('##_MAP_METADATA_##', meta)
         return mapstr
@@ -552,7 +550,6 @@ class MapLayerSet(_LayerSet, ServiceObject):
         if dataspecs: 
             proj = self._createProjectionInfo(sdlLyr.epsgcode)
             
-            subsetFname = None                      
             meta = self._getLayerMetadata(sdlLyr, metalines=attMeta, 
                                           isVector=True)
             if (sdlLyr.ogrType == ogr.wkbPoint 
@@ -576,14 +573,13 @@ class MapLayerSet(_LayerSet, ServiceObject):
     def _createRasterLayer(self, sdlLyr, paletteName):
         dataspecs = self._getRasterDataSpecs(sdlLyr, paletteName)
         proj = self._createProjectionInfo(sdlLyr.epsgcode)
-        rasterMetadata = [# following 3 required in MS 6.0+
-                          'wcs_label  \"%s\"' % sdlLyr.name,
-                          'wcs_rangeset_name  \"%s\"' % sdlLyr.name,
-                          'wcs_rangeset_label \"%s\"' % sdlLyr.name]
+        rasterMetadata = ['wcs_label  \"{}\"'.format(sdlLyr.name),
+                          'wcs_rangeset_name  \"{}\"'.format(sdlLyr.name),
+                          'wcs_rangeset_label \"{}\"'.format(sdlLyr.name)]
         # TODO: Where/how is this set?? 
         #       if sdlLyr.nodataVal is not None:
-        #          rasterMetadata.append('rangeset_nullvalue  %s' 
-        #                                % str(sdlLyr.nodataVal))
+        #          rasterMetadata.append('rangeset_nullvalue  {}' 
+        #                               .format(str(sdlLyr.nodataVal))
            
         meta = self._getLayerMetadata(sdlLyr, metalines=rasterMetadata)
         
@@ -594,16 +590,18 @@ class MapLayerSet(_LayerSet, ServiceObject):
     def _createLayer(self, sdlLyr, dataspecs, proj, meta, cls=None):
         lyr = ''
         if dataspecs:
-            lyr = '\n'.join([lyr, '   LAYER'])
-            lyr = '\n'.join([lyr, '      NAME  \"%s\"' % sdlLyr.name])
-            lyr = '\n'.join([lyr, '      TYPE  %s' % self._getMSText(sdlLyr)])
-            lyr = '\n'.join([lyr, '      STATUS  OFF'])
-            lyr = '\n'.join([lyr, '      OPACITY 100'])
-            #          lyr = '\n'.join([lyr, '      DUMP  TRUE'])
+            parts = ['   LAYER',
+                     '      NAME  \"{}\"'.format(sdlLyr.name),
+                     '      TYPE  {}'.format(self._getMSText(sdlLyr)),
+                     '      STATUS  OFF',
+                     '      OPACITY 100',
+#                      '      DUMP  TRUE'
+                     ]
+            lyr = '\n'.join(parts)
             
             ext = sdlLyr.getSSVExtentString()
             if ext is not None:
-               lyr = '\n'.join([lyr, '      EXTENT  %s' % ext])
+                lyr = '\n'.join([lyr, '      EXTENT  {}'.format(ext)])
             
             lyr = '\n'.join([lyr, proj])
             lyr = '\n'.join([lyr, meta])
@@ -619,106 +617,103 @@ class MapLayerSet(_LayerSet, ServiceObject):
         fname = os.path.join(IMAGE_PATH, BLUE_MARBLE_IMAGE)
         boundstr = LMSpatialObject.getExtentAsString(DEFAULT_GLOBAL_EXTENT, 
                                                      separator='  ')
-        lyr = ''
-        lyr = '\n'.join([lyr, '   LAYER'])
-        lyr = '\n'.join([lyr, '      NAME  bmng'])
-        lyr = '\n'.join([lyr, '      TYPE  RASTER'])
-        lyr = '\n'.join([lyr, '      DATA  \"%s\"' % fname])
-        lyr = '\n'.join([lyr, '      STATUS  OFF'])
-        #       lyr = '\n'.join([lyr, '      DUMP  TRUE'])
-        lyr = '\n'.join([lyr, '      EXTENT  {}'.format(boundstr)]) 
-        lyr = '\n'.join([lyr, '      METADATA'])
-        lyr = '\n'.join([lyr, '         ows_name   \"NASA blue marble\"'])
-        lyr = '\n'.join([lyr, '         ows_title  \"NASA Blue Marble Next Generation\"'])
-        lyr = '\n'.join([lyr, '         author     \"NASA\"'])
-        lyr = '\n'.join([lyr, '      END'])
-        lyr = '\n'.join([lyr, '   END'])
+        parts = ['   LAYER',
+                 '      NAME  bmng',
+                 '      TYPE  RASTER',
+                 '      DATA  \"{}\"'.format(fname),
+                 '      STATUS  OFF',
+                 '      EXTENT  {}'.format(boundstr),
+                 '      METADATA',
+                 '         ows_name   \"NASA blue marble\"',
+                 '         ows_title  \"NASA Blue Marble Next Generation\"',
+                 '         author     \"NASA\"',
+                 '      END',
+                 '   END']
+        lyr = '\n'.join(parts)
         return lyr
 
     # ...............................................
     def _createClass(self, name=None, styles=[], useCTClassGroups=False):
-        cls = ''
-        cls = '\n'.join([cls, '      CLASS'])
+        parts = ['      CLASS']
         if name is not None:
-            cls = '\n'.join([cls, '         NAME   %s' % name])
+            parts.append('         NAME   {}'.format(name))
         if useCTClassGroups:
-            cls = '\n'.join([cls, '         GROUP   %s' % name])
-        for stl in styles:
-            cls = '\n'.join([cls, stl])
-        cls = '\n'.join([cls, '      END'])
+            parts.append('         GROUP   {}'.format(name))
+        parts.extend(styles)
+        parts.append('      END')
+        cls = '\n'.join(parts)
         return cls
       
     # ...............................................
     def _createStyle(self, symbol, size, colorstr=None, outlinecolorstr=None):
-        style = ''  
-        style = '\n'.join([style, '         STYLE' ])
+        parts = ['         STYLE' ]
         # if NOT polygon
         if symbol is not None:
-            style = '\n'.join([style, '            SYMBOL   \"%s\"' % symbol])
-            style = '\n'.join([style, '            SIZE   %d' % size])
+            parts.extend(['            SYMBOL   \"{}\"'.format(symbol),
+                          '            SIZE   {}'.format(size)])
         else:
-            style = '\n'.join([style, '            WIDTH   %d' % size])
+            parts.append('            WIDTH   {}'.format(size))
            
         if colorstr is not None:
             (r, g, b) = self._HTMLColorToRGB(colorstr)
-            style = '\n'.join([style, '            COLOR   %d  %d  %d' % (r, g, b) ])
+            parts.append('            COLOR   {}  {}  {}'.format(r, g, b))
            
         if outlinecolorstr is not None:
             (r, g, b) = self._HTMLColorToRGB(outlinecolorstr)
-            style = '\n'.join([style, '            OUTLINECOLOR   %d  %d  %d' % (r, g, b) ])
-        style = '\n'.join([style, '         END' ])
+            parts.append('            OUTLINECOLOR   {}  {}  {}'.format(r, g, b))
+        parts.append('         END' )
+        style = '\n'.join(parts)
         return style
 
     # ...............................................
     def _createStyleClasses(self, name, styles):
-        classes = ''
+        parts = []
         for clsgroup, style in styles.iteritems():
             # first class is default 
-            if len(classes) == 0: 
-               classes = '\n'.join([classes, '      CLASSGROUP \"%s\"' % clsgroup])
-            classes = '\n'.join([classes, '      CLASS'])
-            classes = '\n'.join([classes, '         NAME   \"%s\"' % name])
-            classes = '\n'.join([classes, '         GROUP   \"%s\"' % clsgroup])
-            classes = '\n'.join([classes, '         STYLE'])
-            classes = '\n'.join([classes, style])
-            classes = '\n'.join([classes, '         END'])
-            classes = '\n'.join([classes, '      END'])
+            if len(parts) == 0: 
+                parts.append('      CLASSGROUP \"{}\"'.format(clsgroup))
+            parts.extend(['         CLASS',
+                          '            NAME   \"{}\"'.format(name),
+                          '            GROUP   \"{}\"'.format(clsgroup),
+                          '            STYLE', style,
+                          '         END'])
+        if len(parts) > 0: 
+            parts.append('      END')
+        classes = '\n'.join(parts)
         return classes
 
     # ...............................................
     def _createProjectionInfo(self, epsgcode):
-        prj = ''
-        prj = '\n'.join([prj, '      PROJECTION'])
         if epsgcode == '4326':
-            prj = '\n'.join([prj, '         \"proj=longlat"'])
-            prj = '\n'.join([prj, '         \"ellps=WGS84"'])
-            prj = '\n'.join([prj, '         \"datum=WGS84"'])
-            prj = '\n'.join([prj, '         \"no_defs"'])
+            parts = ['      PROJECTION',
+                     '         \"proj=longlat\"', 
+                     '         \"ellps=WGS84\"', 
+                     '         \"datum=WGS84\"', 
+                     '         \"no_defs\"',
+                     '      END']
         else:
-            prj = '\n'.join([prj, '         \"init=epsg:%s\"' % epsgcode])
-        prj = '\n'.join([prj, '      END'])
+            parts = ['      PROJECTION',
+                     '         \"init=epsg:{}\"'.format(epsgcode),
+                     '      END']
+        prj = '\n'.join(parts)
         return prj
 
     # ...............................................
     def _getLayerMetadata(self, sdlLyr, metalines=[], isVector=False):
-        meta = ''
-        meta = '\n'.join([meta, '      METADATA'])
-        try:
-            lyrTitle = sdlLyr.lyrMetadata[ServiceObject.META_TITLE]
-        except:
-            lyrTitle = None
-        # DUMP True deprecated in Mapserver 6.0, replaced by
+        parts = ['      METADATA']
         if isVector:
-            meta = '\n'.join([meta, '         gml_geometries \"geom\"'])
-            meta = '\n'.join([meta, '         gml_geom_type \"point\"'])
-            meta = '\n'.join([meta, '         gml_include_items \"all\"'])
-        # ows_ used in metadata for multiple OGC services
-        meta = '\n'.join([meta, '         ows_name  \"%s\"' % sdlLyr.name])
-        if lyrTitle is not None:
-            meta = '\n'.join([meta, '         ows_title  \"%s\"' % lyrTitle])
-        for line in metalines:
-            meta = '\n'.join([meta, '         %s' % line])
-        meta = '\n'.join([meta, '      END'])
+            parts.extend(['         gml_geometries \"geom\"',
+                          '         gml_geom_type \"point\"',
+                          '         gml_include_items \"all\"'])
+        parts.append('         ows_name  \"{}\"'.format(sdlLyr.name))
+        try:
+            ltitle = sdlLyr.lyrMetadata[ServiceObject.META_TITLE]
+            parts.append('         ows_title  \"{}\"'.format(ltitle))
+        except:
+            pass
+        parts.extend(metalines)
+        parts.append('      END')
+        meta = '\n'.join(parts)
         return meta
       
     # ...............................................
@@ -735,11 +730,12 @@ class MapLayerSet(_LayerSet, ServiceObject):
             dlocation = sdlLyr.getDLocation()
            
         if dlocation is not None and os.path.exists(dlocation):
-            dataspecs = '      CONNECTIONTYPE  OGR'
-            dataspecs = '\n'.join([dataspecs, '      CONNECTION  \"%s\"' % dlocation])
-            dataspecs = '\n'.join([dataspecs, '      TEMPLATE \"%s\"' % QUERY_TEMPLATE])
-            dataspecs = '\n'.join([dataspecs, '      TOLERANCE  %d' % QUERY_TOLERANCE])
-            dataspecs = '\n'.join([dataspecs, '      TOLERANCEUNITS  pixels'])
+            parts = ['      CONNECTIONTYPE  OGR',
+                     '      CONNECTION  \"{}\"'.format(dlocation),
+                     '      TEMPLATE \"{}\"'.format(QUERY_TEMPLATE),
+                     '      TOLERANCE  {}'.format(QUERY_TOLERANCE),
+                     '      TOLERANCEUNITS  pixels']
+            dataspecs = '\n'.join(parts)
         return dataspecs
 
     # ...............................................
@@ -747,16 +743,14 @@ class MapLayerSet(_LayerSet, ServiceObject):
         dataspecs = None
         dlocation = sdlLyr.getDLocation()
         if dlocation is not None and os.path.exists(dlocation):
-            dataspecs = '      DATA  \"%s\"' % dlocation
+            parts = ['      DATA  \"{}\"'.format(dlocation)]
             if sdlLyr.mapUnits is not None:
-                dataspecs = '\n'.join([dataspecs, '      UNITS  %s' % 
-                                      sdlLyr.mapUnits.upper()])
-            dataspecs = '\n'.join([dataspecs, '      OFFSITE  0  0  0'])
+                parts.append('      UNITS  {}'.format(sdlLyr.mapUnits.upper()))
+            parts.append('      OFFSITE  0  0  0')
             
             if sdlLyr.nodataVal is None:
                 sdlLyr.populateStats()
-            dataspecs = '\n'.join([dataspecs, '      PROCESSING \"NODATA=%s\"' 
-                                   % str(sdlLyr.nodataVal)])
+            parts.append('      PROCESSING \"NODATA={}\"'.format(sdlLyr.nodataVal))
             # SDM projections are always scaled b/w 0 and 100
             if isinstance(sdlLyr, SDMProjection):
                 vmin = SCALE_PROJECTION_MINIMUM + 1
@@ -765,7 +759,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 vmin = sdlLyr.minVal
                 vmax = sdlLyr.maxVal
             rampClass = self._createColorRamp(vmin, vmax, paletteName)
-            dataspecs = '\n'.join([dataspecs, rampClass])
+            parts.append(rampClass)
+            dataspecs = '\n'.join(parts)
 
 #          # Continuous data
 #          if not(sdlLyr.getIsDiscreteData()):
@@ -784,9 +779,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
     def _getDiscreteClasses(self, vals, paletteName):
         if vals is not None:
             bins = self._createDiscreteBins(vals, paletteName)
-            classdata = ''
-            for b in bins:
-                classdata = '\n'.join([classdata, b])
+            classdata = '\n'.join(bins)
             return classdata
         else:
             return None
@@ -849,7 +842,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 endColor = '#00FF00'
         elif palettename  == 'greenred':
             startColor = '#00FF00'
-            endColor == '#FF0000'
+            endColor = '#FF0000'
             
         r, g, b = startColor[1:3], startColor[3:5], startColor[5:]
         r1, g1, b1 = [int(n, 16) for n in (r, g, b)]
@@ -868,16 +861,16 @@ class MapLayerSet(_LayerSet, ServiceObject):
             colorstring = '#' + colorstring
         if len(colorstring) == 7:
             if colorstring[0] != '#':
-                print('input %s is not in #RRGGBB format' % colorstring)
+                print('input {} is not in #RRGGBB format'.format(colorstring))
                 return None
            
             for i in range(len(colorstring)):
                 if i > 0:
                     if not(colorstring[i].isdigit()) and validChars.count(colorstring[i]) == 0:
-                        print('input %s is not a valid hex color' % colorstring)
+                        print('input {} is not a valid hex color'.format(colorstring))
                         return None
         else:
-            print('input %s is not in #RRGGBB format' % colorstring)
+            print('input {} is not in #RRGGBB format'.format(colorstring))
             return None
         return colorstring
 
@@ -887,8 +880,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
         numBins = len(vals) + 1
         palette = colorPalette(n=numBins, ptype=paletteName)
         for i in range(len(vals)):
-            expr = '([pixel] = %g)' % (vals[i])
-            name = 'Value = %g' % (vals[i])
+            expr = '([pixel] = {:g})'.format(vals[i])
+            name = 'Value = {:g}'.format(vals[i])
             # skip the first color, so that first class is not black
             bins.append(self._createClassBin(expr, name, palette[i+1]))
         return bins
@@ -896,17 +889,18 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # ...............................................
     def _createColorRamp(self, vmin, vmax, paletteName='gray'):
         rgbs = self._paletteToRGBStartEnd(paletteName)
-        colorstr = '%s %s %s %s %s %s' % (rgbs[0],rgbs[1],rgbs[2], rgbs[3],rgbs[4],rgbs[5])
-        ramp = ''
-        ramp = '\n'.join([ramp, '      CLASS'])
-        ramp = '\n'.join([ramp, '         EXPRESSION ([pixel] >= %s AND [pixel] <= %s)' 
-                         % (str(vmin), str(vmax))])
-        ramp = '\n'.join([ramp, '         STYLE'])
-        ramp = '\n'.join([ramp, '            COLORRANGE %s' % colorstr])
-        ramp = '\n'.join([ramp, '            DATARANGE %s  %s' % (str(vmin), str(vmax))])
-        ramp = '\n'.join([ramp, '            RANGEITEM \"pixel\"'])
-        ramp = '\n'.join([ramp, '         END'])      
-        ramp = '\n'.join([ramp, '      END'])
+        colorstr = '{} {} {} {} {} {}'.format(rgbs[0], rgbs[1], rgbs[2], 
+                                              rgbs[3], rgbs[4], rgbs[5])
+        parts = ['      CLASS',
+                 '         EXPRESSION ([pixel] >= {} AND [pixel] <= {})'.format(vmin, vmax),
+                 '         STYLE', 
+                 '            COLORRANGE {}'.format(colorstr),
+                 '            DATARANGE {}  {}'.format(vmin, vmax),
+                 '            RANGEITEM \"pixel\"',
+                 '         END',
+                 '      END']
+                                            
+        ramp = '\n'.join(parts)
         return ramp
 
 # ...............................................
@@ -947,25 +941,25 @@ class MapLayerSet(_LayerSet, ServiceObject):
             lo = vmin
            
         if hi is None: 
-            expr = '([pixel] >= %g AND [pixel] <= %g)' % (lo, vmax)
-            name = '%g <= Value <= %g' % (lo, vmax)
+            expr = '([pixel] >= {:g} AND [pixel] <= {:g})'.format(lo, vmax)
+            name = '{:g} <= Value <= {:g}'.format(lo, vmax)
         else:
-            expr = '([pixel] >= %g AND [pixel] < %g)' % (lo, hi)
-            name = '%g <= Value < %g' % (lo, hi) 
+            expr = '([pixel] >= {:g} AND [pixel] < {:g})'.format(lo, hi)
+            name = '{:g} <= Value < {:g}'.format(lo, hi) 
         
         return expr, name
 
     # ...............................................
     def _createClassBin(self, expr, name, clr):
-        rgbstr = '%s %s %s' % (clr[0],clr[1],clr[2])
-        bin = ''
-        bin = '\n'.join([bin, '      CLASS'])
-        bin = '\n'.join([bin, '         NAME \"%s\"' % name])
-        bin = '\n'.join([bin, '         EXPRESSION %s' % expr])
-        bin = '\n'.join([bin, '         STYLE'])
-        bin = '\n'.join([bin, '            COLOR %s' % rgbstr])
-        bin = '\n'.join([bin, '         END'])      
-        bin = '\n'.join([bin, '      END'])
+        rgbstr = '{} {} {}'.format(clr[0],clr[1],clr[2])
+        parts = ['      CLASS', 
+                 '         NAME \"{}\"'.format(name),
+                 '         EXPRESSION {}'.format(expr),
+                 '         STYLE',
+                 '            COLOR {}'.format(rgbstr),
+                 '         END',
+                 '      END']
+        bin = '\n'.join(parts)
         return bin
 
     # ...............................................
@@ -980,11 +974,11 @@ class MapLayerSet(_LayerSet, ServiceObject):
         try:
             src = gdal.Open(srcpath, gdalconst.GA_ReadOnly)
         except Exception, e:
-            print('Exception opening %s (%s)' % (srcpath,str(e)) )
+            print('Exception opening {} ({})'.format(srcpath, e))
             return (None, None, None, None)
         
         if src is None:
-            print('%s is not a valid image file' % srcpath )
+            print('{} is not a valid image file'.format(srcpath ))
             return (None, None, None, None)
         
         srcbnd = src.GetRasterBand(1)
