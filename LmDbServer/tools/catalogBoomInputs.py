@@ -1170,7 +1170,7 @@ class BOOMFiller(LMObject):
             lyrdir = os.path.dirname(boomGridset.getShapegrid().getDLocation())
             self._fixPermissions(dirs=[lyrdir])
             earl = EarlJr()
-            mfdir = earl.createDataPath(self.userId, LMFileType.SDM_MAKEFLOW_FILE)
+            mfdir = earl.createDataPath(self.userId, LMFileType.MF_DOCUMENT)
             self._fixPermissions(dirs=[mfdir])
             
             # If there is a tree, add db object

@@ -297,7 +297,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          if raw:
             ftype = LMFileType.OCCURRENCE_RAW_FILE
          elif makeflow:
-            ftype = LMFileType.SDM_MAKEFLOW_FILE
+            ftype = LMFileType.MF_DOCUMENT
          elif largeFile:
             ftype = LMFileType.OCCURRENCE_LARGE_FILE
          else:

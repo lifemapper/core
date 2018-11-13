@@ -383,7 +383,6 @@ class LMFileType:
     OCCURRENCE_FILE = 111
     OCCURRENCE_RAW_FILE = 112
     OCCURRENCE_LARGE_FILE = 114
-    SDM_MAKEFLOW_FILE = 113
     MODEL_REQUEST = 120
     MODEL_STATS = 121
     MODEL_RESULT = 122
@@ -441,7 +440,6 @@ class LMFileType:
                      LMFileType.OCCURRENCE_FILE, 
                      LMFileType.OCCURRENCE_RAW_FILE, 
                      LMFileType.OCCURRENCE_LARGE_FILE,
-                     LMFileType.SDM_MAKEFLOW_FILE, 
                      LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
                      LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT, 
                      LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
@@ -569,7 +567,6 @@ class FileFix:
               
               LMFileType.TMP_JSON: None,
               LMFileType.ENVIRONMENTAL_LAYER: None,
-              LMFileType.SDM_MAKEFLOW_FILE: OCC_NAME_PREFIX,
               LMFileType.OCCURRENCE_FILE: OCC_PREFIX,
               LMFileType.OCCURRENCE_RAW_FILE: OCC_PREFIX,
               LMFileType.OCCURRENCE_LARGE_FILE: 'big' + OCC_PREFIX,
@@ -629,7 +626,6 @@ class FileFix:
                  LMFileType.ENVIRONMENTAL_LAYER: LMFormat.GTIFF.ext,
                  LMFileType.SCENARIO_MAP: LMFormat.MAP.ext,
                  LMFileType.SDM_MAP: LMFormat.MAP.ext,
-                 LMFileType.SDM_MAKEFLOW_FILE: LMFormat.MAKEFLOW.ext,
                  LMFileType.OCCURRENCE_FILE: LMFormat.SHAPE.ext,
                  LMFileType.OCCURRENCE_RAW_FILE: LMFormat.CSV.ext,
                  LMFileType.OCCURRENCE_LARGE_FILE: LMFormat.SHAPE.ext,
