@@ -20,6 +20,7 @@ from LmCommon.common.lmconstants import (
 #from LmDbServer.boom.boominput import ArchiveFiller
 #from LmDbServer.boom.initboom import initBoom
 from LmDbServer.tools.catalogBoomInputs import BOOMFiller
+from LmDbServer.common.lmconstants import SpeciesDatasource
 from LmDbServer.tools.catalogScenPkg import SPFiller
 from LmServer.common.lmconstants import TEMP_PATH, Priority, ENV_DATA_PATH
 from LmServer.common.localconstants import PUBLIC_USER
@@ -296,7 +297,8 @@ class BoomPoster(object):
                     outF.write('{}\n'.format(occId))
             self.config.set(SERVER_BOOM_HEADING, 'OCCURRENCE_ID_FILENAME', 
                                  occFname)
-            self.config.set(SERVER_BOOM_HEADING, 'DATASOURCE', 'EXISTING')
+            self.config.set(
+                SERVER_BOOM_HEADING, 'DATASOURCE', SpeciesDatasource.EXISTING)
         elif occJson.has_key('taxon_ids'):
             tax_id_filename = self._get_temp_filename(LMFormat.CSV.ext)
             with open(tax_id_filename, 'w') as out_f:
@@ -304,7 +306,8 @@ class BoomPoster(object):
                     out_f.write('{}\n'.format(tax_id))
             self.config.set(
                 SERVER_BOOM_HEADING, 'TAXON_ID_FILENAME', tax_id_filename)
-            self.config.set(SERVER_BOOM_HEADING, 'DATASOURCE', 'TAXON_IDS')
+            self.config.set(
+                SERVER_BOOM_HEADING, 'DATASOURCE', SpeciesDatasource.TAXON_IDS)
         elif occJson.has_key('taxon_names'):
             tax_names_filename = self._get_temp_filename(LMFormat.CSV.ext)
             with open(tax_names_filename, 'w') as out_f:
@@ -312,15 +315,18 @@ class BoomPoster(object):
                     out_f.write('{}\n'.format(tax_name))
             self.config.set(
                 SERVER_BOOM_HEADING, 'TAXON_NAME_FILENAME', tax_names_filename)
-            self.config.set(SERVER_BOOM_HEADING, 'DATASOURCE', 'TAXON_NAMES')
+            self.config.set(
+                SERVER_BOOM_HEADING, 'DATASOURCE',
+                SpeciesDatasource.TAXON_NAMES)
         else:
             pointsFilename = occJson['points_filename']
             #TODO: Full file path?
-            self.config.set(SERVER_BOOM_HEADING, 'DATASOURCE', 'USER')
-            self.config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA', 
-                                 pointsFilename)
-            self.config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA_DELIMITER', 
-                                 ',')
+            self.config.set(
+                SERVER_BOOM_HEADING, 'DATASOURCE', SpeciesDatasource.USER)
+            self.config.set(
+                SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA', pointsFilename)
+            self.config.set(
+                SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA_DELIMITER', ',')
             if occJson.has_key('point_count_min'):
                 self.config.set(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN', 
                                      occJson['point_count_min'])
