@@ -372,6 +372,14 @@ class MapLayerSet(_LayerSet, ServiceObject):
     
     # ...............................................
     @property
+    def mapAbsolutePath(self):
+        pth = None
+        if self._mapFilename is not None:
+            pth, mapfname = os.path.split(self._mapFilename)
+        return pth
+    
+    # ...............................................
+    @property
     def mapName(self):
         mapname = None
         if self._mapFilename is not None:
@@ -455,6 +463,22 @@ class MapLayerSet(_LayerSet, ServiceObject):
         @summary Set map attributes on the map from the LayerSet
         @param mapstr: string for a mapserver mapfile to modify
         """
+        if self.epsgcode == DEFAULT_EPSG:
+            mbbox = DEFAULT_GLOBAL_EXTENT
+        else:
+            mbbox = self.unionBounds
+        boundstr = LMSpatialObject.getExtentAsString(mbbox, separator='  ')
+        mapprj = self._createProjectionInfo(self.epsgcode)
+        parts = ['  NAME        {}'.format(self.mapName),
+                 '  SHAPEPATH \"{}\"'.format(self.mapAbsolutePath()),
+                 '  EXTENT      {}'.format(boundstr),
+                 '  UNITS       {}'.format(self.mapUnits),
+                 '  SYMBOLSET \"{}\"'.format(SYMBOL_FILENAME),
+                 '  CONFIG \"PROJ_LIB\" \"{}\"'.format(mapprj)
+                ]
+        mapstuff = '\n'.join(parts)
+        mapstr = mapstr.replace('##_MAPSTUFF_##', mapstuff)      
+        
         if self.name.startswith(MapPrefix.SDM):
             label = 'Lifemapper Species Map Service'
         elif self.name.startswith(MapPrefix.USER):
@@ -465,41 +489,16 @@ class MapLayerSet(_LayerSet, ServiceObject):
             label = 'Lifemapper Ancillary Map Service'
         elif self.name.startswith(MapPrefix.RAD):
             label = 'Lifemapper RAD Map Service'
-#      elif self.name.lower() == SPECIES_SERVICENAME:
-#         label = 'Lifemapper Species Occurrence Service'
-#      elif self.name.lower() == PROJECTION_SERVICENAME:
-#         label = 'Lifemapper Species Habitat Projection Service'
         else:
             label = 'Lifemapper Data Service'
-
-        # changed this from self.name (which left 'scen_' prefix off scenarios)
-        mapstr = mapstr.replace('##_MAPNAME_##', self.mapName)      
-                                
-        if self.epsgcode == DEFAULT_EPSG:
-            mbbox = DEFAULT_GLOBAL_EXTENT
-        else:
-            mbbox = self.unionBounds
-        boundstr = LMSpatialObject.getExtentAsString(mbbox, separator='  ')
-        
-        mapstr = mapstr.replace('##_EXTENT_##', boundstr)
-        mapunits = self.mapUnits
-        mapstr = mapstr.replace('##_UNITS_##',  mapunits)
-        
-        mapstr = mapstr.replace('##_SYMBOLSET_##',  SYMBOL_FILENAME)
-        mapstr = mapstr.replace('##_PROJLIB_##',  PROJ_LIB)
-        
-        mapprj = self._createProjectionInfo(self.epsgcode)
-        mapstr = mapstr.replace('##_PROJECTION_##',  mapprj)
-        
         parts = ['      METADATA', 
-                 '         ows_srs   \"epsg:{}\"'.format(self.epsgcode),
+                 '         ows_srs     \"epsg:{}\"'.format(self.epsgcode),
                  '         ows_enable_request   \"*\"', 
                  '         ows_label   \"{}\"'.format(label),
                  '         ows_title   \"{}\"'.format(self.title),
                  '         ows_onlineresource   \"{}\"'.format(onlineUrl),
                  '      END']
         meta = '\n'.join(parts)
-        
         mapstr = mapstr.replace('##_MAP_METADATA_##', meta)
         return mapstr
 
@@ -717,6 +716,10 @@ class MapLayerSet(_LayerSet, ServiceObject):
         return meta
       
     # ...............................................
+    def _getRelativePath(self, dlocation):
+        os.path.relpath(dlocation, self.mapAbsolutePath)
+        
+    # ...............................................
     def _getVectorDataSpecs(self, sdlLyr):
         dataspecs = None
         # limit to 1000 features for archive point data
@@ -728,12 +731,14 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 dlocation = sdlLyr.getDLocation()
         else:
             dlocation = sdlLyr.getDLocation()
+            
            
         if dlocation is not None and os.path.exists(dlocation):
+            relpath = os.path.relpath(dlocation, self.mapAbsolutePath)
             parts = ['      CONNECTIONTYPE  OGR',
-                     '      CONNECTION  \"{}\"'.format(dlocation),
-                     '      TEMPLATE \"{}\"'.format(QUERY_TEMPLATE),
-                     '      TOLERANCE  {}'.format(QUERY_TOLERANCE),
+                     '      CONNECTION    \"{}\"'.format(relpath),
+                     '      TEMPLATE      \"{}\"'.format(QUERY_TEMPLATE),
+                     '      TOLERANCE       {}'.format(QUERY_TOLERANCE),
                      '      TOLERANCEUNITS  pixels']
             dataspecs = '\n'.join(parts)
         return dataspecs
@@ -743,7 +748,9 @@ class MapLayerSet(_LayerSet, ServiceObject):
         dataspecs = None
         dlocation = sdlLyr.getDLocation()
         if dlocation is not None and os.path.exists(dlocation):
-            parts = ['      DATA  \"{}\"'.format(dlocation)]
+            relpath = os.path.relpath(dlocation, self.mapAbsolutePath)
+            parts = ['      DATA  \"{}\"'.format(relpath)]
+            
             if sdlLyr.mapUnits is not None:
                 parts.append('      UNITS  {}'.format(sdlLyr.mapUnits.upper()))
             parts.append('      OFFSITE  0  0  0')
