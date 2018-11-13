@@ -54,71 +54,50 @@ class BoomPoster(object):
             archiveName = '{}_{}'.format(userId, gmt().mjd)
         self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', archiveName)
         
-        # Check for old parameters for backwards compatibility until Ben updates
-        if reqJson.has_key('algorithms') and \
-              reqJson.has_key('occurrenceSets') and \
-              reqJson.has_key('modelScenario') and \
-              reqJson.has_key('projectionScenarios'):
-            # Old app did not allow for global PAMs
-            self.config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', False)
+        # NOTE: For this version, we will follow what is available from the 
+        #             .ini file and not let it get too fancy / complicated.  We
+        #             can add functionality later to connect different parts as 
+        #             needed but for now they will either be present or not
+        
+        # Look for occurrence set specification at top level
+        occSec = self._get_json_section(reqJson, 'occurrence')
+        if occSec:
+            self._process_occurrence_sets(occSec)
+        
+        # Look for scenario package information at top level
+        scnSec = self._get_json_section(reqJson, 'scenario_package')
+        if scnSec:
+            self._process_scenario_package(scnSec)
             
-            if reqJson.has_key('algorithms'):
-                self._old_process_algorithms(reqJson['algorithms'])
-                
-            if reqJson.has_key('occurrenceSets'):
-                self._old_process_occurrence_sets(reqJson['occurrenceSets'])
-                
-            if reqJson.has_key('modelScenario'):
-                self._old_process_model_scenario(reqJson['modelScenario'])
-                
-            if reqJson.has_key('projectionScenarios'):
-                self._old_process_projection_scenarios(reqJson['projectionScenarios'])
-        else:
-            
-            # NOTE: For this version, we will follow what is available from the 
-            #             .ini file and not let it get too fancy / complicated.  We
-            #             can add functionality later to connect different parts as 
-            #             needed but for now they will either be present or not
-            
-            # Look for occurrence set specification at top level
-            occSec = self._get_json_section(reqJson, 'occurrence')
-            if occSec:
-                self._process_occurrence_sets(occSec)
-            
-            # Look for scenario package information at top level
-            scnSec = self._get_json_section(reqJson, 'scenario_package')
-            if scnSec:
-                self._process_scenario_package(scnSec)
-                
-            # Look for global pam information
-            globalPamSec = self._get_json_section(reqJson, 'global_pam')
-            if globalPamSec:
-                self._process_global_pam(globalPamSec)
+        # Look for global pam information
+        globalPamSec = self._get_json_section(reqJson, 'global_pam')
+        if globalPamSec:
+            self._process_global_pam(globalPamSec)
 
-            # Look for tree information
-            treeSec = self._get_json_section(reqJson, 'tree')
-            if treeSec:
-                self._process_tree(treeSec)
-                
-            # Look for SDM options (masks / scaling / etc)
-            sdmSec = self._get_json_section(reqJson, 'sdm')
-            if sdmSec:
-                self._process_sdm(sdmSec)
+        # Look for tree information
+        treeSec = self._get_json_section(reqJson, 'tree')
+        if treeSec:
+            self._process_tree(treeSec)
             
-            # PAM stats
-            pamStatsSec = self._get_json_section(reqJson, 'pam_stats')
-            if pamStatsSec:
-                self._process_pam_stats(pamStatsSec)
-                
-            # MCPA
-            mcpaSec = self._get_json_section(reqJson, 'mcpa')
-            if mcpaSec:
-                self._process_mcpa(mcpaSec)
+        # Look for SDM options (masks / scaling / etc)
+        sdmSec = self._get_json_section(reqJson, 'sdm')
+        if sdmSec:
+            self._process_sdm(sdmSec)
+        
+        # PAM stats
+        pamStatsSec = self._get_json_section(reqJson, 'pam_stats')
+        if pamStatsSec:
+            self._process_pam_stats(pamStatsSec)
             
-            
-            # TODO: Masks
-            # TODO: Pre / post processing (scaling)
-            # TODO: Randomizations
+        # MCPA
+        mcpaSec = self._get_json_section(reqJson, 'mcpa')
+        if mcpaSec:
+            self._process_mcpa(mcpaSec)
+        
+        
+        # TODO: Masks
+        # TODO: Pre / post processing (scaling)
+        # TODO: Randomizations
 
         
     
@@ -160,76 +139,6 @@ class BoomPoster(object):
         """
         return os.path.join(TEMP_PATH, 'file_{}{}'.format(
             random.randint(0, 100000), ext))
-    
-    # ................................
-    def _old_process_algorithms(self, algoJson):
-        """
-        @summary: Process algorithms in request
-        """
-        i = 0
-        for algo in algoJson:
-            algoSection = 'ALGORITHM - {}'.format(i)
-            self.config.add_section(algoSection)
-            self.config.set(algoSection, 'CODE', algo['code'])
-            for param in algo['parameters'].keys():
-                self.config.set(algoSection, param.lower(), algo['parameters'][param])
-            i += 1
-    
-    # ................................
-    def _old_process_occurrence_sets(self, occSetJson):
-        """
-        @summary: Process occurrence sets in request
-        @todo: GBIF, iDigBio, Bison, etc
-        """
-        occIds = []
-        
-        for occSection in occSetJson:
-            if occSection.has_key('occurrenceSetId'):
-                occIds.append(occSection['occurrenceSetId'])
-            elif occSection.has_key('occurrenceData'):
-                # Process user csv upload
-                # Write the CSV data
-                occFname = self._get_temp_filename(LMFormat.CSV.ext)
-                with open(occFname, 'w') as outF:
-                    outF.write(occSection['occurrenceData'])
-                # Set the config
-                self.config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA')
-                # Look for metadata
-                metaFname = '{}{}'.format(os.path.splitext(occFname), 
-                                                  LMFormat.METADATA.ext)
-                if occSection.has_key('occurrenceMeta'):
-                    with open(metaFname, 'w') as metaOut:
-                        json.dump(occSection['occurrenceMeta'], metaOut, indent=3)
-                    
-                    
-        if len(occIds) > 0:
-            occFname = self._get_temp_filename(LMFormat.CSV.ext)
-            with open(occFname, 'w') as outF:
-                for occId in occIds:
-                    outF.write('{}\n'.format(occId))
-            self.config.set(SERVER_BOOM_HEADING, 'OCCURRENCE_ID_FILENAME', 
-                                 occFname)
-            self.config.set(SERVER_BOOM_HEADING, 'DATASOURCE', 'EXISTING')
-    
-    # ................................
-    def _old_process_model_scenario(self, scnJson):
-        """
-        """
-        scnCode = scnJson['scenarioCode']
-        self.config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MODEL_SCENARIO', 
-                             scnCode)
-    
-    # ................................
-    def _old_process_projection_scenarios(self, scnsJson):
-        """
-        @todo: Process layers package
-        """
-        prjScnCodes = []
-        for scn in scnsJson:
-            prjScnCodes.append(scn['scenarioCode'])
-        
-        self.config.set(SERVER_BOOM_HEADING, 
-                             'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', ','.join(prjScnCodes))
     
     # ................................
     def _process_global_pam(self, globalPamJson):
