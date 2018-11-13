@@ -405,7 +405,6 @@ class LMFileType:
     CALCS = 243 # New rad calcs
     RAD_MAP = 250
     # RAD statistic matrices
-    OBSERVED_CALC = 260 
     SITES_OBSERVED = 261
     SPECIES_OBSERVED = 262
     DIVERSITY_OBSERVED = 263
@@ -425,20 +424,6 @@ class LMFileType:
     MCPA_OUTPUTS = 324
     TREE = 325
    
-    # TODO: Consider removing these.  We only return one matrix with all of them
-    MCPA_BG_F_GLOBAL = 330 
-    MCPA_BG_F_SEMI = 331
-    MCPA_BG_OBS_ADJ_R_SQ = 332
-    MCPA_BG_OBS_PARTIAL = 333
-    MCPA_BG_RAND_F_GLOBAL = 334
-    MCPA_BG_RAND_F_PARTIAL = 335
-    MCPA_ENV_F_GLOBAL = 336
-    MCPA_ENV_F_SEMI = 337
-    MCPA_ENV_OBS_ADJ_R_SQ = 338
-    MCPA_ENV_OBS_PARTIAL = 339
-    MCPA_ENV_RAND_F_GLOBAL = 340
-    MCPA_ENV_RAND_F_PARTIAL = 341
-    
     GRIDSET_PACKAGE = 401
     
     USER_LAYER = 510
@@ -471,13 +456,7 @@ class LMFileType:
                      LMFileType.PAM, LMFileType.GRIM, 
                      LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
                      LMFileType.BIOGEO_HYPOTHESES, LMFileType.TREE,
-                     LMFileType.CALCS, LMFileType.MCPA_BG_F_GLOBAL,
-                     LMFileType.MCPA_BG_F_SEMI, LMFileType.MCPA_BG_OBS_ADJ_R_SQ,
-                     LMFileType.MCPA_BG_OBS_PARTIAL, LMFileType.MCPA_BG_RAND_F_GLOBAL,
-                     LMFileType.MCPA_BG_RAND_F_PARTIAL, LMFileType.MCPA_ENV_F_GLOBAL,
-                     LMFileType.MCPA_ENV_F_SEMI, LMFileType.MCPA_ENV_OBS_ADJ_R_SQ,
-                     LMFileType.MCPA_ENV_OBS_PARTIAL, LMFileType.MCPA_ENV_RAND_F_GLOBAL,
-                     LMFileType.MCPA_ENV_RAND_F_PARTIAL, LMFileType.OBSERVED_CALC, 
+                     LMFileType.CALCS, 
                      LMFileType.SITES_OBSERVED, LMFileType.SPECIES_OBSERVED,
                      LMFileType.DIVERSITY_OBSERVED, LMFileType.SCHLUTER_OBSERVED,
                      LMFileType.SPECIES_COV_OBSERVED, LMFileType.SITES_COV_OBSERVED,
@@ -519,15 +498,6 @@ class LMFileType:
         if rtype in [LMFileType.PAM, LMFileType.GRIM, LMFileType.BIOGEO_HYPOTHESES, 
                      LMFileType.TREE, LMFileType.PADDED_PAM, LMFileType.MCPA_OUTPUTS,
                      LMFileType.CALCS, 
-                     # TODO: CJG - Consider removing extra MCPA matrix types.  We
-                     #          only return one matrix with everything currently
-                     LMFileType.MCPA_BG_F_GLOBAL,
-                     LMFileType.MCPA_BG_F_SEMI, LMFileType.MCPA_BG_OBS_ADJ_R_SQ,
-                     LMFileType.MCPA_BG_OBS_PARTIAL, LMFileType.MCPA_BG_RAND_F_GLOBAL,
-                     LMFileType.MCPA_BG_RAND_F_PARTIAL, LMFileType.MCPA_ENV_F_GLOBAL,
-                     LMFileType.MCPA_ENV_F_SEMI, LMFileType.MCPA_ENV_OBS_ADJ_R_SQ,
-                     LMFileType.MCPA_ENV_OBS_PARTIAL, LMFileType.MCPA_ENV_RAND_F_GLOBAL,
-                     LMFileType.MCPA_ENV_RAND_F_PARTIAL, LMFileType.OBSERVED_CALC, 
                      LMFileType.SITES_OBSERVED, LMFileType.SPECIES_OBSERVED,
                      LMFileType.DIVERSITY_OBSERVED, LMFileType.SCHLUTER_OBSERVED,
                      LMFileType.SPECIES_COV_OBSERVED, LMFileType.SITES_COV_OBSERVED,
@@ -552,28 +522,6 @@ class LMFileType:
             #   return LMFileType.PADDED_PAM
             elif mtype == MatrixType.MCPA_OUTPUTS:
                 return LMFileType.MCPA_OUTPUTS
-            elif mtype == MatrixType.MCPA_BG_F_GLOBAL:
-                return LMFileType.MCPA_BG_F_GLOBAL
-            elif mtype == MatrixType.MCPA_BG_F_SEMI:
-                return LMFileType.MCPA_BG_F_SEMI
-            elif mtype == MatrixType.MCPA_BG_OBS_ADJ_R_SQ:
-                return LMFileType.MCPA_BG_OBS_ADJ_R_SQ
-            elif mtype == MatrixType.MCPA_BG_OBS_PARTIAL:
-                return LMFileType.MCPA_BG_OBS_PARTIAL
-            elif mtype == MatrixType.MCPA_BG_RAND_F_GLOBAL:
-                return LMFileType.MCPA_BG_RAND_F_PARTIAL
-            elif mtype == MatrixType.MCPA_ENV_F_GLOBAL:
-                return LMFileType.MCPA_ENV_F_GLOBAL
-            elif mtype == MatrixType.MCPA_ENV_F_SEMI:
-                return LMFileType.MCPA_ENV_F_SEMI
-            elif mtype == MatrixType.MCPA_ENV_OBS_ADJ_R_SQ:
-                return LMFileType.MCPA_ENV_OBS_ADJ_R_SQ
-            elif mtype == MatrixType.MCPA_ENV_OBS_PARTIAL:
-                return LMFileType.MCPA_ENV_OBS_PARTIAL
-            elif mtype == MatrixType.MCPA_ENV_RAND_F_GLOBAL:
-                return LMFileType.MCPA_ENV_RAND_F_PARTIAL
-            elif mtype == MatrixType.OBSERVED_CALC:
-                return LMFileType.OBSERVED_CALC
             elif mtype == MatrixType.SITES_OBSERVED:
                 return LMFileType.SITES_OBSERVED
             elif mtype == MatrixType.SPECIES_OBSERVED:
@@ -642,7 +590,6 @@ class FileFix:
               LMFileType.CALCS: 'calc', # TODO: Add to this?
               LMFileType.SUM_SHAPE: PAMSUM_PREFIX,
               # RAD calcs
-              LMFileType.OBSERVED_CALC: 'obsCalc', 
               LMFileType.SITES_OBSERVED: 'sites', 
               LMFileType.SPECIES_OBSERVED: 'species',
               LMFileType.DIVERSITY_OBSERVED: 'diversity', 
@@ -669,19 +616,6 @@ class FileFix:
               LMFileType.PADDED_PAM: 'ppam',
               LMFileType.MCPA_OUTPUTS: 'mcpa',
               # MCPA
-              LMFileType.MCPA_BG_F_GLOBAL: 'bgFglobal',
-              LMFileType.MCPA_BG_F_SEMI: 'bgFsemi', 
-              LMFileType.MCPA_BG_OBS_ADJ_R_SQ: 'bgObsAdjRsq',
-              LMFileType.MCPA_BG_OBS_PARTIAL: 'bgObsPart', 
-              LMFileType.MCPA_BG_RAND_F_GLOBAL: 'bgRandFglob', 
-              LMFileType.MCPA_BG_RAND_F_PARTIAL: 'bgRandFpart', 
-              LMFileType.MCPA_ENV_F_GLOBAL: 'envFglobal', 
-              LMFileType.MCPA_ENV_F_SEMI: 'envFsemi', 
-              LMFileType.MCPA_ENV_OBS_ADJ_R_SQ: 'envObsAdjRsq',
-              LMFileType.MCPA_ENV_OBS_PARTIAL: 'envObsPart', 
-              LMFileType.MCPA_ENV_RAND_F_GLOBAL: 'envRandFglob', 
-              LMFileType.MCPA_ENV_RAND_F_PARTIAL: 'envRandFpart',
-              
               LMFileType.GRIDSET_PACKAGE: 'gsPkg',
     }
     # Postfix
@@ -715,7 +649,6 @@ class FileFix:
                  LMFileType.SUM_CALCS: LMFormat.PICKLE.ext,
                  LMFileType.SUM_SHAPE: LMFormat.SHAPE.ext,
                  # RAD calcs
-                 LMFileType.OBSERVED_CALC: LMFormat.MATRIX.ext, 
                  LMFileType.SITES_OBSERVED: LMFormat.MATRIX.ext, 
                  LMFileType.SPECIES_OBSERVED: LMFormat.MATRIX.ext,
                  LMFileType.DIVERSITY_OBSERVED: LMFormat.MATRIX.ext, 
@@ -742,19 +675,6 @@ class FileFix:
                  LMFileType.PADDED_PAM: LMFormat.MATRIX.ext,
                  LMFileType.MCPA_OUTPUTS: LMFormat.MATRIX.ext,
                  LMFileType.CALCS: LMFormat.MATRIX.ext,
-                 #MCPA
-                 LMFileType.MCPA_BG_F_GLOBAL: LMFormat.MATRIX.ext,
-                 LMFileType.MCPA_BG_F_SEMI: LMFormat.MATRIX.ext, 
-                 LMFileType.MCPA_BG_OBS_ADJ_R_SQ: LMFormat.MATRIX.ext,
-                 LMFileType.MCPA_BG_OBS_PARTIAL: LMFormat.MATRIX.ext, 
-                 LMFileType.MCPA_BG_RAND_F_GLOBAL: LMFormat.MATRIX.ext, 
-                 LMFileType.MCPA_BG_RAND_F_PARTIAL: LMFormat.MATRIX.ext, 
-                 LMFileType.MCPA_ENV_F_GLOBAL: LMFormat.MATRIX.ext, 
-                 LMFileType.MCPA_ENV_F_SEMI: LMFormat.MATRIX.ext, 
-                 LMFileType.MCPA_ENV_OBS_ADJ_R_SQ: LMFormat.MATRIX.ext,
-                 LMFileType.MCPA_ENV_OBS_PARTIAL: LMFormat.MATRIX.ext, 
-                 LMFileType.MCPA_ENV_RAND_F_GLOBAL: LMFormat.MATRIX.ext, 
-                 LMFileType.MCPA_ENV_RAND_F_PARTIAL: LMFormat.MATRIX.ext,
                  
                  LMFileType.GRIDSET_PACKAGE: LMFormat.ZIP.ext
     }
