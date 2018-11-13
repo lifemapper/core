@@ -333,7 +333,8 @@ class BoomPoster(object):
                     user = self.scribe.findUser(userId=self.userId)
                     user_email = user.email
                     
-                    filler = SPFiller(scen_package_meta, user, email=user_email)
+                    filler = SPFiller(
+                        scen_package_meta, self.userId, email=user_email)
                     filler.initializeMe()        
                     filler.catalogScenPackages()
                 
