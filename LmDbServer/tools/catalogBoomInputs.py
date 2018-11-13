@@ -776,7 +776,8 @@ class BOOMFiller(LMObject):
         # "Global" PAM, GRIM (one each per scenario)
         for code, scen in self.scenPkg.scenarios.iteritems():
             gPam = self._findOrAddPAM(updatedGrdset, scen)
-            if not(self.userId == DEFAULT_POST_USER) and self.assemblePams:
+            if not(self.userId == DEFAULT_POST_USER):
+#             if not(self.userId == DEFAULT_POST_USER) and self.assemblePams:
                 scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
                 scenGrims[code] = scenGrim
                 
@@ -1167,8 +1168,9 @@ class BOOMFiller(LMObject):
             
             # Fix directory permissions
             lyrdir = os.path.dirname(boomGridset.getShapegrid().getDLocation())
-            mfdir = os.path.dirname(grimMFs[0].getDLocation())
             self._fixPermissions(dirs=[lyrdir])
+            earl = EarlJr()
+            mfdir = earl.createDataPath(self.userId, LMFileType.SDM_MAKEFLOW_FILE)
             self._fixPermissions(dirs=[mfdir])
             
             # If there is a tree, add db object
