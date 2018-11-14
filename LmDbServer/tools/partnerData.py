@@ -290,12 +290,12 @@ class PartnerQuery(object):
         return currcount
             
     # ...............................................
-    def _getInsertSciNameForGBIFSpeciesKey(self, gbifSrcId, taxonKey):
+    def _getInsertSciNameForGBIFSpeciesKey(self, scribe, gbifSrcId, taxonKey):
         """
         Returns an existing or newly inserted ScientificName
         """
-        sciName = self._scribe.getTaxon(taxonSourceId=gbifSrcId, 
-                                                 taxonKey=taxonKey)
+        sciName = scribe.getTaxon(taxonSourceId=gbifSrcId, 
+                                  taxonKey=taxonKey)
         if sciName is None:
             # Use API to get and insert species name 
             try:
@@ -322,7 +322,7 @@ class PartnerQuery(object):
                                   taxonomySourceGenusKey=genusKey, 
                                   taxonomySourceSpeciesKey=speciesKey)
                     try:
-                        sciName = self._scribe.findOrInsertTaxon(sciName=sname)
+                        sciName = scribe.findOrInsertTaxon(sciName=sname)
                         self.log.info('Inserted sciName for taxonKey {}, {}'
                                       .format(taxonKey, sciName.scientificName))
                     except Exception, e:
@@ -361,7 +361,7 @@ class PartnerQuery(object):
             else:
                 squidDict[ottlabel] = []
                 for gid in gbifids:
-                    sno = self._getInsertSciNameForGBIFSpeciesKey(gbifSrcId, gid)
+                    sno = self._getInsertSciNameForGBIFSpeciesKey(scribe, gbifSrcId, gid)
                     if sno:
                         squidDict[ottlabel].append(sno.squid)
                 if len(gbifids) == 1:
@@ -372,20 +372,6 @@ class PartnerQuery(object):
         otree.annotateTree(PhyloTreeKeys.SQUID, squidDict)
         print "Adding interior node labels to tree"
         otree.addNodeLabels()
-        
-    # .............................................................................
-    def _updateTree(self, scribe, otree):
-        # Update tree properties
-        otree.clearDLocation()
-        otree.setDLocation()
-        otree.writeTree()
-        
-        # Update metadata
-        otree.updateModtime(mx.DateTime.gmt().mjd)
-        success = scribe.updateObject(otree)        
-        print 'Wrote tree {} to final location and updated db'.format(otree.getId())
-        
-        return otree
 
     # .............................................................................
     def _writeNameMatches(self, origname, goodnames, writer):
@@ -558,7 +544,7 @@ class PartnerQuery(object):
                 summary[gid] = ptCount
             else:
                 unmatched_gbif_ids.append(gid)
-        return gbifid_counts, unmatched_gbif_ids
+        return summary
    
     # .............................................................................
     def readIdigbioData(self, ptFname, metaFname):
@@ -602,18 +588,24 @@ class PartnerQuery(object):
         return tree, gbif_to_ott, ott_unmatched_gbif_ids
 
     # .............................................................................
-    def encodeOTTTreeToGBIF(self, otree, gbifott):
-        updatedtree = None
-        scribe = BorgScribe(self.log)
-        try:    
-            scribe.openConnections()
-            labeledTree = self._relabelOttTree(scribe, otree, gbifott)
-            updatedTree = self._updateTree(scribe, labeledTree)
-        except Exception, e:
-            raise LMError('Failed to relabel or update tree ({})'.format(e))
-        finally:
-            scribe.closeConnections()
-        return updatedtree
+    def encodeOTTTreeToGBIF(self, otree, gbifott, scribe=None):
+        labeledTree = None
+        if scribe is None:
+            scribe = BorgScribe(self.log)
+            try:    
+                scribe.openConnections()
+                labeledTree = self._relabelOttTree(scribe, otree, gbifott)
+            except Exception, e:
+                raise LMError('Failed to relabel or update tree ({})'.format(e))
+            finally:
+                scribe.closeConnections()
+        else:
+            try:    
+                labeledTree = self._relabelOttTree(scribe, otree, gbifott)
+            except Exception, e:
+                raise LMError('Failed to relabel or update tree ({})'.format(e))
+
+        return labeledTree 
   
 # .............................................................................
 # .............................................................................

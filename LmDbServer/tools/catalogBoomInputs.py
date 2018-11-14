@@ -35,7 +35,7 @@ from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
-      ProcessType, DEFAULT_POST_USER, LM_USER,
+      ProcessType, DEFAULT_POST_USER, 
       SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
       SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
       SERVER_PIPELINE_HEADING)
@@ -45,6 +45,7 @@ from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 from LmDbServer.tools.catalogScenPkg import SPFiller
+from LmDbServer.tools.partnerData import PartnerQuery
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
@@ -56,6 +57,7 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector
 from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.utilities import isLMUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
@@ -64,7 +66,6 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
-from LmServer.base.utilities import isRootUser, isLMUser
 
 # .............................................................................
 class BOOMFiller(LMObject):
@@ -105,6 +106,11 @@ class BOOMFiller(LMObject):
         self.open()
 
     # ...............................................
+    @property
+    def log(self):
+        return self.scribe.log
+    
+    # ...............................................
     def initializeInputs(self):
         """
         @summary Initialize configured and stored inputs for BOOMFiller class.
@@ -124,6 +130,8 @@ class BOOMFiller(LMObject):
          self.idigFname,
          self.idigOccSep,
          self.bisonFname,
+         self.taxon_name_filename, 
+         self.taxon_id_filename, 
          self.userOccFname,
          self.userOccSep,   
          self.minpoints,
@@ -402,6 +410,9 @@ class BOOMFiller(LMObject):
         idigFname = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA')
         idigOccSep = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA_DELIMITER')
         bisonFname = self._getBoomOrDefault(config, 'BISON_TSN_FILENAME') 
+        taxon_name_filename = self._getBoomOrDefault(config, 'TAXON_NAME_FILENAME')
+        taxon_id_filename = self._getBoomOrDefault(config, 'TAXON_ID_FILENAME')
+        
         userOccFname = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA')
         userOccSep = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA_DELIMITER')
         minpoints = self._getBoomOrDefault(config, 'POINT_COUNT_MIN')
@@ -449,6 +460,7 @@ class BOOMFiller(LMObject):
         return (usr, usrPath, usrEmail, userTaxonomyBasename, archiveName, priority, scenPackageName, 
                 modelScenCode, prjScenCodeList, doMapBaseline, dataSource, 
                 occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
+                taxon_name_filename, taxon_id_filename, 
                 userOccFname, userOccSep, minpoints, algs, 
                 assemblePams, gridbbox, cellsides, cellsize, gridname, 
                 intersectParams, maskAlg, treeFname, bghypFnames, 
@@ -839,29 +851,38 @@ class BOOMFiller(LMObject):
    
       
     # ...............................................
-    def addTree(self, gridset):
+    def addTree(self, gridset, encoded_tree=None):
         tree = None
+        # Provided tree filename takes precedence
         if self.treeFname is not None:
             currtime = mx.DateTime.gmt().mjd
             name, _ = os.path.splitext(self.treeFname)
             treeFilename = os.path.join(self.userIdPath, self.treeFname) 
             if os.path.exists(treeFilename):
-                # TODO: save gridset link to tree???
                 baretree = Tree(name, dlocation=treeFilename, userId=self.userId, 
                                 gridsetId=gridset.getId(), modTime=currtime)
+                baretree.read()
                 tree = self.scribe.findOrInsertTree(baretree)
-                tree.read()
-                tree.clearDLocation()
-                self.scribe.updateObject(tree)
-                tree.writeTree()
-                self._fixPermissions(files=[tree.getDLocation()])
             else:
                 self.scribe.log.warning('No tree at {}'.format(treeFilename))
+        elif encoded_tree is not None:
+            tree = self.scribe.findOrInsertTree(encoded_tree)
+            
+        if tree is not None:
+            # Update tree properties and write file
+            tree.clearDLocation()
+            tree.setDLocation()
+            tree.writeTree()
+            tree.updateModtime(mx.DateTime.gmt().mjd)
+            # Update database
+            success = self.scribe.updateObject(tree)        
+            self._fixPermissions(files=[tree.getDLocation()])
             
             # Save tree link to gridset
             print "Add tree to grid set"
             gridset.addTree(tree)
             gridset.updateModtime(currtime)
+            
             self.scribe.updateObject(gridset)
         return tree
 
@@ -1149,16 +1170,115 @@ class BOOMFiller(LMObject):
         mfChain = self._write_update_MF(mfChain)
         return mfChain
 
+    # .............................................................................
+    def _fixDirectoryPermissions(self, boomGridset):
+        lyrdir = os.path.dirname(boomGridset.getShapegrid().getDLocation())
+        self._fixPermissions(dirs=[lyrdir])
+        earl = EarlJr()
+        mfdir = earl.createDataPath(self.userId, LMFileType.MF_DOCUMENT)
+        self._fixPermissions(dirs=[mfdir])
+
+    # .............................................................................
+    def _updateTree(self, otree):
+        # Update tree properties
+        otree.clearDLocation()
+        otree.setDLocation()
+        otree.writeTree()
+         
+        # Update metadata
+        otree.updateModtime(mx.DateTime.gmt().mjd)
+        success = self.scribe.updateObject(otree)        
+        print 'Wrote tree {} to final location and updated db'.format(otree.getId())
+         
+        return otree
+    
+    # ...............................................
+    def _getPartnerTreeData(self, pquery, gbifids, basefilename):
+        treename = os.path.basename(basefilename)
+        otree, gbif_to_ott, ott_unmatched_gbif_ids = pquery.assembleOTOLData(
+                                                            gbifids, treename)
+        encoded_tree = pquery.encodeOTTTreeToGBIF(otree, gbif_to_ott, 
+                                                  scribe=self.scribe)
+        return encoded_tree
+
+    # ...............................................
+    def _getPartnerSpeciesData(self, pquery, gbifids, basefilename):
+        species_filename = basefilename + '.csv'
+        meta_filename  = basefilename + '.json'
+        summary = pquery.assembleIdigbioData(gbifids, species_filename, 
+                                             meta_filename)
+        idig_unmatched_gbif_ids = summary['unmatched_gbif_ids']
+        return species_filename, meta_filename
+
+    # ...............................................
+    def _getPartnerIds(self, pquery, names, basefilename):
+        gbif_results_filename = basefilename + '.gids'
+        unmatched_names, name_to_gbif_ids = pquery.assembleGBIFTaxonIds(names, 
+                                                        gbif_results_filename)
+        return unmatched_names, name_to_gbif_ids, gbif_results_filename
+        
+    # ...............................................
+    def _getUserInput(self, filename):
+        items = []
+        basefilename, ext = os.path.splitext(filename)
+        if os.path.exists(self.taxon_name_filename):
+            try:
+                for line in open(filename):
+                    items.append(line.strip())
+            except:
+                raise LMError('Failed to read file {}'.format(filename))
+        else:
+            raise LMError('File {} does not exist'.format(filename))
+        return items
+        
+    # ...............................................
+    def queryPartners(self):
+        gbifids = []
+        pquery = PartnerQuery(self.scribe.log)
+        # Get matching taxonIds for names
+        if self.dataSource == SpeciesDatasource.TAXON_NAMES:
+            orig_filename = self.taxon_name_filename
+            # Read provided names
+            names = self._getUserInput(self.taxon_name_filename)
+            # TODO: decide
+            # Could take top matches without user feedback (current)
+            # Could return unmatched names to user
+            # Could return full matched results to user
+            unmatched_names, name_to_gbif_ids, gbif_results_filename = \
+                self._getPartnerIds(pquery, names, orig_filename)
+            for gid, canonical in name_to_gbif_ids.values():
+                gbifids.append(gid)
+            if not gbifids:
+                raise LMError('Failed to match any names')
+            
+        if not gbifids:
+            orig_filename = self.taxon_id_filename
+            # Read provided taxonIds
+            gbifids = self._getUserInput(self.taxon_id_filename)
+                
+        # Get species occurrence data
+        species_filename, meta_filename = self._getPartnerSpeciesData(pquery, 
+                                                        gbifids, orig_filename)
+        encoded_tree = self._getPartnerTreeData(pquery, gbifids, orig_filename)
+        
+        return species_filename, meta_filename, encoded_tree
+
     # ...............................................
     def initBoom(self, initMakeflow=False):
         try:
             # Also adds user
             self.initializeInputs()
             
-            # Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
+            encoded_tree = None
+            # Check for a file OccurrenceLayer Ids for existing or PUBLIC user
             if self.occIdFname:
                 self._checkOccurrenceSets()
-               
+            # Check for a file of species names or GBIF taxonIDs
+            elif self.dataSource in (SpeciesDatasource.TAXON_NAMES,
+                                     SpeciesDatasource.TAXON_IDS):
+                self.userOccFname, meta_filename, encoded_tree = self.queryPartners()
+                self.dataSource = SpeciesDatasource.USER
+                
             # Add or get ShapeGrid, Global PAM, Gridset for this archive
             # This updates the gridset, shapegrid, default PAMs (rolling, with no 
             #     matrixColumns, default GRIMs with matrixColumns
@@ -1166,15 +1286,11 @@ class BOOMFiller(LMObject):
             # Add GRIM compute Makeflows, independent of Boom completion
             grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
             
-            # Fix directory permissions
-            lyrdir = os.path.dirname(boomGridset.getShapegrid().getDLocation())
-            self._fixPermissions(dirs=[lyrdir])
-            earl = EarlJr()
-            mfdir = earl.createDataPath(self.userId, LMFileType.MF_DOCUMENT)
-            self._fixPermissions(dirs=[mfdir])
-            
+            # Fix user makeflow and layer directory permissions
+            self._fixDirectoryPermissions(boomGridset)
+                        
             # If there is a tree, add db object
-            tree = self.addTree(boomGridset)
+            tree = self.addTree(boomGridset, encoded_tree=encoded_tree)
             
             # If there are biogeographic hypotheses, add layers and matrix and create MFChain
             biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
@@ -1268,6 +1384,7 @@ from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE,
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 from LmDbServer.tools.catalogScenPkg import SPFiller
+from LmDbServer.tools.partnerData import PartnerQuery
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
@@ -1295,8 +1412,12 @@ paramFname = '/share/lm/data/archive/modem/heuchera_boom_na_10min.params'
 paramFname = '/opt/lifemapper/rocks/etc/defaultArchiveParams.ini'
 paramFname = '/share/lm/data/archive/onemore/heuchera_boom_global_10min.params'
  
-heuchera_boom_global_10min.params
-initMakeflow = True
+# Taxon names
+paramFname = '/state/partition1/lmscratch/temp/file_44205.ini'
+
+# Taxon ids
+paramFname = '/state/partition1/lmscratch/temp/file_30386.ini'
+
 pname, _ = os.path.splitext(os.path.basename(paramFname))
 import time
 secs = time.time()
@@ -1304,27 +1425,36 @@ timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 logname = '{}.{}'.format(pname, timestamp)
 
 self = BOOMFiller(paramFname, logname=logname)
+
 self.initializeInputs()
 
+encoded_tree = None
 if self.occIdFname:
-   self._checkOccurrenceSets()
-   
+    self._checkOccurrenceSets()
+elif self.dataSource in (SpeciesDatasource.TAXON_NAMES,
+                         SpeciesDatasource.TAXON_IDS):
+                         
+self.userOccFname, meta_filename, encoded_tree = self.queryPartners()
+self.dataSource = SpeciesDatasource.USER
+    
 scenGrims, boomGridset = self.addShapeGridGPAMGridset()
+
 grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
 
-tree = self.addTree(boomGridset)
+self._fixDirectoryPermissions(boomGridset)
+            
+tree = self.addTree(boomGridset, encoded_tree=encoded_tree)
 
 biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
 
 self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
                      biogeoLayers=biogeoLayerNames)
+
       
-if initMakeflow is True:
-    if biogeoMtx and len(biogeoLayerNames) > 0:
+if biogeoMtx and len(biogeoLayerNames) > 0:
+    bgMF = self.addEncodeBioGeoMF(boomGridset)
 
-        bgMF = self.addEncodeBioGeoMF(boomGridset)
-
-    boomMF = self.addBoomMF(boomGridset.getId(), tree)
+boomMF = self.addBoomMF(boomGridset.getId(), tree)
    
 
 

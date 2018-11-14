@@ -470,6 +470,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         boundstr = LMSpatialObject.getExtentAsString(mbbox, separator='  ')
         mapprj = self._createProjectionInfo(self.epsgcode)
         parts = ['  NAME        {}'.format(self.mapName),
+                 # All raster/vector filepaths will be relative to mapfile path
                  '  SHAPEPATH \"{}\"'.format(self.mapAbsolutePath()),
                  '  EXTENT      {}'.format(boundstr),
                  '  UNITS       {}'.format(self.mapUnits),
@@ -594,7 +595,6 @@ class MapLayerSet(_LayerSet, ServiceObject):
                      '      TYPE  {}'.format(self._getMSText(sdlLyr)),
                      '      STATUS  OFF',
                      '      OPACITY 100',
-#                      '      DUMP  TRUE'
                      ]
             lyr = '\n'.join(parts)
             
