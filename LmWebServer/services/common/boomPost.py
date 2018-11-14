@@ -211,7 +211,7 @@ class BoomPoster(object):
         """
         if APIPostKeys.OCCURRENCE_IDS in occ_json.keys():
             occ_filename = self._get_temp_filename(
-                LMFormat.CSV.ext, prefix='user_existing_occ_')
+                LMFormat.TXT.ext, prefix='user_existing_occ_')
             with open(occ_filename, 'w') as out_f:
                 for occ_id in occ_json[APIPostKeys.OCCURRENCE_IDS]:
                     out_f.write('{}\n'.format(occ_id))
@@ -221,7 +221,7 @@ class BoomPoster(object):
                 SERVER_BOOM_HEADING, 'DATASOURCE', SpeciesDatasource.EXISTING)
         elif APIPostKeys.TAXON_IDS in occ_json.keys():
             tax_id_filename = self._get_temp_filename(
-                LMFormat.CSV.ext, prefix='user_taxon_ids_')
+                LMFormat.TXT.ext, prefix='user_taxon_ids_')
             with open(tax_id_filename, 'w') as out_f:
                 for tax_id in occ_json[APIPostKeys.TAXON_IDS]:
                     out_f.write('{}\n'.format(tax_id))
@@ -231,7 +231,7 @@ class BoomPoster(object):
                 SERVER_BOOM_HEADING, 'DATASOURCE', SpeciesDatasource.TAXON_IDS)
         elif APIPostKeys.TAXON_NAMES in occ_json.keys():
             tax_names_filename = self._get_temp_filename(
-                LMFormat.CSV.ext, prefix='user_taxon_names_')
+                LMFormat.TXT.ext, prefix='user_taxon_names_')
             with open(tax_names_filename, 'w') as out_f:
                 for tax_name in occ_json[APIPostKeys.TAXON_NAMES]:
                     out_f.write('{}\n'.format(tax_name))
