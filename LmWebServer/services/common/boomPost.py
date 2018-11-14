@@ -124,14 +124,14 @@ class BoomPoster(object):
         return None
 
     # ................................
-    def _get_temp_filename(self, ext):
+    def _get_temp_filename(self, ext, prefix='file_'):
         """Returns a name for a temporary file.
 
         Args:
             ext : The file extension to use for this temporary file.
         """
         return os.path.join(
-            TEMP_PATH, 'file_{}{}'.format(random.randint(0, 100000), ext))
+            TEMP_PATH, '{}{}{}'.format(prefix, random.randint(0, 100000), ext))
     
     # ................................
     def _process_global_pam(self, global_pam_json):
@@ -210,7 +210,8 @@ class BoomPoster(object):
             occ_json : JSON chunk of occurrence information
         """
         if APIPostKeys.OCCURRENCE_IDS in occ_json.keys():
-            occ_filename = self._get_temp_filename(LMFormat.CSV.ext)
+            occ_filename = self._get_temp_filename(
+                LMFormat.CSV.ext, prefix='user_existing_occ_')
             with open(occ_filename, 'w') as out_f:
                 for occ_id in occ_json[APIPostKeys.OCCURRENCE_IDS]:
                     out_f.write('{}\n'.format(occ_id))
@@ -219,7 +220,8 @@ class BoomPoster(object):
             self.config.set(
                 SERVER_BOOM_HEADING, 'DATASOURCE', SpeciesDatasource.EXISTING)
         elif APIPostKeys.TAXON_IDS in occ_json.keys():
-            tax_id_filename = self._get_temp_filename(LMFormat.CSV.ext)
+            tax_id_filename = self._get_temp_filename(
+                LMFormat.CSV.ext, prefix='user_taxon_ids_')
             with open(tax_id_filename, 'w') as out_f:
                 for tax_id in occ_json[APIPostKeys.TAXON_IDS]:
                     out_f.write('{}\n'.format(tax_id))
@@ -228,7 +230,8 @@ class BoomPoster(object):
             self.config.set(
                 SERVER_BOOM_HEADING, 'DATASOURCE', SpeciesDatasource.TAXON_IDS)
         elif APIPostKeys.TAXON_NAMES in occ_json.keys():
-            tax_names_filename = self._get_temp_filename(LMFormat.CSV.ext)
+            tax_names_filename = self._get_temp_filename(
+                LMFormat.CSV.ext, prefix='user_taxon_names_')
             with open(tax_names_filename, 'w') as out_f:
                 for tax_name in occ_json[APIPostKeys.TAXON_NAMES]:
                     out_f.write('{}\n'.format(tax_name))
@@ -417,7 +420,8 @@ class BoomPoster(object):
     def init_boom(self):
         """Initializes the BOOM by writing the file and calling BOOMFiller
         """
-        filename = self._get_temp_filename(LMFormat.CONFIG.ext)
+        filename = self._get_temp_filename(
+            LMFormat.CONFIG.ext, prefix='boom_config_')
             
         with open(filename, 'w') as configOutF:
             self.config.write(configOutF)
