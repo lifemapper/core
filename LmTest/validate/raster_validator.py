@@ -12,6 +12,12 @@ from LmCommon.common.lmconstants import LMFormat
 # .............................................................................
 def validate_raster_file(raster_filename, raster_format=None):
     """Validates a raster file by seeing if it can be loaded by GDAL
+
+    Args:
+        raster_filename : A file path for a raster file to validate.
+        raster_format : An optional LMFormat class to use for validation.  If
+            not provided, the file extension will be used to determine how to
+            validate the file.
     """
     msg = 'Valid'
     valid = False
