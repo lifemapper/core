@@ -127,6 +127,7 @@ class LMFormat:
     NEXUS = FileFormat('.nex', 'text/plain', allExtensions=['.nex', '.nxs'])
     NEWICK = FileFormat('.tre', 'text/plain', allExtensions=['.tre', '.nhx'])
     NUMPY = FileFormat('.npy', 'application/octet-stream')
+    PARAMS = FileFormat('.params', 'text/plain')
     PICKLE = FileFormat('.pkl', 'application/octet-stream')
     PYTHON = FileFormat('.py', 'text/plain')
     SHAPE = FileFormat('.shp', 'application/x-gzip', 
