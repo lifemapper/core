@@ -421,7 +421,7 @@ class BoomPoster(object):
         """Initializes the BOOM by writing the file and calling BOOMFiller
         """
         filename = self._get_temp_filename(
-            LMFormat.CONFIG.ext, prefix='boom_config_')
+            LMFormat.PARAMS.ext, prefix='boom_config_')
             
         with open(filename, 'w') as configOutF:
             self.config.write(configOutF)
