@@ -10509,6 +10509,22 @@ var _user$project$StatsMain$DataScale = F4(
 	function (a, b, c, d) {
 		return {minX: a, minY: b, maxX: c, maxY: d};
 	});
+var _user$project$StatsMain$init = {
+	ctor: '_Tuple2',
+	_0: {
+		selected: _elm_lang$core$Set$empty,
+		selecting: _elm_lang$core$Maybe$Nothing,
+		variables: {ctor: '[]'},
+		statNames: _elm_lang$core$Dict$empty,
+		stats: {ctor: '[]'},
+		displayedRecords: {ctor: '[]'},
+		scale: A4(_user$project$StatsMain$DataScale, 1, 1, 1, 1),
+		xCol: '',
+		yCol: ''
+	},
+	_1: _user$project$StatsMain$requestStats(
+		{ctor: '_Tuple0'})
+};
 var _user$project$StatsMain$Point = F2(
 	function (a, b) {
 		return {x: a, y: b};
@@ -10821,7 +10837,7 @@ var _user$project$StatsMain$YColSelectedMsg = function (a) {
 var _user$project$StatsMain$XColSelectedMsg = function (a) {
 	return {ctor: 'XColSelectedMsg', _0: a};
 };
-var _user$project$StatsMain$view = function (model) {
+var _user$project$StatsMain$viewPlot = function (model) {
 	var variableSelector = F2(
 		function (selected, select) {
 			return A2(
@@ -10863,13 +10879,6 @@ var _user$project$StatsMain$view = function (model) {
 					},
 					model.variables));
 		});
-	var selectedSiteIds = A2(
-		_elm_lang$core$String$join,
-		' ',
-		A2(
-			_elm_lang$core$List$map,
-			_elm_lang$core$Basics$toString,
-			_elm_lang$core$Set$toList(model.selected)));
 	var selectionBox = A2(
 		_elm_lang$core$List$map,
 		function (_p37) {
@@ -10926,6 +10935,111 @@ var _user$project$StatsMain$view = function (model) {
 		_elm_community$maybe_extra$Maybe_Extra$toList(model.selecting));
 	return A2(
 		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$h3,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
+								_1: {ctor: '[]'}
+							}
+						}),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Site Based Stat Relationships'),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$svg$Svg$svg,
+					{
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$width(
+							_elm_lang$core$Basics$toString(_user$project$StatsMain$svgViewBox.width)),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$height(
+								_elm_lang$core$Basics$toString(_user$project$StatsMain$svgViewBox.height)),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$viewBox(
+									_user$project$StatsMain$svgViewBox2String(_user$project$StatsMain$svgViewBox)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$id('plot'),
+									_1: {ctor: '[]'}
+								}
+							}
+						}
+					},
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$svg$Svg$g,
+								{
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$transform(''),
+									_1: {ctor: '[]'}
+								},
+								_user$project$StatsMain$drawScatter(model)),
+							_1: {ctor: '[]'}
+						},
+						selectionBox)),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$p,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: A2(variableSelector, model.yCol, _user$project$StatsMain$YColSelectedMsg),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html$text(' vs '),
+								_1: {
+									ctor: '::',
+									_0: A2(variableSelector, model.xCol, _user$project$StatsMain$XColSelectedMsg),
+									_1: {ctor: '[]'}
+								}
+							}
+						}),
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
+var _user$project$StatsMain$view = function (model) {
+	var selectedSiteIds = A2(
+		_elm_lang$core$String$join,
+		' ',
+		A2(
+			_elm_lang$core$List$map,
+			_elm_lang$core$Basics$toString,
+			_elm_lang$core$Set$toList(model.selected)));
+	return A2(
+		_elm_lang$html$Html$div,
 		{
 			ctor: '::',
 			_0: _elm_lang$html$Html_Attributes$style(
@@ -10950,102 +11064,7 @@ var _user$project$StatsMain$view = function (model) {
 		},
 		{
 			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$div,
-				{ctor: '[]'},
-				{
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$h3,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$style(
-								{
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
-										_1: {ctor: '[]'}
-									}
-								}),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Site Based Stat Relationships'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$svg$Svg$svg,
-							{
-								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$width(
-									_elm_lang$core$Basics$toString(_user$project$StatsMain$svgViewBox.width)),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$height(
-										_elm_lang$core$Basics$toString(_user$project$StatsMain$svgViewBox.height)),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$viewBox(
-											_user$project$StatsMain$svgViewBox2String(_user$project$StatsMain$svgViewBox)),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$id('plot'),
-											_1: {ctor: '[]'}
-										}
-									}
-								}
-							},
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								{
-									ctor: '::',
-									_0: A2(
-										_elm_lang$svg$Svg$g,
-										{
-											ctor: '::',
-											_0: _elm_lang$svg$Svg_Attributes$transform(''),
-											_1: {ctor: '[]'}
-										},
-										_user$project$StatsMain$drawScatter(model)),
-									_1: {ctor: '[]'}
-								},
-								selectionBox)),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$p,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$style(
-										{
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-											_1: {ctor: '[]'}
-										}),
-									_1: {ctor: '[]'}
-								},
-								{
-									ctor: '::',
-									_0: A2(variableSelector, model.yCol, _user$project$StatsMain$YColSelectedMsg),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$html$Html$text(' vs '),
-										_1: {
-											ctor: '::',
-											_0: A2(variableSelector, model.xCol, _user$project$StatsMain$XColSelectedMsg),
-											_1: {ctor: '[]'}
-										}
-									}
-								}),
-							_1: {ctor: '[]'}
-						}
-					}
-				}),
+			_0: _user$project$StatsMain$viewPlot(model),
 			_1: {
 				ctor: '::',
 				_0: A2(
@@ -11131,42 +11150,23 @@ var _user$project$StatsMain$SitesSelectedMsg = function (a) {
 var _user$project$StatsMain$MouseMsg = function (a) {
 	return {ctor: 'MouseMsg', _0: a};
 };
-var _user$project$StatsMain$main = _elm_lang$html$Html$program(
-	{
-		init: {
-			ctor: '_Tuple2',
-			_0: {
-				selected: _elm_lang$core$Set$empty,
-				selecting: _elm_lang$core$Maybe$Nothing,
-				variables: {ctor: '[]'},
-				statNames: _elm_lang$core$Dict$empty,
-				stats: {ctor: '[]'},
-				displayedRecords: {ctor: '[]'},
-				scale: A4(_user$project$StatsMain$DataScale, 1, 1, 1, 1),
-				xCol: '',
-				yCol: ''
-			},
-			_1: _user$project$StatsMain$requestStats(
-				{ctor: '_Tuple0'})
-		},
-		update: _user$project$StatsMain$update,
-		view: _user$project$StatsMain$view,
-		subscriptions: _elm_lang$core$Basics$always(
-			_elm_lang$core$Platform_Sub$batch(
-				{
+var _user$project$StatsMain$subscriptions = _elm_lang$core$Basics$always(
+	_elm_lang$core$Platform_Sub$batch(
+		{
+			ctor: '::',
+			_0: _user$project$StatsMain$mouseEvent(_user$project$StatsMain$MouseMsg),
+			_1: {
+				ctor: '::',
+				_0: _user$project$StatsMain$sitesSelected(_user$project$StatsMain$SitesSelectedMsg),
+				_1: {
 					ctor: '::',
-					_0: _user$project$StatsMain$mouseEvent(_user$project$StatsMain$MouseMsg),
-					_1: {
-						ctor: '::',
-						_0: _user$project$StatsMain$sitesSelected(_user$project$StatsMain$SitesSelectedMsg),
-						_1: {
-							ctor: '::',
-							_0: _user$project$StatsMain$statsForSites(_user$project$StatsMain$ReceivedStats),
-							_1: {ctor: '[]'}
-						}
-					}
-				}))
-	})();
+					_0: _user$project$StatsMain$statsForSites(_user$project$StatsMain$ReceivedStats),
+					_1: {ctor: '[]'}
+				}
+			}
+		}));
+var _user$project$StatsMain$main = _elm_lang$html$Html$program(
+	{init: _user$project$StatsMain$init, update: _user$project$StatsMain$update, view: _user$project$StatsMain$view, subscriptions: _user$project$StatsMain$subscriptions})();
 
 var Elm = {};
 Elm['StatsMain'] = Elm['StatsMain'] || {};
