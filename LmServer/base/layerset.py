@@ -475,7 +475,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
                  '  EXTENT      {}'.format(boundstr),
                  '  UNITS       {}'.format(self.mapUnits),
                  '  SYMBOLSET \"{}\"'.format(SYMBOL_FILENAME),
-                 '  CONFIG \"PROJ_LIB\" \"{}\"'.format(mapprj)
+                 '  CONFIG \"PROJ_LIB\" \"{}\"'.format(PROJ_LIB),
+                 mapprj
                 ]
         mapstuff = '\n'.join(parts)
         mapstr = mapstr.replace('##_MAPSTUFF_##', mapstuff)      
