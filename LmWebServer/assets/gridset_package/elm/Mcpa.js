@@ -13630,27 +13630,29 @@ var _user$project$LinearTreeView$drawTree = F3(
 				}
 			};
 		} else {
-			var _p7 = _p3._0;
+			var _p11 = _p3._2;
+			var _p10 = _p3._1;
+			var _p9 = _p3._0;
 			var length = config.showBranchLengths ? A2(
 				_elm_lang$core$Maybe$withDefault,
 				0,
 				A2(
 					_elm_lang$core$Maybe$map,
 					_user$project$LinearTreeView$scaleLength(config.totalLength),
-					_p7.length)) : (30 / _elm_lang$core$Basics$toFloat(config.treeDepth));
-			var color = A2(config.computeColor, 1.0, _p7.cladeId);
-			var _p5 = A3(_user$project$LinearTreeView$drawTree, config, color, _p3._1);
+					_p9.length)) : (30 / _elm_lang$core$Basics$toFloat(config.treeDepth));
+			var color = A2(config.computeColor, 1.0, _p9.cladeId);
+			var _p5 = A3(_user$project$LinearTreeView$drawTree, config, color, _p10);
 			var leftHeight = _p5._0;
 			var leftGrads = _p5._1;
 			var leftNodes = _p5._2;
-			var _p6 = A3(_user$project$LinearTreeView$drawTree, config, color, _p3._2);
+			var _p6 = A3(_user$project$LinearTreeView$drawTree, config, color, _p11);
 			var rightHeight = _p6._0;
 			var rightGrads = _p6._1;
 			var rightNodes = _p6._2;
 			var thisHeight = leftHeight + rightHeight;
 			var boxes = _elm_lang$core$Native_Utils.eq(
 				config.selectedNode,
-				_elm_lang$core$Maybe$Just(_p7.cladeId)) ? {
+				_elm_lang$core$Maybe$Just(_p9.cladeId)) ? {
 				ctor: '::',
 				_0: A2(
 					_elm_lang$svg$Svg$rect,
@@ -13670,7 +13672,8 @@ var _user$project$LinearTreeView$drawTree = F3(
 										_elm_lang$core$Basics$toString(leftHeight)),
 									_1: {
 										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$fill('#00f'),
+										_0: _elm_lang$svg$Svg_Attributes$fill(
+											config.redBlue ? '#00f' : '#f00'),
 										_1: {
 											ctor: '::',
 											_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
@@ -13717,8 +13720,104 @@ var _user$project$LinearTreeView$drawTree = F3(
 						{ctor: '[]'}),
 					_1: {ctor: '[]'}
 				}
-			} : {ctor: '[]'};
-			var thisGrad = {ctor: '_Tuple3', _0: _p7.cladeId, _1: parentColor, _2: color};
+			} : _elm_lang$core$List$concat(
+				{
+					ctor: '::',
+					_0: function () {
+						var _p7 = _p10;
+						if (_p7.ctor === 'Leaf') {
+							return A2(
+								_elm_lang$core$List$member,
+								_p9.cladeId,
+								_elm_lang$core$Tuple$first(config.flaggedNodes)) ? {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$svg$Svg$rect,
+									{
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$x(
+											_elm_lang$core$Basics$toString(length)),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$y('0'),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$width('100'),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$height(
+														_elm_lang$core$Basics$toString(leftHeight)),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$fill('#f00'),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
+															_1: {ctor: '[]'}
+														}
+													}
+												}
+											}
+										}
+									},
+									{ctor: '[]'}),
+								_1: {ctor: '[]'}
+							} : {ctor: '[]'};
+						} else {
+							return {ctor: '[]'};
+						}
+					}(),
+					_1: {
+						ctor: '::',
+						_0: function () {
+							var _p8 = _p11;
+							if (_p8.ctor === 'Leaf') {
+								return A2(
+									_elm_lang$core$List$member,
+									_p9.cladeId,
+									_elm_lang$core$Tuple$second(config.flaggedNodes)) ? {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$svg$Svg$rect,
+										{
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$x(
+												_elm_lang$core$Basics$toString(length)),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$y(
+													_elm_lang$core$Basics$toString(leftHeight)),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$width('100'),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$height(
+															_elm_lang$core$Basics$toString(rightHeight)),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$svg$Svg_Attributes$fill('#f00'),
+															_1: {
+																ctor: '::',
+																_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
+																_1: {ctor: '[]'}
+															}
+														}
+													}
+												}
+											}
+										},
+										{ctor: '[]'}),
+									_1: {ctor: '[]'}
+								} : {ctor: '[]'};
+							} else {
+								return {ctor: '[]'};
+							}
+						}(),
+						_1: {ctor: '[]'}
+					}
+				});
+			var thisGrad = {ctor: '_Tuple3', _0: _p9.cladeId, _1: parentColor, _2: color};
 			return {
 				ctor: '_Tuple3',
 				_0: thisHeight,
@@ -13799,7 +13898,7 @@ var _user$project$LinearTreeView$drawTree = F3(
 																	'url(#grad-',
 																	A2(
 																		_elm_lang$core$Basics_ops['++'],
-																		_elm_lang$core$Basics$toString(_p7.cladeId),
+																		_elm_lang$core$Basics$toString(_p9.cladeId),
 																		')'))),
 															_1: {ctor: '[]'}
 														}
@@ -13864,7 +13963,7 @@ var _user$project$LinearTreeView$drawTree = F3(
 															_1: {
 																ctor: '::',
 																_0: _elm_lang$html$Html_Events$onClick(
-																	config.selectNode(_p7.cladeId)),
+																	config.selectNode(_p9.cladeId)),
 																_1: {
 																	ctor: '::',
 																	_0: _elm_lang$html$Html_Attributes$style(
@@ -13890,9 +13989,601 @@ var _user$project$LinearTreeView$drawTree = F3(
 			};
 		}
 	});
-var _user$project$LinearTreeView$TreeConfig = F6(
-	function (a, b, c, d, e, f) {
-		return {computeColor: a, showBranchLengths: b, treeDepth: c, totalLength: d, selectedNode: e, selectNode: f};
+var _user$project$LinearTreeView$TreeConfig = F8(
+	function (a, b, c, d, e, f, g, h) {
+		return {computeColor: a, showBranchLengths: b, treeDepth: c, totalLength: d, selectedNode: e, selectNode: f, flaggedNodes: g, redBlue: h};
+	});
+
+var _user$project$McpaGraphView$barGraph = function (_p0) {
+	var _p1 = _p0;
+	var _p2 = _p1._0;
+	var opacity = 1.0 - (_p1._1 / 1.2);
+	var background = A2(_user$project$LinearTreeView$computeColor, opacity, _p2);
+	var height = A2(
+		_elm_lang$core$Basics_ops['++'],
+		_elm_lang$core$Basics$toString(
+			100 * _elm_lang$core$Basics$abs(_p2)),
+		'%');
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				{
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
+					_1: {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'height', _1: height},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'bottom', _1: '0'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'background-color', _1: background},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'z-index', _1: '-1'},
+										_1: {ctor: '[]'}
+									}
+								}
+							}
+						}
+					}
+				}),
+			_1: {ctor: '[]'}
+		},
+		{ctor: '[]'});
+};
+var _user$project$McpaGraphView$drawVariable = F5(
+	function (showBarGraph, formatter, i, $var, _p3) {
+		var _p4 = _p3;
+		var _p7 = _p4._1;
+		var _p6 = _p4._0;
+		var values = A2(
+			_elm_lang$core$Maybe$withDefault,
+			'',
+			A2(
+				_elm_lang$core$Maybe$map,
+				formatter,
+				A3(
+					_elm_lang$core$Maybe$map2,
+					F2(
+						function (v0, v1) {
+							return {ctor: '_Tuple2', _0: v0, _1: v1};
+						}),
+					_p6,
+					_p7)));
+		var bar = showBarGraph ? A2(
+			_elm_lang$core$Maybe$withDefault,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('na'),
+				_1: {ctor: '[]'}
+			},
+			A2(
+				_elm_lang$core$Maybe$map,
+				function (_p5) {
+					return _elm_lang$core$List$singleton(
+						_user$project$McpaGraphView$barGraph(_p5));
+				},
+				A2(
+					_elm_lang$core$Maybe$map,
+					function (observed) {
+						return {
+							ctor: '_Tuple2',
+							_0: observed,
+							_1: A2(_elm_community$maybe_extra$Maybe_Extra_ops['?'], _p7, 0.0)
+						};
+					},
+					_p6))) : {ctor: '[]'};
+		var fontWeight = A2(
+			_elm_lang$core$Maybe$withDefault,
+			false,
+			A2(
+				_elm_lang$core$Maybe$map,
+				F2(
+					function (x, y) {
+						return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+					})(0.5),
+				_p4._2)) ? {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'} : {ctor: '_Tuple2', _0: 'font-weight', _1: 'normal'};
+		return A2(
+			_elm_lang$html$Html$td,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'position', _1: 'relative'},
+						_1: {
+							ctor: '::',
+							_0: fontWeight,
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'border-bottom', _1: '2px solid'},
+								_1: {ctor: '[]'}
+							}
+						}
+					}),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$title(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							$var,
+							A2(_elm_lang$core$Basics_ops['++'], '\n', values))),
+					_1: {ctor: '[]'}
+				}
+			},
+			bar);
+	});
+var _user$project$McpaGraphView$viewGraph = F5(
+	function (selectedNode, showBarGraph, variableFormatter, vars, dataForVar) {
+		var _p8 = function () {
+			var _p9 = A2(
+				_elm_community$list_extra$List_Extra$findIndex,
+				F2(
+					function (x, y) {
+						return _elm_lang$core$Native_Utils.eq(x, y);
+					})('Env - Adjusted R-squared'),
+				vars);
+			if (_p9.ctor === 'Just') {
+				return A2(_elm_community$list_extra$List_Extra$splitAt, _p9._0 + 1, vars);
+			} else {
+				return {
+					ctor: '_Tuple2',
+					_0: vars,
+					_1: {ctor: '[]'}
+				};
+			}
+		}();
+		var envVars = _p8._0;
+		var bgVars = _p8._1;
+		var _p10 = function () {
+			var _p11 = selectedNode;
+			if (_p11.ctor === 'Just') {
+				return {
+					ctor: '_Tuple2',
+					_0: A2(
+						_elm_lang$html$Html$tr,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'height', _1: '400px'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'border-bottom', _1: '1px solid'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'border-right', _1: '1px solid'},
+											_1: {ctor: '[]'}
+										}
+									}
+								}),
+							_1: {ctor: '[]'}
+						},
+						A2(
+							_elm_lang$core$List$indexedMap,
+							F2(
+								function (i, $var) {
+									return A5(
+										_user$project$McpaGraphView$drawVariable,
+										showBarGraph,
+										variableFormatter,
+										i,
+										$var,
+										dataForVar($var));
+								}),
+							envVars)),
+					_1: A2(
+						_elm_lang$html$Html$tr,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'height', _1: '400px'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'border-bottom', _1: '1px solid'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'border-left', _1: '1px solid'},
+											_1: {ctor: '[]'}
+										}
+									}
+								}),
+							_1: {ctor: '[]'}
+						},
+						_elm_lang$core$List$reverse(
+							A2(
+								_elm_lang$core$List$indexedMap,
+								F2(
+									function (i, $var) {
+										return A5(
+											_user$project$McpaGraphView$drawVariable,
+											showBarGraph,
+											variableFormatter,
+											i,
+											$var,
+											dataForVar($var));
+									}),
+								bgVars)))
+				};
+			} else {
+				return {
+					ctor: '_Tuple2',
+					_0: A2(
+						_elm_lang$html$Html$tr,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$td,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$colspan(2),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+												_1: {ctor: '[]'}
+											}),
+										_1: {ctor: '[]'}
+									}
+								},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('No node selected.'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}),
+					_1: A2(
+						_elm_lang$html$Html$tr,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$td,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$colspan(2),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+												_1: {ctor: '[]'}
+											}),
+										_1: {ctor: '[]'}
+									}
+								},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('No node selected.'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						})
+				};
+			}
+		}();
+		var envVarTableRows = _p10._0;
+		var bgVarTableRows = _p10._1;
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'flex-grow', _1: '1'},
+								_1: {ctor: '[]'}
+							}
+						}
+					}),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$style(
+							{
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'flex-shrink', _1: '0'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'margin', _1: '0 12px'},
+									_1: {ctor: '[]'}
+								}
+							}),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$h3,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$style(
+									{
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
+											_1: {ctor: '[]'}
+										}
+									}),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('Subtree Left (blue) vs. Right (red) of selected node'),
+								_1: {ctor: '[]'}
+							}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$div,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$class('leaflet-map'),
+									_1: {
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html_Attributes$attribute,
+											'data-map-column',
+											A2(
+												_elm_lang$core$Maybe$withDefault,
+												'',
+												A2(_elm_lang$core$Maybe$map, _elm_lang$core$Basics$toString, selectedNode))),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$style(
+												{
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'max-width', _1: '900px'},
+													_1: {
+														ctor: '::',
+														_0: {ctor: '_Tuple2', _0: 'height', _1: '500px'},
+														_1: {
+															ctor: '::',
+															_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
+															_1: {
+																ctor: '::',
+																_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
+																_1: {ctor: '[]'}
+															}
+														}
+													}
+												}),
+											_1: {ctor: '[]'}
+										}
+									}
+								},
+								{ctor: '[]'}),
+							_1: {ctor: '[]'}
+						}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$h3,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
+										_1: {ctor: '[]'}
+									}
+								}),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Semipartial Correlations b/w Clade and Predictors'),
+							_1: {ctor: '[]'}
+						}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$div,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$style(
+									{
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$div,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+												_1: {
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'justify-content', _1: 'center'},
+													_1: {
+														ctor: '::',
+														_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '10px'},
+														_1: {
+															ctor: '::',
+															_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
+															_1: {
+																ctor: '::',
+																_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
+																_1: {
+																	ctor: '::',
+																	_0: {ctor: '_Tuple2', _0: 'max-width', _1: '900px'},
+																	_1: {ctor: '[]'}
+																}
+															}
+														}
+													}
+												}
+											}),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$table,
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html_Attributes$style(
+													{
+														ctor: '::',
+														_0: {
+															ctor: '_Tuple2',
+															_0: 'width',
+															_1: A3(
+																_elm_lang$core$Basics$flip,
+																F2(
+																	function (x, y) {
+																		return A2(_elm_lang$core$Basics_ops['++'], x, y);
+																	}),
+																'%',
+																_elm_lang$core$Basics$toString(
+																	(100 * _elm_lang$core$Basics$toFloat(
+																		_elm_lang$core$List$length(envVars))) / _elm_lang$core$Basics$toFloat(
+																		_elm_lang$core$List$length(vars))))
+														},
+														_1: {
+															ctor: '::',
+															_0: {ctor: '_Tuple2', _0: 'border-right', _1: '1px solid'},
+															_1: {ctor: '[]'}
+														}
+													}),
+												_1: {ctor: '[]'}
+											},
+											{
+												ctor: '::',
+												_0: envVarTableRows,
+												_1: {
+													ctor: '::',
+													_0: A2(
+														_elm_lang$html$Html$tr,
+														{ctor: '[]'},
+														{
+															ctor: '::',
+															_0: A2(
+																_elm_lang$html$Html$th,
+																{
+																	ctor: '::',
+																	_0: _elm_lang$html$Html_Attributes$colspan(
+																		_elm_lang$core$List$length(envVars)),
+																	_1: {ctor: '[]'}
+																},
+																{
+																	ctor: '::',
+																	_0: _elm_lang$html$Html$text('Environmental Variables'),
+																	_1: {ctor: '[]'}
+																}),
+															_1: {ctor: '[]'}
+														}),
+													_1: {ctor: '[]'}
+												}
+											}),
+										_1: {
+											ctor: '::',
+											_0: A2(
+												_elm_lang$html$Html$table,
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html_Attributes$style(
+														{
+															ctor: '::',
+															_0: {
+																ctor: '_Tuple2',
+																_0: 'width',
+																_1: A3(
+																	_elm_lang$core$Basics$flip,
+																	F2(
+																		function (x, y) {
+																			return A2(_elm_lang$core$Basics_ops['++'], x, y);
+																		}),
+																	'%',
+																	_elm_lang$core$Basics$toString(
+																		(100 * _elm_lang$core$Basics$toFloat(
+																			_elm_lang$core$List$length(bgVars))) / _elm_lang$core$Basics$toFloat(
+																			_elm_lang$core$List$length(vars))))
+															},
+															_1: {
+																ctor: '::',
+																_0: {ctor: '_Tuple2', _0: 'border-left', _1: '1px solid'},
+																_1: {ctor: '[]'}
+															}
+														}),
+													_1: {ctor: '[]'}
+												},
+												{
+													ctor: '::',
+													_0: bgVarTableRows,
+													_1: {
+														ctor: '::',
+														_0: A2(
+															_elm_lang$html$Html$tr,
+															{ctor: '[]'},
+															{
+																ctor: '::',
+																_0: A2(
+																	_elm_lang$html$Html$th,
+																	{
+																		ctor: '::',
+																		_0: _elm_lang$html$Html_Attributes$colspan(
+																			_elm_lang$core$List$length(bgVars)),
+																		_1: {ctor: '[]'}
+																	},
+																	{
+																		ctor: '::',
+																		_0: _elm_lang$html$Html$text('Biogeographic Hypotheses'),
+																		_1: {ctor: '[]'}
+																	}),
+																_1: {ctor: '[]'}
+															}),
+														_1: {ctor: '[]'}
+													}
+												}),
+											_1: {ctor: '[]'}
+										}
+									}),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
+				}
+			});
 	});
 
 var _user$project$Newick$floatWithExp = A2(
@@ -14419,8 +15110,8 @@ var _user$project$McpaModel$init = F2(
 				return _elm_lang$core$Native_Utils.crashCase(
 					'McpaModel',
 					{
-						start: {line: 63, column: 13},
-						end: {line: 68, column: 76}
+						start: {line: 64, column: 13},
+						end: {line: 69, column: 76}
 					},
 					_p1)(
 					A2(_elm_lang$core$Basics_ops['++'], 'failed parsing Nexus tree data: ', _p1._0));
@@ -14444,6 +15135,11 @@ var _user$project$McpaModel$init = F2(
 					_elm_lang$core$Maybe$withDefault,
 					'',
 					_elm_lang$core$List$head(variables)),
+				flaggedNodes: {
+					ctor: '_Tuple2',
+					_0: {ctor: '[]'},
+					_1: {ctor: '[]'}
+				},
 				selectedNode: _elm_lang$core$Maybe$Nothing,
 				showBranchLengths: false,
 				data: data
@@ -14459,9 +15155,9 @@ var _user$project$McpaModel$TreeInfo = F4(
 	function (a, b, c, d) {
 		return {root: a, length: b, depth: c, breadth: d};
 	});
-var _user$project$McpaModel$Model = F6(
-	function (a, b, c, d, e, f) {
-		return {treeInfo: a, variables: b, data: c, selectedVariable: d, selectedNode: e, showBranchLengths: f};
+var _user$project$McpaModel$Model = F7(
+	function (a, b, c, d, e, f, g) {
+		return {treeInfo: a, variables: b, data: c, flaggedNodes: d, selectedVariable: e, selectedNode: f, showBranchLengths: g};
 	});
 var _user$project$McpaModel$SelectNode = function (a) {
 	return {ctor: 'SelectNode', _0: a};
@@ -14471,280 +15167,107 @@ var _user$project$McpaModel$SelectVariable = function (a) {
 	return {ctor: 'SelectVariable', _0: a};
 };
 
-var _user$project$MultiSpeciesView$barGraph = function (_p0) {
-	var _p1 = _p0;
-	var _p2 = _p1._0;
-	var opacity = 1.0 - (_p1._1 / 1.2);
-	var background = A2(_user$project$LinearTreeView$computeColor, opacity, _p2);
-	var height = A2(
-		_elm_lang$core$Basics_ops['++'],
-		_elm_lang$core$Basics$toString(
-			100 * _elm_lang$core$Basics$abs(_p2)),
-		'%');
-	return A2(
-		_elm_lang$html$Html$div,
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$style(
-				{
-					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
-					_1: {
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'height', _1: height},
-						_1: {
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
-							_1: {
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'bottom', _1: '0'},
-								_1: {
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'background-color', _1: background},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'z-index', _1: '-1'},
-										_1: {ctor: '[]'}
-									}
-								}
-							}
-						}
-					}
-				}),
-			_1: {ctor: '[]'}
-		},
-		{ctor: '[]'});
-};
-var _user$project$MultiSpeciesView$drawVariable = F4(
-	function (showBarGraph, formatter, $var, _p3) {
-		var _p4 = _p3;
-		var _p7 = _p4._1;
-		var _p6 = _p4._0;
-		var values = A2(
-			_elm_lang$core$Maybe$withDefault,
-			'',
-			A2(
-				_elm_lang$core$Maybe$map,
-				formatter,
-				A3(
-					_elm_lang$core$Maybe$map2,
-					F2(
-						function (v0, v1) {
-							return {ctor: '_Tuple2', _0: v0, _1: v1};
-						}),
-					_p6,
-					_p7)));
-		var bar = showBarGraph ? A2(
-			_elm_lang$core$Maybe$withDefault,
-			{ctor: '[]'},
-			A2(
-				_elm_lang$core$Maybe$map,
-				function (_p5) {
-					return _elm_lang$core$List$singleton(
-						_user$project$MultiSpeciesView$barGraph(_p5));
-				},
-				A3(
-					_elm_lang$core$Maybe$map2,
-					F2(
-						function (v0, v1) {
-							return {ctor: '_Tuple2', _0: v0, _1: v1};
-						}),
-					_p6,
-					_p7))) : {ctor: '[]'};
-		var fontWeight = A2(
-			_elm_lang$core$Maybe$withDefault,
-			false,
-			A2(
-				_elm_lang$core$Maybe$map,
-				F2(
-					function (x, y) {
-						return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
-					})(0.5),
-				_p4._2)) ? {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'} : {ctor: '_Tuple2', _0: 'font-weight', _1: 'normal'};
-		return A2(
-			_elm_lang$html$Html$td,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$style(
-					{
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'position', _1: 'relative'},
-						_1: {
-							ctor: '::',
-							_0: fontWeight,
-							_1: {ctor: '[]'}
-						}
-					}),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$title(
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							$var,
-							A2(_elm_lang$core$Basics_ops['++'], '\n', values))),
-					_1: {ctor: '[]'}
+var _user$project$ParseMcpa$nan = 0 / 0;
+var _user$project$ParseMcpa$nodeIdRegex = _elm_lang$core$Regex$caseInsensitive(
+	_elm_lang$core$Regex$regex('Node_(\\d+)'));
+var _user$project$ParseMcpa$parseRecord = F3(
+	function (variables, record, result) {
+		var _p0 = record;
+		if ((_p0.ctor === '::') && (_p0._1.ctor === '::')) {
+			var _p5 = _p0._0;
+			var makeDict = F2(
+				function (cladeId, values) {
+					return A2(
+						_elm_lang$core$List$foldl,
+						function (_p1) {
+							var _p2 = _p1;
+							return A2(
+								_elm_lang$core$Dict$insert,
+								{ctor: '_Tuple3', _0: cladeId, _1: _p0._1._0, _2: _p2._0},
+								_p2._1);
+						},
+						result)(
+						A3(
+							_elm_lang$core$List$map2,
+							F2(
+								function (v0, v1) {
+									return {ctor: '_Tuple2', _0: v0, _1: v1};
+								}),
+							variables,
+							values));
+				});
+			var valueToFloat = function (s) {
+				var _p3 = s;
+				if (_p3 === 'nan') {
+					return _elm_lang$core$Result$Ok(_user$project$ParseMcpa$nan);
+				} else {
+					return A2(
+						_elm_lang$core$Result$map,
+						_elm_lang$core$Basics$abs,
+						_elm_lang$core$String$toFloat(s));
 				}
-			},
-			bar);
+			};
+			var values = _elm_community$result_extra$Result_Extra$combine(
+				A2(_elm_lang$core$List$map, valueToFloat, _p0._1._1));
+			var cladeId = function () {
+				var _p4 = A3(
+					_elm_lang$core$Regex$find,
+					_elm_lang$core$Regex$AtMost(1),
+					_user$project$ParseMcpa$nodeIdRegex,
+					_p5);
+				if (_p4.ctor === '[]') {
+					return _elm_lang$core$String$toInt(_p5);
+				} else {
+					return A2(
+						_elm_lang$core$Maybe$withDefault,
+						_elm_lang$core$Result$Err('missing node_id'),
+						A2(
+							_elm_lang$core$Maybe$map,
+							_elm_lang$core$String$toInt,
+							_elm_community$maybe_extra$Maybe_Extra$join(
+								_elm_lang$core$List$head(_p4._0.submatches))));
+				}
+			}();
+			return A3(_elm_lang$core$Result$map2, makeDict, cladeId, values);
+		} else {
+			return _elm_lang$core$Result$Err('bad csv');
+		}
 	});
-var _user$project$MultiSpeciesView$view = F7(
-	function (_p8, tableHead, showBarGraph, variableFormatter, vars, selectData, dataForVar) {
-		var _p9 = _p8;
-		var _p18 = _p9.treeInfo;
-		var _p17 = _p9.showBranchLengths;
-		var _p16 = _p9.selectedNode;
-		var _p10 = function () {
-			var _p11 = A2(
-				_elm_community$list_extra$List_Extra$findIndex,
-				F2(
-					function (x, y) {
-						return _elm_lang$core$Native_Utils.eq(x, y);
-					})('ENV - Adjusted R-squared'),
-				vars);
-			if (_p11.ctor === 'Just') {
-				return A2(_elm_community$list_extra$List_Extra$splitAt, _p11._0 + 1, vars);
-			} else {
-				return {
-					ctor: '_Tuple2',
-					_0: vars,
-					_1: {ctor: '[]'}
-				};
-			}
-		}();
-		var envVars = _p10._0;
-		var bgVars = _p10._1;
-		var _p12 = function () {
-			var _p13 = _p16;
-			if (_p13.ctor === 'Just') {
-				return {
-					ctor: '_Tuple2',
-					_0: A2(
-						_elm_lang$html$Html$tr,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$style(
-								{
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'height', _1: '400px'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'border-bottom', _1: '1px solid'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'border-right', _1: '1px solid'},
-											_1: {ctor: '[]'}
-										}
-									}
-								}),
-							_1: {ctor: '[]'}
-						},
-						A2(
-							_elm_lang$core$List$map,
-							function ($var) {
-								return A4(
-									_user$project$MultiSpeciesView$drawVariable,
-									showBarGraph,
-									variableFormatter,
-									$var,
-									dataForVar($var));
-							},
-							envVars)),
-					_1: A2(
-						_elm_lang$html$Html$tr,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$style(
-								{
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'height', _1: '400px'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'border-bottom', _1: '1px solid'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'border-left', _1: '1px solid'},
-											_1: {ctor: '[]'}
-										}
-									}
-								}),
-							_1: {ctor: '[]'}
-						},
-						A2(
-							_elm_lang$core$List$map,
-							function ($var) {
-								return A4(
-									_user$project$MultiSpeciesView$drawVariable,
-									showBarGraph,
-									variableFormatter,
-									$var,
-									dataForVar($var));
-							},
-							_elm_lang$core$List$reverse(bgVars)))
-				};
-			} else {
-				return {
-					ctor: '_Tuple2',
-					_0: A2(
-						_elm_lang$html$Html$tr,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$td,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$colspan(2),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$style(
-											{
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-												_1: {ctor: '[]'}
-											}),
-										_1: {ctor: '[]'}
-									}
-								},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('No node selected.'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						}),
-					_1: A2(
-						_elm_lang$html$Html$tr,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$td,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$colspan(2),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$style(
-											{
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-												_1: {ctor: '[]'}
-											}),
-										_1: {ctor: '[]'}
-									}
-								},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('No node selected.'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						})
-				};
-			}
-		}();
-		var envVarTableRows = _p12._0;
-		var bgVarTableRows = _p12._1;
+var _user$project$ParseMcpa$parseCsv = function (_p6) {
+	var _p7 = _p6;
+	var variables = A2(_elm_lang$core$List$drop, 2, _p7.headers);
+	var data = A3(
+		_elm_lang$core$List$foldl,
+		function (record) {
+			return _elm_lang$core$Result$andThen(
+				A2(_user$project$ParseMcpa$parseRecord, variables, record));
+		},
+		_elm_lang$core$Result$Ok(_elm_lang$core$Dict$empty),
+		_p7.records);
+	return A2(
+		_elm_lang$core$Result$map,
+		F2(
+			function (v0, v1) {
+				return {ctor: '_Tuple2', _0: v0, _1: v1};
+			})(variables),
+		data);
+};
+var _user$project$ParseMcpa$parseMcpa = function (_p8) {
+	return A2(
+		_elm_lang$core$Result$andThen,
+		_user$project$ParseMcpa$parseCsv,
+		A2(
+			_elm_lang$core$Result$mapError,
+			_elm_lang$core$Basics$toString,
+			_periodic$elm_csv$Csv$parse(_p8)));
+};
+
+var _user$project$McpaTreeView$viewTree = F3(
+	function (_p0, redBlue, selectData) {
+		var _p1 = _p0;
+		var _p6 = _p1.variables;
+		var _p5 = _p1.treeInfo;
+		var _p4 = _p1.showBranchLengths;
 		var toggleBranchLengths = A2(
 			_elm_lang$html$Html$div,
 			{ctor: '[]'},
@@ -14762,7 +15285,7 @@ var _user$project$MultiSpeciesView$view = F7(
 								_0: _elm_lang$html$Html_Attributes$type_('checkbox'),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$checked(_p17),
+									_0: _elm_lang$html$Html_Attributes$checked(_p4),
 									_1: {
 										ctor: '::',
 										_0: _elm_lang$html$Html_Attributes$readonly(true),
@@ -14783,7 +15306,7 @@ var _user$project$MultiSpeciesView$view = F7(
 					}),
 				_1: {ctor: '[]'}
 			});
-		var select = function (_p14) {
+		var select = function (_p2) {
 			return _user$project$McpaModel$SelectVariable(
 				A2(
 					_elm_lang$core$Maybe$withDefault,
@@ -14791,10 +15314,10 @@ var _user$project$MultiSpeciesView$view = F7(
 					A2(
 						_elm_lang$core$Maybe$andThen,
 						function (i) {
-							return A2(_elm_community$list_extra$List_Extra$getAt, i, vars);
+							return A2(_elm_community$list_extra$List_Extra$getAt, i, _p6);
 						},
 						_elm_lang$core$Result$toMaybe(
-							_elm_lang$core$String$toInt(_p14)))));
+							_elm_lang$core$String$toInt(_p2)))));
 		};
 		var variableSelector = A2(
 			_elm_lang$html$Html$div,
@@ -14845,7 +15368,7 @@ var _user$project$MultiSpeciesView$view = F7(
 										{
 											ctor: '::',
 											_0: _elm_lang$html$Html_Attributes$selected(
-												_elm_lang$core$Native_Utils.eq(v, _p9.selectedVariable)),
+												_elm_lang$core$Native_Utils.eq(v, _p1.selectedVariable)),
 											_1: {
 												ctor: '::',
 												_0: _elm_lang$html$Html_Attributes$value(
@@ -14859,7 +15382,7 @@ var _user$project$MultiSpeciesView$view = F7(
 											_1: {ctor: '[]'}
 										});
 								}),
-							vars)),
+							_p6)),
 					_1: {ctor: '[]'}
 				}
 			});
@@ -14873,14 +15396,14 @@ var _user$project$MultiSpeciesView$view = F7(
 						_user$project$LinearTreeView$computeColor(opacity),
 						selectData(cladeId)));
 			});
-		var _p15 = A3(
+		var _p3 = A3(
 			_user$project$LinearTreeView$drawTree,
-			{computeColor: computeColor_, showBranchLengths: _p17, treeDepth: _p18.depth, totalLength: _p18.length, selectedNode: _p16, selectNode: _user$project$McpaModel$SelectNode},
+			{computeColor: computeColor_, showBranchLengths: _p4, treeDepth: _p5.depth, totalLength: _p5.length, flaggedNodes: _p1.flaggedNodes, selectedNode: _p1.selectedNode, selectNode: _user$project$McpaModel$SelectNode, redBlue: redBlue},
 			'#ccc',
-			_p18.root);
-		var treeHeight = _p15._0;
-		var grads = _p15._1;
-		var treeSvg = _p15._2;
+			_p5.root);
+		var treeHeight = _p3._0;
+		var grads = _p3._1;
+		var treeSvg = _p3._2;
 		var gradDefs = _user$project$LinearTreeView$gradientDefinitions(grads);
 		return A2(
 			_elm_lang$html$Html$div,
@@ -14892,12 +15415,8 @@ var _user$project$MultiSpeciesView$view = F7(
 						_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
 						_1: {
 							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'font-family', _1: 'sans-serif'},
-							_1: {
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'height', _1: '100vh'},
-								_1: {ctor: '[]'}
-							}
+							_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+							_1: {ctor: '[]'}
 						}
 					}),
 				_1: {ctor: '[]'}
@@ -14905,16 +15424,16 @@ var _user$project$MultiSpeciesView$view = F7(
 			{
 				ctor: '::',
 				_0: A2(
-					_elm_lang$html$Html$div,
+					_elm_lang$html$Html$h3,
 					{
 						ctor: '::',
 						_0: _elm_lang$html$Html_Attributes$style(
 							{
 								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+								_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
 								_1: {
 									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+									_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
 									_1: {ctor: '[]'}
 								}
 							}),
@@ -14922,117 +15441,8 @@ var _user$project$MultiSpeciesView$view = F7(
 					},
 					{
 						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$h3,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$style(
-									{
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
-											_1: {ctor: '[]'}
-										}
-									}),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('Select nodes in tree'),
-								_1: {ctor: '[]'}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$div,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$style(
-										{
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-											_1: {
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'justify-content', _1: 'space-between'},
-												_1: {
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'flex-shrink', _1: '0'},
-													_1: {ctor: '[]'}
-												}
-											}
-										}),
-									_1: {ctor: '[]'}
-								},
-								{
-									ctor: '::',
-									_0: variableSelector,
-									_1: {
-										ctor: '::',
-										_0: toggleBranchLengths,
-										_1: {ctor: '[]'}
-									}
-								}),
-							_1: {
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$div,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$style(
-											{
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '20px'},
-												_1: {
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'overflow-y', _1: 'auto'},
-													_1: {ctor: '[]'}
-												}
-											}),
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$svg$Svg$svg,
-											{
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$width('600'),
-												_1: {
-													ctor: '::',
-													_0: _elm_lang$svg$Svg_Attributes$height(
-														_elm_lang$core$Basics$toString(15 * treeHeight)),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$svg$Svg_Attributes$viewBox(
-															A2(
-																_elm_lang$core$Basics_ops['++'],
-																'0 0 40 ',
-																_elm_lang$core$Basics$toString(treeHeight))),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$style(
-																{
-																	ctor: '::',
-																	_0: {ctor: '_Tuple2', _0: 'background', _1: '#000'},
-																	_1: {
-																		ctor: '::',
-																		_0: {ctor: '_Tuple2', _0: 'font-family', _1: 'sans-serif'},
-																		_1: {ctor: '[]'}
-																	}
-																}),
-															_1: {ctor: '[]'}
-														}
-													}
-												}
-											},
-											{ctor: '::', _0: gradDefs, _1: treeSvg}),
-										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							}
-						}
+						_0: _elm_lang$html$Html$text('Select nodes in tree'),
+						_1: {ctor: '[]'}
 					}),
 				_1: {
 					ctor: '::',
@@ -15046,10 +15456,10 @@ var _user$project$MultiSpeciesView$view = F7(
 									_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
 									_1: {
 										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+										_0: {ctor: '_Tuple2', _0: 'justify-content', _1: 'space-between'},
 										_1: {
 											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'flex-grow', _1: '1'},
+											_0: {ctor: '_Tuple2', _0: 'flex-shrink', _1: '0'},
 											_1: {ctor: '[]'}
 										}
 									}
@@ -15058,383 +15468,74 @@ var _user$project$MultiSpeciesView$view = F7(
 						},
 						{
 							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$div,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$style(
-										{
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'flex-shrink', _1: '0'},
-											_1: {
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'margin', _1: '0 12px'},
-												_1: {ctor: '[]'}
-											}
-										}),
-									_1: {ctor: '[]'}
-								},
-								{
-									ctor: '::',
-									_0: A2(
-										_elm_lang$html$Html$h3,
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$style(
-												{
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-													_1: {
-														ctor: '::',
-														_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
-														_1: {ctor: '[]'}
-													}
-												}),
-											_1: {ctor: '[]'}
-										},
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html$text('Subtree Left (blue) vs. Right (red) of selected node'),
-											_1: {ctor: '[]'}
-										}),
-									_1: {
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$div,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$class('leaflet-map'),
-												_1: {
-													ctor: '::',
-													_0: A2(
-														_elm_lang$html$Html_Attributes$attribute,
-														'data-map-column',
-														A2(
-															_elm_lang$core$Maybe$withDefault,
-															'',
-															A2(_elm_lang$core$Maybe$map, _elm_lang$core$Basics$toString, _p16))),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$style(
-															{
-																ctor: '::',
-																_0: {ctor: '_Tuple2', _0: 'max-width', _1: '900px'},
-																_1: {
-																	ctor: '::',
-																	_0: {ctor: '_Tuple2', _0: 'height', _1: '500px'},
-																	_1: {
-																		ctor: '::',
-																		_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
-																		_1: {
-																			ctor: '::',
-																			_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
-																			_1: {ctor: '[]'}
-																		}
-																	}
-																}
-															}),
-														_1: {ctor: '[]'}
-													}
-												}
-											},
-											{ctor: '[]'}),
-										_1: {ctor: '[]'}
-									}
-								}),
+							_0: variableSelector,
 							_1: {
 								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$h3,
+								_0: toggleBranchLengths,
+								_1: {ctor: '[]'}
+							}
+						}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$div,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$style(
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$style(
-											{
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-												_1: {
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
-													_1: {ctor: '[]'}
-												}
-											}),
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html$text('Semipartial Correlations b/w Clade and Predictors'),
-										_1: {ctor: '[]'}
-									}),
-								_1: {
-									ctor: '::',
-									_0: A2(
-										_elm_lang$html$Html$div,
-										{
+										_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '20px'},
+										_1: {
 											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$style(
-												{
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
-													_1: {ctor: '[]'}
-												}),
+											_0: {ctor: '_Tuple2', _0: 'overflow-y', _1: 'auto'},
 											_1: {ctor: '[]'}
-										},
-										{
+										}
+									}),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$svg$Svg$svg,
+									{
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$width('600'),
+										_1: {
 											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$div,
-												{
+											_0: _elm_lang$svg$Svg_Attributes$height(
+												_elm_lang$core$Basics$toString(15 * treeHeight)),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$viewBox(
+													A2(
+														_elm_lang$core$Basics_ops['++'],
+														'0 0 40 ',
+														_elm_lang$core$Basics$toString(treeHeight))),
+												_1: {
 													ctor: '::',
 													_0: _elm_lang$html$Html_Attributes$style(
 														{
 															ctor: '::',
-															_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+															_0: {ctor: '_Tuple2', _0: 'background', _1: '#000'},
 															_1: {
 																ctor: '::',
-																_0: {ctor: '_Tuple2', _0: 'justify-content', _1: 'center'},
-																_1: {
-																	ctor: '::',
-																	_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '10px'},
-																	_1: {
-																		ctor: '::',
-																		_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
-																		_1: {
-																			ctor: '::',
-																			_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
-																			_1: {
-																				ctor: '::',
-																				_0: {ctor: '_Tuple2', _0: 'max-width', _1: '900px'},
-																				_1: {ctor: '[]'}
-																			}
-																		}
-																	}
-																}
+																_0: {ctor: '_Tuple2', _0: 'font-family', _1: 'sans-serif'},
+																_1: {ctor: '[]'}
 															}
 														}),
 													_1: {ctor: '[]'}
-												},
-												{
-													ctor: '::',
-													_0: A2(
-														_elm_lang$html$Html$table,
-														{
-															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$style(
-																{
-																	ctor: '::',
-																	_0: {
-																		ctor: '_Tuple2',
-																		_0: 'width',
-																		_1: A3(
-																			_elm_lang$core$Basics$flip,
-																			F2(
-																				function (x, y) {
-																					return A2(_elm_lang$core$Basics_ops['++'], x, y);
-																				}),
-																			'%',
-																			_elm_lang$core$Basics$toString(
-																				(100 * _elm_lang$core$Basics$toFloat(
-																					_elm_lang$core$List$length(envVars))) / _elm_lang$core$Basics$toFloat(
-																					_elm_lang$core$List$length(vars))))
-																	},
-																	_1: {ctor: '[]'}
-																}),
-															_1: {ctor: '[]'}
-														},
-														{
-															ctor: '::',
-															_0: envVarTableRows,
-															_1: {
-																ctor: '::',
-																_0: A2(
-																	_elm_lang$html$Html$tr,
-																	{ctor: '[]'},
-																	{
-																		ctor: '::',
-																		_0: A2(
-																			_elm_lang$html$Html$th,
-																			{
-																				ctor: '::',
-																				_0: _elm_lang$html$Html_Attributes$colspan(
-																					_elm_lang$core$List$length(envVars)),
-																				_1: {ctor: '[]'}
-																			},
-																			{
-																				ctor: '::',
-																				_0: _elm_lang$html$Html$text('Environmental Variables'),
-																				_1: {ctor: '[]'}
-																			}),
-																		_1: {ctor: '[]'}
-																	}),
-																_1: {ctor: '[]'}
-															}
-														}),
-													_1: {
-														ctor: '::',
-														_0: A2(
-															_elm_lang$html$Html$table,
-															{
-																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$style(
-																	{
-																		ctor: '::',
-																		_0: {
-																			ctor: '_Tuple2',
-																			_0: 'width',
-																			_1: A3(
-																				_elm_lang$core$Basics$flip,
-																				F2(
-																					function (x, y) {
-																						return A2(_elm_lang$core$Basics_ops['++'], x, y);
-																					}),
-																				'%',
-																				_elm_lang$core$Basics$toString(
-																					(100 * _elm_lang$core$Basics$toFloat(
-																						_elm_lang$core$List$length(bgVars))) / _elm_lang$core$Basics$toFloat(
-																						_elm_lang$core$List$length(vars))))
-																		},
-																		_1: {ctor: '[]'}
-																	}),
-																_1: {ctor: '[]'}
-															},
-															{
-																ctor: '::',
-																_0: bgVarTableRows,
-																_1: {
-																	ctor: '::',
-																	_0: A2(
-																		_elm_lang$html$Html$tr,
-																		{ctor: '[]'},
-																		{
-																			ctor: '::',
-																			_0: A2(
-																				_elm_lang$html$Html$th,
-																				{
-																					ctor: '::',
-																					_0: _elm_lang$html$Html_Attributes$colspan(
-																						_elm_lang$core$List$length(bgVars)),
-																					_1: {ctor: '[]'}
-																				},
-																				{
-																					ctor: '::',
-																					_0: _elm_lang$html$Html$text('Biogeographic Hypotheses'),
-																					_1: {ctor: '[]'}
-																				}),
-																			_1: {ctor: '[]'}
-																		}),
-																	_1: {ctor: '[]'}
-																}
-															}),
-														_1: {ctor: '[]'}
-													}
-												}),
-											_1: {ctor: '[]'}
-										}),
-									_1: {ctor: '[]'}
-								}
-							}
-						}),
-					_1: {ctor: '[]'}
+												}
+											}
+										}
+									},
+									{ctor: '::', _0: gradDefs, _1: treeSvg}),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
 				}
 			});
 	});
-
-var _user$project$ParseMcpa$nan = 0 / 0;
-var _user$project$ParseMcpa$nodeIdRegex = _elm_lang$core$Regex$caseInsensitive(
-	_elm_lang$core$Regex$regex('Node_(\\d+)'));
-var _user$project$ParseMcpa$parseRecord = F3(
-	function (variables, record, result) {
-		var _p0 = record;
-		if ((_p0.ctor === '::') && (_p0._1.ctor === '::')) {
-			var _p5 = _p0._0;
-			var makeDict = F2(
-				function (cladeId, values) {
-					return A2(
-						_elm_lang$core$List$foldl,
-						function (_p1) {
-							var _p2 = _p1;
-							return A2(
-								_elm_lang$core$Dict$insert,
-								{ctor: '_Tuple3', _0: cladeId, _1: _p0._1._0, _2: _p2._0},
-								_p2._1);
-						},
-						result)(
-						A3(
-							_elm_lang$core$List$map2,
-							F2(
-								function (v0, v1) {
-									return {ctor: '_Tuple2', _0: v0, _1: v1};
-								}),
-							variables,
-							values));
-				});
-			var valueToFloat = function (s) {
-				var _p3 = s;
-				if (_p3 === 'nan') {
-					return _elm_lang$core$Result$Ok(_user$project$ParseMcpa$nan);
-				} else {
-					return A2(
-						_elm_lang$core$Result$map,
-						_elm_lang$core$Basics$abs,
-						_elm_lang$core$String$toFloat(s));
-				}
-			};
-			var values = _elm_community$result_extra$Result_Extra$combine(
-				A2(_elm_lang$core$List$map, valueToFloat, _p0._1._1));
-			var cladeId = function () {
-				var _p4 = A2(
-					_elm_lang$core$Debug$log,
-					'matches',
-					A3(
-						_elm_lang$core$Regex$find,
-						_elm_lang$core$Regex$AtMost(1),
-						_user$project$ParseMcpa$nodeIdRegex,
-						_p5));
-				if (_p4.ctor === '[]') {
-					return _elm_lang$core$String$toInt(_p5);
-				} else {
-					return A2(
-						_elm_lang$core$Maybe$withDefault,
-						_elm_lang$core$Result$Err('missing node_id'),
-						A2(
-							_elm_lang$core$Maybe$map,
-							_elm_lang$core$String$toInt,
-							_elm_community$maybe_extra$Maybe_Extra$join(
-								_elm_lang$core$List$head(_p4._0.submatches))));
-				}
-			}();
-			return A3(_elm_lang$core$Result$map2, makeDict, cladeId, values);
-		} else {
-			return _elm_lang$core$Result$Err('bad csv');
-		}
-	});
-var _user$project$ParseMcpa$parseCsv = function (_p6) {
-	var _p7 = _p6;
-	var variables = A2(_elm_lang$core$List$drop, 2, _p7.headers);
-	var data = A3(
-		_elm_lang$core$List$foldl,
-		function (record) {
-			return _elm_lang$core$Result$andThen(
-				A2(_user$project$ParseMcpa$parseRecord, variables, record));
-		},
-		_elm_lang$core$Result$Ok(_elm_lang$core$Dict$empty),
-		_p7.records);
-	return A2(
-		_elm_lang$core$Result$map,
-		F2(
-			function (v0, v1) {
-				return {ctor: '_Tuple2', _0: v0, _1: v1};
-			})(variables),
-		data);
-};
-var _user$project$ParseMcpa$parseMcpa = function (_p8) {
-	return A2(
-		_elm_lang$core$Result$andThen,
-		_user$project$ParseMcpa$parseCsv,
-		A2(
-			_elm_lang$core$Result$mapError,
-			_elm_lang$core$Basics$toString,
-			_periodic$elm_csv$Csv$parse(_p8)));
-};
 
 var _user$project$McpaView$variableFormatter = function (_p0) {
 	var _p1 = _p0;
@@ -15444,70 +15545,6 @@ var _user$project$McpaView$variableFormatter = function (_p0) {
 		_p1._0);
 };
 var _user$project$McpaView$view = function (model) {
-	var tableHead = A2(
-		_elm_lang$html$Html$thead,
-		{ctor: '[]'},
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$tr,
-				{ctor: '[]'},
-				{
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$th,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$colspan(2),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$style(
-									{
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
-										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							}
-						},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('MCPA data for Selected Node'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$tr,
-					{ctor: '[]'},
-					{
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$th,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('Observed'),
-								_1: {ctor: '[]'}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$th,
-								{ctor: '[]'},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('Variable'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						}
-					}),
-				_1: {ctor: '[]'}
-			}
-		});
 	var dataForVar = function ($var) {
 		return {
 			ctor: '_Tuple3',
@@ -15534,7 +15571,7 @@ var _user$project$McpaView$view = function (model) {
 				function (cladeId) {
 					return A2(
 						_elm_lang$core$Dict$get,
-						{ctor: '_Tuple3', _0: cladeId, _1: 'BH Significant', _2: $var},
+						{ctor: '_Tuple3', _0: cladeId, _1: 'BH Corrected', _2: $var},
 						model.data);
 				},
 				model.selectedNode)
@@ -15546,7 +15583,35 @@ var _user$project$McpaView$view = function (model) {
 			{ctor: '_Tuple3', _0: cladeId, _1: 'Observed', _2: model.selectedVariable},
 			model.data);
 	};
-	return A7(_user$project$MultiSpeciesView$view, model, tableHead, true, _user$project$McpaView$variableFormatter, model.variables, selectData, dataForVar);
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				{
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+					_1: {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'font-family', _1: 'sans-serif'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'height', _1: '1080px'},
+							_1: {ctor: '[]'}
+						}
+					}
+				}),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: A3(_user$project$McpaTreeView$viewTree, model, true, selectData),
+			_1: {
+				ctor: '::',
+				_0: A5(_user$project$McpaGraphView$viewGraph, model.selectedNode, true, _user$project$McpaView$variableFormatter, model.variables, dataForVar),
+				_1: {ctor: '[]'}
+			}
+		});
 };
 
 var _user$project$McpaMain$parseData = function (data) {

@@ -471,7 +471,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         mapprj = self._createProjectionInfo(self.epsgcode)
         parts = ['  NAME        {}'.format(self.mapName),
                  # All raster/vector filepaths will be relative to mapfile path
-                 '  SHAPEPATH \"{}\"'.format(self.mapAbsolutePath()),
+                 '  SHAPEPATH \"{}\"'.format(self.mapAbsolutePath),
                  '  EXTENT      {}'.format(boundstr),
                  '  UNITS       {}'.format(self.mapUnits),
                  '  SYMBOLSET \"{}\"'.format(SYMBOL_FILENAME),

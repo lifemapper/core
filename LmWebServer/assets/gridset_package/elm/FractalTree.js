@@ -13579,14 +13579,11 @@ var _user$project$ParseMcpa$parseRecord = F3(
 			var values = _elm_community$result_extra$Result_Extra$combine(
 				A2(_elm_lang$core$List$map, valueToFloat, _p0._1._1));
 			var cladeId = function () {
-				var _p4 = A2(
-					_elm_lang$core$Debug$log,
-					'matches',
-					A3(
-						_elm_lang$core$Regex$find,
-						_elm_lang$core$Regex$AtMost(1),
-						_user$project$ParseMcpa$nodeIdRegex,
-						_p5));
+				var _p4 = A3(
+					_elm_lang$core$Regex$find,
+					_elm_lang$core$Regex$AtMost(1),
+					_user$project$ParseMcpa$nodeIdRegex,
+					_p5);
 				if (_p4.ctor === '[]') {
 					return _elm_lang$core$String$toInt(_p5);
 				} else {

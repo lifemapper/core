@@ -5315,684 +5315,6 @@ var _elm_lang$core$Dict$diff = F2(
 			t2);
 	});
 
-var _elm_lang$http$Native_Http = function() {
-
-
-// ENCODING AND DECODING
-
-function encodeUri(string)
-{
-	return encodeURIComponent(string);
-}
-
-function decodeUri(string)
-{
-	try
-	{
-		return _elm_lang$core$Maybe$Just(decodeURIComponent(string));
-	}
-	catch(e)
-	{
-		return _elm_lang$core$Maybe$Nothing;
-	}
-}
-
-
-// SEND REQUEST
-
-function toTask(request, maybeProgress)
-{
-	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
-	{
-		var xhr = new XMLHttpRequest();
-
-		configureProgress(xhr, maybeProgress);
-
-		xhr.addEventListener('error', function() {
-			callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'NetworkError' }));
-		});
-		xhr.addEventListener('timeout', function() {
-			callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Timeout' }));
-		});
-		xhr.addEventListener('load', function() {
-			callback(handleResponse(xhr, request.expect.responseToResult));
-		});
-
-		try
-		{
-			xhr.open(request.method, request.url, true);
-		}
-		catch (e)
-		{
-			return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'BadUrl', _0: request.url }));
-		}
-
-		configureRequest(xhr, request);
-		send(xhr, request.body);
-
-		return function() { xhr.abort(); };
-	});
-}
-
-function configureProgress(xhr, maybeProgress)
-{
-	if (maybeProgress.ctor === 'Nothing')
-	{
-		return;
-	}
-
-	xhr.addEventListener('progress', function(event) {
-		if (!event.lengthComputable)
-		{
-			return;
-		}
-		_elm_lang$core$Native_Scheduler.rawSpawn(maybeProgress._0({
-			bytes: event.loaded,
-			bytesExpected: event.total
-		}));
-	});
-}
-
-function configureRequest(xhr, request)
-{
-	function setHeader(pair)
-	{
-		xhr.setRequestHeader(pair._0, pair._1);
-	}
-
-	A2(_elm_lang$core$List$map, setHeader, request.headers);
-	xhr.responseType = request.expect.responseType;
-	xhr.withCredentials = request.withCredentials;
-
-	if (request.timeout.ctor === 'Just')
-	{
-		xhr.timeout = request.timeout._0;
-	}
-}
-
-function send(xhr, body)
-{
-	switch (body.ctor)
-	{
-		case 'EmptyBody':
-			xhr.send();
-			return;
-
-		case 'StringBody':
-			xhr.setRequestHeader('Content-Type', body._0);
-			xhr.send(body._1);
-			return;
-
-		case 'FormDataBody':
-			xhr.send(body._0);
-			return;
-	}
-}
-
-
-// RESPONSES
-
-function handleResponse(xhr, responseToResult)
-{
-	var response = toResponse(xhr);
-
-	if (xhr.status < 200 || 300 <= xhr.status)
-	{
-		response.body = xhr.responseText;
-		return _elm_lang$core$Native_Scheduler.fail({
-			ctor: 'BadStatus',
-			_0: response
-		});
-	}
-
-	var result = responseToResult(response);
-
-	if (result.ctor === 'Ok')
-	{
-		return _elm_lang$core$Native_Scheduler.succeed(result._0);
-	}
-	else
-	{
-		response.body = xhr.responseText;
-		return _elm_lang$core$Native_Scheduler.fail({
-			ctor: 'BadPayload',
-			_0: result._0,
-			_1: response
-		});
-	}
-}
-
-function toResponse(xhr)
-{
-	return {
-		status: { code: xhr.status, message: xhr.statusText },
-		headers: parseHeaders(xhr.getAllResponseHeaders()),
-		url: xhr.responseURL,
-		body: xhr.response
-	};
-}
-
-function parseHeaders(rawHeaders)
-{
-	var headers = _elm_lang$core$Dict$empty;
-
-	if (!rawHeaders)
-	{
-		return headers;
-	}
-
-	var headerPairs = rawHeaders.split('\u000d\u000a');
-	for (var i = headerPairs.length; i--; )
-	{
-		var headerPair = headerPairs[i];
-		var index = headerPair.indexOf('\u003a\u0020');
-		if (index > 0)
-		{
-			var key = headerPair.substring(0, index);
-			var value = headerPair.substring(index + 2);
-
-			headers = A3(_elm_lang$core$Dict$update, key, function(oldValue) {
-				if (oldValue.ctor === 'Just')
-				{
-					return _elm_lang$core$Maybe$Just(value + ', ' + oldValue._0);
-				}
-				return _elm_lang$core$Maybe$Just(value);
-			}, headers);
-		}
-	}
-
-	return headers;
-}
-
-
-// EXPECTORS
-
-function expectStringResponse(responseToResult)
-{
-	return {
-		responseType: 'text',
-		responseToResult: responseToResult
-	};
-}
-
-function mapExpect(func, expect)
-{
-	return {
-		responseType: expect.responseType,
-		responseToResult: function(response) {
-			var convertedResponse = expect.responseToResult(response);
-			return A2(_elm_lang$core$Result$map, func, convertedResponse);
-		}
-	};
-}
-
-
-// BODY
-
-function multipart(parts)
-{
-	var formData = new FormData();
-
-	while (parts.ctor !== '[]')
-	{
-		var part = parts._0;
-		formData.append(part._0, part._1);
-		parts = parts._1;
-	}
-
-	return { ctor: 'FormDataBody', _0: formData };
-}
-
-return {
-	toTask: F2(toTask),
-	expectStringResponse: expectStringResponse,
-	mapExpect: F2(mapExpect),
-	multipart: multipart,
-	encodeUri: encodeUri,
-	decodeUri: decodeUri
-};
-
-}();
-
-//import Native.Scheduler //
-
-var _elm_lang$core$Native_Time = function() {
-
-var now = _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
-{
-	callback(_elm_lang$core$Native_Scheduler.succeed(Date.now()));
-});
-
-function setInterval_(interval, task)
-{
-	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
-	{
-		var id = setInterval(function() {
-			_elm_lang$core$Native_Scheduler.rawSpawn(task);
-		}, interval);
-
-		return function() { clearInterval(id); };
-	});
-}
-
-return {
-	now: now,
-	setInterval_: F2(setInterval_)
-};
-
-}();
-var _elm_lang$core$Task$onError = _elm_lang$core$Native_Scheduler.onError;
-var _elm_lang$core$Task$andThen = _elm_lang$core$Native_Scheduler.andThen;
-var _elm_lang$core$Task$spawnCmd = F2(
-	function (router, _p0) {
-		var _p1 = _p0;
-		return _elm_lang$core$Native_Scheduler.spawn(
-			A2(
-				_elm_lang$core$Task$andThen,
-				_elm_lang$core$Platform$sendToApp(router),
-				_p1._0));
-	});
-var _elm_lang$core$Task$fail = _elm_lang$core$Native_Scheduler.fail;
-var _elm_lang$core$Task$mapError = F2(
-	function (convert, task) {
-		return A2(
-			_elm_lang$core$Task$onError,
-			function (_p2) {
-				return _elm_lang$core$Task$fail(
-					convert(_p2));
-			},
-			task);
-	});
-var _elm_lang$core$Task$succeed = _elm_lang$core$Native_Scheduler.succeed;
-var _elm_lang$core$Task$map = F2(
-	function (func, taskA) {
-		return A2(
-			_elm_lang$core$Task$andThen,
-			function (a) {
-				return _elm_lang$core$Task$succeed(
-					func(a));
-			},
-			taskA);
-	});
-var _elm_lang$core$Task$map2 = F3(
-	function (func, taskA, taskB) {
-		return A2(
-			_elm_lang$core$Task$andThen,
-			function (a) {
-				return A2(
-					_elm_lang$core$Task$andThen,
-					function (b) {
-						return _elm_lang$core$Task$succeed(
-							A2(func, a, b));
-					},
-					taskB);
-			},
-			taskA);
-	});
-var _elm_lang$core$Task$map3 = F4(
-	function (func, taskA, taskB, taskC) {
-		return A2(
-			_elm_lang$core$Task$andThen,
-			function (a) {
-				return A2(
-					_elm_lang$core$Task$andThen,
-					function (b) {
-						return A2(
-							_elm_lang$core$Task$andThen,
-							function (c) {
-								return _elm_lang$core$Task$succeed(
-									A3(func, a, b, c));
-							},
-							taskC);
-					},
-					taskB);
-			},
-			taskA);
-	});
-var _elm_lang$core$Task$map4 = F5(
-	function (func, taskA, taskB, taskC, taskD) {
-		return A2(
-			_elm_lang$core$Task$andThen,
-			function (a) {
-				return A2(
-					_elm_lang$core$Task$andThen,
-					function (b) {
-						return A2(
-							_elm_lang$core$Task$andThen,
-							function (c) {
-								return A2(
-									_elm_lang$core$Task$andThen,
-									function (d) {
-										return _elm_lang$core$Task$succeed(
-											A4(func, a, b, c, d));
-									},
-									taskD);
-							},
-							taskC);
-					},
-					taskB);
-			},
-			taskA);
-	});
-var _elm_lang$core$Task$map5 = F6(
-	function (func, taskA, taskB, taskC, taskD, taskE) {
-		return A2(
-			_elm_lang$core$Task$andThen,
-			function (a) {
-				return A2(
-					_elm_lang$core$Task$andThen,
-					function (b) {
-						return A2(
-							_elm_lang$core$Task$andThen,
-							function (c) {
-								return A2(
-									_elm_lang$core$Task$andThen,
-									function (d) {
-										return A2(
-											_elm_lang$core$Task$andThen,
-											function (e) {
-												return _elm_lang$core$Task$succeed(
-													A5(func, a, b, c, d, e));
-											},
-											taskE);
-									},
-									taskD);
-							},
-							taskC);
-					},
-					taskB);
-			},
-			taskA);
-	});
-var _elm_lang$core$Task$sequence = function (tasks) {
-	var _p3 = tasks;
-	if (_p3.ctor === '[]') {
-		return _elm_lang$core$Task$succeed(
-			{ctor: '[]'});
-	} else {
-		return A3(
-			_elm_lang$core$Task$map2,
-			F2(
-				function (x, y) {
-					return {ctor: '::', _0: x, _1: y};
-				}),
-			_p3._0,
-			_elm_lang$core$Task$sequence(_p3._1));
-	}
-};
-var _elm_lang$core$Task$onEffects = F3(
-	function (router, commands, state) {
-		return A2(
-			_elm_lang$core$Task$map,
-			function (_p4) {
-				return {ctor: '_Tuple0'};
-			},
-			_elm_lang$core$Task$sequence(
-				A2(
-					_elm_lang$core$List$map,
-					_elm_lang$core$Task$spawnCmd(router),
-					commands)));
-	});
-var _elm_lang$core$Task$init = _elm_lang$core$Task$succeed(
-	{ctor: '_Tuple0'});
-var _elm_lang$core$Task$onSelfMsg = F3(
-	function (_p7, _p6, _p5) {
-		return _elm_lang$core$Task$succeed(
-			{ctor: '_Tuple0'});
-	});
-var _elm_lang$core$Task$command = _elm_lang$core$Native_Platform.leaf('Task');
-var _elm_lang$core$Task$Perform = function (a) {
-	return {ctor: 'Perform', _0: a};
-};
-var _elm_lang$core$Task$perform = F2(
-	function (toMessage, task) {
-		return _elm_lang$core$Task$command(
-			_elm_lang$core$Task$Perform(
-				A2(_elm_lang$core$Task$map, toMessage, task)));
-	});
-var _elm_lang$core$Task$attempt = F2(
-	function (resultToMessage, task) {
-		return _elm_lang$core$Task$command(
-			_elm_lang$core$Task$Perform(
-				A2(
-					_elm_lang$core$Task$onError,
-					function (_p8) {
-						return _elm_lang$core$Task$succeed(
-							resultToMessage(
-								_elm_lang$core$Result$Err(_p8)));
-					},
-					A2(
-						_elm_lang$core$Task$andThen,
-						function (_p9) {
-							return _elm_lang$core$Task$succeed(
-								resultToMessage(
-									_elm_lang$core$Result$Ok(_p9)));
-						},
-						task))));
-	});
-var _elm_lang$core$Task$cmdMap = F2(
-	function (tagger, _p10) {
-		var _p11 = _p10;
-		return _elm_lang$core$Task$Perform(
-			A2(_elm_lang$core$Task$map, tagger, _p11._0));
-	});
-_elm_lang$core$Native_Platform.effectManagers['Task'] = {pkg: 'elm-lang/core', init: _elm_lang$core$Task$init, onEffects: _elm_lang$core$Task$onEffects, onSelfMsg: _elm_lang$core$Task$onSelfMsg, tag: 'cmd', cmdMap: _elm_lang$core$Task$cmdMap};
-
-var _elm_lang$core$Time$setInterval = _elm_lang$core$Native_Time.setInterval_;
-var _elm_lang$core$Time$spawnHelp = F3(
-	function (router, intervals, processes) {
-		var _p0 = intervals;
-		if (_p0.ctor === '[]') {
-			return _elm_lang$core$Task$succeed(processes);
-		} else {
-			var _p1 = _p0._0;
-			var spawnRest = function (id) {
-				return A3(
-					_elm_lang$core$Time$spawnHelp,
-					router,
-					_p0._1,
-					A3(_elm_lang$core$Dict$insert, _p1, id, processes));
-			};
-			var spawnTimer = _elm_lang$core$Native_Scheduler.spawn(
-				A2(
-					_elm_lang$core$Time$setInterval,
-					_p1,
-					A2(_elm_lang$core$Platform$sendToSelf, router, _p1)));
-			return A2(_elm_lang$core$Task$andThen, spawnRest, spawnTimer);
-		}
-	});
-var _elm_lang$core$Time$addMySub = F2(
-	function (_p2, state) {
-		var _p3 = _p2;
-		var _p6 = _p3._1;
-		var _p5 = _p3._0;
-		var _p4 = A2(_elm_lang$core$Dict$get, _p5, state);
-		if (_p4.ctor === 'Nothing') {
-			return A3(
-				_elm_lang$core$Dict$insert,
-				_p5,
-				{
-					ctor: '::',
-					_0: _p6,
-					_1: {ctor: '[]'}
-				},
-				state);
-		} else {
-			return A3(
-				_elm_lang$core$Dict$insert,
-				_p5,
-				{ctor: '::', _0: _p6, _1: _p4._0},
-				state);
-		}
-	});
-var _elm_lang$core$Time$inMilliseconds = function (t) {
-	return t;
-};
-var _elm_lang$core$Time$millisecond = 1;
-var _elm_lang$core$Time$second = 1000 * _elm_lang$core$Time$millisecond;
-var _elm_lang$core$Time$minute = 60 * _elm_lang$core$Time$second;
-var _elm_lang$core$Time$hour = 60 * _elm_lang$core$Time$minute;
-var _elm_lang$core$Time$inHours = function (t) {
-	return t / _elm_lang$core$Time$hour;
-};
-var _elm_lang$core$Time$inMinutes = function (t) {
-	return t / _elm_lang$core$Time$minute;
-};
-var _elm_lang$core$Time$inSeconds = function (t) {
-	return t / _elm_lang$core$Time$second;
-};
-var _elm_lang$core$Time$now = _elm_lang$core$Native_Time.now;
-var _elm_lang$core$Time$onSelfMsg = F3(
-	function (router, interval, state) {
-		var _p7 = A2(_elm_lang$core$Dict$get, interval, state.taggers);
-		if (_p7.ctor === 'Nothing') {
-			return _elm_lang$core$Task$succeed(state);
-		} else {
-			var tellTaggers = function (time) {
-				return _elm_lang$core$Task$sequence(
-					A2(
-						_elm_lang$core$List$map,
-						function (tagger) {
-							return A2(
-								_elm_lang$core$Platform$sendToApp,
-								router,
-								tagger(time));
-						},
-						_p7._0));
-			};
-			return A2(
-				_elm_lang$core$Task$andThen,
-				function (_p8) {
-					return _elm_lang$core$Task$succeed(state);
-				},
-				A2(_elm_lang$core$Task$andThen, tellTaggers, _elm_lang$core$Time$now));
-		}
-	});
-var _elm_lang$core$Time$subscription = _elm_lang$core$Native_Platform.leaf('Time');
-var _elm_lang$core$Time$State = F2(
-	function (a, b) {
-		return {taggers: a, processes: b};
-	});
-var _elm_lang$core$Time$init = _elm_lang$core$Task$succeed(
-	A2(_elm_lang$core$Time$State, _elm_lang$core$Dict$empty, _elm_lang$core$Dict$empty));
-var _elm_lang$core$Time$onEffects = F3(
-	function (router, subs, _p9) {
-		var _p10 = _p9;
-		var rightStep = F3(
-			function (_p12, id, _p11) {
-				var _p13 = _p11;
-				return {
-					ctor: '_Tuple3',
-					_0: _p13._0,
-					_1: _p13._1,
-					_2: A2(
-						_elm_lang$core$Task$andThen,
-						function (_p14) {
-							return _p13._2;
-						},
-						_elm_lang$core$Native_Scheduler.kill(id))
-				};
-			});
-		var bothStep = F4(
-			function (interval, taggers, id, _p15) {
-				var _p16 = _p15;
-				return {
-					ctor: '_Tuple3',
-					_0: _p16._0,
-					_1: A3(_elm_lang$core$Dict$insert, interval, id, _p16._1),
-					_2: _p16._2
-				};
-			});
-		var leftStep = F3(
-			function (interval, taggers, _p17) {
-				var _p18 = _p17;
-				return {
-					ctor: '_Tuple3',
-					_0: {ctor: '::', _0: interval, _1: _p18._0},
-					_1: _p18._1,
-					_2: _p18._2
-				};
-			});
-		var newTaggers = A3(_elm_lang$core$List$foldl, _elm_lang$core$Time$addMySub, _elm_lang$core$Dict$empty, subs);
-		var _p19 = A6(
-			_elm_lang$core$Dict$merge,
-			leftStep,
-			bothStep,
-			rightStep,
-			newTaggers,
-			_p10.processes,
-			{
-				ctor: '_Tuple3',
-				_0: {ctor: '[]'},
-				_1: _elm_lang$core$Dict$empty,
-				_2: _elm_lang$core$Task$succeed(
-					{ctor: '_Tuple0'})
-			});
-		var spawnList = _p19._0;
-		var existingDict = _p19._1;
-		var killTask = _p19._2;
-		return A2(
-			_elm_lang$core$Task$andThen,
-			function (newProcesses) {
-				return _elm_lang$core$Task$succeed(
-					A2(_elm_lang$core$Time$State, newTaggers, newProcesses));
-			},
-			A2(
-				_elm_lang$core$Task$andThen,
-				function (_p20) {
-					return A3(_elm_lang$core$Time$spawnHelp, router, spawnList, existingDict);
-				},
-				killTask));
-	});
-var _elm_lang$core$Time$Every = F2(
-	function (a, b) {
-		return {ctor: 'Every', _0: a, _1: b};
-	});
-var _elm_lang$core$Time$every = F2(
-	function (interval, tagger) {
-		return _elm_lang$core$Time$subscription(
-			A2(_elm_lang$core$Time$Every, interval, tagger));
-	});
-var _elm_lang$core$Time$subMap = F2(
-	function (f, _p21) {
-		var _p22 = _p21;
-		return A2(
-			_elm_lang$core$Time$Every,
-			_p22._0,
-			function (_p23) {
-				return f(
-					_p22._1(_p23));
-			});
-	});
-_elm_lang$core$Native_Platform.effectManagers['Time'] = {pkg: 'elm-lang/core', init: _elm_lang$core$Time$init, onEffects: _elm_lang$core$Time$onEffects, onSelfMsg: _elm_lang$core$Time$onSelfMsg, tag: 'sub', subMap: _elm_lang$core$Time$subMap};
-
-var _elm_lang$http$Http_Internal$map = F2(
-	function (func, request) {
-		return _elm_lang$core$Native_Utils.update(
-			request,
-			{
-				expect: A2(_elm_lang$http$Native_Http.mapExpect, func, request.expect)
-			});
-	});
-var _elm_lang$http$Http_Internal$RawRequest = F7(
-	function (a, b, c, d, e, f, g) {
-		return {method: a, headers: b, url: c, body: d, expect: e, timeout: f, withCredentials: g};
-	});
-var _elm_lang$http$Http_Internal$Request = function (a) {
-	return {ctor: 'Request', _0: a};
-};
-var _elm_lang$http$Http_Internal$Expect = {ctor: 'Expect'};
-var _elm_lang$http$Http_Internal$FormDataBody = {ctor: 'FormDataBody'};
-var _elm_lang$http$Http_Internal$StringBody = F2(
-	function (a, b) {
-		return {ctor: 'StringBody', _0: a, _1: b};
-	});
-var _elm_lang$http$Http_Internal$EmptyBody = {ctor: 'EmptyBody'};
-var _elm_lang$http$Http_Internal$Header = F2(
-	function (a, b) {
-		return {ctor: 'Header', _0: a, _1: b};
-	});
-
 //import Native.List //
 
 var _elm_lang$core$Native_Array = function() {
@@ -7664,101 +6986,6 @@ var _elm_lang$core$Json_Decode$int = _elm_lang$core$Native_Json.decodePrimitive(
 var _elm_lang$core$Json_Decode$bool = _elm_lang$core$Native_Json.decodePrimitive('bool');
 var _elm_lang$core$Json_Decode$string = _elm_lang$core$Native_Json.decodePrimitive('string');
 var _elm_lang$core$Json_Decode$Decoder = {ctor: 'Decoder'};
-
-var _elm_lang$http$Http$decodeUri = _elm_lang$http$Native_Http.decodeUri;
-var _elm_lang$http$Http$encodeUri = _elm_lang$http$Native_Http.encodeUri;
-var _elm_lang$http$Http$expectStringResponse = _elm_lang$http$Native_Http.expectStringResponse;
-var _elm_lang$http$Http$expectJson = function (decoder) {
-	return _elm_lang$http$Http$expectStringResponse(
-		function (response) {
-			return A2(_elm_lang$core$Json_Decode$decodeString, decoder, response.body);
-		});
-};
-var _elm_lang$http$Http$expectString = _elm_lang$http$Http$expectStringResponse(
-	function (response) {
-		return _elm_lang$core$Result$Ok(response.body);
-	});
-var _elm_lang$http$Http$multipartBody = _elm_lang$http$Native_Http.multipart;
-var _elm_lang$http$Http$stringBody = _elm_lang$http$Http_Internal$StringBody;
-var _elm_lang$http$Http$jsonBody = function (value) {
-	return A2(
-		_elm_lang$http$Http_Internal$StringBody,
-		'application/json',
-		A2(_elm_lang$core$Json_Encode$encode, 0, value));
-};
-var _elm_lang$http$Http$emptyBody = _elm_lang$http$Http_Internal$EmptyBody;
-var _elm_lang$http$Http$header = _elm_lang$http$Http_Internal$Header;
-var _elm_lang$http$Http$request = _elm_lang$http$Http_Internal$Request;
-var _elm_lang$http$Http$post = F3(
-	function (url, body, decoder) {
-		return _elm_lang$http$Http$request(
-			{
-				method: 'POST',
-				headers: {ctor: '[]'},
-				url: url,
-				body: body,
-				expect: _elm_lang$http$Http$expectJson(decoder),
-				timeout: _elm_lang$core$Maybe$Nothing,
-				withCredentials: false
-			});
-	});
-var _elm_lang$http$Http$get = F2(
-	function (url, decoder) {
-		return _elm_lang$http$Http$request(
-			{
-				method: 'GET',
-				headers: {ctor: '[]'},
-				url: url,
-				body: _elm_lang$http$Http$emptyBody,
-				expect: _elm_lang$http$Http$expectJson(decoder),
-				timeout: _elm_lang$core$Maybe$Nothing,
-				withCredentials: false
-			});
-	});
-var _elm_lang$http$Http$getString = function (url) {
-	return _elm_lang$http$Http$request(
-		{
-			method: 'GET',
-			headers: {ctor: '[]'},
-			url: url,
-			body: _elm_lang$http$Http$emptyBody,
-			expect: _elm_lang$http$Http$expectString,
-			timeout: _elm_lang$core$Maybe$Nothing,
-			withCredentials: false
-		});
-};
-var _elm_lang$http$Http$toTask = function (_p0) {
-	var _p1 = _p0;
-	return A2(_elm_lang$http$Native_Http.toTask, _p1._0, _elm_lang$core$Maybe$Nothing);
-};
-var _elm_lang$http$Http$send = F2(
-	function (resultToMessage, request) {
-		return A2(
-			_elm_lang$core$Task$attempt,
-			resultToMessage,
-			_elm_lang$http$Http$toTask(request));
-	});
-var _elm_lang$http$Http$Response = F4(
-	function (a, b, c, d) {
-		return {url: a, status: b, headers: c, body: d};
-	});
-var _elm_lang$http$Http$BadPayload = F2(
-	function (a, b) {
-		return {ctor: 'BadPayload', _0: a, _1: b};
-	});
-var _elm_lang$http$Http$BadStatus = function (a) {
-	return {ctor: 'BadStatus', _0: a};
-};
-var _elm_lang$http$Http$NetworkError = {ctor: 'NetworkError'};
-var _elm_lang$http$Http$Timeout = {ctor: 'Timeout'};
-var _elm_lang$http$Http$BadUrl = function (a) {
-	return {ctor: 'BadUrl', _0: a};
-};
-var _elm_lang$http$Http$StringPart = F2(
-	function (a, b) {
-		return {ctor: 'StringPart', _0: a, _1: b};
-	});
-var _elm_lang$http$Http$stringPart = _elm_lang$http$Http$StringPart;
 
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrap;
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrapWithFlags;
@@ -13088,156 +12315,6 @@ var _elm_lang$svg$Svg_Attributes$accumulate = _elm_lang$virtual_dom$VirtualDom$a
 var _elm_lang$svg$Svg_Attributes$accelerate = _elm_lang$virtual_dom$VirtualDom$attribute('accelerate');
 var _elm_lang$svg$Svg_Attributes$accentHeight = _elm_lang$virtual_dom$VirtualDom$attribute('accent-height');
 
-var _krisajenkins$formatting$Formatting$html = function (_p0) {
-	var _p1 = _p0;
-	return _p1._0(_elm_lang$html$Html$text);
-};
-var _krisajenkins$formatting$Formatting$print = function (_p2) {
-	var _p3 = _p2;
-	return _p3._0(_elm_lang$core$Basics$identity);
-};
-var _krisajenkins$formatting$Formatting$Format = function (a) {
-	return {ctor: 'Format', _0: a};
-};
-var _krisajenkins$formatting$Formatting$compose = F2(
-	function (_p5, _p4) {
-		var _p6 = _p5;
-		var _p7 = _p4;
-		return _krisajenkins$formatting$Formatting$Format(
-			function (callback) {
-				return _p6._0(
-					function (strF) {
-						return _p7._0(
-							function (strG) {
-								return callback(
-									A2(_elm_lang$core$Basics_ops['++'], strF, strG));
-							});
-					});
-			});
-	});
-var _krisajenkins$formatting$Formatting_ops = _krisajenkins$formatting$Formatting_ops || {};
-_krisajenkins$formatting$Formatting_ops['<>'] = _krisajenkins$formatting$Formatting$compose;
-var _krisajenkins$formatting$Formatting$map = F2(
-	function (f, _p8) {
-		var _p9 = _p8;
-		return _krisajenkins$formatting$Formatting$Format(
-			function (callback) {
-				return _p9._0(
-					function (_p10) {
-						return callback(
-							f(_p10));
-					});
-			});
-	});
-var _krisajenkins$formatting$Formatting$pad = F2(
-	function (n, $char) {
-		return _krisajenkins$formatting$Formatting$map(
-			A2(_elm_lang$core$String$pad, n, $char));
-	});
-var _krisajenkins$formatting$Formatting$padLeft = F2(
-	function (n, $char) {
-		return _krisajenkins$formatting$Formatting$map(
-			A2(_elm_lang$core$String$padLeft, n, $char));
-	});
-var _krisajenkins$formatting$Formatting$padRight = F2(
-	function (n, $char) {
-		return _krisajenkins$formatting$Formatting$map(
-			A2(_elm_lang$core$String$padRight, n, $char));
-	});
-var _krisajenkins$formatting$Formatting$premap = F2(
-	function (f, _p11) {
-		var _p12 = _p11;
-		return _krisajenkins$formatting$Formatting$Format(
-			function (callback) {
-				return function (_p13) {
-					return A2(
-						_p12._0,
-						callback,
-						f(_p13));
-				};
-			});
-	});
-var _krisajenkins$formatting$Formatting$toFormatter = function (f) {
-	return _krisajenkins$formatting$Formatting$Format(
-		function (callback) {
-			return function (_p14) {
-				return callback(
-					f(_p14));
-			};
-		});
-};
-var _krisajenkins$formatting$Formatting$any = _krisajenkins$formatting$Formatting$toFormatter(_elm_lang$core$Basics$toString);
-var _krisajenkins$formatting$Formatting$int = _krisajenkins$formatting$Formatting$any;
-var _krisajenkins$formatting$Formatting$bool = _krisajenkins$formatting$Formatting$any;
-var _krisajenkins$formatting$Formatting$float = _krisajenkins$formatting$Formatting$any;
-var _krisajenkins$formatting$Formatting$number = _krisajenkins$formatting$Formatting$any;
-var _krisajenkins$formatting$Formatting$apply = F2(
-	function (_p15, value) {
-		var _p16 = _p15;
-		return _krisajenkins$formatting$Formatting$Format(
-			function (callback) {
-				return A2(_p16._0, callback, value);
-			});
-	});
-var _krisajenkins$formatting$Formatting$s = function (str) {
-	return _krisajenkins$formatting$Formatting$Format(
-		function (c) {
-			return c(str);
-		});
-};
-var _krisajenkins$formatting$Formatting$wrap = F2(
-	function (wrapping, format) {
-		return A2(
-			_krisajenkins$formatting$Formatting_ops['<>'],
-			_krisajenkins$formatting$Formatting$s(wrapping),
-			A2(
-				_krisajenkins$formatting$Formatting_ops['<>'],
-				format,
-				_krisajenkins$formatting$Formatting$s(wrapping)));
-	});
-var _krisajenkins$formatting$Formatting$string = _krisajenkins$formatting$Formatting$Format(_elm_lang$core$Basics$identity);
-var _krisajenkins$formatting$Formatting$uriFragment = A2(_krisajenkins$formatting$Formatting$premap, _elm_lang$http$Http$encodeUri, _krisajenkins$formatting$Formatting$string);
-var _krisajenkins$formatting$Formatting$roundTo = function (n) {
-	return _krisajenkins$formatting$Formatting$Format(
-		F2(
-			function (callback, value) {
-				return callback(
-					function () {
-						if (_elm_lang$core$Native_Utils.eq(n, 0)) {
-							return _elm_lang$core$Basics$toString(
-								_elm_lang$core$Basics$round(value));
-						} else {
-							var finalFormat = A2(
-								_krisajenkins$formatting$Formatting_ops['<>'],
-								_krisajenkins$formatting$Formatting$string,
-								A2(
-									_krisajenkins$formatting$Formatting_ops['<>'],
-									_krisajenkins$formatting$Formatting$int,
-									A2(
-										_krisajenkins$formatting$Formatting_ops['<>'],
-										_krisajenkins$formatting$Formatting$s('.'),
-										A3(
-											_krisajenkins$formatting$Formatting$padLeft,
-											n,
-											_elm_lang$core$Native_Utils.chr('0'),
-											_krisajenkins$formatting$Formatting$int))));
-							var sign = (_elm_lang$core$Native_Utils.cmp(value, 0.0) < 0) ? '-' : '';
-							var exp = Math.pow(10, n);
-							var raised = _elm_lang$core$Basics$abs(
-								_elm_lang$core$Basics$round(
-									value * _elm_lang$core$Basics$toFloat(exp)));
-							return A4(
-								_krisajenkins$formatting$Formatting$print,
-								finalFormat,
-								sign,
-								(raised / exp) | 0,
-								A2(_elm_lang$core$Basics$rem, raised, exp));
-						}
-					}());
-			}));
-};
-var _krisajenkins$formatting$Formatting$dp = _krisajenkins$formatting$Formatting$roundTo;
-
 var _periodic$elm_csv$Csv$textData = _Bogdanp$elm_combine$Combine_Char$noneOf(
 	{
 		ctor: '::',
@@ -13448,6 +12525,551 @@ var _user$project$DecodeTree$treeDecoder = A2(
 				function (_p5) {
 					return _elm_lang$core$Json_Decode$list(_user$project$DecodeTree$treeDecoder);
 				}))));
+
+var _user$project$LinearTreeView$gradientDefinitions = function (_p0) {
+	return A2(
+		_elm_lang$svg$Svg$defs,
+		{ctor: '[]'},
+		A2(
+			_elm_lang$core$List$map,
+			function (_p1) {
+				var _p2 = _p1;
+				return A2(
+					_elm_lang$svg$Svg$linearGradient,
+					{
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$id(
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								'grad-',
+								_elm_lang$core$Basics$toString(_p2._0))),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$x1('0%'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$y1('0%'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$x2('100%'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$y2('0%'),
+										_1: {ctor: '[]'}
+									}
+								}
+							}
+						}
+					},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$svg$Svg$stop,
+							{
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$offset('0%'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$stopColor(_p2._1),
+									_1: {ctor: '[]'}
+								}
+							},
+							{ctor: '[]'}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$svg$Svg$stop,
+								{
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$offset('100%'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$stopColor(_p2._2),
+										_1: {ctor: '[]'}
+									}
+								},
+								{ctor: '[]'}),
+							_1: {ctor: '[]'}
+						}
+					});
+			},
+			_p0));
+};
+var _user$project$LinearTreeView$computeColor = F2(
+	function (opacity, value) {
+		var s = _elm_lang$core$Basics$toString(
+			A3(_elm_lang$core$Basics$clamp, 0, 100, value * 100));
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			'hsla(10,',
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				s,
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					'%,50%,',
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						_elm_lang$core$Basics$toString(opacity),
+						')'))));
+	});
+var _user$project$LinearTreeView$scaleLength = F2(
+	function (totalLength, thisLength) {
+		return (30 * thisLength) / totalLength;
+	});
+var _user$project$LinearTreeView$drawTree = F3(
+	function (config, parentColor, tree) {
+		var _p3 = tree;
+		if (_p3.ctor === 'Leaf') {
+			var _p4 = _p3._0;
+			var length = config.showBranchLengths ? A2(
+				_elm_lang$core$Maybe$withDefault,
+				0,
+				A2(
+					_elm_lang$core$Maybe$map,
+					_user$project$LinearTreeView$scaleLength(config.totalLength),
+					_p4.length)) : (30 / _elm_lang$core$Basics$toFloat(config.treeDepth));
+			return {
+				ctor: '_Tuple3',
+				_0: 1,
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple3', _0: _p4.cladeId, _1: parentColor, _2: '#ccc'},
+					_1: {ctor: '[]'}
+				},
+				_2: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$svg$Svg$rect,
+						{
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$x('0'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$width(
+									_elm_lang$core$Basics$toString(length)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$y('0.45'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$height('0.15'),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$fill(
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													'url(#grad-',
+													A2(
+														_elm_lang$core$Basics_ops['++'],
+														_elm_lang$core$Basics$toString(_p4.cladeId),
+														')'))),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
+							}
+						},
+						{ctor: '[]'}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$svg$Svg$text_,
+							{
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$x(
+									_elm_lang$core$Basics$toString(length + 0.5)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$y('0.75'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$fontSize('0.8'),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$stroke('none'),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$fill('#ccc'),
+												_1: {ctor: '[]'}
+											}
+										}
+									}
+								}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$svg$Svg$text(_p4.name),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
+				}
+			};
+		} else {
+			var _p11 = _p3._2;
+			var _p10 = _p3._1;
+			var _p9 = _p3._0;
+			var length = config.showBranchLengths ? A2(
+				_elm_lang$core$Maybe$withDefault,
+				0,
+				A2(
+					_elm_lang$core$Maybe$map,
+					_user$project$LinearTreeView$scaleLength(config.totalLength),
+					_p9.length)) : (30 / _elm_lang$core$Basics$toFloat(config.treeDepth));
+			var color = A2(config.computeColor, 1.0, _p9.cladeId);
+			var _p5 = A3(_user$project$LinearTreeView$drawTree, config, color, _p10);
+			var leftHeight = _p5._0;
+			var leftGrads = _p5._1;
+			var leftNodes = _p5._2;
+			var _p6 = A3(_user$project$LinearTreeView$drawTree, config, color, _p11);
+			var rightHeight = _p6._0;
+			var rightGrads = _p6._1;
+			var rightNodes = _p6._2;
+			var thisHeight = leftHeight + rightHeight;
+			var boxes = _elm_lang$core$Native_Utils.eq(
+				config.selectedNode,
+				_elm_lang$core$Maybe$Just(_p9.cladeId)) ? {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$svg$Svg$rect,
+					{
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$x(
+							_elm_lang$core$Basics$toString(length)),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$y('0'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$width('100'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$height(
+										_elm_lang$core$Basics$toString(leftHeight)),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$fill(
+											config.redBlue ? '#00f' : '#f00'),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
+							}
+						}
+					},
+					{ctor: '[]'}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$svg$Svg$rect,
+						{
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$x(
+								_elm_lang$core$Basics$toString(length)),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$y(
+									_elm_lang$core$Basics$toString(leftHeight)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$width('100'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$height(
+											_elm_lang$core$Basics$toString(rightHeight)),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$fill('#f00'),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
+												_1: {ctor: '[]'}
+											}
+										}
+									}
+								}
+							}
+						},
+						{ctor: '[]'}),
+					_1: {ctor: '[]'}
+				}
+			} : _elm_lang$core$List$concat(
+				{
+					ctor: '::',
+					_0: function () {
+						var _p7 = _p10;
+						if (_p7.ctor === 'Leaf') {
+							return A2(
+								_elm_lang$core$List$member,
+								_p9.cladeId,
+								_elm_lang$core$Tuple$first(config.flaggedNodes)) ? {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$svg$Svg$rect,
+									{
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$x(
+											_elm_lang$core$Basics$toString(length)),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$y('0'),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$width('100'),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$height(
+														_elm_lang$core$Basics$toString(leftHeight)),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$fill('#f00'),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
+															_1: {ctor: '[]'}
+														}
+													}
+												}
+											}
+										}
+									},
+									{ctor: '[]'}),
+								_1: {ctor: '[]'}
+							} : {ctor: '[]'};
+						} else {
+							return {ctor: '[]'};
+						}
+					}(),
+					_1: {
+						ctor: '::',
+						_0: function () {
+							var _p8 = _p11;
+							if (_p8.ctor === 'Leaf') {
+								return A2(
+									_elm_lang$core$List$member,
+									_p9.cladeId,
+									_elm_lang$core$Tuple$second(config.flaggedNodes)) ? {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$svg$Svg$rect,
+										{
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$x(
+												_elm_lang$core$Basics$toString(length)),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$y(
+													_elm_lang$core$Basics$toString(leftHeight)),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$width('100'),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$height(
+															_elm_lang$core$Basics$toString(rightHeight)),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$svg$Svg_Attributes$fill('#f00'),
+															_1: {
+																ctor: '::',
+																_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
+																_1: {ctor: '[]'}
+															}
+														}
+													}
+												}
+											}
+										},
+										{ctor: '[]'}),
+									_1: {ctor: '[]'}
+								} : {ctor: '[]'};
+							} else {
+								return {ctor: '[]'};
+							}
+						}(),
+						_1: {ctor: '[]'}
+					}
+				});
+			var thisGrad = {ctor: '_Tuple3', _0: _p9.cladeId, _1: parentColor, _2: color};
+			return {
+				ctor: '_Tuple3',
+				_0: thisHeight,
+				_1: {
+					ctor: '::',
+					_0: thisGrad,
+					_1: A2(_elm_lang$core$Basics_ops['++'], leftGrads, rightGrads)
+				},
+				_2: A2(
+					_elm_lang$core$Basics_ops['++'],
+					boxes,
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$svg$Svg$g,
+							{
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$transform(
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										'translate(',
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											_elm_lang$core$Basics$toString(length),
+											',0)'))),
+								_1: {ctor: '[]'}
+							},
+							leftNodes),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$svg$Svg$g,
+								{
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$transform(
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											'translate(',
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												_elm_lang$core$Basics$toString(length),
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													',',
+													A2(
+														_elm_lang$core$Basics_ops['++'],
+														_elm_lang$core$Basics$toString(leftHeight),
+														')'))))),
+									_1: {ctor: '[]'}
+								},
+								rightNodes),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$svg$Svg$rect,
+									{
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$x('0'),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$width(
+												_elm_lang$core$Basics$toString(length)),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$height('0.15'),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$y(
+														_elm_lang$core$Basics$toString((thisHeight / 2.0) - 5.0e-2)),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$strokeWidth('0.01'),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$svg$Svg_Attributes$fill(
+																A2(
+																	_elm_lang$core$Basics_ops['++'],
+																	'url(#grad-',
+																	A2(
+																		_elm_lang$core$Basics_ops['++'],
+																		_elm_lang$core$Basics$toString(_p9.cladeId),
+																		')'))),
+															_1: {ctor: '[]'}
+														}
+													}
+												}
+											}
+										}
+									},
+									{ctor: '[]'}),
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$svg$Svg$line,
+										{
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$x1(
+												_elm_lang$core$Basics$toString(length)),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$x2(
+													_elm_lang$core$Basics$toString(length)),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$y1(
+														_elm_lang$core$Basics$toString(leftHeight / 2)),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$y2(
+															_elm_lang$core$Basics$toString(leftHeight + (rightHeight / 2))),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$svg$Svg_Attributes$strokeWidth('0.15'),
+															_1: {
+																ctor: '::',
+																_0: _elm_lang$svg$Svg_Attributes$stroke(color),
+																_1: {ctor: '[]'}
+															}
+														}
+													}
+												}
+											}
+										},
+										{ctor: '[]'}),
+									_1: {
+										ctor: '::',
+										_0: A2(
+											_elm_lang$svg$Svg$circle,
+											{
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$cx(
+													_elm_lang$core$Basics$toString(length)),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$cy(
+														_elm_lang$core$Basics$toString(thisHeight / 2.0)),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$r('0.3'),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$svg$Svg_Attributes$fill(color),
+															_1: {
+																ctor: '::',
+																_0: _elm_lang$html$Html_Events$onClick(
+																	config.selectNode(_p9.cladeId)),
+																_1: {
+																	ctor: '::',
+																	_0: _elm_lang$html$Html_Attributes$style(
+																		{
+																			ctor: '::',
+																			_0: {ctor: '_Tuple2', _0: 'cursor', _1: 'pointer'},
+																			_1: {ctor: '[]'}
+																		}),
+																	_1: {ctor: '[]'}
+																}
+															}
+														}
+													}
+												}
+											},
+											{ctor: '[]'}),
+										_1: {ctor: '[]'}
+									}
+								}
+							}
+						}
+					})
+			};
+		}
+	});
+var _user$project$LinearTreeView$TreeConfig = F8(
+	function (a, b, c, d, e, f, g, h) {
+		return {computeColor: a, showBranchLengths: b, treeDepth: c, totalLength: d, selectedNode: e, selectNode: f, flaggedNodes: g, redBlue: h};
+	});
 
 var _user$project$Newick$floatWithExp = A2(
 	_elm_community$parser_combinators$Combine$map,
@@ -14030,659 +13652,6 @@ var _user$project$McpaModel$SelectVariable = function (a) {
 	return {ctor: 'SelectVariable', _0: a};
 };
 
-var _user$project$ParseAncState$updateRanges = F2(
-	function (_p0, ranges) {
-		var _p1 = _p0;
-		var _p4 = _p1._0;
-		var _p3 = _p1._1;
-		var _p2 = A2(
-			_elm_lang$core$Maybe$withDefault,
-			{ctor: '_Tuple2', _0: _p3, _1: _p3},
-			A2(_elm_lang$core$Dict$get, _p4, ranges));
-		var min_ = _p2._0;
-		var max_ = _p2._1;
-		return A3(
-			_elm_lang$core$Dict$insert,
-			_p4,
-			{
-				ctor: '_Tuple2',
-				_0: A2(_elm_lang$core$Basics$min, _p3, min_),
-				_1: A2(_elm_lang$core$Basics$max, _p3, max_)
-			},
-			ranges);
-	});
-var _user$project$ParseAncState$insertValues = F3(
-	function (cladeId, _p5, pairs) {
-		var _p6 = _p5;
-		var ranges_ = A3(_elm_lang$core$List$foldl, _user$project$ParseAncState$updateRanges, _p6.ranges, pairs);
-		var values_ = A3(
-			_elm_lang$core$List$foldl,
-			function (_p7) {
-				var _p8 = _p7;
-				return A2(
-					_elm_lang$core$Dict$insert,
-					{ctor: '_Tuple2', _0: cladeId, _1: _p8._0},
-					_p8._1);
-			},
-			_p6.values,
-			pairs);
-		return {values: values_, ranges: ranges_};
-	});
-var _user$project$ParseAncState$nan = 0 / 0;
-var _user$project$ParseAncState$parseRecord = F3(
-	function (variables, record, result) {
-		var _p9 = record;
-		if (_p9.ctor === '::') {
-			var insert = F2(
-				function (cladeId, values) {
-					return A3(
-						_user$project$ParseAncState$insertValues,
-						cladeId,
-						result,
-						A3(
-							_elm_lang$core$List$map2,
-							F2(
-								function (v0, v1) {
-									return {ctor: '_Tuple2', _0: v0, _1: v1};
-								}),
-							variables,
-							values));
-				});
-			var valueToFloat = function (s) {
-				var _p10 = s;
-				if (_p10 === 'nan') {
-					return _elm_lang$core$Result$Ok(_user$project$ParseAncState$nan);
-				} else {
-					return _elm_lang$core$String$toFloat(s);
-				}
-			};
-			var values = _elm_community$result_extra$Result_Extra$combine(
-				A2(_elm_lang$core$List$map, valueToFloat, _p9._1));
-			var cladeId = _elm_lang$core$String$toInt(_p9._0);
-			return A3(_elm_lang$core$Result$map2, insert, cladeId, values);
-		} else {
-			return _elm_lang$core$Result$Err('bad csv');
-		}
-	});
-var _user$project$ParseAncState$AncStateData = F2(
-	function (a, b) {
-		return {values: a, ranges: b};
-	});
-var _user$project$ParseAncState$parseCsv = function (_p11) {
-	var _p12 = _p11;
-	var empty = A2(_user$project$ParseAncState$AncStateData, _elm_lang$core$Dict$empty, _elm_lang$core$Dict$empty);
-	var variables = A2(_elm_lang$core$List$drop, 1, _p12.headers);
-	var data = A3(
-		_elm_lang$core$List$foldl,
-		function (record) {
-			return _elm_lang$core$Result$andThen(
-				A2(_user$project$ParseAncState$parseRecord, variables, record));
-		},
-		_elm_lang$core$Result$Ok(empty),
-		_p12.records);
-	return A2(
-		_elm_lang$core$Result$map,
-		F2(
-			function (v0, v1) {
-				return {ctor: '_Tuple2', _0: v0, _1: v1};
-			})(variables),
-		data);
-};
-var _user$project$ParseAncState$parseAncState = function (_p13) {
-	return A2(
-		_elm_lang$core$Result$andThen,
-		_user$project$ParseAncState$parseCsv,
-		A2(
-			_elm_lang$core$Result$mapError,
-			_elm_lang$core$Basics$toString,
-			_periodic$elm_csv$Csv$parse(_p13)));
-};
-
-var _user$project$LinearTreeView$gradientDefinitions = function (_p0) {
-	return A2(
-		_elm_lang$svg$Svg$defs,
-		{ctor: '[]'},
-		A2(
-			_elm_lang$core$List$map,
-			function (_p1) {
-				var _p2 = _p1;
-				return A2(
-					_elm_lang$svg$Svg$linearGradient,
-					{
-						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$id(
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								'grad-',
-								_elm_lang$core$Basics$toString(_p2._0))),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$x1('0%'),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$y1('0%'),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$x2('100%'),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$y2('0%'),
-										_1: {ctor: '[]'}
-									}
-								}
-							}
-						}
-					},
-					{
-						ctor: '::',
-						_0: A2(
-							_elm_lang$svg$Svg$stop,
-							{
-								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$offset('0%'),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$stopColor(_p2._1),
-									_1: {ctor: '[]'}
-								}
-							},
-							{ctor: '[]'}),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$svg$Svg$stop,
-								{
-									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$offset('100%'),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$stopColor(_p2._2),
-										_1: {ctor: '[]'}
-									}
-								},
-								{ctor: '[]'}),
-							_1: {ctor: '[]'}
-						}
-					});
-			},
-			_p0));
-};
-var _user$project$LinearTreeView$computeColor = F2(
-	function (opacity, value) {
-		var s = _elm_lang$core$Basics$toString(
-			A3(_elm_lang$core$Basics$clamp, 0, 100, value * 100));
-		return A2(
-			_elm_lang$core$Basics_ops['++'],
-			'hsla(10,',
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				s,
-				A2(
-					_elm_lang$core$Basics_ops['++'],
-					'%,50%,',
-					A2(
-						_elm_lang$core$Basics_ops['++'],
-						_elm_lang$core$Basics$toString(opacity),
-						')'))));
-	});
-var _user$project$LinearTreeView$scaleLength = F2(
-	function (totalLength, thisLength) {
-		return (30 * thisLength) / totalLength;
-	});
-var _user$project$LinearTreeView$drawTree = F3(
-	function (config, parentColor, tree) {
-		var _p3 = tree;
-		if (_p3.ctor === 'Leaf') {
-			var _p4 = _p3._0;
-			var length = config.showBranchLengths ? A2(
-				_elm_lang$core$Maybe$withDefault,
-				0,
-				A2(
-					_elm_lang$core$Maybe$map,
-					_user$project$LinearTreeView$scaleLength(config.totalLength),
-					_p4.length)) : (30 / _elm_lang$core$Basics$toFloat(config.treeDepth));
-			return {
-				ctor: '_Tuple3',
-				_0: 1,
-				_1: {
-					ctor: '::',
-					_0: {ctor: '_Tuple3', _0: _p4.cladeId, _1: parentColor, _2: '#ccc'},
-					_1: {ctor: '[]'}
-				},
-				_2: {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$svg$Svg$rect,
-						{
-							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$x('0'),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$width(
-									_elm_lang$core$Basics$toString(length)),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$y('0.45'),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$height('0.15'),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$svg$Svg_Attributes$fill(
-												A2(
-													_elm_lang$core$Basics_ops['++'],
-													'url(#grad-',
-													A2(
-														_elm_lang$core$Basics_ops['++'],
-														_elm_lang$core$Basics$toString(_p4.cladeId),
-														')'))),
-											_1: {ctor: '[]'}
-										}
-									}
-								}
-							}
-						},
-						{ctor: '[]'}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$svg$Svg$text_,
-							{
-								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$x(
-									_elm_lang$core$Basics$toString(length + 0.5)),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$y('0.75'),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$fontSize('0.8'),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$svg$Svg_Attributes$stroke('none'),
-											_1: {
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$fill('#ccc'),
-												_1: {ctor: '[]'}
-											}
-										}
-									}
-								}
-							},
-							{
-								ctor: '::',
-								_0: _elm_lang$svg$Svg$text(_p4.name),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					}
-				}
-			};
-		} else {
-			var _p11 = _p3._2;
-			var _p10 = _p3._1;
-			var _p9 = _p3._0;
-			var length = config.showBranchLengths ? A2(
-				_elm_lang$core$Maybe$withDefault,
-				0,
-				A2(
-					_elm_lang$core$Maybe$map,
-					_user$project$LinearTreeView$scaleLength(config.totalLength),
-					_p9.length)) : (30 / _elm_lang$core$Basics$toFloat(config.treeDepth));
-			var color = A2(config.computeColor, 1.0, _p9.cladeId);
-			var _p5 = A3(_user$project$LinearTreeView$drawTree, config, color, _p10);
-			var leftHeight = _p5._0;
-			var leftGrads = _p5._1;
-			var leftNodes = _p5._2;
-			var _p6 = A3(_user$project$LinearTreeView$drawTree, config, color, _p11);
-			var rightHeight = _p6._0;
-			var rightGrads = _p6._1;
-			var rightNodes = _p6._2;
-			var thisHeight = leftHeight + rightHeight;
-			var boxes = _elm_lang$core$Native_Utils.eq(
-				config.selectedNode,
-				_elm_lang$core$Maybe$Just(_p9.cladeId)) ? {
-				ctor: '::',
-				_0: A2(
-					_elm_lang$svg$Svg$rect,
-					{
-						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$x(
-							_elm_lang$core$Basics$toString(length)),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$y('0'),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$width('100'),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$height(
-										_elm_lang$core$Basics$toString(leftHeight)),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$fill(
-											config.redBlue ? '#00f' : '#f00'),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
-											_1: {ctor: '[]'}
-										}
-									}
-								}
-							}
-						}
-					},
-					{ctor: '[]'}),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$svg$Svg$rect,
-						{
-							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$x(
-								_elm_lang$core$Basics$toString(length)),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$y(
-									_elm_lang$core$Basics$toString(leftHeight)),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$width('100'),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$height(
-											_elm_lang$core$Basics$toString(rightHeight)),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$svg$Svg_Attributes$fill('#f00'),
-											_1: {
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
-												_1: {ctor: '[]'}
-											}
-										}
-									}
-								}
-							}
-						},
-						{ctor: '[]'}),
-					_1: {ctor: '[]'}
-				}
-			} : _elm_lang$core$List$concat(
-				{
-					ctor: '::',
-					_0: function () {
-						var _p7 = _p10;
-						if (_p7.ctor === 'Leaf') {
-							return A2(
-								_elm_lang$core$List$member,
-								_p9.cladeId,
-								_elm_lang$core$Tuple$first(config.flaggedNodes)) ? {
-								ctor: '::',
-								_0: A2(
-									_elm_lang$svg$Svg$rect,
-									{
-										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$x(
-											_elm_lang$core$Basics$toString(length)),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$svg$Svg_Attributes$y('0'),
-											_1: {
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$width('100'),
-												_1: {
-													ctor: '::',
-													_0: _elm_lang$svg$Svg_Attributes$height(
-														_elm_lang$core$Basics$toString(leftHeight)),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$svg$Svg_Attributes$fill('#f00'),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
-															_1: {ctor: '[]'}
-														}
-													}
-												}
-											}
-										}
-									},
-									{ctor: '[]'}),
-								_1: {ctor: '[]'}
-							} : {ctor: '[]'};
-						} else {
-							return {ctor: '[]'};
-						}
-					}(),
-					_1: {
-						ctor: '::',
-						_0: function () {
-							var _p8 = _p11;
-							if (_p8.ctor === 'Leaf') {
-								return A2(
-									_elm_lang$core$List$member,
-									_p9.cladeId,
-									_elm_lang$core$Tuple$second(config.flaggedNodes)) ? {
-									ctor: '::',
-									_0: A2(
-										_elm_lang$svg$Svg$rect,
-										{
-											ctor: '::',
-											_0: _elm_lang$svg$Svg_Attributes$x(
-												_elm_lang$core$Basics$toString(length)),
-											_1: {
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$y(
-													_elm_lang$core$Basics$toString(leftHeight)),
-												_1: {
-													ctor: '::',
-													_0: _elm_lang$svg$Svg_Attributes$width('100'),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$svg$Svg_Attributes$height(
-															_elm_lang$core$Basics$toString(rightHeight)),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$svg$Svg_Attributes$fill('#f00'),
-															_1: {
-																ctor: '::',
-																_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
-																_1: {ctor: '[]'}
-															}
-														}
-													}
-												}
-											}
-										},
-										{ctor: '[]'}),
-									_1: {ctor: '[]'}
-								} : {ctor: '[]'};
-							} else {
-								return {ctor: '[]'};
-							}
-						}(),
-						_1: {ctor: '[]'}
-					}
-				});
-			var thisGrad = {ctor: '_Tuple3', _0: _p9.cladeId, _1: parentColor, _2: color};
-			return {
-				ctor: '_Tuple3',
-				_0: thisHeight,
-				_1: {
-					ctor: '::',
-					_0: thisGrad,
-					_1: A2(_elm_lang$core$Basics_ops['++'], leftGrads, rightGrads)
-				},
-				_2: A2(
-					_elm_lang$core$Basics_ops['++'],
-					boxes,
-					{
-						ctor: '::',
-						_0: A2(
-							_elm_lang$svg$Svg$g,
-							{
-								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$transform(
-									A2(
-										_elm_lang$core$Basics_ops['++'],
-										'translate(',
-										A2(
-											_elm_lang$core$Basics_ops['++'],
-											_elm_lang$core$Basics$toString(length),
-											',0)'))),
-								_1: {ctor: '[]'}
-							},
-							leftNodes),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$svg$Svg$g,
-								{
-									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$transform(
-										A2(
-											_elm_lang$core$Basics_ops['++'],
-											'translate(',
-											A2(
-												_elm_lang$core$Basics_ops['++'],
-												_elm_lang$core$Basics$toString(length),
-												A2(
-													_elm_lang$core$Basics_ops['++'],
-													',',
-													A2(
-														_elm_lang$core$Basics_ops['++'],
-														_elm_lang$core$Basics$toString(leftHeight),
-														')'))))),
-									_1: {ctor: '[]'}
-								},
-								rightNodes),
-							_1: {
-								ctor: '::',
-								_0: A2(
-									_elm_lang$svg$Svg$rect,
-									{
-										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$x('0'),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$svg$Svg_Attributes$width(
-												_elm_lang$core$Basics$toString(length)),
-											_1: {
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$height('0.15'),
-												_1: {
-													ctor: '::',
-													_0: _elm_lang$svg$Svg_Attributes$y(
-														_elm_lang$core$Basics$toString((thisHeight / 2.0) - 5.0e-2)),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$svg$Svg_Attributes$strokeWidth('0.01'),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$svg$Svg_Attributes$fill(
-																A2(
-																	_elm_lang$core$Basics_ops['++'],
-																	'url(#grad-',
-																	A2(
-																		_elm_lang$core$Basics_ops['++'],
-																		_elm_lang$core$Basics$toString(_p9.cladeId),
-																		')'))),
-															_1: {ctor: '[]'}
-														}
-													}
-												}
-											}
-										}
-									},
-									{ctor: '[]'}),
-								_1: {
-									ctor: '::',
-									_0: A2(
-										_elm_lang$svg$Svg$line,
-										{
-											ctor: '::',
-											_0: _elm_lang$svg$Svg_Attributes$x1(
-												_elm_lang$core$Basics$toString(length)),
-											_1: {
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$x2(
-													_elm_lang$core$Basics$toString(length)),
-												_1: {
-													ctor: '::',
-													_0: _elm_lang$svg$Svg_Attributes$y1(
-														_elm_lang$core$Basics$toString(leftHeight / 2)),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$svg$Svg_Attributes$y2(
-															_elm_lang$core$Basics$toString(leftHeight + (rightHeight / 2))),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$svg$Svg_Attributes$strokeWidth('0.15'),
-															_1: {
-																ctor: '::',
-																_0: _elm_lang$svg$Svg_Attributes$stroke(color),
-																_1: {ctor: '[]'}
-															}
-														}
-													}
-												}
-											}
-										},
-										{ctor: '[]'}),
-									_1: {
-										ctor: '::',
-										_0: A2(
-											_elm_lang$svg$Svg$circle,
-											{
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$cx(
-													_elm_lang$core$Basics$toString(length)),
-												_1: {
-													ctor: '::',
-													_0: _elm_lang$svg$Svg_Attributes$cy(
-														_elm_lang$core$Basics$toString(thisHeight / 2.0)),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$svg$Svg_Attributes$r('0.3'),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$svg$Svg_Attributes$fill(color),
-															_1: {
-																ctor: '::',
-																_0: _elm_lang$html$Html_Events$onClick(
-																	config.selectNode(_p9.cladeId)),
-																_1: {
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Attributes$style(
-																		{
-																			ctor: '::',
-																			_0: {ctor: '_Tuple2', _0: 'cursor', _1: 'pointer'},
-																			_1: {ctor: '[]'}
-																		}),
-																	_1: {ctor: '[]'}
-																}
-															}
-														}
-													}
-												}
-											},
-											{ctor: '[]'}),
-										_1: {ctor: '[]'}
-									}
-								}
-							}
-						}
-					})
-			};
-		}
-	});
-var _user$project$LinearTreeView$TreeConfig = F8(
-	function (a, b, c, d, e, f, g, h) {
-		return {computeColor: a, showBranchLengths: b, treeDepth: c, totalLength: d, selectedNode: e, selectNode: f, flaggedNodes: g, redBlue: h};
-	});
-
 var _user$project$McpaTreeView$viewTree = F3(
 	function (_p0, redBlue, selectData) {
 		var _p1 = _p0;
@@ -14958,16 +13927,1020 @@ var _user$project$McpaTreeView$viewTree = F3(
 			});
 	});
 
-var _user$project$McpaGraphView$barGraph = function (_p0) {
+var _user$project$ParseMcpa$nan = 0 / 0;
+var _user$project$ParseMcpa$nodeIdRegex = _elm_lang$core$Regex$caseInsensitive(
+	_elm_lang$core$Regex$regex('Node_(\\d+)'));
+var _user$project$ParseMcpa$parseRecord = F3(
+	function (variables, record, result) {
+		var _p0 = record;
+		if ((_p0.ctor === '::') && (_p0._1.ctor === '::')) {
+			var _p5 = _p0._0;
+			var makeDict = F2(
+				function (cladeId, values) {
+					return A2(
+						_elm_lang$core$List$foldl,
+						function (_p1) {
+							var _p2 = _p1;
+							return A2(
+								_elm_lang$core$Dict$insert,
+								{ctor: '_Tuple3', _0: cladeId, _1: _p0._1._0, _2: _p2._0},
+								_p2._1);
+						},
+						result)(
+						A3(
+							_elm_lang$core$List$map2,
+							F2(
+								function (v0, v1) {
+									return {ctor: '_Tuple2', _0: v0, _1: v1};
+								}),
+							variables,
+							values));
+				});
+			var valueToFloat = function (s) {
+				var _p3 = s;
+				if (_p3 === 'nan') {
+					return _elm_lang$core$Result$Ok(_user$project$ParseMcpa$nan);
+				} else {
+					return A2(
+						_elm_lang$core$Result$map,
+						_elm_lang$core$Basics$abs,
+						_elm_lang$core$String$toFloat(s));
+				}
+			};
+			var values = _elm_community$result_extra$Result_Extra$combine(
+				A2(_elm_lang$core$List$map, valueToFloat, _p0._1._1));
+			var cladeId = function () {
+				var _p4 = A3(
+					_elm_lang$core$Regex$find,
+					_elm_lang$core$Regex$AtMost(1),
+					_user$project$ParseMcpa$nodeIdRegex,
+					_p5);
+				if (_p4.ctor === '[]') {
+					return _elm_lang$core$String$toInt(_p5);
+				} else {
+					return A2(
+						_elm_lang$core$Maybe$withDefault,
+						_elm_lang$core$Result$Err('missing node_id'),
+						A2(
+							_elm_lang$core$Maybe$map,
+							_elm_lang$core$String$toInt,
+							_elm_community$maybe_extra$Maybe_Extra$join(
+								_elm_lang$core$List$head(_p4._0.submatches))));
+				}
+			}();
+			return A3(_elm_lang$core$Result$map2, makeDict, cladeId, values);
+		} else {
+			return _elm_lang$core$Result$Err('bad csv');
+		}
+	});
+var _user$project$ParseMcpa$parseCsv = function (_p6) {
+	var _p7 = _p6;
+	var variables = A2(_elm_lang$core$List$drop, 2, _p7.headers);
+	var data = A3(
+		_elm_lang$core$List$foldl,
+		function (record) {
+			return _elm_lang$core$Result$andThen(
+				A2(_user$project$ParseMcpa$parseRecord, variables, record));
+		},
+		_elm_lang$core$Result$Ok(_elm_lang$core$Dict$empty),
+		_p7.records);
+	return A2(
+		_elm_lang$core$Result$map,
+		F2(
+			function (v0, v1) {
+				return {ctor: '_Tuple2', _0: v0, _1: v1};
+			})(variables),
+		data);
+};
+var _user$project$ParseMcpa$parseMcpa = function (_p8) {
+	return A2(
+		_elm_lang$core$Result$andThen,
+		_user$project$ParseMcpa$parseCsv,
+		A2(
+			_elm_lang$core$Result$mapError,
+			_elm_lang$core$Basics$toString,
+			_periodic$elm_csv$Csv$parse(_p8)));
+};
+
+var _user$project$StatsMain$svgViewBox2String = function (_p0) {
 	var _p1 = _p0;
-	var _p2 = _p1._0;
-	var opacity = 1.0 - (_p1._1 / 1.2);
-	var background = A2(_user$project$LinearTreeView$computeColor, opacity, _p2);
-	var height = A2(
+	var _p3 = _p1.minY;
+	var _p2 = _p1.minX;
+	return A2(
+		_elm_lang$core$String$join,
+		' ',
+		A2(
+			_elm_lang$core$List$map,
+			_elm_lang$core$Basics$toString,
+			{
+				ctor: '::',
+				_0: _p2,
+				_1: {
+					ctor: '::',
+					_0: _p3,
+					_1: {
+						ctor: '::',
+						_0: _p1.maxX - _p2,
+						_1: {
+							ctor: '::',
+							_0: _p1.maxY - _p3,
+							_1: {ctor: '[]'}
+						}
+					}
+				}
+			}));
+};
+var _user$project$StatsMain$drawYAxis = F3(
+	function (label, min, max) {
+		var ticks = A2(
+			_elm_lang$core$List$map,
+			function (y) {
+				return A2(
+					_elm_lang$svg$Svg$line,
+					{
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$y1(y),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$y2(y),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$x1('0'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$x2('-20'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1'),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$stroke('black'),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
+							}
+						}
+					},
+					{ctor: '[]'});
+			},
+			A2(
+				_elm_lang$core$List$map,
+				function (_p4) {
+					return _elm_lang$core$Basics$toString(
+						A2(
+							F2(
+								function (x, y) {
+									return x - y;
+								}),
+							1000,
+							A2(
+								F2(
+									function (x, y) {
+										return x * y;
+									}),
+								100,
+								_elm_lang$core$Basics$toFloat(_p4))));
+				},
+				A2(_elm_lang$core$List$range, 1, 10)));
+		return {
+			ctor: '::',
+			_0: A2(
+				_elm_lang$svg$Svg$line,
+				{
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$y1('0'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$y2('1000'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$x1('0'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$x2('0'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$stroke('black'),
+										_1: {ctor: '[]'}
+									}
+								}
+							}
+						}
+					}
+				},
+				{ctor: '[]'}),
+			_1: ticks
+		};
+	});
+var _user$project$StatsMain$drawXAxis = F3(
+	function (label, min, max) {
+		var ticks = A2(
+			_elm_lang$core$List$map,
+			function (x) {
+				return A2(
+					_elm_lang$svg$Svg$line,
+					{
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$x1(x),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$x2(x),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$y1('1000'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$y2('1020'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1'),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$stroke('black'),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
+							}
+						}
+					},
+					{ctor: '[]'});
+			},
+			A2(
+				_elm_lang$core$List$map,
+				function (_p5) {
+					return _elm_lang$core$Basics$toString(
+						A2(
+							F2(
+								function (x, y) {
+									return x * y;
+								}),
+							100,
+							_elm_lang$core$Basics$toFloat(_p5)));
+				},
+				A2(_elm_lang$core$List$range, 1, 10)));
+		return {
+			ctor: '::',
+			_0: A2(
+				_elm_lang$svg$Svg$line,
+				{
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$x1('0'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$x2('1000'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$y1('1000'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$y2('1000'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$stroke('black'),
+										_1: {ctor: '[]'}
+									}
+								}
+							}
+						}
+					}
+				},
+				{ctor: '[]'}),
+			_1: ticks
+		};
+	});
+var _user$project$StatsMain$agg = F2(
+	function (fn, xs) {
+		var _p6 = xs;
+		if (_p6.ctor === '[]') {
+			return _elm_lang$core$Maybe$Nothing;
+		} else {
+			return _elm_lang$core$Maybe$Just(
+				A3(_elm_lang$core$List$foldl, fn, _p6._0, _p6._1));
+		}
+	});
+var _user$project$StatsMain$inViewBox = F2(
+	function (_p8, _p7) {
+		var _p9 = _p8;
+		var _p10 = _p7;
+		var _p12 = _p10._0.y;
+		var _p11 = _p10._0.x;
+		return (_elm_lang$core$Native_Utils.cmp(_p9.minX, _p11) < 1) && ((_elm_lang$core$Native_Utils.cmp(_p9.maxX, _p11) > -1) && ((_elm_lang$core$Native_Utils.cmp(_p9.minY, _p12) < 1) && (_elm_lang$core$Native_Utils.cmp(_p9.maxY, _p12) > -1)));
+	});
+var _user$project$StatsMain$svgViewBox = {width: 800, height: 800, minX: -100, minY: 0, maxX: 1020, maxY: 1020};
+var _user$project$StatsMain$computeScale = function (data) {
+	return {
+		minX: A2(
+			_elm_lang$core$Maybe$withDefault,
+			0,
+			A2(
+				_user$project$StatsMain$agg,
+				_elm_lang$core$Basics$min,
+				A2(
+					_elm_lang$core$List$map,
+					function (_) {
+						return _.x;
+					},
+					data))),
+		maxX: A2(
+			_elm_lang$core$Maybe$withDefault,
+			0,
+			A2(
+				_user$project$StatsMain$agg,
+				_elm_lang$core$Basics$max,
+				A2(
+					_elm_lang$core$List$map,
+					function (_) {
+						return _.x;
+					},
+					data))),
+		minY: A2(
+			_elm_lang$core$Maybe$withDefault,
+			0,
+			A2(
+				_user$project$StatsMain$agg,
+				_elm_lang$core$Basics$min,
+				A2(
+					_elm_lang$core$List$map,
+					function (_) {
+						return _.y;
+					},
+					data))),
+		maxY: A2(
+			_elm_lang$core$Maybe$withDefault,
+			0,
+			A2(
+				_user$project$StatsMain$agg,
+				_elm_lang$core$Basics$max,
+				A2(
+					_elm_lang$core$List$map,
+					function (_) {
+						return _.y;
+					},
+					data)))
+	};
+};
+var _user$project$StatsMain$requestStats = _elm_lang$core$Native_Platform.outgoingPort(
+	'requestStats',
+	function (v) {
+		return null;
+	});
+var _user$project$StatsMain$statsForSites = _elm_lang$core$Native_Platform.incomingPort(
+	'statsForSites',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (sitesObserved) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (statNameLookup) {
+					return _elm_lang$core$Json_Decode$succeed(
+						{sitesObserved: sitesObserved, statNameLookup: statNameLookup});
+				},
+				A2(
+					_elm_lang$core$Json_Decode$field,
+					'statNameLookup',
+					_elm_lang$core$Json_Decode$list(
+						A2(
+							_elm_lang$core$Json_Decode$andThen,
+							function (x0) {
+								return A2(
+									_elm_lang$core$Json_Decode$andThen,
+									function (x1) {
+										return _elm_lang$core$Json_Decode$succeed(
+											{ctor: '_Tuple2', _0: x0, _1: x1});
+									},
+									A2(
+										_elm_lang$core$Json_Decode$index,
+										1,
+										A2(
+											_elm_lang$core$Json_Decode$andThen,
+											function (name) {
+												return A2(
+													_elm_lang$core$Json_Decode$andThen,
+													function (description) {
+														return _elm_lang$core$Json_Decode$succeed(
+															{name: name, description: description});
+													},
+													A2(_elm_lang$core$Json_Decode$field, 'description', _elm_lang$core$Json_Decode$string));
+											},
+											A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string))));
+							},
+							A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string)))));
+		},
+		A2(
+			_elm_lang$core$Json_Decode$field,
+			'sitesObserved',
+			_elm_lang$core$Json_Decode$list(
+				A2(
+					_elm_lang$core$Json_Decode$andThen,
+					function (id) {
+						return A2(
+							_elm_lang$core$Json_Decode$andThen,
+							function (stats) {
+								return _elm_lang$core$Json_Decode$succeed(
+									{id: id, stats: stats});
+							},
+							A2(
+								_elm_lang$core$Json_Decode$field,
+								'stats',
+								_elm_lang$core$Json_Decode$list(
+									A2(
+										_elm_lang$core$Json_Decode$andThen,
+										function (x0) {
+											return A2(
+												_elm_lang$core$Json_Decode$andThen,
+												function (x1) {
+													return _elm_lang$core$Json_Decode$succeed(
+														{ctor: '_Tuple2', _0: x0, _1: x1});
+												},
+												A2(
+													_elm_lang$core$Json_Decode$index,
+													1,
+													_elm_lang$core$Json_Decode$oneOf(
+														{
+															ctor: '::',
+															_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+															_1: {
+																ctor: '::',
+																_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$float),
+																_1: {ctor: '[]'}
+															}
+														})));
+										},
+										A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string)))));
+					},
+					A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int))))));
+var _user$project$StatsMain$mouseEvent = _elm_lang$core$Native_Platform.incomingPort(
+	'mouseEvent',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (eventType) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (x) {
+					return A2(
+						_elm_lang$core$Json_Decode$andThen,
+						function (y) {
+							return A2(
+								_elm_lang$core$Json_Decode$andThen,
+								function (ctrlKey) {
+									return _elm_lang$core$Json_Decode$succeed(
+										{eventType: eventType, x: x, y: y, ctrlKey: ctrlKey});
+								},
+								A2(_elm_lang$core$Json_Decode$field, 'ctrlKey', _elm_lang$core$Json_Decode$bool));
+						},
+						A2(_elm_lang$core$Json_Decode$field, 'y', _elm_lang$core$Json_Decode$float));
+				},
+				A2(_elm_lang$core$Json_Decode$field, 'x', _elm_lang$core$Json_Decode$float));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'eventType', _elm_lang$core$Json_Decode$string)));
+var _user$project$StatsMain$sitesSelected = _elm_lang$core$Native_Platform.incomingPort(
+	'sitesSelected',
+	_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$int));
+var _user$project$StatsMain$StatsForSite = F2(
+	function (a, b) {
+		return {id: a, stats: b};
+	});
+var _user$project$StatsMain$DataScale = F4(
+	function (a, b, c, d) {
+		return {minX: a, minY: b, maxX: c, maxY: d};
+	});
+var _user$project$StatsMain$init = {
+	ctor: '_Tuple2',
+	_0: {
+		selected: _elm_lang$core$Set$empty,
+		selecting: _elm_lang$core$Maybe$Nothing,
+		variables: {ctor: '[]'},
+		statNames: _elm_lang$core$Dict$empty,
+		stats: {ctor: '[]'},
+		displayedRecords: {ctor: '[]'},
+		scale: A4(_user$project$StatsMain$DataScale, 1, 1, 1, 1),
+		xCol: '',
+		yCol: ''
+	},
+	_1: _user$project$StatsMain$requestStats(
+		{ctor: '_Tuple0'})
+};
+var _user$project$StatsMain$Point = F2(
+	function (a, b) {
+		return {x: a, y: b};
+	});
+var _user$project$StatsMain$SvgViewBox = F6(
+	function (a, b, c, d, e, f) {
+		return {width: a, height: b, minX: c, minY: d, maxX: e, maxY: f};
+	});
+var _user$project$StatsMain$MouseEvent = F4(
+	function (a, b, c, d) {
+		return {eventType: a, x: b, y: c, ctrlKey: d};
+	});
+var _user$project$StatsMain$Model = F9(
+	function (a, b, c, d, e, f, g, h, i) {
+		return {selected: a, selecting: b, variables: c, statNames: d, stats: e, displayedRecords: f, scale: g, xCol: h, yCol: i};
+	});
+var _user$project$StatsMain$Record = F3(
+	function (a, b, c) {
+		return {siteId: a, x: b, y: c};
+	});
+var _user$project$StatsMain$extractRecord = F3(
+	function (xCol, yCol, stats) {
+		var getValue = function (col) {
+			return A2(
+				_elm_lang$core$Result$fromMaybe,
+				'missing value',
+				_elm_community$maybe_extra$Maybe_Extra$join(
+					A2(
+						_elm_lang$core$Maybe$map,
+						_elm_lang$core$Tuple$second,
+						A2(
+							_elm_community$list_extra$List_Extra$find,
+							function (_p13) {
+								return A2(
+									F2(
+										function (x, y) {
+											return _elm_lang$core$Native_Utils.eq(x, y);
+										}),
+									col,
+									_elm_lang$core$Tuple$first(_p13));
+							},
+							stats.stats))));
+		};
+		return _elm_lang$core$Result$toMaybe(
+			A3(
+				_elm_lang$core$Result$map2,
+				_user$project$StatsMain$Record(stats.id),
+				getValue(xCol),
+				getValue(yCol)));
+	});
+var _user$project$StatsMain$recordsFromStats = F3(
+	function (xCol, yCol, stats) {
+		return _elm_community$maybe_extra$Maybe_Extra$values(
+			A2(
+				_elm_lang$core$List$map,
+				A2(_user$project$StatsMain$extractRecord, xCol, yCol),
+				stats));
+	});
+var _user$project$StatsMain$PixelPoint = function (a) {
+	return {ctor: 'PixelPoint', _0: a};
+};
+var _user$project$StatsMain$SvgPoint = function (a) {
+	return {ctor: 'SvgPoint', _0: a};
+};
+var _user$project$StatsMain$data2svg = F2(
+	function (ds, _p14) {
+		var _p15 = _p14;
+		return _user$project$StatsMain$SvgPoint(
+			{x: (1000 * (_p15._0.x - ds.minX)) / (ds.maxX - ds.minX), y: 1000 * (1 - ((_p15._0.y - ds.minY) / (ds.maxY - ds.minY)))});
+	});
+var _user$project$StatsMain$pixel2svg = F2(
+	function (_p17, _p16) {
+		var _p18 = _p17;
+		var _p21 = _p18.minY;
+		var _p20 = _p18.minX;
+		var _p19 = _p16;
+		return _user$project$StatsMain$SvgPoint(
+			{x: ((_p19._0.x / _p18.width) * (_p18.maxX - _p20)) + _p20, y: ((_p19._0.y / _p18.height) * (_p18.maxY - _p21)) + _p21});
+	});
+var _user$project$StatsMain$DataPoint = function (a) {
+	return {ctor: 'DataPoint', _0: a};
+};
+var _user$project$StatsMain$svg2data = F2(
+	function (ds, _p22) {
+		var _p23 = _p22;
+		return _user$project$StatsMain$DataPoint(
+			{x: ((_p23._0.x / 1000) * (ds.maxX - ds.minX)) + ds.minX, y: ((1 - (_p23._0.y / 1000)) * (ds.maxY - ds.minY)) + ds.minY});
+	});
+var _user$project$StatsMain$update = F2(
+	function (msg, model) {
+		var _p24 = msg;
+		switch (_p24.ctor) {
+			case 'ReceivedStats':
+				var _p26 = _p24._0.sitesObserved;
+				var yCol = 'phi';
+				var xCol = 'alpha';
+				var records = A3(_user$project$StatsMain$recordsFromStats, xCol, yCol, _p26);
+				var scale = _user$project$StatsMain$computeScale(records);
+				var variables = A2(
+					_elm_lang$core$List$sortBy,
+					_elm_lang$core$String$toLower,
+					_elm_lang$core$Set$toList(
+						A3(
+							_elm_lang$core$List$foldl,
+							_elm_lang$core$Set$insert,
+							_elm_lang$core$Set$empty,
+							A2(
+								_elm_lang$core$List$concatMap,
+								function (_p25) {
+									return A2(
+										_elm_lang$core$List$map,
+										_elm_lang$core$Tuple$first,
+										function (_) {
+											return _.stats;
+										}(_p25));
+								},
+								_p26))));
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							variables: variables,
+							statNames: _elm_lang$core$Dict$fromList(_p24._0.statNameLookup),
+							stats: _p26,
+							xCol: xCol,
+							yCol: yCol,
+							displayedRecords: records,
+							scale: scale
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'XColSelectedMsg':
+				var _p27 = _p24._0;
+				var records = A3(_user$project$StatsMain$recordsFromStats, _p27, model.yCol, model.stats);
+				var scale = _user$project$StatsMain$computeScale(records);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{xCol: _p27, displayedRecords: records, scale: scale}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'YColSelectedMsg':
+				var _p28 = _p24._0;
+				var records = A3(_user$project$StatsMain$recordsFromStats, model.xCol, _p28, model.stats);
+				var scale = _user$project$StatsMain$computeScale(records);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{yCol: _p28, displayedRecords: records, scale: scale}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'SitesSelectedMsg':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							selected: _elm_lang$core$Set$fromList(_p24._0)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				var _p35 = _p24._0;
+				var _p29 = _p35.eventType;
+				switch (_p29) {
+					case 'mousedown':
+						var p = A2(
+							_user$project$StatsMain$pixel2svg,
+							_user$project$StatsMain$svgViewBox,
+							_user$project$StatsMain$PixelPoint(
+								{x: _p35.x, y: _p35.y}));
+						var selecting = A2(_user$project$StatsMain$inViewBox, _user$project$StatsMain$svgViewBox, p) ? _elm_lang$core$Maybe$Just(
+							{ctor: '_Tuple2', _0: p, _1: p}) : _elm_lang$core$Maybe$Nothing;
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{selecting: selecting}),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
+					case 'mousemove':
+						var _p30 = model.selecting;
+						if (_p30.ctor === 'Just') {
+							var p2 = A2(
+								_user$project$StatsMain$pixel2svg,
+								_user$project$StatsMain$svgViewBox,
+								_user$project$StatsMain$PixelPoint(
+									{x: _p35.x, y: _p35.y}));
+							var selecting = _elm_lang$core$Maybe$Just(
+								{ctor: '_Tuple2', _0: _p30._0._0, _1: p2});
+							return {
+								ctor: '_Tuple2',
+								_0: _elm_lang$core$Native_Utils.update(
+									model,
+									{selecting: selecting}),
+								_1: _elm_lang$core$Platform_Cmd$none
+							};
+						} else {
+							return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+						}
+					case 'mouseup':
+						var _p31 = model.selecting;
+						if (_p31.ctor === 'Just') {
+							var p2_ = A2(
+								_user$project$StatsMain$pixel2svg,
+								_user$project$StatsMain$svgViewBox,
+								_user$project$StatsMain$PixelPoint(
+									{x: _p35.x, y: _p35.y}));
+							var _p32 = {
+								ctor: '_Tuple2',
+								_0: A2(_user$project$StatsMain$svg2data, model.scale, _p31._0._0),
+								_1: A2(_user$project$StatsMain$svg2data, model.scale, p2_)
+							};
+							var p1 = _p32._0._0;
+							var p2 = _p32._1._0;
+							var _p33 = {
+								ctor: '_Tuple2',
+								_0: A2(_elm_lang$core$Basics$min, p1.x, p2.x),
+								_1: A2(_elm_lang$core$Basics$min, p1.y, p2.y)
+							};
+							var x1 = _p33._0;
+							var y1 = _p33._1;
+							var _p34 = {
+								ctor: '_Tuple2',
+								_0: A2(_elm_lang$core$Basics$max, p1.x, p2.x),
+								_1: A2(_elm_lang$core$Basics$max, p1.y, p2.y)
+							};
+							var x2 = _p34._0;
+							var y2 = _p34._1;
+							var newlySelected = _elm_lang$core$Set$fromList(
+								A2(
+									_elm_lang$core$List$map,
+									function (_) {
+										return _.siteId;
+									},
+									A2(
+										_elm_lang$core$List$filter,
+										function (d) {
+											return (_elm_lang$core$Native_Utils.cmp(d.x, x1) > 0) && ((_elm_lang$core$Native_Utils.cmp(d.x, x2) < 0) && ((_elm_lang$core$Native_Utils.cmp(d.y, y1) > 0) && (_elm_lang$core$Native_Utils.cmp(d.y, y2) < 0)));
+										},
+										model.displayedRecords)));
+							var selected = _p35.ctrlKey ? A2(_elm_lang$core$Set$union, model.selected, newlySelected) : newlySelected;
+							return {
+								ctor: '_Tuple2',
+								_0: _elm_lang$core$Native_Utils.update(
+									model,
+									{selected: selected, selecting: _elm_lang$core$Maybe$Nothing}),
+								_1: _elm_lang$core$Platform_Cmd$none
+							};
+						} else {
+							return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+						}
+					default:
+						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
+		}
+	});
+var _user$project$StatsMain$drawScatter = function (model) {
+	var plot = function (record) {
+		var _p36 = A2(
+			_user$project$StatsMain$data2svg,
+			model.scale,
+			_user$project$StatsMain$DataPoint(
+				{x: record.x, y: record.y}));
+		var point = _p36._0;
+		return A2(
+			_elm_lang$svg$Svg$circle,
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$cx(
+					_elm_lang$core$Basics$toString(point.x)),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$cy(
+						_elm_lang$core$Basics$toString(point.y)),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$r('6'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.8'),
+							_1: {
+								ctor: '::',
+								_0: A2(_elm_lang$core$Set$member, record.siteId, model.selected) ? _elm_lang$svg$Svg_Attributes$fill('red') : _elm_lang$svg$Svg_Attributes$fill('black'),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			},
+			{ctor: '[]'});
+	};
+	return A2(
 		_elm_lang$core$Basics_ops['++'],
-		_elm_lang$core$Basics$toString(
-			100 * _elm_lang$core$Basics$abs(_p2)),
-		'%');
+		A3(_user$project$StatsMain$drawXAxis, model.xCol, model.scale.minX, model.scale.maxX),
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			A3(_user$project$StatsMain$drawYAxis, model.yCol, model.scale.minY, model.scale.maxY),
+			A2(_elm_lang$core$List$map, plot, model.displayedRecords)));
+};
+var _user$project$StatsMain$ReceivedStats = function (a) {
+	return {ctor: 'ReceivedStats', _0: a};
+};
+var _user$project$StatsMain$YColSelectedMsg = function (a) {
+	return {ctor: 'YColSelectedMsg', _0: a};
+};
+var _user$project$StatsMain$XColSelectedMsg = function (a) {
+	return {ctor: 'XColSelectedMsg', _0: a};
+};
+var _user$project$StatsMain$viewPlot = function (model) {
+	var variableSelector = F2(
+		function (selected, select) {
+			return A2(
+				_elm_lang$html$Html$select,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onInput(select),
+					_1: {ctor: '[]'}
+				},
+				A2(
+					_elm_lang$core$List$map,
+					function (v) {
+						return A2(
+							_elm_lang$html$Html$option,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$selected(
+									_elm_lang$core$Native_Utils.eq(v, selected)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$value(v),
+									_1: {ctor: '[]'}
+								}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text(
+									A2(
+										_elm_lang$core$Maybe$withDefault,
+										v,
+										A2(
+											_elm_lang$core$Maybe$map,
+											function (_) {
+												return _.name;
+											},
+											A2(_elm_lang$core$Dict$get, v, model.statNames)))),
+								_1: {ctor: '[]'}
+							});
+					},
+					model.variables));
+		});
+	var selectionBox = A2(
+		_elm_lang$core$List$map,
+		function (_p37) {
+			var _p38 = _p37;
+			var _p42 = _p38._1._0;
+			var _p41 = _p38._0._0;
+			var _p39 = {
+				ctor: '_Tuple2',
+				_0: _elm_lang$core$Basics$abs(_p42.x - _p41.x),
+				_1: _elm_lang$core$Basics$abs(_p42.y - _p41.y)
+			};
+			var w = _p39._0;
+			var h = _p39._1;
+			var _p40 = {
+				ctor: '_Tuple2',
+				_0: A2(_elm_lang$core$Basics$min, _p41.x, _p42.x),
+				_1: A2(_elm_lang$core$Basics$min, _p41.y, _p42.y)
+			};
+			var x_ = _p40._0;
+			var y_ = _p40._1;
+			return A2(
+				_elm_lang$svg$Svg$rect,
+				{
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$x(
+						_elm_lang$core$Basics$toString(x_)),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$y(
+							_elm_lang$core$Basics$toString(y_)),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$width(
+								_elm_lang$core$Basics$toString(w)),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$height(
+									_elm_lang$core$Basics$toString(h)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$fill('red'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.4'),
+										_1: {ctor: '[]'}
+									}
+								}
+							}
+						}
+					}
+				},
+				{ctor: '[]'});
+		},
+		_elm_community$maybe_extra$Maybe_Extra$toList(model.selecting));
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$h3,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
+								_1: {ctor: '[]'}
+							}
+						}),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Site Based Stat Relationships'),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$svg$Svg$svg,
+					{
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$width(
+							_elm_lang$core$Basics$toString(_user$project$StatsMain$svgViewBox.width)),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$height(
+								_elm_lang$core$Basics$toString(_user$project$StatsMain$svgViewBox.height)),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$viewBox(
+									_user$project$StatsMain$svgViewBox2String(_user$project$StatsMain$svgViewBox)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$id('plot'),
+									_1: {ctor: '[]'}
+								}
+							}
+						}
+					},
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$svg$Svg$g,
+								{
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$transform(''),
+									_1: {ctor: '[]'}
+								},
+								_user$project$StatsMain$drawScatter(model)),
+							_1: {ctor: '[]'}
+						},
+						selectionBox)),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$p,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: A2(variableSelector, model.yCol, _user$project$StatsMain$YColSelectedMsg),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html$text(' vs '),
+								_1: {
+									ctor: '::',
+									_0: A2(variableSelector, model.xCol, _user$project$StatsMain$XColSelectedMsg),
+									_1: {ctor: '[]'}
+								}
+							}
+						}),
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
+var _user$project$StatsMain$view = function (model) {
+	var selectedSiteIds = A2(
+		_elm_lang$core$String$join,
+		' ',
+		A2(
+			_elm_lang$core$List$map,
+			_elm_lang$core$Basics$toString,
+			_elm_lang$core$Set$toList(model.selected)));
 	return A2(
 		_elm_lang$html$Html$div,
 		{
@@ -14975,295 +14948,27 @@ var _user$project$McpaGraphView$barGraph = function (_p0) {
 			_0: _elm_lang$html$Html_Attributes$style(
 				{
 					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
+					_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
 					_1: {
 						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'height', _1: height},
+						_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'flex-row'},
 						_1: {
 							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
-							_1: {
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'bottom', _1: '0'},
-								_1: {
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'background-color', _1: background},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'z-index', _1: '-1'},
-										_1: {ctor: '[]'}
-									}
-								}
-							}
+							_0: {ctor: '_Tuple2', _0: 'font-family', _1: 'sans-serif'},
+							_1: {ctor: '[]'}
 						}
 					}
 				}),
-			_1: {ctor: '[]'}
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$tabindex(0),
+				_1: {ctor: '[]'}
+			}
 		},
-		{ctor: '[]'});
-};
-var _user$project$McpaGraphView$drawVariable = F5(
-	function (showBarGraph, formatter, i, $var, _p3) {
-		var _p4 = _p3;
-		var _p7 = _p4._1;
-		var _p6 = _p4._0;
-		var values = A2(
-			_elm_lang$core$Maybe$withDefault,
-			'',
-			A2(
-				_elm_lang$core$Maybe$map,
-				formatter,
-				A3(
-					_elm_lang$core$Maybe$map2,
-					F2(
-						function (v0, v1) {
-							return {ctor: '_Tuple2', _0: v0, _1: v1};
-						}),
-					_p6,
-					_p7)));
-		var bar = showBarGraph ? A2(
-			_elm_lang$core$Maybe$withDefault,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html$text('na'),
-				_1: {ctor: '[]'}
-			},
-			A2(
-				_elm_lang$core$Maybe$map,
-				function (_p5) {
-					return _elm_lang$core$List$singleton(
-						_user$project$McpaGraphView$barGraph(_p5));
-				},
-				A2(
-					_elm_lang$core$Maybe$map,
-					function (observed) {
-						return {
-							ctor: '_Tuple2',
-							_0: observed,
-							_1: A2(_elm_community$maybe_extra$Maybe_Extra_ops['?'], _p7, 0.0)
-						};
-					},
-					_p6))) : {ctor: '[]'};
-		var fontWeight = A2(
-			_elm_lang$core$Maybe$withDefault,
-			false,
-			A2(
-				_elm_lang$core$Maybe$map,
-				F2(
-					function (x, y) {
-						return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
-					})(0.5),
-				_p4._2)) ? {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'} : {ctor: '_Tuple2', _0: 'font-weight', _1: 'normal'};
-		return A2(
-			_elm_lang$html$Html$td,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$style(
-					{
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'position', _1: 'relative'},
-						_1: {
-							ctor: '::',
-							_0: fontWeight,
-							_1: {
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'border-bottom', _1: '2px solid'},
-								_1: {ctor: '[]'}
-							}
-						}
-					}),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$title(
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							$var,
-							A2(_elm_lang$core$Basics_ops['++'], '\n', values))),
-					_1: {ctor: '[]'}
-				}
-			},
-			bar);
-	});
-var _user$project$McpaGraphView$viewGraph = F5(
-	function (selectedNode, showBarGraph, variableFormatter, vars, dataForVar) {
-		var _p8 = function () {
-			var _p9 = A2(
-				_elm_community$list_extra$List_Extra$findIndex,
-				F2(
-					function (x, y) {
-						return _elm_lang$core$Native_Utils.eq(x, y);
-					})('Env - Adjusted R-squared'),
-				vars);
-			if (_p9.ctor === 'Just') {
-				return A2(_elm_community$list_extra$List_Extra$splitAt, _p9._0 + 1, vars);
-			} else {
-				return {
-					ctor: '_Tuple2',
-					_0: vars,
-					_1: {ctor: '[]'}
-				};
-			}
-		}();
-		var envVars = _p8._0;
-		var bgVars = _p8._1;
-		var _p10 = function () {
-			var _p11 = selectedNode;
-			if (_p11.ctor === 'Just') {
-				return {
-					ctor: '_Tuple2',
-					_0: A2(
-						_elm_lang$html$Html$tr,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$style(
-								{
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'height', _1: '400px'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'border-bottom', _1: '1px solid'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'border-right', _1: '1px solid'},
-											_1: {ctor: '[]'}
-										}
-									}
-								}),
-							_1: {ctor: '[]'}
-						},
-						A2(
-							_elm_lang$core$List$indexedMap,
-							F2(
-								function (i, $var) {
-									return A5(
-										_user$project$McpaGraphView$drawVariable,
-										showBarGraph,
-										variableFormatter,
-										i,
-										$var,
-										dataForVar($var));
-								}),
-							envVars)),
-					_1: A2(
-						_elm_lang$html$Html$tr,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$style(
-								{
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'height', _1: '400px'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'border-bottom', _1: '1px solid'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'border-left', _1: '1px solid'},
-											_1: {ctor: '[]'}
-										}
-									}
-								}),
-							_1: {ctor: '[]'}
-						},
-						_elm_lang$core$List$reverse(
-							A2(
-								_elm_lang$core$List$indexedMap,
-								F2(
-									function (i, $var) {
-										return A5(
-											_user$project$McpaGraphView$drawVariable,
-											showBarGraph,
-											variableFormatter,
-											i,
-											$var,
-											dataForVar($var));
-									}),
-								bgVars)))
-				};
-			} else {
-				return {
-					ctor: '_Tuple2',
-					_0: A2(
-						_elm_lang$html$Html$tr,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$td,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$colspan(2),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$style(
-											{
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-												_1: {ctor: '[]'}
-											}),
-										_1: {ctor: '[]'}
-									}
-								},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('No node selected.'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						}),
-					_1: A2(
-						_elm_lang$html$Html$tr,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$td,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$colspan(2),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$style(
-											{
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-												_1: {ctor: '[]'}
-											}),
-										_1: {ctor: '[]'}
-									}
-								},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('No node selected.'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						})
-				};
-			}
-		}();
-		var envVarTableRows = _p10._0;
-		var bgVarTableRows = _p10._1;
-		return A2(
-			_elm_lang$html$Html$div,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$style(
-					{
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-						_1: {
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
-							_1: {
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'flex-grow', _1: '1'},
-								_1: {ctor: '[]'}
-							}
-						}
-					}),
-				_1: {ctor: '[]'}
-			},
-			{
+		{
+			ctor: '::',
+			_0: _user$project$StatsMain$viewPlot(model),
+			_1: {
 				ctor: '::',
 				_0: A2(
 					_elm_lang$html$Html$div,
@@ -15272,12 +14977,8 @@ var _user$project$McpaGraphView$viewGraph = F5(
 						_0: _elm_lang$html$Html_Attributes$style(
 							{
 								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'flex-shrink', _1: '0'},
-								_1: {
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'margin', _1: '0 12px'},
-									_1: {ctor: '[]'}
-								}
+								_0: {ctor: '_Tuple2', _0: 'flex-grow', _1: '1'},
+								_1: {ctor: '[]'}
 							}),
 						_1: {ctor: '[]'}
 					},
@@ -15301,7 +15002,7 @@ var _user$project$McpaGraphView$viewGraph = F5(
 							},
 							{
 								ctor: '::',
-								_0: _elm_lang$html$Html$text('Subtree Left (blue) vs. Right (red) of selected node'),
+								_0: _elm_lang$html$Html$text('Site Map'),
 								_1: {ctor: '[]'}
 							}),
 						_1: {
@@ -15313,13 +15014,7 @@ var _user$project$McpaGraphView$viewGraph = F5(
 									_0: _elm_lang$html$Html_Attributes$class('leaflet-map'),
 									_1: {
 										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html_Attributes$attribute,
-											'data-map-column',
-											A2(
-												_elm_lang$core$Maybe$withDefault,
-												'',
-												A2(_elm_lang$core$Maybe$map, _elm_lang$core$Basics$toString, selectedNode))),
+										_0: A2(_elm_lang$html$Html_Attributes$attribute, 'data-map-sites', selectedSiteIds),
 										_1: {
 											ctor: '::',
 											_0: _elm_lang$html$Html_Attributes$style(
@@ -15348,250 +15043,215 @@ var _user$project$McpaGraphView$viewGraph = F5(
 							_1: {ctor: '[]'}
 						}
 					}),
+				_1: {ctor: '[]'}
+			}
+		});
+};
+var _user$project$StatsMain$SitesSelectedMsg = function (a) {
+	return {ctor: 'SitesSelectedMsg', _0: a};
+};
+var _user$project$StatsMain$MouseMsg = function (a) {
+	return {ctor: 'MouseMsg', _0: a};
+};
+var _user$project$StatsMain$subscriptions = _elm_lang$core$Basics$always(
+	_elm_lang$core$Platform_Sub$batch(
+		{
+			ctor: '::',
+			_0: _user$project$StatsMain$mouseEvent(_user$project$StatsMain$MouseMsg),
+			_1: {
+				ctor: '::',
+				_0: _user$project$StatsMain$sitesSelected(_user$project$StatsMain$SitesSelectedMsg),
 				_1: {
 					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$h3,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$style(
-								{
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
-										_1: {ctor: '[]'}
-									}
-								}),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Semipartial Correlations b/w Clade and Predictors'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$div,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$style(
-									{
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
-										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$div,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$style(
-											{
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-												_1: {
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'justify-content', _1: 'center'},
-													_1: {
-														ctor: '::',
-														_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '10px'},
-														_1: {
-															ctor: '::',
-															_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
-															_1: {
-																ctor: '::',
-																_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
-																_1: {
-																	ctor: '::',
-																	_0: {ctor: '_Tuple2', _0: 'max-width', _1: '900px'},
-																	_1: {ctor: '[]'}
-																}
-															}
-														}
-													}
-												}
-											}),
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$table,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$style(
-													{
-														ctor: '::',
-														_0: {
-															ctor: '_Tuple2',
-															_0: 'width',
-															_1: A3(
-																_elm_lang$core$Basics$flip,
-																F2(
-																	function (x, y) {
-																		return A2(_elm_lang$core$Basics_ops['++'], x, y);
-																	}),
-																'%',
-																_elm_lang$core$Basics$toString(
-																	(100 * _elm_lang$core$Basics$toFloat(
-																		_elm_lang$core$List$length(envVars))) / _elm_lang$core$Basics$toFloat(
-																		_elm_lang$core$List$length(vars))))
-														},
-														_1: {
-															ctor: '::',
-															_0: {ctor: '_Tuple2', _0: 'border-right', _1: '1px solid'},
-															_1: {ctor: '[]'}
-														}
-													}),
-												_1: {ctor: '[]'}
-											},
-											{
-												ctor: '::',
-												_0: envVarTableRows,
-												_1: {
-													ctor: '::',
-													_0: A2(
-														_elm_lang$html$Html$tr,
-														{ctor: '[]'},
-														{
-															ctor: '::',
-															_0: A2(
-																_elm_lang$html$Html$th,
-																{
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Attributes$colspan(
-																		_elm_lang$core$List$length(envVars)),
-																	_1: {ctor: '[]'}
-																},
-																{
-																	ctor: '::',
-																	_0: _elm_lang$html$Html$text('Environmental Variables'),
-																	_1: {ctor: '[]'}
-																}),
-															_1: {ctor: '[]'}
-														}),
-													_1: {ctor: '[]'}
-												}
-											}),
-										_1: {
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$table,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$style(
-														{
-															ctor: '::',
-															_0: {
-																ctor: '_Tuple2',
-																_0: 'width',
-																_1: A3(
-																	_elm_lang$core$Basics$flip,
-																	F2(
-																		function (x, y) {
-																			return A2(_elm_lang$core$Basics_ops['++'], x, y);
-																		}),
-																	'%',
-																	_elm_lang$core$Basics$toString(
-																		(100 * _elm_lang$core$Basics$toFloat(
-																			_elm_lang$core$List$length(bgVars))) / _elm_lang$core$Basics$toFloat(
-																			_elm_lang$core$List$length(vars))))
-															},
-															_1: {
-																ctor: '::',
-																_0: {ctor: '_Tuple2', _0: 'border-left', _1: '1px solid'},
-																_1: {ctor: '[]'}
-															}
-														}),
-													_1: {ctor: '[]'}
-												},
-												{
-													ctor: '::',
-													_0: bgVarTableRows,
-													_1: {
-														ctor: '::',
-														_0: A2(
-															_elm_lang$html$Html$tr,
-															{ctor: '[]'},
-															{
-																ctor: '::',
-																_0: A2(
-																	_elm_lang$html$Html$th,
-																	{
-																		ctor: '::',
-																		_0: _elm_lang$html$Html_Attributes$colspan(
-																			_elm_lang$core$List$length(bgVars)),
-																		_1: {ctor: '[]'}
-																	},
-																	{
-																		ctor: '::',
-																		_0: _elm_lang$html$Html$text('Biogeographic Hypotheses'),
-																		_1: {ctor: '[]'}
-																	}),
-																_1: {ctor: '[]'}
-															}),
-														_1: {ctor: '[]'}
-													}
-												}),
-											_1: {ctor: '[]'}
-										}
-									}),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					}
+					_0: _user$project$StatsMain$statsForSites(_user$project$StatsMain$ReceivedStats),
+					_1: {ctor: '[]'}
 				}
+			}
+		}));
+var _user$project$StatsMain$main = _elm_lang$html$Html$program(
+	{init: _user$project$StatsMain$init, update: _user$project$StatsMain$update, view: _user$project$StatsMain$view, subscriptions: _user$project$StatsMain$subscriptions})();
+
+var _user$project$StatsTreeMap$parseData = function (data) {
+	var _p0 = _user$project$ParseMcpa$parseMcpa(data);
+	if (_p0.ctor === 'Ok') {
+		return _p0._0;
+	} else {
+		return _elm_lang$core$Native_Utils.crashCase(
+			'StatsTreeMap',
+			{
+				start: {line: 115, column: 5},
+				end: {line: 120, column: 66}
+			},
+			_p0)(
+			A2(_elm_lang$core$Basics_ops['++'], 'failed to decode MCPA matrix: ', _p0._0));
+	}
+};
+var _user$project$StatsTreeMap$requestSitesForNode = _elm_lang$core$Native_Platform.outgoingPort(
+	'requestSitesForNode',
+	function (v) {
+		return v;
+	});
+var _user$project$StatsTreeMap$sitesForNode = _elm_lang$core$Native_Platform.incomingPort(
+	'sitesForNode',
+	_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$int));
+var _user$project$StatsTreeMap$requestNodesForSites = _elm_lang$core$Native_Platform.outgoingPort(
+	'requestNodesForSites',
+	function (v) {
+		return _elm_lang$core$Native_List.toArray(v).map(
+			function (v) {
+				return v;
 			});
 	});
-
-var _user$project$AncStateTreeView$variableFormatter = function (_p0) {
-	var _p1 = _p0;
-	return A2(
-		_krisajenkins$formatting$Formatting$print,
-		_krisajenkins$formatting$Formatting$roundTo(3),
-		_p1._0);
-};
-var _user$project$AncStateTreeView$view = function (model) {
-	var dataForVar = function ($var) {
-		return {
-			ctor: '_Tuple3',
-			_0: A2(
-				_elm_lang$core$Maybe$andThen,
-				function (cladeId) {
-					return A2(
-						_elm_lang$core$Dict$get,
-						{ctor: '_Tuple2', _0: cladeId, _1: $var},
-						model.data.values);
+var _user$project$StatsTreeMap$nodesForSites = _elm_lang$core$Native_Platform.incomingPort(
+	'nodesForSites',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (x0) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (x1) {
+					return _elm_lang$core$Json_Decode$succeed(
+						{ctor: '_Tuple2', _0: x0, _1: x1});
 				},
-				model.selectedNode),
-			_1: _elm_lang$core$Maybe$Just(0.0),
-			_2: _elm_lang$core$Maybe$Just(0.0)
-		};
-	};
-	var _p2 = A2(
-		_elm_lang$core$Maybe$withDefault,
-		{ctor: '_Tuple2', _0: 0, _1: 0},
-		A2(_elm_lang$core$Dict$get, model.selectedVariable, model.data.ranges));
-	var min = _p2._0;
-	var max = _p2._1;
-	var scaleData = function (value) {
-		return ((2 * (value - min)) / (max - min)) - 1;
-	};
+				A2(
+					_elm_lang$core$Json_Decode$index,
+					1,
+					_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$int)));
+		},
+		A2(
+			_elm_lang$core$Json_Decode$index,
+			0,
+			_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$int))));
+var _user$project$StatsTreeMap$Model = F2(
+	function (a, b) {
+		return {mcpaModel: a, statsModel: b};
+	});
+var _user$project$StatsTreeMap$SetSelectedNodes = function (a) {
+	return {ctor: 'SetSelectedNodes', _0: a};
+};
+var _user$project$StatsTreeMap$SetSelectedSites = function (a) {
+	return {ctor: 'SetSelectedSites', _0: a};
+};
+var _user$project$StatsTreeMap$StatsMsg = function (a) {
+	return {ctor: 'StatsMsg', _0: a};
+};
+var _user$project$StatsTreeMap$McpaMsg = function (a) {
+	return {ctor: 'McpaMsg', _0: a};
+};
+var _user$project$StatsTreeMap$update = F2(
+	function (msg, model) {
+		var _p2 = msg;
+		switch (_p2.ctor) {
+			case 'SetSelectedNodes':
+				var mcpaModel = model.mcpaModel;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							mcpaModel: _elm_lang$core$Native_Utils.update(
+								mcpaModel,
+								{
+									selectedNode: _elm_lang$core$Maybe$Nothing,
+									flaggedNodes: {ctor: '_Tuple2', _0: _p2._0._0, _1: _p2._0._1}
+								})
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'SetSelectedSites':
+				var statsModel = model.statsModel;
+				var selected = _elm_lang$core$Set$fromList(_p2._0);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							statsModel: _elm_lang$core$Native_Utils.update(
+								statsModel,
+								{selected: selected})
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'McpaMsg':
+				if (_p2._0.ctor === 'SelectNode') {
+					var _p3 = A2(_user$project$McpaModel$update, _p2._0, model.mcpaModel);
+					var mcpaModel = _p3._0;
+					var cmd = _p3._1;
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
+							model,
+							{
+								mcpaModel: _elm_lang$core$Native_Utils.update(
+									mcpaModel,
+									{
+										flaggedNodes: {
+											ctor: '_Tuple2',
+											_0: {ctor: '[]'},
+											_1: {ctor: '[]'}
+										}
+									})
+							}),
+						{
+							ctor: '::',
+							_0: A2(_elm_lang$core$Platform_Cmd$map, _user$project$StatsTreeMap$McpaMsg, cmd),
+							_1: {
+								ctor: '::',
+								_0: _user$project$StatsTreeMap$requestSitesForNode(_p2._0._0),
+								_1: {ctor: '[]'}
+							}
+						});
+				} else {
+					var _p4 = A2(_user$project$McpaModel$update, _p2._0, model.mcpaModel);
+					var mcpaModel = _p4._0;
+					var cmd = _p4._1;
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{mcpaModel: mcpaModel}),
+						_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$StatsTreeMap$McpaMsg, cmd)
+					};
+				}
+			default:
+				var _p5 = A2(_user$project$StatsMain$update, _p2._0, model.statsModel);
+				var statsModel = _p5._0;
+				var cmd = _p5._1;
+				var getNodes = (!_elm_lang$core$Native_Utils.eq(statsModel.selected, model.statsModel.selected)) ? _user$project$StatsTreeMap$requestNodesForSites(
+					_elm_lang$core$Set$toList(statsModel.selected)) : _elm_lang$core$Platform_Cmd$none;
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{statsModel: statsModel}),
+					{
+						ctor: '::',
+						_0: A2(_elm_lang$core$Platform_Cmd$map, _user$project$StatsTreeMap$StatsMsg, cmd),
+						_1: {
+							ctor: '::',
+							_0: getNodes,
+							_1: {ctor: '[]'}
+						}
+					});
+		}
+	});
+var _user$project$StatsTreeMap$view = function (_p6) {
+	var _p7 = _p6;
+	var _p9 = _p7.statsModel;
+	var _p8 = _p7.mcpaModel;
 	var selectData = function (cladeId) {
 		return A2(
-			_elm_lang$core$Maybe$map,
-			scaleData,
-			A2(
-				_elm_lang$core$Dict$get,
-				{ctor: '_Tuple2', _0: cladeId, _1: model.selectedVariable},
-				model.data.values));
+			_elm_lang$core$Dict$get,
+			{ctor: '_Tuple3', _0: cladeId, _1: 'Observed', _2: _p8.selectedVariable},
+			_p8.data);
 	};
+	var selectedSiteIds = A2(
+		_elm_lang$core$String$join,
+		' ',
+		A2(
+			_elm_lang$core$List$map,
+			_elm_lang$core$Basics$toString,
+			_elm_lang$core$Set$toList(_p9.selected)));
 	return A2(
 		_elm_lang$html$Html$div,
 		{
@@ -15614,37 +15274,174 @@ var _user$project$AncStateTreeView$view = function (model) {
 		},
 		{
 			ctor: '::',
-			_0: A3(_user$project$McpaTreeView$viewTree, model, true, selectData),
+			_0: A2(
+				_elm_lang$html$Html$map,
+				_user$project$StatsTreeMap$McpaMsg,
+				A3(_user$project$McpaTreeView$viewTree, _p8, false, selectData)),
 			_1: {
 				ctor: '::',
-				_0: A5(_user$project$McpaGraphView$viewGraph, model.selectedNode, false, _user$project$AncStateTreeView$variableFormatter, model.variables, dataForVar),
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$style(
+							{
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'flex-grow', _1: '1'},
+										_1: {ctor: '[]'}
+									}
+								}
+							}),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$div,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$style(
+									{
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'flex-shrink', _1: '0'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'margin', _1: '0 12px'},
+											_1: {ctor: '[]'}
+										}
+									}),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$h3,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+												_1: {
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'},
+													_1: {ctor: '[]'}
+												}
+											}),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text('Sites'),
+										_1: {ctor: '[]'}
+									}),
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$div,
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$class('leaflet-map'),
+											_1: {
+												ctor: '::',
+												_0: A2(_elm_lang$html$Html_Attributes$attribute, 'data-map-sites', selectedSiteIds),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$html$Html_Attributes$style(
+														{
+															ctor: '::',
+															_0: {ctor: '_Tuple2', _0: 'max-width', _1: '900px'},
+															_1: {
+																ctor: '::',
+																_0: {ctor: '_Tuple2', _0: 'height', _1: '500px'},
+																_1: {
+																	ctor: '::',
+																	_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
+																	_1: {
+																		ctor: '::',
+																		_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
+																		_1: {ctor: '[]'}
+																	}
+																}
+															}
+														}),
+													_1: {ctor: '[]'}
+												}
+											}
+										},
+										{ctor: '[]'}),
+									_1: {ctor: '[]'}
+								}
+							}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$map,
+								_user$project$StatsTreeMap$StatsMsg,
+								_user$project$StatsMain$viewPlot(_p9)),
+							_1: {ctor: '[]'}
+						}
+					}),
 				_1: {ctor: '[]'}
 			}
 		});
 };
-
-var _user$project$AncStateMain$parseData = function (data) {
-	var _p0 = _user$project$ParseAncState$parseAncState(data);
-	if (_p0.ctor === 'Ok') {
-		return _p0._0;
-	} else {
-		return _elm_lang$core$Native_Utils.crashCase(
-			'AncStateMain',
+var _user$project$StatsTreeMap$init = function (flags) {
+	var _p10 = _user$project$StatsMain$init;
+	var statsModel = _p10._0;
+	var statsCmd = _p10._1;
+	var _p11 = A2(_user$project$McpaModel$init, _user$project$StatsTreeMap$parseData, flags);
+	var mcpaModel = _p11._0;
+	var mcpaCmd = _p11._1;
+	return {
+		ctor: '_Tuple2',
+		_0: {mcpaModel: mcpaModel, statsModel: statsModel},
+		_1: _elm_lang$core$Platform_Cmd$batch(
 			{
-				start: {line: 35, column: 5},
-				end: {line: 40, column: 70}
-			},
-			_p0)(
-			A2(_elm_lang$core$Basics_ops['++'], 'failed to decode ancState matrix: ', _p0._0));
-	}
+				ctor: '::',
+				_0: A2(_elm_lang$core$Platform_Cmd$map, _user$project$StatsTreeMap$McpaMsg, mcpaCmd),
+				_1: {
+					ctor: '::',
+					_0: A2(_elm_lang$core$Platform_Cmd$map, _user$project$StatsTreeMap$StatsMsg, statsCmd),
+					_1: {ctor: '[]'}
+				}
+			})
+	};
 };
-var _user$project$AncStateMain$main = _elm_lang$html$Html$programWithFlags(
-	{
-		init: _user$project$McpaModel$init(_user$project$AncStateMain$parseData),
-		update: _user$project$McpaModel$update,
-		view: _user$project$AncStateTreeView$view,
-		subscriptions: _user$project$McpaModel$subscriptions
-	})(
+var _user$project$StatsTreeMap$subscriptions = function (model) {
+	return _elm_lang$core$Platform_Sub$batch(
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$core$Platform_Sub$map,
+				_user$project$StatsTreeMap$McpaMsg,
+				_user$project$McpaModel$subscriptions(model.mcpaModel)),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$core$Platform_Sub$map,
+					_user$project$StatsTreeMap$StatsMsg,
+					_user$project$StatsMain$subscriptions(model.statsModel)),
+				_1: {
+					ctor: '::',
+					_0: _user$project$StatsTreeMap$sitesForNode(_user$project$StatsTreeMap$SetSelectedSites),
+					_1: {
+						ctor: '::',
+						_0: _user$project$StatsTreeMap$nodesForSites(_user$project$StatsTreeMap$SetSelectedNodes),
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		});
+};
+var _user$project$StatsTreeMap$main = _elm_lang$html$Html$programWithFlags(
+	{init: _user$project$StatsTreeMap$init, update: _user$project$StatsTreeMap$update, view: _user$project$StatsTreeMap$view, subscriptions: _user$project$StatsTreeMap$subscriptions})(
 	A2(
 		_elm_lang$core$Json_Decode$andThen,
 		function (data) {
@@ -15659,9 +15456,9 @@ var _user$project$AncStateMain$main = _elm_lang$html$Html$programWithFlags(
 		A2(_elm_lang$core$Json_Decode$field, 'data', _elm_lang$core$Json_Decode$string)));
 
 var Elm = {};
-Elm['AncStateMain'] = Elm['AncStateMain'] || {};
-if (typeof _user$project$AncStateMain$main !== 'undefined') {
-    _user$project$AncStateMain$main(Elm['AncStateMain'], 'AncStateMain', undefined);
+Elm['StatsTreeMap'] = Elm['StatsTreeMap'] || {};
+if (typeof _user$project$StatsTreeMap$main !== 'undefined') {
+    _user$project$StatsTreeMap$main(Elm['StatsTreeMap'], 'StatsTreeMap', undefined);
 }
 
 if (typeof define === "function" && define['amd'])

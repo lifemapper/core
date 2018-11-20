@@ -11,13 +11,24 @@
             crossorigin=""></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@0.4.12/dist/leaflet.draw.css"/>
     <script src="https://unpkg.com/leaflet-draw@0.4.12/dist/leaflet.draw.js"></script>
-    <script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
+    <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+
   </head>
   <body>
+    <script src="./package/ancPam.js"></script>
+    <script src="./package/mcpaMatrix.js"></script>
+    <script src="./package/tree.js"></script>
+    <script src="./package/nodeLookup.js"></script>
     <script src="./package/sitesObserved.js"></script>
     <script src="./package/statNameLookup.json"></script>
-    <script src="./elm/Stats.js"></script>
-    <script>var app = Elm.StatsMain.fullscreen();</script>
+    <script src="./elm/StatsTreeMap.js"></script>
+    <script>
+      var app = Elm.StatsTreeMap.fullscreen({
+      data: mcpaMatrix,
+      taxonTree: taxonTree
+      });
+    </script>
     <script src="./statsMain.js"></script>
+    <script src="./sitesForNode.js"></script>
   </body>
 </html>
