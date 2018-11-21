@@ -587,7 +587,7 @@ class ChristopherWalken(LMObject):
         sweep_config.add_projection(
             prj.processType, prj.getId(), prj.getOccurrenceSetId(),
             alg, prj.modelScenario, prj.projScenario,
-            prj.getDLocation(), self.boomGridset.getPackageLocation(),
+            prj.getDLocation(), prj.getProjPackageFilename(),
             model_mask=model_mask,
             projection_mask=projection_mask,
             scale_parameters=scale_parameters,
