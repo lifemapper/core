@@ -254,7 +254,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
             MAXENT_PROJECT_TOOL,
             ruleset_filename, 
             layer_dir, 
-            self.get_ascii_output_filename(), 
+            self.get_projection_filename() 
         ]
         
         # Mask
