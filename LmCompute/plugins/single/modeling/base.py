@@ -205,10 +205,12 @@ class ModelSoftwareWrapper(object):
                 if base.find('layers') == -1: # Skip layers directory
                     for f in files:
                         # Don't add zip files
-                        if f.find(LMFormat.ZIP.ext) == -1:
-                            zf.write(os.path.join(base, f), 
-                                        os.path.relpath(os.path.join(base, f), 
-                                                             self.work_dir))
+                        if f.find(LMFormat.ZIP.ext) == -1 \
+                                and os.path.exists(os.path.join(base, f)):
+                            zf.write(
+                                os.path.join(base, f),
+                                os.path.relpath(os.path.join(base, f),
+                                                self.work_dir))
 
     # ...................................
     def get_log_filename(self):
@@ -300,4 +302,3 @@ class ModelSoftwareWrapper(object):
         self._copy_file(
             self.get_log_filename(), destination_filename, 
             overwrite=overwrite)
-    

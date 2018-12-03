@@ -164,11 +164,12 @@ class ParameterSweep(object):
                         wrapper.copy_ruleset(mdl_ruleset_path, overwrite=True)
                         
                         # Append log
-                        with open(wrapper.get_log_filename()) as log_f:
-                            self.log.debug('---------------------------------')
-                            self.log.debug(wrapper.get_log_filename())
-                            self.log.debug('---------------------------------')
-                            self.log.debug(log_f.read())
+                        if os.path.exists(wrapper.get_log_filename()):
+                            with open(wrapper.get_log_filename()) as log_f:
+                                self.log.debug('-----------------------------')
+                                self.log.debug(wrapper.get_log_filename())
+                                self.log.debug('-----------------------------')
+                                self.log.debug(log_f.read())
                         
                         mdl_metrics = wrapper.get_metrics()
 
@@ -388,72 +389,76 @@ class ParameterSweep(object):
                     
                     # TODO(CJ): Check this
                     if status < JobStatus.GENERAL_ERROR:
-                       # If Maxent
-                       if process_type == ProcessType.ATT_PROJECT:
+                        # If Maxent
+                        if process_type == ProcessType.ATT_PROJECT:
                            
-                           mask_filename = '{}{}'.format(
-                               mask_filename_base, LMFormat.ASCII.ext)
-                           wrapper = MaxentWrapper(
-                               work_dir, species_name, logger=self.log)
+                            mask_filename = '{}{}'.format(
+                                mask_filename_base, LMFormat.ASCII.ext)
+                            wrapper = MaxentWrapper(
+                                work_dir, species_name, logger=self.log)
+                            wrapper.create_projection(
+                                ruleset_filename, prj_scenario, algorithm,
+                                mask_filename)
                            
-                           wrapper.create_projection(
-                               ruleset_filename, prj_scenario, algorithm,
-                               mask_filename)
-                           
-                           # Get outputs
-                           status = wrapper.get_status()
-                           if status < JobStatus.GENERAL_ERROR:
-                               
-                               raw_prj_filename = wrapper.get_projection_filename()
-                               # Convert layer and scale layer
-                               layer_tools.convertAndModifyAsciiToTiff(
-                                   raw_prj_filename, projection_path,
-                                   scale=scale_params, multiplier=multiplier)
-                               
-                               # Append log
-                               with open(wrapper.get_log_filename()) as log_f:
-                                   self.log.debug('-----------------------------')
-                                   self.log.debug(wrapper.get_log_filename())
-                                   self.log.debug('-----------------------------')
-                                   self.log.debug(log_f.read())
-                               wrapper.get_output_package(package_path,
-                                                          overwrite=True)
-                               prj_metrics = wrapper.get_metrics()
-       
-                       # If openModeller
-                       elif process_type in [ProcessType.OM_MODEL,
-                                             ProcessType.OM_PROJECT]:
-                           mask_filename = '{}{}'.format(
-                               mask_filename_base, LMFormat.GTIFF.ext)
-                           wrapper = OpenModellerWrapper(
-                               work_dir, species_name, logger=self.log)
-                           wrapper.create_projection(
-                               ruleset_filename, prj_scenario, algorithm,
-                               mask_filename)
-                           
-                           # Get outputs
-                           status = wrapper.get_status()
-                           if status < JobStatus.GENERAL_ERROR:
-                               
-                               wrapper.copy_projection(
-                                   projection_path, overwrite=True)
-                               
-                               # Append log
-                               with open(wrapper.get_log_filename()) as log_f:
-                                   self.log.debug('-----------------------------')
-                                   self.log.debug(wrapper.get_log_filename())
-                                   self.log.debug('-----------------------------')
-                                   self.log.debug(log_f.read())
-                               wrapper.get_output_package(package_path,
-                                                          overwrite=True)
-                               prj_metrics = wrapper.get_metrics()
-       
-                       # If other
-                       else:
-                           status = JobStatus.UNKNOWN_ERROR
-                           self.log.error(
-                               'Unknown process type: {} for proj {}'.format(
-                                   process_type, projection_id))
+                            # Get outputs
+                            status = wrapper.get_status()
+                            if status < JobStatus.GENERAL_ERROR:
+                                raw_prj_filename = \
+                                    wrapper.get_projection_filename()
+                                # Convert layer and scale layer
+                                layer_tools.convertAndModifyAsciiToTiff(
+                                    raw_prj_filename, projection_path,
+                                    scale=scale_params, multiplier=multiplier)
+
+                                # Append log
+                                if os.path.exists(wrapper.get_log_filename()):
+                                    with open(wrapper.get_log_filename()
+                                              ) as log_f:
+                                        self.log.debug('---------------------')
+                                        self.log.debug(
+                                            wrapper.get_log_filename())
+                                        self.log.debug('---------------------')
+                                        self.log.debug(log_f.read())
+                                wrapper.get_output_package(
+                                    package_path, overwrite=True)
+                                prj_metrics = wrapper.get_metrics()
+
+                        # If openModeller
+                        elif process_type in [
+                            ProcessType.OM_MODEL, ProcessType.OM_PROJECT]:
+                            mask_filename = '{}{}'.format(
+                                mask_filename_base, LMFormat.GTIFF.ext)
+                            wrapper = OpenModellerWrapper(
+                                work_dir, species_name, logger=self.log)
+                            wrapper.create_projection(
+                                ruleset_filename, prj_scenario, algorithm,
+                                mask_filename)
+
+                            # Get outputs
+                            status = wrapper.get_status()
+                            if status < JobStatus.GENERAL_ERROR:
+                                wrapper.copy_projection(
+                                    projection_path, overwrite=True)
+
+                                # Append log
+                                if os.path.exists(wrapper.get_log_filename()):
+                                    with open(wrapper.get_log_filename()
+                                              ) as log_f:
+                                        self.log.debug('---------------------')
+                                        self.log.debug(
+                                            wrapper.get_log_filename())
+                                        self.log.debug('---------------------')
+                                        self.log.debug(log_f.read())
+                                wrapper.get_output_package(
+                                    package_path, overwrite=True)
+                                prj_metrics = wrapper.get_metrics()
+
+                        # If other
+                        else:
+                            status = JobStatus.UNKNOWN_ERROR
+                            self.log.error(
+                                'Unknown process type: {} for proj {}'.format(
+                                    process_type, projection_id))
     
                 # Register model output
                 self._register_output_object(
