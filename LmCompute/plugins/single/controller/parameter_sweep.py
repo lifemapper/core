@@ -1,5 +1,6 @@
 """This module contains methods for performing a single species parameter sweep
 """
+from exceptions import ZeroDivisionError
 import json
 import os
 
@@ -403,25 +404,31 @@ class ParameterSweep(object):
                             # Get outputs
                             status = wrapper.get_status()
                             if status < JobStatus.GENERAL_ERROR:
-                                raw_prj_filename = \
-                                    wrapper.get_projection_filename()
-                                # Convert layer and scale layer
-                                layer_tools.convertAndModifyAsciiToTiff(
-                                    raw_prj_filename, projection_path,
-                                    scale=scale_params, multiplier=multiplier)
-
-                                # Append log
-                                if os.path.exists(wrapper.get_log_filename()):
-                                    with open(wrapper.get_log_filename()
-                                              ) as log_f:
-                                        self.log.debug('---------------------')
-                                        self.log.debug(
-                                            wrapper.get_log_filename())
-                                        self.log.debug('---------------------')
-                                        self.log.debug(log_f.read())
-                                wrapper.get_output_package(
-                                    package_path, overwrite=True)
-                                prj_metrics = wrapper.get_metrics()
+                                try:
+                                    raw_prj_filename = \
+                                        wrapper.get_projection_filename()
+                                    # Convert layer and scale layer
+                                    layer_tools.convertAndModifyAsciiToTiff(
+                                        raw_prj_filename, projection_path,
+                                        scale=scale_params, multiplier=multiplier)
+    
+                                    # Append log
+                                    if os.path.exists(wrapper.get_log_filename()):
+                                        with open(wrapper.get_log_filename()
+                                                  ) as log_f:
+                                            self.log.debug('---------------------')
+                                            self.log.debug(
+                                                wrapper.get_log_filename())
+                                            self.log.debug('---------------------')
+                                            self.log.debug(log_f.read())
+                                    wrapper.get_output_package(
+                                        package_path, overwrite=True)
+                                    prj_metrics = wrapper.get_metrics()
+                                except ZeroDivisionError:
+                                    self.log.error('Could not convert to Tiff')
+                                    self.log.debug(
+                                        'Divide by zero : empty projection')
+                                    status = JobStatus.BLANK_PROJECTION_ERROR
 
                         # If openModeller
                         elif process_type in [

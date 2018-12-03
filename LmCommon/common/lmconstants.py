@@ -703,7 +703,9 @@ class JobStatus:
     
     # 301000-301999  - Process (3) openModeller SDM Projection (02)   
     # ............................................
-    OM_PROJECTION_ERROR = 302150 
+    OM_PROJECTION_ERROR = 302150
+    
+    BLANK_PROJECTION_ERROR = 303100
     
     # ............................................
     @staticmethod
