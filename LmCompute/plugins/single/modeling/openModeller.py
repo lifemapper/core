@@ -208,8 +208,7 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
 
     # ...................................
     def get_log_filename(self):
-        """
-        @summary: Return the log file name
+        """Returns the log file name
         """
         return os.path.join(self.work_dir, 'om.log')
 

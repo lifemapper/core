@@ -18,6 +18,7 @@ import LmCompute.plugins.single.mask.create_mask as create_mask
 from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
 import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
+from LmServer.tools.index_pavs import pav_filename
 
 # .............................................................................
 class ParameterSweep(object):
@@ -46,6 +47,7 @@ class ParameterSweep(object):
         
         # Note: The registry is a place for registering outputs
         self.registry = {}
+        self.pavs = []
 
     # ........................................
     def _create_masks(self):
@@ -352,6 +354,14 @@ class ParameterSweep(object):
                 RegistryKey.PAV, pav_id, status, pav_filename,
                 process_type=ProcessType.INTERSECT_RASTER)
             
+            # If successful, add to index pavs list
+            if status < JobStatus.GENERAL_ERROR:
+                self.pavs.append(
+                    {
+                        RegistryKey.PAV_FILENAME : pav_filename,
+                        RegistryKey.IDENTIFIER : pav_id,
+                        RegistryKey.PROJECTION_ID : projection_id
+                    })
 
     # ........................................
     def _create_projections(self):
@@ -581,6 +591,15 @@ class ParameterSweep(object):
         return metrics
 
     # ........................................
+    def get_pav_info(self):
+        """Generates a report of successfully generated PAV objects for index
+
+        Returns:
+            * A list of dictionaries for PAVs to index
+        """
+        return self.pavs
+
+    # ........................................
     def get_snippets(self):
         """Generates a report of the snippets generated in this run
         """
@@ -631,3 +650,7 @@ class ParameterSweep(object):
         # Write stockpile information
         with open(self.sweep_config.stockpile_filename, 'w') as out_stockpile:
             json.dump(self.get_stockpile_info(), out_stockpile)
+
+        # Write PAV information
+        with open(self.sweep_config.pavs_filename, 'w') as out_pavs:
+            json.dump(self.get_pav_info(), out_pavs)

@@ -14,6 +14,7 @@ DO_TIFF = 'do_tiff'
 # Local filename constants.  The final path is accessible through an attribute.
 LOG_FILENAME = 'species.log'
 METRICS_FILENAME = 'metrics.txt'
+PAVS_FILENAME = 'pavs.json'
 SNIPPETS_FILENAME = 'snippets.xml'
 STOCKPILE_FILENAME = 'stockpile.json'
 
@@ -36,6 +37,7 @@ class ParameterSweepConfiguration(object):
         self.snippets_filename = os.path.join(self.work_dir, SNIPPETS_FILENAME)
         self.stockpile_filename = os.path.join(
             self.work_dir, STOCKPILE_FILENAME)
+        self.pavs_filename = os.path.join(self.work_dir, PAVS_FILENAME)
 
     # ........................................
     @classmethod
@@ -66,6 +68,7 @@ class ParameterSweepConfiguration(object):
             my_obj.work_dir, SNIPPETS_FILENAME)
         my_obj.stockpile_filename = os.path.join(
             my_obj.work_dir, STOCKPILE_FILENAME)
+        my_obj.pavs_filename = os.path.join(my_obj.work_dir, PAVS_FILENAME)
         return my_obj
 
     # ........................................
@@ -423,7 +426,8 @@ class ParameterSweepConfiguration(object):
         output_files = [
             self.metrics_filename,
             self.snippets_filename,
-            self.stockpile_filename]
+            self.stockpile_filename,
+            self.pavs_filename]
         
         return output_files
 

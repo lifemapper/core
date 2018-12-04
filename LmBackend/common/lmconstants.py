@@ -55,6 +55,7 @@ class RegistryKey(object):
     RULESET_PATH = 'ruleset_path'
     LOG_PATH = 'log_path'
     PROJECTION_PATH = 'projection_path'
+    PAV_FILENAME = 'pav_path'
     
     # ..................
     # Types

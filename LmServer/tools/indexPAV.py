@@ -1,4 +1,6 @@
 """This script inserts a PAV into the Solr index
+
+DEPRECATED: Replaced by index_pavs.py script
 """
 import argparse
 from mx.DateTime import DateTimeFromMJD
