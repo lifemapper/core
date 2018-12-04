@@ -158,16 +158,20 @@ if __name__ == '__main__':
         pam = scribe.getMatrix(mtxId=pav.parentId)
         sci_name = scribe.getTaxon(squid=pav.squid)
     
-        doc_pairs.append(
-            get_post_pairs(pav, prj, occ, pam, sci_name, pav_filename))
+        val_pairs = get_post_pairs(pav, prj, occ, pam, sci_name, pav_filename)
+        if len(val_pairs) > 0:
+            doc_pairs.append(val_pairs)
     
     # Get all the information for a POST
-    doc = buildSolrDocument(doc_pairs)
+    if len(doc_pairs) > 0:
+        doc = buildSolrDocument(doc_pairs)
+        
+        # Write the post document
+        with open(args.post_index_filename, 'w') as out_f:
+            out_f.write(doc)
     
-    # Write the post document
-    with open(args.post_index_filename, 'w') as out_f:
-        out_f.write(doc)
-
-    postSolrDocument(SOLR_ARCHIVE_COLLECTION, args.post_index_filename)
+        postSolrDocument(SOLR_ARCHIVE_COLLECTION, args.post_index_filename)
+    else:
+        print('No documents to post')
 
     scribe.closeConnections()
