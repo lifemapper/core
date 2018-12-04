@@ -179,14 +179,19 @@ class ParameterSweep(object):
                     if projection_id is not None:
                         # Only convert if success, else we'll register failure
                         if status < JobStatus.GENERAL_ERROR:
-                            
-                            raw_prj_filename = wrapper.get_projection_filename()
-                            # Convert layer and scale layer
-                            layer_tools.convertAndModifyAsciiToTiff(
-                                raw_prj_filename, projection_path,
-                                scale=scale_params, multiplier=multiplier)
-                            wrapper.get_output_package(
-                                package_path, overwrite=True)
+                            try:
+                                raw_prj_filename = wrapper.get_projection_filename()
+                                # Convert layer and scale layer
+                                layer_tools.convertAndModifyAsciiToTiff(
+                                    raw_prj_filename, projection_path,
+                                    scale=scale_params, multiplier=multiplier)
+                                wrapper.get_output_package(
+                                    package_path, overwrite=True)
+                            except ZeroDivisionError:
+                                self.log.error(
+                                    'Could not get projection for model')
+                                self.log.error('Projection was blank')
+                                status = JobStatus.BLANK_PROJECTION_ERROR
                         # Use same secondary outputs as model and register
                         self._register_output_object(
                             RegistryKey.PROJECTION, projection_id, status,
