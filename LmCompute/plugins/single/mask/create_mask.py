@@ -13,7 +13,7 @@ from LmCommon.common.readyfile import readyFilename
 NUM_QUAD_SEGS = 30
 
 # .............................................................................
-def create_convex_hull_region_intersect_mask(occ_shp_filename, 
+def create_convex_hull_region_intersect_mask(occ_shp_filename, mask_path,
                                             region_layer_filename, buffer_distance,
                                             nodata=DEFAULT_NODATA, 
                                             ascii_filename=None, tiff_filename=None):
@@ -74,8 +74,7 @@ def create_convex_hull_region_intersect_mask(occ_shp_filename,
     
     # Get convex hull array
     con_hull_data = create_convex_hull_array(
-                    os.path.splitext(occ_shp_filename)[0], buffered_convex_hull, 
-                    bbox, cell_size, epsg, nodata=nodata)
+        mask_path, buffered_convex_hull, bbox, cell_size, epsg, nodata=nodata)
     
     # Mask the layer to only regions that points fall within
     for i in range(data.shape[0]):
@@ -160,15 +159,16 @@ def create_convex_hull_array(base_path, convex_hull, bbox, cell_size, epsg,
     data = np.array(band.ReadAsArray())
     
     # Remove temp files
-    try:
-        os.remove(tmp_raster_filename)
-    except Exception, e:
-        print str(e)
+    #try:
+    #    os.remove(tmp_raster_filename)
+    #except Exception, e:
+    #    print str(e)
         
-    try:
-        os.remove(tmp_shp_filename)
-    except Exception, e:
-        print str(e)
+    #try:
+    #    # TODO: Remove all files if we are removing any
+    #    os.remove(tmp_shp_filename)
+    #except Exception, e:
+    #    print str(e)
     
     return data
 

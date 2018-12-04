@@ -74,8 +74,9 @@ class ParameterSweep(object):
                     if occ_status < JobStatus.GENERAL_ERROR and \
                             occ_shp_filename:
                         create_mask.create_convex_hull_region_intersect_mask(
-                            occ_shp_filename, region_layer_filename, 
-                            buffer_distance, ascii_filename=asc_filename,
+                            occ_shp_filename, out_mask_base_filename,
+                            region_layer_filename, buffer_distance,
+                            ascii_filename=asc_filename,
                             tiff_filename=tif_filename)
                 elif mask_method == MaskMethod.BLANK_MASK:
                     template_layer_filename = mask_config[5]
