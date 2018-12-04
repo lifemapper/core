@@ -425,10 +425,6 @@ class ParameterSweepConfiguration(object):
             self.snippets_filename,
             self.stockpile_filename]
         
-        # PAVs
-        for pav_config in self.pavs:
-            output_files.append(pav_config[3]) # pav_filename
-
         return output_files
 
     # ........................................
