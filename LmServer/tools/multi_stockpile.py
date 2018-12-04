@@ -52,6 +52,8 @@ def stockpile_objects(stockpile_list):
                 currargs='Failed to get object {} for process {}'.format(
                     obj_id, process_type))
         
+        log.debug('Test object: ptype {}, object id {}, status {}'.format(
+            process_type, obj_id, status))
         if status < JobStatus.GENERAL_ERROR:
             # Test outputs
             status = test_method(test_file)
