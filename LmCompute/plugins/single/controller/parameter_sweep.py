@@ -18,7 +18,6 @@ import LmCompute.plugins.single.mask.create_mask as create_mask
 from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
 import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
-from LmServer.tools.index_pavs import pav_filename
 
 # .............................................................................
 class ParameterSweep(object):
