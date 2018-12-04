@@ -352,7 +352,6 @@ class ParameterSweep(object):
             self._register_output_object(
                 RegistryKey.PAV, pav_id, status, pav_filename,
                 process_type=ProcessType.INTERSECT_RASTER)
-            
             # If successful, add to index pavs list
             if status < JobStatus.GENERAL_ERROR:
                 self.pavs.append(
@@ -361,6 +360,13 @@ class ParameterSweep(object):
                         RegistryKey.IDENTIFIER : pav_id,
                         RegistryKey.PROJECTION_ID : projection_id
                     })
+            else:
+                # Only do this on error so we catch failures that look like
+                # successes
+                # Touch file if it doesn't exist
+                if not os.path.exists(pav_filename):
+                    with open(pav_filename, 'a'):
+                        os.utime(pav_filename, None)
 
     # ........................................
     def _create_projections(self):
