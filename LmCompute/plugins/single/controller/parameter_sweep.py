@@ -330,17 +330,20 @@ class ParameterSweep(object):
             prj_filename, prj_status = self._get_registry_output(
                 RegistryKey.PROJECTION, projection_id)
             if prj_filename is not None and \
-                prj_status < JobStatus.GENERAL_ERROR:
-
-                encoder.encode_presence_absence(
-                    prj_filename, squid, min_presence, max_presence,
-                    min_coverage)
-                pav = encoder.get_encoded_matrix()
-                if pav is not None:
-                    readyFilename(pav_filename, overwrite=True)
-                    status = JobStatus.COMPUTED
-                    with open(pav_filename, 'w') as pav_out_f:
-                        pav.save(pav_out_f)
+                    prj_status < JobStatus.GENERAL_ERROR:
+                try:
+                    encoder.encode_presence_absence(
+                        prj_filename, squid, min_presence, max_presence,
+                        min_coverage)
+                    pav = encoder.get_encoded_matrix()
+                    if pav is not None:
+                        readyFilename(pav_filename, overwrite=True)
+                        status = JobStatus.COMPUTED
+                        with open(pav_filename, 'w') as pav_out_f:
+                            pav.save(pav_out_f)
+                except Exception as e:
+                    self.log.error('Failed to encode PAV: {}'.format(str(e)))
+                    status = JobStatus.ENCODING_ERROR
             else:
                 if prj_status >= JobStatus.GENERAL_ERROR:
                     status = prj_status

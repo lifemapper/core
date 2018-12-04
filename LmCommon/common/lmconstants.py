@@ -707,6 +707,8 @@ class JobStatus:
     
     BLANK_PROJECTION_ERROR = 303100
     
+    ENCODING_ERROR = 304100
+    
     # ............................................
     @staticmethod
     def waiting(stat):
