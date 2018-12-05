@@ -173,5 +173,7 @@ if __name__ == '__main__':
         postSolrDocument(SOLR_ARCHIVE_COLLECTION, args.post_index_filename)
     else:
         print('No documents to post')
+        with open(args.post_index_filename, 'a'):
+            os.utime(args.post_index_filename, None)
 
     scribe.closeConnections()
