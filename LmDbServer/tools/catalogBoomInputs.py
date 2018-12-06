@@ -1202,12 +1202,21 @@ class BOOMFiller(LMObject):
         return encoded_tree
 
     # ...............................................
-    def _getPartnerSpeciesData(self, pquery, gbifids, basefilename):
+    def _getPartnerSpeciesData(self):
+        if not os.path.exists(self.taxon_id_filename):
+            raise LMError('TaxonID file {} does not exist'.format(self.taxon_id_filename))
+        basefilename, ext = os.path.splitext(self.taxon_id_filename)
+        pquery = PartnerQuery(self.scribe.log)
+        gbifids = self._getUserInput(self.taxon_id_filename)
         species_filename = basefilename + '.csv'
         meta_filename  = basefilename + '.json'
         summary = pquery.assembleIdigbioData(gbifids, species_filename, 
                                              meta_filename)
+        # Return to user at some checkpoint, match with user names 
+        # If user originally sent taxon names for resolution, return names
+        # with the unmatched taxonids
         idig_unmatched_gbif_ids = summary['unmatched_gbif_ids']
+        
         return species_filename, meta_filename
 
     # ...............................................
@@ -1220,8 +1229,7 @@ class BOOMFiller(LMObject):
     # ...............................................
     def _getUserInput(self, filename):
         items = []
-        basefilename, ext = os.path.splitext(filename)
-        if os.path.exists(self.taxon_name_filename):
+        if os.path.exists(filename):
             try:
                 for line in open(filename):
                     items.append(line.strip())
@@ -1230,38 +1238,6 @@ class BOOMFiller(LMObject):
         else:
             raise LMError('File {} does not exist'.format(filename))
         return items
-        
-    # ...............................................
-    def queryPartners(self):
-        gbifids = []
-        pquery = PartnerQuery(self.scribe.log)
-        # Get matching taxonIds for names
-        if self.dataSource == SpeciesDatasource.TAXON_NAMES:
-            orig_filename = self.taxon_name_filename
-            # Read provided names
-            names = self._getUserInput(self.taxon_name_filename)
-            # TODO: decide
-            # Could take top matches without user feedback (current)
-            # Could return unmatched names to user
-            # Could return full matched results to user
-            unmatched_names, name_to_gbif_ids, gbif_results_filename = \
-                self._getPartnerIds(pquery, names, orig_filename)
-            for gid, canonical in name_to_gbif_ids.values():
-                gbifids.append(gid)
-            if not gbifids:
-                raise LMError('Failed to match any names')
-            
-        if not gbifids:
-            orig_filename = self.taxon_id_filename
-            # Read provided taxonIds
-            gbifids = self._getUserInput(self.taxon_id_filename)
-                
-        # Get species occurrence data
-        species_filename, meta_filename = self._getPartnerSpeciesData(pquery, 
-                                                        gbifids, orig_filename)
-        encoded_tree = self._getPartnerTreeData(pquery, gbifids, orig_filename)
-        
-        return species_filename, meta_filename, encoded_tree
 
     # ...............................................
     def initBoom(self, initMakeflow=False):
@@ -1274,9 +1250,10 @@ class BOOMFiller(LMObject):
             if self.occIdFname:
                 self._checkOccurrenceSets()
             # Check for a file of species names or GBIF taxonIDs
-            elif self.dataSource in (SpeciesDatasource.TAXON_NAMES,
-                                     SpeciesDatasource.TAXON_IDS):
-                self.userOccFname, meta_filename, encoded_tree = self.queryPartners()
+            elif self.dataSource == SpeciesDatasource.TAXON_IDS:
+                # Get species occurrence data
+                self.userOccFname, meta_filename = self._getPartnerSpeciesData()
+                # Reset datasource for USER formatted occ data 
                 self.dataSource = SpeciesDatasource.USER
                 
             # Add or get ShapeGrid, Global PAM, Gridset for this archive
