@@ -52,9 +52,9 @@ def _get_presence_absence_method(min_presence, max_presence, min_coverage,
     # ...............................
     def get_presence_absence(window):
         min_num = max(min_coverage * window.size, 1)
-        valid_cells = np.logical_and(window >= min_presence, 
-                                     window <= max_presence,
-                                     window != nodata)
+        valid_cells = np.logical_and(
+            np.logical_and(window >= min_presence, window <= max_presence),
+            window != nodata)
         return np.sum(valid_cells) >= min_num
     return get_presence_absence
 
