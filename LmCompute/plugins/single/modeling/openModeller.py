@@ -217,7 +217,7 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         """Gets the projection filename
         """
         return os.path.join(
-            self.work_dir, 'projction{}'.format(LMFormat.GTIFF.ext))
+            self.work_dir, 'projection{}'.format(LMFormat.GTIFF.ext))
     
     # ...................................
     def get_ruleset_filename(self):
