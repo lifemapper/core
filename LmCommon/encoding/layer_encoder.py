@@ -42,11 +42,13 @@ def _get_presence_absence_method(min_presence, max_presence, min_coverage,
         min_presence: Data cells must have a value greater than or equal to
             this to be considered present
         max_presence: Data cells must have a value less than or equal to this
-            to be consiered present
-        min_coverage: At least the percentage of the window must be calssified
+            to be considered present
+        min_coverage: At least the percentage of the window must be classified
             as present to consider the window present
         nodata: This values should be considered nodata
     """
+    if min_coverage > 1.0:
+        min_coverage = min_coverage / 100.0
     # ...............................
     def get_presence_absence(window):
         min_num = max(min_coverage * window.size, 1)
@@ -81,6 +83,8 @@ def _get_largest_class_method(min_coverage, nodata):
             covered by the largest class.
         nodata: This value is assumed to be nodata in the array
     """
+    if min_coverage > 1.0:
+        min_coverage = min_coverage / 100.0
     # ...............................
     def get_largest_class(window):
         min_num = min_coverage * window.size
@@ -145,6 +149,9 @@ def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
         i += 1
         # Note: 'i' is the number of values, we'll use that later
     
+    if min_coverage > 1.0:
+        min_coverage = min_coverage / 100.0
+
     # ...............................
     def encode_method(window):
         min_vals = int(min_coverage * window.size)
@@ -163,6 +170,7 @@ def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
                 counts[val_map[v]['index']] = num
                 ret[val_map[v]['index']] = val_map[v]['val']
         return ret
+
     # ...............................
     def encode_method_1_8(window):
         """Encode method for Numpy 1.8
