@@ -107,7 +107,9 @@ class MFChain(ProcessObject):
                   Makeflow process
         @note: If the object does not have an ID, this returns None
         @note: This is to organize a sub-workspace within the Makeflow workspace 
-               for files used by a single workflow 
+               for files used by a single workflow
+        @note: MattDaemon will delete this workspace directory when the
+            Makeflow completes.
         """
         basename = None
         self.setDLocation()
