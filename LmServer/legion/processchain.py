@@ -224,8 +224,10 @@ class MFChain(ProcessObject):
         job = "# {comment}\n{outputs}: {dependencies}\n\t{cmd}\n".format(
            outputs=' '.join(outputs), 
            cmd=cmd, comment=comment, 
-           dependencies=' '.join(
-               [d for d in dependencies is not os.path.isabs(d)]))
+           dependencies=' '.join(dependencies))
+
+#            dependencies=' '.join(
+#                [d for d in dependencies is not os.path.isabs(d)]))
         # NOTE: Uncomment this if removing absolute paths causes problems
         #job = "# {comment}\n{outputs}: {dependencies}\n\t{cmd}\n".format(
         #   outputs=' '.join(outputs), 
