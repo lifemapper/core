@@ -9,6 +9,7 @@ from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 ACCEPTED_NAME_KEY = 'accepted_name'
+SEARCH_NAME_KEY = 'search_name'
 SPECIES_KEY_KEY = 'speciesKey'
 SPECIES_NAME_KEY = 'species'
 TAXON_ID_KEY = 'taxon_id'
@@ -28,7 +29,7 @@ class GBIFNamesService(LmService):
             raise cherrypy.HTTPError(
                 HTTPStatus.BAD_REQUEST, 'Names must be provided as a JSON list')
         else:
-            ret = {}
+            ret = []
             for name in names_obj:
                 try:
                     gbif_resp = GbifAPI.getAcceptedNames(name)[0]
@@ -40,8 +41,9 @@ class GBIFNamesService(LmService):
                     self.log.error(
                         'Could not get accepted name from GBIF for name {}: {}'
                         .format(name, str(e)))
-                    ret[name] = {
+                    ret.append({
+                        SEARCH_NAME_KEY : name,
                         ACCEPTED_NAME_KEY : None,
                         TAXON_ID_KEY : None
-                    }
+                    })
             return ret
