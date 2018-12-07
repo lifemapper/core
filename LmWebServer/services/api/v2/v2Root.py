@@ -12,6 +12,7 @@ from LmWebServer.services.api.v2.gridset import GridSetService
 from LmWebServer.services.api.v2.layer import LayerService
 from LmWebServer.services.api.v2.occurrence import OccurrenceLayerService
 from LmWebServer.services.api.v2.ogc import MapService
+from LmWebServer.services.api.v2.open_tree import OpenTreeService
 from LmWebServer.services.api.v2.scenario import ScenarioService
 from LmWebServer.services.api.v2.scenPackage import ScenarioPackageService
 from LmWebServer.services.api.v2.sdmProject import SdmProjectService
@@ -34,6 +35,7 @@ class ApiRootV2(object):
     hint = SpeciesHintService()
     layer = LayerService()
     occurrence = OccurrenceLayerService()
+    opentree = OpenTreeService()
     scenario = ScenarioService()
     scenpackage = ScenarioPackageService()
     sdmproject = SdmProjectService()
