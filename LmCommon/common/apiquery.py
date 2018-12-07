@@ -24,16 +24,19 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import collections
+import idigbio
 import json
+import os
 import requests
-from types import (BooleanType, DictionaryType, TupleType)
+from types import (BooleanType, DictionaryType, TupleType, FloatType, IntType, 
+                   StringType, UnicodeType, ListType)
 import urllib
 
 from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
                                          IDIGBIO, IDIGBIO_QUERY, 
                                          URL_ESCAPES, HTTPStatus, DWCNames)
-from LmCommon.common.lmXml import *
+from LmCommon.common.lmXml import fromstring, deserialize
+from LmCommon.common.occparse import OccDataParser
 
 # .............................................................................
 class APIQuery(object):
@@ -722,6 +725,164 @@ class IdigbioAPI(APIQuery):
                         newitem[idxFld] = idxVal
                 specimenList.append(newitem)
         return specimenList
+    
+    # .............................................................................
+    def _writeIdigbioMetadata(self, origFldnames, metaFname):
+        newMeta = {}
+        for colIdx in range(len(origFldnames)):
+            fldname = origFldnames[colIdx]
+            
+            valdict = {'name': fldname , 
+                       'type': 'str'}
+            if fldname == 'uuid':
+                valdict['role'] = OccDataParser.FIELD_ROLE_IDENTIFIER
+            elif fldname == 'taxonid':
+                valdict['role'] = OccDataParser.FIELD_ROLE_GROUPBY
+            elif fldname == 'geopoint':
+                valdict['role'] = OccDataParser.FIELD_ROLE_GEOPOINT
+            elif fldname == 'canonicalname':            
+                valdict['role'] = OccDataParser.FIELD_ROLE_TAXANAME
+            elif fldname == 'dec_long':            
+                valdict['role'] = OccDataParser.FIELD_ROLE_LONGITUDE
+            elif fldname == 'dec_lat':            
+                valdict['role'] = OccDataParser.FIELD_ROLE_LATITUDE
+            newMeta[str(colIdx)] = valdict
+            
+        with open(metaFname, 'w') as outf:
+            json.dump(newMeta, outf)
+        return newMeta
+   
+    # .............................................................................
+    def _getIdigbioFields(self, gbifTaxonId):
+        """
+        @param gbifTaxonIds: one GBIF TaxonId or a list
+        """
+        fldnames = None
+        api = idigbio.json()
+        recordQuery = {'taxonid':str(gbifTaxonId), 
+                       'geopoint': {'type': 'exists'}}
+        try:
+            output = api.search_records(rq=recordQuery, limit=1, offset=0)
+        except:
+            print 'Failed on {}'.format(gbifTaxonId)
+        else:
+            items = output['items']
+            print('  Retrieved 1 record for metadata')
+            if len(items) == 1:
+                itm = items[0]
+                fldnames = itm['indexTerms'].keys()
+                # add dec_long and dec_lat to records
+                fldnames.extend(['dec_lat', 'dec_long'])
+                fldnames.sort()
+        return fldnames
+   
+    # .............................................................................
+    def _getIdigbioRecords(self, gbifTaxonId, fields, writer):
+        """
+        @param gbifTaxonIds: one GBIF TaxonId or a list
+        """
+        api = idigbio.json()
+        limit = 100
+        offset = 0
+        currcount = 0
+        total = 0
+        recordQuery = {'taxonid':str(gbifTaxonId), 
+                       'geopoint': {'type': 'exists'}}
+        while offset <= total:
+            try:
+                output = api.search_records(rq=recordQuery,
+                                            limit=limit, offset=offset)
+            except:
+                print 'Failed on {}'.format(gbifTaxonId)
+            else:
+                total = output['itemCount']
+                items = output['items']
+                currcount += len(items)
+                print("  Retrieved {} records, {} records starting at {}"
+                      .format(len(items), limit, offset))
+                for itm in items:
+                    itmdata = itm['indexTerms']
+                    vals = []
+                    for fldname in fields:
+                        # Pull long, lat from geopoint
+                        if fldname == 'dec_long':
+                            try:
+                                vals.append(itmdata['geopoint']['lon'])
+                            except:
+                                vals.append('')
+                        elif fldname == 'dec_lat':
+                            try:
+                                vals.append(itmdata['geopoint']['lat'])
+                            except:
+                                vals.append('')
+                        # or just append verbatim
+                        else:
+                            try:
+                                vals.append(itmdata[fldname])
+                            except:
+                                vals.append('')
+                    
+                    writer.writerow(vals)
+                offset += limit
+        print('Retrieved {} of {} reported records for {}'.format(currcount, total, gbifTaxonId))
+        return currcount
+
+    
+    # .............................................................................
+    def assembleIdigbioData(self, gbifTaxonIds, ptFname, metaFname): 
+        unmatched_gbif_ids = []     
+        if not(isinstance(gbifTaxonIds, list)):
+            gbifTaxonIds = [gbifTaxonIds]
+            
+        for fname in (ptFname, metaFname):
+            if os.path.exists(fname):
+                print('Deleting existing file {} ...'.format(fname))
+                os.remove(fname)
+            
+        summary = {'unmatched_gbif_ids': []}
+        writer, f = self._getCSVWriter(ptFname, doAppend=False)
+         
+        # Keep trying in case no records are available
+        tryidx = 0
+        origFldnames = self._getIdigbioFields(gbifTaxonIds[tryidx])
+        while not origFldnames and tryidx < len(gbifTaxonIds):
+            tryidx += 1
+            origFldnames = self._getIdigbioFields(gbifTaxonIds[tryidx])
+        if not origFldnames:
+            raise Exception('Unable to pull data from iDigBio')
+         
+        # write header, but also put column indices in metadata
+        writer.writerow(origFldnames)
+        meta = self._writeIdigbioMetadata(origFldnames, metaFname)
+         
+        # get/write data
+        for gid in gbifTaxonIds:
+            ptCount = self._getIdigbioRecords(gid, origFldnames, writer)
+            if ptCount > 0:
+                summary[gid] = ptCount
+            else:
+                unmatched_gbif_ids.append(gid)
+        return summary
+    
+    # .............................................................................
+    def readIdigbioData(self, ptFname, metaFname):
+        gbifid_counts = {}
+        if not(os.path.exists(ptFname)):
+            print ('Point data {} does not exist'.format(ptFname))
+        elif not(os.path.exists(metaFname)):
+            print ('Metadata {} does not exist'.format(metaFname))
+        else:
+            occParser = OccDataParser(self.log, ptFname, metaFname, 
+                                      delimiter=self.delimiter,
+                                      pullChunks=True)
+            occParser.initializeMe()  
+            # returns dict with key = taxonid, val = (name, count)
+            summary = occParser.readAllChunks()
+            for taxid, (name, count) in summary.iteritems():
+                gbifid_counts[taxid] = count
+        return gbifid_counts
+
+
 
 # .............................................................................
 def testBison():
