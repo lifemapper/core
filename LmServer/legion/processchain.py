@@ -223,16 +223,8 @@ class MFChain(ProcessObject):
         """
         job = "# {comment}\n{outputs}: {dependencies}\n\t{cmd}\n".format(
            outputs=' '.join(outputs), 
-           cmd=cmd, comment=comment, 
+           cmd=cmd, comment=comment,
            dependencies=' '.join(dependencies))
-
-#            dependencies=' '.join(
-#                [d for d in dependencies is not os.path.isabs(d)]))
-        # NOTE: Uncomment this if removing absolute paths causes problems
-        #job = "# {comment}\n{outputs}: {dependencies}\n\t{cmd}\n".format(
-        #   outputs=' '.join(outputs), 
-        #   cmd=cmd, comment=comment, 
-        #   dependencies=' '.join(dependencies))
         self.jobs.append(job)
         # Add the new targets to self.targets
         # NOTE: Uncomment this version if removing absolute paths causes problems
