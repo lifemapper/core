@@ -28,8 +28,10 @@ import idigbio
 import json
 import os
 import requests
+import sys
 from types import (BooleanType, DictionaryType, TupleType, FloatType, IntType, 
                    StringType, UnicodeType, ListType)
+import unicodecsv
 import urllib
 
 from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
@@ -58,6 +60,9 @@ class APIQuery(object):
         self.filterString = self._assembleFilterString(filterString=filterString)
         self.output = None
         self.debug = False
+        unicodecsv.field_size_limit(sys.maxsize)
+        self.encoding = 'utf-8'
+        self.delimiter = '\t'
       
 # ...............................................
     @classmethod
@@ -75,6 +80,27 @@ class APIQuery(object):
         else:
             return self.baseurl
       
+    # ...............................................
+    def _getCSVWriter(self, datafile, doAppend=True):
+        '''
+        @summary: Get a CSV writer that can handle encoding
+        '''
+        unicodecsv.field_size_limit(sys.maxsize)
+        if doAppend:
+            mode = 'ab'
+        else:
+            mode = 'wb'
+           
+        try:
+            f = open(datafile, mode) 
+            writer = unicodecsv.writer(f, delimiter=self.delimiter, 
+                                      encoding=self.encoding)
+        
+        except Exception, e:
+            raise Exception('Failed to read or open {}, ({})'
+                            .format(datafile, str(e)))
+        return writer, f
+          
     # ...............................................
     def addFilters(self, qFilters={}, otherFilters={}):
         """
@@ -829,39 +855,52 @@ class IdigbioAPI(APIQuery):
 
     
     # .............................................................................
-    def assembleIdigbioData(self, gbifTaxonIds, ptFname, metaFname): 
+    def assembleIdigbioData(self, taxon_ids, point_output_file, meta_output_file, 
+                            missing_id_file=None): 
         unmatched_gbif_ids = []     
-        if not(isinstance(gbifTaxonIds, list)):
-            gbifTaxonIds = [gbifTaxonIds]
+        if not(isinstance(taxon_ids, list)):
+            taxon_ids = [taxon_ids]
             
-        for fname in (ptFname, metaFname):
+        for fname in (point_output_file, meta_output_file):
             if os.path.exists(fname):
                 print('Deleting existing file {} ...'.format(fname))
                 os.remove(fname)
             
         summary = {'unmatched_gbif_ids': []}
-        writer, f = self._getCSVWriter(ptFname, doAppend=False)
+        writer, f = self._getCSVWriter(point_output_file, doAppend=False)
          
         # Keep trying in case no records are available
         tryidx = 0
-        origFldnames = self._getIdigbioFields(gbifTaxonIds[tryidx])
-        while not origFldnames and tryidx < len(gbifTaxonIds):
+        origFldnames = self._getIdigbioFields(taxon_ids[tryidx])
+        while not origFldnames and tryidx < len(taxon_ids):
             tryidx += 1
-            origFldnames = self._getIdigbioFields(gbifTaxonIds[tryidx])
+            origFldnames = self._getIdigbioFields(taxon_ids[tryidx])
         if not origFldnames:
             raise Exception('Unable to pull data from iDigBio')
          
         # write header, but also put column indices in metadata
         writer.writerow(origFldnames)
-        meta = self._writeIdigbioMetadata(origFldnames, metaFname)
+        meta = self._writeIdigbioMetadata(origFldnames, meta_output_file)
          
         # get/write data
-        for gid in gbifTaxonIds:
+        for gid in taxon_ids:
             ptCount = self._getIdigbioRecords(gid, origFldnames, writer)
             if ptCount > 0:
                 summary[gid] = ptCount
             else:
                 unmatched_gbif_ids.append(gid)
+                
+        # get/write missing data
+        if missing_id_file is not None and len(summary['unmatched_gbif_ids']) > 0:
+            try: 
+                f = open(missing_id_file, 'w')
+                for gid in summary['unmatched_gbif_ids']:
+                    f.write(gid + '\n')
+            except Exception, e:
+                raise
+            finally:
+                f.close()
+
         return summary
     
     # .............................................................................

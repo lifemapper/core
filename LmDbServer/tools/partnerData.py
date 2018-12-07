@@ -523,6 +523,9 @@ from LmServer.base.taxon import ScientificName
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ScriptLogger
 from LmServer.legion.tree import Tree
+from LmCommon.common.apiquery import IdigbioAPI
+
+
 
 DEV_SERVER = 'http://141.211.236.35:10999'
 INDUCED_SUBTREE_BASE_URL = '{}/induced_subtree'.format(DEV_SERVER)
@@ -533,9 +536,10 @@ logger = ScriptLogger('partnerData.test')
 delimiter = '\t'
 
 dataname = '/tmp/testIdigbioData'
-gbifidFname = dataname + '.gids'
-ptFname = dataname + '.csv'
-metaFname = dataname + '.json'
+taxon_id_file = dataname + '.gids'
+point_output_file = dataname + '.csv'
+meta_output_file = dataname + '.json'
+
 names = ['Methanococcoides burtonii', 'Methanogenium frigidum', 
          'Hexarthra fennica', 'Hexarthra longicornicula', 
          'Hexarthra intermedia', 'Hexarthra mira', 'Horaella thomassoni', 
@@ -549,18 +553,22 @@ iquery = PartnerQuery(logger=logger)
 
 # ............................
 # Get GBIF ACCEPTED TaxonIDs and canonical name for user-provided names
-if os.path.exists(gbifidFname):
-    name_to_gbif_ids = iquery.readGBIFTaxonIds(gbifidFname)
-else:
-    unmatched_names, name_to_gbif_ids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
-user_gbif_ids = [match[0] for match in name_to_gbif_ids.values()]
+# if os.path.exists(gbifidFname):
+#     name_to_gbif_ids = iquery.readGBIFTaxonIds(gbifidFname)
+# else:
+name_to_gbif_ids = iquery.assembleGBIFTaxonIds(names, taxon_id_file) 
+taxon_ids = [match[0] for match in name_to_gbif_ids.values()]
+
 # ............................
 # Get iDigBio point data for TaxonIDs
-if os.path.exists(ptFname) and os.path.exists(metaFname):
-    # Reads keys as integers
-    gbifid_counts = iquery.readIdigbioData(ptFname, metaFname)
-else:
-    gbifid_counts, idig_unmatched_gbif_ids = iquery.assembleIdigbioData(user_gbif_ids, ptFname, metaFname)   
+# if os.path.exists(ptFname) and os.path.exists(metaFname):
+#     # Reads keys as integers
+#     gbifid_counts = iquery.readIdigbioData(point_output_file, meta_output_file)
+# else:
+idigAPI = IdigbioAPI()
+summary = idigAPI.assembleIdigbioData(taxon_ids, point_output_file, meta_output_file, missing_id_file=None)                                          
+print('Missing: {}'.format(summary['unmatched_gbif_ids'])
+gbifid_counts, idig_unmatched_gbif_ids = iquery.assembleIdigbioData(user_gbif_ids, point_output_file, meta_output_file)   
                  
 idig_gbif_ids = gbifid_counts.keys()
 

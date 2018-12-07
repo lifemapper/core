@@ -25,30 +25,33 @@
              02110-1301, USA.
 """
 import argparse
+import os
 
 from LmCommon.common.apiquery import IdigbioAPI
+
+# ...............................................
+def _getUserInput(self, filename):
+    items = []
+    if os.path.exists(filename):
+        try:
+            for line in open(filename):
+                items.append(line.strip())
+        except:
+            raise Exception('Failed to read file {}'.format(filename))
+    else:
+        raise Exception('File {} does not exist'.format(filename))
+    return items
 
 # ...............................................
 def getPartnerSpeciesData(self, taxon_id_file, 
                           point_output_file, meta_output_file,
                           missing_id_file=None):
+    taxon_ids = _getUserInput(taxon_id_file)
     idigAPI = IdigbioAPI()
-    # Writes point and metadata to point_output_file, and meta_output_file
-    summary = idigAPI.assembleIdigbioData(taxon_id_file, point_output_file, 
-                                          meta_output_file, missing_id_file)
-    # Return to user at some checkpoint, match with user names 
-    # If user originally sent taxon names for resolution, return names
-    # with the unmatched taxonids
-    idig_unmatched_gbif_ids = summary['unmatched_gbif_ids']
-    if missing_id_file is not None and len(idig_unmatched_gbif_ids) > 0:
-        try: 
-            f = open(missing_id_file, 'w')
-            for gid in idig_unmatched_gbif_ids:
-                f.write(gid + '\n')
-        except Exception, e:
-            raise
-        finally:
-            f.close()
+    # Writes points, metadata, unmatched ids to respective files
+    summary = idigAPI.assembleIdigbioData(taxon_ids, point_output_file, 
+                                          meta_output_file, 
+                                          missing_id_file=missing_id_file)
                 
             
 
