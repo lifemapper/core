@@ -89,14 +89,14 @@ class TreeService(LmService):
                 HTTPStatus.BAD_REQUEST, 'Must provide name for tree')
         tree = dendropy.Tree.get(file=cherrypy.request.body, schema=treeSchema)
         
-        newTree = Tree(name, userId=self.getUserId())
-        updatedTree = self.scribe.findOrInsertTree(newTree)
-        updatedTree.setTree(tree)
-        updatedTree.writeTree()
-        updatedTree.modTime = mx.DateTime.gmt().mjd
-        self.scribe.updateObject(updatedTree)
+        new_tree = Tree(name, userId=self.getUserId())
+        updated_tree = self.scribe.findOrInsertTree(new_tree)
+        updated_tree.setTree(tree)
+        updated_tree.writeTree()
+        updated_tree.modTime = mx.DateTime.gmt().mjd
+        self.scribe.updateObject(updated_tree)
         
-        return updatedTree
+        return updated_tree
     
     # ................................
     def _count_trees(self, userId, afterTime=None, beforeTime=None,
