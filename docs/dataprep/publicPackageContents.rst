@@ -43,6 +43,14 @@ Data available on yeti (data packages are .tar.gz files)
   * heuchera.nex
   * global_hypotheses-2.0.tar.gz
   
+#. heuchera_boom_global_10min_ppf 
+   (same as above but scenpkg = 10min-past-present-future, 2 algorithms
+  * heuchera_boom_global_10min_ppf.contents 
+  * heuchera_boom_global_10min_ppf.params 
+  * heuchera.tar.gz
+  * heuchera.nex
+  * global_hypotheses-2.0.tar.gz
+  
 #. heuchera_boom_na_10min
   * heuchera_boom_na_10min.contents 
   * heuchera_boom_na_10min.params (scenpkg = obs12_na_10min)
