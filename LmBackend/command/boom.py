@@ -55,3 +55,6 @@ class BoomerCommand(_LmCommand):
         """
         return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.optArgs)
 
+
+    
+    

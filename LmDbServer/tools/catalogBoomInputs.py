@@ -29,6 +29,7 @@ import stat
 import types
 
 from LmBackend.command.boom import BoomerCommand
+from LmBackend.command.common import IdigbioQueryCommand
 from LmBackend.command.server import (CatalogTaxonomyCommand, EncodeTreeCommand,
                                       EncodeBioGeoHypothesesCommand)
 from LmBackend.common.lmobj import LMError, LMObject
@@ -45,8 +46,6 @@ from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 from LmDbServer.tools.catalogScenPkg import SPFiller
-from LmDbServer.tools.partnerData import PartnerQuery
-
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
                            GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
@@ -1048,7 +1047,24 @@ class BOOMFiller(LMObject):
                                  .format(grimChain.objId, code))
                  
         return grimChains
-   
+
+    # .............................
+    def _getIdigQueryCmd(self, gridsetId, ws_dir):
+        idigCmd = None
+        if self.dataSource == SpeciesDatasource.TAXON_IDS:
+            if not os.path.exists(self.taxon_id_filename):
+                raise LMError('Taxon ID file {} is missing'.format(self.taxon_id_filename))
+        
+            currtime = mx.DateTime.gmt().mjd
+            # Workspace directory
+            basename, _ = os.path.splitext(os.path.basename(self.taxon_id_filename))
+            point_output_file = os.path.join(ws_dir, basename + LMFormat.CSV.ext)
+            meta_output_file = os.path.join(ws_dir, basename + LMFormat.JSON.ext)
+            idigCmd = IdigbioQueryCommand(self.taxon_id_filename, point_output_file, 
+                                          meta_output_file, missing_id_file=None)
+                          
+        return idigCmd
+
     # ...............................................
     def _getTaxonomyCommand(self):
         """
@@ -1058,14 +1074,6 @@ class BOOMFiller(LMObject):
         """
         cattaxCmd = taxSuccessFname = taxDataFname = None
         config = Config(siteFn=self.inParamFname)
-        #       # look for User data in user space or GBIF data in species dir
-        #       taxDataBasename = self._getBoomOrDefault(config, 
-        #                            'USER_TAXONOMY_FILENAME', None)
-        #       if taxDataBasename is not None:
-        #          taxDataFname = os.path.join(self.userIdPath, taxDataBasename)
-        #          taxSourceName = self.userId
-        #          taxSourceUrl = None
-        #       elif self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
         if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
             taxDataBasename = self._getBoomOrDefault(config, 
                                  'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
@@ -1105,23 +1113,6 @@ class BOOMFiller(LMObject):
         except:
             self.scribe.log.info('  Wrote Makeflow {}'.format(mfchain.objId))
         return mfchain
-                
-    # ...............................................
-    def addTaxonomyMF(self, boomGridsetId):
-        """
-        @summary: Create a Makeflow to initiate taxonomy ingestion.
-        """
-        meta = {MFChain.META_CREATED_BY: self.name,
-                MFChain.META_GRIDSET: boomGridsetId,
-                MFChain.META_DESCRIPTION: 'Taxonomy ingest for User {}, Archive {}'
-        .format(self.userId, self.archiveName)}
-        newMFC = MFChain(self.userId, priority=self.priority, 
-                         metadata=meta, status=JobStatus.GENERAL, 
-                         statusModTime=mx.DateTime.gmt().mjd)
-        mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
-        cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
-        mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
-        mfChain = self._write_update_MF(mfChain)
 
     # ...............................................
     def addBoomMF(self, boomGridsetId, tree):
@@ -1145,6 +1136,15 @@ class BOOMFiller(LMObject):
         boomSuccessFname = os.path.join(ws_dir, baseAbsFilename + '.success')
         boomCmd = BoomerCommand(self.outConfigFilename, boomSuccessFname)
                   
+        # Add iDigBio MF and dependency to Boom, if specified as occurrence input
+        idigCmd = self._getIdigQueryCmd(boomGridsetId, ws_dir)
+        if idigCmd is not None:
+            # Add command to this Makeflow
+            # TODO: allow non-local
+            mfChain.addCommands([idigCmd.getMakeflowRule(local=True)])
+            # Boom requires iDigBio data
+            boomCmd.inputs.extend(idigCmd.outputs)
+            
         # Add taxonomy before Boom, if taxonomy is specified
         cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
         if cattaxCmd:
@@ -1202,24 +1202,6 @@ class BOOMFiller(LMObject):
         return encoded_tree
 
     # ...............................................
-    def _getPartnerSpeciesData(self):
-        if not os.path.exists(self.taxon_id_filename):
-            raise LMError('TaxonID file {} does not exist'.format(self.taxon_id_filename))
-        basefilename, ext = os.path.splitext(self.taxon_id_filename)
-        pquery = PartnerQuery(self.scribe.log)
-        gbifids = self._getUserInput(self.taxon_id_filename)
-        species_filename = basefilename + '.csv'
-        meta_filename  = basefilename + '.json'
-        summary = pquery.assembleIdigbioData(gbifids, species_filename, 
-                                             meta_filename)
-        # Return to user at some checkpoint, match with user names 
-        # If user originally sent taxon names for resolution, return names
-        # with the unmatched taxonids
-        idig_unmatched_gbif_ids = summary['unmatched_gbif_ids']
-        
-        return species_filename, meta_filename
-
-    # ...............................................
     def _getPartnerIds(self, pquery, names, basefilename):
         gbif_results_filename = basefilename + '.gids'
         unmatched_names, name_to_gbif_ids = pquery.assembleGBIFTaxonIds(names, 
@@ -1246,15 +1228,6 @@ class BOOMFiller(LMObject):
             self.initializeInputs()
             
             encoded_tree = None
-            # Check for a file OccurrenceLayer Ids for existing or PUBLIC user
-            if self.occIdFname:
-                self._checkOccurrenceSets()
-            # Check for a file of species names or GBIF taxonIDs
-            elif self.dataSource == SpeciesDatasource.TAXON_IDS:
-                # Get species occurrence data
-                self.userOccFname, meta_filename = self._getPartnerSpeciesData()
-                # Reset datasource for USER formatted occ data 
-                self.dataSource = SpeciesDatasource.USER
                 
             # Add or get ShapeGrid, Global PAM, Gridset for this archive
             # This updates the gridset, shapegrid, default PAMs (rolling, with no 
@@ -1263,6 +1236,18 @@ class BOOMFiller(LMObject):
             # Add GRIM compute Makeflows, independent of Boom completion
             grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
             
+            # Check for a file OccurrenceLayer Ids for existing or PUBLIC user
+            if self.occIdFname:
+                self._checkOccurrenceSets()
+#             # Check for a file of GBIF taxonIDs
+#             elif self.dataSource == SpeciesDatasource.TAXON_IDS:
+#                 # Create makeflow for occurrence data retrieval then reset datasource 
+#                 iqMF = self.addIdigQueryMF(boomGridset.getId())
+#                 boomCmd.inputs.append(point_output_file, meta_output_file)
+# 
+#                 self.dataSource = SpeciesDatasource.USER
+# #                 self.userOccFname, meta_filename = self._getPartnerSpeciesData()
+
             # Fix user makeflow and layer directory permissions
             self._fixDirectoryPermissions(boomGridset)
                         
