@@ -285,19 +285,19 @@ class ParameterSweep(object):
             occ_metrics = None
             occ_snippets = None
 
-            if process_type == ProcessType.BISON_TAXA_OCCURRENCE:
-                status = csv_occ.createBisonShapefile(
-                    url_fn_or_key, out_file, big_out_file, max_points,
-                    log=self.log)
-            elif process_type == ProcessType.GBIF_TAXA_OCCURRENCE:
-                status = csv_occ.createGBIFShapefile(
-                    url_fn_or_key, out_file, big_out_file, max_points,
-                    log=self.log)
-            elif process_type == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
-                status = csv_occ.createIdigBioShapefile(
-                    url_fn_or_key, out_file, big_out_file, max_points,
-                    log=self.log)
-            elif process_type == ProcessType.USER_TAXA_OCCURRENCE:
+            #if process_type == ProcessType.BISON_TAXA_OCCURRENCE:
+            #    status = csv_occ.createBisonShapefile(
+            #        url_fn_or_key, out_file, big_out_file, max_points,
+            #        log=self.log)
+            #elif process_type == ProcessType.GBIF_TAXA_OCCURRENCE:
+            #    status = csv_occ.createGBIFShapefile(
+            #        url_fn_or_key, out_file, big_out_file, max_points,
+            #        log=self.log)
+            #elif process_type == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
+            #    status = csv_occ.createIdigBioShapefile(
+            #        url_fn_or_key, out_file, big_out_file, max_points,
+            #        log=self.log)
+            if process_type == ProcessType.USER_TAXA_OCCURRENCE:
                 status = csv_occ.createUserShapefile(
                     url_fn_or_key, metadata, out_file, big_out_file,
                     max_points, log=self.log)
