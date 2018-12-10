@@ -627,26 +627,12 @@ class Priority:
     REQUESTED = 5
 
 # ............................................................................
-class JobFamily:
-# ............................................................................
-    SDM = 1
-    RAD = 2
-
-# ............................................................................
 # Change to enum.Enum with Python 3.4
 # Corresponds to LmCommon individual constants MODELS_SERVICE, LAYERS_SERVICE, etc
 class LMServiceType:
-    BUCKETS = 'buckets' # TODO: Remove, obsolete 
     TREES = 'tree'
-    EXPERIMENTS = 'experiments' # TODO: Remove, obsolete
     GRIDSETS = 'gridset'
-    SDM_EXPERIMENTS = 'experiments' # TODO: Remove, obsolete
-    LAYERTYPES = 'typecodes' # TODO: Remove, obsolete
-    MODELS = 'models' # TODO: Remove, obsolete
     OCCURRENCES = 'occurrence'
-    PAMSUMS = 'pamsums' # TODO: Remove, obsolete?
-    ANCILLARY_LAYERS = 'anclayers' # TODO: Remove, obsolete?
-    PRESENCEABSENCE_LAYERS = 'palayers' # TODO: Remove, obsolete?
     MATRIX_LAYERS = 'mtxlayers'
     ENVIRONMENTAL_LAYERS = 'envlayer'
     PROJECTIONS = 'sdmProject'
@@ -655,7 +641,6 @@ class LMServiceType:
     SHAPEGRIDS = 'shapegrid'
     # Generic layers/layersets/matrices
     LAYERS = 'layer'
-    LAYERSETS = 'layersets' # TODO: Remove, obsolete?
     MATRICES = 'matrix'
     MATRIX_COLUMNS = 'column'
    
