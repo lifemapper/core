@@ -1,3 +1,0 @@
-The layers directory will contain a sqlite3 database containing information
-about the layers on this system and directories (identified by host) grouping
-the layers
