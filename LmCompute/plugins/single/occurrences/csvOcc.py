@@ -6,7 +6,7 @@ from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import (
     ENCODING, JobStatus, LMFormat, ProcessType)
-    LMFormat
+    
 from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger

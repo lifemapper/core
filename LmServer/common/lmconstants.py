@@ -652,9 +652,6 @@ ARCHIVE_KEYWORD = 'archive'
    
 # ............................................................................
 # Lifemapper RAD constants
-ORGANISM_LAYER_KEY = 'orgLayerIndices'
-ENVIRONMENTAL_LAYER_KEY = 'envLayerIndices'
-
 ID_PLACEHOLDER = '#id#'
 
 # # TODO: remove these, use LmCommon.common.lmconstants.LMFormat
