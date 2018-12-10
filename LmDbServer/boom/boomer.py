@@ -388,7 +388,7 @@ from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
                                          MASK_LAYER_KEY, PRE_PROCESS_KEY,
                                          PROCESSING_KEY, MASK_LAYER_NAME_KEY,
     SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM, LMFileType, PUBLIC_ARCHIVE_NAME, 
-                                         ProcessTool)
+                                         )
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmBackend.common.cmd import MfRule
