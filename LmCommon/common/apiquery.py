@@ -247,24 +247,40 @@ class APIQuery(object):
                   .format(self.url, response.status_code, response.reason))
 
     # ...........    ....................................
-    def queryByPost(self, outputType='json'):
+    def queryByPost(self, outputType='json', file=None):
         self.output = None
-        allParams = self._otherFilters.copy()
-        allParams[self._qKey] = self._qFilters
-        queryAsString = json.dumps(allParams)
-        try:
-            response = requests.post(self.baseurl, 
-                                     data=queryAsString,
-                                     headers=self.headers)
-        except Exception, e:
+        # Post a file
+        if file is not None:
+            files = {'files': open(file, 'rb')}
             try:
-                retcode = response.status_code
-                reason = response.reason
-            except:
-                retcode = HTTPStatus.INTERNAL_SERVER_ERROR
-                reason = 'Unknown Error'
-            print('Failed on URL {}, code = {}, reason = {} ({})'.format(
-                              self.url, retcode, reason, str(e)))
+                response = requests.post(self.baseurl, files=files)
+            except Exception, e:
+                try:
+                    retcode = response.status_code
+                    reason = response.reason
+                except:
+                    retcode = HTTPStatus.INTERNAL_SERVER_ERROR
+                    reason = 'Unknown Error'
+                print("""Failed on URL {}, posting uploaded file {}, code = {}, 
+                        reason = {} ({})""".format(self.url, file, retcode, 
+                                                   reason, str(e)))
+        # Post parameters
+        else:
+            allParams = self._otherFilters.copy()
+            allParams[self._qKey] = self._qFilters
+            queryAsString = json.dumps(allParams)
+            try:
+                response = requests.post(self.baseurl, data=queryAsString,
+                                         headers=self.headers)
+            except Exception, e:
+                try:
+                    retcode = response.status_code
+                    reason = response.reason
+                except:
+                    retcode = HTTPStatus.INTERNAL_SERVER_ERROR
+                    reason = 'Unknown Error'
+                print('Failed on URL {}, code = {}, reason = {} ({})'.format(
+                                  self.url, retcode, reason, str(e)))
         
         if response.ok:
             try:
@@ -573,6 +589,8 @@ class GbifAPI(APIQuery):
                   for this namestring
                   rank, name, strict, verbose, kingdom, phylum, class, 
                   order, family, genus
+        @note: This function uses the Name search API, returning 
+        @todo: Rename function to "matchAcceptedName"
         """
         goodnames = []
         
@@ -606,6 +624,46 @@ class GbifAPI(APIQuery):
             if alt['status'] == 'ACCEPTED':
                 smallrec = nameAPI._getFldVals(output)
                 goodnames.append(smallrec)
+                    
+        return goodnames
+    
+    # ...............................................
+    @staticmethod
+    def parseNames(filename=None):
+        """
+        @summary: Return closest accepted species in the GBIF backbone taxonomy 
+                  for this namestring
+                  rank, name, strict, verbose, kingdom, phylum, class, 
+                  order, family, genus
+        """
+        goodnames = []        
+        nameAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key='parser/name')
+        try:
+            nameAPI.queryByPost(file=filename, outputType='json')
+            output = nameAPI.output
+        except Exception, e:
+            print ('Failed to get a response from GBIF name parser for file {}, ({})'
+                   .format(filename, str(e)))
+            raise
+        
+        try:
+            status = output['status']
+        except:
+            raise
+        
+        # TODO: parse ParsedNameList response
+#         try:
+#             alternatives = output['alternatives']
+#         except:
+#             alternatives = []
+#                 
+#         if status == 'ACCEPTED':
+#             smallrec = nameAPI._getFldVals(output)
+#             goodnames.append(smallrec)
+#         for alt in alternatives:
+#             if alt['status'] == 'ACCEPTED':
+#                 smallrec = nameAPI._getFldVals(output)
+#                 goodnames.append(smallrec)
                     
         return goodnames
     
@@ -707,50 +765,50 @@ class IdigbioAPI(APIQuery):
                 specimenList.append(newitem)
         return specimenList
     
-    # ...............................................
-    def queryBySciname(self, sciname):
-        """
-        @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
-        """
-        self._qFilters['scientificname'] = sciname
-        self.query()
-        specimenList = []
-        if self.output is not None:
-            fullCount = self.output['itemCount']
-            for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
-                newitem = {}
-                for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].iteritems():
-                    newitem[dataFld] = dataVal
-                    for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].iteritems():
-                        if idxFld == 'geopoint':
-                            newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
-                            newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
-                        else:
-                            newitem[idxFld] = idxVal
-                specimenList.append(newitem)
-        return specimenList
-    
-    # ...............................................
-    def getOccurrences(self, asShapefile=False):
-        """
-        @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
-        """
-        if self.output is None:
-            self.query()
-        specimenList = []
-        if self.output is not None:
-            for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
-                newitem = {}
-                for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].iteritems():
-                    newitem[dataFld] = dataVal
-                for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].iteritems():
-                    if idxFld == 'geopoint':
-                        newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
-                        newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
-                    else:
-                        newitem[idxFld] = idxVal
-                specimenList.append(newitem)
-        return specimenList
+#     # ...............................................
+#     def queryBySciname(self, sciname):
+#         """
+#         @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
+#         """
+#         self._qFilters['scientificname'] = sciname
+#         self.query()
+#         specimenList = []
+#         if self.output is not None:
+#             fullCount = self.output['itemCount']
+#             for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
+#                 newitem = {}
+#                 for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].iteritems():
+#                     newitem[dataFld] = dataVal
+#                     for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].iteritems():
+#                         if idxFld == 'geopoint':
+#                             newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
+#                             newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
+#                         else:
+#                             newitem[idxFld] = idxVal
+#                 specimenList.append(newitem)
+#         return specimenList
+#     
+#     # ...............................................
+#     def getOccurrences(self, asShapefile=False):
+#         """
+#         @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
+#         """
+#         if self.output is None:
+#             self.query()
+#         specimenList = []
+#         if self.output is not None:
+#             for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
+#                 newitem = {}
+#                 for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].iteritems():
+#                     newitem[dataFld] = dataVal
+#                 for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].iteritems():
+#                     if idxFld == 'geopoint':
+#                         newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
+#                         newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
+#                     else:
+#                         newitem[idxFld] = idxVal
+#                 specimenList.append(newitem)
+#         return specimenList
     
     # .............................................................................
     def _writeIdigbioMetadata(self, origFldnames, metaFname):
@@ -978,30 +1036,30 @@ def testGbif():
     output = GbifAPI.getTaxonomy(taxonid)
     print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
 
-# .............................................................................
-def testIdigBio():
-    gbifids = [2435099, 1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
-              1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 
-              1000519, 1000525, 1000541, 1000543, 1000546, 1000575]
-   
-    # ******************* iDigBio ********************************
-    digList = [4990907, 2437967, 4990907, 5158206, 2438635, 2394563, 2360481, 
-               5231132, 2350580, 2361357]
-    for gid in gbifids:
-        # direct query
-        api = IdigbioAPI()
-        try:
-            occList1 = api.queryByGBIFTaxonId(gid)
-        except:
-            print 'Failed on {}'.format(gid)
-        else:
-            print("Retrieved {} records for gbif taxonid {}"
-                  .format(len(occList1), gid))
-           
-        print '   ', api.baseurl
-        print '   ', api._otherFilters
-        print '   ', api._qFilters
-        print
+# # .............................................................................
+# def testIdigBio():
+#     gbifids = [2435099, 1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
+#               1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 
+#               1000519, 1000525, 1000541, 1000543, 1000546, 1000575]
+#    
+#     # ******************* iDigBio ********************************
+#     digList = [4990907, 2437967, 4990907, 5158206, 2438635, 2394563, 2360481, 
+#                5231132, 2350580, 2361357]
+#     for gid in gbifids:
+#         # direct query
+#         api = IdigbioAPI()
+#         try:
+#             occList1 = api.queryByGBIFTaxonId(gid)
+#         except:
+#             print 'Failed on {}'.format(gid)
+#         else:
+#             print("Retrieved {} records for gbif taxonid {}"
+#                   .format(len(occList1), gid))
+#            
+#         print '   ', api.baseurl
+#         print '   ', api._otherFilters
+#         print '   ', api._qFilters
+#         print
       
 # .............................................................................
 def testIdigbioTaxonIds():
