@@ -78,3 +78,11 @@ if __name__ == "__main__":
                           args.meta_output_file, 
                           missing_id_file=args.missing_id_file)
     
+"""
+import os
+
+from LmCommon.common.apiquery import IdigbioAPI
+
+from LmCompute.tools.common.get_idig_data import *
+
+"""

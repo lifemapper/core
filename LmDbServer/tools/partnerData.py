@@ -40,6 +40,7 @@ import unicodecsv
 import urllib2
 
 from LmBackend.common.lmobj import LMError
+
 from LmCommon.common.apiquery import GbifAPI
 from LmCommon.common.lmconstants import PhyloTreeKeys
 
@@ -540,6 +541,7 @@ taxon_id_file = dataname + '.gids'
 point_output_file = dataname + '.csv'
 meta_output_file = dataname + '.json'
 
+# TODO: Find names with data
 names = ['Methanococcoides burtonii', 'Methanogenium frigidum', 
          'Hexarthra fennica', 'Hexarthra longicornicula', 
          'Hexarthra intermedia', 'Hexarthra mira', 'Horaella thomassoni', 
@@ -549,6 +551,9 @@ names = ['Methanococcoides burtonii', 'Methanogenium frigidum',
          'Ptygura libera', 'Floscularia janus', 'Floscularia conifera', 
          'Floscularia ringens', 'Sinantherina semibullata']
 
+names = ['Prenolepis imparis']
+
+
 iquery = PartnerQuery(logger=logger)
 
 # ............................
@@ -556,7 +561,7 @@ iquery = PartnerQuery(logger=logger)
 # if os.path.exists(gbifidFname):
 #     name_to_gbif_ids = iquery.readGBIFTaxonIds(gbifidFname)
 # else:
-name_to_gbif_ids = iquery.assembleGBIFTaxonIds(names, taxon_id_file) 
+unmatched_names, name_to_gbif_ids = iquery.assembleGBIFTaxonIds(names, taxon_id_file) 
 taxon_ids = [match[0] for match in name_to_gbif_ids.values()]
 
 # ............................

@@ -11,22 +11,22 @@ from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
-# .............................................................................
-def createBisonShapefile(url, outFile, bigFile, maxPoints, log=None):
-    """
-    @summary: Retrieves a BISON url, pulls in the data, and creates a shapefile
-    @param url: The url to pull data from
-    @param outFile: The file location to write the modelable occurrence set
-    @param bigFile: The file location to write the full occurrence set 
-    @param maxPoints: The maximum number of points to be included in the regular
-                                shapefile
-    @param log: If provided, use this logger
-    """
-    occAPI = BisonAPI.initFromUrl(url)
-    occList = occAPI.getTSNOccurrences()
-    count = len(occList)
-    return parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, 
-                              outFile, bigFile, count, maxPoints, log=log)
+# # .............................................................................
+# def createBisonShapefile(url, outFile, bigFile, maxPoints, log=None):
+#     """
+#     @summary: Retrieves a BISON url, pulls in the data, and creates a shapefile
+#     @param url: The url to pull data from
+#     @param outFile: The file location to write the modelable occurrence set
+#     @param bigFile: The file location to write the full occurrence set 
+#     @param maxPoints: The maximum number of points to be included in the regular
+#                                 shapefile
+#     @param log: If provided, use this logger
+#     """
+#     occAPI = BisonAPI.initFromUrl(url)
+#     occList = occAPI.getTSNOccurrences()
+#     count = len(occList)
+#     return parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, 
+#                               outFile, bigFile, count, maxPoints, log=log)
 
 # .............................................................................
 def createGBIFShapefile(pointCsvFn, outFile, bigFile, maxPoints, log=None):
@@ -50,26 +50,26 @@ def createGBIFShapefile(pointCsvFn, outFile, bigFile, maxPoints, log=None):
         ''.join(csvInputBlob), ProcessType.GBIF_TAXA_OCCURRENCE, outFile,
         bigFile, len(csvInputBlob), maxPoints, log=log)
     
-# .............................................................................
-def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints, log=None):
-    """
-    @summary: Retrieves an iDigBio url, pulls in the data, and creates a 
-                     shapefile
-    @param taxonKey: The GBIF taxonID (in iDigBio) for which to pull data
-    @param outFile: The file location to write the modelable occurrence set
-    @param bigFile: The file location to write the full occurrence set 
-    @param maxPoints: The maximum number of points to be included in the regular
-                                shapefile
-    @param log: If provided, use this logger
-    @todo: Change this back to GBIF TaxonID when iDigBio API is fixed!
-    """
-    occAPI = IdigbioAPI()
-#     occList = occAPI.queryByGBIFTaxonId(taxonKey)
-    # TODO: Un-hack this - here using canonical name instead
-    occList = occAPI.queryBySciname(taxonKey)
-    count = len(occList)
-    return parseCsvData(''.join(occList), ProcessType.IDIGBIO_TAXA_OCCURRENCE, 
-                              outFile, bigFile, count, maxPoints, log=log)
+# # .............................................................................
+# def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints, log=None):
+#     """
+#     @summary: Retrieves an iDigBio url, pulls in the data, and creates a 
+#                      shapefile
+#     @param taxonKey: The GBIF taxonID (in iDigBio) for which to pull data
+#     @param outFile: The file location to write the modelable occurrence set
+#     @param bigFile: The file location to write the full occurrence set 
+#     @param maxPoints: The maximum number of points to be included in the regular
+#                                 shapefile
+#     @param log: If provided, use this logger
+#     @todo: Change this back to GBIF TaxonID when iDigBio API is fixed!
+#     """
+#     occAPI = IdigbioAPI()
+# #     occList = occAPI.queryByGBIFTaxonId(taxonKey)
+#     # TODO: Un-hack this - here using canonical name instead
+#     occList = occAPI.queryBySciname(taxonKey)
+#     count = len(occList)
+#     return parseCsvData(''.join(occList), ProcessType.IDIGBIO_TAXA_OCCURRENCE, 
+#                               outFile, bigFile, count, maxPoints, log=log)
     
 # .............................................................................
 def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints,
@@ -220,8 +220,8 @@ xmloutput = ET.fromstring(output)
 
 occList = occAPI.getTSNOccurrences()
 count = len(occList)
-parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, outFile,  
-                          bigFile, count, maxPoints)
+# parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, outFile,  
+#                           bigFile, count, maxPoints)
 
 # createBisonShapefile(url, outFile, bigFile, maxPoints)
 

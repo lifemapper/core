@@ -760,8 +760,8 @@ class ProcessType:
     PROJECT_REQUEST = 105
     # Occurrences
     GBIF_TAXA_OCCURRENCE = 405
-    BISON_TAXA_OCCURRENCE = 410
-    IDIGBIO_TAXA_OCCURRENCE = 415
+#     BISON_TAXA_OCCURRENCE = 410
+#     IDIGBIO_TAXA_OCCURRENCE = 415
     USER_TAXA_OCCURRENCE = 420
     OCC_BUCKETEER = 450
     OCC_SORTER = 460
@@ -814,8 +814,8 @@ class ProcessType:
                      ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT, 
                      ProcessType.OM_MODEL, ProcessType.OM_PROJECT, 
                      ProcessType.GBIF_TAXA_OCCURRENCE, 
-                     ProcessType.BISON_TAXA_OCCURRENCE, 
-                     ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+#                      ProcessType.BISON_TAXA_OCCURRENCE, 
+#                      ProcessType.IDIGBIO_TAXA_OCCURRENCE,
                      ProcessType.USER_TAXA_OCCURRENCE, 
                      ProcessType.INTERSECT_RASTER, 
                      ProcessType.INTERSECT_VECTOR, 
@@ -826,8 +826,8 @@ class ProcessType:
     @staticmethod
     def isOccurrence(ptype):
         if ptype in [ProcessType.GBIF_TAXA_OCCURRENCE, 
-                     ProcessType.BISON_TAXA_OCCURRENCE, 
-                     ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+#                      ProcessType.BISON_TAXA_OCCURRENCE, 
+#                      ProcessType.IDIGBIO_TAXA_OCCURRENCE,
                      ProcessType.USER_TAXA_OCCURRENCE]:
             return True
         return False
