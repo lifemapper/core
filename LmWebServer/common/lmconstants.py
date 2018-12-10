@@ -23,386 +23,389 @@ class HTTPMethod(object):
 # Note: The dictionary keys are the .lower() version of the parameter names.
 #             The 'name' value of each key is what it gets translated to
 # The point of this structure is to allow query parameters to be case-insensitive
+QP_NAME_KEY = 'name'
+QP_PROCESS_KEY = 'process_in'
+
 QUERY_PARAMETERS = {
     'afterstatus' : {
-        'name' : 'afterStatus',
-        'processIn' : int
+        QP_NAME_KEY : 'afterStatus',
+        QP_PROCESS_KEY : int
     },
     'aftertime' : {
-        'name' : 'afterTime',
-        'processIn' : getMjdTimeFromISO8601
+        QP_NAME_KEY : 'afterTime',
+        QP_PROCESS_KEY : getMjdTimeFromISO8601
     },
     'agent' : {
-        'name' : 'agent'
+        QP_NAME_KEY : 'agent'
     },
     'algorithmcode' : {
-        'name' : 'algorithmCode',
+        QP_NAME_KEY : 'algorithmCode',
     },
     'altpredcode' : {
-        'name' : 'altPredCode'
+        QP_NAME_KEY : 'altPredCode'
     },
     'archivename' : {
-        'name' : 'archiveName'
+        QP_NAME_KEY : 'archiveName'
     },
     'beforestatus' : {
-        'name' : 'beforeStatus',
-        'processIn' : int
+        QP_NAME_KEY : 'beforeStatus',
+        QP_PROCESS_KEY : int
     },
     'beforetime' : {
-        'name' : 'beforeTime',
-        'processIn' : getMjdTimeFromISO8601
+        QP_NAME_KEY : 'beforeTime',
+        QP_PROCESS_KEY : getMjdTimeFromISO8601
     },
     'bbox' : {
         # Comes in as a comma separated list, turn it into a tuple of floats
-        'name' : 'bbox',
-        #'processIn' : lambda x: [float(i) for i in x.split(',')]
+        QP_NAME_KEY : 'bbox',
+        #QP_PROCESS_KEY : lambda x: [float(i) for i in x.split(',')]
     },
     'bgcolor' : {
-        'name' : 'bgcolor',
-        'processIn' : lambda x: getColor(x, allowRamp=False)
+        QP_NAME_KEY : 'bgcolor',
+        QP_PROCESS_KEY : lambda x: getColor(x, allowRamp=False)
     },
     'canonicalname' : {
-        'name' : 'canonicalName'
+        QP_NAME_KEY : 'canonicalName'
     },
     'catalognumber' : {
-        'name' : 'catalogNumber'
+        QP_NAME_KEY : 'catalogNumber'
     },
     'cellsides' : {
-        'name' : 'cellSides',
-        'processIn' : int
+        QP_NAME_KEY : 'cellSides',
+        QP_PROCESS_KEY : int
     },
     'cellsize' : {
-        'name' : 'cellSize',
-        'processIn' : float
+        QP_NAME_KEY : 'cellSize',
+        QP_PROCESS_KEY : float
     },
     'collection' : {
-        'name' : 'collection'
+        QP_NAME_KEY : 'collection'
     },
     'color' : {
-        'name' : 'color',
-        'processIn' : lambda x: getColor(x, allowRamp=True)
+        QP_NAME_KEY : 'color',
+        QP_PROCESS_KEY : lambda x: getColor(x, allowRamp=True)
     },
     'coverage' : {
-        'name' : 'coverage'
+        QP_NAME_KEY : 'coverage'
     },
     'crs' : {
         # TODO: Consider processing the EPSG here
-        'name' : 'crs'
+        QP_NAME_KEY : 'crs'
     },
     'datecode' : {
-        'name' : 'dateCode'
+        QP_NAME_KEY : 'dateCode'
     },
     'displayname' : {
-        'name' : 'displayName'
+        QP_NAME_KEY : 'displayName'
     },
     'docalc' : {
-        'name' : 'doCalc',
-        'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+        QP_NAME_KEY : 'doCalc',
+        QP_PROCESS_KEY : lambda x: bool(int(x)) # Zero is false, one is true
     },
     'domcpa' : {
-        'name' : 'doMcpa',
-        'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+        QP_NAME_KEY : 'doMcpa',
+        QP_PROCESS_KEY : lambda x: bool(int(x)) # Zero is false, one is true
     },
     'envcode' : {
-        'name' : 'envCode'
+        QP_NAME_KEY : 'envCode'
     },
     'envtypeid' : {
-        'name' : 'envTypeId',
-        'processIn' : int
+        QP_NAME_KEY : 'envTypeId',
+        QP_PROCESS_KEY : int
     },
     'epsgcode' : {
-        'name' : 'epsgCode',
-        'processIn' : int
+        QP_NAME_KEY : 'epsgCode',
+        QP_PROCESS_KEY : int
     },
     'exceptions' : {
-        'name' : 'exceptions'
+        QP_NAME_KEY : 'exceptions'
     },
     'filename' : {
-        'name' : 'fileName'
+        QP_NAME_KEY : 'fileName'
     },
     'fillpoints' : {
-        'name' : 'fillPoints',
-        'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+        QP_NAME_KEY : 'fillPoints',
+        QP_PROCESS_KEY : lambda x: bool(int(x)) # Zero is false, one is true
     },
     'format' : {
         # TODO: Forward to respFormat since format is reserved
-        'name' : 'respFormat',
+        QP_NAME_KEY : 'respFormat',
     },
     'gcmcode' : {
-        'name' : 'gcmCode',
+        QP_NAME_KEY : 'gcmCode',
     },
     'gridsetid' : {
-        'name' : 'gridSetId',
-        'processIn' : int
+        QP_NAME_KEY : 'gridSetId',
+        QP_PROCESS_KEY : int
     },
     'hasbranchlengths' : {
-        'name' : 'hasBranchLengths',
-        'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+        QP_NAME_KEY : 'hasBranchLengths',
+        QP_PROCESS_KEY : lambda x: bool(int(x)) # Zero is false, one is true
     },
     'height' : {
-        'name' : 'height',
-        'processIn' : int
+        QP_NAME_KEY : 'height',
+        QP_PROCESS_KEY : int
     },
     'ident1' : {
-        'name' : 'ident1'
+        QP_NAME_KEY : 'ident1'
     },
     'ident2' : {
-        'name' : 'ident2'
+        QP_NAME_KEY : 'ident2'
     },
     'includecsvs' : {
-        'name' : 'includeCSVs',
-        'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+        QP_NAME_KEY : 'includeCSVs',
+        QP_PROCESS_KEY : lambda x: bool(int(x)) # Zero is false, one is true
     },
     'includesdms' : {
-        'name' : 'includeSDMs',
-        'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+        QP_NAME_KEY : 'includeSDMs',
+        QP_PROCESS_KEY : lambda x: bool(int(x)) # Zero is false, one is true
     },
     'isbinary' : {
-        'name' : 'isBinary',
-        'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+        QP_NAME_KEY : 'isBinary',
+        QP_PROCESS_KEY : lambda x: bool(int(x)) # Zero is false, one is true
     },
     'isultrametric' : {
-        'name' : 'isUltrametric',
-        'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+        QP_NAME_KEY : 'isUltrametric',
+        QP_PROCESS_KEY : lambda x: bool(int(x)) # Zero is false, one is true
     },
     'keyword' : {
-        'name' : 'keyword',
-        'processIn' : lambda x: [float(x)]
+        QP_NAME_KEY : 'keyword',
+        QP_PROCESS_KEY : lambda x: [float(x)]
     },
     'layer' : {
-        'name' : 'layer'
+        QP_NAME_KEY : 'layer'
     },
     'layers' : {
-        'name' : 'layers',
-        #'processIn' : lambda x: [i for i in x.split(',')]
+        QP_NAME_KEY : 'layers',
+        #QP_PROCESS_KEY : lambda x: [i for i in x.split(',')]
     },
     'layertype' : {
-        'name' : 'layerType',
-        'processIn' : int
+        QP_NAME_KEY : 'layerType',
+        QP_PROCESS_KEY : int
     },
     'limit' : {
-        'name' : 'limit',
-        'processIn' : lambda x: max(1, int(x)) # Integer, minimum is one
+        QP_NAME_KEY : 'limit',
+        QP_PROCESS_KEY : lambda x: max(1, int(x)) # Integer, minimum is one
     },
     'map' : {
-        'name' : 'mapName'
+        QP_NAME_KEY : 'mapName'
     },
     'mapname' : {
-        'name' : 'mapName'
+        QP_NAME_KEY : 'mapName'
     },
     'matrixtype' : {
-        'name' : 'matrixType',
-        'processIn' : int
+        QP_NAME_KEY : 'matrixType',
+        QP_PROCESS_KEY : int
     },
     'metadata' : {
-        'name' : 'metadata'
+        QP_NAME_KEY : 'metadata'
     },
     'metastring' : {
-        'name' : 'metaString'
+        QP_NAME_KEY : 'metaString'
     },
     'modelscenariocode' : {
-        'name' : 'modelScenarioCode'
+        QP_NAME_KEY : 'modelScenarioCode'
     },
     'minimumnumberofpoints' : {
-        'name' : 'minimumNumberOfPoints',
-        'processIn' : lambda x: max(1, int(x)) # Integer, minimum is one
+        QP_NAME_KEY : 'minimumNumberOfPoints',
+        QP_PROCESS_KEY : lambda x: max(1, int(x)) # Integer, minimum is one
     },
     'numpermutations' : {
-        'name' : 'numPermutations',
-        'processIn' : int
+        QP_NAME_KEY : 'numPermutations',
+        QP_PROCESS_KEY : int
     },
     'occurrencesetid' : {
-        'name' : 'occurrenceSetId',
-        'processIn' : int
+        QP_NAME_KEY : 'occurrenceSetId',
+        QP_PROCESS_KEY : int
     },
     'operation' : {
-        'name' : 'operation'
+        QP_NAME_KEY : 'operation'
     },
     'offset' : {
-        'name' : 'offset',
-        'processIn' : lambda x: max(0, int(x)) # Integer, minimum is zero
+        QP_NAME_KEY : 'offset',
+        QP_PROCESS_KEY : lambda x: max(0, int(x)) # Integer, minimum is zero
     },
     'pathbiogeoid' : {
-        'name' : 'pathBioGeoId'
+        QP_NAME_KEY : 'pathBioGeoId'
     },
     'pathgridsetid' : {
-        'name' : 'pathGridSetId'
+        QP_NAME_KEY : 'pathGridSetId'
     },
     'pathlayerid' : {
-        'name' : 'pathLayerId'
+        QP_NAME_KEY : 'pathLayerId'
     },
     'pathmatrixid' : {
-        'name' : 'pathMatrixId'
+        QP_NAME_KEY : 'pathMatrixId'
     },
     'pathoccsetid' : {
-        'name' : 'pathOccSetId'
+        QP_NAME_KEY : 'pathOccSetId'
     },
     'pathprojectionid' : {
-        'name' : 'pathProjectionId'
+        QP_NAME_KEY : 'pathProjectionId'
     },
     'pathscenarioid' : {
-        'name' : 'pathScenarioId'
+        QP_NAME_KEY : 'pathScenarioId'
     },
     'pathscenariopackageid' : {
-        'name' : 'pathScenarioPackageId'
+        QP_NAME_KEY : 'pathScenarioPackageId'
     },
     'pathshapegridid' : {
-        'name' : 'pathShapegridId'
+        QP_NAME_KEY : 'pathShapegridId'
     },
     'pathtreeid' : {
-        'name' : 'pathTreeId'
+        QP_NAME_KEY : 'pathTreeId'
     },
     'pointmax' : {
-        'name' : 'pointMax',
-        'processIn' : int
+        QP_NAME_KEY : 'pointMax',
+        QP_PROCESS_KEY : int
     },
     'pointmin' : {
-        'name' : 'pointMin',
-        'processIn' : int
+        QP_NAME_KEY : 'pointMin',
+        QP_PROCESS_KEY : int
     },
     'projectionscenariocode' : {
-        'name' : 'projectionScenarioCode'
+        QP_NAME_KEY : 'projectionScenarioCode'
     },
     'provider' : {
-        'name' : 'provider'
+        QP_NAME_KEY : 'provider'
     },
     'request' : {
-        'name' : 'request'
+        QP_NAME_KEY : 'request'
     },
     'resolution' : {
-        'name' : 'resolution'
+        QP_NAME_KEY : 'resolution'
     },
     'scenariocode' : {
-        'name' : 'scenarioCode'
+        QP_NAME_KEY : 'scenarioCode'
     },
     'scenarioid' : {
-        'name' : 'scenarioId',
-        'processIn' : int
+        QP_NAME_KEY : 'scenarioId',
+        QP_PROCESS_KEY : int
     },
     'scientificname' : {
-        'name' : 'scientificName' 
+        QP_NAME_KEY : 'scientificName' 
     },
     'searchstring' : {
-        'name' : 'searchString'
+        QP_NAME_KEY : 'searchString'
     },
     'service' : {
-        'name' : 'service'
+        QP_NAME_KEY : 'service'
     },
     'shapegridid' : {
-        'name' : 'shapegridId'
+        QP_NAME_KEY : 'shapegridId'
     },
     'sld' : {
-        'name' : 'sld'
+        QP_NAME_KEY : 'sld'
     },
     'sldbody' : {
-        'name' : 'sld_body'
+        QP_NAME_KEY : 'sld_body'
     },
     'squid' : {
-        'name' : 'squid',
-        'processIn' : lambda x: x # TODO: Evaluate what needs to be done to process into list
+        QP_NAME_KEY : 'squid',
+        QP_PROCESS_KEY : lambda x: x # TODO: Evaluate what needs to be done to process into list
     },
     'srs' : {
         # TODO: Forward to crs for WMS 1.3.0?
-        'name' : 'srs'
+        QP_NAME_KEY : 'srs'
     },
     'status' : {
-        'name' : 'status',
-        'processIn' : int
+        QP_NAME_KEY : 'status',
+        QP_PROCESS_KEY : int
     },
     'styles' : {
-        'name' : 'styles',
-        #'processIn' : lambda x: [i for i in x.split(',')]
+        QP_NAME_KEY : 'styles',
+        #QP_PROCESS_KEY : lambda x: [i for i in x.split(',')]
     },
     'taxonclass' : {
-        'name' : 'taxonClass'
+        QP_NAME_KEY : 'taxonClass'
     },
     'taxonfamily' : {
-        'name' : 'taxonFamily'
+        QP_NAME_KEY : 'taxonFamily'
     },
     'taxongenus' : {
-        'name' : 'taxonGenus'
+        QP_NAME_KEY : 'taxonGenus'
     },
     'taxonkingdom' : {
-        'name' : 'taxonKingdom'
+        QP_NAME_KEY : 'taxonKingdom'
     },
     'taxonorder' : {
-        'name' : 'taxonOrder'
+        QP_NAME_KEY : 'taxonOrder'
     },
     'taxonphylum' : {
-        'name' : 'taxonPhylum'
+        QP_NAME_KEY : 'taxonPhylum'
     },
     'taxonspecies' : {
-        'name' : 'taxonSpecies'
+        QP_NAME_KEY : 'taxonSpecies'
     },
     'time' : {
-        'name' : 'time'
+        QP_NAME_KEY : 'time'
     },
     'transparent' : {
-        'name' : 'transparent',
-        #'processIn' : lambda x: bool(x.lower() == 'true')
+        QP_NAME_KEY : 'transparent',
+        #QP_PROCESS_KEY : lambda x: bool(x.lower() == 'true')
     },
     'treename' : {
-        'name' : 'name' # Map to 'name' for processing
+        QP_NAME_KEY : 'name' # Map to 'name' for processing
     },
     'treeschema' : {
-        'name' : 'treeSchema' 
+        QP_NAME_KEY : 'treeSchema' 
     },
     'uploadtype' : {
-        'name' : 'uploadType'
+        QP_NAME_KEY : 'uploadType'
     },
     'url' : {
-        'name' : 'url'
+        QP_NAME_KEY : 'url'
     },
     'user' : {
-        'name' : 'urlUser',
-        'processIn' : lambda x: x.lower()
+        QP_NAME_KEY : 'urlUser',
+        QP_PROCESS_KEY : lambda x: x.lower()
     },
     'version' : {
-        'name' : 'version'
+        QP_NAME_KEY : 'version'
     },
     'who' : {
-        'name' : 'who'
+        QP_NAME_KEY : 'who'
     },
     'why' : {
-        'name' : 'why'
+        QP_NAME_KEY : 'why'
     },
     'width' : {
-        'name' : 'width',
-        'processIn' : int
+        QP_NAME_KEY : 'width',
+        QP_PROCESS_KEY : int
     },
     # Authentication parameters
     'address1' : {
-        'name' : 'address1'
+        QP_NAME_KEY : 'address1'
     },
     'address2' : {
-        'name' : 'address2'
+        QP_NAME_KEY : 'address2'
     },
     'address3' : {
-        'name' : 'address3'
+        QP_NAME_KEY : 'address3'
     },
     'phone' : {
-        'name' : 'phone'
+        QP_NAME_KEY : 'phone'
     },
     'email' : {
-        'name' : 'email'
+        QP_NAME_KEY : 'email'
     },
     'firstname' : {
-        'name' : 'firstName'
+        QP_NAME_KEY : 'firstName'
     },
     'institution' : {
-        'name' : 'institution'
+        QP_NAME_KEY : 'institution'
     },
     'lastname' : {
-        'name' : 'lastName'
+        QP_NAME_KEY : 'lastName'
     },
     'pword' : {
-        'name' : 'pword'
+        QP_NAME_KEY : 'pword'
     },
     'pword1' : {
-        'name' : 'pword1'
+        QP_NAME_KEY : 'pword1'
     },
     'userid' : {
-        'name' : 'userId'
+        QP_NAME_KEY : 'userId'
     },
 }
 
