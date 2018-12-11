@@ -59,8 +59,7 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.tools.occwoc import (BisonWoC, GBIFWoC, UserWoC, ExistingWoC, 
-                                   TinyBubblesWoC)
+from LmServer.tools.occwoc import (GBIFWoC, UserWoC, ExistingWoC, TinyBubblesWoC)
 
 # .............................................................................
 class ChristopherWalken(LMObject):
@@ -251,15 +250,6 @@ class ChristopherWalken(LMObject):
                                      providerFname=gbifProvFile, 
                                      taxonSourceName=taxonSourceName, 
                                      logger=self.log)
-        # Bison data
-        elif datasource == SpeciesDatasource.BISON:
-            bisonTsn = self._getBoomOrDefault('BISON_TSN_FILENAME')
-            # Note: changed path from species dir to bison archive dir
-            bisonTsnFile = os.path.join(boompath, bisonTsn)
-            weaponOfChoice = BisonWoC(self._scribe, userId, archiveName, 
-                                      epsg, expDate, bisonTsnFile, 
-                                      taxonSourceName=taxonSourceName, 
-                                      logger=self.log)
         
         # Copy public data to user space
         # TODO: Handle taxonomy, useGBIFTaxonomy=??
