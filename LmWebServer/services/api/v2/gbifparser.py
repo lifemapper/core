@@ -33,10 +33,11 @@ class GBIFNamesService(LmService):
             for name in names_obj:
                 try:
                     gbif_resp = GbifAPI.getAcceptedNames(name)[0]
-                    ret[name] = {
+                    ret.append({
+                        SEARCH_NAME_KEY : name,
                         ACCEPTED_NAME_KEY : gbif_resp[SPECIES_NAME_KEY],
                         TAXON_ID_KEY : gbif_resp[SPECIES_KEY_KEY]
-                    }
+                    })
                 except Exception as e:
                     self.log.error(
                         'Could not get accepted name from GBIF for name {}: {}'
