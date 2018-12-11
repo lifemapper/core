@@ -31,7 +31,7 @@ Using
 #. Download as part of bash script 
    * /opt/lifemapper/rocks/bin/getBoomPackageForUser   
 #. Catalog along with bash script
-   * /opt/lifemapper/rocks/bin/catalogBoomJob
+   * /opt/lifemapper/rocks/bin/initBoomJob
 
 
 Data available on yeti (data packages are .tar.gz files)
@@ -107,7 +107,7 @@ Using
 ~~~~~~~~
 #. Data will be pulled and transformed as part of BOOM data processing above
    * getBoomPackageForUser will download and transform the layers
-   * catalogBoomJob will catalog the data for the workflow user
+   * initBoomJob will catalog the data for the workflow user
 #. Iff you want to pull it separately    
    *  Download and transform data with 
       * /opt/lifemapper/rocks/bin/getScenarioPackageForUser

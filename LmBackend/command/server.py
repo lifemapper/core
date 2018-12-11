@@ -171,7 +171,7 @@ class CatalogBoomCommand(_LmDbServerCommand):
                     * create an archive ini file, and 
                     * start the Boomer to walk through inputs
     """
-    scriptName = 'catalogBoomJob.py'
+    scriptName = 'initBoomJob.py'
 
     # ................................
     def __init__(self, config_filename, init_makeflow=False):

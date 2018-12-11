@@ -1311,12 +1311,12 @@ if __name__ == '__main__':
         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(scriptname, timestamp)
     
-    print('Running catalogBoomJob with paramFname = {}'
+    print('Running initBoomJob with paramFname = {}'
           .format(paramFname))
     
     filler = BOOMFiller(paramFname, logname=logname)
     gs = filler.initBoom(initMakeflow=initMakeflow)
-    print('Completed catalogBoomInputs creating gridset: {}'.format(gs.getId()))
+    print('Completed initBoomJob creating gridset: {}'.format(gs.getId()))
 
     
 """
@@ -1367,7 +1367,7 @@ from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmServer.base.utilities import isRootUser
 
-from LmDbServer.tools.catalogBoomInputs import *
+from LmDbServer.tools.initBoomJob import *
 
 paramFname = '/share/lm/data/archive/modem/heuchera_boom_na_10min.params'
 

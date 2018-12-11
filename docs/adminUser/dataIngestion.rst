@@ -84,9 +84,9 @@ Configure for new boom job
     if init_makeflow is 1, a boom script will immediately process species data to 
     create Makeflows for boom job. Script is installed by the rocks-lifemapper 
     rpm into /opt/lifemapper/rocks/bin::
-    # catalogBoomJob  <boom parameter>.ini  <init_makeflow>
+    # initBoomJob  <boom parameter>.ini  <init_makeflow>
    
-   * Results of catalogBoomJob:
+   * Results of initBoomJob:
      * Verify scenario data exists for this user
      * Create gridset for Boom 
      * Optionally create shapegrid, matrices, tree, biogeographic hypotheses
@@ -144,7 +144,7 @@ Misc Data Info
 
 #. Create a BOOM parameter file based on the template in 
    /opt/lifemapper/config/boomInit.sample.ini as data input to the 
-   catalogBoomJob script
+   initBoomJob script
 
 #. Either allow the makeflow produced by fillDB to be run automatically, 
    or run the boom daemon as described above. 

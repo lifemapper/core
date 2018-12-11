@@ -275,7 +275,7 @@ class _LayerSet(LMSpatialObject):
 # .............................................................................
 class MapLayerSet(_LayerSet, ServiceObject):
     """
-    Superclass of Scenario, PresenceAbsenceLayerset.  
+    Superclass of Scenario.  
     @todo: extend as collections.MutableSequence subclass
     @note: mapcode should be required
     """
@@ -286,7 +286,9 @@ class MapLayerSet(_LayerSet, ServiceObject):
               url=None, dlocation=None, keywords=None, epsgcode=None, layers=None, 
               userId=None, dbId=None, modTime=None, 
               bbox=None, mapunits=None,
-              serviceType=LMServiceType.LAYERSETS, mapType=LMFileType.OTHER_MAP):
+              # This must be specified
+              serviceType=None, 
+              mapType=LMFileType.OTHER_MAP):
         """
         @summary Constructor for the LayerSet class
         @copydoc LmServer.base.layerset._LayerSet::__init__()
@@ -296,6 +298,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
         @param dbid: database id of the object, occsetId for SDM_MAP layersets, 
                gridsetId for RAD_MAP layersets, scenCode for Scenarios 
         """
+        if serviceType is None:
+            raise LMError('Failed to specify serviceType for MapLayerSet superclass')
         _LayerSet.__init__(self, mapname, title=title, keywords=keywords, 
                            epsgcode=epsgcode, layers=layers, 
                            bbox=bbox, mapunits=mapunits)

@@ -85,4 +85,8 @@ from LmCommon.common.apiquery import IdigbioAPI
 
 from LmCompute.tools.common.get_idig_data import *
 
+taxon_id_file =  
+point_output_file =
+meta_output_file =
+missing_id_file=None
 """

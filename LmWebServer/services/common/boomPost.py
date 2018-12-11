@@ -16,7 +16,7 @@ from LmCommon.common.lmconstants import (
     HTTPStatus,LMFormat, SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX)
 #from LmDbServer.boom.boominput import ArchiveFiller
 #from LmDbServer.boom.initboom import initBoom
-from LmDbServer.tools.catalogBoomInputs import BOOMFiller
+from LmDbServer.tools.initBoomJob import BOOMFiller
 from LmDbServer.common.lmconstants import SpeciesDatasource
 from LmDbServer.tools.catalogScenPkg import SPFiller
 from LmServer.common.lmconstants import TEMP_PATH, Priority, ENV_DATA_PATH
