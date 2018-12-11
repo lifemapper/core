@@ -397,8 +397,10 @@ def mcpa(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
         f_results[i] = f_vals
 
     # Correct any nans and add depth
-    obs_results = np.expand_dims(np.nan_to_num(obs_results), axis=2)
-    f_results = np.expand_dims(np.nan_to_num(f_results), axis=2)
+    obs_results = np.clip(
+        np.expand_dims(np.nan_to_num(obs_results), axis=2), -1.0, 1.0)
+    f_results = np.clip(
+        np.expand_dims(np.nan_to_num(f_results), axis=2), -1.0, 1.0)
 
     column_headers = env_mtx.getColumnHeaders()
     column_headers.append('Env - Adjusted R-squared')
@@ -474,8 +476,8 @@ def mcpa_parallel(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
             f_results[i] = f
 
     # Correct any nans
-    obs_results = np.nan_to_num(obs_results)
-    f_results = np.nan_to_num(f_results)
+    obs_results = np.clip(np.nan_to_num(obs_results), -1.0, 1.0)
+    f_results = np.clip(np.nan_to_num(f_results), -1.0, 1.0)
 
     column_headers = env_mtx.getColumnHeaders()
     column_headers.append('Env - Adjusted R-squared')
