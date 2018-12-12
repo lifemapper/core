@@ -641,6 +641,7 @@ class LMServiceType:
     SHAPEGRIDS = 'shapegrid'
     # Generic layers/layersets/matrices
     LAYERS = 'layer'
+    LAYERSETS = 'layersets'
     MATRICES = 'matrix'
     MATRIX_COLUMNS = 'column'
    

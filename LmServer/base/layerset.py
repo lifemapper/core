@@ -287,7 +287,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
               userId=None, dbId=None, modTime=None, 
               bbox=None, mapunits=None,
               # This must be specified
-              serviceType=None, 
+              serviceType=LMServiceType.LAYERSETS, 
               mapType=LMFileType.OTHER_MAP):
         """
         @summary Constructor for the LayerSet class
