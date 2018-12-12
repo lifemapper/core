@@ -200,6 +200,7 @@ class ParameterSweepConfiguration(object):
 
     # ........................................
     def add_projection(self, process_type, projection_id, occ_set_id,
+                       occ_shp_filename,
                        algorithm, model_scenario, projection_scenario,
                        projection_path, package_path, model_mask=None,
                        projection_mask=None, scale_parameters=None,
@@ -263,6 +264,7 @@ class ParameterSweepConfiguration(object):
             self.models[model_id] = {
                 RegistryKey.PROCESS_TYPE : mdl_process_type,
                 RegistryKey.OCCURRENCE_SET_ID : occ_set_id,
+                RegistryKey.OCCURRENCE_SET_PATH : occ_shp_filename,
                 RegistryKey.ALGORITHM : algo,
                 RegistryKey.SCENARIO : mdl_scn,
                 RegistryKey.MASK_ID : mdl_mask_id,
@@ -353,7 +355,8 @@ class ParameterSweepConfiguration(object):
                 # Add region layer, buffer, and occurrence set id
                 config_list.append(mask_config[RegistryKey.REGION_LAYER_PATH])
                 config_list.append(mask_config[RegistryKey.BUFFER])
-                config_list.append(mask_config[RegistryKey.OCCURRENCE_SET_ID])
+                config_list.append(
+                    mask_config[RegistryKey.OCCURRENCE_SET_PATH])
             elif method == MaskMethod.BLANK_MASK:
                 # Add template layer path for blank mask creation
                 config_list.append(mask_config[RegistryKey.TEMPLATE_LAYER_PATH])
@@ -373,6 +376,7 @@ class ParameterSweepConfiguration(object):
                 self.models[model_id][RegistryKey.PROCESS_TYPE],
                 model_id,
                 self.models[model_id][RegistryKey.OCCURRENCE_SET_ID],
+                self.models[model_id][RegistryKey.OCCURRENCE_SET_PATH],
                 self.models[model_id][RegistryKey.ALGORITHM],
                 self.models[model_id][RegistryKey.SCENARIO],
                 self.models[model_id][RegistryKey.MASK_ID],

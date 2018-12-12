@@ -558,7 +558,9 @@ class ChristopherWalken(LMObject):
         # Masking
         if model_mask_base is not None:
             model_mask = model_mask_base.copy()
-            model_mask[RegistryKey.OCCURRENCE_SET_ID] = prj.getOccurrenceSetId()
+            model_mask[
+                RegistryKey.OCCURRENCE_SET_PATH
+                ] = prj.occurrenceSet.getDLocation()
             projection_mask = {
                 RegistryKey.METHOD : MaskMethod.BLANK_MASK,
                 RegistryKey.TEMPLATE_LAYER_PATH : prj.projScenario.layers[
@@ -577,6 +579,7 @@ class ChristopherWalken(LMObject):
         
         sweep_config.add_projection(
             prj.processType, prj.getId(), prj.getOccurrenceSetId(),
+            prj.occurrenceSet.getDLocation(),
             alg, prj.modelScenario, prj.projScenario,
             prj.getDLocation(), prj.getProjPackageFilename(),
             model_mask=model_mask,
@@ -654,11 +657,12 @@ class ChristopherWalken(LMObject):
             occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
             sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
             
-            # Add occurrence set
-            sweep_config.add_occurrence_set(
-                occ.processType, occ.getId(), occ.getRawDLocation(),
-                occ.getDLocation(), occ.getDLocation(largeFile=True),
-                POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
+            # Add occurrence set if there is a process to perform
+            if occ.processType is not None:
+                sweep_config.add_occurrence_set(
+                    occ.processType, occ.getId(), occ.getRawDLocation(),
+                    occ.getDLocation(), occ.getDLocation(largeFile=True),
+                    POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
             
             # If we have enough points to model
             if occ.queryCount >= self.minPoints:

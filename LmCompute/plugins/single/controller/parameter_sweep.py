@@ -18,6 +18,7 @@ import LmCompute.plugins.single.mask.create_mask as create_mask
 from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
 import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
+from time import sleep
 
 # .............................................................................
 class ParameterSweep(object):
@@ -67,11 +68,13 @@ class ParameterSweep(object):
 
             try:
                 if mask_method == MaskMethod.HULL_REGION_INTERSECT:
-                    (region_layer_filename, buffer_distance, occ_set_id
+                    (region_layer_filename, buffer_distance, occ_shp_filename
                      ) = mask_config[5:]
                     # Get occurrence set shapefile
-                    occ_shp_filename, occ_status = self._get_registry_output(
-                        RegistryKey.OCCURRENCE, occ_set_id)
+                    if not os.path.exists(occ_shp_filename):
+                        occ_status = JobStatus.NOT_FOUND
+                    #occ_shp_filename, occ_status = self._get_registry_output(
+                    #    RegistryKey.OCCURRENCE, occ_set_id)
                     if occ_status < JobStatus.GENERAL_ERROR and \
                             occ_shp_filename:
                         create_mask.create_convex_hull_region_intersect_mask(
@@ -115,7 +118,8 @@ class ParameterSweep(object):
         """
         for mdl_config in self.sweep_config.get_model_config():
             
-            (process_type, model_id, occ_set_id, algorithm, model_scenario,
+            (process_type, model_id, occ_set_id, occ_shp_filename, algorithm,
+             model_scenario,
              mask_id, mdl_ruleset_path, projection_id, projection_path,
              package_path, scale_params, multiplier) = mdl_config
             
@@ -124,8 +128,14 @@ class ParameterSweep(object):
             mdl_metrics = None
             mdl_snippets = None
             
-            occ_shp_filename, occ_status = self._get_registry_output(
-                RegistryKey.OCCURRENCE, occ_set_id)
+            # Get occurrence set shapefile, sleep 3 seconds to allow
+            #    file to exist on front end as it may take a bit to
+            #    sync
+            sleep(3)
+            if not os.path.exists(occ_shp_filename):
+                occ_status = JobStatus.NOT_FOUND
+            #occ_shp_filename, occ_status = self._get_registry_output(
+            #    RegistryKey.OCCURRENCE, occ_set_id)
             # We can only compute if occurrence set was created successfully
             if occ_status >= JobStatus.GENERAL_ERROR:
                 occ_cont = False
@@ -304,7 +314,7 @@ class ParameterSweep(object):
             else:
                 self.log.error(
                     'Unknown process type: {} for occurrence set: {}'.format(
-                        occ_set_id, process_type))
+                        process_type, occ_set_id))
                 status = JobStatus.UNKNOWN_ERROR
             self._register_output_object(
                 RegistryKey.OCCURRENCE, occ_set_id, status, out_file, 

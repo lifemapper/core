@@ -40,6 +40,7 @@ class RegistryKey(object):
     
     # TODO: Should these be somewhere else?  Used for config, not SDM process
     OCCURRENCE_SET_ID = 'occ_set_id'
+    OCCURRENCE_SET_PATH = 'occ_set_path'
     ALGORITHM = 'algorithm'
     SCENARIO = 'scenario'
     MASK_ID = 'mask_id'
