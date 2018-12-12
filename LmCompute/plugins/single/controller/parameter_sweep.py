@@ -323,6 +323,7 @@ class ParameterSweep(object):
             (shapegrid_filename, pav_id, projection_id, pav_filename, squid,
              min_presence, max_presence, min_coverage) = pav_config
             
+            readyFilename(pav_filename, overwrite=True)
             # TODO(CJ) : Consider if we can reuse the encoder
             encoder = LayerEncoder(shapegrid_filename)
             
@@ -338,7 +339,6 @@ class ParameterSweep(object):
                         min_coverage)
                     pav = encoder.get_encoded_matrix()
                     if pav is not None:
-                        readyFilename(pav_filename, overwrite=True)
                         status = JobStatus.COMPUTED
                         with open(pav_filename, 'w') as pav_out_f:
                             pav.save(pav_out_f)
