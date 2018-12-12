@@ -73,6 +73,8 @@ class ParameterSweep(object):
                     # Get occurrence set shapefile
                     if not os.path.exists(occ_shp_filename):
                         occ_status = JobStatus.NOT_FOUND
+                    else:
+                        occ_status = JobStatus.COMPUTED
                     #occ_shp_filename, occ_status = self._get_registry_output(
                     #    RegistryKey.OCCURRENCE, occ_set_id)
                     if occ_status < JobStatus.GENERAL_ERROR and \
@@ -134,6 +136,8 @@ class ParameterSweep(object):
             sleep(3)
             if not os.path.exists(occ_shp_filename):
                 occ_status = JobStatus.NOT_FOUND
+            else:
+                occ_status = JobStatus.COMPUTED
             #occ_shp_filename, occ_status = self._get_registry_output(
             #    RegistryKey.OCCURRENCE, occ_set_id)
             # We can only compute if occurrence set was created successfully
