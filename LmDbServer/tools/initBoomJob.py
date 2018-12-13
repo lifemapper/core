@@ -514,6 +514,8 @@ class BOOMFiller(LMObject):
             config.set(SERVER_BOOM_HEADING, 'GBIF_OCCURRENCE_FILENAME', self.gbifFname)
             config.set(SERVER_BOOM_HEADING, 'GBIF_PROVIDER_FILENAME', 
                        GBIF_PROVIDER_FILENAME)
+        elif self.dataSource == SpeciesDatasource.TAXON_IDS:
+            config.set(SERVER_BOOM_HEADING, 'TAXON_ID_FILENAME', self.taxon_id_filename)
         elif self.dataSource == SpeciesDatasource.BISON:
             config.set(SERVER_BOOM_HEADING, 'BISON_TSN_FILENAME', self.bisonFname)
         elif self.dataSource == SpeciesDatasource.IDIGBIO:
@@ -527,7 +529,8 @@ class BOOMFiller(LMObject):
                        self.userOccSep)
         
         if self.userTaxonomyBasename is not None:
-            config.set(SERVER_BOOM_HEADING, 'USER_TAXONOMY_FILENAME')
+            config.set(SERVER_BOOM_HEADING, 'USER_TAXONOMY_FILENAME', 
+                       self.userTaxonomyBasename)
         # Use GBIF taxonomy for iDigBio/Biotaphy also
         if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
             config.set(SERVER_BOOM_HEADING, 'GBIF_TAXONOMY_FILENAME', 
@@ -1049,7 +1052,7 @@ class BOOMFiller(LMObject):
         return grimChains
 
     # .............................
-    def _getIdigQueryCmd(self, gridsetId, ws_dir):
+    def _getIdigQueryCmd(self, ws_dir):
         idigCmd = None
         if self.dataSource == SpeciesDatasource.TAXON_IDS:
             if not os.path.exists(self.taxon_id_filename):
@@ -1137,7 +1140,7 @@ class BOOMFiller(LMObject):
         boomCmd = BoomerCommand(self.outConfigFilename, boomSuccessFname)
                   
         # Add iDigBio MF and dependency to Boom, if specified as occurrence input
-        idigCmd = self._getIdigQueryCmd(boomGridsetId, ws_dir)
+        idigCmd = self._getIdigQueryCmd(ws_dir)
         if idigCmd is not None:
             # Add command to this Makeflow
             # TODO: allow non-local

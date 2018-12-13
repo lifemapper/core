@@ -411,8 +411,11 @@ currtime = dt.gmt().mjd
 config_file='/share/lm/data/archive/noob/heuchera_global_10min.ini'
 success_file='/share/lm/data/archive/noob/heuchera_global_10min.success'
 
-boomer = Boomer(config_file, success_file, log=logger)
 
+config_file='/share/lm/data/archive/anon/idigtest5.ini' 
+success_file='tmp/idigtest5.success'
+
+boomer = Boomer(config_file, success_file, log=logger)
 
 boomer.initializeMe()                      
 chris = boomer.christopher
