@@ -39,6 +39,7 @@ from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
                                          URL_ESCAPES, HTTPStatus, DWCNames)
 from LmCommon.common.lmXml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.readyfile import readyFilename
 
 # .............................................................................
 class APIQuery(object):
@@ -92,6 +93,7 @@ class APIQuery(object):
             mode = 'wb'
            
         try:
+            readyFilename(datafile)
             f = open(datafile, mode) 
             writer = unicodecsv.writer(f, delimiter=self.delimiter, 
                                       encoding=self.encoding)
@@ -930,7 +932,7 @@ class IdigbioAPI(APIQuery):
         # Keep trying in case no records are available
         tryidx = 0
         origFldnames = self._getIdigbioFields(taxon_ids[tryidx])
-        while not origFldnames and tryidx < len(taxon_ids):
+        while not origFldnames and tryidx < len(taxon_ids) -1:
             tryidx += 1
             origFldnames = self._getIdigbioFields(taxon_ids[tryidx])
         if not origFldnames:
