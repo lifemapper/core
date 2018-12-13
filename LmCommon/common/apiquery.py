@@ -46,6 +46,7 @@ class APIQuery(object):
     """
     Class to query APIs and return results
     """
+    GBIF_MISSING_KEY = 'unmatched_gbif_ids'
     def __init__(self, baseurl, 
               qKey = None, qFilters={}, otherFilters={}, filterString=None, 
               headers={}):
@@ -839,31 +840,18 @@ class IdigbioAPI(APIQuery):
         return newMeta
    
     # .............................................................................
-    def _getIdigbioFields(self, gbifTaxonId):
+    def _getIdigbioFields(self, rec):
         """
         @param gbifTaxonIds: one GBIF TaxonId or a list
         """
-        fldnames = None
-        api = idigbio.json()
-        recordQuery = {'taxonid':str(gbifTaxonId), 
-                       'geopoint': {'type': 'exists'}}
-        try:
-            output = api.search_records(rq=recordQuery, limit=1, offset=0)
-        except:
-            print 'Failed on {}'.format(gbifTaxonId)
-        else:
-            items = output['items']
-            print('  Retrieved 1 record for metadata')
-            if len(items) == 1:
-                itm = items[0]
-                fldnames = itm['indexTerms'].keys()
-                # add dec_long and dec_lat to records
-                fldnames.extend(['dec_lat', 'dec_long'])
-                fldnames.sort()
+        fldnames = rec['indexTerms'].keys()
+        # add dec_long and dec_lat to records
+        fldnames.extend(['dec_lat', 'dec_long'])
+        fldnames.sort()
         return fldnames
    
     # .............................................................................
-    def _getIdigbioRecords(self, gbifTaxonId, fields, writer):
+    def _getIdigbioRecords(self, gbifTaxonId, fields, writer, meta_output_file):
         """
         @param gbifTaxonIds: one GBIF TaxonId or a list
         """
@@ -880,81 +868,83 @@ class IdigbioAPI(APIQuery):
                                             limit=limit, offset=offset)
             except:
                 print 'Failed on {}'.format(gbifTaxonId)
+                total = 0
             else:
                 total = output['itemCount']
-                items = output['items']
-                currcount += len(items)
+                
+                # First gbifTaxonId where this data retrieval is successful, 
+                # get and write header and metadata
+                if total > 0 and fields is None:
+                    fields = self._getIdigbioFields(output['items'][0])
+                    # Write header in datafile
+                    writer.writerow(fields)
+                    # Write metadata file with column indices 
+                    meta = self._writeIdigbioMetadata(fields, meta_output_file)
+                    
+                # Write these records
+                recs = output['items']
+                currcount += len(recs)
                 print("  Retrieved {} records, {} records starting at {}"
-                      .format(len(items), limit, offset))
-                for itm in items:
-                    itmdata = itm['indexTerms']
+                      .format(len(recs), limit, offset))
+                for rec in recs:
+                    recdata = rec['indexTerms']
                     vals = []
                     for fldname in fields:
                         # Pull long, lat from geopoint
                         if fldname == 'dec_long':
                             try:
-                                vals.append(itmdata['geopoint']['lon'])
+                                vals.append(recdata['geopoint']['lon'])
                             except:
                                 vals.append('')
                         elif fldname == 'dec_lat':
                             try:
-                                vals.append(itmdata['geopoint']['lat'])
+                                vals.append(recdata['geopoint']['lat'])
                             except:
                                 vals.append('')
                         # or just append verbatim
                         else:
                             try:
-                                vals.append(itmdata[fldname])
+                                vals.append(recdata[fldname])
                             except:
                                 vals.append('')
                     
                     writer.writerow(vals)
                 offset += limit
         print('Retrieved {} of {} reported records for {}'.format(currcount, total, gbifTaxonId))
-        return currcount
+        return currcount, fields
 
     
     # .............................................................................
     def assembleIdigbioData(self, taxon_ids, point_output_file, meta_output_file, 
                             missing_id_file=None): 
-        unmatched_gbif_ids = []     
         if not(isinstance(taxon_ids, list)):
             taxon_ids = [taxon_ids]
             
+        # Delete old files
         for fname in (point_output_file, meta_output_file):
             if os.path.exists(fname):
                 print('Deleting existing file {} ...'.format(fname))
                 os.remove(fname)
             
-        summary = {'unmatched_gbif_ids': []}
+        summary = {self.UNMATCHED_IDS_KEY: []}
         writer, f = self._getCSVWriter(point_output_file, doAppend=False)
          
-        # Keep trying in case no records are available
-        tryidx = 0
-        origFldnames = self._getIdigbioFields(taxon_ids[tryidx])
-        while not origFldnames and tryidx < len(taxon_ids) -1:
-            tryidx += 1
-            origFldnames = self._getIdigbioFields(taxon_ids[tryidx])
-        if not origFldnames:
-            raise Exception('Unable to pull data from iDigBio')
-         
-        # write header, but also put column indices in metadata
-        writer.writerow(origFldnames)
-        meta = self._writeIdigbioMetadata(origFldnames, meta_output_file)
-         
         # get/write data
+        fldnames = None
         for gid in taxon_ids:
-            ptCount = self._getIdigbioRecords(gid, origFldnames, writer)
+            # Pull/write fieldnames first time
+            ptCount, fldnames = self._getIdigbioRecords(gid, fldnames, 
+                                                    writer, meta_output_file)
             if ptCount > 0:
                 summary[gid] = ptCount
             else:
-                unmatched_gbif_ids.append(gid)
-                
+                summary[self.UNMATCHED_IDS_KEY].append(gid)
+                         
         # get/write missing data
-        if missing_id_file is not None and len(summary['unmatched_gbif_ids']) > 0:
+        if missing_id_file is not None and len(summary[self.UNMATCHED_IDS_KEY]) > 0:
             try: 
                 f = open(missing_id_file, 'w')
-                for gid in summary['unmatched_gbif_ids']:
+                for gid in summary[self.UNMATCHED_IDS_KEY]:
                     f.write(gid + '\n')
             except Exception, e:
                 raise
@@ -1123,6 +1113,65 @@ if __name__ == '__main__':
 
          
 """
+import idigbio
+import json
+import os
+import requests
+import sys
+from types import (BooleanType, DictionaryType, TupleType, FloatType, IntType, 
+                   StringType, UnicodeType, ListType)
+import unicodecsv
+import urllib
+
+from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
+                                         IDIGBIO, IDIGBIO_QUERY, 
+                                         URL_ESCAPES, HTTPStatus, DWCNames)
+from LmCommon.common.lmXml import fromstring, deserialize
+from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.readyfile import readyFilename
+
+taxon_ids = [1000431, 1000432, 1000488, 1000410, 1000443, 1000519, 1000546, 
+             1000464, 1000541, 1000515, 1000543, 1000511, 1000461, 1000525, 
+             1000447, 1000483, 1000329, 1000454, 1000484, 1000575]
+
+idigAPI = IdigbioAPI()
+
+unmatched_gbif_ids = []     
+    
+for fname in (point_output_file, meta_output_file):
+    if os.path.exists(fname):
+        print('Deleting existing file {} ...'.format(fname))
+        os.remove(fname)
+    
+summary = {'unmatched_gbif_ids': []}
+writer, f = self._getCSVWriter(point_output_file, doAppend=False)
+ 
+tryidx = 0
+origFldnames = self._getIdigbioFields(taxon_ids[tryidx])
+while not origFldnames and tryidx < len(taxon_ids) -1:
+    tryidx += 1
+    
+        
+# get/write missing data
+if missing_id_file is not None and len(summary['unmatched_gbif_ids']) > 0:
+    try: 
+        f = open(missing_id_file, 'w')
+        for gid in summary['unmatched_gbif_ids']:
+            f.write(gid + '\n')
+    except Exception, e:
+        raise
+    finally:
+        f.close()
+
+return summary
 
 
+# summary = idigAPI.assembleIdigbioData(taxon_ids, point_output_file, meta_output_file, missing_id_file=None)                                          
+# print('Missing: {}'.format(summary['unmatched_gbif_ids'])
+
+$PYTHON /opt/lifemapper/LmCompute/tools/common/get_idig_data.py \
+/state/partition1/lmscratch/temp/user_taxon_ids_98006.txt \
+tmp/user_taxon_ids_98006.csv \
+tmp/user_taxon_ids_98006.json \
+--missing_id_file=tmp/user_taxon_ids_98006.missing
 """

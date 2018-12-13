@@ -54,6 +54,7 @@ from LmServer.legion.tree import Tree
 DEV_SERVER = 'http://141.211.236.35:10999'
 INDUCED_SUBTREE_BASE_URL = '{}/induced_subtree'.format(DEV_SERVER)
 OTTIDS_FROM_GBIFIDS_URL = '{}/ottids_from_gbifids'.format(DEV_SERVER)
+GBIF_MISSING_KEY = GbifAPI.GBIF_MISSING_KEY
 
 # .............................................................................
 class Partners(object):
@@ -101,7 +102,7 @@ def get_ottids_from_gbifids(gbif_ids):
                           data=json.dumps(request_body), headers=headers)
    
     resp = json.load(urllib2.urlopen(req))
-    unmatchedIds = resp['unmatched_gbif_ids']
+    unmatchedIds = resp[GBIF_MISSING_KEY]
    
     id_map = resp["gbif_ott_id_map"]
    
@@ -531,6 +532,7 @@ from LmCommon.common.apiquery import IdigbioAPI
 DEV_SERVER = 'http://141.211.236.35:10999'
 INDUCED_SUBTREE_BASE_URL = '{}/induced_subtree'.format(DEV_SERVER)
 OTTIDS_FROM_GBIFIDS_URL = '{}/ottids_from_gbifids'.format(DEV_SERVER)
+GBIF_MISSING_KEY = GbifAPI.GBIF_MISSING_KEY
 
 
 logger = ScriptLogger('partnerData.test')
@@ -550,6 +552,7 @@ names = ['Methanococcoides burtonii', 'Methanogenium frigidum',
          'Ptygura linguata', 'Ptygura barbata', 'Ptygura crystallina', 
          'Ptygura libera', 'Floscularia janus', 'Floscularia conifera', 
          'Floscularia ringens', 'Sinantherina semibullata']
+
 
 names = ['Prenolepis imparis']
 
@@ -572,8 +575,7 @@ taxon_ids = [match[0] for match in name_to_gbif_ids.values()]
 # else:
 idigAPI = IdigbioAPI()
 summary = idigAPI.assembleIdigbioData(taxon_ids, point_output_file, meta_output_file, missing_id_file=None)                                          
-print('Missing: {}'.format(summary['unmatched_gbif_ids'])
-gbifid_counts, idig_unmatched_gbif_ids = iquery.assembleIdigbioData(user_gbif_ids, point_output_file, meta_output_file)   
+print('Missing: {}'.format(summary[GBIF_MISSING_KEY])
                  
 idig_gbif_ids = gbifid_counts.keys()
 

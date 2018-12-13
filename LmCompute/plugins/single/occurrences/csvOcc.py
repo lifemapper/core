@@ -2,7 +2,7 @@
 """
 import os
 
-from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
+# from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import (
     ENCODING, JobStatus, LMFormat, ProcessType)
@@ -197,7 +197,6 @@ from types import (BooleanType, DictionaryType, FloatType, IntType, ListType,
 import urllib
 import xml.etree.ElementTree as ET
 
-from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import JobStatus, ProcessType, ENCODING
 from LmCommon.common.readyfile import readyFilename

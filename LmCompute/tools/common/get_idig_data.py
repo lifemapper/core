@@ -83,10 +83,33 @@ import os
 
 from LmCommon.common.apiquery import IdigbioAPI
 
-from LmCompute.tools.common.get_idig_data import *
+from LmCompute.tools.common.get_idig_data import _getUserInput
 
-taxon_id_file =  
-point_output_file =
-meta_output_file =
-missing_id_file=None
+def _getUserInput(filename):
+    items = []
+    if os.path.exists(filename):
+        try:
+            for line in open(filename):
+                items.append(line.strip())
+        except:
+            raise Exception('Failed to read file {}'.format(filename))
+    else:
+        raise Exception('File {} does not exist'.format(filename))
+    return items
+
+
+taxon_id_file =  '/state/partition1/lmscratch/temp/user_taxon_ids_98006.txt'
+point_output_file = 'tmp/user_taxon_ids_98006.csv'
+meta_output_file = 'tmp/user_taxon_ids_98006.json'
+missing_id_file= 'tmp/user_taxon_ids_98006.missing'
+
+taxon_ids = _getUserInput(taxon_id_file)
+idigAPI = IdigbioAPI()
+
+summary = idigAPI.assembleIdigbioData(taxon_ids, point_output_file, 
+                                      meta_output_file, 
+                                      missing_id_file=missing_id_file)
+
+
+
 """
