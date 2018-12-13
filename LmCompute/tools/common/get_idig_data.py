@@ -30,7 +30,7 @@ import os
 from LmCommon.common.apiquery import IdigbioAPI
 
 # ...............................................
-def _getUserInput(self, filename):
+def _getUserInput(filename):
     items = []
     if os.path.exists(filename):
         try:
@@ -43,7 +43,7 @@ def _getUserInput(self, filename):
     return items
 
 # ...............................................
-def getPartnerSpeciesData(self, taxon_id_file, 
+def getPartnerSpeciesData(taxon_id_file, 
                           point_output_file, meta_output_file,
                           missing_id_file=None):
     taxon_ids = _getUserInput(taxon_id_file)
