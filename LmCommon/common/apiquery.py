@@ -926,7 +926,7 @@ class IdigbioAPI(APIQuery):
                 print('Deleting existing file {} ...'.format(fname))
                 os.remove(fname)
             
-        summary = {self.UNMATCHED_IDS_KEY: []}
+        summary = {self.GBIF_MISSING_KEY: []}
         writer, f = self._getCSVWriter(point_output_file, doAppend=False)
          
         # get/write data
@@ -938,13 +938,13 @@ class IdigbioAPI(APIQuery):
             if ptCount > 0:
                 summary[gid] = ptCount
             else:
-                summary[self.UNMATCHED_IDS_KEY].append(gid)
+                summary[self.GBIF_MISSING_KEY].append(gid)
                          
         # get/write missing data
-        if missing_id_file is not None and len(summary[self.UNMATCHED_IDS_KEY]) > 0:
+        if missing_id_file is not None and len(summary[self.GBIF_MISSING_KEY]) > 0:
             try: 
                 f = open(missing_id_file, 'w')
-                for gid in summary[self.UNMATCHED_IDS_KEY]:
+                for gid in summary[self.GBIF_MISSING_KEY]:
                     f.write(gid + '\n')
             except Exception, e:
                 raise
