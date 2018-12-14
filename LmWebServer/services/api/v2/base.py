@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 """The module provides a base Lifemapper service class
 """
 import cherrypy

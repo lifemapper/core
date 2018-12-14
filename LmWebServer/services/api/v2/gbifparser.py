@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 """This module provides a wrapper around GBIF's names service
 """
 import cherrypy
@@ -27,7 +29,8 @@ class GBIFNamesService(LmService):
         
         if not isinstance(names_obj, list):
             raise cherrypy.HTTPError(
-                HTTPStatus.BAD_REQUEST, 'Names must be provided as a JSON list')
+                HTTPStatus.BAD_REQUEST,
+                'Names must be provided as a JSON list')
         else:
             ret = []
             for name in names_obj:

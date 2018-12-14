@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 """This module provides a wrapper around OpenTree's induce subtree service
 
 Todo:

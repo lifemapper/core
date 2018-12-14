@@ -124,7 +124,7 @@ def facetArchiveOnGridset(userId=None):
     ]
     
     otherParams = '&facet=true&facet.field={}&wt=python&indent=true'.format(
-                                                                        SOLR_FIELDS.GRIDSET_ID)
+        SOLR_FIELDS.GRIDSET_ID)
     
     rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams,
                                          otherParams=otherParams))
@@ -132,12 +132,12 @@ def facetArchiveOnGridset(userId=None):
     return rDict['facet_counts']['facet_fields'][SOLR_FIELDS.GRIDSET_ID]
 
 # .............................................................................
-def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None, gridSetId=None, 
-                             modelScenarioCode=None, pointMax=None, pointMin=None, 
-                             projectionScenarioCode=None, squid=None, taxKingdom=None, 
-                             taxPhylum=None, taxClass=None, taxOrder=None, 
-                             taxFamily=None, taxGenus=None, taxSpecies=None, 
-                             userId=None):
+def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None,
+                      gridSetId=None, modelScenarioCode=None, pointMax=None,
+                      pointMin=None, projectionScenarioCode=None, squid=None,
+                      taxKingdom=None, taxPhylum=None, taxClass=None,
+                      taxOrder=None, taxFamily=None, taxGenus=None,
+                      taxSpecies=None, userId=None):
     """
     @summary: Query the PAV archive Solr index
     
@@ -183,10 +183,10 @@ def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None, gridSetId
     return rDict['response']['docs']
 
 # .............................................................................
-def querySnippetIndex(ident1=None, provider=None, collection=None, 
-                             catalogNumber=None, operation=None, afterTime=None,
-                             beforeTime=None, ident2=None, url=None, who=None,
-                             agent=None, why=None):
+def querySnippetIndex(ident1=None, provider=None, collection=None,
+                      catalogNumber=None, operation=None, afterTime=None,
+                      beforeTime=None, ident2=None, url=None, who=None,
+                      agent=None, why=None):
     """
     @summary: Query the snippet Solr index
     @param ident1: An identifier for the primary object (probably occurrence 
@@ -292,7 +292,8 @@ def add_taxa_to_taxonomy_index(sciname_objects):
                    [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.txOrder],
                    [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
                    [SOLR_TAXONOMY_FIELDS.USER_ID, sno.getUserId()],
-                   [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID, sno.taxonomySourceId()],
+                   [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
+                    sno.taxonomySourceId()],
                    [SOLR_TAXONOMY_FIELDS.ID, sno.getId()]
         ])
     post_doc = buildSolrDocument(doc_pairs)
@@ -328,7 +329,8 @@ def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
     for taxon_info in taxon_dicts:
         doc_pairs.append([
             [SOLR_TAXONOMY_FIELDS.ID, taxon_info['taxonid']],
-            [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID, taxon_info['taxonomysourceid']],
+            [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
+             taxon_info['taxonomysourceid']],
             [SOLR_TAXONOMY_FIELDS.USER_ID, taxon_info['userid']],
             [SOLR_TAXONOMY_FIELDS.TAXON_KEY, taxon_info['taxonomykey']],
             [SOLR_TAXONOMY_FIELDS.SQUID, taxon_info['squid']],
