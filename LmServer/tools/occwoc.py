@@ -638,7 +638,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
     def _locateRawData(self, occ, data=None):
         rdloc = occ.createLocalDLocation(raw=True)
         success = occ.writeCSV(data, dlocation=rdloc, overwrite=True,
-                                      header=self._fieldNames)
+                               header=self._fieldNames)
         if not success:
             rdloc = None
             self.log.debug('Unable to write CSV file {}'.format(rdloc))
@@ -654,8 +654,8 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
     def __init__(self, scribe, user, archiveName, epsg, expDate, occFname, 
                      providerFname=None, taxonSourceName=None, logger=None):
         super(GBIFWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                                                occFname, taxonSourceName=taxonSourceName, 
-                                                logger=logger)
+                                      occFname, taxonSourceName=taxonSourceName, 
+                                      logger=logger)
         # GBIF-specific grouped/sorted CSV data
         self.processType = ProcessType.GBIF_TAXA_OCCURRENCE
         self._dumpfile = None
@@ -680,8 +680,8 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
         
         # Save known GBIF provider/IDs for lookup if available
         try:
-            self._providers, self._provCol = self._readProviderKeys(providerFname, 
-                                                                                GBIF.PROVIDER_FIELD)
+            self._providers, self._provCol = self._readProviderKeys(
+                providerFname, GBIF.PROVIDER_FIELD)
         except:
             self._providers = []
             self._provCol = -1
@@ -913,27 +913,29 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
             pth, fname = os.path.split(bubbleFname)
             basename, ext = os.path.splitext(fname)
             parts = basename.split('_')
-            try:
-                genus, species, idstr = parts 
+            if len(parts) >= 2:
+                genus =  parts[0]
+                species = parts[1]
+                try:
+                    idstr = parts[2]
+                    opentreeId = int(idstr)
+                except:
+                    self.log.error('Unable to extract integer openTreeId from filename {}'
+                                        .format(basename))
                 binomial = ' '.join((genus, species))
-            except:
+            else:
                 self.log.error('Unable to parse filename {} into binomial and opentreeId'
                                     .format(basename))
-            try:
-                tmp = fromUnicode(toUnicode(binomial))
-            except Exception, e:
-                self.log.error('Failed to convert binomial to and from unicode')
-                binomial = None
-                
-            try:
-                opentreeId = int(idstr)
-            except:
-                self.log.error('Unable to extract integer openTreeId from filename {}'
-                                    .format(basename))
-            with open(bubbleFname) as f:
-                for i, l in enumerate(f):
-                    pass
-            recordCount = i
+        try:
+            tmp = fromUnicode(toUnicode(binomial))
+        except Exception, e:
+            self.log.error('Failed to convert binomial to and from unicode')
+            binomial = None            
+                    
+        with open(bubbleFname) as f:
+            for idx, line in enumerate(f):
+                pass
+        recordCount = idx
 
         return binomial, opentreeId, recordCount
  
