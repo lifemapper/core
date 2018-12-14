@@ -11,6 +11,7 @@ from urlparse import urlparse
 
 from LmServer.common.localconstants import PUBLIC_FQDN
 from LmWebServer.common.lmconstants import HTTPMethod
+import json
 
 # .............................................................................
 class _SERVICE:
@@ -584,7 +585,7 @@ class LmWebClient(object):
     # = OGC =
     # =======
     # ............................
-    def get_ogc(self, mapName, bbox=None, bgcolor=None, color=None,
+    def get_ogc(self, map_name, bbox=None, bgcolor=None, color=None,
                 coverage=None, crs=None, exceptions=None, height=None,
                 layer=None, layers=None, point=None, request=None, format=None,
                 service=None, sld=None, sld_body=None, srs=None, styles=None,
@@ -594,7 +595,7 @@ class LmWebClient(object):
         """
         return self._make_request(
             self._build_base_url(_SERVICE.OGC), method=HTTPMethod.GET,
-            headers=headers, mapName=mapName, bbox=bbox, bgcolor=bgcolor,
+            headers=headers, map_name=map_name, bbox=bbox, bgcolor=bgcolor,
             color=color, coverage=coverage, crs=crs, exceptions=exceptions,
             height=height, layer=layer, layers=layers, point=point,
             request=request, format=format, service=service, sld=sld,
@@ -1052,7 +1053,7 @@ class LmWebClient(object):
         resp = req.read()
         req.close()
         return resp
-        
+
     # ............................
     def logout(self):
         """Logs out of the server
@@ -1061,3 +1062,12 @@ class LmWebClient(object):
         resp = req.read()
         req.close()
         return resp
+
+    # ==============
+    # = Processing =
+    # ==============
+    # ............................
+    def deserialize(self, response_object):
+        """Deserializes a JSON file-like object
+        """
+        return json.load(response_object)
