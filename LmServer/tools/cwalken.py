@@ -259,18 +259,18 @@ class ChristopherWalken(LMObject):
                                          epsg, expDate, occIdFname, 
                                          logger=self.log)
            
-        # Biotaphy data, individual files, metadata in filenames
-        elif datasource == SpeciesDatasource.BIOTAFFY:
-            occData = self._getBoomOrDefault('USER_OCCURRENCE_DATA')
-            occDelimiter = self._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
-            occDir= os.path.join(boompath, occData)
-            occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
-            dirContentsFname = os.path.join(boompath, occData + LMFormat.TXT.ext)
-            weaponOfChoice = TinyBubblesWoC(self._scribe, userId, archiveName, 
-                                      epsg, expDate, occDir, occMeta, occDelimiter,
-                                      dirContentsFname, 
-                                      taxonSourceName=taxonSourceName, 
-                                      logger=self.log)
+#         # Biotaphy data, individual files, metadata in filenames
+#         elif datasource == SpeciesDatasource.BIOTAFFY:
+#             occData = self._getBoomOrDefault('USER_OCCURRENCE_DATA')
+#             occDelimiter = self._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
+#             occDir= os.path.join(boompath, occData)
+#             occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
+#             dirContentsFname = os.path.join(boompath, occData + LMFormat.TXT.ext)
+#             weaponOfChoice = TinyBubblesWoC(self._scribe, userId, archiveName, 
+#                                       epsg, expDate, occDir, occMeta, occDelimiter,
+#                                       dirContentsFname, 
+#                                       taxonSourceName=taxonSourceName, 
+#                                       logger=self.log)
         
         # iDigBio or User
         else:
@@ -639,6 +639,9 @@ class ChristopherWalken(LMObject):
             mask_layer_name = proc_params[PRE_PROCESS_KEY][MASK_KEY][MASK_LAYER_KEY]
             mask_layer = self._scribe.getLayer(userId=self.userId, 
                                     lyrName=mask_layer_name, epsg=self.epsg)
+            if mask_layer is None:
+                raise LMError('Failed to retrieve layer {} for user {}'
+                              .format(mask_layer_name, self.userId))
             model_mask_base = {
                 RegistryKey.REGION_LAYER_PATH : mask_layer.getDLocation(),
                 RegistryKey.BUFFER : proc_params[PRE_PROCESS_KEY][MASK_KEY][
