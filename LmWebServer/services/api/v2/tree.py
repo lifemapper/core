@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 """This module provides REST services for trees
 """
 import cherrypy
@@ -145,9 +147,9 @@ class TreeService(LmService):
                     self.getUserId(), pathTreeId))
     
     # ................................
-    def _list_trees(self, userId, afterTime=None, beforeTime=None, isBinary=None, 
-                            isUltrametric=None, hasBranchLengths=None, limit=100, 
-                            metaString=None, name=None, offset=0):
+    def _list_trees(self, userId, afterTime=None, beforeTime=None,
+                    isBinary=None, isUltrametric=None, hasBranchLengths=None,
+                    limit=100, metaString=None, name=None, offset=0):
         """Lists tree objects matching the specified criteria.
 
         Args:

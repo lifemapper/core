@@ -72,8 +72,9 @@ class GridsetAnalysisService(LmService):
                'All matrices must be complete'))
 
         if doMcpa:
-            mcpaPossible = len(gridset.getBiogeographicHypotheses()) > 0 and \
-                           gridset.tree is not None
+            mcpaPossible = len(
+                gridset.getBiogeographicHypotheses()
+                ) > 0 and gridset.tree is not None
         if not mcpaPossible:
             raise cherrypy.HTTPError(
                 HTTPStatus.CONFLICT, 
@@ -89,8 +90,9 @@ class GridsetAnalysisService(LmService):
             cherrypy.response.status = HTTPStatus.ACCEPTED
             return gridset
         else:
-            raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST,
-                              'Must specify at least one analysis to perform')
+            raise cherrypy.HTTPError(
+                HTTPStatus.BAD_REQUEST,
+                'Must specify at least one analysis to perform')
 
     # ................................
     def _getGridSet(self, pathGridSetId):
@@ -98,8 +100,9 @@ class GridsetAnalysisService(LmService):
         """
         gs = self.scribe.getGridset(gridsetId=pathGridSetId, fillMatrices=True)
         if gs is None:
-            raise cherrypy.HTTPError(HTTPStatus.NOT_FOUND, 
-                        'GridSet {} was not found'.format(pathGridSetId))
+            raise cherrypy.HTTPError(
+                HTTPStatus.NOT_FOUND,
+                'GridSet {} was not found'.format(pathGridSetId))
         if checkUserPermission(self.getUserId(), gs, HTTPMethod.GET):
             return gs
         else:
@@ -116,44 +119,15 @@ class GridsetAnalysisService(LmService):
             Change this to use something at a lower level.  This is using the
                 same path construction as the getBoomPackage script
         """
-        return os.path.join(ARCHIVE_PATH, self.getUserId(), 'uploads', 'biogeo')
+        return os.path.join(
+            ARCHIVE_PATH, self.getUserId(), 'uploads', 'biogeo')
 
 # .............................................................................
 @cherrypy.expose
 @cherrypy.popargs('pathBioGeoId')
 class GridsetBioGeoService(LmService):
+    """Service class for gridset biogeographic hypotheses
     """
-    @summary: This class is for the service representing gridset biogeographic
-                     hypotheses.  The dispatcher is responsible for calling the 
-                     correct method.
-    """
-    # TODO: Enable delete.  Probably need an id or delete all
-    # ................................
-    #def DELETE(self, pathGridSetId):
-    #    """
-    #    @summary: Attempts to delete a tree
-    #    @param pathTreeId: The id of the tree to delete
-    #    """
-    #    tree = self.scribe.getTree(treeId=pathTreeId)
-    #
-    #    if tree is None:
-    #        raise cherrypy.HTTPError(404, "Tree {} not found".format(pathTreeId))
-    #    
-    #    # If allowed to, delete
-    #    if checkUserPermission(self.getUserId(), tree, HTTPMethod.DELETE):
-    #        success = self.scribe.deleteObject(tree)
-    #        if success:
-    #            cherrypy.response.status = 204
-    #            return 
-    #        else:
-    #            # TODO: How can this happen?  Make sure we catch those cases and 
-    #            #             respond appropriately.  We don't want 500 errors
-    #            raise cherrypy.HTTPError(500, 
-    #                            "Failed to delete tree")
-    #    else:
-    #        raise cherrypy.HTTPError(403, 
-    #                  "User does not have permission to delete this tree")
-
     # ................................
     @lmFormatter
     def GET(self, pathGridSetId, pathBioGeoId=None, **params):
@@ -172,15 +146,15 @@ class GridsetBioGeoService(LmService):
                     return bg
         
         # If not found 404...
-        raise cherrypy.HTTPError(404, 
+        raise cherrypy.HTTPError(
+            HTTPStatus.NOT_FOUND, 
             'Biogeographic hypothesis matrix {} not found for gridset {}'.format(
                 pathBioGeoId, pathGridSetId))
         
     # ................................
     @lmFormatter
     def POST(self, pathGridSetId, **params):
-        """
-        @summary: Adds a set of biogeographic hypotheses to the gridset
+        """Adds a set of biogeographic hypotheses to the gridset
         """
         # Get gridset
         gridset = self._getGridSet(pathGridSetId)
@@ -201,7 +175,7 @@ class GridsetBioGeoService(LmService):
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST, 
                     'Cannot get gridset for reference identfier {}'.format(
-                                refObj[BG_REF_ID_KEY]))
+                        refObj[BG_REF_ID_KEY]))
             refGridset = self._getGridSet(refGsId)
 
             # Get hypotheses from other gridset
@@ -350,19 +324,20 @@ class GridsetBioGeoService(LmService):
 
     # ................................
     def _getGridSet(self, pathGridSetId):
-        """
-        @summary: Attempt to get a GridSet
+        """Attempts to get a GridSet
         """
         gs = self.scribe.getGridset(gridsetId=pathGridSetId, fillMatrices=True)
         if gs is None:
-            raise cherrypy.HTTPError(404, 
-                                'GridSet {} was not found'.format(pathGridSetId))
+            raise cherrypy.HTTPError(
+                HTTPStatus.NOT_FOUND,
+                'GridSet {} was not found'.format(pathGridSetId))
         if checkUserPermission(self.getUserId(), gs, HTTPMethod.GET):
             return gs
         else:
-            raise cherrypy.HTTPError(403, 
-                  'User {} does not have permission to access GridSet {}'.format(
-                            self.getUserId(), pathGridSetId))
+            raise cherrypy.HTTPError(
+                HTTPStatus.FORBIDDEN,
+                'User {} does not have permission to access GridSet {}'.format(
+                    self.getUserId(), pathGridSetId))
     
     # ................................
     def _get_user_dir(self):
@@ -421,22 +396,24 @@ class GridsetTreeService(LmService):
         
     # ................................
     @lmFormatter
-    def POST(self, pathGridSetId, pathTreeId=None, name=None, 
-                treeSchema=DEFAULT_TREE_SCHEMA, **params):
+    def POST(self, pathGridSetId, pathTreeId=None, name=None,
+             treeSchema=DEFAULT_TREE_SCHEMA, **params):
         """
         @summary: Posts a new tree and adds it to the gridset
         """
         if pathTreeId is not None:
             tree = self.scribe.getTree(treeId=pathTreeId)
             if tree is None:
-                raise cherrypy.HTTPError(404, 
-                                    'Tree {} was not found'.format(pathTreeId))
+                raise cherrypy.HTTPError(
+                    HTTPStatus.NOT_FOUND,
+                    'Tree {} was not found'.format(pathTreeId))
             if checkUserPermission(self.getUserId(), tree, HTTPMethod.GET):
                 pass
             else:
                 # Raise exception if user does not have permission
-                raise cherrypy.HTTPError(403, 
-                      'User {} does not have permission to access tree {}'.format(
+                raise cherrypy.HTTPError(
+                    HTTPStatus.FORBIDDEN,
+                    'User {} does not have permission to access tree {}'.format(
                                 self.getUserId(), pathTreeId))
         else:
             if name is None:
@@ -466,14 +443,16 @@ class GridsetTreeService(LmService):
         """
         gs = self.scribe.getGridset(gridsetId=pathGridSetId, fillMatrices=True)
         if gs is None:
-            raise cherrypy.HTTPError(404, 
-                                'GridSet {} was not found'.format(pathGridSetId))
+            raise cherrypy.HTTPError(
+                HTTPStatus.NOT_FOUND,
+                'GridSet {} was not found'.format(pathGridSetId))
         if checkUserPermission(self.getUserId(), gs, HTTPMethod.GET):
             return gs
         else:
-            raise cherrypy.HTTPError(403, 
-                  'User {} does not have permission to access GridSet {}'.format(
-                            self.getUserId(), pathGridSetId))
+            raise cherrypy.HTTPError(
+                HTTPStatus.FORBIDDEN,
+                'User {} does not have permission to access GridSet {}'.format(
+                    self.getUserId(), pathGridSetId))
     
 # .............................................................................
 @cherrypy.expose
@@ -497,22 +476,25 @@ class GridSetService(LmService):
         gs = self.scribe.getGridset(gridsetId=pathGridSetId)
 
         if gs is None:
-            raise cherrypy.HTTPError(404, "Grid set not found")
+            raise cherrypy.HTTPError(
+                HTTPStatus.NOT_FOUND, "Grid set not found")
         
         # If allowed to, delete
         if checkUserPermission(self.getUserId(), gs, HTTPMethod.DELETE):
             success = self.scribe.deleteObject(gs)
             if success:
-                cherrypy.response.status = 204
+                cherrypy.response.status = HTTPStatus.NO_CONTENT
                 return 
             else:
                 # TODO: How can this happen?  Make sure we catch those cases and 
                 #             respond appropriately.  We don't want 500 errors
-                raise cherrypy.HTTPError(500, 
-                                "Failed to delete grid set")
+                raise cherrypy.HTTPError(
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to delete grid set")
         else:
-            raise cherrypy.HTTPError(403, 
-                      "User does not have permission to delete this grid set")
+            raise cherrypy.HTTPError(
+                HTTPStatus.FORBIDDEN,
+                "User does not have permission to delete this grid set")
 
     # ................................
     @lmFormatter
@@ -550,7 +532,7 @@ class GridSetService(LmService):
         gridset = bp.init_boom()
 
         # TODO: What do we return?
-        cherrypy.response.status = 202
+        cherrypy.response.status = HTTPStatus.ACCEPTED
         return Atom(gridset.getId(), gridset.name, gridset.metadataUrl, 
                         gridset.modTime, epsg=gridset.epsgcode)
         

@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 """This module provides services for query and subsetting of global PAMs
 """
 import cherrypy
@@ -95,11 +97,12 @@ class GlobalPAMService(LmService):
     
     # ................................
     def _make_solr_query(self, algorithmCode=None, bbox=None, displayName=None,
-                       gridSetId=None, modelScenarioCode=None, pointMax=None,
-                       pointMin=None, urlUser=None, projectionScenarioCode=None,
-                       squid=None, taxKingdom=None, taxPhylum=None,
-                       taxClass=None, taxOrder=None, taxFamily=None,
-                       taxGenus=None, taxSpecies=None):
+                         gridSetId=None, modelScenarioCode=None, pointMax=None,
+                         pointMin=None, urlUser=None,
+                         projectionScenarioCode=None, squid=None,
+                         taxKingdom=None, taxPhylum=None, taxClass=None,
+                         taxOrder=None, taxFamily=None, taxGenus=None,
+                         taxSpecies=None):
         
         return queryArchiveIndex(
             algorithmCode=algorithmCode, bbox=bbox, displayName=displayName,

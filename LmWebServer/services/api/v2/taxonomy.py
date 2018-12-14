@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 """This module contains service code for performing searches on taxonomy.
 """
 import cherrypy
