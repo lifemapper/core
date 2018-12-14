@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-@summary: This module provides REST services for matrix columns
+"""This module provides REST services for matrix columns
 """
 import cherrypy
 
