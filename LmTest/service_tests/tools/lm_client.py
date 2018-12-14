@@ -755,12 +755,13 @@ class LmWebClient(object):
             method=HTTPMethod.DELETE, headers=headers)
 
     # ............................
-    def get_sdm_projection(self, prjId, headers=None, response_format=None):
+    def get_sdm_projection(self, projection_id, headers=None,
+                           response_format=None):
         """Attempt to retrieve an SDM projection
         """
         return self._make_request(
             self._build_base_url(
-                _SERVICE.SDM_PROJECT, object_id=prjId,
+                _SERVICE.SDM_PROJECT, object_id=projection_id,
                 response_format=response_format),
             method=HTTPMethod.GET, headers=headers)
     
