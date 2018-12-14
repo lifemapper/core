@@ -218,8 +218,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             occ.queryCount = dataCount
             occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
             # Update raw data in new or reset object
-            rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKey, 
-                                                 data=data)
+            rdloc = self._locateRawData(occ, data=data)
             if not rdloc:
                 raise LMError(currargs='    Failed to find raw data location')
             occ.setRawDLocation(rdloc, currtime)
@@ -261,10 +260,10 @@ class _SpeciesWeaponOfChoice(LMObject):
                 if rankStr in ('SPECIES', 'GENUS') and taxStatus == 'ACCEPTED':
 #                 if taxonKey in (retSpecieskey, acceptedkey, genuskey):
                     currtime = dt.gmt().mjd
+                    # Do not tie GBIF taxonomy to one userid
                     sname = ScientificName(scinameStr, 
                                          rank=rankStr, 
-                                         canonicalName=canonicalStr,
-                                         userId=self.userId, squid=None,
+                                         canonicalName=canonicalStr, squid=None,
                                          lastOccurrenceCount=taxonCount,
                                          kingdom=kingdomStr, phylum=phylumStr, 
                                          txClass=classStr, txOrder=orderStr, 
@@ -294,7 +293,7 @@ class _SpeciesWeaponOfChoice(LMObject):
         raise LMError(currargs='Function must be implemented in subclass')
 
 # ...............................................
-    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
+    def _locateRawData(self, occ, data=None):
         self._raiseSubclassError()
     
 # ...............................................
@@ -636,7 +635,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
         return finalfront
     
 # ...............................................
-    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
+    def _locateRawData(self, occ, data=None):
         rdloc = occ.createLocalDLocation(raw=True)
         success = occ.writeCSV(data, dlocation=rdloc, overwrite=True,
                                       header=self._fieldNames)
@@ -782,7 +781,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
                 line, specieskey = self._getCSVRecord(parse=False)
         
 # ...............................................
-    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
+    def _locateRawData(self, occ, data=None):
         rdloc = occ.createLocalDLocation(raw=True)
         success = occ.writeCSV(data, dlocation=rdloc, overwrite=True)
         if not success:
@@ -1043,7 +1042,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         return occ, willCompute
 
 # ...............................................
-    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
+    def _locateRawData(self, occ, data=None):
         if data is None:
             raise LMError(currargs='Missing data file for occurrenceSet')
         rdloc = occ.createLocalDLocation(raw=True)
