@@ -420,7 +420,7 @@ boomer = Boomer(config_file, success_file, log=logger)
 boomer.initializeMe()                      
 chris = boomer.christopher
 woc = chris.weaponOfChoice
-scribe = self._scribe
+scribe = boomer._scribe
 borg = scribe._borg
 
 workdir = boomer.potatoBushel.getRelativeDirectory()
