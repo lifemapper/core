@@ -658,6 +658,7 @@ class ChristopherWalken(LMObject):
             # If we have enough points to model
             if occ.queryCount >= self.minPoints:
                 self.log.info('   Will compute for Grid {}:'.format(gsid))
+                sweep_config = None
                 for alg in self.algs:
                     for prj_scen in self.prjScens:
                         prj = self._findOrInsertSDMProject(
@@ -672,8 +673,12 @@ class ChristopherWalken(LMObject):
                     doSDM = self._doComputeSDM(occ, prjs, mtxcols)
                         
                     if doSDM:
-                        sweep_config = self._getSweepConfig(
-                            workdir, alg, occ, prjs, mtxcols)
+                        # There must only be one sweep config for a species to
+                        #    prevent duplication in the makeflow.  
+                        #    Conditionally initialize if we haven't done so yet
+                        if sweep_config is None:
+                            sweep_config = self._getSweepConfig(
+                                workdir, alg, occ, prjs, mtxcols)
         
                         # Write config file
                         species_config_filename = os.path.join(
@@ -690,7 +695,8 @@ class ChristopherWalken(LMObject):
                         spudRules.append(param_sweep_cmd.getMakeflowRule())
                         
                         # Add stockpile rule
-                        occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
+                        occ_work_dir = os.path.join(
+                            workdir, 'occ_{}'.format(occ.getId()))
                         stockpile_success_filename = os.path.join(
                             occ_work_dir, 'occ_{}stockpile.success'.format(
                                 occ.getId()))
