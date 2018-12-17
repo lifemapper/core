@@ -10,6 +10,7 @@ from LmCommon.common.lmconstants import HTTPStatus
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
+# TODO: These need to go into a constants file
 ACCEPTED_NAME_KEY = 'accepted_name'
 SEARCH_NAME_KEY = 'search_name'
 SPECIES_KEY_KEY = 'speciesKey'
