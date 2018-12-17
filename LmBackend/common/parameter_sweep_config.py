@@ -481,8 +481,8 @@ class ParameterSweepConfiguration(object):
             RegistryKey.WORK_DIR : self.work_dir
         }
         
-        readyFilename(fn_or_flo, overwrite=True)
         if not hasattr(fn_or_flo, 'write'):
+            readyFilename(fn_or_flo, overwrite=True)
             with open(fn_or_flo, 'w') as out_f:
                 json.dump(config, out_f)
         else:
