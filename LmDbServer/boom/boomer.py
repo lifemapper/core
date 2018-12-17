@@ -240,7 +240,7 @@ class Boomer(LMObject):
         @summary: Create a Spud or Potato rule for the MasterPotatoHead MF 
         """
         if dependencies is None:
-           dependencies = []
+            dependencies = []
            
         targetFname = mfchain.getArfFilename(
                                arfDir=self.potatoBushel.getRelativeDirectory(),
@@ -408,12 +408,8 @@ scriptname = 'boomerTesting'
 logger = ScriptLogger(scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
 
-config_file='/share/lm/data/archive/noob/heuchera_global_10min.ini'
-success_file='/share/lm/data/archive/noob/heuchera_global_10min.success'
-
-
-config_file='/share/lm/data/archive/anon/idigtest5.ini' 
-success_file='tmp/idigtest5.success'
+config_file='/share/lm/data/archive/taffy/heuchera_global_10min_ppf.ini'
+success_file='/share/lm/data/archive/taffy/heuchera_global_10min.success'
 
 boomer = Boomer(config_file, success_file, log=logger)
 
