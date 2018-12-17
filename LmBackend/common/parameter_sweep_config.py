@@ -325,7 +325,8 @@ class ParameterSweepConfiguration(object):
         
         # Only return relative paths.  Makeflow doesn't want absolute paths.
         relative_input_files = [
-            fn for fn in list(input_files) if not os.path.isabs(fn)]
+            fn for fn in list(input_files
+                              ) if fn is not None and not os.path.isabs(fn)]
         return relative_input_files
 
     # ........................................
