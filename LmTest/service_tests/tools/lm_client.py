@@ -559,8 +559,9 @@ class LmWebClient(object):
         """Gets an occurrence set
         """
         return self._make_request(
-            self._build_base_url(_SERVICE.OCCURRENCE, object_id=occ_id,
-                                 response_format=response_format),
+            self._build_base_url(
+                _SERVICE.OCCURRENCE, object_id=occ_id,
+                response_format=response_format),
             method=HTTPMethod.GET, headers=headers)
 
     # ............................

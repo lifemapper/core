@@ -6,15 +6,16 @@ Todo:
 import argparse
 import json
 import os
-from osgeo import gdal, ogr
 
 from LmBackend.common.lmconstants import RegistryKey
-from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.common.log import ConsoleLogger
 from LmBackend.common.lmobj import LMError
+
+from LmCommon.common.lmconstants import JobStatus, LMFormat, ProcessType
 from LmCommon.common.matrix import Matrix
-from LmServer.base.layer2 import Vector, Raster
+
+from LmServer.base.layer2 import Raster, Vector
+from LmServer.common.log import ConsoleLogger
+from LmServer.db.borgscribe import BorgScribe
 
 # .............................................................................
 def stockpile_objects(stockpile_list):
@@ -57,6 +58,12 @@ def stockpile_objects(stockpile_list):
         if status < JobStatus.GENERAL_ERROR:
             # Test outputs
             status = test_method(test_file)
+            # Attempt to update verify
+            try:
+                obj.setVerify()
+            except AttributeError:
+                # If the object doesn't have the setVerify method, pass
+                pass
             
             # TODO: Test secondary outputs
             

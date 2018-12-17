@@ -8,6 +8,7 @@ from LmServer.common.lmconstants import (
      SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER, 
      SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
 from LmServer.common.localconstants import PUBLIC_USER
+import json
 
 # .............................................................................
 def buildSolrDocument(docPairs):
@@ -112,10 +113,138 @@ def _query(collection, qParams=None, fqParams=None,
     return resp
 
 # .............................................................................
+def add_taxa_to_taxonomy_index(sciname_objects):
+    """Create a solr document and post it for the provided objects
+    """
+    doc_pairs = []
+    for sno in sciname_objects:
+        doc_pairs.append([
+                   [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, sno.canonicalName],
+                   [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, sno.scientificName],
+                   [SOLR_TAXONOMY_FIELDS.SQUID, sno.squid],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, sno.txClass],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, sno.family],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, sno.genus],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_KEY, sno.sourceTaxonKey],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sno.kingdom],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.txOrder],
+                   [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
+                   [SOLR_TAXONOMY_FIELDS.USER_ID, sno.getUserId()],
+                   [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
+                    sno.taxonomySourceId()],
+                   [SOLR_TAXONOMY_FIELDS.ID, sno.getId()]
+        ])
+    post_doc = buildSolrDocument(doc_pairs)
+    # Note: This is somewhat redundant.
+    # TODO: Modify _post to accept a string or file like object as well
+    url = '{}{}/update?commit=true'.format(SOLR_SERVER, 
+                                           SOLR_TAXONOMY_COLLECTION)
+    req = urllib2.Request(url, data=post_doc, 
+                          headers={'Content-Type' : 'text/xml'})
+    return urllib2.urlopen(req).read()
+    
+# .............................................................................
+def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
+    """Create a solr document and post it for the provided objects
+    
+    Note:
+        Should have the following keys
+            taxonid,
+            taxonomysourceid,
+            userid,
+            taxonomykey,
+            squid,
+            kingdom,
+            phylum,
+            tx_class,
+            tx_order,
+            family,
+            genus,
+            canonical,
+            sciname
+    """
+    doc_pairs = []
+    for taxon_info in taxon_dicts:
+        doc_pairs.append([
+            [SOLR_TAXONOMY_FIELDS.ID, taxon_info['taxonid']],
+            [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
+             taxon_info['taxonomysourceid']],
+            [SOLR_TAXONOMY_FIELDS.USER_ID, taxon_info['userid']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_KEY, taxon_info['taxonomykey']],
+            [SOLR_TAXONOMY_FIELDS.SQUID, taxon_info['squid']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, taxon_info['kingdom']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, taxon_info['phylum']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, taxon_info['tx_class']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, taxon_info['tx_order']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, taxon_info['family']],
+            [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, taxon_info['genus']],
+            [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, taxon_info['canonical']],
+            [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, taxon_info['sciname']]
+        ])
+    post_doc = buildSolrDocument(doc_pairs)
+    # Note: This is somewhat redundant.
+    # TODO: Modify _post to accept a string or file like object as well
+    url = '{}{}/update?commit=true'.format(SOLR_SERVER, 
+                                           SOLR_TAXONOMY_COLLECTION)
+    req = urllib2.Request(url, data=post_doc, 
+                          headers={'Content-Type' : 'text/xml'})
+    return urllib2.urlopen(req).read()
+
+# .............................................................................
+def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
+                              occ_id=None, squid=None, user_id=None):
+    """Deletes records from the archive index
+
+    Args:
+        gridset_id (:obj:`int`, optional): The database identifier of a gridset
+            that you want to remove the PAVs of from the Solr index.
+        pav_id (:obj:`int`, optional): The database identifier for a single PAV
+            to remove from the Solr index.
+        sdmproject_id (:obj:`int`, optional): The database identifier of a SDM
+            projection to remove all corresponding PAVs from the Solr index.
+        occ_id (:obj:`int`, optional): The database identifier of an occurrence
+            set to remove all resulting PAVs from the index.
+        squid (:obj:`str`, optional): Remove all PAVs from the index that have
+            this species squid.
+        user_id (:obj:`str`, optional): Remove all PAVs from the index for this
+            user.
+
+    Note:
+        * Must provide at least one input parameter so as to not accidentally
+            delete everything in the index
+    """
+    if gridset_id is None and pav_id is None and sdmproject_id is None and \
+            occ_id is None and squid is None and user_id is None:
+        raise Exception('Must provide at least one query parameter')
+    query_parts = [
+        (SOLR_FIELDS.GRIDSET_ID, gridset_id),
+        (SOLR_FIELDS.ID, pav_id),
+        (SOLR_FIELDS.PROJ_ID, sdmproject_id),
+        (SOLR_FIELDS.OCCURRENCE_ID, occ_id),
+        (SOLR_FIELDS.SQUID, squid),
+        (SOLR_FIELDS.USER_ID, user_id)
+    ]
+    query = ' AND '.join(
+        ['{}:{}'.format(f, v) for (f, v) in query_parts if v is not None])
+    
+    url = '{}{}/update?commit=true'.format(
+        SOLR_SERVER, SOLR_ARCHIVE_COLLECTION)
+    doc = {
+        "delete" : {
+            "query" : query
+        }
+    }
+
+    req = urllib2.Request(
+        url, data=json.dumps(doc),
+        headers={'Content-Type' : 'application/json'})
+    return urllib2.urlopen(req).read()
+
+# .............................................................................
 def facetArchiveOnGridset(userId=None):
     """
-    @summary: Query the PAV archive Solr index to get the gridsets contained and
-                     the number of matches for each
+    @summary: Query the PAV archive Solr index to get the gridsets contained
+        and the number of matches for each
     @todo: Consider integrating this with regular solr query
     """
     qParams = [
@@ -274,81 +403,3 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
     rDict = literal_eval(_query(SOLR_TAXONOMY_COLLECTION, qParams=q_params))
     return rDict['response']['docs']
 
-# .............................................................................
-def add_taxa_to_taxonomy_index(sciname_objects):
-    """Create a solr document and post it for the provided objects
-    """
-    doc_pairs = []
-    for sno in sciname_objects:
-        doc_pairs.append([
-                   [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, sno.canonicalName],
-                   [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, sno.scientificName],
-                   [SOLR_TAXONOMY_FIELDS.SQUID, sno.squid],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, sno.txClass],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, sno.family],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, sno.genus],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_KEY, sno.sourceTaxonKey],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sno.kingdom],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.txOrder],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
-                   [SOLR_TAXONOMY_FIELDS.USER_ID, sno.getUserId()],
-                   [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
-                    sno.taxonomySourceId()],
-                   [SOLR_TAXONOMY_FIELDS.ID, sno.getId()]
-        ])
-    post_doc = buildSolrDocument(doc_pairs)
-    # Note: This is somewhat redundant.
-    # TODO: Modify _post to accept a string or file like object as well
-    url = '{}{}/update?commit=true'.format(SOLR_SERVER, 
-                                           SOLR_TAXONOMY_COLLECTION)
-    req = urllib2.Request(url, data=post_doc, 
-                          headers={'Content-Type' : 'text/xml'})
-    return urllib2.urlopen(req).read()
-    
-# .............................................................................
-def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
-    """Create a solr document and post it for the provided objects
-    
-    Note:
-        Should have the following keys
-            taxonid,
-            taxonomysourceid,
-            userid,
-            taxonomykey,
-            squid,
-            kingdom,
-            phylum,
-            tx_class,
-            tx_order,
-            family,
-            genus,
-            canonical,
-            sciname
-    """
-    doc_pairs = []
-    for taxon_info in taxon_dicts:
-        doc_pairs.append([
-            [SOLR_TAXONOMY_FIELDS.ID, taxon_info['taxonid']],
-            [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
-             taxon_info['taxonomysourceid']],
-            [SOLR_TAXONOMY_FIELDS.USER_ID, taxon_info['userid']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_KEY, taxon_info['taxonomykey']],
-            [SOLR_TAXONOMY_FIELDS.SQUID, taxon_info['squid']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, taxon_info['kingdom']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, taxon_info['phylum']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, taxon_info['tx_class']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, taxon_info['tx_order']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, taxon_info['family']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, taxon_info['genus']],
-            [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, taxon_info['canonical']],
-            [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, taxon_info['sciname']]
-        ])
-    post_doc = buildSolrDocument(doc_pairs)
-    # Note: This is somewhat redundant.
-    # TODO: Modify _post to accept a string or file like object as well
-    url = '{}{}/update?commit=true'.format(SOLR_SERVER, 
-                                           SOLR_TAXONOMY_COLLECTION)
-    req = urllib2.Request(url, data=post_doc, 
-                          headers={'Content-Type' : 'text/xml'})
-    return urllib2.urlopen(req).read()
-    
