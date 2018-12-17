@@ -1,18 +1,11 @@
 """Tests for the occurrence set web services
 """
-import argparse
-import contextlib
-import json
-import unittest
 import urllib2
-import warnings
 
-from LmCommon.common.lmconstants import (CSV_INTERFACE, EML_INTERFACE,
-                           GEO_JSON_INTERFACE, JSON_INTERFACE, KML_INTERFACE, 
-                           SHAPEFILE_INTERFACE, HTTPStatus)
+from LmCommon.common.lmconstants import (
+    CSV_INTERFACE, EML_INTERFACE, GEO_JSON_INTERFACE, KML_INTERFACE,
+    SHAPEFILE_INTERFACE, HTTPStatus, JobStatus)
 
-from LmServer.common.log import ConsoleLogger
-from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.occlayer import OccurrenceLayer
 
 from LmTest.formatTests.csvValidator import validate_csv
@@ -61,7 +54,7 @@ class Test_occurrence_layer_web_services(object):
         """
         scribe_count = scribe.countOccurrenceSets(minOccurrenceCount=10)
         service_count = public_client.deserialize(
-            public_client.count_occurrence_sets(minimumNumberOfPoints=10))
+            public_client.count_occurrence_sets(minimum_number_of_points=10))
         assert scribe_count == service_count
         assert scribe_count >= 0
 
@@ -151,9 +144,171 @@ class Test_occurrence_layer_web_services(object):
             public_client.delete_occurrence_set(bad_occ_id)
             assert e_info.code == HTTPStatus.NOT_FOUND
     
-    # Get
-    # List
+    # ............................
+    def test_get_occ_does_not_exist(self, public_client):
+        """Tests that user cannot get an occurrence set that does not exist
 
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        bad_occ_id = 999999999
+        with pytest.raises(urllib2.HTTPError) as e_info:
+            public_client.get_occurrence_set(bad_occ_id)
+            assert e_info.code == HTTPStatus.NOT_FOUND
+    
+    # ............................
+    def test_get_occ_for_user_csv(self, public_client, scribe):
+        """Tests that user occurrence set can be retrieved in CSV format
 
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        occ_id = scribe.listOccurrenceSets(
+            0, 1, status=JobStatus.COMPLETE)[0].id
 
+        resp_raw = public_client.get_occurrence_set(
+            occ_id, response_format=CSV_INTERFACE)
+        assert resp_raw.code == HTTPStatus.OK
+        assert validate_csv(resp_raw)
+
+    # ............................
+    def test_get_occ_for_user_eml(self, public_client, scribe):
+        """Tests that user occurrence set can be retrieved in EML format
+
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        occ_id = scribe.listOccurrenceSets(
+            0, 1, status=JobStatus.COMPLETE)[0].id
+
+        resp_raw = public_client.get_occurrence_set(
+            occ_id, response_format=EML_INTERFACE)
+        assert resp_raw.code == HTTPStatus.OK
+        assert validate_eml(resp_raw)
+
+    # ............................
+    def test_get_occ_for_user_geojson(self, public_client, scribe):
+        """Tests that user occurrence set can be retrieved in GeoJSON format
+
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        occ_id = scribe.listOccurrenceSets(
+            0, 1, status=JobStatus.COMPLETE)[0].id
+
+        resp_raw = public_client.get_occurrence_set(
+            occ_id, response_format=GEO_JSON_INTERFACE)
+        assert resp_raw.code == HTTPStatus.OK
+        assert validate_geojson(resp_raw)
+
+    # ............................
+    def test_get_occ_for_user_json(self, public_client, scribe):
+        """Tests that user occurrence set can be retrieved in JSON format
+
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        occ_id = scribe.listOccurrenceSets(0, 1)[0].id
+
+        resp_raw = public_client.get_occurrence_set(occ_id)
+        assert resp_raw.code == HTTPStatus.OK
+        occ_resp = public_client.deserialize(resp_raw)
+        assert occ_resp['id'] == occ_id
+        assert 'spatialVector' in occ_resp.keys()
+        assert validate_json(resp_raw)
+
+    # ............................
+    def test_get_occ_for_user_kml(self, public_client, scribe):
+        """Tests that user occurrence set can be retrieved in KML format
+
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        occ_id = scribe.listOccurrenceSets(
+            0, 1, status=JobStatus.COMPLETE)[0].id
+
+        resp_raw = public_client.get_occurrence_set(
+            occ_id, response_format=KML_INTERFACE)
+        assert resp_raw.code == HTTPStatus.OK
+        assert validate_kml(resp_raw)
+
+    # ............................
+    def test_get_occ_for_user_shapefile(self, public_client, scribe):
+        """Tests that user occurrence set can be retrieved in SHAPEFILE format
+
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        occ_id = scribe.listOccurrenceSets(
+            0, 1, status=JobStatus.COMPLETE)[0].id
+
+        resp_raw = public_client.get_occurrence_set(
+            occ_id, response_format=SHAPEFILE_INTERFACE)
+        assert resp_raw.code == HTTPStatus.OK
+        assert validate_shapefile(resp_raw)
+
+    # ............................
+    def test_list_occurrence_sets_no_parameters(self, public_client, scribe):
+        """Tests the list service with the default parameters
+
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        scribe_list = scribe.listOccurrenceSets(0, 10)
+        service_list = public_client.deserialize(
+            public_client.list_occurrence_sets(offset=0, limit=10))
+        assert len(scribe_list) == len(service_list)
+        assert len(service_list) <= 10
+        assert len(service_list) >= 0
+
+    # ............................
+    def test_list_occurrence_sets_with_parameters(self, public_client, scribe):
+        """Tests the list service with the default parameters
+
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        scribe_list = scribe.listOccurrenceSets(0, 10, minOccurrenceCount=10)
+        service_list = public_client.deserialize(
+            public_client.list_occurrence_sets(
+                minimum_number_of_points=10, offset=0, limit=10))
+        assert len(scribe_list) == len(service_list)
+        assert len(service_list) <= 10
+        assert len(service_list) >= 0
 
