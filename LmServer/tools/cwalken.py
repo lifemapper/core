@@ -780,7 +780,8 @@ class ChristopherWalken(LMObject):
                      mtxcol.INTERSECT_PARAM_MAX_PRESENCE],
                  mtxcol.intersectParams[
                      mtxcol.INTERSECT_PARAM_MIN_PERCENT])
-             
+        return sweep_config
+
     # ...............................
     def stopWalken(self):
         """
