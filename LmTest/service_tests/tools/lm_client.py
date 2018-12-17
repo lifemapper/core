@@ -529,7 +529,7 @@ class LmWebClient(object):
     # ............................
     def count_occurrence_sets(self, after_time=None, before_time=None,
                               display_name=None, epsg_code=None,
-                              minimumNumberOfPoints=None, status=None,
+                              minimum_number_of_points=None, status=None,
                               gridset_id=None, headers=None,
                               response_format=None):
         """Count occurrence sets matching the specified criteria
@@ -541,7 +541,7 @@ class LmWebClient(object):
             method=HTTPMethod.GET, headers=headers, after_time=after_time,
             before_time=before_time, display_name=display_name,
             epsg_code=epsg_code, gridset_id=gridset_id, status=status,
-            minimumNumberOfPoints=minimumNumberOfPoints)
+            minimum_number_of_points=minimum_number_of_points)
     
     # ............................
     def delete_occurrence_set(self, occ_id, headers=None,
@@ -566,7 +566,7 @@ class LmWebClient(object):
     # ............................
     def list_occurrence_sets(self, after_time=None, before_time=None,
                              display_name=None, epsg_code=None,
-                             minimumNumberOfPoints=None, limit=None,
+                             minimum_number_of_points=None, limit=None,
                              offset=None, status=None, gridset_id=None,
                              fillPoints=None, headers=None,
                              response_format=None):
@@ -577,9 +577,10 @@ class LmWebClient(object):
                 _SERVICE.OCCURRENCE, response_format=response_format),
             method=HTTPMethod.GET, headers=headers, after_time=after_time,
             before_time=before_time, display_name=display_name,
-            epsg_code=epsg_code, minimumNumberOfPoints=minimumNumberOfPoints,
-            status=status, gridset_id=gridset_id, fillPoints=fillPoints,
-            limit=limit, offset=offset)
+            epsg_code=epsg_code,
+            minimum_number_of_points=minimum_number_of_points, status=status,
+            gridset_id=gridset_id, fillPoints=fillPoints, limit=limit,
+            offset=offset)
     
     # =======
     # = OGC =
