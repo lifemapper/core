@@ -195,6 +195,20 @@ def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
                               occ_id=None, squid=None, user_id=None):
     """Deletes records from the archive index
 
+    Args:
+        gridset_id (:obj:`int`, optional): The database identifier of a gridset
+            that you want to remove the PAVs of from the Solr index.
+        pav_id (:obj:`int`, optional): The database identifier for a single PAV
+            to remove from the Solr index.
+        sdmproject_id (:obj:`int`, optional): The database identifier of a SDM
+            projection to remove all corresponding PAVs from the Solr index.
+        occ_id (:obj:`int`, optional): The database identifier of an occurrence
+            set to remove all resulting PAVs from the index.
+        squid (:obj:`str`, optional): Remove all PAVs from the index that have
+            this species squid.
+        user_id (:obj:`str`, optional): Remove all PAVs from the index for this
+            user.
+
     Note:
         * Must provide at least one input parameter so as to not accidentally
             delete everything in the index
