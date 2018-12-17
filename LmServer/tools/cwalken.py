@@ -131,7 +131,8 @@ class ChristopherWalken(LMObject):
          self.algs, 
          self.mdlScen, 
          self.prjScens, 
-         self.sdmMaskParams,
+#          self.sdmMaskParams,
+         self.model_mask_base,
          self.boomGridset, 
          self.intersectParams, 
          self.assemblePams) = self._getConfiguredObjects()
@@ -379,7 +380,7 @@ class ChristopherWalken(LMObject):
     def _getProjParams(self, userId):
         prjScens = []      
         mdlScen = None
-        maskParams = {}
+        model_mask_base = None
         
         # Get environmental data model and projection scenarios
         mdlScenCode = self._getBoomOrDefault('SCENARIO_PACKAGE_MODEL_SCENARIO')
@@ -414,7 +415,8 @@ class ChristopherWalken(LMObject):
             
             lyrname = maskData.values()[0]
             
-            maskParams = {
+            # Get processing parameters for masking
+            proc_params = {
                   PRE_PROCESS_KEY : {
                      MASK_KEY : {
                         MASK_LAYER_KEY : lyrname,
@@ -422,8 +424,22 @@ class ChristopherWalken(LMObject):
                         CODE_KEY : ECOREGION_MASK_METHOD,
                         BUFFER_KEY : sdmMaskAlg.getParameterValue(BUFFER_KEY)
                      }}}
+                            
+            mask_layer_name = proc_params[PRE_PROCESS_KEY][MASK_KEY][MASK_LAYER_KEY]
+            mask_layer = self._scribe.getLayer(userId=self.userId, 
+                                    lyrName=mask_layer_name, epsg=self.epsg)
+            if mask_layer is None:
+                raise LMError('Failed to retrieve layer {} for user {}'
+                              .format(mask_layer_name, self.userId))
+            model_mask_base = {
+                RegistryKey.REGION_LAYER_PATH : mask_layer.getDLocation(),
+                RegistryKey.BUFFER : proc_params[PRE_PROCESS_KEY][MASK_KEY][
+                    BUFFER_KEY],
+                RegistryKey.METHOD : MaskMethod.HULL_REGION_INTERSECT
+            }
+            
            
-        return (mdlScen, prjScens, maskParams)  
+        return (mdlScen, prjScens, model_mask_base)  
 
     # .............................................................................
     def _getGlobalPamObjects(self, userId, archiveName, epsg):
@@ -524,14 +540,14 @@ class ChristopherWalken(LMObject):
         minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
         algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
         
-        (mdlScen, prjScens, maskParams) = self._getProjParams(userId)
+        (mdlScen, prjScens, model_mask_base) = self._getProjParams(userId)
         # Global PAM inputs
         (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                               archiveName, epsg)
         assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
         
         return (userId, archiveName, archivePriority, boompath, weaponOfChoice,  
-                epsg, minPoints, algorithms, mdlScen, prjScens, maskParams, 
+                epsg, minPoints, algorithms, mdlScen, prjScens, model_mask_base, 
                 boomGridset, intersectParams, assemblePams)  
 
     # ...............................
@@ -547,73 +563,71 @@ class ChristopherWalken(LMObject):
         """
         pass
     
-    # ...............................
-    def _processProjection(self, prj, prjWillCompute, alg, model_mask_base, 
-                           sweep_config, workdir):
-        currtime = dt.gmt().mjd
-        pcount = prcount = icount = ircount = 0        
-        pcount += 1
-        if prjWillCompute: prcount += 1
-        # Add projection
-        # Masking
-        if model_mask_base is not None:
-            model_mask = model_mask_base.copy()
-            model_mask[
-                RegistryKey.OCCURRENCE_SET_PATH
-                ] = prj.occurrenceSet.getDLocation()
-            projection_mask = {
-                RegistryKey.METHOD : MaskMethod.BLANK_MASK,
-                RegistryKey.TEMPLATE_LAYER_PATH : prj.projScenario.layers[
-                    0].getDLocation()
-            }
-        else:
-            model_mask = None
-            projection_mask = None
-        
-        scale_parameters = multiplier = None
-        if prj.isATT():
-            scale_parameters = (SCALE_PROJECTION_MINIMUM,
-                                SCALE_PROJECTION_MAXIMUM)
-            #TODO: This should be in config somewhere
-            multiplier = None
-        
-        sweep_config.add_projection(
-            prj.processType, prj.getId(), prj.getOccurrenceSetId(),
-            prj.occurrenceSet.getDLocation(),
-            alg, prj.modelScenario, prj.projScenario,
-            prj.getDLocation(), prj.getProjPackageFilename(),
-            model_mask=model_mask,
-            projection_mask=projection_mask,
-            scale_parameters=scale_parameters,
-            multiplier=multiplier)
+#     # ...............................
+#     def _processProjectionOld(self, prj, prjWillCompute, alg, model_mask_base, 
+#                            sweep_config, workdir):
+#         currtime = dt.gmt().mjd
+#         pcount = prcount = icount = ircount = 0        
+#         pcount += 1
+#         if prjWillCompute: prcount += 1
+#         # Add projection
+#         # Masking
+#         if model_mask_base is not None:
+#             model_mask = model_mask_base.copy()
+#             model_mask[
+#                 RegistryKey.OCCURRENCE_SET_PATH
+#                 ] = prj.occurrenceSet.getDLocation()
+#             projection_mask = {
+#                 RegistryKey.METHOD : MaskMethod.BLANK_MASK,
+#                 RegistryKey.TEMPLATE_LAYER_PATH : prj.projScenario.layers[
+#                     0].getDLocation()
+#             }
+#         else:
+#             model_mask = None
+#             projection_mask = None
+#         
+#         scale_parameters = multiplier = None
+#         if prj.isATT():
+#             scale_parameters = (SCALE_PROJECTION_MINIMUM,
+#                                 SCALE_PROJECTION_MAXIMUM)
+#             #TODO: This should be in config somewhere
+#             multiplier = None
+#         
+#         sweep_config.add_projection(
+#             prj.processType, prj.getId(), prj.getOccurrenceSetId(),
+#             prj.occurrenceSet.getDLocation(),
+#             alg, prj.modelScenario, prj.projScenario,
+#             prj.getDLocation(), prj.getProjPackageFilename(),
+#             model_mask=model_mask,
+#             projection_mask=projection_mask,
+#             scale_parameters=scale_parameters,
+#             multiplier=multiplier)
+# 
+#         mtx = self.globalPAMs[prj.projScenarioCode]
+#         # If projection was reset (pReset), force intersect
+#         #    reset
+#         (mtxcol, mWillCompute) = self._createOrResetIntersect(prj, mtx, prjWillCompute, currtime)
+#         if mtxcol is not None:
+#             icount += 1
+#             if mWillCompute: ircount += 1
+#             # Todo: Add intersect
+#             pav_filename = os.path.join(
+#                 workdir, 'pavs', 'pav_{}{}'.format(
+#                     mtxcol.getId(), LMFormat.MATRIX.ext))
+#             sweep_config.add_pav_intersect(
+#                 mtxcol.shapegrid.getDLocation(),
+#                 mtxcol.getId(), prj.getId(), pav_filename,
+#                 prj.squid,
+#                 mtxcol.intersectParams[
+#                     mtxcol.INTERSECT_PARAM_MIN_PRESENCE],
+#                 mtxcol.intersectParams[
+#                     mtxcol.INTERSECT_PARAM_MAX_PRESENCE],
+#                 mtxcol.intersectParams[
+#                     mtxcol.INTERSECT_PARAM_MIN_PERCENT])
+#             self.log.info('      {} projections, {} matrixColumns ( {}, {} reset)'
+#                         .format(pcount, icount, prcount, ircount))
+#         return sweep_config
 
-        mtx = self.globalPAMs[prj.projScenarioCode]
-        # If projection was reset (pReset), force intersect
-        #    reset
-        (mtxcol,
-         mWillCompute) = self._createOrResetIntersect(
-             prj, mtx, prjWillCompute, currtime)
-        if mtxcol is not None:
-            icount += 1
-            if mWillCompute: ircount += 1
-            # Todo: Add intersect
-            pav_filename = os.path.join(
-                workdir, 'pavs', 'pav_{}{}'.format(
-                    mtxcol.getId(), LMFormat.MATRIX.ext))
-            sweep_config.add_pav_intersect(
-                mtxcol.shapegrid.getDLocation(),
-                mtxcol.getId(), prj.getId(), pav_filename,
-                prj.squid,
-                mtxcol.intersectParams[
-                    mtxcol.INTERSECT_PARAM_MIN_PRESENCE],
-                mtxcol.intersectParams[
-                    mtxcol.INTERSECT_PARAM_MAX_PRESENCE],
-                mtxcol.intersectParams[
-                    mtxcol.INTERSECT_PARAM_MIN_PERCENT])
-            self.log.info('      {} projections, {} matrixColumns ( {}, {} reset)'
-                        .format(pcount, icount, prcount, ircount))
-        return sweep_config
-   
     # ...............................
     def startWalken(self, workdir):
         """
@@ -624,91 +638,149 @@ class ChristopherWalken(LMObject):
         """
         squid = None
         spudRules = []
-#         pcount = prcount = icount = ircount = 0
+        prjs = []
+        mtxcols = []
         gsid = 0
+        currtime = dt.gmt().mjd
+        
         try:
             gsid = self.boomGridset.getId()
         except:
             self.log.warning('Missing self.boomGridset id!!')
             
-        # Get processing parameters for masking
-        proc_params = self.sdmMaskParams
-        if (PRE_PROCESS_KEY in proc_params.keys() 
-            and MASK_KEY in proc_params[PRE_PROCESS_KEY].keys()):
-            
-            mask_layer_name = proc_params[PRE_PROCESS_KEY][MASK_KEY][MASK_LAYER_KEY]
-            mask_layer = self._scribe.getLayer(userId=self.userId, 
-                                    lyrName=mask_layer_name, epsg=self.epsg)
-            if mask_layer is None:
-                raise LMError('Failed to retrieve layer {} for user {}'
-                              .format(mask_layer_name, self.userId))
-            model_mask_base = {
-                RegistryKey.REGION_LAYER_PATH : mask_layer.getDLocation(),
-                RegistryKey.BUFFER : proc_params[PRE_PROCESS_KEY][MASK_KEY][
-                    BUFFER_KEY],
-                RegistryKey.METHOD : MaskMethod.HULL_REGION_INTERSECT
-            }
-        else:
-            model_mask_base = None
-            
         # WeaponOfChoice resets old or failed Occurrenceset
-        occ, occWillCompute = self.weaponOfChoice.getOne()
+        occ = self.weaponOfChoice.getOne()
         if self.weaponOfChoice.finishedInput:
             self._writeDoneWalkenFile()
         if occ:
             squid = occ.squid
-            occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
-            sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
-            
-            # Add occurrence set if there is a process to perform
-            if occ.processType is not None:
-                sweep_config.add_occurrence_set(
-                    occ.processType, occ.getId(), occ.getRawDLocation(),
-                    occ.getDLocation(), occ.getDLocation(largeFile=True),
-                    POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
             
             # If we have enough points to model
             if occ.queryCount >= self.minPoints:
                 self.log.info('   Will compute for Grid {}:'.format(gsid))
                 for alg in self.algs:
                     for prj_scen in self.prjScens:
-                        prj, prjWillCompute = self._createOrResetSDMProject(
-                            occ, alg, prj_scen, occWillCompute, dt.gmt().mjd)
+                        prj = self._findOrInsertSDMProject(occ, alg, prj_scen, 
+                                                           dt.gmt().mjd)
                         if prj is not None:
-                            sweep_config = self._processProjection(
-                                prj, prjWillCompute, alg, model_mask_base, 
-                                sweep_config, occ_work_dir)
-                            #spudRules.append(solr_rule)
-
-            # Write config file
-            species_config_filename = os.path.join(
-                os.path.dirname(occ.getDLocation()), 
-                'species_config_{}{}'.format(occ.getId(), LMFormat.JSON.ext))
-            sweep_config.save_config(species_config_filename)
-            
-            # Add sweep rule
-            param_sweep_cmd = SpeciesParameterSweepCommand(
-                species_config_filename, sweep_config.get_input_files(),
-                sweep_config.get_output_files())
-            spudRules.append(param_sweep_cmd.getMakeflowRule())
-            
-            # Add stockpile rule
-            stockpile_success_filename = os.path.join(
-                occ_work_dir, 'occ_{}stockpile.success'.format(occ.getId()))
-            stockpile_cmd = MultiStockpileCommand(
-                sweep_config.stockpile_filename, stockpile_success_filename)
-            spudRules.append(stockpile_cmd.getMakeflowRule(local=True))
-            
-            # Add multi-index rule
-            index_pavs_document_filename = os.path.join(
-                occ_work_dir, 'solr_pavs_post{}'.format(LMFormat.XML.ext))
-            index_cmd = MultiIndexPAVCommand(
-                sweep_config.pavs_filename, index_pavs_document_filename)
-            spudRules.append(index_cmd.getMakeflowRule(local=True))
+                            prjs.append(prj)
+                            mtx = self.globalPAMs[prj.projScenarioCode]
+                            mtxcol = self._findOrInsertIntersect(prj, mtx, currtime)
+                            if mtxcol is not None:
+                                # Todo: Add intersect
+                                pav_filename = os.path.join(
+                                    workdir, 'pavs', 'pav_{}{}'.format(
+                                        mtxcol.getId(), LMFormat.MATRIX.ext))
+                    doSDM = self._checkDoCompute(occ, prjs, mtxcols)
+                        
+                    if doSDM:
+                        occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
+                        sweep_config = self._getSweepConfig(workdir, alg, occ, prjs, mtxcols)
+        
+                        # Write config file
+                        species_config_filename = os.path.join(
+                            os.path.dirname(occ.getDLocation()), 
+                            'species_config_{}{}'.format(occ.getId(), LMFormat.JSON.ext))
+                        sweep_config.save_config(species_config_filename)
+                        
+                        # Add sweep rule
+                        param_sweep_cmd = SpeciesParameterSweepCommand(
+                            species_config_filename, sweep_config.get_input_files(),
+                            sweep_config.get_output_files())
+                        spudRules.append(param_sweep_cmd.getMakeflowRule())
+                        
+                        # Add stockpile rule
+                        stockpile_success_filename = os.path.join(
+                            occ_work_dir, 'occ_{}stockpile.success'.format(occ.getId()))
+                        stockpile_cmd = MultiStockpileCommand(
+                            sweep_config.stockpile_filename, stockpile_success_filename)
+                        spudRules.append(stockpile_cmd.getMakeflowRule(local=True))
+                        
+                        # Add multi-index rule
+                        index_pavs_document_filename = os.path.join(
+                            occ_work_dir, 'solr_pavs_post{}'.format(LMFormat.XML.ext))
+                        index_cmd = MultiIndexPAVCommand(
+                            sweep_config.pavs_filename, index_pavs_document_filename)
+                        spudRules.append(index_cmd.getMakeflowRule(local=True))
             
             # TODO: Add metrics / snippets processing
         return squid, spudRules
+    
+    # ...............................
+    def _doComputeSDM(self, occ, prjs, mtxcols):
+        doSDM = self._doResetOcc(occ.status, occ.statusModTime, 
+                                 occ.getDLocation(), occ.getRawDLocation())
+        for o in prjs:
+            if doSDM:
+                break
+            else:
+                doSDM = self._doReset(o.status, o.statusModTime)
+        for o in mtxcols:
+            if doSDM:
+                break
+            else:
+                doSDM = self._doReset(o.status, o.statusModTime)
+        return doSDM
       
+    # ...............................
+    def _getSweepConfig(self, alg, workdir, occ, prjs, mtxcols):
+        occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
+        sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
+        
+        # Add occurrence set if there is a process to perform
+        if occ.processType is not None:
+            sweep_config.add_occurrence_set(
+                occ.processType, occ.getId(), occ.getRawDLocation(),
+                occ.getDLocation(), occ.getDLocation(largeFile=True),
+                POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
+            
+        for prj in prjs:
+            if self.model_mask_base is not None:
+                model_mask = self.model_mask_base.copy()
+                model_mask[
+                    RegistryKey.OCCURRENCE_SET_PATH
+                    ] = prj.occurrenceSet.getDLocation()
+                projection_mask = {
+                    RegistryKey.METHOD : MaskMethod.BLANK_MASK,
+                    RegistryKey.TEMPLATE_LAYER_PATH : prj.projScenario.layers[
+                        0].getDLocation()
+                }
+            else:
+                model_mask = None
+                projection_mask = None
+            
+            scale_parameters = multiplier = None
+            if prj.isATT():
+                scale_parameters = (SCALE_PROJECTION_MINIMUM,
+                                    SCALE_PROJECTION_MAXIMUM)
+                #TODO: This should be in config somewhere
+                multiplier = None
+
+            sweep_config.add_projection(
+                prj.processType, prj.getId(), prj.getOccurrenceSetId(),
+                prj.occurrenceSet.getDLocation(),
+                alg, prj.modelScenario, prj.projScenario,
+                prj.getDLocation(), prj.getProjPackageFilename(),
+                model_mask=model_mask,
+                projection_mask=projection_mask,
+                scale_parameters=scale_parameters,
+                multiplier=multiplier)
+
+        for mtxcol in mtxcols:
+            pav_filename = os.path.join(
+                workdir, 'pavs', 'pav_{}{}'.format(
+                    mtxcol.getId(), LMFormat.MATRIX.ext))
+            sweep_config.add_pav_intersect(
+                 mtxcol.shapegrid.getDLocation(),
+                 mtxcol.getId(), prj.getId(), pav_filename,
+                 prj.squid,
+                 mtxcol.intersectParams[
+                     mtxcol.INTERSECT_PARAM_MIN_PRESENCE],
+                 mtxcol.intersectParams[
+                     mtxcol.INTERSECT_PARAM_MAX_PRESENCE],
+                 mtxcol.intersectParams[
+                     mtxcol.INTERSECT_PARAM_MIN_PERCENT])
+             
     # ...............................
     def stopWalken(self):
         """
@@ -722,13 +794,57 @@ class ChristopherWalken(LMObject):
         else:
             self.log.info('Christopher is done walken')
       
+#     # ...............................................
+#     def _createOrResetIntersect(self, prj, mtx, forceReset, currtime):
+#         """
+#         @summary: Initialize model, projections for inputs/algorithm.
+#         """
+#         mtxcol = None
+#         reset = False
+#         if prj is not None:
+#             # TODO: Save processType into the DB??
+#             if LMFormat.isGDAL(driver=prj.dataFormat):
+#                 ptype = ProcessType.INTERSECT_RASTER
+#             else:
+#                 ptype = ProcessType.INTERSECT_VECTOR
+#             
+#             tmpCol = MatrixColumn(None, mtx.getId(), self.userId, 
+#                            layer=prj, shapegrid=self.boomGridset.getShapegrid(), 
+#                            intersectParams=self.intersectParams, 
+#                            squid=prj.squid, ident=prj.ident,
+#                            processType=ptype, metadata={}, matrixColumnId=None, 
+#                            postToSolr=self.assemblePams,
+#                            status=JobStatus.GENERAL, statusModTime=currtime)
+#             mtxcol = self._scribe.findOrInsertMatrixColumn(tmpCol)
+#             if mtxcol is not None:
+#                 self.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
+#                 
+#                 # Reset processType (not in db)
+#                 mtxcol.processType = ptype
+#                 # DB does not populate with shapegrid on insert
+#                 mtxcol.shapegrid = self.boomGridset.getShapegrid()
+#                 
+#                 # Rollback if obsolete or failed, or input projection was reset
+#                 if forceReset:
+#                     reset = True
+#                 else:
+#                     reset = self._doReset(mtxcol.status, mtxcol.statusModTime)
+#                 if reset:
+#                     if prj.status == JobStatus.COMPLETE:
+#                         stat = JobStatus.INITIALIZE
+#                     else:
+#                         stat = JobStatus.GENERAL
+#                     self.log.debug('Reset MatrixColumn {}'.format(mtxcol.getId()))
+#                     mtxcol.updateStatus(stat, modTime=currtime)
+#                     success = self._scribe.updateObject(mtxcol)
+#         return mtxcol, reset
+
     # ...............................................
-    def _createOrResetIntersect(self, prj, mtx, forceReset, currtime):
+    def _findOrInsertIntersect(self, prj, mtx, currtime):
         """
         @summary: Initialize model, projections for inputs/algorithm.
         """
         mtxcol = None
-        reset = False
         if prj is not None:
             # TODO: Save processType into the DB??
             if LMFormat.isGDAL(driver=prj.dataFormat):
@@ -747,25 +863,11 @@ class ChristopherWalken(LMObject):
             if mtxcol is not None:
                 self.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
                 
-                # Reset processType (not in db)
+                # Reset processType, shapegrid obj (not in db)
                 mtxcol.processType = ptype
-                # DB does not populate with shapegrid on insert
                 mtxcol.shapegrid = self.boomGridset.getShapegrid()
                 
-                # Rollback if obsolete or failed, or input projection was reset
-                if forceReset:
-                    reset = True
-                else:
-                    reset = self._doReset(mtxcol.status, mtxcol.statusModTime)
-                if reset:
-                    if prj.status == JobStatus.COMPLETE:
-                        stat = JobStatus.INITIALIZE
-                    else:
-                        stat = JobStatus.GENERAL
-                    self.log.debug('Reset MatrixColumn {}'.format(mtxcol.getId()))
-                    mtxcol.updateStatus(stat, modTime=currtime)
-                    success = self._scribe.updateObject(mtxcol)
-        return mtxcol, reset
+        return mtxcol
 
     # ...............................................
     def _doReset(self, status, statusModTime):
@@ -777,15 +879,30 @@ class ChristopherWalken(LMObject):
             willCompute = True
         return willCompute
 
+# ...............................................
+    def _doResetOcc(self, status, statusModTime, dlocation, rawDataLocation):
+        willCompute = False
+        noRawData = rawDataLocation is None or not os.path.exists(rawDataLocation)
+        noCompleteData = dlocation is None or not os.path.exists(dlocation)
+        obsoleteData = statusModTime > 0 and statusModTime < self._obsoleteTime
+        if (JobStatus.incomplete(status) or
+             JobStatus.failed(status) or
+              # waiting with missing data
+             (JobStatus.waiting(status) and noRawData) or 
+              # out-of-date
+             (status == JobStatus.COMPLETE and noCompleteData or obsoleteData)):
+            willCompute = True
+        return willCompute
+
     # ...............................................
-    def _createOrResetSDMProject(self, occ, alg, prjscen, forceReset, currtime):
+    def _findOrInsertSDMProject(self, occ, alg, prjscen, currtime):
         """
         @summary: Iterates through all input combinations to create or reset
                   SDMProjections for the given occurrenceset.
         @param occ: OccurrenceSet for which to initialize or rollback all 
                     dependent projections
         """
-        prj = reset = None
+        prj = None
         if occ is not None:
             tmpPrj = SDMProjection(occ, alg, self.mdlScen, prjscen, 
                            dataFormat=LMFormat.GTIFF.driver,
@@ -796,20 +913,41 @@ class ChristopherWalken(LMObject):
                 # Fill in projection with input scenario layers, masks
                 prj._modelScenario = self.mdlScen
                 prj._projScenario = prjscen
-                # Rollback if obsolete or failed, or input occset was reset
-                if forceReset:
-                    reset = True
-                else:
-                    reset = self._doReset(prj.status, prj.statusModTime)
-                if reset:
-                    if occ.status == JobStatus.COMPLETE:
-                        stat = JobStatus.INITIALIZE
-                    else:
-                        stat = JobStatus.GENERAL
-                    self.log.debug('Reset SDMProject {}'.format(prj.getId()))
-                    prj.updateStatus(stat, modTime=currtime)
-                    success = self._scribe.updateObject(prj)
-        return prj, reset
+        return prj
+
+#     # ...............................................
+#     def _createOrResetSDMProject(self, occ, alg, prjscen, forceReset, currtime):
+#         """
+#         @summary: Iterates through all input combinations to create or reset
+#                   SDMProjections for the given occurrenceset.
+#         @param occ: OccurrenceSet for which to initialize or rollback all 
+#                     dependent projections
+#         """
+#         prj = reset = None
+#         if occ is not None:
+#             tmpPrj = SDMProjection(occ, alg, self.mdlScen, prjscen, 
+#                            dataFormat=LMFormat.GTIFF.driver,
+#                            status=JobStatus.GENERAL, statusModTime=currtime)
+#             prj = self._scribe.findOrInsertSDMProject(tmpPrj)
+#             if prj is not None:
+#                 self.log.debug('Found/inserted SDMProject {}'.format(prj.getId()))
+#                 # Fill in projection with input scenario layers, masks
+#                 prj._modelScenario = self.mdlScen
+#                 prj._projScenario = prjscen
+#                 # Rollback if obsolete or failed, or input occset was reset
+#                 if forceReset:
+#                     reset = True
+#                 else:
+#                     reset = self._doReset(prj.status, prj.statusModTime)
+#                 if reset:
+#                     if occ.status == JobStatus.COMPLETE:
+#                         stat = JobStatus.INITIALIZE
+#                     else:
+#                         stat = JobStatus.GENERAL
+#                     self.log.debug('Reset SDMProject {}'.format(prj.getId()))
+#                     prj.updateStatus(stat, modTime=currtime)
+#                     success = self._scribe.updateObject(prj)
+#         return prj, reset
 
     # ...............................................
     def _writeDoneWalkenFile(self):

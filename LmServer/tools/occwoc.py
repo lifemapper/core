@@ -181,8 +181,9 @@ class _SpeciesWeaponOfChoice(LMObject):
         return willCompute
 
 # ...............................................
-    def _createOrResetOccurrenceset(self, sciName, dataCount, 
-                                              taxonSourceKey=None, data=None):
+#     def _createOrResetOccurrenceset(self, sciName, dataCount, 
+    def _findOrInsertOccurrenceset(self, sciName, dataCount, 
+                                   taxonSourceKey=None, data=None):
         """
         @param sciName: ScientificName object
         @param dataCount: reported number of points for taxon in input dataset
@@ -206,34 +207,34 @@ class _SpeciesWeaponOfChoice(LMObject):
                 e = LMError(currargs=e.args, lineno=self.getLineno())
             raise e
 
-        # Reset found or inserted Occ
-        willCompute = self._willCompute(occ.status, occ.statusModTime, 
-                                        occ.getDLocation(), occ.getRawDLocation())
-        if willCompute:
-            self.log.info('    Reseting OccLayer status and raw data')
-            # Reset verify hash, name, count, status 
-            occ.clearVerify()
-            occ.clearOutputFiles()
-            occ.displayName = sciName.scientificName
-            occ.queryCount = dataCount
-            occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
-            # Update raw data in new or reset object
-            rdloc = self._locateRawData(occ, data=data)
-            if not rdloc:
-                raise LMError(currargs='    Failed to find raw data location')
-            occ.setRawDLocation(rdloc, currtime)
-            # TODO: remove Hack
-            # Set scientificName, not pulled from DB, for alternate iDigBio query
-            occ.setScientificName(sciName)
-            success = self._scribe.updateObject(occ)
-        else:
-            # Return existing, complete
-            self.log.info('    Returning completed OccLayer')
+#         # Reset found or inserted Occ
+#         willCompute = self._willCompute(occ.status, occ.statusModTime, 
+#                                         occ.getDLocation(), occ.getRawDLocation())
+#         if willCompute:
+#             self.log.info('    Reseting OccLayer status and raw data')
+#             # Reset verify hash, name, count, status 
+#             occ.clearVerify()
+#             occ.clearOutputFiles()
+#             occ.displayName = sciName.scientificName
+#             occ.queryCount = dataCount
+#             occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
+#             # Update raw data in new or reset object
+#             rdloc = self._locateRawData(occ, data=data)
+#             if not rdloc:
+#                 raise LMError(currargs='    Failed to find raw data location')
+#             occ.setRawDLocation(rdloc, currtime)
+#             # TODO: remove Hack
+#             # Set scientificName, not pulled from DB, for alternate iDigBio query
+#             occ.setScientificName(sciName)
+#             success = self._scribe.updateObject(occ)
+#         else:
+#             # Return existing, complete
+#             self.log.info('    Returning completed OccLayer')
         if occ is not None:
             # Set processType and metadata location (from config, not saved in DB)
             occ.processType = self.processType
             occ.rawMetaDLocation = self.metaFilename
-        return occ, willCompute
+        return occ#, willCompute
     
 # ...............................................
     def _getInsertSciNameForGBIFSpeciesKey(self, taxonKey, taxonCount):
@@ -619,13 +620,13 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 bbsciName = ScientificName(taxonName, userId=self.userId)
                 sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
             if sciName is not None:
-                occ, willCompute = self._createOrResetOccurrenceset(sciName, len(dataChunk), 
-                                                                    data=dataChunk)
+                occ = self._findOrInsertOccurrenceset(sciName, len(dataChunk), 
+                                                      data=dataChunk)
                 if occ is not None:
                     self.log.info('WOC processed occset {}, name {}, with {} records; next start {}'
                                       .format(occ.getId(), taxonName, len(dataChunk), 
                                                  self.nextStart))
-        return occ, willCompute
+        return occ
 
 # ...............................................
     def _simplifyName(self, longname):
@@ -758,10 +759,9 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
             sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, 
                                                                               len(dataChunk))
             if sciName is not None:
-                occ, willCompute = self._createOrResetOccurrenceset(sciName, 
-                                                                        len(dataChunk), 
-                                                                        taxonSourceKey=speciesKey, 
-                                                                        data=dataChunk)
+                occ = self._findOrInsertOccurrenceset(sciName, len(dataChunk), 
+                                                      taxonSourceKey=speciesKey, 
+                                                      data=dataChunk)
                 if occ:
                     self.log.info('WOC processed occset {} gbif key {} with {} records; next start {}'
                                       .format(occ.getId(), speciesKey, len(dataChunk), 
@@ -1039,9 +1039,9 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
             sciName = self._getInsertSciNameForTinyBubble(binomial, opentreeId, 
                                                           recordCount)
             if sciName is not None:
-                occ, willCompute = self._createOrResetOccurrenceset(sciName, recordCount,
-                                                                    taxonSourceKey=opentreeId,
-                                                                    data=bubbleFname)
+                occ = self._findOrInsertOccurrenceset(sciName, recordCount,
+                                                      taxonSourceKey=opentreeId,
+                                                      data=bubbleFname)
             if occ:
                 self.log.info('WOC processed occset {}, opentreeId {}, with {} points; next start {}'
                                   .format(occ.getId(), opentreeId, recordCount, self.nextStart))
