@@ -125,7 +125,8 @@ class ChristopherWalken(LMObject):
          self.archiveName, 
          self.priority, 
          self.boompath, 
-         self.weaponOfChoice, 
+         self.weaponOfChoice,
+         self._obsoleteTime, 
          self.epsg, 
          self.minPoints, 
          self.algs, 
@@ -287,7 +288,7 @@ class ChristopherWalken(LMObject):
            
         weaponOfChoice.initializeMe()
            
-        return weaponOfChoice
+        return weaponOfChoice, expDate
 
     # .............................................................................
     def _findData(self, datasource, boompath):
@@ -377,7 +378,7 @@ class ChristopherWalken(LMObject):
         return algs
 
     # .............................................................................
-    def _getProjParams(self, userId):
+    def _getProjParams(self, userId, epsg):
         prjScens = []      
         mdlScen = None
         model_mask_base = None
@@ -426,18 +427,16 @@ class ChristopherWalken(LMObject):
                      }}}
                             
             mask_layer_name = proc_params[PRE_PROCESS_KEY][MASK_KEY][MASK_LAYER_KEY]
-            mask_layer = self._scribe.getLayer(userId=self.userId, 
-                                    lyrName=mask_layer_name, epsg=self.epsg)
+            mask_layer = self._scribe.getLayer(userId=userId, 
+                                    lyrName=mask_layer_name, epsg=epsg)
             if mask_layer is None:
                 raise LMError('Failed to retrieve layer {} for user {}'
-                              .format(mask_layer_name, self.userId))
+                              .format(mask_layer_name, userId))
             model_mask_base = {
                 RegistryKey.REGION_LAYER_PATH : mask_layer.getDLocation(),
                 RegistryKey.BUFFER : proc_params[PRE_PROCESS_KEY][MASK_KEY][
                     BUFFER_KEY],
-                RegistryKey.METHOD : MaskMethod.HULL_REGION_INTERSECT
-            }
-            
+                RegistryKey.METHOD : MaskMethod.HULL_REGION_INTERSECT}
            
         return (mdlScen, prjScens, model_mask_base)  
 
@@ -533,20 +532,21 @@ class ChristopherWalken(LMObject):
         boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
         epsg = self._getBoomOrDefault('SCENARIO_PACKAGE_EPSG', 
                                       defaultValue=DEFAULT_EPSG)
+        
         # Species parser/puller
-        weaponOfChoice = self._getOccWeaponOfChoice(userId, archiveName, epsg, 
-                                                    boompath)
+        weaponOfChoice, expDate = self._getOccWeaponOfChoice(userId, archiveName, 
+                                                      epsg, boompath)
         # SDM inputs
         minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
         algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
         
-        (mdlScen, prjScens, model_mask_base) = self._getProjParams(userId)
+        (mdlScen, prjScens, model_mask_base) = self._getProjParams(userId, epsg)
         # Global PAM inputs
         (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                               archiveName, epsg)
         assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
         
-        return (userId, archiveName, archivePriority, boompath, weaponOfChoice,  
+        return (userId, archiveName, archivePriority, boompath, weaponOfChoice, expDate,
                 epsg, minPoints, algorithms, mdlScen, prjScens, model_mask_base, 
                 boomGridset, intersectParams, assemblePams)  
 
@@ -669,7 +669,7 @@ class ChristopherWalken(LMObject):
                                 prj, mtx, currtime)
                             if mtxcol is not None:
                                 mtxcols.append(mtxcol)
-                    doSDM = self._checkDoCompute(occ, prjs, mtxcols)
+                    doSDM = self._doComputeSDM(occ, prjs, mtxcols)
                         
                     if doSDM:
                         occ_work_dir = os.path.join(
@@ -730,7 +730,7 @@ class ChristopherWalken(LMObject):
         return doSDM
       
     # ...............................
-    def _getSweepConfig(self, alg, workdir, occ, prjs, mtxcols):
+    def _getSweepConfig(self, workdir, alg, occ, prjs, mtxcols):
         occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
         sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
         
