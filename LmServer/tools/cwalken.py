@@ -660,47 +660,54 @@ class ChristopherWalken(LMObject):
                 self.log.info('   Will compute for Grid {}:'.format(gsid))
                 for alg in self.algs:
                     for prj_scen in self.prjScens:
-                        prj = self._findOrInsertSDMProject(occ, alg, prj_scen, 
-                                                           dt.gmt().mjd)
+                        prj = self._findOrInsertSDMProject(
+                            occ, alg, prj_scen, dt.gmt().mjd)
                         if prj is not None:
                             prjs.append(prj)
                             mtx = self.globalPAMs[prj.projScenarioCode]
-                            mtxcol = self._findOrInsertIntersect(prj, mtx, currtime)
+                            mtxcol = self._findOrInsertIntersect(
+                                prj, mtx, currtime)
                             if mtxcol is not None:
-                                # Todo: Add intersect
-                                pav_filename = os.path.join(
-                                    workdir, 'pavs', 'pav_{}{}'.format(
-                                        mtxcol.getId(), LMFormat.MATRIX.ext))
+                                mtxcols.append(mtxcol)
                     doSDM = self._checkDoCompute(occ, prjs, mtxcols)
                         
                     if doSDM:
-                        occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
-                        sweep_config = self._getSweepConfig(workdir, alg, occ, prjs, mtxcols)
+                        occ_work_dir = os.path.join(
+                            workdir, 'occ_{}'.format(occ.getId()))
+                        sweep_config = self._getSweepConfig(
+                            workdir, alg, occ, prjs, mtxcols)
         
                         # Write config file
                         species_config_filename = os.path.join(
                             os.path.dirname(occ.getDLocation()), 
-                            'species_config_{}{}'.format(occ.getId(), LMFormat.JSON.ext))
+                            'species_config_{}{}'.format(
+                                occ.getId(), LMFormat.JSON.ext))
                         sweep_config.save_config(species_config_filename)
                         
                         # Add sweep rule
                         param_sweep_cmd = SpeciesParameterSweepCommand(
-                            species_config_filename, sweep_config.get_input_files(),
+                            species_config_filename,
+                            sweep_config.get_input_files(),
                             sweep_config.get_output_files())
                         spudRules.append(param_sweep_cmd.getMakeflowRule())
                         
                         # Add stockpile rule
                         stockpile_success_filename = os.path.join(
-                            occ_work_dir, 'occ_{}stockpile.success'.format(occ.getId()))
+                            occ_work_dir, 'occ_{}stockpile.success'.format(
+                                occ.getId()))
                         stockpile_cmd = MultiStockpileCommand(
-                            sweep_config.stockpile_filename, stockpile_success_filename)
-                        spudRules.append(stockpile_cmd.getMakeflowRule(local=True))
+                            sweep_config.stockpile_filename,
+                            stockpile_success_filename)
+                        spudRules.append(
+                            stockpile_cmd.getMakeflowRule(local=True))
                         
                         # Add multi-index rule
                         index_pavs_document_filename = os.path.join(
-                            occ_work_dir, 'solr_pavs_post{}'.format(LMFormat.XML.ext))
+                            occ_work_dir, 'solr_pavs_post{}'.format(
+                                LMFormat.XML.ext))
                         index_cmd = MultiIndexPAVCommand(
-                            sweep_config.pavs_filename, index_pavs_document_filename)
+                            sweep_config.pavs_filename,
+                            index_pavs_document_filename)
                         spudRules.append(index_cmd.getMakeflowRule(local=True))
             
             # TODO: Add metrics / snippets processing
