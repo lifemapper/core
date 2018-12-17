@@ -867,23 +867,24 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
 # ..............................................................................
 class TinyBubblesWoC(_SpeciesWeaponOfChoice):
     """
-    @summary: Moves multiple csv occurrence files (pre-parsed by taxa, with or without 
-                 headers).  A template for the metadata, with instructions, is at 
-                 LmDbServer/tools/occurrence.meta.example.  
-                 The WOC moves each rww to a file, inserts or updates  
-                 the Occurrence record and inserts any dependent objects.
+    @summary: Moves multiple csv occurrence files (pre-parsed by taxa, with or  
+              without headers).  A template for the metadata, with instructions,  
+              is at LmDbServer/tools/occurrence.meta.example.  
+              The WOC renames and moves each csv file to the correct location,  
+              inserts or updates the Occurrence record and inserts any dependent 
+              objects.
     @note: If useGBIFTaxonomy is true, the 'GroupBy' field in the metadata
-                 should name the field containing the GBIF TaxonID for the accepted 
-                 Taxon of each record in the group. 
+           should name the field containing the GBIF TaxonID for the accepted 
+           Taxon of each record in the group. 
     """
     def __init__(self, scribe, user, archiveName, epsg, expDate, 
                      occCSVDir, occMeta, occDelimiter, dirContentsFname,
                      logger=None, processType=ProcessType.USER_TAXA_OCCURRENCE, 
                      useGBIFTaxonomy=False, taxonSourceName=None):
         super(TinyBubblesWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                                                occCSVDir, metaFname=occMeta, 
-                                                taxonSourceName=taxonSourceName, 
-                                                logger=logger)
+                                             occCSVDir, metaFname=occMeta, 
+                                             taxonSourceName=taxonSourceName, 
+                                             logger=logger)
         # specific attributes
         self.processType = processType
         self._occCSVDir = occCSVDir
@@ -900,13 +901,15 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
 # ...............................................
     def  _parseBubble(self, bubbleFname):
         """
-        @note: This method could either get OpenTree ID from filename or 
-                 GBIF ID from record/s.
-        @return binomial: Binomial, genus + species, assigned to these data.
-        @return openTreeId: Integer key indicating the Open Tree of Life unique 
-                  identifier for the phylogenetic record represented by these data. 
+        @todo: This method should either get OpenTree ID from filename or 
+               some taxon ID (GBIF) from record/s.
+        @return species_name: If it can be parsed from the filename, 
+                Binomial, genus + species, otherwise it is simply the filename
+        @return openTreeId: If it can be parsed from the filename, an integer 
+                key indicating the Open Tree of Life unique identifier for the 
+                phylogenetic record represented by these data. 
         @return recordCount: number of records in the file (lines not including 
-                  the header).
+                the header).
         """
         binomial = opentreeId = recordCount = None
         if bubbleFname is not None:
@@ -941,19 +944,20 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
  
 # ...............................................
     def  _getInsertSciNameForTinyBubble(self, binomial, opentreeId, recordCount):
-        if binomial is not None and opentreeId is not None:
-            sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
-                                                                  taxonKey=opentreeId)
-                
-            if sciName is None:
+        if binomial is not None:
+            if opentreeId is not None:
                 sciName = ScientificName(binomial,
-                                                 lastOccurrenceCount=recordCount,
-                                                 taxonomySourceId=self._taxonSourceId, 
-                                                 taxonomySourceKey=opentreeId, 
-                                                 taxonomySourceSpeciesKey=opentreeId)
-                self._scribe.findOrInsertTaxon(sciName=sciName)
-                self.log.info('Inserted sciName for OpenTree UID {}, {}'
-                                      .format(opentreeId, binomial))
+                                         lastOccurrenceCount=recordCount,
+                                         taxonomySourceId=self._taxonSourceId, 
+                                         taxonomySourceKey=opentreeId, 
+                                         taxonomySourceSpeciesKey=opentreeId)
+            else:
+                sciName = ScientificName(binomial, userId=self.userId,
+                                         lastOccurrenceCount=recordCount)
+            self._scribe.findOrInsertTaxon(sciName=sciName)
+            self.log.info('Inserted sciName for OpenTree UID {}, {}'
+                                  .format(opentreeId, binomial))
+
         return sciName
     
 # ...............................................
@@ -1033,7 +1037,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         binomial, opentreeId, recordCount = self._parseBubble(bubbleFname)
         if binomial is not None and opentreeId is not None:
             sciName = self._getInsertSciNameForTinyBubble(binomial, opentreeId, 
-                                                                         recordCount)
+                                                          recordCount)
             if sciName is not None:
                 occ, willCompute = self._createOrResetOccurrenceset(sciName, recordCount,
                                                                     taxonSourceKey=opentreeId,
