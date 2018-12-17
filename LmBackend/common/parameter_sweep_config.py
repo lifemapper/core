@@ -6,6 +6,7 @@ import os
 
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 from LmCommon.common.lmconstants import LMFormat, ProcessType
+from LmCommon.common.readyfile import readyFilename
 
 # Local dictionary keys for determining the type of masks to create
 DO_ASCII = 'do_ascii'
@@ -483,4 +484,5 @@ class ParameterSweepConfiguration(object):
             with open(fn_or_flo, 'w') as out_f:
                 json.dump(config, out_f)
         else:
+            readyFilename(fn_or_flo, overwrite=True)
             json.dump(config, fn_or_flo)
