@@ -9,9 +9,6 @@ Todo:
 from copy import deepcopy
 from random import randint, shuffle
 
-import dendropy
-import pytest
-
 # TODO: Get these from constants
 ACCEPTED_NAME_KEY = 'accepted_name'
 SEARCH_NAME_KEY = 'search_name'
