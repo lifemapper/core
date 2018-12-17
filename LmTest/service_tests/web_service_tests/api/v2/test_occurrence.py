@@ -1,38 +1,15 @@
-"""
-@summary: Test occurrence set services
-@status: alpha
-@author: CJ Grady
-@license: gpl2
-@copyright: Copyright (C) 2018, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+"""Tests for the occurrence set web services
 """
 import argparse
 import contextlib
 import json
 import unittest
+import urllib2
 import warnings
 
 from LmCommon.common.lmconstants import (CSV_INTERFACE, EML_INTERFACE,
                            GEO_JSON_INTERFACE, JSON_INTERFACE, KML_INTERFACE, 
-                           SHAPEFILE_INTERFACE)
+                           SHAPEFILE_INTERFACE, HTTPStatus)
 
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -44,243 +21,139 @@ from LmTest.formatTests.geoJsonValidator import validate_geojson
 from LmTest.formatTests.jsonValidator import validate_json
 from LmTest.formatTests.kmlValidator import validate_kml
 from LmTest.formatTests.shapefileValidator import validate_shapefile
-from LmTest.webTestsLite.common.userUnitTest import UserTestCase
-from LmTest.webTestsLite.common.webClient import LmWebClient
+import pytest
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.algorithm import Algorithm
 
 # .............................................................................
-class TestScribeOccurrenceService(UserTestCase):
-   """
-   @summary: This is a test class for running scribe tests for the occurrence 
-                set service
-   """
-   # ............................
-   def setUp(self):
-      """
-      @summary: Set up test
-      """
-      self.scribe = BorgScribe(ConsoleLogger())
-      self.scribe.openConnections()
-      
-   # ............................
-   def tearDown(self):
-      """
-      @summary: Clean up after test
-      """
-      self.scribe.closeConnections()
-      
-   # ............................
-   def test_count(self):
-      """
-      @summary: Basic test counting all occurrence sets for a user
-      """
-      count = self.scribe.countOccurrenceSets(userId=self._get_session_user())
-      self.assertGreaterEqual(count, 0)
-      if count == 0:
-         warnings.warn(
-            'Count returned 0 occurrence sets for user: {}'.format(
-               self._get_session_user()))
-   
-   # ............................
-   def test_get(self):
-      """
-      @summary: Basic test that tries to get an occurrence set object 
-                   belonging to a user
-      """
-      occAtoms = self.scribe.listOccurrenceSets(0, 1,
-                                               userId=self._get_session_user())
-      if len(occAtoms) == 0:
-         self.fail(
-            'Cannot get an occurrence set because listing found none')
-      else:
-         occ = self.scribe.getOccurrenceSet(occId=occAtoms[0].id, 
-                                       userId=self._get_session_user())
-         self.assertIsInstance(occ, OccurrenceLayer)
-         self.assertEqual(occ.getUserId(), self._get_session_user(), 
-               'User id on occurrence = {}, session user = {}'.format(
-                                    occ.getUserId(), self._get_session_user()))
-   
-   # ............................
-   def test_list_atoms(self):
-      """
-      @summary: Basic test that tries to get a list of occurrence set atoms 
-                   from the scribe
-      """
-      occAtoms = self.scribe.listOccurrenceSets(0, 1, 
-                                              userId=self._get_session_user())
-      self.assertGreaterEqual(len(occAtoms), 0)
-      if len(occAtoms) == 0:
-         warnings.warn(
-            'List returned 0 occurrence sets for user: {}'.format(
-               self._get_session_user()))
-      else:
-         occ = self.scribe.getOccurrenceSet(occId=occAtoms[0].id, 
-                                       userId=self._get_session_user())
-         self.assertEqual(occ.getUserId(), self._get_session_user(), 
-               'User id on occurrence set = {}, session user = {}'.format(
-                                    occ.getUserId(), self._get_session_user()))
-   
-   # ............................
-   def test_list_objects(self):
-      """
-      @summary: Basic test that tries to get a list of occurrence set objects
-                   from the scribe
-      """
-      occObjs = self.scribe.listOccurrenceSets(0, 1, atom=False,
-                                              userId=self._get_session_user())
-      self.assertGreaterEqual(len(occObjs), 0)
-      if len(occObjs) == 0:
-         warnings.warn(
-            'List returned 0 occurrence sets for user: {}'.format(
-                                                     self._get_session_user()))
-      else:
-         self.assertIsInstance(occObjs[0], OccurrenceLayer)
-         self.assertEqual(occObjs[0].getUserId(), self._get_session_user(), 
-               'User id on occurrence set = {}, session user = {}'.format(
-                             occObjs[0].getUserId(), self._get_session_user()))
+class Test_occurrence_layer_web_services(object):
+    """Test class for occurrence set services
+    """
+    # ............................
+    def test_count_occurrence_sets_no_parameters(self, public_client, scribe):
+        """Tests the count service with the default parameters
 
-# .............................................................................
-class TestWebOccurrenceService(UserTestCase):
-   """
-   @summary: This is a test class for running web tests for the occurrence set 
-                service
-   """
-   # ............................
-   def setUp(self):
-      """
-      @summary: Set up test
-      """
-      self.cl = LmWebClient()
-      if self.userId is not None:
-         # Log in
-         self.cl.login(self.userId, self.passwd)
-      
-   # ............................
-   def tearDown(self):
-      """
-      @summary: Clean up after test
-      """
-      if self.userId is not None:
-         # Log out
-         self.cl.logout()
-      self.cl = None
-      
-   # ............................
-   def test_count(self):
-      """
-      @summary: Basic test counting all occurrence sets for a user
-      """
-      with contextlib.closing(self.cl.count_occurrence_sets()) as x:
-         ret = json.load(x)
-      count = int(ret['count'])
-      
-      self.assertGreaterEqual(count, 0)
-      if count == 0:
-         warnings.warn(
-            'Count returned 0 occurrence sets for user: {}'.format(
-                                                     self._get_session_user()))
-   
-   # ............................
-   def test_get(self):
-      """
-      @summary: Basic test that tries to get an occurrence set object belonging 
-                   to a user
-      """
-      with contextlib.closing(self.cl.list_occurrence_sets()) as x:
-         ret = json.load(x)
-      
-      if len(ret) == 0:
-         self.fail(
-            'Cannot get an occurrence set because listing found none')
-      else:
-         occId = ret[0]['id']
-         
-         with contextlib.closing(self.cl.get_occurrence_set(occId)) as x:
-            occMeta = json.load(x)
-            
-         self.assertTrue(occMeta.has_key('speciesName'))
-         self.assertEqual(occMeta['user'], self._get_session_user(), 
-               'User id on occurrence set = {}, session user = {}'.format(
-                                    occMeta['user'], self._get_session_user()))
-         
-         # CSV
-         with contextlib.closing(self.cl.get_occurrence_set(occId, 
-                                          responseFormat=CSV_INTERFACE)) as x:
-            self.assertTrue(validate_csv(x))
-         # EML
-         with contextlib.closing(self.cl.get_occurrence_set(occId, 
-                                          responseFormat=EML_INTERFACE)) as x:
-            self.assertTrue(validate_eml(x))
-         # GeoJSON
-         with contextlib.closing(self.cl.get_occurrence_set(occId, 
-                                    responseFormat=GEO_JSON_INTERFACE)) as x:
-            self.assertTrue(validate_geojson(x))
-         # JSON
-         with contextlib.closing(self.cl.get_occurrence_set(occId, 
-                                          responseFormat=JSON_INTERFACE)) as x:
-            self.assertTrue(validate_json(x))
-         # KML
-         with contextlib.closing(self.cl.get_occurrence_set(occId, 
-                                          responseFormat=KML_INTERFACE)) as x:
-            self.assertTrue(validate_kml(x))
-         # Shapefile
-         with contextlib.closing(self.cl.get_occurrence_set(occId, 
-                                    responseFormat=SHAPEFILE_INTERFACE)) as x:
-            self.assertTrue(validate_shapefile(x))
-   
-   # ............................
-   def test_list(self):
-      """
-      @summary: Basic test that tries to get a list of occurrence set atoms 
-                   from the web
-      """
-      with contextlib.closing(self.cl.list_occurrence_sets()) as x:
-         ret = json.load(x)
-      
-      if len(ret) == 0:
-         warnings.warn(
-            'Count returned 0 occurrence sets for user: {}'.format(
-               self._get_session_user()))
-   
-# .............................................................................
-def get_test_classes():
-   """
-   @summary: Return a list of the available test classes in this module.  This 
-                should be returned to a test suite builder that will 
-                parameterize tests appropriately
-   """
-   return [
-      TestScribeOccurrenceService,
-      TestWebOccurrenceService
-   ]
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        scribe_count = scribe.countOccurrenceSets()
+        service_count = public_client.deserialize(
+            public_client.count_occurrence_sets())
+        assert scribe_count == service_count
+        assert scribe_count >= 0
+    
+    # ............................
+    def test_count_occurrence_sets_with_parameters(self, public_client,
+                                                   scribe):
+        """Tests the count service with the default parameters
 
-# .............................................................................
-def get_test_suite(userId=None, pwd=None):
-   """
-   @summary: Get test suite for this module.  Always get public tests and get
-                user tests if user information is provided
-   @param userId: The id of the user to use for tests
-   @param pwd: The password of the specified user
-   """
-   suite = unittest.TestSuite()
-   suite.addTest(UserTestCase.parameterize(TestScribeOccurrenceService))
-   suite.addTest(UserTestCase.parameterize(TestWebOccurrenceService))
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        scribe_count = scribe.countOccurrenceSets(minOccurrenceCount=10)
+        service_count = public_client.deserialize(
+            public_client.count_occurrence_sets(minimumNumberOfPoints=10))
+        assert scribe_count == service_count
+        assert scribe_count >= 0
 
-   if userId is not None:
-      suite.addTest(UserTestCase.parameterize(TestScribeOccurrenceService, 
-                                              userId=userId, pwd=pwd))
-      suite.addTest(UserTestCase.parameterize(TestWebOccurrenceService, 
-                                              userId=userId, pwd=pwd))
-      
-   return suite
+    # ............................
+    def test_delete_occ_user_owns(self, public_client, scribe):
+        """Tests that user can delete one of their occurrence sets
 
-# .............................................................................
-if __name__ == '__main__':
-   parser = argparse.ArgumentParser(
-                        description='Run occurrence service tests')
-   parser.add_argument('-u', '--user', type=str, 
-                 help='If provided, run tests for this user (and anonymous)' )
-   parser.add_argument('-p', '--pwd', type=str, help='Password for user')
-   
-   args = parser.parse_args()
-   suite = get_test_suite(userId=args.user, pwd=args.pwd)
-   unittest.TextTestRunner(verbosity=2).run(suite)
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        dummy_occ = OccurrenceLayer('dummy test occ', PUBLIC_USER, 4326, 1)
+        inserted_dummy_occ = scribe.findOrInsertOccurrenceSet(dummy_occ)
+
+        test_occ_id = inserted_dummy_occ.getId()
+
+        try:
+            resp = public_client.delete_occurrence_set(test_occ_id)
+            resp_status = resp.code
+        except Exception as e_info:
+            # If there was a failure, try to delete the dummy occ with the
+            #    scribe to clean things up
+            scribe.deleteObject(inserted_dummy_occ)
+            print(str(e_info))
+            raise e_info
+        assert resp_status == HTTPStatus.NO_CONTENT
+        # Check that test occurrence set was deleted
+        assert scribe.getOccurrenceSet(occId=test_occ_id) is None
+
+    # ............................
+    def test_delete_occ_user_owns_with_children(self, public_client, scribe):
+        """Tests that user can delete occurrence set and dependants
+
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        dummy_occ = OccurrenceLayer('dummy test occ', PUBLIC_USER, 4326, 1)
+        inserted_dummy_occ = scribe.findOrInsertOccurrenceSet(dummy_occ)
+
+        test_occ_id = inserted_dummy_occ.getId()
+
+        scn_id = scribe.listScenarios(0, 1)[0].id
+        scn = scribe.getScenario(scn_id)
+
+        algo = Algorithm('ATT_MAXENT')
+        algo.fillWithDefaults()
+        prj = SDMProjection(inserted_dummy_occ, algo, scn, scn)
+        inserted_dummy_prj = scribe.findOrInsertSDMProject(prj)
+        
+        test_prj_id = inserted_dummy_prj.getId()
+
+        try:
+            resp = public_client.delete_occurrence_set(test_occ_id)
+            resp_status = resp.code
+        except Exception as e_info:
+            # If there was a failure, try to delete the dummy objects with the
+            #    scribe to clean things up
+            scribe.deleteObject(inserted_dummy_prj)
+            scribe.deleteObject(inserted_dummy_occ)
+            print(str(e_info))
+            raise e_info
+        assert resp_status == HTTPStatus.NO_CONTENT
+        # Check that test occurrence set was deleted
+        assert scribe.getOccurrenceSet(occId=test_occ_id) is None
+        assert scribe.getSDMProject(test_prj_id) is None
+
+    # ............................
+    def test_delete_occ_does_not_exist(self, public_client):
+        """Tests that user cannot delete occurrence set that does not exist
+
+        Args:
+            public_client (:obj:`LmWebclient`): A Lifemapper web service client
+                instance for the public user.  This will be provided via
+                pytest.
+            scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
+                querying the database
+        """
+        bad_occ_id = 999999999
+        with pytest.raises(urllib2.HTTPError) as e_info:
+            public_client.delete_occurrence_set(bad_occ_id)
+            assert e_info.code == HTTPStatus.NOT_FOUND
+    
+    # Get
+    # List
+
+
+
+
