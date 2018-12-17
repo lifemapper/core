@@ -2858,84 +2858,37 @@ $$
 DECLARE
    currCount int := -1;
    mtxid int;
-   prjid int;
-   mcrec lm_v3.lm_sdmMatrixcolumn;
    mCount int := 0;
    mcCount int := 0;
-   lyrCount int := 0;
-   prjCount int := 0;
-   occCount int := 0;
    total int := 0;
 BEGIN
    -- MFProcesses
-   -- DELETE FROM lm_v3.MFProcess WHERE gridsetId = gsid;
-   DELETE FROM lm_v3.MFProcess 
-      WHERE userid = (SELECT userid FROM lm_v3.Gridset WHERE gridsetId = gsid)
-        AND metadata not like '%GRIM%';
+   DELETE FROM lm_v3.MFProcess WHERE gridsetId = gsid;
    GET DIAGNOSTICS currCount = ROW_COUNT;
    RAISE NOTICE 'Deleted % MF processes for Gridset %', currCount, gsid;
 
    FOR mtxid IN
-      -- SDM Matrices, LmCommon.common.lmconstants 
-      --   MatrixType.GRIM = 2, MatrixType.BIOGEO_HYPOTHESES = 3
-      SELECT matrixid FROM lm_v3.Gridset g, lm_v3.Matrix m
-         WHERE g.gridsetid = gsid 
-           AND g.gridsetid = m.gridsetid
-           AND m.matrixtype NOT IN (2, 3)
-      LOOP
-         RAISE NOTICE 'Deleting SDM Data for Matrix %', mtxid;
-         
-         FOR mcrec IN 
-            SELECT * FROM lm_v3.lm_sdmMatrixcolumn WHERE matrixId = mtxid
-            LOOP
-               DELETE FROM lm_v3.MatrixColumn WHERE matrixColumnId = mcrec.matrixColumnId;
-               GET DIAGNOSTICS currCount = ROW_COUNT;
-               mcCount = mcCount + currCount;
+      SELECT matrixid FROM lm_v3.Matrix WHERE gridsetId = gsid
+   LOOP
+      DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % columns for Matrix %', currCount, mtxid;
+      mcCount = mcCount + currCount;            
 
-               -- cascades to SDMProject
-               DELETE FROM lm_v3.Layer WHERE layerId = mcrec.layerid; 
-               GET DIAGNOSTICS currCount = ROW_COUNT;
-               lyrCount = lyrCount + currCount;
-
-               SELECT count(*) INTO currCount FROM lm_v3.sdmproject 
-                 WHERE occurrencesetId = mcrec.occurrencesetId;
-               IF currCount = 0 THEN
-                  DELETE FROM lm_v3.OccurrenceSet 
-	                 WHERE occurrencesetID = mcrec.occurrencesetID;
-                  GET DIAGNOSTICS currCount = ROW_COUNT;
-                  occCount = occCount + currCount;
-	           END IF;
-
-            END LOOP;
-            
-         DELETE FROM lm_v3.Matrix WHERE matrixId = mtxid;
-         RAISE NOTICE 'Deleted Matrix %', mtxid;
-         mCount = mCount + 1;
-      END LOOP;
-
-   RAISE NOTICE 'Deleted % MatrixColumns', mcCount;
-   RAISE NOTICE 'Deleted % Layers and SDMProjects', lyrCount;
-   RAISE NOTICE 'Deleted % Occurrencesets', occCount;
-   total = mcCount + lryCount + occCount;
+      DELETE FROM lm_v3.Matrix WHERE matrixid = mtxid;
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % Matrix # %', currCount, mtxid;
+      mCount = mCount + currCount;
+   END LOOP;
    
-   FOR mtxid IN
-      SELECT matrixid FROM lm_v3.Gridset g, lm_v3.Matrix m
-         WHERE g.gridsetid = gsid 
-           AND g.gridsetid = m.gridsetid
-           AND m.matrixtype in (2, 3)
-      LOOP
-         RAISE NOTICE 'Deleting GRIM or BioGeographic Hypotheses Matrix %', mtxid;
-         DELETE FROM lm_v3.MatrixColumn WHERE matrixId = mtxid;
-         GET DIAGNOSTICS currCount = ROW_COUNT;
-         RAISE NOTICE 'Deleted % MatrixColumns for Matrix %', currCount, mtxid;
-
-         DELETE FROM lm_v3.Matrix WHERE matrixId = mtxid;
-         RAISE NOTICE 'Deleted Matrix %', mtxid;
-         mCount = mCount + 1;
-      END LOOP;
-
-   RAISE NOTICE 'Deleted % Matrices', mCount;
-   return mCount;
+   DELETE FROM lm_v3.Gridset WHERE gridsetId = gsid;
+   GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % Gridset # %', currCount, gsid;
+   mCount = mCount + currCount;
+   
+   total = mcCount + mCount + currCount;
+   return total;
+   
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
