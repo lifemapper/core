@@ -672,8 +672,6 @@ class ChristopherWalken(LMObject):
                     doSDM = self._doComputeSDM(occ, prjs, mtxcols)
                         
                     if doSDM:
-                        occ_work_dir = os.path.join(
-                            workdir, 'occ_{}'.format(occ.getId()))
                         sweep_config = self._getSweepConfig(
                             workdir, alg, occ, prjs, mtxcols)
         
@@ -692,6 +690,7 @@ class ChristopherWalken(LMObject):
                         spudRules.append(param_sweep_cmd.getMakeflowRule())
                         
                         # Add stockpile rule
+                        occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
                         stockpile_success_filename = os.path.join(
                             occ_work_dir, 'occ_{}stockpile.success'.format(
                                 occ.getId()))
