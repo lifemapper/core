@@ -30,13 +30,12 @@ except:
 import csv
 import os
 import sys
-from time import sleep
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.apiquery import BisonAPI, GbifAPI
+from LmCommon.common.apiquery import GbifAPI
 from LmCommon.common.unicode import fromUnicode, toUnicode
-from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
-                                                ProcessType, JobStatus, ONE_HOUR, LMFormat) 
+from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, ProcessType, 
+                                         JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH
@@ -83,7 +82,7 @@ class _SpeciesWeaponOfChoice(LMObject):
         # Taxon Source for known taxonomy
         self._taxonSourceId = None
         if taxonSourceName is not None:
-            txSourceId, x, x = self._scribe.findTaxonSource(taxonSourceName)
+            txSourceId, _, _ = self._scribe.findTaxonSource(taxonSourceName)
             self._taxonSourceId = txSourceId
         # Beginning of iteration
         self.startFile = os.path.join(LOG_PATH, 'start.{}.txt'.format(self.name))
