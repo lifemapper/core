@@ -750,7 +750,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
                     self.log.info('WOC processed occset {} gbif key {} with {} records; next start {}'
                                       .format(occ.getId(), speciesKey, len(dataChunk), 
                                                  self.nextStart))
-        return occ, willCompute
+        return occ
     
 # ...............................................
     def moveToStart(self):
@@ -1016,7 +1016,6 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
 # ...............................................
     def getOne(self):
         occ = None
-        willCompute = False
         bubbleFname = self._getNextFilename()
         binomial, opentreeId, recordCount = self._parseBubble(bubbleFname)
         if binomial is not None and opentreeId is not None:
@@ -1028,7 +1027,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
             if occ:
                 self.log.info('WOC processed occset {}, opentreeId {}, with {} points; next start {}'
                                   .format(occ.getId(), opentreeId, recordCount, self.nextStart))
-        return occ, willCompute
+        return occ
 
 # ...............................................
     def _writeRawData(self, occ, data=None):
@@ -1173,7 +1172,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
             else:
                 self._scribe.log.info('Unauthorized user {} for ID {}'
                                             .format(occ.getUserId(), occ.getId()))
-        return userOcc, willCompute
+        return userOcc
     
 """
 import shutil

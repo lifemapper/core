@@ -412,6 +412,9 @@ currtime = dt.gmt().mjd
 config_file='/share/lm/data/archive/taffy/heuchera_global_10min_ppf.ini'
 success_file='/share/lm/data/archive/taffy/heuchera_global_10min.success'
 
+config_file='/share/lm/data/archive/anon/cjtest1.ini'
+success_file='/share/lm/data/archive/anon/cjtest1.success'
+
 boomer = Boomer(config_file, success_file, log=logger)
 
 boomer.initializeMe()                      
@@ -421,6 +424,17 @@ scribe = boomer._scribe
 borg = scribe._borg
 
 workdir = boomer.potatoBushel.getRelativeDirectory()
+
+self = chris
+squid = None
+spudRules = []
+gsid = 0
+currtime = dt.gmt().mjd
+
+gsid = self.boomGridset.getId()
+occ = self.weaponOfChoice.getOne()
+
+
 
 squid, spudRules = boomer.christopher.startWalken(workdir)
 boomer.squidNames.append(squid)
