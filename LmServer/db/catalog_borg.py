@@ -1368,6 +1368,22 @@ class Borg(DbPostgresql):
             success = True
         return success 
 
+# ...............................................
+    def clearUser(self, userId):
+        """
+        @summary: Deletes all User data
+        @param userId: User for whom to delete data
+        @return: True/False for success of operation
+        """
+        success = False
+        delCount = self.executeModifyFunction('lm_clearUserData', userId)
+        self.log.info('Deleted {} data objects for user {}'
+                          .format(delCount, userId))
+
+        if delCount > 0:
+            success = True
+        return success 
+
 # .............................................................................
     def countJobChains(self, status, userId=None):        
         """

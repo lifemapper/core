@@ -323,6 +323,14 @@ class BorgScribe(LMObject):
         return success 
     
 # ...............................................
+    def clearUser(self, userId):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::clearUser
+        """
+        success = self._borg.clearUser(userId)
+        return success 
+    
+# ...............................................
     def findOrInsertUser(self, usr):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertUser()
