@@ -258,16 +258,20 @@ class ParameterSweepConfiguration(object):
 
         # Check if model has been defined and define if necessary
         if not model_id in self.models.keys():
-            if process_type == ProcessType.ATT_PROJECT:
+            if int(process_type) == ProcessType.ATT_PROJECT:
                 mdl_process_type = ProcessType.ATT_MODEL
                 mdl_ruleset_path = os.path.join(
                     self.work_dir, model_id, '{}_ruleset{}'.format(
                         model_id, LMFormat.TXT.ext))
-            else:
-                mdl_process_type = ProcessType.OM_PROJECT
+            elif int(process_type) == ProcessType.OM_PROJECT:
+                mdl_process_type = ProcessType.OM_MODEL
                 mdl_ruleset_path = os.path.join(
                     self.work_dir, model_id, '{}_ruleset{}'.format(
                         model_id, LMFormat.XML.ext))
+            else:
+                raise Exception(
+                    'Cannot process process type: {}, {}'.format(
+                        process_type, type(process_type)))
             self.models[model_id] = {
                 RegistryKey.PROCESS_TYPE : mdl_process_type,
                 RegistryKey.OCCURRENCE_SET_ID : occ_set_id,
