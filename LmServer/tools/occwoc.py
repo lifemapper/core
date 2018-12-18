@@ -181,7 +181,6 @@ class _SpeciesWeaponOfChoice(LMObject):
         return willCompute
 
 # ...............................................
-#     def _createOrResetOccurrenceset(self, sciName, dataCount, 
     def _findOrInsertOccurrenceset(self, sciName, dataCount, 
                                    taxonSourceKey=None, data=None):
         """
@@ -207,34 +206,26 @@ class _SpeciesWeaponOfChoice(LMObject):
                 e = LMError(currargs=e.args, lineno=self.getLineno())
             raise e
 
-#         # Reset found or inserted Occ
-#         willCompute = self._willCompute(occ.status, occ.statusModTime, 
-#                                         occ.getDLocation(), occ.getRawDLocation())
-#         if willCompute:
-#             self.log.info('    Reseting OccLayer status and raw data')
-#             # Reset verify hash, name, count, status 
-#             occ.clearVerify()
-#             occ.clearOutputFiles()
-#             occ.displayName = sciName.scientificName
-#             occ.queryCount = dataCount
-#             occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
-#             # Update raw data in new or reset object
-#             rdloc = self._locateRawData(occ, data=data)
-#             if not rdloc:
-#                 raise LMError(currargs='    Failed to find raw data location')
-#             occ.setRawDLocation(rdloc, currtime)
-#             # TODO: remove Hack
-#             # Set scientificName, not pulled from DB, for alternate iDigBio query
-#             occ.setScientificName(sciName)
-#             success = self._scribe.updateObject(occ)
-#         else:
-#             # Return existing, complete
-#             self.log.info('    Returning completed OccLayer')
         if occ is not None:
-            # Set processType and metadata location (from config, not saved in DB)
-            occ.processType = self.processType
-            occ.rawMetaDLocation = self.metaFilename
-        return occ#, willCompute
+            # Do reset existing or new Occ?
+            willCompute = self._willCompute(occ.status, occ.statusModTime, 
+                                            occ.getDLocation(), occ.getRawDLocation())
+            if willCompute:
+                self.log.info('    Reseting OccLayer raw data')
+                # Update raw data in new or reset object
+                rdloc = self._writeRawData(occ, data=data)
+                if not rdloc:
+                    raise LMError(currargs='    Failed to find raw data location')
+                occ.setRawDLocation(rdloc, currtime)
+                # Set scientificName, not pulled from DB, for alternate iDigBio query
+                success = self._scribe.updateObject(occ)
+                # Set processType and metadata location (from config, not saved in DB)
+                occ.processType = self.processType
+                occ.rawMetaDLocation = self.metaFilename
+            else:
+                # Return existing, completed, unchanged
+                self.log.info('    Returning up-to-date OccLayer')
+        return occ
     
 # ...............................................
     def _getInsertSciNameForGBIFSpeciesKey(self, taxonKey, taxonCount):
@@ -294,7 +285,7 @@ class _SpeciesWeaponOfChoice(LMObject):
         raise LMError(currargs='Function must be implemented in subclass')
 
 # ...............................................
-    def _locateRawData(self, occ, data=None):
+    def _writeRawData(self, occ, data=None):
         self._raiseSubclassError()
     
 # ...............................................
@@ -462,7 +453,7 @@ class _SpeciesWeaponOfChoice(LMObject):
 #         return occ, willCompute
 # 
 # # ...............................................
-#     def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
+#     def _writeRawData(self, occ, taxonSourceKeyVal=None, data=None):
 #         if taxonSourceKeyVal is None:
 #             raise LMError(currargs='Missing taxonSourceKeyVal for BISON query url')
 #         occAPI = BisonAPI(qFilters=
@@ -636,7 +627,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
         return finalfront
     
 # ...............................................
-    def _locateRawData(self, occ, data=None):
+    def _writeRawData(self, occ, data=None):
         rdloc = occ.createLocalDLocation(raw=True)
         success = occ.writeCSV(data, dlocation=rdloc, overwrite=True,
                                header=self._fieldNames)
@@ -781,7 +772,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
                 line, specieskey = self._getCSVRecord(parse=False)
         
 # ...............................................
-    def _locateRawData(self, occ, data=None):
+    def _writeRawData(self, occ, data=None):
         rdloc = occ.createLocalDLocation(raw=True)
         success = occ.writeCSV(data, dlocation=rdloc, overwrite=True)
         if not success:
@@ -1048,7 +1039,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         return occ, willCompute
 
 # ...............................................
-    def _locateRawData(self, occ, data=None):
+    def _writeRawData(self, occ, data=None):
         if data is None:
             raise LMError(currargs='Missing data file for occurrenceSet')
         rdloc = occ.createLocalDLocation(raw=True)
