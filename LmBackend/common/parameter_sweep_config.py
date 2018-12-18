@@ -168,9 +168,15 @@ class ParameterSweepConfiguration(object):
             metadata : Optional.  This should be provided with user occurrence
                 sets to describe the fields in the CSV.
         """
-        self.occurrence_sets.append(
-            (process_type, occ_set_id, url_fn_or_key, out_filename, 
-             big_out_filename, max_points, metadata))
+        add_me = True  # Should we add this occurrence set config
+        # Check if occurrence set is already in the config
+        for occ_info in self.occurrence_sets:
+            if occ_set_id == occ_info[2]:
+                add_me = False
+        if add_me:
+            self.occurrence_sets.append(
+                (process_type, occ_set_id, url_fn_or_key, out_filename, 
+                 big_out_filename, max_points, metadata))
     
     # ........................................
     def add_pav_intersect(self, shapegrid_filename, pav_id, projection_id,
