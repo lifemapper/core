@@ -217,7 +217,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                     raise LMError(currargs='    Failed to find raw data location')
                 occ.setRawDLocation(rdloc, currtime)
                 # Set scientificName, not pulled from DB, for alternate iDigBio query
-                success = self._scribe.updateObject(occ)
+                _ = self._scribe.updateObject(occ)
                 # Set processType and metadata location (from config, not saved in DB)
                 occ.processType = self.processType
                 occ.rawMetaDLocation = self.metaFilename
@@ -239,10 +239,9 @@ class _SpeciesWeaponOfChoice(LMObject):
         else:
             # Use API to get and insert species name 
             try:
-                (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
-                 nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
-                 familyStr, genusStr, speciesStr, genusKey, speciesKey, 
-                 loglines) = GbifAPI.getTaxonomy(taxonKey)
+                (rankStr, scinameStr, canonicalStr, _, _, _, taxStatus, 
+                 kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
+                 _, genusKey, speciesKey, _) = GbifAPI.getTaxonomy(taxonKey)
             except Exception, e:
                 self.log.info('Failed lookup for key {}, ({})'.format(
                                                                     taxonKey, e))
@@ -513,7 +512,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
                                                      delimiter=self._delimiter,
                                                      pullChunks=True) 
         except Exception, e:
-            raise LMError('Failed to construct OccDataParser')
+            raise LMError('Failed to construct OccDataParser, {}'.format(e))
         
         self._fieldNames = self.occParser.header
         self.occParser.initializeMe()         
@@ -595,7 +594,6 @@ class UserWoC(_SpeciesWeaponOfChoice):
                  the OccurrenceLayer.displayname will use the GroupBy value
         """
         occ = None
-        willCompute = False
         dataChunk, taxonKey, taxonName = self.occParser.pullCurrentChunk()
         if dataChunk:
             # Get or insert ScientificName (squid)
@@ -765,10 +763,10 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
             self._currKeyFirstRecnum = startline
             self._currRec = self._currSpeciesKey = None
         else:
-            line, specieskey = self._getCSVRecord(parse=True)
+            line, _ = self._getCSVRecord(parse=True)
             # If not there yet, power through lines
             while line is not None and self._linenum < startline-1:
-                line, specieskey = self._getCSVRecord(parse=False)
+                line, _ = self._getCSVRecord(parse=False)
         
 # ...............................................
     def _writeRawData(self, occ, data=None):
@@ -901,10 +899,10 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         @return recordCount: number of records in the file (lines not including 
                 the header).
         """
-        binomial = opentreeId = recordCount = None
+        binomial = opentreeId = None
         if bubbleFname is not None:
-            pth, fname = os.path.split(bubbleFname)
-            basename, ext = os.path.splitext(fname)
+            _, fname = os.path.split(bubbleFname)
+            basename, _ = os.path.splitext(fname)
             parts = basename.split('_')
             if len(parts) >= 2:
                 genus =  parts[0]
@@ -920,8 +918,8 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                 self.log.error('Unable to parse filename {} into binomial and opentreeId'
                                     .format(basename))
         try:
-            tmp = fromUnicode(toUnicode(binomial))
-        except Exception, e:
+            _ = fromUnicode(toUnicode(binomial))
+        except Exception, _:
             self.log.error('Failed to convert binomial to and from unicode')
             binomial = None            
                     
@@ -1112,7 +1110,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
         startline = self._findStart()  
         if startline > 1:
             while self._linenum < startline-1:
-                line = self._getNextLine(self._idfile)
+                _ = self._getNextLine(self._idfile)
 
 # ...............................................
     def _getOcc(self):
