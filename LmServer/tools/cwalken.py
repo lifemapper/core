@@ -655,6 +655,9 @@ class ChristopherWalken(LMObject):
         if occ:
             squid = occ.squid
             
+            occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
+            sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
+            
             # If we have enough points to model
             if occ.queryCount >= self.minPoints:
                 self.log.info('   Will compute for Grid {}:'.format(gsid))
@@ -673,47 +676,45 @@ class ChristopherWalken(LMObject):
                     doSDM = self._doComputeSDM(occ, prjs, mtxcols)
             
                     if doSDM:
-                        # We only want one sweep config per species to prevent
-                        #    partial rules in the makeflow
-                        if sweep_config is None:
-                            occ_work_dir = os.path.join(
-                                workdir, 'occ_{}'.format(occ.getId()))
-                            sweep_config = ParameterSweepConfiguration(
-                                work_dir=occ_work_dir)
-                        
                         # Add SDM commands for the algorithm
                         self._fill_sweep_config(
                             sweep_config, workdir, alg, occ, prjs, mtxcols)
                 
-                # If we created a sweep config, write the config and add rules
-                if sweep_config is not None:
-                    # Write config file
-                    species_config_filename = os.path.join(
-                        os.path.dirname(occ.getDLocation()), 
-                        'species_config_{}{}'.format(
-                            occ.getId(), LMFormat.JSON.ext))
-                    sweep_config.save_config(species_config_filename)
-                    
-                    # Add sweep rule
-                    param_sweep_cmd = SpeciesParameterSweepCommand(
-                        species_config_filename,
-                        sweep_config.get_input_files(),
-                        sweep_config.get_output_files())
-                    spudRules.append(param_sweep_cmd.getMakeflowRule())
-                    
-                    # Add stockpile rule
-                    occ_work_dir = os.path.join(
-                        workdir, 'occ_{}'.format(occ.getId()))
-                    stockpile_success_filename = os.path.join(
-                        occ_work_dir, 'occ_{}stockpile.success'.format(
-                            occ.getId()))
-                    stockpile_cmd = MultiStockpileCommand(
-                        sweep_config.stockpile_filename,
-                        stockpile_success_filename)
-                    spudRules.append(
-                        stockpile_cmd.getMakeflowRule(local=True))
-                    
-                    # Add multi-index rule
+            else:
+                doSDM = self._doComputeSDM(occ, [], [])
+                if doSDM:
+                    # Only add the occurrence set to the sweep config.  Empty
+                    #    lists for projections and PAVs will omit those objects
+                    self._fill_sweep_config(
+                        sweep_config, workdir, None, occ, [], [])
+
+            # Only add rules if we have something to compute
+            if len(sweep_config.occurrence_sets) > 0:
+                # Write the sweep config file
+                species_config_filename = os.path.join(
+                    os.path.dirname(occ.getDLocation()),
+                    'species_config_{}{}'.format(
+                        occ.getId(), LMFormat.JSON.ext))
+                sweep_config.save_config(species_config_filename)
+    
+                # Add sweep rule
+                param_sweep_cmd = SpeciesParameterSweepCommand(
+                    species_config_filename, sweep_config.get_input_files(),
+                    sweep_config.get_output_files())
+                spudRules.append(param_sweep_cmd.getMakeflowRule())
+    
+                # Add stockpile rule
+                stockpile_success_filename = os.path.join(
+                    occ_work_dir, 'occ_{}stockpile.success'.format(
+                        occ.getId()))
+                stockpile_cmd = MultiStockpileCommand(
+                    sweep_config.stockpile_filename,
+                    stockpile_success_filename)
+                spudRules.append(
+                    stockpile_cmd.getMakeflowRule(local=True))
+    
+                # Add multi-index rule if we added PAVs
+                if len(sweep_config.pavs) > 0:
                     index_pavs_document_filename = os.path.join(
                         occ_work_dir, 'solr_pavs_post{}'.format(
                             LMFormat.XML.ext))
@@ -721,7 +722,7 @@ class ChristopherWalken(LMObject):
                         sweep_config.pavs_filename,
                         index_pavs_document_filename)
                     spudRules.append(index_cmd.getMakeflowRule(local=True))
-            
+
             # TODO: Add metrics / snippets processing
         return squid, spudRules
     
