@@ -1012,6 +1012,21 @@ class BOOMFiller(LMObject):
                          statusModTime=currtime)
         grimChain = self.scribe.insertMFChain(newMFC, gridsetId)
         return grimChain
+
+    # .............................
+    def _getGrimMF(self, scencode, gridsetId, currtime):
+        # Create MFChain for this GPAM
+        desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
+                .format(self.userId, self.archiveName, scencode))
+        meta = {MFChain.META_CREATED_BY: self.name,
+                MFChain.META_GRIDSET: gridsetId,
+                MFChain.META_DESCRIPTION: desc 
+                }
+        newMFC = MFChain(self.userId, priority=self.priority, 
+                         metadata=meta, status=JobStatus.GENERAL, 
+                         statusModTime=currtime)
+        grimChain = self.scribe.insertMFChain(newMFC, gridsetId)
+        return grimChain
    
     # .............................
     def addGrimMFs(self, defaultGrims, gridsetId):
@@ -1242,14 +1257,6 @@ class BOOMFiller(LMObject):
             # Check for a file OccurrenceLayer Ids for existing or PUBLIC user
             if self.occIdFname:
                 self._checkOccurrenceSets()
-#             # Check for a file of GBIF taxonIDs
-#             elif self.dataSource == SpeciesDatasource.TAXON_IDS:
-#                 # Create makeflow for occurrence data retrieval then reset datasource 
-#                 iqMF = self.addIdigQueryMF(boomGridset.getId())
-#                 boomCmd.inputs.append(point_output_file, meta_output_file)
-# 
-#                 self.dataSource = SpeciesDatasource.USER
-# #                 self.userOccFname, meta_filename = self._getPartnerSpeciesData()
 
             # Fix user makeflow and layer directory permissions
             self._fixDirectoryPermissions(boomGridset)
