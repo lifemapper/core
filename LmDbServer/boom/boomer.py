@@ -185,11 +185,12 @@ class Boomer(LMObject):
         if self.potatoBushel:
             self.log.info('Rotate potatoes ...')
             # Write the potatoBushel MFChain
-            self.potatoBushel.write()
-            self.potatoBushel.updateStatus(JobStatus.INITIALIZE)
-            self._scribe.updateObject(self.potatoBushel)
-            self.log.info('   Wrote potatoBushel {} ({} spuds)'
-                          .format(self.potatoBushel.objId, len(self.squidNames)))
+            if self.potatoBushel.jobs:
+                self.potatoBushel.write()
+                self.potatoBushel.updateStatus(JobStatus.INITIALIZE)
+                self._scribe.updateObject(self.potatoBushel)
+                self.log.info('   Wrote potatoBushel {} ({} spuds)'
+                              .format(self.potatoBushel.objId, len(self.squidNames)))
         
         # Create new bushel
         if not self.christopher.complete:

@@ -659,7 +659,6 @@ class ChristopherWalken(LMObject):
             # If we have enough points to model
             if occ.queryCount >= self.minPoints:
                 self.log.info('   Will compute for Grid {}:'.format(gsid))
-                sweep_config = None
                 for alg in self.algs:
                     prjs = []
                     mtxcols = []
