@@ -638,8 +638,6 @@ class ChristopherWalken(LMObject):
         """
         squid = None
         spudRules = []
-        prjs = []
-        mtxcols = []
         gsid = 0
         currtime = dt.gmt().mjd
         
@@ -663,6 +661,8 @@ class ChristopherWalken(LMObject):
                 self.log.info('   Will compute for Grid {}:'.format(gsid))
                 sweep_config = None
                 for alg in self.algs:
+                    prjs = []
+                    mtxcols = []
                     for prj_scen in self.prjScens:
                         prj = self._findOrInsertSDMProject(
                             occ, alg, prj_scen, dt.gmt().mjd)
