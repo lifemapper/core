@@ -282,7 +282,7 @@ class _SpeciesWeaponOfChoice(LMObject):
 # ...............................................
     def _writeRawData(self, occ, data=None):
         self._raiseSubclassError()
-    
+        
 # ...............................................
     def close(self):
         self._raiseSubclassError()
@@ -580,7 +580,8 @@ class UserWoC(_SpeciesWeaponOfChoice):
     def getOne(self):
         """
         @summary: Create and return an OccurrenceLayer from a chunk of CSV 
-                     records grouped by a `taxonKey`
+                  records grouped by a GroupBy value indicating species,  
+                  possibly a GBIF `taxonKey`
         @note: If useGBIFTaxonomy is true, 
                  - the `taxonKey` will contain the GBIF TaxonID for the accepted 
                     Taxon of each record in the chunk, and a taxon record will be 
@@ -737,8 +738,12 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
             
 # ...............................................
     def getOne(self):
+        """
+        @summary: Return the next occurrenceset for species input data
+                  If occurrenceset is new, failed, or outdated, write the raw 
+                  data and update the rawDlocation
+        """
         occ = None
-        willCompute = False
         speciesKey, dataChunk = self._getOccurrenceChunk()
         if speciesKey:
             sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, 

@@ -1068,7 +1068,7 @@ class BOOMFiller(LMObject):
 
     # .............................
     def _getIdigQueryCmd(self, ws_dir):
-        idigCmd = None
+        idigCmd = point_output_file = None
         if self.dataSource == SpeciesDatasource.TAXON_IDS:
             if not os.path.exists(self.taxon_id_filename):
                 raise LMError('Taxon ID file {} is missing'.format(self.taxon_id_filename))
@@ -1080,8 +1080,7 @@ class BOOMFiller(LMObject):
             meta_output_file = os.path.join(ws_dir, basename + LMFormat.JSON.ext)
             idigCmd = IdigbioQueryCommand(self.taxon_id_filename, point_output_file, 
                                           meta_output_file, missing_id_file=None)
-                          
-        return idigCmd
+        return idigCmd, point_output_file
 
     # ...............................................
     def _getTaxonomyCommand(self):
@@ -1133,7 +1132,7 @@ class BOOMFiller(LMObject):
         return mfchain
 
     # ...............................................
-    def addBoomMF(self, boomGridsetId, tree):
+    def addBoomMF(self, boomGridsetId, tree, idigCmd):
         """
         @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                   and configFile written by BOOMFiller.initBoom.
@@ -1154,14 +1153,17 @@ class BOOMFiller(LMObject):
         boomSuccessFname = os.path.join(ws_dir, baseAbsFilename + '.success')
         boomCmd = BoomerCommand(self.outConfigFilename, boomSuccessFname)
                   
-        # Add iDigBio MF and dependency to Boom, if specified as occurrence input
-        idigCmd = self._getIdigQueryCmd(ws_dir)
-        if idigCmd is not None:
+        # Add iDigBio MF before Boom, if specified as occurrence input
+        if self.dataSource == SpeciesDatasource.TAXON_IDS:
+            idigCmd, point_output_file = self._getIdigQueryCmd(ws_dir)
             # Add command to this Makeflow
             # TODO: allow non-local
             mfChain.addCommands([idigCmd.getMakeflowRule(local=True)])
             # Boom requires iDigBio data
             boomCmd.inputs.extend(idigCmd.outputs)
+            # Update config to User (CSV) datasource and point_output_file
+            self.dataSource = SpeciesDatasource.USER
+            self.userOccFname = point_output_file
             
         # Add taxonomy before Boom, if taxonomy is specified
         cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
@@ -1172,12 +1174,9 @@ class BOOMFiller(LMObject):
             boomCmd.inputs.append(taxSuccessFname)
         
         # Encode tree after Boom, if tree exists
-        try:
+        if tree is not None:
             walkedTreeFname = os.path.join(ws_dir, self.userId+tree.name+'.success')
             treeCmd = EncodeTreeCommand(self.userId, tree.name, walkedTreeFname)
-        except:
-            pass
-        else:
             # Tree requires Boom completion
             treeCmd.inputs.append(boomSuccessFname)
             # Add tree encoding command to this Makeflow
@@ -1265,22 +1264,21 @@ class BOOMFiller(LMObject):
             tree = self.addTree(boomGridset, encoded_tree=encoded_tree)
             
             # If there are biogeographic hypotheses, add layers and matrix and create MFChain
-            biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
-            
-            # Write config file for archive, update permissions
-            self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
-                                 biogeoLayers=biogeoLayerNames)
-            
+            biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)            
                   
             if initMakeflow is True:
                 if biogeoMtx and len(biogeoLayerNames) > 0:
                     # Add BG Hypotheses encoding Makeflows, independent of Boom completion
                     bgMF = self.addEncodeBioGeoMF(boomGridset)
                 # Create MFChain to run Boomer on these inputs IFF requested
-                # This also adds commands for taxonomy insertion before 
+                # This also adds commands for iDigBio species retrieval and 
+                # taxonomy insertion before 
                 #   and tree encoding after Boom 
                 boomMF = self.addBoomMF(boomGridset.getId(), tree)
-              
+
+            # Write config file for archive, update permissions
+            self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
+                                 biogeoLayers=biogeoLayerNames)
         finally:
             self.close()
            
@@ -1379,16 +1377,9 @@ from LmServer.base.utilities import isRootUser
 
 from LmDbServer.tools.initBoomJob import *
 
-paramFname = '/share/lm/data/archive/modem/heuchera_boom_na_10min.params'
-
-paramFname = '/opt/lifemapper/rocks/etc/defaultArchiveParams.ini'
-paramFname = '/share/lm/data/archive/onemore/heuchera_boom_global_10min.params'
- 
-# Taxon names
-paramFname = '/state/partition1/lmscratch/temp/file_44205.ini'
 
 # Taxon ids
-paramFname = '/state/partition1/lmscratch/temp/file_30386.ini'
+paramFname = '/state/partition1/lmscratch/temp/boom_config_10255.params'
 
 pname, _ = os.path.splitext(os.path.basename(paramFname))
 import time
@@ -1397,38 +1388,42 @@ timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 logname = '{}.{}'.format(pname, timestamp)
 
 self = BOOMFiller(paramFname, logname=logname)
-
+initMakeflow=True
 self.initializeInputs()
 
 encoded_tree = None
-if self.occIdFname:
-    self._checkOccurrenceSets()
-elif self.dataSource in (SpeciesDatasource.TAXON_NAMES,
-                         SpeciesDatasource.TAXON_IDS):
-                         
-self.userOccFname, meta_filename, encoded_tree = self.queryPartners()
-self.dataSource = SpeciesDatasource.USER
     
+# Add or get ShapeGrid, Global PAM, Gridset for this archive
+# This updates the gridset, shapegrid, default PAMs (rolling, with no 
+#     matrixColumns, default GRIMs with matrixColumns
 scenGrims, boomGridset = self.addShapeGridGPAMGridset()
-
+# Add GRIM compute Makeflows, independent of Boom completion
 grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
 
+# Check for a file OccurrenceLayer Ids for existing or PUBLIC user
+if self.occIdFname:
+    self._checkOccurrenceSets()
+
+# Fix user makeflow and layer directory permissions
 self._fixDirectoryPermissions(boomGridset)
             
+# If there is a tree, add db object
 tree = self.addTree(boomGridset, encoded_tree=encoded_tree)
 
+# If there are biogeographic hypotheses, add layers and matrix and create MFChain
 biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
-
-self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
-                     biogeoLayers=biogeoLayerNames)
-
       
 if biogeoMtx and len(biogeoLayerNames) > 0:
+    # Add BG Hypotheses encoding Makeflows, independent of Boom completion
     bgMF = self.addEncodeBioGeoMF(boomGridset)
-
+# Create MFChain to run Boomer on these inputs IFF requested
+# This also adds commands for taxonomy insertion before 
+#   and tree encoding after Boom 
 boomMF = self.addBoomMF(boomGridset.getId(), tree)
-   
 
+# Write config file for archive, update permissions
+self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
+                     biogeoLayers=biogeoLayerNames)
 
 # gs = filler.initBoom(initMakeflow=initMakeflow)
 

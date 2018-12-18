@@ -412,10 +412,110 @@ currtime = dt.gmt().mjd
 config_file='/share/lm/data/archive/taffy/heuchera_global_10min_ppf.ini'
 success_file='/share/lm/data/archive/taffy/heuchera_global_10min.success'
 
-config_file='/share/lm/data/archive/anon/cjtest1.ini'
-success_file='/share/lm/data/archive/anon/cjtest1.success'
+config_file='/share/lm/data/archive/anon/Hechera2.ini'
+success_file='/share/lm/data/archive/anon/Hechera2.success'
+
+config_file='/share/lm/data/archive/anon/idigtest4.ini'
+success_file='/share/lm/data/archive/anon/idigtest4.success'
 
 boomer = Boomer(config_file, success_file, log=logger)
+###############################################
+self = boomer
+success = self._scribe.openConnections()
+self.christopher = ChristopherWalken(self.configFname,
+                                                 scribe=self._scribe)
+                                                 
+###############################################
+self = boomer.christopher
+self.moreDataToProcess = False
+
+###############################################
+userId = self._getBoomOrDefault('ARCHIVE_USER', defaultValue=PUBLIC_USER)
+archiveName = self._getBoomOrDefault('ARCHIVE_NAME')
+archivePriority = self._getBoomOrDefault('ARCHIVE_PRIORITY')
+earl = EarlJr()
+boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
+epsg = self._getBoomOrDefault('SCENARIO_PACKAGE_EPSG', 
+                              defaultValue=DEFAULT_EPSG)
+
+useGBIFTaxonIds = False
+# Get datasource and optional taxonomy source
+datasource = self._getBoomOrDefault('DATASOURCE')
+try:
+    taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
+except:
+    taxonSourceName = None
+   
+# Expiration date for retrieved species data 
+expDate = dt.DateTime(self._getBoomOrDefault('SPECIES_EXP_YEAR'), 
+                      self._getBoomOrDefault('SPECIES_EXP_MONTH'), 
+                      self._getBoomOrDefault('SPECIES_EXP_DAY')).mjd
+occCSV, occMeta, occDelimiter, self.moreDataToProcess = \
+               self._findData(datasource, boompath)
+
+weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
+                         epsg, expDate, occCSV, occMeta, 
+                         occDelimiter, logger=self.log, 
+                         processType=ProcessType.USER_TAXA_OCCURRENCE,
+                         useGBIFTaxonomy=useGBIFTaxonIds,
+                         taxonSourceName=taxonSourceName)
+
+weaponOfChoice, expDate = self._getOccWeaponOfChoice(userId, archiveName, 
+                                              epsg, boompath)
+                                              
+# SDM inputs
+minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
+algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
+
+(mdlScen, prjScens, model_mask_base) = self._getProjParams(userId, epsg)
+# Global PAM inputs
+(boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
+                                                      archiveName, epsg)
+assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
+###############################################
+        
+
+(self.userId, 
+ self.archiveName, 
+ self.priority, 
+ self.boompath, 
+ self.weaponOfChoice,
+ self._obsoleteTime, 
+ self.epsg, 
+ self.minPoints, 
+ self.algs, 
+ self.mdlScen, 
+ self.prjScens, 
+ self.model_mask_base,
+ self.boomGridset, 
+ self.intersectParams, 
+ self.assemblePams) = self._getConfiguredObjects()
+# One Global PAM for each scenario
+if self.assemblePams:
+    for prjscen in self.prjScens:
+        self.globalPAMs[prjscen.code] = self.boomGridset.getPAMForCodes(
+            prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode)
+###############################################
+
+self.christopher.initializeMe()
+self.gridsetId = self.christopher.boomGridset.getId()
+self.priority = self.christopher.priority
+
+self.christopher.moveToStart()
+self.log.debug('Starting Chris at location {} ... '
+               .format(self.christopher.currRecnum))
+self.keepWalken = True
+
+self.squidNames = []
+# master MF chain
+self.potatoBushel = None
+self.rotatePotatoes()
+###############################################
+
+
+
+
+
 
 boomer.initializeMe()                      
 chris = boomer.christopher
@@ -424,16 +524,6 @@ scribe = boomer._scribe
 borg = scribe._borg
 
 workdir = boomer.potatoBushel.getRelativeDirectory()
-
-self = chris
-squid = None
-spudRules = []
-gsid = 0
-currtime = dt.gmt().mjd
-
-gsid = self.boomGridset.getId()
-occ = self.weaponOfChoice.getOne()
-
 
 
 squid, spudRules = boomer.christopher.startWalken(workdir)

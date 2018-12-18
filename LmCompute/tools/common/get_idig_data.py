@@ -83,8 +83,6 @@ import os
 
 from LmCommon.common.apiquery import IdigbioAPI
 
-from LmCompute.tools.common.get_idig_data import _getUserInput
-
 def _getUserInput(filename):
     items = []
     if os.path.exists(filename):
@@ -98,17 +96,88 @@ def _getUserInput(filename):
     return items
 
 
-taxon_id_file =  '/state/partition1/lmscratch/temp/user_taxon_ids_98006.txt'
-point_output_file = 'tmp/user_taxon_ids_98006.csv'
-meta_output_file = 'tmp/user_taxon_ids_98006.json'
-missing_id_file= 'tmp/user_taxon_ids_98006.missing'
+taxon_id_file =  '/state/partition1/lmscratch/temp/user_taxon_ids_37488.txt'
+
+point_output_file = 'mf_2101/user_taxon_ids_37488.csv'           
+meta_output_file = 'mf_2101/user_taxon_ids_37488.json'
+missing_id_file= None
 
 taxon_ids = _getUserInput(taxon_id_file)
-idigAPI = IdigbioAPI()
+self = IdigbioAPI()
 
-summary = idigAPI.assembleIdigbioData(taxon_ids, point_output_file, 
-                                      meta_output_file, 
-                                      missing_id_file=missing_id_file)
+for fname in (point_output_file, meta_output_file):
+    if os.path.exists(fname):
+        print('Deleting existing file {} ...'.format(fname))
+        os.remove(fname)
+
+
+summary = {self.GBIF_MISSING_KEY: []}
+writer, f = self._getCSVWriter(point_output_file, doAppend=False)
+fldnames = None
+
+gid = taxon_ids[0]
+ptCount, fldnames = self._getIdigbioRecords(gid, fldnames, 
+                                            writer, meta_output_file)
+#################
+import idigbio
+gbifTaxonId = gid
+
+api = idigbio.json()
+limit = 100
+offset = 0
+currcount = 0
+total = 0
+recordQuery = {'taxonid':str(gbifTaxonId), 
+               'geopoint': {'type': 'exists'}}
+output = api.search_records(rq=recordQuery,
+                            limit=limit, offset=offset)
+total = output['itemCount']
+
+# First gbifTaxonId where this data retrieval is successful, 
+# get and write header and metadata
+if total > 0 and fields is None:
+    fields = self._getIdigbioFields(output['items'][0])
+    # Write header in datafile
+    writer.writerow(fields)
+    # Write metadata file with column indices 
+    meta = self._writeIdigbioMetadata(fields, meta_output_file)
+    
+# Write these records
+recs = output['items']
+currcount += len(recs)
+print("  Retrieved {} records, {} records starting at {}"
+      .format(len(recs), limit, offset))
+for rec in recs:
+    recdata = rec['indexTerms']
+    vals = []
+    for fldname in fields:
+        # Pull long, lat from geopoint
+        if fldname == 'dec_long':
+            try:
+                vals.append(recdata['geopoint']['lon'])
+            except:
+                vals.append('')
+        elif fldname == 'dec_lat':
+            try:
+                vals.append(recdata['geopoint']['lat'])
+            except:
+                vals.append('')
+        # or just append verbatim
+        else:
+            try:
+                vals.append(recdata[fldname])
+            except:
+                vals.append('')
+    
+    writer.writerow(vals)
+
+#################                                            
+    if ptCount > 0:
+        summary[gid] = ptCount
+    else:
+        summary[self.GBIF_MISSING_KEY].append(gid)
+
+summary = idigAPI.assembleIdigbioData(taxon_ids, point_output_file, meta_output_file)
 
 
 

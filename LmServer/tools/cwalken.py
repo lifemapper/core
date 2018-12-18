@@ -132,7 +132,6 @@ class ChristopherWalken(LMObject):
          self.algs, 
          self.mdlScen, 
          self.prjScens, 
-#          self.sdmMaskParams,
          self.model_mask_base,
          self.boomGridset, 
          self.intersectParams, 
@@ -581,7 +580,9 @@ class ChristopherWalken(LMObject):
         except:
             self.log.warning('Missing self.boomGridset id!!')
             
-        # WeaponOfChoice resets old or failed Occurrenceset
+        # WeaponOfChoice.getOne returns the next occurrenceset for species 
+        # input data. If it is new, failed, or outdated, write the raw  
+        # data and update the rawDlocation.
         occ = self.weaponOfChoice.getOne()
         if self.weaponOfChoice.finishedInput:
             self._writeDoneWalkenFile()
