@@ -180,13 +180,10 @@ class _SpeciesWeaponOfChoice(LMObject):
         return willCompute
 
 # ...............................................
-    def _findOrInsertOccurrenceset(self, sciName, dataCount, 
-                                   taxonSourceKey=None, data=None):
+    def _findOrInsertOccurrenceset(self, sciName, dataCount, data=None):
         """
         @param sciName: ScientificName object
         @param dataCount: reported number of points for taxon in input dataset
-        @param taxonSourceKey: unique identifier for this name in source 
-                 taxonomy database
         @param data: raw point data, stream or filename
         """
         currtime = dt.gmt().mjd
@@ -745,10 +742,9 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
         speciesKey, dataChunk = self._getOccurrenceChunk()
         if speciesKey:
             sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, 
-                                                                              len(dataChunk))
+                                                              len(dataChunk))
             if sciName is not None:
                 occ = self._findOrInsertOccurrenceset(sciName, len(dataChunk), 
-                                                      taxonSourceKey=speciesKey, 
                                                       data=dataChunk)
                 if occ:
                     self.log.info('WOC processed occset {} gbif key {} with {} records; next start {}'
@@ -1028,7 +1024,6 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                                                           recordCount)
             if sciName is not None:
                 occ = self._findOrInsertOccurrenceset(sciName, recordCount,
-                                                      taxonSourceKey=opentreeId,
                                                       data=bubbleFname)
             if occ:
                 self.log.info('WOC processed occset {}, opentreeId {}, with {} points; next start {}'
