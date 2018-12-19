@@ -21,19 +21,14 @@
              Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
              02110-1301, USA.
 """
-import mx.DateTime
 import os
-import shutil
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import LMFileType
-from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.lmconstants import LMFileType, LMFormat
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 
-CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
-CURR_MJD = mx.DateTime.gmt().mjd
 
 # .............................................................................
 class Janitor(LMObject):
@@ -44,20 +39,17 @@ class Janitor(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, usr=None, gridsetId=None):
+    def __init__(self):
         """
         @summary Constructor for Janitor class.
         """
         super(Janitor, self).__init__()
-        self.usr = usr
         self._earl = EarlJr()
         # Get database
         try:
             self.scribe = self._getDb()
         except: 
             raise
-        # If running as root, new user filespace must have permissions corrected
-        self._warnPermissions()
         
     # ...............................................
     def open(self):
@@ -79,16 +71,6 @@ class Janitor(LMObject):
         return fname
     
     # ...............................................
-    def getUserMakeflowPath(self):
-        pth = self._earl.createDataPath(self.usr, LMFileType.MF_DOCUMENT)
-        return pth
-            
-    # ...............................................
-    def getUserSDMPaths(self):
-        paths = self._earl.getTopLevelUserSDMPaths(self.usr)
-        return paths
-
-    # ...............................................
     def _getDb(self):
         basefilename = os.path.basename(__file__)
         basename, _ = os.path.splitext(basefilename)
@@ -97,38 +79,39 @@ class Janitor(LMObject):
         return scribe
     
     # ...............................................
-    def _clearUserComputedDataRecords(self):
-        success = self.scribe.deleteComputedUserData(self.usr)
-        return success
+    def _clearUserFiles(self, usr):
+        usrpth = self._earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
+        for root, dirs, files in os.walk(usrpth):
+            for fname in files:
+                ext = os.path.splitext(fname)
+                fullFname = os.path.join(root, fname)
+                # Save config files, newick/nexus tree files, 
+                # species data csv and metadata json files at top level
+                if (root == usrpth and 
+                    ext in [LMFormat.CONFIG.ext, LMFormat.CSV, LMFormat.JSON,
+                            LMFormat.NEWICK, LMFormat.NEXUS]):
+                    self.scribe.log.info('Saving {}'.format(fullFname))
+                else:
+                    os.remove(fullFname)
+                    self.scribe.log.info('Removing {}'.format(fullFname))
 
     # ...............................................
-    def _clearUserComputedDataFiles(self):
-        mfpath = self.getUserMakeflowPath()
-        self.scribe.log.info('Removing {}'.format(mfpath))
-        shutil.rmtree(mfpath, ignore_errors=True)
-        sdmPaths = self.getUserSDMPaths()
-        for pth in sdmPaths:
-            self.scribe.log.info('Removing {}'.format(pth))
-            shutil.rmtree(pth, ignore_errors=True)
-
-    # ...............................................
-    def _clearUserInputDataRecords(self):
-        pass
-
-    # ...............................................
-    def _clearUserInputDataFiles(self):
-        pass
-
-    # ...............................................
-    def clearUserData(self):
-        if self.doDeleteDBRecords:
-            self._clearUserComputedDataRecords()
-        if self.doDeleteFiles:
-            self._clearUserComputedDataFiles()
-        if self.doDeleteInputs:
-            self._clearUserInputDataRecords()
-            self._clearUserInputDataFiles()
+    def clearUserData(self, usr):
+        count = self._scribe.clearUser(usr)
+        self.scribe.log.info('Deleted {} objects for user {}'.format(count, usr))
+        self._clearUserFiles(usr)
             
+    # ...............................................
+    def deleteGridset(self, gridsetid):
+        filenames = self._scribe.deleteGridsetReturnFilenames(gridsetid)
+        for fn in filenames:
+            try:
+                os.remove(fn)
+                self.scribe.log.info('Deleted {} for gridset {}'.format(fn, 
+                                                                    gridsetid))
+            except:                
+                self.scribe.log.info('Failed to delete {} for gridset {}'.format(fn, 
+                                                                    gridsetid))
         
 # ...............................................
 if __name__ == '__main__':
@@ -147,10 +130,13 @@ if __name__ == '__main__':
     except:
         usr = args.user_or_gridsetid
         
-    jan = Janitor(usr, gridsetid)
-    filler.open()
-    filler.clearUserData()
-    filler.close()
+    jan = Janitor()
+    jan.open()
+    if usr is not None:
+        jan.clearUserData(usr)
+    else:
+        jan.deleteGridset(gridsetid)
+    jan.close()
       
 """
 

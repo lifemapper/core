@@ -951,6 +951,14 @@ class BorgScribe(LMObject):
         return success
 
 # ...............................................
+    def deleteGridsetReturnFilenames(self, gridsetId):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::deleteGridsetReturnFilenames()
+        """
+        filenames = self._borg.deleteGridsetReturnFilenames(gridsetId)
+        return filenames
+
+# ...............................................
     def getMapServiceForSDMOccurrence(self, occLyrOrId):
         """
         @param mapFilename: absolute path of mapfile

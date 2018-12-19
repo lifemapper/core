@@ -2782,113 +2782,88 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
+
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_clearGridsetSDMs(gsid int, delOcc int)
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridsetNoFiles(gsid int)
 RETURNS int AS
 $$
 DECLARE
    currCount int := -1;
    mtxid int;
-   prjid int;
-   mcrec lm_v3.lm_sdmMatrixcolumn;
-   mcCount int := 0;
-   lyrCount int := 0;
-   prjCount int := 0;
-   occCount int := 0;
+   total int := 0;
 BEGIN
    -- MFProcesses
-   -- DELETE FROM lm_v3.MFProcess WHERE gridsetId = gsid AND metadata not like '%GRIM%';
-   DELETE FROM lm_v3.MFProcess 
-      WHERE userid = (SELECT userid FROM lm_v3.Gridset WHERE gridsetId = gsid)
-        AND metadata not like '%GRIM%';
-   GET DIAGNOSTICS currCount = ROW_COUNT;
+   DELETE FROM lm_v3.MFProcess WHERE gridsetId = gsid;
+   GET DIAGNOSTICS total = ROW_COUNT;
    RAISE NOTICE 'Deleted % MF processes for Gridset %', currCount, gsid;
 
-   FOR mtxid IN
-      -- Do not delete GRIMs or BioGeo, LmCommon.common.lmconstants 
-      --   MatrixType.GRIM = 2, MatrixType.BIOGEO_HYPOTHESES = 3
-      SELECT matrixid FROM lm_v3.Gridset g, lm_v3.Matrix m
-         WHERE g.gridsetid = gsid 
-           AND g.gridsetid = m.gridsetid
-           AND m.matrixtype NOT IN (2, 3)
+   FOR mtxid IN SELECT matrixid FROM lm_v3.Matrix WHERE gridsetid = gsid 
       LOOP
-         RAISE NOTICE 'Deleting SDM Data for Matrix %', mtxid;
-         
-         FOR mcrec IN 
-            SELECT * FROM lm_v3.lm_sdmMatrixcolumn WHERE matrixId = mtxid
-            LOOP
-               DELETE FROM lm_v3.MatrixColumn WHERE matrixColumnId = mcrec.matrixColumnId;
-               GET DIAGNOSTICS currCount = ROW_COUNT;
-               mcCount = mcCount + currCount;
-
-               -- cascades to SDMProject
-               DELETE FROM lm_v3.Layer WHERE layerId = mcrec.layerid; 
-               GET DIAGNOSTICS currCount = ROW_COUNT;
-               lyrCount = lyrCount + currCount;
-
-               IF delOcc != 0 THEN
-                  SELECT count(*) INTO currCount FROM lm_v3.sdmproject 
-                    WHERE occurrencesetId = mcrec.occurrencesetId;
-                  IF currCount = 0 THEN
-	                 DELETE FROM lm_v3.OccurrenceSet 
-	                    WHERE occurrencesetID = mcrec.occurrencesetID;
-                     GET DIAGNOSTICS currCount = ROW_COUNT;
-                     occCount = occCount + currCount;
-	              END IF;
-               END IF;
-
-            END LOOP;
-         
+         DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
+         GET DIAGNOSTICS currCount = ROW_COUNT;
+         total = total + currCount;
+         RAISE NOTICE 'Deleted % Columns for Matrix %', currCount, mtxid;         
       END LOOP;
-   currCount = mcCount + lryCount + occCount;
 
-   RAISE NOTICE 'Deleted % MatrixColumns', mcCount;
-   RAISE NOTICE 'Deleted % Layers and SDMProjects', lyrCount;
-   IF delOcc != 0 THEN
-      RAISE NOTICE 'Deleted % Occurrencesets', occCount;
-   END IF;
-   return currCount;
+   DELETE FROM lm_v3.Matrix WHERE gridsetid = gsid;
+   GET DIAGNOSTICS currCount = ROW_COUNT;
+   total = total + currCount;
+   RAISE NOTICE 'Deleted % Matrices for Gridset %', currCount, gsid;         
+
+   DELETE FROM lm_v3.Gridset WHERE gridsetId = gsid;
+   GET DIAGNOSTICS currCount = ROW_COUNT;
+   total = total + currCount;
+   RAISE NOTICE 'Deleted % Gridset # %', currCount, gsid;
+
+   return total;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridset(gsid int)
-RETURNS int AS
+RETURNS SETOF varchar AS
 $$
 DECLARE
    currCount int := -1;
+   dloc varchar;
+   mfid int;
    mtxid int;
-   mCount int := 0;
-   mcCount int := 0;
    total int := 0;
 BEGIN
    -- MFProcesses
+   FOR dloc IN SELECT dlocation FROM lm_v3.MFProcess WHERE gridsetid = gsid
+      LOOP
+         RETURN NEXT dloc;
+      END LOOP;      
    DELETE FROM lm_v3.MFProcess WHERE gridsetId = gsid;
-   GET DIAGNOSTICS currCount = ROW_COUNT;
+   GET DIAGNOSTICS total = ROW_COUNT;
    RAISE NOTICE 'Deleted % MF processes for Gridset %', currCount, gsid;
 
-   FOR mtxid IN
-      SELECT matrixid FROM lm_v3.Matrix WHERE gridsetId = gsid
-   LOOP
-      DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
-      GET DIAGNOSTICS currCount = ROW_COUNT;
-      RAISE NOTICE 'Deleted % columns for Matrix %', currCount, mtxid;
-      mcCount = mcCount + currCount;            
+   -- Matrices
+   FOR dloc IN SELECT matrixdlocation FROM lm_v3.Matrix WHERE gridsetid = gsid 
+      LOOP
+         -- DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
+         -- GET DIAGNOSTICS currCount = ROW_COUNT;
+         total = total + currCount;
+         RAISE NOTICE 'Deleted % Columns for Matrix %', currCount, mtxid;
+         RETURN NEXT dloc;  
+      END LOOP;
+   DELETE FROM lm_v3.Matrix WHERE gridsetid = gsid;
+   GET DIAGNOSTICS currCount = ROW_COUNT;
+   total = total + currCount;
+   RAISE NOTICE 'Deleted % Matrices for Gridset %', currCount, gsid;         
 
-      DELETE FROM lm_v3.Matrix WHERE matrixid = mtxid;
-      GET DIAGNOSTICS currCount = ROW_COUNT;
-      RAISE NOTICE 'Deleted % Matrix # %', currCount, mtxid;
-      mCount = mCount + currCount;
-   END LOOP;
-   
+   -- Gridset
+   FOR dloc IN SELECT dlocation FROM lm_v3.Gridset WHERE gridsetid = gsid
+      LOOP
+         RETURN NEXT dloc;
+      END LOOP;      
    DELETE FROM lm_v3.Gridset WHERE gridsetId = gsid;
    GET DIAGNOSTICS currCount = ROW_COUNT;
+   total = total + currCount;
    RAISE NOTICE 'Deleted % Gridset # %', currCount, gsid;
-   mCount = mCount + currCount;
-   
-   total = mcCount + mCount + currCount;
-   return total;
-   
+
+   return;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 

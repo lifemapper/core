@@ -937,47 +937,22 @@ class Borg(DbPostgresql):
         return updatedGrdset
         
 # ...............................................
-    def deleteGridset(self, gridsetId):
+    def deleteGridsetReturnFilenames(self, gridsetId):
         """
-        @summary: Deletes Gridset, and all dependent Matrices, MatrixColumns, 
-                    SDMProjectLayers, orphaned OccurrenceLayers, and all Makeflows
-        @param gridsetId: Gridset for which to delete SDM records and MatrixColumns
-        @return: True/False for success of operation
-        @note: GRIMs, Tree, Biogeographic Hypotheses will not be deleted 
-        @note: All makeflows will be deleted, regardless
+        @summary: Deletes Gridset SDM MatrixColumns, Matrices, and Makeflows
+        @param gridsetId: Gridset for which to delete objects
+        @return: List of filenames for all deleted objects
         """
-        success = False
-        delCount = self.executeModifyFunction('lm_deleteGridset', gridsetId)
-        self.log.info('''Deleted {} Gridset, SDM Matrices, MatrixColumns, Projections, 
-        orphaned Occurrencesets, and Makeflows for gridset {}'''
-                          .format(delCount, gridsetId))
-
-        if delCount > 0:
-            success = True
-        return success 
+        filenames = []
+        rows, idxs = self.executeSelectManyFunction('lm_deleteGridset', gridsetId)
+        self.log.info('''Deleted {} Gridset, Matrices, MatrixColumns 
+        and Makeflows for gridset {}'''.format(len(rows), gridsetId))
         
-# ...............................................
-    def clearGridsetSDMs(self, gridsetId):
-        """
-        @summary: Clears Gridset SDM MatrixColumns, SDMProjectLayers, 
-                     orphaned OccurrenceLayers, and all Makeflows
-        @param gridsetId: Gridset for which to delete SDM records and MatrixColumns
-        @return: True/False for success of operation
-        @note: Does not delete any matrix, and does not delete matrix columns
-                 of GRIMs, Biogeographic Hypotheses.
-        @note: All makeflows will be deleted, regardless
-        """
-        success = False
-        doDeleteOrphanOccsets = True
-        delCount = self.executeModifyFunction('lm_clearGridsetSDMs', gridsetId, 
-                                                          doDeleteOrphanOccsets)
-        self.log.info('''Deleted {} Gridset, Matrices, MatrixColumns, Projections, 
-        orphaned Occurrencesets, and Makeflows for gridset {}'''
-                          .format(delCount, gridsetId))
-
-        if delCount > 0:
-            success = True
-        return success 
+        for r in rows:
+            if r[0] is not None:
+                filenames.append(r[0])
+            
+        return filenames
         
 # ...............................................
     def getGridset(self, gridsetId, userId, name, fillMatrices):
