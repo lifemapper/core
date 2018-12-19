@@ -220,11 +220,9 @@ class LmWebClient(object):
                                       response_format=None):
         """Gets the gridsets available and their counts in the Global PAM
         """
-        return self._make_request(
-            self._build_base_url(
-                _SERVICE.GLOBAL_PAM, object_id='gridset',
-                response_format=response_format),
-            method=HTTPMethod.GET, headers)
+        url = self._build_base_url(_SERVICE.GLOBAL_PAM, object_id='gridset',
+                                   response_format=response_format),
+        return self._make_request(url, method=HTTPMethod.GET, headers=headers)
 
     # ............................
     def get_global_pam_matches(self, algorithm_code=None, bbox=None,
