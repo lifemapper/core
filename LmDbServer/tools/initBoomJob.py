@@ -88,14 +88,16 @@ class BOOMFiller(LMObject):
         @summary Constructor for BOOMFiller class.
         """
         super(BOOMFiller, self).__init__()
+
         scriptname, _ = os.path.splitext(os.path.basename(__file__))
         self.name = scriptname
-        # Logfile
-        bsname, _ = os.path.splitext(os.path.basename(paramFname))
         if logname is None:
-            logname = '{}.{}'.format(self.name, bsname)
+            import time
+            secs = time.time()
+            timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+            logname = '{}.{}'.format(scriptname, timestamp)
         self.logname = logname
-        
+                
         self.inParamFname = paramFname
         # Get database
         try:
@@ -1038,8 +1040,8 @@ class BOOMFiller(LMObject):
             grimChain = self._addGrimMF(code, gridsetId, currtime)
             targetDir = grimChain.getRelativeDirectory()
             mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
-            self.scribe.log.info('  {} grim columns for scencode {}'
-                          .format(grimChain.objId, code))
+            self.scribe.log.info('  Adding {} grim columns for scencode {}'
+                          .format(len(mtxcols), code))
             
             colFilenames = []
             for mtxcol in mtxcols:
@@ -1132,7 +1134,7 @@ class BOOMFiller(LMObject):
         return mfchain
 
     # ...............................................
-    def addBoomMF(self, boomGridsetId, tree, idigCmd):
+    def addBoomMF(self, boomGridsetId, tree):
         """
         @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                   and configFile written by BOOMFiller.initBoom.
@@ -1381,11 +1383,13 @@ from LmDbServer.tools.initBoomJob import *
 # Taxon ids
 paramFname = '/state/partition1/lmscratch/temp/boom_config_10255.params'
 
-pname, _ = os.path.splitext(os.path.basename(paramFname))
+# Public archive
+paramFname = '/opt/lifemapper/config/boom.public.params'
+
 import time
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-logname = '{}.{}'.format(pname, timestamp)
+logname = 'initBoomJob.debug.{}'.format(timestamp)
 
 self = BOOMFiller(paramFname, logname=logname)
 initMakeflow=True
@@ -1407,19 +1411,67 @@ if self.occIdFname:
 # Fix user makeflow and layer directory permissions
 self._fixDirectoryPermissions(boomGridset)
             
-# If there is a tree, add db object
+# If there is a tree, add db objectmf_390.out
 tree = self.addTree(boomGridset, encoded_tree=encoded_tree)
 
 # If there are biogeographic hypotheses, add layers and matrix and create MFChain
 biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)
       
 if biogeoMtx and len(biogeoLayerNames) > 0:
-    # Add BG Hypotheses encoding Makeflows, independent of Boom completion
     bgMF = self.addEncodeBioGeoMF(boomGridset)
-# Create MFChain to run Boomer on these inputs IFF requested
-# This also adds commands for taxonomy insertion before 
-#   and tree encoding after Boom 
-boomMF = self.addBoomMF(boomGridset.getId(), tree)
+
+############################################
+boomGridsetId = boomGridset.getId()
+meta = {MFChain.META_CREATED_BY: self.name,
+        MFChain.META_GRIDSET: boomGridsetId,
+        MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
+.format(self.userId, self.archiveName)}
+newMFC = MFChain(self.userId, priority=self.priority, 
+                 metadata=meta, status=JobStatus.GENERAL, 
+                 statusModTime=mx.DateTime.gmt().mjd)
+mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
+
+ws_dir = mfChain.getRelativeDirectory()
+baseAbsFilename, _ = os.path.splitext(os.path.basename(self.outConfigFilename))
+
+boomSuccessFname = os.path.join(ws_dir, baseAbsFilename + '.success')
+boomCmd = BoomerCommand(self.outConfigFilename, boomSuccessFname)
+          
+if self.dataSource == SpeciesDatasource.TAXON_IDS:
+    idigCmd, point_output_file = self._getIdigQueryCmd(ws_dir)
+    # Add command to this Makeflow
+    # TODO: allow non-local
+    mfChain.addCommands([idigCmd.getMakeflowRule(local=True)])
+    # Boom requires iDigBio data
+    boomCmd.inputs.extend(idigCmd.outputs)
+    # Update config to User (CSV) datasource and point_output_file
+    self.dataSource = SpeciesDatasource.USER
+    self.userOccFname = point_output_file
+    
+# Add taxonomy before Boom, if taxonomy is specified
+cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
+if cattaxCmd:
+    # Add catalog taxonomy command to this Makeflow
+    mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
+    # Boom requires catalog taxonomy completion
+    boomCmd.inputs.append(taxSuccessFname)
+
+# Encode tree after Boom, if tree exists
+if tree is not None:
+    walkedTreeFname = os.path.join(ws_dir, self.userId+tree.name+'.success')
+    treeCmd = EncodeTreeCommand(self.userId, tree.name, walkedTreeFname)
+    # Tree requires Boom completion
+    treeCmd.inputs.append(boomSuccessFname)
+    # Add tree encoding command to this Makeflow
+    mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
+
+# Add boom command to this Makeflow
+mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
+mfChain = self._write_update_MF(mfChain)
+############################################
+
+
+# boomMF = self.addBoomMF(boomGridset.getId(), tree)
 
 # Write config file for archive, update permissions
 self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
@@ -1429,5 +1481,11 @@ self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx,
 
  
 
+/opt/python/bin/python2.7 /opt/lifemapper/LmDbServer/tools/catalogTaxonomy.py \
+   --taxon_source_name='GBIF Backbone Taxonomy' \
+   --taxon_data_filename=/share/lmserver/data/species/gbif_taxonomy-2018.09.14.csv \
+   --success_filename=/share/lmserver/data/species/gbif_taxonomy-2018.09.14.success \
+   --logname=catalogTaxonomy.gbif_taxonomy-2018.09.14.20181220-0859 \
+   --taxon_source_url=http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c
 
 """
