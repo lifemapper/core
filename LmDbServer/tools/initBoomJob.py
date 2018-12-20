@@ -987,7 +987,7 @@ class BOOMFiller(LMObject):
         newMFC = MFChain(self.userId, priority=Priority.HIGH, 
                          metadata=meta, status=JobStatus.GENERAL, 
                          statusModTime=mx.DateTime.gmt().mjd)
-        mfChain = self.scribe.insertMFChain(newMFC, None)
+        mfChain = self.scribe.insertMFChain(newMFC, gridset.getId())
         
         ws_dir = mfChain.getRelativeDirectory()
         baseFilename, _ = os.path.splitext(os.path.basename(self.outConfigFilename))
