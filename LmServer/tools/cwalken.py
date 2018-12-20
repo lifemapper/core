@@ -291,6 +291,7 @@ class ChristopherWalken(LMObject):
 
     # .............................................................................
     def _findData(self, datasource, boompath):
+        moreDataToProcess = False
         occDelimiter = self._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER')
         # iDigBio data
         if datasource == SpeciesDatasource.IDIGBIO:
@@ -338,7 +339,6 @@ class ChristopherWalken(LMObject):
                 raise LMError("""Failed to find file {} in relative location 
                                  or in user dir {} or installation dir {}"""
                               .format(occname, boompath, SPECIES_DATA_PATH))
-            moreDataToProcess = False
             occMeta = occDir + LMFormat.METADATA.ext
             fnames = glob.glob(os.path.join(occDir, '*' + LMFormat.CSV.ext))
             if len(fnames) > 0:
