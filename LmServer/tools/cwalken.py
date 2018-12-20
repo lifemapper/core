@@ -298,36 +298,54 @@ class ChristopherWalken(LMObject):
         # User data, anything not above
         elif datasource == SpeciesDatasource.USER:
             occname = self._getBoomOrDefault('USER_OCCURRENCE_DATA')
-              
-        occInstalled = os.path.join(SPECIES_DATA_PATH, occname)
-        occUser = os.path.join(boompath, occname)
-              
-        # Check for CSV file installed into species or user path 
-        occCSV = occDir = None
-        if os.path.exists(occInstalled + LMFormat.CSV.ext):
-            occCSV = occInstalled + LMFormat.CSV.ext
-        elif os.path.exists(occUser + LMFormat.CSV.ext):
-            occCSV = occUser + LMFormat.CSV.ext
-        # Check for directory installed into species or user path 
-        elif os.path.isdir(occInstalled):
-            occDir = occInstalled
-        elif os.path.isdir(occUser):
-            occDir = occUser
-        # Missing 
-        else:
-            raise LMError('Failed to find file or directory {} in {} or {}'
-                          .format(occname, boompath, SPECIES_DATA_PATH))
-           
-        moreDataToProcess = False
-        if occDir is not None:
+            occDir = self._getBoomOrDefault('USER_OCCURRENCE_DIR')
+            
+        if occname is not None:
+            # Complete base filename
+            if not occname.endswith(LMFormat.CSV.ext):
+                occCSV = occname + LMFormat.CSV.ext 
+            else:
+                occCSV = occname
+
+            # Check for CSV file location - either absolute or relative path
+            if os.path.exists(occCSV):
+                pass
+            #   or in User top data directory
+            elif os.path.exists(os.path.join(boompath, occCSV)):
+                occCSV = os.path.join(boompath, occCSV)
+            #   or in installation data directory
+            elif os.path.exists(os.path.join(SPECIES_DATA_PATH, occCSV)):
+                occCSV = os.path.join(SPECIES_DATA_PATH, occCSV)
+            else:
+                raise LMError("""Failed to find file {} in relative location 
+                                 or in user dir {} or installation dir {}"""
+                              .format(occname, boompath, SPECIES_DATA_PATH))
+            occMeta = os.path.splitext(occCSV)[0] + LMFormat.METADATA.ext
+
+        # TODO: Add 'USER_OCCURRENCE_DIR' as parameter for individual CSV files
+        # in a directory, one per species (for LmServer.tools.occwoc.TinyBubblesWoC)
+        elif occDir is not None:
+            # Check for directory location - either absolute or relative path
+            if os.path.isdir(occDir):
+                pass
+            #   or in User top data directory
+            elif os.path.isdir(os.path.join(boompath, occDir)):
+                occDir = os.path.join(boompath, occDir)
+            #   or in installation data directory
+            elif os.path.exists(os.path.join(SPECIES_DATA_PATH, occDir)):
+                occCSV = os.path.join(SPECIES_DATA_PATH, occDir)
+            else:
+                raise LMError("""Failed to find file {} in relative location 
+                                 or in user dir {} or installation dir {}"""
+                              .format(occname, boompath, SPECIES_DATA_PATH))
+            moreDataToProcess = False
             occMeta = occDir + LMFormat.METADATA.ext
             fnames = glob.glob(os.path.join(occDir, '*' + LMFormat.CSV.ext))
             if len(fnames) > 0:
                 occCSV = fnames[0]
                 if len(fnames) > 1:
                     moreDataToProcess = True
-        else:
-            occMeta = os.path.splitext(occCSV)[0] + LMFormat.METADATA.ext
+                         
         return occCSV, occMeta, occDelimiter, moreDataToProcess
 
     # .............................................................................
