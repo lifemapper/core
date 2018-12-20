@@ -242,8 +242,6 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
             secs = time.time()
             timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
             logname = '{}.{}.{}'.format(self.scriptBasename, dataBasename, timestamp)
-            # Logfile is created by script in LOG_DIR
-            logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
             
         # Optional script args, required here
         self.args =  ' --taxon_source_name=\'{}\''.format(source_name)
@@ -257,8 +255,10 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
         if delimiter != '\t': 
             self.args += ' --delimiter={}'.format(delimiter)
             
-        self.outputs.append(logfilename)
         self.outputs.append(taxon_success_filename)
+#         # Logfile is created by script in LOG_DIR
+#         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+#         self.outputs.append(logfilename)
             
     # ................................
     def getCommand(self):
@@ -288,16 +288,16 @@ class EncodeTreeCommand(_LmServerCommand):
         secs = time.time()
         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         log_name = '{}.{}'.format(self.scriptBasename, timestamp)
-        # Logfile is created by script in LOG_DIR
-        log_file = '{}{}'.format(log_name, LMFormat.LOG.ext)
             
         # Required args
         self.args = '{} {} {}'.format(user_id, tree_name, success_file)
         # Optional arg, we also want for output 
         self.args += ' --logname={}'.format(log_name)
 
-        self.outputs.append(log_file)
         self.outputs.append(success_file)
+#         # Logfile is created by script in LOG_DIR
+#         log_file = '{}{}'.format(log_name, LMFormat.LOG.ext)
+#         self.outputs.append(log_file)
             
     # ................................
     def getCommand(self):
@@ -328,15 +328,16 @@ class EncodeBioGeoHypothesesCommand(_LmServerCommand):
         secs = time.time()
         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(self.scriptBasename, timestamp)
-        # Logfile is created by script in LOG_DIR
-        logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
             
         # Required args
         self.args = '{} {} {}'.format(user_id, gridset_name, success_file)
         # Optional arg, we also want for output 
         self.args += ' --logname={}'.format(logname)
 
-        self.outputs.append(logfilename)
+        self.outputs.append(success_file)
+#         # Logfile is created by script in LOG_DIR
+#         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+#         self.outputs.append(logfilename)
             
     # ................................
     def getCommand(self):
