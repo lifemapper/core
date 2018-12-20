@@ -246,8 +246,8 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
             logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
             
         # Optional script args, required here
-        self.args = " --taxon_source_name='{}'".format(source_name)
-        self.args += " --taxon_data_filename={}".format(taxon_data_filename)
+        self.args =  ' --taxon_source_name=\'{}\''.format(source_name)
+        self.args += ' --taxon_data_filename={}'.format(taxon_data_filename)
         self.args += ' --success_filename={}'.format(taxon_success_filename)      
         self.args += ' --logname={}'.format(logname)
 
