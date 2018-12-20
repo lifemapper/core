@@ -425,9 +425,14 @@ class BoomPoster(object):
             
         with open(filename, 'w') as configOutF:
             self.config.write(configOutF)
+            
+        import time
+        scriptname, _ = os.path.splitext(os.path.basename(__file__))
+        secs = time.time()
+        timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+        logname = '{}.{}'.format(scriptname, timestamp)
         
-#         gridset = initBoom(filename, walkNow=True)
-        filler = BOOMFiller(filename)
+        filler = BOOMFiller(filename, logname=logname)
         gridset = filler.initBoom(initMakeflow=True)
         
         return gridset
