@@ -17,10 +17,6 @@ Current versions
 (If update) Stop processes
 --------------------------
 
-#. **Stop the daboom daemon** as lmwriter ::    
-
-     lmwriter$ $PYTHON /opt/lifemapper/LmDbServer/boom/daboom.py stop
-
 #. **Stop the mattDaemon** as lmwriter::
 
      lmwriter$ $PYTHON /opt/lifemapper/LmServer/tools/mattDaemon.py stop
@@ -31,28 +27,44 @@ Current versions
    # bash /opt/lifemapper/rocks/etc/clean-lm-server-roll.sh
    # bash /opt/lifemapper/rocks/etc/clean-lm-compute-roll.sh
 
-Update existing install
+Update existing code and script RPMs (without new roll)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#. Copy individual rpms to /export/rocks/install/contrib/6.2/x86_64/RPMS/ 
+   (or 7.0). This will only update RPMs that are part of the original roll.
+   To add rpms that are not yet part of the rolls, put them into a directory 
+   shared from FE to nodes (/share/lm/). 
+   
+#. then rebuild distribution.  ::
+   
+   # (cd /export/rocks/install; rocks create distro; yum clean all)
+   # yum list updates
+   # yum update
+   
+#. Run scripts to update config and DB types/views/functions ::
+   
+   # /opt/lifemapper/rocks/bin/updateIP
+   # /opt/lifemapper/rocks/bin/updateDB
+   
+#. Install new rpms ::
+   
+   # rpm -i /share/lm/*rpm
+
+#. Update nodes ::
+   
+   # rocks set host boot compute action=install
+   # rocks run host compute reboot
+
+#. Update nodes with non-roll rpms::
+   
+   # rocks run host compute "(hostname; rpm -i /share/lm/*rpm)"
+
+
+Update existing rolls
 ~~~~~~~~~~~~~~~~~~~~~~~
 #. Remove old rolls (without cleaning or removing individual rpms)::
 
    # rocks remove roll lifemapper-server lifemapper-compute
    
-#. (Obsolete?) Remove old elgis repository rpm (it will cause yum to fail 
-   and pull old pgbouncer, postgresql, rpms from the roll.  TODO: update static 
-   rpms in roll) ::
-   
-   # rpm -evl --nodeps elgis-release
-   
-#. (Optional) When updating an existing install, it should always be true that  
-   the configuration rpms (rocks-lifemapper, rocks-lmcompute) have new version 
-   numbers, matching the code rpms (lifemapper-lmserver or lifemapper-lmcompute).  
-   As long as this is true, rpms will be replaced correctly.  If it is false, 
-   the configuration rpms must be manually removed so that configuration scripts 
-   will be run on install. If the above is true on a lifemapper-compute 
-   installation, do the same thing for every node::
-   
-   # rpm -el rocks-lmcompute
-      
 
 Install both rolls on Frontend
 ------------------------------
