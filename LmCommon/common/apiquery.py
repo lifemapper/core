@@ -945,7 +945,7 @@ class IdigbioAPI(APIQuery):
             try: 
                 f = open(missing_id_file, 'w')
                 for gid in summary[self.GBIF_MISSING_KEY]:
-                    f.write(gid + '\n')
+                    f.write('{}\n'.format(gid))
             except Exception, e:
                 raise
             finally:
@@ -1129,44 +1129,55 @@ from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
 from LmCommon.common.lmXml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.apiquery import IdigbioAPI
 
 taxon_ids = [1000431, 1000432, 1000488, 1000410, 1000443, 1000519, 1000546, 
              1000464, 1000541, 1000515, 1000543, 1000511, 1000461, 1000525, 
              1000447, 1000483, 1000329, 1000454, 1000484, 1000575]
+             
+             
+taxon_ids = [570242, 399675, 90421, 147019, 73025, 403142, 105648, 251580, 
+             629740, 235469, 702004, 598047, 605296, 525564, 336509, 620128]
+
 
 idigAPI = IdigbioAPI()
+point_output_file = '/state/partition1/lmscratch/temp/point_output_file.csv'
+meta_output_file = '/state/partition1/lmscratch/temp/meta_output_file.json'
+missing_id_file = '/state/partition1/lmscratch/temp/missing_id_file.csv'
 
-unmatched_gbif_ids = []     
-    
-for fname in (point_output_file, meta_output_file):
-    if os.path.exists(fname):
-        print('Deleting existing file {} ...'.format(fname))
-        os.remove(fname)
-    
-summary = {'unmatched_gbif_ids': []}
-writer, f = self._getCSVWriter(point_output_file, doAppend=False)
- 
-tryidx = 0
-origFldnames = self._getIdigbioFields(taxon_ids[tryidx])
-while not origFldnames and tryidx < len(taxon_ids) -1:
-    tryidx += 1
-    
-        
-# get/write missing data
-if missing_id_file is not None and len(summary['unmatched_gbif_ids']) > 0:
-    try: 
-        f = open(missing_id_file, 'w')
-        for gid in summary['unmatched_gbif_ids']:
-            f.write(gid + '\n')
-    except Exception, e:
-        raise
-    finally:
-        f.close()
+# unmatched_gbif_ids = []     
+#     
+# for fname in (point_output_file, meta_output_file):
+#     if os.path.exists(fname):
+#         print('Deleting existing file {} ...'.format(fname))
+#         os.remove(fname)
+#     
+# summary = {'unmatched_gbif_ids': []}
+# writer, f = self._getCSVWriter(point_output_file, doAppend=False)
+#  
+# tryidx = 0
+# origFldnames = self._getIdigbioFields(taxon_ids[tryidx])
+# while not origFldnames and tryidx < len(taxon_ids) -1:
+#     tryidx += 1
+#     
+#         
+# # get/write missing data
+# if missing_id_file is not None and len(summary['unmatched_gbif_ids']) > 0:
+#     try: 
+#         f = open(missing_id_file, 'w')
+#         for gid in summary['unmatched_gbif_ids']:
+#             f.write(gid + '\n')
+#     except Exception, e:
+#         raise
+#     finally:
+#         f.close()
+# 
+# return summary
 
-return summary
 
-
-# summary = idigAPI.assembleIdigbioData(taxon_ids, point_output_file, meta_output_file, missing_id_file=None)                                          
+# summary = idigAPI.assembleIdigbioData(taxon_ids, point_output_file, 
+                                        meta_output_file, 
+                                        missing_id_file=missing_id_file)
 # print('Missing: {}'.format(summary['unmatched_gbif_ids'])
 
 $PYTHON /opt/lifemapper/LmCompute/tools/common/get_idig_data.py \
