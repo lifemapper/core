@@ -2824,7 +2824,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridset(gsid int)
 RETURNS SETOF varchar AS
 $$
 DECLARE
-   currCount int := -1;
+   currCount int := 0;
    dloc varchar;
    mfid int;
    mtxid int;
@@ -2833,20 +2833,28 @@ BEGIN
    -- MFProcesses
    FOR dloc IN SELECT dlocation FROM lm_v3.MFProcess WHERE gridsetid = gsid
       LOOP
-         RETURN NEXT dloc;
+         IF dloc IS NOT NULL THEN
+            RETURN NEXT dloc;
+         ELSE
+            RAISE NOTICE 'No mfprocess dlocation';
+         END IF;  
       END LOOP;      
    DELETE FROM lm_v3.MFProcess WHERE gridsetId = gsid;
    GET DIAGNOSTICS total = ROW_COUNT;
    RAISE NOTICE 'Deleted % MF processes for Gridset %', currCount, gsid;
 
    -- Matrices
-   FOR dloc IN SELECT matrixdlocation FROM lm_v3.Matrix WHERE gridsetid = gsid 
+   FOR mtxid, dloc IN SELECT matrixid, matrixdlocation FROM lm_v3.Matrix WHERE gridsetid = gsid 
       LOOP
-         -- DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
-         -- GET DIAGNOSTICS currCount = ROW_COUNT;
+         DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
+         GET DIAGNOSTICS currCount = ROW_COUNT;
          total = total + currCount;
          RAISE NOTICE 'Deleted % Columns for Matrix %', currCount, mtxid;
-         RETURN NEXT dloc;  
+         IF dloc IS NOT NULL THEN
+            RETURN NEXT dloc;
+         ELSE
+            RAISE NOTICE 'No matrix dlocation';
+         END IF;  
       END LOOP;
    DELETE FROM lm_v3.Matrix WHERE gridsetid = gsid;
    GET DIAGNOSTICS currCount = ROW_COUNT;
@@ -2856,7 +2864,11 @@ BEGIN
    -- Gridset
    FOR dloc IN SELECT dlocation FROM lm_v3.Gridset WHERE gridsetid = gsid
       LOOP
-         RETURN NEXT dloc;
+         IF dloc IS NOT NULL THEN
+            RETURN NEXT dloc;
+         ELSE
+            RAISE NOTICE 'No gridset dlocation';
+         END IF;  
       END LOOP;      
    DELETE FROM lm_v3.Gridset WHERE gridsetId = gsid;
    GET DIAGNOSTICS currCount = ROW_COUNT;
