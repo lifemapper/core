@@ -14,12 +14,14 @@ import zipfile
 
 from LmCommon.common.lmconstants import HTTPStatus, LMFormat, DEFAULT_POST_USER
 from LmCommon.common.readyfile import readyFilename
-from LmServer.common.lmconstants import ARCHIVE_PATH, ENV_DATA_PATH
+from LmServer.common.lmconstants import ENV_DATA_PATH
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.lmconstants import LMFileType
 
 BIOGEO_UPLOAD = 'biogeo'
 CLIMATE_UPLOAD = 'climate'
@@ -72,10 +74,16 @@ class UserUploadService(LmService):
         @todo: Change this to use something at a lower level.  This is using
             the same path construction as the getBoomPackage script
         """
+#         userId = self.getUserId()
+#         if userId == PUBLIC_USER:
+#             userId = DEFAULT_POST_USER
+#         return os.path.join(ARCHIVE_PATH, userId)
+        earl = EarlJr()
         userId = self.getUserId()
         if userId == PUBLIC_USER:
             userId = DEFAULT_POST_USER
-        return os.path.join(ARCHIVE_PATH, userId)
+        pth = earl.createDataPath(userId, LMFileType.TMP_JSON)
+        return pth
     
     # ................................
     def _upload_biogeo(self, bioGeoFilename):
