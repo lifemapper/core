@@ -12,7 +12,7 @@ from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
 @cherrypy.expose
-class GBIFNamesService(LmService):
+class GBIFTaxonService(LmService):
     """
     """
     # ................................

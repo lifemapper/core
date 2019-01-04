@@ -17,6 +17,8 @@ import json
 class _SERVICE:
     """Constants class for web service endpoints
     """
+    BIOTAPHYNAMES = 'biotaphynames'
+    BIOTAPHYPOINTS = 'biotaphypoints'
     ENVLAYER = 'envlayer'
     GBIFPARSER = 'gbifparser'
     GLOBAL_PAM = 'globalpam'

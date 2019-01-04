@@ -5,6 +5,8 @@
 
 import cherrypy
 
+from LmWebServer.services.api.v2.biotaphy_names import GBIFTaxonService
+from LmWebServer.services.api.v2.biotaphy_points import IDigBioOccurrenceService
 from LmWebServer.services.api.v2.envLayer import EnvLayerService
 from LmWebServer.services.api.v2.gbifparser import GBIFNamesService
 from LmWebServer.services.api.v2.globalPam import GlobalPAMService
@@ -28,6 +30,8 @@ from LmWebServer.services.api.v2.upload import UserUploadService
 class ApiRootV2(object):
     """Top level class containing Lifemapper services V2
     """
+    biotaphynames = GBIFTaxonService()
+    biotaphypoints = IDigBioOccurrenceService()
     envlayer = EnvLayerService()
     gbifparser = GBIFNamesService()
     globalpam = GlobalPAMService()
