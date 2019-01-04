@@ -124,8 +124,9 @@ def _query(collection, qParams=None, fqParams=None,
         print('Exception, code {}, on response read for {}: {}'
               .format(retcode, url, str(e)))
         raise
-    
-    return resp
+    else:
+        rDict = literal_eval(resp)
+        return rDict
 
 # .............................................................................
 def add_taxa_to_taxonomy_index(sciname_objects):
@@ -269,11 +270,18 @@ def facetArchiveOnGridset(userId=None):
     
     otherParams = '&facet=true&facet.field={}&wt=python&indent=true'.format(
         SOLR_FIELDS.GRIDSET_ID)
+#     rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams,
+#                                          otherParams=otherParams))
+#     return rDict['facet_counts']['facet_fields'][SOLR_FIELDS.GRIDSET_ID]
+    try:
+        rDict = _query(SOLR_ARCHIVE_COLLECTION, qParams=qParams, 
+                      otherParams=otherParams)
+    except:
+        raise
+    else:
+        sdata = rDict['facet_counts']['facet_fields'][SOLR_FIELDS.GRIDSET_ID]
+        return sdata
     
-    rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams,
-                                         otherParams=otherParams))
-    
-    return rDict['facet_counts']['facet_fields'][SOLR_FIELDS.GRIDSET_ID]
 
 # .............................................................................
 def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None,
@@ -286,6 +294,7 @@ def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None,
     @summary: Query the PAV archive Solr index
     
     """
+    solr_resp = None
     qParams = [
         (SOLR_FIELDS.ALGORITHM_CODE, algorithmCode),
         (SOLR_FIELDS.DISPLAY_NAME, displayName),
@@ -322,9 +331,16 @@ def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None,
         fqParams.append((SOLR_FIELDS.PRESENCE,
                          '%5B{},{}%20{},{}%5D'.format(miny, minx, maxy, maxx)))
     
-    rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams, 
-                                         fqParams=fqParams))
-    return rDict['response']['docs']
+#     rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams, 
+#                                          fqParams=fqParams))
+#     return rDict['response']['docs']
+    try:
+        rDict = _query(SOLR_ARCHIVE_COLLECTION, qParams=qParams, fqParams=fqParams)
+    except:
+        raise
+    else:
+        sdata = rDict['response']['docs']
+        return sdata
 
 # .............................................................................
 def querySnippetIndex(ident1=None, provider=None, collection=None,
@@ -377,9 +393,16 @@ def querySnippetIndex(ident1=None, provider=None, collection=None,
                          '%5B{}%20TO%20{}%5D'.format(aTime, bTime)))
     
     
-    rDict = literal_eval(_query(SOLR_SNIPPET_COLLECTION, qParams=qParams, 
-                                         fqParams=fqParams))
-    return rDict['response']['docs']
+#     rDict = literal_eval(_query(SOLR_SNIPPET_COLLECTION, qParams=qParams, 
+#                                          fqParams=fqParams))
+#     return rDict['response']['docs']
+    try:
+        rDict = _query(SOLR_SNIPPET_COLLECTION, qParams=qParams, fqParams=fqParams)
+    except:
+        raise
+    else:
+        sdata = rDict['response']['docs']
+        return sdata
 
 # .............................................................................
 def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None, 
@@ -415,9 +438,12 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
         (SOLR_TAXONOMY_FIELDS.USER_ID, user_id)
         ]
 #     rDict = literal_eval(_query(SOLR_TAXONOMY_COLLECTION, qParams=q_params))
-    resp = _query(SOLR_TAXONOMY_COLLECTION, qParams=q_params)
-    if resp is not None:
-        rDict = literal_eval(resp)
-        return rDict['response']['docs']
+#     return rDict['response']['docs']
+    try:
+        rDict = _query(SOLR_TAXONOMY_COLLECTION, qParams=q_params)
+    except:
+        raise
     else:
+        sdata = rDict['response']['docs']
+        return sdata
 
