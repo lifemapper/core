@@ -147,11 +147,14 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
                 processType, rawData, count, logger=log, metadata=metadata)
             shaper.writeOccurrences(
                 outFile, maxPoints=maxPoints, bigfname=bigFile, isUser=isUser)
-            status = JobStatus.COMPUTED
-            log.debug('Shaper wrote occurrences, return {}'.format(status))
+            log.debug('Shaper wrote occurrences')
             
             # Test generated shapefiles, throws exceptions if bad
-            ShapeShifter.testShapefile(outFile)
+            status = JobStatus.COMPUTED
+            goodData, featCount = ShapeShifter.testShapefile(outFile)
+            if not goodData:
+                raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                                  'Shaper tested, failed newly created occset')
             
             # Test the big shapefile if it exists
             if os.path.exists(bigFile):
