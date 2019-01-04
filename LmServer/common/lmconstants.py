@@ -269,6 +269,7 @@ class LMFileType:
     SDM_MAP = 110
     OCCURRENCE_FILE = 111
     OCCURRENCE_RAW_FILE = 112
+    OCCURRENCE_META_FILE = 113
     OCCURRENCE_LARGE_FILE = 114
     MODEL_REQUEST = 120
     MODEL_STATS = 121
@@ -325,7 +326,8 @@ class LMFileType:
     def isSDM(rtype):
         if rtype in [LMFileType.SDM_MAP, 
                      LMFileType.OCCURRENCE_FILE, 
-                     LMFileType.OCCURRENCE_RAW_FILE, 
+                     LMFileType.OCCURRENCE_RAW_FILE,
+                     LMFileType.OCCURRENCE_META_FILE, 
                      LMFileType.OCCURRENCE_LARGE_FILE,
                      LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
                      LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT, 
@@ -456,6 +458,7 @@ class FileFix:
               LMFileType.ENVIRONMENTAL_LAYER: None,
               LMFileType.OCCURRENCE_FILE: OCC_PREFIX,
               LMFileType.OCCURRENCE_RAW_FILE: OCC_PREFIX,
+              LMFileType.OCCURRENCE_META_FILE: OCC_PREFIX,
               LMFileType.OCCURRENCE_LARGE_FILE: 'big' + OCC_PREFIX,
               LMFileType.MODEL_REQUEST: 'modReq',
               LMFileType.MODEL_STATS: None,
@@ -515,6 +518,7 @@ class FileFix:
                  LMFileType.SDM_MAP: LMFormat.MAP.ext,
                  LMFileType.OCCURRENCE_FILE: LMFormat.SHAPE.ext,
                  LMFileType.OCCURRENCE_RAW_FILE: LMFormat.CSV.ext,
+                 LMFileType.OCCURRENCE_META_FILE: LMFormat.METADATA.ext,
                  LMFileType.OCCURRENCE_LARGE_FILE: LMFormat.SHAPE.ext,
                  LMFileType.MODEL_REQUEST: LMFormat.XML.ext,
                  LMFileType.MODEL_STATS: LMFormat.ZIP.ext,
