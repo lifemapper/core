@@ -145,9 +145,9 @@ class TaxonFiller(LMObject):
                 totalWrongRank += 1
             else:
                 if taxonkey == specieskey:
-                    rank = GBIF.RESPONSE_GENUS_KEY
-                elif taxonkey == genuskey:
                     rank = GBIF.RESPONSE_SPECIES_KEY
+                elif taxonkey == genuskey:
+                    rank = GBIF.RESPONSE_GENUS_KEY
                 sciName = ScientificName(scinameStr, rank=rank, canonicalName=None, 
                          kingdom=kingdomStr, phylum=phylumStr, txClass=classStr, 
                          txOrder=orderStr, family=familyStr, genus=genusStr, 

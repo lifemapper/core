@@ -9,6 +9,7 @@ from LmServer.common.lmconstants import (
      SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
 from LmServer.common.localconstants import PUBLIC_USER
 import json
+from urllib2 import URLError
 
 # .............................................................................
 def buildSolrDocument(docPairs):
@@ -107,8 +108,22 @@ def _query(collection, qParams=None, fqParams=None,
         queryParts.append(otherParams)
     
     url = '{}{}/select?{}'.format(SOLR_SERVER, collection, '&'.join(queryParts))
-    res = urllib2.urlopen(url)
-    resp = res.read()
+    try:
+        res = urllib2.urlopen(url)
+    except URLError, e:
+        print('URLError on urlopen for {}: {}'.format(url, str(e)))
+        raise
+    except Exception, e:
+        print('Exception on urlopen for {}: {}'.format(url, str(e)))
+        raise
+    
+    retcode = res.getcode()
+    try:
+        resp = res.read()
+    except Exception, e:
+        print('Exception, code {}, on response read for {}: {}'
+              .format(retcode, url, str(e)))
+        raise
     
     return resp
 
@@ -399,7 +414,10 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
         (SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, taxon_phylum),
         (SOLR_TAXONOMY_FIELDS.USER_ID, user_id)
         ]
-
-    rDict = literal_eval(_query(SOLR_TAXONOMY_COLLECTION, qParams=q_params))
-    return rDict['response']['docs']
+#     rDict = literal_eval(_query(SOLR_TAXONOMY_COLLECTION, qParams=q_params))
+    resp = _query(SOLR_TAXONOMY_COLLECTION, qParams=q_params)
+    if resp is not None:
+        rDict = literal_eval(resp)
+        return rDict['response']['docs']
+    else:
 
