@@ -774,51 +774,6 @@ class IdigbioAPI(APIQuery):
                 specimenList.append(newitem)
         return specimenList
     
-#     # ...............................................
-#     def queryBySciname(self, sciname):
-#         """
-#         @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
-#         """
-#         self._qFilters['scientificname'] = sciname
-#         self.query()
-#         specimenList = []
-#         if self.output is not None:
-#             fullCount = self.output['itemCount']
-#             for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
-#                 newitem = {}
-#                 for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].iteritems():
-#                     newitem[dataFld] = dataVal
-#                     for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].iteritems():
-#                         if idxFld == 'geopoint':
-#                             newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
-#                             newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
-#                         else:
-#                             newitem[idxFld] = idxVal
-#                 specimenList.append(newitem)
-#         return specimenList
-#     
-#     # ...............................................
-#     def getOccurrences(self, asShapefile=False):
-#         """
-#         @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
-#         """
-#         if self.output is None:
-#             self.query()
-#         specimenList = []
-#         if self.output is not None:
-#             for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
-#                 newitem = {}
-#                 for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].iteritems():
-#                     newitem[dataFld] = dataVal
-#                 for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].iteritems():
-#                     if idxFld == 'geopoint':
-#                         newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
-#                         newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
-#                     else:
-#                         newitem[idxFld] = idxVal
-#                 specimenList.append(newitem)
-#         return specimenList
-    
     # .............................................................................
     def _writeIdigbioMetadata(self, origFldnames, metaFname):
         newMeta = {}
@@ -981,18 +936,6 @@ class IdigbioAPI(APIQuery):
 
 # .............................................................................
 def testBison():
-  # ******************* BISON ********************************
-#       tsnQuery = BisonAPI(qFilters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX}, 
-#                           otherFilters=BISON.TSN_FILTERS)
-#     
-#       qfilters = {'decimalLongitude': (-125, -66), 'decimalLatitude': (24, 50), 
-#                   'ITISscientificName': '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/', 
-#                   'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
-#       otherfilters = {'facet.mincount': 20, 'rows': 0, 'facet.field': 'TSNs', 
-#                   'facet': True, 'facet.limit': -1, 'wt': 'json', 'json.nl': 'arrarr'}
-#       headers = {'Content-Type': 'application/json'}
-#       tsnList = tsnQuery.getBinomialTSNs()
-#       print len(tsnList)
       
     tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
     response = {u'facet_counts': 
@@ -1034,30 +977,6 @@ def testGbif():
     output = GbifAPI.getTaxonomy(taxonid)
     print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
 
-# # .............................................................................
-# def testIdigBio():
-#     gbifids = [2435099, 1000329, 1000410, 1000431, 1000432, 1000443, 1000447, 1000454, 
-#               1000461, 1000464, 1000483, 1000484, 1000488, 1000511, 1000515, 
-#               1000519, 1000525, 1000541, 1000543, 1000546, 1000575]
-#    
-#     # ******************* iDigBio ********************************
-#     digList = [4990907, 2437967, 4990907, 5158206, 2438635, 2394563, 2360481, 
-#                5231132, 2350580, 2361357]
-#     for gid in gbifids:
-#         # direct query
-#         api = IdigbioAPI()
-#         try:
-#             occList1 = api.queryByGBIFTaxonId(gid)
-#         except:
-#             print 'Failed on {}'.format(gid)
-#         else:
-#             print("Retrieved {} records for gbif taxonid {}"
-#                   .format(len(occList1), gid))
-#            
-#         print '   ', api.baseurl
-#         print '   ', api._otherFilters
-#         print '   ', api._qFilters
-#         print
       
 # .............................................................................
 def testIdigbioTaxonIds():

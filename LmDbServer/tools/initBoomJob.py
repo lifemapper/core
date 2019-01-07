@@ -1196,20 +1196,6 @@ class BOOMFiller(LMObject):
         earl = EarlJr()
         mfdir = earl.createDataPath(self.userId, LMFileType.MF_DOCUMENT)
         self._fixPermissions(dirs=[mfdir])
-
-    # .............................................................................
-    def _updateTree(self, otree):
-        # Update tree properties
-        otree.clearDLocation()
-        otree.setDLocation()
-        otree.writeTree()
-         
-        # Update metadata
-        otree.updateModtime(mx.DateTime.gmt().mjd)
-        success = self.scribe.updateObject(otree)        
-        print 'Wrote tree {} to final location and updated db'.format(otree.getId())
-         
-        return otree
     
     # ...............................................
     def _getPartnerTreeData(self, pquery, gbifids, basefilename):

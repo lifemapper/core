@@ -43,7 +43,9 @@ Nothing is completing / workers cycle quickly
 This problem presents multiple symptoms, first, no (remote) work is being 
 completed (local jobs may still complete).  The easiest way to see this is if
 workflows complete occurrence jobs but never progress through models and 
-projections.  It may be that there is a problem with the workers.  A better way
+projections.  
+
+It may be that there is a problem with the workers.  A better way
 to tell if this is the problem is if you notice that the worker factory submits
 new workers at every iteration.  Though, it is possible that this symptom will
 not show up either if SGE is holding the submitted cluster jobs in the error 
@@ -53,7 +55,9 @@ lmwriter user, `qstat -U lmwriter`.  If the results show a status of `Eqw` then
 the scheduler will likely lock up and you will need to delete those jobs with
 `qdel -j {job id}`, but before you do that, check to see if there is any error
 information on the job.  Do this with `qstat -j {job id}`.  Hopefully, there 
-will be some information that can be used to debug the problem.  If not, look 
+will be some information that can be used to debug the problem.  
+** CJ: /share/lm/data/worker.log  is not currently being modified **
+If not, look 
 at /share/lm/data/worker.log to see if there is any debugging information there.
 Most likely, the error will be related to file permissions / directory setup or
 potentially networking issues.

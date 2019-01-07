@@ -167,9 +167,9 @@ class _SpeciesWeaponOfChoice(LMObject):
 # ...............................................
     def _willCompute(self, status, statusModTime, dlocation, rawDataLocation):
         willCompute = False
-        noRawData = rawDataLocation is None or not os.path.exists(rawDataLocation)
-        noCompleteData = dlocation is None or not os.path.exists(dlocation)
-        obsoleteData = statusModTime > 0 and statusModTime < self._obsoleteTime
+        noRawData = (rawDataLocation is None) or not (os.path.exists(rawDataLocation))
+        noCompleteData = (dlocation is None) or not (os.path.exists(dlocation))
+        obsoleteData = (statusModTime > 0) and (statusModTime < self._obsoleteTime)
         if (JobStatus.incomplete(status) or
              JobStatus.failed(status) or
               # waiting with missing data
