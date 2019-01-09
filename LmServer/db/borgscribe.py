@@ -449,14 +449,13 @@ class BorgScribe(LMObject):
         return mtxColumns
 
 # ...............................................
-    def getSDMColumnsForMatrix(self, mtxId, 
-                                        returnColumns=True, returnProjections=True):
+    def getSDMColumnsForMatrix(self, mtxId, returnColumns=True, 
+                               returnProjections=True):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getSDMColumnsForMatrix()
         """
-        colPrjPairs = self._borg.getSDMColumnsForMatrix(mtxId,
-                                                                      returnColumns, 
-                                                                      returnProjections)
+        colPrjPairs = self._borg.getSDMColumnsForMatrix(mtxId, returnColumns, 
+                                                        returnProjections)
         return colPrjPairs
 
 # ...............................................

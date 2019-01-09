@@ -965,10 +965,8 @@ class Borg(DbPostgresql):
                  matrices associated with this Gridset
         @return: Existing LmServer.legion.gridset.Gridset
         """
-        row, idxs = self.executeSelectOneFunction('lm_getGridset', 
-                                                                gridsetId,
-                                                                userId,
-                                                                name)
+        row, idxs = self.executeSelectOneFunction('lm_getGridset', gridsetId,
+                                                  userId, name)
         fullGset = self._createGridset(row, idxs)
         if fullGset is not None and fillMatrices:
             mtxs = self.getMatricesForGridset(fullGset.getId(), None)
@@ -2432,11 +2430,12 @@ class Borg(DbPostgresql):
         @summary Return all LmServer.legion.LMMatrix objects that are part of a 
                     gridset
         @param gridsetid: Id of the gridset organizing these data matrices
-        @param mtxType: optional filter for one type of LMMatrix
+        @param mtxType: optional filter, LmCommon.common.lmconstants.MatrixType 
+               for one type of LMMatrix
         """
         mtxs = []
         rows, idxs = self.executeSelectManyFunction('lm_getMatricesForGridset', 
-                                                                  gridsetid, mtxType)
+                                                    gridsetid, mtxType)
         for r in rows:
             mtxs.append(self._createLMMatrix(r, idxs))
         return mtxs

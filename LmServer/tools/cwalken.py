@@ -35,8 +35,8 @@ from types import IntType, FloatType
 from LmBackend.common.lmconstants import RegistryKey, MaskMethod
 from LmBackend.common.lmobj import LMError, LMObject
 from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
-from LmBackend.command.server import (
-    MultiIndexPAVCommand, MultiStockpileCommand)
+from LmBackend.command.server import (MultiIndexPAVCommand, 
+                                      MultiStockpileCommand)
 from LmBackend.command.single import SpeciesParameterSweepCommand
 
 from LmCommon.common.config import Config
@@ -78,7 +78,7 @@ class ChristopherWalken(LMObject):
                  (Single-species Makeflow chain) for a species.
         """
         super(ChristopherWalken, self).__init__()
-        self.name = self.__class__.__name__.lower()
+
         self.configFname = configFname
         baseAbsFilename, _ = os.path.splitext(configFname)
         basename = os.path.basename(baseAbsFilename)
@@ -538,9 +538,8 @@ class ChristopherWalken(LMObject):
         """
         userId = self._getBoomOrDefault('ARCHIVE_USER', defaultValue=PUBLIC_USER)
         archiveName = self._getBoomOrDefault('ARCHIVE_NAME')
-        archivePriority = self._getBoomOrDefault('ARCHIVE_PRIORITY')
-        if archivePriority is None:
-            archivePriority = Priority.NORMAL
+        archivePriority = self._getBoomOrDefault('ARCHIVE_PRIORITY', 
+                                                 defaultValue=Priority.NORMAL)
         # Get user-archive configuration file
         if userId is None or archiveName is None:
             raise LMError(currargs='Missing ARCHIVE_USER or ARCHIVE_NAME in {}'

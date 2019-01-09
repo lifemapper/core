@@ -203,6 +203,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             except:
                 status = JobStatus.COMPLETE
 
+            # TODO: Remove this, layer does not have this method
             if JobStatus.waiting(status):
                 lyrRules = self.layer.computeMe(workDir=workDir)
                 rules.extend(lyrRules)

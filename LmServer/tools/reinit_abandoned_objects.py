@@ -73,6 +73,7 @@ def reinitialize_projections(gridset_id, begin_status, end_status, group_size,
 
         rules = []
         for prj in prjs:
+            # TODO: Remove this, prj does not have this method
             rules.extend(prj.computeMe(
                 workDir=work_dir, procParams=processing_parameters, 
                 addOccRules=True))
