@@ -32,6 +32,7 @@ class ApiRootV2(object):
     """
     biotaphynames = GBIFTaxonService()
     biotaphypoints = IDigBioOccurrenceService()
+    biotaphytree = OpenTreeService()
     envlayer = EnvLayerService()
     gbifparser = GBIFNamesService()
     globalpam = GlobalPAMService()

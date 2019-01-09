@@ -300,8 +300,6 @@ class GridsetBioGeoService(LmService):
                 bgMtx = self.scribe.findOrInsertMatrix(tmpMtx)
                 
                 # Encode the hypotheses
-                # TODO: May be better to leave this to the gridset computeMe to
-                #             do asynchronously
                 encMtx = encoder.get_encoded_matrix()
                 with open(bgMtx.dlocation, 'w') as outF:
                     encMtx.save(outF)
