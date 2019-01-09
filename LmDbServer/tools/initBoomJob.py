@@ -29,7 +29,9 @@ import stat
 import types
 
 from LmBackend.command.boom import BoomerCommand
-from LmBackend.command.common import IdigbioQueryCommand
+from LmBackend.command.common import (IdigbioQueryCommand, 
+        ConcatenateMatricesCommand)
+from LmBackend.command.multi import (CalculateStatsCommand)
 from LmBackend.command.server import (CatalogTaxonomyCommand, EncodeTreeCommand,
                                       EncodeBioGeoHypothesesCommand)
 from LmBackend.common.lmobj import LMError, LMObject
@@ -1014,21 +1016,6 @@ class BOOMFiller(LMObject):
                          statusModTime=currtime)
         grimChain = self.scribe.insertMFChain(newMFC, gridsetId)
         return grimChain
-
-    # .............................
-    def _getGrimMF(self, scencode, gridsetId, currtime):
-        # Create MFChain for this GPAM
-        desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
-                .format(self.userId, self.archiveName, scencode))
-        meta = {MFChain.META_CREATED_BY: self.name,
-                MFChain.META_GRIDSET: gridsetId,
-                MFChain.META_DESCRIPTION: desc 
-                }
-        newMFC = MFChain(self.userId, priority=self.priority, 
-                         metadata=meta, status=JobStatus.GENERAL, 
-                         statusModTime=currtime)
-        grimChain = self.scribe.insertMFChain(newMFC, gridsetId)
-        return grimChain
    
     # .............................
     def addGrimMFs(self, defaultGrims, gridsetId):
@@ -1065,7 +1052,6 @@ class BOOMFiller(LMObject):
             grimChains.append(grimChain)
             self.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
                                  .format(grimChain.objId, code))
-                 
         return grimChains
 
     # .............................

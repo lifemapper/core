@@ -31,7 +31,7 @@ from LmBackend.command.common import ChainCommand, SystemCommand
 from LmBackend.command.server import LmTouchCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import JobStatus, LM_USER
+from LmCommon.common.lmconstants import JobStatus, LM_USER, MatrixType
 
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
@@ -42,6 +42,7 @@ from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
+from LmServer.legion.lmmatrix import LMMatrix
 
 
 SPUD_LIMIT = 200
@@ -57,8 +58,7 @@ class Boomer(LMObject):
     current MFChains, and pick up where it left off to create new MFChains for 
     unprocessed species data.
     @todo: Next instance of boom.Walker will create new MFChains, but add data
-    to the existing Global PAM matrices.  Make sure LMMatrix.computeMe handles 
-    appending new PAVs or re-assembling. 
+    to the existing Global PAM matrices.  
     """
     # .............................
     def __init__(self, configFname, successFname, assemblePams=True, log=None):      
@@ -145,7 +145,7 @@ class Boomer(LMObject):
         self.rotatePotatoes()
          
     # .............................
-    def processSpud(self):
+    def processOneSpecies(self):
         try:
             self.log.info('Next species ...')
             # Get Spud rules (single-species SDM) and dict of {scencode: pavFilename}
@@ -287,14 +287,6 @@ class Boomer(LMObject):
                   command and something else.  Don't use MfRule directly
         """
         pass
-        #targetFname = self.potatoBushel.getArfFilename(prefix='goPotato')
-        #cmdArgs = ['checkArfFiles'].extend(self.spudArfFnames)
-        #mfCmd = ' '.join(cmdArgs)
-        #arfCmd = 'touch {}'.format(targetFname)
-        #cmd = 'LOCAL {} ; {}'.format(arfCmd, mfCmd)
-        ## Create a rule from the MF and Arf file creation
-        #rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
-        #self.potatoBushel.addCommands([rule])
 
     # ...............................................
     def writeSuccessFile(self, message):
@@ -308,15 +300,17 @@ class Boomer(LMObject):
             f.close()
 
     # .............................
-    def processAll(self):
+    def processAllSpecies(self):
         print('processAll with configFname = {}'.format(self.configFname))
         count = 0
         while self.keepWalken:
-            self.processSpud()
+            self.processOneSpecies()
             count += 1
         if not self.keepWalken:
             self.close()
         self.writeSuccessFile('Boomer finished walken {} species'.format(count))
+
+
 
 # .............................................................................
 if __name__ == "__main__":
@@ -355,7 +349,7 @@ if __name__ == "__main__":
     logger = ScriptLogger(logname, level=logging.INFO)
     boomer = Boomer(configFname, successFname, log=logger)
     boomer.initializeMe()
-    boomer.processAll()
+    boomer.processAllSpecies()
    
 """
 $PYTHON LmDbServer/boom/boom.py --help
