@@ -659,8 +659,14 @@ class Gridset(ServiceObject): #LMMap
                 mtxs.append(mtx)
         return mtxs
 
-    def getPAMs(self):
+    def getAllPAMs(self):
         return  self._getMatrixTypes([MatrixType.PAM, MatrixType.ROLLING_PAM])
+
+    def getPAMs(self):
+        return  self._getMatrixTypes(MatrixType.PAM)
+
+    def getRollingPAMs(self):
+        return  self._getMatrixTypes(MatrixType.ROLLING_PAM)
 
     def getGRIMs(self):
         return self._getMatrixTypes(MatrixType.GRIM)
@@ -669,7 +675,7 @@ class Gridset(ServiceObject): #LMMap
         return self._getMatrixTypes(MatrixType.BIOGEO_HYPOTHESES)
 
     def getPAMForCodes(self, gcmCode, altpredCode, dateCode):
-        for pam in self.getPAMs():
+        for pam in self.getAllPAMs():
             if (pam.gcmCode == gcmCode and 
                  pam.altpredCode == altpredCode and 
                  pam.dateCode == dateCode):

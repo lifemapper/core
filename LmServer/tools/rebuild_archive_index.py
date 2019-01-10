@@ -35,7 +35,7 @@ def rebuild_index_for_gridset(gridset_id):
     user_id = gs.getUserId()
     
     # TODO: Should this only be rolling PAMs?
-    for pam in gs.getPAMs():
+    for pam in gs.getAllPAMs():
         # Create makeflow
         wfMeta = {
             MFChain.META_CREATED_BY : os.path.basename(__file__),

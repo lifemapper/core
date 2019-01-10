@@ -484,11 +484,6 @@ assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
  self.boomGridset, 
  self.intersectParams, 
  self.assemblePams) = self._getConfiguredObjects()
-# One Global PAM for each scenario
-if self.assemblePams:
-    for prjscen in self.prjScens:
-        self.globalPAMs[prjscen.code] = self.boomGridset.getPAMForCodes(
-            prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode)
 ###############################################
 
 self.christopher.initializeMe()

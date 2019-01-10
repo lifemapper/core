@@ -117,7 +117,7 @@ def formatGridset(gs):
       )
       
    # PAMs
-   for mtx in gs.getPAMs():
+   for mtx in gs.getAllPAMs():
       gsDict['pams'].append(
          {
             'id' : mtx.getId(),

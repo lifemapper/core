@@ -591,6 +591,8 @@ class ShootSnippetsCommand(_LmServerCommand):
 # .............................................................................
 class SquidIncCommand(_LmServerCommand):
     """
+    @note: OBSOLETE?
+    @todo: delete me
     @summary: This command will add squids to a tree
     """
     scriptName = 'squid_inc.py'

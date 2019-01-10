@@ -137,6 +137,7 @@ class ChristopherWalken(LMObject):
          self.intersectParams, 
          self.assemblePams) = self._getConfiguredObjects()
         # One Global PAM for each scenario
+        # TODO: Allow assemblePams on RollingPAM?
         if self.assemblePams:
             for prjscen in self.prjScens:
                 self.globalPAMs[prjscen.code] = self.boomGridset.getPAMForCodes(
