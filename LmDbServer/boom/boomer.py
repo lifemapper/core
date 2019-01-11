@@ -31,7 +31,7 @@ from LmBackend.command.common import ChainCommand, SystemCommand
 from LmBackend.command.server import LmTouchCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import JobStatus, LM_USER, MatrixType
+from LmCommon.common.lmconstants import JobStatus, LM_USER
 
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
@@ -42,7 +42,6 @@ from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
-from LmServer.legion.lmmatrix import LMMatrix
 
 
 SPUD_LIMIT = 200
@@ -53,7 +52,7 @@ class Boomer(LMObject):
     Class to iterate with a ChristopherWalken through a sequence of species data
     creating individual species (Spud) MFChains, multi-species (Bushel) MFChains
     with SPUD_LIMIT number of species and aggregated by projection scenario, 
-    and a master (MasterPotatoHead) MFChain
+    and a master (MasterPotatoHead) MFChain to identify completion of all bushels.
     until it is complete.  If the daemon is interrupted, it will write out the 
     current MFChains, and pick up where it left off to create new MFChains for 
     unprocessed species data.
@@ -61,7 +60,7 @@ class Boomer(LMObject):
     to the existing Global PAM matrices.  
     """
     # .............................
-    def __init__(self, configFname, successFname, assemblePams=True, log=None):      
+    def __init__(self, configFname, successFname, log=None):      
         self.name = self.__class__.__name__.lower()
         # Logfile
         if log is None:
@@ -73,14 +72,16 @@ class Boomer(LMObject):
         
         self.configFname = configFname
         self._successFname = successFname
-        self.assemblePams = assemblePams
+        self.assemblePams = None
         # Send Database connection
         self._scribe = BorgScribe(self.log)
         # iterator tool for species
         self.christopher = None
-        # Dictionary of {scenCode: (potatoChain, triagePotatoFile)}
-        self.potatoes = None
-        # MFChain for potatoBushel MF
+
+#         # Dictionary of {scenCode: (potatoChain, triagePotatoFile)}
+#         self.potatoes = None
+
+        # MFChain for lots of spuds 
         self.potatoBushel = None
         self.squidNames = None
         # Stop indicator
@@ -132,6 +133,7 @@ class Boomer(LMObject):
         if self.gridsetId is None:
             self.log.warning('Missing christopher.boomGridset id!!')
         
+        self.assemblePams = self.christopher.assemblePams
         self.priority = self.christopher.priority
         # Start where we left off 
         self.christopher.moveToStart()
@@ -141,6 +143,7 @@ class Boomer(LMObject):
         
         self.squidNames = []
         # master MF chain
+        self.masterPotatoHead = None
         self.potatoBushel = None
         self.rotatePotatoes()
          
@@ -194,7 +197,8 @@ class Boomer(LMObject):
         
         # Create new bushel
         if not self.christopher.complete:
-            self.potatoBushel = self._createMasterMakeflow()
+#             self.potatoBushel = self._createMasterMakeflow()
+            self.potatoBushel = self._createBushelMakeflow()
             if self.christopher.assemblePams:
                 self.log.info('Create new potatoes')
                 self.squidNames = []
@@ -223,7 +227,20 @@ class Boomer(LMObject):
             self.initializeMe()
 
     # ...............................................
-    def _createMasterMakeflow(self):
+    def _createBushelMakeflow(self):
+        meta = {MFChain.META_CREATED_BY: self.name,
+                MFChain.META_DESCRIPTION: 'Bushel for User {}, Archive {}'
+                    .format(self.christopher.userId, self.christopher.archiveName),
+                'GridsetId': self.gridsetId 
+        }
+        newMFC = MFChain(self.christopher.userId, priority=self.priority, 
+                         metadata=meta, status=JobStatus.GENERAL, 
+                         statusModTime=dt.gmt().mjd)
+        mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
+        return mfChain
+
+    # ...............................................
+    def _createMasterPotatoHeadMakeflow(self):
         meta = {MFChain.META_CREATED_BY: self.name,
                 MFChain.META_DESCRIPTION: 'MasterPotatoHead for User {}, Archive {}'
                     .format(self.christopher.userId, self.christopher.archiveName),
@@ -235,58 +252,58 @@ class Boomer(LMObject):
         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
         return mfChain
 
-    # .............................
-    def _addRuleToMasterPotatoHead(self, mfchain, dependencies=None, prefix='spud'):
-        """
-        @summary: Create a Spud or Potato rule for the MasterPotatoHead MF 
-        """
-        if dependencies is None:
-            dependencies = []
-           
-        targetFname = mfchain.getArfFilename(
-                               arfDir=self.potatoBushel.getRelativeDirectory(),
-                               prefix=prefix)
-        
-        origMfName = mfchain.getDLocation()
-        wsMfName = os.path.join(self.potatoBushel.getRelativeDirectory(), 
-                                os.path.basename(origMfName))
-        
-        # Copy makeflow to workspace
-        cpCmd = SystemCommand('cp', 
-                              '{} {}'.format(origMfName, wsMfName), 
-                              inputs=[targetFname], 
-                              outputs=wsMfName)
-        
-        
-        mfCmd = SystemCommand('makeflow', 
-                              ' '.join(['-T wq', 
-                                        '-N lifemapper-{}b'.format(mfchain.getId()),
-                                        '-C {}:9097'.format(PUBLIC_FQDN),
-                                        '-X {}/worker/'.format(SCRATCH_PATH),
-                                        '-a {}'.format(wsMfName)]),
-                              inputs=[wsMfName])
-        arfCmd = LmTouchCommand(targetFname)
-        arfCmd.inputs.extend(dependencies)
-        
-        delCmd = SystemCommand('rm', '-rf {}'.format(mfchain.getRelativeDirectory()))
-        
-        mpCmd = ChainCommand([mfCmd, delCmd])
-        self.potatoBushel.addCommands([arfCmd.getMakeflowRule(local=True),
-                                       cpCmd.getMakeflowRule(local=True),
-                                       mpCmd.getMakeflowRule(local=True)])
-      
-    # .............................
-    def _addDelayRuleToMasterPotatoHead(self, mfchain):
-        """
-        @summary: Create an intermediate rule for the MasterPotatoHead MF to check
-                  for the existence of all single-species dependencies (ARF files)  
-                  of the multi-species makeflows.
-        @TODO: Replace adding all dependencies to the Potato makeflow command
-               with this Delay rule
-        @todo: When implementing this, use a ChainCommand object with a touch
-                  command and something else.  Don't use MfRule directly
-        """
-        pass
+#     # .............................
+#     def _addRuleToMasterPotatoHead(self, mfchain, dependencies=None, prefix='spud'):
+#         """
+#         @summary: Create a Spud or Potato rule for the MasterPotatoHead MF 
+#         """
+#         if dependencies is None:
+#             dependencies = []
+#            
+#         targetFname = mfchain.getArfFilename(
+#                                arfDir=self.potatoBushel.getRelativeDirectory(),
+#                                prefix=prefix)
+#         
+#         origMfName = mfchain.getDLocation()
+#         wsMfName = os.path.join(self.potatoBushel.getRelativeDirectory(), 
+#                                 os.path.basename(origMfName))
+#         
+#         # Copy makeflow to workspace
+#         cpCmd = SystemCommand('cp', 
+#                               '{} {}'.format(origMfName, wsMfName), 
+#                               inputs=[targetFname], 
+#                               outputs=wsMfName)
+#         
+#         
+#         mfCmd = SystemCommand('makeflow', 
+#                               ' '.join(['-T wq', 
+#                                         '-N lifemapper-{}b'.format(mfchain.getId()),
+#                                         '-C {}:9097'.format(PUBLIC_FQDN),
+#                                         '-X {}/worker/'.format(SCRATCH_PATH),
+#                                         '-a {}'.format(wsMfName)]),
+#                               inputs=[wsMfName])
+#         arfCmd = LmTouchCommand(targetFname)
+#         arfCmd.inputs.extend(dependencies)
+#         
+#         delCmd = SystemCommand('rm', '-rf {}'.format(mfchain.getRelativeDirectory()))
+#         
+#         mpCmd = ChainCommand([mfCmd, delCmd])
+#         self.potatoBushel.addCommands([arfCmd.getMakeflowRule(local=True),
+#                                        cpCmd.getMakeflowRule(local=True),
+#                                        mpCmd.getMakeflowRule(local=True)])
+#       
+#     # .............................
+#     def _addDelayRuleToMasterPotatoHead(self, mfchain):
+#         """
+#         @summary: Create an intermediate rule for the MasterPotatoHead MF to check
+#                   for the existence of all single-species dependencies (ARF files)  
+#                   of the multi-species makeflows.
+#         @TODO: Replace adding all dependencies to the Potato makeflow command
+#                with this Delay rule
+#         @todo: When implementing this, use a ChainCommand object with a touch
+#                   command and something else.  Don't use MfRule directly
+#         """
+#         pass
 
     # ...............................................
     def writeSuccessFile(self, message):
