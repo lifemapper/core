@@ -77,8 +77,8 @@ class CalculateStatsCommand(_LmCommand):
 
     # ................................
     def __init__(self, pamFilename, sitesFilename, speciesFilename, 
-                        diversityFilename, treeFilename=None, schluter=False,
-                        speciesCovarianceFilename=None, sitesCovarianceFilename=None):
+                 diversityFilename, treeFilename=None, schluter=False,
+                 speciesCovarianceFilename=None, sitesCovarianceFilename=None):
         """
         @summary: Construct the command object
         """
