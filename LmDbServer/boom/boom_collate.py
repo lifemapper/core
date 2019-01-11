@@ -95,7 +95,7 @@ class BoomCollate(LMObject):
         self.configFname = configFname
         self._successFname = successFname
         self.userId = None
-        self.archiveName, 
+        self.archiveName = None 
         self.priority = None 
         self.boomGridset = None
         self.globalPams = None 
@@ -118,6 +118,23 @@ class BoomCollate(LMObject):
         else:
             message = "Unknown signal: %s" % sigNum
             self.log.error(message)
+
+    # ...............................................
+    def _getVarValue(self, var):
+        # Remove spaces and empty strings
+        if var is not None and not isinstance(var, bool):
+            var = var.strip()
+            if var == '':
+                var = None
+        # Convert to number if needed
+        try:
+            var = int(var)
+        except:
+            try:
+                var = float(var)
+            except:
+                pass
+        return var
 
     # ...............................................
     def _getBoomOrDefault(self, varname, defaultValue=None, isList=False, isBool=False):
@@ -178,7 +195,7 @@ class BoomCollate(LMObject):
                                               fillMatrices=True)
         
         baretree = Tree(treename, userId=userId)
-        tree = self.scribe.getTree(baretree)
+        tree = self._scribe.getTree(baretree)
         
         return (userId, archiveName, archivePriority, assemblePams, 
                 boomGridset, tree)  
@@ -202,8 +219,8 @@ class BoomCollate(LMObject):
         # Get Boom Gridset values from config file and database
         (self.userId, 
          self.archiveName, 
-         assemblePams,
          self.priority, 
+         assemblePams,
          self.boomGridset, 
          self.tree) = self._getConfiguredObjects()
          
@@ -285,7 +302,7 @@ class BoomCollate(LMObject):
                 mtxcol.shapegrid = self.boomGridset.getShapegrid()
                 # TODO: ? Assemble commands to pull PAV from Solr   
                 # TODO: ? or Remove intersect from sweepconfig
-                lyrRules = mtxcol.computeMe(workdir=workdir)
+                lyrRules = mtxcol.computeMe(workDir=workdir)
                 rules.extend(lyrRules)
                 
                 # Save new, temp intersection filenames for matrix concatenation
@@ -321,7 +338,7 @@ class BoomCollate(LMObject):
                        gridset=self.boomGridset, 
                        status=JobStatus.GENERAL, 
                        statusModTime=dt.gmt().mjd)
-        mtx = self.scribe.findOrInsertMatrix(mtx)
+        mtx = self._scribe.findOrInsertMatrix(mtx)
         ws_mtx_fname, _ = self._getTempFinalFilenames(workdir, pam, prefix=mtx_key)
         success_fname = ws_mtx_fname + '.success'
 
@@ -630,8 +647,92 @@ if __name__ == "__main__":
    
 """
 # ##########################################################################
+from LmDbServer.boom.boom_collate import *
+
+import logging
+import mx.DateTime as dt
+import os, sys, time
+import signal
+
+from LmBackend.command.common import (ChainCommand, SystemCommand, 
+                                      ConcatenateMatricesCommand)
+from LmBackend.command.server import (LmTouchCommand, StockpileCommand)
+from LmBackend.command.multi import (CalculateStatsCommand, 
+        CreateAncestralPamCommand, SyncPamAndTreeCommand, EncodePhylogenyCommand,
+        McpaRunCommand, McpaCorrectPValuesCommand)
+from LmBackend.common.lmobj import LMError, LMObject
+
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (JobStatus, LM_USER, MatrixType, 
+          LMFormat, ProcessType, SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING)
+
+from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.utilities import isLMUser
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME, 
+                                         Priority) 
+from LmServer.common.localconstants import PUBLIC_USER 
+from LmServer.common.log import ScriptLogger
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.processchain import MFChain
+from LmServer.legion.lmmatrix import LMMatrix
+from LmServer.legion.tree import Tree
+
+
+# TODO: Move these to localconstants
+NUM_RAND_GROUPS = 30
+NUM_RAND_PER_GROUP = 2
+
+configFname = '/share/lm/data/archive/taffy/heuchera_global_10min.ini'
+successFname = '/share/lm/data/archive/taffy/heuchera_global_10min.ini.collate.success'
+
+
+logname = 'boom_collate_test'
+logger = ScriptLogger(logname, level=logging.INFO)
+boomer = BoomCollate(configFname, successFname, log=logger)
+boomer.initializeMe()
+
+# ##########################################################################
+self = boomer
+master_chain = self._createMasterMakeflow()
+workdir = master_chain.getRelativeDirectory()
+globalPams = self.boomGridset.getPAMs()
+pam = globalPams[0]
+# for pam in globalPams:
+
+filter_desc = 'Filters: GCM {}, Altpred {}, Date {}'.format(
+                    pam.gcmCode, pam.altpredCode, pam.dateCode)
+# Add intersect and concatenate rules for this PAM
+ass_rules, ass_success_fname = self._getPamAssembleRules(workdir, 
+                                                    pam, filter_desc)
+master_chain.addCommands(ass_rules)
+
+# PamCalc depends on success of PamAssemble (ass_success_fname)
+calc_rules = self._getPamCalcRules(workdir, pam, ass_success_fname, 
+                                   filter_desc)
+master_chain.addCommands(calc_rules)
+
+if self.tree is not None:
+    anc_rules = self._getAncestralRules(workdir, pam)
+    master_chain.addCommands(anc_rules)
+
+    biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
+    # TODO: handle > 1 Biogeographic Hypotheses
+    if len(biogeo_hyp) > 1: 
+        biogeo_hyp = biogeo_hyp[0]
+        mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
+                                        filter_desc, numPermutations)
+        master_chain.addCommands(mcpa_rules)
+
+master_chain = self._write_update_MF(master_chain)
+self.writeSuccessFile('Boom_collate finished writing makefiles')
+# ##########################################################################
+
+# boomer.processMultiSpecies()
+
 
 # ##########################################################################
 
-       
+select * from lm_v3.lm_insertMFChain('taffy',203,NULL,TRUE,'{"GridsetId": 203, "description": "Boom Collation for User taffy, Archive heuchera_global_10min", "createdBy": "boomcollate_heuchera_global_10min"}',0,58494.9260805);
+
 """
