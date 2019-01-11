@@ -2581,11 +2581,6 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
--- select * from lm_countMtxCols(null, null, null, null, null, 300, 300, 536, null)
-                                                    beforestat int,
-                                                    mtxid int,
-                                                    lyrid int)
-
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_listMtxColAtoms(firstRecNum int, maxNum int, 
                                                     usr varchar,
