@@ -1135,11 +1135,11 @@ class BOOMFiller(LMObject):
         mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
         # Workspace directory
         ws_dir = mfChain.getRelativeDirectory()
-        baseAbsFilename, _ = os.path.splitext(os.path.basename(self.outConfigFilename))
+        base_config_fname = os.path.basename(self.outConfigFilename)
         # ChristopherWalken writes when finished walking through 
         # species data (initiated by this Makeflow).  
-        boomSuccessFname = os.path.join(ws_dir, baseAbsFilename + '.success')
-        boomCmd = BoomerCommand(self.outConfigFilename, boomSuccessFname)
+        boom_success_fname = os.path.join(ws_dir, base_config_fname + '.success')
+        boomCmd = BoomerCommand(self.outConfigFilename, boom_success_fname)
                   
         # Add iDigBio MF before Boom, if specified as occurrence input
         if self.dataSource == SpeciesDatasource.TAXON_IDS:
@@ -1163,10 +1163,10 @@ class BOOMFiller(LMObject):
         
         # Encode tree after Boom, if tree exists
         if tree is not None:
-            walkedTreeFname = os.path.join(ws_dir, self.userId+tree.name+'.success')
-            treeCmd = EncodeTreeCommand(self.userId, tree.name, walkedTreeFname)
+            tree_success_fname = os.path.join(ws_dir, tree.name+'.success')
+            treeCmd = EncodeTreeCommand(self.userId, tree.name, tree_success_fname)
             # Tree requires Boom completion
-            treeCmd.inputs.append(boomSuccessFname)
+            treeCmd.inputs.append(boom_success_fname)
             # Add tree encoding command to this Makeflow
             mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
         

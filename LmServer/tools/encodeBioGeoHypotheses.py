@@ -16,7 +16,6 @@ import sys
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (LM_USER, JobStatus, 
                                             MatrixType, ProcessType, SERVER_BOOM_HEADING)
-from LmCommon.common.matrix import Matrix
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmServer.base.utilities import isLMUser
@@ -263,106 +262,39 @@ if __name__ == '__main__':
         scribe.closeConnections()
 
 """
-import argparse
-import mx.DateTime
-import os
-import sys
+from LmServer.tools.encodeBioGeoHypotheses import *
 
-from LmServer.tools.boomInputs import (_getBoomBioGeoParams, _getBioGeoMatrix, 
-      encodeHypothesesToMatrix, squidifyTree)
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (JobStatus, PhyloTreeKeys, MatrixType, 
-                                                      ProcessType, SERVER_BOOM_HEADING)
-from LmCommon.common.matrix import Matrix
+from LmCommon.common.lmconstants import (LM_USER, JobStatus, 
+                                            MatrixType, ProcessType, SERVER_BOOM_HEADING)
+from LmCommon.common.readyfile import readyFilename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
-from LmServer.common.log import ConsoleLogger
+from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn
-from LmServer.legion.tree import Tree
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.localconstants import DEFAULT_EPSG
 
-usr = 'biotaphy'
-treename = None
-gridname = 'biotaphy_heuchera_global'
+logname = 'encodeBioGeoHypotheses.20190111-1346'
+usr = 'taffy3'
+grid_name = 'sax_global' 
+success_file = 'mf_517/sax_global.success' 
 
-scribe = BorgScribe(ConsoleLogger())
+import logging
+logger = ScriptLogger(logname, level=logging.INFO)
+scribe = BorgScribe(logger)
+
 scribe.openConnections()
-# Biogeo
-layers = _getBoomBioGeoParams(scribe, gridname, usr)
-gridset = scribe.getGridset(userId=usr, name=gridname, fillMatrices=True)
-if not (gridset and layers):
-    print ('No gridset or layers to encode as hypotheses')
-    
-# encodeHypothesesToMatrix(scribe, usr, gridset, layers=layers)
-mtxCols = []
-bgMtx = _getBioGeoMatrix(scribe, usr, gridset, layers)
-shapegrid = gridset.getShapegrid()
-
-lyr = layers[0]
-encoder = LayerEncoder(shapegrid.getDLocation())
-
-# TODO(CJ): Minimum coverage should be pulled from config or database
-min_coverage = 0.25
-
-for lyr in layers:
-    try:
-        valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
-        column_name = valAttribute
-    except KeyError:
-        valAttribute = None
-        column_name = lyr.name
-    new_cols = encoder.encode_biogeographic_hypothesis(
-         lyr.getDLocation(), column_name, min_coverage, 
-         event_field=valAttribute)
-    print('layer name={}, eventField={}, dloc={}'
-            .format(lyr.name, valAttribute, lyr.getDLocation()))
-    
-    # Add matrix columns for the newly encoded layers
-    for col_name in new_cols:
-        # TODO: Fill in params and metadata
-        try:
-            efValue = col_name.split(' - ')[1]
-        except:
-            efValue = col_name
-
-        if valAttribute is not None:
-            intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
-                             MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue}
-        else:
-            intParams = None
-        metadata = {
-            ServiceObject.META_DESCRIPTION.lower() : 
-        'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
-            ServiceObject.META_TITLE.lower() : 
-        'Biogeographic hypothesis column ({})'.format(col_name)}
-        mc = MatrixColumn(len(mtxCols), bgMtx.getId(), usr, layer=lyr,
-                                shapegrid=shapegrid, intersectParams=intParams, 
-                                metadata=metadata, postToSolr=False,
-                                status=JobStatus.COMPLETE, 
-                                statusModTime=mx.DateTime.gmt().mjd)
-        updatedMC = scribe.findOrInsertMatrixColumn(mc)
-        mtxCols.append(updatedMC)
-    
-    enc_mtx = encoder.get_encoded_matrix()
-
-    bgMtx.data = enc_mtx.data
-    bgMtx.setHeaders(enc_mtx.getHeaders())
-
-# Save matrix and update record
-bgMtx.write(overwrite=True)
-bgMtx.updateStatus(JobStatus.COMPLETE, modTime=mx.DateTime.gmt().mjd)
-success = scribe.updateObject(bgMtx)
-
-# Tree
-baretree = Tree(treename, userId=args.user)
-tree = scribe.getTree(tree=baretree)
-decoratedtree = squidifyTree(scribe, usr, tree)
+layers = _getBoomBioGeoParams(scribe, grid_name, usr)
+gridset = scribe.getGridset(userId=usr, name=grid_name, fillMatrices=True)
+if gridset and layers:
+    encodeHypothesesToMatrix(scribe, usr, gridset, success_file, layers=layers)
 
 scribe.closeConnections()
+
 """
     
