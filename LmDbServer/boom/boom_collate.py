@@ -239,10 +239,18 @@ class BoomCollate(LMObject):
             filter_desc = 'Filters: GCM {}, Altpred {}, Date {}'.format(
                                 pam.gcmCode, pam.altpredCode, pam.dateCode)
             # Add intersect and concatenate rules for this PAM
-            ass_rules = self._getPamAssembleRules(workdir, pam, filter_desc)
-            calc_rules = self._getPamCalcRules(workdir, pam, filter_desc)
+            ass_rules, ass_success_fname = self._getPamAssembleRules(workdir, 
+                                                                pam, filter_desc)
+            master_chain.addCommands(ass_rules)
+            
+            # PamCalc depends on success of PamAssemble (ass_success_fname)
+            calc_rules = self._getPamCalcRules(workdir, pam, ass_success_fname, 
+                                               filter_desc)
+            master_chain.addCommands(calc_rules)
+            
             if self.tree is not None:
-                anc_rules = self._getPamAncestralRules(workdir, pam, filter_desc)
+                anc_rules = self._getAncestralRules(workdir, pam)
+                master_chain.addCommands(anc_rules)
             
                 biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
                 # TODO: handle > 1 Biogeographic Hypotheses
@@ -250,8 +258,10 @@ class BoomCollate(LMObject):
                     biogeo_hyp = biogeo_hyp[0]
                     mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
                                                     filter_desc, numPermutations)
+                    master_chain.addCommands(mcpa_rules)
 
-        master_chain = self._write_update_MF(master_chain)            
+        master_chain = self._write_update_MF(master_chain)
+        self.writeSuccessFile('Boom_collate finished writing makefiles')
      
     # .............................
     def _getPamAssembleRules(self, workdir, pam, filter_desc):
@@ -289,15 +299,15 @@ class BoomCollate(LMObject):
         rules.append(concat_cmd.getMakeflowRule())
 
         # Save PAM
-        pam_success_fname = ws_pam_fname + '.success'
+        ass_success_fname = ws_pam_fname + '.success'
         pam_save_cmd = StockpileCommand(ProcessType.CONCATENATE_MATRICES, 
-                                        self.getId(),pam_success_fname, 
+                                        self.getId(), ass_success_fname, 
                                         ws_pam_fname, status=JobStatus.COMPLETE)
         rules.append(pam_save_cmd.getMakeflowRule(local=True))
 
         self._scribe.log.info('  Added rules to save {} pam columns into matrix {}'
                       .format(len(colFilenames), pam.getId()))
-        return rules
+        return rules, ass_success_fname
     
     # ...............................................
     def _findOrAddPAMStatMatrix(self, pam, mtx_type, mtx_key, filter_desc, workdir):
@@ -345,7 +355,7 @@ class BoomCollate(LMObject):
         return rule, wsfname
 
     # ...............................................
-    def _getPamCalcRules(self, workdir, pam, filter_desc):
+    def _getPamCalcRules(self, workdir, pam, ass_success_fname, filter_desc):
         # TODO: Site covariance, species covariance, schluter
         rules = []
 
@@ -375,6 +385,8 @@ class BoomCollate(LMObject):
         # Calulate multi-species statistics
         stats_cmd = CalculateStatsCommand(ws_pam_fname, sites_fname, 
                     species_fname, div_fname, treeFilename=wstree_fname)
+        # add dependency of PAM assembly before calculate possible
+        stats_cmd.inputs.append(ass_success_fname)
         rules.append(stats_cmd.getMakeflowRule())
         
         # Save multi-species sites outputs
@@ -393,15 +405,18 @@ class BoomCollate(LMObject):
         rules.append(div_save_cmd.getMakeflowRule(local=True))
         
         return rules
+#         return rules, [sites_success_fname, species_success_fname, 
+#                        div_success_fname]
 
     # ............................................
-    def _getPamAncestralRules(self, workdir, pam, filter_desc):
+    def _getAncestralRules(self, workdir, pam):
         if not self.tree:
             return []
         # else
         rules = []
         # Copy encoded tree into workspace
-        tchcp_tree_rule, wstree_fname = self._getCopyDataToWorkdirRule(workdir, pam)
+        tchcp_tree_rule, wstree_fname = self._getCopyDataToWorkdirRule(workdir, 
+                                                                       self.tree)
         rules.append(tchcp_tree_rule)
 
         # Copy PAM into workspace if necessary 
@@ -414,7 +429,7 @@ class BoomCollate(LMObject):
                                              'Ancestral', workdir)
         # Create ancestral pam
         ancpam_cmd = CreateAncestralPamCommand(ws_pam_fname, wstree_fname, 
-                                                 ws_ancpam_fname)
+                                               ws_ancpam_fname)
         rules.append(ancpam_cmd.getMakeflowRule())
         # Save ancestral pam
         ancpam_save_cmd = StockpileCommand(ProcessType.RAD_CALCULATE,
@@ -423,12 +438,11 @@ class BoomCollate(LMObject):
                                             ws_ancpam_fname)
         rules.append(ancpam_save_cmd.getMakeflowRule(local=True))
         return rules
+#         return rules, ancpam_success_fname
     
     # ............................................
     def _getMCPARules(self, workdir, pam, biogeo_hyp, filter_desc, numPermutations):
         rules = []
-#             mcpaRule = self._getMCPARule(workdir, targetDir)
-#             rules.append(mcpaRule)
         
         # Copy BiogeographicHypotheses into workspace if necessary 
         tchcp_bgh_rule, ws_bgh_fname = self._getCopyDataToWorkdirRule(workdir, biogeo_hyp)
@@ -450,6 +464,7 @@ class BoomCollate(LMObject):
         prune_tree_fname = os.path.join(workdir, 'prunedTree'+LMFormat.NEXUS.ext)
         prune_meta_fname = os.path.join(workdir, 'prunedMeta'+LMFormat.JSON.ext)
                 
+        # Need Pam and Tree
         syncCmd = SyncPamAndTreeCommand(ws_pam_fname, prune_pam_fname,
                     ws_tree_fname, prune_tree_fname, prune_meta_fname)
         rules.append(syncCmd.getMakeflowRule())
@@ -468,7 +483,6 @@ class BoomCollate(LMObject):
         rules.append(tchcp_grim_rule)    
                             
         # Get MCPA matrices
-#         mcpaOutMtx = pamDict[pamId][MatrixType.MCPA_OUTPUTS]
         mcpa_out_mtx, ws_mcpa_out_fname, mcpa_out_success_fname = \
                 self._findOrAddPAMStatMatrix(pam, MatrixType.MCPA_OUTPUTS, 'MCPA_OUTPUTS', 
                                              filter_desc, workdir)
@@ -535,16 +549,14 @@ class BoomCollate(LMObject):
         """
         
         # TODO: Correct P-Values
-        out_p_values_filename = os.path.join(
-             workdir, 'p_values{}'.format(LMFormat.MATRIX.ext))
-        out_bh_values_filename = os.path.join(
-             workdir, 'bh_values{}'.format(LMFormat.MATRIX.ext))
+        out_p_values_filename = os.path.join(workdir, 'p_values'+LMFormat.MATRIX.ext)
+        out_bh_values_filename = os.path.join(workdir, 'bh_values'+LMFormat.MATRIX.ext)
         
         # TODO: Use ws_obs_filename?
         corr_p_cmd = McpaCorrectPValuesCommand(ws_obs_f_filename,
-                                                            out_p_values_filename,
-                                                            out_bh_values_filename,
-                                                            rand_f_mtxs)
+                                               out_p_values_filename,
+                                               out_bh_values_filename,
+                                               rand_f_mtxs)
         rules.append(corr_p_cmd.getMakeflowRule())
         
         # Assemble final MCPA matrix
@@ -554,20 +566,19 @@ class BoomCollate(LMObject):
                                                       2, ws_mcpa_out_fname)
         rules.append(mcpa_concat_cmd.getMakeflowRule())
         
-        # Stockpile matrix
-        mcpaOutSuccessFilename = os.path.join(workdir, 'mcpaOut.success')
-        
+        # Save matrix
         mcpaOutStockpileCmd = StockpileCommand(ProcessType.MCPA_ASSEMBLE,
-                                        mcpa_out_mtx.getId(), mcpaOutSuccessFilename, 
-                                        ws_mcpa_out_fname, 
-                                        metadataFilename=prune_meta_fname)
+                                               mcpa_out_mtx.getId(), 
+                                               mcpa_out_success_fname, 
+                                               ws_mcpa_out_fname, 
+                                               metadataFilename=prune_meta_fname)
         rules.append(mcpaOutStockpileCmd.getMakeflowRule(local=True))
 
         return rules
 
 
     # ...............................................
-    def writeSuccessFile(self, message):
+    def writeSuccessFile(self, message='Success'):
         self.readyFilename(self._successFname, overwrite=True)
         try:
             f = open(self._successFname, 'w')
@@ -618,69 +629,6 @@ if __name__ == "__main__":
     boomer.processMultiSpecies()
    
 """
-$PYTHON LmDbServer/boom/boom.py --help
-
-import mx.DateTime as dt
-import logging
-import os, sys, time
-
-from LmBackend.common.lmconstants import RegistryKey, MaskMethod
-from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
-from LmBackend.command.server import IndexPAVCommand, MultiStockpileCommand
-from LmBackend.command.single import SpeciesParameterSweepCommand
-from LmServer.common.localconstants import (PUBLIC_USER, DEFAULT_EPSG, 
-                                            POINT_COUNT_MAX)
-
-from LmDbServer.boom.boomer import *
-from LmCommon.common.apiquery import BisonAPI, GbifAPI
-from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, 
-          SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX,
-          SERVER_DEFAULT_HEADING_POSTFIX, MatrixType, IDIG_DUMP) 
-from LmCommon.common.readyfile import readyFilename
-from LmBackend.common.lmobj import LMError, LMObject
-from LmServer.base.utilities import isLMUser
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
-                                            SCRATCH_PATH)
-from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
-                                         Priority, BUFFER_KEY, CODE_KEY,
-                                         ECOREGION_MASK_METHOD, MASK_KEY, 
-                                         MASK_LAYER_KEY, PRE_PROCESS_KEY,
-                                         PROCESSING_KEY, MASK_LAYER_NAME_KEY,
-    SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM, LMFileType, PUBLIC_ARCHIVE_NAME, 
-                                         )
-from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmBackend.common.cmd import MfRule
-from LmServer.legion.processchain import MFChain
-from LmServer.tools.cwalken import ChristopherWalken
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-          SERVER_BOOM_HEADING, MatrixType) 
-from LmCommon.common.occparse import OccDataParser
-from LmServer.legion.occlayer import OccurrenceLayer
-
-from LmDbServer.boom.boomer import *
-
-PROCESSING_KEY = 'processing'
-
-scriptname = 'boomerTesting'
-logger = ScriptLogger(scriptname, level=logging.DEBUG)
-currtime = dt.gmt().mjd
-
-config_file='/share/lm/data/archive/taffy/heuchera_global_10min_ppf.ini'
-success_file='/share/lm/data/archive/taffy/heuchera_global_10min.success'
-
-config_file='/share/lm/data/archive/anon/Hechera2.ini'
-success_file='/share/lm/data/archive/anon/Hechera2.success'
-
-config_file='/share/lm/data/archive/anon/idigtest4.ini'
-success_file='/share/lm/data/archive/anon/idigtest4.success'
-
-boomer = Boomer(config_file, success_file, log=logger)
-###############################################
-
 # ##########################################################################
 
 # ##########################################################################
