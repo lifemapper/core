@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2018, University of Kansas Center for Research
+@copyright: Copyright (C) 2019, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -27,8 +27,6 @@ import mx.DateTime as dt
 import os, sys, time
 import signal
 
-from LmBackend.command.common import ChainCommand, SystemCommand
-from LmBackend.command.server import LmTouchCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.lmconstants import JobStatus, LM_USER
@@ -36,8 +34,7 @@ from LmCommon.common.lmconstants import JobStatus, LM_USER
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME) 
-from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
-                                            SCRATCH_PATH)
+from LmServer.common.localconstants import PUBLIC_USER 
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.processchain import MFChain
