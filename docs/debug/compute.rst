@@ -83,7 +83,7 @@ and hopefully the problem will be obvious.
 
 If you want to run the makeflow locally, you can use makeflow as the job queue
 instead of work queue.  The command will look like this:
-   `/opt/lifemapper/bin/makeflow -X /share/lmserver/lmscratch/worker/ {path to makeflow DAG document}`
+   `/opt/lifemapper/cctools/bin/makeflow -X /state/partition1/lmscratch/worker/ {path to makeflow DAG document}`
 
 The command is simpler, but does not test as many components as the remote 
 version.  I have even seen the workflow work correctly when run locally but
