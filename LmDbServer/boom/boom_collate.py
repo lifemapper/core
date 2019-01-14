@@ -295,20 +295,43 @@ class BoomCollate(LMObject):
                 mtxcol.updateStatus(JobStatus.DEPENDENCY_ERROR)
                 self._scribe.updateObject(mtxcol)
             elif JobStatus.incomplete(prj.status):
-                raise LMError('Projection {} dependency unfinished'.format(prj.getId()))
+                raise LMError('sdmproject {}, layerid {}, dependency unfinished'
+                              .format(prj.objId, prj.getId()))
+            elif prj.minVal == prj.maxVal and prj.minVal == 0.0:
+                print('No prediction for sdmproject {}, layerid {}, skipping'
+                      .format(prj.objId, prj.getId()))
             else:
                 mtxcol.postToSolr = False
                 mtxcol.processType = ProcessType.INTERSECT_RASTER
                 mtxcol.shapegrid = self.boomGridset.getShapegrid()
+                mtxcol.updateStatus(JobStatus.INITIALIZE)
+                self._scribe.updateObject(mtxcol)
                 # TODO: ? Assemble commands to pull PAV from Solr   
                 # TODO: ? or Remove intersect from sweepconfig
                 lyrRules = mtxcol.computeMe(workDir=workdir)
                 rules.extend(lyrRules)
                 
+                # TODO: Why create a subdir in workdir for projection? Just 
+                # touching for dependency = ready status?
+                lyrbasename = os.path.splitext(prj.getRelativeDLocation())[0]
+                prj_target_dir = os.path.join(workdir, lyrbasename)
+                prj_touch_fname = os.path.join(prj_target_dir, 'touch.out')
+                prj_stat_filename = os.path.join(prj_target_dir, lyrbasename+'.status')
+                           
+                # TODO: is touch necessary prior to echo to file?     
+                touch_cmd = LmTouchCommand(prj_touch_fname)                
+                rules.append(touch_cmd.getMakeflowRule(local=True))
+                
+                touch_stat_cmd = SystemCommand('echo', '{} > {}'
+                                               .format(JobStatus.COMPLETE, 
+                                                       prj_stat_filename),
+                                               inputs=[prj_touch_fname],
+                                               outputs=[prj_stat_filename])
+                rules.append(touch_stat_cmd.getMakeflowRule(local=True))
+                
                 # Save new, temp intersection filenames for matrix concatenation
-                relDir, _ = os.path.splitext(mtxcol.layer.getRelativeDLocation())
-                outFname = os.path.join(workdir, relDir, mtxcol.getTargetFilename())
-                colFilenames.append(outFname)            
+                mtxcol_fname = os.path.join(prj_target_dir, mtxcol.getTargetFilename())
+                colFilenames.append(mtxcol_fname)            
 
         # Concatenate PAM
         ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
