@@ -66,9 +66,11 @@ class BoomCollate(LMObject):
     until it is complete.  If the daemon is interrupted, it will write out the 
     current MFChains, and pick up where it left off to create new MFChains for 
     unprocessed species data.
-    @todo: Next instance of boom.Walker will create new MFChains, but add data
-    to the existing Global PAM matrices.  Make sure LMMatrix.computeMe handles 
-    appending new PAVs or re-assembling. 
+    @todo: Next instance of BoomCollate will create new MFChains, but add data
+           to existing Global PAM matrices.  Make sure LMMatrix handles 
+           appending new PAVs or re-assembling. 
+    @todo: Replace with consistent file construction from 
+           LmServer.common.datalocator.EarlJr.createBasename!
     """
     # .............................
     def __init__(self, configFname, successFname, log=None):      
@@ -238,8 +240,7 @@ class BoomCollate(LMObject):
         meta = {MFChain.META_CREATED_BY: self.name,
                 MFChain.META_DESCRIPTION: 'Boom Collation for User {}, Archive {}'
                     .format(self.userId, self.archiveName),
-                'GridsetId': self.gridset_id 
-        }
+                MFChain.META_GRIDSET: self.gridset_id }
         newMFC = MFChain(self.userId, priority=self.priority, 
                          metadata=meta, status=JobStatus.GENERAL, 
                          statusModTime=dt.gmt().mjd)
@@ -330,6 +331,9 @@ class BoomCollate(LMObject):
                 rules.append(touch_stat_cmd.getMakeflowRule(local=True))
                 
                 # Save new, temp intersection filenames for matrix concatenation
+                # mtxcol.computeMe uses mtxcol.getTargetFilename()
+                # TODO: Replace with consistent file construction from 
+                #       LmServer.common.datalocator.EarlJr.createBasename!
                 mtxcol_fname = os.path.join(prj_target_dir, mtxcol.getTargetFilename())
                 colFilenames.append(mtxcol_fname)            
 
@@ -399,14 +403,15 @@ class BoomCollate(LMObject):
         # TODO: Site covariance, species covariance, schluter
         rules = []
 
-        # Copy PAM into workspace if necessary 
-        tchcp_pam_rule, ws_pam_fname = self._getCopyDataToWorkdirRule(workdir, pam)
-        rules.append(tchcp_pam_rule)    
+#         # Copy PAM into workspace if necessary 
+#         tchcp_pam_rule, ws_pam_fname = self._getCopyDataToWorkdirRule(workdir, pam)
+#         rules.append(tchcp_pam_rule)
+        ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
         
         # Copy encoded tree into workspace
         wstree_fname = None
         if self.tree:
-            tchcp_tree_rule, wstree_fname = self._getCopyDataToWorkdirRule(workdir, pam)
+            tchcp_tree_rule, wstree_fname = self._getCopyDataToWorkdirRule(workdir, self.tree)
             rules.append(tchcp_tree_rule)    
 
         # Sites stats outputs
@@ -459,9 +464,10 @@ class BoomCollate(LMObject):
                                                                        self.tree)
         rules.append(tchcp_tree_rule)
 
-        # Copy PAM into workspace if necessary 
-        tchcp_pam_rule, ws_pam_fname = self._getCopyDataToWorkdirRule(workdir, pam)
-        rules.append(tchcp_pam_rule)    
+#         # Copy PAM into workspace if necessary 
+#         tchcp_pam_rule, ws_pam_fname = self._getCopyDataToWorkdirRule(workdir, pam)
+#         rules.append(tchcp_pam_rule)
+        ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
         
             
         ancpam_mtx, ws_ancpam_fname, ancpam_success_fname = \
@@ -489,8 +495,9 @@ class BoomCollate(LMObject):
         rules.append(tchcp_bgh_rule)    
 
         # Copy PAM into workspace if necessary 
-        tchcp_pam_rule, ws_pam_fname = self._getCopyDataToWorkdirRule(workdir, pam)
-        rules.append(tchcp_pam_rule)    
+#         tchcp_pam_rule, ws_pam_fname = self._getCopyDataToWorkdirRule(workdir, pam)
+#         rules.append(tchcp_pam_rule)
+        ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
             
         # TODO: Do we need to resolvePolytomies??
 #         if self.tree.isBinary() and (not self.tree.hasBranchLengths() 
@@ -701,6 +708,7 @@ if __name__ == "__main__":
    
 """
 # ##########################################################################
+# $PYTHON LmDbServer/boom/boom_collate.py  --config_file=/share/lm/data/archive/taffy/heuchera_global_10min.ini --success_file=/share/lm/data/archive/taffy/heuchera_global_10min.collate.success
 from LmDbServer.boom.boom_collate import *
 
 import logging
@@ -804,7 +812,7 @@ os.chmod(fname, 0664)
 # ##########################################################################
 
 # boomer.processMultiSpecies()
-
+/share/lm/data/archive/taffy2/pam_1410.lmm
 
 # ##########################################################################
 
