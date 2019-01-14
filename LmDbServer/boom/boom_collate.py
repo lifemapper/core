@@ -600,14 +600,14 @@ class BoomCollate(LMObject):
         self._fixPermissions(mfchain.getDLocation())
         # Set as ready to go
         mfchain.updateStatus(JobStatus.INITIALIZE)
-        self.scribe.updateObject(mfchain)
+        self._scribe.updateObject(mfchain)
         try:
-            self.scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
+            self._scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
                 .format(mfchain.objId, 
                         mfchain.mfMetadata[MFChain.META_DESCRIPTION], 
                         mfchain.mfMetadata[MFChain.META_GRIDSET]))
         except:
-            self.scribe.log.info('  Wrote Makeflow {}'.format(mfchain.objId))
+            self._scribe.log.info('  Wrote Makeflow {}'.format(mfchain.objId))
         return mfchain
 
     # ...............................................
@@ -759,6 +759,25 @@ master_chain.addCommands(mcpa_rules)
 
 master_chain = self._write_update_MF(master_chain)
 self.writeSuccessFile('Boom_collate finished writing makefiles')
+
+
+    # ...............................................
+mfchain = master_chain
+
+mfchain.updateStatus(JobStatus.INITIALIZE)
+self._scribe.updateObject(mfchain)
+self._scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
+    .format(mfchain.objId, 
+            mfchain.mfMetadata[MFChain.META_DESCRIPTION], 
+            mfchain.mfMetadata[MFChain.META_GRIDSET]))
+
+dirname = os.path.dirname(self.configFname)
+stats = os.stat(dirname)
+# item 5 is group id; get for lmwriter
+gid = stats[5]
+os.chown(fname, -1, gid)
+os.chmod(fname, 0664)
+
 # ##########################################################################
 
 # boomer.processMultiSpecies()
@@ -766,6 +785,5 @@ self.writeSuccessFile('Boom_collate finished writing makefiles')
 
 # ##########################################################################
 
-select * from lm_v3.lm_insertMFChain('taffy',203,NULL,TRUE,'{"GridsetId": 203, "description": "Boom Collation for User taffy, Archive heuchera_global_10min", "createdBy": "boomcollate_heuchera_global_10min"}',0,58494.9260805);
 
 """
