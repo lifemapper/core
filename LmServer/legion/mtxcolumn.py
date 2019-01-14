@@ -172,6 +172,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
     def getTargetFilename(self):
         """
         @summary: Return temporary filename for output.
+        @todo: Replace with consistent file construction from 
+               LmServer.common.datalocator.EarlJr.createBasename!
         """
         relFname = 'mtxcol_{}{}'.format(self.getId(), LMFormat.MATRIX.ext)
         return relFname

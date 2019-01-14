@@ -174,6 +174,8 @@ class SDMProjection(_ProjectionType, Raster):
 
     Note:
         * Uses layerid for filename, layername construction
+        * Uses layerid for _dbId, getId(), ServiceObject
+        * Uses sdmprojectid for objId, ProcessObject
     """
 # .............................................................................
 # Constructor
