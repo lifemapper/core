@@ -251,7 +251,7 @@ class BoomCollate(LMObject):
         # Master makeflow for 
         master_chain = self._createMasterMakeflow()
         workdir = master_chain.getRelativeDirectory()
-        globalPams = self.boomGridset.getPAMs()
+        globalPams = self.boomGridset.getAllPAMs()
         for pam in globalPams:
             filter_desc = 'Filters: GCM {}, Altpred {}, Date {}'.format(
                                 pam.gcmCode, pam.altpredCode, pam.dateCode)
@@ -271,7 +271,7 @@ class BoomCollate(LMObject):
             
                 biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
                 # TODO: handle > 1 Biogeographic Hypotheses
-                if len(biogeo_hyp) > 1: 
+                if len(biogeo_hyp) > 0: 
                     biogeo_hyp = biogeo_hyp[0]
                     mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
                                                     filter_desc, numPermutations)
@@ -311,14 +311,14 @@ class BoomCollate(LMObject):
                 colFilenames.append(outFname)            
 
         # Concatenate PAM
-        ws_pam_fname = self._getWorkspaceFilename(workdir, pam)
+        ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
         concat_cmd = ConcatenateMatricesCommand(colFilenames, '1', ws_pam_fname)
         rules.append(concat_cmd.getMakeflowRule())
 
         # Save PAM
         ass_success_fname = ws_pam_fname + '.success'
         pam_save_cmd = StockpileCommand(ProcessType.CONCATENATE_MATRICES, 
-                                        self.getId(), ass_success_fname, 
+                                        pam.getId(), ass_success_fname, 
                                         ws_pam_fname, status=JobStatus.COMPLETE)
         rules.append(pam_save_cmd.getMakeflowRule(local=True))
 
@@ -593,6 +593,37 @@ class BoomCollate(LMObject):
 
         return rules
 
+    # ...............................................
+    def _write_update_MF(self, mfchain):
+        mfchain.write()
+        # Give lmwriter rw access (this script may be run as root)
+        self._fixPermissions(mfchain.getDLocation())
+        # Set as ready to go
+        mfchain.updateStatus(JobStatus.INITIALIZE)
+        self.scribe.updateObject(mfchain)
+        try:
+            self.scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
+                .format(mfchain.objId, 
+                        mfchain.mfMetadata[MFChain.META_DESCRIPTION], 
+                        mfchain.mfMetadata[MFChain.META_GRIDSET]))
+        except:
+            self.scribe.log.info('  Wrote Makeflow {}'.format(mfchain.objId))
+        return mfchain
+
+    # ...............................................
+    def _fixPermissions(self, fname):
+        if isLMUser:
+            print('Permissions created correctly by LMUser')
+        else:
+            dirname = os.path.dirname(self.configFname)
+            stats = os.stat(dirname)
+            # item 5 is group id; get for lmwriter
+            gid = stats[5]
+            try:
+                os.chown(fname, -1, gid)
+                os.chmod(fname, 0664)
+            except Exception, e:
+                print('Failed to fix permissions on {}'.format(fname))
 
     # ...............................................
     def writeSuccessFile(self, message='Success'):
@@ -694,15 +725,17 @@ boomer.initializeMe()
 
 # ##########################################################################
 self = boomer
+numPermutations=500
+
 master_chain = self._createMasterMakeflow()
 workdir = master_chain.getRelativeDirectory()
-globalPams = self.boomGridset.getPAMs()
-pam = globalPams[0]
-# for pam in globalPams:
+globalPams = self.boomGridset.getAllPAMs()
 
+# for pam in globalPams:
+pam = globalPams[0]
 filter_desc = 'Filters: GCM {}, Altpred {}, Date {}'.format(
                     pam.gcmCode, pam.altpredCode, pam.dateCode)
-# Add intersect and concatenate rules for this PAM
+
 ass_rules, ass_success_fname = self._getPamAssembleRules(workdir, 
                                                     pam, filter_desc)
 master_chain.addCommands(ass_rules)
@@ -712,17 +745,17 @@ calc_rules = self._getPamCalcRules(workdir, pam, ass_success_fname,
                                    filter_desc)
 master_chain.addCommands(calc_rules)
 
-if self.tree is not None:
-    anc_rules = self._getAncestralRules(workdir, pam)
-    master_chain.addCommands(anc_rules)
+# if self.tree is not None:
+anc_rules = self._getAncestralRules(workdir, pam)
+master_chain.addCommands(anc_rules)
 
-    biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
-    # TODO: handle > 1 Biogeographic Hypotheses
-    if len(biogeo_hyp) > 1: 
-        biogeo_hyp = biogeo_hyp[0]
-        mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
-                                        filter_desc, numPermutations)
-        master_chain.addCommands(mcpa_rules)
+biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
+# if len(biogeo_hyp) > 1: 
+biogeo_hyp = biogeo_hyp[0]
+
+mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
+                                filter_desc, numPermutations)
+master_chain.addCommands(mcpa_rules)
 
 master_chain = self._write_update_MF(master_chain)
 self.writeSuccessFile('Boom_collate finished writing makefiles')
