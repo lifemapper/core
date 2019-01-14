@@ -389,12 +389,13 @@ def mcpa(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
     obs_results = np.empty((num_nodes, num_predictors + 2))
     f_results = np.empty((num_nodes, num_predictors + 2))
     for i in range(num_nodes):
-        print('Node {} of {}'.format(i+1, num_nodes))
+        #print('Node {} of {}'.format(i+1, num_nodes))
         obs, f_vals = _mcpa_for_node(
             init_incidence, env_predictors, bg_predictors,
             phylo_mtx.data[:, [i]])
         obs_results[i] = obs
         f_results[i] = f_vals
+    print('Processed mcpa for {} of {} nodes'.format(i, num_nodes))
 
     # Correct any nans and add depth
     obs_results = np.clip(
