@@ -633,12 +633,14 @@ class StockpileCommand(_LmServerCommand):
         @param pType: The process type of the outputs
         @param objectId: The id of the object
         @param successFilename: The file location of the output file to create if 
-                                            the process is successful
+                                the process is successful
         @param objOutputFilenames: A list of object files to test
-        @param status: An optional object status to update the database with
+        @param status: An optional object status (currently not used) to update 
+                       the database with
         @param statusFilename: The location of a file that contains status 
-                                          information for the object
+                                information for the object
         @param metadataFilename: The file location of metadata about this object
+        @todo: use status in stockpile script
         """
         _LmServerCommand.__init__(self)
         

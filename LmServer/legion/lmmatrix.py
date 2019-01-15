@@ -277,12 +277,6 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         rules.append(spCmd.getMakeflowRule(local=True))
         return rules
     
-# #     # ............................................
-# #     def computeMe(self, workDir=None, doCalc=False, doMCPA=False, pamDict=None,
-# #                       numPermutations=500):
-# #     # ............................................
-# #     def computeMe(self, workDir=None, doCalc=False, doMCPA=False, pamDict=None,
-# #                       numPermutations=500):
 #     # ............................................
 #     def getCalcRules(self, workDir=''):
 #         """
