@@ -46,6 +46,7 @@ from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME,
                                          Priority) 
 from LmServer.common.localconstants import PUBLIC_USER 
 from LmServer.common.log import ScriptLogger
+from LmServer.common.solr import queryArchiveIndex
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.lmmatrix import LMMatrix
@@ -253,6 +254,55 @@ class BoomCollate(LMObject):
         master_chain = self._createMasterMakeflow()
         workdir = master_chain.getRelativeDirectory()
         globalPams = self.boomGridset.getAllPAMs()
+        # TODO: need mdl/prj scenario to query Solr
+        for pam in globalPams:
+            mtxcol_count = self._scribe.countMatrixColumns(matrixId=pam.getId())
+            if mtxcol_count == 0:
+                self.log.error('Pam {} has no matrixColumns'.format(pam.getId()))
+                break
+            filter_desc = ('Filters: GCM {}, Altpred {}, Date {}'
+                           .format(pam.gcmCode, pam.altpredCode, pam.dateCode))
+            # Add intersect and concatenate rules for this PAM
+            ass_rules, ass_success_fname = self._getPamAssembleRules(workdir, 
+                                                            pam, filter_desc)
+            master_chain.addCommands(ass_rules)
+            
+            # PamCalc depends on success of PamAssemble (ass_success_fname)
+            calc_rules = self._getPamCalcRules(workdir, pam, ass_success_fname, 
+                                               filter_desc)
+            master_chain.addCommands(calc_rules)
+            
+            if self.tree is not None:
+                anc_rules = self._getAncestralRules(workdir, pam)
+                master_chain.addCommands(anc_rules)
+            
+                biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
+                # TODO: handle > 1 Biogeographic Hypotheses
+                if len(biogeo_hyp) > 0: 
+                    biogeo_hyp = biogeo_hyp[0]
+                    mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
+                                                    filter_desc, numPermutations)
+                    master_chain.addCommands(mcpa_rules)
+
+        master_chain = self._write_update_MF(master_chain)
+        self.writeSuccessFile('Boom_collate finished writing makefiles')
+        
+    # ...............................................
+    def _getPAVs(self, model_scen_code, prj_scen_code):
+        solr_data = queryArchiveIndex(gridSetId=self.boomGridset.getId(), 
+                                      modelScenarioCode=model_scen_code, 
+                                      projectionScenarioCode=prj_scen_code, 
+                                      userId=self.userId)
+        for doc in solr_data:
+            pass
+        return solr_data
+
+    # ...............................................
+    def processMultiSpeciesOld(self, numPermutations=500):
+        # Master makeflow for 
+        master_chain = self._createMasterMakeflow()
+        workdir = master_chain.getRelativeDirectory()
+        globalPams = self.boomGridset.getAllPAMs()
         for pam in globalPams:
             filter_desc = 'Filters: GCM {}, Altpred {}, Date {}'.format(
                                 pam.gcmCode, pam.altpredCode, pam.dateCode)
@@ -280,9 +330,88 @@ class BoomCollate(LMObject):
 
         master_chain = self._write_update_MF(master_chain)
         self.writeSuccessFile('Boom_collate finished writing makefiles')
-     
+
+    # .............................
+    def _process_pav(self, mtxcol, lyr, workdir, mdl_scen_code=None, 
+                            prj_scen_code=None):
+        """
+        @todo: allow solr query using scenario codes and/or lyr.squid
+        """
+        rules = []
+        mtxcol.postToSolr = False
+        mtxcol.shapegrid = self.shapegrid
+        
+        intersect_rules = mtxcol.computeMe(workDir=workdir)
+        rules.append(intersect_rules)
+                
+        # Save new, temp intersection filenames for matrix concatenation
+        # mtxcol.computeMe uses mtxcol.getTargetFilename()
+        # TODO: Use consistent file construction method, 
+        #       i.e. LmServer.common.datalocator.EarlJr.createBasename or
+        #            self._getTempFinalFilenames()
+        pavFname = os.path.join(workdir, self.getTargetFilename())
+        return pavFname 
+
+
     # .............................
     def _getPamAssembleRules(self, workdir, pam, filter_desc):
+        rules = []
+        colFilenames = []
+        
+        # IFF this is a matrix of SDM projections
+        mdl_scen_code = prj_scen_code = None
+        colPrjPairs = self._scribe.getSDMColumnsForMatrix(pam.getId(), 
+                                returnColumns=True, returnProjections=True)
+        if len(colPrjPairs) > 0:
+            self._scribe.log.info('Adding rules for PAM assembly of SDM matrix {}, {}'
+                              .format(pam.getId(), filter_desc))
+            _, prj = colPrjPairs[0]
+            mdl_scen_code = prj.modelScenarioCode
+            prj_scen_code = prj.projScenarioCode
+            for mtxcol, prj in colPrjPairs:
+                if JobStatus.failed(prj.status):
+                    mtxcol.updateStatus(JobStatus.DEPENDENCY_ERROR)
+                    self._scribe.updateObject(mtxcol)
+                elif JobStatus.incomplete(prj.status):
+                    raise LMError('sdmproject {}, layerid {}, dependency unfinished'
+                                  .format(prj.objId, prj.getId()))
+                elif prj.minVal == prj.maxVal and prj.minVal == 0.0:
+                    print('No prediction for sdmproject {}, layerid {}, skipping'
+                          .format(prj.objId, prj.getId()))
+                else:
+                    mtxcol_fname = self._process_pav(mtxcol, prj, workdir,
+                                                     mdl_scen_code=mdl_scen_code, 
+                                                     prj_scen_code=prj_scen_code)
+                    if mtxcol_fname:
+                        colFilenames.append(mtxcol_fname)
+        else:
+            mtxcols = self._scribe.getColumnsForMatrix(pam.getId())
+            self._scribe.log.info('Adding rules for PAM assembly of matrix {}, {}'
+                              .format(pam.getId(), filter_desc))
+            for mtxcol in mtxcols:
+                mtxcol_fname = self._process_pav(mtxcol, mtxcol.layer, workdir)
+                if mtxcol_fname:
+                    colFilenames.append(mtxcol_fname)
+
+        # Concatenate PAM
+#         pamRules = pam.getConcatAndStockpileRules(colFilenames, workDir=workdir)
+        ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
+        concat_cmd = ConcatenateMatricesCommand(colFilenames, '1', ws_pam_fname)
+        rules.append(concat_cmd.getMakeflowRule())
+
+        # Save PAM
+        ass_success_fname = ws_pam_fname + '.success'
+        pam_save_cmd = StockpileCommand(ProcessType.CONCATENATE_MATRICES, 
+                                        pam.getId(), ass_success_fname, 
+                                        ws_pam_fname, status=JobStatus.COMPLETE)
+        rules.append(pam_save_cmd.getMakeflowRule(local=True))
+
+        self._scribe.log.info('  Added rules to save {} pam columns into matrix {}'
+                      .format(len(colFilenames), pam.getId()))
+        return rules, ass_success_fname
+     
+    # .............................
+    def _getPamAssembleRulesOld(self, workdir, pam, filter_desc):
         rules = []
         # Create MFChain for this GPAM
         self._scribe.log.info('Adding rules for PAM assembly of matrix {}, {}'
@@ -816,5 +945,103 @@ os.chmod(fname, 0664)
 
 # ##########################################################################
 
+    # ...............................................
+    def processMultiSpecies(self, numPermutations=500):
+        # Master makeflow for 
+        master_chain = self._createMasterMakeflow()
+        workdir = master_chain.getRelativeDirectory()
+        globalPams = self.boomGridset.getAllPAMs()
+        # TODO: need mdl/prj scenario to query Solr
+        for pam in globalPams:
+            mtxcol_count = self._scribe.countMatrixColumns(matrixId=pam.getId())
+            if mtxcol_count == 0:
+                self.log.error('Pam {} has no matrixColumns'.format(pam.getId()))
+                break
+            filter_desc = ('Filters: GCM {}, Altpred {}, Date {}'
+                           .format(pam.gcmCode, pam.altpredCode, pam.dateCode))
+            # Add intersect and concatenate rules for this PAM
+            ass_rules, ass_success_fname = self._getPamAssembleRules(workdir, 
+                                                            pam, filter_desc)
+            master_chain.addCommands(ass_rules)
+            
+            # PamCalc depends on success of PamAssemble (ass_success_fname)
+            calc_rules = self._getPamCalcRules(workdir, pam, ass_success_fname, 
+                                               filter_desc)
+            master_chain.addCommands(calc_rules)
+            
+            if self.tree is not None:
+                anc_rules = self._getAncestralRules(workdir, pam)
+                master_chain.addCommands(anc_rules)
+            
+                biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
+                # TODO: handle > 1 Biogeographic Hypotheses
+                if len(biogeo_hyp) > 0: 
+                    biogeo_hyp = biogeo_hyp[0]
+                    mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
+                                                    filter_desc, numPermutations)
+                    master_chain.addCommands(mcpa_rules)
+
+        master_chain = self._write_update_MF(master_chain)
+        self.writeSuccessFile('Boom_collate finished writing makefiles')
+        
+    # ...............................................
+    def _getPAVs(self, model_scen_code, prj_scen_code):
+        solr_data = queryArchiveIndex(gridSetId=self.boomGridset.getId(), 
+                                      modelScenarioCode=model_scen_code, 
+                                      projectionScenarioCode=prj_scen_code, 
+                                      userId=self.userId)
+        for doc in solr_data:
+            pass
+        return solr_data
+    
+    # .............................
+    def _process_sdm_column(self, mtxcol, prj, workdir):
+        rules = []
+        if JobStatus.failed(prj.status):
+            mtxcol.updateStatus(JobStatus.DEPENDENCY_ERROR)
+            self._scribe.updateObject(mtxcol)
+        elif JobStatus.incomplete(prj.status):
+            raise LMError('sdmproject {}, layerid {}, dependency unfinished'
+                          .format(prj.objId, prj.getId()))
+        elif prj.minVal == prj.maxVal and prj.minVal == 0.0:
+            print('No prediction for sdmproject {}, layerid {}, skipping'
+                  .format(prj.objId, prj.getId()))
+        else:
+            mtxcol.postToSolr = False
+            mtxcol.processType = ProcessType.INTERSECT_RASTER
+            mtxcol.shapegrid = self.boomGridset.getShapegrid()
+#             mtxcol.updateStatus(JobStatus.INITIALIZE)
+#             self._scribe.updateObject(mtxcol)
+            # TODO: ? Assemble commands to pull PAV from Solr   
+            # TODO: ? or Remove intersect from sweepconfig
+            lyrRules = mtxcol.computeMe(workDir=workdir)
+            rules.extend(lyrRules)
+            
+            # TODO: Why create a subdir in workdir for projection? Just 
+            # touching for dependency = ready status?
+            lyrbasename = os.path.splitext(prj.getRelativeDLocation())[0]
+            prj_target_dir = os.path.join(workdir, lyrbasename)
+            prj_touch_fname = os.path.join(prj_target_dir, 'touch.out')
+            prj_stat_filename = os.path.join(prj_target_dir, lyrbasename+'.status')
+                       
+            # TODO: is touch necessary prior to echo to file?     
+            touch_cmd = LmTouchCommand(prj_touch_fname)                
+            rules.append(touch_cmd.getMakeflowRule(local=True))
+            
+            touch_stat_cmd = SystemCommand('echo', '{} > {}'
+                                           .format(JobStatus.COMPLETE, 
+                                                   prj_stat_filename),
+                                           inputs=[prj_touch_fname],
+                                           outputs=[prj_stat_filename])
+            rules.append(touch_stat_cmd.getMakeflowRule(local=True))
+            
+            # Save new, temp intersection filenames for matrix concatenation
+            # mtxcol.computeMe uses mtxcol.getTargetFilename()
+            # TODO: Replace with consistent file construction from 
+            #       LmServer.common.datalocator.EarlJr.createBasename!
+            mtxcol_fname = os.path.join(prj_target_dir, mtxcol.getTargetFilename())
+            return mtxcol_fname
+     
+    
 
 """
