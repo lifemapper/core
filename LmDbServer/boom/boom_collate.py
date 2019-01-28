@@ -234,7 +234,7 @@ class BoomCollate(LMObject):
             
     # .............................
     def close(self):
-        pass
+        self._scribe.closeConnections()
 
     # ...............................................
     def _createMasterMakeflow(self):
@@ -296,40 +296,6 @@ class BoomCollate(LMObject):
         for doc in solr_data:
             pass
         return solr_data
-
-    # ...............................................
-    def processMultiSpeciesOld(self, numPermutations=500):
-        # Master makeflow for 
-        master_chain = self._createMasterMakeflow()
-        workdir = master_chain.getRelativeDirectory()
-        globalPams = self.boomGridset.getAllPAMs()
-        for pam in globalPams:
-            filter_desc = 'Filters: GCM {}, Altpred {}, Date {}'.format(
-                                pam.gcmCode, pam.altpredCode, pam.dateCode)
-            # Add intersect and concatenate rules for this PAM
-            ass_rules, ass_success_fname = self._getPamAssembleRules(workdir, 
-                                                                pam, filter_desc)
-            master_chain.addCommands(ass_rules)
-            
-            # PamCalc depends on success of PamAssemble (ass_success_fname)
-            calc_rules = self._getPamCalcRules(workdir, pam, ass_success_fname, 
-                                               filter_desc)
-            master_chain.addCommands(calc_rules)
-            
-            if self.tree is not None:
-                anc_rules = self._getAncestralRules(workdir, pam)
-                master_chain.addCommands(anc_rules)
-            
-                biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
-                # TODO: handle > 1 Biogeographic Hypotheses
-                if len(biogeo_hyp) > 0: 
-                    biogeo_hyp = biogeo_hyp[0]
-                    mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
-                                                    filter_desc, numPermutations)
-                    master_chain.addCommands(mcpa_rules)
-
-        master_chain = self._write_update_MF(master_chain)
-        self.writeSuccessFile('Boom_collate finished writing makefiles')
 
     # .............................
     def _process_pav(self, mtxcol, lyr, workdir, mdl_scen_code=None, 
@@ -410,77 +376,6 @@ class BoomCollate(LMObject):
                       .format(len(colFilenames), pam.getId()))
         return rules, ass_success_fname
      
-    # .............................
-    def _getPamAssembleRulesOld(self, workdir, pam, filter_desc):
-        rules = []
-        # Create MFChain for this GPAM
-        self._scribe.log.info('Adding rules for PAM assembly of matrix {}, {}'
-                          .format(pam.getId(), filter_desc))
-        colFilenames = []
-
-        colPrjPairs = self._scribe.getSDMColumnsForMatrix(pam.getId(), 
-                                   returnColumns=True, returnProjections=True)
-        for mtxcol, prj in colPrjPairs:
-            if JobStatus.failed(prj.status):
-                mtxcol.updateStatus(JobStatus.DEPENDENCY_ERROR)
-                self._scribe.updateObject(mtxcol)
-            elif JobStatus.incomplete(prj.status):
-                raise LMError('sdmproject {}, layerid {}, dependency unfinished'
-                              .format(prj.objId, prj.getId()))
-            elif prj.minVal == prj.maxVal and prj.minVal == 0.0:
-                print('No prediction for sdmproject {}, layerid {}, skipping'
-                      .format(prj.objId, prj.getId()))
-            else:
-                mtxcol.postToSolr = False
-                mtxcol.processType = ProcessType.INTERSECT_RASTER
-                mtxcol.shapegrid = self.boomGridset.getShapegrid()
-                mtxcol.updateStatus(JobStatus.INITIALIZE)
-                self._scribe.updateObject(mtxcol)
-                # TODO: ? Assemble commands to pull PAV from Solr   
-                # TODO: ? or Remove intersect from sweepconfig
-                lyrRules = mtxcol.computeMe(workDir=workdir)
-                rules.extend(lyrRules)
-                
-                # TODO: Why create a subdir in workdir for projection? Just 
-                # touching for dependency = ready status?
-                lyrbasename = os.path.splitext(prj.getRelativeDLocation())[0]
-                prj_target_dir = os.path.join(workdir, lyrbasename)
-                prj_touch_fname = os.path.join(prj_target_dir, 'touch.out')
-                prj_stat_filename = os.path.join(prj_target_dir, lyrbasename+'.status')
-                           
-                # TODO: is touch necessary prior to echo to file?     
-                touch_cmd = LmTouchCommand(prj_touch_fname)                
-                rules.append(touch_cmd.getMakeflowRule(local=True))
-                
-                touch_stat_cmd = SystemCommand('echo', '{} > {}'
-                                               .format(JobStatus.COMPLETE, 
-                                                       prj_stat_filename),
-                                               inputs=[prj_touch_fname],
-                                               outputs=[prj_stat_filename])
-                rules.append(touch_stat_cmd.getMakeflowRule(local=True))
-                
-                # Save new, temp intersection filenames for matrix concatenation
-                # mtxcol.computeMe uses mtxcol.getTargetFilename()
-                # TODO: Replace with consistent file construction from 
-                #       LmServer.common.datalocator.EarlJr.createBasename!
-                mtxcol_fname = os.path.join(prj_target_dir, mtxcol.getTargetFilename())
-                colFilenames.append(mtxcol_fname)            
-
-        # Concatenate PAM
-        ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
-        concat_cmd = ConcatenateMatricesCommand(colFilenames, '1', ws_pam_fname)
-        rules.append(concat_cmd.getMakeflowRule())
-
-        # Save PAM
-        ass_success_fname = ws_pam_fname + '.success'
-        pam_save_cmd = StockpileCommand(ProcessType.CONCATENATE_MATRICES, 
-                                        pam.getId(), ass_success_fname, 
-                                        ws_pam_fname, status=JobStatus.COMPLETE)
-        rules.append(pam_save_cmd.getMakeflowRule(local=True))
-
-        self._scribe.log.info('  Added rules to save {} pam columns into matrix {}'
-                      .format(len(colFilenames), pam.getId()))
-        return rules, ass_success_fname
     
     # ...............................................
     def _findOrAddPAMStatMatrix(self, pam, mtx_type, mtx_key, filter_desc, workdir):
@@ -532,9 +427,6 @@ class BoomCollate(LMObject):
         # TODO: Site covariance, species covariance, schluter
         rules = []
 
-#         # Copy PAM into workspace if necessary 
-#         tchcp_pam_rule, ws_pam_fname = self._getCopyDataToWorkdirRule(workdir, pam)
-#         rules.append(tchcp_pam_rule)
         ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
         
         # Copy encoded tree into workspace
@@ -579,8 +471,6 @@ class BoomCollate(LMObject):
         rules.append(div_save_cmd.getMakeflowRule(local=True))
         
         return rules
-#         return rules, [sites_success_fname, species_success_fname, 
-#                        div_success_fname]
 
     # ............................................
     def _getAncestralRules(self, workdir, pam):
@@ -593,9 +483,7 @@ class BoomCollate(LMObject):
                                                                        self.tree)
         rules.append(tchcp_tree_rule)
 
-#         # Copy PAM into workspace if necessary 
-#         tchcp_pam_rule, ws_pam_fname = self._getCopyDataToWorkdirRule(workdir, pam)
-#         rules.append(tchcp_pam_rule)
+        # Copy PAM into workspace if necessary 
         ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
         
             
@@ -613,7 +501,6 @@ class BoomCollate(LMObject):
                                             ws_ancpam_fname)
         rules.append(ancpam_save_cmd.getMakeflowRule(local=True))
         return rules
-#         return rules, ancpam_success_fname
     
     # ............................................
     def _getMCPARules(self, workdir, pam, biogeo_hyp, filter_desc, numPermutations):
@@ -623,9 +510,6 @@ class BoomCollate(LMObject):
         tchcp_bgh_rule, ws_bgh_fname = self._getCopyDataToWorkdirRule(workdir, biogeo_hyp)
         rules.append(tchcp_bgh_rule)    
 
-        # Copy PAM into workspace if necessary 
-#         tchcp_pam_rule, ws_pam_fname = self._getCopyDataToWorkdirRule(workdir, pam)
-#         rules.append(tchcp_pam_rule)
         ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
             
         # TODO: Do we need to resolvePolytomies??
@@ -834,7 +718,7 @@ if __name__ == "__main__":
     boomer = BoomCollate(configFname, successFname, log=logger)
     boomer.initializeMe()
     boomer.processMultiSpecies()
-   
+    boomer.close()
 """
 # ##########################################################################
 # $PYTHON LmDbServer/boom/boom_collate.py  --config_file=/share/lm/data/archive/taffy/heuchera_global_10min.ini --success_file=/share/lm/data/archive/taffy/heuchera_global_10min.collate.success
@@ -919,128 +803,6 @@ master_chain.addCommands(mcpa_rules)
 
 master_chain = self._write_update_MF(master_chain)
 self.writeSuccessFile('Boom_collate finished writing makefiles')
-
-
-    # ...............................................
-mfchain = master_chain
-
-mfchain.updateStatus(JobStatus.INITIALIZE)
-self._scribe.updateObject(mfchain)
-self._scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
-    .format(mfchain.objId, 
-            mfchain.mfMetadata[MFChain.META_DESCRIPTION], 
-            mfchain.mfMetadata[MFChain.META_GRIDSET]))
-
-dirname = os.path.dirname(self.configFname)
-stats = os.stat(dirname)
-# item 5 is group id; get for lmwriter
-gid = stats[5]
-os.chown(fname, -1, gid)
-os.chmod(fname, 0664)
-
-# ##########################################################################
-
-# boomer.processMultiSpecies()
-/share/lm/data/archive/taffy2/pam_1410.lmm
-
-# ##########################################################################
-
-    # ...............................................
-    def processMultiSpecies(self, numPermutations=500):
-        # Master makeflow for 
-        master_chain = self._createMasterMakeflow()
-        workdir = master_chain.getRelativeDirectory()
-        globalPams = self.boomGridset.getAllPAMs()
-        # TODO: need mdl/prj scenario to query Solr
-        for pam in globalPams:
-            mtxcol_count = self._scribe.countMatrixColumns(matrixId=pam.getId())
-            if mtxcol_count == 0:
-                self.log.error('Pam {} has no matrixColumns'.format(pam.getId()))
-                break
-            filter_desc = ('Filters: GCM {}, Altpred {}, Date {}'
-                           .format(pam.gcmCode, pam.altpredCode, pam.dateCode))
-            # Add intersect and concatenate rules for this PAM
-            ass_rules, ass_success_fname = self._getPamAssembleRules(workdir, 
-                                                            pam, filter_desc)
-            master_chain.addCommands(ass_rules)
-            
-            # PamCalc depends on success of PamAssemble (ass_success_fname)
-            calc_rules = self._getPamCalcRules(workdir, pam, ass_success_fname, 
-                                               filter_desc)
-            master_chain.addCommands(calc_rules)
-            
-            if self.tree is not None:
-                anc_rules = self._getAncestralRules(workdir, pam)
-                master_chain.addCommands(anc_rules)
-            
-                biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
-                # TODO: handle > 1 Biogeographic Hypotheses
-                if len(biogeo_hyp) > 0: 
-                    biogeo_hyp = biogeo_hyp[0]
-                    mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
-                                                    filter_desc, numPermutations)
-                    master_chain.addCommands(mcpa_rules)
-
-        master_chain = self._write_update_MF(master_chain)
-        self.writeSuccessFile('Boom_collate finished writing makefiles')
-        
-    # ...............................................
-    def _getPAVs(self, model_scen_code, prj_scen_code):
-        solr_data = queryArchiveIndex(gridSetId=self.boomGridset.getId(), 
-                                      modelScenarioCode=model_scen_code, 
-                                      projectionScenarioCode=prj_scen_code, 
-                                      userId=self.userId)
-        for doc in solr_data:
-            pass
-        return solr_data
-    
-    # .............................
-    def _process_sdm_column(self, mtxcol, prj, workdir):
-        rules = []
-        if JobStatus.failed(prj.status):
-            mtxcol.updateStatus(JobStatus.DEPENDENCY_ERROR)
-            self._scribe.updateObject(mtxcol)
-        elif JobStatus.incomplete(prj.status):
-            raise LMError('sdmproject {}, layerid {}, dependency unfinished'
-                          .format(prj.objId, prj.getId()))
-        elif prj.minVal == prj.maxVal and prj.minVal == 0.0:
-            print('No prediction for sdmproject {}, layerid {}, skipping'
-                  .format(prj.objId, prj.getId()))
-        else:
-            mtxcol.postToSolr = False
-            mtxcol.processType = ProcessType.INTERSECT_RASTER
-            mtxcol.shapegrid = self.boomGridset.getShapegrid()
-#             mtxcol.updateStatus(JobStatus.INITIALIZE)
-#             self._scribe.updateObject(mtxcol)
-            # TODO: ? Assemble commands to pull PAV from Solr   
-            # TODO: ? or Remove intersect from sweepconfig
-            lyrRules = mtxcol.computeMe(workDir=workdir)
-            rules.extend(lyrRules)
-            
-            # TODO: Why create a subdir in workdir for projection? Just 
-            # touching for dependency = ready status?
-            lyrbasename = os.path.splitext(prj.getRelativeDLocation())[0]
-            prj_target_dir = os.path.join(workdir, lyrbasename)
-            prj_touch_fname = os.path.join(prj_target_dir, 'touch.out')
-            prj_stat_filename = os.path.join(prj_target_dir, lyrbasename+'.status')
-                       
-            # TODO: is touch necessary prior to echo to file?     
-            touch_cmd = LmTouchCommand(prj_touch_fname)                
-            rules.append(touch_cmd.getMakeflowRule(local=True))
-            
-            touch_stat_cmd = SystemCommand('echo', '{} > {}'
-                                           .format(JobStatus.COMPLETE, 
-                                                   prj_stat_filename),
-                                           inputs=[prj_touch_fname],
-                                           outputs=[prj_stat_filename])
-            rules.append(touch_stat_cmd.getMakeflowRule(local=True))
-            
-            # Save new, temp intersection filenames for matrix concatenation
-            # mtxcol.computeMe uses mtxcol.getTargetFilename()
-            # TODO: Replace with consistent file construction from 
-            #       LmServer.common.datalocator.EarlJr.createBasename!
-            mtxcol_fname = os.path.join(prj_target_dir, mtxcol.getTargetFilename())
-            return mtxcol_fname
      
     
 
