@@ -305,7 +305,7 @@ class BoomCollate(LMObject):
         """
         rules = []
         mtxcol.postToSolr = False
-        mtxcol.shapegrid = self.shapegrid
+        mtxcol.shapegrid = self.boomGridset.getShapegrid()
         
         intersect_rules = mtxcol.computeMe(workDir=workdir)
         rules.append(intersect_rules)
@@ -315,7 +315,7 @@ class BoomCollate(LMObject):
         # TODO: Use consistent file construction method, 
         #       i.e. LmServer.common.datalocator.EarlJr.createBasename or
         #            self._getTempFinalFilenames()
-        pavFname = os.path.join(workdir, self.getTargetFilename())
+        pavFname = os.path.join(workdir, mtxcol.getTargetFilename())
         return pavFname 
 
 
