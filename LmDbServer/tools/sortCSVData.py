@@ -266,7 +266,8 @@ def usage():
     print output
 
 # .............................................................................
-if __name__ == "__main__":   
+if __name__ == "__main__": 
+    import argparse  
     if len(sys.argv) in (3,4):
         csv.field_size_limit(sys.maxsize)
         if len(sys.argv) == 3:
@@ -275,13 +276,41 @@ if __name__ == "__main__":
             cmd = sys.argv[3]
     else:
         usage()
+
+#     inDelimiter = sys.argv[1]
+#     datafname = sys.argv[2]
+
+    parser = argparse.ArgumentParser(
+             description=('Populate a Lifemapper archive with metadata ' +
+                          'for single- or multi-species computations ' + 
+                          'specific to the configured input data or the ' +
+                          'data package named.'))
+    parser.add_argument('dump_filename', 
+             help=('Filename for unsorted database dump.'))
+    parser.add_argument('--delimiter', default='\t',
+             help=('Field delimiter for these data.'))
+    parser.add_argument('--command', default='all',
+             help=("""Process to be excecuted: 
+             split: split large unsorted input into smaller files
+             sort: sort smaller files individually
+             merge: merge smaller sorted files into large sorted file
+             check: test large sorted file for errors
+             all: perform all (split, sort, merge) functions"""))
+    parser.add_argument('--start_idx', default=0,
+             help=(""""For merging, start at this file number (limit on number
+             of open files may require doing this in 2 or more steps)."""))
     
-    inDelimiter = sys.argv[1]
+    args = parser.parse_args()
+    inDelimiter = args.delimiter
+    datafname = args.dump_filename
+    cmd = args.command
+    start_idx = args.start_idx
+    
+    # Only 2 options
     if inDelimiter == ',':
         print 'delimiter is comma'
     else:
         inDelimiter = '\t'
-    datafname = sys.argv[2]
     if cmd not in ('split', 'sort', 'merge', 'check', 'all'):   
         usage()
     
@@ -319,7 +348,7 @@ if __name__ == "__main__":
     if cmd in ('merge', 'all'):   
         # Merge all data for production system into multiple subset files
         mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, 
-                         metafname, maxFileSize=None)
+                         metafname, inIdx=start_idx, maxFileSize=None)
     
     if cmd == 'check':
         # Check final output (only for single file now)
