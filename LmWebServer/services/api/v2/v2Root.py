@@ -20,6 +20,7 @@ from LmWebServer.services.api.v2.scenPackage import ScenarioPackageService
 from LmWebServer.services.api.v2.sdmProject import SdmProjectService
 from LmWebServer.services.api.v2.shapegrid import ShapeGridService
 from LmWebServer.services.api.v2.snippet import SnippetService
+from LmWebServer.services.api.v2.solr_raw import RawSolrService
 from LmWebServer.services.api.v2.speciesHint import SpeciesHintService
 from LmWebServer.services.api.v2.taxonomy import TaxonomyHintService
 from LmWebServer.services.api.v2.tree import TreeService
@@ -46,6 +47,7 @@ class ApiRootV2(object):
     sdmproject = SdmProjectService()
     shapegrid = ShapeGridService()
     snippet = SnippetService()
+    rawsolr = RawSolrService()
     taxonomy = TaxonomyHintService()
     tree = TreeService()
     upload = UserUploadService()
