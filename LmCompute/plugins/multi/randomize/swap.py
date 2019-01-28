@@ -41,10 +41,10 @@ def swapRandomize(matrix, numSwaps, maxTries=MAX_TRIES_WITHOUT_SWAP):
    @param maxTries: The maximum number of tries to swap before failing
    """
    mtxHeaders = matrix.getHeaders()
-   swappedMtx = matrix.data.copy()
+   swappedMtx = matrix.data.copy().astype(int)
    counter = 0
    numTries = 0
-   rowLen, colLen = matrix.shape
+   rowLen, colLen = matrix.data.shape
 
    #numTries is a safety to kill the loop if nothing is ever found
    while counter < numSwaps and numTries < MAX_TRIES_WITHOUT_SWAP: 

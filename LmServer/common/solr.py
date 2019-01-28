@@ -129,6 +129,14 @@ def _query(collection, qParams=None, fqParams=None,
         return rDict
 
 # .............................................................................
+def raw_query(collection, query_string):
+    """Performs a raw solr query and returns the unprocessed results
+    """
+    url = '{}{}/select?{}'.format(SOLR_SERVER, collection, query_string)
+    res = urllib2.urlopen(url)
+    return res.read()
+
+# .............................................................................
 def add_taxa_to_taxonomy_index(sciname_objects):
     """Create a solr document and post it for the provided objects
     """
