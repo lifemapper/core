@@ -46,6 +46,8 @@ class APIQuery(object):
     """
     Class to query APIs and return results
     """
+    GBIF_MISSING_KEY = 'unmatched_gbif_ids'
+
     def __init__(self, baseurl, 
               qKey = None, qFilters={}, otherFilters={}, filterString=None, 
               headers={}):
@@ -512,7 +514,6 @@ class GbifAPI(APIQuery):
     SPECIES_KEY_KEY = 'speciesKey'
     SPECIES_NAME_KEY = 'species'
     TAXON_ID_KEY = 'taxon_id'
-    GBIF_MISSING_KEY = 'unmatched_gbif_ids'
 
     # ...............................................
     def __init__(self, service=GBIF.SPECIES_SERVICE, key=None, otherFilters={}):
@@ -810,6 +811,23 @@ class IdigbioAPI(APIQuery):
         fldnames.extend(['dec_lat', 'dec_long'])
         fldnames.sort()
         return fldnames
+
+    # .............................................................................
+    def _countIdigbioRecords(self, gbifTaxonId):
+        """
+        @param gbifTaxonIds: one GBIF TaxonId or a list
+        """
+        api = idigbio.json()
+        recordQuery = {'taxonid':str(gbifTaxonId), 
+                       'geopoint': {'type': 'exists'}}
+        try:
+            output = api.search_records(rq=recordQuery, limit=1, offset=0)
+        except:
+            print 'Failed on {}'.format(gbifTaxonId)
+            total = 0
+        else:
+            total = output['itemCount']
+        return total
    
     # .............................................................................
     def _getIdigbioRecords(self, gbifTaxonId, fields, writer, meta_output_file):
@@ -911,6 +929,22 @@ class IdigbioAPI(APIQuery):
                 raise
             finally:
                 f.close()
+
+        return summary
+    
+    # .............................................................................
+    def queryIdigbioData(self, taxon_ids): 
+        if not(isinstance(taxon_ids, list)):
+            taxon_ids = [taxon_ids]
+                        
+        summary = {self.GBIF_MISSING_KEY: []}
+         
+        for gid in taxon_ids:
+            # Pull/write fieldnames first time
+            ptCount = self._countIdigbioRecords(gid)
+            if ptCount == 0:
+                summary[self.GBIF_MISSING_KEY].append(gid)
+            summary[gid] = ptCount
 
         return summary
     

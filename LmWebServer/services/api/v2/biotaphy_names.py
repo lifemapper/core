@@ -50,10 +50,18 @@ class GBIFTaxonService(LmService):
 """
 curl 'http://notyeti-191.lifemapper.org/api/v2/biotaphynames' \
      -H 'Accept: application/json' \
-     -H 'Origin: null' \
-     -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/71.0.3578.98 Chrome/71.0.3578.98 Safari/537.36' \
-     -H 'DNT: 1' \
      -H 'Content-Type: application/json' \
-     --data-binary '["Acacia bifaria"]'
+     --data-binary '["Acacia bifaria", "Acacia daviesioides"]'
+
+import json
+
+from LmCommon.common.apiquery import GbifAPI
+from LmCommon.common.lmconstants import HTTPStatus
+from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.services.cpTools.lmFormat import lmFormatter
+
+body = '["Acacia bifaria"]'
+userId = DEFAULT_POST_USER
+
 
 """
