@@ -1,4 +1,7 @@
 """Module containing functions for creating output package files
+
+Todo:
+    Split up some functions into smaller chunks
 """
 import cherrypy
 from collections import defaultdict
@@ -495,6 +498,26 @@ def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
                                         MATRIX_DIR, 'mcpa_{}{}'.format(
                                             mtx.getId(), LMFormat.CSV.ext))
                                     
+                                elif mtx.matrixType == MatrixType.SPECIES_OBSERVED:
+                                    mtxName = 'speciesObserved'
+                                    mtxStr = StringIO()
+                                    mtxObj.writeCSV(mtxStr)
+                                    mtxStr.seek(0)
+                                    
+                                    mtxPkgFn = os.path.join(
+                                        DYN_PACKAGE_DIR, '{}.js'.format(
+                                            mtxName))
+                                    zipF.writestr(
+                                        mtxPkgFn,
+                                        "var {} = JSON.parse(`{}`);".format(
+                                            mtxName, mtxStr.getvalue()))
+                                    # Save memory
+                                    mtxStr = None
+                                    
+                                    csvMtxFn = os.path.join(
+                                        MATRIX_DIR, '{}_{}{}'.format(
+                                            mtxName, mtx.getId(),
+                                            LMFormat.CSV.ext))
                                 else:
                                     csvMtxFn = os.path.join(
                                         MATRIX_DIR, '{}{}'.format(
