@@ -19,38 +19,40 @@ from LmWebServer.formatters.geoJsonFormatter import geoJsonObjectFormatter
 from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
 from LmWebServer.formatters.kmlFormatter import kmlObjectFormatter
 from LmWebServer.formatters.packageFormatter import gridsetPackageFormatter
+from LmWebServer.formatters.progress_formatter import progress_object_formatter
 
 # .............................................................................
 def lmFormatter(f):
-    """
-    @summary: Use this as a decorator for methods that return objects that 
-                     should be sent through formatting before being returned
+    """Wrapper method for formatting service objects
+
+    Use this as a decorator for methods that return objects that should be sent
+    through formatting before being returned
     """
     def wrapper(*args, **kwargs):
-        """
-        @summary: Wrapper function
+        """Wrapper function
         """
         # Call the handler and get the object result
         handler_result = f(*args, **kwargs)
         
-        acceptHeaders = cherrypy.request.headers.get('Accept')
+        accept_headers = cherrypy.request.headers.get('Accept')
         
         try:
-            rawHeaders = acceptHeaders.split(',')
-            valuedAccepts = []
-            for h in rawHeaders:
+            raw_headers = accept_headers.split(',')
+            valued_accepts = []
+            for h in raw_headers:
                 if len(h.split(';')) > 1:
                     mime, val = h.split(';')
-                    valuedAccepts.append(
+                    valued_accepts.append(
                         (mime.strip(), float(val.strip('q='))))
                 else:
-                    valuedAccepts.append((h.strip(), 1.0))
+                    valued_accepts.append((h.strip(), 1.0))
         except:
-            valuedAccepts = [('*/*', 1.0)]
+            valued_accepts = [('*/*', 1.0)]
         
-        sortedAccepts = sorted(valuedAccepts, key=lambda x: x[1], reverse=True)
+        sorted_accepts = sorted(
+            valued_accepts, key=lambda x: x[1], reverse=True)
         
-        for ah, _ in sortedAccepts:
+        for ah, _ in sorted_accepts:
             try:
                 if ah == LMFormat.GEO_JSON.getMimeType():
                     return geoJsonObjectFormatter(handler_result)
@@ -95,6 +97,8 @@ def lmFormatter(f):
                     
                     return gridsetPackageFormatter(
                         handler_result, includeCSV=csvs, includeSDM=sdms)
+                elif ah == LMFormat.PROGRESS.getMimeType():
+                    return progress_object_formatter(handler_result)
             except Exception, e:
                 # Ignore and try next accept header
                 raise cherrypy.HTTPError(
@@ -104,8 +108,6 @@ def lmFormatter(f):
         raise cherrypy.HTTPError(
             HTTPStatus.NOT_ACCEPTABLE, 'Could not find an acceptable format')
                 
-        
-        
         return jsonObjectFormatter(handler_result)
     
     return wrapper

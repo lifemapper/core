@@ -129,6 +129,7 @@ class LMFormat:
     NUMPY = FileFormat('.npy', 'application/octet-stream')
     PARAMS = FileFormat('.params', 'text/plain')
     PICKLE = FileFormat('.pkl', 'application/octet-stream')
+    PROGRESS = FileFormat('.progress', 'application/progress+json')
     PYTHON = FileFormat('.py', 'text/plain')
     SHAPE = FileFormat('.shp', 'application/x-gzip', 
                        allExtensions=[".shp", ".shx", ".dbf", ".prj", ".sbn", 
@@ -262,6 +263,7 @@ NEXUS_INTERFACE = 'nexus'
 NEWICK_INTERFACE = 'newick'
 OGC_INTERFACE = 'ogc'
 PACKAGE_INTERFACE = 'package'
+PROGRESS_INTERFACE = 'progress'
 SHAPEFILE_INTERFACE = 'shapefile'
 
 # .............................................................................
