@@ -297,7 +297,7 @@ def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None,
                       pointMin=None, projectionScenarioCode=None, squid=None,
                       taxKingdom=None, taxPhylum=None, taxClass=None,
                       taxOrder=None, taxFamily=None, taxGenus=None,
-                      taxSpecies=None, userId=None):
+                      taxSpecies=None, userId=None, pam_id=None):
     """
     @summary: Query the PAV archive Solr index
     
@@ -318,6 +318,7 @@ def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None,
         (SOLR_FIELDS.TAXON_FAMILY, taxFamily),
         (SOLR_FIELDS.TAXON_GENUS, taxGenus),
         (SOLR_FIELDS.TAXON_SPECIES, taxSpecies),
+        (SOLR_FIELDS.PAM_ID, pam_id)
     ]
     
     if pointMax is not None or pointMin is not None:
