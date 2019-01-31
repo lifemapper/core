@@ -3,7 +3,7 @@
 import os
 
 from LmBackend.command.base import _LmCommand
-from LmBackend.common.lmconstants import CMD_PYBIN, SINGLE_SPECIES_SCRIPTS_DIR
+from LmBackend.common.lmconstants import SINGLE_SPECIES_SCRIPTS_DIR
 
 # .............................................................................
 class GrimRasterCommand(_LmCommand):

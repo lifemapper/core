@@ -4,7 +4,7 @@ import os
 import time
 
 from LmBackend.command.base import _LmCommand
-from LmBackend.common.lmconstants import BOOM_SCRIPTS_DIR, CMD_PYBIN
+from LmBackend.common.lmconstants import BOOM_SCRIPTS_DIR
 from LmCommon.common.lmconstants import LMFormat
 
 # .............................................................................
