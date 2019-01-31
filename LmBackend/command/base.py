@@ -28,25 +28,27 @@ class _LmCommand(object):
         self.outputs = []
         # If these are missing or empty, command won't run
         self.required_inputs = []
+        self.args = ''
+        self.opt_args = ''
         
     # ................................
     def call(self, **kwargs):
         """Wrapper around subprocess.call
 
-        Nmed arguments sent to this function will be passed to subprocess.call
+        Named arguments sent to this function will be passed to subprocess.call
         """
         return subprocess.call(self.getCommand(), **kwargs)
     
     # ................................
     def getCommand(self):
+        """Gets the raw command to run
         """
-        """
-        raise Exception('Get command is not implemented in the base class')
+        return '{} {} {} {}'.format(
+            CMD_PYBIN, self.getScript(), self.opt_args, self.args)
     
     # ................................
     def getMakeflowRule(self, local=False):
-        """
-        @summary: Get a MfRule object for this command
+        """Get a MfRule object for this command
         """
         cmd = '{local}{cmd}'.format(
             local='LOCAL ' if local else '', cmd=self.getCommand())
@@ -79,9 +81,10 @@ class _LmCommand(object):
         
     # ................................
     def Popen(self, **kwargs):
-        """
-        @summary: Wrapper around subprocess.Popen, named arguments sent to this
-                         function will be passed through
+        """Wrapper for subprocess.Popen
+
+        Wrapper around subprocess.Popen, named arguments sent to this function
+        will be passed through
         """
         return subprocess.Popen(self.getCommand(), **kwargs)
 
