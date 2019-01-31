@@ -15,7 +15,7 @@ import time
 
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import (
-    CMD_PYBIN, DB_SERVER_SCRIPTS_DIR, SERVER_SCRIPTS_DIR)
+    DB_SERVER_SCRIPTS_DIR, SERVER_SCRIPTS_DIR)
 
 from LmCommon.common.lmconstants import LMFormat
 
@@ -89,6 +89,35 @@ class AddBioGeoAndTreeCommand(_LmServerCommand):
         if eventField is not None:
             self.opt_args += ' -e {}'.format(eventField)
 
+# .............................................................................
+class AssemblePamFromSolrQuery(_LmServerCommand):
+    """Command to assemble PAM data from a Solr query
+    """
+    scriptName = 'assemble_pam_from_solr.py'
+
+    # ................................
+    def __init__(self, pam_id, success_filename, dependency_files=None):
+        """Construct the command
+
+        Args:
+            pam_id (:obj: `int`): The database identifier of the PAM to
+                assemble
+            success_filename (:obj: `str`): A file location to write an
+                indication of success
+            dependency_files (:obj: `list`): An optional list of dependency
+                files that should exist before running this command
+        """
+        _LmServerCommand.__init__(self)
+        
+        self.args = '{} {}'.format(pam_id, success_filename)
+        self.outputs.append(success_filename)
+        
+        if dependency_files is not None:
+            if isinstance(dependency_files, list):
+                self.inputs.extend(dependency_files)
+            else:
+                self.inputs.append(dependency_files)
+    
 # .............................................................................
 class CatalogScenarioPackageCommand(_LmDbServerCommand):
     """This command will catalog a scenario package
