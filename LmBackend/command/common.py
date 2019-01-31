@@ -1,8 +1,8 @@
 """Command commands
 """
 from LmBackend.command.base import _LmCommand
-from LmBackend.common.lmconstants import (CMD_PYBIN, COMMON_SCRIPTS_DIR,
-    BACKEND_SCRIPTS_DIR)
+from LmBackend.common.lmconstants import (
+    BACKEND_SCRIPTS_DIR, COMMON_SCRIPTS_DIR)
 
 # .............................................................................
 class IdigbioQueryCommand(_LmCommand):
@@ -114,7 +114,36 @@ class ConvertLayerCommand(_LmCommand):
         
         self.inputs.append(origAsciiFilename)
         self.outputs.append(modifiedAsciiFilename)
-            
+
+# .............................................................................
+class CreateFMatrixCommand(_LmCommand):
+    """This command will create a F-Matrix comparing observed and random data
+    """
+    relDir = BACKEND_SCRIPTS_DIR
+    scriptName = 'create_f_matrix.py'
+
+    # ................................
+    def __init__(self, observed_filename, f_matrix_filename, random_matrices,
+                 use_abs=False):
+        """Constructor for command
+
+        Args:
+            observed_filename : The observed matrix
+            f_matrix_filename : The location to write the output matrix
+            random_matrices : One or more random matrices to compare to the
+                observed
+            use_abs : If True, use absolute value for comparisons
+        """
+        self.inputs.append(observed_filename)
+        self.outputs.append(f_matrix_filename)
+        if not isinstance(random_matrices, list):
+            random_matrices = [random_matrices]
+        self.inputs.extend(random_matrices)
+        self.args = '{} {} {}'.format(
+            observed_filename, f_matrix_filename, ' '.join(random_matrices))
+        if use_abs:
+            self.opt_args += ' -a'
+
 # .............................................................................
 class ModifyAsciiHeadersCommand(_LmCommand):
     """This command will reduce the number of decimal digits in ASCII headers
