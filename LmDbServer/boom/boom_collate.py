@@ -249,7 +249,7 @@ class BoomCollate(LMObject):
             mcpa_f_vals_filename = self._create_filename(
                 pam_id, 'mcpa_f_{}{}'.format(
                     group_prefix, LMFormat.MATRIX.ext))
-            if num_permutations > 0:
+            if num_permutations == 0:
                 mcpa_return = (mcpa_filename, mcpa_f_vals_filename)
             else:
                 mcpa_return = mcpa_f_vals_filename
@@ -464,6 +464,8 @@ class BoomCollate(LMObject):
 
         for pam in self.gridset.getPAMs():
             rules.extend(self._get_rules_for_pam(pam))
+        
+        return rules
 
 # .............................................................................
 if __name__ == '__main__':
