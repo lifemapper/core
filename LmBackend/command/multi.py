@@ -90,7 +90,8 @@ class CreateAncestralPamCommand(_LmCommand):
         _LmCommand.__init__(self)
         self.inputs.extend([pamFilename, treeFilename])
         self.outputs.append(outputFilename)
-        self.args = ' '.join([pamFilename, treeFilename, outputFilename])
+        self.args = '{} {} {}'.format(
+            pamFilename, treeFilename, outputFilename)
 
 # .............................................................................
 class EncodeHypothesesCommand(_LmCommand):
