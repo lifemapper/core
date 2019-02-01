@@ -172,10 +172,17 @@ def _mcpa_for_node(incidence_mtx, env_mtx, bg_mtx, phylo_col, use_locks=False):
             y_hat_bg_all = _calculate_y_hat(all_std, beta_bg_all)
             env_r2 = _calculate_r_squared(y_hat_env_all, p_sigma_std)
             bg_r2 = _calculate_r_squared(y_hat_bg_all, p_sigma_std)
-            env_adj_r2 = 1.0 - ((num_sites - 1.0) / (
-                num_sites - num_env_predictors - 1.0)) * (1.0 - env_r2)
-            bg_adj_r2 = 1.0 - ((num_sites - 1.0) / (
-                num_sites - num_bg_predictors - 1.0)) * (1.0 - bg_r2)
+            try:
+                env_adj_r2 = 1.0 - ((num_sites - 1.0) / (
+                    num_sites - num_env_predictors - 1.0)) * (1.0 - env_r2)
+            except ZeroDivisionError as ze:
+                env_adj_r2 = 0.0
+                
+            try:
+                bg_adj_r2 = 1.0 - ((num_sites - 1.0) / (
+                    num_sites - num_bg_predictors - 1.0)) * (1.0 - bg_r2)
+            except ZeroDivisionError as ze:
+                bg_adj_r2 = 0.0
         
             #env_f_pseudo_numerator = np.trace(y_hat_env_all.T.dot(y_hat_env_all))
             env_f_pseudo_numerator = _trace_mtx_by_transverse(y_hat_env_all.T)
