@@ -418,6 +418,8 @@ create table lm_v3.Matrix
    gcmCode varchar(20),
    altpredCode varchar(20),
    dateCode varchar(20),
+   -- optional filter for PAM, could allow diff algs per species
+   algorithmCode varchar(30) REFERENCES lm_v3.Algorithm(algorithmCode),
 
    matrixDlocation text,
    -- metadataUrl text UNIQUE,
@@ -452,6 +454,8 @@ create table lm_v3.MatrixColumn
    
    -- matrixIndex is NULL for Global PAM 
    UNIQUE (matrixId, matrixIndex),
+   -- no duplicate species in matrix 
+   UNIQUE (matrixId, squid),
    -- TODO: will Global PAM only reference a layer once? 
    UNIQUE (matrixId, layerid, intersectParams)
 );

@@ -293,15 +293,19 @@ class Borg(DbPostgresql):
             gcm = self._getColumnValue(row, idxs, ['gcmcode']) 
             rcp  = self._getColumnValue(row, idxs, ['altpredcode'])
             dt =  self._getColumnValue(row, idxs, ['datecode'])
+            alg =  self._getColumnValue(row, idxs, ['algorithmcode'])
             dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
             meta = self._getColumnValue(row, idxs, ['mtxmetadata', 'metadata'])
             usr = self._getColumnValue(row, idxs, ['userid'])
             stat = self._getColumnValue(row, idxs, ['mtxstatus', 'status'])
-            stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime', 'statusmodtime'])
+            stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime', 
+                                                        'statusmodtime'])
             mtx = LMMatrix(None, matrixType=mtype, 
                                 gcmCode=gcm, altpredCode=rcp, dateCode=dt,
-                                metadata=meta, dlocation=dloc, userId=usr, gridset=grdset, 
-                                matrixId=mtxid, status=stat, statusModTime=stattime)
+                                algCode=alg,
+                                metadata=meta, dlocation=dloc, userId=usr, 
+                                gridset=grdset, matrixId=mtxid, 
+                                status=stat, statusModTime=stattime)
         return mtx
     
     # ...............................................
@@ -2224,7 +2228,8 @@ class Borg(DbPostgresql):
         meta = mtx.dumpMtxMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrix', 
                             mtx.getId(), mtx.matrixType, mtx.parentId, 
-                            mtx.gcmCode, mtx.altpredCode, mtx.dateCode,
+                            mtx.gcmCode, mtx.altpredCode, mtx.dateCode, 
+                            mtx.algorithmCode,
                             mtx.getDLocation(), meta, mtx.status, 
                             mtx.statusModTime)
         newOrExistingMtx = self._createLMMatrix(row, idxs)

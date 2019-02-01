@@ -733,7 +733,7 @@ class BOOMFiller(LMObject):
         return newshp
       
     # ...............................................
-    def _findOrAddPAM(self, gridset, scen):
+    def _findOrAddPAM(self, gridset, alg, scen):
         # Create Global PAM for this archive, scenario
         # Pam layers are added upon boom processing
         pamType = MatrixType.PAM
@@ -791,11 +791,15 @@ class BOOMFiller(LMObject):
                          userId=self.userId, modTime=mx.DateTime.gmt().mjd)
         updatedGrdset = self.scribe.findOrInsertGridset(grdset)
         self.scribe.log.info('  Found or insert gridset {}'.format(updatedGrdset.getId()))
-        # "Global" PAM, GRIM (one each per scenario)
+        
         for code, scen in self.scenPkg.scenarios.iteritems():
-            gPam = self._findOrAddPAM(updatedGrdset, scen)
+            # "Global" PAM (one per scenario/algorithm)
+            # TODO: Allow alg to be specified for each species, all in same PAM
+            for alg in self.algorithms:
+                gPam = self._findOrAddPAM(updatedGrdset, alg, scen)
+                
+            # "Global" GRIM (one per scenario) 
             if not(self.userId == DEFAULT_POST_USER):
-#             if not(self.userId == DEFAULT_POST_USER) and self.assemblePams:
                 scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
                 scenGrims[code] = scenGrim
                 
