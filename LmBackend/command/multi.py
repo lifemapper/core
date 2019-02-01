@@ -521,6 +521,6 @@ class SyncPamAndTreeCommand(_LmCommand):
         self.inputs.extend([inPamFilename, inTreeFilename])
         self.outputs.extend([outPamFilename, outTreeFilename, metadataFilename])
         
-        self.args = ' '.join(
-            [inPamFilename, outPamFilename, inTreeFilename, outTreeFilename,
-             metadataFilename])
+        self.args = '{} {} {} {} {}'.format(
+            inPamFilename, outPamFilename, inTreeFilename, outTreeFilename,
+            metadataFilename)
