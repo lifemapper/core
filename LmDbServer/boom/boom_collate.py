@@ -1,809 +1,500 @@
-"""
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
+"""Tools for generating Makeflow rules for multi-species analyses
 
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+Todo:
+    Constants for groups
 """
 import argparse
-import logging
-import mx.DateTime as dt
-import os, sys, time
-import signal
+import mx.DateTime
+import os
 
-from LmBackend.command.common import (ChainCommand, SystemCommand, 
-                                      ConcatenateMatricesCommand)
-from LmBackend.command.server import (LmTouchCommand, StockpileCommand)
-from LmBackend.command.multi import (CalculateStatsCommand, 
-        CreateAncestralPamCommand, SyncPamAndTreeCommand, EncodePhylogenyCommand,
-        McpaRunCommand, McpaCorrectPValuesCommand)
-from LmBackend.common.lmobj import LMError, LMObject
+from LmBackend.command.common import CreateSignificanceMatrixCommand
+from LmBackend.command.multi import (
+    CreateAncestralPamCommand, EncodePhylogenyCommand, MultiSpeciesRunCommand,
+    SyncPamAndTreeCommand)
+from LmBackend.command.server import (
+    AssemblePamFromSolrQuery, SquidIncCommand, StockpileCommand)
+from LmBackend.common.lmobj import LMObject
 
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (JobStatus, LM_USER, MatrixType, 
-          LMFormat, ProcessType, SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING)
+from LmCommon.common.lmconstants import (
+    JobStatus, LMFormat, MatrixType, ProcessType)
 
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isLMUser
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME, 
-                                         Priority) 
-from LmServer.common.localconstants import PUBLIC_USER 
-from LmServer.common.log import ScriptLogger
-from LmServer.common.solr import queryArchiveIndex
+from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.processchain import MFChain
 from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.tree import Tree
+from LmServer.legion.processchain import MFChain
 
 
-# TODO: Move these to localconstants
-NUM_RAND_GROUPS = 30
-NUM_RAND_PER_GROUP = 2
+DEFAULT_NUM_PERMUTATIONS = 1000
+DEFAULT_RANDOM_GROUP_SIZE = 10
 
 # .............................................................................
 class BoomCollate(LMObject):
+    """Class to manage multi-species calculation initiation
     """
-    Class to iterate with a ChristopherWalken through a sequence of species data
-    creating individual species (Spud) MFChains, multi-species (Bushel) MFChains
-    with SPUD_LIMIT number of species and aggregated by projection scenario, 
-    and a master (MasterPotatoHead) MFChain
-    until it is complete.  If the daemon is interrupted, it will write out the 
-    current MFChains, and pick up where it left off to create new MFChains for 
-    unprocessed species data.
-    @todo: Next instance of BoomCollate will create new MFChains, but add data
-           to existing Global PAM matrices.  Make sure LMMatrix handles 
-           appending new PAVs or re-assembling. 
-    @todo: Replace with consistent file construction from 
-           LmServer.common.datalocator.EarlJr.createBasename!
-    """
-    # .............................
-    def __init__(self, configFname, successFname, log=None):      
+    # ................................
+    def __init__(self, gridset, dependencies=None, do_pam_stats=True,
+                 do_mcpa=False, num_permutations=DEFAULT_NUM_PERMUTATIONS,
+                 random_group_size=DEFAULT_RANDOM_GROUP_SIZE, work_dir=None,
+                 log=None):
+        """Constructor for collate
 
-        self.configFname = configFname
-        baseAbsFilename, _ = os.path.splitext(configFname)
-        basename = os.path.basename(baseAbsFilename)
-
-        self.name = '{}_{}'.format(self.__class__.__name__.lower(), basename)       
-        # Config
-        if configFname is not None and os.path.exists(configFname):
-            self.cfg = Config(siteFn=configFname)
-        else:
-            raise LMError(currargs='Missing config file {}'.format(configFname))
-
-        # Logfile
+        Args:
+            gridset (:obj: `Gridset`): A gridset object for which to generate
+                multi-species computations
+            dependencies (:obj: `list`): If provided, set these as dependencies
+                before the assembly rules may begin
+            do_pam_stats (:obj: `bool`): Should PAM stats be performed
+            do_mcpa (:obj: `bool`): Should MCPA be performed
+            num_permutations (:obj: `int`): The number of permutations to
+                perform for the analyses
+            random_group_size (:obj: `int`): The number of permutations to
+                perform in each group of computations
+        """
         if log is None:
-            secs = time.time()
-            timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-            logname = '{}.{}'.format(self.name, timestamp)
-            log = ScriptLogger(logname, level=logging.INFO)
-        self.log = log
-        
-        self.configFname = configFname
-        self._successFname = successFname
-        self.userId = None
-        self.archiveName = None 
-        self.priority = None 
-        self.boomGridset = None
-        self.globalPams = None 
-        # Send Database connection
+            self.log = ConsoleLogger()
+        else:
+            self.log = log
         self._scribe = BorgScribe(self.log)
-        # Stop indicator
-        self.keepWalken = False
-        
-        signal.signal(signal.SIGTERM, self._receiveSignal) # Stop signal
-
-    # .............................
-    def _receiveSignal(self, sigNum, stack):
-        """
-        @summary: Handler used to receive signals
-        @param sigNum: The signal received
-        @param stack: The stack at the time of signal
-        """
-        if sigNum in (signal.SIGTERM, signal.SIGKILL):
-            self.close()
+        self.gridset = gridset
+        self.user_id = gridset.getUserId()
+        if work_dir is not None:
+            self.workspace_dir = os.path.join(
+                work_dir, 'gs_{}'.format(gridset.getId()))
         else:
-            message = "Unknown signal: %s" % sigNum
-            self.log.error(message)
-
-    # ...............................................
-    def _getVarValue(self, var):
-        # Remove spaces and empty strings
-        if var is not None and not isinstance(var, bool):
-            var = var.strip()
-            if var == '':
-                var = None
-        # Convert to number if needed
-        try:
-            var = int(var)
-        except:
-            try:
-                var = float(var)
-            except:
-                pass
-        return var
-
-    # ...............................................
-    def _getBoomOrDefault(self, varname, defaultValue=None, isList=False, isBool=False):
-        var = None
-        # Get value from BOOM or default config file
-        if isBool:
-            try:
-                var = self.cfg.getboolean(SERVER_BOOM_HEADING, varname)
-            except:
-                try:
-                    var = self.cfg.getboolean(SERVER_PIPELINE_HEADING, varname)
-                except:
-                    pass
+            self.workspace_dir = 'gs_{}'.format(gridset.getId())
+        
+        if dependencies is None:
+            self.dependencies = []
+        elif isinstance(dependencies, list):
+            self.dependencies = dependencies
         else:
-            try:
-                var = self.cfg.get(SERVER_BOOM_HEADING, varname)
-            except:
-                try:
-                    var = self.cfg.get(SERVER_PIPELINE_HEADING, varname)
-                except:
-                    pass
-        # Take default if present
-        if var is None:
-            if defaultValue is not None:
-                var = defaultValue
-        # or interpret value
-        elif not isBool:
-            if not isList:
-                var = self._getVarValue(var)
-            else:
-                try:
-                    tmplist = [v.strip() for v in var.split(',')]
-                    var = []
-                except:
-                    raise LMError('Failed to split variables on \',\'')
-                for v in tmplist:
-                    v = self._getVarValue(v)
-                    var.append(v)
-        return var
-
-    # .............................................................................
-    def _getConfiguredObjects(self):
-        """
-        @summary: Get configured string values and any corresponding db objects 
-        @TODO: Make all archive/default config keys consistent
-        """
-        userId = self._getBoomOrDefault('ARCHIVE_USER', defaultValue=PUBLIC_USER)
-        archiveName = self._getBoomOrDefault('ARCHIVE_NAME')
-        if archiveName is None:
-            raise LMError(currargs='Missing ARCHIVE_NAME in {}'
-                          .format(self.cfg.configFiles))
-        archivePriority = self._getBoomOrDefault('ARCHIVE_PRIORITY', 
-                                                 defaultValue=Priority.NORMAL)
-        treename = self._getBoomOrDefault('TREE')
-        assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
-
-        boomGridset = self._scribe.getGridset(name=archiveName, userId=userId,
-                                              fillMatrices=True)
+            self.dependencies = [dependencies]
+            
+        # Todo: Check if required inputs are present
+        self.do_mcpa = do_mcpa
+        self.do_pam_stats = do_pam_stats
+        self.num_permutations = num_permutations
+        self.random_group_size = random_group_size
+        self.do_parallel = False
+        self.fdr = 0.05
         
-        baretree = Tree(treename, userId=userId)
-        tree = self._scribe.getTree(baretree)
-        
-        return (userId, archiveName, archivePriority, assemblePams, 
-                boomGridset, tree)  
+    # ................................
+    def _create_filename(self, pam_id, *parts):
+        """Create a file path
 
-    # .............................
-    def initializeMe(self):
+        Args:
+            pam_id (:obj: `int`): The database identifier for a PAM
+            parts (:obj: *`list`): Additional path parts
         """
-        @summary: Creates objects (ChristopherWalken for walking the species
-                  and MFChain objects for workflow computation requests.
+        path_parts = [self.workspace_dir, pam_id]
+        path_parts.extend(list(parts))
+        return os.path.join(path_parts)
+        
+    # ................................
+    def _get_aggregation_rules_for_pam(
+            self, pam_id, obs_pam_stats_filenames, obs_mcpa_filenames,
+            rand_pam_stats_filenames, rand_mcpa_filenames):
+        """Get the aggregation and summary rules for the various analyses
         """
-        # Send Database connection
-        try:
-            success = self._scribe.openConnections()
-        except Exception, e:
-            raise LMError(currargs='Exception opening database', prevargs=e.args)
+        aggregation_rules = []
+        sig_pam_stats_filenames = []
+        sig_mcpa_stats_filenames = []
+        for i in range(len(obs_pam_stats_filenames)):
+            # TODO: Need a better way to name this file
+            out_mtx_filename = obs_pam_stats_filenames[i].replace(
+                LMFormat.MATRIX.ext, '_sig{}'.format(LMFormat.MATRIX.ext))
+            rand_fns = [fn[i] for fn in rand_pam_stats_filenames]
+            aggregation_rules.append(
+                CreateSignificanceMatrixCommand(
+                    obs_pam_stats_filenames[i], out_mtx_filename, rand_fns,
+                    use_abs=True, fdr=self.fdr))
+            sig_pam_stats_filenames.append(out_mtx_filename)
+
+        if len(obs_mcpa_filenames) > 0:
+            # Create rule
+            out_mtx_filename = self._create_filename(
+                pam_id, 'mcpa_out{}'.format(LMFormat.MATRIX.ext))
+            aggregation_rules.append(
+                CreateSignificanceMatrixCommand(
+                    obs_mcpa_filenames[0], out_mtx_filename,
+                    rand_mcpa_filenames, use_abs=True, fdr=self.fdr,
+                    test_matrix=obs_mcpa_filenames[1]))
+            sig_mcpa_stats_filenames.append(out_mtx_filename)
+        return (sig_pam_stats_filenames, sig_mcpa_stats_filenames,
+                aggregation_rules)
+
+    # ................................
+    def _get_analysis_rules_for_pam(
+            self, pam_id, pam_filename, grim_filename=None,
+            biogeo_filename=None, phylo_filename=None, tree_filename=None):
+        """Get the analysis rules for a PAM
+        """
+        pam_analysis_rules = []
+        # Observed rules
+        (obs_pam_stats_filenames, obs_mcpa_filenames, obs_rules
+         ) = self._get_multispecies_run_rules_for_pam(
+             pam_id, 'obs', pam_filename, 0, grim_filename=grim_filename,
+             biogeo_filename=biogeo_filename, phylo_filename=phylo_filename,
+             tree_filename=tree_filename)
+        pam_analysis_rules.extend(obs_rules)
+        
+        # Ancestral PAM
+        if tree_filename is not None:
+            anc_pam_filename = self._create_filename(
+                pam_id, 'anc_pam{}'.format(LMFormat.MATRIX.ext))
+            pam_analysis_rules.append(
+                CreateAncestralPamCommand(
+                    pam_filename, tree_filename, anc_pam_filename))
         else:
-            if not success:
-                raise LMError(currargs='Failed to open database')
-            else:
-                self.log.info('{} opened databases'.format(self.name))
-        # Get Boom Gridset values from config file and database
-        (self.userId, 
-         self.archiveName, 
-         self.priority, 
-         assemblePams,
-         self.boomGridset, 
-         self.tree) = self._getConfiguredObjects()
-         
-        self.gridset_id = self.boomGridset.getId()
-        if not assemblePams:
-            raise LMError('NO Collation requested for gridset {}, user {}, id {}'
-                          .format(self.gridset_id, self.userId, self.archiveName))
-            
-    # .............................
-    def close(self):
-        self._scribe.closeConnections()
+            anc_pam_filename = None
 
-    # ...............................................
-    def _createMasterMakeflow(self):
-        meta = {MFChain.META_CREATED_BY: self.name,
-                MFChain.META_DESCRIPTION: 'Boom Collation for User {}, Archive {}'
-                    .format(self.userId, self.archiveName),
-                MFChain.META_GRIDSET: self.gridset_id }
-        newMFC = MFChain(self.userId, priority=self.priority, 
-                         metadata=meta, status=JobStatus.GENERAL, 
-                         statusModTime=dt.gmt().mjd)
-        mfChain = self._scribe.insertMFChain(newMFC, self.boomGridset.getId())
-        return mfChain
-
-    # ...............................................
-    def processMultiSpecies(self, numPermutations=500):
-        # Master makeflow for 
-        master_chain = self._createMasterMakeflow()
-        workdir = master_chain.getRelativeDirectory()
-        globalPams = self.boomGridset.getAllPAMs()
-        # TODO: need mdl/prj scenario to query Solr
-        for pam in globalPams:
-            mtxcol_count = self._scribe.countMatrixColumns(matrixId=pam.getId())
-            if mtxcol_count == 0:
-                self.log.error('Pam {} has no matrixColumns'.format(pam.getId()))
-                break
-            filter_desc = ('Filters: GCM {}, Altpred {}, Date {}'
-                           .format(pam.gcmCode, pam.altpredCode, pam.dateCode))
-            # Add intersect and concatenate rules for this PAM
-            ass_rules, ass_success_fname = self._getPamAssembleRules(workdir, 
-                                                            pam, filter_desc)
-            master_chain.addCommands(ass_rules)
+        # Randomized
+        rand_pam_stats_filenames = []
+        rand_mcpa_stats_filenames = []
+        for i, v in enumerate(
+            range(0, self.num_permutations, self.random_group_size)):
             
-            # PamCalc depends on success of PamAssemble (ass_success_fname)
-            calc_rules = self._getPamCalcRules(workdir, pam, ass_success_fname, 
-                                               filter_desc)
-            master_chain.addCommands(calc_rules)
-            
-            if self.tree is not None:
-                anc_rules = self._getAncestralRules(workdir, pam)
-                master_chain.addCommands(anc_rules)
-            
-                biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
-                # TODO: handle > 1 Biogeographic Hypotheses
-                if len(biogeo_hyp) > 0: 
-                    biogeo_hyp = biogeo_hyp[0]
-                    mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
-                                                    filter_desc, numPermutations)
-                    master_chain.addCommands(mcpa_rules)
-
-        master_chain = self._write_update_MF(master_chain)
-        self.writeSuccessFile('Boom_collate finished writing makefiles')
+            (pam_stats_filenames, mcpa_filenames, rand_rules
+             ) = self._get_multispecies_run_rules_for_pam(
+                 pam_id, 'rand{}'.format(i), pam_filename,
+                 min(self.random_group_size, self.num_permutations - v),
+                 grim_filename=grim_filename, biogeo_filename=biogeo_filename,
+                 phylo_filename=phylo_filename, tree_filename=tree_filename)
+            rand_pam_stats_filenames.append(pam_stats_filenames)
+            rand_mcpa_stats_filenames.append(mcpa_filenames)
+            pam_analysis_rules.extend(rand_rules)
         
-    # ...............................................
-    def _getPAVs(self, model_scen_code, prj_scen_code):
-        solr_data = queryArchiveIndex(gridSetId=self.boomGridset.getId(), 
-                                      modelScenarioCode=model_scen_code, 
-                                      projectionScenarioCode=prj_scen_code, 
-                                      userId=self.userId)
-        for doc in solr_data:
-            pass
-        return solr_data
+        # Aggregates
+        (sig_pam_stats_filenames, sig_mcpa_filenames, agg_rules
+         ) = self._get_aggregation_rules_for_pam(pam_id,
+             obs_pam_stats_filenames, obs_mcpa_filenames,
+             rand_pam_stats_filenames, rand_mcpa_stats_filenames)
+        # Add aggregation rules
+        pam_analysis_rules.extend(agg_rules)
+        
+        return (anc_pam_filename, sig_pam_stats_filenames, sig_mcpa_filenames,
+                pam_analysis_rules)
 
-    # .............................
-    def _process_pav(self, mtxcol, lyr, workdir, mdl_scen_code=None, 
-                            prj_scen_code=None):
+    # ................................
+    def _get_mcpa_tree_encode_rules_for_pam(self, pam):
+        """Get MCPA tree encoding rules for PAM
+
+        Args:
+            pam (:obj: `Matrix`): The PAM to use for MCPA
         """
-        @todo: allow solr query using scenario codes and/or lyr.squid
-        """
-        rules = []
-        mtxcol.postToSolr = False
-        mtxcol.shapegrid = self.boomGridset.getShapegrid()
+        pam_id = pam.getId()
+        mcpa_tree_encode_rules = []
         
-        intersect_rules = mtxcol.computeMe(workDir=workdir)
-        rules.append(intersect_rules)
-                
-        # Save new, temp intersection filenames for matrix concatenation
-        # mtxcol.computeMe uses mtxcol.getTargetFilename()
-        # TODO: Use consistent file construction method, 
-        #       i.e. LmServer.common.datalocator.EarlJr.createBasename or
-        #            self._getTempFinalFilenames()
-        pavFname = os.path.join(workdir, mtxcol.getTargetFilename())
-        return pavFname 
-
-
-    # .............................
-    def _getPamAssembleRules(self, workdir, pam, filter_desc):
-        rules = []
-        colFilenames = []
-        
-        # IFF this is a matrix of SDM projections
-        mdl_scen_code = prj_scen_code = None
-        colPrjPairs = self._scribe.getSDMColumnsForMatrix(pam.getId(), 
-                                returnColumns=True, returnProjections=True)
-        if len(colPrjPairs) > 0:
-            self._scribe.log.info('Adding rules for PAM assembly of SDM matrix {}, {}'
-                              .format(pam.getId(), filter_desc))
-            _, prj = colPrjPairs[0]
-            mdl_scen_code = prj.modelScenarioCode
-            prj_scen_code = prj.projScenarioCode
-            for mtxcol, prj in colPrjPairs:
-                if JobStatus.failed(prj.status):
-                    mtxcol.updateStatus(JobStatus.DEPENDENCY_ERROR)
-                    self._scribe.updateObject(mtxcol)
-                elif JobStatus.incomplete(prj.status):
-                    raise LMError('sdmproject {}, layerid {}, dependency unfinished'
-                                  .format(prj.objId, prj.getId()))
-                elif prj.minVal == prj.maxVal and prj.minVal == 0.0:
-                    print('No prediction for sdmproject {}, layerid {}, skipping'
-                          .format(prj.objId, prj.getId()))
-                else:
-                    mtxcol_fname = self._process_pav(mtxcol, prj, workdir,
-                                                     mdl_scen_code=mdl_scen_code, 
-                                                     prj_scen_code=prj_scen_code)
-                    if mtxcol_fname:
-                        colFilenames.append(mtxcol_fname)
-        else:
-            mtxcols = self._scribe.getColumnsForMatrix(pam.getId())
-            self._scribe.log.info('Adding rules for PAM assembly of matrix {}, {}'
-                              .format(pam.getId(), filter_desc))
-            for mtxcol in mtxcols:
-                mtxcol_fname = self._process_pav(mtxcol, mtxcol.layer, workdir)
-                if mtxcol_fname:
-                    colFilenames.append(mtxcol_fname)
-
-        # Concatenate PAM
-#         pamRules = pam.getConcatAndStockpileRules(colFilenames, workDir=workdir)
-        ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
-        concat_cmd = ConcatenateMatricesCommand(colFilenames, '1', ws_pam_fname)
-        rules.append(concat_cmd.getMakeflowRule())
-
-        # Save PAM
-        ass_success_fname = ws_pam_fname + '.success'
-        pam_save_cmd = StockpileCommand(ProcessType.CONCATENATE_MATRICES, 
-                                        pam.getId(), ass_success_fname, 
-                                        ws_pam_fname, status=JobStatus.COMPLETE)
-        rules.append(pam_save_cmd.getMakeflowRule(local=True))
-
-        self._scribe.log.info('  Added rules to save {} pam columns into matrix {}'
-                      .format(len(colFilenames), pam.getId()))
-        return rules, ass_success_fname
-     
-    
-    # ...............................................
-    def _findOrAddPAMStatMatrix(self, pam, mtx_type, mtx_key, filter_desc, workdir):
-        desc = 'Computed matrix {} for PAM {}, {}'.format(mtx_key, pam.getId(),
-                                                          filter_desc)
-        meta = {ServiceObject.META_DESCRIPTION: desc,
-                ServiceObject.META_KEYWORDS: [mtx_key]}
-        mtx = LMMatrix(None, matrixType=mtx_type, 
-                       gcmCode=pam.gcmCode, altpredCode=pam.altpredCode, 
-                       dateCode=pam.dateCode, metadata=meta, userId=self.userId, 
-                       gridset=self.boomGridset, 
-                       status=JobStatus.GENERAL, 
-                       statusModTime=dt.gmt().mjd)
-        mtx = self._scribe.findOrInsertMatrix(mtx)
-        ws_mtx_fname, _ = self._getTempFinalFilenames(workdir, pam, prefix=mtx_key)
-        success_fname = ws_mtx_fname + '.success'
-
-        return mtx, ws_mtx_fname, success_fname
-        
-    # ...............................................
-    def _getTempFinalFilenames(self, workdir, obj, prefix=None):
-        try:
-            fname = obj.getDLocation()
-            pth, basename = os.path.split(fname)
-        except:
-            raise LMError('{} must implement getDLocation'.format(type(obj)))
-        if prefix is None:
-            wsfname = os.path.join(workdir, basename)
-        else:
-            fname = os.path.join(pth, '{}_{}'.format(prefix, basename))
-            wsfname = os.path.join(workdir, '{}_{}'.format(prefix, basename))
-        return wsfname, fname
-
-    # ...............................................
-    def _getCopyDataToWorkdirRule(self, workdir, obj):
-        # Copy object into workspace if it does not exist
-        wsfname, fname = self._getTempFinalFilenames(workdir, obj)
-        touch_cmd = LmTouchCommand(os.path.join(workdir, 'touch.out'))
-        copy_cmd= SystemCommand('cp', 
-                                '{} {}'.format(fname, wsfname), 
-                                inputs=[fname], 
-                                outputs=[wsfname])
-        tchcp_pam_cmd = ChainCommand([touch_cmd, copy_cmd])
-        rule = tchcp_pam_cmd.getMakeflowRule(local=True)
-        return rule, wsfname
-
-    # ...............................................
-    def _getPamCalcRules(self, workdir, pam, ass_success_fname, filter_desc):
-        # TODO: Site covariance, species covariance, schluter
-        rules = []
-
-        ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
-        
-        # Copy encoded tree into workspace
-        wstree_fname = None
-        if self.tree:
-            tchcp_tree_rule, wstree_fname = self._getCopyDataToWorkdirRule(workdir, self.tree)
-            rules.append(tchcp_tree_rule)    
-
-        # Sites stats outputs
-        sites_mtx, sites_fname, sites_success_fname  = \
-            self._findOrAddPAMStatMatrix(pam, MatrixType.SITES_OBSERVED, 
-                                         'SITES_OBSERVED', filter_desc, workdir)
-        # Species stats outputs
-        species_mtx, species_fname, species_success_fname = \
-            self._findOrAddPAMStatMatrix(pam, MatrixType.SPECIES_OBSERVED, 
-                                         'SPECIES_OBSERVED', filter_desc, workdir)        
-        # Diversity stats outputs
-        div_mtx, div_fname, div_success_fname = \
-            self._findOrAddPAMStatMatrix(pam, MatrixType.DIVERSITY_OBSERVED, 
-                                         'DIVERSITY_OBSERVED', filter_desc, workdir)
-        
-        # Calulate multi-species statistics
-        stats_cmd = CalculateStatsCommand(ws_pam_fname, sites_fname, 
-                    species_fname, div_fname, treeFilename=wstree_fname)
-        # add dependency of PAM assembly before calculate possible
-        stats_cmd.inputs.append(ass_success_fname)
-        rules.append(stats_cmd.getMakeflowRule())
-        
-        # Save multi-species sites outputs
-        sites_save_cmd = StockpileCommand(ProcessType.RAD_CALCULATE, 
-                    sites_mtx.getId(), sites_success_fname, sites_fname)
-        rules.append(sites_save_cmd.getMakeflowRule(local=True))
-        
-        # Save multi-species species outputs
-        species_save_cmd = StockpileCommand(ProcessType.RAD_CALCULATE, 
-                    species_mtx.getId(), species_success_fname, species_fname)
-        rules.append(species_save_cmd.getMakeflowRule(local=True))
-        
-        # Save multi-species diversity outputs
-        div_save_cmd = StockpileCommand(ProcessType.RAD_CALCULATE, 
-                    div_mtx.getId(), div_success_fname, div_fname)
-        rules.append(div_save_cmd.getMakeflowRule(local=True))
-        
-        return rules
-
-    # ............................................
-    def _getAncestralRules(self, workdir, pam):
-        if not self.tree:
-            return []
-        # else
-        rules = []
-        # Copy encoded tree into workspace
-        tchcp_tree_rule, wstree_fname = self._getCopyDataToWorkdirRule(workdir, 
-                                                                       self.tree)
-        rules.append(tchcp_tree_rule)
-
-        # Copy PAM into workspace if necessary 
-        ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
-        
-            
-        ancpam_mtx, ws_ancpam_fname, ancpam_success_fname = \
-                self._findOrAddPAMStatMatrix(pam, MatrixType.ANC_PAM, 'ANC_PAM', 
-                                             'Ancestral', workdir)
-        # Create ancestral pam
-        ancpam_cmd = CreateAncestralPamCommand(ws_pam_fname, wstree_fname, 
-                                               ws_ancpam_fname)
-        rules.append(ancpam_cmd.getMakeflowRule())
-        # Save ancestral pam
-        ancpam_save_cmd = StockpileCommand(ProcessType.RAD_CALCULATE,
-                                            ancpam_mtx.getId(),
-                                            ancpam_success_fname,
-                                            ws_ancpam_fname)
-        rules.append(ancpam_save_cmd.getMakeflowRule(local=True))
-        return rules
-    
-    # ............................................
-    def _getMCPARules(self, workdir, pam, biogeo_hyp, filter_desc, numPermutations):
-        rules = []
-        
-        # Copy BiogeographicHypotheses into workspace if necessary 
-        tchcp_bgh_rule, ws_bgh_fname = self._getCopyDataToWorkdirRule(workdir, biogeo_hyp)
-        rules.append(tchcp_bgh_rule)    
-
-        ws_pam_fname, _ = self._getTempFinalFilenames(workdir, pam)
-            
-        # TODO: Do we need to resolvePolytomies??
-#         if self.tree.isBinary() and (not self.tree.hasBranchLengths() 
-#                                      or self.tree.isUltrametric()):
-        # Copy Tree into workspace if necessary 
-        tchcp_tree_rule, ws_tree_fname = self._getCopyDataToWorkdirRule(workdir, self.tree)
-        rules.append(tchcp_tree_rule)
-                
-        # Sync PAM and tree
-        prune_pam_fname = os.path.join(workdir, 'prunedPAM'+LMFormat.MATRIX.ext)
-        prune_tree_fname = os.path.join(workdir, 'prunedTree'+LMFormat.NEXUS.ext)
-        prune_meta_fname = os.path.join(workdir, 'prunedMeta'+LMFormat.JSON.ext)
-                
-        # Need Pam and Tree
-        syncCmd = SyncPamAndTreeCommand(ws_pam_fname, prune_pam_fname,
-                    ws_tree_fname, prune_tree_fname, prune_meta_fname)
-        rules.append(syncCmd.getMakeflowRule())
-                
+        # File names
+        encoded_tree_filename = self._create_filename(
+            pam_id, 'encoded_tree{}'.format(LMFormat.MATRIX.ext))
+        pruned_pam_filename = self._create_filename(
+            pam_id, 'pruned_pam{}'.format(LMFormat.MATRIX.ext))
+        pruned_tree_filename = self._create_filename(
+            pam_id, 'pruned_tree{}'.format(LMFormat.NEXUS.ext))
+        pruned_metadata_filename = self._create_filename(
+            pam_id, 'pruned_metadata{}'.format(LMFormat.JSON.ext))
+        # Synchronize PAM and Squidded tree
+        mcpa_tree_encode_rules.append(
+            SyncPamAndTreeCommand(
+                pam.getDLocation(), pruned_pam_filename,
+                self.squid_tree_filename, pruned_tree_filename,
+                pruned_metadata_filename))
         # Encode tree
-        enc_tree_fname = os.path.join(workdir, 'tree'+LMFormat.MATRIX.ext)
-        enc_tree_cmd = EncodePhylogenyCommand(prune_tree_fname, prune_pam_fname, 
-                                            enc_tree_fname)
-        rules.append(enc_tree_cmd.getMakeflowRule())
+        mcpa_tree_encode_rules.append(
+            EncodePhylogenyCommand(
+                pruned_tree_filename, pruned_pam_filename,
+                encoded_tree_filename))
         
-        # Get correct GRIM matching PAM
-        grim = self.boomGridset.getGRIMForCodes(pam.gcmCode, pam.altpredCode, 
-                                                pam.dateCode)
-        # Copy GRIM into workspace if necessary 
-        tchcp_grim_rule, ws_grim_fname = self._getCopyDataToWorkdirRule(workdir, grim)
-        rules.append(tchcp_grim_rule)    
-                            
-        # Get MCPA matrices
-        mcpa_out_mtx, ws_mcpa_out_fname, mcpa_out_success_fname = \
-                self._findOrAddPAMStatMatrix(pam, MatrixType.MCPA_OUTPUTS, 'MCPA_OUTPUTS', 
-                                             filter_desc, workdir)
-        
-        # Get workspace filenames
-        ws_obs_filename = os.path.join(workdir, 'obs_cor'+LMFormat.MATRIX.ext)
-        ws_obs_f_filename = os.path.join(workdir, 'obs_f'.format(LMFormat.MATRIX.ext))
-                
-        # MCPA observed command
-        mcpa_obs_cmd = McpaRunCommand(ws_pam_fname, enc_tree_fname,
-                                      ws_grim_fname, ws_bgh_fname,
-                                      obs_filename=ws_obs_filename,
-                                      f_mtx_filename=ws_obs_f_filename)
-        rules.append(mcpa_obs_cmd.getMakeflowRule())
-                
-        # MCPA randomized runs
-        i = 0
-        rand_f_mtxs = []
-        while i < numPermutations:
-            j = NUM_RAND_PER_GROUP
-            if i + j >= numPermutations:
-                j = numPermutations - i
-        
-            rand_f_mtx_filename = os.path.join(workdir, 'f_mtx_rand{}{}'
-                                               .format(i, LMFormat.MATRIX.ext))
-            rand_f_mtxs.append(rand_f_mtx_filename)
-            rand_cmd = McpaRunCommand(ws_pam_fname, enc_tree_fname,
-                                              ws_grim_fname, ws_bgh_fname,
-                                              f_mtx_filename=rand_f_mtx_filename,
-                                              randomize=True, 
-                                              num_permutations=NUM_RAND_PER_GROUP)
-            rules.append(rand_cmd.getMakeflowRule())
-            i += NUM_RAND_PER_GROUP
-        
-        i = 0
-        # TODO: Consider a different constant for this
-        group_size = NUM_RAND_PER_GROUP  
-        while len(rand_f_mtxs) > group_size:
-            i += 1
-            agg_filename = os.path.join(workdir, 'f_rand_agg{}{}'
-                                        .format(i, LMFormat.MATRIX.ext))
-            # Create a concatenate command for this group
-            concat_cmd = ConcatenateMatricesCommand(
-                  rand_f_mtxs[:group_size], 2, agg_filename)
-            rules.append(concat_cmd.getMakeflowRule())
+        return (pruned_pam_filename, pruned_tree_filename,
+                encoded_tree_filename, mcpa_tree_encode_rules)
+    
+    # ................................
+    def _get_multispecies_run_rules_for_pam(
+            self, pam_id, group_prefix, pam_filename, num_permutations,
+            grim_filename=None, biogeo_filename=None, phylo_filename=None,
+            tree_filename=None):
+        """Get the rules for running a set of multi species analyses
 
-            # Remove these from list and append new file
-            rand_f_mtxs = rand_f_mtxs[group_size:]
-            rand_f_mtxs.append(agg_filename)
-                
+        Return:
+            * Tuple of tuple of pam stats files created, tuple of mcpa files
+                created, list of rules
         """
-        # If we have multiple files left, aggregate them
-        if len(rand_f_mtxs) > 1:
-            i += 1
-            f_rand_agg_filename = os.path.join(
-                  workdir, 'f_rand_agg{}{}'.format(i, 
-                                                                  LMFormat.MATRIX.ext))
-            # Create a concatenate command for this group
-            concat_cmd = ConcatenateMatricesCommand(
-                  rand_f_mtxs[:group_size], axis=2, agg_filename)
-            rules.append(concat_cmd.getMakeflowRule())
-        else:
-            f_rand_agg_filename = rand_f_mtxs[0]
+        run_rules = []
+        div_stats_filename = None
+        species_stats_filename = None
+        site_stats_filename = None
+        mcpa_filename = None
+        mcpa_f_vals_filename = None
+        pam_stats_return = None
+        mcpa_return = None
+        
+        if self.do_pam_stats:
+            div_stats_filename = self._create_filename(
+                pam_id, 'div_stats_{}{}'.format(
+                    group_prefix, LMFormat.MATRIX.ext))
+            species_stats_filename = self._create_filename(
+                pam_id, 'sp_stats_{}{}'.format(
+                    group_prefix, LMFormat.MATRIX.ext))
+            site_stats_filename = self._create_filename(
+                pam_id, 'site_stats_{}{}'.format(
+                    group_prefix, LMFormat.MATRIX.ext))
+            pam_stats_return = (
+                div_stats_filename, species_stats_filename,
+                site_stats_filename)
+        if self.do_mcpa:
+            mcpa_filename = self._create_filename(
+                pam_id, 'mcpa_out_{}{}'.format(
+                    group_prefix, LMFormat.MATRIX.ext))
+            mcpa_f_vals_filename = self._create_filename(
+                pam_id, 'mcpa_f_{}{}'.format(
+                    group_prefix, LMFormat.MATRIX.ext))
+            if num_permutations > 0:
+                mcpa_return = (mcpa_filename, mcpa_f_vals_filename)
+            else:
+                mcpa_return = mcpa_f_vals_filename
+        run_rules.append(
+            MultiSpeciesRunCommand(
+                pam_filename, num_permutations, self.do_pam_stats,
+                self.do_mcpa, parallel=self.do_parallel,
+                grim_filename=grim_filename, biogeo_filename=biogeo_filename,
+                phylo_filename=phylo_filename, tree_filename=tree_filename,
+                diversity_stats_filename=div_stats_filename,
+                site_stats_filename=site_stats_filename,
+                species_stats_filename=species_stats_filename,
+                #site_covariance_filename=None,
+                #species_covariance_filename=None,
+                mcpa_output_filename=mcpa_filename,
+                mcpa_f_matrix_filename=mcpa_f_vals_filename))
+        return pam_stats_return, mcpa_return, run_rules
+
+    # ................................
+    def _get_or_insert_matrix(self, mtx_type, process_type, gcm_code,
+                              altpred_code, date_code):
+        """Attempt to find a matching matrix or create a new one
+
+        Args:
+            mtx_type (:obj: `int`): A MatrixType constant
+            process_type (:obj: `int`): A ProcessType constant
+            gcm_code (:obj: `str`): A GCM code for this LMMatrix
+            altpred_code (:obj: `str`): An alternate prediction code to use for
+                this LMMatrix
+            date_code (:obj: `str`): A date code to use for this LMMatrix
         """
-        
-        # TODO: Correct P-Values
-        out_p_values_filename = os.path.join(workdir, 'p_values'+LMFormat.MATRIX.ext)
-        out_bh_values_filename = os.path.join(workdir, 'bh_values'+LMFormat.MATRIX.ext)
-        
-        # TODO: Use ws_obs_filename?
-        corr_p_cmd = McpaCorrectPValuesCommand(ws_obs_f_filename,
-                                               out_p_values_filename,
-                                               out_bh_values_filename,
-                                               rand_f_mtxs)
-        rules.append(corr_p_cmd.getMakeflowRule())
-        
-        # Assemble final MCPA matrix
-        mcpa_concat_cmd = ConcatenateMatricesCommand([ws_obs_filename, 
-                                                      out_p_values_filename, 
-                                                      out_bh_values_filename], 
-                                                      2, ws_mcpa_out_fname)
-        rules.append(mcpa_concat_cmd.getMakeflowRule())
-        
-        # Save matrix
-        mcpaOutStockpileCmd = StockpileCommand(ProcessType.MCPA_ASSEMBLE,
-                                               mcpa_out_mtx.getId(), 
-                                               mcpa_out_success_fname, 
-                                               ws_mcpa_out_fname, 
-                                               metadataFilename=prune_meta_fname)
-        rules.append(mcpaOutStockpileCmd.getMakeflowRule(local=True))
+        new_mtx = LMMatrix(
+            None, matrixType=mtx_type, processType=process_type,
+            gcmCode=gcm_code, altpredCode=altpred_code, dateCode=date_code,
+            userId=self.user_id, gridset=self.gridset)
+        mtx = self._scribe.findOrInsertMatrix(new_mtx)
+        mtx.updateStatus(JobStatus.INITIALIZE)
+        return mtx
 
-        return rules
+    # ................................
+    def _get_rules_for_pam(self, pam):
+        """Get the rules for a PAM
 
-    # ...............................................
-    def _write_update_MF(self, mfchain):
-        mfchain.write()
-        # Give lmwriter rw access (this script may be run as root)
-        self._fixPermissions(mfchain.getDLocation())
-        # Set as ready to go
-        mfchain.updateStatus(JobStatus.INITIALIZE)
-        self._scribe.updateObject(mfchain)
+        Args:
+            pam (:obj: `Matrix`): The PAM for which to generate compute rules
+        """
+        pam_rules = []
+        # Generate the PAM
+        pam_rules.extend(self._get_rules_for_pam_assembly(pam))
+        pam_id = pam.getId()
+        
+        # Initialize variables
+        pruned_pam_filename = pam.getDLocation()
+        pruned_tree_filename = self.squid_tree_filename
+        encoded_tree_filename = None
+        grim_filename = None
+        biogeo_filename = None
+        
+        # If MCPA, sync tree and PAM
+        if self.do_mcpa:
+            (pruned_pam_filename, pruned_tree_filename, encoded_tree_filename,
+             tree_encode_rules) = self._get_mcpa_tree_encode_rules_for_pam(pam)
+            pam_rules.extend(tree_encode_rules)
+            # Initialize MCPA output matrix
+            mcpa_out_mtx = self._get_or_insert_matrix(
+                MatrixType.MCPA_OUTPUTS, ProcessType.MCPA_ASSEMBLE,
+                pam.gcmCode, pam.altpredCode, pam.datecode)
+            grim = self.gridset.getGRIMForCodes(
+                pam.gcmCode, pam.altpredCode, pam.dateCode)
+            grim_filename = grim.getDLocation()
+            biogeo = self.gridset.getBiogeographicHypotheses()
+            biogeo_filename = biogeo.getDLocation()
+
+        # If PAM stats, initialize matrices
+        if self.do_pam_stats:
+            sites_obs_mtx = self._get_or_insert_matrix(
+                MatrixType.SITES_OBSERVED, ProcessType.RAD_CALCULATE,
+                pam.gcmCode, pam.altpredCode, pam.dateCode)
+            species_obs_mtx = self._get_or_insert_matrix(
+                MatrixType.SPECIES_OBSERVED, ProcessType.RAD_CALCULATE,
+                pam.gcmCode, pam.altpredCode, pam.dateCode)
+            diversity_obs_mtx = self._get_or_insert_matrix(
+                MatrixType.DIVERSITY_OBSERVED, ProcessType.RAD_CALCULATE,
+                pam.gcmCode, pam.altpredCode, pam.dateCode)
+            anc_pam_mtx = self._get_or_insert_matrix(
+                MatrixType.ANC_PAM, ProcessType.RAD_CALCULATE, pam.gcmCode,
+                pam.altpredCode, pam.dateCode)
+        
+        # Analysis rules
+        (anc_pam_filename, pam_stats_filenames, mcpa_filenames, analysis_rules
+         ) = self._get_analysis_rules_for_pam(
+             pam.getId(), pruned_pam_filename, grim_filename=grim_filename,
+             biogeo_filename=biogeo_filename,
+             phylo_filename=encoded_tree_filename,
+             tree_filename=pruned_tree_filename)
+        # Add analysis rules
+        pam_rules.extend(analysis_rules)
+        
+        # Add stockpile rules
+        # TODO: This is ugly and fragile.  Figure out a better way to determine
+        #    what stats are present in what order
+        if len(pam_stats_filenames) > 0:
+            pam_rules.append(
+                StockpileCommand(
+                    ProcessType.RAD_CALCULATE, diversity_obs_mtx.getId(),
+                    self._create_filename(pam_id, 'diversity_stats.success'),
+                    [pam_stats_filenames[0]]))
+            pam_rules.append(
+                StockpileCommand(
+                    ProcessType.RAD_CALCULATE, species_obs_mtx.getId(),
+                    self._create_filename(pam_id, 'species_stats.success'),
+                    [pam_stats_filenames[1]]))
+            pam_rules.append(
+                StockpileCommand(
+                    ProcessType.RAD_CALCULATE, sites_obs_mtx.getId(),
+                    self._create_filename(pam_id, 'site_stats.success'),
+                    [pam_stats_filenames[2]]))
+
+        # Stockpile ancestral PAM
+        if anc_pam_filename is not None:
+            pam_rules.append(
+                StockpileCommand(
+                    ProcessType.RAD_CALCULATE, anc_pam_mtx.getId(),
+                    self._create_filename(pam_id, 'anc_pam.success'),
+                    [anc_pam_filename]))
+        
+        # Add stockpile for MCPA
+        if len(mcpa_filenames) > 0:
+            pam_rules.append(
+                StockpileCommand(
+                    ProcessType.MCPA_ASSEMBLE, mcpa_out_mtx.getId(),
+                    self._create_filename(pam_id, 'mcpa.success'),
+                    mcpa_filenames))
+
+        return pam_rules
+
+    # ................................
+    def _get_rules_for_pam_assembly(self, pam):
+        """Get the rules for creating the PAM
+
+        Args:
+            pam (:obj: `Matrix`): The PAM for which to generate assembly rules
+
+        Return:
+            Tuple of PAM file location and assembly rules
+        """
+        assembly_rules = []
+        pam_id = pam.getId()
+        pam_assembly_success_filename = self._create_filename(
+            pam_id, 'pam_{}_assembly.success'.format(pam.getId()))
+        assembly_rules.append(AssemblePamFromSolrQuery(
+            pam_id, pam_assembly_success_filename,
+            dependency_files=self.dependencies))
+        return pam.getDLocation(), assembly_rules
+        
+    # ................................
+    def close(self):
+        """Close scribe connections
+        """
         try:
-            self._scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
-                .format(mfchain.objId, 
-                        mfchain.mfMetadata[MFChain.META_DESCRIPTION], 
-                        mfchain.mfMetadata[MFChain.META_GRIDSET]))
+            self._scribe.closeConnections()
         except:
-            self._scribe.log.info('  Wrote Makeflow {}'.format(mfchain.objId))
-        return mfchain
+            pass
 
-    # ...............................................
-    def _fixPermissions(self, fname):
-        if isLMUser:
-            print('Permissions created correctly by LMUser')
+    # ................................
+    def create_workflow(self):
+        """Creates a workflow to accomplish the computations
+        """
+        meta = {
+            MFChain.META_CREATED_BY: os.path.basename(__file__),
+            MFChain.META_DESCRIPTION : 'Makeflow for multispecies analyses'
+        }
+        new_makeflow = MFChain(
+            self.user_id, metadata=meta, status=JobStatus.GENERAL,
+            statusModTime=mx.DateTime.gmt().mjd)
+        mf_chain = self._scribe.insertMFChain(
+            new_makeflow, self.gridset.getId())
+        self._scribe.updateObject(mf_chain)
+        
+        # Get rules
+        rules = self.get_collate_rules()
+        mf_chain.addCommands(rules)
+        # Write makeflow
+        mf_chain.write()
+        # Update DB
+        mf_chain.updateStatus(JobStatus.INITIALIZE)
+        self._scribe.updateObject(mf_chain)
+        self.log.debug('Wrote Makeflow: {}'.format(mf_chain.getDLocation()))
+
+    # ................................
+    def get_collate_rules(self):
+        """Generate a list of Makeflow rules for running these analyses
+
+        Return:
+            A list of MfRules
+        """
+        rules = []
+        if len(self.gridset.getPAMs()) == 0:
+            raise Exception(
+                ('There are no PAMs for this gridset.'
+                 '  Do they need to be filled by the scribe?'))
+        if self.gridset.tree is not None:
+            # Squid tree if exists and set self.squid_tree_filename
+            self.squid_tree_filename = self._create_filename(
+                'squid_tree{}'.format(LMFormat.NEXUS.ext))
+            rules.append(
+                SquidIncCommand(
+                    self.gridset.tree.getDLocation(), self.user_id,
+                    self.squid_tree_filename))
         else:
-            dirname = os.path.dirname(self.configFname)
-            stats = os.stat(dirname)
-            # item 5 is group id; get for lmwriter
-            gid = stats[5]
-            try:
-                os.chown(fname, -1, gid)
-                os.chmod(fname, 0664)
-            except Exception, e:
-                print('Failed to fix permissions on {}'.format(fname))
+            self.squid_tree_filename = None
 
-    # ...............................................
-    def writeSuccessFile(self, message='Success'):
-        self.readyFilename(self._successFname, overwrite=True)
-        try:
-            f = open(self._successFname, 'w')
-            f.write(message)
-        except:
-            raise
-        finally:
-            f.close()
-
+        for pam in self.gridset.getPAMs():
+            rules.extend(self._get_rules_for_pam(pam))
 
 # .............................................................................
-if __name__ == "__main__":
-    if not isLMUser():
-        print("Run this script as `{}`".format(LM_USER))
-        sys.exit(2)
-    earl = EarlJr()
-    defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG, 
-                                            objCode=PUBLIC_ARCHIVE_NAME, 
-                                            usr=PUBLIC_USER)
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-             description=('Populate a Lifemapper archive with metadata ' +
-                          'for single- or multi-species computations ' + 
-                          'specific to the configured input data or the ' +
-                          'data package named.'))
-    parser.add_argument('--config_file', default=defaultConfigFile,
-             help=('Configuration file for the archive, gridset, and grid ' +
-                   'to be created from these data.'))
-    parser.add_argument('--success_file', default=None,
-             help=('Filename to be written on successful completion of script.'))
-    
+        description='Create a multi-species workflow for a gridset')
+    parser.add_argument(
+        'gridset_id', type=int, help='The identifier for a gridset to use')
+    parser.add_argument(
+        'num_permutations', type=int, help='The number of permutations to perform')
+    parser.add_argument(
+        '-p', action='store_true', dest='do_pam_stats',
+        help='Should PAM stats be computed')
+    parser.add_argument(
+        '-m', action='store_true', dest='do_mcpa',
+        help='Should MCPA be computed')
+    parser.add_argument(
+        '-g', type=int, default=DEFAULT_RANDOM_GROUP_SIZE,
+        help='The number of permutations to group into one process')
+    parser.add_argument('-w', type=str, default='./', help='A work directory')
+
     args = parser.parse_args()
-    configFname = args.config_file
-    successFname = args.success_file
-    if not os.path.exists(configFname):
-        raise Exception('Configuration file {} does not exist'.format(configFname))
-    if successFname is None:
-        boombasename, _ = os.path.splitext(configFname)
-        successFname = boombasename + '.success'
     
-    secs = time.time()
-    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+    scribe = BorgScribe(ConsoleLogger())
+    scribe.openConnections()
+    gridset = scribe.getGridset(gridsetId=args.gridset_id, fillMatrices=True)
+    scribe.closeConnections()
+    collator = BoomCollate(
+        gridset, do_pam_stats=args.p, do_mcpa=args.m,
+        num_permutations=args.num_permutations, random_group_size=args.g,
+        work_dir=args.w)
+    collator.create_workflow()
+    collator.close()
+    scribe.closeConnections()
     
-    scriptname = os.path.splitext(os.path.basename(__file__))[0]
-    logname = '{}.{}'.format(scriptname, timestamp)
-    logger = ScriptLogger(logname, level=logging.INFO)
-    boomer = BoomCollate(configFname, successFname, log=logger)
-    boomer.initializeMe()
-    boomer.processMultiSpecies()
-    boomer.close()
-"""
-# ##########################################################################
-# $PYTHON LmDbServer/boom/boom_collate.py  --config_file=/share/lm/data/archive/taffy/heuchera_global_10min.ini --success_file=/share/lm/data/archive/taffy/heuchera_global_10min.collate.success
-from LmDbServer.boom.boom_collate import *
-
-import logging
-import mx.DateTime as dt
-import os, sys, time
-import signal
-
-from LmBackend.command.common import (ChainCommand, SystemCommand, 
-                                      ConcatenateMatricesCommand)
-from LmBackend.command.server import (LmTouchCommand, StockpileCommand)
-from LmBackend.command.multi import (CalculateStatsCommand, 
-        CreateAncestralPamCommand, SyncPamAndTreeCommand, EncodePhylogenyCommand,
-        McpaRunCommand, McpaCorrectPValuesCommand)
-from LmBackend.common.lmobj import LMError, LMObject
-
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (JobStatus, LM_USER, MatrixType, 
-          LMFormat, ProcessType, SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING)
-
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isLMUser
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME, 
-                                         Priority) 
-from LmServer.common.localconstants import PUBLIC_USER 
-from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.processchain import MFChain
-from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.tree import Tree
-
-
-# TODO: Move these to localconstants
-NUM_RAND_GROUPS = 30
-NUM_RAND_PER_GROUP = 2
-
-configFname = '/share/lm/data/archive/taffy/heuchera_global_10min.ini'
-successFname = '/share/lm/data/archive/taffy/heuchera_global_10min.ini.collate.success'
-
-
-logname = 'boom_collate_test'
-logger = ScriptLogger(logname, level=logging.INFO)
-boomer = BoomCollate(configFname, successFname, log=logger)
-boomer.initializeMe()
-
-# ##########################################################################
-self = boomer
-numPermutations=500
-
-master_chain = self._createMasterMakeflow()
-workdir = master_chain.getRelativeDirectory()
-globalPams = self.boomGridset.getAllPAMs()
-
-# for pam in globalPams:
-pam = globalPams[0]
-filter_desc = 'Filters: GCM {}, Altpred {}, Date {}'.format(
-                    pam.gcmCode, pam.altpredCode, pam.dateCode)
-
-ass_rules, ass_success_fname = self._getPamAssembleRules(workdir, 
-                                                    pam, filter_desc)
-master_chain.addCommands(ass_rules)
-
-# PamCalc depends on success of PamAssemble (ass_success_fname)
-calc_rules = self._getPamCalcRules(workdir, pam, ass_success_fname, 
-                                   filter_desc)
-master_chain.addCommands(calc_rules)
-
-# if self.tree is not None:
-anc_rules = self._getAncestralRules(workdir, pam)
-master_chain.addCommands(anc_rules)
-
-biogeo_hyp = self.boomGridset.getBiogeographicHypotheses()
-# if len(biogeo_hyp) > 1: 
-biogeo_hyp = biogeo_hyp[0]
-
-mcpa_rules = self._getMCPARules(workdir, pam, biogeo_hyp, 
-                                filter_desc, numPermutations)
-master_chain.addCommands(mcpa_rules)
-
-master_chain = self._write_update_MF(master_chain)
-self.writeSuccessFile('Boom_collate finished writing makefiles')
-     
-    
-
-"""
