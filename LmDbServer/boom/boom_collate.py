@@ -177,7 +177,7 @@ class BoomCollate(LMObject):
                 pam_analysis_rules)
 
     # ................................
-    def _get_mcpa_tree_encode_rules_for_pam(self, pam):
+    def _get_mcpa_tree_encode_rules_for_pam(self, pam, pam_success_filename):
         """Get MCPA tree encoding rules for PAM
 
         Args:
@@ -196,11 +196,15 @@ class BoomCollate(LMObject):
         pruned_metadata_filename = self._create_filename(
             pam_id, 'pruned_metadata{}'.format(LMFormat.JSON.ext))
         # Synchronize PAM and Squidded tree
-        mcpa_tree_encode_rules.append(
-            SyncPamAndTreeCommand(
-                pam.getDLocation(), pruned_pam_filename,
-                self.squid_tree_filename, pruned_tree_filename,
-                pruned_metadata_filename).getMakeflowRule())
+        
+        sync_command = SyncPamAndTreeCommand(
+            pam.getDLocation(), pruned_pam_filename,
+            self.squid_tree_filename, pruned_tree_filename,
+            pruned_metadata_filename)
+        sync_command.inputs.append(pam_success_filename)
+        
+        mcpa_tree_encode_rules.append(sync_command.getMakeflowRule())
+
         # Encode tree
         mcpa_tree_encode_rules.append(
             EncodePhylogenyCommand(
@@ -299,7 +303,9 @@ class BoomCollate(LMObject):
         """
         pam_rules = []
         # Generate the PAM
-        pam_rules.extend(self._get_rules_for_pam_assembly(pam))
+        (pam_success_filename, pam_assembly_rules
+         ) = self._get_rules_for_pam_assembly(pam)
+        pam_rules.extend(pam_assembly_rules)
         pam_id = pam.getId()
         
         # Initialize variables
@@ -312,7 +318,8 @@ class BoomCollate(LMObject):
         # If MCPA, sync tree and PAM
         if self.do_mcpa:
             (pruned_pam_filename, pruned_tree_filename, encoded_tree_filename,
-             tree_encode_rules) = self._get_mcpa_tree_encode_rules_for_pam(pam)
+             tree_encode_rules) = self._get_mcpa_tree_encode_rules_for_pam(
+                 pam, pam_success_filename)
             pam_rules.extend(tree_encode_rules)
             # Initialize MCPA output matrix
             mcpa_out_mtx = self._get_or_insert_matrix(
@@ -405,7 +412,7 @@ class BoomCollate(LMObject):
             pam_id, pam_assembly_success_filename,
             dependency_files=self.dependencies).getMakeflowRule())
         #return pam.getDLocation(), assembly_rules
-        return assembly_rules
+        return pam_assembly_success_filename, assembly_rules
         
     # ................................
     def close(self):
