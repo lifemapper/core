@@ -744,7 +744,8 @@ class BOOMFiller(LMObject):
                    ServiceObject.META_KEYWORDS: [GPAM_KEYWORD, scen.code]}
         tmpGpam = LMMatrix(None, matrixType=pamType, 
                            gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
-                           dateCode=scen.dateCode, metadata=pamMeta, userId=self.userId, 
+                           dateCode=scen.dateCode, algCode=alg.code, 
+                           metadata=pamMeta, userId=self.userId, 
                            gridset=gridset, 
                            status=JobStatus.GENERAL, 
                            statusModTime=mx.DateTime.gmt().mjd)
