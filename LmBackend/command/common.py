@@ -116,33 +116,41 @@ class ConvertLayerCommand(_LmCommand):
         self.outputs.append(modifiedAsciiFilename)
 
 # .............................................................................
-class CreateFMatrixCommand(_LmCommand):
-    """This command will create a F-Matrix comparing observed and random data
+class CreateSignificanceMatrixCommand(_LmCommand):
+    """This command will create a significance matrix
+
+    The significance matrix is composed of the observed data, p-values
+    determined by comparing random values, and a significance layer indicating
+    which values are significant after p-value correction.
     """
     relDir = BACKEND_SCRIPTS_DIR
-    scriptName = 'create_f_matrix.py'
+    scriptName = 'create_significance_matrix.py'
 
     # ................................
-    def __init__(self, observed_filename, f_matrix_filename, random_matrices,
-                 use_abs=False):
+    def __init__(self, observed_filename, out_matrix_filename, random_matrices,
+                 use_abs=False, fdr=None):
         """Constructor for command
 
         Args:
             observed_filename : The observed matrix
-            f_matrix_filename : The location to write the output matrix
+            out_matrix_filename : The location to write the output matrix
             random_matrices : One or more random matrices to compare to the
                 observed
             use_abs : If True, use absolute value for comparisons
+            fdr : The false discovery rate, or alpha, value to use when
+                determining significance
         """
         self.inputs.append(observed_filename)
-        self.outputs.append(f_matrix_filename)
+        self.outputs.append(out_matrix_filename)
         if not isinstance(random_matrices, list):
             random_matrices = [random_matrices]
         self.inputs.extend(random_matrices)
         self.args = '{} {} {}'.format(
-            observed_filename, f_matrix_filename, ' '.join(random_matrices))
+            observed_filename, out_matrix_filename, ' '.join(random_matrices))
         if use_abs:
             self.opt_args += ' -a'
+        if fdr is not None:
+            self.opt_args += ' -fdr {}'.format(fdr)
 
 # .............................................................................
 class ModifyAsciiHeadersCommand(_LmCommand):
