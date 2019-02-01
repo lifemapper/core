@@ -574,11 +574,11 @@ class StockpileCommand(_LmServerCommand):
         self.outputs.append(successFilename)
         
         if isinstance(objOutputFilenames, list):
-            self.args.extend(objOutputFilenames)
             self.inputs.extend(objOutputFilenames)
+            self.args += ' {}'.format(' '.join(objOutputFilenames))
         else:
             self.inputs.append(objOutputFilenames)
-            self.args.append(objOutputFilenames)
+            self.args += ' {}'.format(objOutputFilenames)
         
         if status is not None:
             self.opt_args += ' -s {}'.format(status)
