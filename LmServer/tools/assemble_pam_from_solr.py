@@ -55,7 +55,8 @@ def assemble_pam(pam_id):
     pam = scribe.getMatrix(mtxId=pam_id)
     
     matches = queryArchiveIndex(gridSetId=pam.gridsetId, userId=pam.user)
-    mtx_cols = scribe.listMatrixColumns(0, 10000, matrixId=pam.getId())
+    mtx_cols = scribe.listMatrixColumns(
+        0, 10000, matrixId=pam.getId(), userId=pam.user)
     mtx_col_ids = [int(c.id) for c in mtx_cols]
 
     # ......................
