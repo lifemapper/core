@@ -2985,14 +2985,14 @@ BEGIN
          occ_total = occ_total + currCount;
          RETURN NEXT dloc;
       END IF;
-
+   END LOOP; 
+        
    -- FINALLY, delete any non-projected occurrencesets
    DELETE FROM lm_v3.OccurrenceSet WHERE userid = usr AND statusmodtime <= dt;
    GET DIAGNOSTICS currCount = ROW_COUNT;
    RAISE NOTICE 'Deleted % Non-projected Occurrencesets %', currCount, occid;
    occ_total = occ_total + currCount;
 
-   END LOOP;      
 
    RAISE NOTICE 'Deleted % MatrixColumns', mc_total;
    RAISE NOTICE 'Deleted % SDMProject/Layers', prj_total;
