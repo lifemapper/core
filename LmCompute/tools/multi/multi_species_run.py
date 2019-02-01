@@ -118,7 +118,7 @@ if __name__ == '__main__':
     grim = None
     tree_mtx = None
 
-    if args.tree is not None:
+    if args.tree_filename is not None:
         tree = dendropy.Tree.get(path=args.tree_filename, schema='nexus')
     if args.do_mcpa:
         try:
