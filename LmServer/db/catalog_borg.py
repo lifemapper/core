@@ -1757,6 +1757,29 @@ class Borg(DbPostgresql):
         success = self.executeModifyFunction('lm_deleteOccurrenceSet', occ.getId())
         return success
 
+
+# ...............................................
+    def deleteObsoleteSDMDataReturnFilenames(self, userid, beforetime):
+        """
+        @summary: Deletes OccurrenceSets, any dependent SDMProjects (with Layer)
+                  and SDMProject-dependent MatrixColumns.  
+        @param userid: User for whom to delete SDM data
+        @param beforetime: delete SDM data modified before or at this time
+        @return: list of shapefile locations for deleted data.
+        """
+        filenames = []
+        rows, idxs = self.executeSelectManyFunction(
+            'lm_clearObsoleteSpeciesDataForUser', userid, beforetime)
+        tmstr = mx.DateTime.DateTimeFromMJD(beforetime).localtime().strftime()
+        self.log.info('''Deleted {} Occurrencesets older than {} and dependent 
+        objects for User {}'''.format(len(rows), tmstr, userid))
+        
+        for r in rows:
+            if r[0] is not None:
+                filenames.append(r[0])
+            
+        return filenames
+
 # ...............................................
     def _deleteOccsetDependentMatrixCols(self, occId, usr):
         """

@@ -2820,6 +2820,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+-- This does not delete any SDM data created for gridset
 CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridset(gsid int)
 RETURNS SETOF varchar AS
 $$
@@ -2912,7 +2913,7 @@ BEGIN
    RAISE NOTICE 'Deleted % ScenPackages for User %', currCount, usr;
    total = total + currCount;
 
-   -- Layers (Cascades to EnvLayer, ShapeGrid)
+   -- Layers (Cascades to EnvLayer, ShapeGrid, SDMProject)
 	DELETE FROM lm_v3.Layer WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
    RAISE NOTICE 'Deleted % Layers for User %', currCount, usr;
@@ -2933,6 +2934,74 @@ BEGIN
    RETURN total;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- Should only call this on PUBLIC user data
+CREATE OR REPLACE FUNCTION lm_v3.lm_clearObsoleteSpeciesDataForUser(usr varchar,
+                                                           dt double precision)
+RETURNS SETOF varchar AS
+$$
+DECLARE
+   lyrid     int;
+   occid     int;
+   currCount int;
+   mc_total  int := 0;
+   prj_total int := 0;
+   occ_total int := 0;
+   dloc      varchar;
+BEGIN
+   -- FIRST delete all matrixcolumns using this layer to remove FK constraint
+   FOR lyrid IN SELECT p.layerid FROM lm_v3.SDMProject p, lm_v3.OccurrenceSet o 
+      WHERE p.occurrencesetid = o.occurrencesetid 
+        AND o.userid = usr AND o.statusmodtime <= dt
+   LOOP
+      DELETE FROM lm_v3.MatrixColumn WHERE layerid = lyrid;
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % MatrixColumns for SDMProject Layer %', currCount, lyrid;
+      mc_total = mc_total + currCount;        
+   END LOOP;      
+
+   -- NEXT, delete sdmproject/layer
+   FOR lyrid, occid, dloc IN 
+      SELECT p.layerid, p.occurrencesetid, o.dlocation 
+         FROM lm_v3.SDMProject p, lm_v3.OccurrenceSet o 
+         WHERE p.occurrencesetid = o.occurrencesetid 
+           AND o.userid = usr AND o.statusmodtime <= dt
+   LOOP
+      -- Delete all sdmproject layers using this sdmproject occurrenceset
+      -- This cascades to joined SDMProject too
+      DELETE FROM lm_v3.Layer WHERE layerid in 
+         (SELECT layerid FROM lm_v3.SDMProject WHERE occurrencesetid = occid);
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+          
+      -- Delete this sdmproject occurrenceset
+      IF currCount > 0 THEN
+         RAISE NOTICE 'Deleted % SDMProject Layers for %', currCount, lyrid;
+         prj_total = prj_total + currCount;
+         
+         DELETE FROM lm_v3.OccurrenceSet WHERE occurrencesetid = occid;
+         GET DIAGNOSTICS currCount = ROW_COUNT;
+         RAISE NOTICE 'Deleted % Occurrenceset %', currCount, occid;
+         occ_total = occ_total + currCount;
+         RETURN NEXT dloc;
+      END IF;
+   END LOOP; 
+        
+   -- FINALLY, delete any non-projected occurrencesets
+   DELETE FROM lm_v3.OccurrenceSet WHERE userid = usr AND statusmodtime <= dt;
+   GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % Non-projected Occurrencesets %', currCount, occid;
+   occ_total = occ_total + currCount;
+
+
+   RAISE NOTICE 'Deleted % MatrixColumns', mc_total;
+   RAISE NOTICE 'Deleted % SDMProject/Layers', prj_total;
+   RAISE NOTICE 'Deleted % OccurrenceSets', occ_total;
+   
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- select * from lm_v3.lm_clearObsoleteSpeciesDataForUser('taffy', 58473)
 
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
