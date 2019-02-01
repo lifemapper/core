@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
     pam_stats, mcpa_outs = do_runs(
         pam, args.num_permutations, do_pam_stats=args.do_pam_stats,
-        do_mcpa=args.do_mcpa, tree=tree, tree=tree, biogeo=biogeo, grim=grim,
+        do_mcpa=args.do_mcpa, tree=tree, biogeo=biogeo, grim=grim,
         tree_mtx=tree_mtx, parallel=args.parallel)
 
     # Write outputs
