@@ -160,6 +160,8 @@ class Stockpile(LMObject):
             elif ProcessType.isMatrix(ptype) and os.path.getsize(fileNames[0]) > 0:
                 if metadata is not None:
                     obj.addMtxMetadata(metadata)
+                if os.path.exists(obj.getDLocation()):
+                    os.remove(obj.getDLocation())
                 shutil.copy(fileNames[0], obj.getDLocation())
         except Exception, e:
             raise LMError(currargs='Exception copying primary {} or ancillary output, ({})'
