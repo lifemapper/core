@@ -316,7 +316,7 @@ class BoomCollate(LMObject):
             # Initialize MCPA output matrix
             mcpa_out_mtx = self._get_or_insert_matrix(
                 MatrixType.MCPA_OUTPUTS, ProcessType.MCPA_ASSEMBLE,
-                pam.gcmCode, pam.altpredCode, pam.datecode)
+                pam.gcmCode, pam.altpredCode, pam.dateCode)
             grim = self.gridset.getGRIMForCodes(
                 pam.gcmCode, pam.altpredCode, pam.dateCode)
             grim_filename = grim.getDLocation()
@@ -491,7 +491,7 @@ if __name__ == '__main__':
     gridset = scribe.getGridset(gridsetId=args.gridset_id, fillMatrices=True)
     scribe.closeConnections()
     collator = BoomCollate(
-        gridset, do_pam_stats=args.p, do_mcpa=args.m,
+        gridset, do_pam_stats=args.do_pam_stats, do_mcpa=args.do_mcpa,
         num_permutations=args.num_permutations, random_group_size=args.g,
         work_dir=args.w)
     collator.create_workflow()
