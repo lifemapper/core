@@ -96,7 +96,8 @@ class AssemblePamFromSolrQueryCommand(_LmServerCommand):
     scriptName = 'assemble_pam_from_solr.py'
 
     # ................................
-    def __init__(self, pam_id, success_filename, dependency_files=None):
+    def __init__(self, pam_id, pam_filename, success_filename,
+                 dependency_files=None):
         """Construct the command
 
         Args:
@@ -111,6 +112,7 @@ class AssemblePamFromSolrQueryCommand(_LmServerCommand):
         
         self.args = '{} {}'.format(pam_id, success_filename)
         self.outputs.append(success_filename)
+        self.outputs.append(pam_filename)
         
         if dependency_files is not None:
             if isinstance(dependency_files, list):
