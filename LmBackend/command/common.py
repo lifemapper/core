@@ -143,6 +143,7 @@ class CreateSignificanceMatrixCommand(_LmCommand):
                 Matrix at this file location for comparisons instead of the
                 observed
         """
+        _LmCommand.__init__(self)
         self.inputs.append(observed_filename)
         self.outputs.append(out_matrix_filename)
         if not isinstance(random_matrices, list):
