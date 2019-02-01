@@ -12,7 +12,7 @@ from LmBackend.command.multi import (
     CreateAncestralPamCommand, EncodePhylogenyCommand, MultiSpeciesRunCommand,
     SyncPamAndTreeCommand)
 from LmBackend.command.server import (
-    AssemblePamFromSolrQuery, SquidIncCommand, StockpileCommand)
+    AssemblePamFromSolrQueryCommand, SquidIncCommand, StockpileCommand)
 from LmBackend.common.lmobj import LMObject
 
 from LmCommon.common.lmconstants import (
@@ -401,10 +401,11 @@ class BoomCollate(LMObject):
         pam_id = pam.getId()
         pam_assembly_success_filename = self._create_filename(
             pam_id, 'pam_{}_assembly.success'.format(pam.getId()))
-        assembly_rules.append(AssemblePamFromSolrQuery(
+        assembly_rules.append(AssemblePamFromSolrQueryCommand(
             pam_id, pam_assembly_success_filename,
-            dependency_files=self.dependencies))
-        return pam.getDLocation(), assembly_rules
+            dependency_files=self.dependencies).getMakeflowRule())
+        #return pam.getDLocation(), assembly_rules
+        return assembly_rules
         
     # ................................
     def close(self):

@@ -90,7 +90,7 @@ class AddBioGeoAndTreeCommand(_LmServerCommand):
             self.opt_args += ' -e {}'.format(eventField)
 
 # .............................................................................
-class AssemblePamFromSolrQuery(_LmServerCommand):
+class AssemblePamFromSolrQueryCommand(_LmServerCommand):
     """Command to assemble PAM data from a Solr query
     """
     scriptName = 'assemble_pam_from_solr.py'
