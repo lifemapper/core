@@ -128,7 +128,7 @@ class CreateSignificanceMatrixCommand(_LmCommand):
 
     # ................................
     def __init__(self, observed_filename, out_matrix_filename, random_matrices,
-                 use_abs=False, fdr=None):
+                 use_abs=False, fdr=None, test_matrix=None):
         """Constructor for command
 
         Args:
@@ -139,6 +139,9 @@ class CreateSignificanceMatrixCommand(_LmCommand):
             use_abs : If True, use absolute value for comparisons
             fdr : The false discovery rate, or alpha, value to use when
                 determining significance
+            test_matrix: An expected values matrix.  If provided, use the
+                Matrix at this file location for comparisons instead of the
+                observed
         """
         self.inputs.append(observed_filename)
         self.outputs.append(out_matrix_filename)
@@ -151,6 +154,8 @@ class CreateSignificanceMatrixCommand(_LmCommand):
             self.opt_args += ' -a'
         if fdr is not None:
             self.opt_args += ' -fdr {}'.format(fdr)
+        if test_matrix is not None:
+            self.opt_args += ' -t {}'.format(test_matrix)
 
 # .............................................................................
 class ModifyAsciiHeadersCommand(_LmCommand):

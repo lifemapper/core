@@ -43,6 +43,9 @@ if __name__ == '__main__':
         '--fdr', type=float, default=0.05,
         help=('The false discovery rate, or alpha, to use when'
               ' determining significance'))
+    parser.add_argument(
+        '-t', '--test_mtx', type=str,
+        help='Use this as the test matrix instead of the observed')
     args = parser.parse_args()
 
     if args.a:
@@ -52,8 +55,13 @@ if __name__ == '__main__':
     
     obs = Matrix.load(args.observed_matrix)
     
+    if args.test_mtx is not None:
+        test_mtx = Matrix.load(args.test_mtx)
+    else:
+        test_mtx = obs
+    
     p_values = ptest.get_p_values(
-        obs, matrix_object_generator(args.random_matrix),
+        test_mtx, matrix_object_generator(args.random_matrix),
         compare_func=cmp_func)
 
     sig_values = ptest.correct_p_values(
