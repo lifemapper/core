@@ -46,26 +46,39 @@ def reportFailure(mesgs):
                          "Failed to delete user occurrence sets", 
                          '\n'.join(mesgs))
     
-def deleteObsoleteData(scribe, userid, obsolete_date):
+# ...............................................
+def deleteObsoleteSDMs(scribe, userid, obsolete_date):
     # Should be able to just list old occurrence sets and then have the scribe 
     #     delete experiments associated with them
     occ_fnames = scribe.deleteObsoleteSDMDataReturnFilenames(userid, 
                                                              obsolete_date)    
     for fname in occ_fnames:
-        if fname is not None: 
-            pth, base = os.path.split(fname)
-            if os.path.exists(pth):
-                try:
-                    shutil.rmtree(pth)
-                except Exception, e:
-                    scribe.log.error('Failed to remove {}, {}'.format(pth, str(e)))
-                else:
-                    scribe.log.error('Removed {} for occset {}'.format(pth, base))
+        pth, base = os.path.split(fname)
+        if fname is not None and os.path.exists(pth):
+            try:
+                shutil.rmtree(pth)
+            except Exception, e:
+                scribe.log.error('Failed to remove {}, {}'.format(pth, str(e)))
+            else:
+                scribe.log.error('Removed {} for occset {}'.format(pth, base))
+    
+# ...............................................
+def deleteObsoleteGridsets(scribe, userid, obsolete_date):
+    # Should be able to just list old occurrence sets and then have the scribe 
+    #     delete experiments associated with them
+    gs_fnames = scribe.deleteGridsetReturnFilenames(userid, obsolete_date)    
+    for fname in gs_fnames:
+        if fname is not None and os.path.exists(fname):
+            try:
+                os.remove(fname)
+            except Exception, e:
+                scribe.log.error('Failed to remove {}, {}'.format(fname, str(e)))
+            else:
+                scribe.log.error('Removed {}'.format(fname))
     
 
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
-    anon_usr = DEFAULT_POST_USER
     anon_obsolesence_date = gmt().mjd - (ONE_DAY * 14)
 
     import argparse
@@ -73,12 +86,14 @@ if __name__ == "__main__":
              description=(""""Delete species occurrencesets older than 
              <date in MJD format>, SDM projections, and MatrixColumns computed 
              from those SDM projections for <user>"""))
-    parser.add_argument('user_id', default=None,
+             
+    parser.add_argument('user_id', default=DEFAULT_POST_USER,
              help=('User to delete data for'))
-    parser.add_argument('mjd_date', type=int, default=None,
-             help=('Cutoff date in MJD format, to the nearest day/integer'))
+    parser.add_argument('mjd_date', type=float, default=anon_obsolesence_date,
+             help=('Cutoff date in MJD format'))
     parser.add_argument('--logname', type=str, default=None,
              help=('Basename of the logfile, without extension'))
+    
     args = parser.parse_args()
     usr = args.user
     mjd_date = args.mjd_date
@@ -95,8 +110,9 @@ if __name__ == "__main__":
     scribe = BorgScribe(log)
     try:
         scribe.openConnections()
-        deleteObsoleteData(scribe, usr, mjd_date)
-#         deleteObsoleteData(scribe, anon_usr, anon_obsolesence_date)
+        if usr == DEFAULT_POST_USER:
+            deleteObsoleteGridsets(scribe, usr, mjd_date)
+        deleteObsoleteSDMs(scribe, usr, mjd_date)
     except:
         pass
     finally:
