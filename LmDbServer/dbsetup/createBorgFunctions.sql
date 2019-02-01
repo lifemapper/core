@@ -1275,6 +1275,7 @@ DECLARE
    gcmtest varchar;
    altpredtest varchar;
    datetest varchar;
+   algtest varchar;
 BEGIN
    IF mtxid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_fullmatrix WHERE matrixid = mtxid;
@@ -1476,7 +1477,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listMatrixAtoms(firstRecNum int, maxNum int,
                                                     gcm varchar,
                                                     altpred varchar,
                                                     tm varchar,
-                                                    alg, varchar,
+                                                    alg varchar,
                                                     meta varchar, 
                                                     grdid int,
                                                     aftertime double precision,
