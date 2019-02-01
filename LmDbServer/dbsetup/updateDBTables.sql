@@ -32,4 +32,74 @@
 
 
 -- \c borg
-
+DROP FUNCTION lm_v3.lm_findOrInsertMatrix(mtxid int, mtxtype int,
+                                                       grdid int,
+                                                       gcm varchar,
+                                                       altpred varchar,
+                                                       dt varchar,
+                                                       dloc text,
+                                                       meta varchar, 
+                                                       stat int,
+                                                   	 stattime double precision);
+                                                   	 
+DROP  FUNCTION lm_v3.lm_getMatrix(mtxid int, mtxtype int, 
+                                              gsid int,
+                                              gcm varchar,
+                                              altpred varchar,
+                                              dt varchar,
+                                              gsname varchar,
+                                              usr varchar); 
+                                              
+DROP  FUNCTION lm_v3.lm_getFilterMtx(usr varchar, mtxtype int,
+                                                    gcm varchar,
+                                                    altpred varchar,
+                                                    tm varchar,
+                                                    meta varchar, 
+                                                    grdid int,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int); 
+                                                    
+DROP  FUNCTION lm_v3.lm_countMatrices(usr varchar, mtxtype int,
+                                                    gcm varchar,
+                                                    altpred varchar,
+                                                    tm varchar,
+                                                    meta varchar, 
+                                                    grdid int,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int);
+                                                    
+DROP  FUNCTION lm_v3.lm_listMatrixAtoms(firstRecNum int, maxNum int, 
+                                                    usr varchar,
+                                                    mtxtype int,
+                                                    gcm varchar,
+                                                    altpred varchar,
+                                                    tm varchar,
+                                                    meta varchar, 
+                                                    grdid int,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int); 
+                                                    
+DROP FUNCTION lm_v3.lm_listMatrixObjects(firstRecNum int, maxNum int, 
+                                                    usr varchar,
+                                                    mtxtype int,
+                                                    gcm varchar,
+                                                    altpred varchar,
+                                                    tm varchar,
+                                                    meta varchar, 
+                                                    grdid int,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int);
+ALTER TABLE lm_v3.Matrix ADD COLUMN algorithmCode varchar(30) REFERENCES lm_v3.Algorithm(algorithmCode);
+ALTER TABLE lm_v3.MatrixColumn ADD UNIQUE (matrixId, squid);

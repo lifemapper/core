@@ -1214,6 +1214,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrix(mtxid int,
                                                        gcm varchar,
                                                        altpred varchar,
                                                        dt varchar,
+                                                       alg varchar,
                                                        dloc text,
                                                        meta varchar, 
                                                        stat int,
@@ -1226,7 +1227,7 @@ DECLARE
    newid int;
 BEGIN
    SELECT * INTO rec FROM lm_v3.lm_getMatrix(mtxid, mtxtype, grdid, 
-                                             gcm, altpred, dt, NULL, NULL);
+                                             gcm, altpred, dt, alg, NULL, NULL);
    IF NOT FOUND OR rec.matrixId IS NULL THEN
       begin
          -- check existence of required referenced gridset
@@ -1237,9 +1238,9 @@ BEGIN
          END IF;
 
          INSERT INTO lm_v3.matrix (matrixType, gridsetId, matrixDlocation, 
-                                   gcmCode, altpredCode, dateCode, metadata, 
-                                   status, statusmodtime) 
-                           VALUES (mtxtype, grdid, dloc, gcm, altpred, dt,
+                                   gcmCode, altpredCode, dateCode, algorithmCode, 
+                                   metadata, status, statusmodtime) 
+                           VALUES (mtxtype, grdid, dloc, gcm, altpred, dt, alg,
                                    meta, stat, stattime);
          IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to find or insert Matrix';
@@ -1256,13 +1257,14 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- Gets a lm_fullmatrix with its (matrix + gridset + shapegrid)
--- Unique: gridsetId, matrixType, gcmCode, altpredCode, dateCode
+-- Unique: gridsetId, matrixType, gcmCode, altpredCode, dateCode, algorithmCode
 CREATE OR REPLACE FUNCTION lm_v3.lm_getMatrix(mtxid int, 
                                               mtxtype int, 
                                               gsid int,
                                               gcm varchar,
                                               altpred varchar,
                                               dt varchar,
+                                              alg varchar,
                                               gsname varchar,
                                               usr varchar)
    RETURNS lm_v3.lm_fullmatrix AS
@@ -1300,13 +1302,20 @@ BEGIN
          datetest = 'dateCode =  ' || quote_literal(dt);
       END IF;
       
+      IF alg IS NULL THEN
+         algtest = 'algorithmCode IS NULL';
+      ELSE 
+         algtest = 'algorithmCode =  ' || quote_literal(alg);
+      END IF;
+      
       cmd := 'SELECT * FROM lm_v3.lm_fullmatrix WHERE matrixtype = ' 
                                                       || quote_literal(mtxtype) 
                                                       || ' AND gridsetid = ' 
                                                       || quote_literal(gsid)
                                                       || ' AND ' || gcmtest
                                                       || ' AND ' || altpredtest
-                                                      || ' AND ' || datetest;
+                                                      || ' AND ' || datetest
+                                                      || ' AND ' || algtest;
       RAISE NOTICE 'cmd = %', cmd;
 
       EXECUTE cmd INTO rec;
@@ -1345,6 +1354,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMtx(usr varchar,
                                                     gcm varchar,
                                                     altpred varchar,
                                                     tm varchar,
+                                                    alg varchar,
                                                     meta varchar, 
                                                     grdid int,
                                                     aftertime double precision,
@@ -1373,6 +1383,9 @@ BEGIN
    END IF;
    IF tm is not null THEN
       wherecls = wherecls || ' AND datecode like  ' || quote_literal(tm);
+   END IF;
+   IF alg is not null THEN
+      wherecls = wherecls || ' AND algorithmcode like  ' || quote_literal(alg);
    END IF;
 
    -- Metadata
@@ -1429,6 +1442,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_countMatrices(usr varchar,
                                                     gcm varchar,
                                                     altpred varchar,
                                                     tm varchar,
+                                                    alg varchar,
                                                     meta varchar, 
                                                     grdid int,
                                                     aftertime double precision,
@@ -1445,7 +1459,7 @@ DECLARE
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.lm_fullmatrix ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtx(usr, mtxtype, gcm, 
-                 altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
+                 altpred, tm, alg, meta, grdid, aftertime, beforetime, epsg, 
                  afterstat, beforestat);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
@@ -1462,6 +1476,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listMatrixAtoms(firstRecNum int, maxNum int,
                                                     gcm varchar,
                                                     altpred varchar,
                                                     tm varchar,
+                                                    alg, varchar,
                                                     meta varchar, 
                                                     grdid int,
                                                     aftertime double precision,
@@ -1480,7 +1495,7 @@ DECLARE
 BEGIN
    cmd = 'SELECT matrixId, null, grdepsgcode, statusmodtime FROM lm_v3.lm_fullmatrix ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtx(usr, mtxtype, gcm, 
-                 altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
+                 altpred, tm, alg, meta, grdid, aftertime, beforetime, epsg, 
                  afterstat, beforestat);
    ordercls = 'ORDER BY statusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
@@ -1504,6 +1519,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listMatrixObjects(firstRecNum int, maxNum in
                                                     gcm varchar,
                                                     altpred varchar,
                                                     tm varchar,
+                                                    alg varchar,
                                                     meta varchar, 
                                                     grdid int,
                                                     aftertime double precision,
@@ -1522,7 +1538,7 @@ DECLARE
 BEGIN
    cmd = 'SELECT * FROM lm_v3.lm_fullmatrix ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtx(usr, mtxtype, gcm, 
-                 altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
+                 altpred, tm, alg, meta, grdid, aftertime, beforetime, epsg, 
                  afterstat, beforestat);
    ordercls = 'ORDER BY statusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);

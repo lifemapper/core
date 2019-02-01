@@ -332,6 +332,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    gcmCode,
    altpredCode,
    dateCode,
+   algorithmCode,
    matrixDlocation,
    metadata,
    status,
@@ -371,7 +372,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    bbox,
    lyrmodtime) AS
    SELECT m.matrixId, m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode, 
-   		 m.dateCode, m.matrixDlocation, m.metadata, m.status, 
+   		 m.dateCode, m.algorithmCode, m.matrixDlocation, m.metadata, m.status, 
    		 m.statusmodtime, 
           g.userId, g.grdname, g.layerId, 
           g.grddlocation, g.grdepsgcode, g.grdmetadata, 
@@ -397,6 +398,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
    gcmCode,
    altpredCode,
    dateCode,
+   algorithmCode,
    matrixDlocation,
    metadata,
    status,
@@ -410,7 +412,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
    grdmetadata,
    grdmodTime) AS
    SELECT m.matrixId, m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode,
-          m.dateCode, m.matrixDlocation, m.metadata, m.status, 
+          m.dateCode, m.algorithmCode, m.matrixDlocation, m.metadata, m.status, 
           m.statusmodtime, 
           g.userId, g.name, g.layerId, 
           g.dlocation, g.epsgcode, g.metadata, g.modTime
@@ -615,6 +617,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    gcmCode,
    altpredCode,
    dateCode,
+   algorithmCode,
    matrixDlocation,
    mtxmetadata,
    mtxstatus,
@@ -628,7 +631,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
              mc.squid, mc.ident, mc.metadata, mc.layerId,
              mc.intersectParams, mc.status, mc.statusmodtime,
              m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode, m.dateCode, 
-             m.matrixDlocation, m.metadata, m.status, 
+             m.algorithmCode, m.matrixDlocation, m.metadata, m.status, 
              m.statusmodtime,
              g.userid, g.layerid
         FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m, lm_v3.Gridset g
@@ -656,6 +659,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_occMatrixcolumn (
    gcmCode,
    altpredCode,
    dateCode,
+   --use algorithmCode from sdmproject 
    matrixDlocation,
    mtxmetadata,
    mtxstatus,
@@ -812,6 +816,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn_matrix (
    gcmCode,
    altpredCode,
    dateCode,
+   -- use algorithmCode above
    matrixDlocation,
    mtxmetadata,
    mtxstatus,

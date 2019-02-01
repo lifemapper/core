@@ -49,7 +49,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
     def __init__(self, matrix, headers=None,
                      matrixType=MatrixType.PAM, 
                      processType=None,
-                     gcmCode=None, altpredCode=None, dateCode=None,
+                     gcmCode=None, altpredCode=None, dateCode=None, algCode=None,
                      metadata={},
                      dlocation=None, 
                      metadataUrl=None,
@@ -78,6 +78,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         self.gcmCode = gcmCode
         self.altpredCode = altpredCode
         self.dateCode = dateCode
+        self.algorithmCode = algCode
         self.mtxMetadata = {}
         self.loadMtxMetadata(metadata)
         self._gridset = gridset
