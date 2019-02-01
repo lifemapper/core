@@ -409,7 +409,7 @@ class BoomCollate(LMObject):
         pam_assembly_success_filename = self._create_filename(
             pam_id, 'pam_{}_assembly.success'.format(pam.getId()))
         assembly_rules.append(AssemblePamFromSolrQueryCommand(
-            pam_id, pam_assembly_success_filename,
+            pam_id, pam.getDLocation(), pam_assembly_success_filename,
             dependency_files=self.dependencies).getMakeflowRule())
         #return pam.getDLocation(), assembly_rules
         return pam_assembly_success_filename, assembly_rules
