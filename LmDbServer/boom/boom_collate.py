@@ -86,9 +86,9 @@ class BoomCollate(LMObject):
             pam_id (:obj: `int`): The database identifier for a PAM
             parts (:obj: *`list`): Additional path parts
         """
-        path_parts = [self.workspace_dir, pam_id]
+        path_parts = [self.workspace_dir, 'pam_{}'.format(pam_id)]
         path_parts.extend(list(parts))
-        return os.path.join(path_parts)
+        return os.path.join(*path_parts)
         
     # ................................
     def _get_aggregation_rules_for_pam(
@@ -320,7 +320,7 @@ class BoomCollate(LMObject):
             grim = self.gridset.getGRIMForCodes(
                 pam.gcmCode, pam.altpredCode, pam.dateCode)
             grim_filename = grim.getDLocation()
-            biogeo = self.gridset.getBiogeographicHypotheses()
+            biogeo = self.gridset.getBiogeographicHypotheses()[0]
             biogeo_filename = biogeo.getDLocation()
 
         # If PAM stats, initialize matrices
