@@ -101,5 +101,9 @@ DROP FUNCTION lm_v3.lm_listMatrixObjects(firstRecNum int, maxNum int,
                                                     epsg int,
                                                     afterstat int,
                                                     beforestat int);
+                                                    
+ALTER TABLE lm_v3.Matrix DROP CONSTRAINT IF EXISTS matrix_gridsetid_matrixtype_gcmcode_altpredcode_datecode_key;
 ALTER TABLE lm_v3.Matrix ADD COLUMN algorithmCode varchar(30) REFERENCES lm_v3.Algorithm(algorithmCode);
+ALTER TABLE lm_v3.Matrix ADD UNIQUE (gridsetId, matrixType, gcmCode, altpredCode, dateCode, algorithmCode);
+
 ALTER TABLE lm_v3.MatrixColumn ADD UNIQUE (matrixId, squid);

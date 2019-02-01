@@ -426,7 +426,7 @@ create table lm_v3.Matrix
    metadata text,
    status int,
    statusmodtime double precision,
-   UNIQUE (gridsetId, matrixType, gcmCode, altpredCode, dateCode)
+   UNIQUE (gridsetId, matrixType, gcmCode, altpredCode, dateCode, algorithmCode)
 );
 
 -- -------------------------------

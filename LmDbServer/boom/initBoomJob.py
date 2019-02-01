@@ -796,7 +796,7 @@ class BOOMFiller(LMObject):
         for code, scen in self.scenPkg.scenarios.iteritems():
             # "Global" PAM (one per scenario/algorithm)
             # TODO: Allow alg to be specified for each species, all in same PAM
-            for alg in self.algorithms:
+            for alg in self.algorithms.values():
                 gPam = self._findOrAddPAM(updatedGrdset, alg, scen)
                 
             # "Global" GRIM (one per scenario) 
@@ -1354,7 +1354,7 @@ from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmServer.base.utilities import isRootUser
 
-from LmDbServer.tools.initBoomJob import *
+from LmDbServer.boom.initBoomJob import *
 
 
 # Taxon ids

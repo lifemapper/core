@@ -1048,7 +1048,7 @@ class Borg(DbPostgresql):
     
 # ...............................................
     def getMatrix(self, mtxId, gridsetId, gridsetName, userId, mtxType, 
-                      gcmCode, altpredCode, dateCode):
+                      gcmCode, altpredCode, dateCode, algCode):
         """
         @summary: Retrieve an LmServer.legion.LMMatrix object with its gridset 
                      from the database
@@ -1060,12 +1060,12 @@ class Borg(DbPostgresql):
         @param gcmCode: Global Climate Model Code of the LMMatrix
         @param altpredCode: alternate prediction code of the LMMatrix
         @param dateCode: date code of the LMMatrix
+        @param algCode: algorithm code of the LMMatrix
         @return: Existing LmServer.legion.lmmatrix.LMMatrix
         """
-        row, idxs = self.executeSelectOneFunction('lm_getMatrix', 
-                                                                mtxId, mtxType, gridsetId, 
-                                                                gcmCode, altpredCode, dateCode, 
-                                                                gridsetName, userId)
+        row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtxId, 
+                mtxType, gridsetId, gcmCode, altpredCode, dateCode, algCode,
+                gridsetName, userId)
         fullMtx = self._createLMMatrix(row, idxs)
         return fullMtx
         
@@ -2147,8 +2147,8 @@ class Borg(DbPostgresql):
     
 # .............................................................................
     def countMatrices(self, userId, matrixType, gcmCode, altpredCode, dateCode, 
-                            metastring, gridsetId, afterTime, beforeTime, epsg, 
-                            afterStatus, beforeStatus):
+                      algCode, metastring, gridsetId, afterTime, beforeTime, 
+                      epsg, afterStatus, beforeStatus):
         """
         @summary: Count Matrices matching filter conditions 
         @param userId: User (owner) for which to return MatrixColumns.  
@@ -2169,15 +2169,16 @@ class Borg(DbPostgresql):
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
         row, idxs = self.executeSelectOneFunction('lm_countMatrices', userId, 
-                                            matrixType, gcmCode, altpredCode, dateCode, 
-                                            metamatch, gridsetId, afterTime, beforeTime, 
-                                            epsg, afterStatus, beforeStatus)
+                            matrixType, gcmCode, altpredCode, dateCode, algCode, 
+                            metamatch, gridsetId, afterTime, beforeTime, epsg, 
+                            afterStatus, beforeStatus)
         return self._getCount(row)
 
 # .............................................................................
     def listMatrices(self, firstRecNum, maxNum, userId, matrixType, gcmCode, 
-                          altpredCode, dateCode, metastring, gridsetId, afterTime, 
-                          beforeTime, epsg, afterStatus, beforeStatus, atom):
+                     altpredCode, dateCode, algCode, metastring, gridsetId, 
+                     afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+                     atom):
         """
         @summary: Return Matrix Objects or Atoms matching filter conditions 
         @param firstRecNum: The first record to return, 0 is the first record
@@ -2202,18 +2203,18 @@ class Borg(DbPostgresql):
             metamatch = '%{}%'.format(metastring)
         if atom:
             rows, idxs = self.executeSelectManyFunction('lm_listMatrixAtoms', 
-                                            firstRecNum, maxNum, userId, matrixType, 
-                                            gcmCode, altpredCode, dateCode, metamatch, 
-                                            gridsetId, afterTime, beforeTime, epsg, 
-                                            afterStatus, beforeStatus)
+                                firstRecNum, maxNum, userId, matrixType, 
+                                gcmCode, altpredCode, dateCode, algCode, 
+                                metamatch, gridsetId, afterTime, beforeTime, 
+                                epsg, afterStatus, beforeStatus)
             objs = self._getAtoms(rows, idxs, LMServiceType.MATRICES)
         else:
             objs = []
             rows, idxs = self.executeSelectManyFunction('lm_listMatrixObjects', 
-                                            firstRecNum, maxNum, userId, matrixType, 
-                                            gcmCode, altpredCode, dateCode, metamatch, 
-                                            gridsetId, afterTime, beforeTime, epsg, 
-                                            afterStatus, beforeStatus)
+                                firstRecNum, maxNum, userId, matrixType, 
+                                gcmCode, altpredCode, dateCode, algCode, 
+                                metamatch, gridsetId, afterTime, beforeTime, 
+                                epsg, afterStatus, beforeStatus)
             for r in rows:
                 objs.append(self._createLMMatrix(r, idxs))
         return objs

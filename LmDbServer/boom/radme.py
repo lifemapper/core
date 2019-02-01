@@ -152,31 +152,23 @@ class RADCaller(LMObject):
             
             if doCalc:
                 # Sites matrix
-                pd[MatrixType.SITES_OBSERVED] = self._getOrInsertMatrix(gridsetId, 
-                                                                  MatrixType.SITES_OBSERVED, 
-                                                                  ProcessType.RAD_CALCULATE,
-                                                                  pam.gcmCode, pam.altpredCode, 
-                                                                  pam.dateCode)
+                pd[MatrixType.SITES_OBSERVED] = self._getOrInsertMatrix(
+                    MatrixType.SITES_OBSERVED, ProcessType.RAD_CALCULATE,
+                    pam.gcmCode, pam.altpredCode, pam.dateCode, pam.algorithmCode)
                 # Species matrix
-                pd[MatrixType.SPECIES_OBSERVED] = self._getOrInsertMatrix(gridsetId, 
-                                                                  MatrixType.SPECIES_OBSERVED, 
-                                                                  ProcessType.RAD_CALCULATE,
-                                                                  pam.gcmCode, pam.altpredCode, 
-                                                                  pam.dateCode)
+                pd[MatrixType.SPECIES_OBSERVED] = self._getOrInsertMatrix(
+                    MatrixType.SPECIES_OBSERVED, ProcessType.RAD_CALCULATE,
+                    pam.gcmCode, pam.altpredCode, pam.dateCode, pam.algorithmCode)
                 # Diveristy matrix
-                pd[MatrixType.DIVERSITY_OBSERVED] = self._getOrInsertMatrix(gridsetId, 
-                                                                  MatrixType.DIVERSITY_OBSERVED, 
-                                                                  ProcessType.RAD_CALCULATE,
-                                                                  pam.gcmCode, pam.altpredCode, 
-                                                                  pam.dateCode)
+                pd[MatrixType.DIVERSITY_OBSERVED] = self._getOrInsertMatrix( 
+                    MatrixType.DIVERSITY_OBSERVED, ProcessType.RAD_CALCULATE,
+                    pam.gcmCode, pam.altpredCode, pam.dateCode, pam.algorithmCode)
                 # TODO: Site covariance, species covariance, schluter
                 
                 # Ancestral PAM
-                pd[MatrixType.ANC_PAM] = self._getOrInsertMatrix(gridsetId, 
-                                                                  MatrixType.ANC_PAM,
-                                                                  ProcessType.RAD_CALCULATE,
-                                                                  pam.gcmCode, pam.altpredCode,
-                                                                  pam.dateCode)
+                pd[MatrixType.ANC_PAM] = self._getOrInsertMatrix(
+                    MatrixType.ANC_PAM, ProcessType.RAD_CALCULATE, 
+                    pam.gcmCode, pam.altpredCode, pam.dateCode, pam.algorithmCode)
             
             if doMCPA:
                 # GRIM
@@ -184,12 +176,13 @@ class RADCaller(LMObject):
                                               mtxType=MatrixType.GRIM, 
                                               gcmCode=pam.gcmCode, 
                                               altpredCode=pam.altpredCode, 
-                                              dateCode=pam.dateCode)
+                                              dateCode=pam.dateCode,
+                                              algCode=pam.algorithmCode)
                 # Store all MCPA outputs in one matrix, remove extra comments when
                 #     confirmed
                 pd[MatrixType.MCPA_OUTPUTS] = self._getOrInsertMatrix(
-                    gridsetId, MatrixType.MCPA_OUTPUTS, ProcessType.MCPA_ASSEMBLE,
-                    pam.gcmCode, pam.altpredCode, pam.dateCode)
+                    MatrixType.MCPA_OUTPUTS, ProcessType.MCPA_ASSEMBLE,
+                    pam.gcmCode, pam.altpredCode, pam.dateCode, pam.algorithmCode)
                 
                             
             pamDict[pamId] = pd
@@ -210,7 +203,8 @@ class RADCaller(LMObject):
         self._scribe.log.info('  Wrote Gridset MF file')
         
     # ..............................................
-    def _getOrInsertMatrix(self, gsId, mtxType, procType, gcmCode, altpredCode, dateCode):
+    def _getOrInsertMatrix(self, mtxType, procType, gcmCode, altpredCode, 
+                           dateCode, algorithmCode):
         """
         @summary: Attempts to find a matrix of the specified type and scenario
                          parameters.  If it cannot be found, create a new matrix
@@ -224,9 +218,10 @@ class RADCaller(LMObject):
         #if mtx is None:
         
         newMtx = LMMatrix(None, matrixType=mtxType, processType=procType, 
-                                    gcmCode=gcmCode, altpredCode=altpredCode, 
-                                    dateCode=dateCode, userId=self._gridset.getUserId(), 
-                                    gridset=self._gridset)
+                          gcmCode=gcmCode, altpredCode=altpredCode, 
+                          dateCode=dateCode, algCode=algorithmCode, 
+                          userId=self._gridset.getUserId(), 
+                          gridset=self._gridset)
         mtx = self._scribe.findOrInsertMatrix(newMtx)
         mtx.updateStatus(JobStatus.INITIALIZE)
         return mtx

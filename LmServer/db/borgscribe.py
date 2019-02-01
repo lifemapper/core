@@ -33,9 +33,9 @@ from LmServer.base.taxon import ScientificName
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
 from LmServer.common.lmconstants import (DbUser, MatrixType, JobStatus, FileFix,
-                                                      NAME_SEPARATOR, LMFileType)
+                                         NAME_SEPARATOR, LMFileType)
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
-                                                          PUBLIC_USER)
+                                            PUBLIC_USER)
 from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
@@ -493,9 +493,9 @@ class BorgScribe(LMObject):
         return objs
 
 # ...............................................
-    def getMatrix(self, mtx=None, mtxId=None, 
-                      gridsetId=None, gridsetName=None, userId=None, 
-                      mtxType=None, gcmCode=None, altpredCode=None, dateCode=None):
+    def getMatrix(self, mtx=None, mtxId=None, gridsetId=None, gridsetName=None, 
+                  userId=None, mtxType=None, gcmCode=None, altpredCode=None, 
+                  dateCode=None, algCode=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getMatrix()
         @param mtx: A LmServer.legion.LMMatrix object containing the unique 
@@ -509,37 +509,38 @@ class BorgScribe(LMObject):
             gcmCode = mtx.gcmCode
             altpredCode = mtx.altpredCode
             dateCode = mtx.dateCode
+            algCode = mtx.algorithmCode
         fullMtx = self._borg.getMatrix(mtxId, gridsetId, gridsetName, userId, 
-                                                 mtxType, gcmCode, altpredCode, dateCode)
+                            mtxType, gcmCode, altpredCode, dateCode, algCode)
         return fullMtx
 
 # .............................................................................
     def countMatrices(self, userId=PUBLIC_USER, matrixType=None, 
-                                gcmCode=None, altpredCode=None, dateCode=None,
-                                keyword=None, gridsetId=None, 
-                                afterTime=None, beforeTime=None, epsg=None, 
-                                afterStatus=None, beforeStatus=None):
+                      gcmCode=None, altpredCode=None, dateCode=None, 
+                      algCode=None, keyword=None, gridsetId=None, 
+                      afterTime=None, beforeTime=None, epsg=None, 
+                      afterStatus=None, beforeStatus=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::countMatrixColumns()
         """
         count = self._borg.countMatrices(userId, matrixType, gcmCode, 
-                                altpredCode, dateCode, keyword, gridsetId, afterTime, 
-                                beforeTime, epsg, afterStatus, beforeStatus)
+                                altpredCode, dateCode, algCode, keyword, 
+                                gridsetId, afterTime, beforeTime, epsg, 
+                                afterStatus, beforeStatus)
         return count
 
 # .............................................................................
     def listMatrices(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
                           matrixType=None, gcmCode=None, altpredCode=None, 
-                          dateCode=None, keyword=None, gridsetId=None, 
+                          dateCode=None, algCode=None, keyword=None, gridsetId=None, 
                           afterTime=None, beforeTime=None, epsg=None, 
                           afterStatus=None, beforeStatus=None, atom=True):
         """
         @copydoc LmServer.db.catalog_borg.Borg::listMatrices()
         """
-        objs = self._borg.listMatrices(firstRecNum, maxNum, userId, 
-                                matrixType, gcmCode, altpredCode, dateCode, keyword, 
-                                gridsetId, afterTime, beforeTime, epsg, afterStatus, 
-                                beforeStatus, atom)
+        objs = self._borg.listMatrices(firstRecNum, maxNum, userId, matrixType, 
+                gcmCode, altpredCode, dateCode, algCode, keyword, gridsetId, 
+                afterTime, beforeTime, epsg, afterStatus, beforeStatus, atom)
         return objs
 
 # ...............................................
@@ -1064,86 +1065,8 @@ from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
                                                           PUBLIC_USER)
 
-pamid = 15
-grimid = 16
-grdid = 2
-
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
-
-gs = scribe.getGridset(gridsetId=grdid, fillMatrices=True)
-
-occs = scribe.getOccLayersForGridset(grdid)
-
-colPrjPairs1 = scribe.getSDMColumnsForMatrix(pamid) 
-for (col, prj) in colPrjPairs1:
-    print col.getId(), prj.getId()
-
-colPrjPairs2 = scribe.getSDMColumnsForMatrix(grimid) 
-for (col, prj) in colPrjPairs2:
-    print col.getId(), prj.getId()
-
-colPrjPairs3 = scribe.getSDMColumnsForGridset(grdid) 
-for (col, prj) in colPrjPairs3:
-    print col.getId(), prj.getId()
-
-usr = PUBLIC_USER
-cellsides = 4
-cellsize = 1
-shplyrid = 135
-
-gcm='CCSM4'
-alt='RCP8.5'
-dt='2050'
-
-grdid=17
-name='cjTest5'
-mtxid=42
-type=1
-
-
-earl = EarlJr(scribe=scribe)
-mtxid=1907
-mtxid=1908
-
-# m1 = scribe.getMatrix(mtxId=mtxid, 
-#                        gridsetId=None, gridsetName=None, userId=None, 
-#                        mtxType=None, gcmCode=None, altpredCode=None, dateCode=None)
-# 
-# m2 = scribe.getMatrix(mtxId=None, 
-#                        gridsetId=grdid, gridsetName=None, userId=None, 
-#                        mtxType=type, gcmCode=gcm, altpredCode=alt, dateCode=dt)
-# 
-# m3 = scribe.getMatrix(mtxId=None, 
-#                        gridsetId=None, gridsetName=name, userId=usr, 
-#                        mtxType=type, gcmCode=gcm, altpredCode=alt, dateCode=dt)
-
-code = 'AR5-CCSM4-RCP8.5-2050-10min'
-
-scen = scribe.getScenario(code)
-mapfname = scen.createLocalMapFilename()
-(mapname, ancillary, usr, epsg, occsetId, gridsetId, scencode)=  earl.parseMapFilename(mapfname)
-
-sgcount = scribe.countShapeGrids(userId=usr, cellsides=cellsides, cellsize=None, 
-                                afterTime=None, beforeTime=None, epsg=None)
-objs = scribe.listShapeGrids(0,10,userId=usr, cellsides=cellsides, cellsize=None, 
-                                afterTime=None, beforeTime=None, epsg=None, atom=False)
-atoms = scribe.listShapeGrids(0,10,userId=usr, cellsides=cellsides, cellsize=None, 
-                                afterTime=None, beforeTime=None, epsg=None, atom=True)
-sg = objs[0]
-sgatom = atoms[0]
-
-gscount = scribe.countGridsets(userId=usr, shpgrdLyrid=shplyrid,
-                          metastring=None, afterTime=None, beforeTime=None, epsg=None)
-objs = scribe.listGridsets(0, 10, userId=usr, shpgrdLyrid=shplyrid,
-                          metastring=None, afterTime=None, beforeTime=None, epsg=None, 
-                          atom=False)
-atoms = scribe.listGridsets(0, 10, userId=usr, shpgrdLyrid=shplyrid,
-                          metastring=None, afterTime=None, beforeTime=None, epsg=None, 
-                          atom=True)
-gs = objs[0]
-gsatom = atoms[0]
-
 
 
 scribe.closeConnections()
