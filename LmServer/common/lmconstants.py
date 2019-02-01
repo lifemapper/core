@@ -1273,6 +1273,7 @@ class SOLR_FIELDS(object):
     PAV_DATA_URL = 'pavDataUrl'
     PAV_META_URL = 'pavMetaUrl'
     POINT_COUNT = 'pointCount'
+    PAM_ID = 'pamId'
     PRESENCE = 'presence'
     PROJ_DATA_URL = 'sdmProjDataUrl'
     PROJ_ID = 'sdmProjId'

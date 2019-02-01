@@ -3,7 +3,7 @@
 import os
 
 from LmBackend.command.base import _LmCommand
-from LmBackend.common.lmconstants import CMD_PYBIN, SINGLE_SPECIES_SCRIPTS_DIR
+from LmBackend.common.lmconstants import SINGLE_SPECIES_SCRIPTS_DIR
 
 # .............................................................................
 class GrimRasterCommand(_LmCommand):
@@ -16,39 +16,31 @@ class GrimRasterCommand(_LmCommand):
     def __init__(self, shapegridFilename, rasterFilename, grimColFilename, 
                  minPercent=None, ident=None):
         """Construct the command object
-        @param shapegridFilename: The file location of the shapegrid to
-            intersect
-        @param rasterFilename: The file location of the raster file to
-            intersect with the shapegrid
-        @param grimColFilename: The file location to write the GRIM column
-        @param resolution: The resolution of the raster
-        @param minPercent: If provided, use largest class method, otherwise use
-            weighted mean
-        @param ident: If included, use this for a label on the GRIM column 
+
+        Args:
+            shapegridFilename: The file location of the shapegrid to intersect
+            rasterFilename: The file location of the raster file to intersect
+                with the shapegrid
+            grimColFilename: The file location to write the GRIM column
+            resolution: The resolution of the raster
+            minPercent: If provided, use largest class method, otherwise use
+                weighted mean
+            ident: If included, use this for a label on the GRIM column 
         """
         _LmCommand.__init__(self)
         self.inputs.extend([shapegridFilename, rasterFilename])
         self.outputs.append(grimColFilename)
         
-        self.args = [shapegridFilename, rasterFilename, grimColFilename]
-        self.optArgs = ''
+        self.args = '{} {} {}'.format(
+            shapegridFilename, rasterFilename, grimColFilename)
         if minPercent:
-            self.optArgs += ' -m largest_class'
+            self.opt_args += ' -m largest_class'
         if ident is not None:
-            self.optArgs += '-i {}'.format(ident)
-
-    # ................................
-    def getCommand(self):
-        """
-        @summary: Get the raw command to run on the system
-        """
-        return '{} {} {} {}'.format(
-            CMD_PYBIN, self.getScript(), self.optArgs, ' '.join(self.args))
+            self.opt_args += '-i {}'.format(ident)
 
 # .............................................................................
 class IntersectRasterCommand(_LmCommand):
-    """
-    @summary: This command intersects a raster layer and a shapegrid
+    """This command intersects a raster layer and a shapegrid
     """
     relDir = SINGLE_SPECIES_SCRIPTS_DIR
     scriptName = 'intersect_raster.py'
@@ -57,56 +49,46 @@ class IntersectRasterCommand(_LmCommand):
     def __init__(self, shapegridFilename, rasterFilename, pavFilename, 
                  minPresence, maxPresence, percentPresence, squid=None,
                  layerStatusFilename=None, statusFilename=None):
-        """
-        @summary: Construct the command object
-        @param shapegridFilename: The file location of the shapegrid to
-            intersect
-        @param rasterFilename: The file location of the raster file to
-            intersect with the shapegrid
-        @param pavFilename: The file location to write the resulting PAV
-        @param resolution: The resolution of the raster
-        @param minPresence: The minimum value to be considered present
-        @param maxPresence: The maximum value to be considered present
-        @param percentPresence: The percent of a shapegrid feature that must be
-            present to be considered present
-        @param squid: If included, use this for a label on the PAV 
-        @param layerStatusFilename: If provided, check this for the status of
-            the input layer object
-        @param statusFilename: If provided, write out status to this location
+        """Construct the command object
+
+        Args:
+            shapegridFilename: The file location of the shapegrid to intersect
+            rasterFilename: The file location of the raster file to intersect
+                with the shapegrid
+            pavFilename: The file location to write the resulting PAV
+            resolution: The resolution of the raster
+            minPresence: The minimum value to be considered present
+            maxPresence: The maximum value to be considered present
+            percentPresence: The percent of a shapegrid feature that must be
+                present to be considered present
+            squid: If included, use this for a label on the PAV 
+            layerStatusFilename: If provided, check this for the status of the
+                input layer object
+            statusFilename: If provided, write out status to this location
         """
         _LmCommand.__init__(self)
         self.inputs.extend([shapegridFilename, rasterFilename])
         self.outputs.append(pavFilename)
         
-        self.args = [
-            shapegridFilename, rasterFilename, pavFilename, str(minPresence),
-            str(maxPresence), str(percentPresence)]
+        self.args = '{} {} {} {} {} {}'.format(
+            shapegridFilename, rasterFilename, pavFilename, minPresence,
+            maxPresence, percentPresence)
         
-        self.optArgs = ''
         if squid is not None:
-            self.optArgs += ' --squid={}'.format(squid)
+            self.opt_args += ' --squid={}'.format(squid)
         
         if layerStatusFilename is not None:
-            self.optArgs += '  --layer_status_file={}'.format(
+            self.opt_args += '  --layer_status_file={}'.format(
                 layerStatusFilename)
             self.inputs.append(layerStatusFilename)
             
         if statusFilename is not None:
-            self.optArgs += ' -s {}'.format(statusFilename)
+            self.opt_args += ' -s {}'.format(statusFilename)
             self.outputs.append(statusFilename)
         
-    # ................................
-    def getCommand(self):
-        """
-        @summary: Get the raw command to run on the system
-        """
-        return '{} {} {} {}'.format(CMD_PYBIN, self.getScript(),
-                            self.optArgs, ' '.join(self.args))
-
 # .............................................................................
 class IntersectVectorCommand(_LmCommand):
-    """
-    @summary: This command intersects a vector layer and a shapegrid
+    """This command intersects a vector layer and a shapegrid
     """
     relDir = SINGLE_SPECIES_SCRIPTS_DIR
     scriptName = 'intersect_vector.py'
@@ -115,39 +97,28 @@ class IntersectVectorCommand(_LmCommand):
     def __init__(self, shapegridFilename, vectorFilename, pavFilename, 
                  presenceAttrib, minPresence, maxPresence, percentPresence, 
                  squid=None):
-        """
-        @summary: Construct the command object
-        @param shapegridFilename: The file location of the shapegrid to
-            intersect
-        @param vectorFilename: The file location of the vector file to
-            intersect with the shapegrid
-        @param pavFilename: The file location to write the resulting PAV
-        @param presenceAttrib: The shapefile attribute to use for determining 
-                                          presence
-        @param minPresence: The minimum value to be considered present
-        @param maxPresence: The maximum value to be considered present
-        @param percentPresence: The percent of a shapegrid feature that must be
-            present to be considered present
-        @param squid: If included, use this for a label on the PAV 
+        """Construct the command object
+            shapegridFilename: The file location of the shapegrid to intersect
+            vectorFilename: The file location of the vector file to intersect
+                with the shapegrid
+            pavFilename: The file location to write the resulting PAV
+            presenceAttrib: The shapefile attribute to use for determining
+                presence
+            minPresence: The minimum value to be considered present
+            maxPresence: The maximum value to be considered present
+            percentPresence: The percent of a shapegrid feature that must be
+                present to be considered present
+            squid: If included, use this for a label on the PAV 
         """
         _LmCommand.__init__(self)
         self.inputs.extend([shapegridFilename, vectorFilename])
         self.outputs.append(pavFilename)
         
-        self.args = [
-            shapegridFilename, vectorFilename, pavFilename, str(minPresence),
-            str(maxPresence), str(percentPresence), presenceAttrib]
-        self.optArgs = ''
+        self.args = '{} {} {} {} {} {} {}'.format(
+            shapegridFilename, vectorFilename, pavFilename, minPresence,
+            maxPresence, percentPresence, presenceAttrib)
         if squid is not None:
-            self.optArgs += ' --squid={}'.format(squid)
-
-    # ................................
-    def getCommand(self):
-        """
-        @summary: Get the raw command to run on the system
-        """
-        return '{} {} {} {}'.format(
-            CMD_PYBIN, self.getScript(), self.optArgs, ' '.join(self.args))
+            self.opt_args += ' --squid={}'.format(squid)
 
 # .............................................................................
 class SpeciesParameterSweepCommand(_LmCommand):
@@ -178,9 +149,3 @@ class SpeciesParameterSweepCommand(_LmCommand):
         self.outputs.extend(outputs)
         
         self.args = config_filename
-        
-    # ................................
-    def getCommand(self):
-        """Get the raw command to run on the system
-        """
-        return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)

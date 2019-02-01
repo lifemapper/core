@@ -95,6 +95,7 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, pav_filename):
         (SOLR_FIELDS.MODEL_SCENARIO_GCM, mdl_scn.gcmCode),
         (SOLR_FIELDS.MODEL_SCENARIO_DATE_CODE, mdl_scn.dateCode),
         (SOLR_FIELDS.MODEL_SCENARIO_ALT_PRED_CODE, mdl_scn.altpredCode),
+        (SOLR_FIELDS.PAM_ID, pam.getId()),
         (SOLR_FIELDS.PROJ_SCENARIO_CODE, prj_scn.code),
         (SOLR_FIELDS.PROJ_SCENARIO_ID, prj_scn.getId()),
         (SOLR_FIELDS.PROJ_SCENARIO_URL, prj_scn.metadataUrl),

@@ -302,6 +302,7 @@ def _trace_mtx_by_transverse(mtx):
         * There was an error in the formula that called for a dot product of
             each matrix transverse with itself.  This was a typo as that would
             only work with square matrices.
+
     """
     return np.sum([row.dot(row.T) for row in mtx])
 
@@ -321,6 +322,9 @@ def get_p_values(observed_value, test_values, num_permutations=None):
             that will be compared to the observed
         num_permutations: (optional) The total number of randomizations 
             performed.  Divide the P-values by this if provided.
+
+    Todo:
+        Deprecate this in favor of new method that is more flexible
     """
     if num_permutations is None:
         num_permutations = 1.0

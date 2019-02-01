@@ -3,7 +3,8 @@
 """This script calculates MCPA for a set of matrices.
 
 Todo:
-    * Add an option to use parallel vs sequential MCPA
+    * Determine if this is obsolete now that we have a script for performing
+        PAM stats and MCPA
 """
 import argparse
 import numpy as np
