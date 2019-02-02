@@ -55,7 +55,8 @@ def assemble_pam(pam_id):
     pam = scribe.getMatrix(mtxId=pam_id)
     
     matches = queryArchiveIndex(gridSetId=pam.gridsetId, userId=pam.user)
-    mtx_cols = scribe.listMatrixColumns(0, 10000, matrixId=pam.getId())
+    mtx_cols = scribe.listMatrixColumns(
+        0, 10000, matrixId=pam.getId(), userId=pam.user)
     mtx_col_ids = [int(c.id) for c in mtx_cols]
 
     # ......................
@@ -86,7 +87,7 @@ def assemble_pam(pam_id):
     
     pam.updateStatus(JobStatus.COMPLETE)
     scribe.updateObject(pam)
-    with open(pam.getDlocation(), 'w') as out_f:
+    with open(pam.getDLocation(), 'w') as out_f:
         pam.save(out_f)
     scribe.closeConnections()
     return pam
@@ -113,7 +114,7 @@ if __name__ == '__main__':
 
     readyFilename(args.success_filename)
     with open(args.success_filename, 'w') as out_f:
-        out_f.write(success)
+        out_f.write(str(success))
 
     
     

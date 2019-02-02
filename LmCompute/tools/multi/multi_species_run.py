@@ -118,7 +118,7 @@ if __name__ == '__main__':
     grim = None
     tree_mtx = None
 
-    if args.tree is not None:
+    if args.tree_filename is not None:
         tree = dendropy.Tree.get(path=args.tree_filename, schema='nexus')
     if args.do_mcpa:
         try:
@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
     pam_stats, mcpa_outs = do_runs(
         pam, args.num_permutations, do_pam_stats=args.do_pam_stats,
-        do_mcpa=args.do_mcpa, tree=tree, tree=tree, biogeo=biogeo, grim=grim,
+        do_mcpa=args.do_mcpa, tree=tree, biogeo=biogeo, grim=grim,
         tree_mtx=tree_mtx, parallel=args.parallel)
 
     # Write outputs
