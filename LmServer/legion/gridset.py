@@ -682,11 +682,12 @@ class Gridset(ServiceObject): #LMMap
                 return grim
         return None
 
-    def getPAMForCodes(self, gcmCode, altpredCode, dateCode):
+    def getPAMForCodes(self, gcmCode, altpredCode, dateCode, algorithmCode):
         for pam in self.getAllPAMs():
             if (pam.gcmCode == gcmCode and 
                  pam.altpredCode == altpredCode and 
-                 pam.dateCode == dateCode):
+                 pam.dateCode == dateCode and 
+                 pam.algorithmCode == algorithmCode):
                 return pam
         return None
 

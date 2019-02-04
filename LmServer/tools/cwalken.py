@@ -139,9 +139,12 @@ class ChristopherWalken(LMObject):
         # One Global PAM for each scenario
         # TODO: Allow assemblePams on RollingPAM?
         if self.assemblePams:
-            for prjscen in self.prjScens:
-                self.globalPAMs[prjscen.code] = self.boomGridset.getPAMForCodes(
-                    prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode)
+            for alg in self.algs:
+                for prjscen in self.prjScens:
+                    pamcode = '{}_{}'.format(prjscen.code, alg.code)
+                    self.globalPAMs[pamcode] = self.boomGridset.getPAMForCodes(
+                        prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode,
+                        alg.code)
 
     # ...............................................
     def moveToStart(self):
@@ -617,11 +620,12 @@ class ChristopherWalken(LMObject):
                     prjs = []
                     mtxcols = []
                     for prj_scen in self.prjScens:
+                        pamcode = '{}_{}'.format(prj_scen.code, alg.code) 
                         prj = self._findOrInsertSDMProject(
                             occ, alg, prj_scen, dt.gmt().mjd)
                         if prj is not None:
                             prjs.append(prj)
-                            mtx = self.globalPAMs[prj.projScenarioCode]
+                            mtx = self.globalPAMs[pamcode]
                             mtxcol = self._findOrInsertIntersect(
                                 prj, mtx, currtime)
                             if mtxcol is not None:
