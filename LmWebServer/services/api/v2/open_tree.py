@@ -53,7 +53,8 @@ class OpenTreeService(LmService):
                 k for k in gbif_to_ott.keys() if gbif_to_ott[k] is None]
             # Create a reverse lookup for OTT to GBIF IDs
             ott_to_gbif = dict([(v, k) for (k, v) in gbif_to_ott.iteritems()])
-            ott_ids = gbif_to_ott.values()
+            # Get the ids and drop Nones
+            ott_ids = [oid for oid in gbif_to_ott.values() if oid is not None]
             # Get the tree from Open Tree
             output = induced_subtree(ott_ids)
             tree_data = output[Partners.OTT_TREE_KEY]
