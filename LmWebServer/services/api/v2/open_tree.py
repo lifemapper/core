@@ -19,6 +19,8 @@ from LmCommon.common.readyfile import readyFilename
 from LmDbServer.tools.partnerData import (
     get_ottids_from_gbifids, induced_subtree, Partners)
 
+from LmServer.common.lmconstants import ARCHIVE_PATH
+
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
@@ -71,7 +73,8 @@ class OpenTreeService(LmService):
         # Determine a name for the tree, use user id, 16 characters of hashed
         #    tree data, and mjd
         tree_name = '{}-{}-{}.tre'.format(
-            self.userId, hashlib.md5(tree_data).hexdigest()[:16], gmt().mjd)
+            self.getUserId(), hashlib.md5(tree_data).hexdigest()[:16],
+            gmt().mjd)
         # Write the tree
         out_filename = os.path.join(self._get_user_dir(), tree_name)
         if not os.path.exists(out_filename):
@@ -92,3 +95,12 @@ class OpenTreeService(LmService):
         }
 
         return resp
+
+    # ................................
+    def _get_user_dir(self):
+        """Get the user's workspace directory for tree upload
+
+        Todo:
+            * Move this function to base class and generalize
+        """
+        return os.path.join(ARCHIVE_PATH, self.getUserId(), 'uploads', 'tree')
