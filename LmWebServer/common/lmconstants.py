@@ -424,6 +424,7 @@ class APIPostKeys(object):
     ARCHIVE_NAME = 'archive_name'
     BUFFER = 'buffer'
     CELL_SIDES = 'cell_sides'
+    DELIMITER = 'delimiter'
     DO_PAM_STATS = 'compute_pam_stats'
     GLOBAL_PAM = 'global_pam'
     HULL_REGION = 'hull_region_intersect_mask'
