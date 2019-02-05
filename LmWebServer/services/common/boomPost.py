@@ -394,7 +394,7 @@ class BoomPoster(object):
             self.config.add_section(algo_section)
 
             self.config.set(
-                algo_section, BoomKeys.CODE, algo[APIPostKeys.ALGORITHM_CODE])
+                algo_section, BoomKeys.ALG_CODE, algo[APIPostKeys.ALGORITHM_CODE])
             for param in algo[APIPostKeys.ALGORITHM_PARAMETERS].keys():
                 self.config.set(
                     algo_section, param.lower(),
@@ -411,7 +411,7 @@ class BoomPoster(object):
                 
                 self.config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
                 self.config.set(
-                    SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.CODE,
+                    SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.ALG_CODE,
                     'hull_region_intersect')
                 self.config.set(
                     SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.BUFFER,
