@@ -13,7 +13,8 @@ import os
 import random
 
 from LmCommon.common.lmconstants import (BoomKeys,
-    HTTPStatus,LMFormat, SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX)
+    HTTPStatus,LMFormat, SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX,
+    SERVER_SDM_ALGORITHM_HEADING_PREFIX)
 #from LmDbServer.boom.boominput import ArchiveFiller
 #from LmDbServer.boom.initboom import initBoom
 from LmDbServer.boom.initBoomJob import BOOMFiller
@@ -390,7 +391,7 @@ class BoomPoster(object):
         # Algorithms
         i = 0
         for algo in sdm_json[APIPostKeys.ALGORITHM]:
-            algo_section = 'ALGORITHM - {}'.format(i)
+            algo_section = '{} - {}'.format(SERVER_SDM_ALGORITHM_HEADING_PREFIX, i)
             self.config.add_section(algo_section)
 
             self.config.set(

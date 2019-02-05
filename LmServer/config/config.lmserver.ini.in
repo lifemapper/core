@@ -91,7 +91,7 @@ INTERSECT_MAX_PRESENCE: 255
 ALG_CODE: ATT_MAXENT
 
 [PREPROCESSING SDM_MASK - DEFAULT]
-MASK_CODE: hull_region_intersect
+ALG_CODE: hull_region_intersect
 buffer: .5
 ;;; Must be the same layer contained in @SCENARIO_PACKAGE@ and metadata 
 region: @ECOREGION_LAYER@

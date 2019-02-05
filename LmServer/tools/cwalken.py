@@ -41,11 +41,11 @@ from LmBackend.command.single import SpeciesParameterSweepCommand
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, 
+          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, BoomKeys,
+          SERVER_SDM_ALGORITHM_HEADING_PREFIX,
           SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
           MatrixType) 
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource, 
-                                           BoomKeys)
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
@@ -373,7 +373,7 @@ class ChristopherWalken(LMObject):
         return alg
 
     # .............................................................................
-    def _getAlgorithms(self, sectionPrefix=BoomKeys.ALG_CODE):
+    def _getAlgorithms(self, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX):
         algs = []
         defaultAlgs = []
         # Get algorithms for SDM modeling
@@ -548,7 +548,7 @@ class ChristopherWalken(LMObject):
                                                       epsg, boompath)
         # SDM inputs
         minPoints = self._getBoomOrDefault(BoomKeys.POINT_COUNT_MIN)
-        algorithms = self._getAlgorithms(sectionPrefix=BoomKeys.ALG_CODE)
+        algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
         
         (mdlScen, prjScens, model_mask_base) = self._getProjParams(userId, epsg)
         # Global PAM inputs

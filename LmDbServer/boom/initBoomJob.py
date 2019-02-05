@@ -37,13 +37,13 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.apiquery import IdigbioAPI
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
-      ProcessType, DEFAULT_POST_USER, GBIF,
+      ProcessType, DEFAULT_POST_USER, GBIF, BoomKeys,
       SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX, 
+      SERVER_SDM_ALGORITHM_HEADING_PREFIX,
       SERVER_DEFAULT_HEADING_POSTFIX, SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
 
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE, 
-                                           BoomKeys)
+from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 from LmDbServer.tools.catalogScenPkg import SPFiller
@@ -309,7 +309,7 @@ class BOOMFiller(LMObject):
         """
         @note: Returns configured algorithm
         """
-        acode =  config.get(algHeading, 'CODE')
+        acode =  config.get(algHeading, BoomKeys.ALG_CODE)
         alg = Algorithm(acode)
         alg.fillWithDefaults()
         inputs = {}
@@ -336,7 +336,7 @@ class BOOMFiller(LMObject):
         return alg
       
     # .............................................................................
-    def _getAlgorithms(self, config, sectionPrefix=BoomKeys.ALG_CODE):
+    def _getAlgorithms(self, config, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX):
         """
         @note: Returns configured algorithms, uses default algorithms only 
                if no others exist
@@ -423,7 +423,7 @@ class BOOMFiller(LMObject):
             occSep = self._getBoomOrDefault(config, BoomKeys.OCC_DATA_DELIMITER)
             
         minpoints = self._getBoomOrDefault(config, BoomKeys.POINT_COUNT_MIN)
-        algs = self._getAlgorithms(config, sectionPrefix=BoomKeys.ALG_CODE)
+        algs = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
         
         # Should be None or one Mask for pre-processing
         maskAlg = None
@@ -1263,8 +1263,7 @@ class BOOMFiller(LMObject):
                 boomMF = self.addBoomMF(boomGridset.getId(), tree)
 
             # Write config file for archive, update permissions
-            self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
-                                 biogeoLayers=biogeoLayerNames)
+            self.writeConfigFile(tree=tree, biogeoLayers=biogeoLayerNames)
         finally:
             self.close()
            
