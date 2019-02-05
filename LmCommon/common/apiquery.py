@@ -898,7 +898,7 @@ class IdigbioAPI(APIQuery):
     # .............................................................................
     def assembleIdigbioData(self, taxon_ids, point_output_file, meta_output_file, 
                             missing_id_file=None): 
-        delimiter = 
+        delimiter = APIQuery.DELIMITER 
         if not(isinstance(taxon_ids, list)):
             taxon_ids = [taxon_ids]
             
