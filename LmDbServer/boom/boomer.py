@@ -383,7 +383,7 @@ from LmDbServer.boom.boomer import *
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, 
-          SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX,
+          SERVER_SDM_MASK_HEADING_PREFIX,
           SERVER_DEFAULT_HEADING_POSTFIX, MatrixType, IDIG_DUMP) 
 from LmCommon.common.readyfile import readyFilename
 from LmBackend.common.lmobj import LMError, LMObject
@@ -477,7 +477,7 @@ weaponOfChoice, expDate = self._getOccWeaponOfChoice(userId, archiveName,
                                               
 # SDM inputs
 minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
-algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
+algorithms = self._getAlgorithms(sectionPrefix=BoomKeys.ALG_CODE)
 
 (mdlScen, prjScens, model_mask_base) = self._getProjParams(userId, epsg)
 # Global PAM inputs

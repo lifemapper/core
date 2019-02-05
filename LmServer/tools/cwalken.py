@@ -42,9 +42,10 @@ from LmBackend.command.single import SpeciesParameterSweepCommand
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, 
-          SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX,
-          SERVER_DEFAULT_HEADING_POSTFIX, MatrixType) 
-from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
+          SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
+          MatrixType) 
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource, 
+                                           BoomKeys)
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
@@ -223,35 +224,30 @@ class ChristopherWalken(LMObject):
     def _getOccWeaponOfChoice(self, userId, archiveName, epsg, boompath):
         useGBIFTaxonIds = False
         # Get datasource and optional taxonomy source
-        datasource = self._getBoomOrDefault('DATASOURCE')
+        datasource = self._getBoomOrDefault(BoomKeys.DATA_SOURCE)
         try:
             taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
         except:
             taxonSourceName = None
            
         # Expiration date for retrieved species data 
-        expDate = dt.DateTime(self._getBoomOrDefault('SPECIES_EXP_YEAR'), 
-                              self._getBoomOrDefault('SPECIES_EXP_MONTH'), 
-                              self._getBoomOrDefault('SPECIES_EXP_DAY')).mjd
+        expDate = dt.DateTime(self._getBoomOrDefault(BoomKeys.OCC_EXP_YEAR), 
+                              self._getBoomOrDefault(BoomKeys.OCC_EXP_MONTH), 
+                              self._getBoomOrDefault(BoomKeys.OCC_EXP_DAY)).mjd
+
+        occname = self._getBoomOrDefault(BoomKeys.OCC_DATA_NAME)
+        occdir = self._getBoomOrDefault(BoomKeys.OCC_DATA_DIR)
+        occ_delimiter = self._getBoomOrDefault(BoomKeys.OCC_DATA_DELIMITER) 
+        occ_csv_fname, occ_meta_fname, self.moreDataToProcess = self._findData(
+            occname, occdir, boompath)
+        
         # Get Weapon of Choice depending on type of Occurrence data to parse
         # GBIF data
         if datasource == SpeciesDatasource.GBIF:
-        #          gbifTax = self._getBoomOrDefault('GBIF_TAXONOMY_FILENAME')
-        #          gbifTaxFile = os.path.join(SPECIES_DATA_PATH, gbifTax)
-            gbifOcc = self._getBoomOrDefault('GBIF_OCCURRENCE_FILENAME')
-            # GBIF data may be for user, or public archive (in SPECIES_DATA_PATH)
-            gbifOccFile = os.path.join(SPECIES_DATA_PATH, gbifOcc)
-            if not os.path.exists(gbifOccFile):
-                gbifOccFile = os.path.join(boompath, gbifOcc)
-                if not os.path.exists(gbifOccFile):
-                    raise LMError("""
-                     Species file {} does not exist in public data 
-                     directory {} or user directory {}"""
-                     .format(gbifOcc, SPECIES_DATA_PATH, boompath))
-            gbifProv = self._getBoomOrDefault('GBIF_PROVIDER_FILENAME')
+            gbifProv = self._getBoomOrDefault(BoomKeys.GBIF_PROVIDER_FILENAME)
             gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
-            weaponOfChoice = GBIFWoC(self._scribe, userId, archiveName, 
-                                     epsg, expDate, gbifOccFile,
+            weaponOfChoice = GBIFWoC(self._scribe, userId, archiveName, epsg,
+                                     expDate, occ_csv_fname,
                                      providerFname=gbifProvFile, 
                                      taxonSourceName=taxonSourceName, 
                                      logger=self.log)
@@ -259,32 +255,15 @@ class ChristopherWalken(LMObject):
         # Copy public data to user space
         # TODO: Handle taxonomy, useGBIFTaxonomy=??
         elif datasource == SpeciesDatasource.EXISTING:
-            occIdFname = self._getBoomOrDefault('OCCURRENCE_ID_FILENAME')
-            weaponOfChoice = ExistingWoC(self._scribe, userId, archiveName, 
-                                         epsg, expDate, occIdFname, 
-                                         logger=self.log)
+            occIdFname = self._getBoomOrDefault(BoomKeys.OCC_ID_FILENAME)
+            weaponOfChoice = ExistingWoC(self._scribe, userId, archiveName, epsg,
+                                         expDate, occIdFname, logger=self.log)
            
-        # Biotaphy data, individual files, metadata in filenames
-        elif datasource == SpeciesDatasource.BIOTAFFY:
-            occData = self._getBoomOrDefault('USER_OCCURRENCE_DATA')
-            occDelimiter = self._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
-            occDir= os.path.join(boompath, occData)
-            occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
-            dirContentsFname = os.path.join(boompath, occData + LMFormat.TXT.ext)
-            weaponOfChoice = TinyBubblesWoC(self._scribe, userId, archiveName, 
-                                      epsg, expDate, occDir, occMeta, occDelimiter,
-                                      dirContentsFname, 
-                                      taxonSourceName=taxonSourceName, 
-                                      logger=self.log)
-        
-        # iDigBio or User
+        # User or iDigBio query
         else:
-            occCSV, occMeta, occDelimiter, self.moreDataToProcess = \
-                           self._findData(datasource, boompath)
-            
-            weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
-                                     epsg, expDate, occCSV, occMeta, 
-                                     occDelimiter, logger=self.log, 
+            weaponOfChoice = UserWoC(self._scribe, userId, archiveName, epsg,
+                                     expDate, occ_csv_fname, occ_meta_fname, 
+                                     occ_delimiter, logger=self.log, 
                                      processType=ProcessType.USER_TAXA_OCCURRENCE,
                                      useGBIFTaxonomy=useGBIFTaxonIds,
                                      taxonSourceName=taxonSourceName)
@@ -294,63 +273,75 @@ class ChristopherWalken(LMObject):
         return weaponOfChoice, expDate
 
     # .............................................................................
-    def _findData(self, datasource, boompath):
+    def _findData(self, occname, occdir, boompath):
         moreDataToProcess = False
-        occDelimiter = self._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER')
-        # iDigBio data
-        if datasource == SpeciesDatasource.IDIGBIO:
-            occname = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
-        # User data, anything not above
-        elif datasource == SpeciesDatasource.USER:
-            occname = self._getBoomOrDefault('USER_OCCURRENCE_DATA')
-            occDir = self._getBoomOrDefault('USER_OCCURRENCE_DIR')
-            
-        if occname is not None:
+        occ_csv_fname = occ_meta_fname = None
+
+        if occname is not None:        
             # Complete base filename
             if not occname.endswith(LMFormat.CSV.ext):
-                occCSV = occname + LMFormat.CSV.ext 
+                occ_csv = occname + LMFormat.CSV.ext 
+                occ_meta = occname + LMFormat.JSON.ext
             else:
-                occCSV = occname
-
-            # Check for CSV file location - either absolute or relative path
-            if os.path.exists(occCSV):
-                pass
-            #   or in User top data directory
-            elif os.path.exists(os.path.join(boompath, occCSV)):
-                occCSV = os.path.join(boompath, occCSV)
-            #   or in installation data directory
-            elif os.path.exists(os.path.join(SPECIES_DATA_PATH, occCSV)):
-                occCSV = os.path.join(SPECIES_DATA_PATH, occCSV)
+                occ_csv = occname
+                occ_meta = os.path.splitext(occ_csv)[0] + LMFormat.JSON.ext
+    
+            
+            installed_csv = os.path.join(SPECIES_DATA_PATH, occ_csv)
+            user_csv = os.path.join(boompath, occ_csv)
+            
+            # Look for data in relative path, installed path, user path
+            if os.path.exists(occ_csv):
+                occ_csv_fname = occ_csv
+                occ_meta_fname = occ_meta
+            elif os.path.exists(installed_csv):
+                occ_csv_fname = installed_csv
+                occ_meta_fname = os.path.join(SPECIES_DATA_PATH, occ_meta)
+            elif os.path.exists(user_csv):
+                occ_csv_fname = user_csv
+                occ_meta_fname = os.path.join(boompath, occ_meta)
             else:
-                raise LMError("""Failed to find file {} in relative location 
-                                 or in user dir {} or installation dir {}"""
-                              .format(occname, boompath, SPECIES_DATA_PATH))
-            occMeta = os.path.splitext(occCSV)[0] + LMFormat.JSON.ext
-
-        # TODO: Add 'USER_OCCURRENCE_DIR' as parameter for individual CSV files
-        # in a directory, one per species (for LmServer.tools.occwoc.TinyBubblesWoC)
-        elif occDir is not None:
+                raise LMError("""
+                 Species file {} does not exist as relative path, or in public data 
+                 directory {} or in user directory {}"""
+                 .format(occname, SPECIES_DATA_PATH, boompath))
+                        
+        # TODO: Add 'OCC_DATA_DIR' as parameter for individual CSV files
+        #       in a directory, one per species 
+        #       (for LmServer.tools.occwoc.TinyBubblesWoC)
+        elif occdir is not None:
+            installed_dir = os.path.join(SPECIES_DATA_PATH, occdir)
+            user_dir = os.path.join(boompath, occdir)
             # Check for directory location - either absolute or relative path
-            if os.path.isdir(occDir):
+            if os.path.isdir(occdir):
                 pass
             #   or in User top data directory
-            elif os.path.isdir(os.path.join(boompath, occDir)):
-                occDir = os.path.join(boompath, occDir)
+            elif os.path.isdir(installed_dir):
+                occdir = installed_dir
             #   or in installation data directory
-            elif os.path.exists(os.path.join(SPECIES_DATA_PATH, occDir)):
-                occCSV = os.path.join(SPECIES_DATA_PATH, occDir)
+            elif os.path.isdir(user_dir):
+                occdir = user_dir
             else:
                 raise LMError("""Failed to find file {} in relative location 
                                  or in user dir {} or installation dir {}"""
                               .format(occname, boompath, SPECIES_DATA_PATH))
-            occMeta = occDir + LMFormat.METADATA.ext
-            fnames = glob.glob(os.path.join(occDir, '*' + LMFormat.CSV.ext))
+            occ_meta_fname = occdir + LMFormat.JSON.ext
+            
+            fnames = glob.glob(os.path.join(occdir, '*' + LMFormat.CSV.ext))
             if len(fnames) > 0:
-                occCSV = fnames[0]
+                occ_csv_fname = fnames[0]
                 if len(fnames) > 1:
                     moreDataToProcess = True
+            else:
+                raise LMError("""Failed to find csv file in relative directory {}
+                                 or in user path {} or installation path {}"""
+                              .format(occdir, boompath, SPECIES_DATA_PATH))
+                
+        if not os.path.exists(occ_meta_fname):
+            raise LMError('Missing metadata file {}'.format(occ_meta_fname))
                          
-        return occCSV, occMeta, occDelimiter, moreDataToProcess
+        return occ_csv_fname, occ_meta_fname, moreDataToProcess
+
 
     # .............................................................................
     def _getAlgorithm(self, algHeading):
@@ -382,7 +373,7 @@ class ChristopherWalken(LMObject):
         return alg
 
     # .............................................................................
-    def _getAlgorithms(self, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX):
+    def _getAlgorithms(self, sectionPrefix=BoomKeys.ALG_CODE):
         algs = []
         defaultAlgs = []
         # Get algorithms for SDM modeling
@@ -405,9 +396,9 @@ class ChristopherWalken(LMObject):
         model_mask_base = None
         
         # Get environmental data model and projection scenarios
-        mdlScenCode = self._getBoomOrDefault('SCENARIO_PACKAGE_MODEL_SCENARIO')
-        prjScenCodes = self._getBoomOrDefault('SCENARIO_PACKAGE_PROJECTION_SCENARIOS', 
-                                               isList=True)
+        mdlScenCode = self._getBoomOrDefault(BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO)
+        prjScenCodes = self._getBoomOrDefault(
+            BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, isList=True)
         scenPkgs = self._scribe.getScenPackagesForUserCodes(userId, prjScenCodes, 
                                                             fillLayers=True)
         if not scenPkgs:
@@ -464,7 +455,7 @@ class ChristopherWalken(LMObject):
     # .............................................................................
     def _getGlobalPamObjects(self, userId, archiveName, epsg):
         # Get existing intersect grid, gridset and parameters for Global PAM
-        gridname = self._getBoomOrDefault('GRID_NAME')
+        gridname = self._getBoomOrDefault(BoomKeys.GRID_NAME)
         if gridname:
             intersectGrid = self._scribe.getShapeGrid(userId=userId, lyrName=gridname, 
                                                      epsg=epsg)
@@ -484,15 +475,15 @@ class ChristopherWalken(LMObject):
                                                       MatrixType.GRIM])
         intersectParams = {
            MatrixColumn.INTERSECT_PARAM_FILTER_STRING: 
-              self._getBoomOrDefault('INTERSECT_FILTERSTRING'),
+              self._getBoomOrDefault(BoomKeys.INTERSECT_FILTER_STRING),
            MatrixColumn.INTERSECT_PARAM_VAL_NAME: 
-              self._getBoomOrDefault('INTERSECT_VALNAME'),
+              self._getBoomOrDefault(BoomKeys.INTERSECT_VAL_NAME),
            MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: 
-              self._getBoomOrDefault('INTERSECT_MINPRESENCE'),
+              self._getBoomOrDefault(BoomKeys.INTERSECT_MIN_PRESENCE),
            MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: 
-              self._getBoomOrDefault('INTERSECT_MAXPRESENCE'),
+              self._getBoomOrDefault(BoomKeys.INTERSECT_MAX_PRESENCE),
            MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 
-              self._getBoomOrDefault('INTERSECT_MINPERCENT')}
+              self._getBoomOrDefault(BoomKeys.INTERSECT_MIN_PERCENT)}
 
         # TODO: remove this from gridset and add to each SDMProject
         maskAlgList = self._getAlgorithms(sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
@@ -540,9 +531,9 @@ class ChristopherWalken(LMObject):
         @summary: Get configured string values and any corresponding db objects 
         @TODO: Make all archive/default config keys consistent
         """
-        userId = self._getBoomOrDefault('ARCHIVE_USER', defaultValue=PUBLIC_USER)
-        archiveName = self._getBoomOrDefault('ARCHIVE_NAME')
-        archivePriority = self._getBoomOrDefault('ARCHIVE_PRIORITY', 
+        userId = self._getBoomOrDefault(BoomKeys.ARCHIVE_USER, defaultValue=PUBLIC_USER)
+        archiveName = self._getBoomOrDefault(BoomKeys.ARCHIVE_NAME)
+        archivePriority = self._getBoomOrDefault(BoomKeys.ARCHIVE_PRIORITY, 
                                                  defaultValue=Priority.NORMAL)
         # Get user-archive configuration file
         if userId is None or archiveName is None:
@@ -550,21 +541,20 @@ class ChristopherWalken(LMObject):
                           .format(self.cfg.configFiles))
         earl = EarlJr()
         boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
-        epsg = self._getBoomOrDefault('SCENARIO_PACKAGE_EPSG', 
-                                      defaultValue=DEFAULT_EPSG)
+        epsg = self._getBoomOrDefault(BoomKeys.EPSG, defaultValue=DEFAULT_EPSG)
         
         # Species parser/puller
         weaponOfChoice, expDate = self._getOccWeaponOfChoice(userId, archiveName, 
                                                       epsg, boompath)
         # SDM inputs
-        minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
-        algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
+        minPoints = self._getBoomOrDefault(BoomKeys.POINT_COUNT_MIN)
+        algorithms = self._getAlgorithms(sectionPrefix=BoomKeys.ALG_CODE)
         
         (mdlScen, prjScens, model_mask_base) = self._getProjParams(userId, epsg)
         # Global PAM inputs
         (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                               archiveName, epsg)
-        assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
+        assemblePams = self._getBoomOrDefault(BoomKeys.ASSEMBLE_PAMS, isBool=True)
         
         return (userId, archiveName, archivePriority, boompath, weaponOfChoice, expDate,
                 epsg, minPoints, algorithms, mdlScen, prjScens, model_mask_base, 

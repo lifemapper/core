@@ -14,6 +14,9 @@ from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (LM_USER, JobStatus, PhyloTreeKeys, 
                                             MatrixType, ProcessType, SERVER_BOOM_HEADING)
 from LmCommon.encoding.layer_encoder import LayerEncoder
+
+from LmDbServer.common.lmconstants import BoomKeys
+
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
@@ -181,12 +184,12 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
         raise Exception('Missing config file {}'.format(configFname))
 
     try:
-        epsg = cfg.get(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_EPSG')
+        epsg = cfg.get(SERVER_BOOM_HEADING, BoomKeys.EPSG)
     except:
         pass
 
     try:
-        var = cfg.get(SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES_LAYERS')
+        var = cfg.get(SERVER_BOOM_HEADING, BoomKeys.BIOGEO_HYPOTHESES_LAYERS)
     except:
         raise Exception('No configured Biogeographic Hypotheses layers')
     else:

@@ -29,22 +29,21 @@ import stat
 import types
 
 from LmBackend.command.boom import BoomerCommand
-from LmBackend.command.common import (IdigbioQueryCommand, 
-        ConcatenateMatricesCommand)
-from LmBackend.command.multi import (CalculateStatsCommand)
+from LmBackend.command.common import IdigbioQueryCommand 
 from LmBackend.command.server import (CatalogTaxonomyCommand, EncodeTreeCommand,
                                       EncodeBioGeoHypothesesCommand)
 from LmBackend.common.lmobj import LMError, LMObject
 
+from LmCommon.common.apiquery import IdigbioAPI
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
-      ProcessType, DEFAULT_POST_USER, 
-      SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
-      SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
-      SERVER_PIPELINE_HEADING)
+      ProcessType, DEFAULT_POST_USER, GBIF,
+      SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX, 
+      SERVER_DEFAULT_HEADING_POSTFIX, SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
 
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
+from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE, 
+                                           BoomKeys)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 from LmDbServer.tools.catalogScenPkg import SPFiller
@@ -129,14 +128,14 @@ class BOOMFiller(LMObject):
          doMapBaseline,
          self.dataSource,
          self.occIdFname,
-         self.gbifFname,
-         self.idigFname,
-         self.idigOccSep,
-         self.bisonFname,
+#          self.gbifFname,
+#          self.idigFname,
+#          self.idigOccSep,
+#          self.bisonFname,
          self.taxon_name_filename, 
          self.taxon_id_filename, 
-         self.userOccFname,
-         self.userOccSep,   
+         self.occFname,
+         self.occSep,   
          self.minpoints,
          self.algorithms,
          self.assemblePams,
@@ -337,7 +336,7 @@ class BOOMFiller(LMObject):
         return alg
       
     # .............................................................................
-    def _getAlgorithms(self, config, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX):
+    def _getAlgorithms(self, config, sectionPrefix=BoomKeys.ALG_CODE):
         """
         @note: Returns configured algorithms, uses default algorithms only 
                if no others exist
@@ -389,37 +388,42 @@ class BOOMFiller(LMObject):
         config = Config(siteFn=paramFname)
         
         # Fill in missing or null variables for archive.config.ini
-        usr = self._getBoomOrDefault(config, 'ARCHIVE_USER', defaultValue=PUBLIC_USER)
+        usr = self._getBoomOrDefault(config, BoomKeys.ARCHIVE_USER, defaultValue=PUBLIC_USER)
         earl = EarlJr()
         usrPath = earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
         defaultEmail = '{}{}'.format(usr, DEFAULT_EMAIL_POSTFIX)
-        usrEmail = self._getBoomOrDefault(config, 'ARCHIVE_USER_EMAIL', 
+        usrEmail = self._getBoomOrDefault(config, BoomKeys.ARCHIVE_USER_EMAIL, 
                                           defaultValue=defaultEmail)
         userTaxonomyBasename = self._getBoomOrDefault(config, 
-                             'USER_TAXONOMY_FILENAME', None)
-        archiveName = self._getBoomOrDefault(config, 'ARCHIVE_NAME', 
+                             BoomKeys.USER_TAXONOMY_FILENAME, None)
+        archiveName = self._getBoomOrDefault(config, BoomKeys.ARCHIVE_NAME, 
                                              defaultValue=PUBLIC_ARCHIVE_NAME)
-        priority = self._getBoomOrDefault(config, 'ARCHIVE_PRIORITY', 
+        priority = self._getBoomOrDefault(config, BoomKeys.ARCHIVE_PRIORITY, 
                                           defaultValue=Priority.NORMAL)
             
         # Species data inputs
-        occIdFname = self._getBoomOrDefault(config, 'OCCURRENCE_ID_FILENAME')
+        occIdFname = self._getBoomOrDefault(config, BoomKeys.OCC_ID_FILENAME)
         if occIdFname:
             dataSource = SpeciesDatasource.EXISTING
         else:
-            dataSource = self._getBoomOrDefault(config, 'DATASOURCE')
+            dataSource = self._getBoomOrDefault(config, BoomKeys.DATA_SOURCE)
             dataSource = dataSource.upper()
-        gbifFname = self._getBoomOrDefault(config, 'GBIF_OCCURRENCE_FILENAME')
-        idigFname = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA')
-        idigOccSep = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA_DELIMITER')
-        bisonFname = self._getBoomOrDefault(config, 'BISON_TSN_FILENAME') 
-        taxon_name_filename = self._getBoomOrDefault(config, 'TAXON_NAME_FILENAME')
-        taxon_id_filename = self._getBoomOrDefault(config, 'TAXON_ID_FILENAME')
+#         gbifFname = self._getBoomOrDefault(config, 'GBIF_OCCURRENCE_FILENAME')
+#         idigFname = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA')
+#         idigOccSep = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA_DELIMITER')
+#         bisonFname = self._getBoomOrDefault(config, 'BISON_TSN_FILENAME') 
         
-        userOccFname = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA')
-        userOccSep = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA_DELIMITER')
-        minpoints = self._getBoomOrDefault(config, 'POINT_COUNT_MIN')
-        algs = self._getAlgorithms(config, sectionPrefix='ALGORITHM')
+        taxon_name_filename = self._getBoomOrDefault(config, BoomKeys.TAXON_NAME_FILENAME)
+        taxon_id_filename = self._getBoomOrDefault(config, BoomKeys.TAXON_ID_FILENAME)
+        
+        occFname = self._getBoomOrDefault(config, BoomKeys.OCC_DATA_NAME)
+        if dataSource == SpeciesDatasource.GBIF:
+            occSep = GBIF.DATA_DUMP_DELIMITER
+        else:
+            occSep = self._getBoomOrDefault(config, BoomKeys.OCC_DATA_DELIMITER)
+            
+        minpoints = self._getBoomOrDefault(config, BoomKeys.POINT_COUNT_MIN)
+        algs = self._getAlgorithms(config, sectionPrefix=BoomKeys.ALG_CODE)
         
         # Should be None or one Mask for pre-processing
         maskAlg = None
@@ -428,64 +432,65 @@ class BOOMFiller(LMObject):
             maskAlg = maskAlgList.values()[0]
            
         # optional MCPA inputs
-        treeFname = self._getBoomOrDefault(config, 'TREE')
-        biogeoName = self._getBoomOrDefault(config, 'BIOGEO_HYPOTHESES')
+        treeFname = self._getBoomOrDefault(config, BoomKeys.TREE)
+        biogeoName = self._getBoomOrDefault(config, BoomKeys.BIOGEO_HYPOTHESES_LAYERS)
         bghypFnames = self._getBioGeoHypothesesLayerFilenames(biogeoName, usrPath)
         
         # RAD/PAM params
-        doComputePAMStats = self._getBoomOrDefault(config, 'COMPUTE_PAM_STATS', isBool=True)
-        assemblePams = self._getBoomOrDefault(config, 'ASSEMBLE_PAMS', isBool=True)
-        gridbbox = self._getBoomOrDefault(config, 'GRID_BBOX', isList=True)
-        cellsides = self._getBoomOrDefault(config, 'GRID_NUM_SIDES')
-        cellsize = self._getBoomOrDefault(config, 'GRID_CELLSIZE')
+        doComputePAMStats = self._getBoomOrDefault(config, BoomKeys.COMPUTE_PAM_STATS, isBool=True)
+        assemblePams = self._getBoomOrDefault(config, BoomKeys.ASSEMBLE_PAMS, isBool=True)
+        gridbbox = self._getBoomOrDefault(config, BoomKeys.GRID_BBOX, isList=True)
+        cellsides = self._getBoomOrDefault(config, BoomKeys.GRID_NUM_SIDES)
+        cellsize = self._getBoomOrDefault(config, BoomKeys.GRID_CELL_SIZE)
         gridname = '{}-Grid-{}'.format(archiveName, cellsize)
         # TODO: allow filter
-        gridFilter = self._getBoomOrDefault(config, 'INTERSECT_FILTERSTRING')
-        gridIntVal = self._getBoomOrDefault(config, 'INTERSECT_VALNAME')
-        gridMinPct = self._getBoomOrDefault(config, 'INTERSECT_MINPERCENT')
-        gridMinPres = self._getBoomOrDefault(config, 'INTERSECT_MINPRESENCE')
-        gridMaxPres = self._getBoomOrDefault(config, 'INTERSECT_MAXPRESENCE')
+        gridFilter = self._getBoomOrDefault(config, BoomKeys.INTERSECT_FILTER_STRING)
+        gridIntVal = self._getBoomOrDefault(config, BoomKeys.INTERSECT_VAL_NAME)
+        gridMinPct = self._getBoomOrDefault(config, BoomKeys.INTERSECT_MIN_PERCENT)
+        gridMinPres = self._getBoomOrDefault(config, BoomKeys.INTERSECT_MIN_PRESENCE)
+        gridMaxPres = self._getBoomOrDefault(config, BoomKeys.INTERSECT_MAX_PRESENCE)
         intersectParams = {MatrixColumn.INTERSECT_PARAM_FILTER_STRING: gridFilter,
                            MatrixColumn.INTERSECT_PARAM_VAL_NAME: gridIntVal,
                            MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
                            MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
                            MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
         
-        scenPackageName = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE')
+        scenPackageName = self._getBoomOrDefault(config, BoomKeys.SCENARIO_PACKAGE)
         if scenPackageName is None:
             raise LMError('SCENARIO_PACKAGE must be configured')
 
-        modelScenCode = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
+        modelScenCode = self._getBoomOrDefault(config, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO)
         prjScenCodeList = self._getBoomOrDefault(config, 
-                    'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', isList=True)
-        doMapBaseline = self._getBoomOrDefault(config, 'MAP_BASELINE', defaultValue=1)
+                    BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, isList=True)
+        doMapBaseline = self._getBoomOrDefault(config, BoomKeys.DO_MAP_BASELINE, 
+                                               defaultValue=1)
         
         return (usr, usrPath, usrEmail, userTaxonomyBasename, archiveName, priority, scenPackageName, 
                 modelScenCode, prjScenCodeList, doMapBaseline, dataSource, 
-                occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
+                occIdFname, #gbifFname, idigFname, idigOccSep, bisonFname, 
                 taxon_name_filename, taxon_id_filename, 
-                userOccFname, userOccSep, minpoints, algs, 
+                occFname, occSep, minpoints, algs, 
                 assemblePams, gridbbox, cellsides, cellsize, gridname, 
                 intersectParams, maskAlg, treeFname, bghypFnames, 
                 doComputePAMStats)
       
     # ...............................................
-    def writeConfigFile(self, tree=None, biogeoMtx=None, biogeoLayers=[], fname=None):
+    def writeConfigFile(self, tree=None, biogeoLayers=[]):
         config = ConfigParser.SafeConfigParser()
         config.add_section(SERVER_BOOM_HEADING)
       
-        # .........................................      
         # SDM Algorithms with all parameters   
         for heading, alg in self.algorithms.iteritems():
             config.add_section(heading)
-            config.set(heading, 'CODE', alg.code)
+            config.set(heading, BoomKeys.ALG_CODE, alg.code)
             for name, val in alg.parameters.iteritems():
                 config.set(heading, name, str(val))
       
         # SDM Mask input
         if self.maskAlg is not None:
             config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
-            config.set(SERVER_SDM_MASK_HEADING_PREFIX, 'CODE', self.maskAlg.code)
+            config.set(SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.MASK_CODE, 
+                       self.maskAlg.code)
             for name, val in self.maskAlg.parameters.iteritems():
                 config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
       
@@ -493,91 +498,93 @@ class BOOMFiller(LMObject):
         if email is None:
             email = ''
 
-        config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', self.userId)
-        config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', self.archiveName)
-        config.set(SERVER_BOOM_HEADING, 'ARCHIVE_PRIORITY', str(self.priority))
-        config.set(SERVER_BOOM_HEADING, 'TROUBLESHOOTERS', email)
+        config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, self.userId)
+        config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_NAME, self.archiveName)
+        config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_PRIORITY, str(self.priority))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.TROUBLESHOOTERS, email)
             
         # SDM input environmental data, pulled from SCENARIO_PACKAGE metadata
         pcodes = ','.join(self.prjScenCodeList)
-        config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', 
+        config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, 
                    pcodes)
-        config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MODEL_SCENARIO', 
+        config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO, 
                    self.modelScenCode)
-        config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MAPUNITS', self.scenPkg.mapUnits)
-        config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_EPSG', str(self.scenPkg.epsgcode))
-        config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE', self.scenPkg.name)
+        config.set(SERVER_BOOM_HEADING, BoomKeys.MAPUNITS, self.scenPkg.mapUnits)
+        config.set(SERVER_BOOM_HEADING, BoomKeys.EPSG, str(self.scenPkg.epsgcode))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE, self.scenPkg.name)
         
         # SDM input species source data and type (for processing)
-        config.set(SERVER_BOOM_HEADING, 'DATASOURCE', self.dataSource)
+        config.set(SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE, self.dataSource)
          
+        # Use/copy public data
         if self.dataSource == SpeciesDatasource.EXISTING:
-            config.set(SERVER_BOOM_HEADING, 'OCCURRENCE_ID_FILENAME', 
+            config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_ID_FILENAME, 
                       self.occIdFname)
-        elif self.dataSource == SpeciesDatasource.GBIF:
-            config.set(SERVER_BOOM_HEADING, 'GBIF_OCCURRENCE_FILENAME', self.gbifFname)
-            config.set(SERVER_BOOM_HEADING, 'GBIF_PROVIDER_FILENAME', 
-                       GBIF_PROVIDER_FILENAME)
+
+        # Use GBIF taxon ids to pull iDigBio data
         elif self.dataSource == SpeciesDatasource.TAXON_IDS:
-            config.set(SERVER_BOOM_HEADING, 'TAXON_ID_FILENAME', self.taxon_id_filename)
-        elif self.dataSource == SpeciesDatasource.BISON:
-            config.set(SERVER_BOOM_HEADING, 'BISON_TSN_FILENAME', self.bisonFname)
-        elif self.dataSource == SpeciesDatasource.IDIGBIO:
-            config.set(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA', self.idigFname)
-            config.set(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA_DELIMITER',
-                       self.idigOccSep)
-        else:
-            config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA', 
-                       self.userOccFname)
-            config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA_DELIMITER',
-                       self.userOccSep)
-        
-        if self.userTaxonomyBasename is not None:
-            config.set(SERVER_BOOM_HEADING, 'USER_TAXONOMY_FILENAME', 
-                       self.userTaxonomyBasename)
-        # Use GBIF taxonomy for iDigBio/Biotaphy also
-        if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
-            config.set(SERVER_BOOM_HEADING, 'GBIF_TAXONOMY_FILENAME', 
+            config.set(SERVER_BOOM_HEADING, BoomKeys.TAXON_ID_FILENAME, self.taxon_id_filename)
+#         elif self.dataSource == SpeciesDatasource.BISON:
+#             config.set(SERVER_BOOM_HEADING, 'BISON_TSN_FILENAME', self.bisonFname)
+#         elif self.dataSource == SpeciesDatasource.IDIGBIO:
+#             config.set(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA', self.idigFname)
+#             config.set(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA_DELIMITER',
+#                        self.idigOccSep)
+
+        # Use GBIF data dump, with supporting provider and taxonomy files 
+        elif self.dataSource == SpeciesDatasource.GBIF:
+            config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_PROVIDER_FILENAME, 
+                       GBIF_PROVIDER_FILENAME)
+            config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_TAXONOMY_FILENAME, 
                        GBIF_TAXONOMY_FILENAME)
+            config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occFname)
+            config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occSep)
+
+        # User data
+        else:            
+            config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occFname)
+            config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occSep)
         
+        # optional user-provided taxonomy
+        if self.userTaxonomyBasename is not None:
+            config.set(SERVER_BOOM_HEADING, BoomKeys.USER_TAXONOMY_FILENAME, 
+                       self.userTaxonomyBasename)
+        else:
+            config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_TAXONOMY_FILENAME, 
+                       GBIF_TAXONOMY_FILENAME)
+            
         # Expiration date triggering re-query and computation
-        config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_YEAR', 
-                   str(mx.DateTime.gmt().year))
-        config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_MONTH', 
-                   str(mx.DateTime.gmt().month))
-        config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_DAY', 
-                   str(mx.DateTime.gmt().day))
-        config.set(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN', str(self.minpoints))
+        today = mx.DateTime.gmt()
+        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_YEAR, str(today.year))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MONTH, str(today.month))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_DAY, str(today.day))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN, str(self.minpoints))
 
         # .........................................      
         # Global PAM vals
         # Intersection grid
-        config.set(SERVER_BOOM_HEADING, 'GRID_NUM_SIDES', str(self.cellsides))
-        config.set(SERVER_BOOM_HEADING, 'GRID_CELLSIZE', str(self.cellsize))
-        config.set(SERVER_BOOM_HEADING, 'GRID_BBOX', 
+        config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_NUM_SIDES, str(self.cellsides))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_CELL_SIZE, str(self.cellsize))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_BBOX, 
                    ','.join(str(v) for v in self.gridbbox))
-        config.set(SERVER_BOOM_HEADING, 'GRID_NAME', self.gridname)
+        config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_NAME, self.gridname)
         # Intersection params
         for k, v in self.intersectParams.iteritems():
             config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), str(v))
         # TODO: For now, this defaults to True
         # TODO: Change to 0/1
-        config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', str(True))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, str(True))
         
         # TODO: Test these new RAD params
-        doHypotheses = doStats = 0
-        # Name/User is unique constraint, so add name here
-        # Only one allowed per gridset (aka archive), so this is 0/1
-        if biogeoMtx is not None:
-            doHypotheses = 1
+        doStats = 0
         if self.doComputePAMStats:
             doStats = 1
-        config.set(SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES', str(doHypotheses))
-        bioGeoLayerNames = ','.join(biogeoLayers)
-        config.set(SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES_LAYERS', bioGeoLayerNames)
-        config.set(SERVER_BOOM_HEADING, 'COMPUTE_PAM_STATS', str(doStats))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, str(doStats))
+        if len(biogeoLayers) > 0:
+            bioGeoLayerNames = ','.join(biogeoLayers)
+            config.set(SERVER_BOOM_HEADING, BoomKeys.BIOGEO_HYPOTHESES_LAYERS, bioGeoLayerNames)
         if tree is not None:
-            config.set(SERVER_BOOM_HEADING, 'TREE', tree.name)
+            config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree.name)
               
         readyFilename(self.outConfigFilename, overwrite=True)
         with open(self.outConfigFilename, 'wb') as configfile:
@@ -1062,16 +1069,15 @@ class BOOMFiller(LMObject):
     # .............................
     def _getIdigQueryCmd(self, ws_dir):
         idigCmd = point_output_file = None
-        if self.dataSource == SpeciesDatasource.TAXON_IDS:
-            if not os.path.exists(self.taxon_id_filename):
-                raise LMError('Taxon ID file {} is missing'.format(self.taxon_id_filename))
+        if not os.path.exists(self.taxon_id_filename):
+            raise LMError('Taxon ID file {} is missing'.format(self.taxon_id_filename))
         
-            currtime = mx.DateTime.gmt().mjd
-            # Workspace directory
-            basename, _ = os.path.splitext(os.path.basename(self.taxon_id_filename))
-            point_output_file = os.path.join(ws_dir, basename + LMFormat.CSV.ext)
-            meta_output_file = os.path.join(ws_dir, basename + LMFormat.JSON.ext)
-            idigCmd = IdigbioQueryCommand(self.taxon_id_filename, point_output_file, 
+        currtime = mx.DateTime.gmt().mjd
+        # Workspace directory
+        basename, _ = os.path.splitext(os.path.basename(self.taxon_id_filename))
+        point_output_file = os.path.join(ws_dir, basename + LMFormat.CSV.ext)
+        meta_output_file = os.path.join(ws_dir, basename + LMFormat.JSON.ext)
+        idigCmd = IdigbioQueryCommand(self.taxon_id_filename, point_output_file, 
                                           meta_output_file, missing_id_file=None)
         return idigCmd, point_output_file
 
@@ -1149,14 +1155,15 @@ class BOOMFiller(LMObject):
         # Add iDigBio MF before Boom, if specified as occurrence input
         if self.dataSource == SpeciesDatasource.TAXON_IDS:
             idigCmd, point_output_file = self._getIdigQueryCmd(ws_dir)
+            # Update config to User (CSV) datasource and point_output_file
+            self.dataSource = SpeciesDatasource.USER
+            self.occFname = point_output_file
+            self.occSep = IdigbioAPI.DELIMITER
             # Add command to this Makeflow
             # TODO: allow non-local
             mfChain.addCommands([idigCmd.getMakeflowRule(local=True)])
             # Boom requires iDigBio data
             boomCmd.inputs.extend(idigCmd.outputs)
-            # Update config to User (CSV) datasource and point_output_file
-            self.dataSource = SpeciesDatasource.USER
-            self.userOccFname = point_output_file
             
         # Add taxonomy before Boom, if taxonomy is specified
         cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
@@ -1250,8 +1257,8 @@ class BOOMFiller(LMObject):
                     # Add BG Hypotheses encoding Makeflows, independent of Boom completion
                     bgMF = self.addEncodeBioGeoMF(boomGridset)
                 # Create MFChain to run Boomer on these inputs IFF requested
-                # This also adds commands for iDigBio species retrieval and 
-                # taxonomy insertion before 
+                # This also adds commands for iDigBio occurrence data retrieval 
+                #   and taxonomy insertion before Boom
                 #   and tree encoding after Boom 
                 boomMF = self.addBoomMF(boomGridset.getId(), tree)
 
@@ -1323,7 +1330,7 @@ from LmBackend.common.lmconstants import RegistryKey, MaskMethod
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
       ProcessType, DEFAULT_POST_USER, LM_USER,
-      SERVER_BOOM_HEADING, SERVER_SDM_ALGORITHM_HEADING_PREFIX, 
+      SERVER_BOOM_HEADING, 
       SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
       SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
@@ -1423,7 +1430,7 @@ if self.dataSource == SpeciesDatasource.TAXON_IDS:
     boomCmd.inputs.extend(idigCmd.outputs)
     # Update config to User (CSV) datasource and point_output_file
     self.dataSource = SpeciesDatasource.USER
-    self.userOccFname = point_output_file
+    self.occFname = point_output_file
     
 # Add taxonomy before Boom, if taxonomy is specified
 cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()

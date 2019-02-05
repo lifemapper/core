@@ -40,7 +40,6 @@ SERVER_PIPELINE_HEADING = 'LmServer - pipeline'
 SERVER_DB_HEADING = 'LmServer - dbserver'
 SERVER_MATT_DAEMON_HEADING = 'LmServer - Matt Daemon'
 
-SERVER_SDM_ALGORITHM_HEADING_PREFIX = 'ALGORITHM'
 SERVER_SDM_MASK_HEADING_PREFIX = 'PREPROCESSING SDM_MASK'
 SERVER_DEFAULT_HEADING_POSTFIX = 'DEFAULT'
 
@@ -1030,6 +1029,7 @@ PROVIDER_FIELD_COMMON = 'provider'
 
 # ......................................................
 class GBIF:
+    DATA_DUMP_DELIMITER = '\t'
     TAXON_KEY = 'specieskey'
     TAXON_NAME = DWCNames.SCIENTIFIC_NAME['SHORT']
     PROVIDER = 'puborgkey'
