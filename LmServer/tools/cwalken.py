@@ -325,7 +325,7 @@ class ChristopherWalken(LMObject):
                 raise LMError("""Failed to find file {} in relative location 
                                  or in user dir {} or installation dir {}"""
                               .format(occname, boompath, SPECIES_DATA_PATH))
-            occMeta = os.path.splitext(occCSV)[0] + LMFormat.METADATA.ext
+            occMeta = os.path.splitext(occCSV)[0] + LMFormat.JSON.ext
 
         # TODO: Add 'USER_OCCURRENCE_DIR' as parameter for individual CSV files
         # in a directory, one per species (for LmServer.tools.occwoc.TinyBubblesWoC)

@@ -408,6 +408,7 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, MatrixType) 
 from LmCommon.common.occparse import OccDataParser
 from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.tools.occwoc import (GBIFWoC, UserWoC, ExistingWoC, TinyBubblesWoC)
 
 from LmDbServer.boom.boomer import *
 
@@ -425,6 +426,9 @@ success_file='/share/lm/data/archive/anon/Hechera2.success'
 
 config_file='/share/lm/data/archive/anon/idigtest4.ini'
 success_file='/share/lm/data/archive/anon/idigtest4.success'
+
+config_file='/share/lm/data/archive/anon/CJ2.ini'
+success_file='mf_3149/CJ2.ini.success'
 
 boomer = Boomer(config_file, success_file, log=logger)
 ###############################################

@@ -73,7 +73,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-
+    # This writes data with tab delimiter
     getPartnerSpeciesData(args.taxon_id_file, args.point_output_file, 
                           args.meta_output_file, 
                           missing_id_file=args.missing_id_file)

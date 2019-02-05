@@ -44,8 +44,11 @@ from LmCommon.common.readyfile import readyFilename
 # .............................................................................
 class APIQuery(object):
     """
-    Class to query APIs and return results
+    Class to query APIs and return results.  
+    @note: CSV files are created with tab delimiter
     """
+    ENCODING = 'utf-8'
+    DELIMITER = '\t'
     GBIF_MISSING_KEY = 'unmatched_gbif_ids'
 
     def __init__(self, baseurl, 
@@ -64,8 +67,6 @@ class APIQuery(object):
         self.output = None
         self.debug = False
         unicodecsv.field_size_limit(sys.maxsize)
-        self.encoding = 'utf-8'
-        self.delimiter = '\t'
       
 # ...............................................
     @classmethod
@@ -97,8 +98,8 @@ class APIQuery(object):
         try:
             readyFilename(datafile)
             f = open(datafile, mode) 
-            writer = unicodecsv.writer(f, delimiter=self.delimiter, 
-                                      encoding=self.encoding)
+            writer = unicodecsv.writer(f, delimiter=self.DELIMITER, 
+                                      encoding=self.ENCODING)
         
         except Exception, e:
             raise Exception('Failed to read or open {}, ({})'
@@ -897,6 +898,7 @@ class IdigbioAPI(APIQuery):
     # .............................................................................
     def assembleIdigbioData(self, taxon_ids, point_output_file, meta_output_file, 
                             missing_id_file=None): 
+        delimiter = 
         if not(isinstance(taxon_ids, list)):
             taxon_ids = [taxon_ids]
             
@@ -957,7 +959,7 @@ class IdigbioAPI(APIQuery):
             print ('Metadata {} does not exist'.format(metaFname))
         else:
             occParser = OccDataParser(self.log, ptFname, metaFname, 
-                                      delimiter=self.delimiter,
+                                      delimiter=self.DELIMITER,
                                       pullChunks=True)
             occParser.initializeMe()  
             # returns dict with key = taxonid, val = (name, count)

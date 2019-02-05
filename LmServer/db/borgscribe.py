@@ -1028,7 +1028,7 @@ class BorgScribe(LMObject):
 
 # ...............................................
     def getSDMColumnsForGridset(self, gridsetid, returnColumns=True, 
-                                         returnProjections=True):
+                                returnProjections=True):
         """
         @summary: Get all existing MatrixColumns and SDMProjections that have  
                      SDMProjections as input layers for a Matrix
@@ -1044,7 +1044,8 @@ class BorgScribe(LMObject):
         pams = self.getMatricesForGridset(gridsetid, mtxType=MatrixType.PAM)
         for pam in pams:
             colPrjPairs = self.getSDMColumnsForMatrix(pam.getId(), 
-                                                                    returnProjections=True)
+                                                      returnColumns, 
+                                                      returnProjections)
             allPairs.extend(colPrjPairs)
 
         return allPairs
@@ -1068,6 +1069,8 @@ from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
 
+mtx = scribe.getMatrix(mtxId=1410)
+mcs = scribe.listMatrixColumns(0,100, userId='x', matrixId=1410)
 
 scribe.closeConnections()
 """
