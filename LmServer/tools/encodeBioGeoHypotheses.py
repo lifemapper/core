@@ -14,11 +14,11 @@ import sys
 # from LmBackend.command.server import EncodeBioGeoHypothesesCommand
 
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (LM_USER, JobStatus, 
-                                            MatrixType, ProcessType, SERVER_BOOM_HEADING)
+from LmCommon.common.lmconstants import (LM_USER, JobStatus, BoomKeys, 
+                                         MatrixType, ProcessType, 
+                                         SERVER_BOOM_HEADING)
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.encoding.layer_encoder import LayerEncoder
-from LmDbServer.common.lmconstants import BoomKeys
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType

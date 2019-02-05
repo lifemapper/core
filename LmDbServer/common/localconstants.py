@@ -23,9 +23,7 @@
           02110-1301, USA.
 """
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import SERVER_PIPELINE_HEADING
-
-from LmDbServer.common.lmconstants import BoomKeys
+from LmCommon.common.lmconstants import SERVER_PIPELINE_HEADING, BoomKeys
 
 # Data Archive Pipeline
 WORKER_JOB_LIMIT = Config().getint(SERVER_PIPELINE_HEADING, 

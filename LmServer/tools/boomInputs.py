@@ -12,10 +12,9 @@ import sys
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (LM_USER, JobStatus, PhyloTreeKeys, 
-                                            MatrixType, ProcessType, SERVER_BOOM_HEADING)
+                                         MatrixType, ProcessType, 
+                                         SERVER_BOOM_HEADING, BoomKeys)
 from LmCommon.encoding.layer_encoder import LayerEncoder
-
-from LmDbServer.common.lmconstants import BoomKeys
 
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr

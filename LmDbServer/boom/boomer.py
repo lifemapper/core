@@ -459,9 +459,9 @@ except:
     taxonSourceName = None
    
 # Expiration date for retrieved species data 
-expDate = dt.DateTime(self._getBoomOrDefault('SPECIES_EXP_YEAR'), 
-                      self._getBoomOrDefault('SPECIES_EXP_MONTH'), 
-                      self._getBoomOrDefault('SPECIES_EXP_DAY')).mjd
+expDate = dt.DateTime(self._getBoomOrDefault('OCC_EXP_YEAR'), 
+                      self._getBoomOrDefault('OCC_EXP_MONTH'), 
+                      self._getBoomOrDefault('OCC_EXP_DAY')).mjd
 occCSV, occMeta, occDelimiter, self.moreDataToProcess = \
                self._findData(datasource, boompath)
 

@@ -12,12 +12,12 @@ from mx.DateTime import gmt
 import os
 import random
 
-from LmCommon.common.lmconstants import (
+from LmCommon.common.lmconstants import (BoomKeys,
     HTTPStatus,LMFormat, SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX)
 #from LmDbServer.boom.boominput import ArchiveFiller
 #from LmDbServer.boom.initboom import initBoom
 from LmDbServer.boom.initBoomJob import BOOMFiller
-from LmDbServer.common.lmconstants import BoomKeys, SpeciesDatasource
+from LmDbServer.common.lmconstants import SpeciesDatasource
 from LmDbServer.tools.catalogScenPkg import SPFiller
 from LmServer.common.lmconstants import TEMP_PATH, Priority, ENV_DATA_PATH
 from LmServer.common.localconstants import PUBLIC_USER
@@ -224,7 +224,7 @@ class BoomPoster(object):
                 for occ_id in occ_json[APIPostKeys.OCCURRENCE_IDS]:
                     out_f.write('{}\n'.format(occ_id))
             self.config.set(
-                SERVER_BOOM_HEADING, BoomKeys.OCCURRENCE_ID_FILENAME,
+                SERVER_BOOM_HEADING, BoomKeys.OCC_ID_FILENAME,
                 occ_filename)
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE,
@@ -263,7 +263,7 @@ class BoomPoster(object):
                 SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE,
                 SpeciesDatasource.USER)
             self.config.set(
-                SERVER_BOOM_HEADING, BoomKeys.USER_OCCURRENCE_DATA,
+                SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME,
                 points_filename)
             try:
                 delimiter = occ_json[APIPostKeys.DELIMITER]
