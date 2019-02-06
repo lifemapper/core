@@ -491,7 +491,7 @@ class BOOMFiller(LMObject):
         # SDM Mask input
         if self.maskAlg is not None:
             config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
-            config.set(SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.MASK_CODE, 
+            config.set(SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.ALG_CODE, 
                        self.maskAlg.code)
             for name, val in self.maskAlg.parameters.iteritems():
                 config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
@@ -1401,17 +1401,19 @@ from LmDbServer.boom.initBoomJob import *
 
 
 # Taxon ids
-paramFname = '/state/partition1/lmscratch/temp/boom_config_10255.params'
+config_file = '/state/partition1/lmscratch/temp/boom_config_10255.params'
 
 # Public archive
-paramFname = '/opt/lifemapper/config/boom.public.params'
+config_file = '/opt/lifemapper/config/boom.public.params'
+
+config_file='/share/lm/data/archive/taffyX/heuchera_boom_global_10min_ppf.params'
 
 import time
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 logname = 'initBoomJob.debug.{}'.format(timestamp)
 
-self = BOOMFiller(paramFname, logname=logname)
+self = BOOMFiller(config_file, logname=logname)
 initMakeflow=True
 self.initializeInputs()
 

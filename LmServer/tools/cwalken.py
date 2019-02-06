@@ -348,7 +348,7 @@ class ChristopherWalken(LMObject):
         """
         @note: Returns configured algorithm
         """
-        acode =  self.cfg.get(algHeading, 'CODE')
+        acode =  self.cfg.get(algHeading, BoomKeys.ALG_CODE)
         alg = Algorithm(acode)
         alg.fillWithDefaults()
         inputs = {}
