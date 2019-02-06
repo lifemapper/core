@@ -1320,7 +1320,7 @@ class BOOMFiller(LMObject):
             rules = []
             
             # Add GRIM rules
-            rules.extend(self.self.addGrimMFs(scenGrims, target_dir))
+            rules.extend(self.addGrimMFs(scenGrims, target_dir))
             
             # Check for a file OccurrenceLayer Ids for existing or PUBLIC user
             if self.occIdFname:
