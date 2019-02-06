@@ -85,7 +85,7 @@ class ConcatenateMatricesCommand(_LmCommand):
         """
         _LmCommand.__init__(self)
         
-        self.args = '{} {} {}'.format(outMtxFilename, axis, matrices)
+        self.args = '{} {} {}'.format(outMtxFilename, axis, ' '.join(matrices))
         
         self.inputs.extend(matrices)
         self.outputs.append(outMtxFilename)

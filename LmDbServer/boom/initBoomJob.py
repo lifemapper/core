@@ -29,9 +29,11 @@ import stat
 import types
 
 from LmBackend.command.boom import BoomerCommand
-from LmBackend.command.common import IdigbioQueryCommand 
+from LmBackend.command.common import IdigbioQueryCommand ,\
+    ConcatenateMatricesCommand
 from LmBackend.command.server import (CatalogTaxonomyCommand, EncodeTreeCommand,
-                                      EncodeBioGeoHypothesesCommand)
+                                      EncodeBioGeoHypothesesCommand,
+    StockpileCommand)
 from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.apiquery import IdigbioAPI
@@ -1057,7 +1059,9 @@ class BOOMFiller(LMObject):
                 colFilenames.append(outFname)
                            
             # Add concatenate command
-            grimRules = grim.getConcatAndStockpileRules(colFilenames, workDir=targetDir)
+            grimRules = self._get_matrix_assembly_and_stockpile_rules(
+                grim.getId(), ProcessType.CONCATENATE_MATRICES, colFilenames,
+                work_dir=targetDir)
             
             grimChain.addCommands(grimRules)
             grimChain = self._write_update_MF(grimChain)            
@@ -1065,6 +1069,39 @@ class BOOMFiller(LMObject):
             self.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
                                  .format(grimChain.objId, code))
         return grimChains
+
+    # .............................
+    def _get_matrix_assembly_and_stockpile_rules(self, matrix_id, process_type,
+                                                 col_filenames, work_dir=None):
+        """Get assembly and stockpile rules for a matrix
+
+        Args:
+            matrix_id : The matrix database id
+                process_type : The ProcessType constant for the process used to
+            create this matrix
+            col_filenames : A list of file names for each column in the matrix
+            work_dir : A relative directory where work should be performed
+        """
+        rules = []
+        if work_dir is None:
+            work_dir = ''
+        
+        # Add concatenate command
+        mtx_out_filename = os.path.join(
+            work_dir, 'mtx_{}{}'.format(matrix_id, LMFormat.MATRIX.ext))
+        concat_cmd = ConcatenateMatricesCommand(
+            col_filenames, '1', mtx_out_filename)
+        rules.append(concat_cmd.getMakeflowRule())
+        
+        # Stockpile matrix
+        mtx_success_filename = os.path.join(
+            work_dir, 'mtx_{}.success'.format(matrix_id))
+        stockpile_cmd = StockpileCommand(
+            process_type, matrix_id, mtx_success_filename, mtx_out_filename,
+            status=JobStatus.COMPLETE)
+        rules.append(stockpile_cmd.getMakeflowRule(local=True))
+        return rules
+
 
     # .............................
     def _getIdigQueryCmd(self, ws_dir):

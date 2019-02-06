@@ -26,13 +26,14 @@
 import os
 import mx.DateTime
 
-from LmBackend.command.common import (ConcatenateMatricesCommand, SystemCommand, 
-                                      ChainCommand)
+#from LmBackend.command.common import (ConcatenateMatricesCommand, SystemCommand, 
+#                                      ChainCommand)
 from LmBackend.common.lmobj import LMError
-from LmBackend.command.server import StockpileCommand, LmTouchCommand
+#from LmBackend.command.server import StockpileCommand, LmTouchCommand
 
-from LmCommon.common.lmconstants import (MatrixType, ProcessType, CSV_INTERFACE, 
-                                         LMFormat, JobStatus)
+from LmCommon.common.lmconstants CSV_INTERFACE, MatrixType
+#from LmCommon.common.lmconstants import (MatrixType, ProcessType, CSV_INTERFACE, 
+#                                         LMFormat, JobStatus)
 from LmCommon.common.matrix import Matrix
 
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
@@ -256,27 +257,27 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 #         
 #         return rules
 
-    # .............................
-    def getConcatAndStockpileRules(self, mtxcolFnames, workDir=''):
-        # Make sure work dir is not None
-        if workDir is None:
-            workDir = ''
-        rules = []
-        # Add concatenate command
-        mtxOutputFname = os.path.join(workDir, 
-                            'mtx_{}{}'.format(self.getId(), LMFormat.MATRIX.ext))
-        
-        concatCmd = ConcatenateMatricesCommand(mtxcolFnames, '1', mtxOutputFname)
-        rules.append(concatCmd.getMakeflowRule())
-
-        # Stockpile Matrix
-        mtxSuccessFilename = os.path.join(workDir, 'mtx_{}.success'
-                                                     .format(self.getId()))
-        spCmd = StockpileCommand(ProcessType.CONCATENATE_MATRICES, self.getId(),
-                                         mtxSuccessFilename, mtxOutputFname, 
-                                         status=JobStatus.COMPLETE)
-        rules.append(spCmd.getMakeflowRule(local=True))
-        return rules
+#     # .............................
+#     def getConcatAndStockpileRules(self, mtxcolFnames, workDir=''):
+#         # Make sure work dir is not None
+#         if workDir is None:
+#             workDir = ''
+#         rules = []
+#         # Add concatenate command
+#         mtxOutputFname = os.path.join(workDir, 
+#                             'mtx_{}{}'.format(self.getId(), LMFormat.MATRIX.ext))
+#         
+#         concatCmd = ConcatenateMatricesCommand(mtxcolFnames, '1', mtxOutputFname)
+#         rules.append(concatCmd.getMakeflowRule())
+# 
+#         # Stockpile Matrix
+#         mtxSuccessFilename = os.path.join(workDir, 'mtx_{}.success'
+#                                                      .format(self.getId()))
+#         spCmd = StockpileCommand(ProcessType.CONCATENATE_MATRICES, self.getId(),
+#                                          mtxSuccessFilename, mtxOutputFname, 
+#                                          status=JobStatus.COMPLETE)
+#         rules.append(spCmd.getMakeflowRule(local=True))
+#         return rules
     
 #     # ............................................
 #     def getCalcRules(self, workDir=''):
