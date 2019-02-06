@@ -1304,7 +1304,7 @@ class BOOMFiller(LMObject):
             
             # Create makeflow for computations and start rule list
             # TODO: Init makeflow
-            script_name = os.path.splitext(os.path.basename(__file__))
+            script_name = os.path.splitext(os.path.basename(__file__))[0]
             meta = {
                 MFChain.META_CREATED_BY: script_name,
                 MFChain.META_GRIDSET : boomGridset.getId(),
