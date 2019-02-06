@@ -418,24 +418,137 @@ scriptname = 'boomerTesting'
 logger = ScriptLogger(scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
 
-config_file='/share/lm/data/archive/taffy/heuchera_global_10min_ppf.ini'
-success_file='/share/lm/data/archive/taffy/heuchera_global_10min.success'
-
-config_file='/share/lm/data/archive/anon/Hechera2.ini'
-success_file='/share/lm/data/archive/anon/Hechera2.success'
-
-config_file='/share/lm/data/archive/anon/idigtest4.ini'
-success_file='/share/lm/data/archive/anon/idigtest4.success'
-
-config_file='/share/lm/data/archive/anon/CJ2.ini'
-success_file='mf_3149/CJ2.ini.success'
+config_file='/share/lm/data/archive/taffyX/heuchera_global_10min_ppf.ini'
+success_file='tmp/heuchera_global_10min_ppf.ini.success'
 
 boomer = Boomer(config_file, success_file, log=logger)
 ###############################################
 self = boomer
+
 success = self._scribe.openConnections()
-self.christopher = ChristopherWalken(self.configFname,
-                                                 scribe=self._scribe)
+self.christopher = ChristopherWalken(self.configFname,scribe=self._scribe)
+
+self = boomer.christopher
+self.moreDataToProcess = False
+
+userId = self._getBoomOrDefault(BoomKeys.ARCHIVE_USER, defaultValue=PUBLIC_USER)
+archiveName = self._getBoomOrDefault(BoomKeys.ARCHIVE_NAME)
+archivePriority = self._getBoomOrDefault(BoomKeys.ARCHIVE_PRIORITY, 
+                                         defaultValue=Priority.NORMAL)
+
+
+earl = EarlJr()
+boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
+epsg = self._getBoomOrDefault(BoomKeys.EPSG, defaultValue=DEFAULT_EPSG)
+
+import csv
+import os
+import sys
+
+from LmBackend.common.lmobj import LMError, LMObject
+from LmCommon.common.apiquery import GbifAPI
+from LmCommon.common.unicode import fromUnicode, toUnicode
+from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, ProcessType, 
+                                         JobStatus, ONE_HOUR, LMFormat) 
+from LmCommon.common.occparse import OccDataParser
+from LmServer.base.taxon import ScientificName
+from LmServer.common.lmconstants import LOG_PATH
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.log import ScriptLogger
+from LmServer.legion.occlayer import OccurrenceLayer
+
+TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
+
+useGBIFTaxonIds = False
+datasource = self._getBoomOrDefault(BoomKeys.DATA_SOURCE)
+try:
+    taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
+except:
+    taxonSourceName = None
+   
+# Expiration date for retrieved species data 
+expDate = dt.DateTime(self._getBoomOrDefault(BoomKeys.OCC_EXP_YEAR), 
+                      self._getBoomOrDefault(BoomKeys.OCC_EXP_MONTH), 
+                      self._getBoomOrDefault(BoomKeys.OCC_EXP_DAY)).mjd
+
+occname = self._getBoomOrDefault(BoomKeys.OCC_DATA_NAME)
+occdir = self._getBoomOrDefault(BoomKeys.OCC_DATA_DIR)
+occ_delimiter = self._getBoomOrDefault(BoomKeys.OCC_DATA_DELIMITER) 
+occ_csv_fname, occ_meta_fname, self.moreDataToProcess = self._findData(
+    occname, occdir, boompath)
+
+
+if datasource == SpeciesDatasource.GBIF:
+    gbifProv = self._getBoomOrDefault(BoomKeys.GBIF_PROVIDER_FILENAME)
+    gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
+    weaponOfChoice = GBIFWoC(self._scribe, userId, archiveName, epsg,
+                             expDate, occ_csv_fname,
+                             providerFname=gbifProvFile, 
+                             taxonSourceName=taxonSourceName, 
+                             logger=self.log)
+
+# Copy public data to user space
+# TODO: Handle taxonomy, useGBIFTaxonomy=??
+elif datasource == SpeciesDatasource.EXISTING:
+    occIdFname = self._getBoomOrDefault(BoomKeys.OCC_ID_FILENAME)
+    weaponOfChoice = ExistingWoC(self._scribe, userId, archiveName, epsg,
+                                 expDate, occIdFname, logger=self.log)
+   
+# User or iDigBio query
+else:
+    weaponOfChoice = UserWoC(self._scribe, userId, archiveName, epsg,
+                             expDate, occ_csv_fname, occ_meta_fname, 
+                             occ_delimiter, logger=self.log, 
+                             processType=ProcessType.USER_TAXA_OCCURRENCE,
+                             useGBIFTaxonomy=useGBIFTaxonIds,
+                             taxonSourceName=taxonSourceName)
+   
+weaponOfChoice.initializeMe()
+# weaponOfChoice, expDate = self._getOccWeaponOfChoice(userId, archiveName, 
+#                                               epsg, boompath)
+# SDM inputs
+minPoints = self._getBoomOrDefault(BoomKeys.POINT_COUNT_MIN)
+algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
+
+(mdlScen, prjScens, model_mask_base) = self._getProjParams(userId, epsg)
+# Global PAM inputs
+(boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
+                                                      archiveName, epsg)
+assemblePams = self._getBoomOrDefault(BoomKeys.ASSEMBLE_PAMS, isBool=True)
+(self.userId, 
+ self.archiveName, 
+ self.priority, 
+ self.boompath, 
+ self.weaponOfChoice,
+ self._obsoleteTime, 
+ self.epsg, 
+ self.minPoints, 
+ self.algs, 
+ self.mdlScen, 
+ self.prjScens, 
+ self.model_mask_base,
+ self.boomGridset, 
+ self.intersectParams, 
+ self.assemblePams) = self._getConfiguredObjects()
+
+# self.christopher.initializeMe()
+
+self.gridsetId = self.christopher.boomGridset.getId()
+
+self.assemblePams = self.christopher.assemblePams
+self.priority = self.christopher.priority
+
+self.christopher.moveToStart()
+
+self.keepWalken = True
+
+self.squidNames = []
+
+self.masterPotatoHead = None
+self.potatoBushel = None
+self.rotatePotatoes()
+
+
                                                  
 ###############################################
 self = boomer.christopher

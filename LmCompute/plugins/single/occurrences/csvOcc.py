@@ -189,183 +189,188 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
         
 
 """
+import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
 import os
-from osgeo import ogr, osr
-from types import UnicodeType, StringType
-import StringIO
-import json
-import requests
-from types import (BooleanType, DictionaryType, FloatType, IntType, ListType, 
-                         StringType, TupleType, UnicodeType)
-import urllib
-import xml.etree.ElementTree as ET
+import logging
+from LmServer.common.log import ScriptLogger
 
+
+# from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.shapes.createshape import ShapeShifter
-from LmCommon.common.lmconstants import JobStatus, ProcessType, ENCODING
+from LmCommon.common.lmconstants import (
+    ENCODING, JobStatus, LMFormat, ProcessType)
+    
 from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
+import csv
+import json
+import os
+from osgeo import ogr, osr
+import StringIO
+import subprocess
+from types import UnicodeType, StringType
 
-from LmCompute.plugins.single.occurrences.csvOcc import *
-from LmCommon.common.lmconstants import *
-
-maxPoints = 500
-
-url='https://bison.usgs.gov/solr/occurrences/select?q=decimalLongitude%3A%5B-125+TO+-66%5D+AND+decimalLatitude%3A%5B24+TO+50%5D+AND+hierarchy_homonym_string%3A%2A-1006869-%2A+NOT+basisOfRecord%3Aliving+NOT+basisOfRecord%3Afossil' 
-outfile='mf_17/pt_54/pt_54.shp' 
-bigfile='mf_17/pt_54/bigpt_54.shp'
-
-occAPI = BisonAPI.initFromUrl(url)
-occAPI.queryByGet(outputType='json')
-
-xmloutput = ET.fromstring(output)
-
-occList = occAPI.getTSNOccurrences()
-count = len(occList)
-# parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, outFile,  
-#                           bigFile, count, maxPoints)
-
-# createBisonShapefile(url, outFile, bigFile, maxPoints)
+from LmCommon.common.lmconstants import (ENCODING, GBIF, GBIF_QUERY,
+                    PROVIDER_FIELD_COMMON, 
+                    LM_WKT_FIELD, ProcessType, JobStatus,
+                    DWCNames, LMFormat, DEFAULT_EPSG)
+from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.unicode import fromUnicode, toUnicode
+from LmCompute.common.lmObj import LmException
+try:
+    from LmServer.common.lmconstants import BIN_PATH
+except:
+    from LmCompute.common.lmconstants import BIN_PATH
 
 
-# user_points.py
-meta, doMatchHeader = OccDataParser.readMetadata(metadataFile)
-# createUserShapefile(pointsCsvFn, meta, outFile, 
-#                                bigFile, maxPoints)
-isUser=True
 
-with open(pointsCsvFn) as inF:
+
+csv_fn = '/share/lm/data/archive/taffy2/000/000/396/221/pt_396221.csv'
+metadata_fn = '/share/lm/data/archive/taffy2/heuchera.json'
+out_fn = '/state/partition1/lmscratch/temp/test_out'
+big_out_fn = '/state/partition1/lmscratch/temp/big_test_out.csv'
+
+
+pointCsvFn = csv_fn
+metadata = metadata_fn
+outFile = out_fn
+bigFile = big_out_fn
+maxPoints=500
+log = ScriptLogger('testshp', level=logging.DEBUG)
+
+with open(pointCsvFn) as inF:
     csvInputBlob = inF.read()
-    lines = csvInputBlob.split('\n')
-    origCount = len(lines)
-    cleanLines = []
-    for ln in lines:
-        try: 
-            clnLn = ln.encode(ENCODING)
-        except:
-            pass
-        else:
-            cleanLines.append(clnLn)
-    cleanCount = len(cleanLines)
-    cleanBlob = '\n'.join(cleanLines)
-    
-print('Cleaned blob of non-encodable lines, orig {}, new {}'
-            .format(origCount, cleanCount))
 
-# parseCsvData(cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
-#                  bigFile, cleanCount, maxPoints, metadata=meta, isUser=True)
-processType = ProcessType.USER_TAXA_OCCURRENCE
-rawData = cleanBlob
-metadata = meta
+lines = csvInputBlob.split('\n')
+origCount = len(lines)
+cleanLines = []
+
+for ln in lines:
+    try: 
+        clnLn = ln.encode(ENCODING)
+    except:
+        pass
+    else:
+        cleanLines.append(clnLn)
+
+
+cleanCount = len(cleanLines)
+cleanBlob = '\n'.join(cleanLines)
+
+(rawData, processType, count, isUser, log) = (
+ cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, cleanCount, True, log)
+
 
 readyFilename(outFile, overwrite=True)
 readyFilename(bigFile, overwrite=True)
-logger = LmComputeLogger(os.path.basename('crap'), addConsole=True)
-shaper = ShapeShifter(processType, rawData, count, logger=logger, 
-                             metadata=metadata)
-op = shaper.op
-op._csvreader, op._file = op.getReader(rawData, delimiter)
-(cr, f) = (op._csvreader, op._file)
 
-# shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
-#                                 isUser=isUser)
-(outfname, bigfname, overwrite) = (outFile, bigFile, True)
-readyFilename(outfname, overwrite=overwrite)
-discardIndices = []
-outDs = shaper._createDataset(outfname)
-outLyr = shaper._addUserFieldDef(outDs)
+shaper = ShapeShifter(
+    processType, rawData, count, logger=log, metadata=metadata)
+    
+(outfname, bigfname, isUser, overwrite) = (outFile, bigFile, isUser, True)
+
+
+self = shaper
+discardIndices = self._getSubset(maxPoints)
+
+outDs = bigDs = None
+
+outDs = self._createDataset(outfname)
+outLyr = self._addUserFieldDef(outDs)
+
 lyrDef = outLyr.GetLayerDefn()
 
 
+recDict = self._getRecord()
+# while recDict is not None:
+#     self._createFillFeat(lyrDef, recDict, outLyr)
+#     recDict = self._getRecord()
 
-
-
-
-
-
-
-
-
-
-meta, doMatchHeader = OccDataParser.readMetadata(metadataFile)
-
-(rawData, processType, outFile, bigFile, count, maxPoints,
- metadata=None, isUser=False = (pointsCsvFn, meta, outFile, bigFile, 500)
-                      
-readyFilename(outFile, overwrite=True)
-readyFilename(bigFile, overwrite=True)
-if count <= 0:
-    f = open(outFile, 'w')
-    f.write('Zero data points')
-    f.close()
-    f = open(bigFile, 'w')
-    f.write('Zero data points')
-    f.close()
-else:
-    logger = LmComputeLogger('crap', addConsole=True)
-    shaper = ShapeShifter(processType, rawData, count, logger=logger, 
-                                 metadata=metadata)
-    shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
-                                    isUser=isUser)
-    if not os.path.exists(bigFile):
-        f = open(bigFile, 'w')
-        f.write('No excess data')
-        f.close()
-
-
-
-fnames = []
-for i in range(21):
-    fnames.append(lyrDef.GetFieldDefn(i).name)
-
-#####################################
-loop
-#####################################
-recDict = shaper._getRecord()
-print recDict
-
-# shaper._createFillFeat(lyrDef, recDict, outLyr)
 feat = ogr.Feature(lyrDef)
-
-# _fillFeature
-try:
-    x = recDict[shaper.op.xIdx]
-    y = recDict[shaper.op.yIdx]
-except:
-    x = recDict[shaper.xField]
-    y = recDict[shaper.yField]
-
+x = recDict[self.xField]
+y = recDict[self.yField]
 
 wkt = 'POINT ({} {})'.format(x, y)
 feat.SetField(LM_WKT_FIELD, wkt)
 geom = ogr.CreateGeometryFromWkt(wkt)
 feat.SetGeometryDirectly(geom)
-specialFields = (shaper.idField, shaper.linkField, shaper.providerKeyField, 
-                      shaper.computedProviderField)
-
-
-shaper._handleSpecialFields(feat, recDict)
-
+            
+specialFields = (self.idField, self.linkField, self.providerKeyField, 
+                              self.computedProviderField)
+self._handleSpecialFields(feat, recDict)
 for name in recDict.keys():
     if (name in feat.keys() and name not in specialFields):
-        fldname = shaper._lookup(name)
+        fldname = self._lookup(name)
+        print name, fldname
         if fldname is not None:
+            fldidx = feat.GetFieldIndex(str(fldname))
             val = recDict[name]
             if val is not None and val != 'None':
                 if isinstance(val, UnicodeType):
                     val = fromUnicode(val)
-                feat.SetField(fldname, val)
+                feat.SetField(fldidx, val)
 
 
 lyr.CreateFeature(feat)
 feat.Destroy()
-#####################################
                             
+# Return metadata
 (minX, maxX, minY, maxY) = outLyr.GetExtent()
 geomtype = lyrDef.GetGeomType()
 fcount = outLyr.GetFeatureCount()
+# Close dataset and flush to disk
 outDs.Destroy()
-shaper._finishWrite(outFile, minX, maxX, minY, maxY, geomtype, fcount)
+self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount)
+                        
+        
+  
+# shaper.writeOccurrences(
+#     outFile, maxPoints=maxPoints, bigfname=bigFile, isUser=isUser)
+log.debug('Shaper wrote occurrences')
+
+# Test generated shapefiles, throws exceptions if bad
+status = JobStatus.COMPUTED
+goodData, featCount = ShapeShifter.testShapefile(outFile)
+if not goodData:
+    raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                      'Shaper tested, failed newly created occset')
+
+# Test the big shapefile if it exists
+if os.path.exists(bigFile):
+    ShapeShifter.testShapefile(bigFile)
+        
+    except LmException, lme:
+        log.debug(lme.msg)
+        status = lme.code
+        log.debug('Failed to write occurrences, return {}'.format(status))
+        log.debug('Delete shapefiles if they exist')
+        
+        # TODO: Find a better way to delete (existing function maybe?)
+        if os.path.exists(outFile):
+            out_base = os.path.splitext(outFile)[0]
+            for ext in LMFormat.SHAPE.getExtensions():
+                fn = '{}{}'.format(out_base, ext)
+                if os.path.exists(fn):
+                    os.remove(fn)
+                    
+        if os.path.exists(bigFile):
+            big_base = os.path.splitext(bigFile)[0]
+            for ext in LMFormat.SHAPE.getExtensions():
+                fn = '{}{}'.format(big_base, ext)
+                if os.path.exists(fn):
+                    os.remove(fn)
+    except Exception, e:
+        log.debug(str(e))
+        status = JobStatus.LM_POINT_DATA_ERROR
+        log.debug('Failed to write occurrences, return {}'.format(status))
+
+# csv_occ.parseCsvData(
+#         cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, bigFile,
+#         cleanCount, maxPoints, metadata=metadata, isUser=True, log=log)
+#         
+# csv_occ.createUserShapefile(csv_fn, metadata_fn, out_fn, big_out_fn, 500)
 
 """
     
