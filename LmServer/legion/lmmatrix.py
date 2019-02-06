@@ -31,7 +31,7 @@ import mx.DateTime
 from LmBackend.common.lmobj import LMError
 #from LmBackend.command.server import StockpileCommand, LmTouchCommand
 
-from LmCommon.common.lmconstants CSV_INTERFACE, MatrixType
+from LmCommon.common.lmconstants import CSV_INTERFACE, MatrixType
 #from LmCommon.common.lmconstants import (MatrixType, ProcessType, CSV_INTERFACE, 
 #                                         LMFormat, JobStatus)
 from LmCommon.common.matrix import Matrix
