@@ -989,65 +989,62 @@ class BOOMFiller(LMObject):
                 self.scribe.log.info('  Failed to add biogeo hypotheses matrix')
         return bgMtx, biogeoLayerNames
     
-    # ...............................................
-    def addEncodeBioGeoMF(self, gridset):
-        """
-        @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-                  and configFile written by BOOMFiller.initBoom.
-        """
-        scriptname, _ = os.path.splitext(os.path.basename(__file__))
-        meta = {MFChain.META_CREATED_BY: scriptname,
-                MFChain.META_GRIDSET: gridset.getId(),
-                MFChain.META_DESCRIPTION: 
-                          'Encode biogeographic hypotheses task for user {} grid {}'
-                          .format(self.userId, gridset.name)}
-        newMFC = MFChain(self.userId, priority=Priority.HIGH, 
-                         metadata=meta, status=JobStatus.GENERAL, 
-                         statusModTime=mx.DateTime.gmt().mjd)
-        mfChain = self.scribe.insertMFChain(newMFC, gridset.getId())
-        
-        ws_dir = mfChain.getRelativeDirectory()
-        baseFilename, _ = os.path.splitext(os.path.basename(self.outConfigFilename))
-        bghSuccessFname = os.path.join(ws_dir, baseFilename + '.success')
-        
-        # Create a rule from the MF 
-        bgCmd = EncodeBioGeoHypothesesCommand(self.userId, gridset.name, bghSuccessFname)
-        
-        mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
-        mfChain = self._write_update_MF(mfChain)
-        return mfChain   
+    ## ...............................................
+    #def addEncodeBioGeoMF(self, gridset):
+    #    """
+    #    @summary: Create a Makeflow to initiate Boomer with inputs assembled 
+    #              and configFile written by BOOMFiller.initBoom.
+    #    """
+    #    scriptname, _ = os.path.splitext(os.path.basename(__file__))
+    #    meta = {MFChain.META_CREATED_BY: scriptname,
+    #            MFChain.META_GRIDSET: gridset.getId(),
+    #            MFChain.META_DESCRIPTION: 
+    #                      'Encode biogeographic hypotheses task for user {} grid {}'
+    #                      .format(self.userId, gridset.name)}
+    #    newMFC = MFChain(self.userId, priority=Priority.HIGH, 
+    #                     metadata=meta, status=JobStatus.GENERAL, 
+    #                     statusModTime=mx.DateTime.gmt().mjd)
+    #    mfChain = self.scribe.insertMFChain(newMFC, gridset.getId())
+    #    
+    #    ws_dir = mfChain.getRelativeDirectory()
+    #    baseFilename, _ = os.path.splitext(os.path.basename(self.outConfigFilename))
+    #    bghSuccessFname = os.path.join(ws_dir, baseFilename + '.success')
+    #    
+    #    # Create a rule from the MF 
+    #    bgCmd = EncodeBioGeoHypothesesCommand(self.userId, gridset.name, bghSuccessFname)
+    #    
+    #    mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
+    #    mfChain = self._write_update_MF(mfChain)
+    #    return mfChain   
 
     # .............................
-    def _addGrimMF(self, scencode, gridsetId, currtime):
-        # Create MFChain for this GPAM
-        desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
-                .format(self.userId, self.archiveName, scencode))
-        meta = {MFChain.META_CREATED_BY: self.name,
-                MFChain.META_GRIDSET: gridsetId,
-                MFChain.META_DESCRIPTION: desc 
-                }
-        newMFC = MFChain(self.userId, priority=self.priority, 
-                         metadata=meta, status=JobStatus.GENERAL, 
-                         statusModTime=currtime)
-        grimChain = self.scribe.insertMFChain(newMFC, gridsetId)
-        return grimChain
+    #def _addGrimMF(self, scencode, gridsetId, currtime):
+    #    # Create MFChain for this GPAM
+    #    desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
+    #            .format(self.userId, self.archiveName, scencode))
+    #    meta = {MFChain.META_CREATED_BY: self.name,
+    #            MFChain.META_GRIDSET: gridsetId,
+    #            MFChain.META_DESCRIPTION: desc 
+    #            }
+    #    newMFC = MFChain(self.userId, priority=self.priority, 
+    #                     metadata=meta, status=JobStatus.GENERAL, 
+    #                     statusModTime=currtime)
+    #    grimChain = self.scribe.insertMFChain(newMFC, gridsetId)
+    #    return grimChain
    
     # .............................
-    def addGrimMFs(self, defaultGrims, gridsetId):
-        currtime = mx.DateTime.gmt().mjd
-        grimChains = []
+    def addGrimMFs(self, defaultGrims, target_dir):
+        #currtime = mx.DateTime.gmt().mjd
+        #grimChains = []
+        rules = []
         
         # Get shapegrid rules / files
         shapegrid_filename = self.shapegrid.getDLocation()
         
-        if not os.path.exists(shapegrid_filename):
-            # TODO: Add shapegrid rules
-            pass
-        
         for code, grim in defaultGrims.iteritems():
             # Create MFChain for this GRIM
-            grimChain = self._addGrimMF(code, gridsetId, currtime)
-            targetDir = grimChain.getRelativeDirectory()
+            #grimChain = self._addGrimMF(code, gridsetId, currtime)
+            #targetDir = grimChain.getRelativeDirectory()
             mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
             self.scribe.log.info('  Adding {} grim columns for scencode {}'
                           .format(len(mtxcols), code))
@@ -1062,7 +1059,7 @@ class BOOMFiller(LMObject):
                 relDir, _ = os.path.splitext(
                     mtxcol.layer.getRelativeDLocation())
                 col_filename = os.path.join(
-                    targetDir, relDir, mtxcol.getTargetFilename())
+                    target_dir, relDir, mtxcol.getTargetFilename())
                 try:
                     min_percent = mtxcol.intersectParams[
                         mtxcol.INTERSECT_PARAM_MIN_PERCENT]
@@ -1071,7 +1068,8 @@ class BOOMFiller(LMObject):
                 intersect_cmd = GrimRasterCommand(
                     shapegrid_filename, mtxcol.layer.getDLocation(),
                     col_filename, minPercent=min_percent, ident=mtxcol.ident)
-                grimChain.addCommands([intersect_cmd.getMakeflowRule()])
+                rules.append(intersect_cmd.getMakeflowRule())
+                #grimChain.addCommands([intersect_cmd.getMakeflowRule()])
                 #lyrRules = mtxcol.computeMe(workDir=targetDir)
                 #grimChain.addCommands(lyrRules)
                
@@ -1081,16 +1079,17 @@ class BOOMFiller(LMObject):
                 colFilenames.append(col_filename)
                            
             # Add concatenate command
-            grimRules = self._get_matrix_assembly_and_stockpile_rules(
+            rules.extend(self._get_matrix_assembly_and_stockpile_rules(
                 grim.getId(), ProcessType.CONCATENATE_MATRICES, colFilenames,
-                work_dir=targetDir)
+                work_dir=target_dir))
             
-            grimChain.addCommands(grimRules)
-            grimChain = self._write_update_MF(grimChain)            
-            grimChains.append(grimChain)
-            self.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
-                                 .format(grimChain.objId, code))
-        return grimChains
+            #grimChain.addCommands(grimRules)
+            #grimChain = self._write_update_MF(grimChain)            
+            #grimChains.append(grimChain)
+            #self.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
+            #                     .format(grimChain.objId, code))
+        #return grimChains
+        return rules
 
     # .............................
     def _get_matrix_assembly_and_stockpile_rules(self, matrix_id, process_type,
@@ -1190,37 +1189,39 @@ class BOOMFiller(LMObject):
         return mfchain
 
     # ...............................................
-    def addBoomMF(self, boomGridsetId, tree):
+    def addBoomMF(self, tree, target_dir):
         """
         @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                   and configFile written by BOOMFiller.initBoom.
         """
-        meta = {MFChain.META_CREATED_BY: self.name,
-                MFChain.META_GRIDSET: boomGridsetId,
-                MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
-        .format(self.userId, self.archiveName)}
-        newMFC = MFChain(self.userId, priority=self.priority, 
-                         metadata=meta, status=JobStatus.GENERAL, 
-                         statusModTime=mx.DateTime.gmt().mjd)
-        mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
+        rules = []
+        #meta = {MFChain.META_CREATED_BY: self.name,
+        #        MFChain.META_GRIDSET: boomGridsetId,
+        #        MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
+        #.format(self.userId, self.archiveName)}
+        #newMFC = MFChain(self.userId, priority=self.priority, 
+        #                 metadata=meta, status=JobStatus.GENERAL, 
+        #                 statusModTime=mx.DateTime.gmt().mjd)
+        #mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
         # Workspace directory
-        ws_dir = mfChain.getRelativeDirectory()
+        #ws_dir = mfChain.getRelativeDirectory()
         base_config_fname = os.path.basename(self.outConfigFilename)
         # ChristopherWalken writes when finished walking through 
         # species data (initiated by this Makeflow).  
-        boom_success_fname = os.path.join(ws_dir, base_config_fname + '.success')
+        boom_success_fname = os.path.join(target_dir, base_config_fname + '.success')
         boomCmd = BoomerCommand(self.outConfigFilename, boom_success_fname)
                   
         # Add iDigBio MF before Boom, if specified as occurrence input
         if self.dataSource == SpeciesDatasource.TAXON_IDS:
-            idigCmd, point_output_file = self._getIdigQueryCmd(ws_dir)
+            idigCmd, point_output_file = self._getIdigQueryCmd(target_dir)
             # Update config to User (CSV) datasource and point_output_file
             self.dataSource = SpeciesDatasource.USER
             self.occFname = point_output_file
             self.occSep = IdigbioAPI.DELIMITER
             # Add command to this Makeflow
             # TODO: allow non-local
-            mfChain.addCommands([idigCmd.getMakeflowRule(local=True)])
+            #mfChain.addCommands([idigCmd.getMakeflowRule(local=True)])
+            rules.append(idigCmd.getMakeflowRule(local=True))
             # Boom requires iDigBio data
             boomCmd.inputs.extend(idigCmd.outputs)
             
@@ -1228,23 +1229,28 @@ class BOOMFiller(LMObject):
         cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
         if cattaxCmd:
             # Add catalog taxonomy command to this Makeflow
-            mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
+            #mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
+            rules.append(cattaxCmd.getMakeflowRule(local=True))
             # Boom requires catalog taxonomy completion
             boomCmd.inputs.append(taxSuccessFname)
         
         # Encode tree after Boom, if tree exists
         if tree is not None:
-            tree_success_fname = os.path.join(ws_dir, tree.name+'.success')
-            treeCmd = EncodeTreeCommand(self.userId, tree.name, tree_success_fname)
+            tree_success_fname = os.path.join(target_dir, tree.name+'.success')
+            treeCmd = EncodeTreeCommand(
+                self.userId, tree.name, tree_success_fname)
             # Tree requires Boom completion
             treeCmd.inputs.append(boom_success_fname)
             # Add tree encoding command to this Makeflow
-            mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
+            #mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
+            rules.append(treeCmd.getMakeflowRule(local=True))
         
         # Add boom command to this Makeflow
-        mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
-        mfChain = self._write_update_MF(mfChain)
-        return mfChain
+        #mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
+        rules.append(boomCmd.getMakeflowRule(local=True))
+        #mfChain = self._write_update_MF(mfChain)
+        #return mfChain
+        return rules
 
     # .............................................................................
     def _fixDirectoryPermissions(self, boomGridset):
@@ -1295,8 +1301,26 @@ class BOOMFiller(LMObject):
             # This updates the gridset, shapegrid, default PAMs (rolling, with no 
             #     matrixColumns, default GRIMs with matrixColumns
             scenGrims, boomGridset = self.addShapeGridGPAMGridset()
-            # Add GRIM compute Makeflows, independent of Boom completion
-            grimMFs = self.addGrimMFs(scenGrims, boomGridset.getId())
+            
+            # Create makeflow for computations and start rule list
+            # TODO: Init makeflow
+            script_name = os.path.splitext(os.path.basename(__file__))
+            meta = {
+                MFChain.META_CREATED_BY: script_name,
+                MFChain.META_GRIDSET : boomGridset.getId(),
+                MFChain.META_DESCRIPTION : 'Makeflow for gridset {}'.format(
+                    boomGridset.getId())
+                }
+            new_mfc = MFChain(
+                self.userId, priority=Priority.HIGH, metadata=meta,
+                status=JobStatus.GENERAL, statusModTime=mx.DateTime.gmt().mjd)
+            gridset_mf = self.scribe.insertMFChain(
+                new_mfc, boomGridset.getId())
+            target_dir = gridset_mf.getRelativeDirectory()
+            rules = []
+            
+            # Add GRIM rules
+            rules.extend(self.self.addGrimMFs(scenGrims, target_dir))
             
             # Check for a file OccurrenceLayer Ids for existing or PUBLIC user
             if self.occIdFname:
@@ -1313,16 +1337,28 @@ class BOOMFiller(LMObject):
                   
             if initMakeflow is True:
                 if biogeoMtx and len(biogeoLayerNames) > 0:
+                    # Add BG hypotheses
+                    bgh_success_fname = os.path.join(target_dir, 'bg.success')
+                    bg_cmd = EncodeBioGeoHypothesesCommand(
+                        self.userId, boomGridset.name, bgh_success_fname)
+                    # TODO: Do we want this to be local?  Yes, needs db access
+                    # TODO: We need a different script for this.  
+                    rules.append(bg_cmd.getMakeflowRule(local=True))
                     # Add BG Hypotheses encoding Makeflows, independent of Boom completion
-                    bgMF = self.addEncodeBioGeoMF(boomGridset)
+                    #rules.extend(self.addEncodeBioGeoMF(boomGridset))
                 # Create MFChain to run Boomer on these inputs IFF requested
                 # This also adds commands for iDigBio occurrence data retrieval 
                 #   and taxonomy insertion before Boom
                 #   and tree encoding after Boom 
-                boomMF = self.addBoomMF(boomGridset.getId(), tree)
+                rules.extend(self.addBoomMF(tree, target_dir))
 
             # Write config file for archive, update permissions
             self.writeConfigFile(tree=tree, biogeoLayers=biogeoLayerNames)
+            
+            # Write rules
+            gridset_mf.addCommands(rules)
+            self._write_update_MF(gridset_mf)
+            
         finally:
             self.close()
            
