@@ -245,7 +245,8 @@ class MFChain(ProcessObject):
            
         # For each tuple in the list
         for rule in ruleList:
-            deps = rule.dependencies
+            # If dependency is not absolute path
+            deps = [d for d in rule.dependencies if not os.path.isabs(d)]
             targets = rule.targets
             cmd = rule.command
             comment = rule.comment
@@ -256,8 +257,8 @@ class MFChain(ProcessObject):
             
             # If there are targets that have not been defined before
             if len(newTargets) > 0:
-                self._addJobCommand(newTargets, cmd, dependencies=deps, 
-                              comment=comment)
+                self._addJobCommand(
+                    newTargets, cmd, dependencies=deps, comment=comment)
     
     # ...........................
     def addHeaders(self, headers):
