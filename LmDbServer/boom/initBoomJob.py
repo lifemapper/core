@@ -68,6 +68,7 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
+from LmBackend.command.single import GrimRasterCommand
 
 # .............................................................................
 class BOOMFiller(LMObject):
@@ -1036,6 +1037,13 @@ class BOOMFiller(LMObject):
         currtime = mx.DateTime.gmt().mjd
         grimChains = []
         
+        # Get shapegrid rules / files
+        shapegrid_filename = self.shapegrid.getDLocation()
+        
+        if not os.path.exists(shapegrid_filename):
+            # TODO: Add shapegrid rules
+            pass
+        
         for code, grim in defaultGrims.iteritems():
             # Create MFChain for this GRIM
             grimChain = self._addGrimMF(code, gridsetId, currtime)
@@ -1047,16 +1055,30 @@ class BOOMFiller(LMObject):
             colFilenames = []
             for mtxcol in mtxcols:
                 mtxcol.postToSolr = False
-                mtxcol.processType = self._getMCProcessType(mtxcol, grim.matrixType)
+                mtxcol.processType = self._getMCProcessType(
+                    mtxcol, grim.matrixType)
                 mtxcol.shapegrid = self.shapegrid
             
-                lyrRules = mtxcol.computeMe(workDir=targetDir)
-                grimChain.addCommands(lyrRules)
+                relDir, _ = os.path.splitext(
+                    mtxcol.layer.getRelativeDLocation())
+                col_filename = os.path.join(
+                    targetDir, relDir, mtxcol.getTargetFilename())
+                try:
+                    min_percent = mtxcol.intersectParams[
+                        mtxcol.INTERSECT_PARAM_MIN_PERCENT]
+                except:
+                    min_percent = None
+                intersect_cmd = GrimRasterCommand(
+                    shapegrid_filename, mtxcol.layer.getDLocation(),
+                    col_filename, minPercent=min_percent, ident=mtxcol.ident)
+                grimChain.addCommands([intersect_cmd.getMakeflowRule()])
+                #lyrRules = mtxcol.computeMe(workDir=targetDir)
+                #grimChain.addCommands(lyrRules)
                
                 # Keep track of intersection filenames for matrix concatenation
-                relDir, _ = os.path.splitext(mtxcol.layer.getRelativeDLocation())
-                outFname = os.path.join(targetDir, relDir, mtxcol.getTargetFilename())
-                colFilenames.append(outFname)
+                #relDir, _ = os.path.splitext(mtxcol.layer.getRelativeDLocation())
+                #outFname = os.path.join(targetDir, relDir, mtxcol.getTargetFilename())
+                colFilenames.append(col_filename)
                            
             # Add concatenate command
             grimRules = self._get_matrix_assembly_and_stockpile_rules(
