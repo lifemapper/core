@@ -1,7 +1,7 @@
 """This script controls a species process.
 
 The species process includes processing for occurrence data, modeling,
-projecting, and presenc absence vector creation.
+projecting, and presence absence vector creation.
 """
 import argparse
 
