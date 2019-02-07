@@ -9,13 +9,13 @@
    <!-- =========================================== -->
    
    <!-- Taxon Information -->
-   <field name="taxon_kingdom" type="string" indexed="true" stored="true" />
-   <field name="taxon_phylum" type="string" indexed="true" stored="true" />
-   <field name="taxon_class" type="string" indexed="true" stored="true" />
-   <field name="taxon_order" type="string" indexed="true" stored="true" />
-   <field name="taxon_family" type="string" indexed="true" stored="true" />
-   <field name="taxon_genus" type="string" indexed="true" stored="true" />
-   <field name="taxon_key" type="string" indexed="true" stored="true" />
+   <field name="taxon_kingdom" type="text_general" indexed="true" stored="true" />
+   <field name="taxon_phylum" type="text_general" indexed="true" stored="true" />
+   <field name="taxon_class" type="text_general" indexed="true" stored="true" />
+   <field name="taxon_order" type="text_general" indexed="true" stored="true" />
+   <field name="taxon_family" type="text_general" indexed="true" stored="true" />
+   <field name="taxon_genus" type="text_general" indexed="true" stored="true" />
+   <field name="taxon_key" type="text_general" indexed="true" stored="true" />
    <field name="scientific_name" type="taxonname" indexed="true" stored="true" />
    <field name="canonical_name" type="taxonname" indexed="true" stored="true" />
    <field name="squid" type="string" indexed="true" stored="true" />
