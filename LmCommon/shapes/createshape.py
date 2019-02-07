@@ -25,7 +25,6 @@
              02110-1301, USA.
 """
 import csv
-import glob
 import json
 import os
 from osgeo import ogr, osr
@@ -33,9 +32,9 @@ import StringIO
 import subprocess
 from types import UnicodeType, StringType
 
-from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
-                    GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
-                    LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
+from LmCommon.common.lmconstants import (ENCODING, GBIF, GBIF_QUERY,
+                    PROVIDER_FIELD_COMMON, 
+                    LM_WKT_FIELD, ProcessType, JobStatus,
                     DWCNames, LMFormat, DEFAULT_EPSG)
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
@@ -498,7 +497,7 @@ class ShapeShifter(object):
         
         for idx, vals in self.op.columnMeta.iteritems():
             if vals is not None:
-                fldname = vals[OccDataParser.FIELD_NAME_KEY]
+                fldname = str(vals[OccDataParser.FIELD_NAME_KEY])
                 fldtype = vals[OccDataParser.FIELD_TYPE_KEY] 
                 fldDef = ogr.FieldDefn(fldname, fldtype)
                 if fldtype == ogr.OFTString:
@@ -649,11 +648,12 @@ class ShapeShifter(object):
                     # For User data, name = fldname
                     fldname = self._lookup(name)
                     if fldname is not None:
+                        fldidx = feat.GetFieldIndex(str(fldname))
                         val = recDict[name]
                         if val is not None and val != 'None':
                             if isinstance(val, UnicodeType):
                                 val = fromUnicode(val)
-                            feat.SetField(fldname, val)
+                            feat.SetField(fldidx, val)
         except Exception, e:
             print('Failed to fillFeature with recDict {}, e = {}'.format(str(recDict), e))
             raise e
