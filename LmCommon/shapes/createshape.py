@@ -55,7 +55,7 @@ class ShapeShifter(object):
 # Constructor
 # .............................................................................
     def __init__(self, processType, rawdata, count, logger=None, metadata=None, 
-                     delimiter=','):
+                     delimiter='\t'):
         """
         @param processType: ProcessType constant, either GBIF_TAXA_OCCURRENCE,
                                   BISON_TAXA_OCCURRENCE or IDIGBIO_TAXA_OCCURRENCE  

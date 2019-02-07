@@ -1209,7 +1209,7 @@ from LmServer.db.borgscribe import BorgScribe
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
 useGBIFTaxonIds = True
-occDelimiter = ',' 
+occDelimiter = '\t' 
 occData = '/state/partition1/lmserver/data/species/idig'
 occMeta = IDIG_DUMP.METADATA
 
@@ -1246,7 +1246,7 @@ op = OccDataParser(logger, occCSV, occMeta, pullChunks=True)
 
 
 f = open(occCSV, 'r')
-cr = csv.reader(f, delimiter=',')
+cr = csv.reader(f, delimiter='\t')
 fieldmeta, doMatchHeader = OccDataParser.readMetadata(occMeta)
                     
 (fieldNames,

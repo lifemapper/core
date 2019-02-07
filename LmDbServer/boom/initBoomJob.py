@@ -424,6 +424,8 @@ class BOOMFiller(LMObject):
             occSep = GBIF.DATA_DUMP_DELIMITER
         else:
             occSep = self._getBoomOrDefault(config, BoomKeys.OCC_DATA_DELIMITER)
+            if occSep != ',':
+                occSep = GBIF.DATA_DUMP_DELIMITER
             
         minpoints = self._getBoomOrDefault(config, BoomKeys.POINT_COUNT_MIN)
         algs = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)

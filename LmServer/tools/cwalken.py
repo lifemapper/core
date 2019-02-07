@@ -40,7 +40,7 @@ from LmBackend.command.server import (MultiIndexPAVCommand,
 from LmBackend.command.single import SpeciesParameterSweepCommand
 
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
+from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat, GBIF,
           SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, BoomKeys,
           SERVER_SDM_ALGORITHM_HEADING_PREFIX,
           SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
@@ -238,6 +238,8 @@ class ChristopherWalken(LMObject):
         occname = self._getBoomOrDefault(BoomKeys.OCC_DATA_NAME)
         occdir = self._getBoomOrDefault(BoomKeys.OCC_DATA_DIR)
         occ_delimiter = self._getBoomOrDefault(BoomKeys.OCC_DATA_DELIMITER) 
+        if occ_delimiter != ',':
+            occ_delimiter = GBIF.DATA_DUMP_DELIMITER
         occ_csv_fname, occ_meta_fname, self.moreDataToProcess = self._findData(
             occname, occdir, boompath)
         
