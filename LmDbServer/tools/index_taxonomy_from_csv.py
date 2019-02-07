@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 """This script processes an exported CSV from the db and indexes the taxonomy
+It processes the output of 
+   set client_encoding = 'UTF8'
+   \copy taxon to '/state/partition1/taxonomy.export.csv' csv header
 """
 import argparse
 import csv

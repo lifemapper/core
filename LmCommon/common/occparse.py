@@ -54,7 +54,7 @@ class OccDataParser(LMObject):
     FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, FIELD_ROLE_GEOPOINT,
                    FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME, FIELD_ROLE_IDENTIFIER]
 
-    def __init__(self, logger, data, metadata, delimiter=',', pullChunks=False):
+    def __init__(self, logger, data, metadata, delimiter='\t', pullChunks=False):
         """
         @summary Reader for arbitrary user CSV data file with
                  - header record and metadata with column **names** first, OR
@@ -825,7 +825,7 @@ log = TestLogger('occparse_checkInput')
 
 dataFname = pthAndBasename + LMFormat.CSV.ext
 metadataFname = pthAndBasename + LMFormat.METADATA.ext
-delimiter = ','
+delimiter = '\t'
 
 # Read metadata file/stream
 fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(metadata)   
@@ -852,7 +852,7 @@ fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(metadata)
 (fieldIndexMeta, filters, 
  idIdx, xIdx, yIdx, groupByIdx, nameIdx) = OccDataParser.getCheckIndexedMetadata(fieldmeta, 
                                                                   header)       
-op = OccDataParser(log, data, metadata, delimiter=',')
+op = OccDataParser(log, data, metadata, delimiter='\t')
 op.readAllRecs()
 op.printStats()
 op.close()

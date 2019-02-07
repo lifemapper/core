@@ -1760,7 +1760,7 @@ class Vector(_Layer):
         if success:
             try:
                 with open(dlocation, 'wb') as csvfile:
-                    spamwriter = csv.writer(csvfile, delimiter=',')
+                    spamwriter = csv.writer(csvfile, delimiter='\t')
                     if header:
                         spamwriter.writerow(header)
                     for rec in dataRecords:
