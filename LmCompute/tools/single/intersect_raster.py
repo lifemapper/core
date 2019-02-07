@@ -5,8 +5,9 @@
 import argparse
 import os
 
-from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.readyfile import readyFilename
+from LmCommon.encoding.layer_encoder import LayerEncoder
 
 # .............................................................................
 if __name__ == "__main__":
@@ -69,12 +70,15 @@ if __name__ == "__main__":
         pav = encoder.get_encoded_matrix()
         
         if pav is not None:
+            readyFilename(args.pav_filename, overwrite=True)
             with open(args.pav_filename, 'w') as pav_out_f:
                 pav.save(pav_out_f)
         if args.status_file is not None:
+            readyFilename(args.status_file, overwrite=True)
             with open(args.status_file, 'w') as outF:
                 outF.write('{}'.format(JobStatus.COMPUTED))
     else:
         if args.status_file is not None:
+            readyFilename(args.status_file, overwrite=True)
             with open(args.status_file, 'w') as outF:
                 outF.write('{}'.format(lyrStatus))
