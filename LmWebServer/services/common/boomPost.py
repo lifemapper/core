@@ -268,10 +268,11 @@ class BoomPoster(object):
                 points_filename)
             try:
                 delimiter = occ_json[APIPostKeys.DELIMITER]
-            except KeyError:  # Not provided, use default
-                delimiter = ','
-            self.config.set(
-                SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, delimiter)
+                self.config.set(
+                    SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
+                    delimiter)
+            except KeyError:  # Not provided, skip and it will default to tab
+                pass
             if APIPostKeys.MIN_POINTS in occ_json.keys():
                 self.config.set(
                     SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN,
