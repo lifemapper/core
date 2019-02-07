@@ -28,6 +28,7 @@ import argparse
 import os
 
 from LmCommon.common.apiquery import IdigbioAPI
+from LmCommon.common.readyfile import readyFilename
 
 # ...............................................
 def _getUserInput(filename):
@@ -68,6 +69,9 @@ if __name__ == "__main__":
                         help="File location for output point data file")
     parser.add_argument('meta_output_file', type=str, 
                         help="File location for output metadata file")
+    parser.add_argument(
+        'success_file', type=str,
+        help='File location to write success indication')
     parser.add_argument('--missing_id_file', default=None, type=str,
                         help="File location for output unmatched taxonids file")
     
@@ -77,7 +81,9 @@ if __name__ == "__main__":
     getPartnerSpeciesData(args.taxon_id_file, args.point_output_file, 
                           args.meta_output_file, 
                           missing_id_file=args.missing_id_file)
-    
+    readyFilename(args.success_file)
+    with open(args.success_file, 'w') as out_f:
+        out_f.write('1')
 """
 import os
 

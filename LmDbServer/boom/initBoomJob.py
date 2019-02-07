@@ -1140,9 +1140,13 @@ class BOOMFiller(LMObject):
         base_path, _ = os.path.splitext(self.taxon_id_filename)
         point_output_file = base_path + LMFormat.CSV.ext
         meta_output_file = base_path + LMFormat.JSON.ext
+        success_file = os.path.join(ws_dir, 'taxa_process.success')
         
-        idigCmd = IdigbioQueryCommand(self.taxon_id_filename, point_output_file, 
-                                          meta_output_file, missing_id_file=None)
+        # TODO: Success file
+        
+        idigCmd = IdigbioQueryCommand(
+            self.taxon_id_filename, point_output_file, meta_output_file,
+            success_file, missing_id_file=None)
         return idigCmd, point_output_file
 
     # ...............................................

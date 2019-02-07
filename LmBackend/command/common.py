@@ -15,7 +15,7 @@ class IdigbioQueryCommand(_LmCommand):
 
     # ................................
     def __init__(self, taxon_id_file, point_output_file, meta_output_file,
-                 missing_id_file):
+                 success_file, missing_id_file=None):
         """
         @summary: Construct the command object
         @param configFile: Configuration file for the boom run
@@ -23,10 +23,10 @@ class IdigbioQueryCommand(_LmCommand):
         _LmCommand.__init__(self)
         
         # no need to add taxon_id_file to inputs
-        self.outputs.append(point_output_file)
-        self.outputs.append(meta_output_file)
-        self.args = '{} {} {}'.format(taxon_id_file, point_output_file, 
-                                         meta_output_file)
+        self.outputs.extend(
+            [point_output_file, meta_output_file, success_file])
+        self.args = '{} {} {} {}'.format(
+            taxon_id_file, point_output_file, meta_output_file, success_file)
         if missing_id_file is not None:
             self.opt_args = '--missing_id_file {}'.format(missing_id_file)
             
