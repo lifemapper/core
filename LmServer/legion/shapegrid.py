@@ -250,48 +250,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
         self._setCellMeasurements(size=cellCount)
         self.setVerify()
         
-# ...............................................
-    def computeMe(self, workDir=None):
-        """
-        @summary: Creates a command to intersect a layer and a shapegrid to 
-                     produce a MatrixColumn.
-        @deprecated: This will be removed soon
-        """
-        rules = []
-        if workDir is None:
-            workDir = ''
-            
-        targetDir = os.path.join(
-            workDir, os.path.splitext(self.getRelativeDLocation())[0], '') # Need trailing slash
-        #TODO
-        targetFiles = self.getTargetFiles(workDir=workDir)
-        
-        if JobStatus.finished(self.status):
-            # Need to move outputs
-            baseName = os.path.splitext(self.getDLocation())[0]
-            
-            touchCmd = LmTouchCommand(os.path.join(targetDir, 'touch.out'))
-            cpCmd = SystemCommand('cp', 
-                                         '{}.* {}'.format(baseName, targetDir), 
-                                         outputs=targetFiles)
-            touchAndCopyCommand = ChainCommand([touchCmd, cpCmd])
-            rules.append(touchAndCopyCommand.getMakeflowRule(local=True))
-        else:
-            # Need to compute
-            cutoutWktFilename = None
-            # TODO: Cutouts
-            outFile = os.path.join(
-                targetDir, os.path.basename(self.getDLocation()))
-        
-            sgCmd = BuildShapegridCommand(
-                outFile, self.getMinX(), self.getMinY(), self.getMaxX(),
-                self.getMaxY(), self.cellsize, self.epsgcode, self.cellsides,
-                cutoutWKTFilename=cutoutWktFilename)
-            sgCmd.outputs = targetFiles
-            rules.append(sgCmd.getMakeflowRule(local=True))
-            
-        return rules
-
     # ................................
     def getTargetFiles(self, workDir=None):
         if workDir is None:
