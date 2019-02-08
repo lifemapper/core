@@ -210,6 +210,13 @@ class BoomPoster(object):
         self.config.set(
             SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES',
             mcpa_json['hypotheses_package_name'])
+        try:
+            should_compute = int(mcpa_json[APIPostKeys.DO_MCPA])
+        except:
+            should_compute = 0
+
+        self.config.set(
+            SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, should_compute)
 
     # ................................
     def _process_occurrence_sets(self, occ_json):

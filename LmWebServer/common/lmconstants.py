@@ -426,6 +426,7 @@ class APIPostKeys(object):
     CELL_SIDES = 'cell_sides'
     DELIMITER = 'delimiter'
     DO_PAM_STATS = 'compute_pam_stats'
+    DO_MCPA = 'compute_mcpa'
     GLOBAL_PAM = 'global_pam'
     HULL_REGION = 'hull_region_intersect_mask'
     INTERSECT_PARAMETERS = 'intersect_parameters'
