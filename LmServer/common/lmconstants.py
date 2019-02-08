@@ -1348,5 +1348,10 @@ class SubsetMethod(object):
     REINTERSECT = 2 # New shapegrid with possibly different resolution, 
     #                    reintersect all columns 
     
-    
-    
+# ============================================================================
+# =                           Permutation constants                          =
+# ============================================================================
+DEFAULT_NUM_PERMUTATIONS = 1000
+# TODO: Change this once memory errors are worked out
+DEFAULT_RANDOM_GROUP_SIZE = 1
+

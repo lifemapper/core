@@ -1,7 +1,4 @@
 """Tools for generating Makeflow rules for multi-species analyses
-
-Todo:
-    Constants for groups
 """
 import argparse
 import mx.DateTime
@@ -18,14 +15,12 @@ from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import (
     JobStatus, LMFormat, MatrixType, ProcessType)
 
+from LmServer.common.lmconstants import (
+    DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE)
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.processchain import MFChain
-
-
-DEFAULT_NUM_PERMUTATIONS = 1000
-DEFAULT_RANDOM_GROUP_SIZE = 10
 
 # .............................................................................
 class BoomCollate(LMObject):
