@@ -24,6 +24,8 @@ from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
+from LmBackend.command.single import IntersectRasterCommand, GrimRasterCommand
+from LmBackend.command.server import IndexPAVCommand, StockpileCommand
 
 # .............................................................................
 def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
@@ -315,14 +317,12 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                              status=JobStatus.GENERAL, statusModTime=gmt().mjd)
         
         myWf = scribe.insertMFChain(newWf, updatedGS.getId())
+        rules = []
     
-        # TODO : Determine if we want a different work directory
-        
-        workDir = myWf.getRelativeDirectory()
+        work_dir = myWf.getRelativeDirectory()
         
         # TODO: Make this asynchronous
         # Add shapegrid to workflow
-        #myWf.addCommands(myShp.computeMe(workDir=workDir))
         myShp.buildShape()
         myShp.writeShapefile(myShp.getDLocation())
         myShp.updateStatus(JobStatus.COMPLETE)
@@ -370,31 +370,61 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                     #     thrown whenever those projections are access.  Catch that 
                     #     and move on
                     try:
-                        prj = scribe.getSDMProject(int(mtxMatches[i][
-                                                                            SOLR_FIELDS.PROJ_ID]))
+                        prj = scribe.getSDMProject(
+                            int(mtxMatches[i][SOLR_FIELDS.PROJ_ID]))
                     except Exception, e:
                         prj = None
-                        log.debug('Could not add projection {}: {}'.format(
-                                            mtxMatches[i][SOLR_FIELDS.PROJ_ID], str(e)))
+                        log.debug(
+                            'Could not add projection {}: {}'.format(
+                                mtxMatches[i][SOLR_FIELDS.PROJ_ID], str(e)))
                     
                     if prj is not None:
                         prjMeta = {} # TODO: Add something here?
                         
-                        tmpCol = MatrixColumn(None, pam.getId(), userId, layer=prj,
-                                                     shapegrid=myShp, 
-                                                     intersectParams=intersectParams,
-                                                     squid=prj.squid, ident=prj.ident, 
-                                                     processType=ProcessType.INTERSECT_RASTER,
-                                                     metadata=prjMeta, matrixColumnId=None, 
-                                                     postToSolr=True, status=JobStatus.GENERAL, 
-                                                     statusModTime=gmt().mjd)
+                        tmpCol = MatrixColumn(
+                            None, pam.getId(), userId, layer=prj,
+                            shapegrid=myShp, intersectParams=intersectParams,
+                            squid=prj.squid, ident=prj.ident,
+                            processType=ProcessType.INTERSECT_RASTER,
+                            metadata=prjMeta, matrixColumnId=None,
+                            postToSolr=True, status=JobStatus.GENERAL,
+                            statusModTime=gmt().mjd)
                         mtxCol = scribe.findOrInsertMatrixColumn(tmpCol)
                         
                         #log.debug('Matrix column shapegrid is: {}'.format(mtxCol.shapegrid))
                         #mtxCol.shapegrid = myShp
                     
-                        # Call compute me for this intersect
-                        myWf.addCommands(mtxCol.computeMe(workDir=workDir))
+                        # Need to intersect this projection with the new
+                        #    shapegrid, stockpile it, and post to solr
+                        pav_fname = os.path.join(
+                            work_dir, 'pav_{}.lmm'.format(mtxCol.getId()))
+                        pav_post_fname = os.path.join(
+                            work_dir, 'pav_{}_post.xml'.format(mtxCol.getId()))
+                        pav_success_fname = os.path.join(
+                            work_dir, 'pav_{}.success'.format(mtxCol.getId()))
+                        
+                        # Intersect parameters
+                        min_presence = mtxCol.intersectParams[
+                            MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE]
+                        max_presence = mtxCol.intersectParams[
+                            MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE]
+                        min_percent = mtxCol.intersectParams[
+                            MatrixColumn.INTERSECT_PARAM_MIN_PERCENT]
+                        
+                        intersect_cmd = IntersectRasterCommand(
+                            myShp.getDLocation(), prj.getDLocation(),
+                            pav_fname, min_presence, max_presence, min_percent,
+                            squid=prj.squid)
+                        index_cmd = IndexPAVCommand(
+                            pav_fname, mtxCol.getId(), prj.getId(),
+                            pam.getId(), pav_post_fname)
+                        stockpile_cmd = StockpileCommand(
+                            ProcessType.INTERSECT_RASTER, mtxCol.getId(),
+                            pav_success_fname, [pav_fname])
+                        # Add rules to list
+                        rules.append(intersect_cmd.getMakeflowRule())
+                        rules.append(index_cmd.getMakeflowRule(local=True))
+                        rules.append(stockpile_cmd.getMakeflowRule(local=True))
                     
                 
                 # Initialize PAM after matrix columns inserted
@@ -426,18 +456,32 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
             for oldCol in oldGrimCols:
                 # TODO: Metadata
                 grimLyrMeta = {}
-                tmpCol = MatrixColumn(None, insertedGrim.getId(), userId, 
-                                             layer=oldCol.layer, shapegrid=myShp, 
-                                             intersectParams=oldCol.intersectParams,
-                                             squid=oldCol.squid, ident=oldCol.ident,
-                                             processType=ProcessType.INTERSECT_RASTER_GRIM,
-                                             metadata=grimLyrMeta, matrixColumnId=None,
-                                             postToSolr=False, status=JobStatus.GENERAL,
-                                             statusModTime=gmt().mjd)
+                tmpCol = MatrixColumn(
+                    None, insertedGrim.getId(), userId, layer=oldCol.layer,
+                    shapegrid=myShp, intersectParams=oldCol.intersectParams,
+                    squid=oldCol.squid, ident=oldCol.ident,
+                    processType=ProcessType.INTERSECT_RASTER_GRIM,
+                    metadata=grimLyrMeta, matrixColumnId=None,
+                    postToSolr=False, status=JobStatus.GENERAL,
+                    statusModTime=gmt().mjd)
                 mtxCol = scribe.findOrInsertMatrixColumn(tmpCol)
                 
-                # Add rules to workflow
-                myWf.addCommands(mtxCol.computeMe(workDir=workDir))
+                # Add rules to workflow, intersect and stockpile
+                grim_col_fname = os.path.join(
+                    work_dir, 'grim_col_{}.lmm'.format(mtxCol.getId()))
+                grim_col_success_fname = os.path.join(
+                    work_dir, 'grim_col_{}.success'.format(mtxCol.getId()))
+                min_percent = mtxCol.intersectParams[
+                    MatrixColumn.INTERSECT_PARAM_MIN_PERCENT]
+                intersect_cmd = GrimRasterCommand(
+                    myShp.getDLocation(), oldCol.layer.getDLocation(),
+                    grim_col_fname, minPercent=min_percent, ident=mtxCol.ident)
+                stockpile_cmd = StockpileCommand(
+                    ProcessType.INTERSECT_RASTER_GRIM, mtxCol.getId(),
+                    grim_col_success_fname, [grim_col_fname])
+                # Add rules to list
+                rules.append(intersect_cmd.getMakeflowRule())
+                rules.append(stockpile_cmd.getMakeflowRule(local=True))
             
             insertedGrim.updateStatus(JobStatus.INITIALIZE)
             scribe.updateObject(insertedGrim)
@@ -512,6 +556,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
             scribe.updateObject(insertedBG)
             
         # Write workflow and update db object
+        myWf.addCommands(rules)
         myWf.write()
         myWf.updateStatus(JobStatus.INITIALIZE)
         scribe.updateObject(myWf)
