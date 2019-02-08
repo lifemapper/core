@@ -1139,7 +1139,9 @@ class BOOMFiller(LMObject):
         self._fixPermissions(dirs=[tmp_pth])
         point_output_file = os.path.join(tmp_pth, base_fname + LMFormat.CSV.ext)
         meta_output_file = os.path.join(tmp_pth, base_fname + LMFormat.JSON.ext)
-        success_file = os.path.join(tmp_pth, base_fname + '.success')
+        
+        # Success file should be in workspace, it will be sent to boomer
+        success_file = os.path.join(ws_dir, base_fname + '.success')
         
         idigCmd = IdigbioQueryCommand(
             self.taxon_id_filename, point_output_file, meta_output_file,
