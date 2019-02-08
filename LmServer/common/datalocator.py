@@ -33,7 +33,8 @@ from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR,
    OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT, 
    DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, ARCHIVE_PATH, USER_LAYER_DIR, 
    MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, WMS_LAYER_KEY, WCS_LAYER_KEY, 
-   RAD_EXPERIMENT_DIR_PREFIX, USER_MAKEFLOW_DIR, API_URL, OGC_SERVICE_URL)
+   RAD_EXPERIMENT_DIR_PREFIX, USER_MAKEFLOW_DIR, USER_TEMP_DIR, 
+   API_URL, OGC_SERVICE_URL)
          
 # .............................................................................
 class EarlJr(LMObject):
@@ -117,6 +118,9 @@ class EarlJr(LMObject):
         # General user documents go directly in user directory
         if LMFileType.isUserSpace(filetype):
             pass
+        
+        elif filetype == LMFileType.TEMP_USER_DATA:
+            pth = os.path.join(pth, USER_TEMP_DIR)
         
         elif filetype == LMFileType.MF_DOCUMENT:
             pth = os.path.join(pth, USER_MAKEFLOW_DIR)

@@ -1128,21 +1128,18 @@ class BOOMFiller(LMObject):
 
     # .............................
     def _getIdigQueryCmd(self, ws_dir):
-        idigCmd = point_output_file = None
         if not os.path.exists(self.taxon_id_filename):
             raise LMError('Taxon ID file {} is missing'.format(self.taxon_id_filename))
         
-        currtime = mx.DateTime.gmt().mjd
-        # Workspace directory
-        
         # Note: These paths must exist longer than the workflow because they
         #    will be used by a different workflow
-        base_path, _ = os.path.splitext(self.taxon_id_filename)
-        point_output_file = base_path + LMFormat.CSV.ext
-        meta_output_file = base_path + LMFormat.JSON.ext
-        success_file = os.path.join(ws_dir, 'taxa_process.success')
-        
-        # TODO: Success file
+        base_fname = os.path.basename(os.path.splitext(self.taxon_id_filename)[0])
+        earl = EarlJr()
+        tmp_pth = earl.createDataPath(self.userId, LMFileType.TEMP_USER_DATA)
+        self._fixPermissions(dirs=[tmp_pth])
+        point_output_file = os.path.join(tmp_pth, base_fname + LMFormat.CSV.ext)
+        meta_output_file = os.path.join(tmp_pth, base_fname + LMFormat.JSON.ext)
+        success_file = os.path.join(tmp_pth, base_fname + '.success')
         
         idigCmd = IdigbioQueryCommand(
             self.taxon_id_filename, point_output_file, meta_output_file,

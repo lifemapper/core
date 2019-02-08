@@ -49,6 +49,7 @@ BIN_PATH = os.path.join(APP_PATH, 'bin')
 # Relative paths
 USER_LAYER_DIR = 'Layers'
 USER_MAKEFLOW_DIR = 'makeflow'
+USER_TEMP_DIR = 'temp'
 # On shared data directory (shared if lifemapper-compute is also installed)
 ENV_DATA_PATH = os.path.join(SHARED_DATA_PATH,'layers')
 ARCHIVE_PATH = os.path.join(SHARED_DATA_PATH,'archive')
@@ -261,6 +262,7 @@ class LMFileType:
     OTHER_MAP = 1
     TMP_JSON = 2
     ANCILLARY_MAP = 3
+    TEMP_USER_DATA = 4
     # ..............................
     # Single species
     ENVIRONMENTAL_LAYER = 101
