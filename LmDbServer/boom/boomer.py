@@ -1,25 +1,12 @@
-"""
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
+"""Module containing boomer class
 
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+Note:
+    Aimee: We need to add collate to the same workflow as the SDMs. To do this,
+        we need to keep track of the single species output files (just the
+        stockpile files probably) and send those as inputs to the collator. The
+        other issue is that we should probably only enable collate if the
+        boomer creates a single makeflow, otherwise we cannot be sure that it
+        will run after all of the sdms are created.
 """
 import argparse
 import logging
@@ -33,12 +20,15 @@ from LmCommon.common.lmconstants import JobStatus, LM_USER
 
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME) 
+from LmServer.common.lmconstants import (
+    DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
+    PUBLIC_ARCHIVE_NAME) 
 from LmServer.common.localconstants import PUBLIC_USER 
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
+from LmDbServer.boom.boom_collate import BoomCollate
 
 
 SPUD_LIMIT = 200
@@ -248,6 +238,45 @@ class Boomer(LMObject):
                          statusModTime=dt.gmt().mjd)
         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
         return mfChain
+
+    # ...............................................
+    def _get_multispecies_rules(self, gridset, work_dir, do_pam_stats, do_mcpa,
+                                num_permutations=DEFAULT_NUM_PERMUTATIONS,
+                                group_size=DEFAULT_RANDOM_GROUP_SIZE,
+                                sdm_dependencies=None, log=None):
+        """Get rules for multi-species computations
+
+        Args:
+            gridset (:obj: `Gridset`): A gridset object for which to create
+                multi-species computation rules
+            work_dir (:obj: `str`): A directory where multi-species work can be
+                performed
+            do_pam_stats (:obj: `bool`): Should PAM stats be created
+            do_mcpa (:obj: `bool`): Should MCPA be computed
+            num_permutations (:obj: `int`) : The number of randomizations that
+                should be performed for the multi-species computations
+            group_size (:obj: `int`) : The number of randomized runs to perform
+                in each group of permutations
+            sdm_dependencies (:obj: `list of str`) : A list of file names that
+                must be created before these rules can run.  They should be
+                created by the same workflow
+            log (:obj: `Logger`) : An optional log object to use
+
+        Note:
+            This only makes sense after all SDMs are created for a gridset
+
+        Return:
+            A list of compute rules for the gridset
+        """
+        if sdm_dependencies is None:
+            sdm_dependencies = []
+        bc = BoomCollate(
+            gridset, dependencies=sdm_dependencies, do_pam_stats=do_pam_stats,
+            do_mcpa=do_mcpa, num_permutations=num_permutations,
+            random_group_size=group_size, work_dir=work_dir, log=log)
+        rules = bc.get_collate_rules()
+        
+        return rules
 
 #     # .............................
 #     def _addRuleToMasterPotatoHead(self, mfchain, dependencies=None, prefix='spud'):
