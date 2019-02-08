@@ -1071,9 +1071,6 @@ class BOOMFiller(LMObject):
                     shapegrid_filename, mtxcol.layer.getDLocation(),
                     col_filename, minPercent=min_percent, ident=mtxcol.ident)
                 rules.append(intersect_cmd.getMakeflowRule())
-                #grimChain.addCommands([intersect_cmd.getMakeflowRule()])
-                #lyrRules = mtxcol.computeMe(workDir=targetDir)
-                #grimChain.addCommands(lyrRules)
                
                 # Keep track of intersection filenames for matrix concatenation
                 #relDir, _ = os.path.splitext(mtxcol.layer.getRelativeDLocation())
