@@ -16,7 +16,7 @@ from LmCommon.common.lmconstants import (DEFAULT_TREE_SCHEMA, HTTPStatus,
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
-from LmDbServer.boom.radme import RADCaller
+from LmDbServer.boom.boom_collate import BoomCollate
 
 from LmServer.base.atom import Atom
 from LmServer.base.layer2 import Vector
@@ -83,10 +83,12 @@ class GridsetAnalysisService(LmService):
       
         # If everything is ready and we have analyses to run, do so
         if doMcpa or doCalc:
-            rc = RADCaller(gridset.getId())
-            rc.analyzeGrid(doCalc=doCalc, doMCPA=doMcpa, 
-                        numPermutations=numPermutations)
-            rc.close()
+            bc = BoomCollate(
+                gridset, do_pam_stats=doCalc, do_mcpa=doMcpa,
+                num_permutations=numPermutations)
+            bc.create_workflow()
+            bc.close()
+            
             cherrypy.response.status = HTTPStatus.ACCEPTED
             return gridset
         else:
