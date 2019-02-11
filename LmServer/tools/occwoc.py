@@ -239,15 +239,12 @@ class _SpeciesWeaponOfChoice(LMObject):
                                             occ.getDLocation(), occ.getRawDLocation())
             if willCompute:
                 self.log.info('    Reseting OccLayer raw data')
-                # Update raw data in new or reset object
+                # Write raw data and metadata, update in new or reset object
                 rdloc, rawmeta_dloc = self._writeRawData(occ, data=data, 
                                                          metadata=metadata)
                 if not rdloc:
                     raise LMError(currargs='    Failed to find raw data location')
                 occ.setRawDLocation(rdloc, currtime)
-                if rawmeta_dloc:
-                    occ.addLyrMetadata({occ.META_CSV_FIELD_DESCRIPTION: 
-                                        rawmeta_dloc})
                 # Set scientificName, not pulled from DB, for alternate iDigBio query
                 _ = self._scribe.updateObject(occ)
                 # Set processType and metadata location (from config, not saved in DB)
@@ -372,7 +369,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
                                                 logger=logger)
         # Save known GBIF provider/IDs for lookup if available
         self._providers = []
-        self._provCol = -1
+        self._provCol = None
         if providerFname is not None and os.path.exists(providerFname):
             try:
                 self._providers, self._provCol = self._readProviderKeys(
