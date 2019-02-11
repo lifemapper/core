@@ -40,6 +40,8 @@ from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCompute.common.lmObj import LmException
+from LmCompute.common.log import LmComputeLogger
+
 try:
     from LmServer.common.lmconstants import BIN_PATH
 except:
@@ -54,8 +56,8 @@ class ShapeShifter(object):
 # ............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, processType, rawdata, count, logger=None, metadata=None, 
-                     delimiter='\t'):
+    def __init__(self, rawdata, metadata, count, logger=None, 
+                 delimiter='\t', isGbif=False):
         """
         @param processType: ProcessType constant, either GBIF_TAXA_OCCURRENCE,
                                   BISON_TAXA_OCCURRENCE or IDIGBIO_TAXA_OCCURRENCE  
@@ -63,12 +65,18 @@ class ShapeShifter(object):
                              or list of dictionary records of BISON data for which to
                              create a single shapefile.
         """
+        if not metadata:
+            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                                    'Failed to get metadata')
+        if logger is None:
+            logname, _ = os.path.splitext(os.path.basename(__file__))
+            logger = LmComputeLogger(logname, addConsole=True)
+
         self._reader = None
         # If necessary, map provider dictionary keys to our field names
         self.lookupFields = None
         self._currRecum = 0
         self._recCount = count
-        self.processType = processType
         self.rawdata = rawdata
         self.linkField = None
         self.linkUrl = None
@@ -76,67 +84,32 @@ class ShapeShifter(object):
         self.computedProviderField = None
         self.op = None
         
-        # All raw Occdata must contain ShortDWCNames.DECIMAL_LATITUDE and 
-        #                                        ShortDWCNames.DECIMAL_LONGITUDE
-        if processType == ProcessType.USER_TAXA_OCCURRENCE:
-            if not logger:
-                raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                                        'Failed to get a logger')
-            if not metadata:
-                raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                                        'Failed to get metadata')
-            self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter,
-                                            pullChunks=False)
-            self.op.initializeMe()
-            if self.op.header is not None:
-                self._recCount = self._recCount - 1
-            self.idField = self.op.idFieldName
-            if self.op.xFieldName is not None: 
-                self.xField = self.op.xFieldName
-            else:
-                self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
-            if self.op.yFieldName is not None:
-                self.yField = self.op.yFieldName
-            else:
-                self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
-            self.ptField = self.op.ptFieldName
-
-        elif processType == ProcessType.GBIF_TAXA_OCCURRENCE:
-            self.dataFields = GBIF_QUERY.EXPORT_FIELDS
-            self.idField = GBIF.ID_FIELD
+        if isGbif:
             self.linkField = GBIF.LINK_FIELD
             self.linkUrl = GBIF.LINK_PREFIX
             self.linkIdField = GBIF.ID_FIELD
             self.providerKeyField = GBIF.PROVIDER_FIELD
             self.computedProviderField = PROVIDER_FIELD_COMMON
-            self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
-            self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
-            self._reader = self._getCSVReader()
-            
-#         elif processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
-#             self.dataFields = IDIGBIO_QUERY.RETURN_FIELDS
-#             self.lookupFields = self._mapAPIResponseNames()
-#             self.idField = IDIGBIO.ID_FIELD
-#             self.linkField = IDIGBIO.LINK_FIELD
-#             self.linkUrl = IDIGBIO.LINK_PREFIX
-#             self.linkIdField = IDIGBIO.ID_FIELD
-#             self.computedProviderField = PROVIDER_FIELD_COMMON
-#             self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
-#             self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
-# 
-#         elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
-#             self.dataFields = BISON_QUERY.RESPONSE_FIELDS
-#             self.lookupFields = self._mapAPIResponseNames()
-#             self.linkField = BISON.LINK_FIELD
-#             self.linkUrl = BISON.LINK_PREFIX
-#             self.linkIdField = DWCNames.OCCURRENCE_ID['SHORT']
-#             self.idField = LM_ID_FIELD  
-#             self.xField = self._lookupReverse(DWCNames.DECIMAL_LONGITUDE['SHORT'])
-#             self.yField = self._lookupReverse(DWCNames.DECIMAL_LATITUDE['SHORT'])
-            
+        
+        self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter,
+                                        pullChunks=False)
+        self.op.initializeMe()
+        if self.op.header is not None:
+            self._recCount = self._recCount - 1
+        self.idField = self.op.idFieldName
+        if self.op.xFieldName is not None: 
+            self.xField = self.op.xFieldName
         else:
-            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                                    'Invalid processType {}'.format(processType))
+            self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
+        if self.op.yFieldName is not None:
+            self.yField = self.op.yFieldName
+        else:
+            self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
+        self.ptField = self.op.ptFieldName
+
+        self.specialFields = (self.idField, self.linkField, self.providerKeyField, 
+                              self.computedProviderField)
+
 
 # .............................................................................
 # Private functions
@@ -204,7 +177,7 @@ class ShapeShifter(object):
 
     # .............................................................................
     def writeOccurrences(self, outfname, maxPoints=None, bigfname=None, 
-                                isUser=False, overwrite=True):
+                        overwrite=True):
         if not readyFilename(outfname, overwrite=overwrite):
             raise LmException('{} is not ready for write (overwrite={})'.format
                                     (outfname, overwrite))
@@ -213,10 +186,7 @@ class ShapeShifter(object):
         outDs = bigDs = None
         try:
             outDs = self._createDataset(outfname)
-            if isUser:
-                outLyr = self._addUserFieldDef(outDs)
-            else:
-                outLyr = self._addFieldDef(outDs)
+            outLyr = self._addUserFieldDef(outDs)
             lyrDef = outLyr.GetLayerDefn()
 
             # Do we need a BIG dataset?
@@ -225,10 +195,7 @@ class ShapeShifter(object):
                     raise LmException('{} is not ready for write (overwrite={})'
                                             .format(bigfname, overwrite))
                 bigDs = self._createDataset(bigfname)
-                if isUser:
-                    bigLyr = self._addUserFieldDef(bigDs)
-                else:
-                    bigLyr = self._addFieldDef(bigDs)
+                bigLyr = self._addUserFieldDef(bigDs)
         except Exception, e:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
                                     'Unable to create field definitions ({})'.format(e))
@@ -317,14 +284,6 @@ class ShapeShifter(object):
         # Write metadata as JSON
         basename, ext = os.path.splitext(outfname)
         self._writeMetadata(basename, geomtype, fcount, minX, minY, maxX, maxY)
-                
-    # .............................................................................
-    def _mapAPIResponseNames(self):
-        lookupDict = {}
-        for bisonkey, flddesc in self.dataFields.iteritems():
-            if flddesc is not None:
-                lookupDict[bisonkey] = flddesc[0]
-        return lookupDict
 
     # ...............................................
     def _writeMetadata(self, basename, geomtype, count, minx, miny, maxx, maxy):
@@ -344,78 +303,9 @@ class ShapeShifter(object):
                 return None
         else:
             return name
-
-    # ...............................................
-    def _lookupReverse(self, name):
-        if self.lookupFields is not None:
-            for key, val in self.lookupFields.iteritems():
-                if val == name:
-                    return key
-            # Not found
-            return None
-        else:
-            return name
-
-    # ...............................................
-    def _getCSVReader(self, header=False):
-        if header:
-            fldnames = None
-        else:
-            fldnames = []
-            idxs = self.dataFields.keys()
-            idxs.sort()
-            for idx in idxs:
-                fldnames.append(self.dataFields[idx][0])
-        csvData = StringIO.StringIO()
-        csvData.write(fromUnicode(toUnicode(self.rawdata, encoding=ENCODING),
-                                          encoding=ENCODING))
-        csvData.seek(0)
-        reader = csv.DictReader(csvData, fieldnames=fldnames)
-        return reader
     
     # ...............................................
     def _getRecord(self):
-        if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
-            recDict = self._getUserCSVRec() 
-        elif self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
-            recDict = self._getCSVRec()
-        else:
-            # get BISON from web service
-            recDict = self._getAPIResponseRec()
-        if recDict is not None:
-#             print('recnum {} pt {}'.format(self._currRecum, recDict['geoPoint']))
-            self._currRecum += 1
-        return recDict
-        
-    # ...............................................
-    def _getAPIResponseRec(self):
-        """
-        @note: We modify BISON returned fieldnames, they are too long for shapefiles
-        """
-        recDict = None
-        success = False
-        badRecCount = 0
-        while not success and len(self.rawdata) > 0: 
-            try:
-                tmpDict = self.rawdata.pop()
-            except:
-                # End of data
-                success = True
-            else:
-                try:
-                    float(tmpDict[self.xField])
-                    float(tmpDict[self.yField])
-                except Exception, e:
-                    badRecCount += 1
-                else:
-                    success = True
-                    recDict = tmpDict
-        if badRecCount > 0:
-            print('Skipped over {} bad records'.format(badRecCount))
-        return recDict
-    
-    # ...............................................
-    def _getUserCSVRec(self):
         success = False
         tmpDict = {}
         recDict = None
@@ -449,39 +339,13 @@ class ShapeShifter(object):
                     fldname = self.op.columnMeta[idx][OccDataParser.FIELD_NAME_KEY]
                     tmpDict[fldname] = thisrec[idx]
             recDict = tmpDict
+        
         if badRecCount > 0:
             print('Skipped over {} bad records'.format(badRecCount))
-        return recDict
+        
+        if recDict is not None:
+            self._currRecum += 1
 
-    # ...............................................
-    def _getCSVRec(self):
-        success = False
-        recDict = None
-        badRecCount = 0
-        # skip bad lines
-        while not success:
-            try:
-                tmpDict = self._reader.next()
-                # ignore records without valid lat/long; all occ jobs contain these fields
-                tmpDict[DWCNames.DECIMAL_LATITUDE['SHORT']] = \
-                        float(tmpDict[DWCNames.DECIMAL_LATITUDE['SHORT']])
-                tmpDict[DWCNames.DECIMAL_LONGITUDE['SHORT']] = \
-                        float(tmpDict[DWCNames.DECIMAL_LONGITUDE['SHORT']])
-                success = True
-                recDict = tmpDict
-            except StopIteration, e:
-                success = True
-            except OverflowError, e:
-                badRecCount += 1
-            except ValueError, e:
-                badRecCount += 1
-            except Exception, e:
-                print('Exception reading line {} ({})'.format(self._currRecum, 
-                                                            fromUnicode(toUnicode(e))))
-                badRecCount += 1
-#                 success = True
-        if badRecCount > 0:
-            print('Skipped over {} bad records'.format(badRecCount))
         return recDict
 
     # ...............................................
@@ -517,64 +381,6 @@ class ShapeShifter(object):
         
         return newLyr
             
-    # ...............................................
-    def _addFieldDef(self, newDataset):
-        spRef = osr.SpatialReference()
-        spRef.ImportFromEPSG(DEFAULT_EPSG)
-     
-        newLyr = newDataset.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
-        if newLyr is None:
-            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
-                                    'Layer creation failed')
-         
-        for fielddesc in self.dataFields.values():
-            if fielddesc is not None:
-                fldname = fielddesc[0]
-                fldtype = fielddesc[1]
-                fldDef = ogr.FieldDefn(fldname, fldtype)
-                if fldtype == ogr.OFTString:
-                    fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
-                returnVal = newLyr.CreateField(fldDef)
-                if returnVal != 0:
-                    raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
-                                            'Failed to create field {}'.format(fldname))
-                
-        # Add wkt field to all
-        fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
-        fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
-        returnVal = newLyr.CreateField(fldDef)
-        if returnVal != 0:
-            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                                    'Failed to create field{}'.format(fldname))
-        
-        # Add URL field to GBIF/iDigBio data
-        if self.linkField is not None:
-            fldDef = ogr.FieldDefn(self.linkField, ogr.OFTString)
-            fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
-            returnVal = newLyr.CreateField(fldDef)
-            if returnVal != 0:
-                raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                                        'Failed to create field {}'.format(self.linkField))
-                
-        # Add Provider field to GBIF/iDigBio data (for resolution from key or attribution)
-        if self.computedProviderField is not None:
-            fldDef = ogr.FieldDefn(self.computedProviderField, ogr.OFTString)
-            fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
-            returnVal = newLyr.CreateField(fldDef)
-            if returnVal != 0:
-                raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                                        'Failed to create field {}'
-                                        .format(self.computedProviderField))
-#         # Add id field to BISON data
-#         if self.processType == ProcessType.BISON_TAXA_OCCURRENCE:
-#             fldDef = ogr.FieldDefn(LM_ID_FIELD, ogr.OFTString)
-#             returnVal = newLyr.CreateField(fldDef)
-#             if returnVal != 0:
-#                 raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-#                                         'Failed to create field {}'.format(LM_ID_FIELD))
-     
-        return newLyr
-    
 
     # ...............................................
     def _handleSpecialFields(self, feat, recDict):
@@ -635,14 +441,12 @@ class ShapeShifter(object):
             print('Failed to create/set geometry, e = {}'.format(e))
             raise e
             
-        specialFields = (self.idField, self.linkField, self.providerKeyField, 
-                              self.computedProviderField)
         self._handleSpecialFields(feat, recDict)
 
         try:
             # Add values out of the line of data
             for name in recDict.keys():
-                if (name in feat.keys() and name not in specialFields):
+                if (name in feat.keys() and name not in self.specialFields):
                     # Handles reverse lookup for BISON metadata
                     # TODO: make this consistent!!!
                     # For User data, name = fldname
@@ -660,7 +464,6 @@ class ShapeShifter(object):
         
 # ...............................................
 if __name__ == '__main__':
-    from LmCommon.common.apiquery import IdigbioAPI, BisonAPI
     gbif = idigbio = bison = False
     outfilename = '/tmp/testpoints.shp'
     subsetOutfilename = '/tmp/testpoints_sub.shp'
@@ -683,22 +486,6 @@ if __name__ == '__main__':
         shaper.writeOccurrences(outfilename, maxPoints=20, 
                                         subsetfname=subsetOutfilename)
 
-#     if idigbio:
-#         taxid = 2437967
-#         occAPI = IdigbioAPI()
-#         occList = occAPI.queryByGBIFTaxonId(taxid)
-#          
-#         count = len(occList)
-#          
-#         shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
-#         shaper.writeOccurrences(outfilename, maxPoints=40, 
-#                                         subsetfname=subsetOutfilename)
-#         
-#     if bison:
-#         url = 'http://bison.usgs.ornl.gov/solrproduction/occurrences/select?q=decimalLongitude%3A%5B-125+TO+-66%5D+AND+decimalLatitude%3A%5B24+TO+50%5D+AND+hierarchy_homonym_string%3A%2A-103383-%2A+NOT+basisOfRecord%3Aliving+NOT+basisOfRecord%3Afossil'
-#         occAPI = BisonAPI.initFromUrl(url)
-#         occList = occAPI.getTSNOccurrences()
-#         shaper = ShapeShifter(ProcessType.BISON_TAXA_OCCURRENCE, occList, len(occList))
 """
 from osgeo import ogr, osr
 import StringIO
@@ -714,39 +501,54 @@ from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
 from LmServer.common.log import ScriptLogger
 import ast
 
+log = LmComputeLogger('csvocc_testing', addConsole=True)
+
 # ......................................................
 # User test
-csvfname = '/share/lm/data/archive/ryan/000/000/000/059/pt_59.csv'
-metafname = '/share/lm/data/archive/ryan/heuchera_all.meta'
-outfname = '/tmp/testpoints.shp'
-bigfname = '/tmp/testpoints_big.shp'
-logger = ScriptLogger('testing')
+csvfname = '/share/lm/data/archive/taffy/000/000/396/487/pt_396487.csv'
+metafname = '/share/lm/data/archive/taffy/heuchera.json'
+outfname = '/state/partition1/lmscratch/temp/testpoints.shp'
+bigfname = '/state/partition1/lmscratch/temp/testpoints_big.shp'
 
 with open(csvfname, 'r') as f:
     blob = f.read()
-with open(metafname, 'r') as f:
-    metad = ast.literal_eval(f.read())
-ptype = ProcessType.USER_TAXA_OCCURRENCE
-shaper = ShapeShifter(ptype, blob, 32, logger=logger, metadata=metad)
-shaper.writeOccurrences(outfname, maxPoints=50, bigfname=bigfname, isUser=True)
+
+with open(csvfname, 'r') as f:
+    blob2 = f.readlines()
+
+# with open(metafname, 'r') as f:
+#     metad = ast.literal_eval(f.read())
+
+shaper = ShapeShifter(blob, metafname, logger=logger)
+shaper.writeOccurrences(outfname, maxPoints=50, bigfname=bigfname)
 
 
 # ......................................................
 # GBIF test
-pointsCsvFn = '/share/lm/data/archive/kubi/000/000/000/235/pt_235.csv'
-count =  456
-outFile = '/tmp/pt_235.shp'
-bigFile = '/tmp/bigpt_235.shp'
+csv_fn = '/share/lm/data/archive/kubi/000/000/398/505/pt_398505.csv'
+out_fn = '/state/partition1/lmscratch/temp/test_points'
+big_out_fn = '/state/partition1/lmscratch/temp/big_test_points'
+metadata = '/share/lmserver/data/species/gbif_occ_subset-2019.01.10.json'
+delimiter = '\t'
 maxPoints = 500
-ptype=ProcessType.GBIF_TAXA_OCCURRENCE
+readyFilename(out_fn, overwrite=True)
+readyFilename(big_out_fn, overwrite=True)
 
-with open(pointsCsvFn) as inF:
-    blob = inF.read()
-shaper = ShapeShifter(ptype, blob, count, logger=logger)
-shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile)
 
+with open(csv_fn) as inF:
+    csvInputBlob = inF.readlines()
+
+rawdata = ''.join(csvInputBlob)
+count = len(csvInputBlob)
+    
+log = LmComputeLogger('csvocc_testing', addConsole=True)
+    
+shaper = ShapeShifter(rawData, metadata, count, logger=log, delimiter='\t', isGbif=True)
+shaper.writeOccurrences(out_fn, maxPoints=maxPoints, bigfname=big_out_fn)
+                            
+status = JobStatus.COMPUTED
+goodData, featCount = ShapeShifter.testShapefile(outFile)
 
 # ......................................................
-# IDIG test
     
 """

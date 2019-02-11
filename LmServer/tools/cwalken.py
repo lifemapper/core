@@ -60,7 +60,7 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.tools.occwoc import (GBIFWoC, UserWoC, ExistingWoC, TinyBubblesWoC)
+from LmServer.tools.occwoc import (UserWoC, ExistingWoC, TinyBubblesWoC)
 
 # .............................................................................
 class ChristopherWalken(LMObject):
@@ -137,6 +137,12 @@ class ChristopherWalken(LMObject):
          self.boomGridset, 
          self.intersectParams, 
          self.assemblePams) = self._getConfiguredObjects()
+        
+        self.columnMeta = None
+        try:
+            self.columnMeta = self.weaponOfChoice.occParser.columnMeta
+        except:
+            pass
         # One Global PAM for each scenario
         # TODO: Allow assemblePams on RollingPAM?
         if self.assemblePams:
@@ -223,12 +229,20 @@ class ChristopherWalken(LMObject):
     # .............................................................................
     def _getOccWeaponOfChoice(self, userId, archiveName, epsg, boompath):
         useGBIFTaxonIds = False
+        gbifProvFile = None
+
         # Get datasource and optional taxonomy source
         datasource = self._getBoomOrDefault(BoomKeys.DATA_SOURCE)
         try:
             taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
         except:
             taxonSourceName = None
+            
+        # Handle GBIF data, taxon and provider lookup data
+        if datasource == SpeciesDatasource.GBIF:
+            useGBIFTaxonIds = True
+            gbifProv = self._getBoomOrDefault(BoomKeys.GBIF_PROVIDER_FILENAME)
+            gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
            
         # Expiration date for retrieved species data 
         expDate = dt.DateTime(self._getBoomOrDefault(BoomKeys.OCC_EXP_YEAR), 
@@ -242,31 +256,20 @@ class ChristopherWalken(LMObject):
             occ_delimiter = GBIF.DATA_DUMP_DELIMITER
         occ_csv_fname, occ_meta_fname, self.moreDataToProcess = self._findData(
             occname, occdir, boompath)
-        
-        # Get Weapon of Choice depending on type of Occurrence data to parse
-        # GBIF data
-        if datasource == SpeciesDatasource.GBIF:
-            gbifProv = self._getBoomOrDefault(BoomKeys.GBIF_PROVIDER_FILENAME)
-            gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
-            weaponOfChoice = GBIFWoC(self._scribe, userId, archiveName, epsg,
-                                     expDate, occ_csv_fname,
-                                     providerFname=gbifProvFile, 
-                                     taxonSourceName=taxonSourceName, 
-                                     logger=self.log)
-        
+                
         # Copy public data to user space
         # TODO: Handle taxonomy, useGBIFTaxonomy=??
-        elif datasource == SpeciesDatasource.EXISTING:
+        if datasource == SpeciesDatasource.EXISTING:
             occIdFname = self._getBoomOrDefault(BoomKeys.OCC_ID_FILENAME)
             weaponOfChoice = ExistingWoC(self._scribe, userId, archiveName, epsg,
                                          expDate, occIdFname, logger=self.log)
            
-        # User or iDigBio query
         else:
             weaponOfChoice = UserWoC(self._scribe, userId, archiveName, epsg,
                                      expDate, occ_csv_fname, occ_meta_fname, 
                                      occ_delimiter, logger=self.log, 
                                      processType=ProcessType.USER_TAXA_OCCURRENCE,
+                                     providerFname=gbifProvFile,
                                      useGBIFTaxonomy=useGBIFTaxonIds,
                                      taxonSourceName=taxonSourceName)
            
@@ -547,7 +550,7 @@ class ChristopherWalken(LMObject):
         
         # Species parser/puller
         weaponOfChoice, expDate = self._getOccWeaponOfChoice(userId, archiveName, 
-                                                      epsg, boompath)
+                                                             epsg, boompath)
         # SDM inputs
         minPoints = self._getBoomOrDefault(BoomKeys.POINT_COUNT_MIN)
         algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
@@ -699,10 +702,13 @@ class ChristopherWalken(LMObject):
         
         # Add occurrence set if there is a process to perform
         if occ.processType is not None:
+            rawmeta_dloc = occ.getRawDLocation() + LMFormat.JSON.ext
+            # TODO: replace metadata filename with metadata dict in self.columnMeta?
             sweep_config.add_occurrence_set(
                 occ.processType, occ.getId(), occ.getRawDLocation(),
                 occ.getDLocation(), occ.getDLocation(largeFile=True),
-                POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
+                POINT_COUNT_MAX, metadata=rawmeta_dloc)
+#                 POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
             
         for prj in prjs:
             if self.model_mask_base is not None:

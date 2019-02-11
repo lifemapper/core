@@ -28,15 +28,18 @@ except:
     pass
 
 import csv
+import json
 import os
 import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.apiquery import GbifAPI
 from LmCommon.common.unicode import fromUnicode, toUnicode
-from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, ProcessType, 
+from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.readyfile import readyFilename
+
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH
 from LmServer.common.localconstants import PUBLIC_USER
@@ -77,7 +80,7 @@ class _SpeciesWeaponOfChoice(LMObject):
         # either a file or directory
         self.inputFilename = inputFname
         # Common metadata description for csv points
-        # TODO: Add this for others?
+        # May be installed with species data in location unavailable to Makeflow
         self.metaFilename = metaFname
         # Taxon Source for known taxonomy
         self._taxonSourceId = None
@@ -165,6 +168,33 @@ class _SpeciesWeaponOfChoice(LMObject):
                                     .format(lineNum, self.startFile))
 
 # ...............................................
+    def _readProviderKeys(self, providerKeyFile, providerKeyColname):
+        providers = {}
+        try:
+            provKeyCol = self._fieldNames.index(providerKeyColname)
+        except:
+            self.log.error('Unable to find {} in fieldnames'
+                                .format(providerKeyColname))
+            provKeyCol = None
+            
+        if providerKeyFile is not None and providerKeyColname is not None: 
+            if not os.path.exists(providerKeyFile):
+                self.log.error('Missing provider file {}'.format(providerKeyFile))
+            else:
+                dumpfile = open(providerKeyFile, 'r')
+                csv.field_size_limit(sys.maxsize)
+                csvreader = csv.reader(dumpfile, delimiter=';')
+                for line in csvreader:
+                    try:
+                        key, name = line
+                        if key != 'key':
+                            providers[key] = name
+                    except:
+                        pass
+                dumpfile.close()
+        return providers, provKeyCol
+            
+# ...............................................
     def _willCompute(self, status, statusModTime, dlocation, rawDataLocation):
         willCompute = False
         noRawData = (rawDataLocation is None) or not (os.path.exists(rawDataLocation))
@@ -180,7 +210,8 @@ class _SpeciesWeaponOfChoice(LMObject):
         return willCompute
 
 # ...............................................
-    def _findOrInsertOccurrenceset(self, sciName, dataCount, data=None):
+    def _findOrInsertOccurrenceset(self, sciName, dataCount, data=None, 
+                                   metadata={}):
         """
         @param sciName: ScientificName object
         @param dataCount: reported number of points for taxon in input dataset
@@ -190,7 +221,7 @@ class _SpeciesWeaponOfChoice(LMObject):
         occ = None
         # Find existing
         tmpocc = OccurrenceLayer(sciName.scientificName, self.userId, self.epsg, 
-                dataCount, squid=sciName.squid, 
+                dataCount, squid=sciName.squid,
                 processType=self.processType, status=JobStatus.INITIALIZE, 
                 statusModTime=currtime, sciName=sciName, 
                 rawMetaDLocation=self.metaFilename)
@@ -209,10 +240,14 @@ class _SpeciesWeaponOfChoice(LMObject):
             if willCompute:
                 self.log.info('    Reseting OccLayer raw data')
                 # Update raw data in new or reset object
-                rdloc = self._writeRawData(occ, data=data)
+                rdloc, rawmeta_dloc = self._writeRawData(occ, data=data, 
+                                                         metadata=metadata)
                 if not rdloc:
                     raise LMError(currargs='    Failed to find raw data location')
                 occ.setRawDLocation(rdloc, currtime)
+                if rawmeta_dloc:
+                    occ.addLyrMetadata({occ.META_CSV_FIELD_DESCRIPTION: 
+                                        rawmeta_dloc})
                 # Set scientificName, not pulled from DB, for alternate iDigBio query
                 _ = self._scribe.updateObject(occ)
                 # Set processType and metadata location (from config, not saved in DB)
@@ -280,7 +315,7 @@ class _SpeciesWeaponOfChoice(LMObject):
         raise LMError(currargs='Function must be implemented in subclass')
 
 # ...............................................
-    def _writeRawData(self, occ, data=None):
+    def _writeRawData(self, occ, data=None, metadata=None):
         self._raiseSubclassError()
         
 # ...............................................
@@ -314,160 +349,6 @@ class _SpeciesWeaponOfChoice(LMObject):
         else:
             return self._linenum
 
-
-# # ..............................................................................
-# class BisonWoC(_SpeciesWeaponOfChoice):
-#     """
-#     @summary: Initializes the species WoC for BISON.
-#     """
-#     def __init__(self, scribe, user, archiveName, epsg, expDate, tsnFname, 
-#                      taxonSourceName=None, logger=None):
-#         super(BisonWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-#                                                  tsnFname, taxonSourceName=taxonSourceName, 
-#                                                  logger=logger)
-#         # Bison-specific attributes
-#         self.processType = ProcessType.BISON_TAXA_OCCURRENCE
-#         self._tsnfile = None        
-#         if taxonSourceName is None:
-#             raise LMError(currargs='Missing taxonomic source')
-#             
-#         self._updateFile(tsnFname, expDate)
-#         try:
-#             self._tsnfile = open(tsnFname, 'r')
-#         except:
-#             raise LMError(currargs='Unable to open {}'.format(tsnFname))
-#         
-# # ...............................................
-#     def  _getInsertSciNameForItisTSN(self, itisTsn, tsnCount):
-#         if itisTsn is None:
-#             return None
-#         sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
-#                                                               taxonKey=itisTsn)
-#             
-#         if sciName is None:
-#             try:
-#                 (itisname, king, tsnHier) = BisonAPI.getItisTSNValues(itisTsn)
-#             except Exception, e:
-#                 self.log.error('Failed to get results for ITIS TSN {} ({})'
-#                                     .format(itisTsn, e))
-#             else:
-#                 sleep(5)
-#                 if itisname is not None and itisname != '':
-#                     sciName = ScientificName(itisname, kingdom=king,
-#                                                  lastOccurrenceCount=tsnCount, 
-#                                                  taxonomySourceId=self._taxonSourceId, 
-#                                                  taxonomySourceKey=itisTsn, 
-#                                                  taxonomySourceSpeciesKey=itisTsn,
-#                                                  taxonomySourceKeyHierarchy=tsnHier)
-#                     self._scribe.findOrInsertTaxon(sciName=sciName)
-#                     self.log.info('Inserted sciName for ITIS tsn {}, {}'
-#                                       .format(itisTsn, sciName.scientificName))
-#         return sciName
-#     
-# # ...............................................
-#     def close(self):
-#         try:
-#             self._tsnfile.close()
-#         except:
-#             self.log.error('Unable to close tsnfile {}'.format(self._tsnfile))
-#             
-# # ...............................................
-#     @property
-#     def nextStart(self):
-#         if self.complete:
-#             return 0
-#         else:
-#             return self._linenum + 1
-# 
-# # ...............................................
-#     @property
-#     def thisStart(self):
-#         if self.complete:
-#             return 0
-#         else:
-#             return self._linenum
-# 
-# # ...............................................
-#     @property
-#     def complete(self):
-#         try:
-#             return self._tsnfile.closed
-#         except:
-#             return True
-#         
-# # ...............................................
-#     def _updateFile(self, filename, expDate):
-#         """
-#         If file does not exist or is older than expDate, create a new file. 
-#         """
-#         if filename is None or not os.path.exists(filename):
-#             self._recreateFile(filename)
-#         elif expDate is not None:
-#             ticktime = os.path.getmtime(filename)
-#             modtime = dt.DateFromTicks(ticktime).mjd
-#             if modtime < expDate:
-#                 self._recreateFile(filename)
-# 
-# # ...............................................
-#     def _recreateFile(self, filename):
-#         """
-#         Create a new file from BISON TSN query for binomials with > 20 points. 
-#         """
-#         tsnList = BisonAPI.getTsnListForBinomials()
-#         with open(filename, 'w') as f:
-#             for tsn, tsnCount in tsnList:
-#                 f.write('{}, {}\n'.format(tsn, tsnCount))
-#         
-# # ...............................................
-#     def _getTsnRec(self):
-#         tsn = tsnCount = None
-#         line = self._getNextLine(self._tsnfile)
-#         if line is not None:
-#             try:                    
-#                 first, second = line.split(',')
-#                 # Returns TSN, TSNCount
-#                 tsn, tsnCount = (int(first), int(second))
-#             except Exception, e:
-#                 self.log.debug('Exception reading line {} ({})'
-#                                     .format(self._linenum, e))
-#         return tsn, tsnCount
-# 
-# # ...............................................
-#     def getOne(self):
-#         occ = None
-#         willCompute = False
-#         tsn, tsnCount = self._getTsnRec()
-#         if tsn is not None:
-#             sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
-#             if sciName is not None:
-#                 occ, willCompute = self._createOrResetOccurrenceset(sciName, tsnCount,
-#                                                                     taxonSourceKey=tsn)
-#             if occ:
-#                 self.log.info('WOC processed occset {}, tsn {}, with {} points; next start {}'
-#                                   .format(occ.getId(), tsn, tsnCount, self.nextStart))
-#         return occ, willCompute
-# 
-# # ...............................................
-#     def _writeRawData(self, occ, taxonSourceKeyVal=None, data=None):
-#         if taxonSourceKeyVal is None:
-#             raise LMError(currargs='Missing taxonSourceKeyVal for BISON query url')
-#         occAPI = BisonAPI(qFilters=
-#                                 {BISON.HIERARCHY_KEY: '*-{}-*'.format(taxonSourceKeyVal)}, 
-#                                 otherFilters=BISON_QUERY.OCC_FILTERS)
-#         occAPI.clearOtherFilters()
-#         return occAPI.url
-# 
-# # ...............................................
-#     def moveToStart(self):
-#         startline = self._findStart()  
-#         if startline < 1:
-#             self._linenum = 0
-#             self._currRec = None
-#         else:
-#             tsn, tsnCount = self._getTsnRec()        
-#             while tsn is not None and self._linenum < startline-1:
-#                 tsn, tsnCount = self._getTsnRec()
-
 # ..............................................................................
 class UserWoC(_SpeciesWeaponOfChoice):
     """
@@ -483,11 +364,21 @@ class UserWoC(_SpeciesWeaponOfChoice):
     def __init__(self, scribe, user, archiveName, epsg, expDate, 
                      userOccCSV, userOccMeta, userOccDelimiter, 
                      logger=None, processType=ProcessType.USER_TAXA_OCCURRENCE, 
-                     useGBIFTaxonomy=False, taxonSourceName=None):
+                     providerFname=None, useGBIFTaxonomy=False, 
+                     taxonSourceName=None):
         super(UserWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
                                                 userOccCSV, metaFname=userOccMeta, 
                                                 taxonSourceName=taxonSourceName, 
                                                 logger=logger)
+        # Save known GBIF provider/IDs for lookup if available
+        self._providers = []
+        self._provCol = -1
+        if providerFname is not None and os.path.exists(providerFname):
+            try:
+                self._providers, self._provCol = self._readProviderKeys(
+                    providerFname, GBIF.PROVIDER_FIELD)
+            except:
+                pass
         # User-specific attributes
         self.processType = processType
         self.useGBIFTaxonomy = useGBIFTaxonomy
@@ -575,6 +466,31 @@ class UserWoC(_SpeciesWeaponOfChoice):
             self.occParser.skipToRecord(startline)
         elif startline < 0:
             self._currRec = None
+            
+# ...............................................
+    def _replaceLookupKeys(self, dataChunk):
+        chunk = []
+        for line in dataChunk:
+            try:
+                provkey = line[self._provCol]
+            except:
+                self.log.debug('Failed to find providerKey on record {} ({})' 
+                        .format(self._linenum, line))
+            else:
+                provname = provkey
+                try:
+                    provname = self._providers[provkey]
+                except:
+                    try:
+                        provname = GbifAPI.getPublishingOrg(provkey)
+                        self._providers[provkey] = provname
+                    except:
+                        self.log.debug('Failed to find providerKey {} in providers or GBIF API' 
+                                      .format(provkey))
+
+                line[self._provCol] = provname
+                chunk.append(line)
+        return chunk        
 
 # ...............................................
     def getOne(self):
@@ -594,6 +510,10 @@ class UserWoC(_SpeciesWeaponOfChoice):
         occ = None
         dataChunk, taxonKey, taxonName = self.occParser.pullCurrentChunk()
         if dataChunk:
+            # If data is from GBIF, replace Provider key with name
+            if self._provCol is not None:
+                dataChunk = self._replaceLookupKeys(dataChunk)
+                        
             # Get or insert ScientificName (squid)
             if self.useGBIFTaxonomy:
                 sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
@@ -605,253 +525,31 @@ class UserWoC(_SpeciesWeaponOfChoice):
                     taxonName = taxonKey
                 bbsciName = ScientificName(taxonName, userId=self.userId)
                 sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
+
             if sciName is not None:
                 occ = self._findOrInsertOccurrenceset(sciName, len(dataChunk), 
-                                                      data=dataChunk)
+                                data=dataChunk, metadata=self.occParser.columnMeta)
                 if occ is not None:
                     self.log.info('WOC processed occset {}, name {}, with {} records; next start {}'
                                       .format(occ.getId(), taxonName, len(dataChunk), 
                                                  self.nextStart))
         return occ
-
-# ...............................................
-    def _simplifyName(self, longname):
-        front = longname.split('(')[0]
-        newfront = front.split(',')[0]
-        finalfront = newfront.strip()
-        return finalfront
     
 # ...............................................
-    def _writeRawData(self, occ, data=None):
+    def _writeRawData(self, occ, data=None, metadata=None):
         rdloc = occ.createLocalDLocation(raw=True)
         success = occ.writeCSV(data, dlocation=rdloc, overwrite=True,
                                header=self._fieldNames)
         if not success:
             rdloc = None
             self.log.debug('Unable to write CSV file {}'.format(rdloc))
-        return rdloc
-
-# ..............................................................................
-class GBIFWoC(_SpeciesWeaponOfChoice):
-    """
-    @summary: Parses a GBIF download of Occurrences by GBIF Taxon ID, writes the 
-                 text chunk to a file, then creates and inserts a Makeflow for requested 
-                 processes, and updates the Occurrence record .
-    """
-    def __init__(self, scribe, user, archiveName, epsg, expDate, occFname, 
-                     providerFname=None, taxonSourceName=None, logger=None):
-        super(GBIFWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                                      occFname, taxonSourceName=taxonSourceName, 
-                                      logger=logger)
-        # GBIF-specific grouped/sorted CSV data
-        self.processType = ProcessType.GBIF_TAXA_OCCURRENCE
-        self._dumpfile = None
-        csv.field_size_limit(sys.maxsize)
-        try:
-            self._dumpfile = open(occFname, 'r')
-        except:
-            raise LMError(currargs='Failed to open {}'.format(occFname))
-        try:
-            self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
-        except:
-            raise LMError(currargs='Failed to init CSV reader with {}'.format(occFname))
-
-        # GBIF fieldnames/column indices              
-        gbifFldNames = []
-        idxs = GBIF_QUERY.EXPORT_FIELDS.keys()
-        idxs.sort()
-        for idx in idxs:
-            gbifFldNames.append(GBIF_QUERY.EXPORT_FIELDS[idx][0])
-        self._fieldNames = gbifFldNames
-        self._keyCol = self._fieldNames.index(GBIF.TAXONKEY_FIELD)
-        
-        # Save known GBIF provider/IDs for lookup if available
-        try:
-            self._providers, self._provCol = self._readProviderKeys(
-                providerFname, GBIF.PROVIDER_FIELD)
-        except:
-            self._providers = []
-            self._provCol = -1
-            
-        # Record start
-        self._currKeyFirstRecnum = None
-        self._currRec = None
-        self._currSpeciesKey = None
-
-# ...............................................
-    def close(self):
-        try:
-            self._dumpfile.close()
-        except:
-            self.log.error('Unable to close {}'.format(self._dumpfile))
-            
-# ...............................................
-    @property
-    def complete(self):
-        try:
-            return self._dumpfile.closed
-        except:
-            return True
-            
-# ...............................................
-    @property
-    def nextStart(self):
-        if self.complete:
-            return 0
         else:
-            return self._linenum
-
-# ...............................................
-    @property
-    def thisStart(self):
-        if self.complete:
-            return 0
-        else:
-            return self._currKeyFirstRecnum
-    
-# ...............................................
-    def _readProviderKeys(self, providerKeyFile, providerKeyColname):
-        providers = {}
-        try:
-            provKeyCol = self._fieldNames.index(providerKeyColname)
-        except:
-            self.log.error('Unable to find {} in fieldnames'
-                                .format(providerKeyColname))
-            provKeyCol = None
-            
-        if providerKeyFile is not None and providerKeyColname is not None: 
-            if not os.path.exists(providerKeyFile):
-                self.log.error('Missing provider file {}'.format(providerKeyFile))
-            else:
-                dumpfile = open(providerKeyFile, 'r')
-                csv.field_size_limit(sys.maxsize)
-                csvreader = csv.reader(dumpfile, delimiter=';')
-                for line in csvreader:
-                    try:
-                        key, name = line
-                        if key != 'key':
-                            providers[key] = name
-                    except:
-                        pass
-                dumpfile.close()
-        return providers, provKeyCol
-            
-# ...............................................
-    def getOne(self):
-        """
-        @summary: Return the next occurrenceset for species input data
-                  If occurrenceset is new, failed, or outdated, write the raw 
-                  data and update the rawDlocation
-        """
-        occ = None
-        speciesKey, dataChunk = self._getOccurrenceChunk()
-        if speciesKey:
-            sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, 
-                                                              len(dataChunk))
-            if sciName is not None:
-                occ = self._findOrInsertOccurrenceset(sciName, len(dataChunk), 
-                                                      data=dataChunk)
-                if occ:
-                    self.log.info('WOC processed occset {} gbif key {} with {} records; next start {}'
-                                      .format(occ.getId(), speciesKey, len(dataChunk), 
-                                                 self.nextStart))
-        return occ
-    
-# ...............................................
-    def moveToStart(self):
-        startline = self._findStart()            
-        if startline < 0:
-            self._currKeyFirstRecnum = startline
-            self._currRec = self._currSpeciesKey = None
-        else:
-            line, _ = self._getCSVRecord(parse=True)
-            # If not there yet, power through lines
-            while line is not None and self._linenum < startline-1:
-                line, _ = self._getCSVRecord(parse=False)
-        
-# ...............................................
-    def _writeRawData(self, occ, data=None):
-        rdloc = occ.createLocalDLocation(raw=True)
-        success = occ.writeCSV(data, dlocation=rdloc, overwrite=True)
-        if not success:
-            rdloc = None
-            self.log.debug('Unable to write CSV file {}}'.format(rdloc))
-        return rdloc
-            
-# ...............................................
-    def _getCSVRecord(self, parse=True):
-        specieskey = None
-        line = self._getNextLine(self._dumpfile, csvreader=self._csvreader)
-            
-        if line and parse:
-            # Post-parse, line is a dictionary
-            line, specieskey = self._parseGBIFRecord(line)
-        return line, specieskey
-
-# ...............................................
-    def _parseGBIFRecord(self, line):
-        specieskey = provkey = None
-        if line is not None and len(line) >= 16:
-            try:
-                specieskey = int(line[self._keyCol])
-            except:
-                line = None
-                self.log.debug('Skipping line; failed to convert specieskey on record {} ({})' 
-                        .format(self._linenum, line))
-                
-            if self._provCol is not None:
-                try:
-                    provkey = line[self._provCol]
-                except:
-                    self.log.debug('Failed to find providerKey on record {} ({})' 
-                            .format(self._linenum, line))
-                else:
-                    provname = provkey
-                    try:
-                        provname = self._providers[provkey]
-                    except:
-                        try:
-                            provname = GbifAPI.getPublishingOrg(provkey)
-                            self._providers[provkey] = provname
-                        except:
-                            self.log.debug('Failed to find providerKey {} in providers or GBIF API' 
-                                          .format(provkey))
-
-                    line[self._provCol] = provname
-                
-        return line, specieskey
-
-# ...............................................
-    def _getOccurrenceChunk(self):
-        """
-        """
-        completeChunk = False
-        currKey = None
-        currChunk = []
-        # if we're at the beginning, pull a record
-        if self._currSpeciesKey is None:
-            self._currRec, self._currSpeciesKey = self._getCSVRecord(parse=True)
-            if self._currRec is None:
-                completeChunk = True
-            
-        while not completeChunk:
-            # If first record of chunk
-            if currKey is None:
-                currKey = self._currSpeciesKey
-                self._currKeyFirstRecnum = self._linenum
-            # If record of this chunk
-            if self._currSpeciesKey == currKey:
-                currChunk.append(self._currRec)
-            else:
-                completeChunk = True
-            # Get another record
-            if not completeChunk:
-                self._currRec, self._currSpeciesKey = self._getCSVRecord(parse=True)
-                if self._currRec is None:
-                    completeChunk = True
-        self.log.debug('Returning {} records for {} (starting on line {})' 
-                            .format(len(currChunk), currKey, self._currKeyFirstRecnum))
-        return currKey, currChunk
+            # Write interpreted metadata along with raw CSV
+            rawmeta_dloc = rdloc + LMFormat.JSON.ext
+            readyFilename(rawmeta_dloc, overwrite=True)
+            with open(rawmeta_dloc, 'w') as f:
+                json.dump(metadata, f)
+        return rdloc, rawmeta_dloc
          
 # ..............................................................................
 class TinyBubblesWoC(_SpeciesWeaponOfChoice):
@@ -1035,13 +733,19 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         return occ
 
 # ...............................................
-    def _writeRawData(self, occ, data=None):
+    def _writeRawData(self, occ, data=None, metadata=None):
         if data is None:
             raise LMError(currargs='Missing data file for occurrenceSet')
         rdloc = occ.createLocalDLocation(raw=True)
         occ.readyFilename(rdloc, overwrite=True)
         shutil.copyfile(data, rdloc)
-        return rdloc
+        
+        if metadata is not None:
+            rawmeta_dloc = rdloc + LMFormat.JSON.ext
+            readyFilename(rawmeta_dloc, overwrite=True)
+            with open(rawmeta_dloc, 'w') as f:
+                json.dump(metadata, f)
+        return rdloc, rawmeta_dloc
 
 # ...............................................
     def moveToStart(self):
@@ -1144,7 +848,6 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
 # ...............................................
     def getOne(self):
         userOcc = None
-        willCompute = False
         occ = self._getOcc()
         if occ is not None:
             if occ.getUserId() == self.userId:

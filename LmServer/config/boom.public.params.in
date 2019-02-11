@@ -9,7 +9,7 @@
 
 [BOOM]
 
-ARCHIVE_NAME: public_boom_@SPECIES_EXP_YEAR@_@SPECIES_EXP_MONTH@_@SPECIES_EXP_DAY@
+ARCHIVE_NAME: public_boom-@GBIF_VERSION@
 ARCHIVE_USER: @PUBLIC_USER@
 ARCHIVE_USER_EMAIL: aimee.stewart@ku.edu
 
@@ -43,7 +43,7 @@ INTERSECT_MIN_PERCENT: 25
 
 
 [PREPROCESSING SDM_MASK]
-MASK_CODE: hull_region_intersect
+ALG_CODE: hull_region_intersect
 buffer: .5
 ;;; Must be the same layer contained in @SCENARIO_PACKAGE@ and metadata 
 region: @ECOREGION_LAYER@
