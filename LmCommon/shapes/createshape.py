@@ -24,18 +24,14 @@
              Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
              02110-1301, USA.
 """
-import csv
 import json
 import os
 from osgeo import ogr, osr
-import StringIO
 import subprocess
 from types import UnicodeType, StringType
 
-from LmCommon.common.lmconstants import (ENCODING, GBIF, GBIF_QUERY,
-                    PROVIDER_FIELD_COMMON, 
-                    LM_WKT_FIELD, ProcessType, JobStatus,
-                    DWCNames, LMFormat, DEFAULT_EPSG)
+from LmCommon.common.lmconstants import (GBIF, PROVIDER_FIELD_COMMON, 
+        LM_WKT_FIELD, ProcessType, JobStatus, DWCNames, LMFormat, DEFAULT_EPSG)
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.common.unicode import fromUnicode, toUnicode
@@ -130,20 +126,6 @@ class ShapeShifter(object):
 # .............................................................................
 # Public functions
 # .............................................................................
-    # .............................................................................
-    @staticmethod
-    def getOgrFieldType(typeString):
-        typestr = typeString.lower()
-        if typestr == 'integer':
-            return ogr.OFTInteger
-        elif typestr == 'string':
-            return ogr.OFTString
-        elif typestr == 'real':
-            return ogr.OFTReal
-        else:
-            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                                    'Unsupported field type {} (integer, string, or real)'
-                                    .format(typeString))
 
 # ...............................................
     @staticmethod
@@ -177,7 +159,7 @@ class ShapeShifter(object):
 
     # .............................................................................
     def writeOccurrences(self, outfname, maxPoints=None, bigfname=None, 
-                        overwrite=True):
+                         overwrite=True):
         if not readyFilename(outfname, overwrite=overwrite):
             raise LmException('{} is not ready for write (overwrite={})'.format
                                     (outfname, overwrite))

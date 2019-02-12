@@ -228,22 +228,13 @@ class ChristopherWalken(LMObject):
 
     # .............................................................................
     def _getOccWeaponOfChoice(self, userId, archiveName, epsg, boompath):
-        useGBIFTaxonIds = False
-        gbifProvFile = None
-
         # Get datasource and optional taxonomy source
         datasource = self._getBoomOrDefault(BoomKeys.DATA_SOURCE)
         try:
             taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
         except:
             taxonSourceName = None
-            
-        # Handle GBIF data, taxon and provider lookup data
-        if datasource == SpeciesDatasource.GBIF:
-            useGBIFTaxonIds = True
-            gbifProv = self._getBoomOrDefault(BoomKeys.GBIF_PROVIDER_FILENAME)
-            gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
-           
+                       
         # Expiration date for retrieved species data 
         expDate = dt.DateTime(self._getBoomOrDefault(BoomKeys.OCC_EXP_YEAR), 
                               self._getBoomOrDefault(BoomKeys.OCC_EXP_MONTH), 
@@ -265,6 +256,13 @@ class ChristopherWalken(LMObject):
                                          expDate, occIdFname, logger=self.log)
            
         else:
+            # Handle GBIF data, taxon and provider lookup data
+            useGBIFTaxonIds = False
+            gbifProvFile = None
+            if datasource == SpeciesDatasource.GBIF:
+                useGBIFTaxonIds = True
+                gbifProv = self._getBoomOrDefault(BoomKeys.GBIF_PROVIDER_FILENAME)
+                gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
             weaponOfChoice = UserWoC(self._scribe, userId, archiveName, epsg,
                                      expDate, occ_csv_fname, occ_meta_fname, 
                                      occ_delimiter, logger=self.log, 

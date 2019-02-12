@@ -3,8 +3,8 @@
 from exceptions import ZeroDivisionError
 import json
 import os
-
 from osgeo import ogr
+from time import sleep
 
 import LmBackend.common.layerTools as layer_tools
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
@@ -17,8 +17,7 @@ from LmCompute.common.log import LmComputeLogger
 import LmCompute.plugins.single.mask.create_mask as create_mask
 from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
-import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
-from time import sleep
+from LmCompute.plugins.single.occurrences.csvOcc import createShapefileFromCSV
 
 # .............................................................................
 class ParameterSweep(object):
@@ -299,22 +298,14 @@ class ParameterSweep(object):
             occ_metrics = None
             occ_snippets = None
 
-            #if process_type == ProcessType.BISON_TAXA_OCCURRENCE:
-            #    status = csv_occ.createBisonShapefile(
-            #        url_fn_or_key, out_file, big_out_file, max_points,
-            #        log=self.log)
-            if process_type == ProcessType.GBIF_TAXA_OCCURRENCE:
-                status = csv_occ.createGBIFShapefile(
-                    url_fn_or_key, out_file, big_out_file, max_points,
-                    log=self.log)
-            #elif process_type == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
-            #    status = csv_occ.createIdigBioShapefile(
-            #        url_fn_or_key, out_file, big_out_file, max_points,
-            #        log=self.log)
-            elif process_type == ProcessType.USER_TAXA_OCCURRENCE:
-                status = csv_occ.createUserShapefile(
-                    url_fn_or_key, metadata, out_file, big_out_file,
-                    max_points, log=self.log)
+            is_gbif = False
+            if process_type in (ProcessType.USER_TAXA_OCCURRENCE,
+                                ProcessType.GBIF_TAXA_OCCURRENCE):
+                if process_type == ProcessType.GBIF_TAXA_OCCURRENCE:
+                    is_gbif = True
+                status = createShapefileFromCSV(url_fn_or_key, metadata, 
+                                        out_file, big_out_file, max_points, 
+                                        is_gbif=is_gbif, log=self.log)
             else:
                 self.log.error(
                     'Unknown process type: {} for occurrence set: {}'.format(
