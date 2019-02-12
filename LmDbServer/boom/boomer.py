@@ -437,7 +437,7 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, MatrixType) 
 from LmCommon.common.occparse import OccDataParser
 from LmServer.legion.occlayer import OccurrenceLayer
-from LmServer.tools.occwoc import (GBIFWoC, UserWoC, ExistingWoC, TinyBubblesWoC)
+from LmServer.tools.occwoc import (UserWoC, ExistingWoC, TinyBubblesWoC)
 
 from LmDbServer.boom.boomer import *
 
@@ -505,16 +505,6 @@ occdir = self._getBoomOrDefault(BoomKeys.OCC_DATA_DIR)
 occ_delimiter = self._getBoomOrDefault(BoomKeys.OCC_DATA_DELIMITER) 
 occ_csv_fname, occ_meta_fname, self.moreDataToProcess = self._findData(
     occname, occdir, boompath)
-
-
-if datasource == SpeciesDatasource.GBIF:
-    gbifProv = self._getBoomOrDefault(BoomKeys.GBIF_PROVIDER_FILENAME)
-    gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
-    weaponOfChoice = GBIFWoC(self._scribe, userId, archiveName, epsg,
-                             expDate, occ_csv_fname,
-                             providerFname=gbifProvFile, 
-                             taxonSourceName=taxonSourceName, 
-                             logger=self.log)
 
 # Copy public data to user space
 # TODO: Handle taxonomy, useGBIFTaxonomy=??

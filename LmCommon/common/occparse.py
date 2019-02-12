@@ -726,9 +726,9 @@ class OccDataParser(LMObject):
                         complete = True
                                        
             except Exception, e:
-               self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
-                         % (str(self.currRecnum), str(e)))
-               self.currLine = self.groupVal = None
+                self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
+                          % (str(self.currRecnum), str(e)))
+                self.currLine = self.groupVal = None
         return chunk, chunkGroup, chunkName
 
     # ...............................................

@@ -5,34 +5,17 @@ import os
 # from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import (
-    ENCODING, JobStatus, LMFormat, ProcessType)
+    ENCODING, JobStatus, LMFormat, ProcessType, GBIF_QUERY)
     
 from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
-# # .............................................................................
-# def createBisonShapefile(url, outFile, bigFile, maxPoints, log=None):
-#     """
-#     @summary: Retrieves a BISON url, pulls in the data, and creates a shapefile
-#     @param url: The url to pull data from
-#     @param outFile: The file location to write the modelable occurrence set
-#     @param bigFile: The file location to write the full occurrence set 
-#     @param maxPoints: The maximum number of points to be included in the regular
-#                                 shapefile
-#     @param log: If provided, use this logger
-#     """
-#     occAPI = BisonAPI.initFromUrl(url)
-#     occList = occAPI.getTSNOccurrences()
-#     count = len(occList)
-#     return parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, 
-#                               outFile, bigFile, count, maxPoints, log=log)
-
 # .............................................................................
 def createGBIFShapefile(pointCsvFn, outFile, bigFile, maxPoints, log=None):
     """
     @summary: Parses a CSV blob from GBIF and saves it to a shapefile
-    @param pointCsvFn: The file location of the CSV data to process
+    @param out_fname: The file location of the CSV data to process
     @param outFile: The file location to write the modelable occurrence set
     @param bigFile: The file location to write the full occurrence set 
     @param reportedCount: The reported number of entries in the CSV file
@@ -41,55 +24,37 @@ def createGBIFShapefile(pointCsvFn, outFile, bigFile, maxPoints, log=None):
     @param log: If provided, use this logger
     """
     with open(pointCsvFn) as inF:
-        csvInputBlob = inF.readlines()
-    
-    if len(csvInputBlob) == 0:
+        lines = inF.readlines()
+         
+    if len(lines) == 0:
         raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
                                 "The provided CSV was empty")
     return parseCsvData(
-        ''.join(csvInputBlob), ProcessType.GBIF_TAXA_OCCURRENCE, outFile,
-        bigFile, len(csvInputBlob), maxPoints, log=log)
-    
-# # .............................................................................
-# def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints, log=None):
-#     """
-#     @summary: Retrieves an iDigBio url, pulls in the data, and creates a 
-#                      shapefile
-#     @param taxonKey: The GBIF taxonID (in iDigBio) for which to pull data
-#     @param outFile: The file location to write the modelable occurrence set
-#     @param bigFile: The file location to write the full occurrence set 
-#     @param maxPoints: The maximum number of points to be included in the regular
-#                                 shapefile
-#     @param log: If provided, use this logger
-#     @todo: Change this back to GBIF TaxonID when iDigBio API is fixed!
-#     """
-#     occAPI = IdigbioAPI()
-# #     occList = occAPI.queryByGBIFTaxonId(taxonKey)
-#     # TODO: Un-hack this - here using canonical name instead
-#     occList = occAPI.queryBySciname(taxonKey)
-#     count = len(occList)
-#     return parseCsvData(''.join(occList), ProcessType.IDIGBIO_TAXA_OCCURRENCE, 
-#                               outFile, bigFile, count, maxPoints, log=log)
+        ''.join(lines), ProcessType.GBIF_TAXA_OCCURRENCE, outFile,
+        bigFile, len(lines), maxPoints, metadata=GBIF_QUERY.EXPORT_FIELDS, 
+        log=log)
     
 # .............................................................................
-def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints,
-                        log=None):
+def createShapefile(csv_fname, metadata, out_fname, big_fname, max_points,
+                    log=None):
     """
-    @summary: Processes a user-provided CSV dataset
-    @param pointCsvFn: CSV file of points
+    @summary: Processes a CSV dataset
+    @param csv_fname: CSV file of points
     @param metadata: A file or dictionary of metadata for these occurrences
-    @param outFile: The file location to write the modelable occurrence set
-    @param bigFile: The file location to write the full occurrence set 
-    @param maxPoints: The maximum number of points to be included in the regular
-                                shapefile
+    @param out_fname: The file location to write the modelable occurrence set
+    @param big_fname: The file location to write the full occurrence set 
+    @param max_points: The maximum number of points to be included in the regular
+                       shapefile
     @param log: If provided, use this logger
     """
-    with open(pointCsvFn) as inF:
-        csvInputBlob = inF.read()
+    with open(csv_fname) as inF:
+        lines = inF.readlines()
     
     # Assume no header
-    lines = csvInputBlob.split('\n')
-    origCount = len(lines)
+    if len(lines) == 0:
+        raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
+                                "The provided CSV was empty")
+    
     # remove non-encodeable lines
     cleanLines = []
     for ln in lines:
@@ -99,23 +64,22 @@ def createUserShapefile(pointCsvFn, metadata, outFile, bigFile, maxPoints,
             pass
         else:
             cleanLines.append(clnLn)
-    cleanCount = len(cleanLines)
     cleanBlob = '\n'.join(cleanLines)
     
     msg = 'createUserShapefile, {}, orig {}, new {}'.format(
-        'Cleaned blob of non-encodable lines', origCount, cleanCount)
+        'Cleaned blob of non-encodable lines', len(lines), len(cleanLines))
     if log is not None:
         log.debug(msg)
     else:
         print(msg)
         
     return parseCsvData(
-        cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, bigFile,
-        cleanCount, maxPoints, metadata=metadata, isUser=True, log=log)
+        cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, out_fname, big_fname,
+        len(cleanLines), max_points, metadata=metadata, isGbif=False, log=log)
         
 # .............................................................................
-def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
-                      metadata=None, isUser=False, log=None):
+def parseCsvData(rawdata, metadata, out_fname, big_fname, count, max_points,
+                 isGbif=False, log=None):
     """
     @summary: Parses a CSV-format dataset and saves it to a shapefile in the 
                      specified location
@@ -135,30 +99,30 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
         log = LmComputeLogger(logname, addConsole=True)
     
     # Ready file names
-    readyFilename(outFile, overwrite=True)
-    readyFilename(bigFile, overwrite=True)
+    readyFilename(out_fname, overwrite=True)
+    readyFilename(big_fname, overwrite=True)
 
     if count <= 0:
         status = JobStatus.LM_RAW_POINT_DATA_ERROR
         log.debug('Count was set to zero, return {}'.format(status))
     else:
         try:
-            shaper = ShapeShifter(
-                processType, rawData, count, logger=log, metadata=metadata)
+            shaper = ShapeShifter(rawdata, metadata, count, logger=log, 
+                                  isGbif=isGbif)
             shaper.writeOccurrences(
-                outFile, maxPoints=maxPoints, bigfname=bigFile, isUser=isUser)
+                out_fname, maxPoints=max_points, bigfname=big_fname)
             log.debug('Shaper wrote occurrences')
             
             # Test generated shapefiles, throws exceptions if bad
             status = JobStatus.COMPUTED
-            goodData, featCount = ShapeShifter.testShapefile(outFile)
+            goodData, featCount = ShapeShifter.testShapefile(out_fname)
             if not goodData:
                 raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                                   'Shaper tested, failed newly created occset')
             
             # Test the big shapefile if it exists
-            if os.path.exists(bigFile):
-                ShapeShifter.testShapefile(bigFile)
+            if os.path.exists(big_fname):
+                ShapeShifter.testShapefile(big_fname)
             
         except LmException, lme:
             log.debug(lme.msg)
@@ -167,15 +131,15 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
             log.debug('Delete shapefiles if they exist')
             
             # TODO: Find a better way to delete (existing function maybe?)
-            if os.path.exists(outFile):
-                out_base = os.path.splitext(outFile)[0]
+            if os.path.exists(out_fname):
+                out_base = os.path.splitext(out_fname)[0]
                 for ext in LMFormat.SHAPE.getExtensions():
                     fn = '{}{}'.format(out_base, ext)
                     if os.path.exists(fn):
                         os.remove(fn)
                         
-            if os.path.exists(bigFile):
-                big_base = os.path.splitext(bigFile)[0]
+            if os.path.exists(big_fname):
+                big_base = os.path.splitext(big_fname)[0]
                 for ext in LMFormat.SHAPE.getExtensions():
                     fn = '{}{}'.format(big_base, ext)
                     if os.path.exists(fn):
@@ -189,20 +153,9 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
         
 
 """
-import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
+from LmCompute.plugins.single.occurrences.csvOcc import *
 import os
 import logging
-from LmServer.common.log import ScriptLogger
-
-
-# from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
-from LmCommon.shapes.createshape import ShapeShifter
-from LmCommon.common.lmconstants import (
-    ENCODING, JobStatus, LMFormat, ProcessType)
-    
-from LmCommon.common.readyfile import readyFilename
-from LmCompute.common.lmObj import LmException
-from LmCompute.common.log import LmComputeLogger
 import csv
 import json
 import os
@@ -210,6 +163,16 @@ from osgeo import ogr, osr
 import StringIO
 import subprocess
 from types import UnicodeType, StringType
+
+from LmServer.common.log import ScriptLogger
+
+from LmCommon.shapes.createshape2 import ShapeShifter
+from LmCommon.common.lmconstants import (
+    ENCODING, JobStatus, LMFormat, ProcessType)
+    
+from LmCommon.common.readyfile import readyFilename
+from LmCompute.common.lmObj import LmException
+from LmCompute.common.log import LmComputeLogger
 
 from LmCommon.common.lmconstants import (ENCODING, GBIF, GBIF_QUERY,
                     PROVIDER_FIELD_COMMON, 
@@ -225,152 +188,56 @@ except:
     from LmCompute.common.lmconstants import BIN_PATH
 
 
+csv_fn = '/share/lm/data/archive/kubi/000/000/398/505/pt_398505.csv'
+out_fn = '/state/partition1/lmscratch/temp/test_points'
+big_out_fn = '/state/partition1/lmscratch/temp/big_test_points'
+metadata = '/share/lmserver/data/species/gbif_occ_subset-2019.01.10.json'
+delimiter = '\t'
 
-
-csv_fn = '/share/lm/data/archive/taffy2/000/000/396/221/pt_396221.csv'
-metadata_fn = '/share/lm/data/archive/taffy2/heuchera.json'
-out_fn = '/state/partition1/lmscratch/temp/test_out'
-big_out_fn = '/state/partition1/lmscratch/temp/big_test_out.csv'
-
-
-pointCsvFn = csv_fn
-metadata = metadata_fn
-outFile = out_fn
-bigFile = big_out_fn
-maxPoints=500
-log = ScriptLogger('testshp', level=logging.DEBUG)
+(pointCsvFn, outFile, bigFile, maxPoints) = (csv_fn, out_fn, big_out_fn, 500)
 
 with open(pointCsvFn) as inF:
-    csvInputBlob = inF.read()
+    blob = inF.readlines()
 
-lines = csvInputBlob.split('\n')
-origCount = len(lines)
-cleanLines = []
-
-for ln in lines:
-    try: 
-        clnLn = ln.encode(ENCODING)
-    except:
-        pass
-    else:
-        cleanLines.append(clnLn)
-
-
-cleanCount = len(cleanLines)
-cleanBlob = '\n'.join(cleanLines)
-
-(rawData, processType, count, isUser, log) = (
- cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, cleanCount, True, log)
-
-
+(rawData, count) = (''.join(csvInputBlob), len(csvInputBlob))
+rawdata = rawData
+    
+logname = 'csvocc_testing'
+log = LmComputeLogger(logname, addConsole=True)
+logger=log
+    
 readyFilename(outFile, overwrite=True)
 readyFilename(bigFile, overwrite=True)
 
-shaper = ShapeShifter(
-    processType, rawData, count, logger=log, metadata=metadata)
+# shaper = ShapeShifter(processType, rawData, count, logger=log, metadata=metadata)
+
+shaper = ShapeShifter(rawData, metadata, count, logger=log)
     
-(outfname, bigfname, isUser, overwrite) = (outFile, bigFile, isUser, True)
-
-
 self = shaper
-discardIndices = self._getSubset(maxPoints)
-
-outDs = bigDs = None
-
-outDs = self._createDataset(outfname)
-outLyr = self._addUserFieldDef(outDs)
-
-lyrDef = outLyr.GetLayerDefn()
+bigfname=bigFile 
+outfname=outFile
 
 
-recDict = self._getRecord()
-# while recDict is not None:
-#     self._createFillFeat(lyrDef, recDict, outLyr)
-#     recDict = self._getRecord()
-
-feat = ogr.Feature(lyrDef)
-x = recDict[self.xField]
-y = recDict[self.yField]
-
-wkt = 'POINT ({} {})'.format(x, y)
-feat.SetField(LM_WKT_FIELD, wkt)
-geom = ogr.CreateGeometryFromWkt(wkt)
-feat.SetGeometryDirectly(geom)
-            
-specialFields = (self.idField, self.linkField, self.providerKeyField, 
-                              self.computedProviderField)
-self._handleSpecialFields(feat, recDict)
-for name in recDict.keys():
-    if (name in feat.keys() and name not in specialFields):
-        fldname = self._lookup(name)
-        print name, fldname
-        if fldname is not None:
-            fldidx = feat.GetFieldIndex(str(fldname))
-            val = recDict[name]
-            if val is not None and val != 'None':
-                if isinstance(val, UnicodeType):
-                    val = fromUnicode(val)
-                feat.SetField(fldidx, val)
-
-
-lyr.CreateFeature(feat)
-feat.Destroy()
+shaper.writeOccurrences(
+    outFile, maxPoints=maxPoints, bigfname=bigFile)
                             
-# Return metadata
-(minX, maxX, minY, maxY) = outLyr.GetExtent()
-geomtype = lyrDef.GetGeomType()
-fcount = outLyr.GetFeatureCount()
-# Close dataset and flush to disk
-outDs.Destroy()
-self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount)
-                        
-        
-  
-# shaper.writeOccurrences(
-#     outFile, maxPoints=maxPoints, bigfname=bigFile, isUser=isUser)
-log.debug('Shaper wrote occurrences')
 
-# Test generated shapefiles, throws exceptions if bad
+
 status = JobStatus.COMPUTED
 goodData, featCount = ShapeShifter.testShapefile(outFile)
 if not goodData:
     raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                       'Shaper tested, failed newly created occset')
 
-# Test the big shapefile if it exists
-if os.path.exists(bigFile):
-    ShapeShifter.testShapefile(bigFile)
-        
-    except LmException, lme:
-        log.debug(lme.msg)
-        status = lme.code
-        log.debug('Failed to write occurrences, return {}'.format(status))
-        log.debug('Delete shapefiles if they exist')
-        
-        # TODO: Find a better way to delete (existing function maybe?)
-        if os.path.exists(outFile):
-            out_base = os.path.splitext(outFile)[0]
-            for ext in LMFormat.SHAPE.getExtensions():
-                fn = '{}{}'.format(out_base, ext)
-                if os.path.exists(fn):
-                    os.remove(fn)
-                    
-        if os.path.exists(bigFile):
-            big_base = os.path.splitext(bigFile)[0]
-            for ext in LMFormat.SHAPE.getExtensions():
-                fn = '{}{}'.format(big_base, ext)
-                if os.path.exists(fn):
-                    os.remove(fn)
-    except Exception, e:
-        log.debug(str(e))
-        status = JobStatus.LM_POINT_DATA_ERROR
-        log.debug('Failed to write occurrences, return {}'.format(status))
 
-# csv_occ.parseCsvData(
-#         cleanBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, bigFile,
-#         cleanCount, maxPoints, metadata=metadata, isUser=True, log=log)
-#         
-# csv_occ.createUserShapefile(csv_fn, metadata_fn, out_fn, big_out_fn, 500)
+# x = parseCsvData(
+#     ''.join(csvInputBlob), ProcessType.GBIF_TAXA_OCCURRENCE, outFile,
+#     bigFile, len(csvInputBlob), maxPoints, metadata=GBIF_QUERY.EXPORT_FIELDS)
+
+
+# csv_occ.createGBIFShapefile(csv_fn, out_fn, big_out_fn, 500)
+
+
 
 """
     
