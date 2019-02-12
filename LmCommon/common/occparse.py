@@ -473,20 +473,34 @@ class OccDataParser(LMObject):
       
     # .............................................................................
     @staticmethod
-    def getOgrFieldType(typeString):
-        typestr = typeString.lower()
-        if typestr == 'none':
+    def getOgrFieldType(typeval):
+        if typeval is None:
             return None
-        elif typestr in ('int', 'integer'):
-            return OFTInteger
-        elif typestr in ('str', 'string'):
-            return OFTString
-        elif typestr in ('float', 'real'):
-            return OFTReal
-        else:
-            print('Unsupported field type {} (requires None, int, string, real)'
-                           .format(typeString))
-            return None
+        try:
+            typeint = int(typeval)
+            if typeint in (OFTInteger, OFTString, OFTReal):
+                return typeint
+            else:
+                raise Exception('Field type must be OFTInteger, OFTString, OFTReal ({}, {}, {})'
+                                .format(OFTInteger, OFTString, OFTReal))
+        except:
+            try:
+                typestr = typeval.lower()
+            except:
+                raise Exception('Field type must be coded as a string or integer')
+        
+            if typestr == 'none':
+                return None
+            elif typestr in ('int', 'integer'):
+                return OFTInteger
+            elif typestr in ('str', 'string'):
+                return OFTString
+            elif typestr in ('float', 'real'):
+                return OFTReal
+            else:
+                print('Unsupported field type {} (requires None, int, string, real)'
+                               .format(typestr))
+        return None
     
     # ...............................................
     @staticmethod
@@ -590,8 +604,9 @@ class OccDataParser(LMObject):
         while not success and self._csvreader is not None:
             try:
                 line = self._csvreader.next()
-                goodEnough = self._testLine(line)
-                success = True
+                if len(line) > 0:
+                    goodEnough = self._testLine(line)
+                    success = True
             except OverflowError, e:
                 self.log.debug( 'Overflow on {}; {}'.format(self.currRecnum, e))
             except StopIteration:
