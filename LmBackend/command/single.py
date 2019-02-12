@@ -128,7 +128,7 @@ class SpeciesParameterSweepCommand(_LmCommand):
     scriptName = 'species_controller.py'
 
     # ...............................
-    def __init__(self, config_filename, inputs, outputs):
+    def __init__(self, config_filename, inputs, outputs, pedantic_mode=False):
         """Construct a command object for a single species parameter sweep
 
         Args:
@@ -148,4 +148,6 @@ class SpeciesParameterSweepCommand(_LmCommand):
         self.inputs.extend(inputs)
         self.outputs.extend(outputs)
         
+        if pedantic_mode:
+            self.opt_args += ' -p'
         self.args = config_filename

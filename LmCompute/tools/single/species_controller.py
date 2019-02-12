@@ -14,8 +14,11 @@ if __name__ == '__main__':
     parser.add_argument(
         'config_file', type=str,
         help='A configuration file for this parameter sweep')
+    parser.add_argument(
+        '-p', '--pedantic', action='store_true',
+        help='Run in pedantic mode where every exception fails out.')
     args = parser.parse_args()
     
     sweep_config = ParameterSweepConfiguration.load(args.config_file)
-    sweeper = ParameterSweep(sweep_config)
+    sweeper = ParameterSweep(sweep_config, pedantic_mode=args.pedantic)
     sweeper.run()

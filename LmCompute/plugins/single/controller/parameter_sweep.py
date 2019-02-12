@@ -1,10 +1,27 @@
 """This module contains methods for performing a single species parameter sweep
+
+Note:
+    * Debug instructions:
+        Run a parameter sweep for a species by calling this script with the
+            species configuration JSON filename as the argument.  This script
+            performs all of the computations and prepares files that are used
+            for stockpiling all of the outputs at once.  Be aware that running
+            this script will put the generated output files in the locations
+            specified by the configuration and that will probably be their
+            final location in a shared data space.
+
+Todo:
+    * CJ - Add a pedantic mode for debugging that will fail all of the way out
+        instead of keeping a status
+    * CJ - Add a debugging or "dry run" mode that does not move files to their
+        final location
 """
 from exceptions import ZeroDivisionError
 import json
 import os
 
 from osgeo import ogr
+from time import sleep
 
 import LmBackend.common.layerTools as layer_tools
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
@@ -18,23 +35,20 @@ import LmCompute.plugins.single.mask.create_mask as create_mask
 from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
 import LmCompute.plugins.single.occurrences.csvOcc as csv_occ
-from time import sleep
 
 # .............................................................................
 class ParameterSweep(object):
     """This class performs a parameter sweep for a single species
     """
     # ........................................
-    def __init__(self, sweep_config):
+    def __init__(self, sweep_config, pedantic_mode=False):
         """Constructor
 
         Args:
             sweep_config : A parameter sweep configuration object used to
                 determine what should be done.
-            work_dir : A top directory where work should be performed.
-            logger : Optional.  If provided, use this logger.
-            log_name : Optional.  If provided (and logger is not) use this as
-                the name of the logger to be used for this parameter sweep.
+            pedantic_mode (:obj: `bool`) : If true, raise every exception to
+                calling method
         """
         self.sweep_config = sweep_config
         self.work_dir = self.sweep_config.work_dir
@@ -48,6 +62,7 @@ class ParameterSweep(object):
         # Note: The registry is a place for registering outputs
         self.registry = {}
         self.pavs = []
+        self.pedantic = pedantic_mode
 
     # ........................................
     def _create_masks(self):
@@ -101,8 +116,9 @@ class ParameterSweep(object):
                     if not os.path.exists(tif_filename):
                         status = JobStatus.GENERAL_ERROR
             except Exception as e:
-                self.log.error(
-                    'Could not create mask {} : {}'.format(mask_id, str(e)))
+                self._process_error(
+                    e, msg='Could not create mask {} : {}'.format(
+                        mask_id, str(e)))
                 status = JobStatus.MASK_ERROR
 
             # TODO: Consider adding rasters as secondary outputs
@@ -202,10 +218,10 @@ class ParameterSweep(object):
                                     scale=scale_params, multiplier=multiplier)
                                 wrapper.get_output_package(
                                     package_path, overwrite=True)
-                            except ZeroDivisionError:
-                                self.log.error(
-                                    'Could not get projection for model')
-                                self.log.error('Projection was blank')
+                            except ZeroDivisionError as zde:
+                                msg = ('Could not get projection for model. '
+                                        'Projection was blank')
+                                self._process_error(zde, msg=msg)
                                 status = JobStatus.BLANK_PROJECTION_ERROR
                         # Use same secondary outputs as model and register
                         self._register_output_object(
@@ -357,7 +373,8 @@ class ParameterSweep(object):
                         with open(pav_filename, 'w') as pav_out_f:
                             pav.save(pav_out_f)
                 except Exception as e:
-                    self.log.error('Failed to encode PAV: {}'.format(str(e)))
+                    self._process_error(
+                        e, msg='Failed to encode PAV: {}'.format(str(e)))
                     status = JobStatus.ENCODING_ERROR
             else:
                 if prj_status >= JobStatus.GENERAL_ERROR:
@@ -462,10 +479,10 @@ class ParameterSweep(object):
                                     wrapper.get_output_package(
                                         package_path, overwrite=True)
                                     prj_metrics = wrapper.get_metrics()
-                                except ZeroDivisionError:
-                                    self.log.error('Could not convert to Tiff')
-                                    self.log.debug(
-                                        'Divide by zero : empty projection')
+                                except ZeroDivisionError as zde:
+                                    msg = ('Could not convert to Tiff.  '
+                                           'Divide by zero : empty projection')
+                                    self._process_error(zde, msg=msg)
                                     status = JobStatus.BLANK_PROJECTION_ERROR
 
                         # If openModeller
@@ -555,10 +572,35 @@ class ParameterSweep(object):
             status = obj[RegistryKey.STATUS]
             if status == JobStatus.COMPUTED:
                 ret_file = obj[RegistryKey.PRIMARY_OUTPUT]
-        except:
+        except Exception as e:
+            msg = 'Failed to get registry output: {}'.format(str(e))
+            self._process_error(e, msg=msg)
             status = JobStatus.NOT_FOUND
-            pass
         return ret_file, status
+
+    # ........................................
+    def _process_error(self, err, msg=None, raise_err=False):
+        """Processes an exception and stops if configured to do so
+
+        Args:
+            err (:obj: `Exception`): An exception (or subclass) thrown by one
+                of the compute processes
+            msg (:obj: `str`): An optional message to include with this error
+                processing that will be sent to the logger
+            raise_err (:obj: `bool`): If set to true, will raise error even if
+                pedantic mode is off
+
+        Note:
+            If pedantic is set to true, we will raise the exception so that the
+                calling method receives it, rather than processing it and
+                moving on
+        """
+        if msg is not None:
+            self.log.error(msg)
+        else:
+            self.log.error(str(err))
+        if self.pedantic or raise_err:
+            raise err
         
     # ........................................
     def _register_output_object(self, object_type, object_id, status,
