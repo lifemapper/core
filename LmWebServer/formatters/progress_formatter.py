@@ -53,8 +53,14 @@ def format_gridset(gridset):
 
     scribe.closeConnections()
     
-    mtx_percent = 1.0 * complete_mtxs / len(gridset.getMatrices())
-    prj_percent = 1.0 * complete_prjs / total_prjs
+    # Initialize in case there are zero prj or mtx
+    mtx_percent = 1.0
+    prj_percent = 1.0
+    
+    if len(gridset.getMatrices()) > 0:
+        mtx_percent = 1.0 * complete_mtxs / len(gridset.getMatrices())
+    if len(total_prjs) > 0:
+        prj_percent = 1.0 * complete_prjs / total_prjs
     
     progress = 0.5 * (mtx_percent + prj_percent)
     
