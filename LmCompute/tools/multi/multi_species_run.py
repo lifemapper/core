@@ -42,12 +42,14 @@ def do_runs(pam, num_permutations, do_pam_stats=False, do_mcpa=False,
         mcpa_method = mcpa
 
     if num_permutations >= 1:
-        for _ in range(num_permutations):
+        for i in range(num_permutations):
+            print('Iteration {}'.format(i))
             i_pam = gradyRandomize(pam)
             if do_pam_stats:
                 pam_stats.append(PamStats(i_pam, tree=tree))
             if do_mcpa:
                 mcpa_outs.append(mcpa_method(i_pam, tree_mtx, grim, biogeo))
+            i_pam = None
     else:
         if do_pam_stats:
             pam_stats.append(PamStats(pam, tree=tree))
