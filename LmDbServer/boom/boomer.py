@@ -129,6 +129,7 @@ class Boomer(LMObject):
         self.keepWalken = True
         
         self.squidNames = []
+        self.pav_index_filenames = []
         # master MF chain
         self.masterPotatoHead = None
         self.potatoBushel = None
@@ -140,7 +141,10 @@ class Boomer(LMObject):
             self.log.info('Next species ...')
             # Get Spud rules (single-species SDM) and dict of {scencode: pavFilename}
             workdir = self.potatoBushel.getRelativeDirectory()
-            squid, spudRules = self.christopher.startWalken(workdir)
+            squid, spudRules, idx_filename = self.christopher.startWalken(
+                workdir)
+            if idx_filename is not None:
+                self.pav_index_filenames.append(idx_filename)
             
             # TODO: Track squids
             if squid is not None:
@@ -182,11 +186,11 @@ class Boomer(LMObject):
             
             Code should be something like this:
             
-            collate_rules = _get_multispecies_rules(self, gridset, work_dir,
-                do_pam_stats, do_mcpa,
+            collate_rules = _get_multispecies_rules(self, gridset,
+                self.potatoBushel.getRelativeDirectory(), do_pam_stats, do_mcpa,
                 num_permutations=DEFAULT_NUM_PERMUTATIONS,
-                group_size=DEFAULT_RANDOM_GROUP_SIZE, sdm_dependencies=None,
-                log=None)
+                group_size=DEFAULT_RANDOM_GROUP_SIZE,
+                sdm_dependencies=self.pav_index_filenames, log=None)
             # Add rules to bushel workflow
             self.potatoBushel.addCommands(collate_rules)
         """

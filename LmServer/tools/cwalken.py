@@ -586,6 +586,7 @@ class ChristopherWalken(LMObject):
         """
         squid = None
         spudRules = []
+        index_pavs_document_filename = None
         gsid = 0
         currtime = dt.gmt().mjd
         
@@ -674,7 +675,7 @@ class ChristopherWalken(LMObject):
                     spudRules.append(index_cmd.getMakeflowRule(local=True))
 
             # TODO: Add metrics / snippets processing
-        return squid, spudRules
+        return squid, spudRules, index_pavs_document_filename
     
     # ...............................
     def _doComputeSDM(self, occ, prjs, mtxcols):
