@@ -271,41 +271,6 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
 #         self.outputs.append(logfilename)
             
 # .............................................................................
-class EncodeTreeCommand(_LmServerCommand):
-    """Command to encode a tree with species identifiers
-
-    Todo:
-        Merge with SquidIncCommand, they are redundant
-    """
-    scriptName = 'encodeTree.py'
-
-    # ................................
-    def __init__(self, user_id, tree_name, success_file):
-        """Construct the command object
-
-        Args:
-            user_id: User for the tree and gridset
-            tree_name: The unique tree name
-        """
-        _LmServerCommand.__init__(self)
-        
-        # file ends up in LOG_PATH
-        secs = time.time()
-        timestamp = "{}".format(
-            time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-        log_name = '{}.{}'.format(self.scriptBasename, timestamp)
-            
-        # Required args
-        self.args = '{} {} {}'.format(user_id, tree_name, success_file)
-        # Optional arg, we also want for output 
-        self.opt_args += ' --logname={}'.format(log_name)
-
-        self.outputs.append(success_file)
-#         # Logfile is created by script in LOG_DIR
-#         log_file = '{}{}'.format(log_name, LMFormat.LOG.ext)
-#         self.outputs.append(log_file)
-
-# .............................................................................
 class EncodeBioGeoHypothesesCommand(_LmServerCommand):
     """Command to encode biogeographic hypotheses
     """
@@ -521,28 +486,25 @@ class ShootSnippetsCommand(_LmServerCommand):
             self.opt_args += ' -why {}'.format(why)
 
 # .............................................................................
-class SquidIncCommand(_LmServerCommand):
-    """This command will add squids to a tree
-
-    Todo:
-        Merge with encode tree most likely, they are redundant
+class SquidAndLabelTreeCommand(_LmServerCommand):
+    """Add SQUIDs and node labels to tree
     """
-    scriptName = 'squid_inc.py'
+    scriptName = 'add_squids_to_tree.py'
 
     # ................................
-    def __init__(self, treeFilename, userId, outTreeFilename):
+    def __init__(self, tree_name, user_id, success_filename):
         """Construct the command object
 
         Args:
-            treeFilename: The file location of the original tree
-            userId: The user id, used for generating squids
-            outTreeFilename: The file location of the resulting tree
+            tree_name: The name of the tree in the database
+            user_id: The user id, used for generating squids
+            success_filename : The file location where success should be
+                indicated
         """
         _LmServerCommand.__init__(self)
-        self.inputs.append(treeFilename)
-        self.outputs.append(outTreeFilename)
+        self.outputs.append(success_filename)
         
-        self.args = '{} {} {}'.format(treeFilename, userId, outTreeFilename)
+        self.args = '{} {} {}'.format(tree_name, user_id, success_filename)
 
 # .............................................................................
 class StockpileCommand(_LmServerCommand):
