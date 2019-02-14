@@ -205,12 +205,7 @@ class Boomer(LMObject):
                 # Only collate if assemblePams and finished with all SDMs
                 if self.assemblePams and self.christopher.complete:
                     # Add multispecies rules requested in boom config file
-                    collate_rules = self._get_multispecies_rules(
-                        #self.christopher.compute_pam_stats, 
-                        self.christopher.compute_mcpa,
-                        num_permutations=self.christopher.num_permutations,
-                        group_size=DEFAULT_RANDOM_GROUP_SIZE,
-                        sdm_dependencies=self.pav_index_filenames, log=None)
+                    collate_rules = self._get_multispecies_rules()
 
                     # Add rules to bushel workflow
                     self.potatoBushel.addCommands(collate_rules)
@@ -293,10 +288,7 @@ class Boomer(LMObject):
         return mfChain
 
     # ...............................................
-    def _get_multispecies_rules(self, do_mcpa,
-                                num_permutations=DEFAULT_NUM_PERMUTATIONS,
-                                group_size=DEFAULT_RANDOM_GROUP_SIZE,
-                                sdm_dependencies=None, log=None):
+    def _get_multispecies_rules(self):
         """Get rules for multi-species computations
 
         Args:
@@ -318,14 +310,12 @@ class Boomer(LMObject):
             A list of compute rules for the gridset
         """
         work_dir = self.potatoBushel.getRelativeDirectory()
-        if sdm_dependencies is None:
-            sdm_dependencies = []
-        bc = BoomCollate(self.gridset, dependencies=sdm_dependencies, 
+        bc = BoomCollate(self.gridset, dependencies=self.pav_index_filenames, 
                          do_pam_stats=self.assemblePams, 
-                         do_mcpa=do_mcpa, 
-                         num_permutations=num_permutations,
-                         random_group_size=group_size, 
-                         work_dir=work_dir, log=log)
+                         do_mcpa=self.christopher.compute_mcpa, 
+                         num_permutations=self.christopher.num_permutations,
+                         random_group_size=DEFAULT_RANDOM_GROUP_SIZE, 
+                         work_dir=work_dir, log=None)
         rules = bc.get_collate_rules()
         
         return rules
