@@ -59,7 +59,7 @@ def format_gridset(gridset):
     
     if len(gridset.getMatrices()) > 0:
         mtx_percent = 1.0 * complete_mtxs / len(gridset.getMatrices())
-    if len(total_prjs) > 0:
+    if total_prjs > 0:
         prj_percent = 1.0 * complete_prjs / total_prjs
     
     progress = 0.5 * (mtx_percent + prj_percent)
