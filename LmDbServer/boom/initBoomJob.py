@@ -580,7 +580,7 @@ class BOOMFiller(LMObject):
         config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, 
                    str(self.assemblePams))
         config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, 
-                   str(self.doComputePAMStats))
+                   str(self.compute_pam_stats))
         config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, 
                    str(self.compute_mcpa)) 
         config.set(SERVER_BOOM_HEADING, BoomKeys.NUM_PERMUTATIONS, 
