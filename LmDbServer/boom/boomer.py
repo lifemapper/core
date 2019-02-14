@@ -206,7 +206,7 @@ class Boomer(LMObject):
                 if self.assemblePams and self.christopher.complete:
                     # Add multispecies rules requested in boom config file
                     collate_rules = self._get_multispecies_rules(
-                        self.christopher.compute_pam_stats, 
+                        #self.christopher.compute_pam_stats, 
                         self.christopher.compute_mcpa,
                         num_permutations=self.christopher.num_permutations,
                         group_size=DEFAULT_RANDOM_GROUP_SIZE,
