@@ -52,7 +52,7 @@ from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
             Priority, BUFFER_KEY, CODE_KEY, ECOREGION_MASK_METHOD, MASK_KEY, 
             MASK_LAYER_KEY, PRE_PROCESS_KEY, PROCESSING_KEY, 
             MASK_LAYER_NAME_KEY,SCALE_PROJECTION_MINIMUM, 
-            SCALE_PROJECTION_MAXIMUM)
+            SCALE_PROJECTION_MAXIMUM, DEFAULT_NUM_PERMUTATIONS)
 from LmServer.common.localconstants import (PUBLIC_USER, DEFAULT_EPSG, 
                                             POINT_COUNT_MAX)
 from LmServer.common.log import ScriptLogger
@@ -136,7 +136,10 @@ class ChristopherWalken(LMObject):
          self.model_mask_base,
          self.boomGridset, 
          self.intersectParams, 
-         self.assemblePams) = self._getConfiguredObjects()
+         self.assemblePams, 
+         self.compute_pam_stats, 
+         self.compute_mcpa, 
+         self.num_permutations) = self._getConfiguredObjects()
         
         self.columnMeta = None
         try:
@@ -558,10 +561,17 @@ class ChristopherWalken(LMObject):
         (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                               archiveName, epsg)
         assemblePams = self._getBoomOrDefault(BoomKeys.ASSEMBLE_PAMS, isBool=True)
+        compute_pam_stats = self._getBoomOrDefault(BoomKeys.COMPUTE_PAM_STATS, 
+                                                   isBool=True)
+        compute_mcpa = self._getBoomOrDefault(BoomKeys.COMPUTE_MCPA, 
+                                              isBool=True)
+        num_permutations = self._getBoomOrDefault(BoomKeys.NUM_PERMUTATIONS,
+                                                  defaultValue=DEFAULT_NUM_PERMUTATIONS)
         
         return (userId, archiveName, archivePriority, boompath, weaponOfChoice, expDate,
                 epsg, minPoints, algorithms, mdlScen, prjScens, model_mask_base, 
-                boomGridset, intersectParams, assemblePams)  
+                boomGridset, intersectParams, assemblePams, compute_pam_stats, 
+                compute_mcpa, num_permutations)  
 
     # ...............................
     def _getJSONObjects(self):
