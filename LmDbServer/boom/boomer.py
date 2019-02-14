@@ -202,7 +202,8 @@ class Boomer(LMObject):
         # Write all spud commands in existing bushel MFChain
         if self.potatoBushel:
             if self.potatoBushel.jobs:
-                if self.assemblePams and not self.christopher.complete:
+                # Only collate if assemblePams and finished with all SDMs
+                if self.assemblePams and self.christopher.complete:
                     # Add multispecies rules requested in boom config file
                     collate_rules = self._get_multispecies_rules(
                         self.christopher.compute_pam_stats, 
