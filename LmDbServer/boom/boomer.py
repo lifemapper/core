@@ -30,19 +30,24 @@ from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 from LmDbServer.boom.boom_collate import BoomCollate
 
-
+# Only relevant for "archive" public data, all user workflows will put all
+# spuds into a single makeflow, along with multi-species commands to follow SDMs 
 SPUD_LIMIT = 200
 
 # .............................................................................
 class Boomer(LMObject):
     """
-    Class to iterate with a ChristopherWalken through a sequence of species data
-    creating individual species (Spud) MFChains, multi-species (Bushel) MFChains
-    with SPUD_LIMIT number of species and aggregated by projection scenario, 
-    and a master (MasterPotatoHead) MFChain to identify completion of all bushels.
-    until it is complete.  If the daemon is interrupted, it will write out the 
-    current MFChains, and pick up where it left off to create new MFChains for 
-    unprocessed species data.
+    Class to iterate with a ChristopherWalken through a sequence of species data,    
+    creating individual species (Spud) commands into one or more "Bushel" 
+    MFChains. 
+    * If working on the Public Archive, a huge, constantly updated dataset,  
+      Bushel MFChains are limited to SPUD_LIMIT number of species commands -
+      the full Bushel is rotated and a new Bushel is created to hold the next
+      set of commands.
+    * In all other multi-species workflows, all spuds are put into the same 
+      bushel. If the daemon is interrupted, it will write out the current  
+      MFChain, and pick up where it left off with a new MFChains for 
+      unprocessed species data.
     @todo: Next instance of boom.Walker will create new MFChains, but add data
     to the existing Global PAM matrices.  
     """
@@ -114,6 +119,7 @@ class Boomer(LMObject):
             raise LMError(currargs='Failed to initialize Chris with config {} ({})'
                          .format(self.configFname, e))
         try:
+            self.gridset = self.christopher.boomGridset
             self.gridsetId = self.christopher.boomGridset.getId()
         except:
             self.log.warning('Exception getting christopher.boomGridset id!!')
@@ -141,10 +147,10 @@ class Boomer(LMObject):
             self.log.info('Next species ...')
             # Get Spud rules (single-species SDM) and dict of {scencode: pavFilename}
             workdir = self.potatoBushel.getRelativeDirectory()
-            squid, spudRules, idx_filename = self.christopher.startWalken(
+            squid, spudRules, idx_success_filename = self.christopher.startWalken(
                 workdir)
-            if idx_filename is not None:
-                self.pav_index_filenames.append(idx_filename)
+            if idx_success_filename is not None:
+                self.pav_index_filenames.append(idx_success_filename)
             
             # TODO: Track squids
             if squid is not None:
@@ -152,9 +158,8 @@ class Boomer(LMObject):
             
             self.keepWalken = not self.christopher.complete
             # TODO: Master process for occurrence only? SDM only? 
-            if self.assemblePams and spudRules:
-                self.log.debug('Processing spud for potatoes')
-               
+            if spudRules:
+                self.log.debug('Processing spud for potatoes') 
                 self.potatoBushel.addCommands(spudRules)
                 # TODO: Don't write triage file, but don't delete code
                 #if potatoInputs:
@@ -164,7 +169,7 @@ class Boomer(LMObject):
                 #   self.log.info('Wrote spud squid to {} triage files'
                 #                 .format(len(potatoInputs)))
                 #if len(self.spudArfFnames) >= SPUD_LIMIT:
-                if len(self.squidNames) >= SPUD_LIMIT:
+                if not self.assemblePams and len(self.squidNames) >= SPUD_LIMIT:
                     self.rotatePotatoes()
             self.log.info('-----------------')
         except Exception, e:
@@ -173,7 +178,7 @@ class Boomer(LMObject):
             raise e
 
     # .............................
-    def rotatePotatoes(self):
+    def _writeBushel(self):
         """
         Todo:
             * Aimee: Add call to boom_collate here probably.  We should
@@ -194,21 +199,44 @@ class Boomer(LMObject):
             # Add rules to bushel workflow
             self.potatoBushel.addCommands(collate_rules)
         """
-        # Finish up existing potatoes
-        #   Write spud to Bushel
+        # Write all spud commands in existing bushel MFChain
         if self.potatoBushel:
-            self.log.info('Rotate potatoes ...')
-            # Write the potatoBushel MFChain
             if self.potatoBushel.jobs:
+                if self.assemblePams and not self.christopher.complete:
+                    # Add multispecies rules requested in boom config file
+                    collate_rules = self._get_multispecies_rules(
+                        self.christopher.compute_pam_stats, 
+                        self.christopher.compute_mcpa,
+                        num_permutations=self.christopher.num_permutations,
+                        group_size=DEFAULT_RANDOM_GROUP_SIZE,
+                        sdm_dependencies=self.pav_index_filenames, log=None)
+
+                    # Add rules to bushel workflow
+                    self.potatoBushel.addCommands(collate_rules)
+                    
                 self.potatoBushel.write()
                 self.potatoBushel.updateStatus(JobStatus.INITIALIZE)
                 self._scribe.updateObject(self.potatoBushel)
                 self.log.info('   Wrote potatoBushel {} ({} spuds)'
                               .format(self.potatoBushel.objId, len(self.squidNames)))
+            else:
+                self.log.info('   No commands in potatoBushel {}'.format(
+                    self.potatoBushel.objId))
+        else:
+            self.log.info('   No existing potatoBushel')
+
+
+    # .............................
+    def rotatePotatoes(self):
+        """
         
-        # Create new bushel
+        """
+        if self.potatoBushel:
+            self._writeBushel()
+        
+        # Create new bushel IFF assemblePAMs is False 
+        #   and there are more species to process
         if not self.christopher.complete:
-#             self.potatoBushel = self._createMasterMakeflow()
             self.potatoBushel = self._createBushelMakeflow()
             if self.christopher.assemblePams:
                 self.log.info('Create new potatoes')
@@ -264,17 +292,13 @@ class Boomer(LMObject):
         return mfChain
 
     # ...............................................
-    def _get_multispecies_rules(self, gridset, work_dir, do_pam_stats, do_mcpa,
+    def _get_multispecies_rules(self, do_mcpa,
                                 num_permutations=DEFAULT_NUM_PERMUTATIONS,
                                 group_size=DEFAULT_RANDOM_GROUP_SIZE,
                                 sdm_dependencies=None, log=None):
         """Get rules for multi-species computations
 
         Args:
-            gridset (:obj: `Gridset`): A gridset object for which to create
-                multi-species computation rules
-            work_dir (:obj: `str`): A directory where multi-species work can be
-                performed
             do_pam_stats (:obj: `bool`): Should PAM stats be created
             do_mcpa (:obj: `bool`): Should MCPA be computed
             num_permutations (:obj: `int`) : The number of randomizations that
@@ -292,68 +316,18 @@ class Boomer(LMObject):
         Return:
             A list of compute rules for the gridset
         """
+        work_dir = self.potatoBushel.getRelativeDirectory()
         if sdm_dependencies is None:
             sdm_dependencies = []
-        bc = BoomCollate(
-            gridset, dependencies=sdm_dependencies, do_pam_stats=do_pam_stats,
-            do_mcpa=do_mcpa, num_permutations=num_permutations,
-            random_group_size=group_size, work_dir=work_dir, log=log)
+        bc = BoomCollate(self.gridset, dependencies=sdm_dependencies, 
+                         do_pam_stats=self.assemblePams, 
+                         do_mcpa=do_mcpa, 
+                         num_permutations=num_permutations,
+                         random_group_size=group_size, 
+                         work_dir=work_dir, log=log)
         rules = bc.get_collate_rules()
         
         return rules
-
-#     # .............................
-#     def _addRuleToMasterPotatoHead(self, mfchain, dependencies=None, prefix='spud'):
-#         """
-#         @summary: Create a Spud or Potato rule for the MasterPotatoHead MF 
-#         """
-#         if dependencies is None:
-#             dependencies = []
-#            
-#         targetFname = mfchain.getArfFilename(
-#                                arfDir=self.potatoBushel.getRelativeDirectory(),
-#                                prefix=prefix)
-#         
-#         origMfName = mfchain.getDLocation()
-#         wsMfName = os.path.join(self.potatoBushel.getRelativeDirectory(), 
-#                                 os.path.basename(origMfName))
-#         
-#         # Copy makeflow to workspace
-#         cpCmd = SystemCommand('cp', 
-#                               '{} {}'.format(origMfName, wsMfName), 
-#                               inputs=[targetFname], 
-#                               outputs=wsMfName)
-#         
-#         
-#         mfCmd = SystemCommand('makeflow', 
-#                               ' '.join(['-T wq', 
-#                                         '-N lifemapper-{}b'.format(mfchain.getId()),
-#                                         '-C {}:9097'.format(PUBLIC_FQDN),
-#                                         '-X {}/worker/'.format(SCRATCH_PATH),
-#                                         '-a {}'.format(wsMfName)]),
-#                               inputs=[wsMfName])
-#         arfCmd = LmTouchCommand(targetFname)
-#         arfCmd.inputs.extend(dependencies)
-#         
-#         delCmd = SystemCommand('rm', '-rf {}'.format(mfchain.getRelativeDirectory()))
-#         
-#         mpCmd = ChainCommand([mfCmd, delCmd])
-#         self.potatoBushel.addCommands([arfCmd.getMakeflowRule(local=True),
-#                                        cpCmd.getMakeflowRule(local=True),
-#                                        mpCmd.getMakeflowRule(local=True)])
-#       
-#     # .............................
-#     def _addDelayRuleToMasterPotatoHead(self, mfchain):
-#         """
-#         @summary: Create an intermediate rule for the MasterPotatoHead MF to check
-#                   for the existence of all single-species dependencies (ARF files)  
-#                   of the multi-species makeflows.
-#         @TODO: Replace adding all dependencies to the Potato makeflow command
-#                with this Delay rule
-#         @todo: When implementing this, use a ChainCommand object with a touch
-#                   command and something else.  Don't use MfRule directly
-#         """
-#         pass
 
     # ...............................................
     def writeSuccessFile(self, message):
@@ -421,289 +395,6 @@ if __name__ == "__main__":
 """
 $PYTHON LmDbServer/boom/boom.py --help
 
-import mx.DateTime as dt
-import logging
-import os, sys, time
-
-from LmBackend.common.lmconstants import RegistryKey, MaskMethod
-from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
-from LmBackend.command.server import IndexPAVCommand, MultiStockpileCommand
-from LmBackend.command.single import SpeciesParameterSweepCommand
-from LmServer.common.localconstants import (PUBLIC_USER, DEFAULT_EPSG, 
-                                            POINT_COUNT_MAX)
-
-from LmDbServer.boom.boomer import *
-from LmCommon.common.apiquery import BisonAPI, GbifAPI
-from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, 
-          SERVER_SDM_MASK_HEADING_PREFIX,
-          SERVER_DEFAULT_HEADING_POSTFIX, MatrixType, IDIG_DUMP) 
-from LmCommon.common.readyfile import readyFilename
-from LmBackend.common.lmobj import LMError, LMObject
-from LmServer.base.utilities import isLMUser
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
-                                            SCRATCH_PATH)
-from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
-                                         Priority, BUFFER_KEY, CODE_KEY,
-                                         ECOREGION_MASK_METHOD, MASK_KEY, 
-                                         MASK_LAYER_KEY, PRE_PROCESS_KEY,
-                                         PROCESSING_KEY, MASK_LAYER_NAME_KEY,
-    SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM, LMFileType, PUBLIC_ARCHIVE_NAME, 
-                                         )
-from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmBackend.common.cmd import MfRule
-from LmServer.legion.processchain import MFChain
-from LmServer.tools.cwalken import ChristopherWalken
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-          SERVER_BOOM_HEADING, MatrixType) 
-from LmCommon.common.occparse import OccDataParser
-from LmServer.legion.occlayer import OccurrenceLayer
-from LmServer.tools.occwoc import (UserWoC, ExistingWoC, TinyBubblesWoC)
-
-from LmDbServer.boom.boomer import *
-
-PROCESSING_KEY = 'processing'
-
-scriptname = 'boomerTesting'
-logger = ScriptLogger(scriptname, level=logging.DEBUG)
-currtime = dt.gmt().mjd
-
-config_file='/share/lm/data/archive/taffyX/heuchera_global_10min_ppf.ini'
-success_file='tmp/heuchera_global_10min_ppf.ini.success'
-
-boomer = Boomer(config_file, success_file, log=logger)
-###############################################
-self = boomer
-
-success = self._scribe.openConnections()
-self.christopher = ChristopherWalken(self.configFname,scribe=self._scribe)
-
-self = boomer.christopher
-self.moreDataToProcess = False
-
-userId = self._getBoomOrDefault(BoomKeys.ARCHIVE_USER, defaultValue=PUBLIC_USER)
-archiveName = self._getBoomOrDefault(BoomKeys.ARCHIVE_NAME)
-archivePriority = self._getBoomOrDefault(BoomKeys.ARCHIVE_PRIORITY, 
-                                         defaultValue=Priority.NORMAL)
-
-
-earl = EarlJr()
-boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
-epsg = self._getBoomOrDefault(BoomKeys.EPSG, defaultValue=DEFAULT_EPSG)
-
-import csv
-import os
-import sys
-
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.apiquery import GbifAPI
-from LmCommon.common.unicode import fromUnicode, toUnicode
-from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, ProcessType, 
-                                         JobStatus, ONE_HOUR, LMFormat) 
-from LmCommon.common.occparse import OccDataParser
-from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import LOG_PATH
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.log import ScriptLogger
-from LmServer.legion.occlayer import OccurrenceLayer
-
-TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
-
-useGBIFTaxonIds = False
-datasource = self._getBoomOrDefault(BoomKeys.DATA_SOURCE)
-try:
-    taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
-except:
-    taxonSourceName = None
-   
-# Expiration date for retrieved species data 
-expDate = dt.DateTime(self._getBoomOrDefault(BoomKeys.OCC_EXP_YEAR), 
-                      self._getBoomOrDefault(BoomKeys.OCC_EXP_MONTH), 
-                      self._getBoomOrDefault(BoomKeys.OCC_EXP_DAY)).mjd
-
-occname = self._getBoomOrDefault(BoomKeys.OCC_DATA_NAME)
-occdir = self._getBoomOrDefault(BoomKeys.OCC_DATA_DIR)
-occ_delimiter = self._getBoomOrDefault(BoomKeys.OCC_DATA_DELIMITER) 
-occ_csv_fname, occ_meta_fname, self.moreDataToProcess = self._findData(
-    occname, occdir, boompath)
-
-# Copy public data to user space
-# TODO: Handle taxonomy, useGBIFTaxonomy=??
-elif datasource == SpeciesDatasource.EXISTING:
-    occIdFname = self._getBoomOrDefault(BoomKeys.OCC_ID_FILENAME)
-    weaponOfChoice = ExistingWoC(self._scribe, userId, archiveName, epsg,
-                                 expDate, occIdFname, logger=self.log)
-   
-# User or iDigBio query
-else:
-    weaponOfChoice = UserWoC(self._scribe, userId, archiveName, epsg,
-                             expDate, occ_csv_fname, occ_meta_fname, 
-                             occ_delimiter, logger=self.log, 
-                             processType=ProcessType.USER_TAXA_OCCURRENCE,
-                             useGBIFTaxonomy=useGBIFTaxonIds,
-                             taxonSourceName=taxonSourceName)
-   
-weaponOfChoice.initializeMe()
-# weaponOfChoice, expDate = self._getOccWeaponOfChoice(userId, archiveName, 
-#                                               epsg, boompath)
-# SDM inputs
-minPoints = self._getBoomOrDefault(BoomKeys.POINT_COUNT_MIN)
-algorithms = self._getAlgorithms(sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
-
-(mdlScen, prjScens, model_mask_base) = self._getProjParams(userId, epsg)
-# Global PAM inputs
-(boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
-                                                      archiveName, epsg)
-assemblePams = self._getBoomOrDefault(BoomKeys.ASSEMBLE_PAMS, isBool=True)
-(self.userId, 
- self.archiveName, 
- self.priority, 
- self.boompath, 
- self.weaponOfChoice,
- self._obsoleteTime, 
- self.epsg, 
- self.minPoints, 
- self.algs, 
- self.mdlScen, 
- self.prjScens, 
- self.model_mask_base,
- self.boomGridset, 
- self.intersectParams, 
- self.assemblePams) = self._getConfiguredObjects()
-
-# self.christopher.initializeMe()
-
-self.gridsetId = self.christopher.boomGridset.getId()
-
-self.assemblePams = self.christopher.assemblePams
-self.priority = self.christopher.priority
-
-self.christopher.moveToStart()
-
-self.keepWalken = True
-
-self.squidNames = []
-
-self.masterPotatoHead = None
-self.potatoBushel = None
-self.rotatePotatoes()
-
-
-                                                 
-###############################################
-self = boomer.christopher
-self.moreDataToProcess = False
-
-###############################################
-userId = self._getBoomOrDefault('ARCHIVE_USER', defaultValue=PUBLIC_USER)
-archiveName = self._getBoomOrDefault('ARCHIVE_NAME')
-archivePriority = self._getBoomOrDefault('ARCHIVE_PRIORITY')
-earl = EarlJr()
-boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
-epsg = self._getBoomOrDefault('SCENARIO_PACKAGE_EPSG', 
-                              defaultValue=DEFAULT_EPSG)
-
-useGBIFTaxonIds = False
-# Get datasource and optional taxonomy source
-datasource = self._getBoomOrDefault('DATASOURCE')
-try:
-    taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
-except:
-    taxonSourceName = None
-   
-# Expiration date for retrieved species data 
-expDate = dt.DateTime(self._getBoomOrDefault('OCC_EXP_YEAR'), 
-                      self._getBoomOrDefault('OCC_EXP_MONTH'), 
-                      self._getBoomOrDefault('OCC_EXP_DAY')).mjd
-occCSV, occMeta, occDelimiter, self.moreDataToProcess = \
-               self._findData(datasource, boompath)
-
-weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
-                         epsg, expDate, occCSV, occMeta, 
-                         occDelimiter, logger=self.log, 
-                         processType=ProcessType.USER_TAXA_OCCURRENCE,
-                         useGBIFTaxonomy=useGBIFTaxonIds,
-                         taxonSourceName=taxonSourceName)
-
-weaponOfChoice, expDate = self._getOccWeaponOfChoice(userId, archiveName, 
-                                              epsg, boompath)
-                                              
-# SDM inputs
-minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
-algorithms = self._getAlgorithms(sectionPrefix=BoomKeys.ALG_CODE)
-
-(mdlScen, prjScens, model_mask_base) = self._getProjParams(userId, epsg)
-# Global PAM inputs
-(boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
-                                                      archiveName, epsg)
-assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
-###############################################
-        
-
-(self.userId, 
- self.archiveName, 
- self.priority, 
- self.boompath, 
- self.weaponOfChoice,
- self._obsoleteTime, 
- self.epsg, 
- self.minPoints, 
- self.algs, 
- self.mdlScen, 
- self.prjScens, 
- self.model_mask_base,
- self.boomGridset, 
- self.intersectParams, 
- self.assemblePams) = self._getConfiguredObjects()
-###############################################
-
-self.christopher.initializeMe()
-self.gridsetId = self.christopher.boomGridset.getId()
-self.priority = self.christopher.priority
-
-self.christopher.moveToStart()
-self.log.debug('Starting Chris at location {} ... '
-               .format(self.christopher.currRecnum))
-self.keepWalken = True
-
-self.squidNames = []
-# master MF chain
-self.potatoBushel = None
-self.rotatePotatoes()
-###############################################
-
-
-
-
-
-
-boomer.initializeMe()                      
-chris = boomer.christopher
-woc = chris.weaponOfChoice
-scribe = boomer._scribe
-borg = scribe._borg
-
-workdir = boomer.potatoBushel.getRelativeDirectory()
-
-
-squid, spudRules = boomer.christopher.startWalken(workdir)
-boomer.squidNames.append(squid)
-boomer.potatoBushel.addCommands(spudRules)
-
-# ############# STOP and write and rotate
-boomer.rotatePotatoes()
-
-# ############# STOP completely and write
-boomer.christopher.stopWalken()
-boomer.rotatePotatoes()
-
-
-
-alg = boomer.algs[0]
-prj_scen = boomer.prjScens[0]
 
 
 # ##########################################################################

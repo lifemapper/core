@@ -53,7 +53,7 @@ from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
                            GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
                            PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX,
-                           SPECIES_DATA_PATH)
+                           SPECIES_DATA_PATH, DEFAULT_NUM_PERMUTATIONS)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
@@ -131,10 +131,6 @@ class BOOMFiller(LMObject):
          doMapBaseline,
          self.dataSource,
          self.occIdFname,
-#          self.gbifFname,
-#          self.idigFname,
-#          self.idigOccSep,
-#          self.bisonFname,
          self.taxon_name_filename, 
          self.taxon_id_filename, 
          self.occFname,
@@ -150,7 +146,9 @@ class BOOMFiller(LMObject):
          self.maskAlg, 
          self.treeFname, 
          self.bghypFnames,
-         self.doComputePAMStats) = self.readParamVals()
+         self.compute_pam_stats, 
+         self.compute_mcpa, 
+         self.num_permutations) = self.readParamVals()
         earl = EarlJr()
         self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                      objCode=self.archiveName, 
@@ -411,10 +409,6 @@ class BOOMFiller(LMObject):
         else:
             dataSource = self._getBoomOrDefault(config, BoomKeys.DATA_SOURCE)
             dataSource = dataSource.upper()
-#         gbifFname = self._getBoomOrDefault(config, 'GBIF_OCCURRENCE_FILENAME')
-#         idigFname = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA')
-#         idigOccSep = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA_DELIMITER')
-#         bisonFname = self._getBoomOrDefault(config, 'BISON_TSN_FILENAME') 
         
         taxon_name_filename = self._getBoomOrDefault(config, BoomKeys.TAXON_NAME_FILENAME)
         taxon_id_filename = self._getBoomOrDefault(config, BoomKeys.TAXON_ID_FILENAME)
@@ -442,8 +436,14 @@ class BOOMFiller(LMObject):
         bghypFnames = self._getBioGeoHypothesesLayerFilenames(biogeoName, usrPath)
         
         # RAD/PAM params
-        doComputePAMStats = self._getBoomOrDefault(config, BoomKeys.COMPUTE_PAM_STATS, isBool=True)
-        assemblePams = self._getBoomOrDefault(config, BoomKeys.ASSEMBLE_PAMS, isBool=True)
+        assemblePams = self._getBoomOrDefault(config, BoomKeys.ASSEMBLE_PAMS, 
+                                              isBool=True)
+        compute_pam_stats = self._getBoomOrDefault(config, BoomKeys.COMPUTE_PAM_STATS, 
+                                                   isBool=True)
+        compute_mcpa = self._getBoomOrDefault(config, BoomKeys.COMPUTE_MCPA, 
+                                              isBool=True)
+        num_permutations = self._getBoomOrDefault(config, BoomKeys.NUM_PERMUTATIONS,
+                                                  defaultValue=DEFAULT_NUM_PERMUTATIONS)
         gridbbox = self._getBoomOrDefault(config, BoomKeys.GRID_BBOX, isList=True)
         cellsides = self._getBoomOrDefault(config, BoomKeys.GRID_NUM_SIDES)
         cellsize = self._getBoomOrDefault(config, BoomKeys.GRID_CELL_SIZE)
@@ -472,12 +472,11 @@ class BOOMFiller(LMObject):
         
         return (usr, usrPath, usrEmail, userTaxonomyBasename, archiveName, priority, scenPackageName, 
                 modelScenCode, prjScenCodeList, doMapBaseline, dataSource, 
-                occIdFname, #gbifFname, idigFname, idigOccSep, bisonFname, 
-                taxon_name_filename, taxon_id_filename, 
+                occIdFname, taxon_name_filename, taxon_id_filename, 
                 occFname, occSep, minpoints, algs, 
                 assemblePams, gridbbox, cellsides, cellsize, gridname, 
                 intersectParams, maskAlg, treeFname, bghypFnames, 
-                doComputePAMStats)
+                compute_pam_stats, compute_mcpa, num_permutations)
       
     # ...............................................
     def writeConfigFile(self, tree=None, biogeoLayers=[]):
@@ -576,15 +575,17 @@ class BOOMFiller(LMObject):
         # Intersection params
         for k, v in self.intersectParams.iteritems():
             config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), str(v))
-        # TODO: For now, this defaults to True
-        # TODO: Change to 0/1
-        config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, str(True))
-        
-        # TODO: Test these new RAD params
-        doStats = 0
-        if self.doComputePAMStats:
-            doStats = 1
-        config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, str(doStats))
+
+        # Multi-species flags and params
+        config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, 
+                   str(self.assemblePams))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, 
+                   str(self.doComputePAMStats))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, 
+                   str(self.compute_mcpa)) 
+        config.set(SERVER_BOOM_HEADING, BoomKeys.NUM_PERMUTATIONS, 
+                   str(self.num_permutations))
+
         if len(biogeoLayers) > 0:
             bioGeoLayerNames = ','.join(biogeoLayers)
             config.set(SERVER_BOOM_HEADING, BoomKeys.BIOGEO_HYPOTHESES_LAYERS, bioGeoLayerNames)
