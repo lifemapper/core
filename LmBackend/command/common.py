@@ -154,7 +154,7 @@ class CreateSignificanceMatrixCommand(_LmCommand):
         if use_abs:
             self.opt_args += ' -a'
         if fdr is not None:
-            self.opt_args += ' -fdr {}'.format(fdr)
+            self.opt_args += ' --fdr {}'.format(fdr)
         if test_matrix is not None:
             self.opt_args += ' -t {}'.format(test_matrix)
 
