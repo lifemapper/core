@@ -5,36 +5,57 @@
 Todo:
     * Enable alternate randomization methods
     * Enable Phylo randomization
+    * Remove do_(pam_stats | mcpa) script parameters and just use filenames to
+        determine if they should be done
 """
 import argparse
-
-import dendropy
 
 from LmCommon.common.matrix import Matrix
 
 from LmCompute.plugins.multi.calculate.calculate import PamStats
 from LmCompute.plugins.multi.mcpa.mcpa import mcpa, mcpa_parallel
 from LmCompute.plugins.multi.randomize.grady import gradyRandomize
+from LmCommon.trees.lmTree import LmTree
 
 # .............................................................................
-def do_runs(pam, num_permutations, do_pam_stats=False, do_mcpa=False,
-            tree=None, biogeo=None, grim=None, tree_mtx=None, parallel=False):
+def do_runs(pam, num_permutations, do_mcpa=False, tree=None, biogeo=None,
+            grim=None, tree_mtx=None, parallel=False, do_diversity_stats=False,
+            do_site_cov_stats=False, do_site_stats=True,
+            do_species_cov_stats=False, do_species_stats=True):
     """Run multi-species analyses
 
     Args:
         pam (:obj: `Matrix`): The PAM or incidence matrix to use for analysis
         num_permutations (:obj: `int`): The number of permutations to perform,
             setting to zero performs an observed run
-        do_pam_stats (:obj: `bool`): Should PAM stats be calculated
         do_mcpa (:obj: `bool`): Should MCPA be calculated
         tree (:obj: `Dendropy.Tree`): A tree instance to use for PAM stats
         biogeo (:obj: `Matrix`): A matrix of biogeographic hypotheses for MCPA
         grim (:obj: `Matrix`): A matrix of environment values for MCPA
         tree_mtx (:obj: `Matrix`): An encoded phylogenetic tree for MCPA
         parallel (:obj: `bool`): If true, use the parallel version of MCPA
+        do_diversity_stats (:obj: `bool`) : Should diversity stats be
+            calculated
+        do_site_cov_stats (:obj: `bool`) : Should site covariance stats be
+            calculated
+        do_site_stats (:obj: `bool`) : Should site stats be calculated
+        do_species_cov_stats (:obj: `bool`) : Should species covariance stats
+            be calculated
+        do_species_stats (:obj: `bool`) : Should species stats be calculated
     """
-    pam_stats = []
+    diversity_stats = []
+    site_cov_stats = []
+    site_stats = []
+    species_cov_stats = []
+    species_stats = []
     mcpa_outs = []
+    mcpa_fs = []
+    
+    # If any of the pam stats are True, this will evaluate to true
+    do_pam_stats = bool(
+        sum([
+            do_diversity_stats, do_site_cov_stats, do_site_stats,
+            do_species_cov_stats, do_species_stats]))
 
     if parallel:
         mcpa_method = mcpa_parallel
@@ -46,16 +67,58 @@ def do_runs(pam, num_permutations, do_pam_stats=False, do_mcpa=False,
             print('Iteration {}'.format(i))
             i_pam = gradyRandomize(pam)
             if do_pam_stats:
-                pam_stats.append(PamStats(i_pam, tree=tree))
+                ps = PamStats(i_pam, tree=tree)
+                # Append to diversity stats if we want them
+                if do_diversity_stats:
+                    diversity_stats.append(ps.getDiversityStatistics())
+                # If we want either covariance matrix, calculate them both
+                if do_site_cov_stats or do_species_cov_stats:
+                    site_c, species_c = ps.getCovarianceMatrices()
+                    if do_site_cov_stats:
+                        site_cov_stats.append(site_c)
+                    if do_species_cov_stats:
+                        species_cov_stats.append(species_c)
+                # Site stats
+                if do_site_stats:
+                    site_stats.append(ps.getSiteStatistics())
+                # Species stats
+                if do_species_stats:
+                    species_stats.append(ps.getSpeciesStatistics())
+                
+                ps = None
+
             if do_mcpa:
-                mcpa_outs.append(mcpa_method(i_pam, tree_mtx, grim, biogeo))
+                mcpa_out, f_mtx = mcpa_method(i_pam, tree_mtx, grim, biogeo)
+                mcpa_outs.append(mcpa_out)
+                mcpa_fs.append(f_mtx)
             i_pam = None
     else:
         if do_pam_stats:
-            pam_stats.append(PamStats(pam, tree=tree))
+            ps = PamStats(pam, tree=tree)
+            # Append to diversity stats if we want them
+            if do_diversity_stats:
+                diversity_stats.append(ps.getDiversityStatistics())
+            # If we want either covariance matrix, calculate them both
+            if do_site_cov_stats or do_species_cov_stats:
+                site_c, species_c = ps.getCovarianceMatrices()
+                if do_site_cov_stats:
+                    site_cov_stats.append(site_c)
+                if do_species_cov_stats:
+                    species_cov_stats.append(species_c)
+            # Site stats
+            if do_site_stats:
+                site_stats.append(ps.getSiteStatistics())
+            # Species stats
+            if do_species_stats:
+                species_stats.append(ps.getSpeciesStatistics())
         if do_mcpa:
-            mcpa_outs.append(mcpa_method(pam, tree_mtx, grim, biogeo))
-    return pam_stats, mcpa_outs
+            mcpa_out, f_mtx = mcpa_method(pam, tree_mtx, grim, biogeo)
+            mcpa_outs.append(mcpa_out)
+            mcpa_fs.append(f_mtx)
+            
+    return (
+        diversity_stats, site_cov_stats, site_stats, species_cov_stats,
+        species_stats, mcpa_outs, mcpa_fs)
 
 # .............................................................................
 if __name__ == '__main__':
@@ -121,7 +184,7 @@ if __name__ == '__main__':
     tree_mtx = None
 
     if args.tree_filename is not None:
-        tree = dendropy.Tree.get(path=args.tree_filename, schema='nexus')
+        tree = LmTree(filename=args.tree_filename, schema='nexus')
     if args.do_mcpa:
         try:
             biogeo = Matrix.load(args.biogeo)
@@ -133,65 +196,56 @@ if __name__ == '__main__':
                    ' and Tree matrix'))
             raise e
 
-    pam_stats, mcpa_outs = do_runs(
-        pam, args.num_permutations, do_pam_stats=args.do_pam_stats,
-        do_mcpa=args.do_mcpa, tree=tree, biogeo=biogeo, grim=grim,
-        tree_mtx=tree_mtx, parallel=args.parallel)
+    (diversity_stats, site_cov_stats, site_stats, species_cov_stats,
+        species_stats, mcpa_outs, mcpa_fs) = do_runs(
+            pam, args.num_permutations, do_mcpa=args.do_mcpa, tree=tree,
+            biogeo=biogeo, grim=grim, tree_mtx=tree_mtx,
+            parallel=args.parallel,
+            do_diversity_stats=args.diversity_stats_filename is not None,
+            do_site_cov_stats=args.site_covariance_filename is not None,
+            do_site_stats=args.site_stats_filename is not None,
+            do_species_cov_stats=args.species_covariance_filename is not None,
+            do_species_stats=args.species_stats_filename is not None)
 
-    # Write outputs
-    # TODO: Determine what happens if we try to write out a metric that is not
-    #    computed
+    # Write outputs if they are not empty lists
     # PAM stats - diversity
-    if args.diversity_stats_filename is not None:
+    if diversity_stats:
         with open(args.diversity_stats_filename, 'w') as out_f:
-            diversity_mtx = Matrix.concatenate(
-                [i.getDiversityStatistics() for i in pam_stats], axis=2)
+            diversity_mtx = Matrix.concatenate(diversity_stats, axis=2)
             diversity_mtx.save(out_f)
 
     # PAM stats - site stats
-    if args.site_stats_filename is not None:
+    if site_stats:
         with open(args.site_stats_filename, 'w') as out_f:
-            site_stats_mtx = Matrix.concatenate(
-                [i.getSiteStatistics() for i in pam_stats], axis=2)
+            site_stats_mtx = Matrix.concatenate(site_stats, axis=2)
             site_stats_mtx.save(out_f)
 
     # PAM stats - species stats
-    if args.species_stats_filename is not None:
+    if species_stats:
         with open(args.species_stats_filename, 'w') as out_f:
-            species_stats_mtx = Matrix.concatenate(
-                [i.getSpeciesStatistics() for i in pam_stats], axis=2)
+            species_stats_mtx = Matrix.concatenate(species_stats, axis=2)
             species_stats_mtx.save(out_f)
 
-    # PAM stats - covariance matrices
-    if args.site_covariance_filename is not None\
-        or args.species_covariance_filename is not None:
+    # PAM stats - site covariance
+    if site_cov_stats:
+        with open(args.site_covariance_filename, 'w') as out_f:
+            site_cov_mtx = Matrix.concatenate(site_cov_stats, axis=2)
+            site_cov_mtx.save(out_f)
 
-        site_covs = []
-        sp_covs = []
-        for i in pam_stats:
-            site_c, species_c = i.getCovariancematrices()
-            site_covs.append(site_c)
-            sp_covs.append(species_c)
-
-        if args.site_covariance_filename is not None:
-            with open(args.site_covariance_filename, 'w') as out_f:
-                site_cov_mtx = Matrix.concatenate(site_covs, axis=2)
-                site_cov_mtx.save(out_f)
-
-        if args.species_covariance_filename is not None:
-            with open(args.species_covariance_filename, 'w') as out_f:
-                sp_cov_mtx = Matrix.concatenate(sp_covs, axis=2)
-                sp_cov_mtx.save(out_f)
+    # PAM stats - species covariance
+    if species_cov_stats:
+        with open(args.species_covariance_filename, 'w') as out_f:
+            sp_cov_mtx = Matrix.concatenate(species_cov_stats, axis=2)
+            sp_cov_mtx.save(out_f)
 
     # MCPA - observed values
     if args.mcpa_output_matrix_filename is not None:
         with open(args.mcpa_output_matrix_filename, 'w') as out_f:
-            mcpa_out_mtx = Matrix.concatenate(
-                [i for i, _ in mcpa_outs], axis=2)
+            mcpa_out_mtx = Matrix.concatenate(mcpa_outs, axis=2)
             mcpa_out_mtx.save(out_f)
 
     # MCPA - F values
     if args.mcpa_f_matrix_filename is not None:
         with open(args.mcpa_f_matrix_filename, 'w') as out_f:
-            mcpa_f_mtx = Matrix.concatenate([j for _, j in mcpa_outs], axis=2)
+            mcpa_f_mtx = Matrix.concatenate(mcpa_fs, axis=2)
             mcpa_f_mtx.save(out_f)    
