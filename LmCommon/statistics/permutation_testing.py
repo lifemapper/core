@@ -89,20 +89,34 @@ def get_p_values(observed_matrix, test_matrices,
     p_val_headers[str(ndim)] = ['P-Values']
     
     # Create the P-values matrix.  The shape should be the same as the observed
-    #    data with one extra dimension
-    p_values = Matrix(
-        np.zeros(list(observed_matrix.data.shape) + [1]),
-        headers=observed_matrix.headers)
+    #    data with one extra dimension if the last dimension has size > 1
+    if observed_matrix.data.shape[-1] == 1:
+        p_vals_shape = observed_matrix.data.shape
+    else:
+        p_vals_shape = list(observed_matrix.data.shape) + [1]
+    p_values = Matrix(np.zeros(p_vals_shape), headers=observed_matrix.headers)
 
     num_permutations = 0
     for rand in test_matrices:
-        if rand.data.ndim > ndim:
-            p_values.data += np.sum(
-                compare_func(observed_matrix.data, rand.data), axis=0)
-            num_permutations += 1
+        # If the random matrices are a stack with more dimensions or more
+        #    layers, compare each layer to observed
+        if rand.data.ndim > ndim or \
+            rand.data.shape[-1] > observed_matrix.data.shape[-1]:
+            # Determine shape of test matrix
+            if rand.data.ndim > ndim:
+                test_shape = list(rand.data.shape)[:-1]
+            else:
+                test_shape = observed_matrix.data.shape
+            # Loop through each
+            for i in range(rand.data.shape[-1]):
+                p_values.data += compare_func(
+                    observed_matrix.data,
+                    # Slice off one test layer
+                    rand.data[..., i].reshape(test_shape))
+                num_permutations += 1
         else:
-            num_permutations += 1
             p_values.data += compare_func(observed_matrix.data, rand.data)
+            num_permutations += 1
 
     # Divide by number of permutations and clip just in case
     p_values.data = np.clip(
