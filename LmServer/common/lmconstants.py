@@ -1352,6 +1352,5 @@ class SubsetMethod(object):
 # =                           Permutation constants                          =
 # ============================================================================
 DEFAULT_NUM_PERMUTATIONS = 1000
-# TODO: Change this once memory errors are worked out
-DEFAULT_RANDOM_GROUP_SIZE = 1
+DEFAULT_RANDOM_GROUP_SIZE = 10
 
