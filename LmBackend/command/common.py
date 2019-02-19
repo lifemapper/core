@@ -157,6 +157,7 @@ class CreateSignificanceMatrixCommand(_LmCommand):
             self.opt_args += ' --fdr {}'.format(fdr)
         if test_matrix is not None:
             self.opt_args += ' -t {}'.format(test_matrix)
+            self.inputs.append(test_matrix)
 
 # .............................................................................
 class ModifyAsciiHeadersCommand(_LmCommand):
