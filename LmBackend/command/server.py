@@ -254,7 +254,7 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
                 self.scriptBasename, dataBasename, timestamp)
             
         # Optional script args, required here
-        self.opt_args =  ' --taxon_source_name=\'{}\''.format(source_name)
+        self.opt_args =  ' --taxon_source_name="{}"'.format(source_name)
         self.opt_args += ' --taxon_data_filename={}'.format(taxon_data_filename)
         self.opt_args += ' --success_filename={}'.format(taxon_success_filename)      
         self.opt_args += ' --logname={}'.format(logname)
