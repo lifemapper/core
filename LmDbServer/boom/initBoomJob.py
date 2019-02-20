@@ -437,11 +437,11 @@ class BOOMFiller(LMObject):
         
         # RAD/PAM params
         assemblePams = self._getBoomOrDefault(config, BoomKeys.ASSEMBLE_PAMS, 
-                                              isBool=True)
+                                              isBool=False)
         compute_pam_stats = self._getBoomOrDefault(config, BoomKeys.COMPUTE_PAM_STATS, 
-                                                   isBool=True)
+                                                   isBool=False)
         compute_mcpa = self._getBoomOrDefault(config, BoomKeys.COMPUTE_MCPA, 
-                                              isBool=True)
+                                              isBool=False)
         num_permutations = self._getBoomOrDefault(config, BoomKeys.NUM_PERMUTATIONS,
                                                   defaultValue=DEFAULT_NUM_PERMUTATIONS)
         gridbbox = self._getBoomOrDefault(config, BoomKeys.GRID_BBOX, isList=True)
@@ -574,6 +574,7 @@ class BOOMFiller(LMObject):
         config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_NAME, self.gridname)
         # Intersection params
         for k, v in self.intersectParams.iteritems():
+            # refer to BoomKeys.INTERSECT_*
             config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), str(v))
 
         # Multi-species flags and params
@@ -1157,7 +1158,7 @@ class BOOMFiller(LMObject):
         config = Config(siteFn=self.inParamFname)
         if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
             taxDataBasename = self._getBoomOrDefault(config, 
-                                 'GBIF_TAXONOMY_FILENAME', GBIF_TAXONOMY_FILENAME)
+                        BoomKeys.GBIF_TAXONOMY_FILENAME, GBIF_TAXONOMY_FILENAME)
             taxDataFname = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
             taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
             taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
@@ -1389,8 +1390,6 @@ if __name__ == '__main__':
     parser.add_argument('--init_makeflow', type=bool, default=True,
              help=("""Create a Makeflow task to walk these species data and 
                       create additional Makeflow tasks."""))
-    parser.add_argument('--taxonomy_only', type=bool, default=False,
-             help=('Add taxonomy, without extension'))
     args = parser.parse_args()
     paramFname = args.param_file
     logname = args.logname
@@ -1473,6 +1472,8 @@ config_file = '/state/partition1/lmscratch/temp/boom_config_10255.params'
 config_file = '/opt/lifemapper/config/boom.public.params'
 
 config_file='/share/lm/data/archive/taffyX/heuchera_boom_global_10min_ppf.params'
+
+config_file = '/share/lm/data/archive/biota/sax_boom_global_10min.params'
 
 import time
 secs = time.time()

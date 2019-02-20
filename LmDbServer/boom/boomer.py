@@ -384,9 +384,43 @@ if __name__ == "__main__":
     boomer.processAllSpecies()
    
 """
-$PYTHON LmDbServer/boom/boom.py --help
+from LmDbServer.boom.boomer import Boomer
+
+import logging
+import mx.DateTime as dt
+import os, sys, time
+import signal
+
+from LmBackend.common.lmobj import LMError, LMObject
+
+from LmCommon.common.lmconstants import JobStatus, LM_USER
+
+from LmServer.base.utilities import isLMUser
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import (
+    DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
+    PUBLIC_ARCHIVE_NAME) 
+from LmServer.common.localconstants import PUBLIC_USER 
+from LmServer.common.log import ScriptLogger
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.processchain import MFChain
+from LmServer.tools.cwalken import ChristopherWalken
+from LmDbServer.boom.boom_collate import BoomCollate
 
 
+configFname =  '/share/lm/data/archive/biota/sax_global.ini'
+successFname = '/share/lm/data/archive/biota/sax_global.ini.success'
+
+
+secs = time.time()
+timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+
+scriptname = 'testing.boomer'
+logname = '{}.{}'.format(scriptname, timestamp)
+logger = ScriptLogger(logname, level=logging.INFO)
+boomer = Boomer(configFname, successFname, log=logger)
+boomer.initializeMe()
+boomer.processAllSpecies()
 
 # ##########################################################################
 
