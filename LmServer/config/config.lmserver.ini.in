@@ -49,12 +49,6 @@ GBIF_TAXONOMY_FILENAME: @GBIF_TAXONOMY@-@GBIF_VERSION@.csv
 GBIF_PROVIDER_FILENAME: @GBIF_PROVIDER@-@GBIF_VERSION@.csv
 
 
-;; The default USER_SPECIES_DATA set on 'lifemapper-server' roll installation
-;; Used only when DATASOURCE is <> GBIF, IDIGBIO, or BISON. 
-;; Change defaults in @LMHOME@/config/site.ini
-;; OCC_DATA_NAME: @USER_SPECIES_DATA@
-;; OCC_DATA_DELIMITER: ,
-
 ; ...................
 ; Env Package Vals
 ; ...................
@@ -67,9 +61,6 @@ SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
 
 ; BISON values (Algs=ATT_MAXENT)
 ;; SCENARIO_PACKAGE: 30sec-present-future-CONUS
-
-; PRAGMA values (Algs=BIOCLIM)
-;; SCENARIO_PACKAGE: 30sec-present-future-SEA
 
 ; ...................
 ; Global PAM vals
