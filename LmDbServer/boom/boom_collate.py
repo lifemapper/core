@@ -66,8 +66,8 @@ class BoomCollate(LMObject):
             self.dependencies = [dependencies]
             
         # Todo: Check if required inputs are present
-        self.do_mcpa = do_mcpa
-        self.do_pam_stats = do_pam_stats
+        self.do_mcpa = bool(do_mcpa)
+        self.do_pam_stats = bool(do_pam_stats)
         self.num_permutations = num_permutations
         self.random_group_size = random_group_size
         self.do_parallel = False
