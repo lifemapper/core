@@ -170,12 +170,20 @@ class _SpeciesWeaponOfChoice(LMObject):
 # ...............................................
     def _readProviderKeys(self, providerKeyFile, providerKeyColname):
         providers = {}
-        try:
-            provKeyCol = self._fieldNames.index(providerKeyColname)
-        except:
+        provKeyCol = None
+        for colidx, desc in self.occParser.columnMeta.iteritems():
+            if desc['name'] == providerKeyColname:
+                provKeyCol = colidx
+                break
+        if provKeyCol is None:
             self.log.error('Unable to find {} in fieldnames'
                                 .format(providerKeyColname))
-            provKeyCol = None
+#         try:
+#             provKeyCol = self._fieldNames.index(providerKeyColname)
+#         except:
+#             self.log.error('Unable to find {} in fieldnames'
+#                                 .format(providerKeyColname))
+#             provKeyCol = None
             
         if providerKeyFile is not None and providerKeyColname is not None: 
             if not os.path.exists(providerKeyFile):
