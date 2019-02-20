@@ -60,7 +60,7 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.tools.occwoc import (UserWoC, ExistingWoC, TinyBubblesWoC)
+from LmServer.tools.occwoc import (UserWoC, ExistingWoC)
 
 # .............................................................................
 class ChristopherWalken(LMObject):
@@ -629,11 +629,12 @@ class ChristopherWalken(LMObject):
                             occ, alg, prj_scen, dt.gmt().mjd)
                         if prj is not None:
                             prjs.append(prj)
-                            mtx = self.globalPAMs[pamcode]
-                            mtxcol = self._findOrInsertIntersect(
-                                prj, mtx, currtime)
-                            if mtxcol is not None:
-                                mtxcols.append(mtxcol)
+                            if self.assemblePams:
+                                mtx = self.globalPAMs[pamcode]
+                                mtxcol = self._findOrInsertIntersect(
+                                    prj, mtx, currtime)
+                                if mtxcol is not None:
+                                    mtxcols.append(mtxcol)
                     doSDM = self._doComputeSDM(occ, prjs, mtxcols)
             
                     if doSDM:

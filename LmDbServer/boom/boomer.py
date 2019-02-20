@@ -408,8 +408,8 @@ from LmServer.tools.cwalken import ChristopherWalken
 from LmDbServer.boom.boom_collate import BoomCollate
 
 
-configFname =  '/share/lm/data/archive/biota/sax_global.ini'
-successFname = '/share/lm/data/archive/biota/sax_global.ini.success'
+configFname =  '/share/lm/data/archive/anon/cj3.ini'
+successFname = 'mf_240355/cj3.ini.success'
 
 
 secs = time.time()
@@ -420,9 +420,113 @@ logname = '{}.{}'.format(scriptname, timestamp)
 logger = ScriptLogger(logname, level=logging.INFO)
 boomer = Boomer(configFname, successFname, log=logger)
 boomer.initializeMe()
-boomer.processAllSpecies()
 
+# boomer.processAllSpecies()
 # ##########################################################################
+import glob
+import mx.DateTime as dt
+from osgeo.ogr import wkbPoint
+import os
+from types import IntType, FloatType
+
+from LmBackend.common.lmconstants import RegistryKey, MaskMethod
+from LmBackend.common.lmobj import LMError, LMObject
+from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
+from LmBackend.command.server import (MultiIndexPAVCommand, 
+                                      MultiStockpileCommand)
+from LmBackend.command.single import SpeciesParameterSweepCommand
+
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat, GBIF,
+          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, BoomKeys,
+          SERVER_SDM_ALGORITHM_HEADING_PREFIX,
+          SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
+          MatrixType) 
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
+
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
+            Priority, BUFFER_KEY, CODE_KEY, ECOREGION_MASK_METHOD, MASK_KEY, 
+            MASK_LAYER_KEY, PRE_PROCESS_KEY, PROCESSING_KEY, 
+            MASK_LAYER_NAME_KEY,SCALE_PROJECTION_MINIMUM, 
+            SCALE_PROJECTION_MAXIMUM, DEFAULT_NUM_PERMUTATIONS)
+from LmServer.common.localconstants import (PUBLIC_USER, DEFAULT_EPSG, 
+                                            POINT_COUNT_MAX)
+from LmServer.common.log import ScriptLogger
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.sdmproj import SDMProjection
+from LmServer.tools.occwoc import (UserWoC, ExistingWoC, TinyBubblesWoC)
+
+self = boomer.christopher
+workdir = boomer.potatoBushel.getRelativeDirectory()
+
+squid = None
+spudRules = []
+index_pavs_document_filename = None
+gsid = 0
+currtime = dt.gmt().mjd
+
+gsid = self.boomGridset.getId()
+
+occ = self.weaponOfChoice.getOne()
+
+squid = occ.squid
+
+occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
+sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
+
+# If we have enough points to model
+if occ.queryCount >= self.minPoints:
+    self.log.info('   Will compute for Grid {}:'.format(gsid))
+    for alg in self.algs:
+        prjs = []
+        mtxcols = []
+        for prj_scen in self.prjScens:
+            pamcode = '{}_{}'.format(prj_scen.code, alg.code) 
+            prj = self._findOrInsertSDMProject(
+                occ, alg, prj_scen, dt.gmt().mjd)
+            if prj is not None:
+                prjs.append(prj)
+                mtx = self.globalPAMs[pamcode]
+                mtxcol = self._findOrInsertIntersect(
+                    prj, mtx, currtime)
+                if mtxcol is not None:
+                    mtxcols.append(mtxcol)
+        doSDM = self._doComputeSDM(occ, prjs, mtxcols)
+
+        if doSDM:
+            # Add SDM commands for the algorithm
+            self._fill_sweep_config(
+                sweep_config, workdir, alg, occ, prjs, mtxcols)
+
+
+
+squid, spudRules, idx_success_filename = self.christopher.startWalken(
+    workdir)
+if idx_success_filename is not None:
+    self.pav_index_filenames.append(idx_success_filename)
+
+# TODO: Track squids
+if squid is not None:
+    self.squidNames.append(squid)
+
+self.keepWalken = not self.christopher.complete
+# TODO: Master process for occurrence only? SDM only? 
+if spudRules:
+    self.log.debug('Processing spud for potatoes') 
+    self.potatoBushel.addCommands(spudRules)
+    # TODO: Don't write triage file, but don't delete code
+    #if potatoInputs:
+    #   for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
+    #      pavFname = potatoInputs[scencode]
+    #      triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
+    #   self.log.info('Wrote spud squid to {} triage files'
+    #                 .format(len(potatoInputs)))
+    #if len(self.spudArfFnames) >= SPUD_LIMIT:
+    if not self.assemblePams and len(self.squidNames) >= SPUD_LIMIT:
+        self.rotatePotatoes()
 
 # ##########################################################################
 
