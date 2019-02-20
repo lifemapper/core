@@ -652,6 +652,7 @@ class ChristopherWalken(LMObject):
             # Only add rules if we have something to compute
             num_comps = sum([
                 len(sweep_config.occurrence_sets),
+                len(sweep_config.models),
                 len(sweep_config.projections),
                 len(sweep_config.pavs)
                 ])
