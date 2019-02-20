@@ -156,7 +156,7 @@ class BoomPoster(object):
             * Shapegrid map units?
             * Expand to other intersect methods
         """
-        self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
+        #self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
         
         # Process shapegrid
         shapegrid_json = global_pam_json[APIPostKeys.SHAPEGRID]
@@ -217,6 +217,8 @@ class BoomPoster(object):
 
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, should_compute)
+        if should_compute:
+            self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
 
     # ................................
     def _process_occurrence_sets(self, occ_json):
@@ -306,6 +308,8 @@ class BoomPoster(object):
 
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, should_compute)
+        if should_compute:
+            self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
     
     # ................................
     def _process_scenario_package(self, scenario_json):
