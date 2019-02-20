@@ -46,6 +46,8 @@ class BoomPoster(object):
         self.userId = userId
         self.config = ConfigParser()
         self.config.add_section(SERVER_BOOM_HEADING)
+        # Set to False. Change if we should
+        self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, False)
         self.config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, userId)
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER_EMAIL, userEmail)
