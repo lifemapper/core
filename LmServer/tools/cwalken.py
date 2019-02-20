@@ -650,7 +650,12 @@ class ChristopherWalken(LMObject):
                         sweep_config, workdir, None, occ, [], [])
 
             # Only add rules if we have something to compute
-            if len(sweep_config.occurrence_sets) > 0:
+            num_comps = sum([
+                len(sweep_config.occurrence_sets),
+                len(sweep_config.projections),
+                len(sweep_config.pavs)
+                ])
+            if num_comps > 0:
                 # Write the sweep config file
                 species_config_filename = os.path.join(
                     os.path.dirname(occ.getDLocation()),
