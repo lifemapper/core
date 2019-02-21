@@ -30,7 +30,7 @@ import types
 
 from LmBackend.command.boom import BoomerCommand
 from LmBackend.command.common import IdigbioQueryCommand ,\
-    ConcatenateMatricesCommand
+    ConcatenateMatricesCommand, SystemCommand, ChainCommand
 from LmBackend.command.server import (
     CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand,
     SquidAndLabelTreeCommand, StockpileCommand)
@@ -1148,13 +1148,13 @@ class BOOMFiller(LMObject):
         return idigCmd, point_output_file
 
     # ...............................................
-    def _getTaxonomyCommand(self):
+    def _getTaxonomyCommand(self, target_dir):
         """
         @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                   and configFile written by BOOMFiller.initBoom.
         @todo: Define format and enable ingest user taxonomy, commented out below
         """
-        cattaxCmd = taxSuccessFname = taxDataFname = None
+        cattaxCmd = taxSuccessFname = taxSuccessLocalFname = taxDataFname = None
         config = Config(siteFn=self.inParamFname)
         if self.dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.IDIGBIO):
             taxDataBasename = self._getBoomOrDefault(config, 
@@ -1172,12 +1172,16 @@ class BOOMFiller(LMObject):
                                      .format(taxDataFname))
             else:         
                 # logfile, walkedTaxFname added to outputs in command construction
-                cattaxCmd = CatalogTaxonomyCommand(taxSourceName, 
-                                                   taxDataFname,
-                                                   taxSuccessFname,
-                                                   source_url=taxSourceUrl,
-                                                   delimiter='\t')
-        return cattaxCmd, taxSuccessFname
+                taxSuccessLocalFname = os.path.join(
+                    target_dir, 'catalog_taxonomy.success')
+                cattaxCmd = ChainCommand(
+                    [CatalogTaxonomyCommand(
+                        taxSourceName, taxDataFname, taxSuccessLocalFname,
+                        source_url=taxSourceUrl, delimiter='\t'),
+                    SystemCommand(
+                        'cp', [taxSuccessLocalFname, taxSuccessFname],
+                        inputs=taxSuccessLocalFname)])
+        return cattaxCmd, taxSuccessLocalFname
     
     # ...............................................
     def _write_update_MF(self, mfchain):
@@ -1234,7 +1238,7 @@ class BOOMFiller(LMObject):
             boomCmd.inputs.extend(idigCmd.outputs)
             
         # Add taxonomy before Boom, if taxonomy is specified
-        cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
+        cattaxCmd, taxSuccessFname = self._getTaxonomyCommand(target_dir)
         if cattaxCmd:
             # Add catalog taxonomy command to this Makeflow
             #mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
