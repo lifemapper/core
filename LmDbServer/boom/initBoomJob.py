@@ -1181,7 +1181,8 @@ class BOOMFiller(LMObject):
                         taxSourceName, taxDataFname, taxSuccessLocalFname,
                         source_url=taxSourceUrl, delimiter='\t'),
                     SystemCommand(
-                        'cp', [taxSuccessLocalFname, taxSuccessFname],
+                        'cp', '{} {}'.format(
+                            taxSuccessLocalFname, taxSuccessFname),
                         inputs=taxSuccessLocalFname)])
         return cattaxCmd, taxSuccessLocalFname
     
