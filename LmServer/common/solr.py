@@ -153,9 +153,9 @@ def add_taxa_to_taxonomy_index(sciname_objects):
                    [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sno.kingdom],
                    [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.txOrder],
                    [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
-                   [SOLR_TAXONOMY_FIELDS.USER_ID, sno.getUserId()],
+                   [SOLR_TAXONOMY_FIELDS.USER_ID, sno.userId],
                    [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
-                    sno.taxonomySourceId()],
+                    sno.taxonomySourceId],
                    [SOLR_TAXONOMY_FIELDS.ID, sno.getId()]
         ])
     post_doc = buildSolrDocument(doc_pairs)
