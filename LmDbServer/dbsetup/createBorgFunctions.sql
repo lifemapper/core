@@ -2912,7 +2912,7 @@ BEGIN
 
    SELECT * INTO total FROM lm_v3.lm_clearComputedUserData(usr);
    
-   -- Gridsets (Cascades to Matrix)
+   -- Gridsets (Cascades to Matrix, then MatrixColumn)
 	DELETE FROM lm_v3.Gridset WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
    RAISE NOTICE 'Deleted % Gridsets for User %', currCount, usr;

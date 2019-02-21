@@ -309,8 +309,8 @@ create table lm_v3.SDMProject
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    
    -- inputs
-   occurrenceSetId int REFERENCES lm_v3.OccurrenceSet ON DELETE CASCADE,
-   algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode),
+   occurrenceSetId int REFERENCES lm_v3.OccurrenceSet,
+   algorithmCode varchar(30) REFERENCES lm_v3.Algorithm(algorithmCode),
    algParams text,
    mdlscenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    prjscenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,

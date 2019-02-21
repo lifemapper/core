@@ -20,9 +20,8 @@ from LmCommon.common.lmconstants import JobStatus, LM_USER
 
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (
-    DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
-    PUBLIC_ARCHIVE_NAME) 
+from LmServer.common.lmconstants import (DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
+                                         PUBLIC_ARCHIVE_NAME) 
 from LmServer.common.localconstants import PUBLIC_USER 
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -32,7 +31,7 @@ from LmDbServer.boom.boom_collate import BoomCollate
 
 # Only relevant for "archive" public data, all user workflows will put all
 # spuds into a single makeflow, along with multi-species commands to follow SDMs 
-SPUD_LIMIT = 200
+SPUD_LIMIT = 5000
 
 # .............................................................................
 class Boomer(LMObject):
@@ -64,7 +63,10 @@ class Boomer(LMObject):
         
         self.configFname = configFname
         self._successFname = successFname
-        self.assemblePams = None
+        
+        self.do_intersect = None
+        self.do_pam_stats = None 
+        self.do_mcpa = None 
         # Send Database connection
         self._scribe = BorgScribe(self.log)
         # iterator tool for species
@@ -126,8 +128,11 @@ class Boomer(LMObject):
         if self.gridsetId is None:
             self.log.warning('Missing christopher.boomGridset id!!')
         
-        self.assemblePams = self.christopher.assemblePams
+        self.do_intersect = self.christopher.assemblePams
+        self.do_pam_stats = self.christopher.compute_pam_stats 
+        self.do_mcpa = self.christopher.compute_mcpa 
         self.priority = self.christopher.priority
+        
         # Start where we left off 
         self.christopher.moveToStart()
         self.log.debug('Starting Chris at location {} ... '
@@ -169,7 +174,7 @@ class Boomer(LMObject):
                 #   self.log.info('Wrote spud squid to {} triage files'
                 #                 .format(len(potatoInputs)))
                 #if len(self.spudArfFnames) >= SPUD_LIMIT:
-                if not self.assemblePams and len(self.squidNames) >= SPUD_LIMIT:
+                if not self.do_pam_stats and len(self.squidNames) >= SPUD_LIMIT:
                     self.rotatePotatoes()
             self.log.info('-----------------')
         except Exception, e:
@@ -203,7 +208,7 @@ class Boomer(LMObject):
         if self.potatoBushel:
             if self.potatoBushel.jobs:
                 # Only collate if assemblePams and finished with all SDMs
-                if self.assemblePams and self.christopher.complete:
+                if self.compute_pam_stats and self.christopher.complete:
                     # Add multispecies rules requested in boom config file
                     collate_rules = self._get_multispecies_rules()
 
@@ -225,7 +230,6 @@ class Boomer(LMObject):
     # .............................
     def rotatePotatoes(self):
         """
-        
         """
         if self.potatoBushel:
             self._writeBushel()
@@ -311,8 +315,8 @@ class Boomer(LMObject):
         """
         work_dir = self.potatoBushel.getRelativeDirectory()
         bc = BoomCollate(self.gridset, dependencies=self.pav_index_filenames, 
-                         do_pam_stats=self.assemblePams, 
-                         do_mcpa=self.christopher.compute_mcpa, 
+                         do_pam_stats=self.do_pam_stats, 
+                         do_mcpa=self.do_mcpa, 
                          num_permutations=self.christopher.num_permutations,
                          random_group_size=DEFAULT_RANDOM_GROUP_SIZE, 
                          work_dir=work_dir, log=None)
