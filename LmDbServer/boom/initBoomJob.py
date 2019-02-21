@@ -1174,6 +1174,8 @@ class BOOMFiller(LMObject):
                 # logfile, walkedTaxFname added to outputs in command construction
                 taxSuccessLocalFname = os.path.join(
                     target_dir, 'catalog_taxonomy.success')
+                # Write taxonomy success to workspace and pass that along, also
+                #    copy local taxonomy success file to absolute location
                 cattaxCmd = ChainCommand(
                     [CatalogTaxonomyCommand(
                         taxSourceName, taxDataFname, taxSuccessLocalFname,
