@@ -208,7 +208,7 @@ class Boomer(LMObject):
         if self.potatoBushel:
             if self.potatoBushel.jobs:
                 # Only collate if assemblePams and finished with all SDMs
-                if self.compute_pam_stats and self.christopher.complete:
+                if self.do_pam_stats and self.christopher.complete:
                     # Add multispecies rules requested in boom config file
                     collate_rules = self._get_multispecies_rules()
 
