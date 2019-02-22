@@ -74,6 +74,12 @@ class OccurrenceLayerService(LmService):
                 beforeTime=beforeTime, displayName=displayName,
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints,
                 gridSetId=gridSetId, status=status)
+        elif pathOccSetId.lower() == 'web':
+            return self._list_web_occurrence_sets(
+                self.getUserId(urlUser=urlUser), afterTime=afterTime,
+                beforeTime=beforeTime, displayName=displayName,
+                epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints,
+                limit=limit, offset=offset, gridSetId=gridSetId, status=status)
         else:
             return self._getOccurrenceSet(pathOccSetId, fillPoints=fillPoints)
     
@@ -179,3 +185,44 @@ class OccurrenceLayerService(LmService):
                             beforeStatus=beforeStatus, afterStatus=afterStatus,
                             gridsetId=gridSetId)
         return occAtoms
+
+    # ................................
+    def _list_web_occurrence_sets(
+            self, userId, afterTime=None, beforeTime=None, displayName=None,
+            epsgCode=None, minimumNumberOfPoints=1, limit=100, offset=0,
+            status=None, gridSetId=None):
+        """Return a list of occurrence set web objects matching criteria
+        """
+        afterStatus = None
+        beforeStatus = None
+        
+        # Process status parameter
+        if status:
+            if status < JobStatus.COMPLETE:
+                beforeStatus = JobStatus.COMPLETE - 1
+            elif status == JobStatus.COMPLETE:
+                beforeStatus = JobStatus.COMPLETE + 1
+                afterStatus = JobStatus.COMPLETE - 1
+            else:
+                afterStatus = status - 1
+        
+        occs = self.scribe.listOccurrenceSets(
+            offset, limit, userId=userId,
+            minOccurrenceCount=minimumNumberOfPoints, displayName=displayName,
+            afterTime=afterTime, beforeTime=beforeTime, epsg=epsgCode,
+            beforeStatus=beforeStatus, afterStatus=afterStatus,
+            gridsetId=gridSetId, atom=False)
+        occ_objs = []
+        for occ in occs:
+            occ_objs.append(
+                {
+                    'id': occ.getId(),
+                    'metadata_url': occ.metadataUrl,
+                    'name' : occ.displayName,
+                    'modification_time' : occ.statusModTime,
+                    'epsg' : occ.epsgcode,
+                    'status' : occ.status,
+                    'count' : occ.queryCount
+                }
+            )
+        return occ_objs
