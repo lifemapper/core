@@ -32,119 +32,61 @@
 
 
 -- \c borg
-DROP FUNCTION IF EXISTS lm_v3.lm_findOrInsertMatrix(mtxid int, mtxtype int,
-                                                       grdid int,
-                                                       gcm varchar,
-                                                       altpred varchar,
-                                                       dt varchar,
-                                                       dloc text,
-                                                       meta varchar, 
-                                                       stat int,
-                                                   	 stattime double precision);
-                                                   	 
-DROP  FUNCTION lm_v3.lm_getMatrix(mtxid int, mtxtype int, 
-                                              gsid int,
-                                              gcm varchar,
-                                              altpred varchar,
-                                              dt varchar,
-                                              gsname varchar,
-                                              usr varchar); 
-                                              
-DROP  FUNCTION lm_v3.lm_getFilterMtx(usr varchar, mtxtype int,
-                                                    gcm varchar,
-                                                    altpred varchar,
-                                                    tm varchar,
-                                                    meta varchar, 
-                                                    grdid int,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int); 
-                                                    
-DROP  FUNCTION lm_v3.lm_countMatrices(usr varchar, mtxtype int,
-                                                    gcm varchar,
-                                                    altpred varchar,
-                                                    tm varchar,
-                                                    meta varchar, 
-                                                    grdid int,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int);
-                                                    
-DROP  FUNCTION lm_v3.lm_listMatrixAtoms(firstRecNum int, maxNum int, 
-                                                    usr varchar,
-                                                    mtxtype int,
-                                                    gcm varchar,
-                                                    altpred varchar,
-                                                    tm varchar,
-                                                    meta varchar, 
-                                                    grdid int,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int); 
-                                                    
-DROP FUNCTION lm_v3.lm_listMatrixObjects(firstRecNum int, maxNum int, 
-                                                    usr varchar,
-                                                    mtxtype int,
-                                                    gcm varchar,
-                                                    altpred varchar,
-                                                    tm varchar,
-                                                    meta varchar, 
-                                                    grdid int,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int);
 
 /*
-                                                    
-
-ALTER TABLE lm_v3.MatrixColumn ADD UNIQUE (matrixId, squid);
+-- ----------------------------------------------------------------------------                                                    
+-- For deleting large amounts of data, drop indices and constraints first
 
 ALTER TABLE lm_v3.SDMProject DROP CONSTRAINT IF EXISTS sdmproject_occurrencesetid_fkey;
-    
-        
 DROP INDEX IF EXISTS idx_layerid;
 DROP INDEX IF EXISTS idx_prjstatus;
 DROP INDEX IF EXISTS idx_prjstatusmodtime;
-CREATE INDEX idx_layerid ON lm_v3.SDMProject(layerid);
-CREATE INDEX idx_prjStatus ON lm_v3.SDMProject(status);
-CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProject(statusModTime);
 
-
+-- MatrixColumn
 ALTER TABLE lm_v3.MatrixColumn DROP CONSTRAINT IF EXISTS matrixcolumn_matrixid_layerid_intersectparams_key;
 ALTER TABLE lm_v3.MatrixColumn DROP CONSTRAINT IF EXISTS matrixcolumn_layerid_fkey;
 
 
-delete  from layer where modtime < 58362 and layerid in 
-   (select layerid from sdmproject where  userid = 'kubi' and statusmodtime < 58362.0);
+-- ----------------------------------------------------------------------------                                                    
+-- Delete boomed projection-layers
+-- need userid, gridsetid, cutofftime
+
+-- returns files for deletion
+select * from lm_deleteGridset(124);
+
+-- write function to return projection files for deletion
+delete  from layer where layerid in 
+   (select layerid from sdmproject where  userid = 'kubi' and statusmodtime < 58535);
 
 
 
 
 
+    
+-- ----------------------------------------------------------------------------
+-- Add indices and constraints after clearing data
+
+-- SDMProject 
+ALTER TABLE lm_v3.SDMProject ADD CONSTRAINT sdmproject_occurrencesetid_fkey 
+    FOREIGN KEY (occurrenceSetId) REFERENCES lm_v3.OccurrenceSet (occurrenceSetId);
+CREATE INDEX idx_layerid ON lm_v3.SDMProject(layerid);
+CREATE INDEX idx_prjStatus ON lm_v3.SDMProject(status);
+CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProject(statusModTime);
+
+-- MatrixColumn
 ALTER TABLE lm_v3.MatrixColumn ADD CONSTRAINT matrixcolumn_layerid_fkey
     FOREIGN KEY (layerid) REFERENCES lm_v3.Layer(layerid);
 ALTER TABLE lm_v3.MatrixColumn ADD CONSTRAINT matrixcolumn_matrixid_layerid_intersectparams_key 
     UNIQUE (matrixId, layerid, intersectParams);
     
-ALTER TABLE lm_v3.SDMProject ADD CONSTRAINT sdmproject_occurrencesetid_fkey 
-    FOREIGN KEY (occurrenceSetId) REFERENCES lm_v3.OccurrenceSet (occurrenceSetId);
     
-    
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
 delete from layer where layerid in 
     (select layerid from sdmproject p
                left join occurrenceset o 
                on p.occurrencesetid = o.occurrencesetid
      where o.occurrencesetid is null);
-
-
 
 
 select count(*) from sdmproject p
