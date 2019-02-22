@@ -179,7 +179,7 @@ class TaxonFiller(LMObject):
     # ...............................................
     def createCatalogTaxonomyMF(self):
         """
-        @note: Not currently used, MF is created in initBoomJob
+        @note: Not currently used, MF is created in initWorkflow
         @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                      and configFile written by BOOMFiller.initBoom.
         """

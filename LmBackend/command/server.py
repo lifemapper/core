@@ -165,55 +165,6 @@ class CatalogScenarioPackageCommand(_LmDbServerCommand):
             
         self.outputs.append(logfilename)
 
-# # .............................................................................
-# class CatalogBoomCommand(_LmDbServerCommand):
-#     """
-#     @summary: This command will create makeflows to:
-#                     * catalog boom archive inputs,
-#                     * catalog ScenarioPackage if necessary
-#                     * create GRIMs, 
-#                     * create an archive ini file, and 
-#                     * start the Boomer to walk through inputs
-#     """
-#     scriptName = 'initBoomJob.py'
-# 
-#     # ................................
-#     def __init__(self, config_filename, init_makeflow=False):
-#         """
-#         @summary: Construct the command object
-#         @param config_filename: The file location of the ini file 
-#                  with parameters for a boom/gridset
-#         """
-#         _LmDbServerCommand.__init__(self)
-#         
-#         # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
-#         if not os.path.exists(config_filename):
-#             raise Exception('Missing Boom configuration file {}'.format(config_filename))
-#         else:
-#             boomBasename, _ = os.path.splitext(os.path.basename(config_filename)) 
-#             # file ends up in LOG_PATH
-#             secs = time.time()
-#             timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-#             logname = '{}.{}.{}'.format(self.scriptBasename, boomBasename, timestamp)
-#             # Logfile is created by script in LOG_DIR
-#             logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
-#             
-#         # Required args
-#         self.args = config_filename
-#         # Optional arg, we also want for output 
-#         self.args += ' --logname={}'.format(logname)
-#         # Optional arg, defaults to False
-#         if init_makeflow:
-#             self.args += ' --init_makeflow=True'
-#             
-#         self.outputs.append(logfilename)
-#             
-#     # ................................
-#     def getCommand(self):
-#         """
-#         @summary: Get the command
-#         """
-#         return '{} {} {}'.format(CMD_PYBIN, self.getScript(), self.args)
 
 # .............................................................................
 class CatalogTaxonomyCommand(_LmDbServerCommand):

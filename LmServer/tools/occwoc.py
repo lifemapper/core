@@ -108,7 +108,8 @@ class _SpeciesWeaponOfChoice(LMObject):
             f = open(self.startFile, 'r')
             for line in f:
                 if not complete:
-                    self.log.info('Start on line {}'.format(line))
+                    self.log.info('Start on line {}, read from {}'
+                                  .format(line, self.startFile))
                     try:
                         linenum = int(line)
                         complete = True

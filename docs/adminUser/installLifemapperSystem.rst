@@ -42,7 +42,7 @@ Update existing code and script RPMs (without new roll)
    
 #. Run scripts to update config and DB types/views/functions ::
    
-   # /opt/lifemapper/rocks/bin/updateIP
+   # /opt/lifemapper/rocks/bin/updateCfg
    # /opt/lifemapper/rocks/bin/updateDB
    
 #. Install new rpms ::

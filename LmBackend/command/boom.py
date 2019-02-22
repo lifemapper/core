@@ -42,7 +42,7 @@ class CatalogBoomCommand(_LmCommand):
         * start the Boomer to walk through inputs
     """
     relDir = BOOM_SCRIPTS_DIR
-    scriptName = 'initBoomJob.py'
+    scriptName = 'initWorkflow.py'
 
     # ................................
     def __init__(self, config_filename, init_makeflow=False):

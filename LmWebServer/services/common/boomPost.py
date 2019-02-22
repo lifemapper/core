@@ -17,7 +17,7 @@ from LmCommon.common.lmconstants import (BoomKeys,
     SERVER_SDM_ALGORITHM_HEADING_PREFIX)
 #from LmDbServer.boom.boominput import ArchiveFiller
 #from LmDbServer.boom.initboom import initBoom
-from LmDbServer.boom.initBoomJob import BOOMFiller
+from LmDbServer.boom.initWorkflow import BOOMFiller
 from LmDbServer.common.lmconstants import SpeciesDatasource
 from LmDbServer.tools.catalogScenPkg import SPFiller
 from LmServer.common.lmconstants import TEMP_PATH, Priority, ENV_DATA_PATH
