@@ -11,6 +11,7 @@ Todo:
 """
 import os
 import shutil
+from time import sleep
 
 from LmBackend.common.layerTools import convertAsciisToMxes
 from LmBackend.common.lmconstants import RegistryKey
@@ -202,16 +203,34 @@ class MaxentWrapper(ModelSoftwareWrapper):
         # If success, check model output
         if self.metrics.get_metric(
                 LmMetricNames.STATUS) < JobStatus.GENERAL_ERROR:
+            # Wait up to 10 seconds for the ruleset file to appear
+            #    This may be necessary for files on shared disks
+            waited = 0
+            while not os.path.exists(self.get_ruleset_filename()) and \
+                        waited < 10:
+                sleep(1)
+                waited += 1
+
             valid_model, model_msg = validate_text_file(
                 self.get_ruleset_filename())
             if not valid_model:
                 self.metrics.add_metric(
                     LmMetricNames.STATUS, JobStatus.ME_EXEC_MODEL_ERROR)
-                self.logger.debug('Model failed: {}'.format(model_msg))
+                self.logger.debug(
+                    'Model failed for {}: {}'.format(
+                        self.get_ruleset_filename(), model_msg))
 
         # If success, check projection output
         if self.metrics.get_metric(
                 LmMetricNames.STATUS) < JobStatus.GENERAL_ERROR:
+            # Wait up to 10 seconds for the projection file to appear
+            #    This may be necessary for files on shared disks
+            waited = 0
+            while not os.path.exists(self.get_projection_filename()) and \
+                        waited < 10:
+                sleep(1)
+                waited += 1
+
             valid_prj, prj_msg = validate_raster_file(
                 self.get_projection_filename())
             if not valid_prj:
