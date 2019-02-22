@@ -33,6 +33,8 @@ from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
 from LmCompute.plugins.single.occurrences.csvOcc import createShapefileFromCSV
 
+WAIT_THRESHOLD = 60
+
 # .............................................................................
 class ParameterSweep(object):
     """This class performs a parameter sweep for a single species
@@ -320,6 +322,17 @@ class ParameterSweep(object):
                 status = createShapefileFromCSV(url_fn_or_key, metadata, 
                                         out_file, big_out_file, max_points, 
                                         is_gbif=is_gbif, log=self.log)
+                if status == JobStatus.COMPUTED:
+                    waited = 0
+                    while waited < WAIT_THRESHOLD and not os.path.exists(out_file):
+                        waited += 1
+                        sleep(1)
+                    
+                    if not os.path.exists(out_file):
+                        self.log.error(
+                            'Successful occurrence set not present on file system: {}'.format(
+                                out_file))
+                    
             else:
                 self.log.error(
                     'Unknown process type: {} for occurrence set: {}'.format(
