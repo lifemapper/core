@@ -30,6 +30,8 @@ MATRIX_DIR = os.path.join(GRIDSET_DIR, 'matrix')
 # TODO: Assmble from constants
 STATIC_PACKAGE_DIR = '/opt/lifemapper/LmWebServer/assets/gridset_package'
 DYN_PACKAGE_DIR = 'package'
+SDM_PRJ_DIR = os.path.join(GRIDSET_DIR, 'sdm')
+MAX_PROJECTIONS = 1000
 
 # .............................................................................
 def createIndexHtml(gridset_name):
@@ -293,264 +295,269 @@ def mung(data):
     return munged
 
 # .............................................................................
-def gridsetPackageFormatter(gsObj, includeCSV=False, includeSDM=False,
+def _get_anc_pam_content(anc_pam, shapegrid):
+    """
+    """
+    lookup_filename = os.path.join(DYN_PACKAGE_DIR, 'nodeLookup.js')
+    lookup_str = 'var nodeLookup = \n{}'.format(
+        json.dumps(createHeaderLookup(anc_pam.getColumnHeaders()), indent=3))
+
+    js_filename = os.path.join(DYN_PACKAGE_DIR, 'ancPam.js')
+    
+    mtx_str = StringIO()
+    geoJsonify_flo(
+        mtx_str, shapegrid.getDLocation(), matrix=anc_pam, mtxJoinAttrib=0,
+        ident=0, headerLookupFilename=lookup_filename, transform=mung)
+    mtx_str.seek(0)
+
+    js_str = "var ancPam = JSON.parse(`{}`);".format(mtx_str.getvalue())
+
+    # Save memory
+    mtx_str = None
+
+    return (lookup_filename, lookup_str, js_filename, js_str)
+    
+# .............................................................................
+def _get_pam_content(pam, shapegrid, scribe, user_id):
+    """Get the lookup and GeoJSON for a PAM
+
+    Args:
+        pam (:obj:`Matrix`): A PAM matrix
+    """
+    # Create the SQUID lookup
+    lookup_filename = os.path.join(DYN_PACKAGE_DIR, 'squidLookup.json')
+    # SQUID lookup content
+    lookup_str = 'var squidLookup =\n{}'.format(
+        json.dumps(createHeaderLookup(
+            pam.getColumnHeaders(), squids=True, scribe=scribe,
+            userId=user_id), indent=3))
+                    
+    # PAM JS filename
+    js_filename = os.path.join(DYN_PACKAGE_DIR, 'pam.js')
+
+    mtx_str = StringIO()
+    geoJsonify_flo(
+        mtx_str, shapegrid.getDLocation(), matrix=pam, mtxJoinAttrib=0,
+        ident=0, headerLookupFilename=lookup_filename, transform=mung)
+    mtx_str.seek(0)
+
+    # PAM JS content
+    js_str = "var pam = JSON.parse('{}');".format(mtx_str.getvalue())
+
+    # Save memory
+    mtx_str = None
+
+    return (lookup_filename, lookup_str, js_filename, js_str)
+
+# .............................................................................
+def _package_gridset(gridset, include_csv=False, include_sdm=False):
+    """Create a gridset package
+    """
+    package_filename = gridset.getPackageLocation()
+    
+    scribe = BorgScribe(LmPublicLogger())
+    user_id = gridset.getUserId()
+    
+    try:
+        gs_name = gridset.name
+    except:
+        gs_name = 'Gridset {}'.format(gridset.getId())
+        
+    shapegrid = gridset.shapegrid
+    matrices = gridset.getMatrices()
+
+    # Create the zip file
+    with zipfile.ZipFile(
+        package_filename, mode='w', compression=zipfile.ZIP_DEFLATED,
+        allowZip64=True) as zip_f:
+
+        # Write static files
+        for f_dir, _, fns in os.walk(STATIC_PACKAGE_DIR):
+            for fn in fns:
+                # Get relative and absolute paths for packaging
+                a_path = os.path.join(f_dir, fn)
+                r_path = a_path.replace(STATIC_PACKAGE_DIR, '')
+                zip_f.write(a_path, r_path)
+        
+        # Write gridset EML
+        gs_eml = tostring(makeEml(gridset))
+        zip_f.writestr(
+            os.path.join(
+                GRIDSET_DIR, 'gridset_{}.eml'.format(gridset.getId())), gs_eml)
+        
+        # Write tree
+        if gridset.tree is not None:
+            with open(gridset.tree.getDLocation()) as tree_file:
+                tree_str = tree_file.read()
+            
+            zip_f.writestr(
+                os.path.join(DYN_PACKAGE_DIR, 'tree.js'),
+                'var taxonTree = `{}`;'.format(tree_str))
+            zip_f.writestr(os.path.join(GRIDSET_DIR, 'tree.nex'), tree_str)
+            # Free some memory
+            tree_str = None
+
+        # index.html page
+        zip_f.writestr('index.html', createIndexHtml(gs_name))
+                            
+        # Matrices
+        stat_lookup_filename = os.path.join(
+            DYN_PACKAGE_DIR, 'statNameLookup.json')
+        zip_f.writestr(
+            stat_lookup_filename, 'var statNameLookup =\n{}'.format(
+                json.dumps(createStatsMeta(), indent=3)))
+
+        for mtx in matrices:
+            # Only add if matrix is complete and observed scenario
+            # TODO: Change or do this better
+            lookup_filename = None
+            lookup_str = None
+            js_filename = None
+            js_str = None
+            
+            if mtx.status == JobStatus.COMPLETE and mtx.dateCode == 'Curr':
+                mtx_obj = Matrix.load(mtx.getDLocation())
+
+                if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
+                    
+                    (lookup_filename, lookup_str, js_filename, js_str
+                     ) = _get_pam_content(mtx_obj, shapegrid, scribe, user_id) 
+                    
+                    csv_mtx_filename = os.path.join(
+                        MATRIX_DIR, 'pam_{}.csv'.format(mtx.getId()))
+                elif mtx.matrixType == MatrixType.ANC_PAM:
+                    
+                    (lookup_filename, lookup_str, js_filename, js_str
+                     ) =_get_anc_pam_content(mtx_obj, shapegrid)
+
+                    csv_mtx_filename = os.path.join(
+                        MATRIX_DIR, 'ancPam_{}.csv'.format(mtx.getId()))
+                elif mtx.matrixType in [
+                    MatrixType.SITES_COV_OBSERVED, MatrixType.SITES_OBSERVED]:
+                    
+                    if mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
+                        mtx_name = 'sitesCovarianceObserved'
+                    else:
+                        mtx_name = 'sitesObserved'
+
+                    js_filename = os.path.join(
+                        DYN_PACKAGE_DIR, '{}.js'.format(mtx_name))
+                    mtx_str = StringIO()
+                    # TODO: Determine if we need to mung this data
+                    geoJsonify_flo(
+                        mtx_str, shapegrid.getDLocation(), matrix=mtx_obj,
+                        mtxJoinAttrib=0, ident=0)
+                    mtx_str.seek(0)
+                    
+                    js_str = "var {} = JSON.parse(`{}`);".format(
+                        mtx_name, mtx_str.getvalue())
+                    # Save memory
+                    mtx_str = None
+                    csv_mtx_filename = os.path.join(
+                        MATRIX_DIR, '{}_{}.csv'.format(mtx_name, mtx.getId()))
+                elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
+                    
+                    js_filename = os.path.join(
+                        DYN_PACKAGE_DIR, 'mcpaMatrix.js')
+                    
+                    mtx_str = StringIO()
+                    mtx_obj.writeCSV(mtx_str)
+                    mtx_str.seek(0)
+
+                    js_str = 'var mcpaMatrix = `{}`;'.format(
+                        mtx_str.getvalue())
+                    # Save memory
+                    mtx_str = None
+                    csv_mtx_filename = os.path.join(
+                        MATRIX_DIR, 'mcpa_{}.csv'.format(mtx.getId()))
+                elif mtx.matrixType == MatrixType.SPECIES_OBSERVED:
+                    mtx_name = 'speciesObserved'
+                    mtx_str = StringIO()
+                    mtx_obj.writeCSV(mtx_str)
+                    mtx_str.seek(0)
+                    
+                    js_filename = os.path.join(
+                        DYN_PACKAGE_DIR, 'speciesObserved.js')
+                    js_str = "var speciesObserved = JSON.parse(`{}`);".format(
+                        mtx_str.getvalue())
+                    # Save memory
+                    mtx_str = None
+                    csv_mtx_filename = os.path.join(
+                        MATRIX_DIR, '{}_{}.csv'.format(mtx_name, mtx.getId()))
+                else:
+                    csv_mtx_filename = os.path.join(
+                        MATRIX_DIR, '{}.csv'.format(
+                            os.path.splitext(
+                                os.path.basename(mtx.getDLocation()))[0]))
+
+                # If lookup, write it
+                if lookup_filename is not None and lookup_str is not None:
+                    zip_f.writestr(lookup_filename, lookup_str)
+
+                # If JS matrix, write it
+                if js_filename is not None and js_str is not None:
+                    zip_f.writestr(js_filename, js_str)
+
+                # If we should include the raw CSV, do so
+                if include_csv:
+                    csv_mtx_str = StringIO()
+                    mtx_obj.writeCSV(csv_mtx_str)
+                    csv_mtx_str.seek(0)
+                    zip_f.writestr(csv_mtx_filename, csv_mtx_str.getvalue())
+
+        if include_sdm:
+            for prj in scribe.listSDMProjects(
+                    0, MAX_PROJECTIONS, userId=user_id,
+                    afterStatus=JobStatus.COMPLETE - 1,
+                    beforeStatus=JobStatus.COMPLETE + 1,
+                    gridsetId=gridset.getId(),
+                    atom=False):
+                # Make sure projection output file exists, then add to package
+                if os.path.exists(prj.getDLocation()):
+                    arc_path = os.path.join(
+                        SDM_PRJ_DIR, prj.displayName,
+                        os.path.basename(prj.getDLocation()))
+                    zip_f.write(prj.getDLocation(), arc_path)
+
+    
+# .............................................................................
+def gridsetPackageFormatter(gridset, includeCSV=False, includeSDM=False,
                             stream=False):
     """
     @summary: Create a Gridset download package for the user to explore locally
+    @todo: Break this into smaller functions
     """
-    if isinstance(gsObj, Gridset):
-        
-        # Get scribe and user id (used for creating lookup)
-        scribe = BorgScribe(LmPublicLogger())
-        userId = gsObj.getUserId()
-        
-        pkgFn = gsObj.getPackageLocation()
-        
-        # Look to see if the package already exists
-        if not os.path.exists(pkgFn):
-            # If it doesn't exist, see if we can create it
-            if all(
-                [mtx.status >= JobStatus.COMPLETE for mtx in gsObj.getMatrices()
-                 ]):
-                
-                with zipfile.ZipFile(
-                    pkgFn, mode='w', compression=zipfile.ZIP_DEFLATED,
-                    allowZip64=True) as zipF:
-                
-                    for f_dir, _, fns in os.walk(STATIC_PACKAGE_DIR):
-                        for fn in fns:
-                            # Get relative and absolute paths for packaging
-                            a_path = os.path.join(f_dir, fn)
-                            r_path = a_path.replace(STATIC_PACKAGE_DIR, '')
-                            zipF.write(a_path, r_path)
-                    
-                    # Write gridset objects
-                    gsEml = tostring(makeEml(gsObj))
-                    zipF.writestr(
-                        os.path.join(GRIDSET_DIR, 'gridset_{}.eml'.format(
-                            gsObj.getId())), gsEml)
-                    
-                    # Write tree
-                    if gsObj.tree is not None:
-                        with open(gsObj.tree.getDLocation()) as treeIn:
-                            treeStr = treeIn.read()
-                            
-                            zipF.writestr(
-                                os.path.join(DYN_PACKAGE_DIR, 'tree.js'),
-                                'var taxonTree = `{}`;'.format(treeStr))
-                            
-                            zipF.writestr(
-                                os.path.join(GRIDSET_DIR, 'tree.tre'), treeStr)
-                        treeStr = None
-                    
-                    # Index.html page
-                    indexFn = 'index.html'
-                    try:
-                        gsName = gsObj.name
-                    except:
-                        gsName = 'Gridset {}'.format(gsObj.getId())
-                    zipF.writestr(indexFn, createIndexHtml(gsName))
-
-                    # Matrices
-                    sg = gsObj.getShapegrid()
-                    matrices = gsObj.getMatrices()
-                    
-                    statLookupFn = os.path.join(
-                        DYN_PACKAGE_DIR, 'statNameLookup.json')
-                    zipF.writestr(
-                        statLookupFn, 'var statNameLookup =\n{}'.format(
-                            json.dumps(createStatsMeta(), indent=3)))
-                    for mtx in matrices:
-                        if mtx.status == JobStatus.COMPLETE:
-                            mtxObj = Matrix.load(mtx.getDLocation())
-                            
-                            # Only add current matrices
-                            # TODO: Change in the future
-                            if mtx.dateCode == 'Curr':
-                                
-                                if mtx.matrixType in [
-                                    MatrixType.PAM, MatrixType.ROLLING_PAM]:
-                                    
-                                    # TODO: Only do this for observed data
-                                    # Write SQUID lookup
-                                    squidLookupFn = os.path.join(
-                                        DYN_PACKAGE_DIR, 'squidLookup.json')
-                                    zipF.writestr(
-                                        squidLookupFn,
-                                        'var squidLookup =\n{}'.format(
-                                            json.dumps(createHeaderLookup(
-                                                mtxObj.getColumnHeaders(),
-                                                squids=True, scribe=scribe,
-                                                userId=userId),
-                                                indent=3)))
-                                    
-                                    mtxStr = StringIO()
-                                    geoJsonify_flo(
-                                        mtxStr, sg.getDLocation(),
-                                        matrix=mtxObj, mtxJoinAttrib=0,
-                                        ident=0,
-                                        headerLookupFilename=squidLookupFn,
-                                        transform=mung)
-                                    mtxStr.seek(0)
-                                    
-                                    pamPkgFn = os.path.join(
-                                        DYN_PACKAGE_DIR, 'pam.js')
-                                    zipF.writestr(
-                                        pamPkgFn,
-                                        "var pam = JSON.parse('{}');".format(
-                                            mtxStr.getvalue()))
-                                    # Save memory
-                                    mtxStr = None
-                                    
-                                    csvMtxFn = os.path.join(
-                                        MATRIX_DIR, 'pam_{}{}'.format(
-                                            mtx.getId(), LMFormat.CSV.ext))
-                                    
-                                elif mtx.matrixType == MatrixType.ANC_PAM:
-                                    
-                                    # TODO: Only do this for observed data?
-                                    # Write node lookup
-                                    nodeLookupFn = os.path.join(
-                                        DYN_PACKAGE_DIR, 'nodeLookup.js')
-                                    zipF.writestr(
-                                        nodeLookupFn,
-                                        'var nodeLookup = \n{}'.format(
-                                            json.dumps(createHeaderLookup(
-                                                mtxObj.getColumnHeaders()),
-                                                indent=3)))
-                
-                                    mtxStr = StringIO()
-                                    geoJsonify_flo(
-                                        mtxStr, sg.getDLocation(),
-                                        matrix=mtxObj, mtxJoinAttrib=0,
-                                        ident=0,
-                                        headerLookupFilename=nodeLookupFn, 
-                                        transform=mung)
-                                    mtxStr.seek(0)
-                                    
-                                    ancPamPkgFn = os.path.join(
-                                        DYN_PACKAGE_DIR, 'ancPam.js')
-                                    zipF.writestr(
-                                        ancPamPkgFn,
-                                        "var ancPam = JSON.parse(`{}`);".format(
-                                            mtxStr.getvalue()))
-                                    # Save memory
-                                    mtxStr = None
-                                    
-                                    csvMtxFn = os.path.join(
-                                        MATRIX_DIR, 'ancPam_{}{}'.format(
-                                            mtx.getId(), LMFormat.CSV.ext))
-                                    
-                
-                                elif mtx.matrixType in [
-                                    MatrixType.SITES_COV_OBSERVED,
-                                    MatrixType.SITES_COV_RANDOM,
-                                    MatrixType.SITES_OBSERVED,
-                                    MatrixType.SITES_RANDOM]:
-                
-                                    # TODO: Only do this for observed data?
-                                    if mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
-                                        mtxName = 'sitesCovarianceObserved'
-                                    elif mtx.matrixType == MatrixType.SITES_COV_RANDOM:
-                                        mtxName = 'sitesCovarianceRandom'
-                                    elif mtx.matrixType == MatrixType.SITES_OBSERVED:
-                                        mtxName = 'sitesObserved'
-                                    else:
-                                        mtxName = 'sitesRandom'          
-                
-                                    mtxStr = StringIO()
-                                    # TODO: Determine if we need to mung this data
-                                    geoJsonify_flo(
-                                        mtxStr, sg.getDLocation(),
-                                        matrix=mtxObj, mtxJoinAttrib=0,
-                                        ident=0)
-                                    mtxStr.seek(0)
-                                    
-                                    mtxPkgFn = os.path.join(
-                                        DYN_PACKAGE_DIR, '{}.js'.format(
-                                            mtxName))
-                                    zipF.writestr(
-                                        mtxPkgFn,
-                                        "var {} = JSON.parse(`{}`);".format(
-                                            mtxName, mtxStr.getvalue()))
-                                    # Save memory
-                                    mtxStr = None
-                                    
-                                    csvMtxFn = os.path.join(
-                                        MATRIX_DIR, '{}_{}{}'.format(
-                                            mtxName, mtx.getId(),
-                                            LMFormat.CSV.ext))
-                                    
-                                    
-                                elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
-                                    # TODO: Only do this for observed data
-                                    csvMtxStr = StringIO()
-                                    mtxObj.writeCSV(csvMtxStr)
-                                    csvMtxStr.seek(0)
-                                    mcpaPkgFn = os.path.join(
-                                        DYN_PACKAGE_DIR, 'mcpaMatrix.js')
-                                    zipF.writestr(
-                                        mcpaPkgFn,
-                                        'var mcpaMatrix = `{}`;'.format(
-                                            csvMtxStr.getvalue()))
-                                    
-                                    csvMtxFn = os.path.join(
-                                        MATRIX_DIR, 'mcpa_{}{}'.format(
-                                            mtx.getId(), LMFormat.CSV.ext))
-                                    
-                                elif mtx.matrixType == MatrixType.SPECIES_OBSERVED:
-                                    mtxName = 'speciesObserved'
-                                    mtxStr = StringIO()
-                                    mtxObj.writeCSV(mtxStr)
-                                    mtxStr.seek(0)
-                                    
-                                    mtxPkgFn = os.path.join(
-                                        DYN_PACKAGE_DIR, '{}.js'.format(
-                                            mtxName))
-                                    zipF.writestr(
-                                        mtxPkgFn,
-                                        "var {} = JSON.parse(`{}`);".format(
-                                            mtxName, mtxStr.getvalue()))
-                                    # Save memory
-                                    mtxStr = None
-                                    
-                                    csvMtxFn = os.path.join(
-                                        MATRIX_DIR, '{}_{}{}'.format(
-                                            mtxName, mtx.getId(),
-                                            LMFormat.CSV.ext))
-                                else:
-                                    csvMtxFn = os.path.join(
-                                        MATRIX_DIR, '{}{}'.format(
-                                            os.path.splitext(os.path.basename(
-                                                mtx.getDLocation()))[0],
-                                            LMFormat.CSV.ext))
-                
-                                # Write the Matrix CSV file if desired
-                                if includeCSV:
-                                    csvMtxStr = StringIO()
-                                    mtxObj.writeCSV(csvMtxStr)
-                                    csvMtxStr.seek(0)
-                                    zipF.writestr(csvMtxFn, csvMtxStr.getvalue())
-                
-            else:
-                cherrypy.response.status = HTTPStatus.ACCEPTED
-                return
-                
-        # Package now exists, return it
-        outPackageName = 'gridset-{}-package.zip'.format(gsObj.getId())
-        cherrypy.response.headers[
-            'Content-Disposition'] = 'attachment; filename="{}"'.format(
-                outPackageName)
-        cherrypy.response.headers['Content-Type'] = LMFormat.ZIP.getMimeType()
-
-        if stream:
-            cherrypy.lib.file_generator(open(pkgFn, 'r'))
-        else:
-            with open(pkgFn) as inF:
-                cnt = inF.read()
-            return cnt
-            
-    else:
+    # Check that it is a gridset
+    if not isinstance(gridset, Gridset):
         raise cherrypy.HTTPError(
             HTTPStatus.BAD_REQUEST,
-            'Only gridsets can be formatted as package')
+            'Only gridsets can be formatted as a package')
+    
+    package_filename = gridset.getPackageLocation()
+    
+    # Check to see if the package does not exist
+    if not os.path.exists(package_filename):
+        # See if we can create it
+        if all([mtx.status >= JobStatus.COMPLETE for \
+                mtx in gridset.getMatrices()]):
+            # Create the package
+            _package_gridset(
+                gridset, include_csv=includeCSV, include_sdm=includeSDM)
+        else:
+            # Not ready, so just return HTTP ACCEPTED
+            cherrypy.response.status = HTTPStatus.ACCEPTED
+            return
+
+    # Package exists, return it
+    out_package_name = 'gridset-{}-package.zip'.format(gridset.getId())
+    cherrypy.response.headers[
+        'Content-Disposition'] = 'attachment; filename="{}"'.format(
+            out_package_name)
+    cherrypy.response.headers['Content-Type'] = LMFormat.ZIP.getMimeType()
+
+    if stream:
+        cherrypy.lib.file_generator(open(package_filename, 'r'))
+    else:
+        with open(package_filename) as package_file:
+            cnt = package_file.read()
+        return cnt
