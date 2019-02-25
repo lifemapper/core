@@ -248,14 +248,14 @@ class _SpeciesWeaponOfChoice(LMObject):
             willCompute = self._willCompute(occ.status, occ.statusModTime, 
                                             occ.getDLocation(), occ.getRawDLocation())
             if willCompute:
-                self.log.info('    Reseting OccLayer raw data')
-                # Write raw data and metadata, update in new or reset object
+                self.log.info('    Reseting OccLayer raw data, status, count')
                 rdloc, rawmeta_dloc = self._writeRawData(occ, data=data, 
                                                          metadata=metadata)
                 if not rdloc:
                     raise LMError(currargs='    Failed to find raw data location')
                 occ.setRawDLocation(rdloc, currtime)
-                # Set scientificName, not pulled from DB, for alternate iDigBio query
+                occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime,
+                     queryCount=dataCount)
                 _ = self._scribe.updateObject(occ)
                 # Set processType and metadata location (from config, not saved in DB)
                 occ.processType = self.processType
