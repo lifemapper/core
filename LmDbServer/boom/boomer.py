@@ -415,6 +415,7 @@ from LmDbServer.boom.boom_collate import BoomCollate
 configFname =  '/share/lm/data/archive/anon/cj3.ini'
 successFname = 'mf_240355/cj3.ini.success'
 configFname = '/share/lm/data/archive/kubi/public_boom-2019.01.10.ini'
+successFname = '/share/lm/data/archive/kubi/public_boom-2019.01.10.ini.success'
 successFname= 'mf_240361/public_boom-2019.01.10.ini.success'
 
 secs = time.time()
@@ -425,6 +426,16 @@ logname = '{}.{}'.format(scriptname, timestamp)
 logger = ScriptLogger(logname, level=logging.INFO)
 boomer = Boomer(configFname, successFname, log=logger)
 boomer.initializeMe()
+
+
+squid, spudRules, idx_success_filename = boomer.christopher.startWalken(
+    workdir)
+
+self = boomer.christopher
+
+
+workdir = boomer.potatoBushel.getRelativeDirectory()
+
 
 # boomer.processAllSpecies()
 # ##########################################################################
@@ -464,8 +475,6 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.tools.occwoc import (UserWoC, ExistingWoC, TinyBubblesWoC)
 
-self = boomer.christopher
-workdir = boomer.potatoBushel.getRelativeDirectory()
 
 squid = None
 spudRules = []

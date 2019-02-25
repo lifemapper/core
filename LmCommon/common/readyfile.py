@@ -24,8 +24,10 @@
 """
 import os
 import glob
-from LmCommon.common.lmconstants import LMFormat
+import sys
+import unicodecsv
 
+from LmCommon.common.lmconstants import LMFormat, ENCODING
 # ...............................................
 def readyFilename(fullfilename, overwrite=False):
     """
@@ -101,3 +103,39 @@ def deleteFile(fname, deleteDir=False):
                     success = False
                     msg = 'Failed to remove {}, {}'.format(pth, str(e))
     return success, msg
+
+# .............................................................................
+def get_unicodecsv_reader(datafile, delimiter):
+    '''
+    @summary: Get a CSV reader that can handle encoding
+    '''
+    f = None  
+    unicodecsv.field_size_limit(sys.maxsize)
+    try:
+        f = open(datafile, 'rb')
+        reader = unicodecsv.reader(f, delimiter=delimiter, encoding=ENCODING)
+    except Exception, e:
+        raise Exception('Failed to read or open {}, ({})'
+                             .format(datafile, str(e)))
+    return reader, f
+
+# .............................................................................
+def get_unicodecsv_writer(datafile, delimiter, doAppend=True):
+    '''
+    @summary: Get a CSV writer that can handle encoding
+    '''
+    unicodecsv.field_size_limit(sys.maxsize)
+    if doAppend:
+        mode = 'ab'
+    else:
+        mode = 'wb'
+        
+    try:
+        f = open(datafile, mode) 
+        writer = unicodecsv.writer(f, delimiter=delimiter, encoding=ENCODING)
+
+    except Exception, e:
+        raise Exception('Failed to read or open {}, ({})'
+                             .format(datafile, str(e)))
+    return writer, f
+

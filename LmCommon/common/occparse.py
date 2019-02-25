@@ -21,18 +21,17 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-
-import csv
 import json
 import os
 import sys
+import unicodecsv
 import StringIO
-from types import DictionaryType, DictType
 
 from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.lmconstants import (ENCODING, OFTInteger, OFTReal, 
                                          OFTString, LMFormat)
+from LmCommon.common.readyfile import get_unicodecsv_reader
 
 # .............................................................................
 class OccDataParser(LMObject):
@@ -106,7 +105,7 @@ class OccDataParser(LMObject):
         self.groupFirstRec = 0      
         self.currLine = None
         
-        self._csvreader, self._file = self.getReader(data, delimiter)
+        self._csvreader, self._file = get_unicodecsv_reader(data, delimiter)
         if self._file is None:
             self.dataFname = None
         
@@ -152,27 +151,6 @@ class OccDataParser(LMObject):
         self.groupFirstRec = self.currRecnum     
         self.currIsGoodEnough = True
 
-    # .............................................................................
-    @staticmethod
-    def getReader(datafile, delimiter):
-        f = None  
-        csv.field_size_limit(sys.maxsize)
-        try:
-            f = open(datafile, 'r')
-            csvreader = csv.reader(f, delimiter=delimiter)
-        except Exception, e:
-            try:
-                f = StringIO.StringIO()
-                f.write(datafile.encode(ENCODING))
-                f.seek(0)
-                csvreader = csv.reader(f, delimiter=delimiter)
-            except IOError, e:
-                raise 
-            except Exception, e:
-                raise Exception('Failed to read or open {}, ({})'
-                                .format(datafile, str(e)))
-        return csvreader, f
-    
     # .............................................................................
     @property
     def currRecnum(self):
@@ -821,15 +799,13 @@ if __name__ == '__main__':
 
 """
 import ast
-import csv
 import os
 import sys
-import StringIO
-from types import DictionaryType, DictType, ListType, TupleType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.lmconstants import (LMFormat, ENCODING,
                                          OFTInteger, OFTReal, OFTString)
+from LmCommon.common.readyfile import get_unicodecsv_reader
 from LmCompute.common.log import TestLogger
 from LmServer.common.localconstants import APP_PATH
 
@@ -844,7 +820,7 @@ delimiter = '\t'
 
 # Read metadata file/stream
 fieldmeta, metadataFname, doMatchHeader = OccDataParser.readMetadata(metadata)   
-csvreader, _file = OccDataParser.getReader(data, delimiter)
+csvreader, _file = get_unicodecsv_reader(data, delimiter)
 
 # Read CSV header
 tmpList = csvreader.next()
@@ -857,7 +833,7 @@ nameIdx) = OccDataParser.getCheckIndexedMetadata(fieldmeta, header)
 occparser = OccDataParser(log, data, metadata, delimiter=delimiter)
 
 # Read CSV header
-csvreader, f = OccDataParser.getReader(data, delimiter)
+csvreader, f = get_unicodecsv_reader(data, delimiter)
 tmpHeader = csvreader.next()
 header = [fldname.strip() for fldname in tmpHeader]
 # Read metadata file/stream

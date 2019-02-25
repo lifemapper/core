@@ -38,7 +38,8 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.readyfile import (readyFilename, 
+                                get_unicodecsv_reader, get_unicodecsv_writer)
 
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH
@@ -522,7 +523,8 @@ class UserWoC(_SpeciesWeaponOfChoice):
                         
             # Get or insert ScientificName (squid)
             if self.useGBIFTaxonomy:
-                sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
+                sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, 
+                                                                  len(dataChunk))
                 if sciName:
                     # Override the given taxonName with the resolved GBIF canonical name
                     taxonName = sciName.canonicalName
@@ -544,11 +546,17 @@ class UserWoC(_SpeciesWeaponOfChoice):
 # ...............................................
     def _writeRawData(self, occ, data=None, metadata=None):
         rdloc = occ.createLocalDLocation(raw=True)
-        success = occ.writeCSV(data, dlocation=rdloc, overwrite=True,
-                               header=self._fieldNames)
-        if not success:
+        writer, f = get_unicodecsv_writer(rdloc, delimiter=self._delimiter, 
+                                          doAppend=False)
+#         success = occ.writeCSV(data, dlocation=rdloc, overwrite=True,
+#                                header=self._fieldNames)
+        try:
+            for rec in data:
+                writer.writerow(rec)
+            f.close()
+        except Exception, e:
             rdloc = None
-            self.log.debug('Unable to write CSV file {}'.format(rdloc))
+            self.log.debug('Unable to write CSV file {} ({})'.format(rdloc, e))
         else:
             # Write interpreted metadata along with raw CSV
             rawmeta_dloc = rdloc + LMFormat.JSON.ext

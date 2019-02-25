@@ -2,19 +2,45 @@
 """
 import os
 
-# from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
+from LmCommon.common.lmconstants import (ENCODING, JobStatus, LMFormat)
+from LmCommon.common.readyfile import get_unicodecsv_reader
 from LmCommon.shapes.createshape import ShapeShifter
-from LmCommon.common.lmconstants import (
-    ENCODING, JobStatus, LMFormat)
     
 from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
 # .............................................................................
+
+# ...............................................
+def _getLineAsString(csvreader, delimiter, recno):
+    '''
+    @summary: Return a CSV line as a single string while keeping track of the 
+              line number and errors
+    '''
+    success = False
+    linestr = None
+    while not success and csvreader is not None:
+        try:
+            line = csvreader.next()
+            if line:
+                recno += 1
+                linestr = delimiter.join(line)
+            success = True
+        except OverflowError, e:
+            recno += 1
+            print( 'Overflow on record {}, line {} ({})'
+                                 .format(recno, csvreader.line, str(e)))
+        except StopIteration:
+            success = True
+        except Exception, e:
+            recno += 1
+            print('Bad record on record {}, line {} ({})'
+                                .format(recno, csvreader.line, e))
+    return linestr, recno
     
 # .............................................................................
-def _prepareInputs(csv_fname, out_fname, big_fname, log):
+def _prepareInputs(csv_fname, delimiter, out_fname, big_fname, log):
     """
     @summary: Processes a CSV dataset
     @param csv_fname: CSV file of points
@@ -33,30 +59,25 @@ def _prepareInputs(csv_fname, out_fname, big_fname, log):
     if log is None:
         logname, _ = os.path.splitext(os.path.basename(__file__))
         log = LmComputeLogger(logname, addConsole=True)
-
-    with open(csv_fname) as inF:
-        lines = inF.readlines()
-    
-    # remove non-encodeable lines
+        
+    # Read data with correct encoding
+    csvreader, f = get_unicodecsv_reader(csv_fname, delimiter)
     cleanLines = []
-    for ln in lines:
-        try: 
-            clnLn = ln.encode(ENCODING)
-        except:
-            pass
-        else:
-            cleanLines.append(clnLn)
+    ln, recno = _getLineAsString(csvreader, delimiter, 0)
+    while ln is not None:
+        # return lines as strings
+        cleanLines.append(ln)
+        ln, recno = _getLineAsString(csvreader, delimiter, recno)
+    f.close()
+        
     rawdata = '\n'.join(cleanLines)
     
-    log.debug('_prepareInputs: Filtered non-encodable lines, orig {}, new {}'
-              .format(len(lines), len(cleanLines)))
-        
     return rawdata, len(cleanLines), log
         
         
 # .............................................................................
 def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points, 
-                           is_gbif=False, log=None):
+                           delimiter='\t', is_gbif=False, log=None):
     """
     @summary: Parses a CSV-format dataset and saves it to a shapefile in the 
                      specified location
@@ -69,7 +90,7 @@ def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points
     @param is_gbif: Flag to indicate special processing for GBIF link, lookup keys 
     @param log: If provided, use this logger.  If not, will create new
     """    
-    rawdata, count, log = _prepareInputs(csv_fname, out_fname, big_fname, log)
+    rawdata, count, log = _prepareInputs(csv_fname, delimiter, out_fname, big_fname, log)
     # Assume no header
     if count == 0:
         log.error("No clean, encodable CSV records")
@@ -77,7 +98,7 @@ def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points
 
     try:
         shaper = ShapeShifter(rawdata, metadata, count, logger=log, 
-                              isGbif=is_gbif)
+                              delimiter=delimiter, isGbif=is_gbif)
         shaper.writeOccurrences(
             out_fname, maxPoints=max_points, bigfname=big_fname)
         log.debug('Shaper wrote occurrences')
@@ -139,7 +160,7 @@ from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import (
     ENCODING, JobStatus, LMFormat, ProcessType)
     
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.readyfile import readyFilename, get_unicodecsv_reader
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
