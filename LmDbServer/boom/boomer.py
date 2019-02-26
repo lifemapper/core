@@ -411,12 +411,8 @@ from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 from LmDbServer.boom.boom_collate import BoomCollate
 
-
-configFname =  '/share/lm/data/archive/anon/cj3.ini'
-successFname = 'mf_240355/cj3.ini.success'
 configFname = '/share/lm/data/archive/kubi/public_boom-2019.01.10.ini'
-successFname = '/share/lm/data/archive/kubi/public_boom-2019.01.10.ini.success'
-successFname= 'mf_240361/public_boom-2019.01.10.ini.success'
+successFname= 'mf_3343/public_boom-2019.01.10.ini.success'
 
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
@@ -428,119 +424,51 @@ boomer = Boomer(configFname, successFname, log=logger)
 boomer.initializeMe()
 
 
-squid, spudRules, idx_success_filename = boomer.christopher.startWalken(
-    workdir)
-
-self = boomer.christopher
-
-
-workdir = boomer.potatoBushel.getRelativeDirectory()
-
-
+# squid, spudRules, idx_success_filename = boomer.christopher.startWalken(
+#     workdir)
 # boomer.processAllSpecies()
 # ##########################################################################
-import glob
-import mx.DateTime as dt
-from osgeo.ogr import wkbPoint
+# occwoc
+
+import shutil
+try:
+    import mx.DateTime as dt
+except:
+    pass
+
+import csv
+import json
 import os
-from types import IntType, FloatType
+import sys
 
-from LmBackend.common.lmconstants import RegistryKey, MaskMethod
 from LmBackend.common.lmobj import LMError, LMObject
-from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
-from LmBackend.command.server import (MultiIndexPAVCommand, 
-                                      MultiStockpileCommand)
-from LmBackend.command.single import SpeciesParameterSweepCommand
+from LmCommon.common.apiquery import GbifAPI
+from LmCommon.common.unicode import fromUnicode, toUnicode
+from LmCommon.common.lmconstants import (GBIF, ProcessType, 
+                                         JobStatus, ONE_HOUR, LMFormat) 
+from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.readyfile import (readyFilename, 
+                                get_unicodecsv_reader, get_unicodecsv_writer)
 
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat, GBIF,
-          SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, BoomKeys,
-          SERVER_SDM_ALGORITHM_HEADING_PREFIX,
-          SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
-          MatrixType) 
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
-            Priority, BUFFER_KEY, CODE_KEY, ECOREGION_MASK_METHOD, MASK_KEY, 
-            MASK_LAYER_KEY, PRE_PROCESS_KEY, PROCESSING_KEY, 
-            MASK_LAYER_NAME_KEY,SCALE_PROJECTION_MINIMUM, 
-            SCALE_PROJECTION_MAXIMUM, DEFAULT_NUM_PERMUTATIONS)
-from LmServer.common.localconstants import (PUBLIC_USER, DEFAULT_EPSG, 
-                                            POINT_COUNT_MAX)
+from LmServer.base.taxon import ScientificName
+from LmServer.common.lmconstants import LOG_PATH
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.sdmproj import SDMProjection
-from LmServer.tools.occwoc import (UserWoC, ExistingWoC, TinyBubblesWoC)
+from LmServer.legion.occlayer import OccurrenceLayer
 
+TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
-squid = None
-spudRules = []
-index_pavs_document_filename = None
-gsid = 0
-currtime = dt.gmt().mjd
+workdir = boomer.potatoBushel.getRelativeDirectory()
+self = boomer.christopher
 
-gsid = self.boomGridset.getId()
+# ##########################################################################
+# in cwalken.startWalken
 
 occ = self.weaponOfChoice.getOne()
 
-squid = occ.squid
 
-occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
-sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
+# ##########################################################################
 
-# If we have enough points to model
-if occ.queryCount >= self.minPoints:
-    self.log.info('   Will compute for Grid {}:'.format(gsid))
-    for alg in self.algs:
-        prjs = []
-        mtxcols = []
-        for prj_scen in self.prjScens:
-            pamcode = '{}_{}'.format(prj_scen.code, alg.code) 
-            prj = self._findOrInsertSDMProject(
-                occ, alg, prj_scen, dt.gmt().mjd)
-            if prj is not None:
-                prjs.append(prj)
-                mtx = self.globalPAMs[pamcode]
-                mtxcol = self._findOrInsertIntersect(
-                    prj, mtx, currtime)
-                if mtxcol is not None:
-                    mtxcols.append(mtxcol)
-        doSDM = self._doComputeSDM(occ, prjs, mtxcols)
-
-        if doSDM:
-            # Add SDM commands for the algorithm
-            self._fill_sweep_config(
-                sweep_config, workdir, alg, occ, prjs, mtxcols)
-
-
-
-squid, spudRules, idx_success_filename = self.christopher.startWalken(
-    workdir)
-if idx_success_filename is not None:
-    self.pav_index_filenames.append(idx_success_filename)
-
-# TODO: Track squids
-if squid is not None:
-    self.squidNames.append(squid)
-
-self.keepWalken = not self.christopher.complete
-# TODO: Master process for occurrence only? SDM only? 
-if spudRules:
-    self.log.debug('Processing spud for potatoes') 
-    self.potatoBushel.addCommands(spudRules)
-    # TODO: Don't write triage file, but don't delete code
-    #if potatoInputs:
-    #   for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
-    #      pavFname = potatoInputs[scencode]
-    #      triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
-    #   self.log.info('Wrote spud squid to {} triage files'
-    #                 .format(len(potatoInputs)))
-    #if len(self.spudArfFnames) >= SPUD_LIMIT:
-    if not self.assemblePams and len(self.squidNames) >= SPUD_LIMIT:
-        self.rotatePotatoes()
 
 # ##########################################################################
 

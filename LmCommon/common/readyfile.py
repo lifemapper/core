@@ -130,6 +130,7 @@ def get_unicodecsv_writer(datafile, delimiter, doAppend=True):
     else:
         mode = 'wb'
         
+    readyFilename(datafile, overwrite=True)
     try:
         f = open(datafile, mode) 
         writer = unicodecsv.writer(f, delimiter=delimiter, encoding=ENCODING)
