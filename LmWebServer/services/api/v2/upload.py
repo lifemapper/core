@@ -167,7 +167,7 @@ class UserUploadService(LmService):
             self._get_user_dir(), '{}{}'.format(packageName, LMFormat.CSV.ext))
         metaFilename = os.path.join(
             self._get_user_dir(),
-            '{}{}'.format(packageName, LMFormat.METADATA.ext))
+            '{}{}'.format(packageName, LMFormat.JSON.ext))
         
         # Check to see if files exist
         if os.path.exists(csvFilename):
