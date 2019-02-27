@@ -24,13 +24,11 @@
 import json
 import os
 import sys
-import unicodecsv
-import StringIO
 
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import (ENCODING, OFTInteger, OFTReal, 
-                                         OFTString, LMFormat)
+from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTString, 
+                                         LMFormat)
 from LmCommon.common.readyfile import get_unicodecsv_reader
 
 # .............................................................................
@@ -53,7 +51,7 @@ class OccDataParser(LMObject):
     FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, FIELD_ROLE_GEOPOINT,
                    FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME, FIELD_ROLE_IDENTIFIER]
 
-    def __init__(self, logger, data, metadata, delimiter='\t', pullChunks=False):
+    def __init__(self, logger, csv_data_or_fname, metadata, delimiter='\t', pullChunks=False):
         """
         @summary Reader for arbitrary user CSV data file with
                  - header record and metadata with column **names** first, OR
@@ -61,6 +59,7 @@ class OccDataParser(LMObject):
         @param logger: Logger to use for the main thread
         @param data: raw data or filename for CSV data
         @param metadata: dictionary or filename containing metadata
+        @param delimiter: delimiter of values in csv records
         @param pullChunks: use the object to pull chunks of data based on the 
                  groupBy column.  This results in 'pre-fetching' a line of
                  data at the start of a chunk to establish the group, and 
@@ -70,11 +69,14 @@ class OccDataParser(LMObject):
         self._rawMetadata = metadata
         self._fieldmeta = None
         self._metadataFname = None
-           
-        self.dataFname = data
-        self.delimiter = delimiter
         self._doPreFetch = pullChunks
-        self._file = None
+           
+        self.delimiter = delimiter
+        self.csv_fname = csv_data_or_fname
+        self._csvreader, self._file = get_unicodecsv_reader(csv_data_or_fname, 
+                                                            delimiter)
+        if self._file is None:
+            self.csv_fname = None
         
         self.log = logger
         self.fieldCount = 0
@@ -104,11 +106,7 @@ class OccDataParser(LMObject):
         self.groupVal = None
         self.groupFirstRec = 0      
         self.currLine = None
-        
-        self._csvreader, self._file = get_unicodecsv_reader(data, delimiter)
-        if self._file is None:
-            self.dataFname = None
-        
+                
         self.header = None
         self.filters = None
         self._idIdx = None
@@ -677,7 +675,7 @@ class OccDataParser(LMObject):
                Indexes: {} 
                Accepted vals: {}
                Bad filter values: {}
-            """.format(self.dataFname, self.recTotal, self.recTotalGood, 
+            """.format(self.csv_fname, self.recTotal, self.recTotalGood, 
                        len(self.groupVals), self.badIds, self.badGeos, 
                        self.badGroups, self.badNames, self.badFilters,  
                        str(self.filters.keys()), str(self.filters.values()), 

@@ -31,7 +31,7 @@ import subprocess
 from types import UnicodeType, StringType
 
 from LmCommon.common.lmconstants import (GBIF, PROVIDER_FIELD_COMMON, 
-        LM_WKT_FIELD, ProcessType, JobStatus, DWCNames, LMFormat, DEFAULT_EPSG)
+        LM_WKT_FIELD, JobStatus, DWCNames, LMFormat, DEFAULT_EPSG)
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.common.unicode import fromUnicode, toUnicode
@@ -52,18 +52,23 @@ class ShapeShifter(object):
 # ............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, rawdata, metadata, count, logger=None, 
+    def __init__(self, csv_fname, metadata, logger=None, 
                  delimiter='\t', isGbif=False):
         """
-        @param processType: ProcessType constant, either GBIF_TAXA_OCCURRENCE,
-                                  BISON_TAXA_OCCURRENCE or IDIGBIO_TAXA_OCCURRENCE  
-        @param rawdata: Either csv blob of GBIF, iDigBio, or User data 
-                             or list of dictionary records of BISON data for which to
-                             create a single shapefile.
+        @param csv_fname: File containing CSV data of species occurrence records
+        @param metadata: dictionary or filename containing JSON format metadata
+        @param logger: logger for debugging output
+        @param delimiter: delimiter of values in csv records
+        @param isGbif: boolean flag to indicate whether data contains GBIF/DwC 
+               fields.
+        
         """
+        if not os.path.exists(csv_fname):
+            raise LmException(JobStatus.LM_RAW_POINT_DATA_ERROR, 
+                              'Raw data file {} does not exist')
         if not metadata:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                                    'Failed to get metadata')
+                              'Failed to get metadata')
         if logger is None:
             logname, _ = os.path.splitext(os.path.basename(__file__))
             logger = LmComputeLogger(logname, addConsole=True)
@@ -72,8 +77,8 @@ class ShapeShifter(object):
         # If necessary, map provider dictionary keys to our field names
         self.lookupFields = None
         self._currRecum = 0
+        count = sum(1 for line in open(csv_fname))
         self._recCount = count
-        self.rawdata = rawdata
         self.linkField = None
         self.linkUrl = None
         self.providerKeyField = None
@@ -87,7 +92,7 @@ class ShapeShifter(object):
             self.providerKeyField = GBIF.PROVIDER_FIELD
             self.computedProviderField = PROVIDER_FIELD_COMMON
         
-        self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter,
+        self.op = OccDataParser(logger, csv_fname, metadata, delimiter=delimiter,
                                         pullChunks=False)
         self.op.initializeMe()
         if self.op.header is not None:
@@ -446,27 +451,7 @@ class ShapeShifter(object):
         
 # ...............................................
 if __name__ == '__main__':
-    gbif = idigbio = bison = False
-    outfilename = '/tmp/testpoints.shp'
-    subsetOutfilename = '/tmp/testpoints_sub.shp'
-    
-    if os.path.exists(outfilename):
-        import glob
-        basename, ext = os.path.splitext(outfilename)
-        fnames = glob.glob(basename + '*')
-        for fname in fnames:
-            print('Removing {}'.format(fname))
-            os.remove(fname)
-    if gbif:
-        testFname = '/opt/lifemapper/LmCommon/tests/data/gbif_chunk.csv'        
-        f = open(testFname, 'r')
-        datachunk = f.read()
-        f.close()
-    
-        count = len(datachunk.split('\n'))
-        shaper = ShapeShifter(ProcessType.GBIF_TAXA_OCCURRENCE, datachunk, count)
-        shaper.writeOccurrences(outfilename, maxPoints=20, 
-                                        subsetfname=subsetOutfilename)
+    print ('__main__ is not implemented')
 
 """
 from osgeo import ogr, osr

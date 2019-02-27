@@ -90,14 +90,24 @@ def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points
     @param is_gbif: Flag to indicate special processing for GBIF link, lookup keys 
     @param log: If provided, use this logger.  If not, will create new
     """    
-    rawdata, count, log = _prepareInputs(csv_fname, delimiter, out_fname, big_fname, log)
-    # Assume no header
-    if count == 0:
-        log.error("No clean, encodable CSV records")
-        return JobStatus.OCC_NO_POINTS_ERROR
+#     rawdata, count, log = _prepareInputs(csv_fname, delimiter, out_fname, big_fname, log)
+    # Ready file names
+    readyFilename(out_fname, overwrite=True)
+    readyFilename(big_fname, overwrite=True)
+
+    # Initialize logger if necessary
+    if log is None:
+        logname, _ = os.path.splitext(os.path.basename(__file__))
+        log = LmComputeLogger(logname, addConsole=True)
+
+#     count = sum(1 for line in open(csv_fname))
+#     # Assume no header
+#     if count == 0:
+#         log.error("No clean, encodable CSV records")
+#         return JobStatus.OCC_NO_POINTS_ERROR
 
     try:
-        shaper = ShapeShifter(rawdata, metadata, count, logger=log, 
+        shaper = ShapeShifter(csv_fname, metadata, logger=log, 
                               delimiter=delimiter, isGbif=is_gbif)
         shaper.writeOccurrences(
             out_fname, maxPoints=max_points, bigfname=big_fname)
