@@ -7,6 +7,7 @@ from LmCommon.common.matrix import Matrix
 from LmCommon.common.lmXml import Element, SubElement, tostring
 
 from LmServer.legion.gridset import Gridset
+from LmServer.legion.sdmproj import SDMProjection
 
 # .............................................................................
 def _create_data_table_section(data_table):
@@ -57,6 +58,29 @@ def _create_other_entity(entity):
         value='nexus')
     SubElement(entity_element, 'entityType', value='tree')
     return entity_element
+
+# .............................................................................
+def _create_spatial_raster(spatial_raster):
+    """Create a 'spatialRaster' subsection for an object
+    """
+    sr_element = Element('spatialRaster')
+    SubElement(
+        sr_element, 'cellSizeXDirection', value=spatial_raster.resolution)
+    SubElement(
+        sr_element, 'cellSizeYDirection', value=spatial_raster.resolution)
+    SubElement(
+        sr_element, 'numberOfBands', value='1')
+    min_x, min_y, max_x, max_y = spatial_raster.bbox
+    num_cols = int((max_x - min_x) / spatial_raster.resolution)
+    num_rows = int((max_y - min_y) / spatial_raster.resolution)
+    SubElement(sr_element, 'rasterOrigin', value='Lower Left')
+    SubElement(sr_element, 'rows', value=str(num_rows))
+    SubElement(sr_element, 'cols', value=str(num_cols))
+    SubElement(
+        sr_element, 'verticals', value='1')
+    SubElement(
+        sr_element, 'cellGeometry', value='pixel')
+    return sr_element
 
 # .............................................................................
 def _create_spatial_vector(spatial_vector):
@@ -125,8 +149,24 @@ def makeEml(my_obj):
                 dsEl.append(_create_data_table_section(mtx))
         if my_obj.tree is not None:
             dsEl.append(_create_other_entity(my_obj.tree))
+    elif isinstance(my_obj, SDMProjection):
+        topEl = Element(
+            'eml',
+            attrib={
+                'packageId' : 'org.lifemapper.sdmproject.{}'.format(
+                    my_obj.getId()),
+                'system' : 'http://svc.lifemapper.org'})
+        ds_el = SubElement(
+            topEl, 'dataset',
+            attrib={'id' : 'sdmroject_{}'.format(my_obj.getId())})
+        # Contact
+        SubElement(
+            SubElement(dsEl, 'contact'),
+            'organizationName', value='Lifemapper')
+        ds_el.append(_create_spatial_raster(my_obj))
     else:
-        raise Exception, 'Cannot create eml for {} currently'.format(my_obj.__class__)
+        raise Exception(
+            'Cannot create eml for {} currently'.format(my_obj.__class__))
     return topEl
     
 # .............................................................................

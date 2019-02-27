@@ -514,10 +514,14 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     atom=False):
                 # Make sure projection output file exists, then add to package
                 if os.path.exists(prj.getDLocation()):
-                    arc_path = os.path.join(
-                        SDM_PRJ_DIR, prj.displayName,
-                        os.path.basename(prj.getDLocation()))
-                    zip_f.write(prj.getDLocation(), arc_path)
+                    prj_dir = os.path.join(SDM_PRJ_DIR, prj.displayName)
+                    arc_prj_path = os.path.join(
+                        prj_dir, os.path.basename(prj.getDLocation()))
+                    prj_eml_path = '{}{}'.format(
+                        os.path.splitext(arc_prj_path)[0], LMFormat.EML.ext)
+                    zip_f.write(prj.getDLocation(), arc_prj_path)
+                    # EML
+                    zip_f.writestr(prj_eml_path, tostring(makeEml(prj)))
 
     
 # .............................................................................
