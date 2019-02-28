@@ -2953,7 +2953,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
--- Should only call this on PUBLIC user data
+-- Should only call this on public or anon user
 CREATE OR REPLACE FUNCTION lm_v3.lm_clearObsoleteSpeciesDataForUser(usr varchar,
                                                            dt double precision)
 RETURNS SETOF varchar AS
@@ -2967,49 +2967,38 @@ DECLARE
    occ_total int := 0;
    dloc      varchar;
 BEGIN
-   -- FIRST delete all matrixcolumns using this layer to remove FK constraint
-   FOR lyrid IN SELECT p.layerid FROM lm_v3.SDMProject p, lm_v3.OccurrenceSet o 
+   -- Find all projections with obsolete occurrencesets
+   FOR lyrid, occid IN SELECT p.layerid, o.occurrencesetid 
+      FROM lm_v3.SDMProject p, lm_v3.OccurrenceSet o 
       WHERE p.occurrencesetid = o.occurrencesetid 
         AND o.userid = usr AND o.statusmodtime <= dt
    LOOP
+      -- FIRST delete all matrixcolumns using this layer to remove FK constraint
       DELETE FROM lm_v3.MatrixColumn WHERE layerid = lyrid;
       GET DIAGNOSTICS currCount = ROW_COUNT;
       RAISE NOTICE 'Deleted % MatrixColumns for SDMProject Layer %', currCount, lyrid;
       mc_total = mc_total + currCount;        
-   END LOOP;      
 
-   -- NEXT, delete sdmproject/layer
-   FOR lyrid, occid, dloc IN 
-      SELECT p.layerid, p.occurrencesetid, o.dlocation 
-         FROM lm_v3.SDMProject p, lm_v3.OccurrenceSet o 
-         WHERE p.occurrencesetid = o.occurrencesetid 
-           AND o.userid = usr AND o.statusmodtime <= dt
-   LOOP
-      -- Delete all sdmproject layers using this sdmproject occurrenceset
-      -- This cascades to joined SDMProject too
+      -- SECOND, delete all sdmproject layers; this cascades to joined SDMProject
       DELETE FROM lm_v3.Layer WHERE layerid in 
          (SELECT layerid FROM lm_v3.SDMProject WHERE occurrencesetid = occid);
       GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % SDMProject Layers for %', currCount, lyrid;
+      prj_total = prj_total + currCount;
           
       -- Delete this sdmproject occurrenceset
-      IF currCount > 0 THEN
-         RAISE NOTICE 'Deleted % SDMProject Layers for %', currCount, lyrid;
-         prj_total = prj_total + currCount;
-         
-         DELETE FROM lm_v3.OccurrenceSet WHERE occurrencesetid = occid;
-         GET DIAGNOSTICS currCount = ROW_COUNT;
-         RAISE NOTICE 'Deleted % Occurrenceset %', currCount, occid;
-         occ_total = occ_total + currCount;
-         RETURN NEXT dloc;
-      END IF;
+      DELETE FROM lm_v3.OccurrenceSet WHERE occurrencesetid = occid;
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % Occurrenceset %', currCount, occid;
+      occ_total = occ_total + currCount;
+      RETURN NEXT dloc;
    END LOOP; 
         
-   -- FINALLY, delete any non-projected occurrencesets
+   -- Find all non-projected occurrencesets
    DELETE FROM lm_v3.OccurrenceSet WHERE userid = usr AND statusmodtime <= dt;
    GET DIAGNOSTICS currCount = ROW_COUNT;
    RAISE NOTICE 'Deleted % Non-projected Occurrencesets %', currCount, occid;
    occ_total = occ_total + currCount;
-
 
    RAISE NOTICE 'Deleted % MatrixColumns', mc_total;
    RAISE NOTICE 'Deleted % SDMProject/Layers', prj_total;

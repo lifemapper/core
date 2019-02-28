@@ -961,14 +961,10 @@ class BorgScribe(LMObject):
     # ...............................................
     def deleteObsoleteSDMDataReturnFilenames(self, userid, beforetime):
         """
-        @summary: Deletes OccurrenceSets, any dependent SDMProjects (with Layer)
-                  and SDMProject-dependent MatrixColumns.  
-        @param userid: User for whom to delete SDM data
-        @param beforetime: delete SDM data modified before or at this time
-        @return: list of shapefile locations for deleted data.
+        @copydoc LmServer.db.catalog_borg.Borg::deleteObsoleteSDMDataReturnFilenames()
         """
-        filenames = self.executeSelectAndModifyManyFunction(
-            'lm_clearObsoleteSpeciesDataForUser', userid, beforetime)
+        filenames = self._borg.deleteObsoleteSDMDataReturnFilenames(userid, 
+                                                                    beforetime)
         return filenames
 
 # ...............................................
