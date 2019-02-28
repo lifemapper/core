@@ -4,6 +4,7 @@ import argparse
 from mx.DateTime import gmt
 
 from LmCommon.common.lmconstants import PhyloTreeKeys
+from LmCommon.common.readyfile import readyFilename
 
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -53,6 +54,7 @@ if __name__ == "__main__":
 
     scribe.closeConnections()
 
+    readyFilename(args.success_filename, overwrite=True)
     with open(args.success_filename, 'w') as out_f:
         out_f.write('1\n')
    
