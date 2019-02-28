@@ -9,7 +9,7 @@ from LmBackend.command.multi import (
     CreateAncestralPamCommand, EncodePhylogenyCommand, MultiSpeciesRunCommand,
     SyncPamAndTreeCommand)
 from LmBackend.command.server import (
-    AssemblePamFromSolrQueryCommand, StockpileCommand)
+    AssemblePamFromSolrQueryCommand, StockpileCommand, SquidAndLabelTreeCommand)
 from LmBackend.common.lmobj import LMObject
 
 from LmCommon.common.lmconstants import (
@@ -456,8 +456,19 @@ class BoomCollate(LMObject):
                 ('There are no PAMs for this gridset.'
                  '  Do they need to be filled by the scribe?'))
         if self.gridset.tree is not None:
-            # If tree exists, assume squidded and set self.squid_tree_filename
+            # If tree exists, squid it
             self.squid_tree_filename = self.gridset.tree.getDLocation()
+            tree_success_filename = os.path.join(
+                self.workspace_dir, 'tree_squid.success')
+            tree_cmd = SquidAndLabelTreeCommand(
+                self.gridset.tree.name, self.user_id,
+                tree_success_filename)
+            tree_cmd.inputs.append(self.squid_tree_filename)
+            rules.append(tree_cmd.getMakeflowRule(local=True))
+            
+            # Add tree success to dependencies
+            self.dependencies.append(tree_success_filename)
+            
         else:
             self.squid_tree_filename = None
 
