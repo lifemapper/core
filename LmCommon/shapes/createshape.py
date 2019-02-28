@@ -47,7 +47,8 @@ except:
 class ShapeShifter(object):
 # .............................................................................
     """
-    Class to write a shapefile from GBIF CSV output or BISON JSON output 
+    Class to write a shapefile from GBIF CSV output or BISON JSON output. 
+    Puts all valid records from input csv file into a single shapefile.
     """
 # ............................................................................
 # Constructor
@@ -165,6 +166,14 @@ class ShapeShifter(object):
     # .............................................................................
     def writeOccurrences(self, outfname, maxPoints=None, bigfname=None, 
                          overwrite=True):
+        """
+        @summary: Write a shapefile from CSV input, putting all valid records 
+                  into a single shapefile.  Valid is defined as containing
+                  latitude and longitude fields OR geopoint field, and a 
+                  "groupBy" field on which to group records of multi-taxa
+                  CSV files.  ** This restriction will be removed.  
+        @note: This function assumes all records go into the same shapefile.
+        """
         if not readyFilename(outfname, overwrite=overwrite):
             raise LmException('{} is not ready for write (overwrite={})'.format
                                     (outfname, overwrite))
