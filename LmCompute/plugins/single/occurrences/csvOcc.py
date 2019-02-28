@@ -38,43 +38,7 @@ def _getLineAsString(csvreader, delimiter, recno):
             print('Bad record on record {}, line {} ({})'
                                 .format(recno, csvreader.line, e))
     return linestr, recno
-    
-# .............................................................................
-def _prepareInputs(csv_fname, delimiter, out_fname, big_fname, log):
-    """
-    @summary: Processes a CSV dataset
-    @param csv_fname: CSV file of points
-    @param metadata: A file or dictionary of metadata for these occurrences
-    @param out_fname: The file location to write the modelable occurrence set
-    @param big_fname: The file location to write the full occurrence set 
-    @param max_points: The maximum number of points to be included in the regular
-                       shapefile
-    @param log: If provided, use this logger
-    """
-    # Ready file names
-    readyFilename(out_fname, overwrite=True)
-    readyFilename(big_fname, overwrite=True)
-
-    # Initialize logger if necessary
-    if log is None:
-        logname, _ = os.path.splitext(os.path.basename(__file__))
-        log = LmComputeLogger(logname, addConsole=True)
-        
-    # Read data with correct encoding
-    csvreader, f = get_unicodecsv_reader(csv_fname, delimiter)
-    cleanLines = []
-    ln, recno = _getLineAsString(csvreader, delimiter, 0)
-    while ln is not None:
-        # return lines as strings
-        cleanLines.append(ln)
-        ln, recno = _getLineAsString(csvreader, delimiter, recno)
-    f.close()
-        
-    rawdata = '\n'.join(cleanLines)
-    
-    return rawdata, len(cleanLines), log
-        
-        
+            
 # .............................................................................
 def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points, 
                            delimiter='\t', is_gbif=False, log=None):
@@ -90,7 +54,6 @@ def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points
     @param is_gbif: Flag to indicate special processing for GBIF link, lookup keys 
     @param log: If provided, use this logger.  If not, will create new
     """    
-#     rawdata, count, log = _prepareInputs(csv_fname, delimiter, out_fname, big_fname, log)
     # Ready file names
     readyFilename(out_fname, overwrite=True)
     readyFilename(big_fname, overwrite=True)
@@ -100,17 +63,11 @@ def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points
         logname, _ = os.path.splitext(os.path.basename(__file__))
         log = LmComputeLogger(logname, addConsole=True)
 
-#     count = sum(1 for line in open(csv_fname))
-#     # Assume no header
-#     if count == 0:
-#         log.error("No clean, encodable CSV records")
-#         return JobStatus.OCC_NO_POINTS_ERROR
-
     try:
         shaper = ShapeShifter(csv_fname, metadata, logger=log, 
                               delimiter=delimiter, isGbif=is_gbif)
-        shaper.writeOccurrences(
-            out_fname, maxPoints=max_points, bigfname=big_fname)
+        shaper.writeOccurrences(out_fname, maxPoints=max_points, 
+                                bigfname=big_fname)
         log.debug('Shaper wrote occurrences')
         
         # Test generated shapefiles, throws exceptions if bad
