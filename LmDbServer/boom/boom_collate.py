@@ -461,7 +461,7 @@ class BoomCollate(LMObject):
             tree_success_filename = os.path.join(
                 self.workspace_dir, 'tree_squid.success')
             tree_cmd = SquidAndLabelTreeCommand(
-                self.gridset.tree.name, self.user_id,
+                self.gridset.tree.getId(), self.user_id,
                 tree_success_filename)
             tree_cmd.inputs.append(self.squid_tree_filename)
             rules.append(tree_cmd.getMakeflowRule(local=True))

@@ -32,8 +32,7 @@ from LmBackend.command.boom import BoomerCommand
 from LmBackend.command.common import IdigbioQueryCommand ,\
     ConcatenateMatricesCommand, SystemCommand, ChainCommand
 from LmBackend.command.server import (
-    CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand,
-    SquidAndLabelTreeCommand, StockpileCommand)
+    CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand, StockpileCommand)
 from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.apiquery import IdigbioAPI

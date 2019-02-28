@@ -443,11 +443,11 @@ class SquidAndLabelTreeCommand(_LmServerCommand):
     scriptName = 'add_squids_to_tree.py'
 
     # ................................
-    def __init__(self, tree_name, user_id, success_filename):
+    def __init__(self, tree_id, user_id, success_filename):
         """Construct the command object
 
         Args:
-            tree_name: The name of the tree in the database
+            tree_id: The database id of the tree in the database
             user_id: The user id, used for generating squids
             success_filename : The file location where success should be
                 indicated
@@ -455,7 +455,7 @@ class SquidAndLabelTreeCommand(_LmServerCommand):
         _LmServerCommand.__init__(self)
         self.outputs.append(success_filename)
         
-        self.args = '{} {} {}'.format(tree_name, user_id, success_filename)
+        self.args = '{} {} {}'.format(tree_id, user_id, success_filename)
 
 # .............................................................................
 class StockpileCommand(_LmServerCommand):
