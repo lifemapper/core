@@ -180,6 +180,11 @@ class ChristopherWalken(LMObject):
         return self.weaponOfChoice.complete
 
     # ...............................................
+    @property
+    def occ_delimiter(self):
+        return self.weaponOfChoice.occ_delimiter
+
+    # ...............................................
     def _getVarValue(self, var):
         try:
             var = int(var)

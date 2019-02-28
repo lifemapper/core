@@ -100,6 +100,14 @@ class _SpeciesWeaponOfChoice(LMObject):
     @property
     def expirationDate(self):
         return self._obsoleteTime
+
+    # ...............................................
+    @property
+    def occ_delimiter(self):
+        try:
+            return self._delimiter
+        except:
+            return None
     
 # ...............................................
     def _findStart(self):
