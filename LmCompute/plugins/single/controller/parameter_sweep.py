@@ -309,11 +309,13 @@ class ParameterSweep(object):
         """
         for occ_config in self.sweep_config.get_occurrence_set_config():
             (process_type, occ_set_id, url_fn_or_key, out_file, big_out_file,
-             max_points, metadata) = occ_config
+             max_points, metadata, delimiter) = occ_config
 
             occ_metrics = None
             occ_snippets = None
 
+            if delimiter is None:
+                delimiter = '\t'
             is_gbif = False
             if process_type in (ProcessType.USER_TAXA_OCCURRENCE,
                                 ProcessType.GBIF_TAXA_OCCURRENCE):
@@ -321,7 +323,8 @@ class ParameterSweep(object):
                     is_gbif = True
                 status = createShapefileFromCSV(url_fn_or_key, metadata, 
                                         out_file, big_out_file, max_points, 
-                                        is_gbif=is_gbif, log=self.log)
+                                        is_gbif=is_gbif, log=self.log,
+                                        delimiter=delimiter)
                 if status == JobStatus.COMPUTED:
                     waited = 0
                     while waited < WAIT_THRESHOLD and not os.path.exists(out_file):

@@ -150,7 +150,7 @@ class ParameterSweepConfiguration(object):
     # ........................................
     def add_occurrence_set(self, process_type, occ_set_id, url_fn_or_key,
                            out_filename, big_out_filename, max_points,
-                           metadata=None):
+                           metadata=None, delimiter=None):
         """Adds an occurrence set configuration to the parameter sweep
 
         Args:
@@ -167,6 +167,7 @@ class ParameterSweepConfiguration(object):
                 occurrence set output file.
             metadata : Optional.  This should be provided with user occurrence
                 sets to describe the fields in the CSV.
+            delimiter : Optional.  Use this as the delimiter for the csv data.
         """
         add_me = True  # Should we add this occurrence set config
         # Check if occurrence set is already in the config
@@ -176,7 +177,7 @@ class ParameterSweepConfiguration(object):
         if add_me:
             self.occurrence_sets.append(
                 (process_type, occ_set_id, url_fn_or_key, out_filename, 
-                 big_out_filename, max_points, metadata))
+                 big_out_filename, max_points, metadata, delimiter))
     
     # ........................................
     def add_pav_intersect(self, shapegrid_filename, pav_id, projection_id,
