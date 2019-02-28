@@ -324,7 +324,7 @@ class ParameterSweep(object):
                 status = createShapefileFromCSV(url_fn_or_key, metadata, 
                                         out_file, big_out_file, max_points, 
                                         is_gbif=is_gbif, log=self.log,
-                                        delimiter=delimiter)
+                                        delimiter=str(delimiter))
                 if status == JobStatus.COMPUTED:
                     waited = 0
                     while waited < WAIT_THRESHOLD and not os.path.exists(out_file):
