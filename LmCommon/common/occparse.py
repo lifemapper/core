@@ -108,13 +108,6 @@ class OccDataParser(LMObject):
         self.currLine = None
                 
         self.header = None
-        self.filters = None
-        self._idIdx = None
-        self._xIdx = None
-        self._yIdx = None
-        self._geoIdx = None
-        self._groupByIdx = None
-        self._nameIdx = None
         self.fieldCount = None
         self.groupFirstRec = None
         self.currIsGoodEnough = None
@@ -438,6 +431,8 @@ class OccDataParser(LMObject):
             filters[idx] = acceptedVals
         
         # Check existence of required roles
+        # TODO: Make name and groupBy roles optional
+        #       If no groupBy role, treat the input as data for a single taxon
         if nameIdx is None:
             nameIdx = groupByIdx
         if (xIdx is None or yIdx is None) and ptIdx is None:
@@ -619,7 +614,10 @@ class OccDataParser(LMObject):
         try:
             value = int(line[self._groupByIdx])
         except:
-            value = str(line[self._groupByIdx])
+            try:
+                value = str(line[self._groupByIdx])
+            except:
+                value = None
         return value
     
     # ...............................................
@@ -637,9 +635,10 @@ class OccDataParser(LMObject):
             while self._csvreader is not None and not self.closed and not complete:
                 if line and goodEnough:
                     self.currLine = line
+                    # TODO: Remove groupBy from required fi
                     self.groupVal = self._getGroupByValue(line)
                     complete = True
-                       
+                # Keep pulling records until goodEnough
                 if not complete:
                     line, goodEnough = self._getLine()
                     if line is None:
