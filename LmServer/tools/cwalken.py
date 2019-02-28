@@ -723,7 +723,8 @@ class ChristopherWalken(LMObject):
             sweep_config.add_occurrence_set(
                 occ.processType, occ.getId(), occ.getRawDLocation(),
                 occ.getDLocation(), occ.getDLocation(largeFile=True),
-                POINT_COUNT_MAX, metadata=rawmeta_dloc)
+                POINT_COUNT_MAX, metadata=rawmeta_dloc,
+                delimiter=self.occ_delimiter)
 #                 POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
             
         for prj in prjs:
