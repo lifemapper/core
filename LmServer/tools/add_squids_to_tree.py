@@ -14,7 +14,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
       description='This script adds SQUIDs to the tips of a tree and labels nodes')
    
-    parser.add_argument('tree_id', type=id, help='The id of this tree')
+    parser.add_argument('tree_id', type=int, help='The id of this tree')
     parser.add_argument(
         'user_id', type=str, help='The user this tree belongs to')
     parser.add_argument(
