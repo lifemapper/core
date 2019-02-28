@@ -250,7 +250,7 @@ class ChristopherWalken(LMObject):
 
         occname = self._getBoomOrDefault(BoomKeys.OCC_DATA_NAME)
         occdir = self._getBoomOrDefault(BoomKeys.OCC_DATA_DIR)
-        occ_delimiter = self._getBoomOrDefault(BoomKeys.OCC_DATA_DELIMITER) 
+        occ_delimiter = str(self._getBoomOrDefault(BoomKeys.OCC_DATA_DELIMITER)) 
         if occ_delimiter != ',':
             occ_delimiter = GBIF.DATA_DUMP_DELIMITER
         occ_csv_fname, occ_meta_fname, self.moreDataToProcess = self._findData(

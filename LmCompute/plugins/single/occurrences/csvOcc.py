@@ -57,6 +57,8 @@ def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points
     # Ready file names
     readyFilename(out_fname, overwrite=True)
     readyFilename(big_fname, overwrite=True)
+    
+    delimiter = str(delimiter)
 
     # Initialize logger if necessary
     if log is None:
