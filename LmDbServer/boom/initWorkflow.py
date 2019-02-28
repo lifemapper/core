@@ -32,8 +32,7 @@ from LmBackend.command.boom import BoomerCommand
 from LmBackend.command.common import IdigbioQueryCommand ,\
     ConcatenateMatricesCommand, SystemCommand, ChainCommand
 from LmBackend.command.server import (
-    CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand,
-    SquidAndLabelTreeCommand, StockpileCommand)
+    CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand, StockpileCommand)
 from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.apiquery import IdigbioAPI
@@ -1248,18 +1247,6 @@ class BOOMFiller(LMObject):
             rules.append(cattaxCmd.getMakeflowRule(local=True))
             # Boom requires catalog taxonomy completion
             boomCmd.inputs.append(taxSuccessFname)
-        
-        # Encode tree after Boom, if tree exists
-        if tree is not None:
-            tree_success_fname = os.path.join(target_dir, tree.name+'.success')
-            treeCmd = SquidAndLabelTreeCommand(
-                tree.name, self.userId, tree_success_fname)
-            # Tree requires Boom completion
-            treeCmd.inputs.append(boom_success_fname)
-            treeCmd.inputs.append(tree.getDLocation())
-            # Add tree encoding command to this Makeflow
-            #mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
-            rules.append(treeCmd.getMakeflowRule(local=True))
         
         # Add boom command to this Makeflow
         #mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])

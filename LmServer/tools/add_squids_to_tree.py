@@ -7,7 +7,6 @@ from LmCommon.common.lmconstants import PhyloTreeKeys
 
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.tree import Tree
 
 # .............................................................................
 if __name__ == "__main__":
@@ -15,7 +14,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
       description='This script adds SQUIDs to the tips of a tree and labels nodes')
    
-    parser.add_argument('tree_name', type=str, help='The name of this tree')
+    parser.add_argument('tree_id', type=int, help='The id of this tree')
     parser.add_argument(
         'user_id', type=str, help='The user this tree belongs to')
     parser.add_argument(
@@ -30,7 +29,7 @@ if __name__ == "__main__":
     scribe = BorgScribe(ScriptLogger('squid_tree'))
     scribe.openConnections()
     
-    tree = scribe.getTree(tree=Tree(args.tree_name, userId=user_id))
+    tree = scribe.getTree(treeId=args.tree_id)
 
     squid_dict = {}
 
