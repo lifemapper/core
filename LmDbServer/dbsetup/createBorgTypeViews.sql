@@ -260,9 +260,10 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset (
 
 -- ----------------------------------------------------------------------------
 -- ----------------
--- lm_tree  (lm_gridset + tree)
+-- lm_gridset_tree  (lm_gridset + tree)
 DROP VIEW IF EXISTS lm_v3.lm_tree CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_tree (
+DROP VIEW IF EXISTS lm_v3.lm_gridset_tree CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_gridset_tree (
    -- lm_gridset.*
    gridsetId,
    userId,
@@ -953,7 +954,7 @@ lm_v3.lm_scenlayer,
 lm_v3.lm_scenPackageScenario,
 lm_v3.lm_shapegrid,
 lm_v3.lm_gridset,
-lm_v3.lm_tree,
+lm_v3.lm_gridset_tree,
 lm_v3.lm_fullmatrix,
 lm_v3.lm_matrix,
 lm_v3.lm_sdmProject, 
@@ -974,7 +975,7 @@ lm_v3.lm_scenlayer,
 lm_v3.lm_scenPackageScenario,
 lm_v3.lm_shapegrid,
 lm_v3.lm_gridset,
-lm_v3.lm_tree,
+lm_v3.lm_gridset_tree,
 lm_v3.lm_fullmatrix,
 lm_v3.lm_matrix,
 lm_v3.lm_sdmProject, 

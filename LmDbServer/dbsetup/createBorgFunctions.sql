@@ -987,7 +987,6 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 -- Gridset
 -- ----------------------------------------------------------------------------
--- TODO: return lm_tree instead of lm_gridset (with only treeId)
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertGridset(grdid int,
                                                         usr varchar, 
                                                         nm varchar,
@@ -996,10 +995,10 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertGridset(grdid int,
                                                         epsg int,
                                                         meta varchar, 
                                                     	  mtime double precision)
-   RETURNS lm_v3.lm_gridset AS
+   RETURNS lm_v3.lm_gridset_tree AS
 $$
 DECLARE
-   rec lm_v3.lm_gridset%rowtype;
+   rec lm_v3.lm_gridset_tree%rowtype;
    newid int;
 BEGIN
    SELECT * INTO rec FROM lm_v3.lm_getGridset(grdid, usr, nm);
@@ -1012,7 +1011,7 @@ BEGIN
             RAISE EXCEPTION 'Unable to find or insert Gridset';
          ELSE
             SELECT INTO newid last_value FROM lm_v3.gridset_gridsetid_seq;
-            SELECT * INTO rec from lm_v3.lm_gridset WHERE gridsetId = newid;
+            SELECT * INTO rec from lm_v3.lm_gridset_tree WHERE gridsetId = newid;
          END IF;
       end;
    END IF;
@@ -1044,19 +1043,18 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- Get an existing gridset
--- TODO: return lm_tree instead of lm_gridset (with only treeId)
 CREATE OR REPLACE FUNCTION lm_v3.lm_getGridset(grdid int,
                                                usr varchar, 
                                                nm varchar)
-   RETURNS lm_v3.lm_gridset AS
+   RETURNS lm_v3.lm_gridset_tree AS
 $$
 DECLARE
-   rec lm_v3.lm_gridset%rowtype;
+   rec lm_v3.lm_gridset_tree%rowtype;
 BEGIN
    IF grdid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.lm_gridset WHERE gridsetid = grdid;
+      SELECT * INTO rec FROM lm_v3.lm_gridset_tree WHERE gridsetid = grdid;
    ELSE
-      SELECT * INTO rec FROM lm_v3.lm_gridset WHERE userid = usr AND grdname = nm;
+      SELECT * INTO rec FROM lm_v3.lm_gridset_tree WHERE userid = usr AND grdname = nm;
    END IF;
 
    IF NOT FOUND THEN
@@ -1170,7 +1168,6 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
--- TODO: return lm_tree instead of lm_gridset (with only treeId)
 CREATE OR REPLACE FUNCTION lm_v3.lm_listGridsetObjects(firstRecNum int, maxNum int, 
                                                        usr varchar,
                                                        shpgridlyrid int,
@@ -1178,16 +1175,16 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listGridsetObjects(firstRecNum int, maxNum i
                                                        aftertime double precision,
                                                        beforetime double precision,
                                                        epsg int)
-   RETURNS SETOF lm_v3.lm_gridset AS
+   RETURNS SETOF lm_v3.lm_gridset_tree AS
 $$
 DECLARE
-   rec lm_v3.lm_gridset;
+   rec lm_v3.lm_gridset_tree;
    cmd varchar;
    wherecls varchar;
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm_v3.lm_gridset ';
+   cmd = 'SELECT * FROM lm_v3.lm_gridset_tree ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterGridset(usr, shpgridlyrid, 
                                           meta, aftertime, beforetime, epsg);
    ordercls = 'ORDER BY grdmodTime DESC';
