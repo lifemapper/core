@@ -321,7 +321,7 @@ class ParameterSweepConfiguration(object):
         for occ_config in self.occurrence_sets:
             # occ_config = (process_type, occ_set_id, url_fn_or_key, out_file,
             #                big_out_file, max_points, metadata)
-            (process_type, _, url_fn_or_key, _, _, _, _) = occ_config
+            (process_type, _, url_fn_or_key, _, _, _, _, _) = occ_config
             # If GBIF or user, add the input csv file
             if process_type in [ProcessType.GBIF_TAXA_OCCURRENCE,
                                 ProcessType.USER_TAXA_OCCURRENCE]:
