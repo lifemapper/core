@@ -445,8 +445,9 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     mtx_str = StringIO()
                     # TODO: Determine if we need to mung this data
                     
+                    # We can only do geojson for 2D currently
                     mtx_2d = Matrix(
-                        mtx_obj.data[:,:,0,0],
+                        mtx_obj.data[:,:,0],
                         headers={'0' : mtx_obj.getHeaders(axis='0'),
                                  '1': mtx_obj.getHeaders(axis='1')})
                     
