@@ -161,7 +161,7 @@ def makeEml(my_obj):
             attrib={'id' : 'sdmroject_{}'.format(my_obj.getId())})
         # Contact
         SubElement(
-            SubElement(dsEl, 'contact'),
+            SubElement(ds_el, 'contact'),
             'organizationName', value='Lifemapper')
         ds_el.append(_create_spatial_raster(my_obj))
     else:
