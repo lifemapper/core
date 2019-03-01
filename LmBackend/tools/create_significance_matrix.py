@@ -67,7 +67,11 @@ if __name__ == '__main__':
     sig_values = ptest.correct_p_values(
         p_values, false_discovery_rate=args.fdr)
     
-    concat_axis = obs.data.ndim
+    # If the last dimension has only one value, use it as the concat axis
+    if obs.data.shape[-1] == 1:
+        concat_axis = obs.data.ndim - 1
+    else:
+        concat_axis = obs.data.ndim
     out_matrix = Matrix.concatenate(
         [obs, p_values, sig_values], axis=concat_axis)
     
