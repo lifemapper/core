@@ -363,7 +363,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
     except:
         gs_name = 'Gridset {}'.format(gridset.getId())
         
-    shapegrid = gridset.shapegrid
+    shapegrid = gridset.getShapegrid()
     matrices = gridset.getMatrices()
 
     # Create the zip file
@@ -444,8 +444,15 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                         DYN_PACKAGE_DIR, '{}.js'.format(mtx_name))
                     mtx_str = StringIO()
                     # TODO: Determine if we need to mung this data
+                    
+                    mtx_2d = Matrix(
+                        mtx_obj.data[:,:,0,0],
+                        headers={'0' : mtx_obj.getHeaders(axis='0'),
+                                 '1': mtx_obj.getHeaders(axis='1')})
+                    
                     geoJsonify_flo(
-                        mtx_str, shapegrid.getDLocation(), matrix=mtx_obj,
+                        mtx_str, shapegrid.getDLocation(),
+                        matrix=mtx_2d,
                         mtxJoinAttrib=0, ident=0)
                     mtx_str.seek(0)
                     
