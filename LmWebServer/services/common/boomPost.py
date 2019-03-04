@@ -46,8 +46,8 @@ class BoomPoster(object):
         self.userId = userId
         self.config = ConfigParser()
         self.config.add_section(SERVER_BOOM_HEADING)
-        # Set to False. Change if we should
-        self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, False)
+        # Set to True, this creates matrix columns for solr and for status query
+        self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
         self.config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, userId)
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER_EMAIL, userEmail)
@@ -219,8 +219,6 @@ class BoomPoster(object):
 
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, should_compute)
-        if should_compute:
-            self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
 
     # ................................
     def _process_occurrence_sets(self, occ_json):
@@ -310,8 +308,6 @@ class BoomPoster(object):
 
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, should_compute)
-        if should_compute:
-            self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
     
     # ................................
     def _process_scenario_package(self, scenario_json):
