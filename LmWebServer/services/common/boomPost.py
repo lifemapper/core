@@ -46,8 +46,6 @@ class BoomPoster(object):
         self.userId = userId
         self.config = ConfigParser()
         self.config.add_section(SERVER_BOOM_HEADING)
-        # Set to True, this creates matrix columns for solr and for status query
-        self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
         self.config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, userId)
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER_EMAIL, userEmail)
@@ -158,8 +156,6 @@ class BoomPoster(object):
             * Shapegrid map units?
             * Expand to other intersect methods
         """
-        #self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
-        
         # Process shapegrid
         shapegrid_json = global_pam_json[APIPostKeys.SHAPEGRID]
         shapegrid_bbox = [
