@@ -172,7 +172,7 @@ class ParameterSweepConfiguration(object):
         add_me = True  # Should we add this occurrence set config
         # Check if occurrence set is already in the config
         for occ_info in self.occurrence_sets:
-            if occ_set_id == occ_info[2]:
+            if occ_set_id == occ_info[1]:
                 add_me = False
         if add_me:
             self.occurrence_sets.append(
