@@ -43,7 +43,7 @@ class DaBoom(Daemon):
     Class to run the Boomer as a Daemon process
     """
     # .............................
-    def __init__(self, pidfile, configFname, assemblePams=True, priority=None):
+    def __init__(self, pidfile, configFname, priority=None):
         # Logfile
         secs = time.time()
         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
@@ -51,7 +51,7 @@ class DaBoom(Daemon):
         log = ScriptLogger(logname, level=logging.INFO)
 
         Daemon.__init__(self, pidfile, log=log)
-        self.boomer = Boomer(configFname, assemblePams=assemblePams, log=log)
+        self.boomer = Boomer(configFname, log=log)
 
     # .............................
     def initialize(self):

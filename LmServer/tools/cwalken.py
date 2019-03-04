@@ -66,9 +66,9 @@ from LmServer.tools.occwoc import (UserWoC, ExistingWoC)
 class ChristopherWalken(LMObject):
     """
     Class to ChristopherWalken with a species iterator through a sequence of 
-    species data creating a Spud for each species.  Creates and catalogs objects 
-    (OccurrenceSets, SMDModels, SDMProjections, and MatrixColumns and MFChains 
-     for their calculation) in the database .
+    species data creating a Spud (set of computations) for each species.  
+    Creates and catalogs objects (OccurrenceSets, SMDModels, SDMProjections, 
+    and MatrixColumns and MFChains for their calculation) in the database .
     """
     # .............................................................................
     # Constructor
@@ -136,7 +136,6 @@ class ChristopherWalken(LMObject):
          self.model_mask_base,
          self.boomGridset, 
          self.intersectParams, 
-         self.assemblePams, 
          self.compute_pam_stats, 
          self.compute_mcpa, 
          self.num_permutations) = self._getConfiguredObjects()
@@ -147,14 +146,12 @@ class ChristopherWalken(LMObject):
         except:
             pass
         # One Global PAM for each scenario
-        # TODO: Allow assemblePams on RollingPAM?
-        if self.assemblePams:
-            for alg in self.algs:
-                for prjscen in self.prjScens:
-                    pamcode = '{}_{}'.format(prjscen.code, alg.code)
-                    self.globalPAMs[pamcode] = self.boomGridset.getPAMForCodes(
-                        prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode,
-                        alg.code)
+        for alg in self.algs:
+            for prjscen in self.prjScens:
+                pamcode = '{}_{}'.format(prjscen.code, alg.code)
+                self.globalPAMs[pamcode] = self.boomGridset.getPAMForCodes(
+                    prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode,
+                    alg.code)
 
     # ...............................................
     def moveToStart(self):
@@ -565,7 +562,6 @@ class ChristopherWalken(LMObject):
         # Global PAM inputs
         (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                               archiveName, epsg)
-        assemblePams = self._getBoomOrDefault(BoomKeys.ASSEMBLE_PAMS, isBool=True)
         compute_pam_stats = self._getBoomOrDefault(BoomKeys.COMPUTE_PAM_STATS, 
                                                    isBool=True)
         compute_mcpa = self._getBoomOrDefault(BoomKeys.COMPUTE_MCPA, 
@@ -575,7 +571,7 @@ class ChristopherWalken(LMObject):
         
         return (userId, archiveName, archivePriority, boompath, weaponOfChoice, expDate,
                 epsg, minPoints, algorithms, mdlScen, prjScens, model_mask_base, 
-                boomGridset, intersectParams, assemblePams, compute_pam_stats, 
+                boomGridset, intersectParams, compute_pam_stats, 
                 compute_mcpa, num_permutations)  
 
     # ...............................
@@ -634,12 +630,11 @@ class ChristopherWalken(LMObject):
                             occ, alg, prj_scen, dt.gmt().mjd)
                         if prj is not None:
                             prjs.append(prj)
-                            if self.assemblePams:
-                                mtx = self.globalPAMs[pamcode]
-                                mtxcol = self._findOrInsertIntersect(
-                                    prj, mtx, currtime)
-                                if mtxcol is not None:
-                                    mtxcols.append(mtxcol)
+                            mtx = self.globalPAMs[pamcode]
+                            mtxcol = self._findOrInsertIntersect(
+                                prj, mtx, currtime)
+                            if mtxcol is not None:
+                                mtxcols.append(mtxcol)
                     doSDM = self._doComputeSDM(occ, prjs, mtxcols)
             
                     if doSDM:
@@ -811,7 +806,7 @@ class ChristopherWalken(LMObject):
                            intersectParams=self.intersectParams, 
                            squid=prj.squid, ident=prj.ident,
                            processType=ptype, metadata={}, matrixColumnId=None, 
-                           postToSolr=self.assemblePams,
+                           postToSolr=True,
                            status=JobStatus.GENERAL, statusModTime=currtime)
             mtxcol = self._scribe.findOrInsertMatrixColumn(tmpCol)
             if mtxcol is not None:

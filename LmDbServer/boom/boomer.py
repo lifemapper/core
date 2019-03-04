@@ -64,7 +64,7 @@ class Boomer(LMObject):
         self.configFname = configFname
         self._successFname = successFname
         
-        self.do_intersect = None
+#         self.do_intersect = None
         self.do_pam_stats = None 
         self.do_mcpa = None 
         # Send Database connection
@@ -128,7 +128,6 @@ class Boomer(LMObject):
         if self.gridsetId is None:
             self.log.warning('Missing christopher.boomGridset id!!')
         
-        self.do_intersect = self.christopher.assemblePams
         self.do_pam_stats = self.christopher.compute_pam_stats 
         self.do_mcpa = self.christopher.compute_mcpa 
         self.priority = self.christopher.priority
@@ -139,12 +138,12 @@ class Boomer(LMObject):
                        .format(self.christopher.currRecnum))
         self.keepWalken = True
         
-        self.squidNames = []
         self.pav_index_filenames = []
         # master MF chain
         self.masterPotatoHead = None
-        self.potatoBushel = None
-        self.rotatePotatoes()
+        self.log.info('Create first potato')
+        self.potatoBushel = self._createBushelMakeflow()
+        self.squidNames = []
          
     # .............................
     def processOneSpecies(self):
@@ -185,29 +184,11 @@ class Boomer(LMObject):
     # .............................
     def _writeBushel(self):
         """
-        Todo:
-            * Aimee: Add call to boom_collate here probably.  We should
-                probably only call it if there is only one bushel as everything
-                will need to be done before the multi-species computations and
-                run.  I suppose we could punt and add the rules on complete if
-                the config says to do so, but that will create incorrect
-                results if this is for a rolling pam.  Maybe that isn't a big
-                deal...
-            
-            Code should be something like this:
-            
-            collate_rules = _get_multispecies_rules(self, gridset,
-                self.potatoBushel.getRelativeDirectory(), do_pam_stats, do_mcpa,
-                num_permutations=DEFAULT_NUM_PERMUTATIONS,
-                group_size=DEFAULT_RANDOM_GROUP_SIZE,
-                sdm_dependencies=self.pav_index_filenames, log=None)
-            # Add rules to bushel workflow
-            self.potatoBushel.addCommands(collate_rules)
         """
         # Write all spud commands in existing bushel MFChain
         if self.potatoBushel:
             if self.potatoBushel.jobs:
-                # Only collate if assemblePams and finished with all SDMs
+                # Only collate if do_pam_stats and finished with all SDMs
                 if self.do_pam_stats and self.christopher.complete:
                     # Add multispecies rules requested in boom config file
                     collate_rules = self._get_multispecies_rules()
@@ -234,13 +215,12 @@ class Boomer(LMObject):
         if self.potatoBushel:
             self._writeBushel()
         
-        # Create new bushel IFF assemblePAMs is False 
+        # Create new bushel IFF do_pam_stats is False, i.e. Rolling PAM,
         #   and there are more species to process
-        if not self.christopher.complete:
+        if not self.christopher.complete and not self.do_pam_stats:
             self.potatoBushel = self._createBushelMakeflow()
-            if self.christopher.assemblePams:
-                self.log.info('Create new potatoes')
-                self.squidNames = []
+            self.log.info('Create new potato')
+            self.squidNames = []
             
     # .............................
     def close(self):

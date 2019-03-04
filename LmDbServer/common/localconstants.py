@@ -28,7 +28,6 @@ from LmCommon.common.lmconstants import SERVER_PIPELINE_HEADING, BoomKeys
 # Data Archive Pipeline
 WORKER_JOB_LIMIT = Config().getint(SERVER_PIPELINE_HEADING, 
                                    'WORKER_JOB_LIMIT')
-ASSEMBLE_PAMS = Config().getboolean(SERVER_PIPELINE_HEADING, BoomKeys.ASSEMBLE_PAMS)
 GRID_NAME = Config().get(SERVER_PIPELINE_HEADING, BoomKeys.GRID_NAME)
 GRID_CELLSIZE = Config().get(SERVER_PIPELINE_HEADING, BoomKeys.GRID_CELL_SIZE)
 GRID_NUM_SIDES = Config().getint(SERVER_PIPELINE_HEADING, BoomKeys.GRID_NUM_SIDES)

@@ -136,7 +136,6 @@ class BOOMFiller(LMObject):
          self.occSep,   
          self.minpoints,
          self.algorithms,
-         self.assemblePams,
          self.gridbbox,
          self.cellsides,
          self.cellsize,
@@ -435,8 +434,6 @@ class BOOMFiller(LMObject):
         bghypFnames = self._getBioGeoHypothesesLayerFilenames(biogeoName, usrPath)
         
         # RAD/PAM params
-        assemblePams = self._getBoomOrDefault(config, BoomKeys.ASSEMBLE_PAMS, 
-                                              isBool=False)
         compute_pam_stats = self._getBoomOrDefault(config, BoomKeys.COMPUTE_PAM_STATS, 
                                                    isBool=False)
         compute_mcpa = self._getBoomOrDefault(config, BoomKeys.COMPUTE_MCPA, 
@@ -473,7 +470,7 @@ class BOOMFiller(LMObject):
                 modelScenCode, prjScenCodeList, doMapBaseline, dataSource, 
                 occIdFname, taxon_name_filename, taxon_id_filename, 
                 occFname, occSep, minpoints, algs, 
-                assemblePams, gridbbox, cellsides, cellsize, gridname, 
+                gridbbox, cellsides, cellsize, gridname, 
                 intersectParams, maskAlg, treeFname, bghypFnames, 
                 compute_pam_stats, compute_mcpa, num_permutations)
       
@@ -577,8 +574,6 @@ class BOOMFiller(LMObject):
             config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), str(v))
 
         # Multi-species flags and params
-        config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, 
-                   str(self.assemblePams))
         config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, 
                    str(self.compute_pam_stats))
         config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, 
