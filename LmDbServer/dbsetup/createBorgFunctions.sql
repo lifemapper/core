@@ -1203,6 +1203,69 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMFProcess(usr varchar,
+                                                       grdid int,
+                                                       meta varchar, 
+                                                       aftertime double precision,
+                                                       beforetime double precision)
+   RETURNS varchar AS
+$$
+DECLARE
+   wherecls varchar;
+BEGIN
+   wherecls = ' WHERE userid = ' || quote_literal(usr);
+
+   -- filter by Gridset
+   IF grdid is not null THEN
+      wherecls = wherecls || ' AND  gridsetId =  ' || grdid;
+   END IF;
+
+   -- Metadata
+   IF meta is not null THEN
+      wherecls = wherecls || ' AND metadata like  ' || quote_literal(meta);
+   END IF;
+
+   -- filter by mfprocess status modified after given time
+   IF aftertime is not null THEN
+      wherecls = wherecls || ' AND statusModTime >=  ' || quote_literal(aftertime);
+   END IF;
+   
+   -- filter by mfprocess status modified before given time
+   IF beforetime is not null THEN
+      wherecls = wherecls || ' AND statusModTime <=  ' || quote_literal(beforetime);
+   END IF;
+
+   return wherecls;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countMFProcess(usr varchar,
+                                                   grdid int,
+                                                   meta varchar, 
+                                                   aftertime double precision,
+                                                   beforetime double precision)
+   RETURNS int AS
+$$
+DECLARE
+   num int;
+   cmd varchar;
+   wherecls varchar;
+BEGIN
+   cmd = 'SELECT count(*) FROM lm_v3.lm_gridset ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterMFProcess(usr, grdid, 
+                                          meta, aftertime, beforetime);
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   EXECUTE cmd INTO num;
+   RETURN num;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+
+
+-- ----------------------------------------------------------------------------
 -- Matrix
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrix(mtxid int,

@@ -58,13 +58,9 @@ select * from lm_deleteGridset(124);
 delete  from layer where layerid in 
    (select layerid from sdmproject where  userid = 'kubi' and statusmodtime < 58535);
 
-
-
-
-
     
 -- ----------------------------------------------------------------------------
--- Add indices and constraints after clearing data
+-- Add back indices and constraints after clearing data
 
 -- SDMProject 
 ALTER TABLE lm_v3.SDMProject ADD CONSTRAINT sdmproject_occurrencesetid_fkey 

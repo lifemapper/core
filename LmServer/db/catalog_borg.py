@@ -2346,6 +2346,25 @@ class Borg(DbPostgresql):
         mfchain = self._createMFChain(row, idxs)
         return mfchain
 
+# .............................................................................
+    def countMFChains(self, userId, gridsetId, metastring, afterTime, beforeTime):
+        """
+        @summary: Return the number of scenarios fitting the given filter conditions
+        @param userId: filter by LMUser 
+        @param gridsetId: filter by a Gridset
+        @param metastring: find gridsets containing this word in the metadata
+        @param afterTime: filter by modified at or after this time
+        @param beforeTime: filter by modified at or before this time
+        @return: count of MFChains fitting the given filter conditions
+        """
+        metamatch = None
+        if metastring is not None:
+            metamatch = '%{}%'.format(metastring)
+        row, idxs = self.executeSelectOneFunction('lm_countMFProcess', userId, 
+                                                  gridsetId, metamatch, 
+                                                  afterTime, beforeTime)
+        return self._getCount(row)
+
 # ...............................................
     def findMFChains(self, count, userId, oldStatus, newStatus):
         """

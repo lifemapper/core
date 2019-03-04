@@ -933,6 +933,16 @@ class BorgScribe(LMObject):
         mfchainList = self._borg.findMFChains(count, userId, 
                                             JobStatus.INITIALIZE, JobStatus.PULL_REQUESTED)
         return mfchainList
+    
+# .............................................................................
+    def countMFChains(self, userId, gridsetId, metastring, afterTime, beforeTime):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::countMFChains()
+        """
+        count = self._borg.countMFChain(userId, gridsetId, metastring, 
+                                        afterTime, beforeTime)
+        return count
+
 
 # ...............................................
     def updateObject(self, obj):
