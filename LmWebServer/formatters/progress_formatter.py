@@ -10,75 +10,86 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
 
 # .............................................................................
-def format_gridset(gridset):
+def format_gridset(gridset, detail=False):
     """Returns a dictionary of progress information for a gridset
 
     Args:
         gridset (:obj: `Gridset`): The gridset object to get the progress
     """
-    complete_mtxs = 0
-    error_mtxs = 0
-    running_mtxs = 0
-    waiting_mtxs = 0
-
-    # Gridset object has matrix objects so we can count status
-    for mtx in gridset.getMatrices():
-        if mtx.status == JobStatus.GENERAL:
-            waiting_mtxs += 1
-        elif mtx.status < JobStatus.COMPLETE:
-            running_mtxs += 1
-        elif mtx.status == JobStatus.COMPLETE:
-            complete_mtxs += 1
-        elif mtx.status >= JobStatus.GENERAL_ERROR:
-            error_mtxs += 1
-
-    # Use scribe to get counts for projections
     scribe = BorgScribe(LmPublicLogger())
     scribe.openConnections()
+    
+    if detail:
+        complete_mtxs = 0
+        error_mtxs = 0
+        running_mtxs = 0
+        waiting_mtxs = 0
 
-    complete_prjs = scribe.countSDMProjects(
-        userId=gridset.getUserId(), afterStatus=JobStatus.COMPLETE - 1,
-        beforeStatus=JobStatus.COMPLETE + 1, gridsetId=gridset.getId()) 
-    error_prjs = scribe.countSDMProjects(
-        userId=gridset.getUserId(), afterStatus=JobStatus.GENERAL_ERROR - 1,
-        gridsetId=gridset.getId())
-    running_prjs = scribe.countSDMProjects(
-        userId=gridset.getUserId(), afterStatus=JobStatus.GENERAL + 1,
-        beforeStatus=JobStatus.COMPLETE - 1, gridsetId=gridset.getId())
-    waiting_prjs = scribe.countSDMProjects(
-        userId=gridset.getUserId(), beforeStatus=JobStatus.GENERAL + 1,
-        gridsetId=gridset.getId())
-
-    total_prjs = complete_prjs + error_prjs + running_prjs + waiting_prjs
-
-    scribe.closeConnections()
-    
-    # Initialize in case there are zero prj or mtx
-    mtx_percent = 1.0
-    prj_percent = 1.0
-    
-    if len(gridset.getMatrices()) > 0:
-        mtx_percent = 1.0 * complete_mtxs / len(gridset.getMatrices())
-    if total_prjs > 0:
-        prj_percent = 1.0 * complete_prjs / total_prjs
-    
-    progress = 0.5 * (mtx_percent + prj_percent)
-    
-    progress_dict = {
-        'matrices' : {
-            'complete' : complete_mtxs,
-            'error' : error_mtxs,
-            'running' : running_mtxs,
-            'waiting' : waiting_mtxs
-        },
-        'progress' : progress,
-        'projections' : {
-            'complete' : complete_prjs,
-            'error' : error_prjs,
-            'running' : running_prjs,
-            'waiting' : waiting_prjs
+        # Gridset object has matrix objects so we can count status
+        for mtx in gridset.getMatrices():
+            if mtx.status == JobStatus.GENERAL:
+                waiting_mtxs += 1
+            elif mtx.status < JobStatus.COMPLETE:
+                running_mtxs += 1
+            elif mtx.status == JobStatus.COMPLETE:
+                complete_mtxs += 1
+            elif mtx.status >= JobStatus.GENERAL_ERROR:
+                error_mtxs += 1
+        
+        # Use scribe to get counts for projections
+        
+        complete_prjs = scribe.countSDMProjects(
+            userId=gridset.getUserId(), afterStatus=JobStatus.COMPLETE - 1,
+            beforeStatus=JobStatus.COMPLETE + 1, gridsetId=gridset.getId()) 
+        error_prjs = scribe.countSDMProjects(
+            userId=gridset.getUserId(), afterStatus=JobStatus.GENERAL_ERROR - 1,
+            gridsetId=gridset.getId())
+        running_prjs = scribe.countSDMProjects(
+            userId=gridset.getUserId(), afterStatus=JobStatus.GENERAL + 1,
+            beforeStatus=JobStatus.COMPLETE - 1, gridsetId=gridset.getId())
+        waiting_prjs = scribe.countSDMProjects(
+            userId=gridset.getUserId(), beforeStatus=JobStatus.GENERAL + 1,
+            gridsetId=gridset.getId())
+        
+        total_prjs = complete_prjs + error_prjs + running_prjs + waiting_prjs
+        
+        scribe.closeConnections()
+        
+        # Initialize in case there are zero prj or mtx
+        mtx_percent = 1.0
+        prj_percent = 1.0
+        
+        if len(gridset.getMatrices()) > 0:
+            mtx_percent = 1.0 * complete_mtxs / len(gridset.getMatrices())
+        if total_prjs > 0:
+            prj_percent = 1.0 * complete_prjs / total_prjs
+        
+        progress = 0.5 * (mtx_percent + prj_percent)
+        
+        progress_dict = {
+            'matrices' : {
+                'complete' : complete_mtxs,
+                'error' : error_mtxs,
+                'running' : running_mtxs,
+                'waiting' : waiting_mtxs
+            },
+            'progress' : progress,
+            'projections' : {
+                'complete' : complete_prjs,
+                'error' : error_prjs,
+                'running' : running_prjs,
+                'waiting' : waiting_prjs
+            }
         }
-    }
+    else:
+        mf_count = scribe.countMFChains(gridset.getUserId(), gridset.getId())
+        if mf_count == 0:
+            progress = 1.0
+        else:
+            progress = 0.0
+        progress_dict = {
+            'progress' : progress
+        }
     return progress_dict
     
 # .............................................................................
