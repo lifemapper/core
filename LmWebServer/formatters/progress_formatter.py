@@ -82,11 +82,23 @@ def format_gridset(gridset, detail=False):
             }
         }
     else:
-        mf_count = scribe.countMFChains(gridset.getUserId(), gridset.getId())
-        if mf_count < 1:
+        gs_mfs = scribe.listMFChains(
+            0, 100, gridsetId=gridset.getId(), atom=False)
+        
+        mfs_left = 0
+        mfs_running = 0
+        for mf in gs_mfs:
+            if mf.status < JobStatus.GENERAL_ERROR:
+                mfs_left += 1
+            if mf.status > JobStatus.INITIALIZE:
+                # Add .5 to say it is half done
+                mfs_running += 0.5
+        
+        if mfs_left == 0:
             progress = 1.0
         else:
-            progress = 0.0
+            progress = float(mfs_running) / mfs_left
+
         progress_dict = {
             'progress' : progress
         }
