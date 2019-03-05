@@ -935,11 +935,12 @@ class BorgScribe(LMObject):
         return mfchainList
     
 # .............................................................................
-    def countMFChains(self, userId, gridsetId, metastring, afterTime, beforeTime):
+    def countMFChains(self, userId, gridsetId=None, metastring=None,
+                      afterTime=None, beforeTime=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::countMFChains()
         """
-        count = self._borg.countMFChain(userId, gridsetId, metastring, 
+        count = self._borg.countMFChains(userId, gridsetId, metastring, 
                                         afterTime, beforeTime)
         return count
 
