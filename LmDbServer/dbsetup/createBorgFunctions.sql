@@ -1252,7 +1252,7 @@ DECLARE
    cmd varchar;
    wherecls varchar;
 BEGIN
-   cmd = 'SELECT count(*) FROM lm_v3.lm_gridset ';
+   cmd = 'SELECT count(*) FROM lm_v3.mfprocess ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMFProcess(usr, grdid, 
                                           meta, aftertime, beforetime);
    cmd := cmd || wherecls;
