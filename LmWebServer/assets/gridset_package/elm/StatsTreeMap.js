@@ -12315,6 +12315,310 @@ var _elm_lang$svg$Svg_Attributes$accumulate = _elm_lang$virtual_dom$VirtualDom$a
 var _elm_lang$svg$Svg_Attributes$accelerate = _elm_lang$virtual_dom$VirtualDom$attribute('accelerate');
 var _elm_lang$svg$Svg_Attributes$accentHeight = _elm_lang$virtual_dom$VirtualDom$attribute('accent-height');
 
+var _myrho$elm_round$Round$funNum = F3(
+	function (fun, s, fl) {
+		return A2(
+			_elm_lang$core$Maybe$withDefault,
+			0 / 0,
+			_elm_lang$core$Result$toMaybe(
+				_elm_lang$core$String$toFloat(
+					A2(fun, s, fl))));
+	});
+var _myrho$elm_round$Round$increaseNum = function (_p0) {
+	var _p1 = _p0;
+	var _p4 = _p1._1;
+	var _p3 = _p1._0;
+	if (_elm_lang$core$Native_Utils.eq(
+		_p3,
+		_elm_lang$core$Native_Utils.chr('9'))) {
+		var _p2 = _elm_lang$core$String$uncons(_p4);
+		if (_p2.ctor === 'Nothing') {
+			return '01';
+		} else {
+			return A2(
+				_elm_lang$core$String$cons,
+				_elm_lang$core$Native_Utils.chr('0'),
+				_myrho$elm_round$Round$increaseNum(_p2._0));
+		}
+	} else {
+		var c = _elm_lang$core$Char$toCode(_p3);
+		return ((_elm_lang$core$Native_Utils.cmp(c, 48) > -1) && (_elm_lang$core$Native_Utils.cmp(c, 57) < 0)) ? A2(
+			_elm_lang$core$String$cons,
+			_elm_lang$core$Char$fromCode(c + 1),
+			_p4) : '0';
+	}
+};
+var _myrho$elm_round$Round$addSign = F2(
+	function (signed, str) {
+		var isNotZero = A2(
+			_elm_lang$core$List$any,
+			function (c) {
+				return (!_elm_lang$core$Native_Utils.eq(
+					c,
+					_elm_lang$core$Native_Utils.chr('0'))) && (!_elm_lang$core$Native_Utils.eq(
+					c,
+					_elm_lang$core$Native_Utils.chr('.')));
+			},
+			_elm_lang$core$String$toList(str));
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			(signed && isNotZero) ? '-' : '',
+			str);
+	});
+var _myrho$elm_round$Round$splitComma = function (str) {
+	var _p5 = A2(_elm_lang$core$String$split, '.', str);
+	if (_p5.ctor === '::') {
+		if (_p5._1.ctor === '::') {
+			return {ctor: '_Tuple2', _0: _p5._0, _1: _p5._1._0};
+		} else {
+			return {ctor: '_Tuple2', _0: _p5._0, _1: '0'};
+		}
+	} else {
+		return {ctor: '_Tuple2', _0: '0', _1: '0'};
+	}
+};
+var _myrho$elm_round$Round$toDecimal = function (fl) {
+	var _p6 = A2(
+		_elm_lang$core$String$split,
+		'e',
+		_elm_lang$core$Basics$toString(
+			_elm_lang$core$Basics$abs(fl)));
+	if (_p6.ctor === '::') {
+		if (_p6._1.ctor === '::') {
+			var _p10 = _p6._1._0;
+			var _p7 = _myrho$elm_round$Round$splitComma(_p6._0);
+			var before = _p7._0;
+			var after = _p7._1;
+			var total = A2(_elm_lang$core$Basics_ops['++'], before, after);
+			var e = A2(
+				_elm_lang$core$Maybe$withDefault,
+				0,
+				_elm_lang$core$Result$toMaybe(
+					_elm_lang$core$String$toInt(
+						A2(_elm_lang$core$String$startsWith, '+', _p10) ? A2(_elm_lang$core$String$dropLeft, 1, _p10) : _p10)));
+			var zeroed = (_elm_lang$core$Native_Utils.cmp(e, 0) < 0) ? A2(
+				_elm_lang$core$Maybe$withDefault,
+				'0',
+				A2(
+					_elm_lang$core$Maybe$map,
+					function (_p8) {
+						var _p9 = _p8;
+						return A2(
+							_elm_lang$core$Basics_ops['++'],
+							_p9._0,
+							A2(_elm_lang$core$Basics_ops['++'], '.', _p9._1));
+					},
+					A2(
+						_elm_lang$core$Maybe$map,
+						_elm_lang$core$Tuple$mapFirst(_elm_lang$core$String$fromChar),
+						_elm_lang$core$String$uncons(
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								A2(
+									_elm_lang$core$String$repeat,
+									_elm_lang$core$Basics$abs(e),
+									'0'),
+								total))))) : A3(
+				_elm_lang$core$String$padRight,
+				e + 1,
+				_elm_lang$core$Native_Utils.chr('0'),
+				total);
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				(_elm_lang$core$Native_Utils.cmp(fl, 0) < 0) ? '-' : '',
+				zeroed);
+		} else {
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				(_elm_lang$core$Native_Utils.cmp(fl, 0) < 0) ? '-' : '',
+				_p6._0);
+		}
+	} else {
+		return '';
+	}
+};
+var _myrho$elm_round$Round$roundFun = F3(
+	function (functor, s, fl) {
+		if (_elm_lang$core$Basics$isInfinite(fl) || _elm_lang$core$Basics$isNaN(fl)) {
+			return _elm_lang$core$Basics$toString(fl);
+		} else {
+			var signed = _elm_lang$core$Native_Utils.cmp(fl, 0) < 0;
+			var _p11 = _myrho$elm_round$Round$splitComma(
+				_myrho$elm_round$Round$toDecimal(
+					_elm_lang$core$Basics$abs(fl)));
+			var before = _p11._0;
+			var after = _p11._1;
+			var r = _elm_lang$core$String$length(before) + s;
+			var roundDigitIndex = A2(_elm_lang$core$Basics$max, 1, r);
+			var normalized = A2(
+				_elm_lang$core$Basics_ops['++'],
+				A2(
+					_elm_lang$core$String$repeat,
+					_elm_lang$core$Basics$negate(r) + 1,
+					'0'),
+				A3(
+					_elm_lang$core$String$padRight,
+					r,
+					_elm_lang$core$Native_Utils.chr('0'),
+					A2(_elm_lang$core$Basics_ops['++'], before, after)));
+			var totalLen = _elm_lang$core$String$length(normalized);
+			var increase = A2(
+				functor,
+				signed,
+				A3(_elm_lang$core$String$slice, roundDigitIndex, totalLen, normalized));
+			var remains = A3(_elm_lang$core$String$slice, 0, roundDigitIndex, normalized);
+			var num = increase ? _elm_lang$core$String$reverse(
+				A2(
+					_elm_lang$core$Maybe$withDefault,
+					'1',
+					A2(
+						_elm_lang$core$Maybe$map,
+						_myrho$elm_round$Round$increaseNum,
+						_elm_lang$core$String$uncons(
+							_elm_lang$core$String$reverse(remains))))) : remains;
+			var numLen = _elm_lang$core$String$length(num);
+			var numZeroed = _elm_lang$core$Native_Utils.eq(num, '0') ? num : ((_elm_lang$core$Native_Utils.cmp(s, 0) < 1) ? A2(
+				F2(
+					function (x, y) {
+						return A2(_elm_lang$core$Basics_ops['++'], x, y);
+					}),
+				num,
+				A2(
+					_elm_lang$core$String$repeat,
+					_elm_lang$core$Basics$abs(s),
+					'0')) : ((_elm_lang$core$Native_Utils.cmp(
+				s,
+				_elm_lang$core$String$length(after)) < 0) ? A2(
+				_elm_lang$core$Basics_ops['++'],
+				A3(_elm_lang$core$String$slice, 0, numLen - s, num),
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					'.',
+					A3(_elm_lang$core$String$slice, numLen - s, numLen, num))) : A2(
+				F2(
+					function (x, y) {
+						return A2(_elm_lang$core$Basics_ops['++'], x, y);
+					}),
+				A2(_elm_lang$core$Basics_ops['++'], before, '.'),
+				A3(
+					_elm_lang$core$String$padRight,
+					s,
+					_elm_lang$core$Native_Utils.chr('0'),
+					after))));
+			return A2(_myrho$elm_round$Round$addSign, signed, numZeroed);
+		}
+	});
+var _myrho$elm_round$Round$round = _myrho$elm_round$Round$roundFun(
+	F2(
+		function (signed, str) {
+			var _p12 = _elm_lang$core$String$uncons(str);
+			if (_p12.ctor === 'Nothing') {
+				return false;
+			} else {
+				if (_p12._0._0.valueOf() === '5') {
+					if (_p12._0._1 === '') {
+						return !signed;
+					} else {
+						return true;
+					}
+				} else {
+					return function ($int) {
+						return ((_elm_lang$core$Native_Utils.cmp($int, 53) > 0) && signed) || ((_elm_lang$core$Native_Utils.cmp($int, 53) > -1) && (!signed));
+					}(
+						_elm_lang$core$Char$toCode(_p12._0._0));
+				}
+			}
+		}));
+var _myrho$elm_round$Round$roundNum = _myrho$elm_round$Round$funNum(_myrho$elm_round$Round$round);
+var _myrho$elm_round$Round$ceiling = _myrho$elm_round$Round$roundFun(
+	F2(
+		function (signed, str) {
+			var _p13 = _elm_lang$core$String$uncons(str);
+			if (_p13.ctor === 'Nothing') {
+				return false;
+			} else {
+				if ((_p13._0.ctor === '_Tuple2') && (_p13._0._0.valueOf() === '0')) {
+					return A2(
+						F2(
+							function (x, y) {
+								return x && y;
+							}),
+						!signed,
+						A2(
+							_elm_lang$core$List$any,
+							F2(
+								function (x, y) {
+									return !_elm_lang$core$Native_Utils.eq(x, y);
+								})(
+								_elm_lang$core$Native_Utils.chr('0')),
+							_elm_lang$core$String$toList(_p13._0._1)));
+				} else {
+					return !signed;
+				}
+			}
+		}));
+var _myrho$elm_round$Round$ceilingNum = _myrho$elm_round$Round$funNum(_myrho$elm_round$Round$ceiling);
+var _myrho$elm_round$Round$floor = _myrho$elm_round$Round$roundFun(
+	F2(
+		function (signed, str) {
+			var _p14 = _elm_lang$core$String$uncons(str);
+			if (_p14.ctor === 'Nothing') {
+				return false;
+			} else {
+				if ((_p14._0.ctor === '_Tuple2') && (_p14._0._0.valueOf() === '0')) {
+					return A2(
+						F2(
+							function (x, y) {
+								return x && y;
+							}),
+						signed,
+						A2(
+							_elm_lang$core$List$any,
+							F2(
+								function (x, y) {
+									return !_elm_lang$core$Native_Utils.eq(x, y);
+								})(
+								_elm_lang$core$Native_Utils.chr('0')),
+							_elm_lang$core$String$toList(_p14._0._1)));
+				} else {
+					return signed;
+				}
+			}
+		}));
+var _myrho$elm_round$Round$floorCom = F2(
+	function (s, fl) {
+		return (_elm_lang$core$Native_Utils.cmp(fl, 0) < 0) ? A2(_myrho$elm_round$Round$ceiling, s, fl) : A2(_myrho$elm_round$Round$floor, s, fl);
+	});
+var _myrho$elm_round$Round$floorNumCom = _myrho$elm_round$Round$funNum(_myrho$elm_round$Round$floorCom);
+var _myrho$elm_round$Round$ceilingCom = F2(
+	function (s, fl) {
+		return (_elm_lang$core$Native_Utils.cmp(fl, 0) < 0) ? A2(_myrho$elm_round$Round$floor, s, fl) : A2(_myrho$elm_round$Round$ceiling, s, fl);
+	});
+var _myrho$elm_round$Round$ceilingNumCom = _myrho$elm_round$Round$funNum(_myrho$elm_round$Round$ceilingCom);
+var _myrho$elm_round$Round$floorNum = _myrho$elm_round$Round$funNum(_myrho$elm_round$Round$floor);
+var _myrho$elm_round$Round$roundCom = _myrho$elm_round$Round$roundFun(
+	F2(
+		function (_p15, $int) {
+			return A2(
+				F2(
+					function (x, y) {
+						return _elm_lang$core$Native_Utils.cmp(x, y) < 1;
+					}),
+				53,
+				_elm_lang$core$Char$toCode(
+					A2(
+						_elm_lang$core$Maybe$withDefault,
+						_elm_lang$core$Native_Utils.chr('0'),
+						A2(
+							_elm_lang$core$Maybe$map,
+							_elm_lang$core$Tuple$first,
+							_elm_lang$core$String$uncons($int)))));
+		}));
+var _myrho$elm_round$Round$roundNumCom = _myrho$elm_round$Round$funNum(_myrho$elm_round$Round$roundCom);
+var _myrho$elm_round$Round$truncate = function (n) {
+	return (_elm_lang$core$Native_Utils.cmp(n, 0) < 0) ? _elm_lang$core$Basics$ceiling(n) : _elm_lang$core$Basics$floor(n);
+};
+
 var _periodic$elm_csv$Csv$textData = _Bogdanp$elm_combine$Combine_Char$noneOf(
 	{
 		ctor: '::',
@@ -12525,6 +12829,88 @@ var _user$project$DecodeTree$treeDecoder = A2(
 				function (_p5) {
 					return _elm_lang$core$Json_Decode$list(_user$project$DecodeTree$treeDecoder);
 				}))));
+
+var _user$project$Helpers$formatNumber = function (v) {
+	if (_elm_lang$core$Native_Utils.eq(v, 0)) {
+		return '0';
+	} else {
+		var exponent = _elm_lang$core$Basics$floor(
+			A2(
+				_elm_lang$core$Basics$logBase,
+				10,
+				_elm_lang$core$Basics$abs(v)));
+		var mantissa = A2(
+			_myrho$elm_round$Round$round,
+			2,
+			v / _elm_lang$core$Basics$toFloat(
+				Math.pow(10, exponent)));
+		return (_elm_lang$core$Native_Utils.cmp(
+			_elm_lang$core$Basics$abs(exponent),
+			3) > 0) ? A2(
+			_elm_lang$core$Basics_ops['++'],
+			mantissa,
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				'e',
+				_elm_lang$core$Basics$toString(exponent))) : ((_elm_lang$core$Native_Utils.cmp(exponent, 0) < 0) ? A2(_myrho$elm_round$Round$round, 2 - exponent, v) : A2(_myrho$elm_round$Round$round, 2, v));
+	}
+};
+var _user$project$Helpers$removeElem = function (i) {
+	return function (_p0) {
+		return _elm_lang$core$Array$fromList(
+			A2(
+				_elm_lang$core$List$filterMap,
+				function (_p1) {
+					var _p2 = _p1;
+					return _elm_lang$core$Native_Utils.eq(_p2._0, i) ? _elm_lang$core$Maybe$Nothing : _elm_lang$core$Maybe$Just(_p2._1);
+				},
+				_elm_lang$core$Array$toIndexedList(_p0)));
+	};
+};
+var _user$project$Helpers$chain = F3(
+	function (first, second, model) {
+		var _p3 = first(model);
+		var model1 = _p3._0;
+		var cmd1 = _p3._1;
+		var _p4 = second(model1);
+		var model2 = _p4._0;
+		var cmd2 = _p4._1;
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			model2,
+			{
+				ctor: '::',
+				_0: cmd1,
+				_1: {
+					ctor: '::',
+					_0: cmd2,
+					_1: {ctor: '[]'}
+				}
+			});
+	});
+var _user$project$Helpers$unsafeFromMaybe = F2(
+	function (error, maybe) {
+		var _p5 = maybe;
+		if (_p5.ctor === 'Just') {
+			return _p5._0;
+		} else {
+			return _elm_lang$core$Native_Utils.crashCase(
+				'Helpers',
+				{
+					start: {line: 42, column: 5},
+					end: {line: 47, column: 30}
+				},
+				_p5)(error);
+		}
+	});
+var _user$project$Helpers$undefined = function (_p7) {
+	return _elm_lang$core$Native_Utils.crash(
+		'Helpers',
+		{
+			start: {line: 37, column: 5},
+			end: {line: 37, column: 16}
+		})('Undefined');
+};
 
 var _user$project$LinearTreeView$gradientDefinitions = function (_p0) {
 	return A2(
@@ -13616,10 +14002,10 @@ var _user$project$McpaModel$init = F2(
 			_0: {
 				treeInfo: treeInfo,
 				variables: variables,
-				selectedVariable: A2(
+				selectedVariable: A2(_elm_lang$core$List$member, 'Env - Adjusted R-squared', variables) ? 'Env - Adjusted R-squared' : (A2(_elm_lang$core$List$member, 'BG - Adjusted R-squared', variables) ? 'BG - Adjusted R-squared' : A2(
 					_elm_lang$core$Maybe$withDefault,
 					'',
-					_elm_lang$core$List$head(variables)),
+					_elm_lang$core$List$head(variables))),
 				flaggedNodes: {
 					ctor: '_Tuple2',
 					_0: {ctor: '[]'},
@@ -13653,11 +14039,7 @@ var _user$project$McpaModel$SelectVariable = function (a) {
 };
 
 var _user$project$McpaTreeView$viewTree = F3(
-	function (_p0, redBlue, selectData) {
-		var _p1 = _p0;
-		var _p6 = _p1.variables;
-		var _p5 = _p1.treeInfo;
-		var _p4 = _p1.showBranchLengths;
+	function (model, redBlue, selectData) {
 		var toggleBranchLengths = A2(
 			_elm_lang$html$Html$div,
 			{ctor: '[]'},
@@ -13675,7 +14057,7 @@ var _user$project$McpaTreeView$viewTree = F3(
 								_0: _elm_lang$html$Html_Attributes$type_('checkbox'),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$checked(_p4),
+									_0: _elm_lang$html$Html_Attributes$checked(model.showBranchLengths),
 									_1: {
 										ctor: '::',
 										_0: _elm_lang$html$Html_Attributes$readonly(true),
@@ -13696,7 +14078,36 @@ var _user$project$McpaTreeView$viewTree = F3(
 					}),
 				_1: {ctor: '[]'}
 			});
-		var select = function (_p2) {
+		var computeColor_ = F2(
+			function (opacity, cladeId) {
+				return A2(
+					_elm_lang$core$Maybe$withDefault,
+					'#ccc',
+					A2(
+						_elm_lang$core$Maybe$map,
+						_user$project$LinearTreeView$computeColor(opacity),
+						selectData(cladeId)));
+			});
+		var _p0 = A3(
+			_user$project$LinearTreeView$drawTree,
+			{computeColor: computeColor_, showBranchLengths: model.showBranchLengths, treeDepth: model.treeInfo.depth, totalLength: model.treeInfo.length, flaggedNodes: model.flaggedNodes, selectedNode: model.selectedNode, selectNode: _user$project$McpaModel$SelectNode, redBlue: redBlue},
+			'#ccc',
+			model.treeInfo.root);
+		var treeHeight = _p0._0;
+		var grads = _p0._1;
+		var treeSvg = _p0._2;
+		var gradDefs = _user$project$LinearTreeView$gradientDefinitions(grads);
+		var variables = function (_p1) {
+			var _p2 = _p1;
+			return A2(_elm_lang$core$Basics_ops['++'], _p2._0, _p2._1);
+		}(
+			A2(
+				_elm_lang$core$List$partition,
+				function (v) {
+					return _elm_lang$core$Native_Utils.eq(v, 'Env - Adjusted R-squared') || _elm_lang$core$Native_Utils.eq(v, 'BG - Adjusted R-squared');
+				},
+				model.variables));
+		var select = function (_p3) {
 			return _user$project$McpaModel$SelectVariable(
 				A2(
 					_elm_lang$core$Maybe$withDefault,
@@ -13704,10 +14115,10 @@ var _user$project$McpaTreeView$viewTree = F3(
 					A2(
 						_elm_lang$core$Maybe$andThen,
 						function (i) {
-							return A2(_elm_community$list_extra$List_Extra$getAt, i, _p6);
+							return A2(_elm_community$list_extra$List_Extra$getAt, i, variables);
 						},
 						_elm_lang$core$Result$toMaybe(
-							_elm_lang$core$String$toInt(_p2)))));
+							_elm_lang$core$String$toInt(_p3)))));
 		};
 		var variableSelector = A2(
 			_elm_lang$html$Html$div,
@@ -13758,7 +14169,7 @@ var _user$project$McpaTreeView$viewTree = F3(
 										{
 											ctor: '::',
 											_0: _elm_lang$html$Html_Attributes$selected(
-												_elm_lang$core$Native_Utils.eq(v, _p1.selectedVariable)),
+												_elm_lang$core$Native_Utils.eq(v, model.selectedVariable)),
 											_1: {
 												ctor: '::',
 												_0: _elm_lang$html$Html_Attributes$value(
@@ -13772,29 +14183,10 @@ var _user$project$McpaTreeView$viewTree = F3(
 											_1: {ctor: '[]'}
 										});
 								}),
-							_p6)),
+							variables)),
 					_1: {ctor: '[]'}
 				}
 			});
-		var computeColor_ = F2(
-			function (opacity, cladeId) {
-				return A2(
-					_elm_lang$core$Maybe$withDefault,
-					'#ccc',
-					A2(
-						_elm_lang$core$Maybe$map,
-						_user$project$LinearTreeView$computeColor(opacity),
-						selectData(cladeId)));
-			});
-		var _p3 = A3(
-			_user$project$LinearTreeView$drawTree,
-			{computeColor: computeColor_, showBranchLengths: _p4, treeDepth: _p5.depth, totalLength: _p5.length, flaggedNodes: _p1.flaggedNodes, selectedNode: _p1.selectedNode, selectNode: _user$project$McpaModel$SelectNode, redBlue: redBlue},
-			'#ccc',
-			_p5.root);
-		var treeHeight = _p3._0;
-		var grads = _p3._1;
-		var treeSvg = _p3._2;
-		var gradDefs = _user$project$LinearTreeView$gradientDefinitions(grads);
 		return A2(
 			_elm_lang$html$Html$div,
 			{
@@ -13958,13 +14350,16 @@ var _user$project$ParseMcpa$parseRecord = F3(
 				});
 			var valueToFloat = function (s) {
 				var _p3 = s;
-				if (_p3 === 'nan') {
-					return _elm_lang$core$Result$Ok(_user$project$ParseMcpa$nan);
-				} else {
-					return A2(
-						_elm_lang$core$Result$map,
-						_elm_lang$core$Basics$abs,
-						_elm_lang$core$String$toFloat(s));
+				switch (_p3) {
+					case '':
+						return _elm_lang$core$Result$Ok(_user$project$ParseMcpa$nan);
+					case 'nan':
+						return _elm_lang$core$Result$Ok(_user$project$ParseMcpa$nan);
+					default:
+						return A2(
+							_elm_lang$core$Result$map,
+							_elm_lang$core$Basics$abs,
+							_elm_lang$core$String$toFloat(s));
 				}
 			};
 			var values = _elm_community$result_extra$Result_Extra$combine(
@@ -14052,6 +14447,99 @@ var _user$project$StatsMain$svgViewBox2String = function (_p0) {
 };
 var _user$project$StatsMain$drawYAxis = F3(
 	function (label, min, max) {
+		var labelText = A2(
+			_elm_lang$svg$Svg$text_,
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$x('500'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$y('50'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$textAnchor('middle'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$transform('rotate(90)'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$style(
+									{
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'font-size', _1: '30px'},
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg$text(label),
+				_1: {ctor: '[]'}
+			});
+		var minValue = A2(
+			_elm_lang$svg$Svg$text_,
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$x('-10'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$y('1000'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$textAnchor('end'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'font-size', _1: '20px'},
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}
+					}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg$text(
+					_user$project$Helpers$formatNumber(min)),
+				_1: {ctor: '[]'}
+			});
+		var maxValue = A2(
+			_elm_lang$svg$Svg$text_,
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$x('-10'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$y('30'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$textAnchor('end'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'font-size', _1: '20px'},
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}
+					}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg$text(
+					_user$project$Helpers$formatNumber(max)),
+				_1: {ctor: '[]'}
+			});
 		var ticks = A2(
 			_elm_lang$core$List$map,
 			function (y) {
@@ -14133,11 +14621,104 @@ var _user$project$StatsMain$drawYAxis = F3(
 					}
 				},
 				{ctor: '[]'}),
-			_1: ticks
+			_1: {
+				ctor: '::',
+				_0: minValue,
+				_1: {
+					ctor: '::',
+					_0: maxValue,
+					_1: {ctor: '::', _0: labelText, _1: ticks}
+				}
+			}
 		};
 	});
 var _user$project$StatsMain$drawXAxis = F3(
 	function (label, min, max) {
+		var labelText = A2(
+			_elm_lang$svg$Svg$text_,
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$x('500'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$y('1050'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$textAnchor('middle'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'font-size', _1: '30px'},
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}
+					}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg$text(label),
+				_1: {ctor: '[]'}
+			});
+		var minValue = A2(
+			_elm_lang$svg$Svg$text_,
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$x('0'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$y('1030'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$style(
+							{
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'font-size', _1: '20px'},
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg$text(
+					_user$project$Helpers$formatNumber(min)),
+				_1: {ctor: '[]'}
+			});
+		var maxValue = A2(
+			_elm_lang$svg$Svg$text_,
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$x('990'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$y('1030'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$textAnchor('end'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'font-size', _1: '20px'},
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}
+					}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg$text(
+					_user$project$Helpers$formatNumber(max)),
+				_1: {ctor: '[]'}
+			});
 		var ticks = A2(
 			_elm_lang$core$List$map,
 			function (x) {
@@ -14213,7 +14794,15 @@ var _user$project$StatsMain$drawXAxis = F3(
 					}
 				},
 				{ctor: '[]'}),
-			_1: ticks
+			_1: {
+				ctor: '::',
+				_0: minValue,
+				_1: {
+					ctor: '::',
+					_0: maxValue,
+					_1: {ctor: '::', _0: labelText, _1: ticks}
+				}
+			}
 		};
 	});
 var _user$project$StatsMain$agg = F2(
@@ -14689,6 +15278,24 @@ var _user$project$StatsMain$update = F2(
 		}
 	});
 var _user$project$StatsMain$drawScatter = function (model) {
+	var yLabel = A2(
+		_elm_lang$core$Maybe$withDefault,
+		model.yCol,
+		A2(
+			_elm_lang$core$Maybe$map,
+			function (_) {
+				return _.name;
+			},
+			A2(_elm_lang$core$Dict$get, model.yCol, model.statNames)));
+	var xLabel = A2(
+		_elm_lang$core$Maybe$withDefault,
+		model.xCol,
+		A2(
+			_elm_lang$core$Maybe$map,
+			function (_) {
+				return _.name;
+			},
+			A2(_elm_lang$core$Dict$get, model.xCol, model.statNames)));
 	var plot = function (record) {
 		var _p36 = A2(
 			_user$project$StatsMain$data2svg,
@@ -14725,10 +15332,10 @@ var _user$project$StatsMain$drawScatter = function (model) {
 	};
 	return A2(
 		_elm_lang$core$Basics_ops['++'],
-		A3(_user$project$StatsMain$drawXAxis, model.xCol, model.scale.minX, model.scale.maxX),
+		A3(_user$project$StatsMain$drawXAxis, xLabel, model.scale.minX, model.scale.maxX),
 		A2(
 			_elm_lang$core$Basics_ops['++'],
-			A3(_user$project$StatsMain$drawYAxis, model.yCol, model.scale.minY, model.scale.maxY),
+			A3(_user$project$StatsMain$drawYAxis, yLabel, model.scale.minY, model.scale.maxY),
 			A2(_elm_lang$core$List$map, plot, model.displayedRecords)));
 };
 var _user$project$StatsMain$ReceivedStats = function (a) {
@@ -14838,7 +15445,20 @@ var _user$project$StatsMain$viewPlot = function (model) {
 		_elm_community$maybe_extra$Maybe_Extra$toList(model.selecting));
 	return A2(
 		_elm_lang$html$Html$div,
-		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				{
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
+					_1: {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
+						_1: {ctor: '[]'}
+					}
+				}),
+			_1: {ctor: '[]'}
+		},
 		{
 			ctor: '::',
 			_0: A2(

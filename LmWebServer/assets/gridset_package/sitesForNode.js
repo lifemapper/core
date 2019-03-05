@@ -49,15 +49,16 @@ app.ports.requestNodesForSites.subscribe(function(sites) {
                 const node = nodeLookup.find(function(d) {
                     return d.index == i;
                 });
-                leftNodes.add(parseInt(node.header));
+                leftNodes.add(parseInt(node.header.replace(/^Node_/i, '')));
             });
             data[-1] && data[-1].forEach(function(i) {
                 const node = nodeLookup.find(function(d) {
                     return d.index == i;
                 });
-                rightNodes.add(parseInt(node.header));
+                rightNodes.add(parseInt(node.header.replace(/^Node_/i, '')));
             });
         }
     });
-    app.ports.nodesForSites.send([Array.from(leftNodes), Array.from(rightNodes)]);
+    const nodesForSites = [Array.from(leftNodes), Array.from(rightNodes)];
+    app.ports.nodesForSites.send(nodesForSites);
 });

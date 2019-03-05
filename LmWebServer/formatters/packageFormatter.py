@@ -85,6 +85,8 @@ def createIndexHtml(gridset_name):
                 <td>
                     <img src="./images/scatterplot_thumb.png" alt="Scatterplots Thumbnail" />
                 </td>
+                <td>
+                </td>
             </tr>
             <tr>
                 <td style="text-align: center;">
@@ -95,6 +97,9 @@ def createIndexHtml(gridset_name):
                 </td>
                 <td style="text-align: center;">
                     <a href="./stats.html">Scatterplots</a>
+                </td>
+                <td style="text-align: center;">
+                    <a href="./statsTreeMap.html">Site Based Relationships with Tree</a>
                 </td>
             </tr>
             <!--
@@ -107,6 +112,9 @@ def createIndexHtml(gridset_name):
                 </td>
                 <td style="text-align: center;">
                     <a href="./help_scatterplots.html">Scatterplots Help</a>
+                </td>
+                <td style="text-align: center;">
+                    <a href="./help_tree-stats.html">Tree stats Help</a>
                 </td>
             </tr>
             -->

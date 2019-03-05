@@ -156,6 +156,7 @@ var observer = new MutationObserver(function(mutations) {
                                     sites;
                             }, [])
                     );
+                    editableLayers.clearLayers();
                 });
 
                 map.on(L.Draw.Event.DRAWSTART, function(e) {

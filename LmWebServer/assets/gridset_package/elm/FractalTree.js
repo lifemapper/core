@@ -13567,13 +13567,16 @@ var _user$project$ParseMcpa$parseRecord = F3(
 				});
 			var valueToFloat = function (s) {
 				var _p3 = s;
-				if (_p3 === 'nan') {
-					return _elm_lang$core$Result$Ok(_user$project$ParseMcpa$nan);
-				} else {
-					return A2(
-						_elm_lang$core$Result$map,
-						_elm_lang$core$Basics$abs,
-						_elm_lang$core$String$toFloat(s));
+				switch (_p3) {
+					case '':
+						return _elm_lang$core$Result$Ok(_user$project$ParseMcpa$nan);
+					case 'nan':
+						return _elm_lang$core$Result$Ok(_user$project$ParseMcpa$nan);
+					default:
+						return A2(
+							_elm_lang$core$Result$map,
+							_elm_lang$core$Basics$abs,
+							_elm_lang$core$String$toFloat(s));
 				}
 			};
 			var values = _elm_community$result_extra$Result_Extra$combine(

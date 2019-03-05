@@ -13994,10 +13994,10 @@ var _user$project$McpaModel$init = F2(
 			_0: {
 				treeInfo: treeInfo,
 				variables: variables,
-				selectedVariable: A2(
+				selectedVariable: A2(_elm_lang$core$List$member, 'Env - Adjusted R-squared', variables) ? 'Env - Adjusted R-squared' : (A2(_elm_lang$core$List$member, 'BG - Adjusted R-squared', variables) ? 'BG - Adjusted R-squared' : A2(
 					_elm_lang$core$Maybe$withDefault,
 					'',
-					_elm_lang$core$List$head(variables)),
+					_elm_lang$core$List$head(variables))),
 				flaggedNodes: {
 					ctor: '_Tuple2',
 					_0: {ctor: '[]'},
@@ -14684,11 +14684,7 @@ var _user$project$LinearTreeView$TreeConfig = F8(
 	});
 
 var _user$project$McpaTreeView$viewTree = F3(
-	function (_p0, redBlue, selectData) {
-		var _p1 = _p0;
-		var _p6 = _p1.variables;
-		var _p5 = _p1.treeInfo;
-		var _p4 = _p1.showBranchLengths;
+	function (model, redBlue, selectData) {
 		var toggleBranchLengths = A2(
 			_elm_lang$html$Html$div,
 			{ctor: '[]'},
@@ -14706,7 +14702,7 @@ var _user$project$McpaTreeView$viewTree = F3(
 								_0: _elm_lang$html$Html_Attributes$type_('checkbox'),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$checked(_p4),
+									_0: _elm_lang$html$Html_Attributes$checked(model.showBranchLengths),
 									_1: {
 										ctor: '::',
 										_0: _elm_lang$html$Html_Attributes$readonly(true),
@@ -14727,7 +14723,36 @@ var _user$project$McpaTreeView$viewTree = F3(
 					}),
 				_1: {ctor: '[]'}
 			});
-		var select = function (_p2) {
+		var computeColor_ = F2(
+			function (opacity, cladeId) {
+				return A2(
+					_elm_lang$core$Maybe$withDefault,
+					'#ccc',
+					A2(
+						_elm_lang$core$Maybe$map,
+						_user$project$LinearTreeView$computeColor(opacity),
+						selectData(cladeId)));
+			});
+		var _p0 = A3(
+			_user$project$LinearTreeView$drawTree,
+			{computeColor: computeColor_, showBranchLengths: model.showBranchLengths, treeDepth: model.treeInfo.depth, totalLength: model.treeInfo.length, flaggedNodes: model.flaggedNodes, selectedNode: model.selectedNode, selectNode: _user$project$McpaModel$SelectNode, redBlue: redBlue},
+			'#ccc',
+			model.treeInfo.root);
+		var treeHeight = _p0._0;
+		var grads = _p0._1;
+		var treeSvg = _p0._2;
+		var gradDefs = _user$project$LinearTreeView$gradientDefinitions(grads);
+		var variables = function (_p1) {
+			var _p2 = _p1;
+			return A2(_elm_lang$core$Basics_ops['++'], _p2._0, _p2._1);
+		}(
+			A2(
+				_elm_lang$core$List$partition,
+				function (v) {
+					return _elm_lang$core$Native_Utils.eq(v, 'Env - Adjusted R-squared') || _elm_lang$core$Native_Utils.eq(v, 'BG - Adjusted R-squared');
+				},
+				model.variables));
+		var select = function (_p3) {
 			return _user$project$McpaModel$SelectVariable(
 				A2(
 					_elm_lang$core$Maybe$withDefault,
@@ -14735,10 +14760,10 @@ var _user$project$McpaTreeView$viewTree = F3(
 					A2(
 						_elm_lang$core$Maybe$andThen,
 						function (i) {
-							return A2(_elm_community$list_extra$List_Extra$getAt, i, _p6);
+							return A2(_elm_community$list_extra$List_Extra$getAt, i, variables);
 						},
 						_elm_lang$core$Result$toMaybe(
-							_elm_lang$core$String$toInt(_p2)))));
+							_elm_lang$core$String$toInt(_p3)))));
 		};
 		var variableSelector = A2(
 			_elm_lang$html$Html$div,
@@ -14789,7 +14814,7 @@ var _user$project$McpaTreeView$viewTree = F3(
 										{
 											ctor: '::',
 											_0: _elm_lang$html$Html_Attributes$selected(
-												_elm_lang$core$Native_Utils.eq(v, _p1.selectedVariable)),
+												_elm_lang$core$Native_Utils.eq(v, model.selectedVariable)),
 											_1: {
 												ctor: '::',
 												_0: _elm_lang$html$Html_Attributes$value(
@@ -14803,29 +14828,10 @@ var _user$project$McpaTreeView$viewTree = F3(
 											_1: {ctor: '[]'}
 										});
 								}),
-							_p6)),
+							variables)),
 					_1: {ctor: '[]'}
 				}
 			});
-		var computeColor_ = F2(
-			function (opacity, cladeId) {
-				return A2(
-					_elm_lang$core$Maybe$withDefault,
-					'#ccc',
-					A2(
-						_elm_lang$core$Maybe$map,
-						_user$project$LinearTreeView$computeColor(opacity),
-						selectData(cladeId)));
-			});
-		var _p3 = A3(
-			_user$project$LinearTreeView$drawTree,
-			{computeColor: computeColor_, showBranchLengths: _p4, treeDepth: _p5.depth, totalLength: _p5.length, flaggedNodes: _p1.flaggedNodes, selectedNode: _p1.selectedNode, selectNode: _user$project$McpaModel$SelectNode, redBlue: redBlue},
-			'#ccc',
-			_p5.root);
-		var treeHeight = _p3._0;
-		var grads = _p3._1;
-		var treeSvg = _p3._2;
-		var gradDefs = _user$project$LinearTreeView$gradientDefinitions(grads);
 		return A2(
 			_elm_lang$html$Html$div,
 			{
