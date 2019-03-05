@@ -63,7 +63,7 @@ class OpenTreeService(LmService):
             # Get the list of GBIF IDs that matched to OTT IDs but were not in
             #    tree
             nontree_ids = [
-                ott_to_gbif[ott] for ott in output[Partners.OTT_MISSING_KEY]]
+                int(ott_to_gbif[ott]) for ott in output[Partners.OTT_MISSING_KEY]]
         except Exception as e:
             raise cherrypy.HTTPError(
                 HTTPStatus.SERVICE_UNAVAILABLE,
