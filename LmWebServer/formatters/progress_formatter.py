@@ -83,7 +83,7 @@ def format_gridset(gridset, detail=False):
         }
     else:
         mf_count = scribe.countMFChains(gridset.getUserId(), gridset.getId())
-        if mf_count == 0:
+        if mf_count < 1:
             progress = 1.0
         else:
             progress = 0.0
