@@ -935,7 +935,7 @@ class BorgScribe(LMObject):
         return mfchainList
     
 # .............................................................................
-    def countMFChains(self, userId, gridsetId=None, metastring=None,
+    def countMFChains(self, userId=None, gridsetId=None, metastring=None,
                       afterStat=None, beforeStat=None, 
                       afterTime=None, beforeTime=None):
         """
