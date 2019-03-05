@@ -145,13 +145,18 @@ class Borg(DbPostgresql):
         mfchain = None
         if row is not None:
             mfchain = MFChain(self._getColumnValue(row, idxs, ['userid']), 
-                            dlocation=self._getColumnValue(row, idxs, ['dlocation']), 
-                            priority=self._getColumnValue(row, idxs, ['priority']), 
-                            metadata=self._getColumnValue(row, idxs, ['metadata']),  
-                            status=self._getColumnValue(row, idxs, ['status']), 
+                            dlocation=self._getColumnValue(row, idxs, 
+                                                ['mfpdlocation', 'dlocation']), 
+                            priority=self._getColumnValue(row, idxs, 
+                                                ['priority']), 
+                            metadata=self._getColumnValue(row, idxs, 
+                                                ['mfpmetadata', 'metadata']),  
+                            status=self._getColumnValue(row, idxs, 
+                                                ['mfpstatus', 'status']), 
                             statusModTime=self._getColumnValue(row, idxs, 
-                                                                          ['statusmodtime']), 
-                            mfChainId=self._getColumnValue(row, idxs, ['mfprocessid']))
+                                        ['mfpstatusmodtime', 'statusmodtime']), 
+                            mfChainId=self._getColumnValue(row, idxs, 
+                                                ['mfprocessid']))
         return mfchain
     
 # ...............................................
@@ -2347,12 +2352,15 @@ class Borg(DbPostgresql):
         return mfchain
 
 # .............................................................................
-    def countMFChains(self, userId, gridsetId, metastring, afterTime, beforeTime):
+    def countMFChains(self, userId, gridsetId, metastring, afterStat, beforeStat, 
+                      afterTime, beforeTime):
         """
         @summary: Return the number of scenarios fitting the given filter conditions
         @param userId: filter by LMUser 
         @param gridsetId: filter by a Gridset
         @param metastring: find gridsets containing this word in the metadata
+        @param afterStat: filter by status >= to this value
+        @param beforeStat: filter by status <= to this value
         @param afterTime: filter by modified at or after this time
         @param beforeTime: filter by modified at or before this time
         @return: count of MFChains fitting the given filter conditions
@@ -2362,8 +2370,40 @@ class Borg(DbPostgresql):
             metamatch = '%{}%'.format(metastring)
         row, idxs = self.executeSelectOneFunction('lm_countMFProcess', userId, 
                                                   gridsetId, metamatch, 
+                                                  afterStat, beforeStat, 
                                                   afterTime, beforeTime)
         return self._getCount(row)
+
+# .............................................................................
+    def listMFChains(self, firstRecNum, maxNum, userId, gridsetId, metastring, 
+                     afterStat, beforeStat, afterTime, beforeTime, atom):
+        """
+        @summary: Return Layer Objects or Atoms matching filter conditions 
+        @param firstRecNum: The first record to return, 0 is the first record
+        @param maxNum: Maximum number of records to return
+        @param userId: User (owner) for which to return shapegrids.  
+        @param gridsetId: filter by a Gridset
+        @param metastring: find gridsets containing this word in the metadata
+        @param afterStat: filter by status >= to this value
+        @param beforeStat: filter by status <= to this value
+        @param afterTime: filter by modified at or after this time
+        @param beforeTime: filter by modified at or before this time
+        @param atom: True if return objects will be Atoms, False if full objects
+        @return: a list of MFProcess/Gridset atoms or full objects
+        """
+        if atom:
+            rows, idxs = self.executeSelectManyFunction('lm_listMFProcessAtoms', 
+                            firstRecNum, maxNum, userId, gridsetId, metastring, 
+                            afterStat, beforeStat, afterTime, beforeTime)
+            objs = self._getAtoms(rows, idxs, None)
+        else:
+            objs = []
+            rows, idxs = self.executeSelectManyFunction('lm_listMFProcessObjects', 
+                            firstRecNum, maxNum, userId, gridsetId, metastring, 
+                            afterStat, beforeStat, afterTime, beforeTime)
+            for r in rows:
+                objs.append(self._createMFChain(r, idxs))
+        return objs
 
 # ...............................................
     def findMFChains(self, count, userId, oldStatus, newStatus):

@@ -936,13 +936,36 @@ class BorgScribe(LMObject):
     
 # .............................................................................
     def countMFChains(self, userId, gridsetId=None, metastring=None,
+                      afterStat=None, beforeStat=None, 
                       afterTime=None, beforeTime=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::countMFChains()
         """
         count = self._borg.countMFChains(userId, gridsetId, metastring, 
-                                        afterTime, beforeTime)
+                                afterStat, beforeStat, afterTime, beforeTime)
         return count
+
+# .............................................................................
+    def listMFChains(self, firstRecNum, maxNum, userId, 
+                     gridsetId=None, metastring=None,
+                     afterStat=None, beforeStat=None, 
+                     afterTime=None, beforeTime=None, atom=True):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::listMFChains()
+        """
+        if atom:
+            rows, idxs = self.executeSelectManyFunction('lm_listMFProcessAtoms', 
+                            firstRecNum, maxNum, userId, gridsetId, metastring, 
+                            afterStat, beforeStat, afterTime, beforeTime)
+            objs = self._getAtoms(rows, idxs, LMServiceType.SHAPEGRIDS)
+        else:
+            objs = []
+            rows, idxs = self.executeSelectManyFunction('lm_listMFProcessObjects', 
+                            firstRecNum, maxNum, userId, gridsetId, metastring, 
+                            afterStat, beforeStat, afterTime, beforeTime)
+            for r in rows:
+                objs.append(self._createMFChain(r, idxs))
+        return objs
 
 
 # ...............................................

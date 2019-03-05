@@ -1206,33 +1206,81 @@ $$  LANGUAGE 'plpgsql' STABLE;
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMFProcess(usr varchar,
                                                        grdid int,
                                                        meta varchar, 
+                                                       afterstat int,
+                                                       beforestat int,
                                                        aftertime double precision,
                                                        beforetime double precision)
    RETURNS varchar AS
 $$
 DECLARE
+   thisfilter varchar;
    wherecls varchar;
 BEGIN
-   wherecls = ' WHERE userid = ' || quote_literal(usr);
+   -- Queries lm_mfprocess view
+   
+   -- filter by User
+   IF usr is not null THEN
+      wherecls = ' WHERE userid = ' || quote_literal(usr);
+   END IF;
 
    -- filter by Gridset
    IF grdid is not null THEN
-      wherecls = wherecls || ' AND  gridsetId =  ' || grdid;
+      thisfilter = ' gridsetId =  ' || grdid;
+      IF wherecls is null THEN 
+         wherecls = ' WHERE ' || thisfilter; 
+      ELSE
+         wherecls = wherecls || ' AND ' || thisfilter;
+      END IF;
    END IF;
 
    -- Metadata
    IF meta is not null THEN
-      wherecls = wherecls || ' AND metadata like  ' || quote_literal(meta);
+      thisfilter =  ' mfpmetadata like  ' || quote_literal(meta);
+      IF wherecls is null THEN 
+         wherecls = ' WHERE ' || thisfilter; 
+      ELSE
+         wherecls = wherecls || ' AND ' || thisfilter;
+      END IF;
+   END IF;
+
+   -- filter by mfprocess status greater than given value
+   IF afterstat is not null THEN
+      thisfilter = ' mfpstatus >=  ' || quote_literal(afterstat);
+      IF wherecls is null THEN 
+         wherecls = ' WHERE ' || thisfilter; 
+      ELSE
+         wherecls = wherecls || ' AND ' || thisfilter;
+      END IF;
+   END IF;
+   
+   -- filter by mfprocess status less than given value
+   IF beforestat is not null THEN
+      thisfilter =  ' mfpstatus <=  ' || quote_literal(beforestat);
+      IF wherecls is null THEN 
+         wherecls = ' WHERE ' || thisfilter; 
+      ELSE
+         wherecls = wherecls || ' AND ' || thisfilter;
+      END IF;
    END IF;
 
    -- filter by mfprocess status modified after given time
    IF aftertime is not null THEN
-      wherecls = wherecls || ' AND statusModTime >=  ' || quote_literal(aftertime);
+      thisfilter = ' mfpstatusModTime >=  ' || quote_literal(aftertime);
+      IF wherecls is null THEN 
+         wherecls = ' WHERE ' || thisfilter; 
+      ELSE
+         wherecls = wherecls || ' AND ' || thisfilter;
+      END IF;
    END IF;
    
    -- filter by mfprocess status modified before given time
    IF beforetime is not null THEN
-      wherecls = wherecls || ' AND statusModTime <=  ' || quote_literal(beforetime);
+      thisfilter =  ' mfpstatusModTime <=  ' || quote_literal(beforetime);
+      IF wherecls is null THEN 
+         wherecls = ' WHERE ' || thisfilter; 
+      ELSE
+         wherecls = wherecls || ' AND ' || thisfilter;
+      END IF;
    END IF;
 
    return wherecls;
@@ -1243,6 +1291,8 @@ $$  LANGUAGE 'plpgsql' STABLE;
 CREATE OR REPLACE FUNCTION lm_v3.lm_countMFProcess(usr varchar,
                                                    grdid int,
                                                    meta varchar, 
+                                                   afterstat int,
+                                                   beforestat int,
                                                    aftertime double precision,
                                                    beforetime double precision)
    RETURNS int AS
@@ -1254,13 +1304,85 @@ DECLARE
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.mfprocess ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMFProcess(usr, grdid, 
-                                          meta, aftertime, beforetime);
+                            meta, afterstat, beforestat, aftertime, beforetime);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
 
    EXECUTE cmd INTO num;
    RETURN num;
 END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_listMFProcessAtoms(firstRecNum int, maxNum int, 
+                                                     usr varchar,
+                                                   grdid int,
+                                                   meta varchar, 
+                                                   afterstat int,
+                                                   beforestat int,
+                                                   aftertime double precision,
+                                                   beforetime double precision)
+   RETURNS SETOF lm_v3.lm_atom AS
+$$
+DECLARE
+   rec lm_v3.lm_atom;
+   cmd varchar;
+   wherecls varchar;
+   limitcls varchar;
+   ordercls varchar;
+BEGIN
+   cmd = 'SELECT mfprocessId, grdname, grdepsgcode, mfpstatusmodtime FROM lm_v3.lm_mfprocess ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterMFProcess(usr, grdid, 
+                            meta, afterstat, beforestat, aftertime, beforetime);
+   ordercls = 'ORDER BY mfpstatusmodtime DESC';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_listMFProcessObjects(firstRecNum int, maxNum int, 
+                                                       usr varchar,
+                                                   grdid int,
+                                                   meta varchar, 
+                                                   afterstat int,
+                                                   beforestat int,
+                                                   aftertime double precision,
+                                                   beforetime double precision)
+   RETURNS SETOF lm_v3.mfprocess AS
+$$
+DECLARE
+   rec lm_v3.mfprocess;
+   cmd varchar;
+   wherecls varchar;
+   limitcls varchar;
+   ordercls varchar;
+BEGIN
+   cmd = 'SELECT * FROM lm_v3.mfprocess ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterGridset(usr, shpgridlyrid, 
+                                          meta, aftertime, beforetime, epsg);
+   ordercls = 'ORDER BY grdmodTime DESC';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+
 $$  LANGUAGE 'plpgsql' STABLE;
 
 

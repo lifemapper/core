@@ -884,6 +884,35 @@ CREATE OR REPLACE VIEW lm_v3.lm_lyrMatrixcolumn
         WHERE mc.layerid = l.layerId;
 
 -- ----------------------------------------------------------------------------
+-- lm_mfprocess (MFProcess + Gridset)
+DROP VIEW IF EXISTS lm_v3.lm_mfprocess CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_mfprocess
+(
+   -- MFProces.*
+   mfProcessId ,
+   userid ,
+   gridsetId ,
+   mfpdlocation ,
+   priority ,
+   mfpmetadata ,
+   mfpstatus ,
+   mfpstatusmodtime ,
+
+   -- Gridset.*
+   grdname,
+   treeId,
+   layerId,
+   grddlocation,
+   grdepsgcode,
+   grdmetadata,
+   grdmodTime) AS
+      SELECT mfp.mfProcessId, mfp.userid, mfp.gridsetId, mfp.dlocation,
+             mfp.priority, mfp.metadata , mfp.status, mfp.statusmodtime,
+             g.name, g.treeId, g.layerId, g.dlocation, g.epsgcode, 
+             g.metadata, g.modTime
+        FROM lm_v3.MFProcess mfp, lm_v3.Gridset g
+        WHERE mfp.gridsetid = g.gridsetid;
+-- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- DATA TYPES (used on multiple tables)
 -- Note: All column names are returned in lower case
@@ -965,6 +994,7 @@ lm_v3.lm_occMatrixcolumn,
 lm_v3.lm_sdmMatrixcolumn,
 lm_v3.lm_sdmMatrixcolumn_matrix,
 lm_v3.lm_lyrMatrixcolumn,
+lm_v3.lm_mfprocess,
 lm_v3.lm_bloat
 TO GROUP reader;
 
@@ -986,6 +1016,7 @@ lm_v3.lm_occMatrixcolumn,
 lm_v3.lm_sdmMatrixcolumn,
 lm_v3.lm_sdmMatrixcolumn_matrix,
 lm_v3.lm_lyrMatrixcolumn,
+lm_v3.lm_mfprocess,
 lm_v3.lm_bloat
 TO GROUP writer;
 

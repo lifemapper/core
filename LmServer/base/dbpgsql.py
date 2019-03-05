@@ -492,17 +492,21 @@ class DbPostgresql(LMAbstractObject):
 # ............................................................................ 
     def _getAtoms(self, rows, idxs, serviceType, parentMetadataUrl=None):
         from LmServer.common.datalocator import EarlJr
-        atoms = []
         earl = EarlJr()
+
+        atoms = []
+        url = None
         
         for r in rows: 
             atom = self._createAtom(r, idxs)
-            url = earl.constructLMMetadataUrl(serviceType, atom.getId(),
-                                                         parentMetadataUrl=parentMetadataUrl)
+            if serviceType is not None:
+                url = earl.constructLMMetadataUrl(serviceType, atom.getId(),
+                                                  parentMetadataUrl=parentMetadataUrl)
             atom.url = url
             atoms.append(atom)            
         return atoms
     
+# ...............................................
     def _getCount(self, row):
         if row:
             return row[0]
