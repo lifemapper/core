@@ -1334,7 +1334,7 @@ BEGIN
    cmd = 'SELECT mfprocessId, grdname, grdepsgcode, mfpstatusmodtime FROM lm_v3.lm_mfprocess ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMFProcess(usr, grdid, 
                             meta, afterstat, beforestat, aftertime, beforetime);
-   ordercls = 'ORDER BY mfpstatusmodtime DESC';
+   ordercls = ' ORDER BY mfpstatusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
    cmd := cmd || wherecls || ordercls || limitcls;
@@ -1358,19 +1358,19 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listMFProcessObjects(firstRecNum int, maxNum
                                                    beforestat int,
                                                    aftertime double precision,
                                                    beforetime double precision)
-   RETURNS SETOF lm_v3.mfprocess AS
+   RETURNS SETOF lm_v3.lm_mfprocess AS
 $$
 DECLARE
-   rec lm_v3.mfprocess;
+   rec lm_v3.lm_mfprocess;
    cmd varchar;
    wherecls varchar;
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm_v3.mfprocess ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterGridset(usr, shpgridlyrid, 
-                                          meta, aftertime, beforetime, epsg);
-   ordercls = 'ORDER BY grdmodTime DESC';
+   cmd = 'SELECT * FROM lm_v3.lm_mfprocess ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterMFProcess(usr, grdid, 
+                            meta, afterstat, beforestat, aftertime, beforetime);
+   ordercls = ' ORDER BY mfpstatusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
    cmd := cmd || wherecls || ordercls || limitcls;
