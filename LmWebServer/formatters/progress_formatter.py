@@ -54,6 +54,17 @@ def format_gridset(gridset_id, detail=False):
         
         total_prjs = complete_prjs + error_prjs + running_prjs + waiting_prjs
         
+        complete_wfs = scribe.countMFChains(
+            gridsetId=gridset.getId(), afterStat=JobStatus.COMPLETE - 1,
+            beforeStat=JobStatus.COMPLETE + 1)
+        error_wfs = scribe.countMFChains(
+            gridsetId=gridset.getId(), afterStat=JobStatus.GENERAL_ERROR - 1)
+        running_wfs = scribe.countMFChains(
+            gridsetId=gridset.getId(), afterStat=JobStatus.GENERAL + 1,
+            beforeStat=JobStatus.COMPLETE - 1)
+        waiting_wfs = scribe.countMFChains(
+            gridsetId=gridset.getId(), beforeStat=JobStatus.GENERAL + 1)
+        
         scribe.closeConnections()
         
         # Initialize in case there are zero prj or mtx
@@ -80,6 +91,12 @@ def format_gridset(gridset_id, detail=False):
                 'error' : error_prjs,
                 'running' : running_prjs,
                 'waiting' : waiting_prjs
+            },
+            'workflows' : {
+                'complete' : complete_wfs,
+                'error' : error_wfs,
+                'running' : running_wfs,
+                'waiting' : waiting_wfs
             }
         }
     else:
