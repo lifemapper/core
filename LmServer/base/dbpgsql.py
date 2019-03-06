@@ -72,7 +72,12 @@ class DbPostgresql(LMAbstractObject):
 # ............................................................................
 # ............................................................................
     def _isOpen(self):
-        return (self.pconn is not None)
+        if self.pconn is None:
+            return False
+        elif self.pconn.closed:
+            return False
+        else:
+            return True
 
     isOpen = property(_isOpen)
 
@@ -160,11 +165,15 @@ class DbPostgresql(LMAbstractObject):
         @summary Opens a connection to the database
         @raise LMError: if opening fails
         """
+        # if pconn is open, do nothing
+        if self.pconn is not None and self.pconn.closed:
+            self.pconn = None
+            
         if self.pconn is None:
             self.pconn = psycopg2.connect(user=self.user, 
-                                                    password=self.password, 
-                                                    host=self.host, port=self.port, 
-                                                    database=self.db)
+                                          password=self.password, 
+                                          host=self.host, port=self.port, 
+                                          database=self.db)
         if self.pconn is None:
             raise LMError(currargs='Unable to open connection to {}'.format(self.db))
 
@@ -188,13 +197,25 @@ class DbPostgresql(LMAbstractObject):
         cmd = 'select * from {};'.format(qry)
         try:
             rows, idxs = self._sendCommand(cmd)
-            if rows:
-                for val in rows[0]:
-                    if val is not None:
-                        return rows[0], idxs
-            return None, None
-        except Exception, e:
-            self._handleException(e)
+        except Exception, e: 
+            # Try 5 times if lost connection
+            tries = 0
+            self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
+            while not self.isOpen and tries <= 5:
+                tries += 1
+                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
+                self.log.warning('Database connection is None! #{} Trying to re-open ...'.format(tries))
+                self.open()
+                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
+            if self.isOpen:
+                # If fails here, let exception bubble up
+                rows, idxs = self._sendCommand(cmd)
+            
+        if rows:
+            for val in rows[0]:
+                if val is not None:
+                    return rows[0], idxs
+        return None, None
     
     # ............................................................................
     def executeQueryFunction(self, cols, fromClause, whereEtcClause=None):
@@ -214,9 +235,21 @@ class DbPostgresql(LMAbstractObject):
             cmd += ';'
         try:
             rows, idxs = self._sendCommand(cmd)
-            return rows, idxs
         except Exception, e: 
-            self._handleException(e)
+            # Try 5 times if lost connection
+            tries = 0
+            self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
+            while not self.isOpen and tries <= 5:
+                tries += 1
+                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
+                self.log.warning('Database connection is None! #{} Trying to re-open ...'.format(tries))
+                self.open()
+                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
+            if self.isOpen:
+                # If fails here, let exception bubble up
+                rows, idxs = self._sendCommand(cmd)
+                
+        return rows, idxs
 
     # ............................................................................
     def executeSelectOneFunction(self, fnName, *fnArgs):
@@ -234,17 +267,14 @@ class DbPostgresql(LMAbstractObject):
         @todo: make sure stored procedure throws exception if len(rows) != 1,
                   then remove the check here                                  
         """
-        try:
-            # exception is thrown by the stored function if len(rows) > 1;
-            # row of nulls is returned if nothing matches the query
-            rows, idxs = self._executeFunction(fnName, fnArgs)
-            if rows:
-                for val in rows[0]:
-                    if val is not None:
-                        return rows[0], idxs
-            return None, None
-        except Exception, e:
-            self._handleException(e)
+        # exception is thrown by the stored function if len(rows) > 1;
+        # row of nulls is returned if nothing matches the query
+        rows, idxs = self._executeFunction(fnName, fnArgs)
+        if rows:
+            for val in rows[0]:
+                if val is not None:
+                    return rows[0], idxs
+        return None, None
     
     # ............................................................................
     def executeSelectManyFunction(self, fnName, *fnArgs):
@@ -255,11 +285,8 @@ class DbPostgresql(LMAbstractObject):
         @param *fnArgs: 0..n arguments to the stored function
         @raise LMError: on error returned from the database.
         """
-        try:
-            rows, idxs = self._executeFunction(fnName, fnArgs)
-            return rows, idxs
-        except Exception, e:
-            self._handleException(e)
+        rows, idxs = self._executeFunction(fnName, fnArgs)
+        return rows, idxs
         
     # ............................................................................
     def executeSelectAndModifyManyFunction(self, fnName, *fnArgs):
@@ -272,28 +299,22 @@ class DbPostgresql(LMAbstractObject):
         @param *fnArgs: 0..n arguments to the stored function
         @raise LMError: on error returned from the database.
         """
-        try:
-            rows, idxs = self._executeFunction(fnName, fnArgs)
-            self.pconn.commit() 
-            return rows, idxs
-        except Exception, e:
-            self._handleException(e)
+        rows, idxs = self._executeFunction(fnName, fnArgs)
+        self.pconn.commit() 
+        return rows, idxs
 
-    # ............................................................................
-    def _handleException(self, e):
-        """
-        @summary Log serialization error or raise an exception.
-        @param e: Exception returned from code
-        @raise LMError: on any error except a Serialization error.
-        """
-        if isinstance(e, LMError):
-            raise e
-#         elif e.pgcode == 40001:
-#             self.log.error('Serialization exception on command %s' % 
-#                                 str(self.lastCommands))
-        else:
-            raise LMError(currargs='Exception on command {}'.format(self.lastCommands), 
-                              prevargs=e.args, doTrace=True)
+#     # ............................................................................
+#     def _handleException(self, e):
+#         """
+#         @summary Log serialization error or raise an exception.
+#         @param e: Exception returned from code
+#         @raise LMError: on any error except a Serialization error.
+#         """
+#         if isinstance(e, LMError):
+#             raise e
+#         else:
+#             raise LMError(currargs='Exception on command {}'.format(self.lastCommands), 
+#                               prevargs=e.args, doTrace=True)
 
     # ............................................................................
     def executeModifyFunction(self, fnName, *fnArgs):
@@ -305,27 +326,13 @@ class DbPostgresql(LMAbstractObject):
         @return: True/False for success
         @raise LMError: on error returned from the database.
         """
-        try:
-            rows, idxs = self._executeFunction(fnName, fnArgs)
-            self.pconn.commit()
-            if len(rows) == 1:
-                if rows[0][0] == 0:
-                    return True
-                else:
-                    return False
-        except Exception, e:
-            self._handleException(e)
-            return False
-#         except LMError, e: 
-#             raise
-#         except Exception, e:
-#             raise LMError(currargs='Exception on command %s' % 
-#                                str(self.lastCommands), prevargs=e.args, doTrace=True)            
-#         if len(rows) == 1:
-#             if rows[0][0] == 0:
-#                 return True
-#             else:
-#                 return False
+        success = False
+        rows, idxs = self._executeFunction(fnName, fnArgs)
+        self.pconn.commit()
+        if len(rows) == 1:
+            if rows[0][0] == 0:
+                success = True
+        return success
 
     # ............................................................................
     def executeModifyReturnValue(self, fnName, *fnArgs):
@@ -336,11 +343,8 @@ class DbPostgresql(LMAbstractObject):
         @param *fnArgs: 0..n arguments to the stored function
         @exception LMError: on error returned from the database.
         """
-        try:
-            rows, idxs = self._executeFunction(fnName, fnArgs)
-            self.pconn.commit()
-        except Exception, e:
-            self._handleException(e)
+        rows, idxs = self._executeFunction(fnName, fnArgs)
+        self.pconn.commit()
             
         if len(rows) == 1:
             return rows[0][0]
@@ -367,11 +371,8 @@ class DbPostgresql(LMAbstractObject):
         @return 0 on success, -1 on failure.
         @exception LMError: on error returned from the database.
         """
-        try:
-            rows, idxs = self._executeFunction(fnName, fnArgs)
-            self.pconn.commit()
-        except Exception, e:
-            self._handleException(e)
+        rows, idxs = self._executeFunction(fnName, fnArgs)
+        self.pconn.commit()
 
         if rows:
             if len(rows) == 1:
@@ -407,19 +408,15 @@ class DbPostgresql(LMAbstractObject):
         @todo: make sure stored procedure throws exception if len(rows) != 1,
                   then remove the check here                                  
         """
-        try:
-            # exception is thrown by the stored function if len(rows) > 1;
-            # row of nulls is returned if nothing matches the query
-            rows, idxs = self._executeFunction(fnName, fnArgs)
-            self.pconn.commit()
-            if rows:
-                for val in rows[0]:
-                    if val is not None:
-                        return rows[0], idxs
-            return None, None
-        except Exception, e:
-            self._handleException(e)
-
+        # exception is thrown by the stored function if len(rows) > 1;
+        # row of nulls is returned if nothing matches the query
+        rows, idxs = self._executeFunction(fnName, fnArgs)
+        self.pconn.commit()
+        if rows:
+            for val in rows[0]:
+                if val is not None:
+                    return rows[0], idxs
+        return None, None
                 
 # ............................................................................
     def _executeFunction(self, fnName, fnArgs):
@@ -435,11 +432,19 @@ class DbPostgresql(LMAbstractObject):
         self.lastCommands = [cmd]
         try:
             rows, idxs = self._sendCommand(cmd)
-        except LMError, e: 
-            raise
         except Exception, e:
-            raise LMError(currargs='Exception on command {}'
-                              .format(self.lastCommands), prevargs=e.args, doTrace=True)
+            # Try 5 times if lost connection
+            tries = 0
+            self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
+            while not self.isOpen and tries <= 5:
+                tries += 1
+                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
+                self.log.warning('Database connection is None! #{} Trying to re-open ...'.format(tries))
+                self.open()
+                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
+            if self.isOpen:
+                # If fails here, let exception bubble up
+                rows, idxs = self._sendCommand(cmd)
 
         return rows, idxs
 
@@ -456,12 +461,8 @@ class DbPostgresql(LMAbstractObject):
         """
         idxs = None
         self.lastCommands = [cmds]
-        
-        if self.pconn is None:
-            self.log.warning('Database connection is None! Trying to re-open ...')
-            self.open()
-            
-        if self.pconn is not None:
+                    
+        if self.isOpen:
             cursor = self.pconn.cursor()
             try:
                 for cmd in cmds:

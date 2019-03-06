@@ -3157,14 +3157,14 @@ BEGIN
    LOOP
       -- FIRST delete any matrixcolumns using SDMProjects for this Occset to remove FK constraint
       DELETE FROM lm_v3.MatrixColumn WHERE layerid IN 
-         (SELECT layerid  FROM lm_v3.lm_sdmproject p WHERE p.occurrencesetid = occid);
+         (SELECT layerid  FROM lm_v3.sdmproject WHERE occurrencesetid = occid);
       GET DIAGNOSTICS currCount = ROW_COUNT;
       RAISE NOTICE 'Deleted % MatrixColumns for SDMProjects with Occset %', currCount, occid;
       mc_total = mc_total + currCount;        
 
       -- SECOND, delete all sdmproject layers; this cascades to joined SDMProject
       DELETE FROM lm_v3.Layer WHERE layerid IN
-         (SELECT layerid  FROM lm_v3.lm_sdmproject p WHERE p.occurrencesetid = occid);
+         (SELECT layerid  FROM lm_v3.sdmproject WHERE occurrencesetid = occid);
       GET DIAGNOSTICS currCount = ROW_COUNT;
       RAISE NOTICE 'Deleted % SDMProject Layers for Occset %', currCount, occid;
       prj_total = prj_total + currCount;
@@ -3182,62 +3182,6 @@ BEGIN
    RAISE NOTICE 'Deleted % OccurrenceSets', occ_total;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_clearObsoleteSpeciesDataForUser(usr varchar,
-                                                           dt double precision)
-RETURNS SETOF varchar AS
-$$
-DECLARE
-   lyrid     int;
-   occid     int;
-   currCount int;
-   mc_total  int := 0;
-   prj_total int := 0;
-   occ_total int := 0;
-   dloc      varchar;
-BEGIN
-   -- Find all projections with obsolete occurrencesets
-   FOR lyrid, occid IN SELECT p.layerid, o.occurrencesetid 
-      FROM lm_v3.SDMProject p, lm_v3.OccurrenceSet o 
-      WHERE p.occurrencesetid = o.occurrencesetid 
-        AND o.userid = usr AND o.statusmodtime <= dt
-   LOOP
-      -- FIRST delete all matrixcolumns using this layer to remove FK constraint
-      DELETE FROM lm_v3.MatrixColumn WHERE layerid = lyrid;
-      GET DIAGNOSTICS currCount = ROW_COUNT;
-      RAISE NOTICE 'Deleted % MatrixColumns for SDMProject Layer %', currCount, lyrid;
-      mc_total = mc_total + currCount;        
-
-      -- SECOND, delete all sdmproject layers; this cascades to joined SDMProject
-      DELETE FROM lm_v3.Layer WHERE layerid in 
-         (SELECT layerid FROM lm_v3.SDMProject WHERE occurrencesetid = occid);
-      GET DIAGNOSTICS currCount = ROW_COUNT;
-      RAISE NOTICE 'Deleted % SDMProject Layers for %', currCount, lyrid;
-      prj_total = prj_total + currCount;
-          
-      -- Delete this sdmproject occurrenceset
-      DELETE FROM lm_v3.OccurrenceSet WHERE occurrencesetid = occid;
-      GET DIAGNOSTICS currCount = ROW_COUNT;
-      RAISE NOTICE 'Deleted % Occurrenceset %', currCount, occid;
-      occ_total = occ_total + currCount;
-      RETURN NEXT dloc;
-   END LOOP; 
-        
-   -- Find all non-projected occurrencesets
-   DELETE FROM lm_v3.OccurrenceSet WHERE userid = usr AND statusmodtime <= dt;
-   GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % Non-projected Occurrencesets %', currCount, occid;
-   occ_total = occ_total + currCount;
-
-   RAISE NOTICE 'Deleted % MatrixColumns', mc_total;
-   RAISE NOTICE 'Deleted % SDMProject/Layers', prj_total;
-   RAISE NOTICE 'Deleted % OccurrenceSets', occ_total;
-   
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
--- select * from lm_v3.lm_clearObsoleteSpeciesDataForUser('taffy', 58473)
 
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
