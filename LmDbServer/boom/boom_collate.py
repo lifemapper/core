@@ -451,7 +451,7 @@ class BoomCollate(LMObject):
             A list of MfRules
         """
         rules = []
-        if len(self.gridset.getPAMs()) == 0:
+        if len(self.gridset.getAllPAMs()) == 0:
             raise Exception(
                 ('There are no PAMs for this gridset.'
                  '  Do they need to be filled by the scribe?'))
@@ -472,7 +472,7 @@ class BoomCollate(LMObject):
         else:
             self.squid_tree_filename = None
 
-        for pam in self.gridset.getPAMs():
+        for pam in self.gridset.getAllPAMs():
             rules.extend(self._get_rules_for_pam(pam))
         
         return rules
