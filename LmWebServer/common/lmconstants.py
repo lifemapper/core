@@ -95,6 +95,10 @@ QUERY_PARAMETERS = {
     'datecode' : {
         QP_NAME_KEY : 'dateCode'
     },
+    'detail' : {
+        QP_NAME_KEY : 'detail',
+        QP_PROCESS_KEY : lambda x: bool(int(x)) # Zero is false, one is true
+    },
     'displayname' : {
         QP_NAME_KEY : 'displayName'
     },

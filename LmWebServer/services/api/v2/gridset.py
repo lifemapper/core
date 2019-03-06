@@ -350,6 +350,18 @@ class GridsetBioGeoService(LmService):
     
 # .............................................................................
 @cherrypy.expose
+class GridsetProgressService(LmService):
+    """Service class for gridset progress
+    """
+    # ................................
+    @lmFormatter
+    def GET(self, pathGridSetId, detail=False, **params):
+        """Get progress for a gridset
+        """
+        return ('gridset', pathGridSetId, detail)
+    
+# .............................................................................
+@cherrypy.expose
 @cherrypy.popargs('pathTreeId')
 class GridsetTreeService(LmService):
     """
@@ -457,7 +469,7 @@ class GridsetTreeService(LmService):
 # .............................................................................
 @cherrypy.expose
 @cherrypy.popargs('pathGridSetId')
-class GridSetService(LmService):
+class GridsetService(LmService):
     """
     @summary: This class is for the grid set service.  The dispatcher is 
                      responsible for calling the correct method.
@@ -465,6 +477,7 @@ class GridSetService(LmService):
     analysis = GridsetAnalysisService()
     biogeo = GridsetBioGeoService()
     matrix = MatrixService()
+    progress = GridsetProgressService()
     tree = GridsetTreeService()
     
     # ................................

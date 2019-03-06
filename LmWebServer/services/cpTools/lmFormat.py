@@ -98,7 +98,9 @@ def lmFormatter(f):
                     return gridsetPackageFormatter(
                         handler_result, includeCSV=csvs, includeSDM=sdms)
                 elif ah == LMFormat.PROGRESS.getMimeType():
-                    return progress_object_formatter(handler_result)
+                    obj_type, obj_id, detail = handler_result
+                    return progress_object_formatter(
+                        obj_type, obj_id, detail=detail)
             except Exception, e:
                 # Ignore and try next accept header
                 raise cherrypy.HTTPError(

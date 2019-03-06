@@ -10,16 +10,17 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
 
 # .............................................................................
-def format_gridset(gridset, detail=False):
+def format_gridset(gridset_id, detail=False):
     """Returns a dictionary of progress information for a gridset
 
     Args:
-        gridset (:obj: `Gridset`): The gridset object to get the progress
+        gridset_id (:obj:`int`): The gridset id to get progress for
     """
     scribe = BorgScribe(LmPublicLogger())
     scribe.openConnections()
     
     if detail:
+        gridset = scribe.getGridset(gridsetid=gridset_id)
         complete_mtxs = 0
         error_mtxs = 0
         running_mtxs = 0
@@ -107,29 +108,29 @@ def format_gridset(gridset, detail=False):
     return progress_dict
     
 # .............................................................................
-def progress_object_formatter(obj):
+def progress_object_formatter(obj_type, obj_id, detail=False):
     """Return a progress interface for an object
 
     Args:
-        obj (:obj: `ServiceObject`): A Lifemapper object to attempt to get the
-            progress of
+        obj_type (str): A Lifemapper object type name
+        obj_id (int): The database ID for the object
     """
-    formatted_obj = _format_object(obj)
+    formatted_obj = _format_object(obj_type, obj_id, detail=detail)
     return json.dumps(formatted_obj, indent=3)
 
 # .............................................................................
-def _format_object(obj):
+def _format_object(obj_type, obj_id, detail=False):
     """Helper function to determine how to get progress of an object
 
     Args:
-        obj (:obj: `ServiceObject`): A Lifemapper service object to get the
-            progress
+        obj_type (str): A Lifemapper object type name
+        obj_id (int): The database ID for the object
     """
     # Progress is JSON format, PROGRESS format is work around for accept
     #    headers
     cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
-    if isinstance(obj, Gridset):
-        return format_gridset(obj)
+    if obj_type.lower() == 'gridset':
+        return format_gridset(obj_id, detail=detail)
     else:
         raise TypeError(
-            'Cannot get progress for object of type: {}'.format(type(obj)))
+            'Cannot get progress for object of type: {}'.format(obj_type))

@@ -10,7 +10,7 @@ from LmWebServer.services.api.v2.biotaphy_points import IDigBioOccurrenceService
 from LmWebServer.services.api.v2.envLayer import EnvLayerService
 from LmWebServer.services.api.v2.gbifparser import GBIFNamesService
 from LmWebServer.services.api.v2.globalPam import GlobalPAMService
-from LmWebServer.services.api.v2.gridset import GridSetService
+from LmWebServer.services.api.v2.gridset import GridsetService
 from LmWebServer.services.api.v2.layer import LayerService
 from LmWebServer.services.api.v2.occurrence import OccurrenceLayerService
 from LmWebServer.services.api.v2.ogc import MapService
@@ -37,7 +37,7 @@ class ApiRootV2(object):
     envlayer = EnvLayerService()
     gbifparser = GBIFNamesService()
     globalpam = GlobalPAMService()
-    gridset = GridSetService()
+    gridset = GridsetService()
     hint = SpeciesHintService()
     layer = LayerService()
     occurrence = OccurrenceLayerService()
