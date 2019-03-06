@@ -54,14 +54,15 @@ def deleteObsoleteSDMs(scribe, userid, obsolete_date, max_num):
                                                              obsolete_date, 
                                                              max_num=max_num)    
     for fname in occ_fnames:
-        pth, base = os.path.split(fname)
-        if fname is not None and os.path.exists(pth):
-            try:
-                shutil.rmtree(pth)
-            except Exception, e:
-                scribe.log.error('Failed to remove {}, {}'.format(pth, str(e)))
-            else:
-                scribe.log.error('Removed {} for occset {}'.format(pth, base))
+        if fname is not None:
+            pth, base = os.path.split(fname)
+            if os.path.exists(pth):
+                try:
+                    shutil.rmtree(pth)
+                except Exception, e:
+                    scribe.log.error('Failed to remove {}, {}'.format(pth, str(e)))
+                else:
+                    scribe.log.error('Removed {} for occset {}'.format(pth, base))
     
 # ...............................................
 def deleteObsoleteGridsets(scribe, userid, obsolete_date):

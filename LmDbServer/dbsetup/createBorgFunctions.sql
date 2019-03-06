@@ -3150,9 +3150,8 @@ DECLARE
    occ_total int := 0;
    dloc      varchar;
 BEGIN
-
    -- Find all projections with obsolete occurrencesets
-   For occid IN SELECT occurrencesetid FROM lm_v3.OccurrenceSet 
+   For occid, dloc IN SELECT occurrencesetid, dlocation FROM lm_v3.OccurrenceSet 
                        WHERE userid = usr AND statusmodtime <= dt
                        LIMIT maxnum
    LOOP
@@ -3181,7 +3180,6 @@ BEGIN
    RAISE NOTICE 'Deleted % MatrixColumns', mc_total;
    RAISE NOTICE 'Deleted % SDMProject/Layers', prj_total;
    RAISE NOTICE 'Deleted % OccurrenceSets', occ_total;
-   
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
