@@ -62,7 +62,7 @@ def deleteObsoleteSDMs(scribe, userid, obsolete_date, max_num):
                 except Exception, e:
                     scribe.log.error('Failed to remove {}, {}'.format(pth, str(e)))
                 else:
-                    scribe.log.error('Removed {} for occset {}'.format(pth, base))
+                    scribe.log.info('Removed {} for occset {}'.format(pth, base))
     
 # ...............................................
 def deleteObsoleteGridsets(scribe, userid, obsolete_date):
