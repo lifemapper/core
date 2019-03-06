@@ -1,32 +1,10 @@
-"""
-@summary: This module contains the job controller daemon that will run as a 
-             daemon process and continually provide Makeflow processes that
-             workers can connect to
-@author: CJ Grady
-@version: 1.0.0
-@status: alpha
+"""Deamon script in charge of job computation control
 
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
+This module contains the job controller daemon that will run as a daemon
+process and continually provide Makeflow processes that workers can connect to
 
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+Todo:
+    * Catch failed makeflows
 """
 import argparse
 import glob
@@ -34,7 +12,6 @@ from mx.DateTime.DateTime import gmt
 import os
 import shutil
 import signal
-from subprocess import Popen
 import subprocess
 import sys
 from time import sleep
@@ -44,384 +21,466 @@ from LmBackend.common.daemon import Daemon, DaemonCommands
 
 from LmCommon.common.lmconstants import LM_USER, JobStatus
 
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, CS_OPTIONS,
-                                      LOG_PATH, MAKEFLOW_BIN, MAKEFLOW_OPTIONS,
-                                      MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, 
-                                      WORKER_FACTORY_BIN, 
-                                      WORKER_FACTORY_OPTIONS,
-                                      RM_OLD_WORKER_DIRS_CMD)
+from LmServer.common.lmconstants import (
+    CATALOG_SERVER_BIN, CS_OPTIONS, LOG_PATH, MAKEFLOW_BIN, MAKEFLOW_OPTIONS,
+    MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, RM_OLD_WORKER_DIRS_CMD,
+    WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS)
 from LmServer.base.utilities import isLMUser
 from LmServer.common.localconstants import MAX_MAKEFLOWS, WORKER_PATH
 from LmServer.common.log import LmServerLogger
+from LmServer.db.borgscribe import BorgScribe
+
+# .............................................................................
+class KeepAction(object):
+    """Constants class for determining delete action level
+    """
+    NONE = 0
+    ERROR = 1
+    ALL = 2
+    
+    @staticmethod
+    def options(self):
+        return [KeepAction.NONE, KeepAction.ERROR, KeepAction.ALL]
 
 # .............................................................................
 class MattDaemon(Daemon):
-   """
-   @summary: The MattDaemon class manages a pool of Makeflow subprocesses
-                that workers connect to.   Once one of the Makeflow processes
-                completes, it is replaced by the next available job chain.
-                Workers can be located anywhere, but at least one should 
-                probably run locally for local processes like database updates. 
-   """
-   debug = False
-   
-   # .............................
-   def initialize(self):
-      """
-      @summary: Initialize the job controller
-      """
-      # Makeflow pool
-      self._mfPool = []
-      self.csProc = None
-      self.wfProc = None
+    """Class to manage makeflow subprocesses
 
-      self.sleepTime = 30
-      self.maxMakeflows = MAX_MAKEFLOWS
-      self.workspace = MAKEFLOW_WORKSPACE
-      
-      # Establish db connection
-      self.scribe = BorgScribe(self.log)
-      self.scribe.openConnections()
-      
-      # Start catalog server
-      self.startCatalogServer()
-      
-      # Start worker factory
-      self.startWorkerFactory()
-   
-   # .............................
-   def run(self):
-      """
-      @summary: This method will continue to run while the self.keepRunning 
-                   attribute is true
-      """
-      try:
-         self.log.info("Running")
-         
-         while self.keepRunning and os.path.exists(self.pidfile):
+    The MattDaemon class manages a pool of Makeflow subprocesses that workers
+    connect to.  Once one of the Makeflow processes completes, it is replaced
+    by the next available job chain.  Workers can be located anywhere, but at
+    least one should probably run locally for local processes like database
+    updates. 
+    """
+    keep_logs = KeepAction.NONE
+    keep_makeflows = KeepAction.NONE
+    keep_outputs = KeepAction.NONE
+    log_dir = LOG_PATH
+    
+    # .............................
+    def initialize(self):
+        """Initialize the MattDaemon
+        """
+        # Makeflow pool
+        self._mf_pool = []
+        self.cs_proc = None
+        self.wf_proc = None
+
+        self.sleep_time = 30
+        self.max_makeflows = MAX_MAKEFLOWS
+        self.workspace = MAKEFLOW_WORKSPACE
+        
+        # Establish db connection
+        self.scribe = BorgScribe(self.log)
+        self.scribe.openConnections()
+        
+        # Start catalog server
+        self.start_catalog_server()
+        
+        # Start worker factory
+        self.start_worker_factory()
+    
+    # .............................
+    def run(self):
+        """Runs workflows until told to stop
+
+        This method will continue to run while the self.keepRunning attribute
+        is true
+        """
+        try:
+            self.log.info("Running")
             
-            # Check if catalog server and factory are running
-            # TODO: Should we attempt to restart these if they are stopped?
-            if self.csProc.poll() is not None:
-               raise Exception, "Catalog server has stopped"
-            
-            if self.wfProc.poll() is not None:
-               raise Exception, "Worker factory has stopped"
-            
-            # Check if there are any empty slots
-            numRunning = self.getNumberOfRunningProcesses()
-            
-            #  Add mf processes for empty slots
-            for mfObj, mfDocFn in self.getMakeflows(self.maxMakeflows - numRunning):
-               
-               if os.path.exists(mfDocFn):
-                  cmd = self._getMakeflowCommand("lifemapper-{0}".format(
-                                             mfObj.getId()), mfDocFn)
-                  self.log.debug(cmd)
-                  
-                  # File outputs
-                  procOut = open(os.path.join(LOG_PATH, 
-                                       'mf_{}.out'.format(mfObj.getId())), 'a')
-                  procErr = open(os.path.join(LOG_PATH,
-                                       'mf_{}.err'.format(mfObj.getId())), 'a')
-                  
-                  self._mfPool.append([mfObj, mfDocFn, 
-                                       Popen(cmd, shell=True, stdout=procOut, 
-                                          stderr=procErr, preexec_fn=os.setsid), 
-                                       procOut, procErr])
-               else:
-                  self._cleanupMakeflow(mfObj, mfDocFn, exitStatus=2, 
-                                        lmStatus=JobStatus.IO_GENERAL_ERROR)
-            # Sleep
-            self.log.info("Sleep for {0} seconds".format(self.sleepTime))
-            sleep(self.sleepTime)
-            
-         self.log.debug("Exiting")
-      except Exception, e:
-         tb = traceback.format_exc()
-         self.log.error("An error occurred")
-         self.log.error(str(e))
-         self.log.error(tb)
-         self.stopWorkerFactory()
-         self.stopCatalogServer()
-   
-   # .............................
-   def getMakeflows(self, count):
-      """
-      @summary: Use the scribe to get available makeflow documents and moves 
-                   DAG files to workspace
-      @param count: The number of Makeflows to retrieve
-      @note: If the DAG exists in the workspace, assume that things failed and
+            while self.keepRunning and os.path.exists(self.pidfile):
+                
+                # Check if catalog server and factory are running
+                # TODO: Should we attempt to restart these if they are stopped?
+                if self.cs_proc.poll() is not None:
+                    raise Exception('Catalog server has stopped')
+                
+                if self.wf_proc.poll() is not None:
+                    raise Exception('Worker factory has stopped')
+                
+                # Check if there are any empty slots
+                num_running = self.get_number_of_running_processes()
+                
+                #  Add mf processes for empty slots
+                for mf_obj, mf_doc_fn in self.get_makeflows(
+                    self.max_makeflows - num_running):
+                    
+                    if os.path.exists(mf_doc_fn):
+                        cmd = self._get_makeflow_command(
+                            'lifemapper-{0}'.format(mf_obj.getId()), mf_doc_fn)
+                        self.log.debug(cmd)
+                        
+                        # File outputs
+                        out_log_filename = os.path.join(
+                            self.log_dir, 'mf_{}.out'.format(mf_obj.getId()))
+                        err_log_filename = os.path.join(
+                            self.log_dir, 'mf_{}.err'.format(mf_obj.getId()))
+                        proc_out = open(out_log_filename, 'a')
+                        proc_err = open(err_log_filename, 'a')
+                        
+                        mf_proc = subprocess.Popen(
+                            cmd, shell=True, stdout=proc_out, stderr=proc_err,
+                            preexec_fn=os.setsid)
+                        
+                        self._mf_pool.append(
+                            [mf_obj, mf_doc_fn, mf_proc, proc_out, proc_err])
+                    else:
+                        self._cleanup_makeflow(
+                            mf_obj, mf_doc_fn, 2,
+                            lm_status=JobStatus.IO_GENERAL_ERROR)
+                # Sleep
+                self.log.info('Sleep for {} seconds'.format(self.sleep_time))
+                sleep(self.sleep_time)
+                
+            self.log.debug('Exiting')
+        except Exception as e:
+            tb = traceback.format_exc()
+            self.log.error('An error occurred')
+            self.log.error(str(e))
+            self.log.error(tb)
+            self.stop_worker_factory()
+            self.stop_catalog_server()
+    
+    # .............................
+    def get_makeflows(self, count):
+        """Get available makeflow documents and move to workspace
+
+        Use the scribe to get available makeflow documents and moves DAG files
+        to workspace
+
+        Args:
+            count (int): The number of Makeflows to retrieve
+
+        Note:
+            * If the DAG exists in the workspace, assume that things failed and
                 we should try to continue
-      """
-      rawMFs = self.scribe.findMFChains(count)
-      
-      mfs = []
-      for mfObj in rawMFs:
-         # New filename
-         origLoc = mfObj.getDLocation()
-         newLoc = os.path.join(self.workspace, os.path.basename(origLoc))
+        """
+        raw_mfs = self.scribe.findMFChains(count)
+        
+        mfs = []
+        for mf_obj in raw_mfs:
+            # New filename
+            orig_loc = mf_obj.getDLocation()
+            new_loc = os.path.join(self.workspace, os.path.basename(orig_loc))
 
-         # Attempt to move the file to the workspace if needed
-         try:
-            # Move to workspace if it does not exist (see note)
-            if not os.path.exists(newLoc):
-               shutil.copyfile(origLoc, newLoc)
-            # Add to mfs list
-            mfs.append((mfObj, newLoc))
-         except Exception, e:
-            # Could fail if original dlocation does not exist
-            self.log.debug('Could not move mf doc: {}'.format(str(e)))
-
-      return mfs
-      
-   # .............................
-   def getNumberOfRunningProcesses(self):
-      """
-      @summary: Returns the number of running processes
-      """
-      numRunning = 0
-      for idx in xrange(len(self._mfPool)):
-         if self._mfPool[idx] is not None:
-            result = self._mfPool[idx][2].poll()
-            if result is None:
-               numRunning += 1
-            else:
-               mfObj = self._mfPool[idx][0]
-               mfDocFn = self._mfPool[idx][1]
-               # Close log files
-               procOut = self._mfPool[idx][3]
-               procErr = self._mfPool[idx][4]
-               logFiles = [procOut.name, procErr.name]
-               procOut.close()
-               procErr.close()
-               self._mfPool[idx] = None
-               
-               self._cleanupMakeflow(mfObj, mfDocFn, result, logFiles=logFiles)
-
-      self._mfPool = filter(None, self._mfPool)
-      return numRunning
-
-   # .............................
-   def onUpdate(self):
-      """
-      @summary: Called on Daemon update request
-      """
-      # Read configuration
-      self.readConfiguration()
-      
-      self.log.debug("Update signal caught!")
-      
-   # .............................
-   def onShutdown(self):
-      """
-      @summary: Called on Daemon shutdown request
-      """
-      self.log.debug("Shutdown signal caught!")
-      self.scribe.closeConnections()
-      Daemon.onShutdown(self)
-
-      # Wait for makeflows to finish
-      maxTime = 60 * 3
-      timeWaited = 0
-      numRunning = self.getNumberOfRunningProcesses()
-      self.log.debug(
-            "Waiting on {} makeflow processes to finish".format(numRunning))
-      while numRunning > 0 and timeWaited < maxTime:
-         self.log.debug(
-            "Waiting on {} makeflow processes to finish".format(numRunning))
-         sleep(self.sleepTime)
-         timeWaited += self.sleepTime
-         try:
-            numRunning = self.getNumberOfRunningProcesses()
-         except:
-            numRunning = 0
-         
-      if timeWaited >= maxTime:
-         self.log.debug("Waited for {} seconds.  Stopping.".format(timeWaited))
-         for runningProc in self._mfPool:
+            # Attempt to move the file to the workspace if needed
             try:
-               _, _, mfProc, procStdOut, procStdErr = runningProc
-               print 'Killing process group: {}'.format(os.getpgid(mfProc.pid))
-               os.killpg(os.getpgid(mfProc.pid), signal.SIGKILL)
-               procStdOut.close()
-               procStdErr.close()
-            except Exception, e:
-               self.log.debug(str(e))
-      
-      # Stop worker factory
-      try:
-         self.stopWorkerFactory()
-      except:
-         pass
-      
-      # Stop catalog server
-      try:
-         self.stopCatalogServer()
-      except:
-         pass
-   
-   # .............................
-   def setDebug(self, flag):
-      self.debug = flag
-      
-   # .............................
-   def startCatalogServer(self):
-      """
-      @summary: Start the local catalog server
-      """
-      self.log.debug("Starting catalog server")
-      cmd = "{csBin} {csOptions}".format(csBin=CATALOG_SERVER_BIN, 
-                                         csOptions=CS_OPTIONS)
-      self.csProc = Popen(cmd, shell=True, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   
-   # .............................
-   def stopCatalogServer(self):
-      """
-      @summary: Stop the local catalog server
-      """
-      self.log.debug("Stopping catalog server")
-      os.killpg(os.getpgid(self.csProc.pid), signal.SIGTERM)
-   
-   # .............................
-   def startWorkerFactory(self):
-      """
-      @summary: Start worker factory
-      """
-      self.log.debug("Clean up old worker directories")
-      rmProc = Popen(RM_OLD_WORKER_DIRS_CMD, shell=True)
-      # Sleep until we remove all of the old work directories
-      while rmProc.poll() is None:
-         sleep(1)
-      
-      self.log.debug("Starting worker factory")
-      cmd = "{wfBin} {wfOptions}".format(wfBin=WORKER_FACTORY_BIN, 
-                                         wfOptions=WORKER_FACTORY_OPTIONS)
-      self.wfProc = Popen(cmd, shell=True, preexec_fn=os.setsid)
-   
-   # .............................
-   def stopWorkerFactory(self):
-      """
-      @summary: Kill worker factory
-      """
-      self.log.debug("Kill worker factory")
-      os.killpg(os.getpgid(self.wfProc.pid), signal.SIGTERM)
-   
-   # .............................
-   def _getMakeflowCommand(self, name, mfDocFn):
-      """
-      @summary: Assemble Makeflow command
-      @param name: The name of the Makeflow job
-      @param mfDocFn: The Makeflow file to run
-      """
-      mfCmd = "{mfBin} {mfOptions} -N {mfName} {mfDoc}".format(
-                           mfBin=MAKEFLOW_BIN, mfOptions=MAKEFLOW_OPTIONS, 
-                           mfName=name, mfDoc=mfDocFn)
-      return mfCmd
+                # Move to workspace if it does not exist (see note)
+                if not os.path.exists(new_loc):
+                    shutil.copyfile(orig_loc, new_loc)
+                # Add to mfs list
+                mfs.append((mf_obj, new_loc))
+            except Exception as e:
+                # Could fail if original dlocation does not exist
+                self.log.debug('Could not move mf doc: {}'.format(str(e)))
 
-   # .............................
-   def _cleanupMakeflow(self, mfObj, mfDocFn, exitStatus, lmStatus=None, 
-                        logFiles=None):
-      """
-      @summary: Clean up a makeflow that has finished, by completion, error, or
-                   signal
-      @param mfObj: Makeflow chain object
-      @param mfDocFn: The file location of the DAG (in the workspace)
-      @param exitStatus: Unix exit status (negative: killed by signal, 
-                                           zero: successful, positive: error)
-      @param lmStatus: If provided, update the database with this status
-      @param logFiles: A list of log files generated by a makeflow
-      """
-      self.log.debug('Cleaning up: {}'.format(mfDocFn))
-      # CJG - 2017/09/25
-      #   For now, we will always delete the directory.  We can enable some 
-      #    checks later to see if we should try to recover but right now this
-      #    is leaving too many orphaned workflows and files that are filling
-      #    the file system
-      
-      mfRelDir = mfObj.getRelativeDirectory()
-      
-      if mfRelDir is not None and not self.debug:
-         mfWsDir = os.path.join(WORKER_PATH, mfRelDir)
-         self.log.debug('Attempting to delete: {}'.format(mfWsDir))
-         try:
-            shutil.rmtree(mfWsDir)
-         except Exception, e:
-            self.log.debug('Could not delete: {} - {}'.format(mfWsDir, str(e)))
-      
-      # If exit status is zero, remove from DB.  Otherwise update with error
-      #    status
-      if exitStatus == 0:
-         origMf = mfObj.getDLocation()
-         self.scribe.deleteObject(mfObj)
-         # Remove log files
-         if logFiles is not None and not self.debug:
-            for logFn in logFiles:
-               os.remove(logFn)
-               
-         # Remove original makeflow file
-         try:
-            os.remove(origMf)
-         except Exception, e:
-            self.log.debug('Could not remove makeflow file: {}, {}'.format(
-                                                               origMf, str(e)))
-      else:
-         # Either killed by signal or error
-         if lmStatus is None:
-            lmStatus = JobStatus.GENERAL_ERROR
-         # Check if killed by signal
-         if exitStatus < 0:
-            lmStatus = JobStatus.INITIALIZE
-         
-         # Update
-         mfObj.updateStatus(lmStatus, modTime=gmt().mjd)
-         self.scribe.updateObject(mfObj)
-      
-      # Remove files from workspace
-      delFiles = glob.glob("{0}*".format(mfDocFn))
-      for fn in delFiles:
-         os.remove(fn)
-   
+        return mfs
+        
+    # .............................
+    def get_number_of_running_processes(self):
+        """Returns the number of running processes
+        """
+        num_running = 0
+        for idx in range(len(self._mf_pool)):
+            if self._mf_pool[idx] is not None:
+                result = self._mf_pool[idx][2].poll()
+                if result is None:
+                    num_running += 1
+                else:
+                    mf_obj = self._mf_pool[idx][0]
+                    mf_doc_fn = self._mf_pool[idx][1]
+                    # Close log files
+                    proc_out = self._mf_pool[idx][3]
+                    proc_err = self._mf_pool[idx][4]
+                    log_files = [proc_out.name, proc_err.name]
+                    proc_out.close()
+                    proc_err.close()
+                    self._mf_pool[idx] = None
+                    
+                    self._cleanup_makeflow(
+                        mf_obj, mf_doc_fn, result.returncode,
+                        log_files=log_files)
+
+        self._mf_pool = filter(None, self._mf_pool)
+        return num_running
+
+    # .............................
+    def onUpdate(self):
+        """Called on Daemon update request
+        """
+        # Read configuration
+        self.readConfiguration()
+        
+        self.log.debug('Update signal caught!')
+        
+    # .............................
+    def onShutdown(self):
+        """Called on Daemon shutdown request
+        """
+        self.log.debug('Shutdown signal caught!')
+        self.scribe.closeConnections()
+        Daemon.onShutdown(self)
+
+        # Wait for makeflows to finish
+        max_time = 60 * 3
+        time_waited = 0
+        num_running = self.get_number_of_running_processes()
+        self.log.debug(
+            'Waiting on {} makeflow processes to finish'.format(num_running))
+        while num_running > 0 and time_waited < max_time:
+            self.log.debug(
+                'Waiting on {} makeflow processes to finish'.format(
+                    num_running))
+            sleep(self.sleep_time)
+            time_waited += self.sleep_time
+            try:
+                num_running = self.get_number_of_running_processes()
+            except:
+                num_running = 0
+            
+        if time_waited >= max_time:
+            self.log.debug(
+                'Waited for {} seconds.  Stopping.'.format(time_waited))
+            for running_proc in self._mf_pool:
+                try:
+                    _, _, mf_proc, proc_std_out, proc_std_err = running_proc
+                    self.log.debug(
+                        'Killing process group: {}'.format(
+                            os.getpgid(mf_proc.pid)))
+                    os.killpg(os.getpgid(mf_proc.pid), signal.SIGKILL)
+                    proc_std_out.close()
+                    proc_std_err.close()
+                except Exception as e:
+                    self.log.debug(str(e))
+        
+        # Stop worker factory
+        try:
+            self.stop_worker_factory()
+        except:
+            pass
+        
+        # Stop catalog server
+        try:
+            self.stop_catalog_server()
+        except:
+            pass
+    
+    # .............................
+    def set_debug(self, debug_logs, debug_makeflows, debug_outputs, log_dir):
+        """Set debugging options
+
+        Args:
+            debug_logs (int): Keep logs - 0: None, 1: Failures, 2: All
+            debug_makeflows (int): Keep makeflows - 0: None, 1: Failures,
+                2: All
+            debug_outputs (int): Keep outputs - 0: None, 1: Failures, 2: All
+            log_dir (str): A directory to keep log files
+        """
+        self.keep_logs = debug_logs
+        self.keep_makeflows = debug_makeflows
+        self.keep_outputs = debug_outputs
+        if log_dir is not None:
+            self.log_dir = log_dir
+        
+    # .............................
+    def start_catalog_server(self):
+        """Start the local catalog server
+        """
+        self.log.debug('Starting catalog server')
+        cmd = '{} {}'.format(CATALOG_SERVER_BIN, CS_OPTIONS)
+        self.cs_proc = subprocess.Popen(
+            cmd, shell=True, preexec_fn=os.setsid, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+    
+    # .............................
+    def stop_catalog_server(self):
+        """Stop the local catalog server
+        """
+        self.log.debug('Stopping catalog server')
+        os.killpg(os.getpgid(self.cs_proc.pid), signal.SIGTERM)
+    
+    # .............................
+    def start_worker_factory(self):
+        """Start worker factory
+        """
+        self.log.debug('Clean up old worker directories')
+        rm_proc = subprocess.Popen(RM_OLD_WORKER_DIRS_CMD, shell=True)
+        # Sleep until we remove all of the old work directories
+        while rm_proc.poll() is None:
+            sleep(1)
+        
+        self.log.debug('Starting worker factory')
+        cmd = '{} {}'.format(WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS)
+        self.wf_proc = subprocess.Popen(cmd, shell=True, preexec_fn=os.setsid)
+    
+    # .............................
+    def stop_worker_factory(self):
+        """Kill worker factory
+        """
+        self.log.debug('Kill worker factory')
+        os.killpg(os.getpgid(self.wf_proc.pid), signal.SIGTERM)
+    
+    # .............................
+    def _get_makeflow_command(self, name, mf_doc_fn):
+        """Assemble Makeflow command
+
+        Args:
+            name (str): The name of the Makeflow job
+            mf_doc_fn (str): The Makeflow DAG file to run
+        """
+        mfCmd = '{} {} -N {} {}'.format(
+            MAKEFLOW_BIN, MAKEFLOW_OPTIONS, name, mf_doc_fn)
+        return mfCmd
+
+    # .............................
+    def _cleanup_makeflow(self, mf_obj, mf_doc_fn, exit_status, lm_status=None, 
+                          log_files=None):
+        """Clean up a makeflow that has finished, by completion, error, or signal
+
+        Args:
+            mf_obj (:obj:`MFChain`): The workflow chain object.
+            mf_doc_fn (str): The file location of the DAG (in the workspace).
+            exit_status (int): Unix exit status (negative: killed by signal,
+                zero: successful, positive: error).
+            lm_status (:obj:`int`, optional): If provided, update the database
+                with this status.
+            log_files (:obj:`list` of :obj:`str`, optional): A list of log
+                files generated by a makeflow.
+        """
+        self.log.debug('Cleaning up: {}'.format(mf_doc_fn))
+        mf_rel_dir = mf_obj.getRelativeDirectory()
+
+        # Determine what we should clean up
+        delete_log = True
+        delete_makeflow = True
+        delete_output = True
+        
+        # Log files
+        if self.keep_logs == KeepAction.ALL or (
+            self.keep_logs == KeepAction.ERROR and exit_status != 0):
+
+            delete_log = False
+        
+        # Output files
+        if self.keep_outputs == KeepAction.ALL or (
+            self.keep_outputs == KeepAction.ERROR and exit_status != 0):
+            
+            delete_output = False
+        
+        # Makeflow (original)
+        if self.keep_makeflows == KeepAction.ALL or (
+            self.keep_makeflows == KeepAction.ERROR and exit_status != 0):
+
+            delete_makeflow = False
+        
+        # Delete output files
+        if mf_rel_dir is not None and delete_output:
+            mf_ws_dir = os.path.join(WORKER_PATH, mf_rel_dir)
+            self.log.debug('Attempting to delete: {}'.format(mf_ws_dir))
+            try:
+                shutil.rmtree(mf_ws_dir)
+            except Exception as e:
+                self.log.debug(
+                    'Could not delete: {} - {}'.format(mf_ws_dir, str(e)))
+        
+        # Delete log files
+        if delete_log and log_files is not None:
+            for log_fn in log_files:
+                os.remove(log_fn)
+        
+        # Delete makeflow
+        if delete_makeflow:
+            orig_mf = mf_obj.getDLocation()
+            self.scribe.deleteObject(mf_obj)
+            # Remove original makeflow file
+            try:
+                os.remove(orig_mf)
+            except Exception as e:
+                self.log.debug(
+                    'Could not remove makeflow file: {}, {}'.format(
+                        orig_mf, str(e)))
+        else:
+            # Get update status
+            if lm_status is None:
+                if exit_status < 0:
+                    # Killed by signal
+                    lm_status = JobStatus.INITIALIZE
+                elif exit_status > 0:
+                    # Error
+                    lm_status = JobStatus.GENERAL_ERROR
+                else:
+                    # Success
+                    lm_status = JobStatus.COMPLETE
+            mf_obj.updateStatus(lm_status, modTime=gmt().mjd)
+            self.scribe.updateObject(mf_obj)
+        
+        
+        # Remove makeflow files from workspace
+        del_files = glob.glob('{}*'.format(mf_doc_fn))
+        for fn in del_files:
+            os.remove(fn)
+    
 # .............................................................................
 if __name__ == "__main__":
-   if not isLMUser():
-      print("Run this script as `{}`".format(LM_USER))
-      sys.exit(2)
-      
-   if os.path.exists(MATT_DAEMON_PID_FILE):
-      pid = open(MATT_DAEMON_PID_FILE).read().strip()
-   else:
-      pid = os.getpid()
-   
-   parser = argparse.ArgumentParser(prog="Lifemapper Makeflow Daemon (Matt Daemon)",
-                           description="Controls a pool of Makeflow processes",
-                           version="1.0.0")
-   
-   parser.add_argument('-d', dest='debug', action='store_true', 
-                       help='Enable debugging mode (will not delete outputs)')
-   parser.add_argument('cmd', choices=[DaemonCommands.START, 
-                                       DaemonCommands.STOP, 
-                                       DaemonCommands.RESTART],
-              help="The action that should be performed by the makeflow daemon")
+    if not isLMUser():
+        print("Run this script as `{}`".format(LM_USER))
+        sys.exit(2)
+        
+    if os.path.exists(MATT_DAEMON_PID_FILE):
+        pid = open(MATT_DAEMON_PID_FILE).read().strip()
+    else:
+        pid = os.getpid()
+    
+    parser = argparse.ArgumentParser(
+        prog='Lifemapper Makeflow Daemon (Matt Daemon)',
+        description='Controls a pool of Makeflow processes', version='1.1.0')
 
-   args = parser.parse_args()
+    # Keep logs, makeflows, data, log dir
+    parser.add_argument(
+        '-l', '--log_dir', type=str,
+        help='Directory to store log files if not default')
+    parser.add_argument(
+        '-dl', '--debug_log', type=int, choices=KeepAction.options(),
+        default=KeepAction.NONE,
+        help=('Should logs be kept. 0: Delete all logs. '
+              '1: Keep logs for failures. 2: Keep all logs.'))
+    parser.add_argument(
+        '-dm', '--debug_makeflows', type=int, choices=KeepAction.options(),
+        default=KeepAction.ERROR,
+        help=('Should makeflows be kept. 0: Delete all makeflows. '
+              '1: Keep failed makeflows. 2: Keep all makeflows.'))
+    parser.add_argument(
+        '-do', '--debug_outputs', type=int, choices=KeepAction.options(),
+        default=KeepAction.NONE,
+        help=('Should outputs be kept. 0: Delete all. '
+              '1: Keep outputs from failures. 2: Keep all outputs.'))
 
-   mfDaemon = MattDaemon(MATT_DAEMON_PID_FILE, 
-               log=LmServerLogger("mattDaemon", addConsole=True, addFile=True))
-   
-   # Set debugging
-   mfDaemon.setDebug(args.debug)
+    parser.add_argument(
+        'cmd', choices=[
+            DaemonCommands.START, DaemonCommands.STOP, DaemonCommands.RESTART],
+        help="The action that should be performed by the makeflow daemon")
 
-   if args.cmd.lower() == DaemonCommands.START:
-      print "Start"
-      mfDaemon.start()
-   elif args.cmd.lower() == DaemonCommands.STOP:
-      print "Stop"
-      mfDaemon.stop()
-   elif args.cmd.lower() == DaemonCommands.RESTART:
-      mfDaemon.restart()
-   else:
-      print "Unknown command:", args.cmd.lower()
-      sys.exit(2)
-   
+    args = parser.parse_args()
+
+    mf_daemon = MattDaemon(
+        MATT_DAEMON_PID_FILE,
+        log=LmServerLogger("mattDaemon", addConsole=True, addFile=True))
+    
+    # Set debugging
+    mf_daemon.set_debug(
+        args.debug_log, args.debug_makeflows, args.debug_outputs, args.log_dir)
+
+    if args.cmd.lower() == DaemonCommands.START:
+        print('Start')
+        mf_daemon.start()
+    elif args.cmd.lower() == DaemonCommands.STOP:
+        print('Stop')
+        mf_daemon.stop()
+    elif args.cmd.lower() == DaemonCommands.RESTART:
+        mf_daemon.restart()
+    else:
+        print('Unknown command: {}'.format(args.cmd.lower()))
+        sys.exit(2)
+    

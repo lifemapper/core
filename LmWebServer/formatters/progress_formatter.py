@@ -90,7 +90,9 @@ def format_gridset(gridset, detail=False):
         for mf in gs_mfs:
             if mf.status < JobStatus.GENERAL_ERROR:
                 mfs_left += 1
-            if mf.status > JobStatus.INITIALIZE:
+            if mf.status == JobStatus.COMPLETE:
+                mfs_running += 1.0
+            elif mf.status > JobStatus.INITIALIZE:
                 # Add .5 to say it is half done
                 mfs_running += 0.5
         
