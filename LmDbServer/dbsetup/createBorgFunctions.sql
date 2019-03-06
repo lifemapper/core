@@ -3136,6 +3136,56 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- Should only call this on public or anon user
+CREATE OR REPLACE FUNCTION lm_v3.lm_clearSomeObsoleteSpeciesDataForUser(usr varchar,
+                                                           dt double precision, 
+                                                           maxnum int)
+RETURNS SETOF varchar AS
+$$
+DECLARE
+   lyrid     int;
+   occid     int;
+   currCount int;
+   mc_total  int := 0;
+   prj_total int := 0;
+   occ_total int := 0;
+   dloc      varchar;
+BEGIN
+
+   -- Find all projections with obsolete occurrencesets
+   For occid IN SELECT occurrencesetid FROM lm_v3.OccurrenceSet 
+                       WHERE userid = usr AND statusmodtime <= dt
+                       LIMIT maxnum
+   LOOP
+      -- FIRST delete any matrixcolumns using SDMProjects for this Occset to remove FK constraint
+      DELETE FROM lm_v3.MatrixColumn WHERE layerid IN 
+         (SELECT layerid  FROM lm_v3.lm_sdmproject p WHERE p.occurrencesetid = occid);
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % MatrixColumns for SDMProjects with Occset %', currCount, occid;
+      mc_total = mc_total + currCount;        
+
+      -- SECOND, delete all sdmproject layers; this cascades to joined SDMProject
+      DELETE FROM lm_v3.Layer WHERE layerid IN
+         (SELECT layerid  FROM lm_v3.lm_sdmproject p WHERE p.occurrencesetid = occid);
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % SDMProject Layers for Occset %', currCount, occid;
+      prj_total = prj_total + currCount;
+          
+      -- Third, delete this sdmproject occurrenceset
+      DELETE FROM lm_v3.OccurrenceSet WHERE occurrencesetid = occid;
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % Occurrenceset %', currCount, occid;
+      occ_total = occ_total + currCount;
+      RETURN NEXT dloc;
+   END LOOP; 
+        
+   RAISE NOTICE 'Deleted % MatrixColumns', mc_total;
+   RAISE NOTICE 'Deleted % SDMProject/Layers', prj_total;
+   RAISE NOTICE 'Deleted % OccurrenceSets', occ_total;
+   
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_clearObsoleteSpeciesDataForUser(usr varchar,
                                                            dt double precision)
 RETURNS SETOF varchar AS
