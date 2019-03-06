@@ -115,6 +115,9 @@ class BoomCollate(LMObject):
                     rand_mcpa_filenames, use_abs=True, fdr=self.fdr,
                     test_matrix=obs_mcpa_filenames[1]).getMakeflowRule())
             sig_mcpa_stats_filenames.append(out_mtx_filename)
+        self.log.debug(
+            'Created {} aggregation rules for pam {}'.format(
+                len(aggregation_rules), pam_id))
         return (sig_pam_stats_filenames, sig_mcpa_stats_filenames,
                 aggregation_rules)
 
@@ -131,6 +134,9 @@ class BoomCollate(LMObject):
              pam_id, 'obs', pam_filename, 0, grim_filename=grim_filename,
              biogeo_filename=biogeo_filename, phylo_filename=phylo_filename,
              tree_filename=tree_filename)
+        self.log.debug(
+            'Created {} observed rules for pam {}'.format(
+                len(obs_rules), pam_id))
         pam_analysis_rules.extend(obs_rules)
         
         # Ancestral PAM
@@ -168,6 +174,9 @@ class BoomCollate(LMObject):
         # Add aggregation rules
         pam_analysis_rules.extend(agg_rules)
         
+        self.log.debug(
+            'Added {} total analysis rules for pam {}'.format(
+                len(pam_analysis_rules), pam_id))
         return (anc_pam_filename, sig_pam_stats_filenames, sig_mcpa_filenames,
                 pam_analysis_rules)
 
@@ -205,7 +214,9 @@ class BoomCollate(LMObject):
             EncodePhylogenyCommand(
                 pruned_tree_filename, pruned_pam_filename,
                 encoded_tree_filename).getMakeflowRule())
-        
+        self.log.debug(
+            'Added {} tree encode rules for pam {}'.format(
+                len(mcpa_tree_encode_rules), pam_id))
         return (pruned_pam_filename, pruned_tree_filename,
                 encoded_tree_filename, mcpa_tree_encode_rules)
     
@@ -266,6 +277,8 @@ class BoomCollate(LMObject):
                 #species_covariance_filename=None,
                 mcpa_output_filename=mcpa_filename,
                 mcpa_f_matrix_filename=mcpa_f_vals_filename).getMakeflowRule())
+        self.log.debug(
+            'Adding {} run rules for pam {}'.format(len(run_rules), pam_id))
         return pam_stats_return, mcpa_return, run_rules
 
     # ................................
@@ -287,6 +300,7 @@ class BoomCollate(LMObject):
             userId=self.user_id, gridset=self.gridset)
         mtx = self._scribe.findOrInsertMatrix(new_mtx)
         mtx.updateStatus(JobStatus.INITIALIZE)
+        self.log.debug('Inserted or found matrix {}'.format(mtx.getId()))
         return mtx
 
     # ................................
@@ -387,6 +401,9 @@ class BoomCollate(LMObject):
                     self._create_filename(pam_id, 'mcpa.success'),
                     mcpa_filenames).getMakeflowRule())
 
+        self.log.debug(
+            'Adding {} total rules for PAM {}'.format(len(pam_rules), pam_id))
+
         return pam_rules
 
     # ................................
@@ -406,6 +423,9 @@ class BoomCollate(LMObject):
         assembly_rules.append(AssemblePamFromSolrQueryCommand(
             pam_id, pam.getDLocation(), pam_assembly_success_filename,
             dependency_files=self.dependencies).getMakeflowRule())
+        self.log.debug(
+            'Adding {} assembly rules for pam {}'.format(
+                len(assembly_rules), pam_id))
         #return pam.getDLocation(), assembly_rules
         return pam_assembly_success_filename, assembly_rules
         
@@ -473,6 +493,7 @@ class BoomCollate(LMObject):
             self.squid_tree_filename = None
 
         for pam in self.gridset.getAllPAMs():
+            self.log.debug('Adding rules for PAM {}'.format(pam.getId()))
             rules.extend(self._get_rules_for_pam(pam))
         
         return rules

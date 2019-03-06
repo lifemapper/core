@@ -299,7 +299,7 @@ class Boomer(LMObject):
                          do_mcpa=self.do_mcpa, 
                          num_permutations=self.christopher.num_permutations,
                          random_group_size=DEFAULT_RANDOM_GROUP_SIZE, 
-                         work_dir=work_dir, log=None)
+                         work_dir=work_dir, log=self.log)
         rules = bc.get_collate_rules()
         
         return rules
