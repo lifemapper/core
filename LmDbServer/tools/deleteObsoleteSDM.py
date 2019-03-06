@@ -47,11 +47,12 @@ def reportFailure(mesgs):
                          '\n'.join(mesgs))
     
 # ...............................................
-def deleteObsoleteSDMs(scribe, userid, obsolete_date):
+def deleteObsoleteSDMs(scribe, userid, obsolete_date, max_num):
     # Should be able to just list old occurrence sets and then have the scribe 
     #     delete experiments associated with them
     occ_fnames = scribe.deleteObsoleteSDMDataReturnFilenames(userid, 
-                                                             obsolete_date)    
+                                                             obsolete_date, 
+                                                             max_num=max_num)    
     for fname in occ_fnames:
         pth, base = os.path.split(fname)
         if fname is not None and os.path.exists(pth):
@@ -91,12 +92,15 @@ if __name__ == "__main__":
              help=('User to delete data for'))
     parser.add_argument('mjd_date', type=float, default=anon_obsolesence_date,
              help=('Cutoff date in MJD format'))
+    parser.add_argument('max_num', type=int, default=10,
+                        help=('Maximum number of occurrencesets to delete'))
     parser.add_argument('--logname', type=str, default=None,
              help=('Basename of the logfile, without extension'))
     
     args = parser.parse_args()
     usr = args.user
     mjd_date = args.mjd_date
+    max_num = args.max_num
     logname = args.logname
     
     if logname is None:
@@ -112,7 +116,7 @@ if __name__ == "__main__":
         scribe.openConnections()
         if usr == DEFAULT_POST_USER:
             deleteObsoleteGridsets(scribe, usr, mjd_date)
-        deleteObsoleteSDMs(scribe, usr, mjd_date)
+        deleteObsoleteSDMs(scribe, usr, mjd_date, max_num)
     except:
         pass
     finally:

@@ -983,12 +983,12 @@ class BorgScribe(LMObject):
         return filenames
     
     # ...............................................
-    def deleteObsoleteSDMDataReturnFilenames(self, userid, beforetime):
+    def deleteObsoleteSDMDataReturnFilenames(self, userid, beforetime, max_num=100):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteObsoleteSDMDataReturnFilenames()
         """
         filenames = self._borg.deleteObsoleteSDMDataReturnFilenames(userid, 
-                                                                    beforetime)
+                                                            beforetime, max_num)
         return filenames
 
 # ...............................................

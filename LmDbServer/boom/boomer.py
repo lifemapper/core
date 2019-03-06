@@ -258,18 +258,18 @@ class Boomer(LMObject):
         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
         return mfChain
 
-    # ...............................................
-    def _createMasterPotatoHeadMakeflow(self):
-        meta = {MFChain.META_CREATED_BY: self.name,
-                MFChain.META_DESCRIPTION: 'MasterPotatoHead for User {}, Archive {}'
-                    .format(self.christopher.userId, self.christopher.archiveName),
-                MFChain.META_GRIDSET: self.gridsetId 
-        }
-        newMFC = MFChain(self.christopher.userId, priority=self.priority, 
-                         metadata=meta, status=JobStatus.GENERAL, 
-                         statusModTime=dt.gmt().mjd)
-        mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
-        return mfChain
+#     # ...............................................
+#     def _createMasterPotatoHeadMakeflow(self):
+#         meta = {MFChain.META_CREATED_BY: self.name,
+#                 MFChain.META_DESCRIPTION: 'MasterPotatoHead for User {}, Archive {}'
+#                     .format(self.christopher.userId, self.christopher.archiveName),
+#                 MFChain.META_GRIDSET: self.gridsetId 
+#         }
+#         newMFC = MFChain(self.christopher.userId, priority=self.priority, 
+#                          metadata=meta, status=JobStatus.GENERAL, 
+#                          statusModTime=dt.gmt().mjd)
+#         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
+#         return mfChain
 
     # ...............................................
     def _get_multispecies_rules(self):

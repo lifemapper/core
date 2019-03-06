@@ -745,7 +745,7 @@ class BOOMFiller(LMObject):
         # Create Global PAM for this archive, scenario
         # Pam layers are added upon boom processing
         pamType = MatrixType.PAM
-        if self.userId == PUBLIC_USER:
+        if not self.compute_pam_stats:
             pamType = MatrixType.ROLLING_PAM
         desc = '{} for Scenario {}'.format(GPAM_KEYWORD, scen.code)
         pamMeta = {ServiceObject.META_DESCRIPTION: desc,
