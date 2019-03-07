@@ -22,3 +22,12 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import os
+
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (SERVER_ENV_HEADING)
+
+cfg = Config()
+
+# Relative Home of Results packaging code
+PACKAGING_DIR = cfg.get(SERVER_ENV_HEADING, 'PACKAGING_DIR')

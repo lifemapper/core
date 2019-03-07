@@ -3,12 +3,21 @@
 import os
 from LmServer.base.utilities import getColor, getMjdTimeFromISO8601
 from LmServer.common.lmconstants import SESSION_DIR
-from LmServer.common.localconstants import SCRATCH_PATH
+from LmServer.common.localconstants import SCRATCH_PATH, APP_PATH
+from LmWebServer.common.localconstants import PACKAGING_DIR
 
 # CherryPy constants
 SESSION_PATH = os.path.join(SCRATCH_PATH, SESSION_DIR)
 SESSION_KEY = '_cp_username'
 REFERER_KEY = 'lm_referer'
+
+# Results package constants
+GRIDSET_DIR = 'gridset'
+MATRIX_DIR = os.path.join(GRIDSET_DIR, 'matrix')
+SDM_PRJ_DIR = os.path.join(GRIDSET_DIR, 'sdm')
+DYN_PACKAGE_DIR = 'package'
+STATIC_PACKAGE_PATH = os.path.join(APP_PATH, PACKAGING_DIR)
+MAX_PROJECTIONS = 1000
 
 # HTTP Methods
 class HTTPMethod(object):

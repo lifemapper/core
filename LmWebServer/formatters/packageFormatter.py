@@ -21,17 +21,19 @@ from LmServer.legion.gridset import Gridset
 
 from LmWebServer.formatters.emlFormatter import makeEml
 from LmWebServer.formatters.geoJsonFormatter import geoJsonify_flo
+from LmWebServer.common.lmconstants import (DYN_PACKAGE_DIR, STATIC_PACKAGE_PATH,
+                        GRIDSET_DIR, MATRIX_DIR, SDM_PRJ_DIR, MAX_PROJECTIONS )
 
 
-# .............................................................................
-# TODO: Move to lmconstants
-GRIDSET_DIR = 'gridset'
-MATRIX_DIR = os.path.join(GRIDSET_DIR, 'matrix')
-# TODO: Assmble from constants
-STATIC_PACKAGE_DIR = '/opt/lifemapper/LmWebServer/assets/gridset_package'
-DYN_PACKAGE_DIR = 'package'
-SDM_PRJ_DIR = os.path.join(GRIDSET_DIR, 'sdm')
-MAX_PROJECTIONS = 1000
+# # .............................................................................
+# # TODO: Move to lmconstants
+# GRIDSET_DIR = 'gridset'
+# MATRIX_DIR = os.path.join(GRIDSET_DIR, 'matrix')
+# # TODO: Assmble from constants
+# STATIC_PACKAGE_PATH = '/opt/lifemapper/LmWebServer/assets/gridset_package'
+# DYN_PACKAGE_DIR = 'package'
+# SDM_PRJ_DIR = os.path.join(GRIDSET_DIR, 'sdm')
+# MAX_PROJECTIONS = 1000
 
 # .............................................................................
 def createIndexHtml(gridset_name):
@@ -380,11 +382,11 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
         allowZip64=True) as zip_f:
 
         # Write static files
-        for f_dir, _, fns in os.walk(STATIC_PACKAGE_DIR):
+        for f_dir, _, fns in os.walk(STATIC_PACKAGE_PATH):
             for fn in fns:
                 # Get relative and absolute paths for packaging
                 a_path = os.path.join(f_dir, fn)
-                r_path = a_path.replace(STATIC_PACKAGE_DIR, '')
+                r_path = a_path.replace(STATIC_PACKAGE_PATH, '')
                 zip_f.write(a_path, r_path)
         
         # Write gridset EML

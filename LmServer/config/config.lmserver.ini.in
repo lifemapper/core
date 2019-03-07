@@ -18,6 +18,7 @@ PID_PATH: @LMSCRATCHDISK@/run
 SHARED_DATA_PATH: @DATADIR_SHARED@
 LM_DISK: @LMDISK@
 SPECIES_DATA_DIR: @SPECIES_DATA_DIR@
+PACKAGING_DIR: @PACKAGING_DIR@
 
 ; .............................................................................
 [LmServer - pipeline]
