@@ -7,7 +7,6 @@ from LmCommon.common.lmconstants import JobStatus, LMFormat
 
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.gridset import Gridset
 
 # .............................................................................
 def format_gridset(gridset_id, detail=False):
@@ -20,7 +19,7 @@ def format_gridset(gridset_id, detail=False):
     scribe.openConnections()
     
     if detail:
-        gridset = scribe.getGridset(gridsetid=gridset_id)
+        gridset = scribe.getGridset(gridsetId=gridset_id)
         complete_mtxs = 0
         error_mtxs = 0
         running_mtxs = 0
@@ -101,7 +100,7 @@ def format_gridset(gridset_id, detail=False):
         }
     else:
         gs_mfs = scribe.listMFChains(
-            0, 100, gridsetId=gridset.getId(), atom=False)
+            0, 100, gridsetId=gridset_id, atom=False)
         
         mfs_left = 0
         mfs_running = 0
