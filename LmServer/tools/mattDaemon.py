@@ -444,17 +444,17 @@ if __name__ == "__main__":
     parser.add_argument(
         '-dl', '--debug_log', type=int, choices=KeepAction.options(),
         default=KeepAction.NONE,
-        help=('Should logs be kept. 0: Delete all logs. '
+        help=('Should logs be kept. 0: Delete all logs. (default).'
               '1: Keep logs for failures. 2: Keep all logs.'))
     parser.add_argument(
         '-dm', '--debug_makeflows', type=int, choices=KeepAction.options(),
         default=KeepAction.ERROR,
         help=('Should makeflows be kept. 0: Delete all makeflows. '
-              '1: Keep failed makeflows. 2: Keep all makeflows.'))
+              '1: Keep failed makeflows (default). 2: Keep all makeflows.'))
     parser.add_argument(
         '-do', '--debug_outputs', type=int, choices=KeepAction.options(),
         default=KeepAction.NONE,
-        help=('Should outputs be kept. 0: Delete all. '
+        help=('Should outputs be kept. 0: Delete all (default).'
               '1: Keep outputs from failures. 2: Keep all outputs.'))
 
     parser.add_argument(
