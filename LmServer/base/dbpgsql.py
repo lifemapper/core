@@ -45,7 +45,7 @@ class DbPostgresql(LMAbstractObject):
     database.
     @todo: Reference LmServer.base.DBConn documentation (how?)
     """     
-
+    RETRY_COUNT = 4
     def __init__(self, logger, db=None, user=None, password=None, host=None, 
                      port=None, schema=LM_SCHEMA):
         """
@@ -182,9 +182,17 @@ class DbPostgresql(LMAbstractObject):
         """
         @summary: Close database connection
         """
-        if self.pconn is not None and not(self.pconn.closed):
+        if self.pconn is not None:
             self.pconn.close()
         self.pconn = None
+        
+# ............................................................................
+    def reopen(self):
+        """
+        @summary: Close database connection
+        """
+        self.close()
+        self.open()
         
     # ............................................................................
     def executeQueryOneFunction(self, qry):
@@ -194,23 +202,25 @@ class DbPostgresql(LMAbstractObject):
         @param qry: string containing a stored function name and parameters
         @exception LMError: on error returned from the database.
         """
+        rows = None
         cmd = 'select * from {};'.format(qry)
         try:
             rows, idxs = self._sendCommand(cmd)
         except Exception, e: 
-            # Try 5 times if lost connection
+            # Sometimes needs a reset, try up to 5 times 
             tries = 0
-            self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
-            while not self.isOpen and tries <= 5:
+            success = False
+            self.log.warning('Db command failed! Try more times ...')
+            self.reopen()            
+            while not success and tries < self.RETRY_COUNT:
                 tries += 1
-                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
-                self.log.warning('Database connection is None! #{} Trying to re-open ...'.format(tries))
-                self.open()
-                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
-            if self.isOpen:
-                # If fails here, let exception bubble up
-                rows, idxs = self._sendCommand(cmd)
-            
+                try:
+                    rows, idxs = self._sendCommand(cmd)
+                    success = True
+                except Exception, e:
+                    self.log.warning('   #{} Trying to re-open, isOpen {}, ...'
+                                     .format(tries, self.isOpen))
+                    self.reopen()            
         if rows:
             for val in rows[0]:
                 if val is not None:
@@ -236,19 +246,23 @@ class DbPostgresql(LMAbstractObject):
         try:
             rows, idxs = self._sendCommand(cmd)
         except Exception, e: 
-            # Try 5 times if lost connection
+            # Sometimes needs a reset, try up to 5 times 
             tries = 0
-            self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
-            while not self.isOpen and tries <= 5:
+            success = False
+            self.log.warning('Db command failed! Try more times ...')
+            self.reopen()            
+            while not success and tries < self.RETRY_COUNT:
                 tries += 1
-                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
-                self.log.warning('Database connection is None! #{} Trying to re-open ...'.format(tries))
-                self.open()
-                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
-            if self.isOpen:
-                # If fails here, let exception bubble up
-                rows, idxs = self._sendCommand(cmd)
-                
+                try:
+                    rows, idxs = self._sendCommand(cmd)
+                    success = True
+                except Exception, e:
+                    self.log.warning('   #{} Trying to re-open, isOpen {}, ...'
+                                     .format(tries, self.isOpen))
+                    self.reopen()
+            if not success:
+                raise LMError('Failed to execute command {}, pconn={}, err={}'
+                              .format(cmd, self.pconn, e))
         return rows, idxs
 
     # ............................................................................
@@ -433,19 +447,23 @@ class DbPostgresql(LMAbstractObject):
         try:
             rows, idxs = self._sendCommand(cmd)
         except Exception, e:
-            # Try 5 times if lost connection
+            # Sometimes needs a reset, try up to 5 times 
             tries = 0
-            self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
-            while not self.isOpen and tries <= 5:
+            success = False
+            self.log.warning('Db command failed! Try more times ...')
+            self.reopen()            
+            while not success and tries < self.RETRY_COUNT:
                 tries += 1
-                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
-                self.log.warning('Database connection is None! #{} Trying to re-open ...'.format(tries))
-                self.open()
-                self.log.debug('isOpen {} or tries <= 5, {}'.format(self.isOpen, tries))
-            if self.isOpen:
-                # If fails here, let exception bubble up
-                rows, idxs = self._sendCommand(cmd)
-
+                try:
+                    rows, idxs = self._sendCommand(cmd)
+                    success = True
+                except Exception, e:
+                    self.log.warning('   #{} Trying to re-open, isOpen {}, ...'
+                                     .format(tries, self.isOpen))
+                    self.reopen()
+            if not success:
+                raise LMError('Failed to execute command {}, pconn={}, err={}'
+                              .format(cmd, self.pconn, e))
         return rows, idxs
 
 # ............................................................................ 

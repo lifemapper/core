@@ -1089,7 +1089,8 @@ from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
 
-gset = scribe.getGridset(gridsetId=269)
+gset = scribe.getGridset(gridsetId=268)
+x = scribe.countMFChains(gridsetId=268, afterStat=299, beforeStat=301)
 
 mtx = scribe.getMatrix(mtxId=1410)
 mcs = scribe.listMatrixColumns(0,100, userId='x', matrixId=1410)
