@@ -255,7 +255,7 @@ class MattDaemon(Daemon):
                     # TODO: Set up a pause status or some way to recover from
                     #    where it was at
                     mf_obj.updateStatus(
-                        JobStatus.INITIALIZE, modTIme=gmt().mjd)
+                        JobStatus.INITIALIZE, modTime=gmt().mjd)
                     self.scribe.updateObject(mf_obj)
                 except Exception as e:
                     self.log.debug(str(e))
