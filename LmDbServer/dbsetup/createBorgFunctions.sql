@@ -1302,7 +1302,7 @@ DECLARE
    cmd varchar;
    wherecls varchar;
 BEGIN
-   cmd = 'SELECT count(*) FROM lm_v3.mfprocess ';
+   cmd = 'SELECT count(*) FROM lm_v3.lm_mfprocess ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMFProcess(usr, grdid, 
                             meta, afterstat, beforestat, aftertime, beforetime);
    cmd := cmd || wherecls;
