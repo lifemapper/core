@@ -7,7 +7,6 @@ from LmCommon.common.lmconstants import JobStatus, LMFormat
 
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.gridset import Gridset
 
 # .............................................................................
 def format_gridset(gridset_id, detail=False):
@@ -20,22 +19,28 @@ def format_gridset(gridset_id, detail=False):
     scribe.openConnections()
     
     if detail:
-        gridset = scribe.getGridset(gridsetid=gridset_id)
+        gridset = scribe.getGridset(gridsetId=gridset_id)
         complete_mtxs = 0
         error_mtxs = 0
         running_mtxs = 0
         waiting_mtxs = 0
 
         # Gridset object has matrix objects so we can count status
-        for mtx in gridset.getMatrices():
-            if mtx.status == JobStatus.GENERAL:
-                waiting_mtxs += 1
-            elif mtx.status < JobStatus.COMPLETE:
-                running_mtxs += 1
-            elif mtx.status == JobStatus.COMPLETE:
-                complete_mtxs += 1
-            elif mtx.status >= JobStatus.GENERAL_ERROR:
-                error_mtxs += 1
+        complete_mtxs = scribe.countMatrices(
+            userId=gridset.getUserId(), gridsetId=gridset_id,
+            afterStatus=JobStatus.COMPLETE - 1,
+            beforeStatus=JobStatus.COMPLETE + 1)
+        waiting_mtxs = scribe.countMatrices(
+            userId=gridset.getUserId(), gridsetId=gridset_id,
+            afterStatus=JobStatus.GENERAL - 1,
+            beforeStatus=JobStatus.GENERAL + 1)
+        running_mtxs = scribe.countMatrices(
+            userId=gridset.getUserId(), gridsetId=gridset_id,
+            afterStatus=JobStatus.GENERAL + 1,
+            beforeStatus=JobStatus.COMPLETE - 1)
+        error_mtxs = scribe.countMatrices(
+            userId=gridset.getUserId(), gridsetId=gridset_id,
+            afterStatus=JobStatus.GENERAL_ERROR - 1)
         
         # Use scribe to get counts for projections
         
@@ -72,9 +77,10 @@ def format_gridset(gridset_id, detail=False):
         prj_percent = 1.0
         
         if len(gridset.getMatrices()) > 0:
-            mtx_percent = 1.0 * complete_mtxs / len(gridset.getMatrices())
+            mtx_percent = 1.0 * (
+                complete_mtxs + error_mtxs) / len(gridset.getMatrices())
         if total_prjs > 0:
-            prj_percent = 1.0 * complete_prjs / total_prjs
+            prj_percent = 1.0 * (complete_prjs + error_prjs) / total_prjs
         
         progress = 0.5 * (mtx_percent + prj_percent)
         
@@ -101,7 +107,7 @@ def format_gridset(gridset_id, detail=False):
         }
     else:
         gs_mfs = scribe.listMFChains(
-            0, 100, gridsetId=gridset.getId(), atom=False)
+            0, 100, gridsetId=gridset_id, atom=False)
         
         mfs_left = 0
         mfs_running = 0

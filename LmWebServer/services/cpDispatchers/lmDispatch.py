@@ -46,6 +46,8 @@ class LmDispatcher(MethodDispatcher):
             set_accept = LMFormat.NEWICK.getMimeType()
         elif last_segment == PROGRESS_INTERFACE:
             set_accept = LMFormat.PROGRESS.getMimeType()
+            # Last one is stripped away but needed for formatting
+            path_info_pieces.append(PROGRESS_INTERFACE)
         
         if set_accept is not None:
             cherrypy.request.headers['Accept'] = set_accept

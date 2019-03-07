@@ -39,7 +39,7 @@ class KeepAction(object):
     ALL = 2
     
     @staticmethod
-    def options(self):
+    def options():
         return [KeepAction.NONE, KeepAction.ERROR, KeepAction.ALL]
 
 # .............................................................................
@@ -189,6 +189,7 @@ class MattDaemon(Daemon):
                 if result is None:
                     num_running += 1
                 else:
+                    exit_status = self._mf_pool[idx][2].returncode
                     mf_obj = self._mf_pool[idx][0]
                     mf_doc_fn = self._mf_pool[idx][1]
                     # Close log files
@@ -200,8 +201,7 @@ class MattDaemon(Daemon):
                     self._mf_pool[idx] = None
                     
                     self._cleanup_makeflow(
-                        mf_obj, mf_doc_fn, result.returncode,
-                        log_files=log_files)
+                        mf_obj, mf_doc_fn, exit_status, log_files=log_files)
 
         self._mf_pool = filter(None, self._mf_pool)
         return num_running
@@ -245,13 +245,18 @@ class MattDaemon(Daemon):
                 'Waited for {} seconds.  Stopping.'.format(time_waited))
             for running_proc in self._mf_pool:
                 try:
-                    _, _, mf_proc, proc_std_out, proc_std_err = running_proc
+                    mf_obj, _, mf_proc, proc_std_out, proc_std_err = running_proc
                     self.log.debug(
                         'Killing process group: {}'.format(
                             os.getpgid(mf_proc.pid)))
                     os.killpg(os.getpgid(mf_proc.pid), signal.SIGKILL)
                     proc_std_out.close()
                     proc_std_err.close()
+                    # TODO: Set up a pause status or some way to recover from
+                    #    where it was at
+                    mf_obj.updateStatus(
+                        JobStatus.INITIALIZE, modTime=gmt().mjd)
+                    self.scribe.updateObject(mf_obj)
                 except Exception as e:
                     self.log.debug(str(e))
         
@@ -444,17 +449,17 @@ if __name__ == "__main__":
     parser.add_argument(
         '-dl', '--debug_log', type=int, choices=KeepAction.options(),
         default=KeepAction.NONE,
-        help=('Should logs be kept. 0: Delete all logs. '
+        help=('Should logs be kept. 0: Delete all logs. (default).'
               '1: Keep logs for failures. 2: Keep all logs.'))
     parser.add_argument(
         '-dm', '--debug_makeflows', type=int, choices=KeepAction.options(),
         default=KeepAction.ERROR,
         help=('Should makeflows be kept. 0: Delete all makeflows. '
-              '1: Keep failed makeflows. 2: Keep all makeflows.'))
+              '1: Keep failed makeflows (default). 2: Keep all makeflows.'))
     parser.add_argument(
         '-do', '--debug_outputs', type=int, choices=KeepAction.options(),
         default=KeepAction.NONE,
-        help=('Should outputs be kept. 0: Delete all. '
+        help=('Should outputs be kept. 0: Delete all (default).'
               '1: Keep outputs from failures. 2: Keep all outputs.'))
 
     parser.add_argument(
