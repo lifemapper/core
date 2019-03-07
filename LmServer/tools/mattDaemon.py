@@ -39,7 +39,7 @@ class KeepAction(object):
     ALL = 2
     
     @staticmethod
-    def options(self):
+    def options():
         return [KeepAction.NONE, KeepAction.ERROR, KeepAction.ALL]
 
 # .............................................................................
