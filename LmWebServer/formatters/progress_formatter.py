@@ -19,22 +19,28 @@ def format_gridset(gridset_id, detail=False):
     scribe.openConnections()
     
     if detail:
-        gridset = scribe.getGridset(gridsetId=gridset_id, fillMatrices=True)
+        gridset = scribe.getGridset(gridsetId=gridset_id)
         complete_mtxs = 0
         error_mtxs = 0
         running_mtxs = 0
         waiting_mtxs = 0
 
         # Gridset object has matrix objects so we can count status
-        for mtx in gridset.getMatrices():
-            if mtx.status == JobStatus.GENERAL:
-                waiting_mtxs += 1
-            elif mtx.status < JobStatus.COMPLETE:
-                running_mtxs += 1
-            elif mtx.status == JobStatus.COMPLETE:
-                complete_mtxs += 1
-            elif mtx.status >= JobStatus.GENERAL_ERROR:
-                error_mtxs += 1
+        complete_mtxs = scribe.countMatrices(
+            userId=gridset.getUserId(), gridsetId=gridset_id,
+            afterStatus=JobStatus.COMPLETE - 1,
+            beforeStatus=JobStatus.COMPLETE + 1)
+        waiting_mtxs = scribe.countMatrices(
+            userId=gridset.getUserId(), gridsetId=gridset_id,
+            afterStatus=JobStatus.GENERAL - 1,
+            beforeStatus=JobStatus.GENERAL + 1)
+        running_mtxs = scribe.countMatrices(
+            userId=gridset.getUserId(), gridsetId=gridset_id,
+            afterStatus=JobStatus.GENERAL + 1,
+            beforeStatus=JobStatus.COMPLETE - 1)
+        error_mtxs = scribe.countMatrices(
+            userId=gridset.getUserId(), gridsetId=gridset_id,
+            afterStatus=JobStatus.GENERAL_ERROR - 1)
         
         # Use scribe to get counts for projections
         
