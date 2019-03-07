@@ -19,7 +19,7 @@ def format_gridset(gridset_id, detail=False):
     scribe.openConnections()
     
     if detail:
-        gridset = scribe.getGridset(gridsetId=gridset_id)
+        gridset = scribe.getGridset(gridsetId=gridset_id, fillMatrices=True)
         complete_mtxs = 0
         error_mtxs = 0
         running_mtxs = 0
