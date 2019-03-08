@@ -392,7 +392,7 @@ from LmServer.tools.cwalken import ChristopherWalken
 from LmDbServer.boom.boom_collate import BoomCollate
 
 configFname = '/share/lm/data/archive/kubi/public_boom-2019.01.10.ini'
-successFname= 'mf_3343/public_boom-2019.01.10.ini.success'
+successFname= 'public_boom-2019.01.10.ini.success'
 
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
