@@ -753,7 +753,6 @@ BEGIN
          wherecls = ' WHERE userid =  ' || quote_literal(usr) ||
                     '   AND occurrenceSetId =  ' || quote_literal(occid) || 
                     '   AND algorithmCode =  ' || quote_literal(algcode) ||
-                    '   AND algParams =  ' || quote_literal(algstr) ||
                     '   AND mdlscenarioId =  ' || quote_literal(mdlscenid) ||
                     '   AND prjscenarioId =  ' || quote_literal(prjscenid);
       end;

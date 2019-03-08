@@ -322,7 +322,7 @@ create table lm_v3.SDMProject
    						
    status int,
    statusModTime double precision,
-   UNIQUE (userId, occurrenceSetId, algorithmCode, algParams, 
+   UNIQUE (userId, occurrenceSetId, algorithmCode, 
            mdlscenarioId, prjscenarioId)
 );  
 CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProject(statusModTime);
