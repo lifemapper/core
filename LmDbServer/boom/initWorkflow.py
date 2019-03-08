@@ -135,6 +135,7 @@ class BOOMFiller(LMObject):
          self.occFname,
          self.occSep,   
          self.minpoints,
+         self.expdate,
          self.algorithms,
          self.gridbbox,
          self.cellsides,
@@ -420,6 +421,11 @@ class BOOMFiller(LMObject):
                 occSep = GBIF.DATA_DUMP_DELIMITER
             
         minpoints = self._getBoomOrDefault(config, BoomKeys.POINT_COUNT_MIN)
+        today = mx.DateTime.gmt()
+        expyr = self._getBoomOrDefault(config, BoomKeys.OCC_EXP_YEAR, defaultValue=today.year)
+        expmo = self._getBoomOrDefault(config, BoomKeys.OCC_EXP_MONTH, defaultValue=today.month)
+        expdy = self._getBoomOrDefault(config, BoomKeys.OCC_EXP_DAY, defaultValue=today.day)
+        
         algs = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
         
         # Should be None or one Mask for pre-processing
@@ -469,7 +475,7 @@ class BOOMFiller(LMObject):
         return (usr, usrPath, usrEmail, userTaxonomyBasename, archiveName, priority, scenPackageName, 
                 modelScenCode, prjScenCodeList, doMapBaseline, dataSource, 
                 occIdFname, taxon_name_filename, taxon_id_filename, 
-                occFname, occSep, minpoints, algs, 
+                occFname, occSep, minpoints, (expyr, expmo, expdy), algs, 
                 gridbbox, cellsides, cellsize, gridname, 
                 intersectParams, maskAlg, treeFname, bghypFnames, 
                 compute_pam_stats, compute_mcpa, num_permutations)
@@ -554,10 +560,9 @@ class BOOMFiller(LMObject):
                        GBIF_TAXONOMY_FILENAME)
             
         # Expiration date triggering re-query and computation
-        today = mx.DateTime.gmt()
-        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_YEAR, str(today.year))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MONTH, str(today.month))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_DAY, str(today.day))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_YEAR, str(self.expdate[0]))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MONTH, str(self.expdate[1]))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_DAY, str(self.expdate[2]))
         config.set(SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN, str(self.minpoints))
 
         # .........................................      
