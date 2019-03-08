@@ -21,17 +21,9 @@
              Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
              02110-1301, USA.
 """
-import glob
 import mx.DateTime
-import os
 
-from LmBackend.command.common import SystemCommand, ChainCommand
-from LmBackend.command.server import (IndexPAVCommand, LmTouchCommand, 
-                                                  StockpileCommand)
-from LmBackend.command.single import (GrimRasterCommand, 
-                                          IntersectVectorCommand, IntersectRasterCommand)
-
-from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
+from LmCommon.common.lmconstants import LMFormat, BoomKeys
 from LmCommon.common.matrix import Matrix
 
 from LmServer.base.layer2 import _LayerParameters
@@ -43,24 +35,25 @@ from LmServer.common.lmconstants import LMServiceType
 # .............................................................................
 # TODO: This should inherit from LmCommon.common.matrix.Matrix
 class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
+    # BoomKeys uses these strings, prefixed by 'INTERSECT_'
     # Query to filter layer for intersect
-    INTERSECT_PARAM_FILTER_STRING = 'filterString'
+    INTERSECT_PARAM_FILTER_STRING = 'filter_string'
     # Attribute used in layer intersect
-    INTERSECT_PARAM_VAL_NAME = 'valName'
+    INTERSECT_PARAM_VAL_NAME = 'val_name'
     # Value of feature for layer intersect (for biogeographic hypotheses)
-    INTERSECT_PARAM_VAL_VALUE = 'valValue'
+    INTERSECT_PARAM_VAL_VALUE = 'val_value'
     # Units of measurement for attribute used in layer intersect
-    INTERSECT_PARAM_VAL_UNITS = 'valUnits'
+    INTERSECT_PARAM_VAL_UNITS = 'val_units'
     # Minimum spatial coverage for gridcell intersect computation
-    INTERSECT_PARAM_MIN_PERCENT = 'minPercent'
+    INTERSECT_PARAM_MIN_PERCENT = 'min_percent'
     # Minimum percentage of acceptable value for PAM gridcell intersect computation 
-    INTERSECT_PARAM_MIN_PRESENCE = 'minPresence'
+    INTERSECT_PARAM_MIN_PRESENCE = 'min_presence'
     # Maximum percentage of acceptable value for PAM gridcell intersect computation 
-    INTERSECT_PARAM_MAX_PRESENCE = 'maxPresence'
+    INTERSECT_PARAM_MAX_PRESENCE = 'max_presence'
 
     # Types of GRIM gridcell intersect computation
-    INTERSECT_PARAM_WEIGHTED_MEAN = 'weightedMean'
-    INTERSECT_PARAM_LARGEST_CLASS = 'largestClass'
+    INTERSECT_PARAM_WEIGHTED_MEAN = 'weighted_mean'
+    INTERSECT_PARAM_LARGEST_CLASS = 'largest_class'
 # .............................................................................
 # Constructor
 # .............................................................................
