@@ -24,14 +24,14 @@
              Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
              02110-1301, USA.
 """
-import glob
 from mx.DateTime import gmt
 import os
 import shutil
 
 from LmCommon.common.lmconstants import ONE_DAY, DEFAULT_POST_USER
 
-from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import LMFileType
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.notifications.email import EmailNotifier
@@ -50,19 +50,23 @@ def reportFailure(mesgs):
 def deleteObsoleteSDMs(scribe, userid, obsolete_date, max_num):
     # Should be able to just list old occurrence sets and then have the scribe 
     #     delete experiments associated with them
-    occ_fnames = scribe.deleteObsoleteSDMDataReturnFilenames(userid, 
-                                                             obsolete_date, 
-                                                             max_num=max_num)    
-    for fname in occ_fnames:
-        if fname is not None:
-            pth, base = os.path.split(fname)
-            if os.path.exists(pth):
+    occ_ids = scribe.deleteObsoleteSDMDataReturnIds(userid, obsolete_date, 
+                                                    max_num=max_num)    
+    earl = EarlJr()
+    for oid in occ_ids:
+        if oid is not None:
+            opth = earl.createDataPath(userid, LMFileType.OCCURRENCE_FILE, 
+                                       occsetId=oid)
+            if os.path.exists(opth):
                 try:
-                    shutil.rmtree(pth)
+                    shutil.rmtree(opth)
                 except Exception, e:
-                    scribe.log.error('Failed to remove {}, {}'.format(pth, str(e)))
+                    scribe.log.error('Failed to remove {}, {}'.format(opth, str(e)))
                 else:
-                    scribe.log.info('Removed {} for occset {}'.format(pth, base))
+                    scribe.log.info('Removed {} for occset {}'.format(opth, oid))
+            else:
+                scribe.log.info('Path {} does not exist'.format(opth))
+                
     
 # ...............................................
 def deleteObsoleteGridsets(scribe, userid, obsolete_date):
@@ -99,7 +103,7 @@ if __name__ == "__main__":
              help=('Basename of the logfile, without extension'))
     
     args = parser.parse_args()
-    usr = args.user
+    usr = args.user_id
     mjd_date = args.mjd_date
     max_num = args.max_num
     logname = args.logname
@@ -123,3 +127,40 @@ if __name__ == "__main__":
     finally:
         scribe.closeConnections()
 
+"""
+from mx.DateTime import gmt
+import os
+import shutil
+
+from LmCommon.common.lmconstants import ONE_DAY, DEFAULT_POST_USER
+
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import LMFileType
+from LmServer.common.log import ScriptLogger
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.notifications.email import EmailNotifier
+
+from LmDbServer.tools.deleteObsoleteSDM import *
+
+usr = 'kubi'
+mjd_date = 58450
+max_num = 10
+
+import time
+secs = time.time()
+timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+logname = '{}.{}'.format('testdelete', timestamp)
+    
+log = ScriptLogger(logname)
+scribe = BorgScribe(log)
+scribe.openConnections()
+
+deleteObsoleteGridsets(scribe, usr, mjd_date)
+
+deleteObsoleteSDMs(scribe, usr, mjd_date, max_num)
+
+
+scribe.closeConnections()
+
+
+"""

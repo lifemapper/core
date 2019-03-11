@@ -339,6 +339,14 @@ class BorgScribe(LMObject):
         return borgUser
 
 # ...............................................
+    def updateUser(self, usr):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::updateUser()
+        """
+        success = self._borg.updateUser(usr)
+        return success
+
+# ...............................................
     def findUser(self, userId=None, email=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findUser()
@@ -991,6 +999,15 @@ class BorgScribe(LMObject):
                                                             beforetime, max_num)
         return filenames
 
+    # ...............................................
+    def deleteObsoleteSDMDataReturnIds(self, userid, beforetime, max_num=100):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::deleteObsoleteSDMDataReturnIds()
+        """
+        occids = self._borg.deleteObsoleteSDMDataReturnIds(userid, 
+                                                           beforetime, max_num)
+        return occids
+
 # ...............................................
     def getMapServiceForSDMOccurrence(self, occLyrOrId):
         """
@@ -1088,6 +1105,10 @@ from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
 
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
+
+usr = scribe.findUser(userId='cshl')
+usr.setPassword('jetsons', False)
+scribe.updateUser(usr)
 
 gset = scribe.getGridset(gridsetId=268)
 x = scribe.countMFChains(gridsetId=268, afterStat=299, beforeStat=301)

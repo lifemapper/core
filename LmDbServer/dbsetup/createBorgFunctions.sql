@@ -971,6 +971,37 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE; 
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateUser(usr varchar, 
+                                                     name1 varchar, 
+                                                     name2 varchar,
+                                                     inst varchar, 
+                                                     addr1 varchar, 
+                                                     addr2 varchar, 
+                                                     addr3 varchar,
+                                                     fone varchar, 
+                                                     emale varchar, 
+                                                     mtime double precision, 
+                                                     psswd varchar)
+   RETURNS int AS
+$$
+DECLARE
+   success int = -1;
+BEGIN
+   UPDATE lm_v3.LMUser  
+      SET (firstname, lastname, institution, address1, address2, address3, 
+           phone, modTime, password)
+        = (name1, name2, inst, addr1, addr2, addr3, fone, mtime, psswd)
+      WHERE userid = usr;
+
+   IF FOUND THEN 
+      success = 0;
+   END IF;
+      
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE; 
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findUser(usr varchar, 
                                            emale varchar)
    RETURNS lm_v3.lmuser AS
@@ -1328,7 +1359,7 @@ DECLARE
    rec lm_v3.lm_atom;
    cmd varchar;
    wherecls varchar;
-   limitcls varchar;
+   limitcls varch
    ordercls varchar;
 BEGIN
    cmd = 'SELECT mfprocessId, grdname, grdepsgcode, mfpstatusmodtime FROM lm_v3.lm_mfprocess ';
@@ -3175,6 +3206,55 @@ BEGIN
       RAISE NOTICE 'Deleted % Occurrenceset %', currCount, occid;
       occ_total = occ_total + currCount;
       RETURN NEXT dloc;
+   END LOOP; 
+        
+   RAISE NOTICE 'Deleted % MatrixColumns', mc_total;
+   RAISE NOTICE 'Deleted % SDMProject/Layers', prj_total;
+   RAISE NOTICE 'Deleted % OccurrenceSets', occ_total;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- Should only call this on public or anon user
+CREATE OR REPLACE FUNCTION lm_v3.lm_clearSomeObsoleteSpeciesDataForUser2(usr varchar,
+                                                           dt double precision, 
+                                                           maxnum int)
+RETURNS SETOF int AS
+$$
+DECLARE
+   lyrid     int;
+   occid     int;
+   currCount int;
+   mc_total  int := 0;
+   prj_total int := 0;
+   occ_total int := 0;
+   dloc      varchar;
+BEGIN
+   -- Find all projections with obsolete occurrencesets
+   For occid IN SELECT occurrencesetid FROM lm_v3.OccurrenceSet 
+                       WHERE userid = usr AND statusmodtime <= dt
+                       LIMIT maxnum
+   LOOP
+      -- FIRST delete any matrixcolumns using SDMProjects for this Occset to remove FK constraint
+      DELETE FROM lm_v3.MatrixColumn WHERE layerid IN 
+         (SELECT layerid  FROM lm_v3.sdmproject WHERE occurrencesetid = occid);
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % MatrixColumns for SDMProjects with Occset %', currCount, occid;
+      mc_total = mc_total + currCount;        
+
+      -- SECOND, delete all sdmproject layers; this cascades to joined SDMProject
+      DELETE FROM lm_v3.Layer WHERE layerid IN
+         (SELECT layerid  FROM lm_v3.sdmproject WHERE occurrencesetid = occid);
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % SDMProject Layers for Occset %', currCount, occid;
+      prj_total = prj_total + currCount;
+          
+      -- Third, delete this sdmproject occurrenceset
+      DELETE FROM lm_v3.OccurrenceSet WHERE occurrencesetid = occid;
+      GET DIAGNOSTICS currCount = ROW_COUNT;
+      RAISE NOTICE 'Deleted % Occurrenceset %', currCount, occid;
+      occ_total = occ_total + currCount;
+      RETURN NEXT occid;
    END LOOP; 
         
    RAISE NOTICE 'Deleted % MatrixColumns', mc_total;

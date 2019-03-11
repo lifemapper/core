@@ -1303,6 +1303,21 @@ class Borg(DbPostgresql):
         return newOrExistingUsr
 
 # ...............................................
+    def updateUser(self, usr):
+        """
+        @summary: Insert a user of the Lifemapper system. 
+        @param usr: LMUser object to update
+        @return: updated LMUser
+        """
+        usr.modTime = mx.DateTime.utc().mjd
+        success = self.executeModifyFunction('lm_updateUser', 
+                                        usr.userid, usr.firstName, usr.lastName, 
+                                        usr.institution, usr.address1, usr.address2, 
+                                        usr.address3, usr.phone, usr.email, usr.modTime, 
+                                        usr.getPassword())
+        return success
+
+# ...............................................
     def findUserForObject(self, layerId, scenCode, occId, matrixId, gridsetId, 
                                  mfprocessId):
         """
@@ -1778,17 +1793,42 @@ class Borg(DbPostgresql):
         @return: list of shapefile locations for deleted data.
         """
         filenames = []
-        rows, idxs = self.executeSelectManyFunction(
+        rows, idxs = self.executeSelectAndModifyManyFunction(
             'lm_clearSomeObsoleteSpeciesDataForUser', userid, beforetime, max_num)
         tmstr = mx.DateTime.DateTimeFromMJD(beforetime).localtime().strftime()
-        self.log.info('''Deleted {} Occurrencesets older than {} and dependent 
-        objects for User {}'''.format(len(rows), tmstr, userid))
         
         for r in rows:
-            if r[0] is not None:
+            if r[0] is not None and r[0] != '':
                 filenames.append(r[0])
             
+        self.log.info('''Deleted {} Occurrencesets older than {} and dependent 
+        objects for User {}; returned {} filenames'''
+        .format(len(rows), tmstr, userid, len(filenames)))
         return filenames
+
+# ...............................................
+    def deleteObsoleteSDMDataReturnIds(self, userid, beforetime, max_num):
+        """
+        @summary: Deletes OccurrenceSets, any dependent SDMProjects (with Layer)
+                  and SDMProject-dependent MatrixColumns.  
+        @param userid: User for whom to delete SDM data
+        @param beforetime: delete SDM data modified before or at this time
+        @param maxNum: limit on number of occsets to process
+        @return: list of occurrenceset ids for deleted data.
+        """
+        occids = []
+        rows, idxs = self.executeSelectAndModifyManyFunction(
+            'lm_clearSomeObsoleteSpeciesDataForUser2', userid, beforetime, max_num)
+        tmstr = mx.DateTime.DateTimeFromMJD(beforetime).localtime().strftime()
+        
+        for r in rows:
+            if r[0] is not None and r[0] != '':
+                occids.append(r[0])
+            
+        self.log.info('''Deleted {} Occurrencesets older than {} and dependent 
+        objects for User {}; returned {} occurrencesetids'''
+        .format(len(rows), tmstr, userid, occids))
+        return occids
 
 # ...............................................
     def _deleteOccsetDependentMatrixCols(self, occId, usr):
