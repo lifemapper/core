@@ -108,8 +108,13 @@ class MattDaemon(Daemon):
                     self.max_makeflows - num_running):
                     
                     if os.path.exists(mf_doc_fn):
+                        if mf_obj.priority is not None:
+                            priority = mf_obj.priority
+                        else:
+                            priority = 1
                         cmd = self._get_makeflow_command(
-                            'lifemapper-{0}'.format(mf_obj.getId()), mf_doc_fn)
+                            'lifemapper-{0}'.format(mf_obj.getId()), mf_doc_fn,
+                            priority=priority)
                         self.log.debug(cmd)
                         
                         # File outputs
@@ -328,15 +333,17 @@ class MattDaemon(Daemon):
         os.killpg(os.getpgid(self.wf_proc.pid), signal.SIGTERM)
     
     # .............................
-    def _get_makeflow_command(self, name, mf_doc_fn):
+    def _get_makeflow_command(self, name, mf_doc_fn, priority=1):
         """Assemble Makeflow command
 
         Args:
             name (str): The name of the Makeflow job
             mf_doc_fn (str): The Makeflow DAG file to run
+            priority (int): The priority that this makeflow should run.  The
+                greater the number the higher the priority for this makeflow.
         """
-        mfCmd = '{} {} -N {} {}'.format(
-            MAKEFLOW_BIN, MAKEFLOW_OPTIONS, name, mf_doc_fn)
+        mfCmd = '{} {} -N {} -P {} {}'.format(
+            MAKEFLOW_BIN, MAKEFLOW_OPTIONS, name, priority, mf_doc_fn)
         return mfCmd
 
     # .............................
