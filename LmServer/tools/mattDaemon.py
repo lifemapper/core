@@ -347,6 +347,15 @@ class MattDaemon(Daemon):
         return mfCmd
 
     # .............................
+    def _cleanup_failure_dirs(self):
+        """Cleans up 'makeflow.failed.*' directories
+        """
+        bad_dirs = glob.glob('{}/makeflow.failed.*'.format(WORKER_PATH))
+        for dir_name in bad_dirs:
+            self.log.debug('Removing error directory: {}'.format(dir_name))
+            shutil.rmtree(dir_name)
+
+    # .............................
     def _cleanup_makeflow(self, mf_obj, mf_doc_fn, exit_status, lm_status=None, 
                           log_files=None):
         """Clean up a makeflow that has finished, by completion, error, or signal
@@ -433,6 +442,9 @@ class MattDaemon(Daemon):
         del_files = glob.glob('{}*'.format(mf_doc_fn))
         for fn in del_files:
             os.remove(fn)
+
+        # Clean up any failed makeflows
+        self._cleanup_failure_dirs()
     
 # .............................................................................
 if __name__ == "__main__":
