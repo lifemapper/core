@@ -398,8 +398,12 @@ class BOOMFiller(LMObject):
                              BoomKeys.USER_TAXONOMY_FILENAME, None)
         archiveName = self._getBoomOrDefault(config, BoomKeys.ARCHIVE_NAME, 
                                              defaultValue=PUBLIC_ARCHIVE_NAME)
+        if usr == PUBLIC_USER:
+            def_priority = Priority.NORMAL
+        else:
+            def_priority = Priority.REQUESTED
         priority = self._getBoomOrDefault(config, BoomKeys.ARCHIVE_PRIORITY, 
-                                          defaultValue=Priority.NORMAL)
+                                          defaultValue=def_priority)
             
         # Species data inputs
         occIdFname = self._getBoomOrDefault(config, BoomKeys.OCC_ID_FILENAME)

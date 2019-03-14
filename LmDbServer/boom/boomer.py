@@ -394,6 +394,8 @@ from LmDbServer.boom.boom_collate import BoomCollate
 configFname = '/share/lm/data/archive/kubi/public_boom-2019.01.10.ini'
 successFname= 'public_boom-2019.01.10.ini.success'
 
+configFname = '/share/lm/data/archive/cshl/prenolepis_imparis_global_10min_ppf.ini'
+successFname = '/share/lm/data/archive/cshl/prenolepis_imparis_global_10min_ppf.ini.success'
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 
@@ -449,6 +451,16 @@ occ = self.weaponOfChoice.getOne()
 
 # ##########################################################################
 
+infname = '/state/partition1/workspace/issues/data/cshl/prenolepis_imparis2.csv'
+outfname = '/state/partition1/workspace/issues/data/cshl/prenolepis_imparis3.csv'
+
+outf = open(outfname, 'w')
+for line in open(infname, 'r'):
+    parts = line.split('\t')
+    newline = ','.join(parts)
+    outf.write(newline)
+    
+outf.close()
 
 # ##########################################################################
 
