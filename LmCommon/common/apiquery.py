@@ -579,8 +579,9 @@ class GbifAPI(APIQuery):
         @todo: Rename function to "matchAcceptedName"
         """
         goodnames = []
+        nameclean = namestr.strip()
         
-        otherFilters={'name': namestr, 'rank': 'species', 'verbose': 'true'}
+        otherFilters={'name': nameclean, 'rank': 'species', 'verbose': 'true'}
         if kingdom:
             otherFilters['kingdom'] = kingdom
         nameAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key='match', 
@@ -590,7 +591,7 @@ class GbifAPI(APIQuery):
             output = nameAPI.output
         except Exception, e:
             print ('Failed to get a response for species match on {}, ({})'
-                   .format(namestr, str(e)))
+                   .format(nameclean, str(e)))
             raise
         
         try:
