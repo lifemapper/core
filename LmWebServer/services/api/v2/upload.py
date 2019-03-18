@@ -191,30 +191,43 @@ class UserUploadService(LmService):
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST, 'Metadata not in expected format')
             else:
+                meta_obj = {}
                 roles = metadata['role']
                 for f in metadata['field']:
-                    line = '{}, {}, {}'.format(
-                        f['key'], f['shortName'], f['fieldType'])
+                    if f['fieldType'].lower() == 'string':
+                        field_type = 4
+                    elif f['fieldType'].lower() == 'integer':
+                        field_type = 0
+                    elif f['fieldType'].lower() == 'real':
+                        field_type = 2
+                    else:
+                        raise cherrypy.HTTPError(
+                            HTTPStatus.BAD_REQUEST,
+                            'Field type: {} is unknown'.format(f['fieldType']))
+                    field_idx = f['key']
+                    field_obj = {
+                        'type' : field_type,
+                        'name' : f['shortName']
+                    }
                     if 'geopoint' in roles.keys() and f[
                             'key'] == roles['geopoint']:
-                        line += ', geopoint'
+                        field_obj['role'] = 'geopoint'
                     elif 'groupBy' in roles.keys() and f[
                             'key'] == roles['groupBy']:
-                        line += ', groupby'
+                        field_obj['role'] = 'groupby'
                     elif 'latitude' in roles.keys() and f[
                             'key'] == roles['latitude']:
-                        line += ', latitude'
+                        field_obj['role'] = 'latitude'
                     elif 'longitude' in roles.keys() and f[
                             'key'] == roles['longitude']:
-                        line += ', longitude'
+                        field_obj['role'] = 'longitude'
                     elif 'taxaName' in roles.keys() and f[
                             'key'] == roles['taxaName']:
-                        line += ', taxaname'
+                        field_obj['role'] = 'taxaName'
                     elif 'uniqueId' in roles.keys() and f[
                             'key'] == roles['uniqueId']:
-                        line += ', uniqueid'
-                    meta_str += line
-                    meta_str += '\n'
+                        field_obj['role'] = 'uniqueId'
+                    meta_obj[field_idx] = field_obj
             
                 with open(metaFilename, 'w') as outF:
                     outF.write(meta_str)
