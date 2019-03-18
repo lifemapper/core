@@ -1359,7 +1359,7 @@ DECLARE
    rec lm_v3.lm_atom;
    cmd varchar;
    wherecls varchar;
-   limitcls varch
+   limitcls varchar;
    ordercls varchar;
 BEGIN
    cmd = 'SELECT mfprocessId, grdname, grdepsgcode, mfpstatusmodtime FROM lm_v3.lm_mfprocess ';

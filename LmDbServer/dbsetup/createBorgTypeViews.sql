@@ -24,8 +24,31 @@
 -- ----------------------------------------------------------------------------
 \c borg
 -- ----------------------------------------------------------------------------
--- lm_envlayer (Layer + EnvType)
+-- ----------------------------------------------------------------------------
+-- DROP everything first so don't have to ensure objects are created in order
 DROP VIEW IF EXISTS lm_v3.lm_envlayer CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_scenlayer CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_scenPackageScenario CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_shapegrid CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_gridset CASCADE;
+-- TODO: Delete later, no longer creating this view
+DROP VIEW IF EXISTS lm_v3.lm_tree CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_gridset_tree CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_fullmatrix CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_matrix CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_sdmproject CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_sdmproject_lyr CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_Occurrenceset CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_matrixcolumn CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_occMatrixcolumn CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_sdmMatrixcolumn CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_sdmMatrixcolumn_matrix CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_lyrMatrixcolumn CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_mfprocess CASCADE;
+
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- lm_envlayer (Layer + EnvType)
 CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    -- Layer.* 
    layerId,
@@ -73,7 +96,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
 
 -- ----------------------------------------------------------------------------
 -- lm_scenlayer (Scenario + lm_envlayer)
-DROP VIEW IF EXISTS lm_v3.lm_scenlayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
    -- scenario
    scenarioId, 
@@ -126,7 +148,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
 
 -- -------------------------------
 -- lm_scenPackageScenario (ScenPackage + Scenario)
-DROP VIEW IF EXISTS lm_v3.lm_scenPackageScenario CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_scenPackageScenario (
    -- Scenario.*
     scenarioId,
@@ -162,7 +183,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenPackageScenario (
 
 -- ----------------------------------------------------------------------------
 -- lm_shapegrid (ShapeGrid + Layer)
-DROP VIEW IF EXISTS lm_v3.lm_shapegrid CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    -- ShapeGrid.*
    layerId,
@@ -208,7 +228,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
 -- ----------------------------------------------------------------------------
 -- ----------------
 -- lm_gridset  (Gridset + lm_shapegrid)
-DROP VIEW IF EXISTS lm_v3.lm_gridset CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_gridset (
    gridsetId,
    userId,
@@ -261,8 +280,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset (
 -- ----------------------------------------------------------------------------
 -- ----------------
 -- lm_gridset_tree  (lm_gridset + tree)
-DROP VIEW IF EXISTS lm_v3.lm_tree CASCADE;
-DROP VIEW IF EXISTS lm_v3.lm_gridset_tree CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_gridset_tree (
    -- lm_gridset.*
    gridsetId,
@@ -324,7 +341,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset_tree (
 
 -- ----------------
 -- lm_fullmatrix (Matrix + lm_gridset (Gridset + lm_shapegrid))
-DROP VIEW IF EXISTS lm_v3.lm_fullmatrix CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    -- Matrix
    matrixId,
@@ -390,7 +406,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
 
 -- ----------------
 -- lm_matrix (Matrix + Gridset)
-DROP VIEW IF EXISTS lm_v3.lm_matrix CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_matrix (
    -- Matrix
    matrixId,
@@ -423,7 +438,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
 -- ----------------
 -- lm_sdmproject (SDMProject + Layer + Occurrenceset + Model scenarioCode 
 --                       + Project scenarioCode, gcmCode, altPredCode, dateCode)
-DROP VIEW IF EXISTS lm_v3.lm_sdmproject CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
    -- sdmproject.*
    sdmprojectid,
@@ -498,7 +512,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
 
 -- ----------------
 -- lm_sdmproject_lyr (SDMProject + Layer)
-DROP VIEW IF EXISTS lm_v3.lm_sdmproject_lyr CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_sdmproject_lyr (
    -- sdmproject.*
    sdmprojectid,
@@ -545,7 +558,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject_lyr (
 
 -- ----------------------------------------------------------------------------
 -- lm_occurrenceset (Occurrenceset + Taxon + TaxonomySource) 
-DROP VIEW IF EXISTS lm_v3.lm_Occurrenceset CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    -- occurrenceset.*
    occurrenceSetId,
@@ -597,7 +609,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
 
 -- ----------------------------------------------------------------------------
 -- lm_matrixcolumn (MatrixColumn + Matrix + Gridset user/shapegrid ids)
-DROP VIEW IF EXISTS lm_v3.lm_matrixcolumn CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
 (
    -- MatrixColumn.*
@@ -640,7 +651,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
 
 -- ----------------------------------------------------------------------------
 -- lm_v3.lm_occMatrixcolumn (MatrixColumn + Matrix + SDMProject + OccurrenceSet)
-DROP VIEW IF EXISTS lm_v3.lm_occMatrixcolumn CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_occMatrixcolumn (
    -- MatrixColumn.*
    matrixColumnId,
@@ -710,7 +720,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_occMatrixcolumn (
 
 -- ----------------------------------------------------------------------------
 -- lm_sdmMatrixcolumn (MatrixColumn + lm_sdmproject_lyr)
-DROP VIEW IF EXISTS lm_v3.lm_sdmMatrixcolumn CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn
 (
    -- MatrixColumn.*
@@ -770,7 +779,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn
 
 -- ----------------
 -- lm_sdmMatrixcolumn_matrix (lm_sdmMatrixcolumn + Matrix)
-DROP VIEW IF EXISTS lm_v3.lm_sdmMatrixcolumn_matrix CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn_matrix (
    -- lm_sdmMatrixcolumn.*
    matrixColumnId,
@@ -839,7 +847,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn_matrix (
 
 -- ----------------------------------------------------------------------------
 -- lm_lyrMatrixcolumn (MatrixColumn + Layer)
-DROP VIEW IF EXISTS lm_v3.lm_lyrMatrixcolumn CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_lyrMatrixcolumn
 (
    -- MatrixColumn.*
@@ -885,7 +892,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_lyrMatrixcolumn
 
 -- ----------------------------------------------------------------------------
 -- lm_mfprocess (MFProcess + Gridset)
-DROP VIEW IF EXISTS lm_v3.lm_mfprocess CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_mfprocess
 (
    -- MFProces.*
@@ -1028,9 +1034,11 @@ TO GROUP writer;
 -- DATA TYPES (used on multiple tables)
 -- Note: All column names are returned in lower case
 -- ----------------------------------------------------------------------------
+DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
+DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;
+DROP TYPE IF EXISTS lm_v3.lm_progress CASCADE;
 -- ----------------------------------------------------------------------------
 -- lm_atom returns only an a few object attributes
-DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
 CREATE TYPE lm_v3.lm_atom AS (
   id int,
   name varchar,
@@ -1039,7 +1047,6 @@ CREATE TYPE lm_v3.lm_atom AS (
 
         
 -- ----------------------------------------------------------------------------
-DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;
 CREATE TYPE lm_v3.lm_occStats AS
 (
     occurrenceSetId int,
@@ -1051,7 +1058,6 @@ CREATE TYPE lm_v3.lm_occStats AS
         
 -- ----------------------------------------------------------------------------
 -- lm_atom returns only an a few object attributes
-DROP TYPE IF EXISTS lm_v3.lm_progress CASCADE;
 CREATE TYPE lm_v3.lm_progress AS (
   status int,
   total int);

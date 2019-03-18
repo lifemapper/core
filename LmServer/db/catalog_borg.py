@@ -2460,8 +2460,8 @@ class Borg(DbPostgresql):
         mfchainList = []
         modtime = mx.DateTime.utc().mjd
         rows, idxs = self.executeSelectManyFunction('lm_findMFChains', count, 
-                                                                  userId, oldStatus, newStatus,
-                                                                  modtime)
+                                                    userId, oldStatus, newStatus,
+                                                    modtime)
         for r in rows:
             mfchain = self._createMFChain(r, idxs)
             mfchainList.append(mfchain)
