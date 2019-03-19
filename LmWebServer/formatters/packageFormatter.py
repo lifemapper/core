@@ -591,7 +591,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 # Add occurrence set
                 if occ.getId() not in added_occ_ids:
                     arc_occ_path = os.path.join(
-                        prj_dir, '.csv'.format(occ.displayName))
+                        prj_dir, '{}.csv'.format(occ.displayName))
                     zip_f.write(occ.getDLocation(), arc_occ_path)
                     # TODO: Add points EML
                     added_occ_ids.append(occ.getId())
