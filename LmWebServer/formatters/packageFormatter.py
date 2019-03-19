@@ -570,15 +570,17 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     zip_f.writestr(csv_mtx_filename, csv_mtx_str.getvalue())
 
         if include_sdm:
+            added_occ_ids = []
             for prj in scribe.listSDMProjects(
                     0, MAX_PROJECTIONS, userId=user_id,
                     afterStatus=JobStatus.COMPLETE - 1,
                     beforeStatus=JobStatus.COMPLETE + 1,
                     gridsetId=gridset.getId(),
                     atom=False):
+                occ = prj.occurrenceSet
+                prj_dir = os.path.join(SDM_PRJ_DIR, occ.displayName)
                 # Make sure projection output file exists, then add to package
                 if os.path.exists(prj.getDLocation()):
-                    prj_dir = os.path.join(SDM_PRJ_DIR, prj.displayName)
                     arc_prj_path = os.path.join(
                         prj_dir, os.path.basename(prj.getDLocation()))
                     prj_eml_path = '{}{}'.format(
@@ -586,6 +588,13 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     zip_f.write(prj.getDLocation(), arc_prj_path)
                     # EML
                     zip_f.writestr(prj_eml_path, tostring(makeEml(prj)))
+                # Add occurrence set
+                if occ.getId() not in added_occ_ids:
+                    arc_occ_path = os.path.join(
+                        prj_dir, '.csv'.format(occ.displayName))
+                    zip_f.write(occ.getDLocation(), arc_occ_path)
+                    # TODO: Add points EML
+                    added_occ_ids.append(occ.getId())
 
     
 # .............................................................................
