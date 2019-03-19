@@ -363,6 +363,9 @@ QUERY_PARAMETERS = {
     'treeschema' : {
         QP_NAME_KEY : 'treeSchema' 
     },
+    'file' : {
+        QP_NAME_KEY : 'file'
+    },
     'uploadtype' : {
         QP_NAME_KEY : 'uploadType'
     },

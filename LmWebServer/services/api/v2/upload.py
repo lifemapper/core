@@ -37,7 +37,7 @@ class UserUploadService(LmService):
     """
     # ................................
     @lmFormatter
-    def POST(self, fileName=None, uploadType=None, metadata=None, **params):
+    def POST(self, fileName=None, uploadType=None, metadata=None, file=None, **params):
         """
         @summary: Posts a new file to the user's space
         @todo: Add parameters to available
@@ -48,15 +48,20 @@ class UserUploadService(LmService):
          - file name
         occurrence data
         climate data
+        
+        @todo: Bad request if upload type is missing
          - 
         """
         if checkUserPermission(self.getUserId(), self, HTTPMethod.POST):
+            if uploadType is None:
+                raise cherrypy.HTTPError(
+                    HTTPStatus.BAD_REQUEST, 'Must provide upload type')
             if uploadType.lower() == TREE_UPLOAD:
                 return self._upload_tree(fileName)
             elif uploadType.lower() == BIOGEO_UPLOAD:
                 return self._upload_biogeo(fileName)
             elif uploadType.lower() == OCCURRENCE_UPLOAD:
-                return self._upload_occurrence_data(fileName, metadata)
+                return self._upload_occurrence_data(fileName, metadata, file)
             elif uploadType.lower() == CLIMATE_UPLOAD:
                 return self._upload_climate_data(fileName)
             else:
@@ -154,7 +159,7 @@ class UserUploadService(LmService):
         }
             
     # ................................
-    def _upload_occurrence_data(self, packageName, metadata):
+    def _upload_occurrence_data(self, packageName, metadata, upload_file):
         """
         @summary: Write the occurrence data to the user's workspace
         @param packageName: The name of the occurrence data
@@ -163,6 +168,7 @@ class UserUploadService(LmService):
         @todo: Use constants
         @todo: Case insensitive
         """
+        self.log.debug('In occ upload')
         csvFilename = os.path.join(
             self._get_user_dir(), '{}{}'.format(packageName, LMFormat.CSV.ext))
         metaFilename = os.path.join(
@@ -185,8 +191,11 @@ class UserUploadService(LmService):
                 HTTPStatus.BAD_REQUEST,
                 'Must provide metadata with occurrence data upload')
         else:
-            metadata = json.loads(metadata)
-            meta_str = ''
+            m_stringio = StringIO()
+            m_stringio.write(metadata)
+            m_stringio.seek(0)
+            metadata = json.load(m_stringio)
+            self.log.debug('Metadata: {}'.format(metadata))
             if 'field' not in metadata.keys() or 'role' not in metadata.keys():
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST, 'Metadata not in expected format')
@@ -230,11 +239,12 @@ class UserUploadService(LmService):
                     meta_obj[field_idx] = field_obj
             
                 with open(metaFilename, 'w') as outF:
-                    outF.write(meta_str)
-            
+                    json.dump(meta_obj, outF)
         # Process file
         instr = StringIO()
-        instr.write(cherrypy.request.body.read())
+        data = upload_file.file.read()
+        #data = cherrypy.request.body.read()
+        instr.write(data)
         instr.seek(0)
         csv_done = False
 
@@ -254,6 +264,13 @@ class UserUploadService(LmService):
                                     for line in zf:
                                         outF.write(line)
                         csv_done = True
+        else:
+            #instr.seek(0)
+            #cnt = instr.read()
+            #self.log.debug(cnt)
+            #self.log.debug(data)
+            with open(csvFilename, 'w') as out_f:
+                out_f.write(data)
                     
         # Return
         return {
