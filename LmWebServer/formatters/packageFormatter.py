@@ -440,7 +440,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 GRIDSET_DIR, 'gridset_{}.eml'.format(gridset.getId())), gs_eml)
         
         # Write tree
-        if gridset.tree is not None:
+        if gridset.tree is not None and gridset.tree.getDLocation() is not None:
             with open(gridset.tree.getDLocation()) as tree_file:
                 tree_str = tree_file.read()
             
@@ -607,7 +607,8 @@ def gridsetPackageFormatter(gridset, includeCSV=False, includeSDM=False,
     if not os.path.exists(package_filename):
         # See if we can create it
         if all([mtx.status >= JobStatus.COMPLETE for \
-                mtx in gridset.getMatrices()]):
+                mtx in gridset.getMatrices() if mtx.matrixType not in [
+                    MatrixType.PAM, MatrixType.ROLLING_PAM]]):
             # Create the package
             _package_gridset(
                 gridset, include_csv=includeCSV, include_sdm=includeSDM)
