@@ -5,6 +5,7 @@
 Todo:
     * Make much more robust.  This is a minimum to get something working and
         discover limitations
+    * Use sub-services for different upload types
 """
 import cherrypy
 import json
@@ -23,34 +24,26 @@ from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmconstants import LMFileType
 
+# TODO: Move to constants
 BIOGEO_UPLOAD = 'biogeo'
 CLIMATE_UPLOAD = 'climate'
 OCCURRENCE_UPLOAD = 'occurrence'
 TREE_UPLOAD = 'tree'
 
+
 # .............................................................................
 @cherrypy.expose
 class UserUploadService(LmService):
-    """
-    @summary: This class is responsible for data uploads to a user space.  The
-                     dispatcher is responsible for calling the correct method.
+    """This class is responsible for data uploads to a user space.
+
+    Note:
+        * This dispatcher is responsible for calling the correct method.
     """
     # ................................
     @lmFormatter
-    def POST(self, fileName=None, uploadType=None, metadata=None, file=None, **params):
-        """
-        @summary: Posts a new file to the user's space
-        @todo: Add parameters to available
-        
-        tree
-         - file name
-        biogeo hypotheses
-         - file name
-        occurrence data
-        climate data
-        
-        @todo: Bad request if upload type is missing
-         - 
+    def POST(self, fileName=None, uploadType=None, metadata=None, file=None,
+             **params):
+        """Posts the new file to the user's space
         """
         if checkUserPermission(self.getUserId(), self, HTTPMethod.POST):
             if uploadType is None:
@@ -59,7 +52,7 @@ class UserUploadService(LmService):
             if uploadType.lower() == TREE_UPLOAD:
                 return self._upload_tree(fileName)
             elif uploadType.lower() == BIOGEO_UPLOAD:
-                return self._upload_biogeo(fileName)
+                return self._upload_biogeo(fileName, file)
             elif uploadType.lower() == OCCURRENCE_UPLOAD:
                 return self._upload_occurrence_data(fileName, metadata, file)
             elif uploadType.lower() == CLIMATE_UPLOAD:
@@ -74,15 +67,12 @@ class UserUploadService(LmService):
         
     # ................................
     def _get_user_dir(self):
+        """Get the user's workspace directory
+
+        Todo:
+            * Change this to use something at a lower level.  This is using
+                the same path construction as the getBoomPackage script
         """
-        @summary: Get the user's workspace directory
-        @todo: Change this to use something at a lower level.  This is using
-            the same path construction as the getBoomPackage script
-        """
-#         userId = self.getUserId()
-#         if userId == PUBLIC_USER:
-#             userId = DEFAULT_POST_USER
-#         return os.path.join(ARCHIVE_PATH, userId)
         earl = EarlJr()
         userId = self.getUserId()
         if userId == PUBLIC_USER:
@@ -91,24 +81,31 @@ class UserUploadService(LmService):
         return pth
     
     # ................................
-    def _upload_biogeo(self, bioGeoFilename):
-        """
-        @summary: Write the biogeographic hypotheses to the user's workspace
-        @param bioGeoFilename: The name of the biogeographic hypotheses package
-        @todo: Sanity checking
+    def _upload_biogeo(self, package_filename, upload_file):
+        """Write the biogeographic hypotheses to the user's workspace
+
+        Args:
+            package_filename (str): The name of the biogeographic hypotheses
+                package
+            upload_file: The uploaded data file
+
+        Todo:
+            * Sanity checking
+            * More docs
         """
         # Determine where to write the files
         outDir = os.path.join(
-            self._get_user_dir(), 'hypotheses', bioGeoFilename)
+            self._get_user_dir(), 'hypotheses', package_filename)
         if not os.path.exists(outDir):
             os.makedirs(outDir)
-            
+
         instr = StringIO()
-        instr.write(cherrypy.request.body.read())
+        instr.write(upload_file.file.read())
         instr.seek(0)
         
         # Unzip files and name provided name
         with zipfile.ZipFile(instr, allowZip64=True) as zipF:
+            self.log.debug(zipF.namelist())
             for zfname in zipF.namelist():
                 #fn = os.path.basename(zfname)
                 _, ext = os.path.splitext(zfname)
@@ -126,7 +123,7 @@ class UserUploadService(LmService):
                                     outF.write(line)
             
         return {
-            'package_name' : bioGeoFilename,
+            'package_name' : package_filename,
             'upload_type' : BIOGEO_UPLOAD,
             'status' : HTTPStatus.ACCEPTED
         }
@@ -265,10 +262,6 @@ class UserUploadService(LmService):
                                         outF.write(line)
                         csv_done = True
         else:
-            #instr.seek(0)
-            #cnt = instr.read()
-            #self.log.debug(cnt)
-            #self.log.debug(data)
             with open(csvFilename, 'w') as out_f:
                 out_f.write(data)
                     
