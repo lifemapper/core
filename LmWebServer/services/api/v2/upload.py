@@ -8,6 +8,7 @@ Todo:
     * Use sub-services for different upload types
 """
 import cherrypy
+import dendropy
 import json
 import os
 from StringIO import StringIO
@@ -50,7 +51,7 @@ class UserUploadService(LmService):
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST, 'Must provide upload type')
             if uploadType.lower() == TREE_UPLOAD:
-                return self._upload_tree(fileName)
+                return self._upload_tree(fileName, file)
             elif uploadType.lower() == BIOGEO_UPLOAD:
                 return self._upload_biogeo(fileName, file)
             elif uploadType.lower() == OCCURRENCE_UPLOAD:
@@ -105,7 +106,6 @@ class UserUploadService(LmService):
         
         # Unzip files and name provided name
         with zipfile.ZipFile(instr, allowZip64=True) as zipF:
-            self.log.debug(zipF.namelist())
             for zfname in zipF.namelist():
                 #fn = os.path.basename(zfname)
                 _, ext = os.path.splitext(zfname)
@@ -273,27 +273,34 @@ class UserUploadService(LmService):
         }
             
     # ................................
-    def _upload_tree(self, treeFilename):
-        """
-        @summary: Write the tree to the user's work space
-        @param treeFilename: The file name to use for writing
-        @todo: Sanity checking
-        @todo: Insert tree into database?  Let boom do it?
+    def _upload_tree(self, tree_name, upload_file):
+        """Write the tree to the user's work space
+
+        Todo:
+            * Sanity checking
+            * Insert tree into database?  Let boom do it?
         """
         # Check to see if file already exists, fail if it does
-        outTreeFilename = os.path.join(self._get_user_dir(), treeFilename)
-        if not os.path.exists(outTreeFilename):
+        out_tree_filename = os.path.join(
+            self._get_user_dir(), '{}{}'.format(tree_name, LMFormat.NEXUS.ext))
+        if not os.path.exists(out_tree_filename):
             # Make sure the user directory exists
-            readyFilename(outTreeFilename)
-            with open(outTreeFilename, 'w') as outF:
-                for chunk in cherrypy.request.body:
-                    outF.write(chunk)
+            readyFilename(out_tree_filename)
+            data = upload_file.file.read()
+            for schema in ['newick', 'nexus', 'phyloxml']:
+                try:
+                    tree = dendropy.Tree.get(data=data, schema=schema)
+                    with open(out_tree_filename, 'w') as out_f:
+                        out_f.write(tree.as_string('nexus'))
+                    break
+                except Exception as e:
+                    pass
         else:
             raise cherrypy.HTTPError(
                 HTTPStatus.CONFLICT,
                 'Tree with this name already exists in the user space')
         return {
-            'file_name' : treeFilename,
+            'file_name' : tree_name,
             'upload_type' : TREE_UPLOAD,
             'status' : HTTPStatus.ACCEPTED
         }
