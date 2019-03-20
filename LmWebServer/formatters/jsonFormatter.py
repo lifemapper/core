@@ -1,29 +1,4 @@
-"""
-@summary: Module functions for converting object to JSON
-@author: CJ Grady
-@version: 2.0
-@status: alpha
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+"""Module functions for converting object to JSON
 @todo: Use constants
 @todo: Can we make this more elegant?
 """
@@ -53,466 +28,461 @@ from LmServer.legion.tree import Tree
 # Provide methods for direct calls to formatters
 # .............................................................................
 def formatAtom(obj):
-   """
-   @summary: Format an Atom object into a dictionary
-   """
-   return {
-      'epsg' : obj.epsgcode,
-      'id' : obj.id,
-      'modificationTime' : formatTimeHuman(obj.modTime),
-      'name' : obj.name,
-      'url' : obj.url
-   }
+    """Format an Atom object into a dictionary
+    """
+    return {
+        'epsg' : obj.epsgcode,
+        'id' : obj.id,
+        'modificationTime' : formatTimeHuman(obj.modTime),
+        'name' : obj.name,
+        'url' : obj.url
+    }
 
 # .............................................................................
 def formatEnvLayer(lyr):
-   """
-   @summary: Convert an environmental layer into a dictionary
-   @todo: Mapping metadata
-   @todo: Min val
-   @todo: Max val
-   @todo: Value units
-   """
-   lyrDict = _getLifemapperMetadata('environmental layer', lyr.getId(), 
-                                    lyr.metadataUrl, lyr.getUserId(), 
-                                    metadata=lyr.lyrMetadata)
-   dataUrl = lyr.getDataUrl()
-   minVal = lyr.minVal
-   maxVal = lyr.maxVal
-   valUnits = lyr.valUnits
-   dataType = type(lyr.minVal).__name__
-   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsgcode, lyr.bbox, 
-                                      lyr.mapUnits, dataUrl, lyr.verify,
-                                      lyr.gdalType, lyr.dataFormat, minVal, 
-                                      maxVal, valUnits, dataType, 
-                                      resolution=lyr.resolution)
-   lyrDict['envCode'] = lyr.envCode
-   lyrDict['gcmCode'] = lyr.gcmCode
-   lyrDict['altPredCode'] = lyr.altpredCode
-   lyrDict['dateCode'] = lyr.dateCode
-   
-   return lyrDict
+    """Convert an environmental layer into a dictionary
+
+    Todo:
+        * Mapping metadata
+        * Min val
+        * Max val
+        * Value units
+    """
+    lyrDict = _getLifemapperMetadata(
+        'environmental layer', lyr.getId(), lyr.metadataUrl, lyr.getUserId(),
+        metadata=lyr.lyrMetadata)
+    dataUrl = lyr.getDataUrl()
+    minVal = lyr.minVal
+    maxVal = lyr.maxVal
+    valUnits = lyr.valUnits
+    dataType = type(lyr.minVal).__name__
+    lyrDict['spatialRaster'] = _getSpatialRasterMetadata(
+        lyr.epsgcode, lyr.bbox, lyr.mapUnits, dataUrl, lyr.verify,
+        lyr.gdalType, lyr.dataFormat, minVal, maxVal, valUnits, dataType,
+        resolution=lyr.resolution)
+    lyrDict['envCode'] = lyr.envCode
+    lyrDict['gcmCode'] = lyr.gcmCode
+    lyrDict['altPredCode'] = lyr.altpredCode
+    lyrDict['dateCode'] = lyr.dateCode
+    
+    return lyrDict
 
 # .............................................................................
 def formatGridset(gs):
-   """
-   @summary: Convert a grid set to a dictionary
-   """
-   gsDict = _getLifemapperMetadata('gridset', gs.getId(), gs.metadataUrl, 
-                                   gs.getUserId(), metadata=gs.grdMetadata)
-   gsDict['epsg'] = gs.epsgcode
-   
-   gsDict['bioGeoHypotheses'] = []
-   gsDict['grims'] = []
-   gsDict['pams'] = []
-   gsDict['matrices'] = []
-   
-   # Bio geo hypotheses
-   for mtx in gs.getBiogeographicHypotheses():
-      gsDict['bioGeoHypotheses'].append(
-         {
-            'id' : mtx.getId(),
-            'url' : mtx.metadataUrl
-         }
-      )
-      
-   # PAMs
-   for mtx in gs.getAllPAMs():
-      gsDict['pams'].append(
-         {
-            'id' : mtx.getId(),
-            'url' : mtx.metadataUrl
-         }
-      )
+    """Convert a grid set to a dictionary
+    """
+    gsDict = _getLifemapperMetadata(
+        'gridset', gs.getId(), gs.metadataUrl, gs.getUserId(),
+        metadata=gs.grdMetadata)
+    gsDict['epsg'] = gs.epsgcode
+    
+    gsDict['bioGeoHypotheses'] = []
+    gsDict['grims'] = []
+    gsDict['pams'] = []
+    gsDict['matrices'] = []
+    
+    # Bio geo hypotheses
+    for mtx in gs.getBiogeographicHypotheses():
+        gsDict['bioGeoHypotheses'].append(
+            {
+                'id' : mtx.getId(),
+                'url' : mtx.metadataUrl
+            }
+        )
+        
+    # PAMs
+    for mtx in gs.getAllPAMs():
+        gsDict['pams'].append(
+            {
+                'id' : mtx.getId(),
+                'url' : mtx.metadataUrl
+            }
+        )
 
-   # GRIMs
-   for mtx in gs.getGRIMs():
-      gsDict['grims'].append(
-         {
-            'id' : mtx.getId(),
-            'url' : mtx.metadataUrl
-         }
-      )
+    # GRIMs
+    for mtx in gs.getGRIMs():
+        gsDict['grims'].append(
+            {
+                'id' : mtx.getId(),
+                'url' : mtx.metadataUrl
+            }
+        )
 
-   # All matrices
-   for mtx in gs._matrices:
-      gsDict['matrices'].append(formatMatrix(mtx))
+    # All matrices
+    for mtx in gs._matrices:
+        gsDict['matrices'].append(formatMatrix(mtx))
 
-   # Shapegrid
-   gsDict['shapegridUrl'] = gs.getShapegrid().metadataUrl
-   gsDict['shapegridId'] = gs.shapeGridId
-   
-   # Tree
-   if gs.tree is not None:
-      gsDict['tree'] = gs.tree.metadataUrl
-   
-   gsDict['name'] = gs.name
-   gsDict['modTime'] = gs.modTime   
-   return gsDict
+    # Shapegrid
+    gsDict['shapegridUrl'] = gs.getShapegrid().metadataUrl
+    gsDict['shapegridId'] = gs.shapeGridId
+    
+    # Tree
+    if gs.tree is not None:
+        gsDict['tree'] = gs.tree.metadataUrl
+    
+    gsDict['name'] = gs.name
+    gsDict['modTime'] = gs.modTime    
+    return gsDict
 
 # .............................................................................
 def formatMatrix(mtx):
-   """
-   @summary: Convert a matrix object into a dictionary
-   """
-   mtxDict = _getLifemapperMetadata('matrix', mtx.getId(), mtx.metadataUrl, 
-                                    mtx.getUserId(), status=mtx.status, 
-                                    statusModTime=mtx.statusModTime,
-                                    metadata=mtx.mtxMetadata)
-   mtxDict['altPredCode'] = mtx.altpredCode
-   mtxDict['dateCode'] = mtx.dateCode
-   mtxDict['gcmCode'] = mtx.gcmCode
-   mtxDict['dataUrl'] = mtx.getDataUrl()
-   mtxDict['matrixType'] = mtx.matrixType
-   mtxDict['parentMetadataUrl'] = mtx.parentMetadataUrl
-   mtxDict['gridsetId'] = mtx.gridsetId
-   mtxDict['gridsetUrl'] = mtx.gridsetUrl
-   mtxDict['gridsetName'] = mtx.gridsetName
-   
-   return mtxDict
+    """Convert a matrix object into a dictionary
+    """
+    mtxDict = _getLifemapperMetadata(
+        'matrix', mtx.getId(), mtx.metadataUrl, mtx.getUserId(),
+        status=mtx.status, statusModTime=mtx.statusModTime,
+        metadata=mtx.mtxMetadata)
+    mtxDict['altPredCode'] = mtx.altpredCode
+    mtxDict['dateCode'] = mtx.dateCode
+    mtxDict['gcmCode'] = mtx.gcmCode
+    mtxDict['dataUrl'] = mtx.getDataUrl()
+    mtxDict['matrixType'] = mtx.matrixType
+    mtxDict['parentMetadataUrl'] = mtx.parentMetadataUrl
+    mtxDict['gridsetId'] = mtx.gridsetId
+    mtxDict['gridsetUrl'] = mtx.gridsetUrl
+    mtxDict['gridsetName'] = mtx.gridsetName
+    
+    return mtxDict
 
 # .............................................................................
 def formatOccurrenceSet(occ):
-   """
-   @summary: Convert an Occurrence Set object to a dictionary
-   @todo: Mapping metadata
-   @todo: Taxon id
-   """
-   occDict = _getLifemapperMetadata('occurrence set', occ.getId(), 
-                           occ.metadataUrl, occ.getUserId(), status=occ.status, 
-                           statusModTime=occ.statusModTime, 
-                           metadata=occ.lyrMetadata)
-   mapName = EarlJr().createBasename(LMFileType.SDM_MAP, objCode=occ.getId(), 
-                                     usr=occ.getUserId(), epsg=occ.epsgcode)
-   occDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, occ.name)
-   dataUrl = occ.getDataUrl()
-   occDict['spatialVector'] = _getSpatialVectorMetadata(occ.epsgcode, occ.bbox, 
-                                    occ.mapUnits, dataUrl, occ.verify, 
-                                    occ.ogrType, occ.dataFormat, occ.queryCount,
-                                    resolution=occ.resolution)
-   occDict['speciesName'] = occ.displayName
-   occDict['squid'] = occ.squid
-   if len(occ.features) > 0:
-      occDict['features'] = [f.getAttributes() for f in occ.features]
-   
-   return occDict
+    """Convert an Occurrence Set object to a dictionary
+
+    Todo:
+        * Mapping metadata
+        * Taxon id
+    """
+    occDict = _getLifemapperMetadata(
+        'occurrence set', occ.getId(), occ.metadataUrl, occ.getUserId(),
+        status=occ.status, statusModTime=occ.statusModTime,
+        metadata=occ.lyrMetadata)
+    mapName = EarlJr().createBasename(
+        LMFileType.SDM_MAP, objCode=occ.getId(), usr=occ.getUserId(),
+        epsg=occ.epsgcode)
+    occDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, occ.name)
+    dataUrl = occ.getDataUrl()
+    occDict['spatialVector'] = _getSpatialVectorMetadata(
+        occ.epsgcode, occ.bbox, occ.mapUnits, dataUrl, occ.verify, occ.ogrType,
+        occ.dataFormat, occ.queryCount, resolution=occ.resolution)
+    occDict['speciesName'] = occ.displayName
+    occDict['squid'] = occ.squid
+    if len(occ.features) > 0:
+        occDict['features'] = [f.getAttributes() for f in occ.features]
+    
+    return occDict
 
 # .............................................................................
 def formatProjection(prj):
-   """
-   @summary: Converts a projection object into a dictionary
-   @todo: Fix map ogc endpoint
-   @todo: Fix map name
-   @todo: Min value
-   @todo: Max value
-   @todo: Value units
-   @todo: Public algorithm parameters
-   @todo: Masks
-   @todo: Taxon id
-   @todo: Occurrence set metadata url
-   """
-   prjDict = _getLifemapperMetadata('projection', prj.getId(), prj.metadataUrl, 
-                                    prj.getUserId(), status=prj.status, 
-                                    statusModTime=prj.statusModTime, 
-                                    metadata=prj.lyrMetadata)
-   occ = prj._occurrenceSet
-   mapName = EarlJr().createBasename(LMFileType.SDM_MAP, objCode=occ.getId(), 
-                                     usr=occ.getUserId(), epsg=occ.epsgcode)
-   prjDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, prj.name)
-   dataUrl = prj.getDataUrl()
-   minVal = 0
-   maxVal = 1
-   valUnits = 'prediction'
-   prjDict['spatialRaster'] = _getSpatialRasterMetadata(prj.epsgcode, prj.bbox, 
-               prj.mapUnits, dataUrl, prj.verify, prj.gdalType, prj.dataFormat, 
-               minVal, maxVal, valUnits, prj.gdalType, prj.resolution)
-   
-   prjDict['algorithm'] = {
-      'code' : prj.algorithmCode,
-      'parameters' : prj._algorithm._parameters
-   }
-   
-   prjDict['modelScenario'] = {
-      'code' : prj.modelScenario.code,
-      'id' : prj.modelScenario.getId(),
-      'metadataUrl' : prj.modelScenario.metadataUrl
-   }
-   
-   prjDict['projectionScenario'] = {
-      'code' : prj.projScenario.code,
-      'id' : prj.projScenario.getId(),
-      'metadataUrl' : prj.projScenario.metadataUrl
-   }
-   
-   prjDict['speciesName'] = prj.speciesName
-   prjDict['squid'] = prj.squid
-   prjDict['occurrenceSet'] = {
-      'id' : prj.getOccurrenceSetId(),
-      'metadataUrl' : prj._occurrenceSet.metadataUrl
-   }
-   
-   return prjDict
-   
+    """Converts a projection object into a dictionary
+
+    Todo:
+        * Fix map ogc endpoint
+        * Fix map name
+        * Min value
+        * Max value
+        * Value units
+        * Public algorithm parameters
+        * Masks
+        * Taxon id
+        * Occurrence set metadata url
+    """
+    prjDict = _getLifemapperMetadata(
+        'projection', prj.getId(), prj.metadataUrl, prj.getUserId(),
+        status=prj.status, statusModTime=prj.statusModTime,
+        metadata=prj.lyrMetadata)
+    occ = prj._occurrenceSet
+    mapName = EarlJr().createBasename(
+        LMFileType.SDM_MAP, objCode=occ.getId(), usr=occ.getUserId(),
+        epsg=occ.epsgcode)
+    prjDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, prj.name)
+    dataUrl = prj.getDataUrl()
+    minVal = 0
+    maxVal = 1
+    valUnits = 'prediction'
+    prjDict['spatialRaster'] = _getSpatialRasterMetadata(
+        prj.epsgcode, prj.bbox, prj.mapUnits, dataUrl, prj.verify,
+        prj.gdalType, prj.dataFormat, minVal, maxVal, valUnits, prj.gdalType,
+        prj.resolution)
+    
+    prjDict['algorithm'] = {
+        'code' : prj.algorithmCode,
+        'parameters' : prj._algorithm._parameters
+    }
+    
+    prjDict['modelScenario'] = {
+        'code' : prj.modelScenario.code,
+        'id' : prj.modelScenario.getId(),
+        'metadataUrl' : prj.modelScenario.metadataUrl
+    }
+    
+    prjDict['projectionScenario'] = {
+        'code' : prj.projScenario.code,
+        'id' : prj.projScenario.getId(),
+        'metadataUrl' : prj.projScenario.metadataUrl
+    }
+    
+    prjDict['speciesName'] = prj.speciesName
+    prjDict['squid'] = prj.squid
+    prjDict['occurrenceSet'] = {
+        'id' : prj.getOccurrenceSetId(),
+        'metadataUrl' : prj._occurrenceSet.metadataUrl
+    }
+    
+    return prjDict
+    
 # .............................................................................
 def formatRasterLayer(lyr):
-   """
-   @summary: Convert an environmental layer into a dictionary
-   @todo: Mapping metadata
-   @todo: Min val
-   @todo: Max val
-   @todo: Value units
-   """
-   lyrDict = _getLifemapperMetadata('raster layer', lyr.getId(), 
-                                    lyr.metadataUrl, lyr.getUserId(), 
-                                    metadata=lyr.lyrMetadata)
-   #lyrDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 
-   #                                 'layers', lyr.name)
-   dataUrl = lyr.getDataUrl()
-   minVal = lyr.minVal
-   maxVal = lyr.maxVal
-   valUnits = lyr.valUnits
-   dataType = type(lyr.minVal).__name__
-   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsgcode, lyr.bbox, 
-                                      lyr.mapUnits, dataUrl, lyr.verify,
-                                      lyr.gdalType, lyr.dataFormat, minVal, 
-                                      maxVal, valUnits, dataType, 
-                                      resolution=lyr.resolution)
-   #lyrDict['envCode'] = lyr.envCode
-   #lyrDict['gcmCode'] = lyr.gcmCode
-   #lyrDict['alternatePredictioCode'] = lyr.altpredCode
-   #lyrDict['dateCode'] = lyr.dateCode
-   
-   return lyrDict
+    """Convert an environmental layer into a dictionary
+
+    Todo:
+        * Mapping metadata
+        * Min val
+        * Max val
+        * Value units
+    """
+    lyrDict = _getLifemapperMetadata(
+        'raster layer', lyr.getId(), lyr.metadataUrl, lyr.getUserId(),
+        metadata=lyr.lyrMetadata)
+    dataUrl = lyr.getDataUrl()
+    minVal = lyr.minVal
+    maxVal = lyr.maxVal
+    valUnits = lyr.valUnits
+    dataType = type(lyr.minVal).__name__
+    lyrDict['spatialRaster'] = _getSpatialRasterMetadata(
+        lyr.epsgcode, lyr.bbox, lyr.mapUnits, dataUrl, lyr.verify,
+        lyr.gdalType, lyr.dataFormat, minVal, maxVal, valUnits, dataType,
+        resolution=lyr.resolution)
+    
+    return lyrDict
 
 # .............................................................................
 def formatScenario(scn):
-   """
-   @summary: Converts a scenario object into a dictionary
-   @todo: Fix map ogc endpoint
-   @todo: GCM / alt pred code / etc
-   """
-   scnDict = _getLifemapperMetadata('scenario', scn.getId(), scn.metadataUrl,
-                                    scn.getUserId(), metadata=scn.scenMetadata)
-   mapName = EarlJr().createBasename(LMFileType.SCENARIO_MAP, 
-                                     objCode=scn.code, usr=scn.getUserId(), 
-                                     epsg=scn.epsgcode)
-   scnDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, scn.layers)
-   scnDict['spatial'] = _getSpatialMetadata(scn.epsgcode, scn.bbox, 
-                                            scn.mapUnits, scn.resolution)
+    """Converts a scenario object into a dictionary
 
-   scnLayers = []
-   for lyr in scn.layers:
-      scnLayers.append(lyr.metadataUrl)
-   scnDict['layers'] = scnLayers
-   scnDict['code'] = scn.code
-   
-   return scnDict
+    Todo:
+        * Fix map ogc endpoint
+        * GCM / alt pred code / etc
+    """
+    scnDict = _getLifemapperMetadata(
+        'scenario', scn.getId(), scn.metadataUrl, scn.getUserId(),
+        metadata=scn.scenMetadata)
+    mapName = EarlJr().createBasename(
+        LMFileType.SCENARIO_MAP, objCode=scn.code, usr=scn.getUserId(),
+        epsg=scn.epsgcode)
+    scnDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, scn.layers)
+    scnDict['spatial'] = _getSpatialMetadata(
+        scn.epsgcode, scn.bbox, scn.mapUnits, scn.resolution)
+
+    scnLayers = []
+    for lyr in scn.layers:
+        scnLayers.append(lyr.metadataUrl)
+    scnDict['layers'] = scnLayers
+    scnDict['code'] = scn.code
+    
+    return scnDict
 
 # .............................................................................
 def formatScenarioPackage(scnPkg):
-   """
-   @summary: Converts a scenario package object into a dictionary
-   """
-   scnPkgDict = _getLifemapperMetadata('scenario package', scnPkg.getId(), 
-                                       scnPkg.metadataUrl, scnPkg.getUserId(),
-                                       metadata=scnPkg.scenpkgMetadata)
-   scnPkgDict['name'] = scnPkg.name
-   scnPkgDict['scenarios'] = [
-             formatScenario(scn) for code, scn in scnPkg.scenarios.iteritems()]
-   return scnPkgDict
+    """Converts a scenario package object into a dictionary
+    """
+    scnPkgDict = _getLifemapperMetadata(
+        'scenario package', scnPkg.getId(), scnPkg.metadataUrl,
+        scnPkg.getUserId(), metadata=scnPkg.scenpkgMetadata)
+    scnPkgDict['name'] = scnPkg.name
+    scnPkgDict['scenarios'] = [
+        formatScenario(scn) for (_, scn) in scnPkg.scenarios.iteritems()]
+    return scnPkgDict
 
 # .............................................................................
 def formatShapegrid(sg):
-   """
-   @summary: Convert a shapegrid into a dictionary
-   """
-   sgDict = _getLifemapperMetadata('shapegrid', sg.getId(), sg.metadataUrl, 
-                                   sg.getUserId(), status=sg.status, 
-                                   statusModTime=sg.statusModTime, 
-                                   metadata=sg.lyrMetadata)
-   sgDict['spatialVector'] = _getSpatialVectorMetadata(sg.epsgcode, sg.bbox, 
-                                    sg.mapUnits, sg.getDataUrl(), sg.verify, 
-                                    sg.ogrType, sg.dataFormat, sg.featureCount,
-                                    resolution=sg.resolution)
-   sgDict['cellSides'] = sg.cellsides
-   sgDict['cellSize'] = sg.cellsize
+    """Convert a shapegrid into a dictionary
+    """
+    sgDict = _getLifemapperMetadata(
+        'shapegrid', sg.getId(), sg.metadataUrl, sg.getUserId(),
+        status=sg.status, statusModTime=sg.statusModTime,
+        metadata=sg.lyrMetadata)
+    sgDict['spatialVector'] = _getSpatialVectorMetadata(
+        sg.epsgcode, sg.bbox, sg.mapUnits, sg.getDataUrl(), sg.verify,
+        sg.ogrType, sg.dataFormat, sg.featureCount, resolution=sg.resolution)
+    sgDict['cellSides'] = sg.cellsides
+    sgDict['cellSize'] = sg.cellsize
 
-   return sgDict
+    return sgDict
 
 # .............................................................................
 def formatTree(tree):
-   """
-   @summary: Convert a tree into a dictionary
-   @todo: CJG - Add more tree metadata.  Check notes from Ryan conversation
-   """
-   treeDict = _getLifemapperMetadata('tree', tree.getId(), tree.metadataUrl,
-                                     tree.getUserId(), 
-                                     metadata=tree.treeMetadata)
-   treeDict['ultrametric'] = tree.isUltrametric()
-   treeDict['binaery'] = tree.isBinary()
-   return treeDict
+    """Convert a tree into a dictionary
+
+    Todo:
+        * CJG - Add more tree metadata.  Check notes from Ryan conversation
+    """
+    treeDict = _getLifemapperMetadata(
+        'tree', tree.getId(), tree.metadataUrl, tree.getUserId(),
+        metadata=tree.treeMetadata)
+    treeDict['ultrametric'] = tree.isUltrametric()
+    treeDict['binaery'] = tree.isBinary()
+    return treeDict
 
 # .............................................................................
 def formatVector(vlyr):
-   """
-   @summary: Convert a vector into a dictionary
-   """
-   vDict = _getLifemapperMetadata('Vector Layer', vlyr.getId(), vlyr.metadataUrl, 
-                                   vlyr.getUserId(), metadata=vlyr.lyrMetadata)
-   vDict['spatialVector'] = _getSpatialVectorMetadata(vlyr.epsgcode, vlyr.bbox, 
-                                    vlyr.mapUnits, vlyr.getDataUrl(), vlyr.verify, 
-                                    vlyr.ogrType, vlyr.dataFormat, 
-                                    vlyr.featureCount)
+    """Convert a vector into a dictionary
+    """
+    vDict = _getLifemapperMetadata(
+        'Vector Layer', vlyr.getId(), vlyr.metadataUrl, vlyr.getUserId(),
+        metadata=vlyr.lyrMetadata)
+    vDict['spatialVector'] = _getSpatialVectorMetadata(
+        vlyr.epsgcode, vlyr.bbox, vlyr.mapUnits, vlyr.getDataUrl(),
+        vlyr.verify, vlyr.ogrType, vlyr.dataFormat, vlyr.featureCount)
 
-   return vDict
+    return vDict
 
 # .............................................................................
 def jsonObjectFormatter(obj):
-   """
-   @summary: Looks at object and converts to JSON based on its type
-   """
-   if isinstance(obj, ListType):
-      response = []
-      for o in obj:
-         response.append(_formatObject(o))
-   else:
-      response = _formatObject(obj)
-   
-   return json.dumps(response, indent=3)
+    """Looks at object and converts to JSON based on its type
+    """
+    if isinstance(obj, ListType):
+        response = []
+        for o in obj:
+            response.append(_formatObject(o))
+    else:
+        response = _formatObject(obj)
+    
+    return json.dumps(response, indent=3)
 
 # .............................................................................
 def _formatObject(obj):
-   """
-   @summary: Helper method to format an individual object based on its type
-   """
-   cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
-   if isinstance(obj, DictionaryType):
-      return obj
-   elif isinstance(obj, Atom):
-      return formatAtom(obj)
-   elif isinstance(obj, SDMProjection):
-      return formatProjection(obj)
-   elif isinstance(obj, OccurrenceLayer):
-      return formatOccurrenceSet(obj)
-   elif isinstance(obj, EnvLayer):
-      return formatEnvLayer(obj)
-   elif isinstance(obj, Scenario):
-      return formatScenario(obj)
-   elif isinstance(obj, ScenPackage):
-      return formatScenarioPackage(obj)
-   elif isinstance(obj, Raster):
-      return formatRasterLayer(obj)
-   elif isinstance(obj, Gridset):
-      return formatGridset(obj)
-   elif isinstance(obj, LMMatrix):
-      return formatMatrix(obj)
-   elif isinstance(obj, ShapeGrid):
-      return formatShapegrid(obj)
-   elif isinstance(obj, Tree):
-      return formatTree(obj)
-   elif isinstance(obj, Vector):
-      return formatVector(obj)
-   else:
-      # TODO: Expand these and maybe fallback to a generic formatter of public
-      #          attributes
-      raise TypeError, "Cannot format object of type: {}".format(type(obj))
+    """Helper method to format an individual object based on its type
+    """
+    cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
+    if isinstance(obj, DictionaryType):
+        return obj
+    elif isinstance(obj, Atom):
+        return formatAtom(obj)
+    elif isinstance(obj, SDMProjection):
+        return formatProjection(obj)
+    elif isinstance(obj, OccurrenceLayer):
+        return formatOccurrenceSet(obj)
+    elif isinstance(obj, EnvLayer):
+        return formatEnvLayer(obj)
+    elif isinstance(obj, Scenario):
+        return formatScenario(obj)
+    elif isinstance(obj, ScenPackage):
+        return formatScenarioPackage(obj)
+    elif isinstance(obj, Raster):
+        return formatRasterLayer(obj)
+    elif isinstance(obj, Gridset):
+        return formatGridset(obj)
+    elif isinstance(obj, LMMatrix):
+        return formatMatrix(obj)
+    elif isinstance(obj, ShapeGrid):
+        return formatShapegrid(obj)
+    elif isinstance(obj, Tree):
+        return formatTree(obj)
+    elif isinstance(obj, Vector):
+        return formatVector(obj)
+    else:
+        # TODO: Expand these and maybe fallback to a generic formatter of public
+        #             attributes
+        raise TypeError("Cannot format object of type: {}".format(type(obj)))
 
 # .............................................................................
-def _getLifemapperMetadata(objectType, lmId, url, userId, status=None, 
+def _getLifemapperMetadata(objectType, lmId, url, userId, status=None,
                            statusModTime=None, metadata=None):
-   """
-   @summary: Get general Lifemapper metadata that we want to return for each 
-                full object type
-   """
-   lmDict = {
-      'objectType' : objectType,
-      'id' : lmId,
-      'url' : url,
-      'user' : userId
-   }
-   if status is not None:
-      lmDict['status'] = status
-   if statusModTime is not None:
-      lmDict['statusModTime'] = formatTimeHuman(statusModTime)
-      lmDict['etag'] = md5('{}-{}'.format(url, statusModTime)).hexdigest()
-   if metadata is not None:
-      lmDict['metadata'] = metadata
+    """Get general Lifemapper metadata that we want to return for each type
+    """
+    lmDict = {
+        'objectType' : objectType,
+        'id' : lmId,
+        'url' : url,
+        'user' : userId
+    }
+    if status is not None:
+        lmDict['status'] = status
+    if statusModTime is not None:
+        lmDict['statusModTime'] = formatTimeHuman(statusModTime)
+        lmDict['etag'] = md5('{}-{}'.format(url, statusModTime)).hexdigest()
+    if metadata is not None:
+        lmDict['metadata'] = metadata
 
-   return lmDict
+    return lmDict
 
 # .............................................................................
 def _getMapMetadata(baseUrl, mapName, layers):
-   """
-   @summary: Get a dictionary of mapping information
-   @note: This is very alpha.  We need to discuss exactly how we will implement 
-             maps going forward
-   """
-   mapDict = {
-      'endpoint' : baseUrl,
-      'mapName' : mapName
-   }
-   if isinstance(layers, ListType):
-      lyrs = []
-      for lyr in layers:
-         lyrs.append({
-            'metadataUrl' : lyr.metadataUrl,
-            'layerName' : lyr.name
-         })
-      mapDict['layers'] = lyrs
-   else:
-      mapDict['layerName'] = layers
-   return mapDict
+    """Get a dictionary of mapping information
+
+    Note:
+        * This is very alpha.  We need to discuss exactly how we will implement
+            maps going forward
+    """
+    mapDict = {
+        'endpoint' : baseUrl,
+        'mapName' : mapName
+    }
+    if isinstance(layers, ListType):
+        lyrs = []
+        for lyr in layers:
+            lyrs.append({
+                'metadataUrl' : lyr.metadataUrl,
+                'layerName' : lyr.name
+            })
+        mapDict['layers'] = lyrs
+    else:
+        mapDict['layerName'] = layers
+    return mapDict
 
 # .............................................................................
 def _getSpatialMetadata(epsg, bbox, mapUnits, resolution=None):
-   """
-   @summary: Get dictionary of spatial metadata
-   @note: This can be expanded by the _getSpatialRasterMetadata and 
-             _getSpatialVectorMetadata functions if the object has a data file
-   """
-   spatialDict = {
-      'epsg' : epsg,
-      'bbox' : bbox,
-      'mapUnits' : mapUnits
-   }
-   if resolution is not None:
-      spatialDict['resolution'] = resolution
-   return spatialDict
+    """Get dictionary of spatial metadata
+
+    Note:
+        * This can be expanded by the _getSpatialRasterMetadata and
+            _getSpatialVectorMetadata functions if the object has a data file
+    """
+    spatialDict = {
+        'epsg' : epsg,
+        'bbox' : bbox,
+        'mapUnits' : mapUnits
+    }
+    if resolution is not None:
+        spatialDict['resolution'] = resolution
+    return spatialDict
 
 # .............................................................................
-def _getSpatialRasterMetadata(epsg, bbox, mapUnits, dataUrl, sha256Val, 
+def _getSpatialRasterMetadata(epsg, bbox, mapUnits, dataUrl, sha256Val,
                               gdalType, dataFormat, minVal, maxVal, valUnits,
                               dataType, resolution=None):
-   """
-   @summary: Return a dictionary of metadata about a spatial raster
-   @todo: Add file size, number of rows, number of columns?
-   """
-   srDict = _getSpatialMetadata(epsg, bbox, mapUnits, resolution=resolution)
-   srDict['dataUrl'] = dataUrl
-   srDict['sha256'] = sha256Val
-   srDict['gdalType'] = gdalType
-   srDict['dataFormat'] = dataFormat
-   srDict['minVal'] = minVal
-   srDict['maxVal'] = maxVal
-   srDict['valueUnits'] = valUnits
-   srDict['dataType'] = dataType
-   
-   return srDict
+    """Return a dictionary of metadata about a spatial raster
+
+    Todo:
+        * Add file size, number of rows, number of columns?
+    """
+    srDict = _getSpatialMetadata(epsg, bbox, mapUnits, resolution=resolution)
+    srDict['dataUrl'] = dataUrl
+    srDict['sha256'] = sha256Val
+    srDict['gdalType'] = gdalType
+    srDict['dataFormat'] = dataFormat
+    srDict['minVal'] = minVal
+    srDict['maxVal'] = maxVal
+    srDict['valueUnits'] = valUnits
+    srDict['dataType'] = dataType
+    
+    return srDict
 
 # .............................................................................
 def _getSpatialVectorMetadata(epsg, bbox, mapUnits, dataUrl, sha256Val,
-                              ogrType, dataFormat, numFeatures, 
+                              ogrType, dataFormat, numFeatures,
                               resolution=None):
-   """
-   @summary: Return a dictionary of metadata about a spatial vector
-   @todo: Add features?
-   @todo: Add file size?
-   """
-   svDict = _getSpatialMetadata(epsg, bbox, mapUnits, resolution=resolution)
-   svDict['dataUrl'] = dataUrl
-   svDict['sha256'] = sha256Val
-   svDict['ogrType'] = ogrType
-   svDict['dataFormat'] = dataFormat
-   svDict['numFeatures'] = numFeatures
+    """Return a dictionary of metadata about a spatial vector
 
-   return svDict
+    Todo:
+        * Add features?
+        * Add file size?
+    """
+    svDict = _getSpatialMetadata(epsg, bbox, mapUnits, resolution=resolution)
+    svDict['dataUrl'] = dataUrl
+    svDict['sha256'] = sha256Val
+    svDict['ogrType'] = ogrType
+    svDict['dataFormat'] = dataFormat
+    svDict['numFeatures'] = numFeatures
+
+    return svDict
