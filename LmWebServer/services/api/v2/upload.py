@@ -104,12 +104,15 @@ class UserUploadService(LmService):
         instr.write(upload_file.file.read())
         instr.seek(0)
         
+        valid_extensions = [LMFormat.JSON.ext]
+        valid_extensions.extend(LMFormat.SHAPE.getExtensions())
+        
         # Unzip files and name provided name
         with zipfile.ZipFile(instr, allowZip64=True) as zipF:
             for zfname in zipF.namelist():
                 #fn = os.path.basename(zfname)
                 _, ext = os.path.splitext(zfname)
-                if ext in LMFormat.SHAPE.getExtensions():
+                if ext in valid_extensions:
                     outFn = os.path.join(outDir, os.path.basename(zfname))
                     if os.path.exists(outFn):
                         raise cherrypy.HTTPError(
