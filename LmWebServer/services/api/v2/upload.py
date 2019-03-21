@@ -5,7 +5,7 @@
 Todo:
     * Make much more robust.  This is a minimum to get something working and
         discover limitations
-    * Use sub-services for different upload types
+Todo: Use sub-services for different upload types rather than query parameter
 """
 import cherrypy
 import dendropy
