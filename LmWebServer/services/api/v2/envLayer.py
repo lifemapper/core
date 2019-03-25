@@ -78,6 +78,13 @@ class EnvLayerService(LmService):
                 dateCode=dateCode, envCode=envCode, envTypeId=envTypeId,
                 epsgCode=epsgCode, gcmCode=gcmCode, scenarioCode=scenarioCode)
         else:
+            try:
+                _ = int(pathLayerId)
+            except ValueError:
+                raise cherrypy.HTTPError(
+                    HTTPStatus.BAD_REQUEST,
+                    '{} is not a valid environmental layer ID'.format(
+                        pathLayerId))
             return self._getEnvLayer(pathLayerId)
         
     # ................................
