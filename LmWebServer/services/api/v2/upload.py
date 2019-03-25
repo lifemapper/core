@@ -243,6 +243,7 @@ class UserUploadService(LmService):
                         field_obj['role'] = 'uniqueId'
                     meta_obj[field_idx] = field_obj
             
+                meta_obj['delimiter'] = metadata['delimiter']
                 with open(metaFilename, 'w') as outF:
                     json.dump(meta_obj, outF)
         # Process file
