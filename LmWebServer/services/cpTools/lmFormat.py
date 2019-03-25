@@ -88,12 +88,12 @@ def lmFormatter(f):
                     try:
                         csvs = cherrypy.request.params.get('includeCSVs')
                     except:
-                        csvs = False
+                        csvs = True
                         
                     try:
                         sdms = cherrypy.request.params.get('includeSDMs')
                     except:
-                        sdms = False
+                        sdms = True
                     
                     return gridsetPackageFormatter(
                         handler_result, includeCSV=csvs, includeSDM=sdms)

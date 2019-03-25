@@ -598,7 +598,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
 
     
 # .............................................................................
-def gridsetPackageFormatter(gridset, includeCSV=False, includeSDM=False,
+def gridsetPackageFormatter(gridset, includeCSV=True, includeSDM=True,
                             stream=False):
     """
     @summary: Create a Gridset download package for the user to explore locally
