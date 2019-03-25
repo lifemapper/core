@@ -47,6 +47,7 @@ class UserUploadService(LmService):
         """Posts the new file to the user's space
         """
         if checkUserPermission(self.getUserId(), self, HTTPMethod.POST):
+            
             if uploadType is None:
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST, 'Must provide upload type')
@@ -159,21 +160,25 @@ class UserUploadService(LmService):
         }
             
     # ................................
-    def _upload_occurrence_data(self, packageName, metadata, upload_file):
+    def _upload_occurrence_data(self, package_name, metadata, upload_file):
         """
         @summary: Write the occurrence data to the user's workspace
-        @param packageName: The name of the occurrence data
+        @param package_name: The name of the occurrence data
         @param metadata: A JSON document with metadata about the CSV data
         @todo: Sanity checking
         @todo: Use constants
         @todo: Case insensitive
         """
         self.log.debug('In occ upload')
+        # If the package name ends in .csv, strip it
+        if package_name.lower().find(LMFormat.CSV.ext):
+            package_name = package_name[
+                :package_name.lower().find(LMFormat.CSV.ext)]
         csvFilename = os.path.join(
-            self._get_user_dir(), '{}{}'.format(packageName, LMFormat.CSV.ext))
+            self._get_user_dir(), '{}{}'.format(package_name, LMFormat.CSV.ext))
         metaFilename = os.path.join(
             self._get_user_dir(),
-            '{}{}'.format(packageName, LMFormat.JSON.ext))
+            '{}{}'.format(package_name, LMFormat.JSON.ext))
         
         # Check to see if files exist
         if os.path.exists(csvFilename):
@@ -242,7 +247,10 @@ class UserUploadService(LmService):
                     json.dump(meta_obj, outF)
         # Process file
         instr = StringIO()
-        data = upload_file.file.read()
+        if upload_file is not None:
+            data = upload_file.file.read()
+        else:
+            data = cherrypy.request.body.read()
         #data = cherrypy.request.body.read()
         instr.write(data)
         instr.seek(0)
@@ -270,7 +278,7 @@ class UserUploadService(LmService):
                     
         # Return
         return {
-            'package_name' : packageName,
+            'package_name' : package_name,
             'upload_type' : OCCURRENCE_UPLOAD,
             'status' : HTTPStatus.ACCEPTED
         }
