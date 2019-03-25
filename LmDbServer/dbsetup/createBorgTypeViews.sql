@@ -46,6 +46,10 @@ DROP VIEW IF EXISTS lm_v3.lm_sdmMatrixcolumn_matrix CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_lyrMatrixcolumn CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_mfprocess CASCADE;
 
+DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
+DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;
+DROP TYPE IF EXISTS lm_v3.lm_progress CASCADE;
+
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- lm_envlayer (Layer + EnvType)
@@ -1034,9 +1038,6 @@ TO GROUP writer;
 -- DATA TYPES (used on multiple tables)
 -- Note: All column names are returned in lower case
 -- ----------------------------------------------------------------------------
-DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
-DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;
-DROP TYPE IF EXISTS lm_v3.lm_progress CASCADE;
 -- ----------------------------------------------------------------------------
 -- lm_atom returns only an a few object attributes
 CREATE TYPE lm_v3.lm_atom AS (

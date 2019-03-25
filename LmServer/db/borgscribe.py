@@ -1110,6 +1110,14 @@ usr = scribe.findUser(userId='cshl')
 usr.setPassword('jetsons', False)
 scribe.updateUser(usr)
 
+usr = scribe.findUser(userId='radicchio')
+usr.setPassword('jetsons', False)
+scribe.updateUser(usr)
+
+usr = scribe.findUser(userId='madadam')
+usr.setPassword('jetsons', False)
+scribe.updateUser(usr)
+
 gset = scribe.getGridset(gridsetId=268)
 x = scribe.countMFChains(gridsetId=268, afterStat=299, beforeStat=301)
 
