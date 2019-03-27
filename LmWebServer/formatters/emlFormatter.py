@@ -158,7 +158,7 @@ def makeEml(my_obj):
                 'system' : 'http://svc.lifemapper.org'})
         ds_el = SubElement(
             topEl, 'dataset',
-            attrib={'id' : 'sdmroject_{}'.format(my_obj.getId())})
+            attrib={'id' : 'sdmproject_{}'.format(my_obj.getId())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'),
