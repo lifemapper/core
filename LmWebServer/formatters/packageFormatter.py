@@ -571,6 +571,11 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
 
         if include_sdm:
             added_occ_ids = []
+            
+            prj_info = []
+            scn_info = {}
+            occ_info = []
+            
             for prj in scribe.listSDMProjects(
                     0, MAX_PROJECTIONS, userId=user_id,
                     afterStatus=JobStatus.COMPLETE - 1,
@@ -583,11 +588,25 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if os.path.exists(prj.getDLocation()):
                     arc_prj_path = os.path.join(
                         prj_dir, os.path.basename(prj.getDLocation()))
-                    prj_eml_path = '{}{}'.format(
-                        os.path.splitext(arc_prj_path)[0], LMFormat.EML.ext)
+                    #prj_eml_path = '{}{}'.format(
+                    #    os.path.splitext(arc_prj_path)[0], LMFormat.EML.ext)
                     zip_f.write(prj.getDLocation(), arc_prj_path)
                     # EML
-                    zip_f.writestr(prj_eml_path, tostring(makeEml(prj)))
+                    #zip_f.writestr(prj_eml_path, tostring(makeEml(prj)))
+                    scn = prj.projScenario
+                    prj_info.append(
+                        {
+                            'prj_id' : prj.getId(),
+                            'file_path' : arc_prj_path,
+                            'scenario_code' : prj.projScenarioCode,
+                            'species_name' : prj.speciesName,
+                            'algorithm_code' : prj.algorithmCode,
+                            'gcm_code' : scn.gcmCode,
+                            'alt_pred_code' : scn.altpredCode,
+                            'date_code' : scn.dateCode,
+                            'epsg' : prj.epsgcode
+                        })
+                    
                 # Add occurrence set
                 if occ.getId() not in added_occ_ids:
                     arc_occ_path = os.path.join(
@@ -595,6 +614,24 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     zip_f.write(occ.getDLocation(), arc_occ_path)
                     # TODO: Add points EML
                     added_occ_ids.append(occ.getId())
+                    occ_info.append(
+                        {
+                            'occ_id' : occ.getId(),
+                            'species_name' : occ.displayName,
+                            'num_points' : occ.queryCount,
+                            'file_path' : arc_occ_path
+                        })
+            
+            # Write out JSON
+            sdm_info_filename = os.path.join(
+                DYN_PACKAGE_DIR, 'sdm_info.js')
+            sdm_info_obj = {
+                'projections' : prj_info,
+                'occurrences' : occ_info
+            }
+            sdm_json_str = "var projection_info = JSON.parse(`{}`);".format(
+                json.dumps(sdm_info_obj))
+            zip_f.writestr(sdm_info_filename, sdm_json_str)
 
     
 # .............................................................................
