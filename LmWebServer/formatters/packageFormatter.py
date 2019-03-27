@@ -7,6 +7,7 @@ import cherrypy
 from collections import defaultdict
 import json
 import os
+import mapscript
 from StringIO import StringIO
 import zipfile
 
@@ -23,6 +24,8 @@ from LmWebServer.formatters.emlFormatter import makeEml
 from LmWebServer.formatters.geoJsonFormatter import geoJsonify_flo
 from LmWebServer.common.lmconstants import (DYN_PACKAGE_DIR, STATIC_PACKAGE_PATH,
                         GRIDSET_DIR, MATRIX_DIR, SDM_PRJ_DIR, MAX_PROJECTIONS )
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import MAP_TEMPLATE
 
 
 # # .............................................................................
@@ -36,21 +39,117 @@ from LmWebServer.common.lmconstants import (DYN_PACKAGE_DIR, STATIC_PACKAGE_PATH
 # MAX_PROJECTIONS = 1000
 
 # .............................................................................
+def get_map_content_for_proj(prj, scribe):
+    """Get a map image for a projection
+    """
+    ows_req = mapscript.OWSRequest()
+    earl_jr = EarlJr(scribe=scribe)
+    map_filename = earl_jr.getMapFilenameFromMapname(prj.mapName)
+    if not os.path.exists(map_filename):
+        map_svc = scribe.getMapServiceFromMapFilename(map_filename)
+        if map_svc is not None and map_svc.count > 0:
+            map_svc.writeMap(MAP_TEMPLATE)
+    map_params = [
+        ('map', prj.mapName),
+        ('bbox', str(prj.bbox).strip('(').strip(')')),
+        #('bgcolor', bgcolor),
+        #('coverage', coverage),
+        #('crs', crs),
+        #('exceptions', exceptions),
+        ('height', '250'),
+        #('layer', layer),
+        ('layers', 'bmng,{}'.format(prj.mapLayername)),
+        #('point', point),
+        ('request', 'GetMap'),
+        ('format', 'image/png'),
+        ('service', 'WMS'),
+        ('srs', 'EPSG:{}'.format(prj.epsgcode)),
+        ('styles', ''),
+        #('transparent', transparent),
+        ('version', '1.1.0'),
+        ('width', '500')
+    ]
+    for k, v in map_params:
+        if v is not None:
+            ows_req.setParameter(k, str(v))
+    map_obj = mapscript.mapObj(map_filename)
+    # TODO: Color
+    mapscript.msIO_installStdoutToBuffer()
+    result = map_obj.OWSDispatch(ows_req)
+    content_type = mapscript.msIO_stripStdoutBufferContentType()
+    content = mapscript.msIO_getStdoutBufferBytes()
+    mapscript.msIO_resetHandlers()
+    return content
+
+# .............................................................................
+def get_sdm_html_page(prj_info):
+    """Generate a (temporary) HTML page for viewing SDM outputs
+    """
+    num_prjs = len(prj_info)
+    prj_images = []
+    prj_labels = []
+    for prj in prj_info:
+        prj_images.append('<img src="{}" alt="{} - {} - {}" />'.format(
+            prj['image_path'], prj['species_name'], prj['algorithm_code'],
+            prj['scenario_code']))
+        prj_labels.append('{} - {} - {}<br />{}'.format(
+            prj['species_name'], prj['algorithm_code'], prj['scenario_code'],
+            prj['image_path']))
+    prj_images.append('')
+    prj_labels.append('')
+    
+    page_html = """\
+<html>
+    <head>
+        <title>BiotaPhy Browse Maps</title>
+    </head>
+    <body>
+        <h2>BiotaPhy Browse Maps</h2>
+        <table>
+"""
+    for i in range(0, num_prjs, 2):
+        page_html += """\
+            <tr>
+                <td style="text-align: center;">
+                    {}
+                </td>
+                <td style="text-align: center;">
+                    {}
+                </td>
+            </tr>
+            <tr>
+                <th style="text-align: center;">
+                    {}
+                </th>
+                <th style="text-align: center;">
+                    {}
+                </th>
+            </tr>\n""".format(
+                prj_images[i], prj_images[i+1], prj_labels[i], prj_labels[i+1])
+    page_html += """\
+        </table>
+    </body>
+</html>"""
+    return page_html
+
+# .............................................................................
 def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
     """
     @summary: Generate an index.html page for the package
     """
     mcpa_thumb = ''
     mcpa_link = ''
-    pam_stats_thumb = ''
-    pam_stats_link = ''
+    map_stats_thumb = ''
+    map_stats_link = ''
     sdm_text = ''
     csv_text = ''
+    sdm_browse_thumb = ''
+    sdm_browse_link = ''
     
     if do_mcpa:
         mcpa_thumb = """
                 <td>
-                    <img src="./images/mcpa_thumb.png" alt="MCPA Thumbnail" />
+                    <img src="./images/MCPA_small.png" alt="MCPA Thumbnail" />
                 </td>
 """
         mcpa_link = """
@@ -60,25 +159,14 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
 """
 
     if do_pam_stats:
-        pam_stats_thumb = """
+        map_stats_thumb = """
                 <td>
-                    <img src="./images/site-maps_thumb.png" alt="Site Maps" />
-                </td>
-                <td>
-                    <img src="./images/scatterplot_thumb.png" alt="Scatterplots Thumbnail" />
-                </td>
-                <td>
+                    <img src="./images/MapStatistics_small.png" alt="Site Maps" />
                 </td>
 """
-        pam_stats_link = """
+        map_stats_link = """
                 <td style="text-align: center;">
-                    <a href="./statsHeatMap.html">Site Statistic Maps</a>
-                </td>
-                <td style="text-align: center;">
-                    <a href="./stats.html">Scatterplots</a>
-                </td>
-                <td style="text-align: center;">
-                    <a href="./statsTreeMap.html">Site Based Relationships with Tree</a>
+                    <a href="./statsHeatMap.html">Map Statistics</a>
                 </td>
 """
 
@@ -88,6 +176,16 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
                 SDM Projections, found in the {} directory 
             </p>
 """.format(SDM_PRJ_DIR)
+        sdm_browse_thumb = """
+                <td>
+                    <img src="./images/BrowseMaps_small.png" alt="Browse Maps" />
+                </td>
+"""
+        sdm_browse_link = """
+                <td style="text-align: center;">
+                    <a href="./browse_maps.html">Browse Maps</a>
+                </td>
+"""
 
     if do_csv:
         csv_text = """
@@ -134,10 +232,10 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
         <p>This package contains the following:</p>
         <table>
             <tr>
-{}{}
+{}{}{}
             </tr>
             <tr>
-{}{}
+{}{}{}
             </tr>
         </table>
 {}{}
@@ -145,8 +243,8 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
         <h4>The Biotaphy project is supported by NSF BIO Award #1458422.</h4>
     </body>
 </html>""".format(
-    gridset_name, mcpa_thumb, pam_stats_thumb, mcpa_link, pam_stats_link,
-    sdm_text, csv_text)
+    gridset_name, mcpa_thumb, map_stats_thumb, sdm_browse_thumb, mcpa_link,
+    map_stats_link, sdm_browse_link, sdm_text, csv_text)
     
 # .............................................................................
 def createStatsMeta():
@@ -588,9 +686,14 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if os.path.exists(prj.getDLocation()):
                     arc_prj_path = os.path.join(
                         prj_dir, os.path.basename(prj.getDLocation()))
+                    arc_prj_img_path = arc_prj_path.replace(
+                        LMFormat.GTIFF.ext, '.png')
                     #prj_eml_path = '{}{}'.format(
                     #    os.path.splitext(arc_prj_path)[0], LMFormat.EML.ext)
                     zip_f.write(prj.getDLocation(), arc_prj_path)
+                    zip_f.writestr(
+                        arc_prj_img_path,
+                        get_map_content_for_proj(prj, scribe))
                     # EML
                     #zip_f.writestr(prj_eml_path, tostring(makeEml(prj)))
                     scn = prj.projScenario
@@ -598,6 +701,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                         {
                             'prj_id' : prj.getId(),
                             'file_path' : arc_prj_path,
+                            'image_path' : arc_prj_img_path,
                             'scenario_code' : prj.projScenarioCode,
                             'species_name' : prj.speciesName,
                             'algorithm_code' : prj.algorithmCode,
@@ -632,6 +736,9 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
             sdm_json_str = "var projection_info = JSON.parse(`{}`);".format(
                 json.dumps(sdm_info_obj))
             zip_f.writestr(sdm_info_filename, sdm_json_str)
+            
+            # Write projection page
+            zip_f.writestr('browse_maps.html', get_sdm_html_page(prj_info))
 
     
 # .............................................................................
