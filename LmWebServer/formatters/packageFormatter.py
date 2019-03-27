@@ -148,8 +148,8 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
     
     if do_mcpa:
         mcpa_thumb = """
-                <td>
-                    <img src="./images/MCPA_small.png" alt="MCPA Thumbnail" />
+                <td style="padding: 25px;">
+                    <img src="./images/mcpa_thumb.png" alt="MCPA Thumbnail" />
                 </td>
 """
         mcpa_link = """
@@ -160,8 +160,8 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
 
     if do_pam_stats:
         map_stats_thumb = """
-                <td>
-                    <img src="./images/MapStatistics_small.png" alt="Site Maps" />
+                <td style="padding: 25px;">
+                    <img src="./images/map_statistics_thumb.png" alt="Site Maps" />
                 </td>
 """
         map_stats_link = """
@@ -177,8 +177,8 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
             </p>
 """.format(SDM_PRJ_DIR)
         sdm_browse_thumb = """
-                <td>
-                    <img src="./images/BrowseMaps_small.png" alt="Browse Maps" />
+                <td style="padding: 25px;">
+                    <img src="./images/browse_maps_thumb.png" alt="Browse Maps" />
                 </td>
 """
         sdm_browse_link = """
