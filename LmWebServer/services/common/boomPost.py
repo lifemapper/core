@@ -8,6 +8,7 @@ Todo:
 """
 import cherrypy
 from ConfigParser import ConfigParser
+import json
 from mx.DateTime import gmt
 import os
 import random
@@ -20,7 +21,8 @@ from LmCommon.common.lmconstants import (BoomKeys,
 from LmDbServer.boom.initWorkflow import BOOMFiller
 from LmDbServer.common.lmconstants import SpeciesDatasource
 from LmDbServer.tools.catalogScenPkg import SPFiller
-from LmServer.common.lmconstants import TEMP_PATH, Priority, ENV_DATA_PATH
+from LmServer.common.lmconstants import TEMP_PATH, Priority, ENV_DATA_PATH,\
+    ARCHIVE_PATH
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.base.lmobj import LmHTTPError
 from LmWebServer.common.lmconstants import APIPostKeys
@@ -271,13 +273,33 @@ class BoomPoster(object):
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME,
                 points_filename)
+            
             try:
-                delimiter = occ_json[APIPostKeys.DELIMITER]
-                self.config.set(
-                    SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
-                    delimiter)
-            except KeyError:  # Not provided, skip and it will default to tab
-                pass
+                meta_filename = os.path.join(
+                        ARCHIVE_PATH, self.userId, points_filename.replace(
+                            LMFormat.CSV.ext, LMFormat.JSON.ext))
+                self.scribe.log.debug(
+                    'Meta filename?: {}'.format(meta_filename))
+                if os.path.exists(meta_filename):
+                    with open(meta_filename) as in_file:
+                        point_meta = json.load(in_file)
+                    if 'delimiter' in point_meta.keys():
+                        # TODO: Remove this pop hack when we can process delimiter in JSON
+                        self.config.set(
+                            SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
+                            point_meta.pop('delimiter'))
+                        
+            except Exception as e:
+                self.scribe.log.debug(
+                    'Failed to get delimiter from occ upload')
+                self.scribe.log.debug(str(e))
+                try:
+                    delimiter = occ_json[APIPostKeys.DELIMITER]
+                    self.config.set(
+                        SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
+                        delimiter)
+                except KeyError:  # Not provided, skip and it will default to tab
+                    pass
             if APIPostKeys.MIN_POINTS in occ_json.keys():
                 self.config.set(
                     SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN,

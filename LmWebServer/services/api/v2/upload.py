@@ -171,7 +171,7 @@ class UserUploadService(LmService):
         """
         self.log.debug('In occ upload')
         # If the package name ends in .csv, strip it
-        if package_name.lower().find(LMFormat.CSV.ext):
+        if package_name.lower().find(LMFormat.CSV.ext) > 0:
             package_name = package_name[
                 :package_name.lower().find(LMFormat.CSV.ext)]
         csvFilename = os.path.join(
