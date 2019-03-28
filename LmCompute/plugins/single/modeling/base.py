@@ -15,9 +15,10 @@ import zipfile
 
 from LmBackend.common.layerTools import processLayersJSON
 from LmBackend.common.metrics import LmMetricNames, LmMetrics
-from LmBackend.common.subprocessManager import SubprocessRunner
+from LmBackend.common.subprocessManager import (
+    LongRunningProcessError, SubprocessRunner)
 
-from LmCommon.common.lmconstants import JobStatus, LMFormat
+from LmCommon.common.lmconstants import JobStatus, LMFormat, ONE_HOUR
 from LmCommon.common.readyfile import readyFilename
 
 from LmCompute.common.lmObj import LmException
@@ -104,7 +105,7 @@ class ModelSoftwareWrapper(object):
             while cont:
                 cont = False
                 tries_left -= 1
-                spr = SubprocessRunner(cmd)
+                spr = SubprocessRunner(cmd, killTime=ONE_HOUR)
                 start_time = time.time()
                 proc_exit_status, proc_std_err = spr.run()
                 end_time = time.time()
@@ -121,7 +122,9 @@ class ModelSoftwareWrapper(object):
                                 status, tries_left))
                         if tries_left > 0:
                             cont = True
-        except LmException, lme:
+        except LongRunningProcessError as lrpe:
+            status = JobStatus.LM_LONG_RUNNING_JOB_ERROR
+        except LmException as lme:
             status = lme.status
         
         # Get size of output directory
