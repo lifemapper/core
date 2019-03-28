@@ -14,6 +14,12 @@ WAIT_TIME = 10
 MAX_RUN_TIME = 60 * 60 * 24 # 24 hours
 
 # .............................................................................
+class LongRunningProcessError(Exception):
+    """Exception indicating that the process took too long to run
+    """
+    pass
+
+# .............................................................................
 def pid_exists(pid):
     """Checks if a process is running with the specified process id
 
@@ -163,7 +169,9 @@ class SubprocessRunner(object):
             
         if runTime >= self.killTime:
             self.signal(signal.SIGTERM)
-            raise Exception, 'Killed long running process'
+            raise LongRunningProcessError(
+                'Process took too long to run (> {} seconds)'.format(
+                    self.killTime))
             
         # Get output
         exitCode = self.myProc.poll()
