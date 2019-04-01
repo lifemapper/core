@@ -31,14 +31,11 @@ DROP VIEW IF EXISTS lm_v3.lm_scenlayer CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_scenPackageScenario CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_shapegrid CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_gridset CASCADE;
--- TODO: Delete later, no longer creating this view
-DROP VIEW IF EXISTS lm_v3.lm_tree CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_gridset_tree CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_fullmatrix CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_matrix CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_sdmproject CASCADE;
-DROP VIEW IF EXISTS lm_v3.lm_sdmproject_lyr CASCADE;
-DROP VIEW IF EXISTS lm_v3.lm_Occurrenceset CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_occurrenceset CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_matrixcolumn CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_occMatrixcolumn CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_sdmMatrixcolumn CASCADE;
@@ -46,9 +43,6 @@ DROP VIEW IF EXISTS lm_v3.lm_sdmMatrixcolumn_matrix CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_lyrMatrixcolumn CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_mfprocess CASCADE;
 
-DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
-DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;
-DROP TYPE IF EXISTS lm_v3.lm_progress CASCADE;
 
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
@@ -514,51 +508,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
         AND p.mdlscenarioId = ms.scenarioid
         AND p.occurrencesetid = o.occurrencesetid;
 
--- ----------------
--- lm_sdmproject_lyr (SDMProject + Layer)
-CREATE OR REPLACE VIEW lm_v3.lm_sdmproject_lyr (
-   -- sdmproject.*
-   sdmprojectid,
-   layerid,
-   userid,
-   occurrenceSetId,
-   algorithmCode,
-   algParams,
-   mdlscenarioId,
-   prjscenarioId,
-   prjmetadata,
-   prjstatus,
-   prjstatusModTime,
-   
-   -- Layer.* 
-   squid,
-   lyrverify,
-   lyrname,
-   lyrdlocation,
-   lyrmetadata,
-   dataFormat,
-   gdalType,
-   ogrType,
-   valUnits,
-   valAttribute,
-   nodataVal,
-   minVal,
-   maxVal,
-   epsgcode,
-   mapunits,
-   resolution,
-   lyrbbox,
-   lyrmodtime) AS
-      SELECT p.sdmprojectid, p.layerid, p.userid, p.occurrenceSetId, 
-             p.algorithmCode, p.algParams, 
-             p.mdlscenarioId, p.prjscenarioId, 
-             p.metadata, p.status, p.statusModTime,
-             l.squid, l.verify, l.name, l.dlocation, l.metadata, 
-             l.dataFormat, l.gdalType, l.ogrType, l.valUnits, l.valAttribute, 
-             l.nodataVal, l.minVal, l.maxVal, 
-             l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime
-      FROM lm_v3.sdmproject p, lm_v3.layer l
-      WHERE p.layerid = l.layerid;
 
 -- ----------------------------------------------------------------------------
 -- lm_occurrenceset (Occurrenceset + Taxon + TaxonomySource) 
@@ -723,7 +672,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_occMatrixcolumn (
               p.occurrencesetid = o.occurrencesetid;
 
 -- ----------------------------------------------------------------------------
--- lm_sdmMatrixcolumn (MatrixColumn + lm_sdmproject_lyr)
+-- lm_sdmMatrixcolumn (MatrixColumn + SDMProject + Layer)
+-- ----------------
 CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn
 (
    -- MatrixColumn.*
@@ -738,9 +688,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn
    mtxcolstatus,
    mtxcolstatusmodtime,
 
-   -- lm_sdmproject_lyr
+   -- sdmproject.*
    sdmprojectid,
-   -- layerid,
    userid,
    occurrenceSetId,
    algorithmCode,
@@ -750,7 +699,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn
    prjmetadata,
    prjstatus,
    prjstatusModTime,
-   -- squid,
+   
+   -- Layer.* 
    lyrverify,
    lyrname,
    lyrdlocation,
@@ -771,15 +721,17 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn
       SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
              mc.squid, mc.ident, mc.metadata, mc.layerId,
              mc.intersectParams, mc.status, mc.statusmodtime,
-             pl.sdmprojectid, pl.userid, pl.occurrenceSetId, pl.algorithmCode, 
-             pl.algParams, pl.mdlscenarioId, pl.prjscenarioId, 
-             pl.prjmetadata, pl.prjstatus, pl.prjstatusModTime, 
-             pl.lyrverify, pl.lyrname, pl.lyrdlocation, pl.lyrmetadata, 
-             pl.dataFormat, pl.gdalType, pl.ogrType, pl.valUnits, 
-             pl.valAttribute, pl.nodataVal, pl.minVal, pl.maxVal, pl.epsgcode,
-             pl.mapunits, pl.resolution, pl.lyrbbox, pl.lyrmodtime
-        FROM lm_v3.MatrixColumn mc, lm_v3.lm_sdmproject_lyr pl
-        WHERE mc.layerid = pl.layerId;
+             p.sdmprojectid, p.userid, p.occurrenceSetId, 
+             p.algorithmCode, p.algParams, 
+             p.mdlscenarioId, p.prjscenarioId, 
+             p.metadata, p.status, p.statusModTime,
+             l.verify, l.name, l.dlocation, l.metadata, 
+             l.dataFormat, l.gdalType, l.ogrType, l.valUnits, l.valAttribute, 
+             l.nodataVal, l.minVal, l.maxVal, 
+             l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime
+        FROM lm_v3.MatrixColumn mc, lm_v3.sdmproject p, lm_v3.Layer l
+        WHERE mc.layerid = p.layerid 
+          AND mc.layerid = l.layerid;
 
 -- ----------------
 -- lm_sdmMatrixcolumn_matrix (lm_sdmMatrixcolumn + Matrix)
@@ -997,7 +949,6 @@ lm_v3.lm_gridset_tree,
 lm_v3.lm_fullmatrix,
 lm_v3.lm_matrix,
 lm_v3.lm_sdmProject, 
-lm_v3.lm_sdmproject_lyr,
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_matrixcolumn,
 lm_v3.lm_occMatrixcolumn,
@@ -1019,7 +970,6 @@ lm_v3.lm_gridset_tree,
 lm_v3.lm_fullmatrix,
 lm_v3.lm_matrix,
 lm_v3.lm_sdmProject, 
-lm_v3.lm_sdmproject_lyr,
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_matrixcolumn,
 lm_v3.lm_occMatrixcolumn,
@@ -1038,6 +988,9 @@ TO GROUP writer;
 -- DATA TYPES (used on multiple tables)
 -- Note: All column names are returned in lower case
 -- ----------------------------------------------------------------------------
+DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
+DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;
+DROP TYPE IF EXISTS lm_v3.lm_progress CASCADE;
 -- ----------------------------------------------------------------------------
 -- lm_atom returns only an a few object attributes
 CREATE TYPE lm_v3.lm_atom AS (

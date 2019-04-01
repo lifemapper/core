@@ -33,14 +33,6 @@
 
 -- \c borg
 
-ALTER TABLE lm_v3.SDMProject DROP CONSTRAINT IF EXISTS 
-   sdmproject_userid_occurrencesetid_algorithmcode_algparams_m_key;
-   
-ALTER TABLE lm_v3.SDMProject ADD CONSTRAINT 
-   sdmproject_userid_occurrencesetid_algorithmcode_algparams_m_key 
-   UNIQUE (userId, occurrenceSetId, algorithmCode, mdlscenarioId, prjscenarioId);
-
-
 /*
 -- ----------------------------------------------------------------------------                                                    
 -- ----------------------------------------------------------------------------                                                    
