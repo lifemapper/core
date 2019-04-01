@@ -759,8 +759,16 @@ def gridsetPackageFormatter(gridset, includeCSV=True, includeSDM=True,
     
     # Check to see if the package does not exist
     if not os.path.exists(package_filename):
+        
+        # Look for makeflows
+        scribe = BorgScribe(LmPublicLogger())
+        scribe.openConnections()
+        cnt = scribe.countMFChains(
+            gridsetId=gridset.getId(), beforeStat=JobStatus.COMPLETE)
+        
+        
         # See if we can create it
-        if all([mtx.status >= JobStatus.COMPLETE for \
+        if cnt == 0 and all([mtx.status >= JobStatus.COMPLETE for \
                 mtx in gridset.getMatrices() if mtx.matrixType not in [
                     MatrixType.PAM, MatrixType.ROLLING_PAM]]):
             # Create the package
