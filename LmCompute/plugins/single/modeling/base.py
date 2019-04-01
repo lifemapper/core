@@ -18,7 +18,7 @@ from LmBackend.common.metrics import LmMetricNames, LmMetrics
 from LmBackend.common.subprocessManager import (
     LongRunningProcessError, SubprocessRunner)
 
-from LmCommon.common.lmconstants import JobStatus, LMFormat, ONE_HOUR
+from LmCommon.common.lmconstants import JobStatus, LMFormat, ONE_HOUR_SECONDS
 from LmCommon.common.readyfile import readyFilename
 
 from LmCompute.common.lmObj import LmException
@@ -105,7 +105,7 @@ class ModelSoftwareWrapper(object):
             while cont:
                 cont = False
                 tries_left -= 1
-                spr = SubprocessRunner(cmd, killTime=ONE_HOUR)
+                spr = SubprocessRunner(cmd, killTime=ONE_HOUR_SECONDS)
                 start_time = time.time()
                 proc_exit_status, proc_std_err = spr.run()
                 end_time = time.time()
