@@ -794,6 +794,23 @@ class BorgScribe(LMObject):
                               occsetId, algCode, mdlscenCode, prjscenCode, gridsetId)
         return count
 
+# ...............................................
+    def summarizeSDMProjectsForGridset(self, gridsetid):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::summarizeSDMProjectsForGridset()
+        """
+        status_total_pairs = self._borg.summarizeSDMProjectsForGridset(gridsetid)
+        return status_total_pairs
+
+# ...............................................
+    def summarizeMatricesForGridset(self, gridsetid, mtx_type=None):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::summarizeMatricesForGridset()
+        """
+        status_total_pairs = self._borg.summarizeMatricesForGridset(gridsetid, mtx_type)
+        return status_total_pairs
+
+
 # .............................................................................
     def listSDMProjects(self, firstRecNum, maxNum, userId=PUBLIC_USER, squid=None, 
                               displayName=None, afterTime=None, beforeTime=None, 

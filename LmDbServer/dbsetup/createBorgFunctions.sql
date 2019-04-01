@@ -1770,6 +1770,40 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+-- Counts all matrixtype matrices for a gridset by status
+CREATE OR REPLACE FUNCTION lm_v3.lm_summarizeMatricesForGridset(gsid int, 
+                                                                mtxtype int)
+   RETURNS SETOF lm_v3.lm_progress AS
+$$
+DECLARE
+   rec lm_v3.lm_progress%rowtype;
+   cmd varchar;
+   wherecls varchar;
+   groupcls varchar;
+BEGIN
+   cmd = 'SELECT status, count(*) FROM lm_v3.matrix ';
+   wherecls = ' WHERE gridsetid = ' || quote_literal(gsid);
+   groupcls = ' GROUP BY status ORDER BY status ';
+   
+   IF mtxtype is not null THEN
+      wherecls = wherecls || ' AND matrixtype = ' || quote_literal(mtxtype);
+   END IF;
+   
+   cmd := cmd || wherecls || groupcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findUserForObject(lyrid int, 
                                                       scode varchar, 
                                                       occid int, 
@@ -2917,6 +2951,47 @@ DECLARE
 BEGIN
    FOR rec IN 
       SELECT * FROM lm_v3.lm_sdmMatrixcolumn WHERE matrixid = mtxid
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Gets all lm_sdmMatrixColumns with their matrix for a gridset(with SDMProjections as input layer)
+CREATE OR REPLACE FUNCTION lm_v3.lm_getSDMColumnsForGridset(gsid int)
+   RETURNS SETOF lm_v3.lm_sdmMatrixcolumn AS
+$$
+DECLARE
+   rec lm_v3.lm_sdmMatrixcolumn%rowtype;
+BEGIN
+   FOR rec IN 
+      SELECT * FROM lm_v3.lm_sdmMatrixcolumn WHERE matrixid in 
+         (SELECT matrixid FROM lm_v3.matrix WHERE gridsetid = gsid);
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Counts all lm_sdmMatrixColumns for a gridset by status
+CREATE OR REPLACE FUNCTION lm_v3.lm_summarizeSDMColumnsForGridset(gsid int, 
+                                                                  mtxtype1 int, 
+                                                                  mtxtype2 int)
+   RETURNS SETOF lm_v3.lm_progress AS
+$$
+DECLARE
+   rec lm_v3.lm_progress%rowtype;
+BEGIN
+   FOR rec IN 
+      SELECT prjstatus, count(*) FROM lm_v3.lm_sdmMatrixcolumn 
+         WHERE matrixid in 
+            (SELECT matrixid FROM lm_v3.matrix 
+               WHERE gridsetid = gsid AND matrixtype IN (mtxtype1, mtxtype2)) 
+         group by prjstatus order by prjstatus
       LOOP
          RETURN NEXT rec;
       END LOOP;

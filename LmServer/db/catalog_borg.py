@@ -2098,6 +2098,36 @@ class Borg(DbPostgresql):
                     sdmprj = self._createSDMProjection(r, idxs, layer=layer)
                 colPrjPairs.append((mtxcol, sdmprj))
         return colPrjPairs
+    
+# ...............................................
+    def summarizeSDMProjectsForGridset(self, gridsetid):
+        """
+        @summary: Count all SDMProjections for a gridset by status
+        @param gridsetid: a database ID for the LmServer.legion.Gridset
+        @return: a list of tuples containing count, status
+        """
+        status_total_pairs = []
+        rows, idxs = self.executeSelectManyFunction('lm_summarizeSDMColumnsForGridset', 
+                                                    gridsetid, MatrixType.PAM,
+                                                    MatrixType.ROLLING_PAM)
+        for r in rows:
+            status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
+        return status_total_pairs
+
+# ...............................................
+    def summarizeMatricesForGridset(self, gridsetid, mtx_type):
+        """
+        @summary: Count all matrices for a gridset by status
+        @param gridsetid: a database ID for the LmServer.legion.Gridset
+        @param mtx_type: optional filter for type of matrix to count
+        @return: a list of tuples containing count, status
+        """
+        status_total_pairs = []
+        rows, idxs = self.executeSelectManyFunction('lm_summarizeMatricesForGridset', 
+                                                    gridsetid, mtx_type)
+        for r in rows:
+            status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
+        return status_total_pairs
 
 # ...............................................
     def getOccLayersForMatrix(self, mtxId):

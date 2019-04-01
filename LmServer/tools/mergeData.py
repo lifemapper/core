@@ -7,18 +7,10 @@ import logging
 import os
 import time
 
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import (GBIF, ProcessType, 
-                                         JobStatus, ONE_HOUR, LMFormat) 
+from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import (ONE_HOUR) 
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import (readyFilename, 
-                                get_unicodecsv_reader, get_unicodecsv_writer)
-
-from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import LOG_PATH
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.legion.occlayer import OccurrenceLayer
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
