@@ -2968,7 +2968,7 @@ DECLARE
 BEGIN
    FOR rec IN 
       SELECT * FROM lm_v3.lm_sdmMatrixcolumn WHERE matrixid in 
-         (SELECT matrixid FROM lm_v3.matrix WHERE gridsetid = gsid);
+         (SELECT matrixid FROM lm_v3.matrix WHERE gridsetid = gsid)
       LOOP
          RETURN NEXT rec;
       END LOOP;
