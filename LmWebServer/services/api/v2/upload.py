@@ -209,11 +209,11 @@ class UserUploadService(LmService):
                 roles = metadata['role']
                 for f in metadata['field']:
                     if f['fieldType'].lower() == 'string':
-                        field_type = 4
+                        field_type = 'string'  #4
                     elif f['fieldType'].lower() == 'integer':
-                        field_type = 0
+                        field_type = 'integer'  #0
                     elif f['fieldType'].lower() == 'real':
-                        field_type = 2
+                        field_type = 'real' #2
                     else:
                         raise cherrypy.HTTPError(
                             HTTPStatus.BAD_REQUEST,
