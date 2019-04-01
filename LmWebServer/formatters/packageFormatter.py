@@ -154,7 +154,7 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
 """
         mcpa_link = """
                 <td style="text-align: center;">
-                    <a href="./mcpa.html">MCPA with modelled data</a>
+                    <a href="./statsTreeMap.html">MCPA with modeled data</a>
                 </td>
 """
 
@@ -166,7 +166,7 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
 """
         map_stats_link = """
                 <td style="text-align: center;">
-                    <a href="./statsHeatMap.html">Modelled Map Statistics</a>
+                    <a href="./statsHeatMap.html">Modeled Map Statistics</a>
                 </td>
 """
 
