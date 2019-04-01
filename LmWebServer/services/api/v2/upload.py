@@ -205,7 +205,22 @@ class UserUploadService(LmService):
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST, 'Metadata not in expected format')
             else:
+                if upload_file is not None:
+                    data = upload_file.file.read()
+                else:
+                    data = cherrypy.request.body.read()
+                
+                header_row = data.split('\n')[0]
                 meta_obj = {}
+                # Check for delimiter
+                if 'delimiter' in metadata.keys():
+                    delim = metadata['delimiter']
+                else:
+                    delim = ','
+                meta_obj['delimiter'] = delim
+                headers = header_row.split(delim)
+                short_names = []
+                
                 roles = metadata['role']
                 for f in metadata['field']:
                     if f['fieldType'].lower() == 'string':
@@ -219,9 +234,25 @@ class UserUploadService(LmService):
                             HTTPStatus.BAD_REQUEST,
                             'Field type: {} is unknown'.format(f['fieldType']))
                     field_idx = f['key']
+                    
+                    # If short name is None or has zero-length, get from csv
+                    short_name = f['shortName']
+                    if short_name is None or len(short_name) == 0:
+                        short_name = headers[int(f['key'])].strip()
+                    # If short name is too long
+                    i = 0
+                    if len(short_name) > 9:
+                        test_name = short_name[:9] + str(i)
+                        while test_name in short_names:
+                            i += 1
+                            test_name = short_name[:9] + str(i)
+                            self.log.debug(
+                                'Trying test name: {}'.format(test_name))
+                        short_names.append(test_name)
+                        short_name = test_name
                     field_obj = {
                         'type' : field_type,
-                        'name' : f['shortName']
+                        'name' : short_name
                     }
                     if 'geopoint' in roles.keys() and f[
                             'key'] == roles['geopoint']:
@@ -243,16 +274,10 @@ class UserUploadService(LmService):
                         field_obj['role'] = 'uniqueId'
                     meta_obj[field_idx] = field_obj
             
-                if 'delimiter' in metadata.keys():
-                    meta_obj['delimiter'] = metadata['delimiter']
                 with open(metaFilename, 'w') as outF:
                     json.dump(meta_obj, outF)
         # Process file
         instr = StringIO()
-        if upload_file is not None:
-            data = upload_file.file.read()
-        else:
-            data = cherrypy.request.body.read()
         #data = cherrypy.request.body.read()
         instr.write(data)
         instr.seek(0)
