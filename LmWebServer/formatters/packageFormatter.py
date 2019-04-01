@@ -154,7 +154,7 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
 """
         mcpa_link = """
                 <td style="text-align: center;">
-                    <a href="./mcpa.html">MCPA</a>
+                    <a href="./mcpa.html">MCPA with modelled data</a>
                 </td>
 """
 
@@ -166,14 +166,14 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
 """
         map_stats_link = """
                 <td style="text-align: center;">
-                    <a href="./statsHeatMap.html">Map Statistics</a>
+                    <a href="./statsHeatMap.html">Modelled Map Statistics</a>
                 </td>
 """
 
     if do_sdm:
         sdm_text = """
             <p>
-                SDM Projections, found in the {} directory 
+                SDM Model Projections, found in the {} directory 
             </p>
 """.format(SDM_PRJ_DIR)
         sdm_browse_thumb = """
@@ -183,7 +183,7 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
 """
         sdm_browse_link = """
                 <td style="text-align: center;">
-                    <a href="./browse_maps.html">Browse Maps</a>
+                    <a href="./browse_maps.html">Browse Model Maps</a>
                 </td>
 """
 
