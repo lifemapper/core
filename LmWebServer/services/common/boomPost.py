@@ -276,8 +276,9 @@ class BoomPoster(object):
             
             try:
                 meta_filename = os.path.join(
-                        ARCHIVE_PATH, self.userId, points_filename.replace(
-                            LMFormat.CSV.ext, LMFormat.JSON.ext))
+                        ARCHIVE_PATH, self.userId, '{}{}'.format(
+                            points_filename.replace(
+                            LMFormat.CSV.ext, ''), LMFormat.JSON.ext))
                 self.scribe.log.debug(
                     'Meta filename?: {}'.format(meta_filename))
                 if os.path.exists(meta_filename):
@@ -285,9 +286,14 @@ class BoomPoster(object):
                         point_meta = json.load(in_file)
                     if 'delimiter' in point_meta.keys():
                         # TODO: Remove this pop hack when we can process delimiter in JSON
+                        delim = point_meta['delimiter']
+                        del point_meta['delimiter']
                         self.config.set(
                             SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
-                            point_meta.pop('delimiter'))
+                            delim)
+                        self.scribe.log.debug(json.dumps(point_meta))
+                        with open(meta_filename, 'w') as out_f:
+                            json.dump(point_meta, out_f)
                         
             except Exception as e:
                 self.scribe.log.debug(
