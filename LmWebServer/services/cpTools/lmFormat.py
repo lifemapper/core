@@ -85,15 +85,17 @@ def lmFormatter(f):
                     return file_formatter(handler_result.getDLocation())
                 elif ah == LMFormat.ZIP.getMimeType():
                     # TODO: use constants
-                    try:
-                        csvs = cherrypy.request.params.get('includeCSVs')
-                    except:
-                        csvs = True
-                        
-                    try:
-                        sdms = cherrypy.request.params.get('includeSDMs')
-                    except:
-                        sdms = True
+                    #try:
+                    #    csvs = cherrypy.request.params.get('includeCSVs')
+                    #except:
+                    #    csvs = True
+                    #    
+                    #try:
+                    #    sdms = cherrypy.request.params.get('includeSDMs')
+                    #except:
+                    #    sdms = True
+                    csvs = True
+                    sdms = True
                     
                     return gridsetPackageFormatter(
                         handler_result, includeCSV=csvs, includeSDM=sdms)
