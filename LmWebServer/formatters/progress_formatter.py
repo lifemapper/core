@@ -24,7 +24,7 @@ def summarize_object_statuses(summary):
     for status, count in summary:
         if status <= JobStatus.INITIALIZE:
             waiting += count
-        elif status <= JobStatus.COMPLETE:
+        elif status < JobStatus.COMPLETE:
             running += count
         elif status == JobStatus.COMPLETE:
             complete += count
@@ -66,6 +66,8 @@ def format_gridset(gridset_id, detail=False):
         progress = -1.0
     elif error_prjs == total_prjs and total_prjs > 0:
         progress = -1.0
+    elif total_mfs == 0:
+        progress = 1.0
     else:
         # 0.5 * number running + 1.0 * number complete + number error / total
         progress = (
