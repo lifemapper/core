@@ -2130,6 +2130,21 @@ class Borg(DbPostgresql):
         return status_total_pairs
 
 # ...............................................
+    def summarizeMtxColumnsForGridset(self, gridsetid, mtx_type):
+        """
+        @summary: Count all MatrixColumns for a gridset by status
+        @param gridsetid: a database ID for the LmServer.legion.Gridset
+        @param mtx_type: optional filter for type of matrix to count
+        @return: a list of tuples containing count, status
+        """
+        status_total_pairs = []
+        rows, idxs = self.executeSelectManyFunction('lm_summarizeMtxColsForGridset', 
+                                                    gridsetid, mtx_type)
+        for r in rows:
+            status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
+        return status_total_pairs
+
+# ...............................................
     def summarizeMatricesForGridset(self, gridsetid, mtx_type):
         """
         @summary: Count all matrices for a gridset by status
@@ -2504,9 +2519,6 @@ class Borg(DbPostgresql):
         for r in rows:
             status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
         return status_total_pairs
-
-
-    
 
 # ...............................................
     def findMFChains(self, count, userId, oldStatus, newStatus):

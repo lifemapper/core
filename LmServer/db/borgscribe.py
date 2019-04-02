@@ -818,6 +818,15 @@ class BorgScribe(LMObject):
         status_total_pairs = self._borg.summarizeMatricesForGridset(gridsetid, mtx_type)
         return status_total_pairs
 
+# ...............................................
+    def summarizeMtxColumnsForGridset(self, gridsetid, mtx_type=None):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::summarizeMtxColumnsForGridset()
+        """
+        status_total_pairs = self._borg.summarizeMtxColumnsForGridset(gridsetid, 
+                                                                      mtx_type)
+        return status_total_pairs
+
 
 # .............................................................................
     def listSDMProjects(self, firstRecNum, maxNum, userId=PUBLIC_USER, squid=None, 
