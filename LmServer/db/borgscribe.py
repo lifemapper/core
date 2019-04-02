@@ -765,6 +765,14 @@ class BorgScribe(LMObject):
         return objs
 
 # ...............................................
+    def summarizeOccurrenceSetsForGridset(self, gridsetid):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::listOccurrenceSets()
+        """
+        status_total_pairs = self._borg.summarizeOccurrenceSetsForGridset(gridsetid)
+        return status_total_pairs
+
+# ...............................................
     def getSDMProject(self, layerid):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getSDMProject()
@@ -982,6 +990,13 @@ class BorgScribe(LMObject):
                 metastring, afterStat, beforeStat, afterTime, beforeTime, atom)
         return objs
 
+# ...............................................
+    def summarizeMFChainsForGridset(self, gridsetid):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::summarizeMFChainsForGridset()
+        """
+        status_total_pairs = self._borg.summarizeMFChainsForGridset(gridsetid)
+        return status_total_pairs
 
 # ...............................................
     def updateObject(self, obj):

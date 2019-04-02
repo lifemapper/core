@@ -1416,6 +1416,24 @@ END;
 
 $$  LANGUAGE 'plpgsql' STABLE;
 
+-- ----------------------------------------------------------------------------
+-- Counts all makeflows for a gridset by status
+CREATE OR REPLACE FUNCTION lm_v3.lm_summarizeMFProcessForGridset(gsid int)
+   RETURNS SETOF lm_v3.lm_progress AS
+$$
+DECLARE
+   rec lm_v3.lm_progress%rowtype;
+BEGIN
+   FOR rec IN 
+      SELECT status, count(*) FROM lm_v3.mfprocess WHERE gridsetid = gsid 
+         group by status 
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
 
 
 -- ----------------------------------------------------------------------------
@@ -1783,7 +1801,7 @@ DECLARE
 BEGIN
    cmd = 'SELECT status, count(*) FROM lm_v3.matrix ';
    wherecls = ' WHERE gridsetid = ' || quote_literal(gsid);
-   groupcls = ' GROUP BY status ORDER BY status ';
+   groupcls = ' GROUP BY status ';
    
    IF mtxtype is not null THEN
       wherecls = wherecls || ' AND matrixtype = ' || quote_literal(mtxtype);
@@ -1800,8 +1818,6 @@ BEGIN
 
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
-
-
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findUserForObject(lyrid int, 
@@ -2439,6 +2455,29 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
+-- ----------------------------------------------------------------------------
+-- Counts all lm_occMatrixColumns for a gridset by status
+CREATE OR REPLACE FUNCTION lm_v3.lm_summarizeOccSetsForGridset(gsid int, 
+                                                               mtxtype1 int, 
+                                                               mtxtype2 int)
+   RETURNS SETOF lm_v3.lm_progress AS
+$$
+DECLARE
+   rec lm_v3.lm_progress%rowtype;
+BEGIN
+   FOR rec IN 
+      SELECT occstatus, count(*) FROM lm_v3.lm_occMatrixcolumn 
+         WHERE matrixid in 
+            (SELECT matrixid FROM lm_v3.matrix 
+               WHERE gridsetid = gsid AND matrixtype IN (mtxtype1, mtxtype2)) 
+         group by occstatus 
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
 
 -- ----------------------------------------------------------------------------
 -- MFProcess
@@ -2923,6 +2962,39 @@ END;
 
 $$  LANGUAGE 'plpgsql' STABLE;
 
+-- ----------------------------------------------------------------------------
+-- Counts all lm_matrixcolumn for a gridset by status
+CREATE OR REPLACE FUNCTION lm_v3.lm_summarizeMtxColsForGridset(gsid int, 
+                                                               mtxtype int)
+   RETURNS SETOF lm_v3.lm_progress AS
+$$
+DECLARE
+   rec lm_v3.lm_progress%rowtype;
+   cmd varchar;
+   wherecls varchar;
+   groupcls varchar;
+BEGIN
+   cmd = 'SELECT mtxcolstatus, count(*) FROM lm_v3.lm_matrixcolumn ';
+   wherecls = ' WHERE gridsetid = ' || quote_literal(gsid);
+   groupcls = ' GROUP BY mtxcolstatus ';
+   
+   IF mtxtype is not null THEN
+      wherecls = wherecls || ' AND matrixtype = ' || quote_literal(mtxtype);
+   END IF;
+   
+   cmd := cmd || wherecls || groupcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+
 
 -- ----------------------------------------------------------------------------
 -- Gets all matrixColumns with their matrix
@@ -2991,7 +3063,7 @@ BEGIN
          WHERE matrixid in 
             (SELECT matrixid FROM lm_v3.matrix 
                WHERE gridsetid = gsid AND matrixtype IN (mtxtype1, mtxtype2)) 
-         group by prjstatus order by prjstatus
+         group by prjstatus
       LOOP
          RETURN NEXT rec;
       END LOOP;

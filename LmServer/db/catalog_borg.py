@@ -1767,6 +1767,21 @@ class Borg(DbPostgresql):
             for r in rows:
                 objs.append(self._createOccurrenceLayer(r, idxs))
         return objs
+    
+# ...............................................
+    def summarizeOccurrenceSetsForGridset(self, gridsetid):
+        """
+        @summary: Count all OccurrenceSets for a gridset by status
+        @param gridsetid: a database ID for the LmServer.legion.Gridset
+        @return: a list of tuples containing count, status
+        """
+        status_total_pairs = []
+        rows, idxs = self.executeSelectManyFunction('lm_summarizeOccSetsForGridset', 
+                                                    gridsetid, MatrixType.PAM,
+                                                    MatrixType.ROLLING_PAM)
+        for r in rows:
+            status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
+        return status_total_pairs
 
 # ...............................................
     def deleteOccurrenceSet(self, occ):
@@ -2475,6 +2490,23 @@ class Borg(DbPostgresql):
             for r in rows:
                 objs.append(self._createMFChain(r, idxs))
         return objs
+    
+# ...............................................
+    def summarizeMFChainsForGridset(self, gridsetid):
+        """
+        @summary: Count all mfprocesses for a gridset by status
+        @param gridsetid: a database ID for the LmServer.legion.Gridset
+        @return: a list of tuples containing count, status
+        """
+        status_total_pairs = []
+        rows, idxs = self.executeSelectManyFunction('lm_summarizeMFProcessForGridset', 
+                                                    gridsetid)
+        for r in rows:
+            status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
+        return status_total_pairs
+
+
+    
 
 # ...............................................
     def findMFChains(self, count, userId, oldStatus, newStatus):
