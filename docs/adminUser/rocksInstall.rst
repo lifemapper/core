@@ -6,6 +6,21 @@ Notes:
 Fresh Rocks Install:
 ********************
 
+Yum errors
+~~~~~~~~~~~
+* Opt python module "breaks" yum, must unload before using Yum commands::
+     module load opt-python
+     do something
+     module unload opt-python
+     yum something 
+   
+Need VNC for admin
+~~~~~~~~~~~~~~~~~~  
+* Install and start vncserver
+  yum install tigervnc-server
+  vncserver :20
+
+
 Start/restart a virtual cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Make sure that the boot action is "os", configure cdrom to the kernel roll on 
@@ -162,7 +177,6 @@ To change eclipse to use ssh login with key::
     
 Security updates ONLY for Rocks 7.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Follow instructions at 
 http://www.rocksclusters.org/new/2018/2018/01/04/updates-meltdown-spectre.html
 Create a mirror with CentOS updates, using a nearby mirror from 
@@ -183,7 +197,7 @@ the above instructions.
     # yum clean all; yum update
     
 
-Troubleshooting 7.0
+Rocks 7.0 tips
 ~~~~~~~~~~~~~~~~~~~~
 * User creation
     * Don't
@@ -193,6 +207,7 @@ Troubleshooting 7.0
 
 * Mouse - Switching the primary mouse button from left to right did not work,
   but after a reboot several weeks later it magically did work
+
 
 New repositories
 ~~~~~~~~~~~~~~~~
