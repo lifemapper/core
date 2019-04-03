@@ -4,15 +4,21 @@ Troubleshooting:
 
 Yum errors
 ~~~~~~~~~~~
-
 * Opt python module "breaks" yum, must unload before using Yum commands::
      module load opt-python
      do something
      module unload opt-python
      yum something 
+   
+Need VNC for admin
+~~~~~~~~~~~~~~~~~~  
+* Install and start vncserver
+  yum install tigervnc-server
+  vncserver :20
 
-On Compute Nodes, lifemapper-compute roll
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On Compute Nodes
+~~~~~~~~~~~~~~~~~
 
 User share and shared FS problems
 #. Missing file /etc/411-security/shared.key on nodes. Copy 
@@ -111,10 +117,4 @@ Virtual cluster
    cp -p /tftpboot/pxelinux/vmlinuz-7.0-x86_64 /boot/kickstart/default/
    cp -p /tftpboot/pxelinux/initrd.img-7.0-x86_64 /boot/kickstart/default/
 
- 
-=======
-Building a roll
-~~~~~~~~~~~~~~~~~~
-* Yum commands to inspect installed libs
-  * look for lib:  "rpm -qa | grep somelib"
  
