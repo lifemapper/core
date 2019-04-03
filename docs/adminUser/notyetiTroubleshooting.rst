@@ -42,6 +42,7 @@ On FE
 On Compute Nodes/Dev Appliances 
 ~~~~~~~~~~~~~~~~~
 User share and shared FS problems
+
 #. Missing file /etc/411-security/shared.key on nodes. Copy 
    /etc/411-security/shared.key to all nodes::
    
@@ -113,16 +114,15 @@ Try Me
 ~~~~~~
 * Notyeti throws me off ssh when filling out install screen   
 
-    * check services are running, httpd, named, rocks-kvm-vlan, random number generator
+  * check services are running, httpd, named, rocks-kvm-vlan, random number generator
       systemctl list-units
-    * check status of dmesg
-    * /var/log/secure
-    * /var/log/messages
-    * /var/log/fail2ban
-
-    * directory listing through browser
-    * time on machine - 
-    * rocks list host attr | grep Timezone
+  * check status of dmesg
+  * /var/log/secure
+  * /var/log/messages
+  * /var/log/fail2ban
+  * directory listing through browser
+  * time on machine - 
+  * rocks list host attr | grep Timezone
 
 On Development Appliance
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -144,7 +144,11 @@ Virtual cluster
 ~~~~~~~~~~~~~~~
 * Error, missing boot files for vms::
 
-    Mar 31 16:40:02 notyeti.lifemapper.org libvirtd[5594]: 2018-03-31 21:40:02.506+0000: 5601: error : virSecurityDACSetOwnership:632 : unable to stat: /boot/kickstart/default/initrd.img-7.0-x86_64: No such file or directory
+    Mar 31 16:40:02 notyeti.lifemapper.org libvirtd[5594]: 
+    2018-03-31 21:40:02.506+0000: 5601: error : 
+    virSecurityDACSetOwnership:632 : 
+    unable to stat: /boot/kickstart/default/initrd.img-7.0-x86_64: 
+    No such file or directory
 
 * Copied files from PXE boot location to other boot location::
 
@@ -159,6 +163,8 @@ http://repository.it4i.cz/mirrors/repoforge/redhat/el7/en/x86_64/rpmforge/RPMS/r
 
 
 history:
+-------- 
+
 * Check DNS::
     1012  ping www.ucsd.edu
     1013  cat /var/log/messages | grep DHCP
