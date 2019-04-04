@@ -208,7 +208,23 @@ Rocks 7.0 tips
 * Mouse - Switching the primary mouse button from left to right did not work,
   but after a reboot several weeks later it magically did work
 
+Virtual clusters
+~~~~~~~~~~~~~~~~~
+* Install Vclusters with bootaction=os and cdrom pointing to kernel roll file on notyeti::
 
+    1051  rocks list host boot
+    1053  rocks set host boot notyeti-191 action=os
+    1057  rocks set host vm cdrom notyeti-191 cdrom=/tank/data/rolls/kernel-7.0-0.x86_64.disk1.iso
+    1058  rocks report host vm config notyeti-191
+    1059  rocks list host vm status=1
+    1060  rocks start host vm notyeti-191
+
+* Clear cdrom before next boot
+* make sure to "stop", then "start" vm after install::
+
+    1022  rocks set host vm cdrom notyeti-191 cdrom=None
+    1023  rocks report host vm config notyeti-191 
+    
 New repositories
 ~~~~~~~~~~~~~~~~
 http://repository.it4i.cz/mirrors/repoforge/redhat/el7/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el7.rf.x86_64.rpm

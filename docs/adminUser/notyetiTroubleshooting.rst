@@ -79,40 +79,13 @@ On Development Appliance
 * Repositories and RPMs unavailable for CentOS7
 
   * PGDG repo, Postgresql 9.1 libraries, PostGIS
-  * HDF4 and HDF5 rpms
+  * HDF5 rpms
   
-* RPMForge repository included in installation points to defunct RPMForge repo
-
-  * http://apt.sw.be/redhat/el6/en/x86_64/rpmforge/repodata/repomd.xml
-  * Download latest from rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm
-  * Get rpmforge from new location, edit name, disable by default::
-     # RPMFORGEREPO=rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm
-     # wget http://ftp.tu-chemnitz.de/pub/linux/dag/redhat/el6/en/x86_64/rpmforge/RPMS/$RPMFORGEREPO
-     # rpm -Uvh rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm 
-     
-  * Save old repo::
   
-     ### rpmforge.repo still shows old url
-     # mv /etc/yum.repos.d/rpmforge.repo /etc/yum.repos.d/rpmforge.repo.save
-     
-  * Add repo from url, copy to rpmforge.repo, disable original and newly named version::
-  
-     # yum-config-manager --add-repo http://ftp.tu-chemnitz.de/pub/linux/dag/redhat/el6/en/x86_64/rpmforge
-     ### disable
-     # vim /etc/yum.repos.d/ftp.tu-chemnitz.de_pub_linux_dag_redhat_el6_en_x86_64_rpmforge.repo
-     # cat /etc/yum.repos.d/ftp.tu-chemnitz.de_pub_linux_dag_redhat_el6_en_x86_64_rpmforge.repo > /etc/yum.repos.d/rpmforge.repo
-     ### change [name], disable
-     # vim /etc/yum.repos.d/rpmforge.repo
-     
-  * Possible missing dependencies for HDF4 according to 
-    https://centos.pkgs.org/6/repoforge-x86_64/hdf4-4.2.6-1.el6.rf.x86_64.rpm.html:
-    
-    * libmfhdf.so.0()(64bit)
-    * rtld(GNU_HASH)
   
 Try Me
 ~~~~~~
-* Notyeti throws me off ssh when filling out install screen   
+* Notyeti throws me off ssh when filling out install screen for VMs
 
   * check services are running, httpd, named, rocks-kvm-vlan, random number generator
       systemctl list-units
@@ -154,12 +127,6 @@ Virtual cluster
 
    cp -p /tftpboot/pxelinux/vmlinuz-7.0-x86_64 /boot/kickstart/default/
    cp -p /tftpboot/pxelinux/initrd.img-7.0-x86_64 /boot/kickstart/default/
-
- 
-New repositories
-~~~~~~~~~~~~~~~~
-http://repository.it4i.cz/mirrors/repoforge/redhat/el7/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el7.rf.x86_64.rpm
-
 
 
 history:
@@ -204,15 +171,14 @@ history:
     1036  ll
     1037  ls /run
  
-* Missing directory, should have been created by systemd::
+* Missing directories, should have been created by systemd
+* Services fail
+* insert-ethers will fail if httpd is not running::
 
     1038  mkdir /run/httpd
     1039  systemctl start httpd
     1040  systemctl status httpd
     1041  systemctl status named
-
-* insert-ethers will fail if httpd is not running::
-
     1042  insert-ethers
     1043  ~
     1044  systemctl start named
@@ -221,21 +187,6 @@ history:
     1047  insert-ethers
     1048  systemctl start httpd
     1049  insert-ethers
-
-* Install Vclusters with bootaction=os and cdrom pointing to kernel roll file on notyeti::
-
-    1051  rocks list host boot
-    1053  rocks set host boot notyeti-191 action=os
-    1057  rocks set host vm cdrom notyeti-191 cdrom=/tank/data/rolls/kernel-7.0-0.x86_64.disk1.iso
-    1058  rocks report host vm config notyeti-191
-    1059  rocks list host vm status=1
-    1060  rocks start host vm notyeti-191
- 
-* Clear cdrom before next boot
-* make sure to "stop", then "start" vm after install::
-
-    1022  rocks set host vm cdrom notyeti-191 cdrom=None
-    1023  rocks report host vm config notyeti-191 
  
 * Check rocksdb::
 
@@ -253,12 +204,6 @@ history:
     12  systemctl status httpd 
     14  mkdir /run/httpd
     15  systemctl start httpd 
-
-* Disable unnecessary opensm, subnet manager for InfiniBand::
-
-    4  systemctl status opensm
-    5  systemctl stop opensm
-    6  systemctl disable opensm
 
 * Note broken link to /run/httpd directory::
 
@@ -294,21 +239,6 @@ history:
    81  ls -lahtr /tftpboot/pxelinux/pxelinux.cfg/
    82  more /tftpboot/pxelinux/pxelinux.cfg/default 
 
-* Is there a problem with MTU=1500?  No::
-
-   93  ping 192.168.131.1 -s 1500
-   94  ping 192.168.131.1 -s 1800
-   95  ping 192.168.131.254 -s 1800
-   96  ping 192.168.131.254 
-   97  ping 192.168.131.254 -s 1500
-   98  ping 192.168.131.254 -s 1472
-   99  ping 192.168.131.254 -s 1500
-
-* Install tftp client for testing connection::
-
-   156  yum install tftp
-   159  tftp --help
-   160  tftp 192.168.131.1
 
 * Look at messages again::
 
