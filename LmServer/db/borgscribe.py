@@ -40,7 +40,6 @@ from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.common.datalocator import EarlJr
-from LmDbServer.tools.janitor import gridsetid
 
 # .............................................................................
 class BorgScribe(LMObject):

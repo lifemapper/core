@@ -2938,7 +2938,7 @@ BEGIN
    cmd = 'SELECT matrixColumnId, squid, null, null, mtxcolstatusmodtime FROM lm_v3.lm_matrixcolumn ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
             aftertime, beforetime, epsg, afterstat, beforestat, 
-            grdid mtxid, lyrid);
+            grdid, mtxid, lyrid);
    ordercls = 'ORDER BY mtxcolstatusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
