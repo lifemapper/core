@@ -1249,19 +1249,16 @@ DECLARE
 BEGIN
    -- Queries lm_mfprocess view
    
-   -- filter by User
-   IF usr is not null THEN
-      wherecls = ' WHERE userid = ' || quote_literal(usr);
+   -- MUST have either gridsetId or userId
+   IF usr is null AND grdid is null THEN
+      RAISE EXCEPTION 'Must provide userId or gridsetId for filter';
    END IF;
-
-   -- filter by Gridset
+   
+   -- filter by gridsetId or userId
    IF grdid is not null THEN
-      thisfilter = ' gridsetId =  ' || grdid;
-      IF wherecls is null THEN 
-         wherecls = ' WHERE ' || thisfilter; 
-      ELSE
-         wherecls = wherecls || ' AND ' || thisfilter;
-      END IF;
+      wherecls = ' WHERE  gridsetId =  ' || grdid;
+   ELSE
+      wherecls = ' WHERE userid = ' || quote_literal(usr);
    END IF;
 
    -- Metadata
@@ -1599,8 +1596,19 @@ $$
 DECLARE
    wherecls varchar;
 BEGIN
-   wherecls = ' WHERE userid = ' || quote_literal(usr);
-
+   -- MUST have either gridsetId or userId
+   IF usr is null AND grdid is null THEN
+      RAISE EXCEPTION 'Must provide userId or gridsetId for filter';
+   END IF;
+   
+   -- filter by gridsetId 
+   IF grdid is not null THEN
+      wherecls = ' WHERE  gridsetId =  ' || grdid;
+   -- or filter by userId
+   ELSE
+      wherecls = ' WHERE userid = ' || quote_literal(usr);
+   END IF;
+                
    -- filter by MatrixType
    IF mtxtype is not null THEN
       wherecls = wherecls || ' AND matrixtype =  ' || quote_literal(mtxtype);
@@ -2254,17 +2262,24 @@ DECLARE
    squidcol varchar := 'squid';
    statcol varchar := 'status';
    timecol varchar := 'statusModTime';
-   wherecls varchar := ' WHERE userid = ' || quote_literal(usr);
+   wherecls varchar;
 BEGIN
-   -- filter by gridsetId 
-   --   and modify column names for lm_occMatrixcolumn
+   -- MUST have either gridsetId or userId
+   IF usr is null AND grdid is null THEN
+      RAISE EXCEPTION 'Must provide userId or gridsetId for filter';
+   END IF;
+   
    IF grdid is not null THEN
-      wherecls = wherecls || ' AND  gridsetId =  ' || grdid;
+   -- filter by gridsetId 
+   -- and modify column names for lm_occMatrixcolumn
+      wherecls = ' WHERE  gridsetId =  ' || grdid;
       squidcol = 'occsquid';
       statcol = 'occstatus';
       timecol = 'occstatusModTime';
+   ELSE
+      wherecls = ' WHERE userid = ' || quote_literal(usr);
    END IF;
-                
+                   
    -- filter by squid
    IF sqd is not null THEN
       wherecls = wherecls || ' AND ' || squidcol || ' =  ' || quote_literal(sqd);
@@ -2788,6 +2803,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMtxCols(usr varchar,
                                                     epsg int,
                                                     afterstat int,
                                                     beforestat int,
+                                                    grdid int,
                                                     mtxid int,
                                                     lyrid int)
    RETURNS varchar AS
@@ -2795,7 +2811,18 @@ $$
 DECLARE
    wherecls varchar;
 BEGIN
-   wherecls = ' WHERE userid = ' || quote_literal(usr);
+   -- MUST have either gridsetId or userId
+   IF usr is null AND grdid is null THEN
+      RAISE EXCEPTION 'Must provide userId or gridsetId for filter';
+   END IF;
+   
+   -- filter by gridsetId 
+   IF grdid is not null THEN
+      wherecls = ' WHERE  gridsetId =  ' || grdid;
+   -- or filter by userId 
+   ELSE
+      wherecls = ' WHERE userid = ' || quote_literal(usr);
+   END IF;
                 
    -- filter by squid
    IF sqd is not null THEN
@@ -2864,6 +2891,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_countMtxCols(usr varchar,
                                                     epsg int,
                                                     afterstat int,
                                                     beforestat int,
+                                                    grdid int,
                                                     mtxid int,
                                                     lyrid int)
    RETURNS int AS
@@ -2875,7 +2903,8 @@ DECLARE
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.lm_matrixcolumn ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
-            aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
+            aftertime, beforetime, epsg, afterstat, beforestat, 
+            grdid, mtxid, lyrid);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
 
@@ -2894,6 +2923,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listMtxColAtoms(firstRecNum int, maxNum int,
                                                     epsg int,
                                                     afterstat int,
                                                     beforestat int,
+                                                    grdid int,
                                                     mtxid int,
                                                     lyrid int)
    RETURNS SETOF lm_v3.lm_atom AS
@@ -2907,7 +2937,8 @@ DECLARE
 BEGIN
    cmd = 'SELECT matrixColumnId, squid, null, null, mtxcolstatusmodtime FROM lm_v3.lm_matrixcolumn ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
-            aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
+            aftertime, beforetime, epsg, afterstat, beforestat, 
+            grdid mtxid, lyrid);
    ordercls = 'ORDER BY mtxcolstatusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
@@ -2933,6 +2964,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listMtxColObjects(firstRecNum int, maxNum in
                                                     epsg int,
                                                     afterstat int,
                                                     beforestat int,
+                                                    grdid int,
                                                     mtxid int,
                                                     lyrid int)
    RETURNS SETOF lm_v3.lm_matrixcolumn AS
@@ -2946,7 +2978,8 @@ DECLARE
 BEGIN
    cmd = 'SELECT * FROM lm_v3.lm_matrixcolumn ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
-            aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
+            aftertime, beforetime, epsg, afterstat, beforestat, 
+            grdid, mtxid, lyrid);
    ordercls = 'ORDER BY mtxcolstatusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 

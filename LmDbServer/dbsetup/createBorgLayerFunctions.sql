@@ -903,11 +903,19 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterSDMProjects(usr varchar,
    RETURNS varchar AS
 $$
 DECLARE
-   wherecls varchar := ' WHERE userid = ' || quote_literal(usr);
+   wherecls varchar;
 BEGIN
+   -- MUST have either gridsetId or userId
+   IF usr is null AND grdid is null THEN
+      RAISE EXCEPTION 'Must provide userId or gridsetId for filter';
+   END IF;
+   
    -- filter by gridsetId 
    IF grdid is not null THEN
-      wherecls = wherecls || ' AND  gridsetId =  ' || grdid;
+      wherecls = ' WHERE  gridsetId =  ' || grdid;
+   -- or filter by userId 
+   ELSE
+      wherecls = ' WHERE userid = ' || quote_literal(usr);
    END IF;
                 
    -- filter by squid

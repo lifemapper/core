@@ -2178,7 +2178,8 @@ class Borg(DbPostgresql):
 
 # .............................................................................
     def countMatrixColumns(self, userId, squid, ident, afterTime, beforeTime, 
-                                  epsg, afterStatus, beforeStatus, matrixId, layerId):
+                                  epsg, afterStatus, beforeStatus, 
+                                  gridsetId, matrixId, layerId):
         """
         @summary: Return count of MatrixColumns matching filter conditions 
         @param firstRecNum: The first record to return, 0 is the first record
@@ -2197,13 +2198,14 @@ class Borg(DbPostgresql):
         """
         row, idxs = self.executeSelectOneFunction('lm_countMtxCols', userId, 
                                         squid, ident, afterTime, beforeTime, epsg, 
-                                        afterStatus, beforeStatus, matrixId, layerId)
+                                        afterStatus, beforeStatus, 
+                                        gridsetId, matrixId, layerId)
         return self._getCount(row)
 
 # .............................................................................
     def listMatrixColumns(self, firstRecNum, maxNum, userId, squid, ident, 
                                  afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
-                                 matrixId, layerId, atom):
+                                 gridsetId, matrixId, layerId, atom):
         """
         @summary: Return MatrixColumn Objects or Atoms matching filter conditions 
         @param firstRecNum: The first record to return, 0 is the first record
@@ -2223,16 +2225,16 @@ class Borg(DbPostgresql):
         """
         if atom:
             rows, idxs = self.executeSelectManyFunction('lm_listMtxColAtoms', 
-                                            firstRecNum, maxNum, userId, squid, ident, 
-                                            afterTime, beforeTime, epsg, afterStatus, 
-                                            beforeStatus, matrixId, layerId)
+                            firstRecNum, maxNum, userId, squid, ident, 
+                            afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+                            gridsetId, matrixId, layerId)
             objs = self._getAtoms(rows, idxs, LMServiceType.MATRIX_COLUMNS)
         else:
             objs = []
             rows, idxs = self.executeSelectManyFunction('lm_listMtxColObjects', 
-                                            firstRecNum, maxNum, userId, squid, ident, 
-                                            afterTime, beforeTime, epsg, afterStatus, 
-                                            beforeStatus, matrixId, layerId)
+                                firstRecNum, maxNum, userId, squid, ident, 
+                                afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+                                gridsetId, matrixId, layerId)
             for r in rows:
                 objs.append(self._createMatrixColumn(r, idxs))
         return objs

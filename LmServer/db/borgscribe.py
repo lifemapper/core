@@ -40,6 +40,7 @@ from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.common.datalocator import EarlJr
+from LmDbServer.tools.janitor import gridsetid
 
 # .............................................................................
 class BorgScribe(LMObject):
@@ -475,29 +476,30 @@ class BorgScribe(LMObject):
         return occsets
     
 # .............................................................................
-    def countMatrixColumns(self, userId=PUBLIC_USER, squid=None, ident=None, 
-                                  afterTime=None, beforeTime=None, epsg=None, 
-                                  afterStatus=None, beforeStatus=None, matrixId=None, 
-                                  layerId=None):
+    def countMatrixColumns(self, userId=None, squid=None, ident=None, 
+                           afterTime=None, beforeTime=None, epsg=None, 
+                           afterStatus=None, beforeStatus=None, 
+                           gridsetId=None, matrixId=None, layerId=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::countMatrixColumns()
         """
         count = self._borg.countMatrixColumns(userId, squid, ident, afterTime, 
-                                            beforeTime, epsg, afterStatus, beforeStatus, 
-                                            matrixId, layerId)
+                        beforeTime, epsg, afterStatus, beforeStatus, 
+                        gridsetId, matrixId, layerId)
         return count
 
 # .............................................................................
-    def listMatrixColumns(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
-                                 squid=None, ident=None, afterTime=None, beforeTime=None, 
-                                 epsg=None, afterStatus=None, beforeStatus=None, 
-                                 matrixId=None, layerId=None, atom=True):
+    def listMatrixColumns(self, firstRecNum, maxNum, userId=None, 
+                          squid=None, ident=None, afterTime=None, beforeTime=None, 
+                          epsg=None, afterStatus=None, beforeStatus=None, 
+                          gridsetId=None, matrixId=None, layerId=None, atom=True):
         """
         @copydoc LmServer.db.catalog_borg.Borg::listMatrixColumns()
         """
         objs = self._borg.listMatrixColumns(firstRecNum, maxNum, userId, squid, 
-                                            ident, afterTime, beforeTime, epsg, afterStatus, 
-                                            beforeStatus, matrixId, layerId, atom)
+                                            ident, afterTime, beforeTime, 
+                                            epsg, afterStatus, beforeStatus, 
+                                            gridsetId, matrixId, layerId, atom)
         return objs
 
 # ...............................................
@@ -523,7 +525,7 @@ class BorgScribe(LMObject):
         return fullMtx
 
 # .............................................................................
-    def countMatrices(self, userId=PUBLIC_USER, matrixType=None, 
+    def countMatrices(self, userId=None, matrixType=None, 
                       gcmCode=None, altpredCode=None, dateCode=None, 
                       algCode=None, keyword=None, gridsetId=None, 
                       afterTime=None, beforeTime=None, epsg=None, 
@@ -538,11 +540,11 @@ class BorgScribe(LMObject):
         return count
 
 # .............................................................................
-    def listMatrices(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
-                          matrixType=None, gcmCode=None, altpredCode=None, 
-                          dateCode=None, algCode=None, keyword=None, gridsetId=None, 
-                          afterTime=None, beforeTime=None, epsg=None, 
-                          afterStatus=None, beforeStatus=None, atom=True):
+    def listMatrices(self, firstRecNum, maxNum, userId=None, 
+                     matrixType=None, gcmCode=None, altpredCode=None, 
+                     dateCode=None, algCode=None, keyword=None, gridsetId=None, 
+                     afterTime=None, beforeTime=None, epsg=None, 
+                     afterStatus=None, beforeStatus=None, atom=True):
         """
         @copydoc LmServer.db.catalog_borg.Borg::listMatrices()
         """
@@ -737,7 +739,7 @@ class BorgScribe(LMObject):
         return newOcc
             
 # .............................................................................
-    def countOccurrenceSets(self, userId=PUBLIC_USER, squid=None, minOccurrenceCount=None, 
+    def countOccurrenceSets(self, userId=None, squid=None, minOccurrenceCount=None, 
                     displayName=None, afterTime=None, beforeTime=None, epsg=None, 
                     afterStatus=None, beforeStatus=None, gridsetId=None):
         """
@@ -749,19 +751,19 @@ class BorgScribe(LMObject):
         return count
 
 # .............................................................................
-    def listOccurrenceSets(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
-                                  squid=None, minOccurrenceCount=None, displayName=None, 
-                                  afterTime=None, beforeTime=None, epsg=None, 
-                                  afterStatus=None, beforeStatus=None, gridsetId=None,
-                                  atom=True):
+    def listOccurrenceSets(self, firstRecNum, maxNum, userId=None, 
+                           squid=None, minOccurrenceCount=None, displayName=None, 
+                           afterTime=None, beforeTime=None, epsg=None, 
+                           afterStatus=None, beforeStatus=None, gridsetId=None,
+                           atom=True):
         """
         @copydoc LmServer.db.catalog_borg.Borg::listOccurrenceSets()
         """
         objs = self._borg.listOccurrenceSets(firstRecNum, maxNum, userId, 
-                                                         squid, minOccurrenceCount, 
-                                                         displayName, afterTime, beforeTime, 
-                                                         epsg, afterStatus, beforeStatus, 
-                                                         gridsetId, atom)
+                                             squid, minOccurrenceCount, 
+                                             displayName, afterTime, beforeTime, 
+                                             epsg, afterStatus, beforeStatus, 
+                                             gridsetId, atom)
         return objs
 
 # ...............................................
@@ -789,7 +791,7 @@ class BorgScribe(LMObject):
         return newOrExistingProj
 
 # .............................................................................
-    def countSDMProjects(self, userId=PUBLIC_USER, squid=None, displayName=None, 
+    def countSDMProjects(self, userId=None, squid=None, displayName=None, 
                                 afterTime=None, beforeTime=None, epsg=None, 
                                 afterStatus=None, beforeStatus=None, occsetId=None, 
                                 algCode=None, mdlscenCode=None, prjscenCode=None, 
@@ -797,6 +799,8 @@ class BorgScribe(LMObject):
         """
         @copydoc LmServer.db.catalog_borg.Borg::countSDMProjects()
         """
+        if userId is None and gridsetId is None:
+            raise LMError('Must provide either userId or gridsetId')
         count = self._borg.countSDMProjects(userId, squid, displayName, 
                               afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
                               occsetId, algCode, mdlscenCode, prjscenCode, gridsetId)
@@ -829,14 +833,16 @@ class BorgScribe(LMObject):
 
 
 # .............................................................................
-    def listSDMProjects(self, firstRecNum, maxNum, userId=PUBLIC_USER, squid=None, 
-                              displayName=None, afterTime=None, beforeTime=None, 
-                              epsg=None, afterStatus=None, beforeStatus=None, 
-                              occsetId=None, algCode=None, mdlscenCode=None, 
-                              prjscenCode=None, gridsetId=None, atom=True):
+    def listSDMProjects(self, firstRecNum, maxNum, userId=None, squid=None, 
+                        displayName=None, afterTime=None, beforeTime=None, 
+                        epsg=None, afterStatus=None, beforeStatus=None, 
+                        occsetId=None, algCode=None, mdlscenCode=None, 
+                        prjscenCode=None, gridsetId=None, atom=True):
         """
         @copydoc LmServer.db.catalog_borg.Borg::listSDMProjects()
         """
+        if userId is None and gridsetId is None:
+            raise LMError('Must provide either userId or gridsetId')
         objs = self._borg.listSDMProjects(firstRecNum, maxNum, userId, squid, displayName, 
                               afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
                               occsetId, algCode, mdlscenCode, prjscenCode, gridsetId, 
