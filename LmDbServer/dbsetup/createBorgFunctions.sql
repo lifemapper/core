@@ -1234,6 +1234,33 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countMFProcessAhead(grdid int, 
+                                                        donestat int)
+   RETURNS int AS
+$$
+DECLARE
+   prty int;
+   stattime double precision;
+   total int;
+BEGIN
+   SELECT priority, statusmodtime INTO prty, stattime 
+      FROM lm_v3.mfprocess WHERE gridsetid = grdid 
+      ORDER BY statusmodtime ASC LIMIT 1;
+   IF NOT FOUND THEN 
+      RAISE EXCEPTION 'No MFProcess for gridset %', grdid;
+   ELSE
+      SELECT count(*) INTO total FROM lm_v3.mfprocess 
+         WHERE gridsetid != grdid AND status < donestat 
+           AND (priority > prty 
+                OR (priority = prty AND statusmodtime <= stattime));
+   END IF;
+      
+   RETURN total;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMFProcess(usr varchar,
                                                        grdid int,
                                                        meta varchar, 

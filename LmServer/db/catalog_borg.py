@@ -24,7 +24,7 @@
 import mx.DateTime
     
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import MatrixType, LMFormat
+from LmCommon.common.lmconstants import MatrixType, LMFormat, JobStatus
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
@@ -2458,7 +2458,7 @@ class Borg(DbPostgresql):
     def countMFChains(self, userId, gridsetId, metastring, afterStat, beforeStat, 
                       afterTime, beforeTime):
         """
-        @summary: Return the number of scenarios fitting the given filter conditions
+        @summary: Return the number of MFChains fitting the given filter conditions
         @param userId: filter by LMUser 
         @param gridsetId: filter by a Gridset
         @param metastring: find gridsets containing this word in the metadata
@@ -2476,12 +2476,26 @@ class Borg(DbPostgresql):
                                                   afterStat, beforeStat, 
                                                   afterTime, beforeTime)
         return self._getCount(row)
+    
+# .............................................................................
+    def countPriorityMFChains(self, gridsetId):
+        """
+        @summary: Return the number of MFChains to be run before those for the 
+                  specified gridset
+        @param gridsetId: Gridset id for which to check higher priority mfchains
+        @return: count of MFChains with higher priority or 
+                 same priority and earlier timestamp
+        """
+        row, idxs = self.executeSelectOneFunction('lm_countMFProcessAhead', 
+                                                  gridsetId, JobStatus.COMPLETE)
+        return self._getCount(row)    
+    
 
 # .............................................................................
     def listMFChains(self, firstRecNum, maxNum, userId, gridsetId, metastring, 
                      afterStat, beforeStat, afterTime, beforeTime, atom):
         """
-        @summary: Return Layer Objects or Atoms matching filter conditions 
+        @summary: Return MFChain Objects or Atoms matching filter conditions 
         @param firstRecNum: The first record to return, 0 is the first record
         @param maxNum: Maximum number of records to return
         @param userId: User (owner) for which to return shapegrids.  
