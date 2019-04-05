@@ -43,6 +43,7 @@ def format_gridset(gridset_id, detail=False):
     scribe = BorgScribe(LmPublicLogger())
     scribe.openConnections()
     
+    message = ''
     prj_summary = scribe.summarizeSDMProjectsForGridset(gridset_id)
     mtx_summary = scribe.summarizeMatricesForGridset(gridset_id)
     mf_summary = scribe.summarizeMFChainsForGridset(gridset_id)
@@ -64,14 +65,18 @@ def format_gridset(gridset_id, detail=False):
     # Progress is determined by makeflows.  If all SDMs error, then -1
     if error_occs == total_occs and total_occs > 0:
         progress = -1.0
+        message = 'All occurrence sets have failed'
     elif error_prjs == total_prjs and total_prjs > 0:
         progress = -1.0
+        message = 'All projections have failed'
     elif total_mfs == 0:
         progress = 1.0
+        message = 'All workflows have completed'
     else:
         # 0.5 * number running + 1.0 * number complete + number error / total
         progress = (
             0.5 * running_mfs + 1.0 * (complete_mfs + error_mfs)) / total_mfs
+        message = 'Workflows are running'
     
     if detail:
         progress_dict = {
@@ -105,7 +110,8 @@ def format_gridset(gridset_id, detail=False):
                 'error' : error_mfs,
                 'running' : running_mfs,
                 'waiting' : waiting_mfs
-            }
+            },
+            'message' : message
         }
     else:
         progress_dict = {
