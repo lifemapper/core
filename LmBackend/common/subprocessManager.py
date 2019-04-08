@@ -165,6 +165,9 @@ class SubprocessRunner(object):
         while self.myProc.poll() is None and \
                 runTime < self.killTime and pid_exists(pid):
             self._wait()
+            # Get std err.  This bumps process in case of immediate fail of
+            #    Maxent
+            _ = self.myProc.stderr.read()
             runTime += self.waitTime
             
         if runTime >= self.killTime:
