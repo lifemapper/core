@@ -528,6 +528,9 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                         (fn.lower().find('stats') >= 0 and not do_pam_stats):
                         # Don't add this file
                         add_file = False
+                # Don't add base index.html file
+                elif fn.lower().find('index.html') >= 0:
+                    add_file = False
                 
                 if add_file:
                     zip_f.write(a_path, r_path)
