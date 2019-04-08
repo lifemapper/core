@@ -101,8 +101,12 @@ class UserUploadService(LmService):
         if not os.path.exists(outDir):
             os.makedirs(outDir)
 
+        if upload_file is not None:
+            data = upload_file.file.read()
+        else:
+            data = cherrypy.request.body.read()
         instr = StringIO()
-        instr.write(upload_file.file.read())
+        instr.write(data)
         instr.seek(0)
         
         valid_extensions = [LMFormat.JSON.ext]
@@ -324,7 +328,10 @@ class UserUploadService(LmService):
         if not os.path.exists(out_tree_filename):
             # Make sure the user directory exists
             readyFilename(out_tree_filename)
-            data = upload_file.file.read()
+            if upload_file is not None:
+                data = upload_file.file.read()
+            else:
+                data = cherrypy.request.body.read()
             for schema in ['newick', 'nexus', 'phyloxml']:
                 try:
                     tree = dendropy.Tree.get(data=data, schema=schema)
