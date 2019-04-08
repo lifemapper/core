@@ -982,6 +982,14 @@ class BorgScribe(LMObject):
         return mfchainList
     
 # .............................................................................
+    def countPriorityMFChains(self, gridsetId):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::countPriorityMFChains()
+        """
+        count = self._borg.countPriorityMFChains(gridsetId)
+        return count   
+    
+# .............................................................................
     def countMFChains(self, userId=None, gridsetId=None, metastring=None,
                       afterStat=None, beforeStat=None, 
                       afterTime=None, beforeTime=None):
