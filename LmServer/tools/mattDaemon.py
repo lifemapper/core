@@ -229,7 +229,9 @@ class MattDaemon(Daemon):
         Daemon.onShutdown(self)
 
         # Wait for makeflows to finish
-        max_time = 60 * 3
+        # 60 * 3 -- CJG: Changed to 30 seconds, need to send time via signal or
+        #    something
+        max_time = 30 
         time_waited = 0
         num_running = self.get_number_of_running_processes()
         self.log.debug(
