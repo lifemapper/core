@@ -205,7 +205,7 @@ def _formatObject(obj):
     """
     cherrypy.response.headers['Content-Type'] = LMFormat.EML.getMimeType()
     
-    if isinstance(obj, Gridset):
+    if isinstance(obj, (EnvLayer, Gridset, SDMProjection)):
         cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}.eml"'.format(obj.name)
         return makeEml(obj)
     else:
