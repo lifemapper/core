@@ -8,6 +8,7 @@ from LmCommon.common.lmXml import Element, SubElement, tostring
 
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.envlayer import EnvLayer
 
 # .............................................................................
 def _create_data_table_section(data_table):
@@ -125,10 +126,13 @@ def makeEml(my_obj):
                                     my_obj.getId()),
                                 'system' : 'http://svc.lifemapper.org'
                               })
-        dsEl = SubElement(topEl, 'dataset', 
-                                attrib={'id' : 'gridset_{}'.format(my_obj.getId())})
+        dsEl = SubElement(
+            topEl, 'dataset', attrib={'id' : 'gridset_{}'.format(
+                my_obj.getId())})
         # Contact
-        SubElement(SubElement(dsEl, 'contact'), 'organizationName', value='Lifemapper')
+        SubElement(
+            SubElement(dsEl, 'contact'), 'organizationName',
+            value='Lifemapper')
         
         try:
             dsName = my_obj.name
@@ -139,8 +143,9 @@ def makeEml(my_obj):
         
         for mtx in my_obj.getMatrices():
             # TODO: Enable GRIMs
-            if mtx.matrixType in [MatrixType.ANC_PAM, #MatrixType.GRIM, 
-                                         MatrixType.PAM, MatrixType.SITES_OBSERVED]:
+            if mtx.matrixType in [
+                MatrixType.ANC_PAM, #MatrixType.GRIM,
+                MatrixType.PAM, MatrixType.SITES_OBSERVED]:
                 dsEl.append(_create_spatial_vector(mtx))
             elif mtx.matrixType in [MatrixType.ANC_STATE, 
                                             MatrixType.DIVERSITY_OBSERVED, 
@@ -159,6 +164,21 @@ def makeEml(my_obj):
         ds_el = SubElement(
             topEl, 'dataset',
             attrib={'id' : 'sdmproject_{}'.format(my_obj.getId())})
+        # Contact
+        SubElement(
+            SubElement(ds_el, 'contact'),
+            'organizationName', value='Lifemapper')
+        ds_el.append(_create_spatial_raster(my_obj))
+    elif isinstance(my_obj, EnvLayer):
+        topEl = Element(
+            'eml',
+            attrib={
+                'packageId' : 'org.lifemapper.envlayer.{}'.format(
+                    my_obj.getId()),
+                'system' : 'http://svc.lifemapper.org'})
+        ds_el = SubElement(
+            topEl, 'dataset',
+            attrib={'id' : 'envlayer_{}'.format(my_obj.getId())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'),
