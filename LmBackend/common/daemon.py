@@ -32,8 +32,11 @@ class Daemon(object):
         if log is not None:
             self.log = log
         else:
-            #TODO: Change this, the PID file doesn't exist when we are here
-            pid = open(pidfile).read().strip()
+            if os.path.exists(pidfile):
+                with open(pidfile) as in_pid:
+                    pid = in_pid.read().strip()
+            else:
+                pid = 'unknown'
             self.log = DaemonLogger(pid)
         
         signal.signal(signal.SIGTERM, self._receiveSignal) # Stop signal
@@ -140,11 +143,11 @@ class Daemon(object):
         """
         # Get the pid from the pidfile
         try:
-            pf = file(self.pidfile,'r')
-            pid = int(pf.read().strip())
-            pf.close()
-        except IOError:
             pid = None
+            with open(self.pidfile) as in_pid:
+                pid = int(in_pid.read().strip())
+        except IOError:
+            pass
         
         if not pid:
             msg = 'pidfile {} does not exist. Daemon not running?'.format(
@@ -154,12 +157,16 @@ class Daemon(object):
         
         # Try killing the daemon process         
         try:
-            #TODO: Put in a maximum wait time or maximum tries to kill
-            if os.path.exists(self.pidfile):
+            max_time = 60  # Try to kill process for 60 seconds
+            wait_time = 0
+            while os.path.exists(self.pidfile) and wait_time < max_time:
                 os.kill(pid, signal.SIGTERM)
-                time.sleep(3)
-        except OSError, err:
-            err = str(err)
+                time.sleep(5)
+                wait_time += 5
+            if wait_time >= max_time and os.path.exists(self.pidfile):
+                raise Exception('Could not kill process: {}'.format(pid))
+        except OSError as os_err:
+            err = str(os_err)
             if err.find("No such process") > 0:
                 if os.path.exists(self.pidfile):
                     os.remove(self.pidfile)
