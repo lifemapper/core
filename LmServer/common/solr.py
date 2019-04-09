@@ -106,6 +106,8 @@ def _query(collection, qParams=None, fqParams=None,
     
     if otherParams is not None:
         queryParts.append(otherParams)
+    if len(queryParts) == 0:
+        queryParts.append('q=*:*')
     
     url = '{}{}/select?{}'.format(SOLR_SERVER, collection, '&'.join(queryParts))
     try:
