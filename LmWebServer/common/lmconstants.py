@@ -31,7 +31,7 @@ def sci_name_prep(x):
     strip_chars = [' ', '+', '%20', ',', '%2C']
     for c in strip_chars:
         x = x.replace(c, '')
-    return x
+    return x[:20]
 
 # This constant is used for processing query parameters.  If no 'processIn' 
 #     key, just take the parameter as it comes in
