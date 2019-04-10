@@ -20,6 +20,7 @@ from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
 from LmWebServer.formatters.kmlFormatter import kmlObjectFormatter
 from LmWebServer.formatters.packageFormatter import gridsetPackageFormatter
 from LmWebServer.formatters.progress_formatter import progress_object_formatter
+from LmWebServer.formatters.emlFormatter import emlObjectFormatter
 
 # .............................................................................
 def lmFormatter(f):
@@ -61,6 +62,8 @@ def lmFormatter(f):
                     shootSnippets(handler_result, SnippetOperations.VIEWED, 
                                       JSON_INTERFACE)
                     return jsonObjectFormatter(handler_result)
+                elif ah == LMFormat.EML.getMimeType():
+                    return emlObjectFormatter(handler_result)
                 elif ah == LMFormat.KML.getMimeType():
                     return kmlObjectFormatter(handler_result)
                 elif ah == LMFormat.GTIFF.getMimeType():
@@ -103,7 +106,7 @@ def lmFormatter(f):
                     obj_type, obj_id, detail = handler_result
                     return progress_object_formatter(
                         obj_type, obj_id, detail=detail)
-            except Exception, e:
+            except Exception as e:
                 # Ignore and try next accept header
                 raise cherrypy.HTTPError(
                     HTTPStatus.INTERNAL_SERVER_ERROR,
