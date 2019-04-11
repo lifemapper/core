@@ -1241,13 +1241,13 @@ $$
 DECLARE
    prty int;
    stattime double precision;
-   total int;
+   total int:= -1;
 BEGIN
    SELECT priority, statusmodtime INTO prty, stattime 
       FROM lm_v3.mfprocess WHERE gridsetid = grdid 
       ORDER BY statusmodtime ASC LIMIT 1;
    IF NOT FOUND THEN 
-      RAISE EXCEPTION 'No MFProcess for gridset %', grdid;
+      return total;
    ELSE
       SELECT count(*) INTO total FROM lm_v3.mfprocess 
          WHERE gridsetid != grdid AND status < donestat 

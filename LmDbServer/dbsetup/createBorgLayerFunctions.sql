@@ -1586,12 +1586,12 @@ BEGIN
 
    -- filter by modified after given time
    IF aftertime is not null THEN
-      wherecls = wherecls || ' AND prjstatusModTime >=  ' || quote_literal(aftertime);
+      wherecls = wherecls || ' AND modTime >=  ' || quote_literal(aftertime);
    END IF;
 
    -- filter by modified before given time
    IF beforetime is not null THEN
-      wherecls = wherecls || ' AND prjstatusModTime <=  ' || quote_literal(beforetime);
+      wherecls = wherecls || ' AND modTime <=  ' || quote_literal(beforetime);
    END IF;
 
    -- filter by epsgcode
