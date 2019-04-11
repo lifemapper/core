@@ -10,7 +10,6 @@ Todo:
 import cherrypy
 
 from LmCommon.common.lmconstants import HTTPStatus
-from LmServer.legion.envlayer import EnvLayer
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
@@ -25,33 +24,6 @@ class EnvLayerService(LmService):
     Note:
         * The dispatcher is responsible for calling the correct method
     """
-    # ................................
-    def DELETE(self, pathLayerId):
-        """Attempts to delete an environmental layer
-
-        Args:
-            pathLayerId: The id of the layer to delete
-        """
-        lyr = self.scribe.getEnvLayer(envlyrId=pathLayerId)
-        if lyr is None:
-            raise cherrypy.HTTPError(HTTPStatus.NOT_FOUND, 'Layer not found')
-        
-        # If allowed to, delete
-        if checkUserPermission(self.getUserId(), lyr, HTTPMethod.DELETE):
-            success = self.scribe.deleteObject(lyr)
-            if success:
-                cherrypy.response.status = HTTPStatus.NO_CONTENT
-                return 
-            else:
-                # TODO: Could this happen if this layer is in a scenario that is 
-                #     being used?  If so, this should be a 4xx error
-                raise cherrypy.HTTPError(
-                    HTTPStatus.INTERNAL_SERVER_ERROR, 'Failed to delete layer')
-        else:
-            raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN,
-                'User does not have permission to delete this layer')
-
     # ................................
     @lmFormatter
     def GET(self, pathLayerId=None, afterTime=None, altPredCode=None, 
@@ -87,41 +59,6 @@ class EnvLayerService(LmService):
                         pathLayerId))
             return self._getEnvLayer(pathLayerId)
         
-    # ................................
-    @lmFormatter
-    def POST(self, layerType, epsgCode, layerName, envLayerTypeId=None,
-             additionalMetadata=None, valUnits=None, envCode=None,
-             gcmCode=None, altPredCode=None, dateCode=None,**params):
-        """Posts a new layer
-
-        Todo:
-            * Add file type parameter or look at headers?
-        """
-        if layerType is None or layerType == 0:
-            # Generic layer
-            # TODO: This needs to do something
-            pass
-        elif layerType == 1:
-            # Environmental layer0
-            lyrContent = cherrypy.request.body
-            lyr = EnvLayer(
-                layerName, self.getUserId(), epsgCode,
-                lyrMetadata=additionalMetadata, valUnits=valUnits,
-                valAttibute='pixel', envCode=envCode, gcmCode=gcmCode,
-                altpredCode=altPredCode, dateCode=dateCode,
-                envTypeId=envLayerTypeId)
-            lyr.writeRaster(srcData=lyrContent)
-            updatedLyr = self.scribe.findOrInsertEnvLayer(lyr)
-
-            return updatedLyr
-    
-    # ................................
-    #@cherrypy.tools.json_out
-    #def PUT(self, pathLayerId, epsgCode, envLayerType, name=None, isCategorical=None,
-    #            envLayerTypeId=None, additionalMetadata=None, valUnits=None,
-    #            gcmCode=None, alternatePredictionCode=None, dateCode=None):
-    #    pass
-    
     # ................................
     def _countEnvLayers(self, userId, afterTime=None, altPredCode=None,
                         beforeTime=None, dateCode=None, envCode=None,

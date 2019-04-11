@@ -119,3 +119,12 @@ Qstat is reporting a bunch of old jobs with status like 'dt' or 'dr' that won't 
   
   To remove all jobs for user lmwriter, use root and:
     `# qdel -f -u lmwriter`
+
+How can I tell what types of processes are running?
+---------------------------------------------------
+You can check what the catalog server says is running with:
+   `work_queue_status -C {server FQDN}:9097`
+you can also see what makeflow processes are running with:
+   `ps aux | grep makeflow`
+then check the contents of the makeflows with cat or something:
+   `cat {path to running makeflow}`

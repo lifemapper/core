@@ -7,6 +7,7 @@ import urllib2
 from LmServer.common.lmconstants import (
      SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER, 
      SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
+from LmServer.common.log import LmPublicLogger
 from LmServer.common.localconstants import PUBLIC_USER
 import json
 from urllib2 import URLError
@@ -32,8 +33,9 @@ def buildSolrDocument(docPairs):
         for fName, fVal in fieldPairs:
             # Only add the field if the value is not None
             if fVal is not None: 
-                docLines.append('        <field name="{}">{}</field>'.format(fName, 
-                                                             str(fVal).replace('&', '&amp;')))
+                docLines.append(
+                    '        <field name="{}">{}</field>'.format(
+                        fName, str(fVal).replace('&', '&amp;')))
         docLines.append('    </doc>')
     docLines.append('</add>')
     return '\n'.join(docLines)
@@ -73,6 +75,7 @@ def _query(collection, qParams=None, fqParams=None,
     @param fqParams: Parameters to include in the filter section of the query
     @param otherParams: Other parameters to pass to Solr
     """
+    log = LmPublicLogger()
     queryParts = []
     if qParams:
         qParts = []
@@ -84,7 +87,7 @@ def _query(collection, qParams=None, fqParams=None,
                     else:
                         qParts.append('{}:{}'.format(k, v[0]))
                 else:
-                    qParts.append('{}:{}'.format(k, v))
+                    qParts.append('{}:{}'.format(k, v.replace(' ', '+')))
         # If we have at least one query parameter
         if qParts:
             queryParts.append('q={}'.format('+AND+'.join(qParts)))
@@ -104,6 +107,9 @@ def _query(collection, qParams=None, fqParams=None,
         if fqParts:
             queryParts.append('fq={}'.format('+AND+'.join(fqParts)))
     
+    if len(queryParts) == 0:
+        queryParts.append('q=*:*')
+
     if otherParams is not None:
         queryParts.append(otherParams)
     
@@ -111,17 +117,17 @@ def _query(collection, qParams=None, fqParams=None,
     try:
         res = urllib2.urlopen(url)
     except URLError, e:
-        print('URLError on urlopen for {}: {}'.format(url, str(e)))
+        log.error('URLError on urlopen for {}: {}'.format(url, str(e)))
         raise
     except Exception, e:
-        print('Exception on urlopen for {}: {}'.format(url, str(e)))
+        log.error('Exception on urlopen for {}: {}'.format(url, str(e)))
         raise
     
     retcode = res.getcode()
     try:
         resp = res.read()
     except Exception, e:
-        print('Exception, code {}, on response read for {}: {}'
+        log.error('Exception, code {}, on response read for {}: {}'
               .format(retcode, url, str(e)))
         raise
     else:

@@ -20,6 +20,7 @@ from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
 from LmWebServer.formatters.kmlFormatter import kmlObjectFormatter
 from LmWebServer.formatters.packageFormatter import gridsetPackageFormatter
 from LmWebServer.formatters.progress_formatter import progress_object_formatter
+from LmWebServer.formatters.emlFormatter import emlObjectFormatter
 
 # .............................................................................
 def lmFormatter(f):
@@ -32,7 +33,10 @@ def lmFormatter(f):
         """Wrapper function
         """
         # Call the handler and get the object result
-        handler_result = f(*args, **kwargs)
+        try:
+            handler_result = f(*args, **kwargs)
+        except TypeError:
+            raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 'Bad request')
         
         accept_headers = cherrypy.request.headers.get('Accept')
         
@@ -61,6 +65,8 @@ def lmFormatter(f):
                     shootSnippets(handler_result, SnippetOperations.VIEWED, 
                                       JSON_INTERFACE)
                     return jsonObjectFormatter(handler_result)
+                elif ah == LMFormat.EML.getMimeType():
+                    return emlObjectFormatter(handler_result)
                 elif ah == LMFormat.KML.getMimeType():
                     return kmlObjectFormatter(handler_result)
                 elif ah == LMFormat.GTIFF.getMimeType():
@@ -103,10 +109,10 @@ def lmFormatter(f):
                     obj_type, obj_id, detail = handler_result
                     return progress_object_formatter(
                         obj_type, obj_id, detail=detail)
-            except Exception, e:
+            except Exception as e:
                 # Ignore and try next accept header
                 raise cherrypy.HTTPError(
-                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    HTTPStatus.NOT_ACCEPTABLE,
                     'Failed: {}'.format(str(e)))
         # If we cannot find an acceptable formatter, raise HTTP error
         raise cherrypy.HTTPError(

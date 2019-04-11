@@ -27,6 +27,12 @@ class HTTPMethod(object):
     PUT = 'PUT'
 
 
+def sci_name_prep(x):
+    strip_chars = [' ', '+', '%20', ',', '%2C']
+    for c in strip_chars:
+        x = x.replace(c, '')
+    return x[:20]
+
 # This constant is used for processing query parameters.  If no 'processIn' 
 #     key, just take the parameter as it comes in
 # Note: The dictionary keys are the .lower() version of the parameter names.
@@ -296,7 +302,8 @@ QUERY_PARAMETERS = {
         QP_PROCESS_KEY : int
     },
     'scientificname' : {
-        QP_NAME_KEY : 'scientificName' 
+        QP_NAME_KEY : 'scientificName',
+        QP_PROCESS_KEY : sci_name_prep
     },
     'searchstring' : {
         QP_NAME_KEY : 'searchString'

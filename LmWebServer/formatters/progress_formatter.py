@@ -72,6 +72,13 @@ def format_gridset(gridset_id, detail=False):
     elif total_mfs == 0:
         progress = 1.0
         message = 'All workflows have completed'
+    elif waiting_mfs == total_mfs:
+        progress = 0.0
+        line_pos = scribe.countPriorityMFChains(gridset_id)
+        if line_pos == 0:
+            message = 'Your gridset is running or next in line'
+        else:
+            message = 'Your gridset is {} in line'.format(line_pos)
     else:
         # 0.5 * number running + 1.0 * number complete + number error / total
         progress = (
