@@ -129,7 +129,9 @@ class UserUploadService(LmService):
                             with open(outFn, 'w') as outF:
                                 for line in zf:
                                     outF.write(line)
-            
+        
+        # Set HTTP status
+        cherrypy.response.status = HTTPStatus.ACCEPTED
         return {
             'package_name' : package_filename,
             'upload_type' : BIOGEO_UPLOAD,
@@ -308,6 +310,7 @@ class UserUploadService(LmService):
                 out_f.write(data)
                     
         # Return
+        cherrypy.response.status = HTTPStatus.ACCEPTED
         return {
             'package_name' : package_name,
             'upload_type' : OCCURRENCE_UPLOAD,
@@ -344,6 +347,8 @@ class UserUploadService(LmService):
             raise cherrypy.HTTPError(
                 HTTPStatus.CONFLICT,
                 'Tree with this name already exists in the user space')
+        # Set HTTP status code
+        cherrypy.response.status = HTTPStatus.ACCEPTED
         return {
             'file_name' : tree_name,
             'upload_type' : TREE_UPLOAD,
