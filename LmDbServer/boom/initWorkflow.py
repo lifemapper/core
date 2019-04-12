@@ -29,8 +29,8 @@ import stat
 import types
 
 from LmBackend.command.boom import BoomerCommand
-from LmBackend.command.common import IdigbioQueryCommand ,\
-    ConcatenateMatricesCommand, SystemCommand, ChainCommand
+from LmBackend.command.common import (IdigbioQueryCommand ,
+    ConcatenateMatricesCommand, SystemCommand, ChainCommand)
 from LmBackend.command.server import (
     CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand, StockpileCommand)
 from LmBackend.common.lmobj import LMError, LMObject
@@ -817,7 +817,8 @@ class BOOMFiller(LMObject):
                 gPam = self._findOrAddPAM(updatedGrdset, alg, scen)
                 
             # "Global" GRIM (one per scenario) 
-            if not(self.userId == DEFAULT_POST_USER):
+            # @todo: anon user will get GRIMs if compute_pam_stats = True
+            if self.compute_pam_stats:
                 scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
                 scenGrims[code] = scenGrim
                 
@@ -1417,39 +1418,40 @@ import ConfigParser
 import json
 import mx.DateTime
 import os
+import stat
 import types
 
 from LmBackend.command.boom import BoomerCommand
-from LmBackend.command.server import (CatalogTaxonomyCommand, EncodeTreeCommand,
-                                      EncodeBioGeoHypothesesCommand)
+from LmBackend.command.common import (IdigbioQueryCommand ,
+    ConcatenateMatricesCommand, SystemCommand, ChainCommand)
+from LmBackend.command.server import (
+    CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand, StockpileCommand)
 from LmBackend.common.lmobj import LMError, LMObject
-from LmBackend.common.lmconstants import RegistryKey, MaskMethod
 
-
+from LmCommon.common.apiquery import IdigbioAPI
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
-      ProcessType, DEFAULT_POST_USER, LM_USER,
-      SERVER_BOOM_HEADING, 
-      SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
-      SERVER_PIPELINE_HEADING)
+      ProcessType, DEFAULT_POST_USER, GBIF, BoomKeys,
+      SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX, 
+      SERVER_SDM_ALGORITHM_HEADING_PREFIX,
+      SERVER_DEFAULT_HEADING_POSTFIX, SERVER_PIPELINE_HEADING)
 from LmCommon.common.readyfile import readyFilename
 
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE,
-                                           GBIF_TAXONOMY_DUMP_FILE)
+from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
 from LmDbServer.tools.catalogScenPkg import SPFiller
-from LmDbServer.tools.partnerData import PartnerQuery
-
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
                            GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
-                           PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
+                           PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX,
+                           SPECIES_DATA_PATH, DEFAULT_NUM_PERMUTATIONS)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector
 from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.utilities import isLMUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
@@ -1458,13 +1460,14 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
-from LmServer.base.utilities import isRootUser
+from LmBackend.command.single import GrimRasterCommand
 
 from LmDbServer.boom.initWorkflow import *
 
 
 # Taxon ids
-config_file = '/state/partition1/lmscratch/temp/boom_config_10255.params'
+
+config_file = '/state/partition1/lmscratch/temp/boom_config_97100.params'
 
 # Public archive
 config_file = '/opt/lifemapper/config/boom.public.params'
@@ -1574,5 +1577,24 @@ self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx,
    --success_filename=/share/lmserver/data/species/gbif_taxonomy-2018.09.14.success \
    --logname=catalogTaxonomy.gbif_taxonomy-2018.09.14.20181220-0859 \
    --taxon_source_url=http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c
+
+
+
+
+On 193:
+
+
+/opt/python/bin/python2.7 \
+/opt/lifemapper/LmDbServer/boom/boomer.py \
+--config_file=/share/lm/data/archive/anon/Anthony_test_5.ini \
+--success_file=mf_3509/Anthony_test_5.ini.success
+
+boom_config_97100.params
+
+
+Creating follow up makeflows and failing, so there are multiple with status = 0.
+
+
+Can you check it out?
 
 """
