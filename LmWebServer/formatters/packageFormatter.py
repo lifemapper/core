@@ -199,7 +199,7 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>Lifemapper Analysis Results Package</title>
+        <title>BiotaPhy Results Package</title>
     </head>
     <body>
         <h2>BiotaPhy Results package 1.0.0</h2>
