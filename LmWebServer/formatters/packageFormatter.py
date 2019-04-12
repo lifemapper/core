@@ -240,7 +240,7 @@ def createIndexHtml(gridset_name, do_mcpa, do_pam_stats, do_sdm, do_csv):
             </tr>
         </table>
 {}{}
-        <p>* Due to the size of the data these pages may take some time to load.</p>
+        <p>Note: Due to the size of the data these pages may take some time to load.</p>
         <h4>The BiotaPhy project is supported by NSF BIO Award #1458422.</h4>
     </body>
 </html>""".format(
