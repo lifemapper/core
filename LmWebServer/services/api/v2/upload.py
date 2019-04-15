@@ -96,8 +96,7 @@ class UserUploadService(LmService):
             * More docs
         """
         # Determine where to write the files
-        outDir = os.path.join(
-            self._get_user_dir(), 'hypotheses', package_filename)
+        outDir = os.path.join(self._get_user_dir(), package_filename)
         if not os.path.exists(outDir):
             os.makedirs(outDir)
 
@@ -325,9 +324,10 @@ class UserUploadService(LmService):
             * Sanity checking
             * Insert tree into database?  Let boom do it?
         """
+        tree_base_name, _ = os.path.splitext(tree_name)
+        tree_name = '{}{}'.format(tree_base_name, LMFormat.NEXUS.ext)
         # Check to see if file already exists, fail if it does
-        out_tree_filename = os.path.join(
-            self._get_user_dir(), '{}{}'.format(tree_name, LMFormat.NEXUS.ext))
+        out_tree_filename = os.path.join(self._get_user_dir(), tree_name)
         if not os.path.exists(out_tree_filename):
             # Make sure the user directory exists
             readyFilename(out_tree_filename)

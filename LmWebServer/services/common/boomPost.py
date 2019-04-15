@@ -471,9 +471,11 @@ class BoomPoster(object):
         Note:
             This version only allows a tree to be specified by file name
         """
-        self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.TREE,
-            tree_json[APIPostKeys.TREE_FILENAME])
+        tree_name_1 = tree_json[APIPostKeys.TREE_FILENAME]
+        # Make sure we include extension
+        tree_base, _ = os.path.splitext(tree_name_1)
+        tree_name = '{}{}'.format(tree_base, LMFormat.NEXUS.ext)
+        self.config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree_name)
         self.has_tree = True
     
     # ................................
