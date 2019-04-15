@@ -87,7 +87,7 @@ def _query(collection, qParams=None, fqParams=None,
                     else:
                         qParts.append('{}:{}'.format(k, v[0]))
                 else:
-                    qParts.append('{}:{}'.format(k, v.replace(' ', '+')))
+                    qParts.append('{}:{}'.format(k, v).replace(' ', '+'))
         # If we have at least one query parameter
         if qParts:
             queryParts.append('q={}'.format('+AND+'.join(qParts)))
