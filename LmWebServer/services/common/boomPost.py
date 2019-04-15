@@ -44,6 +44,7 @@ class BoomPoster(object):
         """
         @todo: Make this more generic
         """
+        self.has_tree = False
         self.scribe = scribe
         self.userId = userId
         self.config = ConfigParser()
@@ -208,12 +209,9 @@ class BoomPoster(object):
             * Fill in iterations
         """
         self.config.set(
-            SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES',
+            SERVER_BOOM_HEADING, BoomKeys.BIOGEO_HYPOTHESES_LAYERS,
             mcpa_json['hypotheses_package_name'])
-        try:
-            should_compute = int(mcpa_json[APIPostKeys.DO_MCPA])
-        except:
-            should_compute = 0
+        should_compute = int(self.has_tree)
 
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, should_compute)
@@ -473,9 +471,12 @@ class BoomPoster(object):
         Note:
             This version only allows a tree to be specified by file name
         """
-        self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.TREE,
-            tree_json[APIPostKeys.TREE_FILENAME])
+        tree_name_1 = tree_json[APIPostKeys.TREE_FILENAME]
+        # Make sure we include extension
+        tree_base, _ = os.path.splitext(tree_name_1)
+        tree_name = '{}{}'.format(tree_base, LMFormat.NEXUS.ext)
+        self.config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree_name)
+        self.has_tree = True
     
     # ................................
     def init_boom(self):

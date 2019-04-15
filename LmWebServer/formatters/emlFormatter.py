@@ -9,6 +9,7 @@ from LmCommon.common.lmXml import Element, SubElement, tostring
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer
+from LmServer.base.layer2 import Raster, Vector
 
 # .............................................................................
 def _create_data_table_section(data_table):
@@ -103,11 +104,15 @@ def _create_spatial_vector(spatial_vector):
             'externallyDefinedFormat'), 'formatName', value='geojson')
     
     attrib_list_element = SubElement(sv_element, 'attributeList')
-    mtx = Matrix.load(spatial_vector.getDLocation())
-    for colHeader in mtx.getColumnHeaders():
-        SubElement(attrib_list_element, 'attribute', value=colHeader)
-        
-    SubElement(sv_element, 'geometry', value='polygon')
+    if isinstance(spatial_vector, Matrix):
+        mtx = Matrix.load(spatial_vector.getDLocation())
+        for colHeader in mtx.getColumnHeaders():
+            SubElement(attrib_list_element, 'attribute', value=colHeader)
+        SubElement(sv_element, 'geometry', value='polygon')
+    else:
+        for _, v in spatial_vector.featureAttributes.items():
+            SubElement(attrib_list_element, 'attribute', value=v[0])
+        SubElement(sv_element, 'geometry', value='polygon')
     
     return sv_element
 
@@ -184,6 +189,36 @@ def makeEml(my_obj):
             SubElement(ds_el, 'contact'),
             'organizationName', value='Lifemapper')
         ds_el.append(_create_spatial_raster(my_obj))
+    elif isinstance(my_obj, Raster):
+        topEl = Element(
+            'eml',
+            attrib={
+                'packageId' : 'org.lifemapper.layer.{}'.format(
+                    my_obj.getId()),
+                'system' : 'http://svc.lifemapper.org'})
+        ds_el = SubElement(
+            topEl, 'dataset',
+            attrib={'id' : 'layer_{}'.format(my_obj.getId())})
+        # Contact
+        SubElement(
+            SubElement(ds_el, 'contact'),
+            'organizationName', value='Lifemapper')
+        ds_el.append(_create_spatial_raster(my_obj))
+    elif isinstance(my_obj, Vector):
+        topEl = Element(
+            'eml',
+            attrib={
+                'packageId' : 'org.lifemapper.layer.{}'.format(
+                    my_obj.getId()),
+                'system' : 'http://svc.lifemapper.org'})
+        ds_el = SubElement(
+            topEl, 'dataset',
+            attrib={'id' : 'layer_{}'.format(my_obj.getId())})
+        # Contact
+        SubElement(
+            SubElement(ds_el, 'contact'),
+            'organizationName', value='Lifemapper')
+        ds_el.append(_create_spatial_vector(my_obj))
     else:
         raise Exception(
             'Cannot create eml for {} currently'.format(my_obj.__class__))
@@ -205,7 +240,7 @@ def _formatObject(obj):
     """
     cherrypy.response.headers['Content-Type'] = LMFormat.EML.getMimeType()
     
-    if isinstance(obj, (EnvLayer, Gridset, SDMProjection)):
+    if isinstance(obj, (EnvLayer, Gridset, SDMProjection, Raster, Vector)):
         cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}.eml"'.format(obj.name)
         return makeEml(obj)
     else:

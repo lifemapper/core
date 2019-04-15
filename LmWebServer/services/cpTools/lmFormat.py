@@ -33,7 +33,10 @@ def lmFormatter(f):
         """Wrapper function
         """
         # Call the handler and get the object result
-        handler_result = f(*args, **kwargs)
+        try:
+            handler_result = f(*args, **kwargs)
+        except TypeError:
+            raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 'Bad request')
         
         accept_headers = cherrypy.request.headers.get('Accept')
         
@@ -109,7 +112,7 @@ def lmFormatter(f):
             except Exception as e:
                 # Ignore and try next accept header
                 raise cherrypy.HTTPError(
-                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    HTTPStatus.NOT_ACCEPTABLE,
                     'Failed: {}'.format(str(e)))
         # If we cannot find an acceptable formatter, raise HTTP error
         raise cherrypy.HTTPError(
