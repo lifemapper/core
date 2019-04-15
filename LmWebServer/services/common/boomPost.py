@@ -209,7 +209,7 @@ class BoomPoster(object):
             * Fill in iterations
         """
         self.config.set(
-            SERVER_BOOM_HEADING, 'BIOGEO_HYPOTHESES',
+            SERVER_BOOM_HEADING, BoomKeys.BIOGEO_HYPOTHESES_LAYERS,
             mcpa_json['hypotheses_package_name'])
         should_compute = int(self.has_tree)
 
