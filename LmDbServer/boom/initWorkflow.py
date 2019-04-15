@@ -812,14 +812,15 @@ class BOOMFiller(LMObject):
         
         for code, scen in self.scenPkg.scenarios.iteritems():
             # "Global" PAM (one per scenario/algorithm)
-            # TODO: Allow alg to be specified for each species, all in same PAM
-            for alg in self.algorithms.values():
-                gPam = self._findOrAddPAM(updatedGrdset, alg, scen)
-                
-            # "Global" GRIM (one per scenario) 
-            if not(self.userId == DEFAULT_POST_USER):
-                scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
-                scenGrims[code] = scenGrim
+            if code in self.prjScenCodeList:
+                # TODO: Allow alg to be specified for each species, all in same PAM
+                for alg in self.algorithms.values():
+                    gPam = self._findOrAddPAM(updatedGrdset, alg, scen)
+                    
+                # "Global" GRIM (one per scenario) 
+                if not(self.userId == DEFAULT_POST_USER):
+                    scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
+                    scenGrims[code] = scenGrim
                 
         return scenGrims, updatedGrdset
    
