@@ -635,8 +635,9 @@ class ChristopherWalken(LMObject):
                             if mtxcol is not None:
                                 mtxcols.append(mtxcol)
                     doSDM = self._doComputeSDM(occ, prjs, mtxcols)
-                    self.log.info('    Will compute for Grid {} alg {}: {} projs, {} intersects'
-                                  .format(gsid, alg.code, len(prjs, len(mtxcols))))
+                    self.log.info(
+                        '    Will compute for Grid {} alg {}: {} projs, {} intersects'
+                                  .format(gsid, alg.code, len(prjs), len(mtxcols)))
             
                     if doSDM:
                         # Add SDM commands for the algorithm
