@@ -80,6 +80,8 @@ class UserUploadService(LmService):
         if userId == PUBLIC_USER:
             userId = DEFAULT_POST_USER
         pth = earl.createDataPath(userId, LMFileType.TMP_JSON)
+        if not os.path.exists(pth):
+            os.makedirs(pth)
         return pth
     
     # ................................
