@@ -35,9 +35,7 @@ if __name__ == "__main__":
     squid_dict = {}
 
     for label in tree.getLabels():
-        # TODO: Do we always need to do this?
-        taxLabel = label.replace(' ', '_')
-        sno = scribe.getTaxon(userId=user_id, taxonName=taxLabel)
+        sno = scribe.getTaxon(userId=user_id, taxonName=label)
         if sno is not None:
             squid_dict[label] = sno.squid
    
