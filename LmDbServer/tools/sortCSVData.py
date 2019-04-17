@@ -321,7 +321,7 @@ if __name__ == "__main__":
     basepath, ext = os.path.splitext(datafname)
     pth, basename = os.path.split(basepath)
     logname = 'sortCSVData_{}_{}'.format(basename, cmd)
-    metafname = basepath + LMFormat.METADATA.ext
+    metafname = basepath + LMFormat.JSON.ext
     mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename, 
                                                     LMFormat.CSV.ext))
     if not os.path.exists(datafname) or not os.path.exists(metafname):
@@ -339,14 +339,17 @@ if __name__ == "__main__":
          
         if cmd in ('split', 'all'):   
             # Split into smaller unsorted files
+            print('Split huge data file into smaller files')
             splitIntoFiles(occparser, pth, unsortedPrefix, basename, 500000)   
         if cmd in ('sort', 'all'):              
             # Sort smaller files
+            print('Sort smaller files')
             sortFiles(groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
         occparser.close()
     
     if cmd in ('merge', 'all'):   
         # Merge all data for production system into multiple subset files
+        print('Merge smaller sorted files into huge sorted file')
         mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, 
                          metafname, inIdx=start_idx, maxFileSize=None)
     
