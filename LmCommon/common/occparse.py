@@ -431,15 +431,16 @@ class OccDataParser(LMObject):
             filters[idx] = acceptedVals
         
         # Check existence of required roles
-        # TODO: Make name and groupBy roles optional
-        #       If no groupBy role, treat the input as data for a single taxon
+#         # Handle old metadata that required groupby instead of taxaname
+#         if nameIdx is None:
+#             nameIdx = groupByIdx
         if nameIdx is None:
-            nameIdx = groupByIdx
+            raise Exception('Missing `TAXANAME` required role in metadata')
         if (xIdx is None or yIdx is None) and ptIdx is None:
             print ('Found x {}, y {}, point {}').format(xIdx, yIdx, ptIdx)
             raise Exception('Missing `LATITUDE`-`LONGITUDE` pair or `GEOPOINT` roles in metadata')
         if groupByIdx is None:
-            raise Exception('Missing `GROUPBY` required role in metadata')
+            groupByIdx = nameIdx
         return (fieldIndexMeta, filters, idIdx, xIdx, yIdx, ptIdx, groupByIdx, nameIdx)
       
     # .............................................................................
