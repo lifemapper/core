@@ -787,7 +787,13 @@ def gridsetPackageFormatter(gridset, includeCSV=True, includeSDM=True,
             return
 
     # Package exists, return it
-    out_package_name = 'gridset-{}-package.zip'.format(gridset.getId())
+    keep_chars = (' ','.','_')
+    # Sanitize the gridset name for filename construction
+    sanitized_gridset_name = ''.join(
+        [c for c in gridset.name if c.isalnum() or c in keep_chars]).rstrip()
+    if len(sanitized_gridset_name) == 0:
+        sanitized_gridset_name = 'gridset-{}'.format(gridset.getId())
+    out_package_name = '{}{}'.format(sanitized_gridset_name, LMFormat.ZIP.ext)
     cherrypy.response.headers[
         'Content-Disposition'] = 'attachment; filename="{}"'.format(
             out_package_name)
