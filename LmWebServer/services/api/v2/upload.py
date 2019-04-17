@@ -264,21 +264,21 @@ class UserUploadService(LmService):
                     if 'geopoint' in roles.keys() and f[
                             'key'] == roles['geopoint']:
                         field_obj['role'] = 'geopoint'
-                    elif 'groupBy' in roles.keys() and f[
-                            'key'] == roles['groupBy']:
-                        field_obj['role'] = 'groupby'
+                    elif 'taxaName' in roles.keys() and f[
+                            'key'] == roles['taxaName']:
+                        field_obj['role'] = 'taxaName'
                     elif 'latitude' in roles.keys() and f[
                             'key'] == roles['latitude']:
                         field_obj['role'] = 'latitude'
                     elif 'longitude' in roles.keys() and f[
                             'key'] == roles['longitude']:
                         field_obj['role'] = 'longitude'
-                    elif 'taxaName' in roles.keys() and f[
-                            'key'] == roles['taxaName']:
-                        field_obj['role'] = 'taxaName'
                     elif 'uniqueId' in roles.keys() and f[
                             'key'] == roles['uniqueId']:
                         field_obj['role'] = 'uniqueId'
+                    elif 'groupBy' in roles.keys() and f[
+                            'key'] == roles['groupBy']:
+                        field_obj['role'] = 'groupby'
                     meta_obj[field_idx] = field_obj
             
                 with open(metaFilename, 'w') as outF:
