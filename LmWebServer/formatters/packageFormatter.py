@@ -56,7 +56,7 @@ def get_map_content_for_proj(prj, scribe):
         #('coverage', coverage),
         #('crs', crs),
         #('exceptions', exceptions),
-        ('height', '250'),
+        ('height', '500'),
         #('layer', layer),
         ('layers', 'bmng,{}'.format(prj.mapLayername)),
         #('point', point),
@@ -67,7 +67,7 @@ def get_map_content_for_proj(prj, scribe):
         ('styles', ''),
         #('transparent', transparent),
         ('version', '1.1.0'),
-        ('width', '500')
+        ('width', '1000')
     ]
     for k, v in map_params:
         if v is not None:
@@ -89,9 +89,10 @@ def get_sdm_html_page(prj_info):
     prj_images = []
     prj_labels = []
     for prj in prj_info:
-        prj_images.append('<img src="{}" alt="{} - {} - {}" />'.format(
-            prj['image_path'], prj['species_name'], prj['algorithm_code'],
-            prj['scenario_code']))
+        prj_images.append(
+            '<a href="{}" target="_blank"><img src="{}" height="250" width="500" alt="{} - {} - {}" /></a>'.format(
+                prj['image_path'], prj['image_path'], prj['species_name'], prj['algorithm_code'],
+                prj['scenario_code']))
         prj_labels.append('{} - {} - {}<br />{}'.format(
             prj['species_name'], prj['algorithm_code'], prj['scenario_code'],
             prj['image_path']))
@@ -719,7 +720,10 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if occ.getId() not in added_occ_ids:
                     arc_occ_path = os.path.join(
                         prj_dir, '{}.csv'.format(occ.displayName))
-                    zip_f.write(occ.getDLocation(), arc_occ_path)
+                    sys_occ_path = '{}{}'.format(
+                        os.path.splitext(
+                            occ.getDLocation())[0], LMFormat.CSV.ext)
+                    zip_f.write(sys_occ_path, arc_occ_path)
                     # TODO: Add points EML
                     added_occ_ids.append(occ.getId())
                     occ_info.append(
