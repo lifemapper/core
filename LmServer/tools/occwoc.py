@@ -286,16 +286,25 @@ class _SpeciesWeaponOfChoice(LMObject):
         else:
             # Use API to get and insert species name 
             try:
-                (rankStr, scinameStr, canonicalStr, _, _, _, taxStatus, 
-                 kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
-                 _, genusKey, speciesKey, _) = GbifAPI.getTaxonomy(taxonKey)
+                (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
+                 nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
+                 familyStr, genusStr, speciesStr, genusKey, speciesKey, 
+                 loglines) = GbifAPI.getTaxonomy(taxonKey)
             except Exception, e:
                 self.log.info('Failed lookup for key {}, ({})'.format(
                                                                     taxonKey, e))
             else:
                 # if no species key, this is not a species
-                if rankStr in ('SPECIES', 'GENUS') and taxStatus == 'ACCEPTED':
-#                 if taxonKey in (retSpecieskey, acceptedkey, genuskey):
+                if rankStr in ('SPECIES', 'GENUS'):
+                    if taxonKey != acceptedKey:
+                        if acceptedKey is not None:
+                            # Update to accepted values
+                            taxonKey = acceptedKey
+                            scinameStr = acceptedStr
+                        else:
+                            self.log.warning('No accepted key for taxonKey {}'.format(taxonKey))
+                            return None
+                        
                     currtime = dt.gmt().mjd
                     # Do not tie GBIF taxonomy to one userid
                     sname = ScientificName(scinameStr, 
@@ -531,9 +540,11 @@ class UserWoC(_SpeciesWeaponOfChoice):
                         
             # Get or insert ScientificName (squid)
             if self.useGBIFTaxonomy:
+                # returns None if GBIF API does NOT return this or another key as ACCEPTED  
                 sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, 
                                                                   len(dataChunk))
                 if sciName:
+                    updatedTaxonKey = sciName.sourceTaxonKey
                     # Override the given taxonName with the resolved GBIF canonical name
                     taxonName = sciName.canonicalName
             else:
