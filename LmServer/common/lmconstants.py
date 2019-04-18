@@ -581,30 +581,9 @@ class FileFix:
    
 NAME_SEPARATOR = '_'
    
-# FIXME: change this
 # Development desktops, debug users, and beta server names
 DEBUG_USER_PREFIX = 'debug_'
-
 HINT_PREFIX = 'hint'
-
-# SPECIES LAYER STYLES FOR CHANGETHINKING
-CT_SPECIES_KEYWORD = 'NatureServe'
-CT_SPECIES_LAYER_STYLES  = {'blue':  '           SYMBOL \'hatch\'\n' +
-                                     '           SIZE 5\n' +
-                                     '           ANGLE 35\n' +
-                                     '           WIDTH 0.91\n' +
-                                     '           OUTLINECOLOR 0 0 0\n' +
-                                     '           COLOR 90 116 232\n',
-                            'green': '           SYMBOL \'line-horizontal\'\n' +
-                                     '           WIDTH 0.91\n' + 
-                                     '           OUTLINECOLOR 0 0 0\n' +
-                                     '           COLOR 180 230 102\n',
-                            'red':   '           SYMBOL \'hatch\'\n' +
-                                     '           SIZE 5\n' +
-                                     '           ANGLE 65\n' +
-                                     '           WIDTH 0.91\n' +
-                                     '           OUTLINECOLOR 0 0 0\n' +
-                                     '           COLOR 190 16 32\n'}
 
 # .............................................................................
 # List of error statuses that can be recovered

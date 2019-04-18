@@ -120,34 +120,37 @@ def sortRecs(array, idx):
         return array
 
 # .............................................................................
-def splitIntoFiles(occparser, datapath, prefix, basename, maxFileSize):
+def splitIntoFiles(log, occparser, datapath, prefix, basename, maxFileSize):
     idx = 0
     while not occparser.closed:
         chunk = occparser.getSizeChunk(maxFileSize)
         fname = _getOPFilename(datapath, prefix, basename, run=idx)
-        csvwriter, f = get_unicodecsv_writer(fname, OUT_DELIMITER)
+        csvwriter, f = get_unicodecsv_writer(fname, OUT_DELIMITER, doAppend=False)
         # Skip header, rely on metadata with column indices
         #       csvwriter.writerow(occparser.header)
         for rec in chunk:
             csvwriter.writerow(rec)
         f.close()
+        log.debug('Wrote {} records to {}'.format(len(chunk), fname))
         csvwriter = None
         idx += 1
     return idx
    
 # .............................................................................
-def sortFiles(groupByIdx, datapath, inprefix, outprefix, basename):
+def sortFiles(log, groupByIdx, datapath, inprefix, outprefix, basename):
     idx = 0
     
     infname = _getOPFilename(datapath, inprefix, basename, run=idx)
     while os.path.exists(infname):
         outfname = _getOPFilename(datapath, outprefix, basename, run=idx)
+        log.debug('Write from {} to {}'.format(infname, outfname))
         # Read rows
         unsRows = []
-#         with open(infname, 'r') as csvfile:
         occreader, infile = get_unicodecsv_reader(infname, OUT_DELIMITER)
+        occwriter, outfile = get_unicodecsv_writer(outfname, OUT_DELIMITER, 
+                                                   doAppend=False)
+
         # Skip header, rely on metadata with column indices
-        #          header = occreader.next()
         while True:
             try: 
                 unsRows.append(occreader.next())
@@ -158,16 +161,14 @@ def sortFiles(groupByIdx, datapath, inprefix, outprefix, basename):
                      (infname, occreader.line_num, e))
                 break
         infile.close()
-        # Sort records into new array
+        
+        # Sort records into new array, then write to file, no header
         srtRows = sortRecs(unsRows, groupByIdx)
-        # Write sorted records to file
-        occwriter, outfile = get_unicodecsv_writer(outfname, OUT_DELIMITER)
-        # TODO: Write header, but rely on metadata with column indices
-#             occwriter.writerow(header)
         for rec in srtRows:
             occwriter.writerow(rec)
         outfile.close()
-        # Try again
+        
+        # Move to next file
         idx += 1
         infname = _getOPFilename(datapath, inprefix, basename, run=idx)
     return idx
@@ -176,10 +177,10 @@ def sortFiles(groupByIdx, datapath, inprefix, outprefix, basename):
 def _switchFiles(openFile, datapath, prefix, basename, run=None):
     openFile.close()
     # Open next output sorted file
-    newFname = _getOPFilename(datapath, prefix, basename, run=run)
-    newFile = open(newFname, 'wb')
-    csvwriter, outfile = get_unicodecsv_writer(newFile, OUT_DELIMITER)
-    return newFile, csvwriter, outfile
+    fname = _getOPFilename(datapath, prefix, basename, run=run)
+    csvwriter, outfile = get_unicodecsv_writer(fname, OUT_DELIMITER, 
+                                               doAppend=False)
+    return outfile, csvwriter
 
 # ...............................................
 def _popChunkAndWrite(csvwriter, occPrsr):
@@ -206,10 +207,7 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
     @param maxFileSize: (optional) maximum number of bytes for output files; 
                         this results in multiple, numbered, sorted output files,  
                         with no keys in more than one file
-    """
-    # Open output sorted file
-    csvwriter, outfile = get_unicodecsv_writer(mergefname, OUT_DELIMITER)
-    
+    """    
     # Open all input split files
     sortedFiles = []
     srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
@@ -234,6 +232,10 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
             srtFname = _getOPFilename(datapath, inputPrefix, basename, run=currIdx)
        
     try:
+        outIdx = 0
+        # Open output sorted file
+        csvwriter, outfile = get_unicodecsv_writer(mergefname, OUT_DELIMITER, 
+                                                   doAppend=False)
         # Skip header (no longer written to files)
         # find file with record containing smallest key
         smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
@@ -241,11 +243,11 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
             # Output records in this file with smallKey 
             _popChunkAndWrite(csvwriter, sortedFiles[pos])
             
-            #          # If size limit is reached, switch to new file
-            #          if (maxFileSize and os.fstat(mergeFile.fileno()).st_size >= maxFileSize):
-            #             outIdx += 1
-            #             mergeFile, csvwriter = _switchFiles(mergeFile, csvwriter, datapath, 
-            #                                                 mergePrefix, basename, run=outIdx)
+#             # If size limit is reached, switch to new file
+#             if (maxFileSize and os.fstat(outfile.fileno()).st_size >= maxFileSize):
+#                 outIdx += 1
+#                 outfile, csvwriter = _switchFiles(outfile, csvwriter, datapath, 
+#                                                inputPrefix, basename, run=outIdx)
             # Find smallest again
             smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
            
@@ -255,7 +257,7 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
         outfile.close()
         csvwriter = None
         for op in sortedFiles:
-            print 'Closing file %s' % (op.dataFname)
+            log.debug('Closing file {}'.format(op.dataFname))
             op.close()
    
 # ...............................................
@@ -270,8 +272,6 @@ def usage():
 if __name__ == "__main__": 
     import argparse  
     if len(sys.argv) in (3,4):
-        import csv
-        csv.field_size_limit(sys.maxsize)
         if len(sys.argv) == 3:
             cmd = 'all'
         else:
@@ -339,12 +339,14 @@ if __name__ == "__main__":
         if cmd in ('split', 'all'):   
             # Split into smaller unsorted files
             print('Split huge data file into smaller files')
-            splitIntoFiles(occparser, pth, unsortedPrefix, basename, 500000)   
+            splitIntoFiles(log, occparser, pth, unsortedPrefix, basename, 500000)   
+            occparser.close()
+        
         if cmd in ('sort', 'all'):              
             # Sort smaller files
             print('Sort smaller files')
-            sortFiles(groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
-        occparser.close()
+            sortFiles(log, groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
+
     
     if cmd in ('merge', 'all'):   
         # Merge all data for production system into multiple subset files
@@ -363,7 +365,7 @@ import sys
 
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import get_unicodecsv_reader, get_unicodecsv_writer
+from LmCommon.common.readyfile import *
 
 from LmServer.common.log import ScriptLogger
 
@@ -398,13 +400,57 @@ print 'groupByIdx = ', groupByIdx
 
 (datapath, prefix, maxFileSize) = (pth, unsortedPrefix, 5000000)
  
-splitIntoFiles(occparser, pth, unsortedPrefix, basename, 5000000)   
-
-sortFiles(groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
-
-occparser.close()
+######################### SPLIT
+# splitIntoFiles(log, occparser, pth, unsortedPrefix, basename, 5000000)   
+# occparser.close()
 
 
+######################### SORT 
+groupByIdx = 2
+# sortFiles(log, groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
+(datapath, inprefix, outprefix)=(pth, unsortedPrefix, sortedPrefix)
+idx = 0
+infname = _getOPFilename(datapath, inprefix, basename, run=idx)
+
+######################### 
+######################### loop
+######################### 
+
+outfname = _getOPFilename(datapath, outprefix, basename, run=idx)
+log.debug('Write from {} to {}'.format(infname, outfname))
+
+unsRows = []
+occreader, infile = get_unicodecsv_reader(infname, OUT_DELIMITER)
+occwriter, outfile = get_unicodecsv_writer(outfname, OUT_DELIMITER, 
+                                           doAppend=False)
+
+while True:
+    try: 
+        unsRows.append(occreader.next())
+    except StopIteration:
+        break
+    except Exception, e:
+        print('Error file %s, line %d: %s' % 
+             (infname, occreader.line_num, e))
+        break
+
+infile.close()
+
+srtRows = sortRecs(unsRows, groupByIdx)
+
+for rec in srtRows:
+    occwriter.writerow(rec)
+
+outfile.close()
+idx += 1
+infname = _getOPFilename(datapath, inprefix, basename, run=idx)
+
+
+######################### 
+######################### end loop
+######################### 
+
+######################### MERGE
 mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, metafname)
 
 checkMergedFile(log, mergefname, metafname)
