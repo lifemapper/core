@@ -62,7 +62,8 @@ def readyFilename(fullfilename, overwrite=False):
         if os.path.isdir(pth):
             return True
         else:
-            raise Exception('Failed to create directories {}'.format(pth))
+            raise Exception('Failed to create directories {}, checking for readyFilename {}'
+                            .format(pth, fullfilename))
 
 # ...............................................
 def deleteFile(fname, deleteDir=False):
@@ -138,7 +139,7 @@ def get_unicodecsv_writer(datafile, delimiter, doAppend=True):
     else:
         mode = 'wb'
         
-    readyFilename(datafile, overwrite=True)
+    readyFilename(datafile, overwrite=(not doAppend))
     try:
         f = open(datafile, mode) 
         writer = unicodecsv.writer(f, delimiter=delimiter, encoding=ENCODING)
