@@ -76,9 +76,9 @@ def format_gridset(gridset_id, detail=False):
         progress = 0.0
         line_pos = scribe.countPriorityMFChains(gridset_id)
         if line_pos == 0:
-            message = 'Your gridset is running or next in line'
+            message = 'Your project is running or next in the processing queue'
         else:
-            message = 'Your gridset is {} in line'.format(line_pos)
+            message = 'Your project is number {} in the processing queue'.format(line_pos)
     else:
         # 0.5 * number running + 1.0 * number complete + number error / total
         progress = (

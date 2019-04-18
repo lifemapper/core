@@ -105,7 +105,7 @@ class BoomCollate(LMObject):
                     use_abs=True, fdr=self.fdr).getMakeflowRule())
             sig_pam_stats_filenames.append(out_mtx_filename)
 
-        if len(obs_mcpa_filenames) > 0:
+        if obs_mcpa_filenames is not None and len(obs_mcpa_filenames) > 0:
             # Create rule
             out_mtx_filename = self._create_filename(
                 pam_id, 'mcpa_out{}'.format(LMFormat.MATRIX.ext))
