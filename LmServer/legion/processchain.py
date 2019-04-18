@@ -246,7 +246,7 @@ class MFChain(ProcessObject):
         # For each tuple in the list
         for rule in ruleList:
             # If dependency is not absolute path
-            deps = [d for d in rule.dependencies if not os.path.isabs(d)]
+            deps = [d for d in rule.dependencies if d is not None and not os.path.isabs(d)]
             targets = rule.targets
             cmd = rule.command
             comment = rule.comment
