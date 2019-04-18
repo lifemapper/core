@@ -22,12 +22,13 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import csv
 import os
 import sys
 
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.readyfile import get_unicodecsv_reader, get_unicodecsv_writer
+
 from LmServer.common.log import ScriptLogger
 
 OUT_DELIMITER = '\t'
@@ -124,12 +125,12 @@ def splitIntoFiles(occparser, datapath, prefix, basename, maxFileSize):
     while not occparser.closed:
         chunk = occparser.getSizeChunk(maxFileSize)
         fname = _getOPFilename(datapath, prefix, basename, run=idx)
-        newFile = open(fname, 'wb')
-        csvwriter = csv.writer(newFile, delimiter=OUT_DELIMITER)
+        csvwriter, f = get_unicodecsv_writer(fname, OUT_DELIMITER)
         # Skip header, rely on metadata with column indices
         #       csvwriter.writerow(occparser.header)
         for rec in chunk:
             csvwriter.writerow(rec)
+        f.close()
         csvwriter = None
         idx += 1
     return idx
@@ -143,41 +144,42 @@ def sortFiles(groupByIdx, datapath, inprefix, outprefix, basename):
         outfname = _getOPFilename(datapath, outprefix, basename, run=idx)
         # Read rows
         unsRows = []
-        with open(infname, 'r') as csvfile:
-            occreader = csv.reader(csvfile, delimiter=OUT_DELIMITER)
+#         with open(infname, 'r') as csvfile:
+        occreader, infile = get_unicodecsv_reader(infname, OUT_DELIMITER)
         # Skip header, rely on metadata with column indices
         #          header = occreader.next()
-            while True:
-                try: 
-                    unsRows.append(occreader.next())
-                except StopIteration:
-                    break
-                except Exception, e:
-                    print('Error file %s, line %d: %s' % 
-                         (infname, occreader.line_num, e))
-                    break
+        while True:
+            try: 
+                unsRows.append(occreader.next())
+            except StopIteration:
+                break
+            except Exception, e:
+                print('Error file %s, line %d: %s' % 
+                     (infname, occreader.line_num, e))
+                break
+        infile.close()
         # Sort records into new array
         srtRows = sortRecs(unsRows, groupByIdx)
         # Write sorted records to file
-        with open(outfname, 'wb') as csvfile:
-            occwriter = csv.writer(csvfile, delimiter=OUT_DELIMITER)
-            # TODO: Write header, but rely on metadata with column indices
+        occwriter, outfile = get_unicodecsv_writer(outfname, OUT_DELIMITER)
+        # TODO: Write header, but rely on metadata with column indices
 #             occwriter.writerow(header)
-            for rec in srtRows:
-                occwriter.writerow(rec)
+        for rec in srtRows:
+            occwriter.writerow(rec)
+        outfile.close()
         # Try again
         idx += 1
         infname = _getOPFilename(datapath, inprefix, basename, run=idx)
     return idx
 
 # ...............................................
-def _switchFiles(openFile, csvwriter, datapath, prefix, basename, run=None):
+def _switchFiles(openFile, datapath, prefix, basename, run=None):
     openFile.close()
     # Open next output sorted file
     newFname = _getOPFilename(datapath, prefix, basename, run=run)
     newFile = open(newFname, 'wb')
-    csvwriter = csv.writer(newFile, delimiter=OUT_DELIMITER)
-    return newFile, csvwriter
+    csvwriter, outfile = get_unicodecsv_writer(newFile, OUT_DELIMITER)
+    return newFile, csvwriter, outfile
 
 # ...............................................
 def _popChunkAndWrite(csvwriter, occPrsr):
@@ -206,8 +208,7 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
                         with no keys in more than one file
     """
     # Open output sorted file
-    mergeFile = open(mergefname, 'wb')
-    csvwriter = csv.writer(mergeFile, delimiter=OUT_DELIMITER)
+    csvwriter, outfile = get_unicodecsv_writer(mergefname, OUT_DELIMITER)
     
     # Open all input split files
     sortedFiles = []
@@ -251,7 +252,7 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
     except Exception, e:
         raise
     finally:
-        mergeFile.close()
+        outfile.close()
         csvwriter = None
         for op in sortedFiles:
             print 'Closing file %s' % (op.dataFname)
@@ -269,6 +270,7 @@ def usage():
 if __name__ == "__main__": 
     import argparse  
     if len(sys.argv) in (3,4):
+        import csv
         csv.field_size_limit(sys.maxsize)
         if len(sys.argv) == 3:
             cmd = 'all'
@@ -276,9 +278,6 @@ if __name__ == "__main__":
             cmd = sys.argv[3]
     else:
         usage()
-
-#     inDelimiter = sys.argv[1]
-#     datafname = sys.argv[2]
 
     parser = argparse.ArgumentParser(
              description=('Populate a Lifemapper archive with metadata ' +
@@ -364,7 +363,11 @@ import sys
 
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.readyfile import get_unicodecsv_reader, get_unicodecsv_writer
+
 from LmServer.common.log import ScriptLogger
+
+OUT_DELIMITER = '\t'
 
 from LmDbServer.tools.sortCSVData import *
 from LmDbServer.tools.sortCSVData import _getOPFilename, _popChunkAndWrite
@@ -376,7 +379,7 @@ unsortedPrefix = 'chunk'
 sortedPrefix = 'smsort'
 mergedPrefix = 'sorted'
 
-datafname = '/tank/zdata/occ/gbif/aimee_export_sep2018.csv'
+datafname = '/tank/zdata/occ/gbif/aimee_export2019.csv'
 inDelimiter = '\t'
 basepath, ext = os.path.splitext(datafname)
 pth, basename = os.path.split(basepath)
@@ -392,6 +395,8 @@ occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter,
 occparser.initializeMe()
 groupByIdx = occparser.groupByIdx
 print 'groupByIdx = ', groupByIdx
+
+(datapath, prefix, maxFileSize) = (pth, unsortedPrefix, 5000000)
  
 splitIntoFiles(occparser, pth, unsortedPrefix, basename, 5000000)   
 
