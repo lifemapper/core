@@ -155,7 +155,7 @@ class OccurrenceLayerService(LmService):
         else:
             raise cherrypy.HTTPError(
                 HTTPStatus.FORBIDDEN, 
-                'User {} does not have permission to delete this occurrence set'.format(
+                'User {} does not have permission to GET this occurrence set'.format(
                     self.getUserId()))
     
     # ................................
