@@ -447,8 +447,8 @@ class ParameterSweepConfiguration(object):
             self.pavs_filename]
         
         # PAVs
-        for pav_config in self.pavs:
-            output_files.append(pav_config[3]) # pav_filename
+        #for pav_config in self.pavs:
+        #    output_files.append(pav_config[3]) # pav_filename
 
         return output_files
 
