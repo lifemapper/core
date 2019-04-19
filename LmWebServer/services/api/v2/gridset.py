@@ -43,6 +43,31 @@ KEYWORD_KEY = 'keywords'
 LAYERS_KEY = 'layers'
 
 # .............................................................................
+def summarize_object_statuses(summary):
+    """Summarizes a summary
+
+    Args:
+        summary (:obj:`list` of :obj:`tuple` of :obj:`int`, :obj:`int`): A list
+            of (status, count) tuples for an object type
+    """
+    complete = 0
+    waiting = 0
+    running = 0
+    error = 0
+    total = 0
+    for status, count in summary:
+        if status <= JobStatus.INITIALIZE:
+            waiting += count
+        elif status < JobStatus.COMPLETE:
+            running += count
+        elif status == JobStatus.COMPLETE:
+            complete += count
+        else:
+            error += count
+        total += count
+    return (waiting, running, complete, error, total)
+
+# .............................................................................
 @cherrypy.expose
 class GridsetAnalysisService(LmService):
     """This class is for the service representing gridset analyses.
@@ -532,6 +557,20 @@ class GridsetService(LmService):
         else:
             return self._getGridSet(pathGridSetId)
         
+    # ................................
+    def HEAD(self, pathGridSetId=None):
+        if pathGridSetId is not None:
+            mf_summary = self.scribe.summarizeMFChainsForGridset(pathGridSetId)
+            (waiting_mfs, running_mfs, complete_mfs, error_mfs, total_mfs
+             ) = summarize_object_statuses(mf_summary)
+            if waiting_mfs + running_mfs == 0:
+                cherrypy.response.status = HTTPStatus.OK
+            else:
+                cherrypy.response.status = HTTPStatus.ACCEPTED
+        else:
+            cherrypy.response.status = HTTPStatus.OK
+        
+    
     # ................................
     def POST(self, **params):
         """
