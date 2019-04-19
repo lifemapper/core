@@ -750,6 +750,32 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
 
     
 # .............................................................................
+def summarize_object_statuses(summary):
+    """Summarizes a summary
+
+    Args:
+        summary (:obj:`list` of :obj:`tuple` of :obj:`int`, :obj:`int`): A list
+            of (status, count) tuples for an object type
+    """
+    complete = 0
+    waiting = 0
+    running = 0
+    error = 0
+    total = 0
+    for status, count in summary:
+        if status <= JobStatus.INITIALIZE:
+            waiting += count
+        elif status < JobStatus.COMPLETE:
+            running += count
+        elif status == JobStatus.COMPLETE:
+            complete += count
+        else:
+            error += count
+        total += count
+    return (waiting, running, complete, error, total)
+
+
+# .............................................................................
 def gridsetPackageFormatter(gridset, includeCSV=True, includeSDM=True,
                             stream=False):
     """
@@ -770,14 +796,38 @@ def gridsetPackageFormatter(gridset, includeCSV=True, includeSDM=True,
         # Look for makeflows
         scribe = BorgScribe(LmPublicLogger())
         scribe.openConnections()
-        cnt = scribe.countMFChains(
-            gridsetId=gridset.getId(), beforeStat=JobStatus.COMPLETE)
         
+        # Check progress counts
+        gridset_id = gridset.getId()
+        #prj_summary = scribe.summarizeSDMProjectsForGridset(gridset_id)
+        #mtx_summary = scribe.summarizeMatricesForGridset(gridset_id)
+        mf_summary = scribe.summarizeMFChainsForGridset(gridset_id)
+        #mc_summary = scribe.summarizeMtxColumnsForGridset(gridset_id)
+        #occ_summary = scribe.summarizeOccurrenceSetsForGridset(gridset_id)
+        
+        #(waiting_prjs, running_prjs, complete_prjs, error_prjs, total_prjs
+        # ) = summarize_object_statuses(prj_summary)
+        #(waiting_mtxs, running_mtxs, complete_mtxs, error_mtxs, total_mtxs
+        # ) = summarize_object_statuses(mtx_summary)
+        (waiting_mfs, running_mfs, complete_mfs, error_mfs, total_mfs
+         ) = summarize_object_statuses(mf_summary)
+        #(waiting_occs, running_occs, complete_occs, error_occs, total_occs
+        # ) = summarize_object_statuses(occ_summary)
+        #(waiting_mcs, running_mcs, complete_mcs, error_mcs, total_mcs
+        # ) = summarize_object_statuses(mc_summary)
+        scribe.closeConnections()
+        
+        cnt = waiting_mfs + running_mfs
         
         # See if we can create it
-        if cnt == 0 and all([mtx.status >= JobStatus.COMPLETE for \
-                mtx in gridset.getMatrices() if mtx.matrixType not in [
-                    MatrixType.PAM, MatrixType.ROLLING_PAM]]):
+        # CJG - Assume we can create package if no makeflows
+        # TODO: Check other objects and raise error status if necessary
+        #if cnt == 0 and all([mtx.status >= JobStatus.COMPLETE for \
+        #        mtx in gridset.getMatrices() if mtx.matrixType not in [
+        #            MatrixType.PAM, MatrixType.ROLLING_PAM]]):
+        # Assume we will never be able to create package if makeflow errors
+        #if error_mfs > 0
+        if cnt == 0:
             # Create the package
             _package_gridset(
                 gridset, include_csv=includeCSV, include_sdm=includeSDM)
