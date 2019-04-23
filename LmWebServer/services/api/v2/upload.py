@@ -8,7 +8,6 @@ Todo:
 Todo: Use sub-services for different upload types rather than query parameter
 """
 import cherrypy
-import dendropy
 import json
 import os
 from StringIO import StringIO
@@ -16,6 +15,7 @@ import zipfile
 
 from LmCommon.common.lmconstants import HTTPStatus, LMFormat, DEFAULT_POST_USER
 from LmCommon.common.readyfile import readyFilename
+from LmCommon.trees.lmTree import LmTree
 from LmServer.common.lmconstants import ENV_DATA_PATH
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
@@ -339,9 +339,9 @@ class UserUploadService(LmService):
                 data = cherrypy.request.body.read()
             for schema in ['newick', 'nexus', 'phyloxml']:
                 try:
-                    tree = dendropy.Tree.get(data=data, schema=schema)
-                    with open(out_tree_filename, 'w') as out_f:
-                        out_f.write(tree.as_string('nexus'))
+                    tree = LmTree.initFromData(data, schema)
+                    tree.addNodeLabels()
+                    tree.writeTree(out_tree_filename)
                     break
                 except Exception as e:
                     pass
