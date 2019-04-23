@@ -46,6 +46,10 @@ class TemplateFiller(object):
         search_token = None
         sub_tokens = None
         do_if = False
+        in_if = False
+        in_for = False
+        for_lcv = None
+        iter_key = None
 
         for token in tokens:
             # If this isn't a token, add it to return string
@@ -57,13 +61,22 @@ class TemplateFiller(object):
                 # If we are looking for a specific token, check for it
                 if search_token is not None:
                     # If this is the search token, process the sub tokens
-                    if token == search_token:
-                        if do_if:
+                    if token.lower() == search_token:
+                        if in_if and do_if:
                             ret_str += self._process_tokens(sub_tokens)
+                        elif in_for:
+                            for i in self.param_dict[iter_key.lower()]:
+                                self.param_dict[for_lcv] = i
+                                ret_str += self._process_tokens(sub_tokens)
+                            self.param_dict[for_lcv] = None
                         # Reset search and sub tokens
                         search_token = None
                         sub_tokens = None
                         is_token = False
+                        in_for = False
+                        in_if = False
+                        for_lcv = None
+                        iter_key = None
                     else:
                         # Add the token to the sub tokens list for processing
                         sub_tokens.append(token)
@@ -72,12 +85,25 @@ class TemplateFiller(object):
                     if token.lower().startswith('if_'):
                         # Create a sub tokens list and set search token
                         sub_tokens = []
-                        search_token = 'END_{}'.format(token)
+                        search_token = 'END_{}'.format(token).lower()
                         # Set if we should process the IF by looking at args
                         do_if = self.param_dict[token.strip('IF_').lower()]
+                        in_if = True
+                    elif token.lower().startswith('for_'):
+                        sub_tokens = []
+                        search_token = 'END_{}'.format(token).lower()
+                        in_for = True
+                        token_parts = token.lower().split('_')
+                        iter_key = token_parts[-1]
+                        for_lcv = token_parts[1]
                     else:
                         # Process as a replace string
-                        ret_str += self.param_dict[token.lower()]
+                        if token.lower().find('.') > 0:
+                            token_parts = token.lower().split('.')
+                            token_val = self.param_dict[token_parts[0]][token_parts[1]]
+                        else:
+                            token_val = self.param_dict[token.lower()]
+                        ret_str += token_val
                         # Next item is not a token
                         is_token = False
         return ret_str
