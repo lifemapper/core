@@ -381,7 +381,7 @@ QUERY_PARAMETERS = {
     },
     'user' : {
         QP_NAME_KEY : 'urlUser',
-        QP_PROCESS_KEY : lambda x: x.lower()
+        QP_PROCESS_KEY : lambda x: x
     },
     'version' : {
         QP_NAME_KEY : 'version'
