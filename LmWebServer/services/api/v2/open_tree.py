@@ -57,6 +57,10 @@ class OpenTreeService(LmService):
             ott_to_gbif = dict([(v, k) for (k, v) in gbif_to_ott.iteritems()])
             # Get the ids and drop Nones
             ott_ids = [oid for oid in gbif_to_ott.values() if oid is not None]
+            if len(ott_ids) <= 1:
+                raise cherrypy.HTTPError(
+                    HTTPStatus.BAD_REQUEST,
+                    'Need more than one open tree ID to create a tree')
             # Get the tree from Open Tree
             output = induced_subtree(ott_ids)
             tree_data = output[Partners.OTT_TREE_KEY]
@@ -64,6 +68,8 @@ class OpenTreeService(LmService):
             #    tree
             nontree_ids = [
                 int(ott_to_gbif[ott]) for ott in output[Partners.OTT_MISSING_KEY]]
+        except cherrypy.HTTPError:
+            raise
         except Exception as e:
             raise cherrypy.HTTPError(
                 HTTPStatus.SERVICE_UNAVAILABLE,
