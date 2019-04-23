@@ -62,7 +62,7 @@ class UserLogin(LmService):
         if user is not None and user.checkPassword(pword):
             # Provided correct credentials
             cherrypy.session.regenerate()
-            cherrypy.session[SESSION_KEY] = cherrypy.request.login = userId
+            cherrypy.session[SESSION_KEY] = cherrypy.request.login = user.getUserId()
             cookie = cherrypy.response.cookie
             cookie[REFERER_KEY] = refererPage
             cookie[REFERER_KEY]['expires'] = 0
