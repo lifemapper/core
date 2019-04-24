@@ -38,6 +38,7 @@ from LmWebServer.formatters.template_filler import TemplateFiller
 # DYN_PACKAGE_DIR = 'package'
 # SDM_PRJ_DIR = os.path.join(GRIDSET_DIR, 'sdm')
 # MAX_PROJECTIONS = 1000
+PACKAGE_VERSION = '1.0.2'
 
 # .............................................................................
 def get_map_content_for_proj(prj, scribe):
@@ -81,58 +82,6 @@ def get_map_content_for_proj(prj, scribe):
     content = mapscript.msIO_getStdoutBufferBytes()
     mapscript.msIO_resetHandlers()
     return content
-
-# .............................................................................
-def get_sdm_html_page(prj_info):
-    """Generate a (temporary) HTML page for viewing SDM outputs
-    """
-    num_prjs = len(prj_info)
-    prj_images = []
-    prj_labels = []
-    for prj in prj_info:
-        prj_images.append(
-            '<a href="{}" target="_blank"><img src="{}" height="250" width="500" alt="{} - {} - {}" /></a>'.format(
-                prj['image_path'], prj['image_path'], prj['species_name'], prj['algorithm_code'],
-                prj['scenario_code']))
-        prj_labels.append('{} - {} - {}<br />{}'.format(
-            prj['species_name'], prj['algorithm_code'], prj['scenario_code'],
-            prj['image_path']))
-    prj_images.append('')
-    prj_labels.append('')
-    
-    page_html = """\
-<html>
-    <head>
-        <title>BiotaPhy Browse Maps</title>
-    </head>
-    <body>
-        <h2>BiotaPhy Browse Maps</h2>
-        <table>
-"""
-    for i in range(0, num_prjs, 2):
-        page_html += """\
-            <tr>
-                <td style="text-align: center;">
-                    {}
-                </td>
-                <td style="text-align: center;">
-                    {}
-                </td>
-            </tr>
-            <tr>
-                <th style="text-align: center;">
-                    {}
-                </th>
-                <th style="text-align: center;">
-                    {}
-                </th>
-            </tr>\n""".format(
-                prj_images[i], prj_images[i+1], prj_labels[i], prj_labels[i+1])
-    page_html += """\
-        </table>
-    </body>
-</html>"""
-    return page_html
 
 # .............................................................................
 def createStatsMeta():
@@ -233,36 +182,6 @@ def createStatsMeta():
     }
 
 # .............................................................................
-def createStatHeaderLookup():
-    """
-    @summary: Create a statistic header lookup for all possible stats
-    """
-    return {
-        PamStatKeys.ALPHA : 'Alpha Diversity',
-        PamStatKeys.ALPHA_PROP : 'Proportional Alpha Diversity',
-        PamStatKeys.PHI : 'Range Size Per Site',
-        PamStatKeys.PHI_AVG_PROP : 'Proportional Range Size Per Site',
-        PamStatKeys.MNTD : 'Mean Nearest Taxon Distance',
-        PamStatKeys.MPD : 'Mean Pairwise Distance',
-        PamStatKeys.PEARSON : "Pearson's Correlation Coefficient",
-        PamStatKeys.PD : 'Phylogenetic Diversity',
-        PamStatKeys.MNND : 'Mean Nearest Neighbor Distance',
-        PamStatKeys.MPHYLODIST : 'Mean Phylogenetic Distance',
-        PamStatKeys.SPD : 'Sum of Phylogenetic Distance',
-        PamStatKeys.OMEGA : 'Species Range Size',
-        PamStatKeys.OMEGA_PROP : 'Proportional Species Range Size',
-        PamStatKeys.PSI : 'Species Range Richness',
-        PamStatKeys.PSI_AVG_PROP : 'Proportional Species Range Richness',
-        PamStatKeys.WHITTAKERS_BETA : 'Whittaker\'s Beta Diversity',
-        PamStatKeys.LANDES_ADDATIVE_BETA : 'Landes Addative Beta Diveristy',
-        PamStatKeys.LEGENDRES_BETA : 'Legendres Beta Diversity',
-        PamStatKeys.SITES_COVARIANCE : 'Sites Covariance',
-        PamStatKeys.SPECIES_COVARIANCE : 'Species Covariance',
-        PamStatKeys.SPECIES_VARIANCE_RATIO : 'Schluter\'s Species Variance Ratio',
-        PamStatKeys.SITES_VARIANCE_RATIO : 'Schluter\'s Sites Variance Ratio'
-    }
-
-# .............................................................................
 def createHeaderLookup(headers, squids=False, scribe=None, userId=None):
     """
     @summary: Generate a header lookup to be included in the package metadata
@@ -313,338 +232,342 @@ def mung(data):
     return munged
 
 # .............................................................................
-def _get_anc_pam_content(anc_pam, shapegrid):
-    """
-    """
-    lookup_filename = os.path.join(DYN_PACKAGE_DIR, 'nodeLookup.js')
-    lookup_str = 'var nodeLookup = \n{}'.format(
-        json.dumps(createHeaderLookup(anc_pam.getColumnHeaders()), indent=3))
-
-    js_filename = os.path.join(DYN_PACKAGE_DIR, 'ancPam.js')
-    
-    mtx_str = StringIO()
-    geoJsonify_flo(
-        mtx_str, shapegrid.getDLocation(), matrix=anc_pam, mtxJoinAttrib=0,
-        ident=0, headerLookupFilename=lookup_filename, transform=mung)
-    mtx_str.seek(0)
-
-    js_str = "var ancPam = JSON.parse(`{}`);".format(mtx_str.getvalue())
-
-    # Save memory
-    mtx_str = None
-
-    return (lookup_filename, lookup_str, js_filename, js_str)
-    
-# .............................................................................
-def _get_pam_content(pam, shapegrid, scribe, user_id):
-    """Get the lookup and GeoJSON for a PAM
+def _add_sdms_to_package(zip_f, projections, scribe):
+    """Adds SDMs to output package and returns projection info.
 
     Args:
-        pam (:obj:`Matrix`): A PAM matrix
+        zip_f (ZipFile): An open zip file object to add the SDMs to.
+        projections (:obj:`list` of :obj:`SDMProject`): A list of projection
+            objects to add to the package.
+        scribe (BorgScribe): A scribe object for database queries.
+
+    Returns:
+        tuple - A tuple of occurrence set and projection info lists.
     """
-    # Create the SQUID lookup
-    lookup_filename = os.path.join(DYN_PACKAGE_DIR, 'squidLookup.json')
-    # SQUID lookup content
-    lookup_str = 'var squidLookup =\n{}'.format(
-        json.dumps(createHeaderLookup(
-            pam.getColumnHeaders(), squids=True, scribe=scribe,
-            userId=user_id), indent=3))
-                    
-    # PAM JS filename
-    js_filename = os.path.join(DYN_PACKAGE_DIR, 'pam.js')
+    added_occ_ids = []
+    occ_info = []
+    prj_info = []
 
-    mtx_str = StringIO()
-    geoJsonify_flo(
-        mtx_str, shapegrid.getDLocation(), matrix=pam, mtxJoinAttrib=0,
-        ident=0, headerLookupFilename=lookup_filename, transform=mung)
-    mtx_str.seek(0)
+    for prj in projections:
+        occ = prj.occurrenceSet
+        prj_dir = os.path.join(SDM_PRJ_DIR, occ.displayName)
+        # Make sure projection output file exists, then add to package
+        if os.path.exists(prj.getDLocation()):
+            arc_prj_path = os.path.join(
+                prj_dir, os.path.basename(prj.getDLocation()))
+            arc_prj_img_path = arc_prj_path.replace(LMFormat.GTIFF.ext, '.png')
+            zip_f.write(prj.getDLocation(), arc_prj_path)
+            zip_f.writestr(
+                arc_prj_img_path, get_map_content_for_proj(prj, scribe))
+            scn = prj.projScenario
+            prj_info.append(
+                {
+                    'prj_id' : prj.getId(),
+                    'file_path' : arc_prj_path,
+                    'image_path' : arc_prj_img_path,
+                    'scenario_code' : prj.projScenarioCode,
+                    'species_name' : prj.speciesName,
+                    'algorithm_code' : prj.algorithmCode,
+                    'gcm_code' : scn.gcmCode,
+                    'alt_pred_code' : scn.altpredCode,
+                    'date_code' : scn.dateCode,
+                    'epsg' : prj.epsgcode,
+                    'label' : '{} {} {} {}'.format(
+                        prj.displayName, prj.algorithmCode,
+                        prj.projScenarioCode, arc_prj_path)
+                })
 
-    # PAM JS content
-    js_str = "var pam = JSON.parse('{}');".format(mtx_str.getvalue())
+        # Add occurrence set
+        if occ.getId() not in added_occ_ids:
+            arc_occ_path = os.path.join(
+                prj_dir, '{}.csv'.format(occ.displayName))
+            sys_occ_path = '{}{}'.format(
+                os.path.splitext(occ.getDLocation())[0], LMFormat.CSV.ext)
+            zip_f.write(sys_occ_path, arc_occ_path)
+            added_occ_ids.append(occ.getId())
+            occ_info.append(
+                {
+                    'occ_id' : occ.getId(),
+                    'species_name' : occ.displayName,
+                    'num_points' : occ.queryCount,
+                    'file_path' : arc_occ_path
+                })
 
-    # Save memory
-    mtx_str = None
+    return occ_info, prj_info
 
-    return (lookup_filename, lookup_str, js_filename, js_str)
+# .............................................................................
+def _get_known_package_files():
+    """Returns known package files, both static and templated.
+
+    Returns:
+        (list, list): A list of static files and a list of template files.
+    """
+    static_files = []
+    template_files = []
+    for f_dir, _, fns in os.walk(STATIC_PACKAGE_PATH):
+        for fn in fns:
+            a_path = os.path.join(f_dir, fn)
+            if a_path.lower().endswith('.template'):
+                template_files.append(a_path)
+            else:
+                static_files.append(a_path)
+    return (static_files, template_files)
 
 # .............................................................................
 def _package_gridset(gridset, include_csv=False, include_sdm=False):
     """Create a gridset package
     """
+    # Initialization
+    # --------------
     package_filename = gridset.getPackageLocation()
-    
     scribe = BorgScribe(LmPublicLogger())
     user_id = gridset.getUserId()
-    
+    occ_info = None
+    prj_info = None
+    tree = None
     try:
         gs_name = gridset.name
     except:
         gs_name = 'Gridset {}'.format(gridset.getId())
-        
     shapegrid = gridset.getShapegrid()
     matrices = gridset.getMatrices()
-
     do_mcpa = False
     do_pam_stats = False
-    # Loop though matrix outputs.  Set mcpa / pam stats to true if the required
-    #    matrix is present and complete
-    for mtx in matrices:
-        if mtx.status == JobStatus.COMPLETE:
-            if mtx.matrixType in [MatrixType.SITES_COV_OBSERVED,
-                                  MatrixType.SITES_OBSERVED]:
-                do_pam_stats = True
-            elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
-                do_mcpa = True
+    pam = None
+    anc_pam = None
+    sites_cov_obs = None
+    sites_obs = None
+    mcpa_mtx = None
 
-    # Create the zip file
+    # Open zip file
     with zipfile.ZipFile(
         package_filename, mode='w', compression=zipfile.ZIP_DEFLATED,
         allowZip64=True) as zip_f:
 
-        # Write static files
-        for f_dir, _, fns in os.walk(STATIC_PACKAGE_PATH):
-            for fn in fns:
-                
-                # Get relative and absolute paths for packaging
-                a_path = os.path.join(f_dir, fn)
-                r_path = a_path.replace(STATIC_PACKAGE_PATH, '')
-                
-                add_file = True
-                if fn.lower().endswith('.template'):
-                    # Remove .template from relative path
-                    r_path = r_path.replace('.template', '')
-                    with open(a_path) as in_file:
-                        template_str = in_file.read()
-                        temp_filler = TemplateFiller(
-                            gridset_name=gs_name, do_mcpa=do_mcpa,
-                            do_map_stats=do_pam_stats, do_sdm=include_sdm,
-                            do_csv=include_csv, sdm_prj_dir=SDM_PRJ_DIR,
-                            matrix_dir=MATRIX_DIR, package_version='1.0.1')
-                        zip_f.writestr(
-                            r_path, temp_filler.fill_templated_string(
-                                template_str))
-                else:
-                    if fn.lower().find('.html') >= 0:
-                        # Check if html file for mcpa or stats and if we should add
-                        if (fn.lower().find('mcpa') >= 0 and not do_mcpa) or \
-                            (fn.lower().find('stats') >= 0 and not do_pam_stats):
-                            # Don't add this file
-                            add_file = False
-                    # Don't add base index.html file
-                    elif fn.lower().find('index.html') >= 0:
-                        add_file = False
-                    
-                    if add_file:
-                        zip_f.write(a_path, r_path)
-        
-        # Write gridset EML
-        gs_eml = tostring(makeEml(gridset))
-        zip_f.writestr(
-            os.path.join(
-                GRIDSET_DIR, 'gridset_{}.eml'.format(gridset.getId())), gs_eml)
-        
-        # Write tree
-        if gridset.tree is not None and gridset.tree.getDLocation() is not None:
-            with open(gridset.tree.getDLocation()) as tree_file:
-                tree_str = tree_file.read()
-            
-            zip_f.writestr(
-                os.path.join(DYN_PACKAGE_DIR, 'tree.js'),
-                'var taxonTree = `{}`;'.format(tree_str))
-            zip_f.writestr(os.path.join(GRIDSET_DIR, 'tree.nex'), tree_str)
-            # Free some memory
-            tree_str = None
+        # Add SDMs if we should
+        # ---------------------
+        if include_sdm:
+            projections = scribe.listSDMProjects(
+                0, MAX_PROJECTIONS, userId=user_id,
+                afterStatus=JobStatus.COMPLETE - 1,
+                beforeStatus=JobStatus.COMPLETE + 1,
+                gridsetId=gridset.getId(), atom=False)
+            occ_info, prj_info = _add_sdms_to_package(
+                zip_f, projections, scribe)
 
-        # Matrices
-        stat_lookup_filename = os.path.join(
-            DYN_PACKAGE_DIR, 'statNameLookup.json')
-        zip_f.writestr(
-            stat_lookup_filename, 'var statNameLookup =\n{}'.format(
-                json.dumps(createStatsMeta(), indent=3)))
-
+        # Loop through matrices
+        #    Add csvs if necessary
+        #    Populate variables
         for mtx in matrices:
             # Only add if matrix is complete and observed scenario
-            # TODO: Change or do this better
-            lookup_filename = None
-            lookup_str = None
-            js_filename = None
-            js_str = None
-            
             if mtx.status == JobStatus.COMPLETE and mtx.dateCode == 'Curr':
-                mtx_obj = Matrix.load(mtx.getDLocation())
-
+                # Handle each matrix type
                 if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
-                    
-                    (lookup_filename, lookup_str, js_filename, js_str
-                     ) = _get_pam_content(mtx_obj, shapegrid, scribe, user_id) 
-                    
-                    csv_mtx_filename = os.path.join(
+                    pam = Matrix.load(mtx.getDLocation())
+                    csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'pam_{}.csv'.format(mtx.getId()))
                 elif mtx.matrixType == MatrixType.ANC_PAM:
-                    
-                    (lookup_filename, lookup_str, js_filename, js_str
-                     ) =_get_anc_pam_content(mtx_obj, shapegrid)
-
-                    csv_mtx_filename = os.path.join(
-                        MATRIX_DIR, 'ancPam_{}.csv'.format(mtx.getId()))
-                elif mtx.matrixType in [
-                    MatrixType.SITES_COV_OBSERVED, MatrixType.SITES_OBSERVED]:
-                    
-                    if mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
-                        mtx_name = 'sitesCovarianceObserved'
-                    else:
-                        mtx_name = 'sitesObserved'
-
-                    js_filename = os.path.join(
-                        DYN_PACKAGE_DIR, '{}.js'.format(mtx_name))
-                    mtx_str = StringIO()
-                    # TODO: Determine if we need to mung this data
-                    
-                    # We can only do geojson for 2D currently
-                    mtx_2d = Matrix(
-                        mtx_obj.data[:,:,0],
-                        headers={'0' : mtx_obj.getHeaders(axis='0'),
-                                 '1': mtx_obj.getHeaders(axis='1')})
-                    
-                    geoJsonify_flo(
-                        mtx_str, shapegrid.getDLocation(),
-                        matrix=mtx_2d,
-                        mtxJoinAttrib=0, ident=0)
-                    mtx_str.seek(0)
-                    
-                    js_str = "var {} = JSON.parse(`{}`);".format(
-                        mtx_name, mtx_str.getvalue())
-                    # Save memory
-                    mtx_str = None
-                    csv_mtx_filename = os.path.join(
-                        MATRIX_DIR, '{}_{}.csv'.format(mtx_name, mtx.getId()))
+                    anc_pam = Matrix.load(mtx.getDLocation())
+                    csv_mtx_fn = os.path.join(
+                        MATRIX_DIR, 'anc_pam_{}.csv'.format(mtx.getId()))
+                elif mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
+                    sites_cov_obs = Matrix.load(mtx.getDLocation())
+                    csv_mtx_fn = os.path.join(
+                        MATRIX_DIR, 'sitesCovarianceObserved_{}.csv'.format(
+                            mtx.getId()))
+                elif mtx.matrixType == MatrixType.SITES_OBSERVED:
+                    sites_obs = Matrix.load(mtx.getDLocation())
+                    csv_mtx_fn = os.path.join(
+                        MATRIX_DIR, 'sitesObserved_{}.csv'.format(mtx.getId()))
+                    do_pam_stats = True
                 elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
-                    
-                    js_filename = os.path.join(
-                        DYN_PACKAGE_DIR, 'mcpaMatrix.js')
-                    
-                    mtx_str = StringIO()
-                    mtx_obj.writeCSV(mtx_str)
-                    mtx_str.seek(0)
-
-                    js_str = 'var mcpaMatrix = `{}`;'.format(
-                        mtx_str.getvalue())
-                    # Save memory
-                    mtx_str = None
-                    csv_mtx_filename = os.path.join(
+                    mcpa_mtx = Matrix.load(mtx.getDLocation())
+                    csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'mcpa_{}.csv'.format(mtx.getId()))
-                elif mtx.matrixType == MatrixType.SPECIES_OBSERVED:
-                    mtx_name = 'speciesObserved'
-                    mtx_str = StringIO()
-                    mtx_obj.writeCSV(mtx_str)
-                    mtx_str.seek(0)
-                    
-                    js_filename = os.path.join(
-                        DYN_PACKAGE_DIR, 'speciesObserved.js')
-                    js_str = "var speciesObserved = JSON.parse(`{}`);".format(
-                        mtx_str.getvalue())
-                    # Save memory
-                    mtx_str = None
-                    csv_mtx_filename = os.path.join(
-                        MATRIX_DIR, '{}_{}.csv'.format(mtx_name, mtx.getId()))
+                    do_mcpa = True
                 else:
-                    csv_mtx_filename = os.path.join(
+                    csv_mtx_fn = os.path.join(
                         MATRIX_DIR, '{}.csv'.format(
                             os.path.splitext(
                                 os.path.basename(mtx.getDLocation()))[0]))
 
-                # If lookup, write it
-                if lookup_filename is not None and lookup_str is not None:
-                    zip_f.writestr(lookup_filename, lookup_str)
-
-                # If JS matrix, write it
-                if js_filename is not None and js_str is not None:
-                    zip_f.writestr(js_filename, js_str)
-
-                # If we should include the raw CSV, do so
+                # If we should write the CSV file, do it
                 if include_csv:
+                    mtx_obj = Matrix.load(mtx.getDLocation())
                     csv_mtx_str = StringIO()
                     mtx_obj.writeCSV(csv_mtx_str)
                     csv_mtx_str.seek(0)
-                    zip_f.writestr(csv_mtx_filename, csv_mtx_str.getvalue())
+                    zip_f.writestr(csv_mtx_fn, csv_mtx_str.getvalue())
+                    csv_mtx_str = None
 
-        if include_sdm:
-            added_occ_ids = []
-            
-            prj_info = []
-            scn_info = {}
-            occ_info = []
-            
-            for prj in scribe.listSDMProjects(
-                    0, MAX_PROJECTIONS, userId=user_id,
-                    afterStatus=JobStatus.COMPLETE - 1,
-                    beforeStatus=JobStatus.COMPLETE + 1,
-                    gridsetId=gridset.getId(),
-                    atom=False):
-                occ = prj.occurrenceSet
-                prj_dir = os.path.join(SDM_PRJ_DIR, occ.displayName)
-                # Make sure projection output file exists, then add to package
-                if os.path.exists(prj.getDLocation()):
-                    arc_prj_path = os.path.join(
-                        prj_dir, os.path.basename(prj.getDLocation()))
-                    arc_prj_img_path = arc_prj_path.replace(
-                        LMFormat.GTIFF.ext, '.png')
-                    #prj_eml_path = '{}{}'.format(
-                    #    os.path.splitext(arc_prj_path)[0], LMFormat.EML.ext)
-                    zip_f.write(prj.getDLocation(), arc_prj_path)
-                    zip_f.writestr(
-                        arc_prj_img_path,
-                        get_map_content_for_proj(prj, scribe))
-                    # EML
-                    #zip_f.writestr(prj_eml_path, tostring(makeEml(prj)))
-                    scn = prj.projScenario
-                    prj_info.append(
-                        {
-                            'prj_id' : prj.getId(),
-                            'file_path' : arc_prj_path,
-                            'image_path' : arc_prj_img_path,
-                            'scenario_code' : prj.projScenarioCode,
-                            'species_name' : prj.speciesName,
-                            'algorithm_code' : prj.algorithmCode,
-                            'gcm_code' : scn.gcmCode,
-                            'alt_pred_code' : scn.altpredCode,
-                            'date_code' : scn.dateCode,
-                            'epsg' : prj.epsgcode
-                        })
+        # Add Generated Files
+        # -------------------
+        # Gridset EML
+        gs_eml = tostring(makeEml(gridset))
+        zip_f.writestr(
+            os.path.join(
+                GRIDSET_DIR, 'gridset_{}.eml'.format(gridset.getId())), gs_eml)
+
+        # Tree
+        if gridset.tree is not None and \
+                gridset.tree.getDLocation() is not None:
+            tree = gridset.tree
+            zip_f.write(
+                tree.getDLocation(), os.path.join(GRIDSET_DIR, 'tree.nex'))
+
+        # Known package files
+        # -------------------
+        static_files, template_files = _get_known_package_files()
+
+        # Add static files
+        for fn in static_files:
+            r_path = fn.replace(STATIC_PACKAGE_PATH, '')
+            zip_f.write(fn, r_path)
+
+        # Process template files
+        for template_fn in template_files:
+            # Remove .template and leading static package path
+            r_path = template_fn.replace(
+                '.template', '').replace(STATIC_PACKAGE_PATH, '')
+            # Should we write this template?  Default to true and change if
+            #    data will not support it.
+            write_template = True
+            # TODO: See if there is a better way to determine what variables to
+            #    send to template without just sending everything and wasting
+            #    memory (would require all all file content to be generated at
+            #    once and passed around, potentially hundreds of MB or more).
+            if r_path.endswith('index.html'):
+                temp_filler = TemplateFiller(
+                    gridset_name=gs_name, do_mcpa=do_mcpa,
+                    do_map_stats=do_pam_stats, do_sdm=include_sdm,
+                    do_csv=include_csv, sdm_prj_dir=SDM_PRJ_DIR,
+                    matrix_dir=MATRIX_DIR, package_version=PACKAGE_VERSION)
+            elif r_path.endswith('browse_maps.html'):
+                if prj_info is not None:
+                    temp_filler = TemplateFiller(
+                        gridset_name=gs_name, projections=prj_info,
+                        package_version=PACKAGE_VERSION)
+                else:
+                    write_template = False
+            elif r_path.endswith('sdm_info.js'):
+                if occ_info is not None and prj_info is not None:
+                    temp_filler = TemplateFiller(
+                        sdm_info=json.dumps({
+                            'projections': prj_info,
+                            'occurrences': occ_info
+                        }, indent=3))
+                else:
+                    write_template = False
+            elif r_path.endswith('tree.js'):
+                if tree is not None:
+                    with open(tree.getDLocation()) as tree_file:
+                        # Fill in tree string value this way so there are no
+                        #    additional references to it and it will be cleaned
+                        #    up at next loop iteration
+                        temp_filler = TemplateFiller(
+                            tree_string=tree_file.read())
+                else:
+                    write_template = False
+            elif r_path.endswith('statNameLookup.json'):
+                temp_filler = TemplateFiller(
+                    stats_json=json.dumps(createStatsMeta(), indent=3))
+            elif r_path.endswith('pam.js'):
+                if pam is not None:
+                    header_lookup_fn = os.path.join(
+                        DYN_PACKAGE_DIR, 'squidLookup.json')
+                    pam_str = StringIO()
+                    geoJsonify_flo(
+                        pam_str, shapegrid.getDLocation(), matrix=pam,
+                        mtxJoinAttrib=0, ident=0,
+                        headerLookupFilename=header_lookup_fn, transform=mung)
+                    pam_str.seek(0)
+                    temp_filler = TemplateFiller(pam_json=pam_str.getvalue())
+                    pam_str = None
+                else:
+                    write_template = False
+            elif r_path.endswith('squidLookup.json'):
+                if pam is not None:
+                    temp_filler = TemplateFiller(
+                        squid_lookup=json.dumps(
+                            createHeaderLookup(
+                                pam.getColumnHeaders(), squids=True,
+                                scribe=scribe, userId=user_id), indent=3))
+                else:
+                    write_template = False
+            elif r_path.endswith('nodeLookup.js'):
+                if anc_pam is not None:
+                    temp_filler = TemplateFiller(
+                        node_lookup_json=json.dumps(
+                            createHeaderLookup(
+                                anc_pam.getColumnHeaders()), indent=3))
+                else:
+                    write_template = False
+            elif r_path.endswith('ancPam.js'):
+                if pam is not None:
+                    header_lookup_fn = os.path.join(
+                        DYN_PACKAGE_DIR, 'nodeLookup.json')
+                    anc_pam_str = StringIO()
+                    geoJsonify_flo(
+                        anc_pam_str, shapegrid.getDLocation(), matrix=anc_pam,
+                        mtxJoinAttrib=0, ident=0,
+                        headerLookupFilename=header_lookup_fn, transform=mung)
+                    anc_pam_str.seek(0)
+                    temp_filler = TemplateFiller(
+                        anc_pam_json=anc_pam_str.getvalue())
+                    anc_pam_str = None
+                else:
+                    write_template = False
+            elif r_path.endswith('mcpaMatrix.js'):
+                if mcpa_mtx is not None:
+                    mtx_str = StringIO()
+                    mcpa_mtx.writeCSV(mtx_str)
+                    mtx_str.seek(0)
+                    temp_filler = TemplateFiller(mcpa_csv=mtx_str.getvalue())
+                    mtx_str = None
+                else:
+                    write_template = False
+            elif r_path.endswith('sitesCovarianceObserved.js'):
+                if sites_cov_obs is not None:
+                    mtx_str = StringIO()
+                    mtx_2d = Matrix(
+                        sites_cov_obs.data[:,:,0],
+                        headers={
+                            '0': sites_cov_obs.getRowHeaders(),
+                            '1': sites_cov_obs.getColumnHeaders()})
+                    geoJsonify_flo(
+                        mtx_str, shapegrid.getDLocation(), mtx_2d,
+                        mtxJoinAttrib=0, ident=0)
+                    mtx_str.seek(0)
+                    temp_filler = TemplateFiller(
+                        sites_cov_obs_json=mtx_str.getvalue())
+                    mtx_str = None
+                else:
+                    write_template = False
+            elif r_path.endswith('sitesObserved.js'):
+                if sites_obs is not None:
+                    mtx_str = StringIO()
+                    mtx_2d = Matrix(
+                        sites_obs.data[:,:,0],
+                        headers={
+                            '0': sites_obs.getRowHeaders(),
+                            '1': sites_obs.getColumnHeaders()})
+                    geoJsonify_flo(
+                        mtx_str, shapegrid.getDLocation(), mtx_2d,
+                        mtxJoinAttrib=0, ident=0)
+                    mtx_str.seek(0)
+                    temp_filler = TemplateFiller(
+                        sites_obs_json=mtx_str.getvalue())
+                    mtx_str = None
+                else:
+                    write_template = False
                     
-                # Add occurrence set
-                if occ.getId() not in added_occ_ids:
-                    arc_occ_path = os.path.join(
-                        prj_dir, '{}.csv'.format(occ.displayName))
-                    sys_occ_path = '{}{}'.format(
-                        os.path.splitext(
-                            occ.getDLocation())[0], LMFormat.CSV.ext)
-                    zip_f.write(sys_occ_path, arc_occ_path)
-                    # TODO: Add points EML
-                    added_occ_ids.append(occ.getId())
-                    occ_info.append(
-                        {
-                            'occ_id' : occ.getId(),
-                            'species_name' : occ.displayName,
-                            'num_points' : occ.queryCount,
-                            'file_path' : arc_occ_path
-                        })
-            
-            # Write out JSON
-            sdm_info_filename = os.path.join(
-                DYN_PACKAGE_DIR, 'sdm_info.js')
-            sdm_info_obj = {
-                'projections' : prj_info,
-                'occurrences' : occ_info
-            }
-            sdm_json_str = "var projection_info = JSON.parse(`{}`);".format(
-                json.dumps(sdm_info_obj))
-            zip_f.writestr(sdm_info_filename, sdm_json_str)
-            
-            # Write projection page
-            zip_f.writestr('browse_maps.html', get_sdm_html_page(prj_info))
+            # Fill in and write template if we should
+            if write_template:
+                with open(template_fn) as in_file:
+                    template_str = in_file.read()
+                zip_f.writestr(
+                    r_path, temp_filler.fill_templated_string(template_str))
 
-    
 # .............................................................................
 def summarize_object_statuses(summary):
     """Summarizes a summary
