@@ -452,13 +452,13 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
             elif r_path.endswith('statsHeatMap.html'):
                 if do_pam_stats:
                     temp_filler = TemplateFiller(
-                        package_version=PACKAGE_VERSION)
+                        gridset_name=gs_name, package_version=PACKAGE_VERSION)
                 else:
                     write_template = False
             elif r_path.endswith('statsTreeMap.html'):
                 if do_mcpa:
                     temp_filler = TemplateFiller(
-                        package_version=PACKAGE_VERSION)
+                        gridset_name=gs_name, package_version=PACKAGE_VERSION)
                 else:
                     write_template = False
             elif r_path.endswith('sdm_info.js'):
