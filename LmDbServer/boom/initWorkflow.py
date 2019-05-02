@@ -445,9 +445,9 @@ class BOOMFiller(LMObject):
         
         # RAD/PAM params
         compute_pam_stats = self._getBoomOrDefault(config, BoomKeys.COMPUTE_PAM_STATS, 
-                                                   isBool=False)
+                                                   isBool=True, defaultValue=False)
         compute_mcpa = self._getBoomOrDefault(config, BoomKeys.COMPUTE_MCPA, 
-                                              isBool=False)
+                                              isBool=True, defaultValue=False)
         num_permutations = self._getBoomOrDefault(config, BoomKeys.NUM_PERMUTATIONS,
                                                   defaultValue=DEFAULT_NUM_PERMUTATIONS)
         gridbbox = self._getBoomOrDefault(config, BoomKeys.GRID_BBOX, isList=True)
