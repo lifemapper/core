@@ -25,6 +25,7 @@ from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmCommon.common.readyfile import readyFilename
+from LmCommon.compression.binaryList import compress
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
 from LmCompute.common.log import LmComputeLogger
@@ -392,7 +393,8 @@ class ParameterSweep(object):
             if status < JobStatus.GENERAL_ERROR:
                 self.pavs.append(
                     {
-                        RegistryKey.PAV_FILENAME : pav_filename,
+                        #RegistryKey.PAV_FILENAME : pav_filename,
+                        RegistryKey.COMPRESSED_PAV_DATA: compress(pav.data),
                         RegistryKey.IDENTIFIER : pav_id,
                         RegistryKey.PROJECTION_ID : projection_id
                     })

@@ -4,18 +4,18 @@ import argparse
 import json
 from mx.DateTime import DateTimeFromMJD
 import os
+from osgeo import ogr
 
 # TODO: Different logger
-from LmCommon.common.matrix import Matrix
-from LmCommon.compression.binaryList import compress
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS)
 from LmServer.common.log import ConsoleLogger
 from LmServer.common.solr import buildSolrDocument, postSolrDocument
 from LmServer.db.borgscribe import BorgScribe
 from LmBackend.common.lmconstants import RegistryKey
+from LmCommon.compression.binaryList import decompress
 
 # .............................................................................
-def get_post_pairs(pav, prj, occ, pam, sci_name, pav_filename):
+def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
     """Gets a list of (field name, field value) tuples for the pav
 
     Args:
@@ -32,7 +32,6 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, pav_filename):
     shapegrid = pam.getShapegrid()
     mdl_scn = prj.modelScenario
     prj_scn = prj.projScenario
-    pav_mtx = Matrix.load(pav_filename)
     
     try:
         sp = sci_name.scientificName.split(' ')[1]
@@ -115,16 +114,25 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, pav_filename):
         (SOLR_FIELDS.SHAPEGRID_META_URL, shapegrid.metadataUrl),
         (SOLR_FIELDS.SHAPEGRID_DATA_URL, shapegrid.getDataUrl()),
         # Compress the PAV and store the string
-        (SOLR_FIELDS.COMPRESSED_PAV, compress(pav_mtx.data))
+        (SOLR_FIELDS.COMPRESSED_PAV, compressed_pav)
     ]
 
     # Process presence centroids
-    rowHeaders = pav_mtx.getRowHeaders()
-    
-    for i in xrange(pav_mtx.data.shape[0]):
-        if pav_mtx.data[i]:
-            _, x, y = rowHeaders[i]
-            fields.append((SOLR_FIELDS.PRESENCE, '{},{}'.format(y, x)))
+    # See if we can get features from shapegrid
+    shapegrid_dataset = ogr.Open(shapegrid.getDLocation())
+    shapegrid_layer = shapegrid_dataset.GetLayer()
+    uncompressed_pav = decompress(compressed_pav)
+    i = 0
+    feat = shapegrid_layer.GetNextFeature()
+    while feat is not None:
+        if uncompressed_pav[i]:
+            geom = feat.GetGeometryRef()
+            cent = geom.Centroid()
+            fields.append(
+                (SOLR_FIELDS.PRESENCE, '{},{}'.format(
+                    cent.GetY(), cent.GetX())))
+        i += 1
+        feat = shapegrid_layer.GetNextFeature()
     return fields
 
 # .............................................................................
@@ -149,7 +157,8 @@ if __name__ == '__main__':
     scribe.openConnections()
     doc_pairs = []
     for pav_info in pav_config:
-        pav_filename = pav_info[RegistryKey.PAV_FILENAME]
+        #pav_filename = pav_info[RegistryKey.PAV_FILENAME]
+        compressed_pav = pav_info[RegistryKey.COMPRESSED_PAV_DATA]
         pav_id = pav_info[RegistryKey.IDENTIFIER]
         proj_id = pav_info[RegistryKey.PROJECTION_ID]
 
@@ -159,7 +168,7 @@ if __name__ == '__main__':
         pam = scribe.getMatrix(mtxId=pav.parentId)
         sci_name = scribe.getTaxon(squid=pav.squid)
     
-        val_pairs = get_post_pairs(pav, prj, occ, pam, sci_name, pav_filename)
+        val_pairs = get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav)
         if len(val_pairs) > 0:
             doc_pairs.append(val_pairs)
     

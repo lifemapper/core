@@ -57,6 +57,7 @@ class RegistryKey(object):
     LOG_PATH = 'log_path'
     PROJECTION_PATH = 'projection_path'
     PAV_FILENAME = 'pav_path'
+    COMPRESSED_PAV_DATA = 'compressed_data'
     
     # ..................
     # Types
