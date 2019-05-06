@@ -112,7 +112,8 @@ class ScientificName(LMObject):
             if self._sourceId is not None and self._sourceKey is not None:
                 squid = computeHash(content='{}:{}'.format(self._sourceId, self._sourceKey))
             elif self.userId is not None and self.scientificName is not None:
-                squid = computeHash(content='{}:{}'.format(self.userId, self.scientificName))
+                mod_sciname = self.scientificName.replace('_', ' ')
+                squid = computeHash(content='{}:{}'.format(self.userId, mod_sciname))
             else:
                 raise LMError('Scientific name requires unique identifier comprised of: '+
                                     'taxonomySourceId/taxonomySourceKey OR userid/scientificName')

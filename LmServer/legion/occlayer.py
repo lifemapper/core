@@ -6,13 +6,12 @@ from osgeo import ogr
 
 from LmBackend.common.lmobj import LMError
 
-from LmCommon.common.lmconstants import LM_NAMESPACE, LMFormat
+from LmCommon.common.lmconstants import LMFormat
 
 from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
-from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, 
-                                                      LMFileType, LMServiceType, 
-                                                      OccurrenceFieldNames)
+from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType, 
+                                         LMServiceType, OccurrenceFieldNames)
 
 # .............................................................................
 # .............................................................................
