@@ -401,7 +401,7 @@ class JobStatus:
     # =                             General Errors                             =
     # ==========================================================================
     # Not found in database, could be prior to insertion
-    NOT_FOUND = 404
+    NOT_FOUND = 1404
     
     GENERAL_ERROR = 1000 ## Any status greater than this is an error
     UNKNOWN_ERROR = 1001 ## Unknown error occurred
@@ -598,9 +598,6 @@ class JobStatus:
     HTTP_SERVER_SERVICE_UNAVAILABLE = 4503
     HTTP_SERVER_GATEWAY_TIMEOUT = 4504
     HTTP_SERVER_HTTP_VERSION_NOT_SUPPORTED = 4505
-    
-    # Not found in database, could be prior to insertion
-    NOT_FOUND = 404
     
     # ==========================================================================   
     # =                             Database Errors                            =
