@@ -16,6 +16,30 @@ from LmCommon.common.matrix import Matrix
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
+from LmCommon.compression.binaryList import decompress
+
+# .............................................................................
+def stockpile_pavs(pav_list):
+    """Stockpiles pavs from a list of dictionary entries
+    """
+    log = ConsoleLogger()
+    scribe = BorgScribe(log)
+    scribe.openConnections()
+    for pav_dict in pav_list:
+        pav_id = int(pav_dict[RegistryKey.IDENTIFIER])
+        pav = scribe.getMatrixColumn(mtxcolId=pav_id)
+        if pav is None:
+            raise LMError(currargs='Failed to get PAV {}'.format(pav_id))
+        try:
+            pav_data = decompress(pav_dict[RegistryKey.COMPRESSED_PAV_DATA])
+            status = JobStatus.COMPLETE
+        except:
+            status = JobStatus.IO_MATRIX_READ_ERROR
+        
+        pav.updateStatus(status)
+        scribe.updateObject(pav)
+    scribe.closeConnections()
+    
 
 # .............................................................................
 def stockpile_objects(stockpile_list):
@@ -126,6 +150,9 @@ def test_spatial(spatial_filename):
 # .............................................................................
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Stockpile multiple objects')
+    parser.add_argument(
+        '-p', '--pavs_filename', type=str,
+        help='A JSON file containing PAV data for stockpiling')
     parser.add_argument('stockpile_filename', type=str,
                         help='A JSON file containing stockpile information')
     parser.add_argument('success_filename', type=str,
@@ -139,6 +166,11 @@ if __name__ == '__main__':
         msg = 'success'
     except Exception as e:
         msg = str(e)
+
+    if args.pavs_filename is not None:
+        with open(args.pavs_filename) as in_pavs:
+            pav_list = json.load(in_pavs)
+            stockpile_pavs(pav_list)
     
     with open(args.success_filename, 'w') as out_success:
         out_success.write(msg)

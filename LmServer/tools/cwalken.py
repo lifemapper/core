@@ -679,7 +679,8 @@ class ChristopherWalken(LMObject):
                         occ.getId()))
                 stockpile_cmd = MultiStockpileCommand(
                     sweep_config.stockpile_filename,
-                    stockpile_success_filename)
+                    stockpile_success_filename,
+                    pav_filename=sweep_config.pavs_filename)
                 spudRules.append(
                     stockpile_cmd.getMakeflowRule(local=True))
     

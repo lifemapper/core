@@ -384,7 +384,8 @@ class MultiStockpileCommand(_LmServerCommand):
     scriptName = 'multi_stockpile.py'
 
     # ..............................
-    def __init__(self, stockpile_filename, success_filename):
+    def __init__(self, stockpile_filename, success_filename,
+                 pav_filename=None):
         """Construct the command object
 
         Args:
@@ -395,6 +396,9 @@ class MultiStockpileCommand(_LmServerCommand):
         self.inputs.append(stockpile_filename)
         self.outputs.append(success_filename)
         self.args = '{} {}'.format(stockpile_filename, success_filename)
+        if pav_filename is not None:
+            self.inputs.append(pav_filename)
+            self.opt_args += ' -p {}'.format(pav_filename)
 
 # .............................................................................
 class ShootSnippetsCommand(_LmServerCommand):
