@@ -1214,16 +1214,6 @@ class BOOMFiller(LMObject):
                   and configFile written by BOOMFiller.initBoom.
         """
         rules = []
-        #meta = {MFChain.META_CREATED_BY: self.name,
-        #        MFChain.META_GRIDSET: boomGridsetId,
-        #        MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
-        #.format(self.userId, self.archiveName)}
-        #newMFC = MFChain(self.userId, priority=self.priority, 
-        #                 metadata=meta, status=JobStatus.GENERAL, 
-        #                 statusModTime=mx.DateTime.gmt().mjd)
-        #mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
-        # Workspace directory
-        #ws_dir = mfChain.getRelativeDirectory()
         base_config_fname = os.path.basename(self.outConfigFilename)
         # ChristopherWalken writes when finished walking through 
         # species data (initiated by this Makeflow).  
@@ -1238,8 +1228,6 @@ class BOOMFiller(LMObject):
             self.occFname = point_output_file
             self.occSep = IdigbioAPI.DELIMITER
             # Add command to this Makeflow
-            # TODO: allow non-local
-            #mfChain.addCommands([idigCmd.getMakeflowRule(local=True)])
             rules.append(idigCmd.getMakeflowRule(local=True))
             # Boom requires iDigBio data
             boomCmd.inputs.extend(idigCmd.outputs)
@@ -1248,16 +1236,12 @@ class BOOMFiller(LMObject):
         cattaxCmd, taxSuccessFname = self._getTaxonomyCommand(target_dir)
         if cattaxCmd:
             # Add catalog taxonomy command to this Makeflow
-            #mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
             rules.append(cattaxCmd.getMakeflowRule(local=True))
             # Boom requires catalog taxonomy completion
             boomCmd.inputs.append(taxSuccessFname)
         
         # Add boom command to this Makeflow
-        #mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
         rules.append(boomCmd.getMakeflowRule(local=True))
-        #mfChain = self._write_update_MF(mfChain)
-        #return mfChain
         return rules
 
     # .............................................................................

@@ -126,7 +126,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             dataFormat=dataFormat, ogrType=ogr.wkbPoint, valUnits=valUnits,
             valAttribute=valAttribute, nodataVal=nodataVal, minVal=minVal,
             maxVal=maxVal, mapunits=mapunits, resolution=resolution, bbox=bbox,
-            svcObjId=occurrenceSetId, serviceType=LMServiceType.OCCURRENCES,
+            svcObjId=occurrenceSetId, serviceType=serviceType,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
             modTime=statusModTime, featureCount=featureCount,
             featureAttributes=featureAttributes, features=features,
