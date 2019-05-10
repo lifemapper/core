@@ -122,6 +122,24 @@ class BoomCollate(LMObject):
                 aggregation_rules)
 
     # ................................
+    def _get_ancestral_pam_rules_for_pam(self, pam_id, pam_filename,
+                                         tree_filename, dependency_filename):
+        """Get rules for creating ancestral PAM
+        """
+        anc_pam_rules = []
+        # Ancestral PAM
+        if tree_filename is not None:
+            anc_pam_filename = self._create_filename(
+                pam_id, 'anc_pam{}'.format(LMFormat.MATRIX.ext))
+            anc_pam_rule = CreateAncestralPamCommand(
+                pam_filename, tree_filename, anc_pam_filename)
+            anc_pam_rule.inputs.append(dependency_filename) 
+            anc_pam_rules.append(anc_pam_rule.getMakeflowRule())
+        else:
+            anc_pam_filename = None
+        return (anc_pam_filename, anc_pam_rules)
+
+    # ................................
     def _get_analysis_rules_for_pam(
             self, pam_id, pam_filename, grim_filename=None,
             biogeo_filename=None, phylo_filename=None, tree_filename=None):
@@ -139,17 +157,6 @@ class BoomCollate(LMObject):
                 len(obs_rules), pam_id))
         pam_analysis_rules.extend(obs_rules)
         
-        # Ancestral PAM
-        if tree_filename is not None:
-            anc_pam_filename = self._create_filename(
-                pam_id, 'anc_pam{}'.format(LMFormat.MATRIX.ext))
-            pam_analysis_rules.append(
-                CreateAncestralPamCommand(
-                    pam_filename, tree_filename, anc_pam_filename
-                    ).getMakeflowRule())
-        else:
-            anc_pam_filename = None
-
         # Randomized
         rand_pam_stats_filenames = []
         rand_mcpa_stats_filenames = []
@@ -177,7 +184,7 @@ class BoomCollate(LMObject):
         self.log.debug(
             'Added {} total analysis rules for pam {}'.format(
                 len(pam_analysis_rules), pam_id))
-        return (anc_pam_filename, sig_pam_stats_filenames, sig_mcpa_filenames,
+        return (sig_pam_stats_filenames, sig_mcpa_filenames,
                 pam_analysis_rules)
 
     # ................................
@@ -355,8 +362,15 @@ class BoomCollate(LMObject):
                 MatrixType.ANC_PAM, ProcessType.RAD_CALCULATE, pam.gcmCode,
                 pam.altpredCode, pam.dateCode)
         
+        # Ancestral PAM rules -- send pruned tree filename as dependency so
+        #    we know that the tree has squids
+        (anc_pam_filename, anc_pam_rules
+         ) = self._get_ancestral_pam_rules_for_pam(
+             pam.getId(), pam.getDLocation(), self.squid_tree_filename,
+             pruned_tree_filename)
+        pam_rules.extend(anc_pam_rules)
         # Analysis rules
-        (anc_pam_filename, pam_stats_filenames, mcpa_filenames, analysis_rules
+        (pam_stats_filenames, mcpa_filenames, analysis_rules
          ) = self._get_analysis_rules_for_pam(
              pam.getId(), pruned_pam_filename, grim_filename=grim_filename,
              biogeo_filename=biogeo_filename,

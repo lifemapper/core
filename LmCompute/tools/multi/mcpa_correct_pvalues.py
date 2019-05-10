@@ -5,7 +5,7 @@
 import argparse
 
 from LmCommon.common.matrix import Matrix
-from LmCommon.statistics.pValueCorrection import correctPValues
+from LmCommon.statistics.permutation_testing import correct_p_values
 from LmCompute.plugins.multi.mcpa.mcpa import get_p_values
 
 # .............................................................................
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     with open(args.p_values_filename, 'w') as p_val_f:
         p_values.save(p_val_f)
       
-    bh_values = correctPValues(p_values)
+    bh_values = correct_p_values(p_values)
    
     with open(args.bh_values_filename, 'w') as bh_val_f:
         bh_values.save(bh_val_f)
