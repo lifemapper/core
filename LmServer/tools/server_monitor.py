@@ -123,30 +123,34 @@ def get_number_of_running_workers():
 # .............................................................................
 if __name__ == '__main__':
     msgs = []
+    is_okay = True
     # If Matt Daemon has been running for longer than 1 second, will be true
     matt_d_running = bool(
         len(get_long_running_processes(
             'mattDaemon', test_age=(0, 0, 0, 1))) > 0)
     if matt_d_running:
-        # Look for makeflows running for more than 12 hours
-        long_makeflows = get_long_running_processes(
-            'makeflow', test_age=(0, 12, 0, 0))
-        for proc in long_makeflows:
-            msgs.append(
-                'Makeflow at PID: {} has been running for: {}'.format(
-                    proc[ProcKeys.PID], proc[ProcKeys.ELAPSED_TIME]))
-        # Check to see if workers are running
-        num_workers = get_number_of_running_workers()
-        if num_workers == 0:
-            msgs.append('There are no workers running on {}'.format(
-                WEBSERVICES_ROOT))
+        msgs.append('Matt Daemon is running on {}'.format(WEBSERVICES_ROOT))
     else:
-        msgs.append('Matt Daemon is not running on the front end of {}'.format(
-            WEBSERVICES_ROOT))
+        msgs.append(
+            'Matt Daemon is NOT running on {}'.format(WEBSERVICES_ROOT))
+        is_okay = False
+        
+    # Look for makeflows running for more than 12 hours
+    long_makeflows = get_long_running_processes(
+        'makeflow', test_age=(0, 12, 0, 0))
+    for proc in long_makeflows:
+        msgs.append(
+            'Makeflow at PID: {} has been running for: {}'.format(
+                proc[ProcKeys.PID], proc[ProcKeys.ELAPSED_TIME]))
 
-    if len(msgs) > 0:
-        notifier = EmailNotifier()
-        subject = 'There are problems on {}'.format(WEBSERVICES_ROOT)
-        notifier.sendMessage(TROUBLESHOOTERS, subject, '\n'.join(msgs))
+    # Check to see if workers are running
+    num_workers = get_number_of_running_workers()
+    msgs.append('There are {} workers running'.format(num_workers))
+
+    notifier = EmailNotifier()
+    if is_okay:
+        subject = 'Compute processes look okay on {}'.format(WEBSERVICES_ROOT)
     else:
-        print('Everything is OK')
+        subject = '!!There are problems on {}!!'.format(WEBSERVICES_ROOT)
+
+    notifier.sendMessage(TROUBLESHOOTERS, subject, '\n'.join(msgs))
