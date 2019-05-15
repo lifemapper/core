@@ -112,7 +112,7 @@ def get_number_of_running_workers():
         int: The number of running workers
     """
     qstat_lines = subprocess.Popen(
-        'qstat', stdout=subprocess.PIPE).communicate(0)[0].split('\n')
+        ['qstat'], stdout=subprocess.PIPE).communicate(0)[0].split('\n')
     count = 0
     for line in qstat_lines:
         if line.find('makeflow') >= 0 and line.find('qw') < 0:
@@ -153,4 +153,4 @@ if __name__ == '__main__':
     else:
         subject = '!!There are problems on {}!!'.format(WEBSERVICES_ROOT)
 
-    notifier.sendMessage(TROUBLESHOOTERS, subject, '\n'.join(msgs))
+    notifier.sendMessage(TROUBLESHOOTERS, subject, '<br /><br />'.join(msgs))
