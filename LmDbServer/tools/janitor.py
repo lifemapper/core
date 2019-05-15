@@ -97,13 +97,13 @@ class Janitor(LMObject):
 
     # ...............................................
     def clearUserData(self, usr):
-        count = self._scribe.clearUser(usr)
+        count = self.scribe.clearUser(usr)
         self.scribe.log.info('Deleted {} objects for user {}'.format(count, usr))
         self._clearUserFiles(usr)
             
     # ...............................................
     def deleteGridset(self, gridsetid):
-        filenames = self._scribe.deleteGridsetReturnFilenames(gridsetid)
+        filenames = self.scribe.deleteGridsetReturnFilenames(gridsetid)
         for fn in filenames:
             try:
                 os.remove(fn)
@@ -117,10 +117,9 @@ class Janitor(LMObject):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(
-                description=('Clear a Lifemapper archive of SDM data and '
-                                 'intersections from those SDM projections ' +
-                                 'makeflows '))
-    parser.add_argument('-', 'user_or_gridsetid', default=None,
+                description=('Clear a Lifemapper archive of all data for a user or'
+                             'MatrixColumns, Matrices, and Makeflows for a gridset'))
+    parser.add_argument('user_or_gridsetid', default=None,
             help=('UserId or GridsetId for the data to delete'))
     args = parser.parse_args()
     gridsetid = usr = None
@@ -130,12 +129,16 @@ if __name__ == '__main__':
     except:
         usr = args.user_or_gridsetid
         
+    print('Janitor argument: gridsetid {}; userid {}'.format(gridsetid, usr))
+        
     jan = Janitor()
     jan.open()
     if usr is not None:
         jan.clearUserData(usr)
-    else:
+    elif gridsetid is not None:
         jan.deleteGridset(gridsetid)
+    else:
+        print('No valid option for clearing gridset or user data')
     jan.close()
       
 """
