@@ -699,6 +699,7 @@ class ChristopherWalken(LMObject):
     
     # ...............................
     def _doComputeSDM(self, occ, prjs, mtxcols):
+        # Do one, do all
         doSDM = self._doResetOcc(occ.status, occ.statusModTime, 
                                  occ.getDLocation(), occ.getRawDLocation())
         for o in prjs:
@@ -715,10 +716,6 @@ class ChristopherWalken(LMObject):
       
     # ...............................
     def _fill_sweep_config(self, sweep_config, work_dir, alg, occ, prjs, mtxcols):
-    #def _getSweepConfig(self, workdir, alg, occ, prjs, mtxcols):
-        #occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
-        #sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
-        
         # Add occurrence set if there is a process to perform
         if occ.processType is not None:
             rawmeta_dloc = occ.getRawDLocation() + LMFormat.JSON.ext
