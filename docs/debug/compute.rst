@@ -128,3 +128,18 @@ you can also see what makeflow processes are running with:
    `ps aux | grep makeflow`
 then check the contents of the makeflows with cat or something:
    `cat {path to running makeflow}`
+
+Things look stuck, what do I do now?
+------------------------------------
+If things are going through (makeflows / projections / whatever), check first to see if there are any makeflows running.
+   `ps aux | grep makeflow`
+If there are makeflows, check when they started.  If they have been running for a while, they may not have 
+workers or they may be stuck.  Check to see if there are connected workers.
+   `work_queue_status -C {server FQDN}:9097`
+If there are workers, tail the logs to see if anything is happening (check both .out and .err)
+   `tail -f {log file}`
+If there weren't any workers, run qstat to see if they are any running:
+   `qstat | grep -v qw`
+In either case, if logs aren't moving or no workers, try restarting matt daemon
+   `$PYTHON /opt/lifemapper/LmServer/tools/mattDaemon.py stop
+    $PYTHON /opt/lifemapper/LmServer/tools/mattDaemon.py start`
