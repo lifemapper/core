@@ -615,7 +615,7 @@ class ChristopherWalken(LMObject):
         if occ:
             squid = occ.squid
             
-            occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
+            occ_work_dir = 'occ_{}'.format(occ.getId())
             sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
             
             # If we have enough points to model
@@ -642,7 +642,7 @@ class ChristopherWalken(LMObject):
                     if doSDM:
                         # Add SDM commands for the algorithm
                         self._fill_sweep_config(
-                            sweep_config, workdir, alg, occ, prjs, mtxcols)
+                            sweep_config, alg, occ, prjs, mtxcols)
                 
             else:
                 doSDM = self._doComputeSDM(occ, [], [])
@@ -650,7 +650,7 @@ class ChristopherWalken(LMObject):
                     # Only add the occurrence set to the sweep config.  Empty
                     #    lists for projections and PAVs will omit those objects
                     self._fill_sweep_config(
-                        sweep_config, workdir, None, occ, [], [])
+                        sweep_config, None, occ, [], [])
 
             # Only add rules if we have something to compute
             num_comps = sum([
@@ -670,7 +670,7 @@ class ChristopherWalken(LMObject):
                 # Add sweep rule
                 param_sweep_cmd = SpeciesParameterSweepCommand(
                     species_config_filename, sweep_config.get_input_files(),
-                    sweep_config.get_output_files())
+                    sweep_config.get_output_files(), workdir)
                 spudRules.append(param_sweep_cmd.getMakeflowRule())
     
                 # Add stockpile rule
@@ -699,7 +699,6 @@ class ChristopherWalken(LMObject):
     
     # ...............................
     def _doComputeSDM(self, occ, prjs, mtxcols):
-        # Do one, do all
         doSDM = self._doResetOcc(occ.status, occ.statusModTime, 
                                  occ.getDLocation(), occ.getRawDLocation())
         for o in prjs:
@@ -715,7 +714,11 @@ class ChristopherWalken(LMObject):
         return doSDM
       
     # ...............................
-    def _fill_sweep_config(self, sweep_config, work_dir, alg, occ, prjs, mtxcols):
+    def _fill_sweep_config(self, sweep_config, alg, occ, prjs, mtxcols):
+    #def _getSweepConfig(self, workdir, alg, occ, prjs, mtxcols):
+        #occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
+        #sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
+        
         # Add occurrence set if there is a process to perform
         if occ.processType is not None:
             rawmeta_dloc = occ.getRawDLocation() + LMFormat.JSON.ext
@@ -761,8 +764,7 @@ class ChristopherWalken(LMObject):
 
         for mtxcol in mtxcols:
             pav_filename = os.path.join(
-                work_dir, 'pavs', 'pav_{}{}'.format(
-                    mtxcol.getId(), LMFormat.MATRIX.ext))
+                'pavs', 'pav_{}{}'.format(mtxcol.getId(), LMFormat.MATRIX.ext))
             sweep_config.add_pav_intersect(
                  mtxcol.shapegrid.getDLocation(),
                  mtxcol.getId(), prj.getId(), pav_filename,
@@ -879,4 +881,5 @@ class ChristopherWalken(LMObject):
         except:
             self.log.error('Failed to write doneWalken file {} for config {}'
                            .format(self.walkedArchiveFname, self.configFname))
+
 
