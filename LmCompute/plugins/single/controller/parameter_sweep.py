@@ -41,7 +41,7 @@ class ParameterSweep(object):
     """This class performs a parameter sweep for a single species
     """
     # ........................................
-    def __init__(self, sweep_config, pedantic_mode=False):
+    def __init__(self, sweep_config, base_work_dir='.', pedantic_mode=False):
         """Constructor
 
         Args:
@@ -51,7 +51,7 @@ class ParameterSweep(object):
                 calling method
         """
         self.sweep_config = sweep_config
-        self.work_dir = self.sweep_config.work_dir
+        self.work_dir = os.path.join(base_work_dir, self.sweep_config.work_dir)
         readyFilename(self.sweep_config.log_filename)
         
         log_name = os.path.basename(self.work_dir)
