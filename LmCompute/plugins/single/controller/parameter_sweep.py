@@ -41,12 +41,18 @@ class ParameterSweep(object):
     """This class performs a parameter sweep for a single species
     """
     # ........................................
-    def __init__(self, sweep_config, base_work_dir='.', pedantic_mode=False):
+    def __init__(self, sweep_config, base_work_dir='.', pavs_only=False,
+                 pedantic_mode=False):
         """Constructor
 
         Args:
             sweep_config : A parameter sweep configuration object used to
                 determine what should be done.
+            base_work_dir (str): A base work directory for all computations to
+                be run within.  The sweep config work directory would then be
+                a sub directory of this one.
+            pavs_only (:obj:`bool`): If true, only compute PAVs and skip the
+                other computations.
             pedantic_mode (:obj: `bool`) : If true, raise every exception to
                 calling method
         """
@@ -63,6 +69,7 @@ class ParameterSweep(object):
         self.registry = {}
         self.pavs = []
         self.pedantic = pedantic_mode
+        self.pavs_only = pavs_only
 
     # ........................................
     def _create_masks(self):
@@ -586,6 +593,21 @@ class ParameterSweep(object):
         return ret_file, status
 
     # ........................................
+    def _prepare_only_pavs(self):
+        """Prepares the metadata objects to perform PAV computations.
+        """
+        # Loop through projections and register outputs
+        for prj_config in self.sweep_config.get_projection_config():
+            
+            (process_type, projection_id, _, _, _, projection_path, _, _, _, _
+             ) = prj_config
+            
+            self._register_output_object(
+                RegistryKey.PROJECTION, projection_id, JobStatus.COMPUTED,
+                projection_path, process_type=process_type)
+
+    
+    # ........................................
     def _process_error(self, err, msg=None, raise_err=False):
         """Processes an exception and stops if configured to do so
 
@@ -701,10 +723,13 @@ class ParameterSweep(object):
     def run(self):
         """Runs the parameter sweep
         """
-        self._create_occurrence_sets()
-        self._create_masks()
-        self._create_models()
-        self._create_projections()
+        if not self.pavs_only:
+            self._create_occurrence_sets()
+            self._create_masks()
+            self._create_models()
+            self._create_projections()
+        else:
+            self._prepare_only_pavs()
         self._create_pavs()
         
         # Write metrics
