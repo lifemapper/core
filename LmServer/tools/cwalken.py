@@ -675,12 +675,13 @@ class ChristopherWalken(LMObject):
     
                 # Add stockpile rule
                 stockpile_success_filename = os.path.join(
-                    occ_work_dir, 'occ_{}stockpile.success'.format(
+                    workdir, occ_work_dir, 'occ_{}stockpile.success'.format(
                         occ.getId()))
                 stockpile_cmd = MultiStockpileCommand(
                     sweep_config.stockpile_filename,
                     stockpile_success_filename,
-                    pav_filename=sweep_config.pavs_filename)
+                    pav_filename=os.path.join(
+                        workdir, sweep_config.pavs_filename))
                 spudRules.append(
                     stockpile_cmd.getMakeflowRule(local=True))
     
