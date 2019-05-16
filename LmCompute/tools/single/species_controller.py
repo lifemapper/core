@@ -22,7 +22,8 @@ if __name__ == '__main__':
         help='Run in pedantic mode where every exception fails out.')
     args = parser.parse_args()
     
-    sweep_config = ParameterSweepConfiguration.load(args.config_file)
+    sweep_config = ParameterSweepConfiguration.load(
+        args.config_file, work_dir=args.base_work_dir)
     sweeper = ParameterSweep(
         sweep_config, base_work_dir=args.base_work_dir,
         pedantic_mode=args.pedantic)

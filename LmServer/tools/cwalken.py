@@ -670,7 +670,7 @@ class ChristopherWalken(LMObject):
                 # Add sweep rule
                 param_sweep_cmd = SpeciesParameterSweepCommand(
                     species_config_filename, sweep_config.get_input_files(),
-                    sweep_config.get_output_files(), workdir)
+                    sweep_config.get_output_files(workdir), workdir)
                 spudRules.append(param_sweep_cmd.getMakeflowRule())
     
                 # Add stockpile rule
