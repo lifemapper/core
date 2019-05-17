@@ -678,7 +678,7 @@ class ChristopherWalken(LMObject):
                     workdir, occ_work_dir, 'occ_{}stockpile.success'.format(
                         occ.getId()))
                 stockpile_cmd = MultiStockpileCommand(
-                    sweep_config.stockpile_filename,
+                    os.path.join(workdir, sweep_config.stockpile_filename),
                     stockpile_success_filename,
                     pav_filename=os.path.join(
                         workdir, sweep_config.pavs_filename))
@@ -688,10 +688,10 @@ class ChristopherWalken(LMObject):
                 # Add multi-index rule if we added PAVs
                 if len(sweep_config.pavs) > 0:
                     index_pavs_document_filename = os.path.join(
-                        occ_work_dir, 'solr_pavs_post{}'.format(
+                        workdir, occ_work_dir, 'solr_pavs_post{}'.format(
                             LMFormat.XML.ext))
                     index_cmd = MultiIndexPAVCommand(
-                        sweep_config.pavs_filename,
+                        os.path.join(workdir, sweep_config.pavs_filename),
                         index_pavs_document_filename)
                     spudRules.append(index_cmd.getMakeflowRule(local=True))
 
