@@ -55,21 +55,21 @@ class ParameterSweepConfiguration(object):
             # Try to load as if argument is a file name
             with open(fn_or_flo) as in_file:
                 config = json.load(in_file)
-        my_obj = cls()
+        my_obj = cls(work_dir=config[RegistryKey.WORK_DIR])
         my_obj.masks = config[RegistryKey.MASK]
         my_obj.models = config[RegistryKey.MODEL]
         my_obj.occurrence_sets = config[RegistryKey.OCCURRENCE]
         my_obj.pavs = config[RegistryKey.PAV]
         my_obj.projections = config[RegistryKey.PROJECTION]
-        my_obj.work_dir = config[RegistryKey.WORK_DIR]
-        my_obj.log_filename = os.path.join(my_obj.work_dir, LOG_FILENAME)
-        my_obj.metrics_filename = os.path.join(
-            my_obj.work_dir, METRICS_FILENAME)
-        my_obj.snippets_filename = os.path.join(
-            my_obj.work_dir, SNIPPETS_FILENAME)
-        my_obj.stockpile_filename = os.path.join(
-            my_obj.work_dir, STOCKPILE_FILENAME)
-        my_obj.pavs_filename = os.path.join(my_obj.work_dir, PAVS_FILENAME)
+        #my_obj.work_dir = config[RegistryKey.WORK_DIR]
+        #my_obj.log_filename = os.path.join(my_obj.work_dir, LOG_FILENAME)
+        #my_obj.metrics_filename = os.path.join(
+        #    my_obj.work_dir, METRICS_FILENAME)
+        #my_obj.snippets_filename = os.path.join(
+        #    my_obj.work_dir, SNIPPETS_FILENAME)
+        #my_obj.stockpile_filename = os.path.join(
+        #    my_obj.work_dir, STOCKPILE_FILENAME)
+        #my_obj.pavs_filename = os.path.join(my_obj.work_dir, PAVS_FILENAME)
         return my_obj
 
     # ........................................
