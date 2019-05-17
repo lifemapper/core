@@ -42,7 +42,7 @@ class ParameterSweepConfiguration(object):
 
     # ........................................
     @classmethod
-    def load(cls, fn_or_flo):
+    def load(cls, fn_or_flo, work_dir=''):
         """Loads a file or file like object
 
         Args:
@@ -55,7 +55,7 @@ class ParameterSweepConfiguration(object):
             # Try to load as if argument is a file name
             with open(fn_or_flo) as in_file:
                 config = json.load(in_file)
-        my_obj = cls()
+        my_obj = cls(work_dir=work_dir)
         my_obj.masks = config[RegistryKey.MASK]
         my_obj.models = config[RegistryKey.MODEL]
         my_obj.occurrence_sets = config[RegistryKey.OCCURRENCE]
