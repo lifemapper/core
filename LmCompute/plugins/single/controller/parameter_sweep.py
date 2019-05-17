@@ -57,13 +57,16 @@ class ParameterSweep(object):
                 calling method
         """
         self.sweep_config = sweep_config
+        self.base_work_dir = base_work_dir
         self.work_dir = os.path.join(base_work_dir, self.sweep_config.work_dir)
-        readyFilename(self.sweep_config.log_filename)
+        log_filename = os.path.join(
+            base_work_dir, self.sweep_config.log_filename)
+        readyFilename(log_filename)
         
         log_name = os.path.basename(self.work_dir)
         self.log = LmComputeLogger(
             log_name, addConsole=True, addFile=True,
-            logFilename=self.sweep_config.log_filename)
+            logFilename=log_filename)
         
         # Note: The registry is a place for registering outputs
         self.registry = {}
@@ -81,6 +84,8 @@ class ParameterSweep(object):
 
             (mask_method, mask_id, out_mask_base_filename, do_ascii, do_tiff
              ) = mask_config[:5]
+            out_mask_base_filename = os.path.join(
+                self.base_work_dir, out_mask_base_filename)
             if do_ascii:
                 asc_filename = '{}{}'.format(
                     out_mask_base_filename, LMFormat.ASCII.ext)
@@ -92,6 +97,9 @@ class ParameterSweep(object):
                 if mask_method == MaskMethod.HULL_REGION_INTERSECT:
                     (region_layer_filename, buffer_distance, occ_shp_filename
                      ) = mask_config[5:]
+                    # Prepend base directory
+                    region_layer_filename = os.path.join(
+                        self.base_work_dir, region_layer_filename)
                     # Get occurrence set shapefile
                     if not os.path.exists(occ_shp_filename):
                         occ_status = JobStatus.NOT_FOUND
@@ -148,6 +156,8 @@ class ParameterSweep(object):
              mask_id, mdl_ruleset_path, projection_id, projection_path,
              package_path, scale_params, multiplier) = mdl_config
             
+            mdl_ruleset_path = os.path.join(
+                self.base_work_dir, mdl_ruleset_path)
             occ_cont = True
             mask_cont = True
             mdl_metrics = None
@@ -192,6 +202,7 @@ class ParameterSweep(object):
                     
                     mask_filename = '{}{}'.format(
                         mask_filename_base, LMFormat.ASCII.ext)
+                    print('Mask file name: {}'.format(mask_filename))
                     wrapper = MaxentWrapper(
                         work_dir, species_name, logger=self.log)
                     wrapper.create_model(
@@ -240,8 +251,9 @@ class ParameterSweep(object):
                 # If openModeller
                 elif process_type in [ProcessType.OM_MODEL,
                                       ProcessType.OM_PROJECT]:
-                    mask_filename = '{}{}'.format(
-                        mask_filename_base, LMFormat.GTIFF.ext)
+                    mask_filename = os.path.join(
+                        self.base_work_dir, '{}{}'.format(
+                            mask_filename_base, LMFormat.GTIFF.ext))
                     wrapper = OpenModellerWrapper(
                         work_dir, species_name, logger=self.log)
                     wrapper.create_model(
@@ -366,6 +378,8 @@ class ParameterSweep(object):
             (shapegrid_filename, pav_id, projection_id, pav_filename, squid,
              min_presence, max_presence, min_coverage) = pav_config
             
+            # Prepend a work directory if provided
+            pav_filename = os.path.join(self.work_dir, pav_filename)
             readyFilename(pav_filename, overwrite=True)
             # TODO(CJ) : Consider if we can reuse the encoder
             encoder = LayerEncoder(shapegrid_filename)
@@ -439,6 +453,8 @@ class ParameterSweep(object):
                 if mask_id is not None:
                     mask_filename_base, mask_status = self._get_registry_output(
                         RegistryKey.MASK, mask_id)
+                    #mask_filename_base = os.path.join(
+                    #    self.base_work_dir, mask_filename_base)
                     # We can only compute if (needed) mask was created
                     #    successfully
                     if mask_status >= JobStatus.GENERAL_ERROR:
@@ -733,17 +749,29 @@ class ParameterSweep(object):
         self._create_pavs()
         
         # Write metrics
-        with open(self.sweep_config.metrics_filename, 'w') as out_metrics:
+        with open(
+            os.path.join(
+                self.base_work_dir,
+                self.sweep_config.metrics_filename), 'w') as out_metrics:
             json.dump(self.get_metrics(), out_metrics)
 
         # Write snippets
-        with open(self.sweep_config.snippets_filename, 'w') as out_snippets:
+        with open(
+            os.path.join(
+                self.base_work_dir,
+                self.sweep_config.snippets_filename), 'w') as out_snippets:
             json.dump(self.get_snippets(), out_snippets)
 
         # Write stockpile information
-        with open(self.sweep_config.stockpile_filename, 'w') as out_stockpile:
+        with open(
+            os.path.join(
+                self.base_work_dir,
+                self.sweep_config.stockpile_filename), 'w') as out_stockpile:
             json.dump(self.get_stockpile_info(), out_stockpile)
 
         # Write PAV information
-        with open(self.sweep_config.pavs_filename, 'w') as out_pavs:
+        with open(
+            os.path.join(
+                self.base_work_dir,
+                self.sweep_config.pavs_filename), 'w') as out_pavs:
             json.dump(self.get_pav_info(), out_pavs)
