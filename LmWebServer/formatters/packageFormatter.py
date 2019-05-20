@@ -338,6 +338,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
     sites_cov_obs = None
     sites_obs = None
     mcpa_mtx = None
+    csvs_in_folder = False
 
     # Open zip file
     with zipfile.ZipFile(
@@ -399,6 +400,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     csv_mtx_str.seek(0)
                     zip_f.writestr(csv_mtx_fn, csv_mtx_str.getvalue())
                     csv_mtx_str = None
+                    csvs_in_folder = True
 
         # Add Generated Files
         # -------------------
@@ -440,7 +442,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 temp_filler = TemplateFiller(
                     gridset_name=gs_name, do_mcpa=do_mcpa,
                     do_map_stats=do_pam_stats, do_sdm=include_sdm,
-                    do_csv=include_csv, sdm_prj_dir=SDM_PRJ_DIR,
+                    do_csv=csvs_in_folder, sdm_prj_dir=SDM_PRJ_DIR,
                     matrix_dir=MATRIX_DIR, package_version=PACKAGE_VERSION)
             elif r_path.endswith('browse_maps.html'):
                 if prj_info is not None:
