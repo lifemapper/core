@@ -117,6 +117,8 @@ new distribution.  ::
       
    * Tunnel ssh connection through local port (laptop)
       ssh -L 5920:localhost:5920 root@notyeti.lifemapper.org
+      
+   * Connect using VNCViewer on laptop
 
 * (NO) VNCServer procedure not currently working, using instructions 
   at https://www.tecmint.com/install-and-configure-vnc-server-in-centos-7/::
