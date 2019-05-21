@@ -545,10 +545,10 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 # returns None if GBIF API does NOT return this or another key as ACCEPTED  
                 sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, 
                                                                   len(dataChunk))
-                if sciName:
-                    updatedTaxonKey = sciName.sourceTaxonKey
-                    # Override the given taxonName with the resolved GBIF canonical name
-                    taxonName = sciName.canonicalName
+#                 if sciName:
+#                     updatedTaxonKey = sciName.sourceTaxonKey
+#                     # Override the given taxonName with the resolved GBIF canonical name
+#                     taxonName = sciName.scientificName
             else:
                 if not taxonName:
                     taxonName = taxonKey
@@ -560,8 +560,8 @@ class UserWoC(_SpeciesWeaponOfChoice):
                                 data=dataChunk, metadata=self.occParser.columnMeta)
                 if occ is not None:
                     self.log.info('WOC processed occset {}, name {}, with {} records; next start {}'
-                                      .format(occ.getId(), taxonName, len(dataChunk), 
-                                                 self.nextStart))
+                                  .format(occ.getId(), sciName.scientificName, 
+                                          len(dataChunk), self.nextStart))
         return occ
     
 # ...............................................

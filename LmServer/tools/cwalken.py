@@ -888,3 +888,12 @@ class ChristopherWalken(LMObject):
                            .format(self.walkedArchiveFname, self.configFname))
 
 
+"""
+borg=> select status, count(*) from occurrenceset where userid = 'kubi' and statusmodtime < 58624.7 group by status;
+ status | count
+--------+--------
+    300 | 242878
+      1 | 609772
+(2 rows)
+
+"""
