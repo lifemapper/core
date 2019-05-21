@@ -125,8 +125,8 @@ class BOOMFiller(LMObject):
          self.archiveName,
          self.priority,
          self.scenPackageName,
-         modelScenCode,
-         prjScenCodeList,
+         mdl_scencode,
+         prj_scencodes,
          doMapBaseline,
          self.dataSource,
          self.occIdFname,
@@ -158,9 +158,13 @@ class BOOMFiller(LMObject):
          
         # Find existing scenarios or create from user or public ScenPackage metadata
         self.scenPkg = self.findOrAddScenarioPackage()
-        (self.modelScenCode,
-         self.prjScenCodeList) = self.findMdlProjScenarios(modelScenCode, 
-                                   prjScenCodeList, doMapBaseline=doMapBaseline)
+        (self.mdl_scencode, self.prj_scencodes, 
+         mask_lyrname) = self.findMdlProjScenarios(mdl_scencode, prj_scencodes, 
+                                                   doMapBaseline=doMapBaseline)
+        # Currently taking ScenarioPackage metadata value SDM_MASK_META
+        # TODO: Allow any existing vector with intersecting region
+        if self.maskAlg and self.maskAlg.code == 'hull_region_intersect':
+            self.maskAlg.setParameter('region', mask_lyrname)
       
         # Fill grid bbox with scenario package (intersection of all bboxes) if it is absent
         if self.gridbbox is None:
@@ -204,7 +208,7 @@ class BOOMFiller(LMObject):
         return scenPkg
                 
     # ...............................................
-    def findMdlProjScenarios(self, modelScenCode, prjScenCodeList, 
+    def findMdlProjScenarios(self, mdl_scencode, prj_scencodes, 
                               doMapBaseline=1):
         """
         @summary Find which Scenario for modeling, which (list) for projecting  
@@ -212,38 +216,38 @@ class BOOMFiller(LMObject):
                                 may include SCENARIO_PACKAGE_MODEL_SCENARIO,
                                             SCENARIO_PACKAGE_PROJECTION_SCENARIOS
         """
-        # TODO: Put optional masklayer into every Scenario
-        masklyr = None 
+        valid_scencodes = self.scenPkg.scenarios.keys()
+        if len(valid_scencodes) == 0 or None in valid_scencodes:
+            raise LMError('ScenPackage {} metadata is incorrect, scenario codes = {}'
+                         .format(self.scenPackageName, valid_scencodes))
+            
+        # TODO: Allow alternate masklayer for any Scenario, requires test and/or transform
+        base_scencode, mask_lyrname = self._find_scenpkg_base_and_mask(
+                                                          self.scenPackageName)      
+        if not base_scencode in valid_scencodes:
+            raise LMError('ScenPackage {} metadata is incorrect, {} not in scenarios'
+                         .format(self.scenPackageName, base_scencode))
+            
+        # If model Scenarios are not listed, use scenPackage default baseline
+        if mdl_scencode is None:
+            mdl_scencode = base_scencode
+        # If model scenarios does not match scenPackage, error params file
+        elif mdl_scencode not in valid_scencodes:
+            raise LMError('Params file {} metadata is incorrect, {} not in scenarios {} for package {}'
+                         .format(self.inParamFname, mdl_scencode, valid_scencodes, self.scenPackageName))            
+        # If projection Scenarios are not listed, use all scenarios in scenPackage
+        if not prj_scencodes:
+            prj_scencodes = valid_scencodes      
+            if not doMapBaseline:
+                prj_scencodes.remove(mdl_scencode)
+        # If any prj scenario does not match scenPackage, error params file
+        else:
+            for pcode in prj_scencodes:
+                if pcode not in valid_scencodes:
+                    raise LMError('Params file {} metadata is incorrect, {} not in scenarios {} for package {}'
+                                 .format(self.inParamFname, mdl_scencode, valid_scencodes, self.scenPackageName))
         
-        validScenCodes = self.scenPkg.scenarios.keys()      
-        # If model and/or projection Scenarios are not listed, use defaults in 
-        # package metadata
-        if modelScenCode is None:
-            modelScenCode = self._findScenPkgBaseline(self.scenPackageName)
-        if not prjScenCodeList:
-            prjScenCodeList = validScenCodes      
-    
-        if modelScenCode is None or prjScenCodeList is None or len(prjScenCodeList) == 0:
-            raise LMError("""SCENARIO_PACKAGE_MODEL_SCENARIO and 
-                            SCENARIO_PACKAGE_PROJECTION_SCENARIOS must be 
-                            configured in BOOM parameter file or 
-                            SCENARIO_PACKAGE metadata file""")
-        # Make sure modeling Scenario exists in this package
-        if not modelScenCode in validScenCodes:
-            raise LMError('Scenario {} must exist in ScenPackage {} for User {}'
-                         .format(modelScenCode, self.scenPackageName, self.userId))
-        if prjScenCodeList:
-            for pcode in prjScenCodeList:
-                if not pcode in validScenCodes:
-                    raise LMError('Scenario {} must exist in ScenPackage {} for User {}'
-                                  .format(pcode, self.scenPackageName, self.userId))
-        if not doMapBaseline:
-            prjScenCodeList.remove(modelScenCode)
-        
-        # TODO: Need a mask layer for every scenario!!
-        self.masklyr = masklyr
-                       
-        return modelScenCode, prjScenCodeList
+        return mdl_scencode, prj_scencodes, mask_lyrname
                 
     # ...............................................
     def open(self):
@@ -327,9 +331,12 @@ class BOOMFiller(LMObject):
                     # Some algorithms(mask) may have a parameter indicating a layer,
                     # if so, add name to parameters and object to inputs
                     if acode == 'hull_region_intersect' and pname == 'region':
-                        if val.endswith(LMFormat.GTIFF.ext):
-                            val = val[:-len(LMFormat.GTIFF.ext)]
-                        inputs[pname] = val
+                    # TODO: re-enable this later.  
+                    #       Now, always use layer in SDM_MASK_META in scenario meta
+                        pass
+#                         if val.endswith(LMFormat.GTIFF.ext):
+#                             val = val[:-len(LMFormat.GTIFF.ext)]
+#                         inputs[pname] = val
                 alg.setParameter(pname, val)
         if inputs:
             alg.setInputs(inputs)
@@ -356,8 +363,26 @@ class BOOMFiller(LMObject):
             algs = defaultAlgs
         return algs
 
+#     # ...............................................
+#     def _findScenPkgMeta(self, scenpkgName):
+#         scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkgName + '.py')
+#         if not os.path.exists(scenpkg_meta_file):
+#             raise LMError(currargs='Climate metadata {} does not exist'
+#                          .format(scenpkg_meta_file))
+#         # TODO: change to importlib on python 2.7 --> 3.3+  
+#         try:
+#             import imp
+#             SPMETA = imp.load_source('currentmetadata', scenpkg_meta_file)
+#         except Exception, e:
+#             raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
+#                           .format(scenpkg_meta_file, e)) 
+#         pkgMeta = SPMETA.CLIMATE_PACKAGES[scenpkgName]
+#         mask_lyrname = SPMETA.SDM_MASK_META['name']
+#         return pkgMeta, mask_lyrname
+
     # ...............................................
-    def _findScenPkgMeta(self, scenpkgName):
+    def _find_scenpkg_base_and_mask(self, scenpkgName):
+#         pkgMeta, mask_lyrname = self._findScenPkgMeta(scenpkgName)
         scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkgName + '.py')
         if not os.path.exists(scenpkg_meta_file):
             raise LMError(currargs='Climate metadata {} does not exist'
@@ -368,15 +393,11 @@ class BOOMFiller(LMObject):
             SPMETA = imp.load_source('currentmetadata', scenpkg_meta_file)
         except Exception, e:
             raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                          .format(scenpkg_meta_file, e))         
+                          .format(scenpkg_meta_file, e)) 
         pkgMeta = SPMETA.CLIMATE_PACKAGES[scenpkgName]
-        return pkgMeta
-
-    # ...............................................
-    def _findScenPkgBaseline(self, scenpkgName):
-        pkgMeta = self._findScenPkgMeta(scenpkgName)
+        mask_lyrname = SPMETA.SDM_MASK_META['name']
         baseCode = pkgMeta['baseline']
-        return baseCode
+        return baseCode, mask_lyrname
 
     # ...............................................
     def readParamVals(self):
@@ -470,14 +491,14 @@ class BOOMFiller(LMObject):
         if scenPackageName is None:
             raise LMError('SCENARIO_PACKAGE must be configured')
 
-        modelScenCode = self._getBoomOrDefault(config, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO)
-        prjScenCodeList = self._getBoomOrDefault(config, 
+        mdl_scencode = self._getBoomOrDefault(config, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO)
+        prj_scencodes = self._getBoomOrDefault(config, 
                     BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, isList=True)
         doMapBaseline = self._getBoomOrDefault(config, BoomKeys.DO_MAP_BASELINE, 
                                                defaultValue=1)
         
         return (usr, usrPath, usrEmail, userTaxonomyBasename, archiveName, priority, scenPackageName, 
-                modelScenCode, prjScenCodeList, doMapBaseline, dataSource, 
+                mdl_scencode, prj_scencodes, doMapBaseline, dataSource, 
                 occIdFname, taxon_name_filename, taxon_id_filename, 
                 occFname, occSep, minpoints, (expyr, expmo, expdy), algs, 
                 gridbbox, cellsides, cellsize, gridname, 
@@ -514,11 +535,11 @@ class BOOMFiller(LMObject):
         config.set(SERVER_BOOM_HEADING, BoomKeys.TROUBLESHOOTERS, email)
             
         # SDM input environmental data, pulled from SCENARIO_PACKAGE metadata
-        pcodes = ','.join(self.prjScenCodeList)
+        pcodes = ','.join(self.prj_scencodes)
         config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, 
                    pcodes)
         config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO, 
-                   self.modelScenCode)
+                   self.mdl_scencode)
         config.set(SERVER_BOOM_HEADING, BoomKeys.MAPUNITS, self.scenPkg.mapUnits)
         config.set(SERVER_BOOM_HEADING, BoomKeys.EPSG, str(self.scenPkg.epsgcode))
         config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE, self.scenPkg.name)
@@ -812,7 +833,7 @@ class BOOMFiller(LMObject):
         
         for code, scen in self.scenPkg.scenarios.iteritems():
             # "Global" PAM (one per scenario/algorithm)
-            if code in self.prjScenCodeList:
+            if code in self.prj_scencodes:
                 # TODO: Allow alg to be specified for each species, all in same PAM
                 for alg in self.algorithms.values():
                     gPam = self._findOrAddPAM(updatedGrdset, alg, scen)
