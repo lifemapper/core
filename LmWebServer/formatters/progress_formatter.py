@@ -44,48 +44,48 @@ def format_gridset(gridset_id, detail=False):
     scribe.openConnections()
     
     message = ''
-    prj_summary = scribe.summarizeSDMProjectsForGridset(gridset_id)
-    mtx_summary = scribe.summarizeMatricesForGridset(gridset_id)
     mf_summary = scribe.summarizeMFChainsForGridset(gridset_id)
-    mc_summary = scribe.summarizeMtxColumnsForGridset(gridset_id)
-    occ_summary = scribe.summarizeOccurrenceSetsForGridset(gridset_id)
-    
-    (waiting_prjs, running_prjs, complete_prjs, error_prjs, total_prjs
-     ) = summarize_object_statuses(prj_summary)
-    (waiting_mtxs, running_mtxs, complete_mtxs, error_mtxs, total_mtxs
-     ) = summarize_object_statuses(mtx_summary)
     (waiting_mfs, running_mfs, complete_mfs, error_mfs, total_mfs
      ) = summarize_object_statuses(mf_summary)
-    (waiting_occs, running_occs, complete_occs, error_occs, total_occs
-     ) = summarize_object_statuses(occ_summary)
-    (waiting_mcs, running_mcs, complete_mcs, error_mcs, total_mcs
-     ) = summarize_object_statuses(mc_summary)
-    scribe.closeConnections()
     
-    # Progress is determined by makeflows.  If all SDMs error, then -1
-    if error_occs == total_occs and total_occs > 0:
-        progress = -1.0
-        message = 'All occurrence sets have failed'
-    elif error_prjs == total_prjs and total_prjs > 0:
-        progress = -1.0
-        message = 'All projections have failed'
-    elif total_mfs == 0:
-        progress = 1.0
-        message = 'All workflows have completed'
-    elif waiting_mfs == total_mfs:
-        progress = 0.0
-        line_pos = scribe.countPriorityMFChains(gridset_id)
-        if line_pos == 0:
-            message = 'Your project is running or next in the processing queue'
-        else:
-            message = 'Your project is number {} in the processing queue'.format(line_pos)
-    else:
-        # 0.5 * number running + 1.0 * number complete + number error / total
-        progress = (
-            0.5 * running_mfs + 1.0 * (complete_mfs + error_mfs)) / total_mfs
-        message = 'Workflows are running'
     
     if detail:
+        prj_summary = scribe.summarizeSDMProjectsForGridset(gridset_id)
+        mtx_summary = scribe.summarizeMatricesForGridset(gridset_id)
+        mc_summary = scribe.summarizeMtxColumnsForGridset(gridset_id)
+        occ_summary = scribe.summarizeOccurrenceSetsForGridset(gridset_id)
+        
+        (waiting_prjs, running_prjs, complete_prjs, error_prjs, total_prjs
+         ) = summarize_object_statuses(prj_summary)
+        (waiting_mtxs, running_mtxs, complete_mtxs, error_mtxs, total_mtxs
+         ) = summarize_object_statuses(mtx_summary)
+        (waiting_occs, running_occs, complete_occs, error_occs, total_occs
+         ) = summarize_object_statuses(occ_summary)
+        (waiting_mcs, running_mcs, complete_mcs, error_mcs, total_mcs
+         ) = summarize_object_statuses(mc_summary)
+        # Progress is determined by makeflows.  If all SDMs error, then -1
+        if error_occs == total_occs and total_occs > 0:
+            progress = -1.0
+            message = 'All occurrence sets have failed'
+        elif error_prjs == total_prjs and total_prjs > 0:
+            progress = -1.0
+            message = 'All projections have failed'
+        elif total_mfs == 0:
+            progress = 1.0
+            message = 'All workflows have completed'
+        elif waiting_mfs == total_mfs:
+            progress = 0.0
+            line_pos = scribe.countPriorityMFChains(gridset_id)
+            if line_pos == 0:
+                message = 'Your project is running or next in the processing queue'
+            else:
+                message = 'Your project is number {} in the processing queue'.format(line_pos)
+        else:
+            # 0.5 * number running + 1.0 * number complete + number error / total
+            progress = (
+                0.5 * running_mfs + 1.0 * (complete_mfs + error_mfs)) / total_mfs
+            message = 'Workflows are running'
+
         progress_dict = {
             'matrices' : {
                 'complete' : complete_mtxs,
@@ -121,9 +121,25 @@ def format_gridset(gridset_id, detail=False):
             'message' : message
         }
     else:
+        if total_mfs == 0 or (waiting_mfs + running_mfs) == 0:
+            progress = 1.0
+            message = 'All workflows have completed'
+        elif waiting_mfs == total_mfs:
+            progress = 0.0
+            line_pos = scribe.countPriorityMFChains(gridset_id)
+            if line_pos == 0:
+                message = 'Your project is running or next in the processing queue'
+            else:
+                message = 'Your project is number {} in the processing queue'.format(line_pos)
+        else:
+            # 0.5 * number running + 1.0 * number complete + number error / total
+            progress = (
+                0.5 * running_mfs + 1.0 * (complete_mfs + error_mfs)) / total_mfs
+            message = 'Workflows are running'
         progress_dict = {
             'progress' : progress
         }
+    scribe.closeConnections()
     return progress_dict
     
 # .............................................................................
