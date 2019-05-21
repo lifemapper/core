@@ -700,18 +700,21 @@ class ChristopherWalken(LMObject):
     
     # ...............................
     def _doComputeSDM(self, occ, prjs, mtxcols):
-        doSDM = self._doResetOcc(occ.status, occ.statusModTime, 
-                                 occ.getDLocation(), occ.getRawDLocation())
-        for o in prjs:
-            if doSDM:
-                break
-            else:
-                doSDM = self._doReset(o.status, o.statusModTime)
-        for o in mtxcols:
-            if doSDM:
-                break
-            else:
-                doSDM = self._doReset(o.status, o.statusModTime)
+#         doSDM = self._doResetOcc(occ.status, occ.statusModTime, 
+#                                  occ.getDLocation(), occ.getRawDLocation())
+        # occ is initalized by occwoc if ready for reset, check only status here
+        doSDM = (occ.status == JobStatus.INITIALIZE)
+        if not doSDM:
+            for o in prjs:
+                if doSDM:
+                    break
+                else:
+                    doSDM = self._doReset(o.status, o.statusModTime)
+            for o in mtxcols:
+                if doSDM:
+                    break
+                else:
+                    doSDM = self._doReset(o.status, o.statusModTime)
         return doSDM
       
     # ...............................
@@ -720,8 +723,8 @@ class ChristopherWalken(LMObject):
         #occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
         #sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
         
-        # Add occurrence set if there is a process to perform
-        if occ.processType is not None:
+        # Add occurrence set if status = 1 and there is a process to perform
+        if occ.status == JobStatus.INITIALIZE and occ.processType is not None:
             rawmeta_dloc = occ.getRawDLocation() + LMFormat.JSON.ext
             # TODO: replace metadata filename with metadata dict in self.columnMeta?
             sweep_config.add_occurrence_set(
@@ -831,20 +834,21 @@ class ChristopherWalken(LMObject):
             willCompute = True
         return willCompute
 
-# ...............................................
-    def _doResetOcc(self, status, statusModTime, dlocation, rawDataLocation):
-        willCompute = False
-        noRawData = rawDataLocation is None or not os.path.exists(rawDataLocation)
-        noCompleteData = dlocation is None or not os.path.exists(dlocation)
-        obsoleteData = statusModTime > 0 and statusModTime < self._obsoleteTime
-        if (JobStatus.incomplete(status) or
-             JobStatus.failed(status) or
-              # waiting with missing data
-             (JobStatus.waiting(status) and noRawData) or 
-              # out-of-date
-             (status == JobStatus.COMPLETE and noCompleteData or obsoleteData)):
-            willCompute = True
-        return willCompute
+# # ...............................................
+#     def _doResetOcc(self, status, statusModTime, dlocation, rawDataLocation):
+#         willCompute = False
+#         noRawData = rawDataLocation is None or not os.path.exists(rawDataLocation)
+#         noCompleteData = dlocation is None or not os.path.exists(dlocation)
+#         obsoleteData = statusModTime > 0 and statusModTime < self._obsoleteTime
+#         if (obsoleteData or
+#             JobStatus.incomplete(status) or
+#             JobStatus.failed(status) or
+#               # waiting with missing data
+#             (JobStatus.waiting(status) and noRawData) or 
+#               # out-of-date
+#             (status == JobStatus.COMPLETE and noCompleteData)):
+#             willCompute = True
+#         return willCompute
 
     # ...............................................
     def _findOrInsertSDMProject(self, occ, alg, prjscen, currtime):

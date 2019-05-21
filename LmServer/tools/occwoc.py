@@ -218,12 +218,12 @@ class _SpeciesWeaponOfChoice(LMObject):
         noRawData = (rawDataLocation is None) or not (os.path.exists(rawDataLocation))
         noCompleteData = (dlocation is None) or not (os.path.exists(dlocation))
         obsoleteData = (statusModTime > 0) and (statusModTime < self._obsoleteTime)
-        if (JobStatus.incomplete(status) or
-             JobStatus.failed(status) or
-              # waiting with missing data
-             (JobStatus.waiting(status) and noRawData) or 
-              # out-of-date
-             (status == JobStatus.COMPLETE and noCompleteData or obsoleteData)):
+        if (obsoleteData or
+            noCompleteData or
+            JobStatus.incomplete(status) or
+            JobStatus.failed(status) or
+            # waiting with missing data
+            (JobStatus.waiting(status) and noRawData)):
             willCompute = True
         return willCompute
 
@@ -252,22 +252,24 @@ class _SpeciesWeaponOfChoice(LMObject):
             raise e
 
         if occ is not None:
+            # Write raw data regardless
+            rdloc, rawmeta_dloc = self._writeRawData(occ, data=data, 
+                                                     metadata=metadata)
+            if not rdloc:
+                raise LMError(currargs='    Failed to find raw data location')
+            occ.setRawDLocation(rdloc, currtime)
+            # Set processType and metadata location (from config, not saved in DB)
+            occ.processType = self.processType
+            occ.rawMetaDLocation = self.metaFilename
+            
             # Do reset existing or new Occ?
             willCompute = self._willCompute(occ.status, occ.statusModTime, 
                                             occ.getDLocation(), occ.getRawDLocation())
             if willCompute:
-                self.log.info('    Reseting OccLayer raw data, status, count')
-                rdloc, rawmeta_dloc = self._writeRawData(occ, data=data, 
-                                                         metadata=metadata)
-                if not rdloc:
-                    raise LMError(currargs='    Failed to find raw data location')
-                occ.setRawDLocation(rdloc, currtime)
+                self.log.info('    Init new or existing OccLayer status, count')
                 occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime,
                      queryCount=dataCount)
                 _ = self._scribe.updateObject(occ)
-                # Set processType and metadata location (from config, not saved in DB)
-                occ.processType = self.processType
-                occ.rawMetaDLocation = self.metaFilename
             else:
                 # Return existing, completed, unchanged
                 self.log.info('    Returning up-to-date OccLayer')
@@ -404,7 +406,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
             except:
                 pass
         # User-specific attributes
-        self.processType = processType
+        self.processType = ProcessType.USER_TAXA_OCCURRENCE
         self.useGBIFTaxonomy = useGBIFTaxonomy
         self._userOccCSV = userOccCSV
         self._userOccMeta = userOccMeta
@@ -606,7 +608,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                                              taxonSourceName=taxonSourceName, 
                                              logger=logger)
         # specific attributes
-        self.processType = processType
+        self.processType = ProcessType.USER_TAXA_OCCURRENCE
         self._occCSVDir = occCSVDir
         self._occMeta = occMeta
         self._delimiter = occDelimiter
