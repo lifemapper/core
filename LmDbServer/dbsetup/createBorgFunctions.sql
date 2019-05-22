@@ -1103,11 +1103,16 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOldGridsets(usr varchar,
 $$
 DECLARE
    grdid int;
+   new_matrix_count int;
 BEGIN
-   For grdid IN SELECT gridsetid FROM lm_v3.lm_matrix 
-                WHERE userid = usr and statusmodtime < oldtime
+   For grdid IN SELECT distinct(gridsetid) FROM lm_v3.lm_matrix 
+                WHERE userid = usr and statusmodtime <= oldtime
       LOOP
-         RETURN NEXT grdid;
+      	 SELECT count(*) INTO new_matrix_count FROM matrix 
+             WHERE gridsetid = grdid and statusmodtime > oldtime;
+         IF new_matrix_count = 0 THEN  
+            RETURN NEXT grdid;
+         END IF; 
       END LOOP;
    
    RETURN;
@@ -3240,43 +3245,39 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridsetNoFiles(gsid int)
-RETURNS int AS
+DROP FUNCTION IF EXISTS lm_v3.lm_deleteGridsetNoFiles(gsid int);
+
+-- ----------------------------------------------------------------------------
+-- TODO: TEST this
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridsetMatrixColumns(gsid int)
+RETURNS SETOF int AS
 $$
 DECLARE
-   currCount int := -1;
+   currCount int := 0;
    mtxid int;
+   mcid int;
    total int := 0;
 BEGIN
-   -- MFProcesses
-   DELETE FROM lm_v3.MFProcess WHERE gridsetId = gsid;
-   GET DIAGNOSTICS total = ROW_COUNT;
-   RAISE NOTICE 'Deleted % MF processes for Gridset %', currCount, gsid;
-
    FOR mtxid IN SELECT matrixid FROM lm_v3.Matrix WHERE gridsetid = gsid 
       LOOP
-         DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
-         GET DIAGNOSTICS currCount = ROW_COUNT;
-         total = total + currCount;
-         RAISE NOTICE 'Deleted % Columns for Matrix %', currCount, mtxid;         
+         FOR mcid IN SELECT matrixcolumnid FROM lm_v3.MatrixColumn WHERE matrixid = mtxid
+            LOOP
+               DELETE FROM lm_v3.matrixcolumn WHERE matrixcolumnId = mcid;
+               RETURN NEXT mcid;
+               currCount = currCount + 1;
+            END LOOP;   
+            
+         RAISE NOTICE 'Deleted % MatrixColumns for Matrix %', currCount, mtxid;         
+         total = total + currCount;   
       END LOOP;
-
-   DELETE FROM lm_v3.Matrix WHERE gridsetid = gsid;
-   GET DIAGNOSTICS currCount = ROW_COUNT;
-   total = total + currCount;
-   RAISE NOTICE 'Deleted % Matrices for Gridset %', currCount, gsid;         
-
-   DELETE FROM lm_v3.Gridset WHERE gridsetId = gsid;
-   GET DIAGNOSTICS currCount = ROW_COUNT;
-   total = total + currCount;
-   RAISE NOTICE 'Deleted % Gridset # %', currCount, gsid;
-
-   return total;
+      RAISE NOTICE 'Total deleted: % MatrixColumns for Gridset %', total, gsid;
+   return;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- This does not delete any SDM data created for gridset
+-- TODO: TEST this
 CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridset(gsid int)
 RETURNS SETOF varchar AS
 $$
@@ -3300,19 +3301,19 @@ BEGIN
    GET DIAGNOSTICS total = ROW_COUNT;
    RAISE NOTICE 'Deleted % MF processes for Gridset %', currCount, gsid;
 
-   -- Matrices
-   FOR mtxid, dloc IN SELECT matrixid, matrixdlocation FROM lm_v3.Matrix WHERE gridsetid = gsid 
-      LOOP
-         DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
-         GET DIAGNOSTICS currCount = ROW_COUNT;
-         total = total + currCount;
-         RAISE NOTICE 'Deleted % Columns for Matrix %', currCount, mtxid;
-         IF dloc IS NOT NULL THEN
-            RETURN NEXT dloc;
-         ELSE
-            RAISE NOTICE 'No matrix dlocation';
-         END IF;  
-      END LOOP;
+//    -- Matrices
+//    FOR mtxid, dloc IN SELECT matrixid, matrixdlocation FROM lm_v3.Matrix WHERE gridsetid = gsid 
+//       LOOP
+//          DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
+//          GET DIAGNOSTICS currCount = ROW_COUNT;
+//          total = total + currCount;
+//          RAISE NOTICE 'Deleted % Columns for Matrix %', currCount, mtxid;
+//          IF dloc IS NOT NULL THEN
+//             RETURN NEXT dloc;
+//          ELSE
+//             RAISE NOTICE 'No matrix dlocation';
+//          END IF;  
+//       END LOOP;
    DELETE FROM lm_v3.Matrix WHERE gridsetid = gsid;
    GET DIAGNOSTICS currCount = ROW_COUNT;
    total = total + currCount;
@@ -3395,6 +3396,45 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 DROP FUNCTION IF EXISTS lm_v3.lm_clearSomeObsoleteSpeciesDataForUser(usr varchar,
                                                            dt double precision, 
                                                            maxnum int);
+
+-- ----------------------------------------------------------------------------
+-- Should only call this on public or anon user
+-- TODO: Will this delete subsetted PAM data 
+--       or is that saved as different MatrixColumns without Layerid???
+CREATE OR REPLACE FUNCTION lm_v3.lm_clearSomeObsoleteMtxcolsForUser(usr varchar,
+                                                           dt double precision, 
+                                                           maxnum int)
+RETURNS SETOF int AS
+$$
+DECLARE
+   occid     int;
+   lyrid     int;
+   mcid      int;
+   currCount int;
+   mc_total  int := 0;
+BEGIN
+   -- Find all projections with obsolete occurrencesets
+   FOR occid IN SELECT occurrencesetid FROM lm_v3.OccurrenceSet 
+                       WHERE userid = usr AND statusmodtime <= dt
+                       LIMIT maxnum
+      LOOP 
+         currCount = 0;
+         FOR mcid IN SELECT mc.matrixcolumnid
+                       FROM lm_v3.MatrixColumn mc, lm_v3.sdmproject p
+                       WHERE mc.layerid = p.layerid 
+                         AND p.occurrencesetid = occid
+                         AND p.userid = usr
+            LOOP 
+               DELETE FROM lm_v3.MatrixColumn WHERE matrixcolumnid = mcid;
+               RETURN NEXT mcid;
+               currCount = currCount + 1;
+            END LOOP; 
+         mc_total = mc_total + currCount;
+      END LOOP; 
+        
+   RAISE NOTICE 'Deleted % MatrixColumns', mc_total;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- Should only call this on public or anon user

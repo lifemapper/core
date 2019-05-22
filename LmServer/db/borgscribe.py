@@ -1043,18 +1043,23 @@ class BorgScribe(LMObject):
         """
         filenames = self._borg.deleteGridsetReturnFilenames(gridsetId)
         return filenames
-    
+
 # ...............................................
-    def deleteObsoleteUserGridsetsReturnFilenames(self, userid, obsolete_time):
+    def deleteObsoleteUserGridsetsReturnFilenamesPavids(self, userid, obsolete_time):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteGridsetReturnFilenames()
         """
         allfilenames = []
+        allpavids = []
         grdids = self._borg.findOldGridsets(userid, obsolete_time)
         for grdid in grdids:
             filenames = self._borg.deleteGridsetReturnFilenames(grdid)
             allfilenames.extend(filenames)
-        return allfilenames
+            
+            pavids = self._borg.deleteMtxcolsReturnIds(grdid)
+            allpavids.extend(pavids)
+            
+        return allfilenames, allpavids
 
     # ...............................................
     def deleteObsoleteSDMDataReturnIds(self, userid, beforetime, max_num=100):
@@ -1063,7 +1068,9 @@ class BorgScribe(LMObject):
         """
         occids = self._borg.deleteObsoleteSDMDataReturnIds(userid, 
                                                            beforetime, max_num)
-        return occids
+        mtxcolids = self._borg.deleteObsoleteSDMMtxcolsReturnIds(userid, 
+                                                           beforetime, max_num)
+        return occids, mtxcolids
 
 # ...............................................
     def getMapServiceForSDMOccurrence(self, occLyrOrId):

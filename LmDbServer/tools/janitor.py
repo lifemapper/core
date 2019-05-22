@@ -106,7 +106,6 @@ class Janitor(LMObject):
     # ...............................................
     def clearUserData(self, usr):
         count = self.scribe.clearUser(usr)
-        self.scribe.log.info('Deleted {} objects for user {}'.format(count, usr))
         self._clearUserFiles(usr)
             
     # ...............................................
@@ -130,31 +129,43 @@ class Janitor(LMObject):
         
     # ...............................................
     def deleteObsoleteSDMs(self, usr, obsolete_date, max_num):
+        earl = EarlJr()
         # Should be able to just list old occurrence sets and then have the scribe 
         #     delete experiments associated with them
-        occ_ids = self.scribe.deleteObsoleteSDMDataReturnIds(usr, obsolete_date, 
-                                                             max_num=max_num)    
-        earl = EarlJr()
-        for oid in occ_ids:
-            if oid is not None:
-                opth = earl.createDataPath(usr, LMFileType.OCCURRENCE_FILE, 
-                                           occsetId=oid)
-                if os.path.exists(opth):
-                    try:
-                        shutil.rmtree(opth)
-                    except Exception, e:
-                        self.scribe.log.error('Failed to remove {}, {}'.format(opth, str(e)))
+        total_obsolete_occs = self.scribe.countOccurrenceSets(userId=usr, 
+                                beforeTime=obsolete_date)
+
+        for i in range(0, total_obsolete_occs, max_num):
+            # TODO: Will this delete subsetted PAM data or is that fine?
+            #       Function restricts deleted PAVs to usr
+            occids, mtxcolids = self.scribe.deleteObsoleteSDMDataReturnIds(usr, 
+                                            obsolete_date, max_num=max_num)    
+            for oid in occids:
+                if oid is not None:
+                    opth = earl.createDataPath(usr, LMFileType.OCCURRENCE_FILE, 
+                                               occsetId=oid)
+                    if os.path.exists(opth):
+                        try:
+                            shutil.rmtree(opth)
+                        except Exception, e:
+                            self.scribe.log.error('Failed to remove {}, {}'
+                                                  .format(opth, str(e)))
+                        else:
+                            self.scribe.log.info('Removed {} for occset {}'
+                                                 .format(opth, oid))
                     else:
-                        self.scribe.log.info('Removed {} for occset {}'.format(opth, oid))
-                else:
-                    self.scribe.log.info('Path {} does not exist'.format(opth))
+                        self.scribe.log.info('Path {} does not exist'
+                                             .format(opth))
                     
         
     # ...............................................
     def deleteObsoleteGridsets(self, usr, obsolete_date):
         # Should be able to just list old occurrence sets and then have the scribe 
         #     delete experiments associated with them
-        gs_fnames = self.scribe.deleteObsoleteUserGridsetsReturnFilenames(usr, obsolete_date)    
+        gs_fnames, pavids = self.scribe.deleteObsoleteUserGridsetsReturnFilenamesPavids(usr, 
+                                                        obsolete_date)    
+        # TODO: Remove PAVs from Solr
+
         for fname in gs_fnames:
             if fname is not None and os.path.exists(fname):
                 try:
@@ -163,6 +174,7 @@ class Janitor(LMObject):
                     self.scribe.log.error('Failed to remove {}, {}'.format(fname, str(e)))
                 else:
                     self.scribe.log.error('Removed {}'.format(fname))
+                    
         
         
 # ...............................................

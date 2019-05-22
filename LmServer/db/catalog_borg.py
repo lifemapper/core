@@ -965,20 +965,39 @@ class Borg(DbPostgresql):
 # ...............................................
     def deleteGridsetReturnFilenames(self, gridsetId):
         """
-        @summary: Deletes Gridset SDM MatrixColumns, Matrices, and Makeflows
+        @summary: Deletes Gridset, Matrices, and Makeflows
         @param gridsetId: Gridset for which to delete objects
         @return: List of filenames for all deleted objects
         """
         filenames = []
         rows, idxs = self.executeSelectManyFunction('lm_deleteGridset', gridsetId)
-        self.log.info('''Deleted {} Gridset, Matrices, MatrixColumns 
-        and Makeflows for gridset {}'''.format(len(rows), gridsetId))
+        self.log.info('Returned {} files to be deleted for gridset {}'
+                      .format(len(rows), gridsetId))
         
         for r in rows:
             if r[0] is not None:
                 filenames.append(r[0])
             
         return filenames
+        
+# ...............................................
+    def deleteMtxcolsReturnIds(self, gridsetId):
+        """
+        @summary: Deletes SDM MatrixColumns (PAVs) for a Gridset
+        @param gridsetId: Gridset for which to delete objects
+        @return: List of ids for all deleted MatrixColumns
+        """
+        pavids = []
+        rows, idxs = self.executeSelectManyFunction('lm_deleteGridsetMatrixColumns', 
+                                                    gridsetId)
+        self.log.info('Returned {} matrixcolumn ids deleted from gridset {}'
+                      .format(len(rows), gridsetId))
+        
+        for r in rows:
+            if r[0] is not None:
+                pavids.append(r[0])
+            
+        return pavids
         
 # ...............................................
     def getGridset(self, gridsetId, userId, name, fillMatrices):
@@ -1390,7 +1409,7 @@ class Borg(DbPostgresql):
         @return: True/False for success of operation
         """
         success = False
-        delCount = self.executeModifyFunction('lm_clearUserData', userId)
+        delCount = self.executeModifyReturnValue('lm_clearUserData', userId)
         self.log.info('Deleted {} data objects for user {}'
                           .format(delCount, userId))
 
@@ -1824,47 +1843,69 @@ class Borg(DbPostgresql):
         @return: list of occurrenceset ids for deleted data.
         """
         occids = []
-        rows, idxs = self.executeSelectAndModifyManyFunction(
-            'lm_clearSomeObsoleteSpeciesDataForUser2', userid, beforetime, max_num)
         tmstr = mx.DateTime.DateTimeFromMJD(beforetime).localtime().strftime()
-        
+        rows, idxs = self.executeSelectAndModifyManyFunction(
+            'lm_clearSomeObsoleteSpeciesDataForUser2', userid, beforetime, max_num)        
         for r in rows:
             if r[0] is not None and r[0] != '':
                 occids.append(r[0])
             
         self.log.info('''Deleted {} Occurrencesets older than {} and dependent 
-        objects for User {}; returned {} occurrencesetids'''
-        .format(len(rows), tmstr, userid, occids))
+        objects for User {}; returning occurrencesetids'''
+        .format(len(rows), tmstr, userid))
         return occids
 
+
 # ...............................................
-    def _deleteOccsetDependentMatrixCols(self, occId, usr):
+    def deleteObsoleteSDMMtxcolsReturnIds(self, userid, beforetime, max_num):
         """
-        @summary: Deletes dependent MatrixColumns IFF they belong to a ROLLING_PAM  
-                     for the OccurrenceSet specified by occId
-        @param occId: OccurrenceSet for which to delete dependent MatrixCols
-        @param usr: User (owner) of the OccurrenceSet for which to delete MatrixCols
-        @return: Count of MatrixCols for success of operation
+        @summary: Deletes SDMProject-dependent MatrixColumns for obsolete occurrencesets
+        @param userid: User for whom to delete SDM data
+        @param beforetime: delete SDM data modified before or at this time
+        @param maxNum: limit on number of occsets to process
+        @return: list of occurrenceset ids for deleted data.
         """
-        delcount = 0
-        gpamMtxAtoms = self.listMatrices(0, 500, usr, MatrixType.ROLLING_PAM, None, 
-                                                    None, None, None, None, None, None, None, 
-                                                    None, None, True)
-        self.log.info('{} ROLLING PAMs for User {}'.format(len(gpamMtxAtoms), usr))
-        if len(gpamMtxAtoms) > 0:
-            gpamIds = [gpam.getId() for gpam in gpamMtxAtoms]
-            # Database will trigger delete of dependent projections on Occset delete
-            _, pavs = self._findOccsetDependents(occId, usr, returnProjs=False, 
-                                                             returnMtxCols=True)
-            for pav in pavs:
-                if pav.parentId in gpamIds:
-                    success = self.executeModifyFunction('lm_deleteMatrixColumn', 
-                                                                     pav.getId())
-                    if success:
-                        delcount += 1
-            self.log.info('Deleted {} PAVs from {} ROLLING PAMs'
-                              .format(len(gpamIds), delcount))
-        return delcount
+        mtxcolids = []
+        tmstr = mx.DateTime.DateTimeFromMJD(beforetime).localtime().strftime()
+        rows, idxs = self.executeSelectAndModifyManyFunction(
+            'lm_clearSomeObsoleteMtxcolsForUser', userid, beforetime, max_num)
+        for r in rows:
+            if r[0] is not None and r[0] != '':
+                mtxcolids.append(r[0])
+            
+        self.log.info('''Deleted {} MatrixColumns for Occurrencesets older 
+        than {}, returning matrixColumnIds'''
+        .format(len(rows), tmstr, userid, mtxcolids))
+        return mtxcolids
+
+# # ...............................................
+#     def _deleteOccsetDependentMatrixCols(self, occId, usr):
+#         """
+#         @summary: Deletes dependent MatrixColumns IFF they belong to a ROLLING_PAM  
+#                      for the OccurrenceSet specified by occId
+#         @param occId: OccurrenceSet for which to delete dependent MatrixCols
+#         @param usr: User (owner) of the OccurrenceSet for which to delete MatrixCols
+#         @return: Count of MatrixCols for success of operation
+#         """
+#         delcount = 0
+#         gpamMtxAtoms = self.listMatrices(0, 500, usr, MatrixType.ROLLING_PAM, None, 
+#                                                     None, None, None, None, None, None, None, 
+#                                                     None, None, True)
+#         self.log.info('{} ROLLING PAMs for User {}'.format(len(gpamMtxAtoms), usr))
+#         if len(gpamMtxAtoms) > 0:
+#             gpamIds = [gpam.getId() for gpam in gpamMtxAtoms]
+#             # Database will trigger delete of dependent projections on Occset delete
+#             _, pavs = self._findOccsetDependents(occId, usr, returnProjs=False, 
+#                                                              returnMtxCols=True)
+#             for pav in pavs:
+#                 if pav.parentId in gpamIds:
+#                     success = self.executeModifyFunction('lm_deleteMatrixColumn', 
+#                                                                      pav.getId())
+#                     if success:
+#                         delcount += 1
+#             self.log.info('Deleted {} PAVs from {} ROLLING PAMs'
+#                               .format(len(gpamIds), delcount))
+#         return delcount
 
 # ...............................................
     def _findOccsetDependents(self, occId, usr, returnProjs=True, returnMtxCols=True):
