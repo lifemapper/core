@@ -1237,7 +1237,7 @@ class BOOMFiller(LMObject):
         return mfchain
 
     # ...............................................
-    def addBoomMF(self, tree, target_dir):
+    def addBoomRules(self, tree, target_dir):
         """
         @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                   and configFile written by BOOMFiller.initBoom.
@@ -1315,8 +1315,6 @@ class BOOMFiller(LMObject):
         try:
             # Also adds user
             self.initializeInputs()
-            
-            encoded_tree = None
                 
             # Add or get ShapeGrid, Global PAM, Gridset for this archive
             # This updates the gridset, shapegrid, default PAMs (rolling, with no 
@@ -1351,27 +1349,26 @@ class BOOMFiller(LMObject):
             self._fixDirectoryPermissions(boomGridset)
                         
             # If there is a tree, add db object
-            tree = self.addTree(boomGridset, encoded_tree=encoded_tree)
+            tree = self.addTree(boomGridset, encoded_tree=None)
             
-            # If there are biogeographic hypotheses, add layers and matrix and create MFChain
+            # If there are biogeographic hypotheses, add layers and matrix 
             biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)            
                   
             if initMakeflow is True:
                 if biogeoMtx and len(biogeoLayerNames) > 0:
+                    # TODO: Create a separate module to create BG Hypotheses 
+                    #       encoding Makeflow, independent of Boom completion
+                    #       so this may be added later or called from this script 
                     # Add BG hypotheses
                     bgh_success_fname = os.path.join(target_dir, 'bg.success')
                     bg_cmd = EncodeBioGeoHypothesesCommand(
                         self.userId, boomGridset.name, bgh_success_fname)
-                    # TODO: Do we want this to be local?  Yes, needs db access
-                    # TODO: We need a different script for this.  
                     rules.append(bg_cmd.getMakeflowRule(local=True))
-                    # Add BG Hypotheses encoding Makeflows, independent of Boom completion
-                    #rules.extend(self.addEncodeBioGeoMF(boomGridset))
-                # Create MFChain to run Boomer on these inputs IFF requested
+
                 # This also adds commands for iDigBio occurrence data retrieval 
                 #   and taxonomy insertion before Boom
                 #   and tree encoding after Boom 
-                rules.extend(self.addBoomMF(tree, target_dir))
+                rules.extend(self.addBoomRules(tree, target_dir))
 
             # Write config file for archive, update permissions
             self.writeConfigFile(tree=tree, biogeoLayers=biogeoLayerNames)
