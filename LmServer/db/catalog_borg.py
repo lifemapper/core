@@ -946,6 +946,23 @@ class Borg(DbPostgresql):
         return updatedGrdset
         
 # ...............................................
+    def findOldGridsets(self, userid, obsolete_time):
+        """
+        @summary: Finds Gridset identifiers for user older than a time
+        @param userid: User for gridsets to query
+        @param obsolete_time: time before which objects are considered obsolete 
+        @return: List of gridset ids for old data
+        """
+        grdids = []
+        rows, idxs = self.executeSelectManyFunction('lm_findOldGridsets', userid, 
+                                                    obsolete_time)
+        for r in rows:
+            if r[0] is not None:
+                grdids.append(r[0])
+                
+        return grdids
+            
+# ...............................................
     def deleteGridsetReturnFilenames(self, gridsetId):
         """
         @summary: Deletes Gridset SDM MatrixColumns, Matrices, and Makeflows
@@ -1045,10 +1062,10 @@ class Borg(DbPostgresql):
         """
         meta = grdset.dumpGrdMetadata()
         success = self.executeModifyFunction('lm_updateGridset', 
-                                                         grdset.getId(), 
-                                                         grdset.treeId, 
-                                                         grdset.getDLocation(),
-                                                         meta, grdset.modTime)
+                                             grdset.getId(), 
+                                             grdset.treeId, 
+                                             grdset.getDLocation(),
+                                             meta, grdset.modTime)
         return success
     
 # ...............................................
@@ -1795,31 +1812,6 @@ class Borg(DbPostgresql):
         pavDelcount = self._deleteOccsetDependentMatrixCols(occ.getId(), occ.getUserId())
         success = self.executeModifyFunction('lm_deleteOccurrenceSet', occ.getId())
         return success
-
-
-# ...............................................
-    def deleteObsoleteSDMDataReturnFilenames(self, userid, beforetime, max_num):
-        """
-        @summary: Deletes OccurrenceSets, any dependent SDMProjects (with Layer)
-                  and SDMProject-dependent MatrixColumns.  
-        @param userid: User for whom to delete SDM data
-        @param beforetime: delete SDM data modified before or at this time
-        @param maxNum: limit on number of occsets to process
-        @return: list of shapefile locations for deleted data.
-        """
-        filenames = []
-        rows, idxs = self.executeSelectAndModifyManyFunction(
-            'lm_clearSomeObsoleteSpeciesDataForUser', userid, beforetime, max_num)
-        tmstr = mx.DateTime.DateTimeFromMJD(beforetime).localtime().strftime()
-        
-        for r in rows:
-            if r[0] is not None and r[0] != '':
-                filenames.append(r[0])
-            
-        self.log.info('''Deleted {} Occurrencesets older than {} and dependent 
-        objects for User {}; returned {} filenames'''
-        .format(len(rows), tmstr, userid, len(filenames)))
-        return filenames
 
 # ...............................................
     def deleteObsoleteSDMDataReturnIds(self, userid, beforetime, max_num):

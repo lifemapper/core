@@ -25,61 +25,18 @@
 -- ----------------------------------------------------------------------------
 -- psql -U admin -d template1 --file=LmDbServer/dbsetup/updateDBTables.sql
 -- ----------------------------------------------------------------------------
--- These functions will do NOTHING if changes have already been performed.
+-- Commands should do NOTHING if changes have already been performed.
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 
 
 
 -- \c borg
-DROP FUNCTION IF EXISTS lm_v3.lm_getFilterMtxCols(usr varchar,
-                                                    sqd varchar,
-                                                    idt varchar,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int,
-                                                    mtxid int,
-                                                    lyrid int);
-DROP FUNCTION IF EXISTS lm_v3.lm_countMtxCols(usr varchar,
-                                                    sqd varchar,
-                                                    idt varchar,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int,
-                                                    mtxid int,
-                                                    lyrid int);
-DROP FUNCTION IF EXISTS lm_v3.lm_listMtxColAtoms(firstRecNum int, maxNum int, 
-                                                    usr varchar,
-                                                    sqd varchar,
-                                                    idt varchar,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int,
-                                                    mtxid int,
-                                                    lyrid int);
-DROP FUNCTION IF EXISTS lm_v3.lm_listMtxColObjects(firstRecNum int, maxNum int, 
-                                                    usr varchar,
-                                                    sqd varchar,
-                                                    idt varchar,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int,
-                                                    mtxid int,
-                                                    lyrid int)
+DROP FUNCTION IF EXISTS lm_v3.lm_clearSomeObsoleteSpeciesDataForUser(usr varchar,
+                                                           dt double precision, 
+                                                           maxnum int);
 
 /*
--- ----------------------------------------------------------------------------                                                    
--- ----------------------------------------------------------------------------                                                    
--- ----------------------------------------------------------------------------                                                    
--- ----------------------------------------------------------------------------                                                    
 -- ----------------------------------------------------------------------------                                                    
 -- For deleting large amounts of data, drop indices and constraints first
 
@@ -120,7 +77,6 @@ ALTER TABLE lm_v3.MatrixColumn ADD CONSTRAINT matrixcolumn_matrixid_layerid_inte
     UNIQUE (matrixId, layerid, intersectParams);
         
 -- ----------------------------------------------------------------------------
--- ----------------------------------------------------------------------------
 delete from layer where layerid in 
     (select layerid from sdmproject p
                left join occurrenceset o 
@@ -135,10 +91,5 @@ where not exists (
     where p.occurrencesetid = o.occurrencesetid
 )
     
--- ----------------------------------------------------------------------------                                                    
--- ----------------------------------------------------------------------------                                                    
--- ----------------------------------------------------------------------------                                                    
--- ----------------------------------------------------------------------------                                                    
--- ----------------------------------------------------------------------------                                                    
-     
+-- ----------------------------------------------------------------------------                                                         
 */

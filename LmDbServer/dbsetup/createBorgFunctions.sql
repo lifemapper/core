@@ -1096,6 +1096,25 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;    
 
 -- ----------------------------------------------------------------------------
+-- Get an existing gridset
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOldGridsets(usr varchar, 
+                                                    oldtime double precision)
+   RETURNS SETOF int AS
+$$
+DECLARE
+   grdid int;
+BEGIN
+   For grdid IN SELECT gridsetid FROM lm_v3.lm_matrix 
+                WHERE userid = usr and statusmodtime < oldtime;
+      LOOP
+         RETURN NEXT grdid;
+      END LOOP;
+   
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;    
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterGridset(usr varchar,
                                                     shpgridlyrid int,
                                                     meta varchar, 
@@ -3373,53 +3392,9 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
--- Should only call this on public or anon user
-CREATE OR REPLACE FUNCTION lm_v3.lm_clearSomeObsoleteSpeciesDataForUser(usr varchar,
+DROP FUNCTION IF EXISTS lm_v3.lm_clearSomeObsoleteSpeciesDataForUser(usr varchar,
                                                            dt double precision, 
-                                                           maxnum int)
-RETURNS SETOF varchar AS
-$$
-DECLARE
-   lyrid     int;
-   occid     int;
-   currCount int;
-   mc_total  int := 0;
-   prj_total int := 0;
-   occ_total int := 0;
-   dloc      varchar;
-BEGIN
-   -- Find all projections with obsolete occurrencesets
-   For occid, dloc IN SELECT occurrencesetid, dlocation FROM lm_v3.OccurrenceSet 
-                       WHERE userid = usr AND statusmodtime <= dt
-                       LIMIT maxnum
-   LOOP
-      -- FIRST delete any matrixcolumns using SDMProjects for this Occset to remove FK constraint
-      DELETE FROM lm_v3.MatrixColumn WHERE layerid IN 
-         (SELECT layerid  FROM lm_v3.sdmproject WHERE occurrencesetid = occid);
-      GET DIAGNOSTICS currCount = ROW_COUNT;
-      RAISE NOTICE 'Deleted % MatrixColumns for SDMProjects with Occset %', currCount, occid;
-      mc_total = mc_total + currCount;        
-
-      -- SECOND, delete all sdmproject layers; this cascades to joined SDMProject
-      DELETE FROM lm_v3.Layer WHERE layerid IN
-         (SELECT layerid  FROM lm_v3.sdmproject WHERE occurrencesetid = occid);
-      GET DIAGNOSTICS currCount = ROW_COUNT;
-      RAISE NOTICE 'Deleted % SDMProject Layers for Occset %', currCount, occid;
-      prj_total = prj_total + currCount;
-          
-      -- Third, delete this sdmproject occurrenceset
-      DELETE FROM lm_v3.OccurrenceSet WHERE occurrencesetid = occid;
-      GET DIAGNOSTICS currCount = ROW_COUNT;
-      RAISE NOTICE 'Deleted % Occurrenceset %', currCount, occid;
-      occ_total = occ_total + currCount;
-      RETURN NEXT dloc;
-   END LOOP; 
-        
-   RAISE NOTICE 'Deleted % MatrixColumns', mc_total;
-   RAISE NOTICE 'Deleted % SDMProject/Layers', prj_total;
-   RAISE NOTICE 'Deleted % OccurrenceSets', occ_total;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
+                                                           maxnum int);
 
 -- ----------------------------------------------------------------------------
 -- Should only call this on public or anon user

@@ -22,12 +22,20 @@
              02110-1301, USA.
 """
 import os
+import mx.DateTime as DT
+import shutil
 
 from LmBackend.common.lmobj import LMError, LMObject
+
+from LmCommon.common.lmconstants import ONE_DAY, DEFAULT_POST_USER
+
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType, LMFormat
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
+from LmServer.notifications.email import EmailNotifier
+
+failedFile = "/home/cjgrady/failed.txt"
 
 
 # .............................................................................
@@ -112,31 +120,96 @@ class Janitor(LMObject):
             except:                
                 self.scribe.log.info('Failed to delete {} for gridset {}'.format(fn, 
                                                                     gridsetid))
+
+    # ...............................................
+    def reportFailure(self, mesgs):
+        notifier = EmailNotifier()
+        notifier.sendMessage(['cjgrady@ku.edu'], 
+                             "Failed to delete user occurrence sets", 
+                             '\n'.join(mesgs))
+        
+    # ...............................................
+    def deleteObsoleteSDMs(self, usr, obsolete_date, max_num):
+        # Should be able to just list old occurrence sets and then have the scribe 
+        #     delete experiments associated with them
+        occ_ids = self.scribe.deleteObsoleteSDMDataReturnIds(usr, obsolete_date, 
+                                                             max_num=max_num)    
+        earl = EarlJr()
+        for oid in occ_ids:
+            if oid is not None:
+                opth = earl.createDataPath(usr, LMFileType.OCCURRENCE_FILE, 
+                                           occsetId=oid)
+                if os.path.exists(opth):
+                    try:
+                        shutil.rmtree(opth)
+                    except Exception, e:
+                        self.scribe.log.error('Failed to remove {}, {}'.format(opth, str(e)))
+                    else:
+                        self.scribe.log.info('Removed {} for occset {}'.format(opth, oid))
+                else:
+                    self.scribe.log.info('Path {} does not exist'.format(opth))
+                    
+        
+    # ...............................................
+    def deleteObsoleteGridsets(self, usr, obsolete_date):
+        # Should be able to just list old occurrence sets and then have the scribe 
+        #     delete experiments associated with them
+        gs_fnames = self.scribe.deleteGridsetReturnFilenames(usr, obsolete_date)    
+        for fname in gs_fnames:
+            if fname is not None and os.path.exists(fname):
+                try:
+                    os.remove(fname)
+                except Exception, e:
+                    self.scribe.log.error('Failed to remove {}, {}'.format(fname, str(e)))
+                else:
+                    self.scribe.log.error('Removed {}'.format(fname))
+        
         
 # ...............................................
 if __name__ == '__main__':
+    currtime = DT.gmt().mjd
+    four_weeks_ago = currtime - (ONE_DAY * 28)
+
     import argparse
     parser = argparse.ArgumentParser(
-                description=('Clear a Lifemapper archive of all data for a user or'
-                             'MatrixColumns, Matrices, and Makeflows for a gridset'))
-    parser.add_argument('user_or_gridsetid', default=None,
-            help=('UserId or GridsetId for the data to delete'))
+                description=("""Clear a Lifemapper archive of 
+                obsolete or all data for a user 
+                or MatrixColumns, Matrices, and Makeflows for a gridset"""))
+    parser.add_argument('--gridsetid', type=int, default=None,
+            help=('GridsetId for data to delete'))
+    parser.add_argument('--user', type=str, default=DEFAULT_POST_USER,
+            help=('UserId for all or old data to delete'))
+    parser.add_argument('--mjd_date', type=float, default=four_weeks_ago,
+            help=("""Cutoff date in MJD format for deleting data for this user. 
+            Future date indicates to clear all data for this user"""))
+    parser.add_argument('--count', type=int, default=10,
+            help=("""Maximum number of occurrencesets (with dependent SDMs) to delete"""))
     args = parser.parse_args()
-    gridsetid = usr = None
     
-    try:
-        gridsetid = int(args.user_or_gridsetid)
-    except:
-        usr = args.user_or_gridsetid
-        
-    print('Janitor argument: gridsetid {}; userid {}'.format(gridsetid, usr))
-        
+    gridsetid = args.gridsetid
+    usr = args.user
+    obsolete_date = args.mjd_date
+    total = args.count
+    
+    datestr = DT.DateTimeFromMJD(obsolete_date).localtime().Format()
+    
+            
+    print("""Janitor arguments: 
+    gridsetid {}; usr {}; count {}; obsolete_date {}"""
+    .format(gridsetid, usr, total, datestr))
+    
     jan = Janitor()
     jan.open()
-    if usr is not None:
-        jan.clearUserData(usr)
-    elif gridsetid is not None:
-        jan.deleteGridset(gridsetid)
+    if gridsetid is not None or usr is not None:
+        if gridsetid is not None:
+            jan.deleteGridset(gridsetid)
+        elif usr is not None:
+            if obsolete_date > currtime:
+                jan.clearUserData(usr)
+            else:
+                jan.deleteObsoleteGridsets(usr, obsolete_date)
+                jan.deleteObsoleteSDMs(usr, obsolete_date, total)
+
     else:
         print('No valid option for clearing gridset or user data')
     jan.close()
