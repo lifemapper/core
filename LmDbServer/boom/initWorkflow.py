@@ -815,6 +815,7 @@ class BOOMFiller(LMObject):
         @summary: Create a Gridset, Shapegrid, PAMs, GRIMs for this archive, and
                   update attributes with new or existing values from DB
         """
+        currtime = mx.DateTime.gmt().mjd
         scenGrims = {}
         self.scribe.log.info('  Find or insert, build shapegrid {} ...'.format(self.gridname))
         shp = self._addIntersectGrid()
@@ -827,9 +828,16 @@ class BOOMFiller(LMObject):
                 'parameters': self.inParamFname}
         grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
                          epsgcode=self.scenPkg.epsgcode, 
-                         userId=self.userId, modTime=mx.DateTime.gmt().mjd)
+                         userId=self.userId, modTime=currtime)
         updatedGrdset = self.scribe.findOrInsertGridset(grdset)
-        self.scribe.log.info('  Found or insert gridset {}'.format(updatedGrdset.getId()))
+        if updatedGrdset.modTime < currtime:
+            updatedGrdset.modTime = currtime
+            self.scribe.updateObject(updatedGrdset)
+            self.scribe.log.info('  Found and updated modtime for gridset {}'
+                                 .format(updatedGrdset.getId()))
+        else:
+            self.scribe.log.info('  Inserted new gridset {}'
+                                 .format(updatedGrdset.getId()))
         
         for code, scen in self.scenPkg.scenarios.iteritems():
             # "Global" PAM (one per scenario/algorithm)
