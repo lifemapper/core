@@ -1105,7 +1105,7 @@ DECLARE
    grdid int;
 BEGIN
    For grdid IN SELECT gridsetid FROM lm_v3.lm_matrix 
-                WHERE userid = usr and statusmodtime < oldtime;
+                WHERE userid = usr and statusmodtime < oldtime
       LOOP
          RETURN NEXT grdid;
       END LOOP;

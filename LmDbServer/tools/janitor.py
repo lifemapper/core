@@ -27,7 +27,7 @@ import shutil
 
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.lmconstants import ONE_DAY, DEFAULT_POST_USER
+from LmCommon.common.lmconstants import ONE_DAY
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType, LMFormat
@@ -154,7 +154,7 @@ class Janitor(LMObject):
     def deleteObsoleteGridsets(self, usr, obsolete_date):
         # Should be able to just list old occurrence sets and then have the scribe 
         #     delete experiments associated with them
-        gs_fnames = self.scribe.deleteGridsetReturnFilenames(usr, obsolete_date)    
+        gs_fnames = self.scribe.deleteObsoleteUserGridsetsReturnFilenames(usr, obsolete_date)    
         for fname in gs_fnames:
             if fname is not None and os.path.exists(fname):
                 try:
@@ -167,7 +167,9 @@ class Janitor(LMObject):
         
 # ...............................................
 if __name__ == '__main__':
+    import math
     currtime = DT.gmt().mjd
+    future_date = math.ceil(currtime)
     four_weeks_ago = currtime - (ONE_DAY * 28)
 
     import argparse
@@ -177,22 +179,26 @@ if __name__ == '__main__':
                 or MatrixColumns, Matrices, and Makeflows for a gridset"""))
     parser.add_argument('--gridsetid', type=int, default=None,
             help=('GridsetId for data to delete'))
-    parser.add_argument('--user', type=str, default=DEFAULT_POST_USER,
+    parser.add_argument('--user', type=str, default=None,
             help=('UserId for all or old data to delete'))
-    parser.add_argument('--mjd_date', type=float, default=four_weeks_ago,
-            help=("""Cutoff date in MJD format for deleting data for this user. 
-            Future date indicates to clear all data for this user"""))
+    parser.add_argument('--obsolete_date', type=float, default=None,
+            help=("""Cutoff date as in MJD format for deleting data for this user. 
+            Future date (i.e. 12am tomorrow, {}) indicates to clear all data for 
+            this user""".format(future_date)))
     parser.add_argument('--count', type=int, default=10,
-            help=("""Maximum number of occurrencesets (with dependent SDMs) to delete"""))
+            help=("""Maximum number of occurrencesets (with dependent SDMs) 
+            to delete"""))
     args = parser.parse_args()
     
     gridsetid = args.gridsetid
     usr = args.user
-    obsolete_date = args.mjd_date
+    obsolete_date = args.obsolete_date
     total = args.count
     
-    datestr = DT.DateTimeFromMJD(obsolete_date).localtime().Format()
-    
+    try:    
+        datestr = DT.DateTimeFromMJD(obsolete_date).localtime().Format()
+    except:
+        datestr = str(obsolete_date)
             
     print("""Janitor arguments: 
     gridsetid {}; usr {}; count {}; obsolete_date {}"""
@@ -204,7 +210,14 @@ if __name__ == '__main__':
         if gridsetid is not None:
             jan.deleteGridset(gridsetid)
         elif usr is not None:
-            if obsolete_date > currtime:
+            if obsolete_date is None:
+                import math
+                future_date = math.ceil(currtime)
+                print("""--obsolete_date argument must be provided, in MJD format,
+                to delete {} user data. To clear all data for the user, provide
+                a date in the future (i.e. 12am tomorrow, {})"""
+                .format(usr, future_date))
+            elif obsolete_date > currtime:
                 jan.clearUserData(usr)
             else:
                 jan.deleteObsoleteGridsets(usr, obsolete_date)

@@ -1045,7 +1045,7 @@ class BorgScribe(LMObject):
         return filenames
     
 # ...............................................
-    def deleteOldUserGridsetsReturnFilenames(self, userid, obsolete_time):
+    def deleteObsoleteUserGridsetsReturnFilenames(self, userid, obsolete_time):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteGridsetReturnFilenames()
         """
@@ -1055,15 +1055,6 @@ class BorgScribe(LMObject):
             filenames = self._borg.deleteGridsetReturnFilenames(grdid)
             allfilenames.extend(filenames)
         return allfilenames
-    
-    # ...............................................
-    def deleteObsoleteSDMDataReturnFilenames(self, userid, beforetime, max_num=100):
-        """
-        @copydoc LmServer.db.catalog_borg.Borg::deleteObsoleteSDMDataReturnFilenames()
-        """
-        filenames = self._borg.deleteObsoleteSDMDataReturnFilenames(userid, 
-                                                            beforetime, max_num)
-        return filenames
 
     # ...............................................
     def deleteObsoleteSDMDataReturnIds(self, userid, beforetime, max_num=100):
