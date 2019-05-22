@@ -391,8 +391,8 @@ from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 from LmDbServer.boom.boom_collate import BoomCollate
 
-configFname = '/share/lm/data/archive/kubi/public_boom-2019.01.10.ini'
-successFname= 'public_boom-2019.01.10.ini.success'
+configFname = '/share/lm/data/archive/kubi/public_boom-2019.04.12.ini'
+successFname= 'public_boom-2019.04.12.ini.success'
 
 configFname = '/share/lm/data/archive/cshl/prenolepis_imparis_global_10min_ppf.ini'
 successFname = '/share/lm/data/archive/cshl/prenolepis_imparis_global_10min_ppf.ini.success'
