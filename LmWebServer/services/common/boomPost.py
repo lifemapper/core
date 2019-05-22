@@ -304,12 +304,12 @@ class BoomPoster(object):
                         delimiter)
                 except KeyError:  # Not provided, skip and it will default to tab
                     pass
-            if APIPostKeys.MIN_POINTS in occ_json.keys():
-                min_points = occ_json[APIPostKeys.MIN_POINTS]
-            else:
-                min_points = 5
-            self.config.set(
-                SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN, min_points)
+        if APIPostKeys.MIN_POINTS in occ_json.keys():
+            min_points = occ_json[APIPostKeys.MIN_POINTS]
+        else:
+            min_points = 5
+        self.config.set(
+            SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN, min_points)
                 
     
     # ................................
