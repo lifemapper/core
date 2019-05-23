@@ -1112,6 +1112,7 @@ DECLARE
 BEGIN
    IF oldtime is not null THEN
       wherecls = wherecls || ' AND statusmodtime <=  ' || quote_literal(oldtime);
+   END IF;
 
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
