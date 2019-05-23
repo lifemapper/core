@@ -946,15 +946,15 @@ class Borg(DbPostgresql):
         return updatedGrdset
         
 # ...............................................
-    def findOldGridsets(self, userid, obsolete_time):
+    def findUserGridsets(self, userid, obsolete_time=None):
         """
-        @summary: Finds Gridset identifiers for user older than a time
+        @summary: Finds Gridset identifiers for user, optionally, filtered by cutoff date
         @param userid: User for gridsets to query
         @param obsolete_time: time before which objects are considered obsolete 
-        @return: List of gridset ids for old data
+        @return: List of gridset ids for user
         """
         grdids = []
-        rows, idxs = self.executeSelectManyFunction('lm_findOldGridsets', userid, 
+        rows, idxs = self.executeSelectManyFunction('lm_findUserGridsets', userid, 
                                                     obsolete_time)
         for r in rows:
             if r[0] is not None:

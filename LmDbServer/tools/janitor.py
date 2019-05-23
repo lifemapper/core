@@ -191,7 +191,7 @@ class Janitor(LMObject):
     def deleteObsoleteGridsets(self, usr, obsolete_date):
         # Should be able to just list old occurrence sets and then have the scribe 
         #     delete experiments associated with them
-        fnames, pavids = self.scribe.deleteObsoleteUserGridsetsReturnFilenamesPavids(usr, 
+        fnames, pavids = self.scribe.deleteObsoleteUserGridsetsReturnFilenamesMtxcolids(usr, 
                                                         obsolete_date)    
         # Remove PAVs from Solr
         self._deletePavsFromSolr(pavids)

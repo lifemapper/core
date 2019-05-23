@@ -327,8 +327,14 @@ class BorgScribe(LMObject):
         """
         @copydoc LmServer.db.catalog_borg.Borg::clearUser
         """
+        allmtxcolids = []
+        grdids = self._borg.findUserGridsets(userId)
+        for grdid in grdids:
+            mtxcolids = self._borg.deleteMtxcolsReturnIds(grdid)
+            allmtxcolids.extend(mtxcolids)
+            
         success = self._borg.clearUser(userId)
-        return success 
+        return success, allmtxcolids
     
 # ...............................................
     def findOrInsertUser(self, usr):
@@ -1051,7 +1057,7 @@ class BorgScribe(LMObject):
         """
         allfilenames = []
         allmtxcolids = []
-        grdids = self._borg.findOldGridsets(userid, obsolete_time)
+        grdids = self._borg.findUserGridsets(userid, obsolete_time=obsolete_time)
         for grdid in grdids:
             fnames, pavids = self._borg.deleteGridsetReturnFilenamesMtxcolids(grdid)
             allfilenames.extend(fnames)

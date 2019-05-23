@@ -1096,17 +1096,27 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;    
 
 -- ----------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS lm_v3.lm_findOldGridsets(usr varchar, 
+                                                    oldtime double precision);
+-- ----------------------------------------------------------------------------
 -- Get an existing gridset
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOldGridsets(usr varchar, 
-                                                    oldtime double precision)
+CREATE OR REPLACE FUNCTION lm_v3.lm_findUserGridsets(usr varchar, 
+                                                     oldtime double precision)
    RETURNS SETOF int AS
 $$
 DECLARE
    grdid int;
+   cmd      varchar := 'SELECT distinct(gridsetid) FROM lm_v3.lm_matrix';
+   wherecls varchar := 'WHERE userid = ' || quote_literal(usr) ;
    new_matrix_count int;
 BEGIN
-   For grdid IN SELECT distinct(gridsetid) FROM lm_v3.lm_matrix 
-                WHERE userid = usr and statusmodtime <= oldtime
+   IF oldtime is not null THEN
+      wherecls = wherecls || ' AND statusmodtime <=  ' || quote_literal(oldtime);
+
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR grdid in EXECUTE cmd
       LOOP
       	 SELECT count(*) INTO new_matrix_count FROM matrix 
              WHERE gridsetid = grdid and statusmodtime > oldtime;
@@ -1114,8 +1124,8 @@ BEGIN
             RETURN NEXT grdid;
          END IF; 
       END LOOP;
-   
    RETURN;
+      
 END;
 $$  LANGUAGE 'plpgsql' STABLE;    
 
