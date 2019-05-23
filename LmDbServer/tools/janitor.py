@@ -32,11 +32,15 @@ from LmCommon.common.lmconstants import ONE_DAY
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType, LMFormat
 from LmServer.common.log import ScriptLogger
+from LmServer.common.solr import delete_from_archive_index
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.notifications.email import EmailNotifier
 
 failedFile = "/home/cjgrady/failed.txt"
 
+# I read that Solr can't delete more than 1000 documents by id at once with the
+#    way the query is structure, so chuck it up into groups
+DELETE_GROUP_SIZE = 999
 
 # .............................................................................
 class Janitor(LMObject):
@@ -164,7 +168,20 @@ class Janitor(LMObject):
         #     delete experiments associated with them
         gs_fnames, pavids = self.scribe.deleteObsoleteUserGridsetsReturnFilenamesPavids(usr, 
                                                         obsolete_date)    
-        # TODO: Remove PAVs from Solr
+        # Remove PAVs from Solr
+        try:
+            while len(pavids):
+                # Get a group of pav ids to delete
+                del_pav_ids = pavids[:DELETE_GROUP_SIZE]
+                # Shrink the pav ids list
+                pavids = pavids[DELETE_GROUP_SIZE:]
+                solr_resp = delete_from_archive_index(
+                    pav_id=del_pav_ids, user_id=usr)
+        except Exception as e:
+            print(str(e))
+            self.scribe.log.error(
+                'Failed to delete pavs from solr: {}, check solr logs'.format(
+                    str(e)))
 
         for fname in gs_fnames:
             if fname is not None and os.path.exists(fname):
