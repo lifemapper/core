@@ -11,6 +11,8 @@ import mapscript
 from StringIO import StringIO
 import zipfile
 
+import unicodecsv
+
 from LmCommon.common.lmconstants import LMFormat, MatrixType, JobStatus,\
     HTTPStatus, PamStatKeys
 from LmCommon.common.matrix import Matrix
@@ -248,6 +250,8 @@ def _add_sdms_to_package(zip_f, projections, scribe):
     occ_info = []
     prj_info = []
 
+    sniffer = unicodecsv.Sniffer()
+
     for prj in projections:
         occ = prj.occurrenceSet
         prj_dir = os.path.join(SDM_PRJ_DIR, occ.displayName)
@@ -283,7 +287,26 @@ def _add_sdms_to_package(zip_f, projections, scribe):
                 prj_dir, '{}.csv'.format(occ.displayName))
             sys_occ_path = '{}{}'.format(
                 os.path.splitext(occ.getDLocation())[0], LMFormat.CSV.ext)
-            zip_f.write(sys_occ_path, arc_occ_path)
+            
+            # string io object
+            occ_string_io = StringIO()
+            headers = occ.getFeatureAttributes().items()
+            with open(sys_occ_path) as in_f:
+                # Get Delimiter
+                dialect = sniffer.sniff(in_f.read(32))
+                in_f.seek(0)
+                delimiter = dialect.delimiter
+
+                # Write header line
+                header_line = delimiter.join([i[1][0] for i in sorted(headers)])
+                occ_string_io.write('{}\n'.format(header_line))
+                # Write the rest of the lines
+                for line in in_f:
+                    occ_string_io.write(line)
+            occ_string_io.seek(0)
+            zip_f.writestr(arc_occ_path, occ_string_io.getvalue())
+            occ_string_io = None
+            #zip_f.write(sys_occ_path, arc_occ_path)
             added_occ_ids.append(occ.getId())
             occ_info.append(
                 {
