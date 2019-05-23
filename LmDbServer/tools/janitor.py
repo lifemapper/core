@@ -87,7 +87,31 @@ class Janitor(LMObject):
         return scribe
     
     # ...............................................
-    def _clearUserFiles(self, usr):
+    def _deleteFiles(self, fnames):
+        for fn in fnames:
+            if fn is not None and os.path.exists(fn):
+                try:
+                    os.remove(fn)
+                except Exception, e:
+                    self.scribe.log.error('Failed to remove {}, {}'
+                                          .format(fn, str(e)))
+                else:
+                    self.scribe.log.error('Removed {}'.format(fn))
+        
+    # ...............................................
+    def reportFailure(self, mesgs):
+        notifier = EmailNotifier()
+        notifier.sendMessage(['aimee.stewart@ku.edu'], 
+                             "Failed to delete user data", 
+                             '\n'.join(mesgs))
+        
+    # ...............................................
+    def clearUserData(self, usr):
+        count, pavids = self.scribe.clearUser(usr)
+
+        # TODO: Remove PAVs from Solr
+        
+        # Delete entire user directory
         usrpth = self._earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
         for root, dirs, files in os.walk(usrpth):
             for fname in files:
@@ -102,44 +126,29 @@ class Janitor(LMObject):
                 else:
                     os.remove(fullFname)
                     self.scribe.log.info('Removing {}'.format(fullFname))
-
-    # ...............................................
-    def clearUserData(self, usr):
-        count = self.scribe.clearUser(usr)
-        self._clearUserFiles(usr)
             
     # ...............................................
     def deleteGridset(self, gridsetid):
-        filenames = self.scribe.deleteGridsetReturnFilenames(gridsetid)
-        for fn in filenames:
-            try:
-                os.remove(fn)
-                self.scribe.log.info('Deleted {} for gridset {}'.format(fn, 
-                                                                    gridsetid))
-            except:                
-                self.scribe.log.info('Failed to delete {} for gridset {}'.format(fn, 
-                                                                    gridsetid))
-
-    # ...............................................
-    def reportFailure(self, mesgs):
-        notifier = EmailNotifier()
-        notifier.sendMessage(['cjgrady@ku.edu'], 
-                             "Failed to delete user occurrence sets", 
-                             '\n'.join(mesgs))
+        fnames, pavids = self.scribe.deleteGridsetReturnFilenamesMtxcolids(gridsetid)
         
+        # TODO: Remove PAVs from Solr
+
+        # Delete gridset-related files
+        self._deleteFiles(fnames)
+
+
     # ...............................................
     def deleteObsoleteSDMs(self, usr, obsolete_date, max_num):
         earl = EarlJr()
-        # Should be able to just list old occurrence sets and then have the scribe 
-        #     delete experiments associated with them
         total_obsolete_occs = self.scribe.countOccurrenceSets(userId=usr, 
                                 beforeTime=obsolete_date)
 
         for i in range(0, total_obsolete_occs, max_num):
-            # TODO: Will this delete subsetted PAM data or is that fine?
-            #       Function restricts deleted PAVs to usr
-            occids, mtxcolids = self.scribe.deleteObsoleteSDMDataReturnIds(usr, 
-                                            obsolete_date, max_num=max_num)    
+            occids, pavids = self.scribe.deleteObsoleteSDMDataReturnIds(usr, 
+                                            obsolete_date, max_num=max_num)
+            # TODO: Remove PAVs from Solr
+            
+            # Delete occurrence SDM files/directories
             for oid in occids:
                 if oid is not None:
                     opth = earl.createDataPath(usr, LMFileType.OCCURRENCE_FILE, 
@@ -156,26 +165,17 @@ class Janitor(LMObject):
                     else:
                         self.scribe.log.info('Path {} does not exist'
                                              .format(opth))
-                    
         
     # ...............................................
     def deleteObsoleteGridsets(self, usr, obsolete_date):
         # Should be able to just list old occurrence sets and then have the scribe 
         #     delete experiments associated with them
-        gs_fnames, pavids = self.scribe.deleteObsoleteUserGridsetsReturnFilenamesPavids(usr, 
+        fnames, pavids = self.scribe.deleteObsoleteUserGridsetsReturnFilenamesPavids(usr, 
                                                         obsolete_date)    
         # TODO: Remove PAVs from Solr
 
-        for fname in gs_fnames:
-            if fname is not None and os.path.exists(fname):
-                try:
-                    os.remove(fname)
-                except Exception, e:
-                    self.scribe.log.error('Failed to remove {}, {}'.format(fname, str(e)))
-                else:
-                    self.scribe.log.error('Removed {}'.format(fname))
-                    
-        
+        # Delete Gridset-related makeflows, gridset, matrix files
+        self._deleteFiles(fnames)
         
 # ...............................................
 if __name__ == '__main__':

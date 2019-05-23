@@ -1037,29 +1037,29 @@ class BorgScribe(LMObject):
         return success
 
 # ...............................................
-    def deleteGridsetReturnFilenames(self, gridsetId):
+    def deleteGridsetReturnFilenamesMtxcolids(self, gridsetId):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteGridsetReturnFilenames()
         """
-        filenames = self._borg.deleteGridsetReturnFilenames(gridsetId)
-        return filenames
+        fnames, pavids = self._borg.deleteGridsetReturnFilenamesMtxcolids(gridsetId)
+        return fnames, pavids
 
 # ...............................................
-    def deleteObsoleteUserGridsetsReturnFilenamesPavids(self, userid, obsolete_time):
+    def deleteObsoleteUserGridsetsReturnFilenamesMtxcolids(self, userid, obsolete_time):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteGridsetReturnFilenames()
         """
         allfilenames = []
-        allpavids = []
+        allmtxcolids = []
         grdids = self._borg.findOldGridsets(userid, obsolete_time)
         for grdid in grdids:
-            filenames = self._borg.deleteGridsetReturnFilenames(grdid)
-            allfilenames.extend(filenames)
+            fnames, pavids = self._borg.deleteGridsetReturnFilenamesMtxcolids(grdid)
+            allfilenames.extend(fnames)
             
-            pavids = self._borg.deleteMtxcolsReturnIds(grdid)
-            allpavids.extend(pavids)
+            mtxcolids = self._borg.deleteMtxcolsReturnIds(grdid)
+            allmtxcolids.extend(mtxcolids)
             
-        return allfilenames, allpavids
+        return allfilenames, allmtxcolids
 
     # ...............................................
     def deleteObsoleteSDMDataReturnIds(self, userid, beforetime, max_num=100):

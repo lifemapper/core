@@ -3423,7 +3423,6 @@ BEGIN
                        FROM lm_v3.MatrixColumn mc, lm_v3.sdmproject p
                        WHERE mc.layerid = p.layerid 
                          AND p.occurrencesetid = occid
-                         AND p.userid = usr
             LOOP 
                DELETE FROM lm_v3.MatrixColumn WHERE matrixcolumnid = mcid;
                RETURN NEXT mcid;

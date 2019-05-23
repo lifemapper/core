@@ -963,7 +963,7 @@ class Borg(DbPostgresql):
         return grdids
             
 # ...............................................
-    def deleteGridsetReturnFilenames(self, gridsetId):
+    def deleteGridsetReturnFilenamesMtxcolids(self, gridsetId):
         """
         @summary: Deletes Gridset, Matrices, and Makeflows
         @param gridsetId: Gridset for which to delete objects
@@ -973,11 +973,10 @@ class Borg(DbPostgresql):
         rows, idxs = self.executeSelectManyFunction('lm_deleteGridset', gridsetId)
         self.log.info('Returned {} files to be deleted for gridset {}'
                       .format(len(rows), gridsetId))
-        
         for r in rows:
             if r[0] is not None:
                 filenames.append(r[0])
-            
+                
         return filenames
         
 # ...............................................
@@ -987,7 +986,7 @@ class Borg(DbPostgresql):
         @param gridsetId: Gridset for which to delete objects
         @return: List of ids for all deleted MatrixColumns
         """
-        pavids = []
+        mtxcolids = []
         rows, idxs = self.executeSelectManyFunction('lm_deleteGridsetMatrixColumns', 
                                                     gridsetId)
         self.log.info('Returned {} matrixcolumn ids deleted from gridset {}'
@@ -995,9 +994,9 @@ class Borg(DbPostgresql):
         
         for r in rows:
             if r[0] is not None:
-                pavids.append(r[0])
+                mtxcolids.append(r[0])
             
-        return pavids
+        return mtxcolids
         
 # ...............................................
     def getGridset(self, gridsetId, userId, name, fillMatrices):
