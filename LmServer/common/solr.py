@@ -246,6 +246,8 @@ def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
     if gridset_id is None and pav_id is None and sdmproject_id is None and \
             occ_id is None and squid is None and user_id is None:
         raise Exception('Must provide at least one query parameter')
+    if isinstance(pav_id, (list, tuple)):
+        pav_id = '({})'.format(' OR '.join([str(p) for p in pav_id]))
     query_parts = [
         (SOLR_FIELDS.GRIDSET_ID, gridset_id),
         (SOLR_FIELDS.ID, pav_id),
