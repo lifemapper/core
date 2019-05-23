@@ -103,6 +103,22 @@ class Janitor(LMObject):
                     self.scribe.log.error('Removed {}'.format(fn))
         
     # ...............................................
+    def _deletePavsFromSolr(self, pavids):
+        try:
+            while len(pavids):
+                # Get a group of pav ids to delete
+                del_pav_ids = pavids[:DELETE_GROUP_SIZE]
+                # Shrink the pav ids list
+                pavids = pavids[DELETE_GROUP_SIZE:]
+                solr_resp = delete_from_archive_index(
+                    pav_id=del_pav_ids, user_id=usr)
+        except Exception as e:
+            print(str(e))
+            self.scribe.log.error(
+                'Failed to delete pavs from solr: {}, check solr logs'.format(
+                    str(e)))
+
+    # ...............................................
     def reportFailure(self, mesgs):
         notifier = EmailNotifier()
         notifier.sendMessage(['aimee.stewart@ku.edu'], 
@@ -113,7 +129,8 @@ class Janitor(LMObject):
     def clearUserData(self, usr):
         count, pavids = self.scribe.clearUser(usr)
 
-        # TODO: Remove PAVs from Solr
+        # Remove PAVs from Solr
+        self._deletePavsFromSolr(pavids)
         
         # Delete entire user directory
         usrpth = self._earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
@@ -134,9 +151,8 @@ class Janitor(LMObject):
     # ...............................................
     def deleteGridset(self, gridsetid):
         fnames, pavids = self.scribe.deleteGridsetReturnFilenamesMtxcolids(gridsetid)
-        
-        # TODO: Remove PAVs from Solr
-
+        # Remove PAVs from Solr
+        self._deletePavsFromSolr(pavids)
         # Delete gridset-related files
         self._deleteFiles(fnames)
 
@@ -150,8 +166,9 @@ class Janitor(LMObject):
         for i in range(0, total_obsolete_occs, max_num):
             occids, pavids = self.scribe.deleteObsoleteSDMDataReturnIds(usr, 
                                             obsolete_date, max_num=max_num)
-            # TODO: Remove PAVs from Solr
-            
+            # Remove PAVs from Solr
+            self._deletePavsFromSolr(pavids)
+                        
             # Delete occurrence SDM files/directories
             for oid in occids:
                 if oid is not None:
@@ -177,19 +194,7 @@ class Janitor(LMObject):
         fnames, pavids = self.scribe.deleteObsoleteUserGridsetsReturnFilenamesPavids(usr, 
                                                         obsolete_date)    
         # Remove PAVs from Solr
-        try:
-            while len(pavids):
-                # Get a group of pav ids to delete
-                del_pav_ids = pavids[:DELETE_GROUP_SIZE]
-                # Shrink the pav ids list
-                pavids = pavids[DELETE_GROUP_SIZE:]
-                solr_resp = delete_from_archive_index(
-                    pav_id=del_pav_ids, user_id=usr)
-        except Exception as e:
-            print(str(e))
-            self.scribe.log.error(
-                'Failed to delete pavs from solr: {}, check solr logs'.format(
-                    str(e)))
+        self._deletePavsFromSolr(pavids)
 
         # Delete Gridset-related makeflows, gridset, matrix files
         self._deleteFiles(fnames)
