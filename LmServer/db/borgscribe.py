@@ -1059,10 +1059,10 @@ class BorgScribe(LMObject):
         allmtxcolids = []
         grdids = self._borg.findUserGridsets(userid, obsolete_time=obsolete_time)
         for grdid in grdids:
-            fnames, pavids = self._borg.deleteGridsetReturnFilenamesMtxcolids(grdid)
+            fnames = self._borg.deleteGridsetReturnFilenames(grdid)
             allfilenames.extend(fnames)
             
-            mtxcolids = self._borg.deleteMtxcolsReturnIds(grdid)
+            mtxcolids = self._borg.deleteGridsetReturnMtxcolids(grdid)
             allmtxcolids.extend(mtxcolids)
             
         return allfilenames, allmtxcolids

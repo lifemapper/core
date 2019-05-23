@@ -963,7 +963,7 @@ class Borg(DbPostgresql):
         return grdids
             
 # ...............................................
-    def deleteGridsetReturnFilenamesMtxcolids(self, gridsetId):
+    def deleteGridsetReturnFilenames(self, gridsetId):
         """
         @summary: Deletes Gridset, Matrices, and Makeflows
         @param gridsetId: Gridset for which to delete objects
@@ -980,7 +980,7 @@ class Borg(DbPostgresql):
         return filenames
         
 # ...............................................
-    def deleteMtxcolsReturnIds(self, gridsetId):
+    def deleteGridsetReturnMtxcolids(self, gridsetId):
         """
         @summary: Deletes SDM MatrixColumns (PAVs) for a Gridset
         @param gridsetId: Gridset for which to delete objects
