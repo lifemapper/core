@@ -1107,7 +1107,7 @@ $$
 DECLARE
    grdid int;
    cmd      varchar := 'SELECT distinct(gridsetid) FROM lm_v3.lm_matrix';
-   wherecls varchar := 'WHERE userid = ' || quote_literal(usr) ;
+   wherecls varchar := ' WHERE userid = ' || quote_literal(usr) ;
    new_matrix_count int;
 BEGIN
    IF oldtime is not null THEN

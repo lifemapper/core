@@ -132,22 +132,26 @@ class Janitor(LMObject):
         # Remove PAVs from Solr
         self._deletePavsFromSolr(pavids)
         
-        # Delete entire user directory
+        # Delete subdirs under user directory
         usrpth = self._earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
-        for root, dirs, files in os.walk(usrpth):
-            for fname in files:
-                ext = os.path.splitext(fname)
-                fullFname = os.path.join(root, fname)
-                # Save config files, newick/nexus tree files, 
-                # species data csv and metadata json files at top level
-                if (root == usrpth and 
-                    ext in [LMFormat.CONFIG.ext, LMFormat.CSV, LMFormat.JSON,
-                            LMFormat.NEWICK, LMFormat.NEXUS]):
-                    self.scribe.log.info('Saving {}'.format(fullFname))
-                else:
-                    os.remove(fullFname)
-                    self.scribe.log.info('Removing {}'.format(fullFname))
-            
+        contents = os.listdir(usrpth)
+        for c in contents:
+            pth = os.path.join(usrpth, c)
+            if os.path.isdir(pth):
+                shutil.rmtree(pth)
+
+        # Delete most files under user directory
+        contents = os.listdir(usrpth)
+        for c in contents:
+            fn = os.path.join(usrpth, c)
+            _, ext = os.path.splitext(c)
+            if ext in [LMFormat.CONFIG.ext, LMFormat.CSV, LMFormat.JSON,
+                       LMFormat.NEWICK, LMFormat.NEXUS]:
+                self.scribe.log.info('Saving {}'.format(fn))
+            else:
+                os.remove(fn)
+                self.scribe.log.info('Removed {}'.format(fn))
+                
     # ...............................................
     def deleteGridset(self, gridsetid):
         fnames, pavids = self.scribe.deleteGridsetReturnFilenamesMtxcolids(gridsetid)
