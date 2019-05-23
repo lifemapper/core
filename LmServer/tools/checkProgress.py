@@ -123,9 +123,10 @@ if __name__ == '__main__':
     scribe = BorgScribe(logger)
     scribe.openConnections()
     
-    output = getStats(scribe, afterStatus=JobStatus.COMPLETE, 
-                      beforeStatus=JobStatus.COMPLETE)
-    output = getStats(scribe, afterStatus=JobStatus.GENERAL_ERROR)
+    output_success = getStats(scribe, afterStatus=JobStatus.COMPLETE, 
+                              beforeStatus=JobStatus.COMPLETE)
+    output_fail = getStats(scribe, afterStatus=JobStatus.GENERAL_ERROR)
+    output = '\n\n'.join((output_success, output_fail))
     notifyPeople(logger, 'LM database stats', output)
     logger.info(output)
     scribe.closeConnections()
