@@ -3301,19 +3301,15 @@ BEGIN
    GET DIAGNOSTICS total = ROW_COUNT;
    RAISE NOTICE 'Deleted % MF processes for Gridset %', currCount, gsid;
 
-//    -- Matrices
-//    FOR mtxid, dloc IN SELECT matrixid, matrixdlocation FROM lm_v3.Matrix WHERE gridsetid = gsid 
-//       LOOP
-//          DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
-//          GET DIAGNOSTICS currCount = ROW_COUNT;
-//          total = total + currCount;
-//          RAISE NOTICE 'Deleted % Columns for Matrix %', currCount, mtxid;
-//          IF dloc IS NOT NULL THEN
-//             RETURN NEXT dloc;
-//          ELSE
-//             RAISE NOTICE 'No matrix dlocation';
-//          END IF;  
-//       END LOOP;
+   -- Matrices
+   FOR mtxid, dloc IN SELECT matrixid, matrixdlocation FROM lm_v3.Matrix WHERE gridsetid = gsid 
+      LOOP
+         IF dloc IS NOT NULL THEN
+            RETURN NEXT dloc;
+         ELSE
+            RAISE NOTICE 'No matrix dlocation';
+         END IF;  
+      END LOOP;
    DELETE FROM lm_v3.Matrix WHERE gridsetid = gsid;
    GET DIAGNOSTICS currCount = ROW_COUNT;
    total = total + currCount;
