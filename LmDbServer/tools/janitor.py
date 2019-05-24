@@ -140,17 +140,12 @@ class Janitor(LMObject):
             if os.path.isdir(pth):
                 shutil.rmtree(pth)
 
-        # Delete most files under user directory
+        # Delete all files under user directory
         contents = os.listdir(usrpth)
         for c in contents:
             fn = os.path.join(usrpth, c)
-            _, ext = os.path.splitext(c)
-            if ext in [LMFormat.CONFIG.ext, LMFormat.CSV, LMFormat.JSON,
-                       LMFormat.NEWICK, LMFormat.NEXUS]:
-                self.scribe.log.info('Saving {}'.format(fn))
-            else:
-                os.remove(fn)
-                self.scribe.log.info('Removed {}'.format(fn))
+            os.remove(fn)
+            self.scribe.log.info('Removed {}'.format(fn))
                 
     # ...............................................
     def deleteGridset(self, gridsetid):
@@ -193,8 +188,6 @@ class Janitor(LMObject):
         
     # ...............................................
     def deleteObsoleteGridsets(self, usr, obsolete_date):
-        # Should be able to just list old occurrence sets and then have the scribe 
-        #     delete experiments associated with them
         fnames, pavids = self.scribe.deleteObsoleteUserGridsetsReturnFilenamesMtxcolids(usr, 
                                                         obsolete_date)    
         # Remove PAVs from Solr
@@ -202,7 +195,39 @@ class Janitor(LMObject):
 
         # Delete Gridset-related makeflows, gridset, matrix files
         self._deleteFiles(fnames)
-        
+
+#     # ...............................................
+#     def deleteObsoleteOccdirs(self, usr, currtime):
+#         basename = 'obsolete_occsets.txt'
+#         fname = '/tmp/{}.{}.txt'.format(basename, currtime)
+#         # Delete subdirs under user directory
+#         usrpth = self._earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
+#         try:
+#             outf = open(fname, 'w')
+#             for root, dirs, files in os.walk(usrpth):
+#                 for d in dirs:
+#                     thispth = os.path.join(root, d)
+#                     # relative pathname parts
+#                     taildirs = thispth[len(usrpth):]
+#                     pts = taildirs.strip(os.sep).split(os.sep)
+#                     # if leaf/occ dir, 4 numeric dirs after user dir
+#                     if len(pts) == 4 and pts[0] == '000':
+#                         occstr = ''.join(pts)
+#                         try:
+#                             occid = int(occstr)
+#                         except:
+#                             self.scribe.log.error('Bad directory {}'.format(thispth))
+#                         else:
+#                             occ = self.scribe.getOccurrenceSet(occId=occid)
+#                             if occ is None:
+#                                 outf.write(occstr + '\n')
+#         except Exception, e:
+#             self.scribe.log.error('Exception in walk loop {}'.format(e))
+#         finally:
+#             outf.close()
+#             
+#         # TODO: Scribe fn to check a list of user/occsets for existence
+#                 
 # ...............................................
 if __name__ == '__main__':
     import math
@@ -242,6 +267,7 @@ if __name__ == '__main__':
     gridsetid {}; usr {}; count {}; obsolete_date {}"""
     .format(gridsetid, usr, total, datestr))
     
+    # TODO: add method to walk files and rmtree dirs for occset absent from DB
     jan = Janitor()
     jan.open()
     if gridsetid is not None or usr is not None:
