@@ -134,18 +134,21 @@ class Janitor(LMObject):
         
         # Delete subdirs under user directory
         usrpth = self._earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
-        contents = os.listdir(usrpth)
-        for c in contents:
-            pth = os.path.join(usrpth, c)
-            if os.path.isdir(pth):
-                shutil.rmtree(pth)
-
-        # Delete all files under user directory
-        contents = os.listdir(usrpth)
-        for c in contents:
-            fn = os.path.join(usrpth, c)
-            os.remove(fn)
-            self.scribe.log.info('Removed {}'.format(fn))
+        if os.path.exists(usrpth):            
+            contents = os.listdir(usrpth)
+            for c in contents:
+                pth = os.path.join(usrpth, c)
+                if os.path.isdir(pth):
+                    shutil.rmtree(pth)
+    
+            # Delete all files under user directory
+            contents = os.listdir(usrpth)
+            for c in contents:
+                fn = os.path.join(usrpth, c)
+                os.remove(fn)
+                self.scribe.log.info('Removed {}'.format(fn))
+        else:
+            self.scribe.log.error('User {} dir does not exist'.format(usr))
                 
     # ...............................................
     def deleteGridset(self, gridsetid):
