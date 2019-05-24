@@ -970,7 +970,7 @@ class Borg(DbPostgresql):
         @return: List of filenames for all deleted objects
         """
         filenames = []
-        rows, idxs = self.executeSelectManyFunction('lm_deleteGridset', gridsetId)
+        rows, idxs = self.executeSelectAndModifyManyFunction('lm_deleteGridset', gridsetId)
         self.log.info('Returned {} files to be deleted for gridset {}'
                       .format(len(rows), gridsetId))
         for r in rows:
@@ -987,7 +987,7 @@ class Borg(DbPostgresql):
         @return: List of ids for all deleted MatrixColumns
         """
         mtxcolids = []
-        rows, idxs = self.executeSelectManyFunction('lm_deleteGridsetMatrixColumns', 
+        rows, idxs = self.executeSelectAndModifyManyFunction('lm_deleteGridsetMatrixColumns', 
                                                     gridsetId)
         self.log.info('Returned {} matrixcolumn ids deleted from gridset {}'
                       .format(len(rows), gridsetId))

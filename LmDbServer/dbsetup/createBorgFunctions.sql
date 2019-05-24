@@ -3273,12 +3273,13 @@ BEGIN
       LOOP
          FOR mcid IN SELECT matrixcolumnid FROM lm_v3.MatrixColumn WHERE matrixid = mtxid
             LOOP
-               DELETE FROM lm_v3.matrixcolumn WHERE matrixcolumnId = mcid;
                RETURN NEXT mcid;
-               currCount = currCount + 1;
-            END LOOP;   
-            
-         RAISE NOTICE 'Deleted % MatrixColumns for Matrix %', currCount, mtxid;         
+            END LOOP;
+         
+         DELETE FROM lm_v3.matrixcolumn WHERE matrixId = mtxid;
+	     GET DIAGNOSTICS currCount = ROW_COUNT;            
+         RAISE NOTICE 'Deleted % MatrixColumns for Matrix %', currCount, mtxid;
+                  
          total = total + currCount;   
       END LOOP;
       RAISE NOTICE 'Total deleted: % MatrixColumns for Gridset %', total, gsid;

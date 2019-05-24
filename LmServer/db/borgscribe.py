@@ -1047,8 +1047,10 @@ class BorgScribe(LMObject):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteGridsetReturnFilenames()
         """
-        fnames, pavids = self._borg.deleteGridsetReturnFilenamesMtxcolids(gridsetId)
-        return fnames, pavids
+        mtxcolids = self._borg.deleteGridsetReturnMtxcolids(gridsetId)
+        fnames = self._borg.deleteGridsetReturnFilenames(gridsetId)
+        
+        return fnames, mtxcolids
 
 # ...............................................
     def deleteObsoleteUserGridsetsReturnFilenamesMtxcolids(self, userid, obsolete_time):
@@ -1059,12 +1061,9 @@ class BorgScribe(LMObject):
         allmtxcolids = []
         grdids = self._borg.findUserGridsets(userid, obsolete_time=obsolete_time)
         for grdid in grdids:
-            fnames = self._borg.deleteGridsetReturnFilenames(grdid)
+            fnames, mtxcolids = self.deleteGridsetReturnFilenamesMtxcolids(grdid)
             allfilenames.extend(fnames)
-            
-            mtxcolids = self._borg.deleteGridsetReturnMtxcolids(grdid)
             allmtxcolids.extend(mtxcolids)
-            
         return allfilenames, allmtxcolids
 
     # ...............................................
