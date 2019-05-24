@@ -101,6 +101,15 @@ class _SpeciesWeaponOfChoice(LMObject):
     def expirationDate(self):
         return self._obsoleteTime
 
+# ...............................................
+    @property
+    def reset_expiration_date(self, new_date_mjd):
+        currtime = dt.gmt().mjd
+        if new_date_mjd < currtime:
+            self._obsoleteTime = new_date_mjd
+        else:
+            raise LMError('New expiration date {} is in the future (now {})')
+
     # ...............................................
     @property
     def occ_delimiter(self):

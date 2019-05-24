@@ -241,6 +241,7 @@ class ChristopherWalken(LMObject):
             taxonSourceName = None
                        
         # Expiration date for retrieved species data 
+        # TODO: change expiration date for booming to Gridset modtime (woof-date)
         expDate = dt.DateTime(self._getBoomOrDefault(BoomKeys.OCC_EXP_YEAR), 
                               self._getBoomOrDefault(BoomKeys.OCC_EXP_MONTH), 
                               self._getBoomOrDefault(BoomKeys.OCC_EXP_DAY)).mjd
@@ -562,6 +563,10 @@ class ChristopherWalken(LMObject):
         # Global PAM inputs
         (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                               archiveName, epsg)
+        new_date_mjd = boomGridset.modTime
+        expDate = new_date_mjd
+        weaponOfChoice.reset_expiration_date(new_date_mjd)
+        
         compute_pam_stats = self._getBoomOrDefault(BoomKeys.COMPUTE_PAM_STATS, 
                                                    isBool=True)
         compute_mcpa = self._getBoomOrDefault(BoomKeys.COMPUTE_MCPA, 

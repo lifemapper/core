@@ -446,6 +446,8 @@ class BOOMFiller(LMObject):
                 occSep = GBIF.DATA_DUMP_DELIMITER
             
         minpoints = self._getBoomOrDefault(config, BoomKeys.POINT_COUNT_MIN)
+        
+        # TODO: Change expiration date to woof date, boomer will override this param
         today = mx.DateTime.gmt()
         expyr = self._getBoomOrDefault(config, BoomKeys.OCC_EXP_YEAR, defaultValue=today.year)
         expmo = self._getBoomOrDefault(config, BoomKeys.OCC_EXP_MONTH, defaultValue=today.month)
@@ -838,6 +840,8 @@ class BOOMFiller(LMObject):
         else:
             self.scribe.log.info('  Inserted new gridset {}'
                                  .format(updatedGrdset.getId()))
+            
+        # TODO: Reset expiration date to Woof-date in MJD
         
         for code, scen in self.scenPkg.scenarios.iteritems():
             # "Global" PAM (one per scenario/algorithm)
