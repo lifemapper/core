@@ -986,7 +986,15 @@ class BorgScribe(LMObject):
         mfchainList = self._borg.findMFChains(count, userId, 
                                             JobStatus.INITIALIZE, JobStatus.PULL_REQUESTED)
         return mfchainList
-    
+
+# ...............................................
+    def deleteMFChainsReturnFilenames(self, gridsetid):
+        """
+        @copydoc LmServer.db.catalog_borg.Borg::deleteMFChainsReturnFilenames()
+        """
+        flist = self._borg.deleteMFChainsReturnFilenames(gridsetid)
+        return flist
+            
 # .............................................................................
     def countPriorityMFChains(self, gridsetId):
         """

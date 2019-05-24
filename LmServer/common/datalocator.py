@@ -28,7 +28,7 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import LMFormat, DEFAULT_GLOBAL_EXTENT
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
-from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR, 
+from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR, LOG_PATH,
    LMFileType, FileFix, GENERIC_LAYER_NAME_PREFIX,
    OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT, 
    DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, ARCHIVE_PATH, USER_LAYER_DIR, 
@@ -51,6 +51,12 @@ class EarlJr(LMObject):
         LMObject.__init__(self)
         self.ogcUrl = OGC_SERVICE_URL
         self._scribe = scribe
+        
+    # ...............................................
+    def createStartWalkenFilename(self, user, archiveName):
+        name = '{}_{}'.format(user, archiveName)
+        fname = os.path.join(LOG_PATH, 'start.{}.txt'.format(self.name)) 
+        return fname
     
     # ...............................................
     def createLayername(self, occsetId=None, projId=None, lyrId=None):

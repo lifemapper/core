@@ -2677,6 +2677,30 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteMFChainsForGridsetReturnFilenames(gsid int)
+RETURNS SETOF varchar AS
+$$
+DECLARE
+   dloc varchar;
+   total int := 0;
+BEGIN
+   -- MFProcesses
+   FOR dloc IN SELECT dlocation FROM lm_v3.MFProcess WHERE gridsetid = gsid
+      LOOP
+         IF dloc IS NOT NULL THEN
+            RETURN NEXT dloc;
+         ELSE
+            RAISE NOTICE 'No mfprocess dlocation';
+         END IF;  
+      END LOOP;      
+   DELETE FROM lm_v3.MFProcess WHERE gridsetId = gsid;
+   GET DIAGNOSTICS total = ROW_COUNT;
+   RAISE NOTICE 'Deleted % MF processes for Gridset %', total, gsid;
+
+   return;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- MatrixColumn

@@ -42,7 +42,7 @@ from LmCommon.common.readyfile import (readyFilename,
                                 get_unicodecsv_reader, get_unicodecsv_writer)
 
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import LOG_PATH
+from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.legion.occlayer import OccurrenceLayer
@@ -89,7 +89,8 @@ class _SpeciesWeaponOfChoice(LMObject):
             txSourceId, _, _ = self._scribe.findTaxonSource(taxonSourceName)
             self._taxonSourceId = txSourceId
         # Beginning of iteration
-        self.startFile = os.path.join(LOG_PATH, 'start.{}.txt'.format(self.name))
+        earl = EarlJr()
+        self.startFile = earl.createStartWalkenFilename(user, archiveName)
         self._linenum = 0
 
     # .............................

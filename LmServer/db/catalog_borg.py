@@ -2590,6 +2590,21 @@ class Borg(DbPostgresql):
         return mfchainList
         
 # ...............................................
+    def deleteMFChainsReturnFilenames(self, gridsetid):
+        """
+        @summary: Deletes MFChains for a gridset, returns filenames 
+        @param gridsetid: Pull only MFChains for this gridset
+        @return: list of MFChains filenames
+        """
+        flist = []
+        rows, idxs = self.executeSelectAndModifyManyFunction(
+            'lm_deleteMFChainsForGridsetReturnFilenames', gridsetid)
+        for r in rows:
+            fname = r[0]
+            flist.append(fname)
+        return flist
+        
+# ...............................................
     def getMFChain(self, mfprocessid):
         """
         @summary: Retrieves MFChain from database

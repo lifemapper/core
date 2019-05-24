@@ -153,6 +153,12 @@ class BOOMFiller(LMObject):
                                                      objCode=self.archiveName, 
                                                      usr=self.userId)
        
+        # # TODO: Decide: do we want to start from beginning of species CSV 
+        #         for every woof???
+        startFile = earl.createStartWalkenFilename(self.userId, self.archiveName)
+        if os.path.exists(startFile):
+            os.remove(startFile)
+
         # Add/find user for this Boom process (should exist)
         self.addUser()
          
@@ -835,6 +841,12 @@ class BOOMFiller(LMObject):
         if updatedGrdset.modTime < currtime:
             updatedGrdset.modTime = currtime
             self.scribe.updateObject(updatedGrdset)
+            
+            # TODO: Decide: do we want to delete old makeflows for this gridset?
+            fnames = self.scribe.deleteMFChainsReturnFilenames(updatedGrdset.getId())
+            for fn in fnames:
+                os.remove(fn)
+                
             self.scribe.log.info('  Found and updated modtime for gridset {}'
                                  .format(updatedGrdset.getId()))
         else:

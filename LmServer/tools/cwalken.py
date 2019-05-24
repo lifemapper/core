@@ -241,7 +241,7 @@ class ChristopherWalken(LMObject):
             taxonSourceName = None
                        
         # Expiration date for retrieved species data 
-        # TODO: change expiration date for booming to Gridset modtime (woof-date)
+        # TODO: get expiration date as MJD, written as woof date in ini file
         expDate = dt.DateTime(self._getBoomOrDefault(BoomKeys.OCC_EXP_YEAR), 
                               self._getBoomOrDefault(BoomKeys.OCC_EXP_MONTH), 
                               self._getBoomOrDefault(BoomKeys.OCC_EXP_DAY)).mjd
