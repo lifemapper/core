@@ -330,7 +330,7 @@ class BorgScribe(LMObject):
         allmtxcolids = []
         grdids = self._borg.findUserGridsets(userId)
         for grdid in grdids:
-            mtxcolids = self._borg.deleteMtxcolsReturnIds(grdid)
+            mtxcolids = self._borg.deleteGridsetReturnMtxcolids(grdid)
             allmtxcolids.extend(mtxcolids)
             
         success = self._borg.clearUser(userId)
