@@ -198,12 +198,15 @@ class Janitor(LMObject):
 
 #     # ...............................................
 #     def deleteObsoleteOccdirs(self, usr, currtime):
-#         basename = 'obsolete_occsets.txt'
-#         fname = '/tmp/{}.{}.txt'.format(basename, currtime)
+#         MAX_TEST = 100
+#         basename = '{}_occsets.txt'.format(usr)
+#         allfname = '/tmp/{}.{}.txt'.format(basename, currtime)
+#         basename = '{}_obsoletes.txt'.format(usr)
+#         obsfname = '/tmp/{}.{}.txt'.format(basename, currtime)
 #         # Delete subdirs under user directory
 #         usrpth = self._earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
 #         try:
-#             outf = open(fname, 'w')
+#             allf = open(allfname, 'w')
 #             for root, dirs, files in os.walk(usrpth):
 #                 for d in dirs:
 #                     thispth = os.path.join(root, d)
@@ -220,14 +223,26 @@ class Janitor(LMObject):
 #                         else:
 #                             occ = self.scribe.getOccurrenceSet(occId=occid)
 #                             if occ is None:
-#                                 outf.write(occstr + '\n')
+#                                 allf.write(occstr + '\n')
 #         except Exception, e:
 #             self.scribe.log.error('Exception in walk loop {}'.format(e))
 #         finally:
-#             outf.close()
-#             
+#             allf.close()
+#              
 #         # TODO: Scribe fn to check a list of user/occsets for existence
-#                 
+#         curr_occids = []
+#         try:
+#             allf = open(allfname, 'r')
+#             for i in MAX_TEST:
+#                 occst = allf.readline()
+#                 try:
+#                     occid = int(occst)
+#                 except:
+#                     scribe.log.error('Bad occsetid {}'.format(occst))
+#                 else:
+#                     curr_occids.append(occid)
+#             obs_occids = self.scribe.testUserOccsets(curr_occids)
+                 
 # ...............................................
 if __name__ == '__main__':
     import math
