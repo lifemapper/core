@@ -98,18 +98,20 @@ class EarlJr(LMObject):
     def createDataPath(self, usr, filetype, occsetId=None, epsg=None, 
                        gridsetId=None):
         """
-        @note: /ARCHIVE_PATH/userId/
+        @note: returns path without trailing /
+        @note: /ARCHIVE_PATH/userId
                    contains config files, trees, attributes ...
                /ARCHIVE_PATH/userId/makeflow
                    contains MF docs
                /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
                    contains experiment data common to occurrenceId xxxxxxxxxxxx
-               /ARCHIVE_PATH/userId/MAP_DIR/
+               /ARCHIVE_PATH/userId/MAP_DIR
                    contains maps
-               /ARCHIVE_PATH/userId/<epsg>/USER_LAYER_DIR/
+               /ARCHIVE_PATH/userId/<epsg>/USER_LAYER_DIR
                    contains user layers common to epsg 
-               /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>/
-                   contains computed data for RAD gridset xxx
+        @todo: Add gridset-related directory 
+               /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>
+                   contains computed data for gridset xxx
         """
         if usr is None :
             raise LMError('createDataPath requires userId')
