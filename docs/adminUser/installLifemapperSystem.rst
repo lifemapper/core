@@ -42,12 +42,11 @@ Update existing code and script RPMs (without new roll)
    
 #. Run scripts to update config and DB types/views/functions ::
    
-   # /opt/lifemapper/rocks/bin/updateCfg
-   # /opt/lifemapper/rocks/bin/updateDB
+   # /opt/lifemapper/rocks/bin/updateLM
    
-#. Install new rpms ::
+#. Install new rpms on FE (only if re-installed roll)  ::
    
-   # rpm -i /share/lm/*rpm
+   # rpm -iv /share/lm/*rpm
 
 #. Update nodes ::
    
@@ -56,7 +55,7 @@ Update existing code and script RPMs (without new roll)
 
 #. Update nodes with non-roll rpms::
    
-   # rocks run host compute "(hostname; rpm -i /share/lm/*rpm)"
+   # rocks run host compute "(hostname; rpm -iv /share/lm/*rpm)"
 
 
 Update existing rolls
