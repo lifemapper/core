@@ -148,6 +148,7 @@ class BOOMFiller(LMObject):
          self.compute_pam_stats, 
          self.compute_mcpa, 
          self.num_permutations) = self.readParamVals()
+        self.woof_time_mjd = mx.DateTime.gmt().mjd
         earl = EarlJr()
         self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                      objCode=self.archiveName, 
@@ -592,12 +593,13 @@ class BOOMFiller(LMObject):
             config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_TAXONOMY_FILENAME, 
                        GBIF_TAXONOMY_FILENAME)
             
+        # TODO: Use this in boomer
+        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MJD, str(self.woof_time_mjd))
         # Expiration date triggering re-query and computation
         config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_YEAR, str(self.expdate[0]))
         config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MONTH, str(self.expdate[1]))
         config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_DAY, str(self.expdate[2]))
         config.set(SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN, str(self.minpoints))
-
         # .........................................      
         # Global PAM vals
         # Intersection grid
@@ -823,7 +825,6 @@ class BOOMFiller(LMObject):
         @summary: Create a Gridset, Shapegrid, PAMs, GRIMs for this archive, and
                   update attributes with new or existing values from DB
         """
-        currtime = mx.DateTime.gmt().mjd
         scenGrims = {}
         self.scribe.log.info('  Find or insert, build shapegrid {} ...'.format(self.gridname))
         shp = self._addIntersectGrid()
@@ -836,10 +837,10 @@ class BOOMFiller(LMObject):
                 'parameters': self.inParamFname}
         grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
                          epsgcode=self.scenPkg.epsgcode, 
-                         userId=self.userId, modTime=currtime)
+                         userId=self.userId, modTime=self.woof_time_mjd)
         updatedGrdset = self.scribe.findOrInsertGridset(grdset)
-        if updatedGrdset.modTime < currtime:
-            updatedGrdset.modTime = currtime
+        if updatedGrdset.modTime < self.woof_time_mjd:
+            updatedGrdset.modTime = self.woof_time_mjd
             self.scribe.updateObject(updatedGrdset)
             
             # TODO: Decide: do we want to delete old makeflows for this gridset?
@@ -874,7 +875,6 @@ class BOOMFiller(LMObject):
         """
         @summary: Initialize model, projections for inputs/algorithm.
         """
-        currtime = mx.DateTime.gmt().mjd
         mtxcol = None
         intersectParams = {MatrixColumn.INTERSECT_PARAM_WEIGHTED_MEAN: True}
         
@@ -891,7 +891,7 @@ class BOOMFiller(LMObject):
                    layer=lyr, shapegrid=self.shapegrid, 
                    intersectParams=intersectParams, 
                    squid=lyr.squid, ident=lyr.name, processType=ptype, 
-                   status=JobStatus.GENERAL, statusModTime=currtime,
+                   status=JobStatus.GENERAL, statusModTime=self.woof_time_mjd,
                    postToSolr=False)
             mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
             
@@ -929,12 +929,11 @@ class BOOMFiller(LMObject):
         tree = None
         # Provided tree filename takes precedence
         if self.treeFname is not None:
-            currtime = mx.DateTime.gmt().mjd
             name, _ = os.path.splitext(self.treeFname)
             treeFilename = os.path.join(self.userIdPath, self.treeFname) 
             if os.path.exists(treeFilename):
                 baretree = Tree(name, dlocation=treeFilename, userId=self.userId, 
-                                gridsetId=gridset.getId(), modTime=currtime)
+                                gridsetId=gridset.getId(), modTime=self.woof_time_mjd)
                 baretree.read()
                 tree = self.scribe.findOrInsertTree(baretree)
             else:
@@ -955,7 +954,7 @@ class BOOMFiller(LMObject):
             # Save tree link to gridset
             print "Add tree to grid set"
             gridset.addTree(tree)
-            gridset.updateModtime(currtime)
+            gridset.updateModtime(self.woof_time_mjd)
             
             self.scribe.updateObject(gridset)
         return tree
@@ -1006,7 +1005,6 @@ class BOOMFiller(LMObject):
     
     # ...............................................
     def addBioGeoHypothesesMatrixAndLayers(self, gridset):
-        currtime = mx.DateTime.gmt().mjd
         biogeoLayerNames = []
         bgMtx = None
            
@@ -1024,7 +1022,7 @@ class BOOMFiller(LMObject):
                     lyr = Vector(name, self.userId, self.scenPkg.epsgcode, 
                                  dlocation=bgFname, metadata=lyrMeta, 
                                  dataFormat=LMFormat.SHAPE.driver, 
-                                 valAttribute=valAttr, modTime=currtime)
+                                 valAttribute=valAttr, modTime=self.woof_time_mjd)
                     updatedLyr = self.scribe.findOrInsertLayer(lyr)
                     biogeoLayerNames.append(updatedLyr.name)
                     self.scribe.log.info('  Added {} layers for biogeo hypotheses matrix'
@@ -1036,68 +1034,20 @@ class BOOMFiller(LMObject):
             tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
                               processType=ProcessType.ENCODE_HYPOTHESES,
                               userId=self.userId, gridset=gridset, metadata=meta,
-                              status=JobStatus.INITIALIZE, statusModTime=currtime)
+                              status=JobStatus.INITIALIZE, statusModTime=self.woof_time_mjd)
             bgMtx = self.scribe.findOrInsertMatrix(tmpMtx)
             if bgMtx is None:
                 self.scribe.log.info('  Failed to add biogeo hypotheses matrix')
         return bgMtx, biogeoLayerNames
-    
-    ## ...............................................
-    #def addEncodeBioGeoMF(self, gridset):
-    #    """
-    #    @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-    #              and configFile written by BOOMFiller.initBoom.
-    #    """
-    #    scriptname, _ = os.path.splitext(os.path.basename(__file__))
-    #    meta = {MFChain.META_CREATED_BY: scriptname,
-    #            MFChain.META_GRIDSET: gridset.getId(),
-    #            MFChain.META_DESCRIPTION: 
-    #                      'Encode biogeographic hypotheses task for user {} grid {}'
-    #                      .format(self.userId, gridset.name)}
-    #    newMFC = MFChain(self.userId, priority=Priority.HIGH, 
-    #                     metadata=meta, status=JobStatus.GENERAL, 
-    #                     statusModTime=mx.DateTime.gmt().mjd)
-    #    mfChain = self.scribe.insertMFChain(newMFC, gridset.getId())
-    #    
-    #    ws_dir = mfChain.getRelativeDirectory()
-    #    baseFilename, _ = os.path.splitext(os.path.basename(self.outConfigFilename))
-    #    bghSuccessFname = os.path.join(ws_dir, baseFilename + '.success')
-    #    
-    #    # Create a rule from the MF 
-    #    bgCmd = EncodeBioGeoHypothesesCommand(self.userId, gridset.name, bghSuccessFname)
-    #    
-    #    mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
-    #    mfChain = self._write_update_MF(mfChain)
-    #    return mfChain   
-
-    # .............................
-    #def _addGrimMF(self, scencode, gridsetId, currtime):
-    #    # Create MFChain for this GPAM
-    #    desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
-    #            .format(self.userId, self.archiveName, scencode))
-    #    meta = {MFChain.META_CREATED_BY: self.name,
-    #            MFChain.META_GRIDSET: gridsetId,
-    #            MFChain.META_DESCRIPTION: desc 
-    #            }
-    #    newMFC = MFChain(self.userId, priority=self.priority, 
-    #                     metadata=meta, status=JobStatus.GENERAL, 
-    #                     statusModTime=currtime)
-    #    grimChain = self.scribe.insertMFChain(newMFC, gridsetId)
-    #    return grimChain
    
     # .............................
     def addGrimMFs(self, defaultGrims, target_dir):
-        #currtime = mx.DateTime.gmt().mjd
-        #grimChains = []
         rules = []
         
         # Get shapegrid rules / files
         shapegrid_filename = self.shapegrid.getDLocation()
         
         for code, grim in defaultGrims.iteritems():
-            # Create MFChain for this GRIM
-            #grimChain = self._addGrimMF(code, gridsetId, currtime)
-            #targetDir = grimChain.getRelativeDirectory()
             mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
             self.scribe.log.info('  Adding {} grim columns for scencode {}'
                           .format(len(mtxcols), code))
@@ -1124,21 +1074,13 @@ class BOOMFiller(LMObject):
                 rules.append(intersect_cmd.getMakeflowRule())
                
                 # Keep track of intersection filenames for matrix concatenation
-                #relDir, _ = os.path.splitext(mtxcol.layer.getRelativeDLocation())
-                #outFname = os.path.join(targetDir, relDir, mtxcol.getTargetFilename())
                 colFilenames.append(col_filename)
-                           
+            
             # Add concatenate command
             rules.extend(self._get_matrix_assembly_and_stockpile_rules(
                 grim.getId(), ProcessType.CONCATENATE_MATRICES, colFilenames,
                 work_dir=target_dir))
             
-            #grimChain.addCommands(grimRules)
-            #grimChain = self._write_update_MF(grimChain)            
-            #grimChains.append(grimChain)
-            #self.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
-            #                     .format(grimChain.objId, code))
-        #return grimChains
         return rules
 
     # .............................
