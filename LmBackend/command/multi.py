@@ -456,28 +456,6 @@ class RandomizeGradyCommand(_LmCommand):
         self.args = '{} {}'.format(pamFilename, randPamFilename)
 
 # .............................................................................
-class RandomizeSplotchCommand(_LmCommand):
-    """This command will randomize a PAM using the splotch method
-    """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'splotch_randomize.py'
-
-    # ................................
-    def __init__(self, pamFilename, numSides, outFilename):
-        """Construct the command object
-
-        Args:
-            pamFilename: The file location of the PAM
-            numSides: The number of sides for each cell in the shapegrid
-            outFilename: The file location to write the randomized PAM
-        """
-        _LmCommand.__init__(self)
-        self.inputs.append(pamFilename)
-        self.outputs.append(outFilename)
-
-        self.args = '{} {} {}'.format(pamFilename, numSides, outFilename)
-
-# .............................................................................
 class RandomizeSwapCommand(_LmCommand):
     """This command will randomize a PAM using the swap method
     """

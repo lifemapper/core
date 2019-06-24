@@ -446,7 +446,6 @@ GENERIC_LAYER_NAME_PREFIX = 'lyr'
    
 OCC_PREFIX = 'pt'
 PRJ_PREFIX = 'prj'
-SPLOTCH_PREFIX = 'splotch'
 PAMSUM_PREFIX = 'pamsum'
 
 class FileFix:
