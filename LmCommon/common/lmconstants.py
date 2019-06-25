@@ -1696,6 +1696,7 @@ class PamStatKeys(object):
     WHITTAKERS_BETA = 'whittakersBeta'
     LANDES_ADDATIVE_BETA = 'landesAddativeBeta'
     LEGENDRES_BETA = 'legendresBeta'
+    C_SCORE = 'c_score'
     
     # Covariance matrices
     # ..................

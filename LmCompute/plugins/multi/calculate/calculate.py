@@ -50,20 +50,21 @@ class PamStats(object):
         """
         @summary: Get the (beta) diversity statistics as a Matrix object with
                          column headers indicating which column is which
-        @todo: Avoid hard code in reshape
         """
-        return Matrix(np.array([self.whittaker, self.lande, 
-                                self.legendre]).reshape((1, 3)),
-                      headers={'0' : ['value'],
-                               '1' : [PamStatKeys.WHITTAKERS_BETA,
-                                      PamStatKeys.LANDES_ADDATIVE_BETA,
-                                      PamStatKeys.LEGENDRES_BETA]})
+        return Matrix(
+            np.array(
+                [[self.whittaker, self.lande, self.legendre, self.c_score]]),
+            headers={
+                '0' : ['value'],
+                '1' : [PamStatKeys.WHITTAKERS_BETA,
+                       PamStatKeys.LANDES_ADDATIVE_BETA,
+                       PamStatKeys.LEGENDRES_BETA,
+                       PamStatKeys.C_SCORE]})
 
     # ...........................
     def getSchluterCovariances(self):
         """
         @summary: Calculate and return the Schluter variance ratio statistics
-        @todo: Avoid hard code in reshape
         """
         # Try to use already computed co-variance matrices, if that fails, 
         #     calculate them too
@@ -80,11 +81,13 @@ class PamStats(object):
             siteVarRatio = float(self.sigmaSites.sum()
                                  ) / self.sigmaSites.trace()
         
-        return Matrix(np.nan_to_num(
-                        np.array([spVarRatio, siteVarRatio]).reshape((1, 2))),
-                      headers={'0' : ['Value'],
-                               '1' : [PamStatKeys.SPECIES_VARIANCE_RATIO,
-                                      PamStatKeys.SITES_VARIANCE_RATIO]})
+        return Matrix(
+            np.nan_to_num(np.array([[spVarRatio, siteVarRatio]])),
+            headers={
+                '0' : ['Value'],
+                '1' : [PamStatKeys.SPECIES_VARIANCE_RATIO,
+                       PamStatKeys.SITES_VARIANCE_RATIO]})
+
     # ...........................
     def getSiteStatistics(self):
         """
@@ -207,3 +210,15 @@ class PamStats(object):
         self.lande = self.numSpecies - self.omegaProp.sum()
         self.legendre = self.omega.sum() - (float((self.omega**2
                                                    ).sum()) / self.numSites)
+        
+        temp = 0.0
+        for i in range(self.numSpecies):
+            for j in range(i, self.numSpecies):
+                # Get the number shared (where both are == 1, so sum == 2)
+                num_shared = len(
+                    np.where(np.sum(self.pamData[:, [i, j]], axis=1) == 2)[0])
+                p1 = self.omega[i] - num_shared
+                p2 = self.omega[j] - num_shared
+                temp += p1 * p2
+        self.c_score = 2 * temp / (self.numSpecies * (self.numSpecies - 1))
+        
