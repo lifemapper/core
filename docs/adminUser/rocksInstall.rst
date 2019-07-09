@@ -134,7 +134,11 @@ new distribution.  ::
         # systemctl status vncserver@:20
         # systemctl enable vncserver@:20
 
-    
+Troubleshooting
+~~~~~~~~~~~~~~~~
+#. If nodes get stuck on re-install, check out tips at:: 
+    https://lists.sdsc.edu/pipermail/npaci-rocks-discussion/2019-July/073004.html
+
     
 **************************
 All KU-Lifemapper Clusters
