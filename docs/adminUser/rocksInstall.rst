@@ -40,50 +40,58 @@ URL for installation image, then point to ::
   
   http://central-6-2-x86-64.rocksclusters.org/install/rolls/
   
-Install the rolls:
+Steps for Rocks 7
 ~~~~~~~~~~~~~~~~~~
+1. Docs at http://central-7-0-x86-64.rocksclusters.org/roll-documentation/base/7.0/install-frontend-7.html
 
-All rolls should come from the vm host machine (notyeti) to speed download time.
-  
-For all clusters, install the following (Rocks 7.0):
- * area51
- * base 
- * CentOS
- * core
- * ganglia
- * hpc
- * kernel
- * python
- * sge
- * Updates-CentOS
- * kvm (Physical clusters only)
- * zfs (Physical clusters only)
+1. Choose English/US Keyboard
+1. Installation summary
+   1. Localization: Choose Date/Time zone
+   1. System: 
+      1. Fill out FQDN
+      1. Network and Hostname: Configure ONLY eth1 (public)
+      1. IPv4 tab
+         * Manual 
+         * Address:  129.237.201.xxx, Netmask: 255.255.255.0, Gateway: 129.237.201.254 (Dyche 129.237.183.126)
+         * DNS:  129.237.133.1, 129.237.32.1
+      1. IPv6 tab
+         * Link-local only
+   1. Rocks Cluster Config
+      1. Cluster Private Network
+         1. IPv4 address: 192.168.xxx.1
+   1. Cluster Configuration
+      1. Add/edit fields
+      1. Lawrence Geo:  N38.969  W95.245
+      1. NTP server:  time.ku.edu
+   1. Rolls selection:
+      1. Change roll source to URL for host machine to speed download time.
+      1. For all clusters, install the following (Rocks 7.0):
+         * area51
+         * base 
+         * CentOS
+         * core
+         * ganglia
+         * hpc
+         * kernel
+         * python
+         * sge
+         * Updates-CentOS
+      1. For physical clusters add:
+         * kvm
+         * zfs
+      1. Rocks6.2: area51, base, ganglia, hpc, kernel, os, python, sge, webserver
+   1. Installation Destination
+      1. Manual partitioning
+      1. Standard partitioning, Not LVM, auto-create
+      1. Change /home to  /state/partition1, make sure > 10gb    
+    1. Begin installation
+    1. User config
+       1. Set up root password
+       1. Do NOT set up user
+    1. When completed and ready to reboot, reset cdrom to None
+       * rocks set host vm cdrom <vm-name> cdrom=None
+       * rocks report host vm config <vm-name> 
 
-(6.2: area51, base, ganglia, hpc, kernel, os, python, sge, webserver)
-
-Configuration params/screens:
- * **Date/Time**
-   * NTP server:  time.ku.edu
- * On **Network and Hostname**:
-   * Fill out FQDN
-   * Fill out only public interface, eth1, 
-   * Method = Manual
-   * IPv4 
-     * assigned by Greg Smith for MAC address
-     * Netmask: 255.255.255.0
-     * Gateway:  129.237.201.254 (Dyche 129.237.183.126)
-     * DNS:  129.237.133.1, 129.237.32.1
-     * Search domain: (optional) lifemapper.org
-   * IPv6 - link-local only
- * On **Cluster Private Network**  
-   * Private Interface:  (notyeti VMs: available internal 192.168.xxx.1, where
-     xxx is the last quartet of the public IP address)
- * **Cluster Config**
-   * Lawrence Geo:  N38.969  W95.245
- * **Installation Destination**
-   * Manual partitioning
-   * Standard partitioning, Not LVM
-   * > 10gb for /state/partition1
 
 
 
