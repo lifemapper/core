@@ -28,11 +28,11 @@ the host system, then start or restart an existing cluster.  Open the
 "virt-manager" application in order to interact with the installation 
 user-interface:: 
 
- * rocks set host boot <vm-name> action=os
- * rocks set host vm cdrom <vm-name> cdrom=<kernel iso>
- * rocks report host vm config <vm-name>
- * (opt) rocks run host <vm-name> "shutdown -h now"
- * rocks start host vm <vm-name>
+ * rocks set host boot notyeti-192 action=os
+ * rocks set host vm cdrom notyeti-192 cdrom=/tank/data/rolls/kernel-7.0-0.x86_64.disk1.iso
+ * rocks report host vm config notyeti-192
+ * (opt) rocks run host notyeti-192 "shutdown -h now"
+ * rocks start host vm notyeti-192
  * virt-manager
 
 If installing 6.2, boot with Rocks 6.2 kernel iso in the CDROM, but choose 
@@ -208,7 +208,7 @@ the above instructions.
     # rocks add roll Updates-CentOS-${osversion}-${version}*iso
     # rocks enable roll Updates-CentOS-${osversion} version=${version}
     # (cd /export/rocks/install; rocks create distro)
-    # yum clean all; yum update
+    # yum clean all; yum update >> update.${version}.log
     
 
 Rocks 7.0 tips

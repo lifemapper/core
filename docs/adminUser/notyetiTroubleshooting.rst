@@ -279,3 +279,18 @@ history:
    160  rocks list host nas-0-0
    161  rocks set host boot nas-0-0 action=install
    162  ssh nas-0-0
+   
+Aug 2019
+~~~~~~~~~
+
+Symptoms:
+* Notyeti loses ZFS 
+  * zfs services, some fail (zfs-import-scan, zfs-mount, zfs-share) 
+  * zfs pool and zfs slices do not appear
+  * some mounts exist
+* Existing virtual clusters lose connectivity 
+  * cannot ssh to them or connect outward from them
+* New virtual clusters cannot get rolls from network
+* New virtual cluster cannot install - "problem in install disks"
+  * related to notyeti centos update?
+  
