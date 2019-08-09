@@ -453,7 +453,9 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
         for template_fn in template_files:
             # Remove .template and leading static package path
             r_path = template_fn.replace(
-                '.template', '').replace(STATIC_PACKAGE_PATH, '')
+                '.template', '').replace(STATIC_PACKAGE_PATH, '').replace('//', '/')
+            if r_path.startswith('/'):
+                r_path = r_path[1:]
             # Should we write this template?  Default to true and change if
             #    data will not support it.
             write_template = True
