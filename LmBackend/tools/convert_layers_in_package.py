@@ -31,16 +31,16 @@ from LmBackend.common.layerTools import convertLayersInDirectory
 
 # ................................................................
 if __name__ == '__main__':
-   parser = argparse.ArgumentParser(
-      description='This script converts all of the layers in a directory to ASCIIs and MXEs')
+    parser = argparse.ArgumentParser(description=
+     'This script converts all of the layers in a directory to ASCIIs and MXEs')
    
-   parser.add_argument('layerDirectory', type=str, 
-                       help='The directory with layer rasters')
-   args = parser.parse_args()
+    parser.add_argument('layerDirectory', type=str, 
+                        help='The directory with layer rasters')
+    args = parser.parse_args()
 
-   if os.path.exists(args.layerDirectory):
-      convertLayersInDirectory(args.layerDirectory)
-   else:
-      raise Exception, 'Layer directory: {}, does not exist'.format(
+    if os.path.exists(args.layerDirectory):
+        convertLayersInDirectory(args.layerDirectory)
+    else:
+        raise Exception, 'Layer directory: {}, does not exist'.format(
                                                          args.layerDirectory)
 
