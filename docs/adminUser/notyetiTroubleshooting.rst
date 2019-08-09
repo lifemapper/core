@@ -81,7 +81,18 @@ On Development Appliance
   * PGDG repo, Postgresql 9.1 libraries, PostGIS
   * HDF5 rpms
   
-  
+* Interrupt-remapping with bad chipset, workaround with KVM
+
+  * Persist across reboots: https://wiki.debian.org/VGAPassthrough#Unsafe_interrupts_remapping: "If your 
+    hardware doesn't support remapping of interruptions, you have to 
+    enable the unsafe assignments. Create /etc/modprobe.d/kvm_iommu.conf with::
+     options kvm allow_unsafe_assigned_interrupts=1
+     
+  * One-time only? https://gist.github.com/lisovy/1f737b1db2af55a153ea: run::
+     echo 1 > /sys/module/kvm/parameters/allow_unsafe_assigned_interrupts
+     
+  * Redhat bug:  https://bugzilla.redhat.com/show_bug.cgi?id=715555 
+    references both methods
   
 Try Me
 ~~~~~~
@@ -97,20 +108,6 @@ Try Me
   * time on machine - 
   * rocks list host attr | grep Timezone
 
-On Development Appliance
-~~~~~~~~~~~~~~~~~~~~~~~~
-* Interrupt-remapping with bad chipset, workaround with KVM
-
-  * Persist across reboots: https://wiki.debian.org/VGAPassthrough#Unsafe_interrupts_remapping: "If your 
-    hardware doesn't support remapping of interruptions, you have to 
-    enable the unsafe assignments. Create /etc/modprobe.d/kvm_iommu.conf with::
-     options kvm allow_unsafe_assigned_interrupts=1
-     
-  * One-time only? https://gist.github.com/lisovy/1f737b1db2af55a153ea: run::
-     echo 1 > /sys/module/kvm/parameters/allow_unsafe_assigned_interrupts
-     
-  * Redhat bug:  https://bugzilla.redhat.com/show_bug.cgi?id=715555 
-    references both methods
 
 
 Virtual cluster
@@ -283,14 +280,50 @@ history:
 Aug 2019
 ~~~~~~~~~
 
-Symptoms:
+ZFS Problem
+~~~~~~~~~~~~
+
 * Notyeti loses ZFS 
   * zfs services, some fail (zfs-import-scan, zfs-mount, zfs-share) 
   * zfs pool and zfs slices do not appear
   * some mounts exist
-* Existing virtual clusters lose connectivity 
+  
+Connectivity problem
+~~~~~~~~~~~~~~~~~~~~
+* Existing virtual clusters lose connectivity (cannot ssh in or out)
   * cannot ssh to them or connect outward from them
-* New virtual clusters cannot get rolls from network
+  * lost once after no activity (vacation)
+  * lost once when new cluster created
+  * New virtual clusters cannot get rolls from network
+* Virtual clusters lose connectivity  when new VC is created
+  * close all VCs, reboot notyeti, 
+    * that worked for first VC brought back up, then 2nd made other fail
+  * rebooted VCs, sometimes that works
+
 * New virtual cluster cannot install - "problem in install disks"
   * related to notyeti centos update?
-  
+  * solved by installing only first CentOS update from SDSC, 
+    Updates-CentOS-7.4.1708, version 2017-12-01
+
+* Development appliance rockme lost connectivity 
+  * first, could not connect from notyeti host
+  * restart ip6tables
+[root@rockme lifemapper-compute]# systemctl status ip6tables
+
+● ip6tables.service - IPv6 firewall with ip6tables
+   Loaded: loaded (/usr/lib/systemd/system/ip6tables.service; enabled; vendor preset: disabled)
+   Active: failed (Result: exit-code) since Wed 2019-08-07 17:19:59 CDT; 17h ago
+  Process: 614 ExecStart=/usr/libexec/iptables/ip6tables.init start (code=exited, status=1/FAILURE)
+ Main PID: 614 (code=exited, status=1/FAILURE)
+
+Aug 07 17:19:59 rockme.local systemd[1]: Starting IPv6 firewall with ip6tables...
+Aug 07 17:19:59 rockme.local ip6tables.init[614]: ip6tables: Applying firewall rules: ip6tables-restore v1.4.21: ip6tables-restore: unable to initialize table 'filter'
+Aug 07 17:19:59 rockme.local ip6tables.init[614]: Error occurred at line: 4
+Aug 07 17:19:59 rockme.local ip6tables.init[614]: Try `ip6tables-restore -h' or 'ip6tables-restore --help' for more information.
+Aug 07 17:19:59 rockme.local ip6tables.init[614]: [FAILED]
+Aug 07 17:19:59 rockme.local systemd[1]: ip6tables.service: main process exited, code=exited, status=1/FAILURE
+Aug 07 17:19:59 rockme.local systemd[1]: Failed to start IPv6 firewall with ip6tables.
+Aug 07 17:19:59 rockme.local systemd[1]: Unit ip6tables.service entered failed state.
+Aug 07 17:19:59 rockme.local systemd[1]: ip6tables.service failed.
+[root@rockme lifemapper-compute]# 
+

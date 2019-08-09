@@ -208,7 +208,7 @@ the above instructions.
     # rocks add roll Updates-CentOS-${osversion}-${version}*iso
     # rocks enable roll Updates-CentOS-${osversion} version=${version}
     # (cd /export/rocks/install; rocks create distro)
-    # yum clean all; yum update >> update.${version}.log
+    # yum clean all; yum update 
     
 
 Rocks 7.0 tips
