@@ -1726,11 +1726,10 @@ BEGIN
             END IF;   
          END;   
       ELSE
-         RAISE NOTICE 'Layer % found for User/EPSG %', lyrname, usr, epsg;
+         RAISE NOTICE 'Layer/User/EPSG %/%', lyrname, usr, epsg;
       END IF;
    ELSE
-      RAISE NOTICE 'User/Name/EPSG Layer % / %  found with id %', 
-                    usr, lyrname, epsg, existingid;
+      RAISE NOTICE 'No User/LayerID % / % found', usr, existingid;
    END IF;
    RETURN success;
 END;

@@ -1096,9 +1096,6 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;    
 
 -- ----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS lm_v3.lm_findOldGridsets(usr varchar, 
-                                                    oldtime double precision);
--- ----------------------------------------------------------------------------
 -- Get an existing gridset
 CREATE OR REPLACE FUNCTION lm_v3.lm_findUserGridsets(usr varchar, 
                                                      oldtime double precision)
@@ -3280,9 +3277,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 
 -- ----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS lm_v3.lm_deleteGridsetNoFiles(gsid int);
-
--- ----------------------------------------------------------------------------
 -- TODO: TEST this
 CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridsetMatrixColumns(gsid int)
 RETURNS SETOF int AS
@@ -3423,11 +3417,6 @@ BEGIN
    RETURN total;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS lm_v3.lm_clearSomeObsoleteSpeciesDataForUser(usr varchar,
-                                                           dt double precision, 
-                                                           maxnum int);
 
 -- ----------------------------------------------------------------------------
 -- Should only call this on public or anon user
