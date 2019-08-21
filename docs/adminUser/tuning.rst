@@ -25,7 +25,7 @@ Java memory usage
     [LmCompute - plugins - maxent]
     JAVA_MAX_MEM_OPTION: 1540m
     JAVA_INIT_MEM_OPTION: 1540m
-    JAVA_EXE: /usr/java/latest/bin/java
+    JAVA_EXE: /etc/alternatives/java
     
     ; For converting ASCIIs to MXEs
     CONVERT_JAVA_MAX_MEM_OPTION: 512m
