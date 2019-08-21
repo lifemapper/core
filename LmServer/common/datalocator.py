@@ -55,7 +55,7 @@ class EarlJr(LMObject):
     # ...............................................
     def createStartWalkenFilename(self, user, archiveName):
         name = '{}_{}'.format(user, archiveName)
-        fname = os.path.join(LOG_PATH, 'start.{}.txt'.format(self.name)) 
+        fname = os.path.join(LOG_PATH, 'start.{}.txt'.format(name)) 
         return fname
     
     # ...............................................
