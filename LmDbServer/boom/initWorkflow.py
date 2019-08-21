@@ -1269,7 +1269,7 @@ class BOOMFiller(LMObject):
         return items
 
     # ...............................................
-    def initBoom(self, initMakeflow=False):
+    def initBoom(self):
         try:
             # Also adds user
             self.initializeInputs()
@@ -1312,21 +1312,21 @@ class BOOMFiller(LMObject):
             # If there are biogeographic hypotheses, add layers and matrix 
             biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)            
                   
-            if initMakeflow is True:
-                if biogeoMtx and len(biogeoLayerNames) > 0:
-                    # TODO: Create a separate module to create BG Hypotheses 
-                    #       encoding Makeflow, independent of Boom completion
-                    #       so this may be added later or called from this script 
-                    # Add BG hypotheses
-                    bgh_success_fname = os.path.join(target_dir, 'bg.success')
-                    bg_cmd = EncodeBioGeoHypothesesCommand(
-                        self.userId, boomGridset.name, bgh_success_fname)
-                    rules.append(bg_cmd.getMakeflowRule(local=True))
+            # init Makeflow
+            if biogeoMtx and len(biogeoLayerNames) > 0:
+                # TODO: Create a separate module to create BG Hypotheses 
+                #       encoding Makeflow, independent of Boom completion
+                #       so this may be added later or called from this script 
+                # Add BG hypotheses
+                bgh_success_fname = os.path.join(target_dir, 'bg.success')
+                bg_cmd = EncodeBioGeoHypothesesCommand(
+                    self.userId, boomGridset.name, bgh_success_fname)
+                rules.append(bg_cmd.getMakeflowRule(local=True))
 
-                # This also adds commands for iDigBio occurrence data retrieval 
-                #   and taxonomy insertion before Boom
-                #   and tree encoding after Boom 
-                rules.extend(self.addBoomRules(tree, target_dir))
+            # This also adds commands for iDigBio occurrence data retrieval 
+            #   and taxonomy insertion before Boom
+            #   and tree encoding after Boom 
+            rules.extend(self.addBoomRules(tree, target_dir))
 
             # Write config file for archive, update permissions
             self.writeConfigFile(tree=tree, biogeoLayers=biogeoLayerNames)
@@ -1354,13 +1354,9 @@ if __name__ == '__main__':
                    'to be created from these data.'))
     parser.add_argument('--logname', type=str, default=None,
              help=('Basename of the logfile, without extension'))
-    parser.add_argument('--init_makeflow', type=bool, default=True,
-             help=("""Create a Makeflow task to walk these species data and 
-                      create additional Makeflow tasks."""))
     args = parser.parse_args()
     paramFname = args.param_file
     logname = args.logname
-    initMakeflow = args.init_makeflow
           
     if paramFname is not None and not os.path.exists(paramFname):
         print ('Missing configuration file {}'.format(paramFname))
@@ -1377,7 +1373,7 @@ if __name__ == '__main__':
           .format(paramFname))
     
     filler = BOOMFiller(paramFname, logname=logname)
-    gs = filler.initBoom(initMakeflow=initMakeflow)
+    gs = filler.initBoom()
     print('Completed initWorkflow creating gridset: {}'.format(gs.getId()))
 
     
@@ -1450,7 +1446,6 @@ timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 logname = 'initWorkflow.debug.{}'.format(timestamp)
 
 self = BOOMFiller(config_file, logname=logname)
-initMakeflow=True
 self.initializeInputs()
 
 encoded_tree = None
@@ -1490,22 +1485,21 @@ tree = self.addTree(boomGridset, encoded_tree=encoded_tree)
 # If there are biogeographic hypotheses, add layers and matrix and create MFChain
 biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)            
       
-if initMakeflow is True:
-    if biogeoMtx and len(biogeoLayerNames) > 0:
-        # Add BG hypotheses
-        bgh_success_fname = os.path.join(target_dir, 'bg.success')
-        bg_cmd = EncodeBioGeoHypothesesCommand(
-            self.userId, boomGridset.name, bgh_success_fname)
-        # TODO: Do we want this to be local?  Yes, needs db access
-        # TODO: We need a different script for this.  
-        rules.append(bg_cmd.getMakeflowRule(local=True))
-        # Add BG Hypotheses encoding Makeflows, independent of Boom completion
-        #rules.extend(self.addEncodeBioGeoMF(boomGridset))
-    # Create MFChain to run Boomer on these inputs IFF requested
-    # This also adds commands for iDigBio occurrence data retrieval 
-    #   and taxonomy insertion before Boom
-    #   and tree encoding after Boom 
-    rules.extend(self.addBoomMF(tree, target_dir))
+if biogeoMtx and len(biogeoLayerNames) > 0:
+    # Add BG hypotheses
+    bgh_success_fname = os.path.join(target_dir, 'bg.success')
+    bg_cmd = EncodeBioGeoHypothesesCommand(
+        self.userId, boomGridset.name, bgh_success_fname)
+    # TODO: Do we want this to be local?  Yes, needs db access
+    # TODO: We need a different script for this.  
+    rules.append(bg_cmd.getMakeflowRule(local=True))
+    # Add BG Hypotheses encoding Makeflows, independent of Boom completion
+    #rules.extend(self.addEncodeBioGeoMF(boomGridset))
+# Create MFChain to run Boomer on these inputs IFF requested
+# This also adds commands for iDigBio occurrence data retrieval 
+#   and taxonomy insertion before Boom
+#   and tree encoding after Boom 
+rules.extend(self.addBoomMF(tree, target_dir))
 
 # Write config file for archive, update permissions
 self.writeConfigFile(tree=tree, biogeoLayers=biogeoLayerNames)
@@ -1572,7 +1566,7 @@ mfChain = self._write_update_MF(mfChain)
 self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
                      biogeoLayers=biogeoLayerNames)
 
-# gs = filler.initBoom(initMakeflow=initMakeflow)
+# gs = filler.initBoom()
 
  
 

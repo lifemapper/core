@@ -212,4 +212,26 @@ if __name__ == '__main__':
     defcat.addDefaults()
 
 """
+from LmDbServer.tools.catalogDefaults import *
+
+logname = '/state/partition1/lmscratch/log/test_catalogDefaults.log'
+
+import logging
+logger = ScriptLogger(logname, level=logging.INFO)
+
+########################
+from LmServer.db.borgscribe import *
+
+########################
+
+# scribe = BorgScribe(logger)
+# scribe.openConnections()
+
+########################
+# defcat = Defcat(logname)
+
+########################
+# defcat.addDefaults()
+########################
+
 """

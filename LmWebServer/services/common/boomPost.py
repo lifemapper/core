@@ -499,6 +499,6 @@ class BoomPoster(object):
         logname = '{}.{}'.format(scriptname, timestamp)
         
         filler = BOOMFiller(filename, logname=logname)
-        gridset = filler.initBoom(initMakeflow=True)
+        gridset = filler.initBoom()
         
         return gridset
