@@ -955,7 +955,7 @@ lm_v3.lm_occMatrixcolumn,
 lm_v3.lm_sdmMatrixcolumn,
 lm_v3.lm_sdmMatrixcolumn_matrix,
 lm_v3.lm_lyrMatrixcolumn,
-lm_v3.lm_mfprocess,
+lm_v3.lm_mfprocess
 -- lm_v3.lm_bloat
 TO GROUP reader;
 
@@ -976,7 +976,7 @@ lm_v3.lm_occMatrixcolumn,
 lm_v3.lm_sdmMatrixcolumn,
 lm_v3.lm_sdmMatrixcolumn_matrix,
 lm_v3.lm_lyrMatrixcolumn,
-lm_v3.lm_mfprocess,
+lm_v3.lm_mfprocess
 -- lm_v3.lm_bloat
 TO GROUP writer;
 
