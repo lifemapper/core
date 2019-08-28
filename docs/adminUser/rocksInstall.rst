@@ -92,15 +92,14 @@ Steps for Rocks 7
        * rocks set host vm cdrom <vm-name> cdrom=None
        * rocks report host vm config <vm-name> 
 
-
-
-
 Enable www access
 ~~~~~~~~~~~~~~~~~
 Follow procedure at http://central-7-0-x86-64.rocksclusters.org/roll-documentation/base/7.0/enable-www.html
 
 Insert compute nodes
 ~~~~~~~~~~~~~~~~~~~~
+Make sure sgemaster.hostname.service is running before doing this!
+
 Start insert-ethers process on the Frontend, then start each node.  Wait until 
 each node has been recognized ( ) and accepted (*) in the insert-ethers
 window before starting the next node.
