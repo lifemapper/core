@@ -58,3 +58,40 @@ Solution:: config.lmserver.ini should have FQDN in DB_HOSTNAME
 
 Fix::  When running initLM (on reboot, after install), subcommand
        rocks/bin/updateCfg should fill in FQDN 
+       
+     
+191 install
+-----------
+12 Rolls from central-7-0-x86-64.rocksclusters.org::
+  area51
+  base
+  CentOS
+  core
+  fingerprint
+  ganglia
+  hpc
+  kernel
+  python
+  sge
+  Updates-CentOS 2017-12-
+  yumfix
+
+
+195 install
+-------------------------------------------------
+     
+Rolls from notyeti::
+  area51
+  base
+  CentOS
+  core
+  ganglia
+  hpc
+  kernel
+  python
+  sge
+  Updates-CentOS 2017-12-
+  
+Rolls from central-7-0-x86-64.rocksclusters.org::
+  fingerprint
+  yumfix
