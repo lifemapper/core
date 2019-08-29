@@ -83,14 +83,19 @@ run the cleanRoll scripts for each roll.
 #. **Create distribution**::
 
    # rocks enable roll lifemapper-compute lifemapper-server
-   # (cd /export/rocks/install; rocks create distro; yum clean all)
+   # (module unload opt-python; \
+      cd /export/rocks/install; \
+      rocks create distro; \
+      yum clean all)
 
 #. **Create and run LmServer/LmCompute scripts**::
 
-    # (rocks run roll lifemapper-compute > add-compute.sh; \
+    # (module unload opt-python; \
+       rocks run roll lifemapper-compute > add-compute.sh; \
        bash add-compute.sh 2>&1 | tee add-compute.out)
 
-    # (rocks run roll lifemapper-server > add-server.sh; \
+    # (module unload opt-python; \
+       rocks run roll lifemapper-server > add-server.sh; \
        bash add-server.sh 2>&1 | tee add-server.out)
 
 #. **IFF** installing compute roll first or alone, manually set the 
@@ -121,8 +126,7 @@ Install bugfixes
 
 #. Compute Nodes - check/fix node group permissions on /state/partition1/lmscratch ::
 
-   # rocks run host compute "(hostname; chgrp -R lmwriter /state/partition1/lmscratch; chmod -R g+ws /state/partition1/lmscratch)"
-   # rocks run host compute "(hostname; ls -lahtr /state/partition1/lmscratch)"
+   # /opt/lifemapper/rocks/bin/fixNodePermissions
       
 Look for Errors
 ---------------
