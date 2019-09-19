@@ -16,7 +16,7 @@ For lifemapper-server and lifemapper compute rolls:
    * lifemapper/rutabaga repo for webclient changes
    * biotaphy/ot_service_wrapper repo for OTOL connect changes
 
-#. Update CODEVERSION and VERSION in github:
+#. Update LMCODE_VERSION and VERSION in github:
    * pragmagrid/lifemapper-compute/src/version.mk 
    * pragmagrid/lifemapper-server/src/version.mk
    * pragmagrid/lifemapper-server/src/webclient/version.mk.in

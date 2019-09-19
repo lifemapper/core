@@ -20,6 +20,14 @@ LM_DISK: @LMDISK@
 SPECIES_DATA_DIR: @SPECIES_DATA_DIR@
 PACKAGING_DIR: @PACKAGING_DIR@
 
+;; Installed dependency versions
+;; May be overridden after non-code updates in config.site.ini
+PYTHON: @PYTHONVER@
+PG_VERSION: @PGSQLVER@
+LMCODE_VERSION: @LMCODE_VERSION@
+LMVIZ_VERSION: @LMVIZ_VERSION@
+GBIF_VERSION: @GBIF_VERSION@
+
 ; .............................................................................
 [LmServer - pipeline]
 TROUBLESHOOTERS: null@nowhere.com
