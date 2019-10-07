@@ -272,16 +272,17 @@ class Borg(DbPostgresql):
         tree = None
         if row is not None:
             treeid = self._getColumnValue(row, idxs, ['treeid'])
-            usr = self._getColumnValue(row, idxs, ['treeuserid', 'userid'])
-            name = self._getColumnValue(row, idxs, ['treename', 'name'])
-            dloc = self._getColumnValue(row, idxs, ['treedlocation', 'dlocation'])
-            isbin = self._getColumnValue(row, idxs, ['isbinary'])
-            isultra = self._getColumnValue(row, idxs, ['isultrametric'])
-            haslen = self._getColumnValue(row, idxs, ['hasbranchlengths'])
-            meta = self._getColumnValue(row, idxs, ['treemetadata', 'metadata'])
-            modtime = self._getColumnValue(row, idxs, ['treemodtime', 'modtime'])
-            tree = Tree(name, metadata=meta, dlocation=dloc, userId=usr, 
-                            treeId=treeid, modTime=modtime)
+            if treeid is not None:
+                usr = self._getColumnValue(row, idxs, ['treeuserid', 'userid'])
+                name = self._getColumnValue(row, idxs, ['treename', 'name'])
+                dloc = self._getColumnValue(row, idxs, ['treedlocation', 'dlocation'])
+                isbin = self._getColumnValue(row, idxs, ['isbinary'])
+                isultra = self._getColumnValue(row, idxs, ['isultrametric'])
+                haslen = self._getColumnValue(row, idxs, ['hasbranchlengths'])
+                meta = self._getColumnValue(row, idxs, ['treemetadata', 'metadata'])
+                modtime = self._getColumnValue(row, idxs, ['treemodtime', 'modtime'])
+                tree = Tree(name, metadata=meta, dlocation=dloc, userId=usr, 
+                                treeId=treeid, modTime=modtime)
         return tree
     
 # ...............................................
