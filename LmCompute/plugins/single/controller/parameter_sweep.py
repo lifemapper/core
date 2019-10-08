@@ -251,9 +251,8 @@ class ParameterSweep(object):
                 # If openModeller
                 elif process_type in [ProcessType.OM_MODEL,
                                       ProcessType.OM_PROJECT]:
-                    mask_filename = os.path.join(
-                        self.base_work_dir, '{}{}'.format(
-                            mask_filename_base, LMFormat.GTIFF.ext))
+                    mask_filename = '{}{}'.format(
+                        mask_filename_base, LMFormat.GTIFF.ext)
                     wrapper = OpenModellerWrapper(
                         work_dir, species_name, logger=self.log)
                     wrapper.create_model(
