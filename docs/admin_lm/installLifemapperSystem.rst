@@ -5,7 +5,8 @@ Install or Update a Lifemapper Server/Compute installation
 ==========================================================
 .. contents::  
 
-.. _Configure Archive Data : docs/adminUser/buildLifemapperData.rst
+git config --global user.email "zzeppozz@gmail.com"
+git config --global user.name "Aimee Stewart"
 
 Current versions
 ----------------
@@ -29,8 +30,8 @@ Current versions
 
 Update existing code and script RPMs (without new roll)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#. Copy individual rpms to /export/rocks/install/contrib/6.2/x86_64/RPMS/ 
-   (or 7.0). This will only update RPMs that are part of the original roll.
+#. Copy individual rpms to /export/rocks/install/contrib/7.0/x86_64/RPMS/ 
+   This will only update RPMs that are part of the original roll.
    To add rpms that are not yet part of the rolls, put them into a directory 
    shared from FE to nodes (/share/lm/). 
    
