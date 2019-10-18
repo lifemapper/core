@@ -1112,6 +1112,7 @@ class GBIF:
     QUALIFIER = 'gbif:'
     
     SPECIES_SERVICE = 'species'
+    PARSER_SERVICE = 'parser/name'
     OCCURRENCE_SERVICE = 'occurrence'
     DATASET_SERVICE = 'dataset'
     ORGANIZATION_SERVICE = 'organization'

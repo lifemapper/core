@@ -286,8 +286,8 @@ class APIQuery(object):
             except:
                 retcode = HTTPStatus.INTERNAL_SERVER_ERROR
                 reason = 'Unknown Error'
-            print('Failed ({}: {}) for baseurl {} and query {}'
-                  .format(retcode, reason, self.baseurl, queryAsString))
+            print('Failed ({}: {}) for baseurl {}'.format(retcode, reason, 
+                                                          self.baseurl))
 
 # .............................................................................
 class BisonAPI(APIQuery):
@@ -614,45 +614,76 @@ class GbifAPI(APIQuery):
                     
         return goodnames
     
-    # ...............................................
-    @staticmethod
-    def parseNames(filename=None):
-        """
-        @summary: Return closest accepted species in the GBIF backbone taxonomy 
-                  for this namestring
-                  rank, name, strict, verbose, kingdom, phylum, class, 
-                  order, family, genus
-        """
-        goodnames = []        
-        nameAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key='parser/name')
+# ...............................................
+    def _postJsonToParser(self, url, data):
+        response = output = None
         try:
-            nameAPI.queryByPost(file=filename, outputType='json')
-            output = nameAPI.output
+            response = requests.post(url, json=data)
+        except Exception as e:
+            if response is not None:
+                retcode = response.status_code
+            else:
+                print('Failed on URL {} ({})'.format(url, str(e)))
+        else:
+            if response.ok:
+                try:
+                    output = response.json()
+                except Exception as e:
+                    try:
+                        output = response.content
+                    except Exception:
+                        output = response.text
+                    else:
+                        print('Failed to interpret output of URL {} ({})'
+                            .format(url, str(e)))
+            else:
+
+                try:
+                    retcode = response.status_code        
+                    reason = response.reason
+                except:
+                    print('Failed to find failure reason for URL {} ({})'
+                        .format(url, str(e)))
+                else:
+                    print('Failed on URL {} ({}: {})'
+                            .format(url, retcode, reason))
+        return output
+
+    
+    # ...............................................
+    def parseNames(self, filename=None):
+        """
+        @summary: Return dictionary of given, and clean taxon name for 
+                  namestrings in this file
+        """
+        if os.path.exists(filename):
+            names = []
+            with open(filename, 'r', encoding='utf-8') as f:
+                for line in f:
+                    names.append(line.strip())
+                    
+        cleanNames = {}
+        nameAPI = GbifAPI(service=GBIF.PARSER_SERVICE)
+        try:
+            output = nameAPI._postJsonToParser(names)
         except Exception, e:
-            print ('Failed to get a response from GBIF name parser for file {}, ({})'
+            print ('Failed to get a response from GBIF name parser for data in file {}, ({})'
                    .format(filename, str(e)))
             raise
         
-        try:
-            status = output['status']
-        except:
-            raise
-        
-        # TODO: parse ParsedNameList response
-#         try:
-#             alternatives = output['alternatives']
-#         except:
-#             alternatives = []
-#                 
-#         if status == 'ACCEPTED':
-#             smallrec = nameAPI._getFldVals(output)
-#             goodnames.append(smallrec)
-#         for alt in alternatives:
-#             if alt['status'] == 'ACCEPTED':
-#                 smallrec = nameAPI._getFldVals(output)
-#                 goodnames.append(smallrec)
+        if output:
+            for rec in output:
+                if rec['parsed'] is True:
+                    try:
+                        sciname = rec['scientificName']
+                        canname = rec['canonicalName']
+                    except KeyError as e:
+                        print('Missing scientific or canonicalName in output record')
+                    except Exception as e:
+                        print('Failed, err: {}'.format(str(e)))
+                    cleanNames[sciname] = canname
                     
-        return goodnames
+        return cleanNames
     
     # ...............................................
     @staticmethod
