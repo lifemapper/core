@@ -273,6 +273,15 @@ class PartnerQuery(object):
         otree.addNodeLabels()
 
     # .............................................................................
+    def _getOptVal(self, retdict, fld):
+        # Top Match
+        try:
+            val = retdict[fld]
+        except:
+            val = ''
+        return val
+
+    # .............................................................................
     def _writeNameMatches(self, origname, goodnames, writer):
         # Top Match
         rec = [origname]
@@ -282,27 +291,30 @@ class PartnerQuery(object):
                 rec.append(gudname[fld])
             except:
                 rec.append('')
-        canonical = gudname['canonicalName']
-        print('origname {}, canonical {}, speciesKey, usageKey :  {}, {}'
-              .format(origname, canonical, gudname['speciesKey'], \
-                      gudname['usageKey']))
         writer.writerow(rec)
+
+        canonical = self._getOptVal(gudname, 'canonicalName')
+        speciesKey1 = self._getOptVal(gudname, 'speciesKey')    
+        print('origname {}, canonical {}, speciesKey {}'.format(origname, 
+                                                        canonical, speciesKey1))
         
         # Alternate matches
         alternatives = goodnames[1:]
-        for gudname in alternatives:
+        for altname in alternatives:
             rec = [origname]
             for fld in GbifAPI.NameMatchFieldnames:
                 try:
-                    rec.append(gudname[fld])
+                    rec.append(altname[fld])
                 except:
                     rec.append('')
             writer.writerow(rec)
-            print('origname {}, canonical {}, speciesKey, usageKey :  {}, {}'
-                  .format(origname, canonical, gudname['speciesKey'], 
-                          gudname['usageKey']))
+            
+            canonical = self._getOptVal(altname, 'canonicalName')
+            speciesKey = self._getOptVal(altname, 'speciesKey')    
+            print('origname {}, canonical {}, speciesKey {}'.format(origname, 
+                                                            canonical, speciesKey))
         # Return only top match
-        return goodnames[0]['speciesKey'], canonical
+        return speciesKey1, canonical
     
     # .............................................................................
     def readGBIFTaxonIds(self, gbifidFname):
@@ -526,6 +538,32 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ScriptLogger
 from LmServer.legion.tree import Tree
 from LmCommon.common.apiquery import IdigbioAPI
+
+from LmDbServer.tools.partnerData import PartnerQuery
+
+outfname = 'nmmst_gids.txt'
+names = []
+pq = PartnerQuery()
+
+names = ['Acrocystis nana', 'Bangia atropurpurea', 'Boergesenia forbesii', 
+'Boodlea composita', 'Bostrychia tenella', 'Brachytrichia quoyi', 
+'Caulerpa peltata', 'Caulerpa prolifera', 'Centroceras clavultum', 
+'Chaetomorpha spiralis', 'Champia parvula', 'Chnoospora minima', 
+'Chondracanthus intermedius', 'Cladophora herpestica', 'colpomenia sinuosa', 
+'Corallina pilulifera', 'Dasya sessilis', 'Dictyosphaeria cavernosa', 
+'Dictyota sp.', 'Enteromorpba clatbrata', 'Gelidiella acerosa', 
+'Gracilaria coronopifolia', 'Grateloupia filicina', 'Hincksia breviarticulatus', 
+'Hincksia mitchellae', 'Hypnea spinella', 'Marginosporum aberrans', 
+'Microdictyon nigrescens', 'Monostroma nitidum', 
+'non-articulate corallina alga', 'Peyssonnelia conchicola', 'Porphyra crispata', 
+'Prionitis ramosissima', 'Ulthrix flaccida', 'Ulva conglobata', 
+'Ulva intestinales', 'Ulva lactuca', 'Ulva prolifera', 'Valoniopsis pachynema', 
+'Yamadaella cenomyce']
+
+
+
+
+unmatched_names, name_to_gbif_id = pq.assembleGBIFTaxonIds(names, outfname)
 
 
 
