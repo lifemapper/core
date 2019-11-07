@@ -68,15 +68,25 @@ class BoomPoster(object):
         #             can add functionality later to connect different parts as 
         #             needed but for now they will either be present or not
         
+        # NOTE (CJG - 2019-10-21): For now, user jobs must include sdm section,
+        #    occ data and scenarios or throw bad request.  Relax once we have
+        #    more flexibility
+        
         # Look for occurrence set specification at top level
         occSec = self._get_json_section(reqJson, APIPostKeys.OCCURRENCE)
         if occSec:
             self._process_occurrence_sets(occSec)
+        else:
+            raise cherrypy.HTTPError(
+                    HTTPStatus.BAD_REQUEST, 'Must provide occurrence data')
         
         # Look for scenario package information at top level
         scnSec = self._get_json_section(reqJson, APIPostKeys.SCENARIO_PACKAGE)
         if scnSec:
             self._process_scenario_package(scnSec)
+        else:
+            raise cherrypy.HTTPError(
+                    HTTPStatus.BAD_REQUEST, 'Must provide climate data')
             
         # Look for global pam information
         globalPamSec = self._get_json_section(reqJson, APIPostKeys.GLOBAL_PAM)
@@ -92,6 +102,9 @@ class BoomPoster(object):
         sdmSec = self._get_json_section(reqJson, APIPostKeys.SDM)
         if sdmSec:
             self._process_sdm(sdmSec)
+        else:
+            raise cherrypy.HTTPError(
+                    HTTPStatus.BAD_REQUEST, 'Must provide SDM configuration')
         
         # PAM stats
         pamStatsSec = self._get_json_section(reqJson, APIPostKeys.PAM_STATS)

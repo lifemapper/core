@@ -415,8 +415,8 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                             os.path.splitext(
                                 os.path.basename(mtx.getDLocation()))[0]))
 
-                # If we should write the CSV file, do it
-                if include_csv:
+                # If we should write the CSV file, and the matrix exists, do it
+                if include_csv and os.path.exists(mtx.getDLocation()):
                     mtx_obj = Matrix.load(mtx.getDLocation())
                     csv_mtx_str = StringIO()
                     mtx_obj.writeCSV(csv_mtx_str)
@@ -534,7 +534,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 else:
                     write_template = False
             elif r_path.endswith('nodeLookup.js'):
-                if anc_pam is not None:
+                if anc_pam is not None and os.path.exists(anc_pam.getDLocation()):
                     temp_filler = TemplateFiller(
                         node_lookup_json=json.dumps(
                             createHeaderLookup(
@@ -542,7 +542,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 else:
                     write_template = False
             elif r_path.endswith('ancPam.js'):
-                if pam is not None:
+                if anc_pam is not None:
                     header_lookup_fn = os.path.join(
                         DYN_PACKAGE_DIR, 'nodeLookup.json')
                     anc_pam_str = StringIO()

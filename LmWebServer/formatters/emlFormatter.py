@@ -1,6 +1,7 @@
 """Module functions for converting object to EML
 """
 import cherrypy
+import os
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmCommon.common.matrix import Matrix
@@ -147,16 +148,17 @@ def makeEml(my_obj):
         SubElement(dsEl, 'name', value=dsName)
         
         for mtx in my_obj.getMatrices():
-            # TODO: Enable GRIMs
-            if mtx.matrixType in [
-                MatrixType.ANC_PAM, #MatrixType.GRIM,
-                MatrixType.PAM, MatrixType.SITES_OBSERVED]:
-                dsEl.append(_create_spatial_vector(mtx))
-            elif mtx.matrixType in [MatrixType.ANC_STATE, 
-                                            MatrixType.DIVERSITY_OBSERVED, 
-                                            MatrixType.MCPA_OUTPUTS,
-                                            MatrixType.SPECIES_OBSERVED]:
-                dsEl.append(_create_data_table_section(mtx))
+            if os.path.exists(mtx.getDLocation()):
+                # TODO: Enable GRIMs
+                if mtx.matrixType in [
+                    MatrixType.ANC_PAM, #MatrixType.GRIM,
+                    MatrixType.PAM, MatrixType.SITES_OBSERVED]:
+                    dsEl.append(_create_spatial_vector(mtx))
+                elif mtx.matrixType in [MatrixType.ANC_STATE, 
+                                                MatrixType.DIVERSITY_OBSERVED, 
+                                                MatrixType.MCPA_OUTPUTS,
+                                                MatrixType.SPECIES_OBSERVED]:
+                    dsEl.append(_create_data_table_section(mtx))
         if my_obj.tree is not None:
             dsEl.append(_create_other_entity(my_obj.tree))
     elif isinstance(my_obj, SDMProjection):
