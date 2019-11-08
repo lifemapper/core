@@ -564,7 +564,10 @@ class GbifAPI(APIQuery):
     def _getFldVals(bigrec):
         rec = {}
         for fldname in GbifAPI.NameMatchFieldnames:
-            rec[fldname] = bigrec[fldname]
+            try:
+                rec[fldname] = bigrec[fldname]
+            except:
+                pass
         return rec
 
     # ...............................................
@@ -597,7 +600,9 @@ class GbifAPI(APIQuery):
         try:
             status = output['status']
         except:
-            raise
+            status = None
+            print ('Failed to get a definitive species match on {}, trying alternatives'
+                   .format(nameclean))
         
         try:
             alternatives = output['alternatives']
@@ -607,10 +612,15 @@ class GbifAPI(APIQuery):
         if status == 'ACCEPTED':
             smallrec = nameAPI._getFldVals(output)
             goodnames.append(smallrec)
-        for alt in alternatives:
-            if alt['status'] == 'ACCEPTED':
-                smallrec = nameAPI._getFldVals(output)
-                goodnames.append(smallrec)
+        elif status is None and len(alternatives) > 0:
+            # get first synonym
+            for alt in alternatives:
+                if alt['status'] == 'SYNONYM':
+                    smallrec = nameAPI._getFldVals(alt)
+                    goodnames.append(smallrec)
+                    break
+        else:
+            print ('No match or alternatives to return')
                     
         return goodnames
     
@@ -1098,7 +1108,87 @@ from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
 from LmCommon.common.lmXml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
-from LmCommon.common.apiquery import IdigbioAPI
+from LmCommon.common.apiquery import IdigbioAPI, GbifAPI
+
+
+names = ['Acrocystis nana', 'Bangia atropurpurea', 'Boergesenia forbesii', 
+'Boodlea composita', 'Bostrychia tenella', 'Brachytrichia quoyi', 
+'Caulerpa peltata', 'Caulerpa prolifera', 'Centroceras clavultum', 
+'Chaetomorpha spiralis', 'Champia parvula', 'Chnoospora minima', 
+'Chondracanthus intermedius', 'Cladophora herpestica', 'colpomenia sinuosa', 
+'Corallina pilulifera', 'Dasya sessilis', 'Dictyosphaeria cavernosa', 
+'Dictyota sp.', 'Enteromorpba clatbrata', 'Gelidiella acerosa', 
+'Gracilaria coronopifolia', 'Grateloupia filicina', 'Hincksia breviarticulatus', 
+'Hincksia mitchellae', 'Hypnea spinella', 'Marginosporum aberrans', 
+'Microdictyon nigrescens', 'Monostroma nitidum', 
+'non-articulate corallina alga', 'Peyssonnelia conchicola', 'Porphyra crispata', 
+'Prionitis ramosissima', 'Ulthrix flaccida', 'Ulva conglobata', 
+'Ulva intestinales', 'Ulva lactuca', 'Ulva prolifera', 'Valoniopsis pachynema', 
+'Yamadaella cenomyce']
+
+namestr = 'Enteromorpba clatbrata'
+namestr = 'Prionitis ramosissima'
+
+goodnames = []
+nameclean = namestr.strip()
+
+otherFilters={'name': nameclean, 'rank': 'species', 'verbose': 'true'}
+
+
+nameAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key='match', 
+                  otherFilters=otherFilters)
+try:
+    nameAPI.query()
+    output = nameAPI.output
+except Exception, e:
+    print ('Failed to get a response for species match on {}, ({})'
+           .format(nameclean, str(e)))
+    raise
+
+try:
+    status = output['status']
+except:
+    status = None
+from LmDbServer.tools.partnerData import PartnerQuery
+
+names = []
+pq = PartnerQuery()
+fname = 'nmmst_species.txt'
+outfname = 'nmmst_gids.txt'
+
+for line in open(fname, 'r'):
+    nm = line.strip()
+    names.append(nm)
+
+try:
+    alternatives = output['alternatives']
+except:
+    alternatives = []
+
+if status == 'ACCEPTED':
+    smallrec = nameAPI._getFldVals(output)
+    goodnames.append(smallrec)
+elif status is None and len(alternatives) > 0:
+    # get first synonym
+    for alt in alternatives:
+        if alt['status'] == 'SYNONYM':
+            smallrec = nameAPI._getFldVals(alt)
+            goodnames.append(smallrec)
+            break
+
+# goodnames = GbifAPI.getAcceptedNames(namestr)
+
+
+
+
+
+
+
+
+
+
+    
+    
 
 # with > 15 points
 taxon_ids = [5150027, 2607722, 8409948, 1452524, 9087097, 5384831, 5357852, 
