@@ -541,7 +541,7 @@ from LmCommon.common.apiquery import IdigbioAPI
 
 from LmDbServer.tools.partnerData import PartnerQuery
 
-outfname = 'nmmst_gids.txt'
+outfname = 'nmmst_sp_gids.txt'
 names = []
 pq = PartnerQuery()
 

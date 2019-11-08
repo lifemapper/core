@@ -584,7 +584,7 @@ class GbifAPI(APIQuery):
         goodnames = []
         nameclean = namestr.strip()
         
-        otherFilters={'name': nameclean, 'rank': 'species', 'verbose': 'true'}
+        otherFilters={'name': nameclean, 'verbose': 'true'}
         if kingdom:
             otherFilters['kingdom'] = kingdom
         nameAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key='match', 
@@ -601,7 +601,14 @@ class GbifAPI(APIQuery):
             status = output['status']
         except:
             status = None
-            print ('Failed to get a definitive species match on {}, trying alternatives'
+            try:
+                match = output['matchType']
+            except:
+                pass
+            else:
+                if match.lower() == 'none':
+                    print('No GBIF match on {}')
+            print ('Failed to get a definitive match on {}, trying alternatives'
                    .format(nameclean))
         
         try:
