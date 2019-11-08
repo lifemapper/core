@@ -20,6 +20,9 @@ LM_DISK: @LMDISK@
 SPECIES_DATA_DIR: @SPECIES_DATA_DIR@
 PACKAGING_DIR: @PACKAGING_DIR@
 
+;; Maximum size of anonymous occurrence data uploads, in lines
+MAX_ANON_UPLOAD_SIZE = 20000
+
 ;; Installed dependency versions
 ;; May be overridden after non-code updates in config.site.ini
 PYTHON: @PYTHONVER@

@@ -13,24 +13,28 @@ import os
 from StringIO import StringIO
 import zipfile
 
-from LmCommon.common.lmconstants import HTTPStatus, LMFormat, DEFAULT_POST_USER
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, HTTPStatus,
+                                         LMFormat, PhyloTreeKeys)
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.trees.lmTree import LmTree
-from LmServer.common.lmconstants import ENV_DATA_PATH
+
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.lmconstants import ENV_DATA_PATH, LMFileType
+
 from LmWebServer.common.lmconstants import HTTPMethod
+from LmWebServer.common.localconstants import MAX_ANON_UPLOAD_SIZE
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.lmconstants import LMFileType
+
 
 # TODO: Move to constants
 BIOGEO_UPLOAD = 'biogeo'
 CLIMATE_UPLOAD = 'climate'
 OCCURRENCE_UPLOAD = 'occurrence'
 TREE_UPLOAD = 'tree'
-
+DEFAULT_POST_USER
 
 # .............................................................................
 @cherrypy.expose
@@ -301,10 +305,24 @@ class UserUploadService(LmService):
                                 HTTPStatus.BAD_REQUEST,
                                 'Must only provide one .csv file')
                         else:
+                            # Determine if we are dealing with anonymous user
+                            #    once instead of checking at every line
+                            anon_user = self.getUserId() == DEFAULT_POST_USER
                             with zip_f.open(z_fname) as zf:
                                 with open(csvFilename, 'w') as outF:
+                                    num_lines = 0
                                     for line in zf:
-                                        outF.write(line)
+                                        num_lines += 1
+                                        if anon_user and num_lines >= MAX_ANON_UPLOAD_SIZE:
+                                            fail_to_upload = True
+                                            break
+                                        else:
+                                            outF.write(line)
+                                if fail_to_upload:
+                                    os.remove(csvFilename)
+                                    raise cherrypy.HTTPError(
+                                        HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                                        'Anonymous users may only upload occurrence data less than {} lines'.format(MAX_ANON_UPLOAD_SIZE))
                         csv_done = True
         else:
             with open(csvFilename, 'w') as out_f:
@@ -340,7 +358,21 @@ class UserUploadService(LmService):
             for schema in ['newick', 'nexus', 'phyloxml']:
                 try:
                     tree = LmTree.initFromData(data, schema)
+                    
+                    # Add squids
+                    squid_dict = {}
+                    user_id = self.getUserId()
+                    if user_id == PUBLIC_USER:
+                        user_id = DEFAULT_POST_USER
+                    for label in tree.getLabels():
+                        sno = self.scribe.getTaxon(
+                            userId=user_id, taxonName=label)
+                        if sno is not None:
+                            squid_dict[label] = sno.squid
+                    tree.annotateTree(PhyloTreeKeys.SQUID, squid_dict)
+                    # Add internal node labels
                     tree.addNodeLabels()
+                    
                     tree.writeTree(out_tree_filename)
                     break
                 except Exception as e:
