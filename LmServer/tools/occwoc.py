@@ -103,7 +103,6 @@ class _SpeciesWeaponOfChoice(LMObject):
         return self._obsoleteTime
 
 # ...............................................
-    @property
     def reset_expiration_date(self, new_date_mjd):
         currtime = dt.gmt().mjd
         if new_date_mjd < currtime:
