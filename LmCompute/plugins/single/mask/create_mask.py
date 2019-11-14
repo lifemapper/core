@@ -206,8 +206,8 @@ def create_blank_mask(bbox, cell_size, epsg, nodata=DEFAULT_NODATA,
                                      location
     """
     minx, miny, maxx, maxy = bbox
-    num_cols = float(maxx - minx) / cell_size
-    num_rows = float(maxy - miny) / cell_size
+    num_cols = int(float(maxx - minx) / cell_size)
+    num_rows = int(float(maxy - miny) / cell_size)
     
     data = np.ones((num_rows, num_cols), dtype=np.int8)
     
