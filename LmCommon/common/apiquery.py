@@ -560,47 +560,75 @@ class GbifAPI(APIQuery):
         return (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
                 nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
                 familyStr, genusStr, speciesStr, genusKey, speciesKey, loglines)
+
+    # ...............................................
+    def _getTaiwanRow(self, occAPI, rec):
+        row = None
+        occKey = occAPI._getOutputVal(rec, 'gbifID')
+        lonstr = occAPI._getOutputVal(rec, 'decimalLongitude')
+        latstr = occAPI._getOutputVal(rec, 'decimalLatitude')
+        try:
+            float(lonstr)
+        except:
+            return row
+
+        try:
+            float(latstr)
+        except:
+            return row
+
+        if (occKey is not None 
+            and not latstr.startswith('0.0')
+            and not lonstr.startswith('0.0')):
+            row = [occKey, lonstr, latstr]
+        return row
     
-#     # ...............................................
-#     @staticmethod
-#     def getOccurrences(taxonKey):
-#         """
-#         @summary: Return GBIF backbone taxonomy for this GBIF Taxon ID  
-#         """
-#         offset = 0
-#         currcount = 0
-#         total = 0
-# 
-#         while offset <= total:
-#             otherFilters = {'taxonKey': taxonKey, 
-#                             'offset': offset, 'limit': GBIF.LIMIT, 
-#                             'country': 'TW'}
-#             occAPI = GbifAPI(service=GBIF.OCCURRENCE_SERVICE, 
-#                              key=GBIF.SEARCH_COMMAND, otherFilters=otherFilters)
-#             try:
-#                 occAPI.query()
-#             except:
-#                 print 'Failed on {}'.format(taxonKey)
-#                 total = 0
-#             else:
-#                 isEnd = occAPI._getOutputVal(occAPI.output, 'endOfRecords').lower()
-#                 count = occAPI._getOutputVal(occAPI.output, 'count')
-#                 # Write these records
-#                 recs = occAPI.output['results']
-#                 total = len(recs)
-#                 
-#                 # First gbifTaxonId where this data retrieval is successful, 
-#                 # get and write header and metadata
-#                 if total > 0 and fields is None:
-#                     
-#                 currcount += len(recs)
-#                 print("  Retrieved {} records, {} records starting at {}"
-#                       .format(len(recs), limit, offset))
-#                 for rec in recs:
-#                     # get vals
-#                     
-#                     writer.writerow(vals)
-#                 offset += limit
+    # ...............................................
+    def getTaiwanOccurrences(self, taxonKey, outfname):
+        """
+        @summary: Return GBIF backbone taxonomy for this GBIF Taxon ID  
+        """
+        offset = 0
+        currcount = 0
+        total = 0
+        try:
+            writer, f = self._getCSVWriter(outfname, doAppend=False)
+     
+            while offset <= total:
+                otherFilters = {'taxonKey': taxonKey, 
+                                'offset': offset, 'limit': GBIF.LIMIT, 
+                                'country': 'TW'}
+                occAPI = GbifAPI(service=GBIF.OCCURRENCE_SERVICE, 
+                                 key=GBIF.SEARCH_COMMAND, otherFilters=otherFilters)
+                try:
+                    occAPI.query()
+                except:
+                    print 'Failed on {}'.format(taxonKey)
+                    currcount = 0
+                else:
+                    isEnd = occAPI._getOutputVal(occAPI.output, 'endOfRecords').lower()
+                    count = occAPI._getOutputVal(occAPI.output, 'count')
+                    # Write these records
+                    recs = occAPI.output['results']
+                    currcount = len(recs)
+                    total += currcount
+    
+                    if offset == 0 and currcount > 0:
+                        writer.writerow(['gbifID', 'decimalLongitude', 'decimalLatitude'])
+                    
+                    for rec in recs:
+                        row = self._getTaiwanOcc(rec)
+                        if row:
+                            writer.writerow(row)
+                         
+                    print("  Retrieved {} records, starting at {}"
+                          .format(currcount, offset))
+    
+                    offset += GBIF.LIMIT
+        except:
+            raise 
+        finally:
+            f.close()
         
     
     # ...............................................
@@ -971,17 +999,22 @@ class IdigbioAPI(APIQuery):
                 os.remove(fname)
             
         summary = {self.GBIF_MISSING_KEY: []}
-        writer, f = self._getCSVWriter(point_output_file, doAppend=False)
-         
-        # get/write data
-        fldnames = None
-        for gid in taxon_ids:
-            # Pull/write fieldnames first time
-            ptCount, fldnames = self._getIdigbioRecords(gid, fldnames, 
-                                                    writer, meta_output_file)
-            summary[gid] = ptCount
-            if ptCount == 0:
-                summary[self.GBIF_MISSING_KEY].append(gid)
+        try:
+            writer, f = self._getCSVWriter(point_output_file, doAppend=False)
+             
+            # get/write data
+            fldnames = None
+            for gid in taxon_ids:
+                # Pull/write fieldnames first time
+                ptCount, fldnames = self._getIdigbioRecords(gid, fldnames, 
+                                                        writer, meta_output_file)
+                summary[gid] = ptCount
+                if ptCount == 0:
+                    summary[self.GBIF_MISSING_KEY].append(gid)
+        except:
+            raise 
+        finally:
+            f.close()
                          
         # get/write missing data
         if missing_id_file is not None and len(summary[self.GBIF_MISSING_KEY]) > 0:
