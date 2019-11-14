@@ -584,7 +584,7 @@ class GbifAPI(APIQuery):
         goodnames = []
         nameclean = namestr.strip()
         
-        otherFilters={'name': nameclean, 'rank': 'species', 'verbose': 'true'}
+        otherFilters={'name': nameclean, 'verbose': 'true'}
         if kingdom:
             otherFilters['kingdom'] = kingdom
         nameAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key='match', 
@@ -598,30 +598,30 @@ class GbifAPI(APIQuery):
             raise
         
         try:
-            status = output['status']
+            status = output['status'].lower()
         except:
-            status = None
-            print ('Failed to get a definitive species match on {}, trying alternatives'
-                   .format(nameclean))
-        
-        try:
-            alternatives = output['alternatives']
-        except:
-            alternatives = []
-                
-        if status == 'ACCEPTED':
+            status = None            
+        if status in ('accepted', 'synonym'):
             smallrec = nameAPI._getFldVals(output)
             goodnames.append(smallrec)
-        elif status is None and len(alternatives) > 0:
-            # get first synonym
-            for alt in alternatives:
-                if alt['status'] == 'SYNONYM':
-                    smallrec = nameAPI._getFldVals(alt)
-                    goodnames.append(smallrec)
-                    break
         else:
-            print ('No match or alternatives to return')
-                    
+            try:
+                alternatives = output['alternatives']
+                print ('No exact match on {}, returning top alternative of {}'
+                       .format(nameclean, len(alternatives)))
+                # get first/best synonym
+                for alt in alternatives:
+                    try:
+                        altstatus = alt['status'].lower()
+                    except:
+                        altstatus = None
+                    if altstatus in ('accepted', 'synonym'):
+                        smallrec = nameAPI._getFldVals(alt)
+                        goodnames.append(smallrec)
+                        break
+            except:
+                print ('No match or alternatives to return for {}'.format(nameclean))
+                
         return goodnames
     
 # ...............................................
@@ -1126,35 +1126,48 @@ names = ['Acrocystis nana', 'Bangia atropurpurea', 'Boergesenia forbesii',
 'Ulva intestinales', 'Ulva lactuca', 'Ulva prolifera', 'Valoniopsis pachynema', 
 'Yamadaella cenomyce']
 
+namestr = 'Ulva intestinales'
 namestr = 'Enteromorpba clatbrata'
-namestr = 'Prionitis ramosissima'
+# namestr = 'Prionitis ramosissima'
+
+gbif_resp = GbifAPI.getAcceptedNames(namestr)
+
+fname = 'nmmst_species.txt'
+outfname = 'nmmst_name_txkey.csv'
 
 goodnames = []
 nameclean = namestr.strip()
 
-otherFilters={'name': nameclean, 'rank': 'species', 'verbose': 'true'}
-
-
-nameAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key='match', 
-                  otherFilters=otherFilters)
-try:
-    nameAPI.query()
-    output = nameAPI.output
-except Exception, e:
-    print ('Failed to get a response for species match on {}, ({})'
-           .format(nameclean, str(e)))
-    raise
-
-try:
-    status = output['status']
-except:
-    status = None
+otherFilters={'name': nameclean, 'verbose': 'true'}
+for namestr in names:
+    nameclean = namestr.strip()
+    otherFilters={'name': nameclean, 'verbose': 'true'}
+    nameAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key='match', 
+                      otherFilters=otherFilters)
+    try:
+        nameAPI.query()
+        output = nameAPI.output
+    except Exception, e:
+        print ('Failed to get a response for species match on {}, ({})'
+               .format(nameclean, str(e)))
+        raise
+    
+    try:
+        status = output['status']
+    except:
+        status = None
+        
+        
+        
+        
+        
+        
+        
+        
 from LmDbServer.tools.partnerData import PartnerQuery
 
 names = []
 pq = PartnerQuery()
-fname = 'nmmst_species.txt'
-outfname = 'nmmst_gids.txt'
 
 for line in open(fname, 'r'):
     nm = line.strip()
