@@ -518,6 +518,7 @@ class GbifAPI(APIQuery):
         """
         @summary: Return GBIF backbone taxonomy for this GBIF Taxon ID  
         """
+        acceptedKey = acceptedStr = nubKey = None
         taxAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key=taxonKey)
         try:
             taxAPI.query()
@@ -532,22 +533,23 @@ class GbifAPI(APIQuery):
             rankStr = taxAPI._getOutputVal(taxAPI.output, 'rank')
             genusKey = taxAPI._getOutputVal(taxAPI.output, 'genusKey')
             speciesKey = taxAPI._getOutputVal(taxAPI.output, 'speciesKey')
-            acceptedKey = taxAPI._getOutputVal(taxAPI.output, 'acceptedKey')
-            nubKey = taxAPI._getOutputVal(taxAPI.output, 'nubKey')
             taxStatus = taxAPI._getOutputVal(taxAPI.output, 'taxonomicStatus')
-            acceptedStr = taxAPI._getOutputVal(taxAPI.output, 'accepted')
             canonicalStr = taxAPI._getOutputVal(taxAPI.output, 'canonicalName')
             loglines = []
             if taxStatus != 'ACCEPTED':
                 try:
+                    # Not present if results are taxonomicStatus=ACCEPTED
+                    acceptedKey = taxAPI._getOutputVal(taxAPI.output, 'acceptedKey')
+                    acceptedStr = taxAPI._getOutputVal(taxAPI.output, 'accepted')
+                    nubKey = taxAPI._getOutputVal(taxAPI.output, 'nubKey')
+                    
                     loglines.append(taxAPI.url)
-                    loglines.append('   genusKey = {}'.format(genusKey))
-                    loglines.append('   speciesKey = {}'.format(speciesKey))
+                    loglines.append('   taxonomicStatus = {}'.format(taxStatus))
                     loglines.append('   acceptedKey = {}'.format(acceptedKey))
                     loglines.append('   acceptedStr = {}'.format(acceptedStr))
                     loglines.append('   nubKey = {}'.format(nubKey))
-                    loglines.append('   taxonomicStatus = {}'.format(taxStatus))
-                    loglines.append('   accepted = {}'.format(acceptedStr))
+                    loglines.append('   genusKey = {}'.format(genusKey))
+                    loglines.append('   speciesKey = {}'.format(speciesKey))
                     loglines.append('   canonicalName = {}'.format(canonicalStr))
                     loglines.append('   rank = {}'.format(rankStr))
                 except:
@@ -558,6 +560,76 @@ class GbifAPI(APIQuery):
         return (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
                 nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
                 familyStr, genusStr, speciesStr, genusKey, speciesKey, loglines)
+
+    # ...............................................
+    def _getTaiwanRow(self, occAPI, rec):
+        row = None
+        occKey = occAPI._getOutputVal(rec, 'gbifID')
+        lonstr = occAPI._getOutputVal(rec, 'decimalLongitude')
+        latstr = occAPI._getOutputVal(rec, 'decimalLatitude')
+        try:
+            float(lonstr)
+        except:
+            return row
+
+        try:
+            float(latstr)
+        except:
+            return row
+
+        if (occKey is not None 
+            and not latstr.startswith('0.0')
+            and not lonstr.startswith('0.0')):
+            row = [occKey, lonstr, latstr]
+        return row
+    
+    # ...............................................
+    def getTaiwanOccurrences(self, taxonKey, outfname):
+        """
+        @summary: Return GBIF backbone taxonomy for this GBIF Taxon ID  
+        """
+        offset = 0
+        currcount = 0
+        total = 0
+        try:
+            writer, f = self._getCSVWriter(outfname, doAppend=False)
+     
+            while offset <= total:
+                otherFilters = {'taxonKey': taxonKey, 
+                                'offset': offset, 'limit': GBIF.LIMIT, 
+                                'country': 'TW'}
+                occAPI = GbifAPI(service=GBIF.OCCURRENCE_SERVICE, 
+                                 key=GBIF.SEARCH_COMMAND, otherFilters=otherFilters)
+                try:
+                    occAPI.query()
+                except:
+                    print 'Failed on {}'.format(taxonKey)
+                    currcount = 0
+                else:
+                    isEnd = occAPI._getOutputVal(occAPI.output, 'endOfRecords').lower()
+                    count = occAPI._getOutputVal(occAPI.output, 'count')
+                    # Write these records
+                    recs = occAPI.output['results']
+                    currcount = len(recs)
+                    total += currcount
+    
+                    if offset == 0 and currcount > 0:
+                        writer.writerow(['gbifID', 'decimalLongitude', 'decimalLatitude'])
+                    
+                    for rec in recs:
+                        row = self._getTaiwanOcc(rec)
+                        if row:
+                            writer.writerow(row)
+                         
+                    print("  Retrieved {} records, starting at {}"
+                          .format(currcount, offset))
+    
+                    offset += GBIF.LIMIT
+        except:
+            raise 
+        finally:
+            f.close()
+        
     
     # ...............................................
     @staticmethod
@@ -927,17 +999,22 @@ class IdigbioAPI(APIQuery):
                 os.remove(fname)
             
         summary = {self.GBIF_MISSING_KEY: []}
-        writer, f = self._getCSVWriter(point_output_file, doAppend=False)
-         
-        # get/write data
-        fldnames = None
-        for gid in taxon_ids:
-            # Pull/write fieldnames first time
-            ptCount, fldnames = self._getIdigbioRecords(gid, fldnames, 
-                                                    writer, meta_output_file)
-            summary[gid] = ptCount
-            if ptCount == 0:
-                summary[self.GBIF_MISSING_KEY].append(gid)
+        try:
+            writer, f = self._getCSVWriter(point_output_file, doAppend=False)
+             
+            # get/write data
+            fldnames = None
+            for gid in taxon_ids:
+                # Pull/write fieldnames first time
+                ptCount, fldnames = self._getIdigbioRecords(gid, fldnames, 
+                                                        writer, meta_output_file)
+                summary[gid] = ptCount
+                if ptCount == 0:
+                    summary[self.GBIF_MISSING_KEY].append(gid)
+        except:
+            raise 
+        finally:
+            f.close()
                          
         # get/write missing data
         if missing_id_file is not None and len(summary[self.GBIF_MISSING_KEY]) > 0:
@@ -1109,6 +1186,9 @@ from LmCommon.common.lmXml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.common.apiquery import IdigbioAPI, GbifAPI
+
+
+tids = [1000515, 1000519, 1000525, 1000541, 1000543, 1000575, 1000583]
 
 
 names = ['Acrocystis nana', 'Bangia atropurpurea', 'Boergesenia forbesii', 

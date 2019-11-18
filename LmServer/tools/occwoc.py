@@ -309,7 +309,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             else:
                 # if no species key, this is not a species
                 if rankStr in ('SPECIES', 'GENUS'):
-                    if taxonKey != acceptedKey:
+                    if taxStatus != 'ACCEPTED':
                         if acceptedKey is not None:
                             # Update to accepted values
                             taxonKey = acceptedKey
