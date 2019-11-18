@@ -36,13 +36,13 @@ import json
 import mx.DateTime
 import os
 import sys
-import unicodecsv
 import urllib2
 
 from LmBackend.common.lmobj import LMError
 
 from LmCommon.common.apiquery import GbifAPI
 from LmCommon.common.lmconstants import PhyloTreeKeys
+from LmCommon.common.readyfile import get_unicodecsv_writer
 
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 
@@ -155,27 +155,6 @@ class PartnerQuery(object):
         unicodecsv.field_size_limit(sys.maxsize)
         self.encoding = 'utf-8'
         self.delimiter = '\t'
-
-    # .............................................................................
-    def _getCSVWriter(self, datafile, doAppend=True):
-        '''
-        @summary: Get a CSV writer that can handle encoding
-        '''
-        unicodecsv.field_size_limit(sys.maxsize)
-        if doAppend:
-            mode = 'ab'
-        else:
-            mode = 'wb'
-           
-        try:
-            f = open(datafile, mode) 
-            writer = unicodecsv.writer(f, delimiter=self.delimiter, 
-                                      encoding=self.encoding)
-        
-        except Exception, e:
-            raise Exception('Failed to read or open {}, ({})'
-                            .format(datafile, str(e)))
-        return writer, f
 
     # .............................................................................
     def _convertType(self, ogrtype):
@@ -391,20 +370,19 @@ class PartnerQuery(object):
         return name_to_gbif_ids
               
     # .............................................................................
-    """
-    nm = 'Sphagnum capillifolium var. capillifolium'
-    """
-    def assembleGBIFTaxonIds(self, names, gbifidFname):
+    def assembleGBIFTaxonIds(self, names, outfname):
         unmatched_names = []
         name_to_gbif_ids = {}
         if not(isinstance(names, list)):
             names = [names]
            
-        if os.path.exists(gbifidFname):
-            print('Deleting existing file {} ...'.format(gbifidFname))
-            os.remove(gbifidFname)
+        if os.path.exists(outfname):
+            print('Deleting existing file {} ...'.format(outfname))
+            os.remove(outfname)
            
-        writer, f = self._getCSVWriter(gbifidFname, doAppend=False)
+#         writer, f = self._getCSVWriter(outfname, doAppend=False)
+        writer, f = get_unicodecsv_writer(outfname, delimiter='\t', 
+                                          doAppend=False)
         header = ['providedName']
         header.extend(GbifAPI.NameMatchFieldnames)
         writer.writerow(header)

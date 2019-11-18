@@ -392,10 +392,10 @@ from LmServer.tools.cwalken import ChristopherWalken
 from LmDbServer.boom.boom_collate import BoomCollate
 
 configFname = '/share/lm/data/archive/kubi/public_boom-2019.04.12.ini'
-successFname= 'public_boom-2019.04.12.ini.success'
+successFname= 'mf_3/public_boom-2019.04.12.ini.success'
 
-configFname = '/share/lm/data/archive/cshl/prenolepis_imparis_global_10min_ppf.ini'
-successFname = '/share/lm/data/archive/cshl/prenolepis_imparis_global_10min_ppf.ini.success'
+# configFname = '/share/lm/data/archive/cshl/prenolepis_imparis_global_10min_ppf.ini'
+# successFname = '/share/lm/data/archive/cshl/prenolepis_imparis_global_10min_ppf.ini.success'
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 
@@ -425,7 +425,6 @@ import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.apiquery import GbifAPI
-from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser

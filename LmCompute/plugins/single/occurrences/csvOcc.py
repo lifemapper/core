@@ -139,7 +139,6 @@ from LmCommon.common.lmconstants import (ENCODING, GBIF, GBIF_QUERY,
                     DWCNames, LMFormat, DEFAULT_EPSG)
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
-from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCompute.common.lmObj import LmException
 try:
     from LmServer.common.lmconstants import BIN_PATH
