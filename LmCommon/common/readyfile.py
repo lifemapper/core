@@ -109,20 +109,27 @@ def deleteFile(fname, deleteDir=False):
 def get_unicodecsv_reader(csv_list_or_file, delimiter):
     '''
     @summary: Get a CSV reader that can handle encoding
+    @todo: require filename, do not allow list
     '''
     openfile = None  
     unicodecsv.field_size_limit(sys.maxsize)
-    try:
-        data = open(csv_list_or_file, 'rb')
-        openfile = data
-    except:
+    if not os.path.exists(csv_list_or_file):
+        print('{} is not an existing filename, trying to parse as data'
+               .format(csv_list_or_file))
         data = csv_list_or_file
+    else:
+        try:
+            data = open(csv_list_or_file, 'rb')
+            openfile = data
+        except Exception, e: 
+            raise
 
     try:
         reader = unicodecsv.reader(data, delimiter=delimiter, encoding=ENCODING)
     except Exception, e:
+        reader = None
         if openfile:
-            msg = ('Failed to read or open {}, ({})'.format(csv_list_or_file, e))
+            msg = ('Failed to read data from {}, ({})'.format(csv_list_or_file, e))
         else:
             msg = ('Failed to parse CSV data ({})'.format(e))
         raise Exception(msg)

@@ -4,10 +4,8 @@ import idigbio
 import json
 import os
 import requests
-import sys
 from types import (BooleanType, DictionaryType, TupleType, FloatType, IntType, 
                    StringType, UnicodeType, ListType)
-import unicodecsv
 import urllib
 
 from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
@@ -15,7 +13,7 @@ from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
                                          URL_ESCAPES, HTTPStatus, DWCNames)
 from LmCommon.common.lmXml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.readyfile import readyFilename, get_unicodecsv_writer
 
 # .............................................................................
 class APIQuery(object):
@@ -24,7 +22,7 @@ class APIQuery(object):
     @note: CSV files are created with tab delimiter
     """
     ENCODING = 'utf-8'
-    DELIMITER = '\t'
+    DELIMITER = GBIF.DATA_DUMP_DELIMITER
     GBIF_MISSING_KEY = 'unmatched_gbif_ids'
 
     def __init__(self, baseurl, 
@@ -42,7 +40,6 @@ class APIQuery(object):
         self.filterString = self._assembleFilterString(filterString=filterString)
         self.output = None
         self.debug = False
-        unicodecsv.field_size_limit(sys.maxsize)
       
 # ...............................................
     @classmethod
@@ -59,28 +56,6 @@ class APIQuery(object):
             return '{}?{}'.format(self.baseurl, self.filterString)
         else:
             return self.baseurl
-      
-    # ...............................................
-    def _getCSVWriter(self, datafile, doAppend=True):
-        '''
-        @summary: Get a CSV writer that can handle encoding
-        '''
-        unicodecsv.field_size_limit(sys.maxsize)
-        if doAppend:
-            mode = 'ab'
-        else:
-            mode = 'wb'
-           
-        try:
-            readyFilename(datafile)
-            f = open(datafile, mode) 
-            writer = unicodecsv.writer(f, delimiter=self.DELIMITER, 
-                                      encoding=self.ENCODING)
-        
-        except Exception, e:
-            raise Exception('Failed to read or open {}, ({})'
-                            .format(datafile, str(e)))
-        return writer, f
           
     # ...............................................
     def addFilters(self, qFilters={}, otherFilters={}):
@@ -584,47 +559,53 @@ class GbifAPI(APIQuery):
         return row
     
     # ...............................................
-    def getTaiwanOccurrences(self, taxonKey, outfname):
+    @staticmethod
+    def getOccurrences(taxonKey, outfname, otherFilters={}, one_page=False):
         """
-        @summary: Return GBIF backbone taxonomy for this GBIF Taxon ID  
+        @summary: Return GBIF occurrences for this GBIF Taxon ID  
         """
+        gapi = GbifAPI(service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
+                       otherFilters={'taxonKey': taxonKey, 
+                                     'limit': GBIF.LIMIT, 
+                                     'hasCoordinate': True,
+                                     'has_geospatial_issue': False})
+        gapi.addFilters(otherFilters)
+
         offset = 0
         currcount = 0
         total = 0
         try:
-            writer, f = self._getCSVWriter(outfname, doAppend=False)
+            writer, f = get_unicodecsv_writer(outfname, GbifAPI.DELIMITER, doAppend=False)
      
             while offset <= total:
-                otherFilters = {'taxonKey': taxonKey, 
-                                'offset': offset, 'limit': GBIF.LIMIT, 
-                                'country': 'TW'}
-                occAPI = GbifAPI(service=GBIF.OCCURRENCE_SERVICE, 
-                                 key=GBIF.SEARCH_COMMAND, otherFilters=otherFilters)
+                gapi.addFilters(otherFilters={'offset': offset})
                 try:
-                    occAPI.query()
+                    gapi.query()
                 except:
                     print 'Failed on {}'.format(taxonKey)
                     currcount = 0
                 else:
-                    isEnd = occAPI._getOutputVal(occAPI.output, 'endOfRecords').lower()
-                    count = occAPI._getOutputVal(occAPI.output, 'count')
-                    # Write these records
-                    recs = occAPI.output['results']
+                    # First query, report count
+                    if offset == 0:
+                        count = gapi.output['count']
+                        print("Found {} recs for key {}".format(count, taxonKey))
+                        
+                    recs = gapi.output['results']
                     currcount = len(recs)
                     total += currcount
-    
+                    # Write header
                     if offset == 0 and currcount > 0:
                         writer.writerow(['gbifID', 'decimalLongitude', 'decimalLatitude'])
-                    
+                    # Write recs
                     for rec in recs:
-                        row = self._getTaiwanOcc(rec)
+                        row = gapi._getTaiwanRow(gapi, rec)
                         if row:
                             writer.writerow(row)
-                         
                     print("  Retrieved {} records, starting at {}"
                           .format(currcount, offset))
-    
                     offset += GBIF.LIMIT
+                    if one_page == True:
+                        offset = total + 1
         except:
             raise 
         finally:
@@ -1069,15 +1050,6 @@ class IdigbioAPI(APIQuery):
 def testBison():
       
     tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
-    response = {u'facet_counts': 
-             {u'facet_ranges': {}, 
-              u'facet_fields': {u'TSNs': tsnList}
-              }
-             }
-    
-    loopCount = 0
-    occAPI = None
-    taxAPI = None
      
     #       tsnList = BisonAPI.getTsnListForBinomials()
     for tsnPair in tsnList:
@@ -1114,12 +1086,6 @@ def testIdigbioTaxonIds():
     infname = '/tank/data/input/idigbio/taxon_ids.txt'
     testcount = 20
     
-    import os
-    #    statii = {}
-    # Output
-    #    outfname = '/tmp/idigbio_summary.txt'
-    #    if os.path.exists(outfname):
-    #       os.remove(outfname)
     outlist = '/tmp/idigbio_accepted_list.txt'
     if os.path.exists(outlist):
         os.remove(outlist)
@@ -1163,12 +1129,46 @@ def testIdigbioTaxonIds():
     return idigList
 
 # .............................................................................
+def testGetTaiwanPoints():
+    pth = '/tank/zdata/taiwan/species'
+#     twFilters={'country': 'TW', 'advanced': 1, 
+#                'geometry': 'POLYGON((119 21,123 21,123 26,119 26,119 21))'}
+    
+    tkeys = [5277384, 2653778, 2644877, 8259272, 5278155, 5426431, 2643011, 5276780, 
+             2644581, 2663441, 3199042, 5279147, 5729863, 3197958, 5276029, 2659095, 
+             2644845, 3200250, 9402904, 2663047, 5278913, 5729905, 2668380, 2656192, 
+             2645228, 2667810, 2653483, 10108706, 5273380, 5273394, 5273309, 5273366, 
+             7491248, 9233726]
+                 
+    for tk in tkeys:
+        outfname = '{}/gbif_occ_{}.csv'.format(pth, tk)
+#         filters = twFilters.copy()
+#         GbifAPI.getOccurrences(tk, outfname, otherFilters=filters, one_page=True)
+        GbifAPI.getOccurrences(tk, outfname, one_page=True)
+
+        gapi = GbifAPI(service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
+                       otherFilters={'taxonKey': tk, 
+                                     'limit': GBIF.LIMIT, 
+                                     'hasCoordinate': True,
+                                     'has_geospatial_issue': False})
+#         gapi.addFilters(otherFilters=twFilters)
+        gapi.query()
+        o = gapi.output
+        count = o['count']
+        recs = o['results']
+        print 'Returned {} points for {}'.format(count, tk)
+
+    
+# .............................................................................
 # .............................................................................
 if __name__ == '__main__':
     pass
 
          
 """
+#            'advanced': 1,
+#            'geometry': 'POLYGON((119 21,123 21,123 26,119 26,119 21))'}
+
 import idigbio
 import json
 import os
@@ -1184,8 +1184,80 @@ from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
                                          URL_ESCAPES, HTTPStatus, DWCNames)
 from LmCommon.common.lmXml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.readyfile import readyFilename, get_unicodecsv_reader
 from LmCommon.common.apiquery import IdigbioAPI, GbifAPI
+
+pth = '/tank/zdata/taiwan/species'
+infname = '{}/species-taxonkeys.csv'.format(pth)
+
+# ga = GbifAPI.getOccurrences(tk, outfname, 
+#                             otherFilters={'country': 'TW'},
+#                             one_page=True)
+
+# for tk in tkeys:
+#     outfname = '{}/gbif_occ_{}.csv'.format(pth, tk)
+#     gapi = GbifAPI.getOccurrences(tk, outfname, 
+#                                   otherFilters={'country': 'TW'},
+#                                   one_page=True)
+    
+pth = '/tank/zdata/taiwan/species'
+
+tkeys = [5277384, 2653778, 2644877, 8259272, 5278155, 5426431, 2643011, 5276780, 
+         2644581, 2663441, 3199042, 5279147, 5729863, 3197958, 5276029, 2659095, 
+         2644845, 3200250, 9402904, 2663047, 5278913, 5729905, 2668380, 2656192, 
+         2645228, 2667810, 2653483, 10108706, 5273380, 5273394, 5273309, 5273366, 
+         7491248, 9233726]
+             
+for tk in tkeys:
+    outfname = '{}/gbif_occ_{}.csv'.format(pth, tk)
+    gapi = GbifAPI(service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
+                   otherFilters={'taxonKey': tk, 
+                                 'limit': GBIF.LIMIT, 
+                                 'hasCoordinate': True,
+                                 'has_geospatial_issue': False})
+    gapi.query()
+    o = gapi.output
+    count = o['count']
+    recs = o['results']
+    print 'Returned {} points for {}'.format(count, tk)
+
+
+
+offset = 0
+currcount = 0
+total = 0
+try:
+    writer, f = get_unicodecsv_writer(outfname, GbifAPI.DELIMITER, doAppend=False)
+
+    while offset <= total:
+        gapi.addFilters(otherFilters={'offset': offset})
+        try:
+            gapi.query()
+            if offset == 0:
+                count = gapi.output['count']
+                print("Found {} recs for key {}".format(count, taxonKey))
+        except:
+            print 'Failed on {}'.format(taxonKey)
+            currcount = 0
+        else:
+            recs = gapi.output['results']
+            currcount = len(recs)
+            total += currcount
+            # Write header
+            if offset == 0 and currcount > 0:
+                writer.writerow(['gbifID', 'decimalLongitude', 'decimalLatitude'])
+            # Write recs
+            for rec in recs:
+                row = gapi._getTaiwanRow(gapi, rec)
+                if row:
+                    writer.writerow(row)
+            print("  Retrieved {} records, starting at {}"
+                  .format(currcount, offset))
+            offset += GBIF.LIMIT
+except:
+    raise 
+finally:
+    f.close()
 
 
 tids = [1000515, 1000519, 1000525, 1000541, 1000543, 1000575, 1000583]
@@ -1210,145 +1282,36 @@ namestr = 'Ulva intestinales'
 namestr = 'Enteromorpba clatbrata'
 # namestr = 'Prionitis ramosissima'
 
+
 gbif_resp = GbifAPI.getAcceptedNames(namestr)
 
 fname = 'nmmst_species.txt'
 outfname = 'nmmst_name_txkey.csv'
 
-goodnames = []
-nameclean = namestr.strip()
 
-otherFilters={'name': nameclean, 'verbose': 'true'}
-for namestr in names:
-    nameclean = namestr.strip()
-    otherFilters={'name': nameclean, 'verbose': 'true'}
-    nameAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key='match', 
-                      otherFilters=otherFilters)
-    try:
-        nameAPI.query()
-        output = nameAPI.output
-    except Exception, e:
-        print ('Failed to get a response for species match on {}, ({})'
-               .format(nameclean, str(e)))
-        raise
-    
-    try:
-        status = output['status']
-    except:
-        status = None
-        
-        
-        
-        
-        
-        
-        
-        
-from LmDbServer.tools.partnerData import PartnerQuery
+Acrocystis nana
+Bangia atropurpurea
+Boergesenia forbesii
+Boodlea composita
+Bostrychia tenella
+Brachytrichia quoyi
+Caulerpa peltata
+Caulerpa prolifera
+Centroceras clavultum
+Chaetomorpha spiralis
+Champia parvula
+Chnoospora minima
+Chondracanthus intermedius
+Cladophora herpestica
+colpomenia sinuosa
+'Corallina pilulifera', 'Dasya sessilis', 'Dictyosphaeria cavernosa', 
+'Dictyota sp.', 'Enteromorpba clatbrata', 'Gelidiella acerosa', 
+'Gracilaria coronopifolia', 'Grateloupia filicina', 'Hincksia breviarticulatus', 
+'Hincksia mitchellae', 'Hypnea spinella', 'Marginosporum aberrans', 
+'Microdictyon nigrescens', 'Monostroma nitidum', 
+'non-articulate corallina alga', 'Peyssonnelia conchicola', 'Porphyra crispata', 
+'Prionitis ramosissima', 'Ulthrix flaccida', 'Ulva conglobata', 
+'Ulva intestinales', 'Ulva lactuca', 'Ulva prolifera', 'Valoniopsis pachynema', 
+'Yamadaella cenomyce'
 
-names = []
-pq = PartnerQuery()
-
-for line in open(fname, 'r'):
-    nm = line.strip()
-    names.append(nm)
-
-try:
-    alternatives = output['alternatives']
-except:
-    alternatives = []
-
-if status == 'ACCEPTED':
-    smallrec = nameAPI._getFldVals(output)
-    goodnames.append(smallrec)
-elif status is None and len(alternatives) > 0:
-    # get first synonym
-    for alt in alternatives:
-        if alt['status'] == 'SYNONYM':
-            smallrec = nameAPI._getFldVals(alt)
-            goodnames.append(smallrec)
-            break
-
-# goodnames = GbifAPI.getAcceptedNames(namestr)
-
-
-
-
-
-
-
-
-
-
-    
-    
-
-# with > 15 points
-taxon_ids = [5150027, 2607722, 8409948, 1452524, 9087097, 5384831, 5357852, 
-2572711, 8320154, 5185035, 8668348, 2893047, 2606239, 5261195, 4876021, 2373573, 
-3068474, 2073214, 4647752, 3390174, 1683893, 2839327, 2928558, 3787473, 3172140, 
-7457116, 1606974, 5784772, 3799619, 2346428, 2383491, 7369164, 9161708, 8275925, 
-2430867, 2698174, 3852937, 1794625, 1701438, 1348298, 5664729, 7261706, 3139940, 
-2476686, 7938306, 3135773, 3157812, 6991452, 2071815, 1403269, 5671599, 2261138, 
-2643478, 1898448, 1338153, 3594155, 5307610, 2679965, 3975944, 2730554, 2926691, 
-3191002, 1793178, 2239724, 2403296, 2456438, 4004516, 6971377, 2332833, 8421628, 
-7341587, 5276162, 5276162, 2377762, 1670015, 3035999, 4028806, 7832286, 8267371, 
-8139949, 5579647, 8937220, 1864949, 2371059, 8677128, 6126345, 2667728, 2657085, 
-2367245, 2494063, 1950784, 2967734, 5335053, 2744933, 2889457, 3089185, 5331809, 
-7319522, 6464155, 2418972]
-
-unmatched = [5150027, 8409948, 2572711, 2373573, 2073214, 1606974, 8275925, 
-1701438, 3157812, 6991452, 1403269, 1898448, 3594155, 3975944, 2456438, 8421628, 
-7832286, 8139949, 8677128, 6126345, 1950784, 7319522]
-
-# with > 100 points
-taxon_ids = [1028165, 5209419, 7959131, 5390395, 5389255, 5357095, 5359658, 
-5356310, 5360432, 5369919, 5358188, 5354646, 5331629, 5289943, 5285991, 5279721, 
-5276999, 5261262, 5230689, 5240922, 5229698, 5228537, 5229124, 5229142, 5211635, 
-5219881, 5217561, 5212077, 5219910, 5208834, 5127343, 5139954, 5137890, 5110326, 
-5102199, 5109545, 5105181, 5112414, 5086821, 4994818, 4989014, 4992875, 4989794, 
-4995911, 4988176, 4921818, 6708884, 4755542, 4750014, 4671947, 4642125, 4520807, 
-4492211, 4462237, 4435781, 4448375, 4373503, 4363579, 4363697, 4368362, 3999133, 
-3996461, 3992999, 3892843, 3888514, 3861748, 3852505, 3827542, 3813593, 3744721, 
-3744738, 3745250, 3743196, 3731134, 3721746, 3200179, 3182578, 3176602, 3176484, 
-3171240, 3175262, 3175330, 3158107, 3144610, 3136882, 3131105, 3092890, 3082427, 
-3632715, 2705962, 9223269, 9130559, 7526196, 9111483, 9107939, 9033066, 8976657, 
-8948865, 8914138, 8903148]
-
-unmatched = [1028165, 5390395, 5357095, 5360432, 5369919, 5127343, 5139954, 
-5102199, 5109545, 5105181, 4994818, 4995911, 3827542, 3745250, 3743196, 3731134, 
-3175262, 2705962, 9223269, 7526196, 9107939, 8903148]
-
-
-all_unmatched = [1028165, 5390395, 5357095, 5360432, 5369919, 5127343, 5139954, 
-5102199, 5109545, 5105181, 4994818, 4995911, 3827542, 3745250, 3743196, 3731134, 
-3175262, 2705962, 9223269, 7526196, 9107939, 8903148, 5150027, 8409948, 2572711, 
-2373573, 2073214, 1606974, 8275925, 
-1701438, 3157812, 6991452, 1403269, 1898448, 3594155, 3975944, 2456438, 8421628, 
-7832286, 8139949, 8677128, 6126345, 1950784, 7319522]
-
-
-idigAPI = IdigbioAPI()
-point_output_file = '/state/partition1/lmscratch/temp/point_output_file.csv'
-meta_output_file = '/state/partition1/lmscratch/temp/meta_output_file.json'
-missing_id_file = '/state/partition1/lmscratch/temp/missing_id_file.csv'
-
-summary = idigAPI.assembleIdigbioData(taxon_ids, point_output_file, 
-                                        meta_output_file, 
-                                        missing_id_file=missing_id_file)
-
-unmatched_gbif_ids = summary['unmatched_gbif_ids']
-for k, v in summary.iteritems():
-    print k, v
-
-    
-# print('Missing: {}'.format(summary['unmatched_gbif_ids'])
-
-(570242, 399675, 90421, 147019, 73025, 403142, 105648, 251580, 629740, 235469, 702004, 598047, 605296, 525564, 336509, 620128)
-             
-$PYTHON /opt/lifemapper/LmCompute/tools/common/get_idig_data.py \
-/state/partition1/lmscratch/temp/user_taxon_ids_98006.txt \
-tmp/user_taxon_ids_98006.csv \
-tmp/user_taxon_ids_98006.json \
---missing_id_file=tmp/user_taxon_ids_98006.missing
 """

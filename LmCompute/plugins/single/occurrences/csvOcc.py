@@ -3,7 +3,6 @@
 import os
 
 from LmCommon.common.lmconstants import (ENCODING, JobStatus, LMFormat)
-from LmCommon.common.readyfile import get_unicodecsv_reader
 from LmCommon.shapes.createshape import ShapeShifter
     
 from LmCommon.common.readyfile import readyFilename
@@ -129,7 +128,6 @@ from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import (
     ENCODING, JobStatus, LMFormat, ProcessType)
     
-from LmCommon.common.readyfile import readyFilename, get_unicodecsv_reader
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 

@@ -38,8 +38,7 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import (readyFilename, 
-                                get_unicodecsv_reader, get_unicodecsv_writer)
+from LmCommon.common.readyfile import (readyFilename, get_unicodecsv_writer)
 
 from LmServer.base.taxon import ScientificName
 from LmServer.common.datalocator import EarlJr
@@ -580,8 +579,6 @@ class UserWoC(_SpeciesWeaponOfChoice):
         rdloc = occ.createLocalDLocation(raw=True)
         writer, f = get_unicodecsv_writer(rdloc, delimiter=self._delimiter, 
                                           doAppend=False)
-#         success = occ.writeCSV(data, dlocation=rdloc, overwrite=True,
-#                                header=self._fieldNames)
         try:
             for rec in data:
                 writer.writerow(rec)
