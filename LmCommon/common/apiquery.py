@@ -13,7 +13,8 @@ from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
                                          URL_ESCAPES, HTTPStatus, DWCNames)
 from LmCommon.common.lmXml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import readyFilename, get_unicodecsv_writer
+from LmCommon.common.readyfile import (readyFilename, get_unicodecsv_writer, 
+                                       get_unicodecsv_reader)
 
 # .............................................................................
 class APIQuery(object):
@@ -537,7 +538,7 @@ class GbifAPI(APIQuery):
                 familyStr, genusStr, speciesStr, genusKey, speciesKey, loglines)
 
     # ...............................................
-    def _getTaiwanRow(self, occAPI, rec):
+    def _getTaiwanRow(self, occAPI, taxonKey, rec):
         row = None
         occKey = occAPI._getOutputVal(rec, 'gbifID')
         lonstr = occAPI._getOutputVal(rec, 'decimalLongitude')
@@ -555,12 +556,12 @@ class GbifAPI(APIQuery):
         if (occKey is not None 
             and not latstr.startswith('0.0')
             and not lonstr.startswith('0.0')):
-            row = [occKey, lonstr, latstr]
+            row = [taxonKey, occKey, lonstr, latstr]
         return row
     
     # ...............................................
     @staticmethod
-    def getOccurrences(taxonKey, outfname, otherFilters={}, one_page=False):
+    def getOccurrences(taxonKey, canonical_name, outfname, otherFilters={}, maxpoints=None):
         """
         @summary: Return GBIF occurrences for this GBIF Taxon ID  
         """
@@ -573,11 +574,13 @@ class GbifAPI(APIQuery):
 
         offset = 0
         currcount = 0
-        total = 0
+        lmtotal = 0
+        gbiftotal = 0
+        complete = False
         try:
             writer, f = get_unicodecsv_writer(outfname, GbifAPI.DELIMITER, doAppend=False)
      
-            while offset <= total:
+            while not complete and offset <= gbiftotal:
                 gapi.addFilters(otherFilters={'offset': offset})
                 try:
                     gapi.query()
@@ -587,25 +590,25 @@ class GbifAPI(APIQuery):
                 else:
                     # First query, report count
                     if offset == 0:
-                        count = gapi.output['count']
-                        print("Found {} recs for key {}".format(count, taxonKey))
+                        gbiftotal = gapi.output['count']
+                        print("Found {} recs for key {}".format(gbiftotal, taxonKey))
                         
                     recs = gapi.output['results']
                     currcount = len(recs)
-                    total += currcount
+                    lmtotal += currcount
                     # Write header
                     if offset == 0 and currcount > 0:
-                        writer.writerow(['gbifID', 'decimalLongitude', 'decimalLatitude'])
+                        writer.writerow(['taxonKey', 'canonicalName', 'gbifID', 'decimalLongitude', 'decimalLatitude'])
                     # Write recs
                     for rec in recs:
-                        row = gapi._getTaiwanRow(gapi, rec)
+                        row = gapi._getTaiwanRow(gapi, taxonKey, rec)
                         if row:
                             writer.writerow(row)
                     print("  Retrieved {} records, starting at {}"
                           .format(currcount, offset))
                     offset += GBIF.LIMIT
-                    if one_page == True:
-                        offset = total + 1
+                    if maxpoints is not None and lmtotal >= maxpoints:
+                        complete = True
         except:
             raise 
         finally:
@@ -1131,38 +1134,50 @@ def testIdigbioTaxonIds():
 # .............................................................................
 def testGetTaiwanPoints():
     pth = '/tank/zdata/taiwan/species'
-#     twFilters={'country': 'TW', 'advanced': 1, 
-#                'geometry': 'POLYGON((119 21,123 21,123 26,119 26,119 21))'}
+    basename = 'nmmst_species_data.csv'
+    infname = os.path.join(pth, basename)
+    try:
+        reader, inf = get_unicodecsv_reader(infname, ',')
+        # 0:taxonKey,1:canonicalName,2:id,3:Family,4:providedName,5:lat,6:lon,7:Loc,8:method
+        last_taxon_key = None
+        outf = None
+        header = reader.next()
+        row = reader.next()
+        while row:
+            try:
+                taxon_key = int(row[0])
+                canonical = row[1]
+            except:
+                pass
+            else:
+                outfname = '{}/gbif_occ_{}.csv'.format(pth, taxon_key)
+                lat = row[5]
+                lon = row[6]
+                lmid = row[2]
+                newrow = [taxon_key, canonical, lmid, lon, lat]
+            
+                if taxon_key != last_taxon_key:
+                    try:
+                        outf.close()
+                    except:
+                        pass
+                    # Creates 0:taxonKey, 1:canonicalName, 2: gbifID, 3: decimalLongitude, 4: decimalLatitude'
+                    GbifAPI.getOccurrences(taxon_key, outfname, maxpoints=300)
+                    writer, outf = get_unicodecsv_writer(outfname, 
+                                        GBIF.DATA_DUMP_DELIMITER, doAppend=True)
+                writer.writerow(newrow)
     
-    tkeys = [5277384, 2653778, 2644877, 8259272, 5278155, 5426431, 2643011, 5276780, 
-             2644581, 2663441, 3199042, 5279147, 5729863, 3197958, 5276029, 2659095, 
-             2644845, 3200250, 9402904, 2663047, 5278913, 5729905, 2668380, 2656192, 
-             2645228, 2667810, 2653483, 10108706, 5273380, 5273394, 5273309, 5273366, 
-             7491248, 9233726]
-                 
-    for tk in tkeys:
-        outfname = '{}/gbif_occ_{}.csv'.format(pth, tk)
-#         filters = twFilters.copy()
-#         GbifAPI.getOccurrences(tk, outfname, otherFilters=filters, one_page=True)
-        GbifAPI.getOccurrences(tk, outfname, one_page=True)
-
-        gapi = GbifAPI(service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
-                       otherFilters={'taxonKey': tk, 
-                                     'limit': GBIF.LIMIT, 
-                                     'hasCoordinate': True,
-                                     'has_geospatial_issue': False})
-#         gapi.addFilters(otherFilters=twFilters)
-        gapi.query()
-        o = gapi.output
-        count = o['count']
-        recs = o['results']
-        print 'Returned {} points for {}'.format(count, tk)
+            row = reader.next()
+    finally:
+        inf.close()
+        outf.close()
+        
 
     
 # .............................................................................
 # .............................................................................
 if __name__ == '__main__':
-    pass
+    testGetTaiwanPoints()
 
          
 """
@@ -1191,14 +1206,8 @@ pth = '/tank/zdata/taiwan/species'
 infname = '{}/species-taxonkeys.csv'.format(pth)
 
 # ga = GbifAPI.getOccurrences(tk, outfname, 
-#                             otherFilters={'country': 'TW'},
 #                             one_page=True)
-
-# for tk in tkeys:
-#     outfname = '{}/gbif_occ_{}.csv'.format(pth, tk)
-#     gapi = GbifAPI.getOccurrences(tk, outfname, 
-#                                   otherFilters={'country': 'TW'},
-#                                   one_page=True)
+                                                                    
     
 pth = '/tank/zdata/taiwan/species'
 
@@ -1207,57 +1216,23 @@ tkeys = [5277384, 2653778, 2644877, 8259272, 5278155, 5426431, 2643011, 5276780,
          2644845, 3200250, 9402904, 2663047, 5278913, 5729905, 2668380, 2656192, 
          2645228, 2667810, 2653483, 10108706, 5273380, 5273394, 5273309, 5273366, 
          7491248, 9233726]
-             
+
 for tk in tkeys:
     outfname = '{}/gbif_occ_{}.csv'.format(pth, tk)
-    gapi = GbifAPI(service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
-                   otherFilters={'taxonKey': tk, 
-                                 'limit': GBIF.LIMIT, 
-                                 'hasCoordinate': True,
-                                 'has_geospatial_issue': False})
-    gapi.query()
-    o = gapi.output
-    count = o['count']
-    recs = o['results']
-    print 'Returned {} points for {}'.format(count, tk)
+    gapi = GbifAPI.getOccurrences(tk, outfname, 
+                                  one_page=True)
+
+# for tk in tkeys:
+#     outfname = '{}/gbif_occ_{}.csv'.format(pth, tk)
+#     gapi = GbifAPI(service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
+#                    otherFilters={'taxonKey': tk, 
+#                                  'limit': GBIF.LIMIT, 
+#                                  'hasCoordinate': True,
+#                                  'has_geospatial_issue': False})
 
 
 
-offset = 0
-currcount = 0
-total = 0
-try:
-    writer, f = get_unicodecsv_writer(outfname, GbifAPI.DELIMITER, doAppend=False)
 
-    while offset <= total:
-        gapi.addFilters(otherFilters={'offset': offset})
-        try:
-            gapi.query()
-            if offset == 0:
-                count = gapi.output['count']
-                print("Found {} recs for key {}".format(count, taxonKey))
-        except:
-            print 'Failed on {}'.format(taxonKey)
-            currcount = 0
-        else:
-            recs = gapi.output['results']
-            currcount = len(recs)
-            total += currcount
-            # Write header
-            if offset == 0 and currcount > 0:
-                writer.writerow(['gbifID', 'decimalLongitude', 'decimalLatitude'])
-            # Write recs
-            for rec in recs:
-                row = gapi._getTaiwanRow(gapi, rec)
-                if row:
-                    writer.writerow(row)
-            print("  Retrieved {} records, starting at {}"
-                  .format(currcount, offset))
-            offset += GBIF.LIMIT
-except:
-    raise 
-finally:
-    f.close()
 
 
 tids = [1000515, 1000519, 1000525, 1000541, 1000543, 1000575, 1000583]
