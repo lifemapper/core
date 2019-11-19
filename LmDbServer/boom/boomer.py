@@ -428,8 +428,7 @@ from LmCommon.common.apiquery import GbifAPI
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import (readyFilename, 
-                                get_unicodecsv_reader, get_unicodecsv_writer)
+from LmCommon.common.readyfile import (readyFilename)
 
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH

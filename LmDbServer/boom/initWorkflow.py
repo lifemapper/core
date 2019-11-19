@@ -60,7 +60,7 @@ from LmServer.base.layer2 import Vector
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isLMUser
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.algorithm import Algorithm, InvalidParameterError
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
 from LmServer.legion.mtxcolumn import MatrixColumn          
@@ -166,12 +166,18 @@ class BOOMFiller(LMObject):
         # Find existing scenarios or create from user or public ScenPackage metadata
         self.scenPkg = self.findOrAddScenarioPackage()
         (self.mdl_scencode, self.prj_scencodes, 
-         mask_lyrname) = self.findMdlProjScenarios(mdl_scencode, prj_scencodes, 
+         mask_lyrname_scen) = self.findMdlProjScenarios(mdl_scencode, prj_scencodes, 
                                                    doMapBaseline=doMapBaseline)
-        # Currently taking ScenarioPackage metadata value SDM_MASK_META
-        # TODO: Allow any existing vector with intersecting region
-        if self.maskAlg and self.maskAlg.code == 'hull_region_intersect':
-            self.maskAlg.setParameter('region', mask_lyrname)
+        # TODO: Allow any existing raster with intersecting region
+        # TODO: Allow packaging of ancillary layers in data package, 
+        #       specify role in params file
+        if self.maskAlg:
+            if self.maskAlg.code == 'hull_region_intersect':
+                mask_lyrname = self.maskAlg.getParameterValue('region')
+                # TODO: Delete this from Scenario packages and code
+                # Take SDM_MASK_META from old (v2.0) scenario metadata
+                if mask_lyrname is None:
+                    self.maskAlg.setParameter('region', mask_lyrname_scen)
       
         # Fill grid bbox with scenario package (intersection of all bboxes) if it is absent
         if self.gridbbox is None:
@@ -189,7 +195,7 @@ class BOOMFiller(LMObject):
                                             SCENARIO_PACKAGE_PROJECTION_SCENARIOS
                If SCENARIO_PACKAGE_PROJECTION_SCENARIOS is not present, SDMs 
                will be projected onto all scenarios
-        @note: This code can only parse scenario metadata marked as version 2.0 
+        @note: This code can only parse scenario metadata marked as version 2.x
         """
         # Make sure Scenario Package exists for this user
         scenPkg = self.scribe.getScenPackage(userId=self.userId, 
@@ -216,7 +222,7 @@ class BOOMFiller(LMObject):
                 
     # ...............................................
     def findMdlProjScenarios(self, mdl_scencode, prj_scencodes, 
-                              doMapBaseline=1):
+                              doMapBaseline=0):
         """
         @summary Find which Scenario for modeling, which (list) for projecting  
         @note: Boom parameters must include SCENARIO_PACKAGE, 
@@ -402,7 +408,11 @@ class BOOMFiller(LMObject):
             raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
                           .format(scenpkg_meta_file, e)) 
         pkgMeta = SPMETA.CLIMATE_PACKAGES[scenpkgName]
-        mask_lyrname = SPMETA.SDM_MASK_META['name']
+        # Mask is optional
+        try:
+            mask_lyrname = SPMETA.SDM_MASK_META['name']
+        except:
+            mask_lyrname = None
         baseCode = pkgMeta['baseline']
         return baseCode, mask_lyrname
 
