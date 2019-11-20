@@ -100,7 +100,7 @@ class Janitor(LMObject):
                     self.scribe.log.error('Failed to remove {}, {}'
                                           .format(fn, str(e)))
                 else:
-                    self.scribe.log.error('Removed {}'.format(fn))
+                    self.scribe.log.info('Removed {}'.format(fn))
         
     # ...............................................
     def _deletePavsFromSolr(self, pavids):
@@ -258,10 +258,8 @@ if __name__ == '__main__':
                 description=("""Clear a Lifemapper archive of 
                 obsolete or all data for a user 
                 or MatrixColumns, Matrices, and Makeflows for a gridset"""))
-    parser.add_argument('--gridsetid', type=int, default=None,
-            help=('GridsetId for data to delete'))
-    parser.add_argument('--user', type=str, default=None,
-            help=('UserId for all or old data to delete'))
+    parser.add_argument('gridsetid_or_userid', type=str, 
+            help=('GridsetId or UserId to delete data for'))
     parser.add_argument('--obsolete_date', type=float, default=None,
             help=("""Cutoff date as in MJD format for deleting data for this user. 
             Future date (i.e. 12am tomorrow, {}) indicates to clear all data for 
@@ -271,19 +269,19 @@ if __name__ == '__main__':
             to delete"""))
     args = parser.parse_args()
     
-    gridsetid = args.gridsetid
-    usr = args.user
+    gridsetid = usr = None
+    gridsetid_or_userid = args.gridsetid_or_userid
+    try:
+        gridsetid = int(gridsetid_or_userid)
+    except:
+        usr = gridsetid_or_userid
+        
     obsolete_date = args.obsolete_date
     total = args.count
     
-    try:    
-        datestr = DT.DateTimeFromMJD(obsolete_date).localtime().Format()
-    except:
-        datestr = str(obsolete_date)
-            
     print("""Janitor arguments: 
     gridsetid {}; usr {}; count {}; obsolete_date {}"""
-    .format(gridsetid, usr, total, datestr))
+    .format(gridsetid, usr, total, obsolete_date))
     
     # TODO: add method to walk files and rmtree dirs for occset absent from DB
     jan = Janitor()
@@ -310,5 +308,6 @@ if __name__ == '__main__':
     jan.close()
       
 """
+
 
 """

@@ -538,7 +538,7 @@ class GbifAPI(APIQuery):
                 familyStr, genusStr, speciesStr, genusKey, speciesKey, loglines)
 
     # ...............................................
-    def _getTaiwanRow(self, occAPI, taxonKey, rec):
+    def _getTaiwanRow(self, occAPI, taxonKey, canonicalName, rec):
         row = None
         occKey = occAPI._getOutputVal(rec, 'gbifID')
         lonstr = occAPI._getOutputVal(rec, 'decimalLongitude')
@@ -556,12 +556,12 @@ class GbifAPI(APIQuery):
         if (occKey is not None 
             and not latstr.startswith('0.0')
             and not lonstr.startswith('0.0')):
-            row = [taxonKey, occKey, lonstr, latstr]
+            row = [taxonKey, canonicalName, occKey, lonstr, latstr]
         return row
     
     # ...............................................
     @staticmethod
-    def getOccurrences(taxonKey, canonical_name, outfname, otherFilters={}, maxpoints=None):
+    def getOccurrences(taxonKey, canonicalName, outfname, otherFilters={}, maxpoints=None):
         """
         @summary: Return GBIF occurrences for this GBIF Taxon ID  
         """
@@ -601,7 +601,7 @@ class GbifAPI(APIQuery):
                         writer.writerow(['taxonKey', 'canonicalName', 'gbifID', 'decimalLongitude', 'decimalLatitude'])
                     # Write recs
                     for rec in recs:
-                        row = gapi._getTaiwanRow(gapi, taxonKey, rec)
+                        row = gapi._getTaiwanRow(gapi, taxonKey, canonicalName, rec)
                         if row:
                             writer.writerow(row)
                     print("  Retrieved {} records, starting at {}"
@@ -1131,53 +1131,60 @@ def testIdigbioTaxonIds():
           
     return idigList
 
-# .............................................................................
-def testGetTaiwanPoints():
-    pth = '/tank/zdata/taiwan/species'
-    basename = 'nmmst_species_data.csv'
-    infname = os.path.join(pth, basename)
-    try:
-        reader, inf = get_unicodecsv_reader(infname, ',')
-        # 0:taxonKey,1:canonicalName,2:id,3:Family,4:providedName,5:lat,6:lon,7:Loc,8:method
-        last_taxon_key = None
-        outf = None
-        header = reader.next()
-        row = reader.next()
-        while row:
-            try:
-                taxon_key = int(row[0])
-                canonical = row[1]
-            except:
-                pass
-            else:
-                outfname = '{}/gbif_occ_{}.csv'.format(pth, taxon_key)
-                lat = row[5]
-                lon = row[6]
-                lmid = row[2]
-                newrow = [taxon_key, canonical, lmid, lon, lat]
-            
-                if taxon_key != last_taxon_key:
-                    try:
-                        outf.close()
-                    except:
-                        pass
-                    # Creates 0:taxonKey, 1:canonicalName, 2: gbifID, 3: decimalLongitude, 4: decimalLatitude'
-                    GbifAPI.getOccurrences(taxon_key, outfname, maxpoints=300)
-                    writer, outf = get_unicodecsv_writer(outfname, 
-                                        GBIF.DATA_DUMP_DELIMITER, doAppend=True)
-                writer.writerow(newrow)
-    
-            row = reader.next()
-    finally:
-        inf.close()
-        outf.close()
-        
+# # .............................................................................
+# def testGetTaiwanPoints():
+#     pth = '/tank/zdata/taiwan/species'
+#     basename = 'nmmst_species_data.csv'
+#     infname = os.path.join(pth, basename)
+#     try:
+#         reader, inf = get_unicodecsv_reader(infname, ',')
+#         # 0:taxonKey,1:canonicalName,2:id,3:Family,4:providedName,5:lat,6:lon,7:Loc,8:method
+#         last_taxon_key = None
+#         outf = None
+#         header = reader.next()
+#         row = reader.next()
+#         while row:
+#             try:
+#                 taxon_key = int(row[0])
+#                 canonical = row[1]
+#             except:
+#                 pass
+#             else:
+#                 outfname = '{}/gbif_occ_{}.csv'.format(pth, taxon_key)
+#                 lat = row[5]
+#                 lon = row[6]
+#                 lmid = row[2]
+#                 newrow = [taxon_key, canonical, lmid, lon, lat]
+#             
+#                 if taxon_key != last_taxon_key:
+#                     try:
+#                         outf.close()
+#                     except:
+#                         pass
+#                     # Creates 0:taxonKey, 1:canonicalName, 2: gbifID, 3: decimalLongitude, 4: decimalLatitude'
+#                     GbifAPI.getOccurrences(taxon_key, canonical, outfname, maxpoints=300)
+#                     writer, outf = get_unicodecsv_writer(outfname, 
+#                                         GBIF.DATA_DUMP_DELIMITER, doAppend=True)
+#                 writer.writerow(newrow)
+#             try:
+#                 row = reader.next()
+#             except StopIteration, e:
+#                 row = None
+#             except Exception, e:
+#                 raise
+#     finally:
+#         inf.close()
+#         try:
+#             outf.close()
+#         except:
+#             pass
+#         
 
     
 # .............................................................................
 # .............................................................................
 if __name__ == '__main__':
-    testGetTaiwanPoints()
+    pass
 
          
 """
@@ -1203,10 +1210,41 @@ from LmCommon.common.readyfile import readyFilename, get_unicodecsv_reader
 from LmCommon.common.apiquery import IdigbioAPI, GbifAPI
 
 pth = '/tank/zdata/taiwan/species'
-infname = '{}/species-taxonkeys.csv'.format(pth)
+basename = 'nmmst_species_data.csv'
+infname = os.path.join(pth, basename)
+reader, inf = get_unicodecsv_reader(infname, ',')
+# 0:taxonKey,1:canonicalName,2:id,3:Family,4:providedName,5:lat,6:lon,7:Loc,8:method
+last_taxon_key = None
+outf = None
+header = reader.next()
+row = reader.next()
 
-# ga = GbifAPI.getOccurrences(tk, outfname, 
-#                             one_page=True)
+
+taxon_key = int(row[0])
+canonical = row[1]
+outfname = '{}/gbif_occ_{}.csv'.format(pth, taxon_key)
+lat = row[5]
+lon = row[6]
+lmid = row[2]
+newrow = [taxon_key, canonical, lmid, lon, lat]
+    
+if taxon_key != last_taxon_key:
+    try:
+        outf.close()
+    except:
+        pass
+    
+    GbifAPI.getOccurrences(taxon_key, outfname, maxpoints=300)
+    writer, outf = get_unicodecsv_writer(outfname, 
+                        GBIF.DATA_DUMP_DELIMITER, doAppend=True)
+
+
+writer.writerow(newrow)
+
+row = reader.next()
+
+inf.close()
+outf.close()
                                                                     
     
 pth = '/tank/zdata/taiwan/species'

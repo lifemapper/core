@@ -152,7 +152,6 @@ class PartnerQuery(object):
         if logger is None:
             logger = ScriptLogger(self.name)
         self.log = logger
-        unicodecsv.field_size_limit(sys.maxsize)
         self.encoding = 'utf-8'
         self.delimiter = '\t'
 
@@ -226,6 +225,9 @@ class PartnerQuery(object):
                  
         
     # .............................................................................
+    """
+    @note: relabels OTT tree with Lifemapper squids
+    """
     def _relabelOttTree(self, scribe, otree, gbifott):
         taxSrc = scribe.getTaxonSource(tsName=
                     TAXONOMIC_SOURCE[SpeciesDatasource.GBIF]['name'])
@@ -248,6 +250,30 @@ class PartnerQuery(object):
                           .format(gbifids, ottlabel))
         
         otree.annotateTree(PhyloTreeKeys.SQUID, squidDict)
+        print "Adding interior node labels to tree"
+        otree.addNodeLabels()
+
+    # .............................................................................
+    """
+    @note: relabels OTT tree with GBIF TaxonKeys
+    """
+    def relabelOTTTree2GbifName(self, otree, gbifott, keys_names):
+        ottgbifDict = {}
+        for ottlabel in otree.getLabels():
+            gbifids = self._lookupGBIFForOTT(gbifott, ottlabel)
+            if len(gbifids) == 0:
+                print('No gbifids for OTT {}'.format(ottlabel))                
+            else:
+                if len(gbifids) == 1:
+                    gid = gbifids[0]
+                    canonical = keys_names[gid]
+                    ottgbifDict[ottlabel] = canonical
+                else:
+                    ottgbifDict[ottlabel] = gbifids
+                    self.log.warning('Multiple matches (gbifids {}) for OTT {}'
+                          .format(gbifids, ottlabel))
+        
+        otree.annotateTree('label', ottgbifDict)
         print "Adding interior node labels to tree"
         otree.addNodeLabels()
 
