@@ -56,11 +56,11 @@ from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.base.layer2 import Vector
+from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isLMUser
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm, InvalidParameterError
+from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
 from LmServer.legion.mtxcolumn import MatrixColumn          
@@ -147,7 +147,8 @@ class BOOMFiller(LMObject):
          self.bghypFnames,
          self.compute_pam_stats, 
          self.compute_mcpa, 
-         self.num_permutations) = self.readParamVals()
+         self.num_permutations, 
+         self.other_lyr_names) = self.readParamVals()
         self.woof_time_mjd = mx.DateTime.gmt().mjd
         earl = EarlJr()
         self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
@@ -483,6 +484,9 @@ class BOOMFiller(LMObject):
         biogeoName = self._getBoomOrDefault(config, BoomKeys.BIOGEO_HYPOTHESES_LAYERS)
         bghypFnames = self._getBioGeoHypothesesLayerFilenames(biogeoName, usrPath)
         
+        # optional layer inputs 
+        other_lyr_names = self._getBoomOrDefault(config, BoomKeys.OTHER_LAYERS, 
+                                                 defaultValue=[], isList=True)
         # RAD/PAM params
         compute_pam_stats = self._getBoomOrDefault(config, BoomKeys.COMPUTE_PAM_STATS, 
                                                    isBool=True, defaultValue=False)
@@ -522,7 +526,7 @@ class BOOMFiller(LMObject):
                 occFname, occSep, minpoints, (expyr, expmo, expdy), algs, 
                 gridbbox, cellsides, cellsize, gridname, 
                 intersectParams, maskAlg, treeFname, bghypFnames, 
-                compute_pam_stats, compute_mcpa, num_permutations)
+                compute_pam_stats, compute_mcpa, num_permutations, other_lyr_names)
       
     # ...............................................
     def writeConfigFile(self, tree=None, biogeoLayers=[]):
@@ -999,6 +1003,50 @@ class BOOMFiller(LMObject):
         return lyrMeta
    
     # ...............................................
+    def _getOtherLayerFilenames(self):
+        layers = []
+        for lyrname in self.other_lyr_names:
+            lyrpth = os.path.join(self.userIdPath, lyrname) 
+            # accept vector shapefiles
+            if os.path.exists(lyrpth + LMFormat.SHAPE.ext):
+                layers.append((lyrname, lyrpth + LMFormat.SHAPE.ext))
+            # accept raster geotiffs
+            elif os.path.exists(lyrpth + LMFormat.GTIFF.ext):
+                layers.append((lyrname, lyrpth + LMFormat.GTIFF.ext))
+            # accept shapefiles or geotiffs in a 
+            else:
+                self.scribe.log.warning('No layers at {}'.format(lyrpth))
+        return layers
+    
+    # ...............................................
+    def addOtherLayers(self):
+        """
+        @note: assumes same EPSG as scenario provided
+        """
+        otherLayerNames = []
+        layers = self._getOtherLayerFilenames()
+        for (lyrname, fname) in layers:
+            lyr = None
+            if fname.endswith(LMFormat.SHAPE.ext):
+                lyr = Vector(lyrname, self.userId, self.scenPkg.epsgcode, 
+                             dlocation=fname,  
+                             dataFormat=LMFormat.SHAPE.driver, 
+                             modTime=self.woof_time_mjd)
+                updatedLyr = self.scribe.findOrInsertLayer(lyr)
+                otherLayerNames.append(updatedLyr.name)
+            elif fname.endswith(LMFormat.GTIFF.ext):
+                lyr = Raster(lyrname, self.userId, self.scenPkg.epsgcode, 
+                             dlocation=fname, 
+                             dataFormat=LMFormat.getDefaultGDAL().driver, 
+                             modTime=self.woof_time_mjd)
+            if lyr is not None:
+                updatedLyr = self.scribe.findOrInsertLayer(lyr)
+                otherLayerNames.append(updatedLyr.name)        
+        self.scribe.log.info('  Added other layers {} for user'.format(otherLayerNames))
+        return otherLayerNames
+   
+
+    # ...............................................
     def _getBioGeoHypothesesLayerFilenames(self, biogeoName, usrPath):
         bghypFnames = []
         if biogeoName is not None:
@@ -1288,6 +1336,8 @@ class BOOMFiller(LMObject):
             # This updates the gridset, shapegrid, default PAMs (rolling, with no 
             #     matrixColumns, default GRIMs with matrixColumns
             scenGrims, boomGridset = self.addShapeGridGPAMGridset()
+            # Insert other layers that may be used for SDM_MASK or other processing
+            otherLayerNames = self.addOtherLayers()
             
             # Create makeflow for computations and start rule list
             # TODO: Init makeflow
