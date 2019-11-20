@@ -328,13 +328,13 @@ class UserUploadService(LmService):
             fail_to_upload = False
             with open(csvFilename, 'w') as out_f:
                 num_lines = 0
-                for line in out_f:
+                for line in instr:
                     num_lines += 1
                     if anon_user and num_lines >= MAX_ANON_UPLOAD_SIZE:
                         fail_to_upload = True
                         break
                     else:
-                        outF.write(line)
+                        out_f.write(line)
             if fail_to_upload:
                 os.remove(csvFilename)
                 raise cherrypy.HTTPError(
