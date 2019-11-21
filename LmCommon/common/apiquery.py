@@ -983,9 +983,9 @@ class IdigbioAPI(APIQuery):
                 os.remove(fname)
             
         summary = {self.GBIF_MISSING_KEY: []}
-        try:
-            writer, f = self._getCSVWriter(point_output_file, doAppend=False)
-             
+        writer, f = get_unicodecsv_writer(point_output_file, self.DELIMITER, 
+                                          doAppend=False)
+        try:             
             # get/write data
             fldnames = None
             for gid in taxon_ids:
@@ -1002,8 +1002,8 @@ class IdigbioAPI(APIQuery):
                          
         # get/write missing data
         if missing_id_file is not None and len(summary[self.GBIF_MISSING_KEY]) > 0:
+            f = open(missing_id_file, 'w')
             try: 
-                f = open(missing_id_file, 'w')
                 for gid in summary[self.GBIF_MISSING_KEY]:
                     f.write('{}\n'.format(gid))
             except Exception, e:
