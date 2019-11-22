@@ -112,7 +112,7 @@ Finish install
 
 #. **Reboot front end** ::  
 
-   # reboot
+   # shutdown -r now
    
 Install nodes from Frontend
 ---------------------------
