@@ -112,7 +112,7 @@ create table lm_v3.EnvType
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    
    -- type of data (elevation, bioclimatic variable types , etc)
-   envCode varchar(20),
+   envCode varchar(60),
    -- Global Climate Model
    gcmCode varchar(20),
    -- Representative Concentration Pathways (AR5+) or Scenario Family (AR4 and earlier) 

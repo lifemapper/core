@@ -35,7 +35,9 @@
 DROP FUNCTION IF EXISTS lm_v3.lm_clearSomeObsoleteSpeciesDataForUser(usr varchar,
                                                            dt double precision, 
                                                            maxnum int);
-
+DROP VIEW IF EXISTS lm_v3.lm_envlayer CASCADE;
+DROP VIEW IF EXISTS lm_v3.lm_scenlayer CASCADE;
+ALTER TABLE lm_v3.EnvType ALTER COLUMN envcode TYPE varchar(60);
 /*
 -- ----------------------------------------------------------------------------                                                    
 -- For deleting large amounts of data, drop indices and constraints first
