@@ -285,7 +285,7 @@ class SPFiller(LMObject):
                        'keywords': lyrKeywords}
             dloc = os.path.join(ENV_DATA_PATH, relfname)
             if not os.path.exists(dloc):
-               raise LMError('Missing local data {}'.format(dloc))
+                raise LMError('Missing local data {}'.format(dloc))
             envlyr = EnvLayer(lyrname, self.userId, pkgMeta['epsg'], 
                               dlocation=dloc, 
                               lyrMetadata=lyrmeta,
@@ -377,13 +377,13 @@ class SPFiller(LMObject):
             # If exists, found by unique Id or Email, update values
             userId = self.addUser()
             
-            updatedMask = None
+            masklyr = None
             for spName in self.spMeta.CLIMATE_PACKAGES.keys():
                 self.scribe.log.info('Creating scenario package {}'.format(spName))
                 scenPkg, masklyr = self.createScenPackage(spName)
                 
                 # Only one Mask is included per scenario package
-                if updatedMask is None:
+                if masklyr is not None:
                     self.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
                     updatedMask = self.addMaskLayer(masklyr)
                     if updatedMask.getDLocation() != masklyr.getDLocation():
