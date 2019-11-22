@@ -254,7 +254,7 @@ class MultiSpeciesRunCommand(_LmCommand):
                  diversity_stats_filename=None, site_stats_filename=None,
                  species_stats_filename=None, site_covariance_filename=None,
                  species_covariance_filename=None, mcpa_output_filename=None,
-                 mcpa_f_matrix_filename=None):
+                 mcpa_f_matrix_filename=None, pam_success_filename=None):
         """Constructor for command object
 
         Args:
@@ -312,7 +312,9 @@ class MultiSpeciesRunCommand(_LmCommand):
         if tree_filename is not None:
             self.inputs.append(tree_filename)
             self.opt_args += ' -t {}'.format(tree_filename)
-        
+        if pam_success_filename is not None:
+            self.inputs.append(pam_success_filename)
+            
         # Outputs
         if diversity_stats_filename is not None:
             self.outputs.append(diversity_stats_filename)

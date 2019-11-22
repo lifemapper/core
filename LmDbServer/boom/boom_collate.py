@@ -123,7 +123,8 @@ class BoomCollate(LMObject):
 
     # ................................
     def _get_ancestral_pam_rules_for_pam(self, pam_id, pam_filename,
-                                         tree_filename, dependency_filename):
+                                         tree_filename, dependency_filename,
+                                         pam_success_filename=None):
         """Get rules for creating ancestral PAM
         """
         anc_pam_rules = []
@@ -133,7 +134,9 @@ class BoomCollate(LMObject):
                 pam_id, 'anc_pam{}'.format(LMFormat.MATRIX.ext))
             anc_pam_rule = CreateAncestralPamCommand(
                 pam_filename, tree_filename, anc_pam_filename)
-            anc_pam_rule.inputs.append(dependency_filename) 
+            anc_pam_rule.inputs.append(dependency_filename)
+            if pam_success_filename is not None:
+                anc_pam_rule.inputs.append(pam_success_filename)
             anc_pam_rules.append(anc_pam_rule.getMakeflowRule())
         else:
             anc_pam_filename = None
@@ -142,7 +145,8 @@ class BoomCollate(LMObject):
     # ................................
     def _get_analysis_rules_for_pam(
             self, pam_id, pam_filename, grim_filename=None,
-            biogeo_filename=None, phylo_filename=None, tree_filename=None):
+            biogeo_filename=None, phylo_filename=None, tree_filename=None,
+            pam_success_filename=None):
         """Get the analysis rules for a PAM
         """
         pam_analysis_rules = []
@@ -151,7 +155,7 @@ class BoomCollate(LMObject):
          ) = self._get_multispecies_run_rules_for_pam(
              pam_id, 'obs', pam_filename, 0, grim_filename=grim_filename,
              biogeo_filename=biogeo_filename, phylo_filename=phylo_filename,
-             tree_filename=tree_filename)
+             tree_filename=tree_filename, pam_success_filename=pam_success_filename)
         self.log.debug(
             'Created {} observed rules for pam {}'.format(
                 len(obs_rules), pam_id))
@@ -168,7 +172,8 @@ class BoomCollate(LMObject):
                  pam_id, 'rand{}'.format(i), pam_filename,
                  min(self.random_group_size, self.num_permutations - v),
                  grim_filename=grim_filename, biogeo_filename=biogeo_filename,
-                 phylo_filename=phylo_filename, tree_filename=tree_filename)
+                 phylo_filename=phylo_filename, tree_filename=tree_filename,
+                 pam_success_filename=pam_success_filename)
             rand_pam_stats_filenames.append(pam_stats_filenames)
             rand_mcpa_stats_filenames.append(mcpa_filenames)
             pam_analysis_rules.extend(rand_rules)
@@ -231,7 +236,7 @@ class BoomCollate(LMObject):
     def _get_multispecies_run_rules_for_pam(
             self, pam_id, group_prefix, pam_filename, num_permutations,
             grim_filename=None, biogeo_filename=None, phylo_filename=None,
-            tree_filename=None):
+            tree_filename=None, pam_success_filename=None):
         """Get the rules for running a set of multi species analyses
 
         Return:
@@ -283,7 +288,8 @@ class BoomCollate(LMObject):
                 #site_covariance_filename=None,
                 #species_covariance_filename=None,
                 mcpa_output_filename=mcpa_filename,
-                mcpa_f_matrix_filename=mcpa_f_vals_filename).getMakeflowRule())
+                mcpa_f_matrix_filename=mcpa_f_vals_filename,
+                pam_success_filename=pam_success_filename).getMakeflowRule())
         self.log.debug(
             'Adding {} run rules for pam {}'.format(len(run_rules), pam_id))
         return pam_stats_return, mcpa_return, run_rules
@@ -367,7 +373,7 @@ class BoomCollate(LMObject):
         (anc_pam_filename, anc_pam_rules
          ) = self._get_ancestral_pam_rules_for_pam(
              pam.getId(), pam.getDLocation(), self.squid_tree_filename,
-             pruned_tree_filename)
+             pruned_tree_filename, pam_success_filename=pam_success_filename)
         pam_rules.extend(anc_pam_rules)
         # Analysis rules
         (pam_stats_filenames, mcpa_filenames, analysis_rules
@@ -375,7 +381,8 @@ class BoomCollate(LMObject):
              pam.getId(), pruned_pam_filename, grim_filename=grim_filename,
              biogeo_filename=biogeo_filename,
              phylo_filename=encoded_tree_filename,
-             tree_filename=pruned_tree_filename)
+             tree_filename=pruned_tree_filename,
+             pam_success_filename=pam_success_filename)
         # Add analysis rules
         pam_rules.extend(analysis_rules)
         

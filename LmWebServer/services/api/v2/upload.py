@@ -325,21 +325,14 @@ class UserUploadService(LmService):
                                         'Anonymous users may only upload occurrence data less than {} lines'.format(MAX_ANON_UPLOAD_SIZE))
                         csv_done = True
         else:
-            fail_to_upload = False
-            with open(csvFilename, 'w') as out_f:
-                num_lines = 0
-                for line in instr:
-                    num_lines += 1
-                    if anon_user and num_lines >= MAX_ANON_UPLOAD_SIZE:
-                        fail_to_upload = True
-                        break
-                    else:
-                        out_f.write(line)
-            if fail_to_upload:
-                os.remove(csvFilename)
+            #self.log.debug('Data: {}'.format(data))
+            if self.getUserId() == DEFAULT_POST_USER and \
+                    len(data.split('\n')) > MAX_ANON_UPLOAD_SIZE:
                 raise cherrypy.HTTPError(
                     HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
                     'Anonymous users may only upload occurrence data less than {} lines'.format(MAX_ANON_UPLOAD_SIZE))
+            with open(csvFilename, 'w') as out_f:
+                out_f.write(data)
                     
         # Return
         cherrypy.response.status = HTTPStatus.ACCEPTED

@@ -20,7 +20,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '-co', '--corr_output', type=str, 
         help=('File location to store semi-partial correlation outputs (only'
-              ' for observed'))
+              ' for observed)'))
     parser.add_argument(
         '-fo', '--freq_output', type=str, 
         help=('File location to store (stack of) semi-partial correlation'
