@@ -28,11 +28,6 @@ from LmCommon.common.lmconstants import SERVER_PIPELINE_HEADING, BoomKeys
 # Data Archive Pipeline
 WORKER_JOB_LIMIT = Config().getint(SERVER_PIPELINE_HEADING, 
                                    'WORKER_JOB_LIMIT')
-GRID_NAME = Config().get(SERVER_PIPELINE_HEADING, BoomKeys.GRID_NAME)
-GRID_CELLSIZE = Config().get(SERVER_PIPELINE_HEADING, BoomKeys.GRID_CELL_SIZE)
-GRID_NUM_SIDES = Config().getint(SERVER_PIPELINE_HEADING, BoomKeys.GRID_NUM_SIDES)
-
-SCENARIO_PACKAGE = Config().get(SERVER_PIPELINE_HEADING, BoomKeys.SCENARIO_PACKAGE)
 
 INTERSECT_FILTERSTRING = Config().get(SERVER_PIPELINE_HEADING, 
                                       BoomKeys.INTERSECT_FILTER_STRING)
@@ -45,29 +40,14 @@ INTERSECT_MINPRESENCE = Config().get(SERVER_PIPELINE_HEADING,
 INTERSECT_MAXPRESENCE = Config().get(SERVER_PIPELINE_HEADING, 
                                      BoomKeys.INTERSECT_MAX_PRESENCE)
 
-# User or GBIF data
-OCC_DATA_NAME = Config().get(SERVER_PIPELINE_HEADING, BoomKeys.OCC_DATA_NAME)
-OCC_DATA_DELIMITER = Config().get(SERVER_PIPELINE_HEADING, 
-                                  BoomKeys.OCC_DATA_DELIMITER)
-
 # GBIF data
 GBIF_TAXONOMY_FILENAME = Config().get(SERVER_PIPELINE_HEADING, 
                                       BoomKeys.GBIF_TAXONOMY_FILENAME)
 GBIF_PROVIDER_FILENAME = Config().get(SERVER_PIPELINE_HEADING, 
                                       BoomKeys.GBIF_PROVIDER_FILENAME)
-# GBIF_OCCURRENCE_FILENAME = Config().get(SERVER_PIPELINE_HEADING, 
-#                                         'GBIF_OCCURRENCE_FILENAME')
+GBIF_OCCURRENCE_FILENAME = Config().get(SERVER_PIPELINE_HEADING, 
+                                        'GBIF_OCCURRENCE_FILENAME')
 
-# # BISON data
-# BISON_TSN_FILENAME = Config().get(SERVER_PIPELINE_HEADING, 
-#                                   'BISON_TSN_FILENAME')
-# 
-# # iDigBio data
-# IDIG_OCCURRENCE_DATA = Config().get(SERVER_PIPELINE_HEADING, 'IDIG_OCCURRENCE_DATA')
-# IDIG_OCCURRENCE_DATA_DELIMITER = Config().get(SERVER_PIPELINE_HEADING, 
-#                                     'IDIG_OCCURRENCE_DATA_DELIMITER')
-
-# Both
 OCC_EXP_YEAR = Config().getint(SERVER_PIPELINE_HEADING, BoomKeys.OCC_EXP_YEAR)
 OCC_EXP_MONTH = Config().getint(SERVER_PIPELINE_HEADING, BoomKeys.OCC_EXP_MONTH)
 OCC_EXP_DAY = Config().getint(SERVER_PIPELINE_HEADING, BoomKeys.OCC_EXP_DAY)

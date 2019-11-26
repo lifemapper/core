@@ -45,45 +45,21 @@ OCC_EXP_DAY: @SPECIES_EXP_DAY@
 
 POINT_COUNT_MIN: 30
 POINT_COUNT_MAX: 500
+
 WORKER_JOB_LIMIT: 50
 
 ; ...................
 ; Species data vals
 ; ...................
-DATA_SOURCE: GBIF
-
-;; GBIF data dump 
-OCC_DATA_NAME: @GBIF_OCCURRENCES@-@GBIF_VERSION@
-OCC_DATA_DELIMITER: \t
 
 ;; Used only when DATASOURCE is GBIF. 
+GBIF_OCCURRENCE_FILENAME: @GBIF_OCCURRENCES@-@GBIF_VERSION@
 GBIF_TAXONOMY_FILENAME: @GBIF_TAXONOMY@-@GBIF_VERSION@.csv
 GBIF_PROVIDER_FILENAME: @GBIF_PROVIDER@-@GBIF_VERSION@.csv
-
-
-; ...................
-; Env Package Vals
-; ...................
-;; The default SCENARIO_PACKAGE (10min-past-present-future) is filled in and  
-;; installed during 'lifemapper-server' roll installation matches these default 
-;; scenarios. 
-;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE
-;; in the [LmCompute - environment] section should match SCENARIO_PACKAGE here
-SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
-
-; BISON values (Algs=ATT_MAXENT)
-;; SCENARIO_PACKAGE: 30sec-present-future-CONUS
 
 ; ...................
 ; Global PAM vals
 ; ...................
-ASSEMBLE_PAMS: True
-GRID_NAME: @GRID_NAME@
-GRID_CELL_SIZE: @GRID_CELLSIZE@
-GRID_NUM_SIDES: @GRID_NUM_SIDES@
-
-COMPUTE_PAM_STATS: 0
-
 INTERSECT_FILTER_STRING: None
 INTERSECT_VAL_NAME: pixel
 INTERSECT_MIN_PERCENT: 25
@@ -92,12 +68,6 @@ INTERSECT_MAX_PRESENCE: 255
 
 [ALGORITHM - DEFAULT]
 ALG_CODE: ATT_MAXENT
-
-[PREPROCESSING SDM_MASK - DEFAULT]
-ALG_CODE: hull_region_intersect
-buffer: .5
-;;; Must be the same layer contained in @SCENARIO_PACKAGE@ and metadata 
-region: @ECOREGION_LAYER@
 
 ; .............................................................................
 [LmServer - dbserver]

@@ -155,7 +155,7 @@ Check LmServer
 
    # export PGPASSWORD=`grep admin /opt/lifemapper/rocks/etc/users | awk '{print $2}'`
    # psql -U admin -d borg
-   psql (9.1.22)
+   psql (9.6.15)
    Type "help" for help.
    borg=> select scenariocode, userid from scenario;
 

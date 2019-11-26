@@ -100,7 +100,7 @@ class SpeciesDatasource:
         return True
         
 
-# Key must match DATASOURCE in config/config.ini.  
+# ??? Key must match DATASOURCE in config/boom.public.params.in
 TAXONOMIC_SOURCE = {
     SpeciesDatasource.BIOTAFFY: {'name':  'Open Tree of Life',
                 'url': 'https://api.opentreeoflife.org/v3/'},
