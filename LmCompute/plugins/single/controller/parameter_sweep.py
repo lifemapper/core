@@ -160,6 +160,7 @@ class ParameterSweep(object):
                 (process_type, model_id, occ_set_id, occ_shp_filename,
                  algorithm, model_scenario, mask_id, mdl_ruleset_path
                  ) = mdl_config
+                projection_id = projection_path = package_path = scale_params = multiplier = None
             
             mdl_ruleset_path = os.path.join(
                 self.base_work_dir, mdl_ruleset_path)
@@ -188,6 +189,8 @@ class ParameterSweep(object):
                 # We can only compute if (needed) mask was created successfully
                 if mask_status >= JobStatus.GENERAL_ERROR:
                     mask_cont = False
+            else:
+                mask_filename_base = None
                 
             # We can only continue if occurrence set and mask (if needed) were
             #    created successfully
@@ -205,9 +208,11 @@ class ParameterSweep(object):
                 if process_type in [ProcessType.ATT_MODEL,
                                     ProcessType.ATT_PROJECT]:
                     
-                    mask_filename = '{}{}'.format(
-                        mask_filename_base, LMFormat.ASCII.ext)
-                    print('Mask file name: {}'.format(mask_filename))
+                    mask_filename = None
+                    if mask_filename_base is not None:
+                        mask_filename = '{}{}'.format(
+                            mask_filename_base, LMFormat.ASCII.ext)
+                        print('Mask file name: {}'.format(mask_filename))
                     wrapper = MaxentWrapper(
                         work_dir, species_name, logger=self.log)
                     wrapper.create_model(
@@ -256,8 +261,10 @@ class ParameterSweep(object):
                 # If openModeller
                 elif process_type in [ProcessType.OM_MODEL,
                                       ProcessType.OM_PROJECT]:
-                    mask_filename = '{}{}'.format(
-                        mask_filename_base, LMFormat.GTIFF.ext)
+                    mask_filename = None
+                    if mask_filename_base is not None:
+                        mask_filename = '{}{}'.format(
+                            mask_filename_base, LMFormat.GTIFF.ext)
                     wrapper = OpenModellerWrapper(
                         work_dir, species_name, logger=self.log)
                     wrapper.create_model(
@@ -466,6 +473,8 @@ class ParameterSweep(object):
                     #    successfully
                     if mask_status >= JobStatus.GENERAL_ERROR:
                         mask_cont = False
+                else:
+                    mask_filename_base = None
                 
                 # We can only continue if mask (if needed) was created successfully
                 if mask_cont:
@@ -484,9 +493,12 @@ class ParameterSweep(object):
                     if status < JobStatus.GENERAL_ERROR:
                         # If Maxent
                         if process_type == ProcessType.ATT_PROJECT:
-                           
-                            mask_filename = '{}{}'.format(
-                                mask_filename_base, LMFormat.ASCII.ext)
+                            
+                            if mask_filename_base is not None:
+                                mask_filename = '{}{}'.format(
+                                    mask_filename_base, LMFormat.ASCII.ext)
+                            else:
+                                mask_filename = None
                             wrapper = MaxentWrapper(
                                 work_dir, species_name, logger=self.log)
                             wrapper.create_projection(
