@@ -151,10 +151,15 @@ class ParameterSweep(object):
         """
         for mdl_config in self.sweep_config.get_model_config():
             
-            (process_type, model_id, occ_set_id, occ_shp_filename, algorithm,
-             model_scenario,
-             mask_id, mdl_ruleset_path, projection_id, projection_path,
-             package_path, scale_params, multiplier) = mdl_config
+            if len(mdl_config) == 13:
+                (process_type, model_id, occ_set_id, occ_shp_filename,
+                 algorithm, model_scenario, mask_id, mdl_ruleset_path,
+                 projection_id, projection_path, package_path, scale_params,
+                 multiplier) = mdl_config
+            else:
+                (process_type, model_id, occ_set_id, occ_shp_filename,
+                 algorithm, model_scenario, mask_id, mdl_ruleset_path
+                 ) = mdl_config
             
             mdl_ruleset_path = os.path.join(
                 self.base_work_dir, mdl_ruleset_path)
@@ -277,29 +282,32 @@ class ParameterSweep(object):
                             algorithm, mask_filename)
                         
                         mdl_metrics = wrapper.get_metrics()
-                        status = wrapper.get_status()
-                        if status < JobStatus.GENERAL_ERROR:
-                            # Append log
-                            with open(wrapper.get_log_filename()) as log_f:
-                                self.log.debug('-----------------------------')
-                                self.log.debug('Projection log')
-                                self.log.debug(wrapper.get_log_filename())
-                                self.log.debug('-----------------------------')
-                                self.log.debug(log_f.read())
-                            # Move raster
-                            wrapper.copy_projection(
-                                projection_path, overwrite=True)
-                            # Package
-                            wrapper.get_output_package(
-                                package_path, overwrite=True)
-                            prj_metrics = wrapper.get_metrics()
-                            prj_snippets = None
-                            # Use same secondary outputs as model and register
-                            self._register_output_object(
-                                RegistryKey.PROJECTION, projection_id,
-                                prj_status, projection_path,
-                                process_type=ProcessType.OM_PROJECT,
-                                metrics=prj_metrics, snippets=prj_snippets)
+                        
+                        if projection_id is not None:
+                            
+                            status = wrapper.get_status()
+                            if status < JobStatus.GENERAL_ERROR:
+                                # Append log
+                                with open(wrapper.get_log_filename()) as log_f:
+                                    self.log.debug('-----------------------------')
+                                    self.log.debug('Projection log')
+                                    self.log.debug(wrapper.get_log_filename())
+                                    self.log.debug('-----------------------------')
+                                    self.log.debug(log_f.read())
+                                # Move raster
+                                wrapper.copy_projection(
+                                    projection_path, overwrite=True)
+                                # Package
+                                wrapper.get_output_package(
+                                    package_path, overwrite=True)
+                                prj_metrics = wrapper.get_metrics()
+                                prj_snippets = None
+                                # Use same secondary outputs as model and register
+                                self._register_output_object(
+                                    RegistryKey.PROJECTION, projection_id,
+                                    prj_status, projection_path,
+                                    process_type=ProcessType.OM_PROJECT,
+                                    metrics=prj_metrics, snippets=prj_snippets)
                     else:
                         status = prj_status
                 
