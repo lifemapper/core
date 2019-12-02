@@ -534,7 +534,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 else:
                     write_template = False
             elif r_path.endswith('nodeLookup.js'):
-                if anc_pam is not None and os.path.exists(anc_pam.getDLocation()):
+                if anc_pam is not None:
                     temp_filler = TemplateFiller(
                         node_lookup_json=json.dumps(
                             createHeaderLookup(
