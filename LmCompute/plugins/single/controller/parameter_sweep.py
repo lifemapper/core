@@ -535,8 +535,11 @@ class ParameterSweep(object):
                         # If openModeller
                         elif process_type in [
                             ProcessType.OM_MODEL, ProcessType.OM_PROJECT]:
-                            mask_filename = '{}{}'.format(
-                                mask_filename_base, LMFormat.GTIFF.ext)
+                            if mask_filename_base is not None:
+                                mask_filename = '{}{}'.format(
+                                    mask_filename_base, LMFormat.GTIFF.ext)
+                            else:
+                                mask_filename = None
                             wrapper = OpenModellerWrapper(
                                 work_dir, species_name, logger=self.log)
                             wrapper.create_projection(
