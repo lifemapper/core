@@ -1500,6 +1500,8 @@ config_file='/share/lm/data/archive/taffyX/heuchera_boom_global_10min_ppf.params
 
 config_file = '/share/lm/data/archive/biota/sax_boom_global_10min.params'
 
+config_file = '/share/lm/data/archive/ams/nmmst_algae.params'
+
 import time
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
@@ -1508,66 +1510,51 @@ logname = 'initWorkflow.debug.{}'.format(timestamp)
 self = BOOMFiller(config_file, logname=logname)
 self.initializeInputs()
 
-encoded_tree = None
+###################################################################
+scenGrims = {}
+self.scribe.log.info('  Find or insert, build shapegrid {} ...'.format(self.gridname))
+shp = self._addIntersectGrid()
+self.scribe.log.info('  Found or inserted shapegrid')
+self.shapegrid = shp
 
-script_name = 'woof-test'
+meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
+        ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD],
+        'parameters': self.inParamFname}
 
-meta = {
-    MFChain.META_CREATED_BY: script_name,
-    MFChain.META_GRIDSET : boomGridset.getId(),
-    MFChain.META_DESCRIPTION : 'Makeflow for gridset {}'.format(
-        boomGridset.getId())
-    }
+grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
+                 epsgcode=self.scenPkg.epsgcode, 
+                 userId=self.userId, modTime=self.woof_time_mjd)
+updatedGrdset = self.scribe.findOrInsertGridset(grdset)
+if updatedGrdset.modTime < self.woof_time_mjd:
+    updatedGrdset.modTime = self.woof_time_mjd
+    self.scribe.updateObject(updatedGrdset)
+    
+    # TODO: Decide: do we want to delete old makeflows for this gridset?
+    fnames = self.scribe.deleteMFChainsReturnFilenames(updatedGrdset.getId())
+    for fn in fnames:
+        os.remove(fn)
+        
+    self.scribe.log.info('  Found and updated modtime for gridset {}'
+                         .format(updatedGrdset.getId()))
+else:
+    self.scribe.log.info('  Inserted new gridset {}'
+                         .format(updatedGrdset.getId()))
+    
 
-new_mfc = MFChain(
-    self.userId, priority=Priority.HIGH, metadata=meta,
-    status=JobStatus.GENERAL, statusModTime=mx.DateTime.gmt().mjd)
-
-gridset_mf = self.scribe.insertMFChain(
-    new_mfc, boomGridset.getId())
-
-target_dir = gridset_mf.getRelativeDirectory()
-rules = []
-
-# Add GRIM rules
-rules.extend(self.addGrimMFs(scenGrims, target_dir))
-
-# Check for a file OccurrenceLayer Ids for existing or PUBLIC user
-if self.occIdFname:
-    self._checkOccurrenceSets()
-
-# Fix user makeflow and layer directory permissions
-self._fixDirectoryPermissions(boomGridset)
+for code, scen in self.scenPkg.scenarios.iteritems():
+    if code in self.prj_scencodes:
+        for alg in self.algorithms.values():
+            self.scribe.log.info('Adding PAM for {}/{}'.format(alg.code, scen.code, scen.dateCode, scen.))
+            gPam = self._findOrAddPAM(updatedGrdset, alg, scen)
             
-# If there is a tree, add db object
-tree = self.addTree(boomGridset, encoded_tree=encoded_tree)
+        # "Global" GRIM (one per scenario) 
+        if not(self.userId == DEFAULT_POST_USER) or self.compute_mcpa:
+            scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
+            scenGrims[code] = scenGrim
+                
 
-# If there are biogeographic hypotheses, add layers and matrix and create MFChain
-biogeoMtx, biogeoLayerNames = self.addBioGeoHypothesesMatrixAndLayers(boomGridset)            
-      
-if biogeoMtx and len(biogeoLayerNames) > 0:
-    # Add BG hypotheses
-    bgh_success_fname = os.path.join(target_dir, 'bg.success')
-    bg_cmd = EncodeBioGeoHypothesesCommand(
-        self.userId, boomGridset.name, bgh_success_fname)
-    # TODO: Do we want this to be local?  Yes, needs db access
-    # TODO: We need a different script for this.  
-    rules.append(bg_cmd.getMakeflowRule(local=True))
-    # Add BG Hypotheses encoding Makeflows, independent of Boom completion
-    #rules.extend(self.addEncodeBioGeoMF(boomGridset))
-# Create MFChain to run Boomer on these inputs IFF requested
-# This also adds commands for iDigBio occurrence data retrieval 
-#   and taxonomy insertion before Boom
-#   and tree encoding after Boom 
-rules.extend(self.addBoomMF(tree, target_dir))
-
-# Write config file for archive, update permissions
-self.writeConfigFile(tree=tree, biogeoLayers=biogeoLayerNames)
-
-# Write rules
-gridset_mf.addCommands(rules)
-self._write_update_MF(gridset_mf)
-
+# scenGrims, boomGridset = self.addShapeGridGPAMGridset()
+###################################################################
 
 ############################################
 boomGridsetId = boomGridset.getId()
@@ -1579,81 +1566,8 @@ newMFC = MFChain(self.userId, priority=self.priority,
                  metadata=meta, status=JobStatus.GENERAL, 
                  statusModTime=mx.DateTime.gmt().mjd)
 mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
-
-ws_dir = mfChain.getRelativeDirectory()
-baseAbsFilename, _ = os.path.splitext(os.path.basename(self.outConfigFilename))
-
-boomSuccessFname = os.path.join(ws_dir, baseAbsFilename + '.success')
-boomCmd = BoomerCommand(self.outConfigFilename, boomSuccessFname)
-          
-if self.dataSource == SpeciesDatasource.TAXON_IDS:
-    idigCmd, point_output_file = self._getIdigQueryCmd(ws_dir)
-    # Add command to this Makeflow
-    # TODO: allow non-local
-    mfChain.addCommands([idigCmd.getMakeflowRule(local=True)])
-    # Boom requires iDigBio data
-    boomCmd.inputs.extend(idigCmd.outputs)
-    # Update config to User (CSV) datasource and point_output_file
-    self.dataSource = SpeciesDatasource.USER
-    self.occFname = point_output_file
-    
-# Add taxonomy before Boom, if taxonomy is specified
-cattaxCmd, taxSuccessFname = self._getTaxonomyCommand()
-if cattaxCmd:
-    # Add catalog taxonomy command to this Makeflow
-    mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
-    # Boom requires catalog taxonomy completion
-    boomCmd.inputs.append(taxSuccessFname)
-
-# Encode tree after Boom, if tree exists
-if tree is not None:
-    walkedTreeFname = os.path.join(ws_dir, self.userId+tree.name+'.success')
-    treeCmd = EncodeTreeCommand(self.userId, tree.name, walkedTreeFname)
-    # Tree requires Boom completion
-    treeCmd.inputs.append(boomSuccessFname)
-    # Add tree encoding command to this Makeflow
-    mfChain.addCommands([treeCmd.getMakeflowRule(local=True)])
-
-# Add boom command to this Makeflow
-mfChain.addCommands([boomCmd.getMakeflowRule(local=True)])
-mfChain = self._write_update_MF(mfChain)
 ############################################
 
 
-# boomMF = self.addBoomMF(boomGridset.getId(), tree)
-
-# Write config file for archive, update permissions
-self.writeConfigFile(tree=tree, biogeoMtx=biogeoMtx, 
-                     biogeoLayers=biogeoLayerNames)
-
-# gs = filler.initBoom()
-
- 
-
-/opt/python/bin/python2.7 /opt/lifemapper/LmDbServer/tools/catalogTaxonomy.py \
-   --taxon_source_name='GBIF Backbone Taxonomy' \
-   --taxon_data_filename=/share/lmserver/data/species/gbif_taxonomy-2018.09.14.csv \
-   --success_filename=/share/lmserver/data/species/gbif_taxonomy-2018.09.14.success \
-   --logname=catalogTaxonomy.gbif_taxonomy-2018.09.14.20181220-0859 \
-   --taxon_source_url=http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c
-
-
-
-
-On 193:
-
-
-/opt/python/bin/python2.7 \
-/opt/lifemapper/LmDbServer/boom/boomer.py \
---config_file=/share/lm/data/archive/anon/Anthony_test_5.ini \
---success_file=mf_3509/Anthony_test_5.ini.success
-
-boom_config_97100.params
-
-
-Creating follow up makeflows and failing, so there are multiple with status = 0.
-
-
-Can you check it out?
 
 """
