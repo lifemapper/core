@@ -272,8 +272,8 @@ class ParameterSweep(object):
                         mask_filename=mask_filename, crs_wkt=crs_wkt)
                     
                     # Get outputs
-                    prj_status = wrapper.get_status()
-                    if prj_status < JobStatus.GENERAL_ERROR:
+                    status = wrapper.get_status()
+                    if status < JobStatus.GENERAL_ERROR:
                         wrapper.copy_ruleset(mdl_ruleset_path, overwrite=True)
 
                         # Append log
@@ -312,11 +312,9 @@ class ParameterSweep(object):
                                 # Use same secondary outputs as model and register
                                 self._register_output_object(
                                     RegistryKey.PROJECTION, projection_id,
-                                    prj_status, projection_path,
+                                    status, projection_path,
                                     process_type=ProcessType.OM_PROJECT,
                                     metrics=prj_metrics, snippets=prj_snippets)
-                    else:
-                        status = prj_status
                 
                 # If other
                 else:
