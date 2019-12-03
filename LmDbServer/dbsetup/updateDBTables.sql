@@ -31,13 +31,62 @@
 
 
 
--- \c borg
+\c borg
+
+-- ----------------------------------------------------------------------------                                                    
+
 DROP FUNCTION IF EXISTS lm_v3.lm_clearSomeObsoleteSpeciesDataForUser(usr varchar,
                                                            dt double precision, 
                                                            maxnum int);
 DROP VIEW IF EXISTS lm_v3.lm_envlayer CASCADE;
 DROP VIEW IF EXISTS lm_v3.lm_scenlayer CASCADE;
 ALTER TABLE lm_v3.EnvType ALTER COLUMN envcode TYPE varchar(60);
+-- ----------------------------------------------------------------------------                                                    
+
+CREATE OR REPLACE FUNCTION lm_v3.lm_fillScenarioIdFromPAMMetadata()
+   RETURNS int AS
+$$
+DECLARE
+   total int := 0;
+   mtxid int;
+   metastr varchar;
+   headstr varchar;
+   tmp varchar;
+   pos int;
+   val varchar;
+   scenid int := -1;
+BEGIN
+   FOR mtxid, metastr IN SELECT matrixid, metadata FROM lm_v3.Matrix 
+      WHERE matrixtype = 1
+   LOOP
+      BEGIN
+           headstr := '"description": "Global PAM for Scenario ';
+           SELECT INTO pos position(headstr in metastr) + char_length(headstr) ;
+           SELECT INTO tmp substring(metastr, pos);
+           SELECT INTO pos position('"' in tmp);
+           SELECT INTO val substring(tmp, 0, pos);
+           SELECT INTO scenid scenarioid FROM scenario WHERE scenariocode = val;
+           RAISE NOTICE 'PAM matrix for % %', scenid, val;
+           --UPDATE Matrix SET scenarioid = scenid WHERE matrixid = mtxid;
+           total := total + 1;
+      END;
+   END LOOP;
+   RETURN total;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+ALTER TABLE lm_v3.Matrix ADD COLUMN scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE;
+SELECT * FROM lm_v3.lm_fillScenarioIdFromPAMMetadata();
+
+ALTER TABLE lm_v3.Matrix DROP CONSTRAINT matrix_gridsetid_matrixtype_gcmcode_altpredcode_datecode_al_key;
+ALTER TABLE lm_v3.Matrix ADD CONSTRAINT UNIQUE (gridsetId, matrixType, scenarioId, algorithmCode);
+
+--ALTER TABLE lm_v3.Matrix DROP COLUMN datecode; 
+--ALTER TABLE lm_v3.Matrix DROP COLUMN gcmcode; 
+--ALTER TABLE lm_v3.Matrix DROP COLUMN altpredcode; 
+
+-- ----------------------------------------------------------------------------                                                    
+
 /*
 -- ----------------------------------------------------------------------------                                                    
 -- For deleting large amounts of data, drop indices and constraints first

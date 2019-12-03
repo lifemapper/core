@@ -344,6 +344,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    matrixId,
    matrixType,
    gridsetId,
+   -- TODO: replace 3 Codes with scenarioId
+   -- scenarioId,
    gcmCode,
    altpredCode,
    dateCode,
@@ -386,8 +388,11 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    resolution,
    bbox,
    lyrmodtime) AS
-   SELECT m.matrixId, m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode, 
-   		 m.dateCode, m.algorithmCode, m.matrixDlocation, m.metadata, m.status, 
+   SELECT m.matrixId, m.matrixType, m.gridsetId, 
+         -- TODO: replace 3 Codes with scenarioID
+         -- m.scenarioid,
+         m.gcmCode, m.altpredCode, m.dateCode, 
+         m.algorithmCode, m.matrixDlocation, m.metadata, m.status, 
    		 m.statusmodtime, 
           g.userId, g.grdname, g.layerId, 
           g.grddlocation, g.grdepsgcode, g.grdmetadata, 
@@ -409,6 +414,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
    matrixId,
    matrixType,
    gridsetId,
+   -- TODO: replace 3 Codes with scenarioId
+   -- scenarioId,
    gcmCode,
    altpredCode,
    dateCode,
@@ -425,8 +432,11 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
    grdepsgcode,
    grdmetadata,
    grdmodTime) AS
-   SELECT m.matrixId, m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode,
-          m.dateCode, m.algorithmCode, m.matrixDlocation, m.metadata, m.status, 
+   SELECT m.matrixId, m.matrixType, m.gridsetId, 
+         -- TODO: replace 3 Codes with scenarioId
+         -- m.scenarioId,
+          m.gcmCode, m.altpredCode, m.dateCode, 
+          m.algorithmCode, m.matrixDlocation, m.metadata, m.status, 
           m.statusmodtime, 
           g.userId, g.name, g.layerId, 
           g.dlocation, g.epsgcode, g.metadata, g.modTime
@@ -579,6 +589,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    -- Matrix.*
    matrixType,
    gridsetId,
+   -- TODO: replace 3 Codes with scenarioId
+   -- scenarioId,
    gcmCode,
    altpredCode,
    dateCode,

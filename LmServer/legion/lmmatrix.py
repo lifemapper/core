@@ -50,7 +50,10 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
     def __init__(self, matrix, headers=None,
                      matrixType=MatrixType.PAM, 
                      processType=None,
-                     gcmCode=None, altpredCode=None, dateCode=None, algCode=None,
+                     # TODO: replace 3 codes with scenarioId
+                     scenarioid=None,
+                     gcmCode=None, altpredCode=None, dateCode=None, 
+                     algCode=None,
                      metadata={},
                      dlocation=None, 
                      metadataUrl=None,
@@ -76,6 +79,8 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         """
         self.matrixType = matrixType
         self._dlocation = dlocation
+        # TODO: replace 3 codes with scenarioId
+        self.scenarioId = scenarioid
         self.gcmCode = gcmCode
         self.altpredCode = altpredCode
         self.dateCode = dateCode
