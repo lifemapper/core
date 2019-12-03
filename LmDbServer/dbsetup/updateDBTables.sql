@@ -49,6 +49,7 @@ $$
 DECLARE
    total int := 0;
    mtxid int;
+   mtxtype int;
    metastr varchar;
    headstr varchar;
    tmp varchar;
@@ -56,19 +57,25 @@ DECLARE
    val varchar;
    scenid int := -1;
 BEGIN
-   FOR mtxid, metastr IN SELECT matrixid, metadata FROM lm_v3.Matrix 
-      WHERE matrixtype = 1
+   FOR mtxid, mtxtype, metastr IN SELECT matrixid, matrixtype, metadata 
+      FROM lm_v3.Matrix 
    LOOP
       BEGIN
-           headstr := '"description": "Global PAM for Scenario ';
+	       IF mtxtype = 1 THEN
+              headstr := '"description": "Global PAM for Scenario ';
+           ELSE
+              headstr := '"description": "Scenario GRIM for Scenario ';
+           END IF;
            SELECT INTO pos position(headstr in metastr) + char_length(headstr) ;
            SELECT INTO tmp substring(metastr, pos);
            SELECT INTO pos position('"' in tmp);
            SELECT INTO val substring(tmp, 0, pos);
            SELECT INTO scenid scenarioid FROM scenario WHERE scenariocode = val;
-           RAISE NOTICE 'PAM matrix for % %', scenid, val;
-           --UPDATE Matrix SET scenarioid = scenid WHERE matrixid = mtxid;
-           total := total + 1;
+           IF mtxtype IN (1, 2) THEN
+              RAISE NOTICE 'PAM/GRIM type % matrix for % %, %', mtxtype, scenid, val, metastr;
+              --UPDATE Matrix SET scenarioid = scenid WHERE matrixid = mtxid;
+              total := total + 1;
+           END IF;
       END;
    END LOOP;
    RETURN total;
@@ -78,9 +85,9 @@ $$  LANGUAGE 'plpgsql' STABLE;
 ALTER TABLE lm_v3.Matrix ADD COLUMN scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE;
 SELECT * FROM lm_v3.lm_fillScenarioIdFromPAMMetadata();
 
-ALTER TABLE lm_v3.Matrix DROP CONSTRAINT matrix_gridsetid_matrixtype_gcmcode_altpredcode_datecode_al_key;
 ALTER TABLE lm_v3.Matrix ADD CONSTRAINT UNIQUE (gridsetId, matrixType, scenarioId, algorithmCode);
 
+--ALTER TABLE lm_v3.Matrix DROP CONSTRAINT matrix_gridsetid_matrixtype_gcmcode_altpredcode_datecode_al_key;
 --ALTER TABLE lm_v3.Matrix DROP COLUMN datecode; 
 --ALTER TABLE lm_v3.Matrix DROP COLUMN gcmcode; 
 --ALTER TABLE lm_v3.Matrix DROP COLUMN altpredcode; 

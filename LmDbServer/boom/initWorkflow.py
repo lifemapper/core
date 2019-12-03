@@ -801,12 +801,22 @@ class BOOMFiller(LMObject):
         pamType = MatrixType.PAM
         if not self.compute_pam_stats:
             pamType = MatrixType.ROLLING_PAM
+            
+        kws = [GPAM_KEYWORD]
+        for kw in (scen.code, scen.gcmCode, scen.altpredCode, scen.dateCode):
+            if kw is not None:
+                kws.append(kw)
+                
         desc = '{} for Scenario {}'.format(GPAM_KEYWORD, scen.code)
         pamMeta = {ServiceObject.META_DESCRIPTION: desc,
-                   ServiceObject.META_KEYWORDS: [GPAM_KEYWORD, scen.code]}
-        tmpGpam = LMMatrix(None, matrixType=pamType, 
+                   ServiceObject.META_KEYWORDS: kws}
+        
+        tmpGpam = LMMatrix(None, matrixType=pamType,
+                           # TODO: replace 3 codes with scenarioId 
+                           scenarioid=scen.getId(),
                            gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
-                           dateCode=scen.dateCode, algCode=alg.code, 
+                           dateCode=scen.dateCode, 
+                           algCode=alg.code, 
                            metadata=pamMeta, userId=self.userId, 
                            gridset=gridset, 
                            status=JobStatus.GENERAL, 
@@ -818,12 +828,21 @@ class BOOMFiller(LMObject):
     def _findOrAddGRIM(self, gridset, scen):
         # Create Scenario-GRIM for this archive, scenario
         # GRIM layers are added now
+        kws = [GGRIM_KEYWORD]
+        for kw in (scen.code, scen.gcmCode, scen.altpredCode, scen.dateCode):
+            if kw is not None:
+                kws.append(kw)
+        
         desc = '{} for Scenario {}'.format(GGRIM_KEYWORD, scen.code)
         grimMeta = {ServiceObject.META_DESCRIPTION: desc,
-                    ServiceObject.META_KEYWORDS: [GGRIM_KEYWORD]}
+                    ServiceObject.META_KEYWORDS: kws}
+        
         tmpGrim = LMMatrix(None, matrixType=MatrixType.GRIM, 
+                           # TODO: replace 3 codes with scenarioId 
+                           scenarioid=scen.getId(),
                            gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
-                           dateCode=scen.dateCode, metadata=grimMeta, userId=self.userId, 
+                           dateCode=scen.dateCode, 
+                           metadata=grimMeta, userId=self.userId, 
                            gridset=gridset, 
                            status=JobStatus.GENERAL, 
                            statusModTime=mx.DateTime.gmt().mjd)
