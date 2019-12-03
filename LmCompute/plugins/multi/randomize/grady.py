@@ -83,6 +83,10 @@ def gradyRandomize(mtx):
     colTots = np.sum(mtxData, axis=0)
     nRows, nCols = mtxData.shape
     
+    valid_rows = np.sum(mtx.data, axis=1) != 0 
+    valid_cols = np.sum(mtx.data, axis=0) != 0
+
+    
     #initialTotal = np.sum(rowTots)
     
     #weights = colAndRowPlusRbyC(rowTots, colTots, nRows, nCols)
@@ -199,8 +203,11 @@ def gradyRandomize(mtx):
         c = choice(problemColumns)
         i = 0
         
-        cs = np.where(mtx1[r] == 0)[0]
-        rs = np.where(mtx1[:,c] == 0)[0]
+        cs = np.where((mtx1[r] == 0) & (valid_cols))[0]
+        rs = np.where((mtx1[:,c] == 0) & (valid_rows))[0]
+        
+        #cs = np.where(mtx1[r] == 0)[0]
+        #rs = np.where(mtx1[:,c] == 0)[0]
         
         numTries = 0
         found = False
@@ -217,7 +224,16 @@ def gradyRandomize(mtx):
                 found = True
         
         if not found:
-            raise Exception("Couldn't fix row, col ({}, {})".format(r, c))
+            # Can't fix row easily so randomly move a one
+            prs = np.where(mtx1[:, c2] == 1)[0]
+            update_row = np.random.choice(prs)
+            mtx1[r, c2] = 1
+            mtx1[update_row, c2] = 0
+
+            # Should we add update row to problem rows or is it already there?
+            if update_row not in problemRows:
+                problemRows.append(update_row)
+            #raise Exception("Couldn't fix row, col ({}, {})".format(r, c))
         
         #r2 = randint(0, nRows-1)
         #c2 = randint(0, nCols-1)
