@@ -296,6 +296,8 @@ class Borg(DbPostgresql):
             grdset = self._createGridset(row, idxs)
             mtxid = self._getColumnValue(row, idxs, ['matrixid'])
             mtype = self._getColumnValue(row, idxs, ['matrixtype'])
+            scenid = self._getColumnValue(row, idxs, ['scenarioid'])
+#             TODO: replace 3 Codes with scenarioId
             gcm = self._getColumnValue(row, idxs, ['gcmcode']) 
             rcp  = self._getColumnValue(row, idxs, ['altpredcode'])
             dt =  self._getColumnValue(row, idxs, ['datecode'])
@@ -307,11 +309,12 @@ class Borg(DbPostgresql):
             stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime', 
                                                         'statusmodtime'])
             mtx = LMMatrix(None, matrixType=mtype, 
-                                gcmCode=gcm, altpredCode=rcp, dateCode=dt,
-                                algCode=alg,
-                                metadata=meta, dlocation=dloc, userId=usr, 
-                                gridset=grdset, matrixId=mtxid, 
-                                status=stat, statusModTime=stattime)
+                           scenarioid=scenid,
+                           gcmCode=gcm, altpredCode=rcp, dateCode=dt,
+                           algCode=alg,
+                           metadata=meta, dlocation=dloc, userId=usr, 
+                           gridset=grdset, matrixId=mtxid, 
+                           status=stat, statusModTime=stattime)
         return mtx
     
     # ...............................................

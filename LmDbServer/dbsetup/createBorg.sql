@@ -404,8 +404,7 @@ create table lm_v3.MFProcess
 
 -- -------------------------------
 -- In Gridset space: PAM, GRIM, BioGeoMtx, MCPA output
--- Object 
--- Status is aggregation of component MatrixColumn statuses
+-- Status is aggregation of component MatrixColumns
 create table lm_v3.Matrix
 (
    matrixId serial UNIQUE PRIMARY KEY,
@@ -414,7 +413,8 @@ create table lm_v3.Matrix
    gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
 
    -- ONLY relevant for PAM
-   -- Codes for GCM, RCP, past/current/projected Date
+   -- TODO: replace scenario attribute codes with projection scenarioId
+   scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    gcmCode varchar(20),
    altpredCode varchar(20),
    dateCode varchar(20),
@@ -422,11 +422,12 @@ create table lm_v3.Matrix
    algorithmCode varchar(30) REFERENCES lm_v3.Algorithm(algorithmCode),
 
    matrixDlocation text,
-   -- metadataUrl text UNIQUE,
    metadata text,
    status int,
    statusmodtime double precision,
-   UNIQUE (gridsetId, matrixType, gcmCode, altpredCode, dateCode, algorithmCode)
+   -- TODO: replace scenario attribute codes with single scenario code
+   UNIQUE (gridsetId, matrixType, gcmCode, altpredCode, dateCode, algorithmCode),
+   UNIQUE (gridsetId, matrixType, scenarioId, algorithmCode)
 );
 
 -- -------------------------------
