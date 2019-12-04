@@ -64,7 +64,7 @@ def correct_p_values(p_values_matrix, false_discovery_rate=0.05):
         rank += 1
 
     headers = deepcopy(p_values_matrix.headers)
-    headers[str(p_values_matrix.data.ndim)] = ['BH Corrected']
+    headers[str(p_values_matrix.data.ndim - 1)] = ['BH Corrected']
     sig_values = (p_values_matrix.data <= comp_p).astype(int)
     return Matrix(sig_values, headers=headers)
 
@@ -86,7 +86,7 @@ def get_p_values(observed_matrix, test_matrices,
     """
     p_val_headers = deepcopy(observed_matrix.headers)
     ndim = observed_matrix.data.ndim
-    p_val_headers[str(ndim)] = ['P-Values']
+    p_val_headers[str(ndim - 1)] = ['P-Values']
     
     # Create the P-values matrix.  The shape should be the same as the observed
     #    data with one extra dimension if the last dimension has size > 1
