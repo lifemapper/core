@@ -174,11 +174,11 @@ class BoomPoster(object):
         """
         # Process shapegrid
         shapegrid_json = global_pam_json[APIPostKeys.SHAPEGRID]
-        shapegrid_bbox = [
+        shapegrid_bbox = '{},{},{},{}'.format(
             shapegrid_json[APIPostKeys.MIN_X],
             shapegrid_json[APIPostKeys.MIN_Y],
             shapegrid_json[APIPostKeys.MAX_X],
-            shapegrid_json[APIPostKeys.MAX_Y]]
+            shapegrid_json[APIPostKeys.MAX_Y])
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.GRID_BBOX, shapegrid_bbox)
         shapegrid_name = shapegrid_json[APIPostKeys.NAME]
