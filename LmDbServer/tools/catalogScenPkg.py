@@ -451,37 +451,28 @@ if __name__ == '__main__':
         filler = SPFiller(scen_package_meta, user_id, email=user_email, 
                           logname=logname)
         filler.initializeMe()
-        filler.catalogScenPackages()
+        updatedScenPkg = filler.catalogScenPackages()
+        if updatedScenPkg is not None:
+            pkgid = updatedScenPkg.getId()
+            if (pkgid is not None and updatedScenPkg.getUserId() == user_id):
+                print('Successfully added scenario package {} for user {}'
+                      .format(pkgid, user_id))
+            else:
+                print('Failed adding scenario package {} for user {}'
+                      .format(pkgid, user_id))
+        else:
+            print('Failed, add scenario package returned None for {} and user {}'
+                  .format(scen_package_meta, user_id))
+
+            
    
 """
-find . -name "*.in" -exec sed -i s%@LMHOME@%/opt/lifemapper%g {} \;
-
-
-
-find . -name "*.in" -exec sed -i \
-        -e 's%@LMHOME@%/opt/lifemapper%g' \
-        -e 's%@LMSCRATCHDISK@%/state/partition1/lmscratch%g' \
-        -e 's%@PYTHONVER@%python2.7%g' \
-        -e 's%@PYBIN@%/opt/python/bin%g' \
-        -e 's%@PKGROOT@%/opt/lifemapper%g' \
-        -e 's%@UNIXSOCKET@%$(UNIXSOCKET)%g' \
-        -e 's%@SCENARIO_PACKAGE@%$(SCENARIO_PACKAGE)%g' \
-        -e 's%@ENV_DATA_DIR@%layers%g' \
-        -e 's%@DATADIR_SERVER@%/share/lmserver/data%g' \
-        -e 's%@DATADIR_SHARED@%/share/lm/data%g' \
-        -e 's%@LMURL@%http://yeti.lifemapper.org/dl%g' \
-        -e 's%@TARBALL_POSTFIX@%tar.gz%g' \
-        -e 's%@LMCLIENT@%sdm%g' \
-{} \;
-
 import mx.DateTime
 import os
 
 from LmBackend.command.server import CatalogScenarioPackageCommand
 from LmBackend.common.lmobj import LMError, LMObject
-
 from LmCommon.common.lmconstants import JobStatus
-
 from LmServer.common.lmconstants import (Priority, ENV_DATA_PATH, 
                                          DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
@@ -492,34 +483,13 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
+from LmDbServer.tools.catalogScenPkg import SPFiller
 
-CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
+scen_package_meta = '/share/lm/data/layers/taffy12_nsa_30sec.py'
+user_id = 'biotaphy'
 
-updatedScenPkg = None
+self = SPFiller(scen_package_meta, user_id)
 self.initializeMe()
-userId = self.addUser()
+self.catalogScenPackages()
 
-updatedMask = None
-# for spName in self.spMeta.CLIMATE_PACKAGES.keys():
-spName = '10min-past-present-future'
-scenPkg, masklyr = self.createScenPackage(spName)
-# if updatedMask is None:
-updatedMask = self.addMaskLayer(masklyr)
-# if updatedMask.getDLocation() != masklyr.getDLocation():
-#    raise LMError('''Returned existing layer name {} for user {} with 
-#                     filename {}, not expected filename {}'''
-#                     .format(masklyr.name, self.userId, 
-#                             updatedMask.getDLocation(), 
-#                             masklyr.getDLocation()))
-updatedScenPkg = self.addPackageScenariosLayers(scenPkg)
-if (updatedScenPkg is not None 
-    and updatedScenPkg.getId() is not None
-    and updatedScenPkg.name == spName
-    and updatedScenPkg.getUserId() == self.userId):
-   self.scribe.log.info('Successfully added scenario package {} for user {}'
-                          .format(spName, self.userId))
-finally:
-   self.close()
-   
-return updatedScenPkg 
 """

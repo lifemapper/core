@@ -44,16 +44,6 @@ class SpeciesDatasource:
                 `Existing` indicates that existing OccurrenceSet ids are 
                  provided as input, and, with proper permissions, are used as-is 
                  or copied to the User's data space.
-    @ivar IDIGBIO: The default or boom config file must specify the filename
-                 IDIG_OCCURRENCE_DATA (without extension) pointing to a CSV file,
-                 and IDIG_OCCURRENCE_DATA_DELIMITER. If the GBIF_TAXONOMY_FILENAME 
-                 (with extension) is present, it will contain CSV data
-                 for the GBIF backbone taxonomy of the species in the data file and
-                 will be connected to the IDIGBIO data.
-    @ivar BISON: The default or boom config file must specify the filename 
-                 BISON_TSN_FILENAME (with extension).  This file contains a 
-                 list of BISON TSNs that may be used to query BISON APIs for  
-                 species occurrence sets. 
     @ivar GBIF: The default or boom config file must specify 
                  GBIF_OCCURRENCE_FILENAME, a CSV file (with extension)
                  grouped by TaxonId.  Two additional files may be provided:
@@ -69,12 +59,6 @@ class SpeciesDatasource:
     @ivar EXISTING: The default or boom config file must specify an 
                  OCCURRENCE_ID_FILENAME containing OccurrenceSet database IDs 
                  for public or user data to serve as input to a BOOM process. 
-    @ivar BIOTAFFY: The default or boom config file must specify 
-                 a directory containing one or more CSV files (with extension)
-                 one file per taxa.  The filename may be split on '_' to get the 
-                 genus, species, and OpenTree UID.  Open Tree of Life provides 
-                 phylogenetic tree data for scientific names that may also be tied to accepted taxonomic keys
-                 in the GBIF backbone taxonomy. 
     @ivar TAXON_IDS : The default or boom config file must specify a
         TAXON_ID_FILENAME containing taxon ids for GBIF taxonomy to serve as
         input to a BOOM process.
@@ -82,12 +66,9 @@ class SpeciesDatasource:
         TAXON_NAME_FILENAME containing taxon name strings to be matched in GBIF
         taxonomy to serve as input to a BOOM process.
     """
-    IDIGBIO = 'IDIGBIO'
-    BISON = 'BISON'
     GBIF = 'GBIF'
     USER = 'USER'
     EXISTING = 'EXISTING'
-    BIOTAFFY = 'BIOTAFFY'
     TAXON_IDS = 'TAXON_IDS'
     TAXON_NAMES = 'TAXON_NAMES'
     
