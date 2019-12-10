@@ -136,6 +136,7 @@ class BOOMFiller(LMObject):
          self.minpoints,
          self.expdate,
          self.algorithms,
+         self.do_assemble_pams,
          self.gridbbox,
          self.cellsides,
          self.cellsize,
@@ -549,7 +550,7 @@ class BOOMFiller(LMObject):
                 mdl_scencode, prj_scencodes, dataSource, 
                 occIdFname, taxon_name_filename, taxon_id_filename, 
                 occFname, occSep, minpoints, (expyr, expmo, expdy), algs, 
-                gridbbox, cellsides, cellsize, gridname, 
+                do_assemble_pams, gridbbox, cellsides, cellsize, gridname, 
                 intersectParams, maskAlg, treeFname, bghypFnames, 
                 compute_pam_stats, compute_mcpa, num_permutations, other_lyr_names)
       
@@ -557,31 +558,30 @@ class BOOMFiller(LMObject):
     def writeConfigFile(self, tree=None, biogeoLayers=[]):
         config = ConfigParser.SafeConfigParser()
         config.add_section(SERVER_BOOM_HEADING)
-      
+        # .........................................      
         # SDM Algorithms with all parameters   
         for heading, alg in self.algorithms.iteritems():
             config.add_section(heading)
             config.set(heading, BoomKeys.ALG_CODE, alg.code)
             for name, val in alg.parameters.iteritems():
                 config.set(heading, name, str(val))
-      
-        # SDM Mask input
+        # SDM Mask input for optional pre-processing
         if self.maskAlg is not None:
             config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
             config.set(SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.ALG_CODE, 
                        self.maskAlg.code)
             for name, val in self.maskAlg.parameters.iteritems():
                 config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
-      
+        # .........................................      
         email = self.userEmail
         if email is None:
             email = ''
-
+        # General config
         config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, self.userId)
         config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_NAME, self.archiveName)
         config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_PRIORITY, str(self.priority))
         config.set(SERVER_BOOM_HEADING, BoomKeys.TROUBLESHOOTERS, email)
-            
+        # .........................................      
         # SDM input environmental data, pulled from SCENARIO_PACKAGE metadata
         pcodes = ','.join(self.prj_scencodes)
         config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, 
@@ -591,19 +591,15 @@ class BOOMFiller(LMObject):
         config.set(SERVER_BOOM_HEADING, BoomKeys.MAPUNITS, self.scenPkg.mapUnits)
         config.set(SERVER_BOOM_HEADING, BoomKeys.EPSG, str(self.scenPkg.epsgcode))
         config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE, self.scenPkg.name)
-        
-        # SDM input species source data and type (for processing)
+        # SDM input species source data
         config.set(SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE, self.dataSource)
-         
         # Use/copy public data
         if self.dataSource == SpeciesDatasource.EXISTING:
             config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_ID_FILENAME, 
                       self.occIdFname)
-
         # Use GBIF taxon ids to pull iDigBio data
         elif self.dataSource == SpeciesDatasource.TAXON_IDS:
             config.set(SERVER_BOOM_HEADING, BoomKeys.TAXON_ID_FILENAME, self.taxon_id_filename)
-
         # Use GBIF data dump, with supporting provider and taxonomy files 
         elif self.dataSource == SpeciesDatasource.GBIF:
             config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_PROVIDER_FILENAME, 
@@ -612,7 +608,6 @@ class BOOMFiller(LMObject):
                        GBIF_TAXONOMY_FILENAME)
             config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occFname)
             config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occSep)
-
         # User data
         else:            
             config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occFname)
@@ -621,17 +616,20 @@ class BOOMFiller(LMObject):
             if self.user_taxonomy_basefilename is not None:
                 config.set(SERVER_BOOM_HEADING, BoomKeys.USER_TAXONOMY_FILENAME, 
                            self.userTaxonomyBasename)
-            
-        # TODO: Use this in boomer
-        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MJD, str(self.woof_time_mjd))
+        # .........................................      
         # Expiration date triggering re-query and computation
         config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_YEAR, str(self.expdate[0]))
         config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MONTH, str(self.expdate[1]))
         config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_DAY, str(self.expdate[2]))
         config.set(SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN, str(self.minpoints))
+        # TODO: Use this in boomer
+        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MJD, str(self.woof_time_mjd))
         # .........................................      
-        # Global PAM vals
-        # Intersection grid
+        # Multi-species flags
+        config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, str(self.do_assemble_pams))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, str(self.compute_pam_stats))
+        config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, str(self.compute_mcpa)) 
+        # Grid and Intersect params
         config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_NUM_SIDES, str(self.cellsides))
         config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_CELL_SIZE, str(self.cellsize))
         config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_BBOX, 
@@ -641,27 +639,22 @@ class BOOMFiller(LMObject):
         for k, v in self.intersectParams.iteritems():
             # refer to BoomKeys.INTERSECT_*
             config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), str(v))
-
-        # Multi-species flags and params
-        config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, 
-                   str(self.compute_pam_stats))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, 
-                   str(self.compute_mcpa)) 
+        # Multi-species randomization 
         config.set(SERVER_BOOM_HEADING, BoomKeys.NUM_PERMUTATIONS, 
                    str(self.num_permutations))
-
+        # .........................................      
+        # MCPA Biogeographic Hypotheses
         if len(biogeoLayers) > 0:
             bioGeoLayerNames = ','.join(biogeoLayers)
             config.set(SERVER_BOOM_HEADING, BoomKeys.BIOGEO_HYPOTHESES_LAYERS, bioGeoLayerNames)
+        # Phylogenetic data for PD
         if tree is not None:
             config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree.name)
               
         readyFilename(self.outConfigFilename, overwrite=True)
         with open(self.outConfigFilename, 'wb') as configfile:
             config.write(configfile)
-            
         self._fixPermissions(files=[self.outConfigFilename])
-           
         self.scribe.log.info('******')
         self.scribe.log.info('--config_file={}'.format(self.outConfigFilename))   
         self.scribe.log.info('******')
