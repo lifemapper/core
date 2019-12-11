@@ -193,7 +193,8 @@ class BoomCollate(LMObject):
                 pam_analysis_rules)
 
     # ................................
-    def _get_mcpa_tree_encode_rules_for_pam(self, pam, pam_success_filename):
+    def _get_mcpa_tree_encode_rules_for_pam(self, pam, pam_filename,
+                                            tree_filename):
         """Get MCPA tree encoding rules for PAM
 
         Args:
@@ -205,32 +206,16 @@ class BoomCollate(LMObject):
         # File names
         encoded_tree_filename = self._create_filename(
             pam_id, 'encoded_tree{}'.format(LMFormat.MATRIX.ext))
-        pruned_pam_filename = self._create_filename(
-            pam_id, 'pruned_pam{}'.format(LMFormat.MATRIX.ext))
-        pruned_tree_filename = self._create_filename(
-            pam_id, 'pruned_tree{}'.format(LMFormat.NEXUS.ext))
-        pruned_metadata_filename = self._create_filename(
-            pam_id, 'pruned_metadata{}'.format(LMFormat.JSON.ext))
-        # Synchronize PAM and Squidded tree
-        
-        sync_command = SyncPamAndTreeCommand(
-            pam.getDLocation(), pruned_pam_filename,
-            self.squid_tree_filename, pruned_tree_filename,
-            pruned_metadata_filename)
-        sync_command.inputs.append(pam_success_filename)
-        
-        mcpa_tree_encode_rules.append(sync_command.getMakeflowRule())
 
         # Encode tree
         mcpa_tree_encode_rules.append(
             EncodePhylogenyCommand(
-                pruned_tree_filename, pruned_pam_filename,
-                encoded_tree_filename).getMakeflowRule())
+                tree_filename, pam_filename, encoded_tree_filename
+                ).getMakeflowRule())
         self.log.debug(
             'Added {} tree encode rules for pam {}'.format(
                 len(mcpa_tree_encode_rules), pam_id))
-        return (pruned_pam_filename, pruned_tree_filename,
-                encoded_tree_filename, mcpa_tree_encode_rules)
+        return (encoded_tree_filename, mcpa_tree_encode_rules)
     
     # ................................
     def _get_multispecies_run_rules_for_pam(
@@ -337,11 +322,49 @@ class BoomCollate(LMObject):
         grim_filename = None
         biogeo_filename = None
         
+        # If there is a tree, the PAM and tree must be synced before we can do
+        #    some of the other stats
+        if self.gridset.tree is not None:
+            # Sync PAM and tree
+            encoded_tree_filename = self._create_filename(
+                pam_id, 'encoded_tree{}'.format(LMFormat.MATRIX.ext))
+            pruned_pam_filename = self._create_filename(
+                pam_id, 'pruned_pam{}'.format(LMFormat.MATRIX.ext))
+            pruned_tree_filename = self._create_filename(
+                pam_id, 'pruned_tree{}'.format(LMFormat.NEXUS.ext))
+            pruned_metadata_filename = self._create_filename(
+                pam_id, 'pruned_metadata{}'.format(LMFormat.JSON.ext))
+            sync_command = SyncPamAndTreeCommand(
+                pam.getDLocation(), pruned_pam_filename,
+                self.squid_tree_filename, pruned_tree_filename,
+                pruned_metadata_filename)
+            sync_command.inputs.append(pam_success_filename)
+            
+            pam_rules.append(sync_command.getMakeflowRule())
+
+            # Ancestral PAM rules -- send pruned tree as dependency so that we
+            #    know that the tree has squids
+            (anc_pam_filename, anc_pam_rules
+             ) = self._get_ancestral_pam_rules_for_pam(
+                 pam.getId(), pam.getDLocation(), self.squid_tree_filename,
+                 pruned_tree_filename,
+                 pam_success_filename=pam_success_filename)
+            pam_rules.extend(anc_pam_rules)
+            anc_pam_mtx = self._get_or_insert_matrix(
+                MatrixType.ANC_PAM, ProcessType.RAD_CALCULATE, pam.gcmCode,
+                pam.altpredCode, pam.dateCode)
+            pam_rules.append(
+                StockpileCommand(
+                    ProcessType.RAD_CALCULATE, anc_pam_mtx.getId(),
+                    self._create_filename(pam_id, 'anc_pam.success'),
+                    [anc_pam_filename]).getMakeflowRule())
+        
+
         # If MCPA, sync tree and PAM
         if self.do_mcpa:
-            (pruned_pam_filename, pruned_tree_filename, encoded_tree_filename,
-             tree_encode_rules) = self._get_mcpa_tree_encode_rules_for_pam(
-                 pam, pam_success_filename)
+            (encoded_tree_filename, tree_encode_rules
+             ) = self._get_mcpa_tree_encode_rules_for_pam(
+                 pam, pruned_pam_filename, pruned_tree_filename)
             pam_rules.extend(tree_encode_rules)
             # Initialize MCPA output matrix
             mcpa_out_mtx = self._get_or_insert_matrix(
@@ -352,6 +375,7 @@ class BoomCollate(LMObject):
             grim_filename = grim.getDLocation()
             biogeo = self.gridset.getBiogeographicHypotheses()[0]
             biogeo_filename = biogeo.getDLocation()
+
 
         # If PAM stats, initialize matrices
         if self.do_pam_stats:
@@ -364,17 +388,7 @@ class BoomCollate(LMObject):
             diversity_obs_mtx = self._get_or_insert_matrix(
                 MatrixType.DIVERSITY_OBSERVED, ProcessType.RAD_CALCULATE,
                 pam.gcmCode, pam.altpredCode, pam.dateCode)
-            anc_pam_mtx = self._get_or_insert_matrix(
-                MatrixType.ANC_PAM, ProcessType.RAD_CALCULATE, pam.gcmCode,
-                pam.altpredCode, pam.dateCode)
         
-        # Ancestral PAM rules -- send pruned tree filename as dependency so
-        #    we know that the tree has squids
-        (anc_pam_filename, anc_pam_rules
-         ) = self._get_ancestral_pam_rules_for_pam(
-             pam.getId(), pam.getDLocation(), self.squid_tree_filename,
-             pruned_tree_filename, pam_success_filename=pam_success_filename)
-        pam_rules.extend(anc_pam_rules)
         # Analysis rules
         (pam_stats_filenames, mcpa_filenames, analysis_rules
          ) = self._get_analysis_rules_for_pam(
@@ -405,14 +419,6 @@ class BoomCollate(LMObject):
                     ProcessType.RAD_CALCULATE, sites_obs_mtx.getId(),
                     self._create_filename(pam_id, 'site_stats.success'),
                     [pam_stats_filenames[2]]).getMakeflowRule())
-
-        # Stockpile ancestral PAM
-        if anc_pam_filename is not None:
-            pam_rules.append(
-                StockpileCommand(
-                    ProcessType.RAD_CALCULATE, anc_pam_mtx.getId(),
-                    self._create_filename(pam_id, 'anc_pam.success'),
-                    [anc_pam_filename]).getMakeflowRule())
         
         # Add stockpile for MCPA
         if len(mcpa_filenames) > 0:
