@@ -326,8 +326,6 @@ class BoomCollate(LMObject):
         #    some of the other stats
         if self.gridset.tree is not None:
             # Sync PAM and tree
-            encoded_tree_filename = self._create_filename(
-                pam_id, 'encoded_tree{}'.format(LMFormat.MATRIX.ext))
             pruned_pam_filename = self._create_filename(
                 pam_id, 'pruned_pam{}'.format(LMFormat.MATRIX.ext))
             pruned_tree_filename = self._create_filename(
