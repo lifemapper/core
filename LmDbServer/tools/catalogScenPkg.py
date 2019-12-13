@@ -58,7 +58,10 @@ class SPFiller(LMObject):
         if not os.path.exists(spMetaFname):
             raise LMError(currargs='Climate metadata {} does not exist'
                          .format(spMetaFname))
-        spBasename, _ = os.path.splitext(os.path.basename(spMetaFname))
+        layer_base_path, fname = os.path.split(spMetaFname)
+        spBasename, _ = os.path.splitext(fname)
+        self.layer_base_path = layer_base_path
+        print('self.layer_base_path {}'.format(self.layer_base_path))
         
         # TODO: change to importlib on python 2.7 --> 3.3+  
         try:
@@ -147,7 +150,7 @@ class SPFiller(LMObject):
            ServiceObject.META_CITATION: self._getOptionalMetadata(maskMeta, 'citation')}
         # required
         try:
-            dloc = os.path.join(ENV_DATA_PATH, maskMeta['file'])
+            dloc = os.path.join(self.layer_base_path, maskMeta['file'])
         except KeyError:
             raise LMError(currargs='Missing `file` key in SDM_MASK_META in scenPkg metadata')
         else:
@@ -283,7 +286,7 @@ class SPFiller(LMObject):
             envmeta = {'title': ltmeta['title'],
                        'description': ltmeta['description'],
                        'keywords': lyrKeywords}
-            dloc = os.path.join(ENV_DATA_PATH, relfname)
+            dloc = os.path.join(self.layer_base_path, relfname)
             if not os.path.exists(dloc):
                 raise LMError('Missing local data {}'.format(dloc))
             envlyr = EnvLayer(lyrname, self.userId, pkgMeta['epsg'], 
