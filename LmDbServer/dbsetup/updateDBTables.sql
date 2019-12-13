@@ -61,7 +61,7 @@ BEGIN
       FROM lm_v3.Matrix 
    LOOP
       BEGIN
-	       IF mtxtype = 1 THEN
+	       IF mtxtype in (1,10) THEN
               headstr := '"description": "Global PAM for Scenario ';
            ELSE
               headstr := '"description": "Scenario GRIM for Scenario ';
@@ -71,22 +71,21 @@ BEGIN
            SELECT INTO pos position('"' in tmp);
            SELECT INTO val substring(tmp, 0, pos);
            SELECT INTO scenid scenarioid FROM scenario WHERE scenariocode = val;
-           IF mtxtype IN (1, 2) THEN
+           IF mtxtype IN (1, 2, 10) THEN
               RAISE NOTICE 'PAM/GRIM type % matrix for % %, %', mtxtype, scenid, val, metastr;
-              --UPDATE Matrix SET scenarioid = scenid WHERE matrixid = mtxid;
+              UPDATE Matrix SET scenarioid = scenid WHERE matrixid = mtxid;
               total := total + 1;
            END IF;
       END;
    END LOOP;
    RETURN total;
 END;
-$$  LANGUAGE 'plpgsql' STABLE;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 ALTER TABLE lm_v3.Matrix ADD COLUMN scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE;
 SELECT * FROM lm_v3.lm_fillScenarioIdFromPAMMetadata();
 
-ALTER TABLE lm_v3.Matrix ADD CONSTRAINT UNIQUE (gridsetId, matrixType, scenarioId, algorithmCode);
-
+ALTER TABLE lm_v3.Matrix ADD CONSTRAINT matrix_gridsetid_matrixtype_scenarioid_algorithmcode_key UNIQUE (gridsetId, matrixType, scenarioId, algorithmCode);
 --ALTER TABLE lm_v3.Matrix DROP CONSTRAINT matrix_gridsetid_matrixtype_gcmcode_altpredcode_datecode_al_key;
 --ALTER TABLE lm_v3.Matrix DROP COLUMN datecode; 
 --ALTER TABLE lm_v3.Matrix DROP COLUMN gcmcode; 

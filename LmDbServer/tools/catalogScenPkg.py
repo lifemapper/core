@@ -441,12 +441,12 @@ if __name__ == '__main__':
     if not os.path.exists(scen_package_meta):
         # if using package name, look in default location)
         scen_package_meta = os.path.join(ENV_DATA_PATH, scen_package_meta + '.py')
-        if not os.path.exists(scen_package_meta):
-            print ('Missing Scenario Package metadata file {}'.format(scen_package_meta))
-            exit(-1)
-        else:
-            print('Running script with scen_package_meta: {}, userid: {}, email: {}, logbasename: {}'
-                 .format(scen_package_meta, user_id, user_email, logname))
+    if not os.path.exists(scen_package_meta):
+        print ('Missing Scenario Package metadata file {}'.format(scen_package_meta))
+        exit(-1)
+    else:
+        print('Running script with scen_package_meta: {}, userid: {}, email: {}, logbasename: {}'
+             .format(scen_package_meta, user_id, user_email, logname))
         
         filler = SPFiller(scen_package_meta, user_id, email=user_email, 
                           logname=logname)
