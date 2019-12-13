@@ -61,7 +61,6 @@ class SPFiller(LMObject):
         layer_base_path, fname = os.path.split(spMetaFname)
         spBasename, _ = os.path.splitext(fname)
         self.layer_base_path = layer_base_path
-        print('self.layer_base_path {}'.format(self.layer_base_path))
         
         # TODO: change to importlib on python 2.7 --> 3.3+  
         try:

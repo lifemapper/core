@@ -51,7 +51,7 @@ from LmDbServer.tools.catalogScenPkg import SPFiller
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
                            GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
-                           PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX,
+                           DEFAULT_EMAIL_POSTFIX,
                            SPECIES_DATA_PATH, DEFAULT_NUM_PERMUTATIONS)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
@@ -393,10 +393,15 @@ class BOOMFiller(LMObject):
     # ...............................................
     def _find_scenpkg_base_and_mask(self, scenpkgName):
 #         pkgMeta, mask_lyrname = self._findScenPkgMeta(scenpkgName)
-        scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkgName + '.py')
-        if not os.path.exists(scenpkg_meta_file):
-            raise LMError(currargs='Climate metadata {} does not exist'
-                         .format(scenpkg_meta_file))
+        public_scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkgName + '.py')
+        user_scenpkg_meta_file = os.path.join(self.userIdPath, scenpkgName + '.py')
+        if os.path.exists(public_scenpkg_meta_file):
+            scenpkg_meta_file = public_scenpkg_meta_file
+        elif os.path.exists(user_scenpkg_meta_file):
+            scenpkg_meta_file = user_scenpkg_meta_file
+        else:
+            raise LMError(currargs='Climate metadata does not exist in {} or {}'
+                         .format(public_scenpkg_meta_file, user_scenpkg_meta_file))
         # TODO: change to importlib on python 2.7 --> 3.3+  
         try:
             import imp
@@ -441,6 +446,7 @@ class BOOMFiller(LMObject):
                                           defaultValue=def_priority)
             
         # Species data source and input
+        occFname = occSep = occIdFname = taxon_id_filename = taxon_name_filename = None
         dataSource = self._getBoomOrDefault(config, BoomKeys.DATA_SOURCE)
         if dataSource is None:
             raise Exception('Failed to configure DATA_SOURCE')
@@ -486,10 +492,11 @@ class BOOMFiller(LMObject):
         # One optional Mask for pre-processing
         maskAlg = None
         maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
-        if maskAlgList and len(maskAlgList) == 1:
-            maskAlg = maskAlgList.values()[0]
-        else:
-            raise Exception('Only one PREPROCESSING SDM_MASK supported')
+        if maskAlgList:
+            if len(maskAlgList) == 1:
+                maskAlg = maskAlgList.values()[0]
+            else:
+                raise Exception('Only one PREPROCESSING SDM_MASK supported')
            
         # optional MCPA inputs, data values indicate processing steps
         treeFname = self._getBoomOrDefault(config, BoomKeys.TREE)

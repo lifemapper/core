@@ -83,14 +83,15 @@ class SpeciesDatasource:
 
 # ??? Key must match DATASOURCE in config/boom.public.params.in
 TAXONOMIC_SOURCE = {
-    SpeciesDatasource.BIOTAFFY: {'name':  'Open Tree of Life',
-                'url': 'https://api.opentreeoflife.org/v3/'},
+#     SpeciesDatasource.BIOTAFFY: {'name':  'Open Tree of Life',
+#                 'url': 'https://api.opentreeoflife.org/v3/'},
     SpeciesDatasource.GBIF: {'name': 'GBIF Backbone Taxonomy',
                 'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'},
-    SpeciesDatasource.BISON: {'name':  'ITIS Taxonomy',
-                'url': 'http://www.itis.gov'},
-    SpeciesDatasource.IDIGBIO: {'name': 'GBIF Backbone Taxonomy',
-                'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'}}
+#     SpeciesDatasource.BISON: {'name':  'ITIS Taxonomy',
+#                 'url': 'http://www.itis.gov'},
+#     SpeciesDatasource.IDIGBIO: {'name': 'GBIF Backbone Taxonomy',
+#                 'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'}}
+}
 
 class TNCMetadata:
     """
