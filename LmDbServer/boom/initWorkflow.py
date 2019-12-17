@@ -447,6 +447,7 @@ class BOOMFiller(LMObject):
             
         # Species data source and input
         occFname = occSep = occIdFname = taxon_id_filename = taxon_name_filename = None
+        user_taxonomy_basefilename = None
         dataSource = self._getBoomOrDefault(config, BoomKeys.DATA_SOURCE)
         if dataSource is None:
             raise Exception('Failed to configure DATA_SOURCE')
