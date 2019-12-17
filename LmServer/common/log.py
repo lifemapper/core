@@ -89,12 +89,12 @@ class LmPublicLogger(LmServerLogger):
         LmServerLogger.__init__(self, 'web', level=level, addFile=True)
 
 # .............................................................................
-class LuceneLogger(LmServerLogger):
+class SolrLogger(LmServerLogger):
     """
-    @summary: The lucene logger is used by the Lifemapper Lucene process
+    @summary: The solr logger is used by Lifemapper solr client tools
     """
     def __init__(self, level=logging.DEBUG):
-        LmServerLogger.__init__(self, 'lucene', level=level, addFile=True)
+        LmServerLogger.__init__(self, 'lm_solr', level=level, addFile=True)
 
 # .............................................................................
 class MapLogger(LmServerLogger):
