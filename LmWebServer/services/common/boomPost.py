@@ -116,6 +116,28 @@ class BoomPoster(object):
         if mcpaSec:
             self._process_mcpa(mcpaSec)
         
+        # If PAM stats or MCPA is requested but no PAM config, create default
+        if not globalPamSec and (pamStatsSec or mcpaSec):
+            default_global_pam_sec = {
+                APIPostKeys.SHAPEGRID: {
+                    APIPostKeys.NAME: '{}-grid-{}'.format(
+                        archiveName, random.randint(0, 100000)),
+                    APIPostKeys.CELL_SIDES: 4,
+                    APIPostKeys.RESOLUTION: 2.0,
+                    APIPostKeys.MIN_X: -180.0,
+                    APIPostKeys.MIN_Y: -90.0,
+                    APIPostKeys.MAX_X: 180.0,
+                    APIPostKeys.MAX_Y: 90.0
+                },
+                APIPostKeys.INTERSECT_PARAMETERS: {
+                    APIPostKeys.VALUE_NAME: 'pixel',
+                    APIPostKeys.MIN_PERCENT: 1,
+                    APIPostKeys.MIN_PRESENCE: 25,
+                    APIPostKeys.MAX_PRESENCE: 100
+                }
+            }
+            self._process_global_pam(default_global_pam_sec)
+        
         
         # TODO: Masks
         # TODO: Pre / post processing (scaling)
@@ -210,6 +232,7 @@ class BoomPoster(object):
             SERVER_BOOM_HEADING, BoomKeys.INTERSECT_MIN_PRESENCE, min_presence)
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.INTERSECT_MAX_PRESENCE, max_presence)
+        self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
     
     # ................................
     def _process_mcpa(self, mcpa_json):

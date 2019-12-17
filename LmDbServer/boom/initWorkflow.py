@@ -507,6 +507,11 @@ class BOOMFiller(LMObject):
         other_lyr_names = self._getBoomOrDefault(config, BoomKeys.OTHER_LAYERS, 
                                                  defaultValue=[], isList=True)
         # RAD/PAM params, defaults to "Do not intersect"
+        intersectParams = None
+        compute_pam_stats = None
+        compute_mcpa = None
+        num_permutations = None
+        
         do_assemble_pams = self._getBoomOrDefault(config, BoomKeys.ASSEMBLE_PAMS, 
                                                   isBool=True, defaultValue=False)
         gridbbox = self._getBoomOrDefault(config, BoomKeys.GRID_BBOX, isList=True)
