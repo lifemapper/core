@@ -25,8 +25,8 @@ SHARED_DATA_PATH: @DATADIR_SHARED@
 ;;** ?? PLUGINS_PATH goes away
 PLUGINS_PATH: @LMHOME@/LmCompute/plugins
 
-;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE in the
-;; [LmServer - pipeline] section should match SCENARIO_PACKAGE here
+;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE in 
+;; config/boom.public.params should match SCENARIO_PACKAGE here
 SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
 
 [LmCompute - plugins - maxent]
