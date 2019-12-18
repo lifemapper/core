@@ -41,7 +41,7 @@ from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
       ProcessType, DEFAULT_POST_USER, GBIF, BoomKeys,
       SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX, 
       SERVER_SDM_ALGORITHM_HEADING_PREFIX,
-      SERVER_DEFAULT_HEADING_POSTFIX, SERVER_PIPELINE_HEADING)
+      SERVER_DEFAULT_HEADING_POSTFIX)
 from LmCommon.common.readyfile import readyFilename
 
 from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
@@ -427,15 +427,15 @@ class BOOMFiller(LMObject):
         paramFname = self.inParamFname
         config = Config(siteFn=paramFname)
         
-        # Fill in missing or null variables for archive.config.ini
-        usr = self._getBoomOrDefault(config, BoomKeys.ARCHIVE_USER, defaultValue=PUBLIC_USER)
+        # ..........................
+        usr = self._getBoomParam(config, BoomKeys.ARCHIVE_USER, defaultValue=PUBLIC_USER)
         earl = EarlJr()
         usrPath = earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
-        usrEmail = self._getBoomOrDefault(config, BoomKeys.ARCHIVE_USER_EMAIL, 
+        usrEmail = self._getBoomParam(config, BoomKeys.ARCHIVE_USER_EMAIL, 
                                           defaultValue='{}{}'.format(usr, 
                                                         DEFAULT_EMAIL_POSTFIX))
         
-        archiveName = self._getBoomOrDefault(config, BoomKeys.ARCHIVE_NAME)
+        archiveName = self._getBoomParam(config, BoomKeys.ARCHIVE_NAME)
         if archiveName is None:
             raise Exception('Failed to configure ARCHIVE_NAME')
         
@@ -443,13 +443,14 @@ class BOOMFiller(LMObject):
             def_priority = Priority.NORMAL
         else:
             def_priority = Priority.REQUESTED
-        priority = self._getBoomOrDefault(config, BoomKeys.ARCHIVE_PRIORITY, 
+        priority = self._getBoomParam(config, BoomKeys.ARCHIVE_PRIORITY, 
                                           defaultValue=def_priority)
             
+        # ..........................
         # Species data source and input
         occFname = occSep = user_taxonomy_basefilename = occIdFname = None
         taxon_id_filename = taxon_name_filename = None
-        dataSource = self._getBoomOrDefault(config, BoomKeys.DATA_SOURCE)
+        dataSource = self._getBoomParam(config, BoomKeys.DATA_SOURCE)
         if dataSource is None:
             raise Exception('Failed to configure DATA_SOURCE')
         else:
@@ -461,36 +462,37 @@ class BOOMFiller(LMObject):
                               SpeciesDatasource.TAXON_NAMES):
             raise Exception('Failed to configure supported DATA_SOURCE')
         elif dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.USER):        
-            occFname = self._getBoomOrDefault(config, BoomKeys.OCC_DATA_NAME)
-            occSep = self._getBoomOrDefault(config, BoomKeys.OCC_DATA_DELIMITER)
+            occFname = self._getBoomParam(config, BoomKeys.OCC_DATA_NAME)
+            occSep = self._getBoomParam(config, BoomKeys.OCC_DATA_DELIMITER)
             # Taxonomy is optional, 
             if dataSource == SpeciesDatasource.USER:
-                user_taxonomy_basefilename = self._getBoomOrDefault(config, BoomKeys.USER_TAXONOMY_FILENAME)
+                user_taxonomy_basefilename = self._getBoomParam(config, BoomKeys.USER_TAXONOMY_FILENAME)
             if occSep is None:
                 occSep = GBIF.DATA_DUMP_DELIMITER
             if occFname is None:
                 raise Exception('Failed to configure OCC_DATA_NAME for DATA_SOURCE=GBIF or USER')
         elif dataSource == SpeciesDatasource.EXISTING:        
-            occIdFname = self._getBoomOrDefault(config, BoomKeys.OCC_ID_FILENAME)
+            occIdFname = self._getBoomParam(config, BoomKeys.OCC_ID_FILENAME)
             if occIdFname is None:
                 raise Exception('Failed to configure OCC_ID_FILENAME for DATA_SOURCE=EXISTING')
         elif dataSource == SpeciesDatasource.TAXON_IDS:        
-            taxon_id_filename = self._getBoomOrDefault(config, BoomKeys.TAXON_ID_FILENAME)
+            taxon_id_filename = self._getBoomParam(config, BoomKeys.TAXON_ID_FILENAME)
             if taxon_id_filename is None:
                 raise Exception('Failed to configure TAXON_ID_FILENAME for DATA_SOURCE=TAXON_IDS')
         elif dataSource == SpeciesDatasource.TAXON_NAMES:        
-            taxon_name_filename = self._getBoomOrDefault(config, BoomKeys.TAXON_NAME_FILENAME)
+            taxon_name_filename = self._getBoomParam(config, BoomKeys.TAXON_NAME_FILENAME)
             if taxon_name_filename is None:
                 raise Exception('Failed to configure TAXON_NAME_FILENAME for DATA_SOURCE=TAXON_NAMES')
-                
-        minpoints = self._getBoomOrDefault(config, BoomKeys.POINT_COUNT_MIN)
+        # ..........................    
+        minpoints = self._getBoomParam(config, BoomKeys.POINT_COUNT_MIN)
         today = mx.DateTime.gmt()
-        expyr = self._getBoomOrDefault(config, BoomKeys.OCC_EXP_YEAR, defaultValue=today.year)
-        expmo = self._getBoomOrDefault(config, BoomKeys.OCC_EXP_MONTH, defaultValue=today.month)
-        expdy = self._getBoomOrDefault(config, BoomKeys.OCC_EXP_DAY, defaultValue=today.day)
+        expyr = self._getBoomParam(config, BoomKeys.OCC_EXP_YEAR, defaultValue=today.year)
+        expmo = self._getBoomParam(config, BoomKeys.OCC_EXP_MONTH, defaultValue=today.month)
+        expdy = self._getBoomParam(config, BoomKeys.OCC_EXP_DAY, defaultValue=today.day)
         
+        # ..........................
         algs = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
-        
+        # ..........................
         # One optional Mask for pre-processing
         maskAlg = None
         maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
@@ -499,33 +501,34 @@ class BOOMFiller(LMObject):
                 maskAlg = maskAlgList.values()[0]
             else:
                 raise Exception('Only one PREPROCESSING SDM_MASK supported')
-           
+        # ..........................
         # optional MCPA inputs, data values indicate processing steps
-        treeFname = self._getBoomOrDefault(config, BoomKeys.TREE)
-        biogeoName = self._getBoomOrDefault(config, BoomKeys.BIOGEO_HYPOTHESES_LAYERS)
+        treeFname = self._getBoomParam(config, BoomKeys.TREE)
+        biogeoName = self._getBoomParam(config, BoomKeys.BIOGEO_HYPOTHESES_LAYERS)
         bghypFnames = self._getBioGeoHypothesesLayerFilenames(biogeoName, usrPath)
-        
+        # ..........................
         # optional layer inputs 
-        other_lyr_names = self._getBoomOrDefault(config, BoomKeys.OTHER_LAYERS, 
+        other_lyr_names = self._getBoomParam(config, BoomKeys.OTHER_LAYERS, 
                                                  defaultValue=[], isList=True)
+        # ..........................
         # RAD/PAM params, defaults to "Do not intersect"
         intersectParams = None
         compute_pam_stats = None
         compute_mcpa = None
         num_permutations = None
         
-        do_assemble_pams = self._getBoomOrDefault(config, BoomKeys.ASSEMBLE_PAMS, 
+        do_assemble_pams = self._getBoomParam(config, BoomKeys.ASSEMBLE_PAMS, 
                                                   isBool=True, defaultValue=False)
-        gridbbox = self._getBoomOrDefault(config, BoomKeys.GRID_BBOX, isList=True)
-        cellsides = self._getBoomOrDefault(config, BoomKeys.GRID_NUM_SIDES)
-        cellsize = self._getBoomOrDefault(config, BoomKeys.GRID_CELL_SIZE)
+        gridbbox = self._getBoomParam(config, BoomKeys.GRID_BBOX, isList=True)
+        cellsides = self._getBoomParam(config, BoomKeys.GRID_NUM_SIDES)
+        cellsize = self._getBoomParam(config, BoomKeys.GRID_CELL_SIZE)
         gridname = '{}-Grid-{}'.format(archiveName, cellsize)
         # TODO: enable filter string
-        gridFilter = self._getBoomOrDefault(config, BoomKeys.INTERSECT_FILTER_STRING)
-        gridIntVal = self._getBoomOrDefault(config, BoomKeys.INTERSECT_VAL_NAME)
-        gridMinPct = self._getBoomOrDefault(config, BoomKeys.INTERSECT_MIN_PERCENT)
-        gridMinPres = self._getBoomOrDefault(config, BoomKeys.INTERSECT_MIN_PRESENCE)
-        gridMaxPres = self._getBoomOrDefault(config, BoomKeys.INTERSECT_MAX_PRESENCE)
+        gridFilter = self._getBoomParam(config, BoomKeys.INTERSECT_FILTER_STRING)
+        gridIntVal = self._getBoomParam(config, BoomKeys.INTERSECT_VAL_NAME)
+        gridMinPct = self._getBoomParam(config, BoomKeys.INTERSECT_MIN_PERCENT)
+        gridMinPres = self._getBoomParam(config, BoomKeys.INTERSECT_MIN_PRESENCE)
+        gridMaxPres = self._getBoomParam(config, BoomKeys.INTERSECT_MAX_PRESENCE)
         if do_assemble_pams:
             for var in (gridbbox, cellsides, cellsize, gridIntVal, gridMinPct,
                         gridMinPres, gridMaxPres):
@@ -540,21 +543,20 @@ class BOOMFiller(LMObject):
                                MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
                                MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
             # More computations, only if 
-            compute_pam_stats = self._getBoomOrDefault(config, BoomKeys.COMPUTE_PAM_STATS, 
+            compute_pam_stats = self._getBoomParam(config, BoomKeys.COMPUTE_PAM_STATS, 
                                                        isBool=True, defaultValue=False)
-            compute_mcpa = self._getBoomOrDefault(config, BoomKeys.COMPUTE_MCPA, 
+            compute_mcpa = self._getBoomParam(config, BoomKeys.COMPUTE_MCPA, 
                                                   isBool=True, defaultValue=False)
-            num_permutations = self._getBoomOrDefault(config, BoomKeys.NUM_PERMUTATIONS,
+            num_permutations = self._getBoomParam(config, BoomKeys.NUM_PERMUTATIONS,
                                                       defaultValue=DEFAULT_NUM_PERMUTATIONS)
-        
-        scenPackageName = self._getBoomOrDefault(config, BoomKeys.SCENARIO_PACKAGE)
+        # ..........................
+        scenPackageName = self._getBoomParam(config, BoomKeys.SCENARIO_PACKAGE)
         if scenPackageName is None:
             raise LMError('Failed to configure SCENARIO_PACKAGE')
-
-        mdl_scencode = self._getBoomOrDefault(config, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO)
+        mdl_scencode = self._getBoomParam(config, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO)
         if mdl_scencode is None:
             self.log.info('Retrieve `baseline` scenario from SCENARIO_PACKAGE metadata')
-        prj_scencodes = self._getBoomOrDefault(config, 
+        prj_scencodes = self._getBoomParam(config, 
                     BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, isList=True)
         if not prj_scencodes:
             self.log.info('Retrieve all scenarios from SCENARIO_PACKAGE metadata')
@@ -692,46 +694,44 @@ class BOOMFiller(LMObject):
         return var
    
     # ...............................................
-    def _getBoomOrDefault(self, config, varname, defaultValue=None, 
-                          allowServerDefault=False, isList=False, isBool=False):
+    def _getBoomParam(self, config, varname, defaultValue=None, 
+                      isList=False, isBool=False):
         var = None
         # Get value from BOOM or default config file
         if isBool:
             try:
                 var = config.getboolean(SERVER_BOOM_HEADING, varname)
             except:
-                if allowServerDefault:
-                    try:
-                        var = config.getboolean(SERVER_PIPELINE_HEADING, varname)
-                    except:
-                        pass
+                if isinstance(defaultValue, bool):
+                    var = defaultValue
+                else:
+                    raise LMError('Var {} must be set to True or False'.format(varname))
         else:
             try:
                 var = config.get(SERVER_BOOM_HEADING, varname)
             except:
-                if allowServerDefault:
-                    try:
-                        var = config.get(SERVER_PIPELINE_HEADING, varname)
-                    except:
-                        pass
-           
-        # Take default if present
-        if var is None:
-            if defaultValue is not None:
-                var = defaultValue
-        # or interpret value
-        else:
-            if not isList:
-                var = self._getVarValue(var)
-            else:
-                try:
-                    tmplist = [v.strip() for v in var.split(',')]
-                    var = []
-                except:
-                    raise LMError('Failed to split variables on \',\'')
-                for v in tmplist:
-                    v = self._getVarValue(v)
-                    var.append(v)
+                # Interpret value
+                if var is not None:
+                    if isList:
+                        try:
+                            tmplist = [v.strip() for v in var.split(',')]
+                            var = []
+                        except:
+                            raise LMError('Failed to split variables on \',\'')
+                        for v in tmplist:
+                            v = self._getVarValue(v)
+                            var.append(v)
+                    else:
+                        var = self._getVarValue(var)
+                # or take default if present
+                else:
+                    if defaultValue is not None:
+                        if isList and isinstance(defaultValue, list):
+                            var = defaultValue
+                        elif isBool and isinstance(defaultValue, bool):
+                            var = defaultValue
+                        elif not isList and not isBool:
+                            var = defaultValue
         return var
    
 
@@ -1249,7 +1249,7 @@ class BOOMFiller(LMObject):
         cattaxCmd = taxSuccessFname = taxSuccessLocalFname = taxDataFname = None
         config = Config(siteFn=self.inParamFname)
         if self.dataSource == SpeciesDatasource.GBIF:
-            taxDataBasename = self._getBoomOrDefault(config, 
+            taxDataBasename = self._getBoomParam(config, 
                         BoomKeys.GBIF_TAXONOMY_FILENAME, GBIF_TAXONOMY_FILENAME)
             taxDataFname = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
             taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
