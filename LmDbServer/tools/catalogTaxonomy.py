@@ -136,11 +136,12 @@ class TaxonFiller(LMObject):
     def readAndInsertTaxonomy(self):
         totalIn = totalOut = totalWrongRank = 0
         
+        sciname_objs = []
+
         for line in self._csvreader:
             (taxonkey, kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
              scinameStr, genuskey, specieskey, count) = self._getTaxonValues(line)
              
-            sciname_objs = []
             if taxonkey not in (specieskey, genuskey): 
                 totalWrongRank += 1
             else:
