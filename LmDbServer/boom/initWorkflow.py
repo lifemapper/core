@@ -68,6 +68,7 @@ from LmServer.legion.processchain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmBackend.command.single import GrimRasterCommand
+from __builtin__ import None
 
 # .............................................................................
 class BOOMFiller(LMObject):
@@ -446,7 +447,8 @@ class BOOMFiller(LMObject):
                                           defaultValue=def_priority)
             
         # Species data source and input
-        occFname = occSep = user_taxonomy_basefilename = occIdFname = taxon_id_filename = taxon_name_filename = None
+        occFname = occSep = user_taxonomy_basefilename = occIdFname = None
+        taxon_id_filename = taxon_name_filename = None
         dataSource = self._getBoomOrDefault(config, BoomKeys.DATA_SOURCE)
         if dataSource is None:
             raise Exception('Failed to configure DATA_SOURCE')
@@ -507,6 +509,11 @@ class BOOMFiller(LMObject):
         other_lyr_names = self._getBoomOrDefault(config, BoomKeys.OTHER_LAYERS, 
                                                  defaultValue=[], isList=True)
         # RAD/PAM params, defaults to "Do not intersect"
+        intersectParams = None
+        compute_pam_stats = None
+        compute_mcpa = None
+        num_permutations = None
+        
         do_assemble_pams = self._getBoomOrDefault(config, BoomKeys.ASSEMBLE_PAMS, 
                                                   isBool=True, defaultValue=False)
         gridbbox = self._getBoomOrDefault(config, BoomKeys.GRID_BBOX, isList=True)

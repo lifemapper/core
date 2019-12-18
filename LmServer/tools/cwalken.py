@@ -246,14 +246,6 @@ class ChristopherWalken(LMObject):
                               self._getBoomOrDefault(BoomKeys.OCC_EXP_MONTH), 
                               self._getBoomOrDefault(BoomKeys.OCC_EXP_DAY)).mjd
 
-        occname = self._getBoomOrDefault(BoomKeys.OCC_DATA_NAME)
-        occdir = self._getBoomOrDefault(BoomKeys.OCC_DATA_DIR)
-        occ_delimiter = str(self._getBoomOrDefault(BoomKeys.OCC_DATA_DELIMITER)) 
-        if occ_delimiter != ',':
-            occ_delimiter = GBIF.DATA_DUMP_DELIMITER
-        occ_csv_fname, occ_meta_fname, self.moreDataToProcess = self._findData(
-            occname, occdir, boompath)
-                
         # Copy public data to user space
         # TODO: Handle taxonomy, useGBIFTaxonomy=??
         if datasource == SpeciesDatasource.EXISTING:
@@ -262,6 +254,15 @@ class ChristopherWalken(LMObject):
                                          expDate, occIdFname, logger=self.log)
            
         else:
+            occname = self._getBoomOrDefault(BoomKeys.OCC_DATA_NAME)
+            occdir = self._getBoomOrDefault(BoomKeys.OCC_DATA_DIR)
+            occ_delimiter = str(
+                self._getBoomOrDefault(BoomKeys.OCC_DATA_DELIMITER)) 
+            if occ_delimiter != ',':
+                occ_delimiter = GBIF.DATA_DUMP_DELIMITER
+            occ_csv_fname, occ_meta_fname, self.moreDataToProcess = self._findData(
+                occname, occdir, boompath)
+                    
             # Handle GBIF data, taxon and provider lookup data
             useGBIFTaxonIds = False
             gbifProvFile = None

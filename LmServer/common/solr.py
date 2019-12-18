@@ -7,7 +7,7 @@ import urllib2
 from LmServer.common.lmconstants import (
      SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER, 
      SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
-from LmServer.common.log import LmPublicLogger
+from LmServer.common.log import SolrLogger
 from LmServer.common.localconstants import PUBLIC_USER
 import json
 from urllib2 import URLError
@@ -75,7 +75,7 @@ def _query(collection, qParams=None, fqParams=None,
     @param fqParams: Parameters to include in the filter section of the query
     @param otherParams: Other parameters to pass to Solr
     """
-    log = LmPublicLogger()
+    log = SolrLogger()
     queryParts = []
     if qParams:
         qParts = []
