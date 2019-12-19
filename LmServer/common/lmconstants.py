@@ -1030,8 +1030,9 @@ ANN_PARAMS = {'HiddenLayerNeurons':
                  'min': 0, 'default': 0, 'max': 1 },
               'Epoch':
                 {'type': IntType,
-                 'min': 1, 'default': 100000, 'max': None },
-              'MinimumError':
+                 'min': 1, 'default': 50000, 'max': None },
+              # Note: There is a typo in openModeller so it is maintained here
+              'MinimunError':
                 {'type': FloatType,
                  'min': 0.0, 'default': 0.01, 'max': 0.05} }
 

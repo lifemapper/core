@@ -58,11 +58,11 @@
                 "displayName": "Epoch",
                 "min": "1",
                 "type": "Integer",
-                "default": "5000000"
+                "default": "50000"
             },
             {
                 "doc": "Minimum mean square error of the epoch. Square root of the sum of squared differences between the network targets and actual outputs divided by number of patterns (only for training by minimum error). ",
-                "name": "MinimumError",
+                "name": "MinimunError",
                 "displayName": "Minimum Error",
                 "min": "0",
                 "max": "0.5",

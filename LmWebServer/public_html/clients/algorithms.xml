@@ -76,14 +76,14 @@
                     displayName="Epoch" 
                     min="1" 
                     type="Integer" 
-                    default="5000000">
+                    default="50000">
             <doc>
                Determines when training will stop once the number of iterations 
                exceeds epochs. When training by minimum error, this represents 
                the maximum number of iterations.
             </doc>
          </parameter>
-         <parameter name="MinimumError"
+         <parameter name="MinimunError"
                     displayName="Minimum Error" 
                     min="0" 
                     max="0.5" 
