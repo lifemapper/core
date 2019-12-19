@@ -111,12 +111,17 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
              
 # ...............................................
     def _setCellsides(self, cellsides):
-        if cellsides == 4 or cellsides == 6:
-            self._cellsides = cellsides
+        try:
+            cellsides = int(cellsides)
+        except:
+            raise LMError('Number of cell sides must be an integer')
         else:
-            raise LMError(
-                'Invalid cellshape. Only 4 (square) and 6 (hexagon) ' +
-                'sides are currently supported')
+            if cellsides in (4, 6):
+                self._cellsides = cellsides
+            else:
+                raise LMError(
+                    'Invalid cellshape. Only 4 (square) and 6 (hexagon) ' +
+                    'sides are currently supported')
             
     @property
     def cellsides(self):
