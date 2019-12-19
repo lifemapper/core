@@ -68,7 +68,6 @@ from LmServer.legion.processchain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmBackend.command.single import GrimRasterCommand
-from __builtin__ import None
 
 # .............................................................................
 class BOOMFiller(LMObject):
@@ -1532,18 +1531,8 @@ from LmBackend.command.single import GrimRasterCommand
 from LmDbServer.boom.initWorkflow import *
 
 
-# Taxon ids
-
-config_file = '/state/partition1/lmscratch/temp/boom_config_67277.params'
-
 # Public archive
 config_file = '/opt/lifemapper/config/boom.public.params'
-
-config_file='/share/lm/data/archive/taffyX/heuchera_boom_global_10min_ppf.params'
-
-config_file = '/share/lm/data/archive/biota/sax_boom_global_10min.params'
-
-config_file = '/share/lm/data/archive/ams/nmmst_algae.params'
 
 import time
 secs = time.time()
@@ -1554,63 +1543,6 @@ self = BOOMFiller(config_file, logname=logname)
 self.initializeInputs()
 
 ###################################################################
-scenGrims = {}
-self.scribe.log.info('  Find or insert, build shapegrid {} ...'.format(self.gridname))
-shp = self._addIntersectGrid()
-self.scribe.log.info('  Found or inserted shapegrid')
-self.shapegrid = shp
-
-meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
-        ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD],
-        'parameters': self.inParamFname}
-
-grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
-                 epsgcode=self.scenPkg.epsgcode, 
-                 userId=self.userId, modTime=self.woof_time_mjd)
-updatedGrdset = self.scribe.findOrInsertGridset(grdset)
-if updatedGrdset.modTime < self.woof_time_mjd:
-    updatedGrdset.modTime = self.woof_time_mjd
-    self.scribe.updateObject(updatedGrdset)
-    
-    # TODO: Decide: do we want to delete old makeflows for this gridset?
-    fnames = self.scribe.deleteMFChainsReturnFilenames(updatedGrdset.getId())
-    for fn in fnames:
-        os.remove(fn)
-        
-    self.scribe.log.info('  Found and updated modtime for gridset {}'
-                         .format(updatedGrdset.getId()))
-else:
-    self.scribe.log.info('  Inserted new gridset {}'
-                         .format(updatedGrdset.getId()))
-    
-
-for code, scen in self.scenPkg.scenarios.iteritems():
-    if code in self.prj_scencodes:
-        for alg in self.algorithms.values():
-            self.scribe.log.info('Adding PAM for {}/{}'.format(alg.code, scen.code, scen.dateCode, scen.))
-            gPam = self._findOrAddPAM(updatedGrdset, alg, scen)
-            
-        # "Global" GRIM (one per scenario) 
-        if not(self.userId == DEFAULT_POST_USER) or self.compute_mcpa:
-            scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
-            scenGrims[code] = scenGrim
-                
-
-# scenGrims, boomGridset = self.addShapeGridGPAMGridset()
 ###################################################################
-
-############################################
-boomGridsetId = boomGridset.getId()
-meta = {MFChain.META_CREATED_BY: self.name,
-        MFChain.META_GRIDSET: boomGridsetId,
-        MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
-.format(self.userId, self.archiveName)}
-newMFC = MFChain(self.userId, priority=self.priority, 
-                 metadata=meta, status=JobStatus.GENERAL, 
-                 statusModTime=mx.DateTime.gmt().mjd)
-mfChain = self.scribe.insertMFChain(newMFC, boomGridsetId)
-############################################
-
-
 
 """
