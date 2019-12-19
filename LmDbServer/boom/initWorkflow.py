@@ -706,7 +706,10 @@ class BOOMFiller(LMObject):
                 else:
                     raise LMError('Var {} must be set to True or False'.format(varname))
         else:
-            var = config.get(SERVER_BOOM_HEADING, varname)
+            try:
+                var = config.get(SERVER_BOOM_HEADING, varname)
+            except:
+                pass
             # Interpret value
             if var is not None:
                 if isList:
