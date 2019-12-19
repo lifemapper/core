@@ -68,7 +68,6 @@ from LmServer.legion.processchain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmBackend.command.single import GrimRasterCommand
-from __builtin__ import None
 
 # .............................................................................
 class BOOMFiller(LMObject):
@@ -707,31 +706,29 @@ class BOOMFiller(LMObject):
                 else:
                     raise LMError('Var {} must be set to True or False'.format(varname))
         else:
-            try:
-                var = config.get(SERVER_BOOM_HEADING, varname)
-            except:
-                # Interpret value
-                if var is not None:
-                    if isList:
-                        try:
-                            tmplist = [v.strip() for v in var.split(',')]
-                            var = []
-                        except:
-                            raise LMError('Failed to split variables on \',\'')
-                        for v in tmplist:
-                            v = self._getVarValue(v)
-                            var.append(v)
-                    else:
-                        var = self._getVarValue(var)
-                # or take default if present
+            var = config.get(SERVER_BOOM_HEADING, varname)
+            # Interpret value
+            if var is not None:
+                if isList:
+                    try:
+                        tmplist = [v.strip() for v in var.split(',')]
+                        var = []
+                    except:
+                        raise LMError('Failed to split variables on \',\'')
+                    for v in tmplist:
+                        v = self._getVarValue(v)
+                        var.append(v)
                 else:
-                    if defaultValue is not None:
-                        if isList and isinstance(defaultValue, list):
-                            var = defaultValue
-                        elif isBool and isinstance(defaultValue, bool):
-                            var = defaultValue
-                        elif not isList and not isBool:
-                            var = defaultValue
+                    var = self._getVarValue(var)
+            # or take default if present
+            else:
+                if defaultValue is not None:
+                    if isList and isinstance(defaultValue, list):
+                        var = defaultValue
+                    elif isBool and isinstance(defaultValue, bool):
+                        var = defaultValue
+                    elif not isList and not isBool:
+                        var = defaultValue
         return var
    
 
