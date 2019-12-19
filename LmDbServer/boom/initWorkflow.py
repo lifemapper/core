@@ -256,7 +256,7 @@ class BOOMFiller(LMObject):
             for pcode in prj_scencodes:
                 if pcode not in valid_scencodes:
                     raise LMError('Params file {} metadata is incorrect, {} not in scenarios {} for package {}'
-                                 .format(self.inParamFname, mdl_scencode, valid_scencodes, self.scenPackageName))
+                                 .format(self.inParamFname, pcode, valid_scencodes, self.scenPackageName))
         
         return mdl_scencode, prj_scencodes, mask_lyrname
                 
