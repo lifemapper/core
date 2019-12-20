@@ -307,6 +307,8 @@ class BoomPoster(object):
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME,
                 points_filename)
+            self.config.set(
+                SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, ',')
             
             try:
                 meta_filename = os.path.join(
@@ -322,9 +324,9 @@ class BoomPoster(object):
                         # TODO: Remove this pop hack when we can process delimiter in JSON
                         delim = point_meta['delimiter']
                         del point_meta['delimiter']
-                        self.config.set(
-                            SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
-                            delim)
+                        #self.config.set(
+                        #    SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
+                        #    delim)
                         self.scribe.log.debug(json.dumps(point_meta))
                         with open(meta_filename, 'w') as out_f:
                             json.dump(point_meta, out_f)
