@@ -22,7 +22,7 @@ from LmDbServer.boom.initWorkflow import BOOMFiller
 from LmDbServer.common.lmconstants import SpeciesDatasource
 from LmDbServer.tools.catalogScenPkg import SPFiller
 from LmServer.common.lmconstants import TEMP_PATH, Priority, ENV_DATA_PATH,\
-    ARCHIVE_PATH
+    ARCHIVE_PATH, ECOREGION_MASK_METHOD
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.base.lmobj import LmHTTPError
 from LmWebServer.common.lmconstants import APIPostKeys
@@ -251,6 +251,27 @@ class BoomPoster(object):
 
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, should_compute)
+
+        # Try to add SDM mask via ecoregion layer if available
+        region_layer_name = 'ecoreg_10min_global'
+        #ecoreg_layer = self.scribe.getLayer(
+        #    userId=self.userId, lyrName=region_layer_name)
+        #if ecoreg_layer is not None:
+        # TODO: CJG - Get ecoregion layer from defaults or db if possible
+        self.config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
+        self.config.set(
+            SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.ALG_CODE,
+            ECOREGION_MASK_METHOD)
+        self.config.set(
+            SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.BUFFER, 0.5)
+        self.config.set(
+            SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.REGION,
+            region_layer_name)
+        #[PREPROCESSING SDM_MASK]
+        #alg_code = hull_region_intersect
+        #buffer = 0.5
+        #region = ecoreg_10min_global
+
 
     # ................................
     def _process_occurrence_sets(self, occ_json):
