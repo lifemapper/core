@@ -134,7 +134,7 @@ class Algorithm(LMObject):
             else:
                 try:
                     newParams = json.loads(params)
-                except Exception, e:
+                except Exception as e:
                     print('Failed to load JSON object from type {} object {}'
                             .format(type(params), params))
 
@@ -142,7 +142,7 @@ class Algorithm(LMObject):
             try:
                 for k, v in newParams.iteritems():
                     self.setParameter(k,v)
-            except Exception, e:
+            except Exception as e:
                 raise LMError('Failed to load parameter {} with value {}'.format(k, v))
         else:
             raise LMError('Algorithm Parameters must be a dictionary or a JSON-encoded dictionary')
