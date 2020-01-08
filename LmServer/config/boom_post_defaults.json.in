@@ -1,0 +1,22 @@
+{
+    "pam_intersect": {
+        "max_presence": "@BP_MAX_PRESENCE", # 100
+        "min_percent": "@BP_MIN_PERCENT", # 1
+        "min_presence": "@BP_MIN_PRESENCE", # 25
+        "value_name" : "@BP_ATT_VAL" # pixel
+    },
+    "sdm": {
+        "mask": {
+            "buffer": "@BP_MASK_BUFFER", # 0.5
+            "method": "@BP_MASK_METHOD", # hull_region_intersect
+            "region": "@BP_REGION_LAYER" # ecoreg_10min_global
+        }
+    },
+    "shapegrid": {
+        "bbox": "@BP_BBOX", # -180.0,-90.0,180.0,90.0
+        "cell_sides": "@BP_CELL_SIDES", # 4
+        "epsg": "@BP_EPSG", # 4326
+        "map_units": "@BP_MAP_UNITS", # dd
+        "resolution": "@BP_RESOLUTION" # 0.05
+    }
+}
