@@ -123,7 +123,7 @@ class BoomPoster(object):
                     APIPostKeys.NAME: '{}-grid-{}'.format(
                         archiveName, random.randint(0, 100000)),
                     APIPostKeys.CELL_SIDES: 4,
-                    APIPostKeys.RESOLUTION: 1.0,
+                    APIPostKeys.RESOLUTION: 0.5,
                     APIPostKeys.MIN_X: -180.0,
                     APIPostKeys.MIN_Y: -90.0,
                     APIPostKeys.MAX_X: 180.0,
