@@ -1,12 +1,14 @@
 """Module containing functions for API Queries
 """
-import idigbio
 import json
 import os
-import requests
 from types import (BooleanType, DictionaryType, TupleType, FloatType, IntType, 
                    StringType, UnicodeType, ListType)
-import urllib.request, urllib.parse, urllib.error
+import urllib
+
+import requests
+
+import idigbio
 
 from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
                                          IDIGBIO, IDIGBIO_QUERY, 
