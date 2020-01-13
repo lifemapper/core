@@ -1,9 +1,6 @@
-"""
-@summary: Add a tree and biogeographic hypotheses to a grid set
-
+"""Add a tree and biogeographic hypotheses to a grid set
 
 @todo: How to specify multiple hypotheses with different event fields?
-
 """
 import argparse
 import mx.DateTime
@@ -178,7 +175,7 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
     configFname = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                  objCode=gridname, usr=usr)
     if configFname is not None and os.path.exists(configFname):
-        cfg = Config(siteFn=configFname)
+        cfg = Config(site_fn=configFname)
     else:
         raise Exception('Missing config file {}'.format(configFname))
 

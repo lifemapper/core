@@ -160,7 +160,7 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
     configFname = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                  objCode=gridname, usr=usr)
     if configFname is not None and os.path.exists(configFname):
-        cfg = Config(siteFn=configFname)
+        cfg = Config(site_fn=configFname)
     else:
         raise Exception('Missing config file {}'.format(configFname))
 
