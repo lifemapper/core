@@ -1,32 +1,6 @@
-"""
-@summary: Module containing Lifemapper XML utilities
-@note: Mainly wraps elementTree functionality to fit Lifemapper needs
-@author: CJ Grady
-@version: 2.0
-@status: beta
+"""Module containing Lifemapper XML utilities
 
-@license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
-@note: For ElementTree distributed with Python 2.7
+Note: Mainly wraps elementTree functionality to fit Lifemapper needs
 """
 from types import BuiltinFunctionType, BuiltinMethodType, IntType, FloatType, \
                         FunctionType, LambdaType, ListType, MethodType, NoneType, \
@@ -355,7 +329,7 @@ def serialize(obj, parent=None):
         for k, v in [(key, obj.attrib[key]) for key in list(obj.attrib.keys())]:
             attrib[k] = v
     try:
-        atts = obj.getAttributes()
+        atts = obj.get_attributes()
         # Filter these out of the dir determined attributes (duplicated and these shouldn't be tags)
         objAttribs = [a for a in objAttribs if a not in atts]
         for key in list(atts.keys()):
