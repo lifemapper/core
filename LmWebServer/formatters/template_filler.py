@@ -2,7 +2,7 @@
 """
 
 # .............................................................................
-class TemplateFiller(object):
+class TemplateFiller:
     """Class responsible for filling templated strings
     """
     # ..............................
@@ -28,7 +28,7 @@ class TemplateFiller(object):
         """
         tokens = template_str.split(self.indicator)
         return self._process_tokens(tokens)
-    
+
     # ..............................
     def _process_tokens(self, tokens):
         """Process a list of tokens and return a string

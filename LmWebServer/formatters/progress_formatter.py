@@ -1,7 +1,8 @@
 """Module containing functions for getting the progress response of an object
 """
-import cherrypy
 import json
+
+import cherrypy
 
 from LmCommon.common.lmconstants import JobStatus, LMFormat
 
@@ -42,26 +43,25 @@ def format_gridset(gridset_id, detail=False):
     """
     scribe = BorgScribe(LmPublicLogger())
     scribe.openConnections()
-    
+
     message = ''
     mf_summary = scribe.summarizeMFChainsForGridset(gridset_id)
     (waiting_mfs, running_mfs, complete_mfs, error_mfs, total_mfs
      ) = summarize_object_statuses(mf_summary)
-    
-    
+
     if detail:
         prj_summary = scribe.summarizeSDMProjectsForGridset(gridset_id)
         mtx_summary = scribe.summarizeMatricesForGridset(gridset_id)
         mc_summary = scribe.summarizeMtxColumnsForGridset(gridset_id)
         occ_summary = scribe.summarizeOccurrenceSetsForGridset(gridset_id)
-        
+
         (waiting_prjs, running_prjs, complete_prjs, error_prjs, total_prjs
          ) = summarize_object_statuses(prj_summary)
-        (waiting_mtxs, running_mtxs, complete_mtxs, error_mtxs, total_mtxs
+        (waiting_mtxs, running_mtxs, complete_mtxs, error_mtxs, _
          ) = summarize_object_statuses(mtx_summary)
         (waiting_occs, running_occs, complete_occs, error_occs, total_occs
          ) = summarize_object_statuses(occ_summary)
-        (waiting_mcs, running_mcs, complete_mcs, error_mcs, total_mcs
+        (waiting_mcs, running_mcs, complete_mcs, error_mcs, _
          ) = summarize_object_statuses(mc_summary)
         # Progress is determined by makeflows.  If all SDMs error, then -1
         if error_occs == total_occs and total_occs > 0:
@@ -141,7 +141,7 @@ def format_gridset(gridset_id, detail=False):
         }
     scribe.closeConnections()
     return progress_dict
-    
+
 # .............................................................................
 def progress_object_formatter(obj_type, obj_id, detail=False):
     """Return a progress interface for an object
@@ -166,6 +166,5 @@ def _format_object(obj_type, obj_id, detail=False):
     cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
     if obj_type.lower() == 'gridset':
         return format_gridset(obj_id, detail=detail)
-    else:
-        raise TypeError(
-            'Cannot get progress for object of type: {}'.format(obj_type))
+    raise TypeError(
+        'Cannot get progress for object of type: {}'.format(obj_type))
