@@ -24,7 +24,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import ConfigParser
+import configparser
 import os
 
 from LmCommon.common.singleton import singleton
@@ -52,7 +52,7 @@ class Config(object):
       """
       # Start a list of config files.  Begin with default config files
       fileList = defaultFns
-      if isinstance(fileList, basestring):
+      if isinstance(fileList, str):
          fileList = list(fileList)
       
       # Add site config files
@@ -69,7 +69,7 @@ class Config(object):
       fileList = [f for f in fileList if f is not None]
       
       if fileList is None or len(fileList) == 0:
-         raise ValueError, "Missing LIFEMAPPER_SERVER_CONFIG_FILE or LIFEMAPPER_COMPUTE_CONFIG_FILE environment variable"
+         raise ValueError("Missing LIFEMAPPER_SERVER_CONFIG_FILE or LIFEMAPPER_COMPUTE_CONFIG_FILE environment variable")
       self.configFiles = fileList
       self.reload()
       
@@ -114,7 +114,7 @@ class Config(object):
                    updates to the configuration without having to stop and 
                    restart the process.
       """
-      self.config = ConfigParser.SafeConfigParser()
+      self.config = configparser.SafeConfigParser()
       readConfigFiles = self.config.read(self.configFiles)
       if len(readConfigFiles) == 0:
          raise Exception('No config files found matching {0}'.format(self.configFiles))

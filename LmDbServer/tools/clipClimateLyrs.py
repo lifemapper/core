@@ -1,11 +1,11 @@
-import commands
+import subprocess
 import os
 
 
 cutPath = "/home/jcavner/Pragma_Data/BBOX.shp"
 
 #listtifs = commands.getoutput('ls /home/jcavner/worldclim_lwr48/future/NIES/%s/%s/*.tif' % (scen,yr))
-listtifs = commands.getoutput('ls /home/jcavner/Pragma_Data/Current/geotiff/*.tif')
+listtifs = subprocess.getoutput('ls /home/jcavner/Pragma_Data/Current/geotiff/*.tif')
 tifpaths = listtifs.split('\n')
 
 #outpath = "/home/jcavner/Bison_WorldClim/Future/%s/%s/" % (scen,yr)
@@ -30,6 +30,6 @@ for tif in tifpaths:
    
    gdalStr = "gdalwarp -dstnodata -9999 -q -cutline %s -crop_to_cutline -of GTiff %s %s" % (cutPath,tif,fullout)
    #print gdalStr
-   resp = commands.getoutput(gdalStr)
-   print resp
-print "done"
+   resp = subprocess.getoutput(gdalStr)
+   print(resp)
+print("done")

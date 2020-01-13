@@ -41,6 +41,6 @@ if __name__ == '__main__':
     if os.path.exists(args.layerDirectory):
         convertLayersInDirectory(args.layerDirectory)
     else:
-        raise Exception, 'Layer directory: {}, does not exist'.format(
-                                                         args.layerDirectory)
+        raise Exception('Layer directory: {}, does not exist'.format(
+                                                         args.layerDirectory))
 

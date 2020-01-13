@@ -48,7 +48,7 @@ def checkUserPermission(sessionUser, obj, method):
     elif method.upper() == HTTPMethod.GET:
         validUsers = [sessionUser, PUBLIC_USER, DEFAULT_POST_USER]
     else:
-        raise Exception, "Unknown HTTP method: {}".format(method.upper())
+        raise Exception("Unknown HTTP method: {}".format(method.upper()))
     
     # Return boolean indicating if the object's user id is in the valid user 
     #     list for the HTTP method

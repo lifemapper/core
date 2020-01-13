@@ -68,7 +68,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
         
 # .............................................................................
     def resetBBox(self):
-        bboxList = [scen.bbox for scen in self._scenarios.values()]
+        bboxList = [scen.bbox for scen in list(self._scenarios.values())]
         minBbox = self.intersectBoundingBoxes(bboxList)
         self._setBBox(minBbox)
 
@@ -109,7 +109,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
                 else:
                     return scen
             elif metadataUrl is not None:
-                for code, scen in self._scenarios.iteritems():
+                for code, scen in self._scenarios.items():
                     if scen.metadataUrl == metadataUrl:
                         return scen
         return None

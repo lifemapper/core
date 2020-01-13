@@ -139,7 +139,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
             if param_value is not None and param_value != 'None':
                 v = default_param[PARAM_PROCESS_KEY](param_value)
                 # Check for options
-                if default_param.has_key(PARAM_OPTIONS_KEY):
+                if PARAM_OPTIONS_KEY in default_param:
                     v = default_param[PARAM_OPTIONS_KEY][v]
                 if v != default_param[PARAM_DEFAULT_KEY]:
                     algo_param_options.append('{}={}'.format(param_name, v))

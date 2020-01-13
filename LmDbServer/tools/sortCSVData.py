@@ -83,7 +83,7 @@ def checkMergedFile(log, mergefname, metafname):
         prevKey = chunkGroup
         chunk = bigSortedData.pullCurrentChunk()
 
-    except Exception, e:
+    except Exception as e:
         log.error(str(e))
     finally:
         bigSortedData.close()
@@ -153,12 +153,12 @@ def sortFiles(log, groupByIdx, datapath, inprefix, outprefix, basename):
         # Skip header, rely on metadata with column indices
         while True:
             try: 
-                unsRows.append(occreader.next())
+                unsRows.append(next(occreader))
             except StopIteration:
                 break
-            except Exception, e:
-                print('Error file %s, line %d: %s' % 
-                     (infname, occreader.line_num, e))
+            except Exception as e:
+                print(('Error file %s, line %d: %s' % 
+                     (infname, occreader.line_num, e)))
                 break
         infile.close()
         
@@ -218,11 +218,11 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
             op = OccDataParser(log, srtFname, metafname, delimiter=OUT_DELIMITER, 
                                pullChunks=True)
             op.initializeMe()
-        except IOError, e:
+        except IOError as e:
             log.warning('Enough already, IOError! Final file {}. Using only indices {} - {}, err {}'
                         .format(srtFname, inIdx, currIdx, str(e)))
             enoughAlready = True
-        except Exception, e:
+        except Exception as e:
             log.warning('Enough already, Unknown error! Final file {}. Using only indices {} - {}, err {}'
                         .format(srtFname, inIdx, currIdx, str(e)))
             enoughAlready = True
@@ -251,7 +251,7 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
             # Find smallest again
             smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
            
-    except Exception, e:
+    except Exception as e:
         raise
     finally:
         outfile.close()
@@ -266,7 +266,7 @@ def usage():
     Usage:
        sortCSVData inputDelimiter inputCSVFile [split | sort | merge | check]
     """
-    print output
+    print(output)
 
 # .............................................................................
 if __name__ == "__main__": 
@@ -307,7 +307,7 @@ if __name__ == "__main__":
     
     # Only 2 options
     if inDelimiter == ',':
-        print 'delimiter is comma'
+        print('delimiter is comma')
     else:
         inDelimiter = '\t'
     if cmd not in ('split', 'sort', 'merge', 'check', 'all'):   
@@ -324,7 +324,7 @@ if __name__ == "__main__":
     mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename, 
                                                     LMFormat.CSV.ext))
     if not os.path.exists(datafname) or not os.path.exists(metafname):
-        print('Files {} and {} must exist'.format(datafname, metafname))
+        print(('Files {} and {} must exist'.format(datafname, metafname)))
         exit()
        
     log = ScriptLogger(logname)
@@ -334,7 +334,7 @@ if __name__ == "__main__":
                                   pullChunks=True)
         occparser.initializeMe()
         groupByIdx = occparser.groupByIdx
-        print 'groupByIdx = ', groupByIdx
+        print('groupByIdx = ', groupByIdx)
          
         if cmd in ('split', 'all'):   
             # Split into smaller unsorted files

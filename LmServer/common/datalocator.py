@@ -249,7 +249,7 @@ class EarlJr(LMObject):
         fileparts = [str(p) for p in nameparts if p is not None ]
         try:
             basename = NAME_SEPARATOR.join(fileparts)
-        except Exception, e:
+        except Exception as e:
             raise LMError('Bad type %s or parameters; (%s)' % (str(ftype), str(e)))
         return basename
 

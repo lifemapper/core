@@ -22,9 +22,9 @@
              02110-1301, USA.
 """
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except:
-    from StringIO import StringIO
+    from io import StringIO
 import glob
 import mx.DateTime
 import os
@@ -360,7 +360,7 @@ class _Layer(LMSpatialObject, ServiceObject):
     def getSRSAsWkt(self):
         try:
             srs = self.getSRS()
-        except Exception, e:
+        except Exception as e:
             raise
         else:
             wkt = srs.ExportToWkt()
@@ -630,12 +630,12 @@ class Raster(_Layer):
         try:
             try:
                 dataset = gdal.Open(str(dlocation), gdalconst.GA_ReadOnly)
-            except Exception, e:
+            except Exception as e:
                 raise LMError(currargs='Unable to open dataset {} with GDAL ({})'
                                     .format(dlocation, str(e)))
             try:
                 band = dataset.GetRasterBand(1)
-            except Exception, e:
+            except Exception as e:
                 raise LMError(currargs='No band {} in dataset {} ({})'
                                     .format(band, dlocation, str(e)))
         except:
@@ -668,7 +668,7 @@ class Raster(_Layer):
         try:
             dataset = gdal.Open(str(dlocation), gdalconst.GA_ReadOnly)
             band = dataset.GetRasterBand(1)
-        except Exception, e:
+        except Exception as e:
             raise LMError(['Unable to open dataset or band {} with GDAL ({})'
                                 .format(dlocation, str(e))])
         return dataset, band
@@ -704,7 +704,7 @@ class Raster(_Layer):
                 if i > 0 and i != self.nodataVal and hist[i] > 0:
                     vals.append(i)
         else:
-            print 'Histogram calculated only for 8-bit data'
+            print('Histogram calculated only for 8-bit data')
         return vals
     
 # ...............................................
@@ -793,7 +793,7 @@ class Raster(_Layer):
             nodataVal = band.GetNoDataValue()
         # Print all warnings
         if msgs:
-            print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
+            print('Layer.populateStats Warning: \n{}'.format('\n'.join(msgs)))
             
         return (dlocation, verify, gdalType, dataFormat, bbox, resolution, 
                   minVal, maxVal, nodataVal)
@@ -839,7 +839,7 @@ class Raster(_Layer):
                     f = open(outFile,"w")
                     f.write(srcData)
                     f.close()
-                except Exception, e:
+                except Exception as e:
                     raise LMError(currargs='Error writing data to raster %s (%s)' 
                                       % (outFile, str(e)))
                 else:
@@ -847,7 +847,7 @@ class Raster(_Layer):
                 # Test input with GDAL
                 try:
                     self.populateStats()
-                except Exception, e:
+                except Exception as e:
                     success, msg = self.deleteFile(outFile)
                     raise LMError(currargs='Invalid data written to %s (%s); Deleted (success=%s, %s)' 
                                       % (outFile, str(e), str(success), msg))
@@ -882,14 +882,14 @@ class Raster(_Layer):
             #kwargs['DECIMAL_PRECISION'] = 4
         driver = gdal.GetDriverByName(format)
         metadata = driver.GetMetadata()
-        if not (metadata.has_key(gdal.DCAP_CREATECOPY) 
+        if not (gdal.DCAP_CREATECOPY in metadata 
                      and metadata[gdal.DCAP_CREATECOPY] == 'YES'):
             raise LMError(currargs='Driver %s does not support CreateCopy() method.' 
                               % format)
         inds = gdal.Open( infname )
         try:
             outds = driver.CreateCopy(outfname, inds, 0, options)
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs='Creation failed for %s from band %d of %s (%s)'
                                           % (outfname, bandnum, infname, str(e)))
         if outds is None:
@@ -922,7 +922,7 @@ class Raster(_Layer):
 
         try:
             self._copyGDALData(1, sourceDataLocation, dlocation, format=format)
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs='Failed to copy data source from %s to %s (%s)' 
                               % (sourceDataLocation, dlocation, str(e)))
                     
@@ -991,7 +991,7 @@ class Raster(_Layer):
         if (self._dlocation is not None and os.path.exists(self._dlocation)):
             try:
                 self._dataset = gdal.Open(self._dlocation, gdalconst.GA_ReadOnly)
-            except Exception, e:
+            except Exception as e:
                 valid = False
                 
         return valid
@@ -1016,7 +1016,7 @@ class Raster(_Layer):
                 try:
                     os.rmdir(pth)
                 except:
-                    print 'Unable to rmdir %s' % pth
+                    print('Unable to rmdir %s' % pth)
         return success
 
 # .............................................................................
@@ -1252,7 +1252,7 @@ class Vector(_Layer):
                      in featureAttributes.
         """
         if features:
-            for fid, vals in features.iteritems():
+            for fid, vals in features.items():
                 self._features[fid] = vals
             self._featureCount = len(self._features)
             
@@ -1269,7 +1269,7 @@ class Vector(_Layer):
         self._valAttribute = None
         if self._featureAttributes:
             if valAttribute:
-                for idx in self._featureAttributes.keys():
+                for idx in list(self._featureAttributes.keys()):
                     fldname, fldtype = self._featureAttributes[idx]
                     if fldname == valAttribute:
                         self._valAttribute = valAttribute
@@ -1296,7 +1296,7 @@ class Vector(_Layer):
 # ...............................................
     def _setGeometryIndex(self):
         if self._geomIdx is None and self._featureAttributes:
-            for idx, (colname, coltype) in self._featureAttributes.iteritems():
+            for idx, (colname, coltype) in self._featureAttributes.items():
                 if colname == self._geomFieldName:
                     self._geomIdx = idx
                     break
@@ -1309,7 +1309,7 @@ class Vector(_Layer):
 # ...............................................
     def _setLocalIdIndex(self):
         if self._localIdIdx is None and self._featureAttributes:
-            for idx, (colname, coltype) in self._featureAttributes.iteritems():
+            for idx, (colname, coltype) in self._featureAttributes.items():
                 if colname in OccurrenceFieldNames.LOCAL_ID:
                     self._localIdIdx = idx
                     break
@@ -1411,7 +1411,7 @@ class Vector(_Layer):
         if self._features and self._featureAttributes:
             self._setGeometryIndex()
                 
-            for fid in self._features.keys():
+            for fid in list(self._features.keys()):
                 feats[fid] = self._features[fid][self._geomIdx]
             
         return feats
@@ -1433,7 +1433,7 @@ class Vector(_Layer):
             try:
                 ds = ogr.Open(dlocation)
                 ds.GetLayer(0)
-            except Exception, e:
+            except Exception as e:
                 pass
             else:
                 valid = True
@@ -1586,8 +1586,8 @@ class Vector(_Layer):
                     if newFldName != oldFldName:
                         nameChanges[oldFldName] = newFldName
 
-                except Exception, e:
-                    print str(e)
+                except Exception as e:
+                    print(str(e))
         else:
             raise LMError('Must provide either LayerDefinition or Fieldnames and Id, X, and Y column names')
     
@@ -1601,18 +1601,18 @@ class Vector(_Layer):
         try:
             # Closes and flushes to disk
             newDs.Destroy()
-        except Exception, e:
+        except Exception as e:
             wrote = None
         else:
-            print('Closed/wrote dataset %s' % dloc)
+            print(('Closed/wrote dataset %s' % dloc))
             wrote = dloc
             
             try:
                 retcode = subprocess.call(["shptree", "%s" % dloc])
                 if retcode != 0: 
-                    print 'Unable to create shapetree index on %s' % dloc
-            except Exception, e:
-                print 'Unable to create shapetree index on %s: %s' % (dloc, str(e))
+                    print('Unable to create shapetree index on %s' % dloc)
+            except Exception as e:
+                print('Unable to create shapetree index on %s: %s' % (dloc, str(e)))
         return wrote
         
 # ...............................................
@@ -1629,7 +1629,7 @@ class Vector(_Layer):
             except:
                 try:
                     spRef.ImportFromWkt(srsEPSGOrWkt)
-                except Exception, e:
+                except Exception as e:
                     raise LMError('Unable to get Spatial Reference System from %s; Error %s'
                                       % (str(srsEPSGOrWkt), str(e)))
         return spRef
@@ -1640,8 +1640,8 @@ class Vector(_Layer):
         newFeat = None
         try:
             newFeat = originalFeature.Clone()
-        except Exception, e:
-            print 'Failure to create new feature; Error: %s' % (str(e))
+        except Exception as e:
+            print('Failure to create new feature; Error: %s' % (str(e)))
         return newFeat
     
 # ...............................................
@@ -1651,16 +1651,16 @@ class Vector(_Layer):
         try:
             ptgeom = ogr.Geometry(ogr.wkbPoint)
             ptgeom.AddPoint(float(oDict[xCol]), float(oDict[yCol]))
-        except Exception, e:
-            print 'Failure %s:  Point = %s, %s' % (str(e), str(oDict[xCol]), 
-                                                              str(oDict[yCol]))
+        except Exception as e:
+            print('Failure %s:  Point = %s, %s' % (str(e), str(oDict[xCol]), 
+                                                              str(oDict[yCol])))
         else:
             # Create feature for combo layer
             ptFeat = ogr.Feature(lyrDef)
             ptFeat.SetGeometryDirectly(ptgeom)
             # set other fields to match original values
-            for okey in oDict.keys():
-                if okey in newNames.keys():
+            for okey in list(oDict.keys()):
+                if okey in list(newNames.keys()):
                     ptFeat.SetField(newNames[okey], oDict[okey])
                 else:
                     ptFeat.SetField(okey, oDict[okey])
@@ -1716,7 +1716,7 @@ class Vector(_Layer):
                 # Create and save point for individual species layer
                 ptFeat2 = Vector.createPointFeature(oDict, xCol, yCol, lyrDef, nameChanges)
                 thisGroup = oDict[groupByField]
-                if thisGroup not in data.keys():
+                if thisGroup not in list(data.keys()):
                     data[thisGroup] = [ptFeat2]
                 else:
                     data[thisGroup].append(ptFeat2)
@@ -1725,7 +1725,7 @@ class Vector(_Layer):
         successfulWrites.append(dloc)
         f.close()
 
-        for group, pointFeatures in data.iteritems():
+        for group, pointFeatures in data.items():
             indDs, indLyr, nameChanges = Vector._createPointShapefile(drv, outpath, 
                                                              spRef, group, lyrDef=lyrDef, 
                                                              overwrite=overwrite)
@@ -1766,12 +1766,12 @@ class Vector(_Layer):
                     for rec in dataRecords:
                         try:
                             spamwriter.writerow(rec)
-                        except Exception, e:
+                        except Exception as e:
                             # Report and move on
-                            print ('Failed to write record {} ({})'.format(rec, str(e)))
+                            print(('Failed to write record {} ({})'.format(rec, str(e))))
                 didWrite = True
-            except Exception, e:
-                print ('Failed to write file {} ({})'.format(dlocation, str(e)))
+            except Exception as e:
+                print(('Failed to write file {} ({})'.format(dlocation, str(e))))
         return didWrite
 
 # ...............................................
@@ -1794,7 +1794,7 @@ class Vector(_Layer):
         if overwrite:
             self.deleteData(dlocation=dlocation)
         elif os.path.isfile(dlocation):
-            print('Dataset exists: %s' % dlocation)
+            print(('Dataset exists: %s' % dlocation))
             return success
         
         self.setDLocation(dlocation) 
@@ -1815,7 +1815,7 @@ class Vector(_Layer):
                 raise LMError('Layer creation failed for %s.' % self._dlocation)
     
             # Define the fields
-            for idx in self._featureAttributes.keys():
+            for idx in list(self._featureAttributes.keys()):
                 fldname, fldtype = self._featureAttributes[idx]
                 if fldname != self._geomFieldName:
                     fldDefn = ogr.FieldDefn(fldname, fldtype)
@@ -1828,13 +1828,13 @@ class Vector(_Layer):
                                           % (fldname, self._dlocation)) 
                         
             # For each feature
-            for i in self._features.keys():
+            for i in list(self._features.keys()):
                 fvals = self._features[i]
                 feat = ogr.Feature( lyr.GetLayerDefn() )
                 try:
                     self._fillOGRFeature(feat, fvals)
-                except Exception, e:
-                    print 'Failed to fillOGRFeature, e = %s' % str(e)
+                except Exception as e:
+                    print('Failed to fillOGRFeature, e = %s' % str(e))
                 else:
                     # Create new feature, setting FID, in this layer
                     lyr.CreateFeature(feat)
@@ -1842,16 +1842,16 @@ class Vector(_Layer):
     
             # Closes and flushes to disk
             ds.Destroy()
-            print('Closed/wrote dataset %s' % self._dlocation)
+            print(('Closed/wrote dataset %s' % self._dlocation))
             success = True
             try:
                 retcode = subprocess.call(["shptree", "%s" % self._dlocation])
                 if retcode != 0: 
-                    print 'Unable to create shapetree index on %s' % self._dlocation
-            except Exception, e:
-                print 'Unable to create shapetree index on %s: %s' % (self._dlocation, 
-                                                                                        str(e))
-        except Exception, e:
+                    print('Unable to create shapetree index on %s' % self._dlocation)
+            except Exception as e:
+                print('Unable to create shapetree index on %s: %s' % (self._dlocation, 
+                                                                                        str(e)))
+        except Exception as e:
             raise LMError(['Failed to create shapefile %s' % self._dlocation, str(e)])
             
         return success
@@ -1870,7 +1870,7 @@ class Vector(_Layer):
             try:
                 # read to make sure it's valid (and populate stats)
                 self.readData()
-            except Exception, e:
+            except Exception as e:
                 raise LMError('Invalid uploaded data in temp file %s (%s)' 
                                   % (self._dlocation, str(e)), doTrace=True )
         elif uploadedType == 'csv':
@@ -1879,7 +1879,7 @@ class Vector(_Layer):
             try:
                 # read to make sure it's valid (and populate stats)
                 self.readData()
-            except Exception, e:
+            except Exception as e:
                 raise LMError('Invalid uploaded data in temp file %s (%s)' 
                                   % (self._dlocation, str(e)) )
         
@@ -1995,7 +1995,7 @@ class Vector(_Layer):
         try:
             for line in f1:
                 f2.write(line)
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs=['Unable to parse input CSV data', str(e)])
         finally:
             f1.close()
@@ -2027,12 +2027,12 @@ class Vector(_Layer):
             srs = self.createSRSFromEPSG()    
             gidx = self._getGeometryIndex()
             
-            for fvals in self._features.values():
+            for fvals in list(self._features.values()):
                 wkt = fvals[gidx]
                 fgeom = ogr.CreateGeometryFromWkt(wkt, srs)
                 if fgeom is None:
-                    print('What happened on point %s?' % 
-                            (str(fvals[self.getLocalIdIndex()])) )
+                    print(('What happened on point %s?' % 
+                            (str(fvals[self.getLocalIdIndex()])) ))
                 else:
                     geom.AddGeometryDirectly(fgeom)
             self._geometry = geom
@@ -2119,13 +2119,13 @@ class Vector(_Layer):
         drv = ogr.GetDriverByName(format)
         try:
             ds = drv.Open(sourceDataLocation)
-        except Exception, e:
+        except Exception as e:
             raise LMError(['Invalid datasource' % sourceDataLocation, str(e)])
         
         try:
             newds = drv.CopyDataSource(ds, targetDataLocation)
             newds.Destroy()
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs='Failed to copy data source')
 
 # ...............................................
@@ -2149,7 +2149,7 @@ class Vector(_Layer):
                 drv = ogr.GetDriverByName(ogrFormat)
                 try:
                     ds = drv.Open(dlocation)
-                except Exception, e:
+                except Exception as e:
                     raise LMError(['Invalid datasource' % dlocation, str(e)])
                 
                 lyrDef = ds.GetLayer(0).GetLayerDefn()
@@ -2174,12 +2174,12 @@ class Vector(_Layer):
             drv = ogr.GetDriverByName(driver)
             try:
                 ds = drv.Open(dlocation)
-            except Exception, e:
+            except Exception as e:
                 goodData = False
             else:
                 try:
                     slyr = ds.GetLayer(0)
-                except Exception, e:
+                except Exception as e:
                     goodData = False
                 else:  
                     featCount = slyr.GetFeatureCount()
@@ -2194,9 +2194,9 @@ class Vector(_Layer):
             shpTreeCmd = os.path.join(APP_PATH, 'shptree')
             retcode = subprocess.call([shpTreeCmd, '{}'.format(dlocation)])
             if retcode != 0: 
-                print 'Failed to create shptree index on {}'.format(dlocation)
-        except Exception, e:
-            print 'Failed create shptree index on {}: {}'.format(dlocation, str(e))
+                print('Failed to create shptree index on {}'.format(dlocation))
+        except Exception as e:
+            print('Failed create shptree index on {}: {}'.format(dlocation, str(e)))
                         
                         
 # ...............................................
@@ -2225,7 +2225,7 @@ class Vector(_Layer):
         reader = csv.reader(infile)
         
         # Read row with possible fieldnames
-        row = reader.next()        
+        row = next(reader)        
         hasHeader = True
         ((idName, idPos), (xName, xPos), (yName, yPos)) = Vector._getIdXYNamePos(row)
         if not idPos:
@@ -2248,8 +2248,8 @@ class Vector(_Layer):
         else:
             eof = False
             try:
-                row = reader.next()
-            except StopIteration, e:
+                row = next(reader)
+            except StopIteration as e:
                 eof = True
             Xs = []
             Ys = []
@@ -2267,13 +2267,13 @@ class Vector(_Layer):
                     feats[thisid] = self.getUserPointFeature(thisid, x, y)
                     if featureLimit is not None and len(feats) >= featureLimit:
                         break
-                except Exception, e:
+                except Exception as e:
                     # Skip point if fails.  This could be a blank row or data error
                     pass
                 # Read next row
                 try:
-                    row = reader.next()
-                except StopIteration, e:
+                    row = next(reader)
+                except StopIteration as e:
                     eof = True
                     
             featureCount = len(feats)
@@ -2285,7 +2285,7 @@ class Vector(_Layer):
                 maxX = max(Xs)
                 maxY = max(Ys)
                 thisBBox = (minX, minY, maxX, maxY)
-            except Exception, e:
+            except Exception as e:
                 raise LMError('Failed to get valid coordinates ({})'.format(str(e)))
             
         infile.close()
@@ -2310,13 +2310,13 @@ class Vector(_Layer):
             drv = ogr.GetDriverByName(ogrFormat)
             try:
                 ds = drv.Open(dlocation)
-            except Exception, e:
+            except Exception as e:
                 raise LMError(['Invalid datasource' % dlocation, str(e)])
                           
             self.clearFeatures() 
             try:
                 slyr = ds.GetLayer(0)
-            except Exception, e:
+            except Exception as e:
                 raise LMError(currargs='#### Failed to GetLayer from %s' % dlocation,
                                   prevargs=e.args, doTrace=True)
 
@@ -2381,7 +2381,7 @@ class Vector(_Layer):
                             
                             # Add the feature values with key=localId to the dictionary 
                             feats[localid] = currFeatureVals
-                except Exception, e:
+                except Exception as e:
                     raise LMError(currargs='Failed to read features from %s (%s)' 
                                       % (dlocation, str(e)), doTrace=True)
             
@@ -2467,7 +2467,7 @@ class Vector(_Layer):
     def getFieldMetadata(self):
         if self._featureAttributes:
             fldMetadata = {}
-            for idx, featAttrs in self._featureAttributes.iteritems():
+            for idx, featAttrs in self._featureAttributes.items():
                 fldMetadata[idx] = (featAttrs[0], 
                                           self._getOGRFieldTypeName(featAttrs[1]))
         return fldMetadata
@@ -2497,7 +2497,7 @@ class Vector(_Layer):
 # ...............................................
     def getFeatureValByFieldIndex(self, fieldIdx, featureFID):
         if self._features:
-            if self._features.has_key(featureFID):
+            if featureFID in self._features:
                 return self._features[featureFID][fieldIdx]
             else:
                 raise LMError ('Feature ID %s not found in dataset %s' % 
@@ -2513,7 +2513,7 @@ class Vector(_Layer):
                 findLocalId = True
             else:
                 findLocalId = False
-            for fldidx, (fldname, fldtype) in self._featureAttributes.iteritems():
+            for fldidx, (fldname, fldtype) in self._featureAttributes.items():
                 
                 if fldname == fieldname:
                     fieldIdx = fldidx
@@ -2534,7 +2534,7 @@ class Vector(_Layer):
             drv = ogr.GetDriverByName(self._dataFormat)
             try:
                 ds = drv.Open(self._dlocation)
-            except Exception, e:
+            except Exception as e:
                 raise LMError(['Invalid datasource' % self._dlocation, str(e)])
 
             vlyr = ds.GetLayer(0)
@@ -2550,7 +2550,7 @@ class Vector(_Layer):
 # .............................................................................
     def _fillOGRFeature(self, feat, fvals):
         # Fill the fields
-        for j in self._featureAttributes.keys():
+        for j in list(self._featureAttributes.keys()):
             fldname, fldtype = self._featureAttributes[j]
             val = fvals[j]
             if fldname == self._geomFieldName:

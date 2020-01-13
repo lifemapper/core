@@ -62,7 +62,7 @@ class LmLogger(logging.Logger):
       """
       try:
          self.log.critical(message)
-      except Exception, e:
+      except Exception as e:
          pass
       
    # ..............................................
@@ -78,7 +78,7 @@ class LmLogger(logging.Logger):
          message = '{}: {}'.format(location, message)
       try:
          self.log.debug(message)
-      except Exception, e:
+      except Exception as e:
          pass
       
    # ..............................................
@@ -89,7 +89,7 @@ class LmLogger(logging.Logger):
       """
       try:
          self.log.error(message)
-      except Exception, e:
+      except Exception as e:
          pass
    
    # ..............................................
@@ -100,7 +100,7 @@ class LmLogger(logging.Logger):
       """
       try:
          self.log.exception(message)
-      except Exception, e:
+      except Exception as e:
          pass
    
    # ..............................................
@@ -111,7 +111,7 @@ class LmLogger(logging.Logger):
       """
       try:
          self.log.info(message)
-      except Exception, e:
+      except Exception as e:
          pass
    
    # ..............................................
@@ -123,7 +123,7 @@ class LmLogger(logging.Logger):
       """
       try:
          self.log.log(level, message)
-      except Exception, e:
+      except Exception as e:
          pass
       
    # ..............................................
@@ -134,7 +134,7 @@ class LmLogger(logging.Logger):
       """
       try:
          self.log.warning(message)
-      except Exception, e:
+      except Exception as e:
          pass
       
    # ...............................................

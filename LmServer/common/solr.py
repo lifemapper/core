@@ -2,7 +2,7 @@
 """
 from ast import literal_eval
 from mx.DateTime import DateTimeFromMJD
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from LmServer.common.lmconstants import (
      SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER, 
@@ -10,7 +10,7 @@ from LmServer.common.lmconstants import (
 from LmServer.common.log import SolrLogger
 from LmServer.common.localconstants import PUBLIC_USER
 import json
-from urllib2 import URLError
+from urllib.error import URLError
 
 # .............................................................................
 def buildSolrDocument(docPairs):
@@ -20,7 +20,7 @@ def buildSolrDocument(docPairs):
                               [[(field name, value)]]
     """
     if not docPairs:
-        raise Exception, "Must provide at least one pair for Solr POST"
+        raise Exception("Must provide at least one pair for Solr POST")
     
     # We want to allow multiple documents.  Make sure that field pairs is a list
     #     of lists of tuples
@@ -62,8 +62,8 @@ def _post(collection, docFilename, headers=None):
     with open(docFilename) as inF:
         data = inF.read()
     
-    req = urllib2.Request(url, data=data, headers=headers)
-    return urllib2.urlopen(req).read()
+    req = urllib.request.Request(url, data=data, headers=headers)
+    return urllib.request.urlopen(req).read()
     
 # .............................................................................
 def _query(collection, qParams=None, fqParams=None,
@@ -115,18 +115,18 @@ def _query(collection, qParams=None, fqParams=None,
     
     url = '{}{}/select?{}'.format(SOLR_SERVER, collection, '&'.join(queryParts))
     try:
-        res = urllib2.urlopen(url)
-    except URLError, e:
+        res = urllib.request.urlopen(url)
+    except URLError as e:
         log.error('URLError on urlopen for {}: {}'.format(url, str(e)))
         raise
-    except Exception, e:
+    except Exception as e:
         log.error('Exception on urlopen for {}: {}'.format(url, str(e)))
         raise
     
     retcode = res.getcode()
     try:
         resp = res.read()
-    except Exception, e:
+    except Exception as e:
         log.error('Exception, code {}, on response read for {}: {}'
               .format(retcode, url, str(e)))
         raise
@@ -139,7 +139,7 @@ def raw_query(collection, query_string):
     """Performs a raw solr query and returns the unprocessed results
     """
     url = '{}{}/select?{}'.format(SOLR_SERVER, collection, query_string)
-    res = urllib2.urlopen(url)
+    res = urllib.request.urlopen(url)
     return res.read()
 
 # .............................................................................
@@ -169,9 +169,9 @@ def add_taxa_to_taxonomy_index(sciname_objects):
     # TODO: Modify _post to accept a string or file like object as well
     url = '{}{}/update?commit=true'.format(SOLR_SERVER, 
                                            SOLR_TAXONOMY_COLLECTION)
-    req = urllib2.Request(url, data=post_doc, 
+    req = urllib.request.Request(url, data=post_doc, 
                           headers={'Content-Type' : 'text/xml'})
-    return urllib2.urlopen(req).read()
+    return urllib.request.urlopen(req).read()
     
 # .............................................................................
 def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
@@ -216,9 +216,9 @@ def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
     # TODO: Modify _post to accept a string or file like object as well
     url = '{}{}/update?commit=true'.format(SOLR_SERVER, 
                                            SOLR_TAXONOMY_COLLECTION)
-    req = urllib2.Request(url, data=post_doc, 
+    req = urllib.request.Request(url, data=post_doc, 
                           headers={'Content-Type' : 'text/xml'})
-    return urllib2.urlopen(req).read()
+    return urllib.request.urlopen(req).read()
 
 # .............................................................................
 def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
@@ -267,10 +267,10 @@ def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
         }
     }
 
-    req = urllib2.Request(
+    req = urllib.request.Request(
         url, data=json.dumps(doc),
         headers={'Content-Type' : 'application/json'})
-    return urllib2.urlopen(req).read()
+    return urllib.request.urlopen(req).read()
 
 # .............................................................................
 def facetArchiveOnGridset(userId=None):

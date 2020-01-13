@@ -93,7 +93,7 @@ def createMaskRaster(inRasterFn, pointsFn, outRasterFn):
    
    listVals = list(vals)
    if len(listVals) == 0:
-      raise Exception, 'No intersection between points and raster'
+      raise Exception('No intersection between points and raster')
    newData = DEFAULT_NODATA * np.ones(data.shape, dtype=int)
    
    for i in range(data.shape[0]):

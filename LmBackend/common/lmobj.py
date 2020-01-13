@@ -78,7 +78,7 @@ class LMObject(object):
                 else:
                     return True
             else:
-                print('File {} exists, overwrite=False'.format(fullfilename))
+                print(('File {} exists, overwrite=False'.format(fullfilename)))
                 return False
         else:
             pth, basename = os.path.split(fullfilename)
@@ -88,7 +88,7 @@ class LMObject(object):
                 return True
             
             try:
-                os.makedirs(pth, 0775)
+                os.makedirs(pth, 0o775)
             except:
                 pass
                 
@@ -123,26 +123,26 @@ class LMObject(object):
                             simbase, simext = os.path.splitext(simfname)
                             if simext in LMFormat.SHAPE.getExtensions():
                                 os.remove(simfname)
-                    except Exception, e:
+                    except Exception as e:
                         success = False
                         msg = 'Failed to remove {}, {}'.format(simfname, str(e))
                 else:
                     try:
                         os.remove(fname)
-                    except Exception, e:
+                    except Exception as e:
                         success = False
                         msg = 'Failed to remove {}, {}'.format(fname, str(e))
                 if deleteDir and len(os.listdir(pth)) == 0:
                     try:
                         os.removedirs(pth)
-                    except Exception, e:
+                    except Exception as e:
                         success = False
                         msg = 'Failed to remove {}, {}'.format(pth, str(e))
         return success, msg
     
 # ...............................................
     def _addMetadata(self, newMetadataDict, existingMetadataDict={}):
-        for key, val in newMetadataDict.iteritems():
+        for key, val in newMetadataDict.items():
             try:
                 existingVal = existingMetadataDict[key]
             except:
@@ -182,9 +182,9 @@ class LMObject(object):
             else:
                 try:
                     objMetadata = json.loads(newMetadata)
-                except Exception, e:
-                    print('Failed to load JSON object from type {} object {}'
-                            .format(type(newMetadata), newMetadata))
+                except Exception as e:
+                    print(('Failed to load JSON object from type {} object {}'
+                            .format(type(newMetadata), newMetadata)))
         return objMetadata
 
 # ============================================================================
@@ -240,9 +240,9 @@ class LMError(Exception, LMObject):
         for x in self.args:
             try:
                 sarg = str(x)
-            except UnicodeDecodeError, e:
+            except UnicodeDecodeError as e:
                 sarg = 'some unicode arg'
-            except Exception, e:
+            except Exception as e:
                 sarg = 'some other non-string arg ({})'.format(e)
             l.append(sarg)
             

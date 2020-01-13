@@ -84,13 +84,13 @@ def get_metrics(points_filename, layer_info, identifier,
                           removeDuplicateLocations=removeDuplicateLocations)
    
    # Get matrics for layers
-   for i in xrange(len(layer_info)):
+   for i in range(len(layer_info)):
       # Get metrics for a layer
       lyrMetrics = get_metrics_for_layer(points, layer_info[i][1], 
                                          metricFunctions)
       
       # Set values in matrix
-      for j in xrange(len(lyrMetrics)):
+      for j in range(len(lyrMetrics)):
          metricsData[j,i,0] = lyrMetrics[j]
    
    metricsMatrix = Matrix(metricsData, headers={
@@ -121,9 +121,9 @@ def get_metrics_for_layer(points, layer_filename, metricFunctions):
          if not is_close(val, nodataVal):
             values.append(data[py, px])
          else:
-            print 'Could not append value at ({}, {}): {}'.format(px, py, val)
-      except Exception, e:
-            print 'Could not append value at ({}, {}): {}'.format(px, py, str(e))
+            print('Could not append value at ({}, {}): {}'.format(px, py, val))
+      except Exception as e:
+            print('Could not append value at ({}, {}): {}'.format(px, py, str(e)))
    
    arr = np.array(values)
    

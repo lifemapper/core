@@ -181,7 +181,7 @@ class TestWebTreeService(UserTestCase):
          with contextlib.closing(self.cl.get_tree(treeId)) as x:
             treeMeta = json.load(x)
             
-         self.assertTrue(treeMeta.has_key('ultrametric'))
+         self.assertTrue('ultrametric' in treeMeta)
          self.assertEqual(treeMeta['user'], self._get_session_user(), 
                               'User id on tree = {}, session user = {}'.format(
                                  treeMeta['user'], self._get_session_user()))

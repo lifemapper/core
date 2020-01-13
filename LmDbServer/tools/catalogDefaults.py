@@ -120,7 +120,7 @@ class Defcat(LMObject):
         @summary Adds Taxonomic Sources to the database from the TAXONOMIC_SOURCE dictionary
         """
         # Insert all taxonomic sources for now
-        for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+        for name, taxInfo in TAXONOMIC_SOURCE.items():
             taxSourceId = self.scribe.findOrInsertTaxonSource(taxInfo['name'],
                                                               taxInfo['url'])
         
@@ -205,8 +205,8 @@ if __name__ == '__main__':
         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(scriptname, timestamp)
     
-    print('Running {} with logbasename: {}'
-          .format(scriptname, logname))
+    print(('Running {} with logbasename: {}'
+          .format(scriptname, logname)))
     
     defcat = Defcat(logname)
     defcat.addDefaults()

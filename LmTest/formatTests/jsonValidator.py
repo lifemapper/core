@@ -33,5 +33,5 @@ def validate_json(obj_generator):
    try:
       testJson = json.load(obj_generator)
       return True
-   except Exception, e:
+   except Exception as e:
       return False

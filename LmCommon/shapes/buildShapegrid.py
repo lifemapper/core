@@ -181,8 +181,8 @@ if __name__ == '__main__':
    count = buildShapegrid(dlocation, minX, minY, maxX, maxY, cellsize, epsgcode, 
                           cellsides, siteId=siteId, siteX=siteX, siteY=siteY, 
                           cutoutWKT=cutout) 
-   print count
-   print('Try ogrinfo on {}'.format(dlocation))
+   print(count)
+   print(('Try ogrinfo on {}'.format(dlocation)))
    
    
 """

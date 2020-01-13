@@ -105,7 +105,7 @@ class Boomer(LMObject):
         # Send Database connection
         try:
             success = self._scribe.openConnections()
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs='Exception opening database', prevargs=e.args)
         else:
             if not success:
@@ -117,7 +117,7 @@ class Boomer(LMObject):
             self.christopher = ChristopherWalken(self.configFname,
                                                  scribe=self._scribe)
             self.christopher.initializeMe()
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs='Failed to initialize Chris with config {} ({})'
                          .format(self.configFname, e))
         try:
@@ -176,7 +176,7 @@ class Boomer(LMObject):
                 if not self.do_pam_stats and len(self.squidNames) >= SPUD_LIMIT:
                     self.rotatePotatoes()
             self.log.info('-----------------')
-        except Exception, e:
+        except Exception as e:
             self.log.debug('Exception {} on spud, closing ...'.format(str(e)))
             self.close()
             raise e
@@ -240,7 +240,7 @@ class Boomer(LMObject):
             newfname = oldfname + '.' + timestamp
             try:
                 os.rename(oldfname, newfname)
-            except Exception, e:
+            except Exception as e:
                 self.log.error('Failed to rename {} to {}'.format(oldfname, newfname))
             # Restart with next file
             self.initializeMe()
@@ -317,7 +317,7 @@ class Boomer(LMObject):
 
     # .............................
     def processAllSpecies(self):
-        print('processAll with configFname = {}'.format(self.configFname))
+        print(('processAll with configFname = {}'.format(self.configFname)))
         count = 0
         while self.keepWalken:
             self.processOneSpecies()
@@ -331,7 +331,7 @@ class Boomer(LMObject):
 # .............................................................................
 if __name__ == "__main__":
     if not isLMUser():
-        print("Run this script as `{}`".format(LM_USER))
+        print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
     earl = EarlJr()
     defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG, 

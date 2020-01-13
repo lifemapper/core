@@ -65,7 +65,7 @@ def assemble_pam(pam_id):
         """
         return int(match[SOLR_FIELDS.ID]) in mtx_col_ids 
     # Filter matches
-    filtered_matches = filter(_match_in_column_ids, matches)
+    filtered_matches = list(filter(_match_in_column_ids, matches))
     
     # Create empty PAM
     shapegrid = pam.getShapegrid()
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         pam = assemble_pam(pam_id)
         success = 1
     except Exception as e:
-        print(str(e))
+        print((str(e)))
         success = 0
 
     readyFilename(args.success_filename)

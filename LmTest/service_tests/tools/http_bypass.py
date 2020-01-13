@@ -8,8 +8,8 @@ Note:
     * This is out of date and needs to be updated
 """
 import types
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 from LmClient.lmClientLib import removeNonesFromTupleList
 
@@ -29,7 +29,7 @@ def installHTTPBypass(cLib, remoteIP='127.0.0.1'):
     def makeBypassRequest(self, url, method='GET', parameters=[], body=None,
                                  headers={}, objectify=False):
         parameters = removeNonesFromTupleList(parameters)
-        urlparams = urllib.urlencode(parameters)
+        urlparams = urllib.parse.urlencode(parameters)
         
         if body is None and len(parameters) > 0 and method.lower() == "post":
             body = urlparams

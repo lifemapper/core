@@ -1444,7 +1444,7 @@ class Borg(DbPostgresql):
             try:
                 row, idxs = self.executeSelectOneFunction('lm_findTaxonSource', 
                                                                         taxonSourceName)
-            except Exception, e:
+            except Exception as e:
                 if not isinstance(e, LMError):
                     e = LMError(currargs=e.args, lineno=self.getLineno())
                 raise e
@@ -1468,14 +1468,14 @@ class Borg(DbPostgresql):
         try:
             row, idxs = self.executeSelectOneFunction('lm_getTaxonSource', 
                                                                     tsId, tsName, tsUrl)
-        except Exception, e:
+        except Exception as e:
             if not isinstance(e, LMError):
                 e = LMError(currargs=e.args, lineno=self.getLineno())
             raise e
         if row is not None:
             import collections
             fldnames = []
-            for key, _ in sorted(idxs.iteritems(), key=lambda (k,v): (v,k)):
+            for key, _ in sorted(iter(idxs.items()), key=lambda k_v: (k_v[1],k_v[0])):
                 fldnames.append(key)
             TaxonSource = collections.namedtuple('TaxonSource', fldnames)
             ts = TaxonSource(*row)
@@ -1488,7 +1488,7 @@ class Borg(DbPostgresql):
                                 taxonSourceId, taxonkey, None, None, None, None, None, 
                                 None, None, None, None, None, None, None, None, None, 
                                 None, None)
-        except Exception, e:
+        except Exception as e:
             raise e
         sciname = self._createScientificName(row, idxs)
         return sciname
@@ -1536,7 +1536,7 @@ class Borg(DbPostgresql):
                                                                 canname, sciname, genkey, spkey,
                                                                 keyhierarchy, lastcount, 
                                                                 currtime)
-        except Exception, e:
+        except Exception as e:
             raise e
         else:
             scientificname = self._createScientificName(row, idxs)
@@ -1672,7 +1672,7 @@ class Borg(DbPostgresql):
                                                              occ.statusModTime, 
                                                              polyWkt, 
                                                              pointsWkt)
-        except Exception, e:
+        except Exception as e:
             raise e
         return success
 
@@ -1714,7 +1714,7 @@ class Borg(DbPostgresql):
                                                              prjmeta,
                                                              proj.status, 
                                                              proj.statusModTime)
-        except Exception, e:
+        except Exception as e:
             raise e
         return success
 

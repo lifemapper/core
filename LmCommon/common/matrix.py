@@ -32,7 +32,7 @@
 from copy import deepcopy
 import json
 import numpy as np
-from StringIO import StringIO
+from io import StringIO
 
 HEADERS_KEY = 'headers'
 DATA_KEY = 'data'
@@ -91,7 +91,7 @@ class Matrix(object):
             try:
                 data = np.load(fn)
                 return cls(data)
-            except Exception, e:
+            except Exception as e:
                 raise Exception("Cannot load file: {0}, {1}".format(fn, str(e)))
             
     # ...........................
@@ -126,7 +126,7 @@ class Matrix(object):
         if isinstance(tmp, np.ndarray):
             data = tmp
         else:
-            data = tmp.items()[0][1]
+            data = list(tmp.items())[0][1]
         return cls(data, headers=headers)
     
     # ...........................
@@ -236,7 +236,7 @@ class Matrix(object):
             newMtx.setColumnHeaders(flatMtx.getColumnHeaders())
             
             # Higher order headers
-            for axis in flatMtx.headers.keys():
+            for axis in list(flatMtx.headers.keys()):
                 if int(axis) > 2:
                     # Reduce the key of the axis by one and set headers on new matrix
                     newMtx.setHeaders(flatMtx.getHeaders(axis=axis), axis=str(int(axis) - 1))
@@ -263,7 +263,7 @@ class Matrix(object):
         if axis is None:
             return self.headers
         else:
-            if self.headers.has_key(str(axis)):
+            if str(axis) in self.headers:
                 return self.headers[str(axis)]
             else:
                 return None
@@ -328,12 +328,12 @@ class Matrix(object):
         else:
             self.headers = {}
             try:
-                headersKeys = headers.keys()
+                headersKeys = list(headers.keys())
             except: # Not a dictionary
                 # Check if first item is a list
                 if isinstance(headers[str(0)], list):
                     # Assume list of lists
-                    headersKeys = range(len(headers))
+                    headersKeys = list(range(len(headers)))
                 else:
                     # Convert to a list
                     headers = [headers]
@@ -430,7 +430,7 @@ class Matrix(object):
                 rowHeaders = mtx.headers['0']
             except:
                 # No row headers
-                rowHeaders = [[] for _ in xrange(mtx.data.shape[0])]
+                rowHeaders = [[] for _ in range(mtx.data.shape[0])]
             
             if isinstance(rowHeaders[0], list):
                 listify = lambda x: x
@@ -438,13 +438,13 @@ class Matrix(object):
                 listify = lambda x: [x]
             
             # Start with the header row, if we have one
-            if mtx.headers.has_key('1') and mtx.headers['1']:
+            if '1' in mtx.headers and mtx.headers['1']:
                 # Add a blank entry if we have row headers
                 headerRow = ['']*len(listify(rowHeaders[0]) if rowHeaders else [])
                 headerRow.extend(mtx.headers['1'])
                 yield headerRow
             # For each row in the data set
-            for i in xrange(mtx.data.shape[0]):
+            for i in range(mtx.data.shape[0]):
                 # Add the row headers if exists
                 row = []
                 row.extend(listify(rowHeaders[i]))

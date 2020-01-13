@@ -52,11 +52,11 @@ class OpenTreeService(LmService):
             gbif_to_ott = get_ottids_from_gbifids(taxon_ids_obj)
             # Get the unmatched GBIF IDs
             unmatched_gbif_ids = [
-                k for k in gbif_to_ott.keys() if gbif_to_ott[k] is None]
+                k for k in list(gbif_to_ott.keys()) if gbif_to_ott[k] is None]
             # Create a reverse lookup for OTT to GBIF IDs
-            ott_to_gbif = dict([(v, k) for (k, v) in gbif_to_ott.iteritems()])
+            ott_to_gbif = dict([(v, k) for (k, v) in gbif_to_ott.items()])
             # Get the ids and drop Nones
-            ott_ids = [oid for oid in gbif_to_ott.values() if oid is not None]
+            ott_ids = [oid for oid in list(gbif_to_ott.values()) if oid is not None]
             if len(ott_ids) <= 1:
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST,

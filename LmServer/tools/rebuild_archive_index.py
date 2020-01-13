@@ -63,8 +63,8 @@ def rebuild_index_for_gridset(gridset_id):
                 lyr = scribe.getLayer(lyrId=mc.getLayerId())
                 if os.path.exists(lyr.getDLocation()):
                     if lyr.minVal == lyr.maxVal and lyr.minVal == 0.0:
-                        print('No prediction for layer {}, skipping'.format(
-                            lyr.getId()))
+                        print(('No prediction for layer {}, skipping'.format(
+                            lyr.getId())))
                     else:
                         mc.layer = lyr
                         mc.shapegrid = shapegrid

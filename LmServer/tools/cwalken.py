@@ -105,7 +105,7 @@ class ChristopherWalken(LMObject):
             try:
                 self._scribe = BorgScribe(self.log)
                 success = self._scribe.openConnections()
-            except Exception, e:
+            except Exception as e:
                 raise LMError(currargs='Exception opening database', prevargs=e.args)
             else:
                 if not success:
@@ -436,7 +436,7 @@ class ChristopherWalken(LMObject):
             if maskData and len(maskData) > 1:
                 raise LMError(currargs='Unable to process > 1 input SDM mask layer')
             
-            lyrname = maskData.values()[0]
+            lyrname = list(maskData.values())[0]
             
             # Get processing parameters for masking
             proc_params = {
@@ -502,7 +502,7 @@ class ChristopherWalken(LMObject):
             # TODO: Handle if there is more than one input layer
             if len(sdmMaskAlg.getInputs()) > 1:
                 raise LMError(currargs='Unable to process > 1 input SDM mask layer')
-            for inputKey, lyrname in sdmMaskAlg.getInputs().iteritems():
+            for inputKey, lyrname in sdmMaskAlg.getInputs().items():
                 sdmMaskInputLayer = self._scribe.getLayer(userId=userId, 
                                                           lyrName=lyrname, epsg=epsg)
                 sdmMaskAlg.setInput(inputKey, sdmMaskInputLayer)

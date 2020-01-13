@@ -29,7 +29,7 @@ def validate_vector_file(vector_filename):
                 lyr = ds.GetLayer()
                 feature_count = lyr.GetFeatureCount()
                 valid = True
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
     else:
         msg = 'File does not exist'

@@ -92,8 +92,8 @@ class Stockpile(LMObject):
             obj = cls._getObject(scribe, ptype, objId)
             cls._copyObject(scribe, ptype, obj, outputFnameList, metaFilename)
             cls._updateObject(scribe, obj, status)
-        except Exception, e:
-            print('Exception on Stockpile._updateObject ({})'.format(str(e)))
+        except Exception as e:
+            print(('Exception on Stockpile._updateObject ({})'.format(str(e))))
             success = False
             raise
         finally:
@@ -123,7 +123,7 @@ class Stockpile(LMObject):
             else:
                 raise LMError(currargs='Unsupported ProcessType {} for object {}'
                                   .format(ptype, objId))
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs='Failed to get object {} for process {}, exception {}'
                               .format(objId, ptype, str(e)))
         if obj is None:
@@ -163,7 +163,7 @@ class Stockpile(LMObject):
                 if os.path.exists(obj.getDLocation()):
                     os.remove(obj.getDLocation())
                 shutil.copy(fileNames[0], obj.getDLocation())
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs='Exception copying primary {} or ancillary output, ({})'
                               .format(obj.getDLocation(), str(e)))
 
@@ -184,7 +184,7 @@ class Stockpile(LMObject):
         # Update database
         try:
             scribe.updateObject(obj)
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs='Exception updating object {} for process {}, ({})'
                               .format(objId, ptype, str(e)))
 

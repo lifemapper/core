@@ -89,7 +89,7 @@ class LMSpatialObject(LMObject):
     def getSRSAsWkt(self):
         try:
             srs = self.getSRS()
-        except Exception, e:
+        except Exception as e:
             raise
         else:
             wkt = srs.ExportToWkt()
@@ -204,15 +204,15 @@ class LMSpatialObject(LMObject):
                         self._bbox = bbox
                     else:
                         # TODO: replace with LMError as soon as bad bboxes are cleared out
-                        print('Invalid bounding box boundaries {}'.format(bbox))
+                        print(('Invalid bounding box boundaries {}'.format(bbox)))
                         self._bbox = None
                 else:
                     raise LMError('Invalid BBox: require 4-tuple in format (minX, minY, maxX, maxY)')
-            except LMError, e:
-                print('Invalid bounding box boundaries {}'.format(bbox))
+            except LMError as e:
+                print(('Invalid bounding box boundaries {}'.format(bbox)))
                 self._bbox = None
-            except Exception, e:
-                print('Invalid bounding box boundaries {}'.format(bbox))
+            except Exception as e:
+                print(('Invalid bounding box boundaries {}'.format(bbox)))
                 self._bbox = None
 
 
@@ -370,7 +370,7 @@ class LMSpatialObject(LMObject):
                                      boundaries
         """
         if bboxSeq and bboxSeq.count(None) > 0:
-            bboxSeq = filter(lambda item: item is not None, bboxSeq)
+            bboxSeq = [item for item in bboxSeq if item is not None]
         if bboxSeq:
             minXs = [bb[0] for bb in bboxSeq]
             minYs = [bb[1] for bb in bboxSeq]
@@ -380,7 +380,7 @@ class LMSpatialObject(LMObject):
             if LMSpatialObject._checkBounds(bounds):
                 return bounds
             else:
-                print('Non-intersecting bounding boxes, bounds: {}'.format(bounds))
+                print(('Non-intersecting bounding boxes, bounds: {}'.format(bounds)))
                 return None
         else:
             return None
@@ -396,7 +396,7 @@ class LMSpatialObject(LMObject):
                                      boundaries
         """
         if bboxSeq and bboxSeq.count(None) > 0:
-            bboxSeq = filter(lambda item: item is not None, bboxSeq)
+            bboxSeq = [item for item in bboxSeq if item is not None]
         if bboxSeq:
             minXs = [bb[0] for bb in bboxSeq]
             minYs = [bb[1] for bb in bboxSeq]

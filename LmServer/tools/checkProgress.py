@@ -54,7 +54,7 @@ def notifyPeople(logger, subject, message, recipients=TROUBLESHOOTERS):
     notifier = EmailNotifier()
     try:
         notifier.sendMessage(recipients, subject, message)
-    except Exception, e:
+    except Exception as e:
         logger.error('Failed to notify {} about {}'.format(str(recipients), subject))
 
 # ...............................................
@@ -98,7 +98,7 @@ def getStats(scribe, afterStatus=JobStatus.COMPLETE, beforeStatus=None):
     for aftertime in TIMES:
         tmHeader = ('', '**************', DISPLAY[aftertime],'**************')
         outputLines.extend(tmHeader)
-        print '\n'.join(outputLines)
+        print('\n'.join(outputLines))
         for usr in USERS:
             theseLines = []
             theseStats = _getProgress(scribe, usr, aftertime, 
@@ -108,7 +108,7 @@ def getStats(scribe, afterStatus=JobStatus.COMPLETE, beforeStatus=None):
             for rt in ReferenceType.progressTypes():
                 theseLines.append('    {}: {}'.format(ReferenceType.name(rt), 
                                                       theseStats[rt]))
-            print '\n'.join(theseLines)
+            print('\n'.join(theseLines))
             outputLines.extend(theseLines)
         outputLines.append('')
     output = '\n'.join(outputLines)

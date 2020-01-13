@@ -21,7 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import ConfigParser
+import configparser
 import json
 import mx.DateTime
 import os
@@ -228,7 +228,7 @@ class BOOMFiller(LMObject):
                                 may include SCENARIO_PACKAGE_MODEL_SCENARIO,
                                             SCENARIO_PACKAGE_PROJECTION_SCENARIOS
         """
-        valid_scencodes = self.scenPkg.scenarios.keys()
+        valid_scencodes = list(self.scenPkg.scenarios.keys())
         if len(valid_scencodes) == 0 or None in valid_scencodes:
             raise LMError('ScenPackage {} metadata is incorrect, scenario codes = {}'
                          .format(self.scenPackageName, valid_scencodes))
@@ -294,9 +294,9 @@ class BOOMFiller(LMObject):
                     for fd in files:
                         try:
                             os.chown(fd, -1, gid)
-                            os.chmod(fd, 0664)
-                        except Exception, e:
-                            print('Failed to fix permissions on {}'.format(fd))
+                            os.chmod(fd, 0o664)
+                        except Exception as e:
+                            print(('Failed to fix permissions on {}'.format(fd)))
             if dirs is not None:
                 if not (isinstance(dirs, list) or 
                         isinstance(dirs, tuple)):
@@ -306,9 +306,9 @@ class BOOMFiller(LMObject):
                         if currperms != '775':
                             try:
                                 os.chown(d, -1, gid)
-                                os.chmod(d, 0775)
-                            except Exception, e:
-                                print('Failed to fix permissions on {}'.format(d))
+                                os.chmod(d, 0o775)
+                            except Exception as e:
+                                print(('Failed to fix permissions on {}'.format(d)))
          
     # ...............................................
     def _getDb(self, logname):
@@ -332,9 +332,9 @@ class BOOMFiller(LMObject):
         for name in algoptions:
             pname, ptype = alg.findParamNameType(name)
             if pname is not None:
-                if ptype == types.IntType:
+                if ptype == int:
                     val = config.getint(algHeading, pname)
-                elif ptype == types.FloatType:
+                elif ptype == float:
                     val = config.getfloat(algHeading, pname)
                 else:
                     val = config.get(algHeading, pname)
@@ -406,7 +406,7 @@ class BOOMFiller(LMObject):
         try:
             import imp
             SPMETA = imp.load_source('currentmetadata', scenpkg_meta_file)
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
                           .format(scenpkg_meta_file, e)) 
         pkgMeta = SPMETA.CLIMATE_PACKAGES[scenpkgName]
@@ -497,7 +497,7 @@ class BOOMFiller(LMObject):
         maskAlgList = self._getAlgorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
         if maskAlgList:
             if len(maskAlgList) == 1:
-                maskAlg = maskAlgList.values()[0]
+                maskAlg = list(maskAlgList.values())[0]
             else:
                 raise Exception('Only one PREPROCESSING SDM_MASK supported')
         # ..........................
@@ -571,21 +571,21 @@ class BOOMFiller(LMObject):
       
     # ...............................................
     def writeConfigFile(self, tree=None, biogeoLayers=[]):
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.SafeConfigParser()
         config.add_section(SERVER_BOOM_HEADING)
         # .........................................      
         # SDM Algorithms with all parameters   
-        for heading, alg in self.algorithms.iteritems():
+        for heading, alg in self.algorithms.items():
             config.add_section(heading)
             config.set(heading, BoomKeys.ALG_CODE, alg.code)
-            for name, val in alg.parameters.iteritems():
+            for name, val in alg.parameters.items():
                 config.set(heading, name, str(val))
         # SDM Mask input for optional pre-processing
         if self.maskAlg is not None:
             config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
             config.set(SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.ALG_CODE, 
                        self.maskAlg.code)
-            for name, val in self.maskAlg.parameters.iteritems():
+            for name, val in self.maskAlg.parameters.items():
                 config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
         # .........................................      
         email = self.userEmail
@@ -651,7 +651,7 @@ class BOOMFiller(LMObject):
                    ','.join(str(v) for v in self.gridbbox))
         config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_NAME, self.gridname)
         # Intersection params
-        for k, v in self.intersectParams.iteritems():
+        for k, v in self.intersectParams.items():
             # refer to BoomKeys.INTERSECT_*
             config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), str(v))
         # Multi-species randomization 
@@ -762,13 +762,13 @@ class BOOMFiller(LMObject):
                 count += 1
                 try:
                     tmp = line.strip()
-                except Exception, e:
+                except Exception as e:
                     self.scribe.log.info('Error reading line {} ({}), stopping'
                                          .format(count, str(e)))
                     break
                 try:
                     occid = int(tmp)
-                except Exception, e:
+                except Exception as e:
                     self.scribe.log.info('Unable to get Id from data {} on line {}'
                                          .format(tmp, count))
                     nonIntCount += 1
@@ -805,7 +805,7 @@ class BOOMFiller(LMObject):
                     newshp.buildShape(overwrite=True)
                     validData, _ = ShapeGrid.testVector(dloc)
                     self._fixPermissions(files=newshp.getShapefiles())
-                except Exception, e:
+                except Exception as e:
                     self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
                 if not validData:
                     raise LMError(currargs='Failed to write Shapegrid {}'.format(dloc))
@@ -913,11 +913,11 @@ class BOOMFiller(LMObject):
             
         # TODO: Reset expiration date to Woof-date in MJD
         
-        for code, scen in self.scenPkg.scenarios.iteritems():
+        for code, scen in self.scenPkg.scenarios.items():
             # "Global" PAM (one per scenario/algorithm)
             if code in self.prj_scencodes:
                 # TODO: Allow alg to be specified for each species, all in same PAM
-                for alg in self.algorithms.values():
+                for alg in list(self.algorithms.values()):
                     gPam = self._findOrAddPAM(updatedGrdset, alg, scen)
                     
                 # "Global" GRIM (one per scenario) 
@@ -1009,7 +1009,7 @@ class BOOMFiller(LMObject):
             self._fixPermissions(files=[tree.getDLocation()])
             
             # Save tree link to gridset
-            print "Add tree to grid set"
+            print("Add tree to grid set")
             gridset.addTree(tree)
             gridset.updateModtime(self.woof_time_mjd)
             
@@ -1031,7 +1031,7 @@ class BOOMFiller(LMObject):
             with open(metaFname) as f:
                 meta = json.load(f)
                 if type(meta) is dict:
-                    for k, v in meta.iteritems():
+                    for k, v in meta.items():
                         lyrMeta[k.lower()] = v
                     # Add keyword to metadata
                     try:
@@ -1148,7 +1148,7 @@ class BOOMFiller(LMObject):
         # Get shapegrid rules / files
         shapegrid_filename = self.shapegrid.getDLocation()
         
-        for code, grim in defaultGrims.iteritems():
+        for code, grim in defaultGrims.items():
             mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
             self.scribe.log.info('  Adding {} grim columns for scencode {}'
                           .format(len(mtxcols), code))
@@ -1462,7 +1462,7 @@ if __name__ == '__main__':
     logname = args.logname
           
     if paramFname is not None and not os.path.exists(paramFname):
-        print ('Missing configuration file {}'.format(paramFname))
+        print(('Missing configuration file {}'.format(paramFname)))
         exit(-1)
        
     if logname is None:
@@ -1472,12 +1472,12 @@ if __name__ == '__main__':
         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(scriptname, timestamp)
     
-    print('Running initWorkflow with paramFname = {}'
-          .format(paramFname))
+    print(('Running initWorkflow with paramFname = {}'
+          .format(paramFname)))
     
     filler = BOOMFiller(paramFname, logname=logname)
     gs = filler.initBoom()
-    print('Completed initWorkflow creating gridset: {}'.format(gs.getId()))
+    print(('Completed initWorkflow creating gridset: {}'.format(gs.getId())))
 
     
 """

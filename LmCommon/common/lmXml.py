@@ -35,7 +35,7 @@ from types import BuiltinFunctionType, BuiltinMethodType, IntType, FloatType, \
 import xml.etree.ElementTree as ET
 
 from LmCommon.common.lmAttObject import LmAttList, LmAttObj
-from LmCommon.common.unicode import toUnicode
+from LmCommon.common.str import toUnicode
 
 # Functions / Classes directly mapped to the Element Tree versions
 # ..............................................................................
@@ -188,7 +188,7 @@ def _processAttribs(attribDict):
     @todo: Add encoding
     """
     newDict = {}
-    for k, v in attribDict.items():
+    for k, v in list(attribDict.items()):
         newDict[toUnicode(k)] = toUnicode(v)
     return newDict
 
@@ -281,7 +281,7 @@ def deserialize(element, removeNS=True):
         processTag = _dontRemoveNSfunc
     
     # If the element has no children, just get the text    
-    if len(list(element)) == 0 and len(element.attrib.keys()) == 0:
+    if len(list(element)) == 0 and len(list(element.attrib.keys())) == 0:
         try:
             val = element.text.strip()
             if len(val) > 0:
@@ -292,7 +292,7 @@ def deserialize(element, removeNS=True):
             return None
     else:
         attribs = dict([(processTag(key), element.attrib[key]) for key in \
-                                                                          element.attrib.keys()])
+                                                                          list(element.attrib.keys())])
         obj = LmAttObj(attrib=attribs, name=processTag(element.tag))
 
         try:
@@ -352,13 +352,13 @@ def serialize(obj, parent=None):
     objAttribs = [att for att in dir(obj) if fltr(att)]
 
     if hasattr(obj, 'attrib'):
-        for k, v in [(key, obj.attrib[key]) for key in obj.attrib.keys()]:
+        for k, v in [(key, obj.attrib[key]) for key in list(obj.attrib.keys())]:
             attrib[k] = v
     try:
         atts = obj.getAttributes()
         # Filter these out of the dir determined attributes (duplicated and these shouldn't be tags)
         objAttribs = [a for a in objAttribs if a not in atts]
-        for key in atts.keys():
+        for key in list(atts.keys()):
             if isinstance(atts[key], (IntType, StringType, FloatType, UnicodeType)):
                 attrib[key] = str(atts[key])
             elif isinstance(atts[key], (NoneType)):
@@ -399,7 +399,7 @@ def serialize(obj, parent=None):
                 SubElement(el, att, value=subObj)
             elif isinstance(subObj, DictType):
                 sEl = SubElement(el, att)
-                for key in subObj.keys():
+                for key in list(subObj.keys()):
                     if isinstance(subObj[key], (StringType, IntType, FloatType, UnicodeType)):
                         SubElement(sEl, key, value=subObj[key])
                     elif isinstance(subObj[key], NoneType):

@@ -90,12 +90,12 @@ class TaxonFiller(LMObject):
         if isInteger:
             try:
                 val = int(valStr)
-            except Exception, e:
+            except Exception as e:
                 pass
         else:
             try:
                 val = float(valStr)
-            except Exception, e:
+            except Exception as e:
                 pass
         return val
     
@@ -108,8 +108,8 @@ class TaxonFiller(LMObject):
             txkey = int(taxonkey)
             occcount = int(count)
         except:
-            print 'Invalid taxonkey {} or count {} for {}'.format(taxonkey, count, 
-                                                                                    scinameStr)
+            print('Invalid taxonkey {} or count {} for {}'.format(taxonkey, count, 
+                                                                                    scinameStr))
         try:
             genkey = int(genuskey)
         except:

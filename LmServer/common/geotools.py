@@ -25,7 +25,7 @@ From http://perrygeo.googlecode.com/svn/trunk/gis-bin/flip_raster.py
 try:
    import numpy
 except:
-   print 'Unable to import numpy'
+   print('Unable to import numpy')
    
 import os
 from osgeo import gdal
@@ -69,9 +69,9 @@ class GeoFileInfo(LMObject):
    
       try:
          self.openDataSet(varpattern, updateable)
-      except LMError, e:
+      except LMError as e:
          raise e
-      except Exception, e:
+      except Exception as e:
          raise LMError(['Unable to open raster file %s' % self.dlocation, str(e)])
       else:
          if self._dataset is None:
@@ -111,9 +111,9 @@ class GeoFileInfo(LMObject):
             self._dataset = gdal.Open(str(self.dlocation), gdalconst.GA_Update)
          elif self._dataset is None:
             self._dataset = gdal.Open(str(self.dlocation), gdalconst.GA_ReadOnly)
-      except Exception,e:
-         print('Exception raised trying to open layer=%s\n%s'
-               % (self.dlocation, str(e)))
+      except Exception as e:
+         print(('Exception raised trying to open layer=%s\n%s'
+               % (self.dlocation, str(e))))
          raise LMError(['Unable to open %s' % self.dlocation])
       else:
          if self._dataset is None:
@@ -140,7 +140,7 @@ class GeoFileInfo(LMObject):
          self._dataset.FlushCache()
          self._dataset = None
          self.srs = srs
-      except Exception, e:
+      except Exception as e:
          raise LMError(['Unable to write SRS info to file', srs, 
                         self.dlocation, str(e)])
    
@@ -167,8 +167,8 @@ class GeoFileInfo(LMObject):
       
       outds = driver.Create(outfname, self.xsize, self.ysize, 1, self.gdalBandType)
       if outds is None:
-         print 'Creation failed for %s from band %d of %s' % (outfname, 1, 
-                                                              self.dlocation)
+         print('Creation failed for %s from band %d of %s' % (outfname, 1, 
+                                                              self.dlocation))
          return 0 
       
       outds.SetGeoTransform(self.geoTransform)
@@ -290,14 +290,14 @@ class GeoFileInfo(LMObject):
       """
       driver = gdal.GetDriverByName(format)
       metadata = driver.GetMetadata()
-      if not (metadata.has_key(gdal.DCAP_CREATECOPY) 
+      if not (gdal.DCAP_CREATECOPY in metadata 
                 and metadata[gdal.DCAP_CREATECOPY] == 'YES'):
          raise LMError(currargs='Driver %s does not support CreateCopy() method.' 
                        % format)
       inds = gdal.Open( self.dlocation )
       try:
          outds = driver.CreateCopy(outfname, inds, 0, **kwargs)
-      except Exception, e:
+      except Exception as e:
          raise LMError(currargs='Creation failed for %s from band %d of %s (%s)'
                                 % (outfname, bandnum, self.dlocation, str(e)))
       if outds is None:
@@ -329,7 +329,7 @@ class GeoFileInfo(LMObject):
       """
       driver = gdal.GetDriverByName(format)
       metadata = driver.GetMetadata()
-      if not (metadata.has_key(gdal.DCAP_CREATE) 
+      if not (gdal.DCAP_CREATE in metadata 
               and metadata[gdal.DCAP_CREATE] == 'YES'):
          raise LMError(currargs='Driver %s does not support Create() method.' 
                                 % format)
@@ -371,7 +371,7 @@ class GeoFileInfo(LMObject):
       
 # ...............................................
    def __unicode__(self):
-      return u'%s (%s)' % (self.name, self.dlocation)
+      return '%s (%s)' % (self.name, self.dlocation)
    
 # ...............................................
    def loadBand(self, bandnum=1):
@@ -393,8 +393,8 @@ class GeoFileInfo(LMObject):
          try:
             min, max, mean, stddev = self._band.GetStatistics(False,True)
 #            min, max, mean, stddev = self._band.ComputeBandStats(False)
-         except Exception, e:
-            print('Exception in GeoFileInfo._getStats: band.GetStatistics %s' % str(e))
+         except Exception as e:
+            print(('Exception in GeoFileInfo._getStats: band.GetStatistics %s' % str(e)))
             min, max, mean, stddev = None, None, None, None
          self._min = min
          self._max = max
@@ -420,7 +420,7 @@ class GeoFileInfo(LMObject):
             if i > 0 and i != self.nodata and hist[i] > 0:
                vals.append(i)
       else:
-         print 'Histogram calculated only for 8-bit data'
+         print('Histogram calculated only for 8-bit data')
       return vals
 
    
@@ -503,7 +503,7 @@ class GeoFileInfo(LMObject):
                   pass
             try:
                z = self._scanline[0,cxy[0]]
-            except Exception, e:
+            except Exception as e:
                z = self.nodata
             if z == self.nodata:
                rpoint.append(missingv)

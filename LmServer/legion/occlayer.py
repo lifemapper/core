@@ -426,7 +426,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             self.getLocalIdIndex()
                 
         geomIdx = self.getFieldIndex(self._geomFieldName)
-        for featureFID in self._features.keys():
+        for featureFID in list(self._features.keys()):
             fid = self.getFeatureValByFieldIndex(self._localIdIdx, featureFID)
             wkt = self.getFeatureValByFieldIndex(geomIdx, featureFID)
             x, y = self.getPointFromWkt(wkt)
@@ -440,7 +440,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         if self._features and self._featureAttributes:
             pttxtlst = []
             self._setGeometryIndex()
-            for pt in self._features.values():
+            for pt in list(self._features.values()):
                 wkt = pt[self._geomIdx]
                 pttxtlst.append(wkt.strip('POINT'))
             multipointstr = ', '.join(pttxtlst)

@@ -92,11 +92,11 @@ def build_ancestral_pam(pam, tree):
     
     # Initialize new matrix
     numRows = pam.data.shape[0]
-    nodeData = np.zeros((numRows, len(cladeDict.keys())), dtype=np.int8)
+    nodeData = np.zeros((numRows, len(list(cladeDict.keys()))), dtype=np.int8)
     
     col = 0
     cols = []
-    for cladeId in cladeDict.keys():
+    for cladeId in list(cladeDict.keys()):
         cols.append(str(cladeId))
         
         # Get left and right squids for the clade
@@ -105,11 +105,9 @@ def build_ancestral_pam(pam, tree):
         
         # Create the left and right squid indexes from the PAM
         leftIdxs = [
-            squidLookup[squid] for squid in leftSquids if squidLookup.has_key(
-                squid)]
+            squidLookup[squid] for squid in leftSquids if squid in squidLookup]
         rightIdxs = [
-            squidLookup[squid] for squid in rightSquids if squidLookup.has_key(
-                squid)]
+            squidLookup[squid] for squid in rightSquids if squid in squidLookup]
         
         # Get the left and right side (clades) binary column of presences
         leftSide = np.any(pam.data[:,leftIdxs], axis=1).astype(int)

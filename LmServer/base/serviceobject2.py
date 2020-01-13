@@ -119,8 +119,8 @@ class ServiceObject(LMObject):
         if self._metadataUrl is None:
             try: 
                 self._metadataUrl = self.constructMetadataUrl() 
-            except Exception, e:
-                print str(e)
+            except Exception as e:
+                print(str(e))
                 pass
         return self._metadataUrl
     

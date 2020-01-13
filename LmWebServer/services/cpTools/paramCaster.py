@@ -23,9 +23,9 @@ def castParameters():
     for key in inParams:
         # Conver the key to lower case and remove any underscores
         modKey = key.replace('_', '').lower()
-        if QUERY_PARAMETERS.has_key(modKey):
+        if modKey in QUERY_PARAMETERS:
             qp = QUERY_PARAMETERS[modKey]
-            if qp.has_key(QP_PROCESS_KEY):
+            if QP_PROCESS_KEY in qp:
                 # If we have a processing instruction, do it
                 newParameters[qp[QP_NAME_KEY]] = qp[
                     QP_PROCESS_KEY](inParams[key])

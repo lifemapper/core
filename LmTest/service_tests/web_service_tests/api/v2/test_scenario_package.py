@@ -188,7 +188,7 @@ class TestWebScenarioPackageService(UserTestCase):
          with contextlib.closing(self.cl.get_scenario_package(scnPkgId)) as x:
             scnMeta = json.load(x)
             
-         self.assertTrue(scnMeta.has_key('scenarios'))
+         self.assertTrue('scenarios' in scnMeta)
          self.assertEqual(scnMeta['user'], self._get_session_user(), 
                'User id on scenario package = {}, session user = {}'.format(
                   scnMeta['user'], self._get_session_user()))

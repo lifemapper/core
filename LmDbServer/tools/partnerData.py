@@ -36,7 +36,7 @@ import json
 import mx.DateTime
 import os
 import sys
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from LmBackend.common.lmobj import LMError
 
@@ -98,10 +98,10 @@ def get_ottids_from_gbifids(gbif_ids):
     headers = {
      'Content-Type' : 'application/json'
     }
-    req = urllib2.Request(OTTIDS_FROM_GBIFIDS_URL, 
+    req = urllib.request.Request(OTTIDS_FROM_GBIFIDS_URL, 
                           data=json.dumps(request_body), headers=headers)
    
-    resp = json.load(urllib2.urlopen(req))
+    resp = json.load(urllib.request.urlopen(req))
     unmatchedIds = resp[GBIF_MISSING_KEY]
    
     id_map = resp["gbif_ott_id_map"]
@@ -132,10 +132,10 @@ def induced_subtree(ott_ids, label_format=LABEL_FORMAT.NAME):
     headers = {
        'Content-Type' : 'application/json'
     }
-    req = urllib2.Request(INDUCED_SUBTREE_BASE_URL, 
+    req = urllib.request.Request(INDUCED_SUBTREE_BASE_URL, 
                           data=json.dumps(request_body), headers=headers)
     
-    resp_str = urllib2.urlopen(req).read()
+    resp_str = urllib.request.urlopen(req).read()
     return json.loads(resp_str)
 
 # .............................................................................
@@ -180,7 +180,7 @@ class PartnerQuery(object):
                  nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
                  familyStr, genusStr, speciesStr, genusKey, speciesKey, 
                  loglines) = GbifAPI.getTaxonomy(taxonKey)
-            except Exception, e:
+            except Exception as e:
                 self.log.info('Failed lookup for key {}, ({})'.format(
                                                       taxonKey, e))
             else:
@@ -202,7 +202,7 @@ class PartnerQuery(object):
                         sciName = scribe.findOrInsertTaxon(sciName=sname)
                         self.log.info('Inserted sciName for taxonKey {}, {}'
                                       .format(taxonKey, sciName.scientificName))
-                    except Exception, e:
+                    except Exception as e:
                         if not isinstance(e, LMError):
                             e = LMError(currargs='Failed on taxonKey {}'
                                         .format(taxonKey), 
@@ -218,7 +218,7 @@ class PartnerQuery(object):
         ottLabelPrefix = 'ott'
         ottid = ottlabel[len(ottLabelPrefix):]
         matches = []
-        for g, o in gbifott.iteritems():
+        for g, o in gbifott.items():
             if str(o) == ottid:
                 matches.append(g)
         return matches
@@ -237,7 +237,7 @@ class PartnerQuery(object):
         for ottlabel in otree.getLabels():
             gbifids = self._lookupGBIFForOTT(gbifott, ottlabel)
             if len(gbifids) == 0:
-                print('No gbifids for OTT {}'.format(ottlabel))                
+                print(('No gbifids for OTT {}'.format(ottlabel)))                
             else:
                 squidDict[ottlabel] = []
                 for gid in gbifids:
@@ -250,7 +250,7 @@ class PartnerQuery(object):
                           .format(gbifids, ottlabel))
         
         otree.annotateTree(PhyloTreeKeys.SQUID, squidDict)
-        print "Adding interior node labels to tree"
+        print("Adding interior node labels to tree")
         otree.addNodeLabels()
 
     # .............................................................................
@@ -262,7 +262,7 @@ class PartnerQuery(object):
         for ottlabel in otree.getLabels():
             gbifids = self._lookupGBIFForOTT(gbifott, ottlabel)
             if len(gbifids) == 0:
-                print('No gbifids for OTT {}'.format(ottlabel))                
+                print(('No gbifids for OTT {}'.format(ottlabel)))                
             else:
                 if len(gbifids) == 1:
                     gid = gbifids[0]
@@ -274,7 +274,7 @@ class PartnerQuery(object):
                           .format(gbifids, ottlabel))
         
         otree.annotateTree('label', ottgbifDict)
-        print "Adding interior node labels to tree"
+        print("Adding interior node labels to tree")
         otree.addNodeLabels()
 
     # .............................................................................
@@ -300,8 +300,8 @@ class PartnerQuery(object):
 
         canonical = self._getOptVal(gudname, 'canonicalName')
         speciesKey1 = self._getOptVal(gudname, 'speciesKey')    
-        print('origname {}, canonical {}, speciesKey {}'.format(origname, 
-                                                        canonical, speciesKey1))
+        print(('origname {}, canonical {}, speciesKey {}'.format(origname, 
+                                                        canonical, speciesKey1)))
         
         # Alternate matches
         alternatives = goodnames[1:]
@@ -316,8 +316,8 @@ class PartnerQuery(object):
             
             canonical = self._getOptVal(altname, 'canonicalName')
             speciesKey = self._getOptVal(altname, 'speciesKey')    
-            print('origname {}, canonical {}, speciesKey {}'.format(origname, 
-                                                            canonical, speciesKey))
+            print(('origname {}, canonical {}, speciesKey {}'.format(origname, 
+                                                            canonical, speciesKey)))
         # Return only top match
         return speciesKey1, canonical
     
@@ -329,11 +329,11 @@ class PartnerQuery(object):
             f = open(gbifidFname, 'r') 
             csvreader = unicodecsv.reader(f, delimiter=self.delimiter, 
                                           encoding=self.encoding)        
-        except Exception, e:
+        except Exception as e:
             raise Exception('Failed to read or open {}, ({})'
                             .format(gbifidFname, str(e)))
-        header = csvreader.next()
-        line = csvreader.next()
+        header = next(csvreader)
+        line = next(csvreader)
         currname = None
         while line is not None:
             try:
@@ -341,9 +341,9 @@ class PartnerQuery(object):
                 thistaxonid = line[header.index('speciesKey')]
                 thiscanonical = line[header.index('canonicalName')]
                 thisscore = line[header.index('confidence')]
-            except KeyError, e:
+            except KeyError as e:
                 self.log.error('Failed on line {} finding key {}'.format(line, str(e)))
-            except Exception, e:
+            except Exception as e:
                 self.log.error('Failed on line {}, {}'.format(line, str(e)))                
             else:
                 # If starting a new set of matches, save last winner and reset
@@ -377,14 +377,14 @@ class PartnerQuery(object):
 
             # Get next one
             try:
-                line = csvreader.next()
-            except OverflowError, e:
+                line = next(csvreader)
+            except OverflowError as e:
                 self.log.debug( 'Overflow on line {}, ({}))'
                                 .format(csvreader.line_num, str(e)))
             except StopIteration:
                 self.log.debug('EOF after line {}'.format(csvreader.line_num))
                 line = None
-            except Exception, e:
+            except Exception as e:
                 self.log.warning('Bad record {}'.format(e))
         
         # Save winner from final name
@@ -403,7 +403,7 @@ class PartnerQuery(object):
             names = [names]
            
         if os.path.exists(outfname):
-            print('Deleting existing file {} ...'.format(outfname))
+            print(('Deleting existing file {} ...'.format(outfname)))
             os.remove(outfname)
            
 #         writer, f = self._getCSVWriter(outfname, doAppend=False)
@@ -428,7 +428,7 @@ class PartnerQuery(object):
     def assembleOTOLData(self, gbifTaxonIds, dataname):
         tree = None
         gbif_to_ott = get_ottids_from_gbifids(gbifTaxonIds)
-        ottids = gbif_to_ott.values()
+        ottids = list(gbif_to_ott.values())
         output = induced_subtree(ottids)
                 
         try:
@@ -455,14 +455,14 @@ class PartnerQuery(object):
             try:    
                 scribe.openConnections()
                 labeledTree = self._relabelOttTree(scribe, otree, gbifott)
-            except Exception, e:
+            except Exception as e:
                 raise LMError('Failed to relabel or update tree ({})'.format(e))
             finally:
                 scribe.closeConnections()
         else:
             try:    
                 labeledTree = self._relabelOttTree(scribe, otree, gbifott)
-            except Exception, e:
+            except Exception as e:
                 raise LMError('Failed to relabel or update tree ({})'.format(e))
 
         return labeledTree 
@@ -491,7 +491,7 @@ if __name__ == '__main__':
         name_to_gbif_ids = iquery.readGBIFTaxonIds(gbifidFname)
     else:
         unmatched_names, name_to_gbif_ids = iquery.assembleGBIFTaxonIds(names, gbifidFname)
-    user_gbif_ids = [match[0] for match in name_to_gbif_ids.values()]
+    user_gbif_ids = [match[0] for match in list(name_to_gbif_ids.values())]
     # ............................
     # Get iDigBio point data for TaxonIDs
     if os.path.exists(ptFname) and os.path.exists(metaFname):
@@ -500,7 +500,7 @@ if __name__ == '__main__':
     else:
         gbifid_counts, idig_unmatched_gbif_ids = iquery.assembleIdigbioData(user_gbif_ids, ptFname, metaFname)   
                      
-    idig_gbif_ids = gbifid_counts.keys()
+    idig_gbif_ids = list(gbifid_counts.keys())
     
     # ............................
     # Get OpenTree tree and map for OTT Ids to GBIF TaxonIDs

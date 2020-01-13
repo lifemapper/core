@@ -113,7 +113,7 @@ class MapService(LmService):
                   ('wms', 'getlegendgraphic')]:
             try:
                 contentType, content = self._wxsGetImage(layers, color=color)
-            except Exception, e:
+            except Exception as e:
                 contentType, content = self._wxsGetText(msg=str(e))
         else:
             raise cherrypy.HTTPError(

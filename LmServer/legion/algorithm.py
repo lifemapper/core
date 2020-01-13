@@ -22,7 +22,7 @@
              02110-1301, USA.
 """
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except:
     import pickle
 import json
@@ -109,7 +109,7 @@ class Algorithm(LMObject):
         self._parameters = {}
         self._parameterConstraints = {}
         algparams = Algorithms.get(self.code).parameters
-        for key, constraintDict in algparams.iteritems():
+        for key, constraintDict in algparams.items():
             self._parameterConstraints[key] = constraintDict
             self._parameters[key] = None
 
@@ -135,12 +135,12 @@ class Algorithm(LMObject):
                 try:
                     newParams = json.loads(params)
                 except Exception as e:
-                    print('Failed to load JSON object from type {} object {}'
-                            .format(type(params), params))
+                    print(('Failed to load JSON object from type {} object {}'
+                            .format(type(params), params)))
 
         if type(newParams) is dict: 
             try:
-                for k, v in newParams.iteritems():
+                for k, v in newParams.items():
                     self.setParameter(k,v)
             except Exception as e:
                 raise LMError('Failed to load parameter {} with value {}'.format(k, v))
@@ -166,9 +166,9 @@ class Algorithm(LMObject):
             else:
                 try:
                     newInputs = json.loads(inputs)
-                except Exception, e:
-                    print('Failed to load JSON object from type {} object {}'
-                            .format(type(inputs), inputs))
+                except Exception as e:
+                    print(('Failed to load JSON object from type {} object {}'
+                            .format(type(inputs), inputs)))
             self._inputData = newInputs
 
     # ...............................................
@@ -209,7 +209,7 @@ class Algorithm(LMObject):
     # ...............................................
     def fillWithDefaults(self):
         self._parameters = {}
-        for key, constraints in self._parameterConstraints.iteritems():
+        for key, constraints in self._parameterConstraints.items():
             self._parameters[key] = constraints['default']
             
     # ...............................................
@@ -235,10 +235,10 @@ class Algorithm(LMObject):
         @return a correctly-capitalized string for this parameter, None if it is 
                   not valid for this algorithm
         """
-        if self._parameterConstraints.has_key(name):
+        if name in self._parameterConstraints:
             return name
         else:
-            for key in self._parameterConstraints.keys():
+            for key in list(self._parameterConstraints.keys()):
                 if key.lower() == name.lower():
                     return key
             return None
@@ -330,7 +330,7 @@ class Algorithm(LMObject):
         @return The algorithm parameter value
         @exception InvalidParameterError: Thrown if the parameter is invalid
         """
-        if self._parameters.has_key(name):
+        if name in self._parameters:
             return self._parameters[name]
         # If didn't find name and return
         raise InvalidParameterError(['Unknown parameter %s' % str(name)])
@@ -343,7 +343,7 @@ class Algorithm(LMObject):
         @param name: The name of the parameter to check 
         @return True/False
         """
-        if self._parameters.has_key(name):
+        if name in self._parameters:
             return True
         # If didn't find name and return
         return False
@@ -360,7 +360,7 @@ class Algorithm(LMObject):
             if (self.code == other.code):
                 if self._parameters is not None and other._parameters is not None:
                     if len(self._parameters) == len(other._parameters):
-                        for key, val in self._parameters.iteritems():
+                        for key, val in self._parameters.items():
                             if self._parameters[key] != other._parameters[key]:
                                 return False
                         return True
@@ -378,7 +378,7 @@ class Algorithm(LMObject):
             "parameters" : []
         }
             
-        for param in self._parameters.keys():
+        for param in list(self._parameters.keys()):
             algoObj["parameters"].append(
                 {"name" : param, 
                  "value" : str(self._parameters[param])})

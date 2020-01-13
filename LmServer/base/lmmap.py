@@ -100,12 +100,12 @@ class LMMap(LMSpatialObject):
             mapstr = self._getBaseMap(mapTemplate)
             mapstr = self._addMapBaseAttributes(mapstr)
             mapstr = mapstr.replace('##_LAYERS_##', lyrstr)
-         except Exception, e:
+         except Exception as e:
             raise
          
          try:
             self._writeBaseMap(mapstr)
-         except Exception, e:
+         except Exception as e:
             raise LMError('Failed to write {}: {}'.format(mapfilename, str(e)))
 
 # ...............................................
@@ -116,8 +116,8 @@ class LMMap(LMSpatialObject):
          # make sure that group is set correctly
          f.write(mapstr)
          f.close()
-         print('Wrote {}'.format(mapfilename))
-      except Exception, e:
+         print(('Wrote {}'.format(mapfilename)))
+      except Exception as e:
          raise LMError('Failed to write {}: {}'.format(mapfilename, str(e)))
       
 # ...............................................
@@ -127,7 +127,7 @@ class LMMap(LMSpatialObject):
          f = open(fname, 'r')
          map = f.read()
          f.close()
-      except Exception, e:
+      except Exception as e:
          raise LMError('Failed to read %s' % fname)
       return map
          
@@ -377,7 +377,7 @@ class LMMap(LMSpatialObject):
 # ...............................................
    def _createStyleClasses(self, name, styles):
       classes = ''
-      for clsgroup, style in styles.iteritems():
+      for clsgroup, style in styles.items():
          # first class is default 
          if len(classes) == 0: 
             classes = '\n'.join([classes, '      CLASSGROUP \"%s\"' % clsgroup])
@@ -568,16 +568,16 @@ class LMMap(LMSpatialObject):
          colorstring = '#' + colorstring
       if len(colorstring) == 7:
          if colorstring[0] != '#':
-            print('input %s is not in #RRGGBB format' % colorstring)
+            print(('input %s is not in #RRGGBB format' % colorstring))
             return None
          
          for i in range(len(colorstring)):
             if i > 0:
                if not(colorstring[i].isdigit()) and validChars.count(colorstring[i]) == 0:
-                  print('input %s is not a valid hex color' % colorstring)
+                  print(('input %s is not a valid hex color' % colorstring))
                   return None
       else:
-         print('input %s is not in #RRGGBB format' % colorstring)
+         print(('input %s is not in #RRGGBB format' % colorstring))
          return None
       return colorstring
 
@@ -679,12 +679,12 @@ class LMMap(LMSpatialObject):
       """
       try:
          src = gdal.Open(srcpath, gdalconst.GA_ReadOnly)
-      except Exception, e:
-         print('Exception opening %s (%s)' % (srcpath,str(e)) )
+      except Exception as e:
+         print(('Exception opening %s (%s)' % (srcpath,str(e)) ))
          return (None, None, None, None)
 
       if src is None:
-         print('%s is not a valid image file' % srcpath )
+         print(('%s is not a valid image file' % srcpath ))
          return (None, None, None, None)
 
       srcbnd = src.GetRasterBand(1)

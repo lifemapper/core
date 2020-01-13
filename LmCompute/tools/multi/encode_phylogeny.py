@@ -40,7 +40,7 @@ if __name__ == "__main__":
     
     # Check if we can encode tree
     if tree.hasBranchLengths() and not tree.isUltrametric(relTol=0.01):
-        raise Exception, "Tree must be ultrametric for encoding"
+        raise Exception("Tree must be ultrametric for encoding")
 
     # If the tree is not binary, resolve the polytomies
     if not tree.isBinary():

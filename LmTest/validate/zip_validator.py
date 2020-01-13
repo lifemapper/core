@@ -21,7 +21,7 @@ def validate_zip_file(zip_filename):
             with zipfile.ZipFile(zip_filename) as zipF:
                 info = zipF.infolist()
             valid = True
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
     else:
         msg = 'File does not exist'

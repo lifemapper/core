@@ -165,7 +165,7 @@ def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
         
         # Check unique values in window
         for v, num in unique_values:
-            if not np.isclose(v, nodata) and v in val_map.keys() and \
+            if not np.isclose(v, nodata) and v in list(val_map.keys()) and \
                     num >= counts[val_map[v]['index']]:
                 counts[val_map[v]['index']] = num
                 ret[val_map[v]['index']] = val_map[v]['val']
@@ -187,7 +187,7 @@ def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
         # Check unique values in window
         for v in unique_values:
             num = np.where(window == v)[0].size
-            if not np.isclose(v, nodata) and v in val_map.keys() and \
+            if not np.isclose(v, nodata) and v in list(val_map.keys()) and \
                     num >= counts[val_map[v]['index']]:
                 counts[val_map[v]['index']] = num
                 ret[val_map[v]['index']] = val_map[v]['val']

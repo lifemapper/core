@@ -96,7 +96,7 @@ class LmAttObj(object):
          if not isinstance(obj.__dict__, (dict, types.DictProxyType)):
             raise TypeError("%s.__dict__ is not a dictionary"
                                  "" % obj.__name__)
-         return obj.__dict__.keys()
+         return list(obj.__dict__.keys())
 
       def dir2(obj):
          attrs = set()
@@ -116,8 +116,8 @@ class LmAttObj(object):
              attrs.update(dir2(cls))
          attrs.update(get_attrs(obj))
          try:
-            attrs.update(obj.getAttributes().keys())
-         except Exception, e:
+            attrs.update(list(obj.getAttributes().keys()))
+         except Exception as e:
             pass
          return list(attrs)
 

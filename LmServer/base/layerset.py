@@ -345,7 +345,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
                                                usr=self._userId, 
                                                epsg=self._epsg)
         else:
-            print('Unsupported mapType {}'.format(self._mapType))
+            print(('Unsupported mapType {}'.format(self._mapType)))
         return fname
 
     # ...............................................
@@ -407,7 +407,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         elif self._mapType == LMFileType.OTHER_MAP:
             print('OTHER_MAP is not yet implemented')
         else:
-            print('Unsupported mapType {}'.format(self._mapType))
+            print(('Unsupported mapType {}'.format(self._mapType)))
         return url
             
     # .............................................................................
@@ -429,12 +429,12 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 onlineUrl = self._getMapsetUrl()
                 mapstr = self._addMapBaseAttributes(mapstr, onlineUrl)
                 mapstr = mapstr.replace('##_LAYERS_##', layers)
-            except Exception, e:
+            except Exception as e:
                 raise
            
             try:
                 self._writeBaseMap(mapstr)
-            except Exception, e:
+            except Exception as e:
                 raise LMError('Failed to write {}; {}'.format(self._mapFilename, e))
 
     # ...............................................
@@ -446,8 +446,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
             # make sure that group is set correctly
             f.write(mapstr)
             f.close()
-            print('Wrote {}'.format((self._mapFilename)))
-        except Exception, e:
+            print(('Wrote {}'.format((self._mapFilename))))
+        except Exception as e:
             raise LMError('Failed to write {}; {}'.format(self._mapFilename, e))
       
     # ...............................................
@@ -457,7 +457,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
             f = open(fname, 'r')
             map = f.read()
             f.close()
-        except Exception, e:
+        except Exception as e:
             raise LMError('Failed to read {}; {}'.format(fname, e))
         return map
          
@@ -672,7 +672,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # ...............................................
     def _createStyleClasses(self, name, styles):
         parts = []
-        for clsgroup, style in styles.iteritems():
+        for clsgroup, style in styles.items():
             # first class is default 
             if len(parts) == 0: 
                 parts.append('      CLASSGROUP \"{}\"'.format(clsgroup))
@@ -873,16 +873,16 @@ class MapLayerSet(_LayerSet, ServiceObject):
             colorstring = '#' + colorstring
         if len(colorstring) == 7:
             if colorstring[0] != '#':
-                print('input {} is not in #RRGGBB format'.format(colorstring))
+                print(('input {} is not in #RRGGBB format'.format(colorstring)))
                 return None
            
             for i in range(len(colorstring)):
                 if i > 0:
                     if not(colorstring[i].isdigit()) and validChars.count(colorstring[i]) == 0:
-                        print('input {} is not a valid hex color'.format(colorstring))
+                        print(('input {} is not a valid hex color'.format(colorstring)))
                         return None
         else:
-            print('input {} is not in #RRGGBB format'.format(colorstring))
+            print(('input {} is not in #RRGGBB format'.format(colorstring)))
             return None
         return colorstring
 
@@ -985,12 +985,12 @@ class MapLayerSet(_LayerSet, ServiceObject):
         """
         try:
             src = gdal.Open(srcpath, gdalconst.GA_ReadOnly)
-        except Exception, e:
-            print('Exception opening {} ({})'.format(srcpath, e))
+        except Exception as e:
+            print(('Exception opening {} ({})'.format(srcpath, e)))
             return (None, None, None, None)
         
         if src is None:
-            print('{} is not a valid image file'.format(srcpath ))
+            print(('{} is not a valid image file'.format(srcpath )))
             return (None, None, None, None)
         
         srcbnd = src.GetRasterBand(1)

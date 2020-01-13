@@ -123,12 +123,12 @@ class SubprocessManager(object):
         """Returns the number of running processes
         """
         numRunning = 0
-        for idx in xrange(len(self._runningProcs)):
+        for idx in range(len(self._runningProcs)):
             if self._runningProcs[idx].poll() is None:
                 numRunning = numRunning +1
             else:
                 self._runningProcs[idx] = None
-        self._runningProcs = filter(None, self._runningProcs)
+        self._runningProcs = [_f for _f in self._runningProcs if _f]
         return numRunning
 
 # .............................................................................

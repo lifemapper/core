@@ -65,7 +65,7 @@ if __name__ == "__main__":
         occParser = OccDataParser(logger, base_csv_fname, base_meta_fname, 
                                   delimiter=base_delimiter,
                                   pullChunks=True) 
-    except Exception, e:
+    except Exception as e:
         raise LMError('Failed to construct OccDataParser, {}'.format(e))
     
     if merge_csv_fname is not None:
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         occParser = OccDataParser(logger, base_csv_fname, base_meta_fname, 
                                   delimiter=base_delimiter,
                                   pullChunks=True) 
-    except Exception, e:
+    except Exception as e:
         raise LMError('Failed to construct OccDataParser, {}'.format(e))
 
     _fieldNames = occParser.header

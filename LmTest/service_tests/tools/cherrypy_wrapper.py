@@ -10,9 +10,9 @@ Note:
 import cherrypy
 import os
 import pickle
-from StringIO import StringIO
-import urllib
-from urlparse import urlparse
+from io import StringIO
+import urllib.request, urllib.parse, urllib.error
+from urllib.parse import urlparse
 
 from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmCommon.common.singleton import singleton
@@ -93,7 +93,7 @@ def createRequestFromErrorPickle(pickleFn):
             return executeRequest(vpath=vpath, method=method, scheme=scheme, data=body,
                                  headers=headers, remoteIp=remoteIp, **qParams)
     else:
-        raise Exception, "Pickle file %s, does not exist" % pickleFn
+        raise Exception("Pickle file %s, does not exist" % pickleFn)
     
 # .............................................................................
 class MockedInfo(object):
@@ -145,7 +145,7 @@ def executeRequest(vpath='/', method='GET', scheme='http',
     # we urlencode the named arguments in **kwargs
     # and set the content-type header
     if method in ('POST', 'PUT') and not data:
-        data = urllib.urlencode(kwargs)
+        data = urllib.parse.urlencode(kwargs)
         kwargs = None
         h['content-type'] = 'application/x-www-form-urlencoded'
 
@@ -153,7 +153,7 @@ def executeRequest(vpath='/', method='GET', scheme='http',
     # urlencode them and use them as a querystring
     qs = None
     if kwargs:
-        qs = urllib.urlencode(kwargs)
+        qs = urllib.parse.urlencode(kwargs)
 
     # if we had some data passed as the request entity
     # let's make sure we have the content-length set
@@ -169,7 +169,7 @@ def executeRequest(vpath='/', method='GET', scheme='http',
     # Let's fake the local and remote addresses
     request, response = app.get_serving(localAddress, remoteAddress, scheme, proto)
     try:
-        h = [(k, v) for k, v in h.iteritems()]
+        h = [(k, v) for k, v in h.items()]
         response = request.run(method, vpath, qs, proto, h, fd)
     finally:
         if fd:
@@ -177,7 +177,7 @@ def executeRequest(vpath='/', method='GET', scheme='http',
             fd = None
 
     if response.status.startswith('500'):
-        print response.body
+        print(response.body)
         raise AssertionError("Unexpected error")
 
     # Add an info function

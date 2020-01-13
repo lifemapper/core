@@ -27,7 +27,7 @@ def validate_csv_file(csv_filename, read_lines=False):
                     for line in reader:
                         pass
             valid = True
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
     else:
         msg = 'File does not exist'

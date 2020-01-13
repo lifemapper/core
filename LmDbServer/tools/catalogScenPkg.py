@@ -66,11 +66,11 @@ class SPFiller(LMObject):
         try:
             import imp
             self.spMeta  = imp.load_source('currentmetadata', spMetaFname)
-        except Exception, e:
+        except Exception as e:
             raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
                           .format(spMetaFname, e))
         
-        spkgNames = ','.join(self.spMeta.CLIMATE_PACKAGES.keys())
+        spkgNames = ','.join(list(self.spMeta.CLIMATE_PACKAGES.keys()))
         
         # version is a string
         try:
@@ -217,8 +217,8 @@ class SPFiller(LMObject):
             pscen = self._createScenario(pkgMeta, predCode, scenMeta, lyrMeta)
             allScens[predCode] = pscen
         
-        self.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
-        for scen in allScens.values():
+        self.scribe.log.info('     Assembled predicted scenarios {}'.format(list(allScens.keys())))
+        for scen in list(allScens.values()):
             scenPkg.addScenario(scen)      
         scenPkg.resetBBox()
         
@@ -352,7 +352,7 @@ class SPFiller(LMObject):
         # Insert empty ScenPackage
         updatedScenPkg = self.scribe.findOrInsertScenPackage(scenPkg)
         updatedScens = []
-        for scode, scen in scenPkg.scenarios.iteritems():
+        for scode, scen in scenPkg.scenarios.items():
             self.scribe.log.info('Insert scenario {}'.format(scode))
             # Insert Scenario and its Layers
             newscen = self.scribe.findOrInsertScenario(scen, 
@@ -380,7 +380,7 @@ class SPFiller(LMObject):
             userId = self.addUser()
             
             masklyr = None
-            for spName in self.spMeta.CLIMATE_PACKAGES.keys():
+            for spName in list(self.spMeta.CLIMATE_PACKAGES.keys()):
                 self.scribe.log.info('Creating scenario package {}'.format(spName))
                 scenPkg, masklyr = self.createScenPackage(spName)
                 
@@ -444,11 +444,11 @@ if __name__ == '__main__':
         # if using package name, look in default location)
         scen_package_meta = os.path.join(ENV_DATA_PATH, scen_package_meta + '.py')
     if not os.path.exists(scen_package_meta):
-        print ('Missing Scenario Package metadata file {}'.format(scen_package_meta))
+        print(('Missing Scenario Package metadata file {}'.format(scen_package_meta)))
         exit(-1)
     else:
-        print('Running script with scen_package_meta: {}, userid: {}, email: {}, logbasename: {}'
-             .format(scen_package_meta, user_id, user_email, logname))
+        print(('Running script with scen_package_meta: {}, userid: {}, email: {}, logbasename: {}'
+             .format(scen_package_meta, user_id, user_email, logname)))
         
         filler = SPFiller(scen_package_meta, user_id, email=user_email, 
                           logname=logname)
@@ -457,14 +457,14 @@ if __name__ == '__main__':
         if updatedScenPkg is not None:
             pkgid = updatedScenPkg.getId()
             if (pkgid is not None and updatedScenPkg.getUserId() == user_id):
-                print('Successfully added scenario package {} for user {}'
-                      .format(pkgid, user_id))
+                print(('Successfully added scenario package {} for user {}'
+                      .format(pkgid, user_id)))
             else:
-                print('Failed adding scenario package {} for user {}'
-                      .format(pkgid, user_id))
+                print(('Failed adding scenario package {} for user {}'
+                      .format(pkgid, user_id)))
         else:
-            print('Failed, add scenario package returned None for {} and user {}'
-                  .format(scen_package_meta, user_id))
+            print(('Failed, add scenario package returned None for {} and user {}'
+                  .format(scen_package_meta, user_id)))
 
             
    

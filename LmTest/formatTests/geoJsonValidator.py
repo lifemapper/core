@@ -33,8 +33,8 @@ def validate_geojson(obj_generator):
    """
    try:
       testJson = json.load(obj_generator)
-      assert testJson.has_key('type')
-      assert testJson.has_key('geometry')
+      assert 'type' in testJson
+      assert 'geometry' in testJson
       return True
-   except Exception, e:
+   except Exception as e:
       return False

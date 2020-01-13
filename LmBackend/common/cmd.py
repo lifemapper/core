@@ -45,5 +45,5 @@ class MfRule(LMObject):
         """
         if type(dependencies) in (list, tuple):
             self.dependencies.extend(dependencies)
-        elif type(dependencies) in (unicode, str):
+        elif type(dependencies) == str:
             self.dependencies.append(dependencies)

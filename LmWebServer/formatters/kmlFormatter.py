@@ -477,7 +477,7 @@ def getLatLonForPoint(pt):
          return lat, lon
    
    # Raise exception if we get to here without determining lat and lon
-   raise Exception, "Could not retrieve latitude and / or longitude for point"
+   raise Exception("Could not retrieve latitude and / or longitude for point")
 
 # .............................................................................
 def getLocalIdForPoint(pt):

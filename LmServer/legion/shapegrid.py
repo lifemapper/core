@@ -147,9 +147,9 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
         if not(self._features) and self.getDLocation() is not None:
             self.readData()
         if self._features: 
-            for siteidx in self._features.keys():
+            for siteidx in list(self._features.keys()):
                 if siteidx is None:
-                    print 'WTF?'
+                    print('WTF?')
                 geom = self._features[siteidx][self._geomIdx]
                 siteIndices[siteidx] = geom
         return siteIndices
@@ -242,8 +242,8 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
     def buildShape(self, cutout=None, overwrite=False):
         # After build, setDLocation, write shapefile
         if os.path.exists(self._dlocation) and not overwrite:
-            print(
-                'Shapegrid file already exists at: {}'.format(self._dlocation))
+            print((
+                'Shapegrid file already exists at: {}'.format(self._dlocation)))
             self.readData(doReadData=False)
             self._setCellMeasurements()
             return 

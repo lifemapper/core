@@ -46,7 +46,7 @@ class UserLogin(LmService):
         
         try:
             cookie = cherrypy.request.cookie
-            if cookie.has_key(REFERER_KEY):
+            if REFERER_KEY in cookie:
                 refererPage = cookie[REFERER_KEY].value
             else:
                 refererPage = cherrypy.request.headers['referer']

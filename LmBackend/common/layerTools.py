@@ -63,7 +63,7 @@ def convertAndModifyAsciiToTiff(ascFn, tiffFn, scale=None, multiplier=None,
         npType = numpy.uint8
         gdalType = gdal.GDT_Byte
     else:
-        raise Exception, "Unknown data type"
+        raise Exception("Unknown data type")
      
     src_ds = gdal.Open(ascFn)
     band = src_ds.GetRasterBand(1)
@@ -127,7 +127,7 @@ def convertAsciisToMxes(lyrDir):
     p = subprocess.Popen(meConvertCmd, shell=True)
     
     while p.poll() is None:
-        print "Waiting for layer conversion (asc to mxe) to finish..."
+        print("Waiting for layer conversion (asc to mxe) to finish...")
         sleep(WAIT_SECONDS)
     
 # .............................................................................
@@ -147,14 +147,14 @@ def convertLayersInDirectory(layerDir):
                 mxeFn = '{}{}'.format(basename, LMFormat.MXE.ext)
                 
                 if not os.path.exists(asciiFn):
-                    print 'Converting: {}'.format(tiffFn)
+                    print('Converting: {}'.format(tiffFn))
                     convertTiffToAscii(tiffFn, asciiFn)
                     
                 if not os.path.exists(mxeFn):
                     mxeDirs.add(myDir)
 
     for lyrDir in mxeDirs:
-        print 'Converting ASCIIs in {} to MXEs'.format(lyrDir)
+        print('Converting ASCIIs in {} to MXEs'.format(lyrDir))
         convertAsciisToMxes(lyrDir)
 
 

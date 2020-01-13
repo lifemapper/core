@@ -66,7 +66,7 @@ def create_convex_hull_region_intersect_mask(occ_shp_filename, mask_path,
     
     listVals = list(vals)
     if len(listVals) == 0:
-        raise Exception, 'No intersection between points and raster'
+        raise Exception('No intersection between points and raster')
     newData = nodata * np.ones(data.shape, dtype=np.int8)
     
     convex_hull_raw = geom_coll.ConvexHull()
@@ -108,7 +108,7 @@ def create_convex_hull_array(base_path, convex_hull, bbox, cell_size, epsg,
     tmp_shp_filename = '{}_convex_hull.shp'.format(base_path)
     tmp_raster_filename = '{}_convex_hull.tif'.format(base_path)
     
-    print tmp_raster_filename, tmp_shp_filename
+    print(tmp_raster_filename, tmp_shp_filename)
     
     shp_drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
     

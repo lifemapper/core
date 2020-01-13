@@ -43,7 +43,7 @@ class Troubleshooter(object):
         problems = {}
         for o in objects:
             usr = o.getUserId()
-            if not (problems.has_key(usr)):
+            if not (usr in problems):
                 problems[usr] = {objname: set([])}
             problems[usr][objname].add(o)
         return problems
@@ -58,7 +58,7 @@ class Troubleshooter(object):
         notifier = EmailNotifier()
         try:
             notifier.sendMessage(recipients, subject, message)
-        except Exception, e:
+        except Exception as e:
             self.log.error('Failed to notify %s about %s' 
                                 % (str(recipients), subject))
 
@@ -69,21 +69,21 @@ class Troubleshooter(object):
             models, projs = self._scribe.findProblemObjects(oldtime, 
                                                     startStat=startStatus, endStat=endStatus, 
                                                     ignoreUser=PUBLIC_USER)
-        except Exception, e:
+        except Exception as e:
             if not isinstance(e, LMError):
                 e = LMError(currargs=e.args, lineno=self.getLineno())
             raise e
             
         probs = self._organizeProblemObjects(models, 'Model')
         pprobs = self._organizeProblemObjects(projs, 'Projection')
-        for usr in pprobs.keys():
-            if probs.has_key(usr):
+        for usr in list(pprobs.keys()):
+            if usr in probs:
                 probs[usr]['Projection'] = pprobs[usr]['Projection']
             
-        if probs.keys():
+        if list(probs.keys()):
             msg = ('Problem SDM Data started before %s (mjd=%d)' 
                      % (dt.DateTimeFromMJD(oldtime).localtime().Format()))
-            for usr in probs.keys():
+            for usr in list(probs.keys()):
                 msg += '%s\n' % usr
                 msg += '  ModelId  Status\n'
                 for m in probs[usr]['Model']:

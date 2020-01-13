@@ -268,7 +268,7 @@ class ModelSoftwareWrapper(object):
             readyFilename(destination_filename, overwrite=overwrite)
             shutil.copy(source_filename, destination_filename)
         else:
-            raise IOError, '{} does not exist'.format(source_filename)
+            raise IOError('{} does not exist'.format(source_filename))
         
     # ...................................
     def copy_ruleset(self, destination_filename, overwrite=False):

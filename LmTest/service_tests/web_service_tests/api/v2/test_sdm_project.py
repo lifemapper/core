@@ -186,7 +186,7 @@ class TestWebSdmProjectService(UserTestCase):
          with contextlib.closing(self.cl.get_sdm_projection(prjId)) as x:
             prjMeta = json.load(x)
             
-         self.assertTrue(prjMeta.has_key('algorithm'))
+         self.assertTrue('algorithm' in prjMeta)
          self.assertEqual(prjMeta['user'], self._get_session_user(), 
                'User id on projection = {}, session user = {}'.format(
                   prjMeta['user'], self._get_session_user()))

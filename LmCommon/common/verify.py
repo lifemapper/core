@@ -22,7 +22,7 @@ def _getHexHashValue(dlocation=None, content=None):
             content = f.read()
             f.close()
         else:
-            print('Failed to hash missing file {}'.format(dlocation))
+            print(('Failed to hash missing file {}'.format(dlocation)))
     if content is not None:
         hashval = hashlib.sha256(content)
         hexhash = hashval.hexdigest()

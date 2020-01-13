@@ -11,11 +11,11 @@ class InvalidResponseException(Exception):
     
     # ...............................
     def __repr__(self):
-        return "%s %s" % (self.__class__, unicode(self))
+        return "%s %s" % (self.__class__, str(self))
         
     # ...............................
     def __str__(self):
-        return unicode(self)
+        return str(self)
     
     # ...............................
     def __unicode__(self):

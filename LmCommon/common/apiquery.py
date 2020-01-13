@@ -6,7 +6,7 @@ import os
 import requests
 from types import (BooleanType, DictionaryType, TupleType, FloatType, IntType, 
                    StringType, UnicodeType, ListType)
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
                                          IDIGBIO, IDIGBIO_QUERY, 
@@ -65,9 +65,9 @@ class APIQuery(object):
                existing filters, unless existing keys are sent with new values.
         """
         self.output = None
-        for k, v in qFilters.iteritems():
+        for k, v in qFilters.items():
             self._qFilters[k] = v
-        for k, v in otherFilters.iteritems():
+        for k, v in otherFilters.items():
             self._otherFilters[k] = v
         self.filterString = self._assembleFilterString()
          
@@ -112,11 +112,11 @@ class APIQuery(object):
 
     # ...............................................
     def _assembleKeyValFilters(self, ofDict):
-        for k, v in ofDict.iteritems():
+        for k, v in ofDict.items():
             if isinstance(v, BooleanType):
                 v = str(v).lower()
-            ofDict[k] = unicode(v).encode('utf-8')         
-        filterString = urllib.urlencode(ofDict)
+            ofDict[k] = str(v).encode('utf-8')         
+        filterString = urllib.parse.urlencode(ofDict)
         return filterString
       
     # ...............................................
@@ -134,9 +134,9 @@ class APIQuery(object):
                   and (isinstance(val[1], IntType) or isinstance(val[1], FloatType))):
                 cls = '{}:[{} TO {}]'.format(key, str(val[0]), str(val[1]))
             else:
-                print 'Unexpected value type {}'.format(val)
+                print('Unexpected value type {}'.format(val))
         else:
-            print 'Unexpected value type {}'.format(val)
+            print('Unexpected value type {}'.format(val))
         return cls
    
     # ...............................................
@@ -155,7 +155,7 @@ class APIQuery(object):
         clauses = []
         qval = ''
         # interpret dictionary
-        for key, val in qDict.iteritems():
+        for key, val in qDict.items():
             clauses.extend(self._assembleQItem(key, val))
         # convert to string
         firstClause = ''
@@ -178,30 +178,30 @@ class APIQuery(object):
         retcode = None
         try:
             response = requests.get(self.url, headers=self.headers)
-        except Exception, e:
+        except Exception as e:
             try:
                 retcode = response.status_code
                 reason = response.reason
             except:
                 reason = 'Unknown Error'
-            print('Failed on URL {}, code = {}, reason = {} ({})'
-                 .format(self.url, retcode, reason, str(e)))
+            print(('Failed on URL {}, code = {}, reason = {} ({})'
+                 .format(self.url, retcode, reason, str(e))))
          
         if response.status_code == 200:
             if outputType == 'json':
                 try:
                     self.output = response.json()
-                except Exception, e:
+                except Exception as e:
                     output = response.content
                     self.output = deserialize(fromstring(output))
             elif outputType == 'xml':
                 output = response.text
                 self.output = deserialize(fromstring(output))
             else:
-                print('Unrecognized output type {}'.format(outputType))
+                print(('Unrecognized output type {}'.format(outputType)))
         else:
-            print('Failed on URL {}, code = {}, reason = {}'
-                  .format(self.url, response.status_code, response.reason))
+            print(('Failed on URL {}, code = {}, reason = {}'
+                  .format(self.url, response.status_code, response.reason)))
 
     # ...........    ....................................
     def queryByPost(self, outputType='json', file=None):
@@ -211,16 +211,16 @@ class APIQuery(object):
             files = {'files': open(file, 'rb')}
             try:
                 response = requests.post(self.baseurl, files=files)
-            except Exception, e:
+            except Exception as e:
                 try:
                     retcode = response.status_code
                     reason = response.reason
                 except:
                     retcode = HTTPStatus.INTERNAL_SERVER_ERROR
                     reason = 'Unknown Error'
-                print("""Failed on URL {}, posting uploaded file {}, code = {}, 
+                print(("""Failed on URL {}, posting uploaded file {}, code = {}, 
                         reason = {} ({})""".format(self.url, file, retcode, 
-                                                   reason, str(e)))
+                                                   reason, str(e))))
         # Post parameters
         else:
             allParams = self._otherFilters.copy()
@@ -229,32 +229,32 @@ class APIQuery(object):
             try:
                 response = requests.post(self.baseurl, data=queryAsString,
                                          headers=self.headers)
-            except Exception, e:
+            except Exception as e:
                 try:
                     retcode = response.status_code
                     reason = response.reason
                 except:
                     retcode = HTTPStatus.INTERNAL_SERVER_ERROR
                     reason = 'Unknown Error'
-                print('Failed on URL {}, code = {}, reason = {} ({})'.format(
-                                  self.url, retcode, reason, str(e)))
+                print(('Failed on URL {}, code = {}, reason = {} ({})'.format(
+                                  self.url, retcode, reason, str(e))))
         
         if response.ok:
             try:
                 if outputType == 'json':
                     try:
                         self.output = response.json()
-                    except Exception, e:
+                    except Exception as e:
                         output = response.content
                         self.output = deserialize(fromstring(output))
                 elif outputType == 'xml':
                     output = response.text
                     self.output = deserialize(fromstring(output))
                 else:
-                    print('Unrecognized output type {}'.format(outputType))
-            except Exception, e:
-                print('Failed to interpret output of URL {}, content = {}; ({})'
-                      .format(self.baseurl, response.content, str(e)))
+                    print(('Unrecognized output type {}'.format(outputType)))
+            except Exception as e:
+                print(('Failed to interpret output of URL {}, content = {}; ({})'
+                      .format(self.baseurl, response.content, str(e))))
         else:
             try:
                 retcode = response.status_code
@@ -262,8 +262,8 @@ class APIQuery(object):
             except:
                 retcode = HTTPStatus.INTERNAL_SERVER_ERROR
                 reason = 'Unknown Error'
-            print('Failed ({}: {}) for baseurl {}'.format(retcode, reason, 
-                                                          self.baseurl))
+            print(('Failed ({}: {}) for baseurl {}'.format(retcode, reason, 
+                                                          self.baseurl)))
 
 # .............................................................................
 class BisonAPI(APIQuery):
@@ -278,12 +278,12 @@ class BisonAPI(APIQuery):
         @summary: Constructor for BisonAPI class      
         """
         allQFilters = BISON_QUERY.QFILTERS.copy()
-        for key, val in qFilters.iteritems():
+        for key, val in qFilters.items():
             allQFilters[key] = val
            
         # Add/replace other filters to defaults for this instance
         allOtherFilters = BISON_QUERY.FILTERS.copy()
-        for key, val in otherFilters.iteritems():
+        for key, val in otherFilters.items():
             allOtherFilters[key] = val
            
         APIQuery.__init__(self, BISON.OCCURRENCE_URL, qKey='q', qFilters=allQFilters, 
@@ -315,7 +315,7 @@ class BisonAPI(APIQuery):
             for key in keylst:
                 try:         
                     thisdict = thisdict[key]
-                except KeyError, e:
+                except KeyError as e:
                     raise Exception('Missing key {} in output'.format(key))
         else:
             raise Exception('Invalid output type ({})'.format(type(thisdict)))
@@ -339,8 +339,8 @@ class BisonAPI(APIQuery):
         if self.output is not None:
             dataCount = self._burrow(BISON_QUERY.COUNT_KEYS)
             dataList = self._burrow(BISON_QUERY.TSN_LIST_KEYS)
-            print 'Reported count = {}, actual count = {}'.format(dataCount, 
-                                                              len(dataList))
+            print('Reported count = {}, actual count = {}'.format(dataCount, 
+                                                              len(dataList)))
         return dataList
     
     # ...............................................
@@ -357,8 +357,8 @@ class BisonAPI(APIQuery):
             tsnHier = occAPI.getFirstValueFor(BISON.HIERARCHY_KEY)
             itisname = occAPI.getFirstValueFor(BISON.NAME_KEY)
             king = occAPI.getFirstValueFor(BISON.KINGDOM_KEY)
-        except Exception, e:
-            print str(e)
+        except Exception as e:
+            print(str(e))
             raise
         return (itisname, king, tsnHier)
     
@@ -388,7 +388,7 @@ class BisonAPI(APIQuery):
                 val = rec[fieldname]
                 break
             except:
-                print('Missing {} for {}'.format(fieldname, self.url))
+                print(('Missing {} for {}'.format(fieldname, self.url)))
                  
         return val
 
@@ -483,7 +483,7 @@ class GbifAPI(APIQuery):
     def _getOutputVal(outDict, name):
         try:
             tmp = outDict[name]
-            val = unicode(tmp).encode('utf-8')
+            val = str(tmp).encode('utf-8')
         except:
             return None
         return val
@@ -530,8 +530,8 @@ class GbifAPI(APIQuery):
                     loglines.append('   rank = {}'.format(rankStr))
                 except:
                     loglines.append('Failed to format data from {}'.format(taxonKey))
-        except Exception, e:
-            print str(e)
+        except Exception as e:
+            print(str(e))
             raise
         return (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
                 nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
@@ -585,13 +585,13 @@ class GbifAPI(APIQuery):
                 try:
                     gapi.query()
                 except:
-                    print 'Failed on {}'.format(taxonKey)
+                    print('Failed on {}'.format(taxonKey))
                     currcount = 0
                 else:
                     # First query, report count
                     if offset == 0:
                         gbiftotal = gapi.output['count']
-                        print("Found {} recs for key {}".format(gbiftotal, taxonKey))
+                        print(("Found {} recs for key {}".format(gbiftotal, taxonKey)))
                         
                     recs = gapi.output['results']
                     currcount = len(recs)
@@ -604,8 +604,8 @@ class GbifAPI(APIQuery):
                         row = gapi._getTaiwanRow(gapi, taxonKey, canonicalName, rec)
                         if row:
                             writer.writerow(row)
-                    print("  Retrieved {} records, starting at {}"
-                          .format(currcount, offset))
+                    print(("  Retrieved {} records, starting at {}"
+                          .format(currcount, offset)))
                     offset += GBIF.LIMIT
                     if maxpoints is not None and lmtotal >= maxpoints:
                         complete = True
@@ -648,9 +648,9 @@ class GbifAPI(APIQuery):
         try:
             nameAPI.query()
             output = nameAPI.output
-        except Exception, e:
-            print ('Failed to get a response for species match on {}, ({})'
-                   .format(nameclean, str(e)))
+        except Exception as e:
+            print(('Failed to get a response for species match on {}, ({})'
+                   .format(nameclean, str(e))))
             raise
         
         try:
@@ -663,8 +663,8 @@ class GbifAPI(APIQuery):
         else:
             try:
                 alternatives = output['alternatives']
-                print ('No exact match on {}, returning top alternative of {}'
-                       .format(nameclean, len(alternatives)))
+                print(('No exact match on {}, returning top alternative of {}'
+                       .format(nameclean, len(alternatives))))
                 # get first/best synonym
                 for alt in alternatives:
                     try:
@@ -676,7 +676,7 @@ class GbifAPI(APIQuery):
                         goodnames.append(smallrec)
                         break
             except:
-                print ('No match or alternatives to return for {}'.format(nameclean))
+                print(('No match or alternatives to return for {}'.format(nameclean)))
                 
         return goodnames
     
@@ -689,7 +689,7 @@ class GbifAPI(APIQuery):
             if response is not None:
                 retcode = response.status_code
             else:
-                print('Failed on URL {} ({})'.format(url, str(e)))
+                print(('Failed on URL {} ({})'.format(url, str(e))))
         else:
             if response.ok:
                 try:
@@ -700,19 +700,19 @@ class GbifAPI(APIQuery):
                     except Exception:
                         output = response.text
                     else:
-                        print('Failed to interpret output of URL {} ({})'
-                            .format(url, str(e)))
+                        print(('Failed to interpret output of URL {} ({})'
+                            .format(url, str(e))))
             else:
 
                 try:
                     retcode = response.status_code        
                     reason = response.reason
                 except:
-                    print('Failed to find failure reason for URL {} ({})'
-                        .format(url, str(e)))
+                    print(('Failed to find failure reason for URL {} ({})'
+                        .format(url, str(e))))
                 else:
-                    print('Failed on URL {} ({}: {})'
-                            .format(url, retcode, reason))
+                    print(('Failed on URL {} ({}: {})'
+                            .format(url, retcode, reason)))
         return output
 
     
@@ -732,9 +732,9 @@ class GbifAPI(APIQuery):
         nameAPI = GbifAPI(service=GBIF.PARSER_SERVICE)
         try:
             output = nameAPI._postJsonToParser(names)
-        except Exception, e:
-            print ('Failed to get a response from GBIF name parser for data in file {}, ({})'
-                   .format(filename, str(e)))
+        except Exception as e:
+            print(('Failed to get a response from GBIF name parser for data in file {}, ({})'
+                   .format(filename, str(e))))
             raise
         
         if output:
@@ -746,7 +746,7 @@ class GbifAPI(APIQuery):
                     except KeyError as e:
                         print('Missing scientific or canonicalName in output record')
                     except Exception as e:
-                        print('Failed, err: {}'.format(str(e)))
+                        print(('Failed, err: {}'.format(str(e))))
                     cleanNames[sciname] = canname
                     
         return cleanNames
@@ -762,8 +762,8 @@ class GbifAPI(APIQuery):
         try:
             orgAPI.query()
             puborgName = orgAPI._getOutputVal(orgAPI.output, 'title')
-        except Exception, e:
-            print str(e)
+        except Exception as e:
+            print(str(e))
             raise
         return puborgName
     
@@ -792,12 +792,12 @@ class IdigbioAPI(APIQuery):
         
         # Add/replace Q filters to defaults for this instance 
         allQFilters = IDIGBIO_QUERY.QFILTERS.copy()
-        for key, val in qFilters.iteritems():
+        for key, val in qFilters.items():
             allQFilters[key] = val
            
         # Add/replace other filters to defaults for this instance
         allOtherFilters = IDIGBIO_QUERY.FILTERS.copy()
-        for key, val in otherFilters.iteritems():
+        for key, val in otherFilters.items():
             allOtherFilters[key] = val
            
         APIQuery.__init__(self, idigSearchUrl, qKey='rq',
@@ -839,9 +839,9 @@ class IdigbioAPI(APIQuery):
             fullCount = self.output['itemCount']
             for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
                 newitem = {}
-                for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].iteritems():
+                for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].items():
                     newitem[dataFld] = dataVal
-                for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].iteritems():
+                for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].items():
                     if idxFld == 'geopoint':
                         newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
                         newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
@@ -882,7 +882,7 @@ class IdigbioAPI(APIQuery):
         """
         @param gbifTaxonIds: one GBIF TaxonId or a list
         """
-        fldnames = rec['indexTerms'].keys()
+        fldnames = list(rec['indexTerms'].keys())
         # add dec_long and dec_lat to records
         fldnames.extend(['dec_lat', 'dec_long'])
         fldnames.sort()
@@ -899,7 +899,7 @@ class IdigbioAPI(APIQuery):
         try:
             output = api.search_records(rq=recordQuery, limit=1, offset=0)
         except:
-            print 'Failed on {}'.format(gbifTaxonId)
+            print('Failed on {}'.format(gbifTaxonId))
             total = 0
         else:
             total = output['itemCount']
@@ -922,7 +922,7 @@ class IdigbioAPI(APIQuery):
                 output = api.search_records(rq=recordQuery,
                                             limit=limit, offset=offset)
             except:
-                print 'Failed on {}'.format(gbifTaxonId)
+                print('Failed on {}'.format(gbifTaxonId))
                 total = 0
             else:
                 total = output['itemCount']
@@ -940,8 +940,8 @@ class IdigbioAPI(APIQuery):
                 # Write these records
                 recs = output['items']
                 currcount += len(recs)
-                print("  Retrieved {} records, {} records starting at {}"
-                      .format(len(recs), limit, offset))
+                print(("  Retrieved {} records, {} records starting at {}"
+                      .format(len(recs), limit, offset)))
                 for rec in recs:
                     recdata = rec['indexTerms']
                     vals = []
@@ -966,7 +966,7 @@ class IdigbioAPI(APIQuery):
                     
                     writer.writerow(vals)
                 offset += limit
-        print('Retrieved {} of {} reported records for {}'.format(currcount, total, gbifTaxonId))
+        print(('Retrieved {} of {} reported records for {}'.format(currcount, total, gbifTaxonId)))
         return currcount, fields
 
     
@@ -979,7 +979,7 @@ class IdigbioAPI(APIQuery):
         # Delete old files
         for fname in (point_output_file, meta_output_file):
             if os.path.exists(fname):
-                print('Deleting existing file {} ...'.format(fname))
+                print(('Deleting existing file {} ...'.format(fname)))
                 os.remove(fname)
             
         summary = {self.GBIF_MISSING_KEY: []}
@@ -1006,7 +1006,7 @@ class IdigbioAPI(APIQuery):
             try: 
                 for gid in summary[self.GBIF_MISSING_KEY]:
                     f.write('{}\n'.format(gid))
-            except Exception, e:
+            except Exception as e:
                 raise
             finally:
                 f.close()
@@ -1033,9 +1033,9 @@ class IdigbioAPI(APIQuery):
     def readIdigbioData(self, ptFname, metaFname):
         gbifid_counts = {}
         if not(os.path.exists(ptFname)):
-            print ('Point data {} does not exist'.format(ptFname))
+            print(('Point data {} does not exist'.format(ptFname)))
         elif not(os.path.exists(metaFname)):
-            print ('Metadata {} does not exist'.format(metaFname))
+            print(('Metadata {} does not exist'.format(metaFname)))
         else:
             occParser = OccDataParser(self.log, ptFname, metaFname, 
                                       delimiter=self.DELIMITER,
@@ -1043,7 +1043,7 @@ class IdigbioAPI(APIQuery):
             occParser.initializeMe()  
             # returns dict with key = taxonid, val = (name, count)
             summary = occParser.readAllChunks()
-            for taxid, (name, count) in summary.iteritems():
+            for taxid, (name, count) in summary.items():
                 gbifid_counts[taxid] = count
         return gbifid_counts
 
@@ -1052,7 +1052,7 @@ class IdigbioAPI(APIQuery):
 # .............................................................................
 def testBison():
       
-    tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
+    tsnList = [['100637', 31], ['100667', 45], ['100674', 24]]
      
     #       tsnList = BisonAPI.getTsnListForBinomials()
     for tsnPair in tsnList:
@@ -1064,24 +1064,24 @@ def testBison():
         thisurl = occAPI.url
         occList = occAPI.getTSNOccurrences()
         count = None if not occList else len(occList)
-        print 'Received {} occurrences for TSN {}'.format(count, tsn)
+        print('Received {} occurrences for TSN {}'.format(count, tsn))
         
         occAPI2 = BisonAPI.initFromUrl(thisurl)
         occList2 = occAPI2.getTSNOccurrences()
         count = None if not occList2 else len(occList2)
-        print 'Received {} occurrences from url init'.format(count)
+        print('Received {} occurrences from url init'.format(count))
          
         tsnAPI = BisonAPI(qFilters={BISON.HIERARCHY_KEY: '*-{}-'.format(tsn)}, 
                           otherFilters={'rows': 1})
         hier = tsnAPI.getFirstValueFor(BISON.HIERARCHY_KEY)
         name = tsnAPI.getFirstValueFor(BISON.NAME_KEY)
-        print name, hier
+        print(name, hier)
 
 # .............................................................................
 def testGbif():
     taxonid = 1000225
     output = GbifAPI.getTaxonomy(taxonid)
-    print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
+    print('GBIF Taxonomy for {} = {}'.format(taxonid, output))
 
       
 # .............................................................................
@@ -1103,7 +1103,7 @@ def testIdigbioTaxonIds():
             if line is not None:
                 tempvals = line.strip().split()
                 if len(tempvals) < 3:
-                    print('Missing data in line {}'.format(line))
+                    print(('Missing data in line {}'.format(line)))
                 else:
                     try:
                         currGbifTaxonId = int(tempvals[0])

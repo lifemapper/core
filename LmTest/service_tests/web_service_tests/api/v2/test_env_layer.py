@@ -194,7 +194,7 @@ class TestWebEnvLayerService(UserTestCase):
          with contextlib.closing(self.cl.get_environmental_layer(layerId)) as x:
             lyrMeta = json.load(x)
             
-         self.assertTrue(lyrMeta.has_key('envCode'))
+         self.assertTrue('envCode' in lyrMeta)
          self.assertEqual(lyrMeta['user'], self._get_session_user(), 
                'User id on layer = {}, session user = {}'.format(
                   lyrMeta['user'], self._get_session_user()))

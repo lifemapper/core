@@ -72,39 +72,39 @@ class ObjectAttributeIterator(LMObject):
       
       try: # Named Tuples
          items = self.obj._asdict()
-         for key in items.keys():
+         for key in list(items.keys()):
             self.addItem(key, self.obj.__getattribute__(key))
-      except Exception, e1:
+      except Exception as e1:
          try: # Pick up attributes from attribute lists and objects
-            for k in self.obj.getAttributes().keys():
+            for k in list(self.obj.getAttributes().keys()):
                att = self.obj.__getattr__(k)
                if isinstance(att, (IntType, FloatType)):
                   self.attributes[k] = att
                elif isinstance(att, StringType):
-                  tmp = unicode(att, ENCODING).encode(ENCODING)
+                  tmp = str(att, ENCODING).encode(ENCODING)
                   self.attributes[k] = tmp
                else:
                   self.addItem(k, att)
-         except Exception, e3:
+         except Exception as e3:
             pass
          
          try: # Handle dictionaries
-            for key in self.obj.keys():
+            for key in list(self.obj.keys()):
                if not isinstance(self.obj[key], numpy.ndarray):
                   self.addItem(key, self.obj[key])
                else:
                   self.addItem(key, self.obj[key].tolist())
-         except Exception, e2:
+         except Exception as e2:
             try: # Handle iterables (picks up attribute list items)
                name = self.name[:-1] if self.name.endswith('s') else self.name
                for item in self.obj:
                   self.addItem(name, item)
-            except Exception, e4:
+            except Exception as e4:
                pass
          
          try: # Other objects (picks up attribute object properties)
             itms = dir(self.obj)
-            filteredItems = [itm for itm in itms if filter(itm)]
+            filteredItems = [itm for itm in itms if list(filter(itm))]
             for key in filteredItems:
                try:
                   att = self.obj.__getattribute__(key)
@@ -121,7 +121,7 @@ class ObjectAttributeIterator(LMObject):
                         self.addItem(key, att)
                except:
                   pass
-         except Exception, e5:
+         except Exception as e5:
             pass
 
    # .........................................
@@ -142,9 +142,9 @@ class ObjectAttributeIterator(LMObject):
                   raise
             except:
                try:
-                  item = unicode(item, ENCODING).encode(ENCODING)
+                  item = str(item, ENCODING).encode(ENCODING)
                except:
-                  item = unicode(str(item), ENCODING).encode(ENCODING)
+                  item = str(str(item), ENCODING).encode(ENCODING)
                   try:
                      item = str(decimal.Decimal(item))
                   except:
@@ -155,9 +155,9 @@ class ObjectAttributeIterator(LMObject):
                                       timeFormat=self.formatTime)
          else:
             try:
-               item = unicode(str(item), ENCODING).encode(ENCODING)
-               item = unicode(str(item.id), ENCODING).encode(ENCODING)
-               item = unicode(str(item.metadataUrl), ENCODING).encode(ENCODING)
+               item = str(str(item), ENCODING).encode(ENCODING)
+               item = str(str(item.id), ENCODING).encode(ENCODING)
+               item = str(str(item.metadataUrl), ENCODING).encode(ENCODING)
             except:
                pass
          self.items.append((key, item))
@@ -165,7 +165,7 @@ class ObjectAttributeIterator(LMObject):
          pass
    
    # .........................................
-   def next(self):
+   def __next__(self):
       """
       @summary: Returns the next item
       """
@@ -269,7 +269,7 @@ def getUrlParameter(param, parameterGroup):
    more than one.
    """
    try:
-      if parameterGroup.has_key(param.lower()):
+      if param.lower() in parameterGroup:
          temp = parameterGroup[param.lower()]
          if temp is None:
             ret = None
@@ -280,7 +280,7 @@ def getUrlParameter(param, parameterGroup):
                ret = temp
       else:
          ret = None
-   except Exception, e3:
+   except Exception as e3:
       ret = None
    if ret == "":
       ret = None
@@ -316,7 +316,7 @@ def getXmlValueFromTree(tree, name, namespace=LM_NAMESPACE,
          ret = temp
       else:
          ret = func(temp)
-   except Exception, e:
+   except Exception as e:
       pass
    return ret
 
@@ -350,7 +350,7 @@ def getXmlListFromTree(tree, name, namespace=LM_NAMESPACE,
          ret = temp
       else:
          ret = [func(t) for t in temp]
-   except Exception, e:
+   except Exception as e:
       pass
    return ret
 
@@ -368,7 +368,7 @@ def escapeString(value, format):
    """
    try:
       if isinstance(value, StringType):
-         value = unicode(value, ENCODING)
+         value = str(value, ENCODING)
       elif isinstance(value, UnicodeType):
          value = value
       else:
@@ -379,7 +379,7 @@ def escapeString(value, format):
    
       for replaceStr, withStr in replaceStrings:
          value = value.replace(replaceStr, withStr)
-   except Exception, e: # Can't escape for some reason
+   except Exception as e: # Can't escape for some reason
       value = ""
    return value
 

@@ -290,7 +290,7 @@ def formatScenarioPackage(scnPkg):
         scnPkg.getUserId(), metadata=scnPkg.scenpkgMetadata)
     scnPkgDict['name'] = scnPkg.name
     scnPkgDict['scenarios'] = [
-        formatScenario(scn) for (_, scn) in scnPkg.scenarios.iteritems()]
+        formatScenario(scn) for (_, scn) in scnPkg.scenarios.items()]
     return scnPkgDict
 
 # .............................................................................

@@ -304,7 +304,7 @@ class Gridset(ServiceObject): #LMMap
             for mtx in matrices:
                 try:
                     self.addMatrix(mtx)
-                except Exception, e:
+                except Exception as e:
                     raise LMError('Failed to add matrix {}'.format(mtx))
 
 # ...............................................
@@ -424,7 +424,7 @@ class Gridset(ServiceObject): #LMMap
             drv = ogr.GetDriverByName(self._shapeGrid.dataFormat)
             try:
                 shpDs = drv.Open(shpfilename, True)
-            except Exception, e:
+            except Exception as e:
                 raise LMError(['Invalid datasource %s' % shpfilename, str(e)])
             shpLyr = shpDs.GetLayer(0)
 
@@ -444,10 +444,10 @@ class Gridset(ServiceObject): #LMMap
             # For each site/feature, fill with value from matrix
             currFeat = shpLyr.GetNextFeature()
             sitesKeys = sorted(self.getSitesPresent().keys())
-            print "starting feature loop"            
+            print("starting feature loop")            
             while currFeat is not None:
                 #for lyridx in range(mlyrCount):
-                for lyridx,exists in self._layersPresent.iteritems():
+                for lyridx,exists in self._layersPresent.items():
                     if exists:
                         # add field to the layer
                         fldname = 'lyr%s' % str(lyridx)
@@ -465,15 +465,15 @@ class Gridset(ServiceObject): #LMMap
     
             # Closes and flushes to disk
             shpDs.Destroy()
-            print('Closed/wrote dataset %s' % shpfilename)
+            print(('Closed/wrote dataset %s' % shpfilename))
             success = True
             try:
                 retcode = subprocess.call(["shptree", "%s" % shpfilename])
                 if retcode != 0: 
-                    print 'Unable to create shapetree index on %s' % shpfilename
-            except Exception, e:
-                print 'Unable to create shapetree index on %s: %s' % (shpfilename, 
-                                                                                        str(e))
+                    print('Unable to create shapetree index on %s' % shpfilename)
+            except Exception as e:
+                print('Unable to create shapetree index on %s: %s' % (shpfilename, 
+                                                                                        str(e)))
         return success
         
     # ...............................................

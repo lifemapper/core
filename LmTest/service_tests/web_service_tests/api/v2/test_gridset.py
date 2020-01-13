@@ -191,7 +191,7 @@ class TestWebGridsetService(UserTestCase):
          with contextlib.closing(self.cl.get_gridset(gsId)) as x:
             gsMeta = json.load(x)
             
-         self.assertTrue(gsMeta.has_key('name'))
+         self.assertTrue('name' in gsMeta)
          self.assertEqual(gsMeta['user'], self._get_session_user(), 
                'User id on gridset {} = {}, session user = {}'.format(
                   gsMeta['id'], gsMeta['user'], self._get_session_user()))

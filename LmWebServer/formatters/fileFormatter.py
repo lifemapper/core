@@ -27,7 +27,7 @@
 """
 import cherrypy
 import os
-from StringIO import StringIO
+from io import StringIO
 import zipfile
 
 from LmCommon.common.lmconstants import LMFormat
@@ -90,7 +90,7 @@ def csvObjectFormatter(obj):
       outStream.close()
       return cnt
    else:
-      raise Exception, "Only matrix objects can be formatted as csv at this time"
+      raise Exception("Only matrix objects can be formatted as csv at this time")
    
 # .............................................................................
 def gtiffObjectFormatter(obj):
@@ -101,7 +101,7 @@ def gtiffObjectFormatter(obj):
       return file_formatter(obj.getDLocation(), readMode='rb', 
                             contentType=LMFormat.GTIFF.getMimeType())
    else:
-      raise Exception, "Only raster files have GeoTiff interface"
+      raise Exception("Only raster files have GeoTiff interface")
 
 # .............................................................................
 def shapefileObjectFormatter(obj):
@@ -110,7 +110,7 @@ def shapefileObjectFormatter(obj):
    if isinstance(obj, Vector):
       return file_formatter(obj.getShapefiles(), contentType=LMFormat.SHAPE.getMimeType())
    else:
-      raise Exception, "Only vector files have Shapefile interface"
+      raise Exception("Only vector files have Shapefile interface")
 
 # .............................................................................
 # NOTE: This was only commented out, and not removed, in case it comes up again

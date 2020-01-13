@@ -446,7 +446,7 @@ class SDMProjection(_ProjectionType, Raster):
             "parameters" : []
         }
             
-        for param in algorithm._parameters.keys():
+        for param in list(algorithm._parameters.keys()):
             algoObj["parameters"].append(
                 {"name" : param, 
                  "value" : str(algorithm._parameters[param])})

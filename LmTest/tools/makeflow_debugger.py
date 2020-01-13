@@ -20,14 +20,14 @@ def cleanupMakeflow(mfDag, workspace, cleanupVal, success, log):
         cleanCmd = getMakeflowCleanCommand(mfDag, workspace)
         try:
             subprocess.check_call(cleanCmd, shell=True)
-        except subprocess.CalledProcessError, e:
+        except subprocess.CalledProcessError as e:
             log.debug('Could not clean up Makeflow:')
             log.debug(str(e))
  
     if cleanupVal == 2:
         try:
             shutil.rmtree(workspace)
-        except Exception, e:
+        except Exception as e:
             log.debug('Could not delete {} - {}'.format(workspace, str(e)))
  
 # .............................................................................
@@ -71,7 +71,7 @@ def getMakeflowDocument(scribe, mfId, log):
             mfDag = mfObj.getDLocation()
             ws = mfObj.getRelativeDirectory()
         else:
-            raise Exception, 'Could not find Makeflow process id: {}'.format(mfId)
+            raise Exception('Could not find Makeflow process id: {}'.format(mfId))
 
     return mfObj, mfDag, ws
 
@@ -139,7 +139,7 @@ def runMakeflow(dagFn, pre_options, ws, log, name=None, logFile=None):
     try:
         cmdOutput = subprocess.check_output(mfCmd, shell=True)
         success = True
-    except subprocess.CalledProcessError, e:
+    except subprocess.CalledProcessError as e:
         log.debug("Process failed")
         log.debug(e.output)
         success = False
@@ -237,7 +237,7 @@ if __name__ == '__main__':
         if args.delete and success:
             deleteMakeflow(scribe, mfObj, mfDag, log)
             
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
     finally:
         scribe.closeConnections()

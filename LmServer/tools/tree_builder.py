@@ -49,7 +49,7 @@ def add_squids_to_tree(tree, scribe, userId=None):
       try:
          userId = tree.getUserId()
       except:
-         raise Exception, 'Must provider user id to get SQUIDs'
+         raise Exception('Must provider user id to get SQUIDs')
    squid_dict = {}
    for label in tree.getLabels():
       taxLabel = label.relace(' ', '_')

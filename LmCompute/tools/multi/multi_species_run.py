@@ -64,7 +64,7 @@ def do_runs(pam, num_permutations, do_mcpa=False, tree=None, biogeo=None,
 
     if num_permutations >= 1:
         for i in range(num_permutations):
-            print('Iteration {}'.format(i))
+            print(('Iteration {}'.format(i)))
             i_pam = gradyRandomize(pam)
             if do_pam_stats:
                 ps = PamStats(i_pam, tree=tree)
@@ -191,7 +191,7 @@ if __name__ == '__main__':
             grim = Matrix.load(args.grim)
             tree_mtx = Matrix.load(args.tree_matrix)
         except Exception as e:
-            print(str(e))
+            print((str(e)))
             print(('Cannot perform MCPA without PAM, Grim, Biogeo,'
                    ' and Tree matrix'))
             raise e

@@ -1,6 +1,6 @@
 """This module contains tests for Lifemapper URLs that should be forwarded
 """
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from LmCommon.common.lmconstants import HTTPStatus
 
@@ -92,8 +92,8 @@ class Test_url_writing(object):
         """This test checks all URLs to be rewritten
         """
         for url_rewrite_info in FORWARDED_URLS:
-            req = urllib2.Request(url_rewrite_info[ORIG_URL_KEY])
-            ret = urllib2.urlopen(req)
+            req = urllib.request.Request(url_rewrite_info[ORIG_URL_KEY])
+            ret = urllib.request.urlopen(req)
             # Check that URL is rewritten
             assert ret.url == url_rewrite_info[REWRITE_URL_KEY]
             # Check that HTTP status is what we expect

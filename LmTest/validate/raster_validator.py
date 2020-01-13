@@ -42,7 +42,7 @@ def validate_raster_file(raster_filename, raster_format=None):
                 else:
                     lyr = ds.GetRasterBand(1)
                     valid = True
-            except Exception, e:
+            except Exception as e:
                 msg = str(e)
         else:
             msg = 'File does not exist'

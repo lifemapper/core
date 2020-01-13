@@ -32,7 +32,7 @@ from types import (IntType, LongType, FloatType, NoneType, BooleanType)
 
 from LmBackend.common.lmobj import LMError
 
-from LmCommon.common.unicode import fromUnicode, toUnicode
+from LmCommon.common.str import fromUnicode, toUnicode
 
 from LmServer.base.atom import Atom
 from LmServer.base.lmobj import LMAbstractObject
@@ -139,7 +139,7 @@ class DbPostgresql(LMAbstractObject):
                  should not encounter it in the current (or future) Lifemapper 
                  configuration.
         """
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             val = fromUnicode(toUnicode(val))
             val = val.replace('\'', "''")
             val = val.replace('\\', '\\\\')
@@ -206,7 +206,7 @@ class DbPostgresql(LMAbstractObject):
         cmd = 'select * from {};'.format(qry)
         try:
             rows, idxs = self._sendCommand(cmd)
-        except Exception, e: 
+        except Exception as e: 
             # Sometimes needs a reset, try up to 5 times 
             tries = 0
             success = False
@@ -217,7 +217,7 @@ class DbPostgresql(LMAbstractObject):
                 try:
                     rows, idxs = self._sendCommand(cmd)
                     success = True
-                except Exception, e:
+                except Exception as e:
                     self.log.warning('   #{} Trying to re-open, isOpen {}, ...'
                                      .format(tries, self.isOpen))
                     self.reopen()            
@@ -245,7 +245,7 @@ class DbPostgresql(LMAbstractObject):
             cmd += ';'
         try:
             rows, idxs = self._sendCommand(cmd)
-        except Exception, e: 
+        except Exception as e: 
             # Sometimes needs a reset, try up to 5 times 
             tries = 0
             success = False
@@ -256,7 +256,7 @@ class DbPostgresql(LMAbstractObject):
                 try:
                     rows, idxs = self._sendCommand(cmd)
                     success = True
-                except Exception, e:
+                except Exception as e:
                     self.log.warning('   #{} Trying to re-open, isOpen {}, ...'
                                      .format(tries, self.isOpen))
                     self.reopen()
@@ -446,7 +446,7 @@ class DbPostgresql(LMAbstractObject):
         self.lastCommands = [cmd]
         try:
             rows, idxs = self._sendCommand(cmd)
-        except Exception, e:
+        except Exception as e:
             # Sometimes needs a reset, try up to 5 times 
             tries = 0
             success = False
@@ -457,7 +457,7 @@ class DbPostgresql(LMAbstractObject):
                 try:
                     rows, idxs = self._sendCommand(cmd)
                     success = True
-                except Exception, e:
+                except Exception as e:
                     self.log.warning('   #{} Trying to re-open, isOpen {}, ...'
                                      .format(tries, self.isOpen))
                     self.reopen()
@@ -489,9 +489,9 @@ class DbPostgresql(LMAbstractObject):
                 idxs = self._getColPositionsByName(cursor)                
                 rows = cursor.fetchall()
 
-            except LMError, e: 
+            except LMError as e: 
                 raise
-            except Exception, e:
+            except Exception as e:
                 raise LMError(currargs='Exception on command {}'
                                   .format(self.lastCommands), prevargs=e.args, doTrace=True)
 

@@ -237,7 +237,7 @@ class OmRequest(object):
         
     # .................................
     def generate(self):
-        raise Exception, 'generate method must be overridden by a subclass'
+        raise Exception('generate method must be overridden by a subclass')
 
 # .............................................................................
 class OmModelRequest(OmRequest):

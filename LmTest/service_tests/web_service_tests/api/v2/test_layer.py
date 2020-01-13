@@ -187,7 +187,7 @@ class TestWebLayerService(UserTestCase):
          with contextlib.closing(self.cl.get_layer(layerId)) as x:
             lyrMeta = json.load(x)
             
-         self.assertTrue(lyrMeta.has_key('id'))
+         self.assertTrue('id' in lyrMeta)
          self.assertEqual(lyrMeta['user'], self._get_session_user(), 
                'User id on layer = {}, session user = {}'.format(
                   lyrMeta['user'], self._get_session_user()))
@@ -204,7 +204,7 @@ class TestWebLayerService(UserTestCase):
             self.assertTrue(validate_eml(x))
             
          # File
-         if lyrMeta.has_key('spatialRaster'):
+         if 'spatialRaster' in lyrMeta:
             # Tiff
             with contextlib.closing(self.cl.get_layer(layerId, 
                                             responseFormat=GEOTIFF_INTERFACE)):

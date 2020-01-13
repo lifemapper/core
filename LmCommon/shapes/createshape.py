@@ -34,7 +34,7 @@ from LmCommon.common.lmconstants import (GBIF, PROVIDER_FIELD_COMMON,
         LM_WKT_FIELD, JobStatus, DWCNames, LMFormat, DEFAULT_EPSG)
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
-from LmCommon.common.unicode import fromUnicode, toUnicode
+from LmCommon.common.str import fromUnicode, toUnicode
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
@@ -120,8 +120,8 @@ class ShapeShifter(object):
         feat = ogr.Feature(lyrDef)
         try:
             self._fillFeature(feat, recDict)
-        except Exception, e:
-            print('Failed to _createFillFeat, e = {}'.format(fromUnicode(toUnicode(e))))
+        except Exception as e:
+            print(('Failed to _createFillFeat, e = {}'.format(fromUnicode(toUnicode(e)))))
             raise e
         else:
             # Create new feature, setting FID, in this layer
@@ -146,12 +146,12 @@ class ShapeShifter(object):
             drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
             try:
                 ds = drv.Open(dlocation)
-            except Exception, e:
+            except Exception as e:
                 goodData = False
             else:
                 try:
                     slyr = ds.GetLayer(0)
-                except Exception, e:
+                except Exception as e:
                     goodData = False
                 else:  
                     featCount = slyr.GetFeatureCount()
@@ -192,7 +192,7 @@ class ShapeShifter(object):
                                             .format(bigfname, overwrite))
                 bigDs = self._createDataset(bigfname)
                 bigLyr = self._addUserFieldDef(bigDs)
-        except Exception, e:
+        except Exception as e:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
                                     'Unable to create field definitions ({})'.format(e))
         # Fill datasets with records
@@ -207,8 +207,8 @@ class ShapeShifter(object):
                     # Add all features to optional "Big" layer
                     if bigDs is not None:
                         self._createFillFeat(lyrDef, recDict, bigLyr)
-                except Exception, e:
-                    print('Failed to create record ({})'.format((e)))
+                except Exception as e:
+                    print(('Failed to create record ({})'.format((e))))
                 recDict = self._getRecord()
                                         
             # Return metadata
@@ -225,9 +225,9 @@ class ShapeShifter(object):
                 bigDs.Destroy()
                 self._finishWrite(bigfname, minX, maxX, minY, maxY, geomtype, bigcount)
                 
-        except LmException, e:
+        except LmException as e:
             raise
-        except Exception, e:
+        except Exception as e:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
                                     'Unable to read or write data ({})'
                                     .format(e))
@@ -250,23 +250,23 @@ class ShapeShifter(object):
         if maxPoints is not None and self._recCount > maxPoints: 
             from random import shuffle
             discardCount = self._recCount - maxPoints
-            allIndices = range(self._recCount)
+            allIndices = list(range(self._recCount))
             shuffle(allIndices)
             discardIndices = allIndices[:discardCount]
         return discardIndices
     
     # .............................................................................
     def _finishWrite(self, outfname, minX, maxX, minY, maxY, geomtype, fcount):
-        print('Closed/wrote {}-feature dataset {}'.format(fcount, outfname))
+        print(('Closed/wrote {}-feature dataset {}'.format(fcount, outfname)))
         
         # Write shapetree index for faster access
         try:
             shpTreeCmd = os.path.join(BIN_PATH, "shptree")
             retcode = subprocess.call([shpTreeCmd, "%s" % outfname])
             if retcode != 0: 
-                print 'Unable to create shapetree index on %s' % outfname
-        except Exception, e:
-            print 'Unable to create shapetree index on %s: %s' % (outfname, str(e))
+                print('Unable to create shapetree index on %s' % outfname)
+        except Exception as e:
+            print('Unable to create shapetree index on %s: %s' % (outfname, str(e)))
         
         # Test output data
         goodData, featCount = self.testShapefile(outfname)
@@ -295,7 +295,7 @@ class ShapeShifter(object):
             try:
                 val = self.lookupFields[name]
                 return val
-            except Exception, e:
+            except Exception as e:
                 return None
         else:
             return name
@@ -319,25 +319,25 @@ class ShapeShifter(object):
                     tmpDict[self.xField] = float(x)
                     tmpDict[self.yField] = float(y)
                     success = True
-            except StopIteration, e:
+            except StopIteration as e:
                 success = True
-            except OverflowError, e:
+            except OverflowError as e:
                 badRecCount += 1
-            except ValueError, e:
+            except ValueError as e:
                 badRecCount += 1
-            except Exception, e:
+            except Exception as e:
                 badRecCount += 1
-                print('Exception reading line {} ({})'.format(self.op.currRecnum, 
-                                                                      fromUnicode(toUnicode(e))))
+                print(('Exception reading line {} ({})'.format(self.op.currRecnum, 
+                                                                      fromUnicode(toUnicode(e)))))
         if success:
-            for idx, vals in self.op.columnMeta.iteritems():
+            for idx, vals in self.op.columnMeta.items():
                 if vals is not None and idx not in (self.op.xIdx, self.op.yIdx):
                     fldname = self.op.columnMeta[idx][OccDataParser.FIELD_NAME_KEY]
                     tmpDict[fldname] = thisrec[idx]
             recDict = tmpDict
         
         if badRecCount > 0:
-            print('Skipped over {} bad records'.format(badRecCount))
+            print(('Skipped over {} bad records'.format(badRecCount)))
         
         if recDict is not None:
             self._currRecum += 1
@@ -355,7 +355,7 @@ class ShapeShifter(object):
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                                     'Layer creation failed')
         
-        for idx, vals in self.op.columnMeta.iteritems():
+        for idx, vals in self.op.columnMeta.items():
             if vals is not None:
                 fldname = str(vals[OccDataParser.FIELD_NAME_KEY])
                 fldtype = vals[OccDataParser.FIELD_TYPE_KEY] 
@@ -411,8 +411,8 @@ class ShapeShifter(object):
                     prov = ''
                 feat.SetField(self.computedProviderField, prov)
 
-        except Exception, e:
-            print('Failed to set optional field in rec {}, e = {}'.format(str(recDict), e))
+        except Exception as e:
+            print(('Failed to set optional field in rec {}, e = {}'.format(str(recDict), e)))
             raise e
 
     # ...............................................
@@ -433,16 +433,16 @@ class ShapeShifter(object):
             feat.SetField(LM_WKT_FIELD, wkt)
             geom = ogr.CreateGeometryFromWkt(wkt)
             feat.SetGeometryDirectly(geom)
-        except Exception, e:
-            print('Failed to create/set geometry, e = {}'.format(e))
+        except Exception as e:
+            print(('Failed to create/set geometry, e = {}'.format(e)))
             raise e
             
         self._handleSpecialFields(feat, recDict)
 
         try:
             # Add values out of the line of data
-            for name in recDict.keys():
-                if (name in feat.keys() and name not in self.specialFields):
+            for name in list(recDict.keys()):
+                if (name in list(feat.keys()) and name not in self.specialFields):
                     # Handles reverse lookup for BISON metadata
                     # TODO: make this consistent!!!
                     # For User data, name = fldname
@@ -454,8 +454,8 @@ class ShapeShifter(object):
                             if isinstance(val, UnicodeType):
                                 val = fromUnicode(val)
                             feat.SetField(fldidx, val)
-        except Exception, e:
-            print('Failed to fillFeature with recDict {}, e = {}'.format(str(recDict), e))
+        except Exception as e:
+            print(('Failed to fillFeature with recDict {}, e = {}'.format(str(recDict), e)))
             raise e
         
 # ...............................................

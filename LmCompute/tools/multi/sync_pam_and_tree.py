@@ -43,7 +43,7 @@ def prunePamAndTree(pam, tree):
     prunedPAMSquids = []
     goodPAMSquids = []
     
-    for i in xrange(len(pamSquids)):
+    for i in range(len(pamSquids)):
         if not pamSquids[i] in treeSquids:
             delCols.append(i)
             prunedPAMSquids.append(pamSquids[i])

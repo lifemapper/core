@@ -16,10 +16,10 @@ def handle_signal(signum, frame):
     """
     @summary: Handle a signal sent to the process and pass it on to subprocess
     """
-    print("Received signal: {}".format(signum))
+    print(("Received signal: {}".format(signum)))
     
     for proc in current_procs:
-        print('Signaling: "{}"'.format(proc.cmd))
+        print(('Signaling: "{}"'.format(proc.cmd)))
         proc.signal(signum)
 
 # .............................................................................
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     if args.input_files is not None:
         for fn in args.input_files:
             if os.path.getsize(fn) < 1:
-                print('File: {} has 0 length'.format(fn))
+                print(('File: {} has 0 length'.format(fn)))
                 skipComps = True
 
     if not skipComps:
@@ -52,10 +52,10 @@ if __name__ == '__main__':
             spr = SubprocessRunner(args.cmd)
             current_procs.add(spr)
             exitCode, stdErr = spr.run()
-            print('Exit code: {}'.format(exitCode))
+            print(('Exit code: {}'.format(exitCode)))
             print(stdErr)
-        except Exception, e:
-            print str(e)
+        except Exception as e:
+            print(str(e))
     else:
         print('One or more required input files had zero length, skipping computations')
     

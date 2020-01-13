@@ -114,11 +114,11 @@ class PamStats(object):
             keep_columns = []
             squids = self.pam.getColumnHeaders()
             for i in range(len(squids)):
-                if squids[i] in squid_dict.keys():
+                if squids[i] in list(squid_dict.keys()):
                     keep_columns.append(i)
                     taxon_labels.append(squid_dict[squids[i]])
             # Slice the PAM to remove missing squid columns
-            sl_pam = self.pam.slice(range(self.pam.data.shape[0]), 
+            sl_pam = self.pam.slice(list(range(self.pam.data.shape[0])), 
                                     keep_columns)
             
             statColumns.extend([

@@ -56,7 +56,7 @@ class JsonObject(LMObject):
       @param value: The attribute value
       """
       if not isinstance(value, UnicodeType):
-         value = unicode(value, ENCODING, errors='ignore')
+         value = str(value, ENCODING, errors='ignore')
       self.values.append((name, value.encode(ENCODING)))
       
    # ..................................
@@ -102,7 +102,7 @@ class JsonArray(LMObject):
       @summary: Adds a value to the array
       """
       if not isinstance(value, UnicodeType):
-         value = unicode(value, ENCODING, errors='ignore')
+         value = str(value, ENCODING, errors='ignore')
       self.values.append(value.encode(ENCODING))
       
    # ..................................
@@ -158,7 +158,7 @@ def _displayValue(obj, delim, depth):
    elif isinstance(obj, StringType):
       return ''.join(("\"", escapeString(obj, "json"), "\""))
    elif isinstance(obj, UnicodeType):
-      return u''.join((u"\"", escapeString(obj, "json"), u"\""))
+      return ''.join(("\"", escapeString(obj, "json"), "\""))
    else:
       return str(obj)
       

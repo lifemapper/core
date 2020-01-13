@@ -60,7 +60,7 @@ class BorgScribe(LMObject):
         self.hostname = socket.gethostname().lower()
         dbHost = DB_HOSTNAME
             
-        if dbUser not in HL_NAME.keys():
+        if dbUser not in list(HL_NAME.keys()):
             raise LMError('Unknown database user {}'.format(dbUser))
                 
         self._borg = Borg(logger, dbHost, CONNECTION_PORT, dbUser, HL_NAME[dbUser])
@@ -77,7 +77,7 @@ class BorgScribe(LMObject):
     def openConnections(self):
         try:
             self._borg.open()
-        except Exception, e:
+        except Exception as e:
             self.log.error('Failed to open Borg (user={} dbname={} host={} port={}): {}' 
                                 .format(self._borg.user, self._borg.db, self._borg.host, 
                                     self._borg.port, e.args))

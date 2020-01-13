@@ -28,7 +28,7 @@ import hashlib
 import os
 
 try:
-   import cPickle as pickle
+   import pickle as pickle
 except:
    import pickle
    
@@ -126,7 +126,7 @@ def getErrorHash(err, tb):
    """
    h1 = hashlib.md5(str(err.__class__))
    if tb is not None:
-      if isinstance(tb, basestring):
+      if isinstance(tb, str):
          h2 = hashlib.md5(tb)
       else:
          h2 = hashlib.md5(str(traceback.format_tb(tb)))

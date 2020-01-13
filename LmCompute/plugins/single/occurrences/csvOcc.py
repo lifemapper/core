@@ -21,21 +21,21 @@ def _getLineAsString(csvreader, delimiter, recno):
     linestr = None
     while not success and csvreader is not None:
         try:
-            line = csvreader.next()
+            line = next(csvreader)
             if line:
                 recno += 1
                 linestr = delimiter.join(line)
             success = True
-        except OverflowError, e:
+        except OverflowError as e:
             recno += 1
-            print( 'Overflow on record {}, line {} ({})'
-                                 .format(recno, csvreader.line, str(e)))
+            print(( 'Overflow on record {}, line {} ({})'
+                                 .format(recno, csvreader.line, str(e))))
         except StopIteration:
             success = True
-        except Exception, e:
+        except Exception as e:
             recno += 1
-            print('Bad record on record {}, line {} ({})'
-                                .format(recno, csvreader.line, e))
+            print(('Bad record on record {}, line {} ({})'
+                                .format(recno, csvreader.line, e)))
     return linestr, recno
             
 # .............................................................................
@@ -82,7 +82,7 @@ def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points
         if os.path.exists(big_fname):
             ShapeShifter.testShapefile(big_fname)
         
-    except LmException, lme:
+    except LmException as lme:
         log.debug(lme.msg)
         status = lme.code
         log.debug('Failed to write occurrences, return {}'.format(status))
@@ -102,7 +102,7 @@ def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points
                 fn = '{}{}'.format(big_base, ext)
                 if os.path.exists(fn):
                     os.remove(fn)
-    except Exception, e:
+    except Exception as e:
         log.debug(str(e))
         status = JobStatus.LM_POINT_DATA_ERROR
         log.debug('Failed to write occurrences, return {}'.format(status))

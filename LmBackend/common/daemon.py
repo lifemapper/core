@@ -59,7 +59,7 @@ class Daemon(object):
             if pid > 0:
                 # exit first parent
                 sys.exit(0)
-        except OSError, e:
+        except OSError as e:
             self.log.error("Fork #1 failed: %d (%s)" % e.errno, e.strerror)
             sys.exit(1)
          
@@ -74,7 +74,7 @@ class Daemon(object):
             if pid > 0:
                 # exit from second parent
                 sys.exit(0)
-        except OSError, e:
+        except OSError as e:
             self.log.error("fork #2 failed: %d (%s)" % (e.errno, e.strerror))
             sys.exit(1)
         
@@ -239,13 +239,13 @@ class Daemon(object):
         # Try killing the daemon process         
         try:
             os.kill(pid, signal.SIGUSR1)
-        except OSError, err:
+        except OSError as err:
             err = str(err)
             if err.find("No such process") > 0:
                 if os.path.exists(self.pidfile):
                     os.remove(self.pidfile)
             else:
-                print(str(err))
+                print(err)
                 sys.exit(1)
     
     # ..........................................................................

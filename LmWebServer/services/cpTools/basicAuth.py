@@ -27,7 +27,7 @@ def getUserName():
             if user is None:
                 user = PUBLIC_USER
             log = UserLogger(user)
-    except Exception, e:
+    except Exception as e:
         log.debug("Exception in getUserName: {}".format(str(e)))
 
     cherrypy.session.user = user

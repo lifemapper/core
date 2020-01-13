@@ -113,7 +113,7 @@ def gradyRandomize(mtx):
     fixAttempts = 0
     numFixed = 0
     
-    for i in xrange(nRows):
+    for i in range(nRows):
         rowSum = np.sum(mtx1[i,:])
         if rowSum > rowTots[i]:
             rowChoices = np.where(mtx1[i] == 1)[0]
@@ -123,7 +123,7 @@ def gradyRandomize(mtx):
                 mtx1[i, rowChoices[x]] = 0
                 numFixed += 1 
         
-    for j in xrange(nCols):
+    for j in range(nCols):
         colSum = np.sum(mtx1[:,j])
         if colSum > colTots[0,j]:
             colChoices = np.where(mtx1[:,j] == 1)[0]

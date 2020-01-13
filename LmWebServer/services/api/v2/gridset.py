@@ -249,13 +249,13 @@ class GridsetBioGeoService(LmService):
                                      '{}{}'.format(
                                          hypFilename, LMFormat.SHAPE.ext
                                          ) in availFiles:
-                                if hypLyr.has_key(HYPOTHESIS_NAME_KEY):
+                                if HYPOTHESIS_NAME_KEY in hypLyr:
                                     hypName = hypLyr[HYPOTHESIS_NAME_KEY]
                                 else:
                                     hypName = os.path.splitext(
                                         os.path.basename(hypFilename))[0]
                                                                                         
-                                if hypLyr.has_key(EVENT_FIELD_KEY):
+                                if EVENT_FIELD_KEY in hypLyr:
                                     eventField = hypLyr[EVENT_FIELD_KEY]
                                     column_name = '{} - {}'.format(
                                         hypName, eventField)
@@ -274,7 +274,7 @@ class GridsetBioGeoService(LmService):
                                     ]
                                 }
                                 
-                                if hypLyr.has_key(KEYWORD_KEY):
+                                if KEYWORD_KEY in hypLyr:
                                     lyrMeta[ServiceObject.META_KEYWORDS.lower()
                                             ].extend(hypLyr[KEYWORD_KEY])
                                     

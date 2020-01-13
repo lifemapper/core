@@ -7,7 +7,7 @@ Todo:
     * Documentation
 """
 import cherrypy
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 import json
 from mx.DateTime import gmt
 import os
@@ -56,7 +56,7 @@ class BoomPoster(object):
             SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_PRIORITY, Priority.REQUESTED)
         
         # Look for an archive name
-        if APIPostKeys.ARCHIVE_NAME in reqJson.keys():
+        if APIPostKeys.ARCHIVE_NAME in list(reqJson.keys()):
             archiveName = reqJson[APIPostKeys.ARCHIVE_NAME].replace(' ', '_')
         else:
             archiveName = '{}_{}'.format(userId, gmt().mjd)
@@ -160,7 +160,7 @@ class BoomPoster(object):
             The JSON section in the document or None if not found
         """
         search_key = section_key.replace(' ', '').replace('_', '').lower()
-        for key in json_doc.keys():
+        for key in list(json_doc.keys()):
             if key.lower().replace(' ', '').replace('_', '') == search_key:
                 return json_doc[key]
         return None
@@ -280,7 +280,7 @@ class BoomPoster(object):
         Args:
             occ_json : JSON chunk of occurrence information
         """
-        if APIPostKeys.OCCURRENCE_IDS in occ_json.keys():
+        if APIPostKeys.OCCURRENCE_IDS in list(occ_json.keys()):
             occ_filename = self._get_temp_filename(
                 LMFormat.TXT.ext, prefix='user_existing_occ_')
             with open(occ_filename, 'w') as out_f:
@@ -292,7 +292,7 @@ class BoomPoster(object):
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE,
                 SpeciesDatasource.EXISTING)
-        elif APIPostKeys.TAXON_IDS in occ_json.keys():
+        elif APIPostKeys.TAXON_IDS in list(occ_json.keys()):
             tax_id_filename = self._get_temp_filename(
                 LMFormat.TXT.ext, prefix='user_taxon_ids_')
             with open(tax_id_filename, 'w') as out_f:
@@ -307,7 +307,7 @@ class BoomPoster(object):
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
                 IdigbioAPI.DELIMITER)
-        elif APIPostKeys.TAXON_NAMES in occ_json.keys():
+        elif APIPostKeys.TAXON_NAMES in list(occ_json.keys()):
             tax_names_filename = self._get_temp_filename(
                 LMFormat.TXT.ext, prefix='user_taxon_names_')
             with open(tax_names_filename, 'w') as out_f:
@@ -341,7 +341,7 @@ class BoomPoster(object):
                 if os.path.exists(meta_filename):
                     with open(meta_filename) as in_file:
                         point_meta = json.load(in_file)
-                    if 'delimiter' in point_meta.keys():
+                    if 'delimiter' in list(point_meta.keys()):
                         # TODO: Remove this pop hack when we can process delimiter in JSON
                         delim = point_meta['delimiter']
                         del point_meta['delimiter']
@@ -363,7 +363,7 @@ class BoomPoster(object):
                         delimiter)
                 except KeyError:  # Not provided, skip and it will default to tab
                     pass
-        if APIPostKeys.MIN_POINTS in occ_json.keys():
+        if APIPostKeys.MIN_POINTS in list(occ_json.keys()):
             min_points = occ_json[APIPostKeys.MIN_POINTS]
         else:
             min_points = 5
@@ -400,7 +400,7 @@ class BoomPoster(object):
         Args:
             scenario_json : JSON chunk of scenario information
         """
-        if APIPostKeys.PACKAGE_FILENAME in scenario_json.keys():
+        if APIPostKeys.PACKAGE_FILENAME in list(scenario_json.keys()):
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE, 
                 scenario_json[APIPostKeys.PACKAGE_FILENAME])
@@ -421,7 +421,7 @@ class BoomPoster(object):
             all_scenario_codes = set(proj_scenario_codes)
             all_scenario_codes.add(model_scenario_code)
 
-            if APIPostKeys.PACKAGE_NAME in scenario_json.keys():
+            if APIPostKeys.PACKAGE_NAME in list(scenario_json.keys()):
                 scenario_package_name = scenario_json[APIPostKeys.PACKAGE_NAME]
             else:
                 possible_packages = self.scribe.getScenPackagesForScenario(
@@ -436,7 +436,7 @@ class BoomPoster(object):
                 for sp in possible_packages:
                     # Verify that all scenarios are in this package
                     if all([
-                        i in sp.scenarios.keys() for i in all_scenario_codes]):
+                        i in list(sp.scenarios.keys()) for i in all_scenario_codes]):
 
                         scenario_package = sp
                         break
@@ -490,14 +490,14 @@ class BoomPoster(object):
 
             self.config.set(
                 algo_section, BoomKeys.ALG_CODE, algo[APIPostKeys.ALGORITHM_CODE])
-            for param in algo[APIPostKeys.ALGORITHM_PARAMETERS].keys():
+            for param in list(algo[APIPostKeys.ALGORITHM_PARAMETERS].keys()):
                 self.config.set(
                     algo_section, param.lower(),
                     algo[APIPostKeys.ALGORITHM_PARAMETERS][param])
             i += 1
 
         # Masks
-        if APIPostKeys.HULL_REGION in sdm_json.keys() and \
+        if APIPostKeys.HULL_REGION in list(sdm_json.keys()) and \
                 sdm_json[APIPostKeys.HULL_REGION] is not None:
             try:
                 buffer_val = sdm_json[

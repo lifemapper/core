@@ -195,7 +195,7 @@ class LmTree(object):
             path_lookups[taxon.label] = l
             
         num_taxa = len(self.tree.taxon_namespace)
-        for i_1 in xrange(num_taxa - 1):
+        for i_1 in range(num_taxa - 1):
             taxon1 = self.tree.taxon_namespace[i_1]
     
             label = labelFn(taxon1)
@@ -213,7 +213,7 @@ class LmTree(object):
                     t_labels.append(label)
                 
                 
-                for i_2 in xrange(i_1, num_taxa):
+                for i_2 in range(i_1, num_taxa):
                     taxon2 = self.tree.taxon_namespace[i_2]
                 
                     try:
@@ -314,7 +314,7 @@ class LmTree(object):
                      Haven't changed yet because this is producing the correct result
         """
         if not self.hasBranchLengths():
-            raise Exception, 'Cannot create VCV without branch lengths'
+            raise Exception('Cannot create VCV without branch lengths')
         
         if labelAttribute == 'label':
             labelFn = lambda taxon: taxon.label

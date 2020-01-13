@@ -24,7 +24,7 @@ def validate_xml_file(xml_filename):
                 xml_str = in_xml.read()
             xml_obj = deserialize(fromstring(xml_str))
             valid = True
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
     else:
         msg = 'File does not exist'

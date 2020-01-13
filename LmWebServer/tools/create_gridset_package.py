@@ -76,9 +76,9 @@ def createHeaderLookup(headers, squids=False, scribe=None, userId=None):
       
    if squids and scribe and userId:
       return [getSquidHeaderDict(
-                  headers[i], i, scribe, userId) for i in xrange(len(headers))]
+                  headers[i], i, scribe, userId) for i in range(len(headers))]
    else:
-      return [getHeaderDict(headers[i], i) for i in xrange(len(headers))]
+      return [getHeaderDict(headers[i], i) for i in range(len(headers))]
 
 # .............................................................................
 def mung(data):
@@ -97,7 +97,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
    """
    @summary: Creates an output zip file from the gridset
    """
-   print('Assembling package: {}'.format(outfile))
+   print(('Assembling package: {}'.format(outfile)))
    print('Creating EML')
    gsEml = tostring(makeEml(gridset))
    with zipfile.ZipFile(outfile, 
@@ -113,11 +113,11 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
       sg = gridset.getShapegrid()
       matrices = gridset.getMatrices()
       i = 0
-      print('{} matrices'.format(len(matrices)))
+      print(('{} matrices'.format(len(matrices))))
       for mtx in matrices:
          i += 1
-         print('Matrix: ({} of {}) {}'.format(i, len(matrices), 
-                                              mtx.getDLocation()))
+         print(('Matrix: ({} of {}) {}'.format(i, len(matrices), 
+                                              mtx.getDLocation())))
          print(' - Loading matrix')
          mtxObj = Matrix.load(mtx.getDLocation())
          print(' - Loaded')
@@ -139,7 +139,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
             
             # Make a temporary file
             tempFn = os.path.join(TEMP_PATH, mtxFn)
-            print(' - Temporary file name: {}'.format(tempFn))
+            print((' - Temporary file name: {}'.format(tempFn)))
             with open(tempFn, 'w') as tempF:
                print(' - Getting GeoJSON')
                geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
@@ -160,7 +160,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
             
             # Make a temporary file
             tempFn = os.path.join(TEMP_PATH, mtxFn)
-            print(' - Temporary file name: {}'.format(tempFn))
+            print((' - Temporary file name: {}'.format(tempFn)))
             with open(tempFn, 'w') as tempF:
                print(' - Getting GeoJSON')
                geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
@@ -177,7 +177,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
             
             # Make a temporary file
             tempFn = os.path.join(TEMP_PATH, mtxFn)
-            print(' - Temporary file name: {}'.format(tempFn))
+            print((' - Temporary file name: {}'.format(tempFn)))
             with open(tempFn, 'w') as tempF:
                print(' - Getting GeoJSON')
                geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
@@ -190,12 +190,12 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
                                   LMFormat.CSV.ext)
             # Make a temporary file
             tempFn = os.path.join(TEMP_PATH, mtxFn)
-            print(' - Temporary file name: {}'.format(tempFn))
+            print((' - Temporary file name: {}'.format(tempFn)))
             with open(tempFn, 'w') as tempF:
                print(' - Getting CSV')
                mtxObj.writeCSV(tempF)
 
-         print(' - Zipping {}'.format(tempFn))
+         print((' - Zipping {}'.format(tempFn)))
          outZip.write(tempFn, mtxFn)
             
          print(' - Delete temp file')

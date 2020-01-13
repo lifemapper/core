@@ -208,7 +208,7 @@ class MattDaemon(Daemon):
                     self._cleanup_makeflow(
                         mf_obj, mf_doc_fn, exit_status, log_files=log_files)
 
-        self._mf_pool = filter(None, self._mf_pool)
+        self._mf_pool = [_f for _f in self._mf_pool if _f]
         return num_running
 
     # .............................
@@ -451,7 +451,7 @@ class MattDaemon(Daemon):
 # .............................................................................
 if __name__ == "__main__":
     if not isLMUser():
-        print("Run this script as `{}`".format(LM_USER))
+        print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
         
     if os.path.exists(MATT_DAEMON_PID_FILE):
@@ -507,6 +507,6 @@ if __name__ == "__main__":
     elif args.cmd.lower() == DaemonCommands.RESTART:
         mf_daemon.restart()
     else:
-        print('Unknown command: {}'.format(args.cmd.lower()))
+        print(('Unknown command: {}'.format(args.cmd.lower())))
         sys.exit(2)
     

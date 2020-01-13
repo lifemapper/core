@@ -218,7 +218,7 @@ def _writeSuccessFile(message, successFname):
 # .............................................................................
 if __name__ == '__main__':
     if not isLMUser():
-        print("Run this script as '{}'".format(LM_USER))
+        print(("Run this script as '{}'".format(LM_USER)))
         sys.exit(2)
 
     parser = argparse.ArgumentParser(

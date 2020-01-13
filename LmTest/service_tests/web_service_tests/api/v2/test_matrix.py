@@ -199,7 +199,7 @@ class TestWebMatrixService(UserTestCase):
          with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId)) as x:
             mtxMeta = json.load(x)
             
-         self.assertTrue(mtxMeta.has_key('matrixType'))
+         self.assertTrue('matrixType' in mtxMeta)
          self.assertEqual(mtxMeta['user'], self._get_session_user(), 
                           'User id on matrix = {}, session user = {}'.format(
                              mtxMeta['user'], self._get_session_user()))

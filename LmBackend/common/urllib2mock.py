@@ -29,14 +29,14 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA. 
 """
-import httplib
+import http.client
 import os
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 mappedUrls = {}
 
 # .............................................................................
-class MockHTTPHandler(urllib2.HTTPHandler):
+class MockHTTPHandler(urllib.request.HTTPHandler):
    """
    @summary: This is a mock handler that maps URLs to local files
    """
@@ -44,7 +44,7 @@ class MockHTTPHandler(urllib2.HTTPHandler):
    def http_open(self, req):
       resp = _mockResponse(req)
       if resp is None:
-         resp = self.do_open(httplib.HTTPConnection, req)
+         resp = self.do_open(http.client.HTTPConnection, req)
       return resp
 
 # .............................................................................
@@ -55,7 +55,7 @@ def _mockResponse(req):
    @param req: Request object
    """
    k = req.get_full_url()
-   if mappedUrls.has_key(k):
+   if k in mappedUrls:
       resp = urllib2.addinfourl(open(mappedUrls[k]), "This is a mock message", 
                                 req.get_full_url())
       resp.code = 200
@@ -107,7 +107,7 @@ def installMockOpener():
    """
    @summary: Installs the mock opener.  This needs to happen before it will work
    """
-   mockOpener = urllib2.build_opener(MockHTTPHandler)
-   urllib2.install_opener(mockOpener)
+   mockOpener = urllib.request.build_opener(MockHTTPHandler)
+   urllib.request.install_opener(mockOpener)
 
    

@@ -58,7 +58,7 @@ if __name__ == '__main__':
    
    for usr in userids:
       total = scribe.countLayers(userId=usr)
-      print ('Pulling User {} layers 0 through {}'.format(usr, total))
+      print(('Pulling User {} layers 0 through {}'.format(usr, total)))
       envlyrs = scribe.listLayers(0, total, userId=usr, atom=False)
       for elyr in envlyrs:
          _updateLayer(elyr, scribe)

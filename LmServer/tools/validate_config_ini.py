@@ -14,7 +14,7 @@ VALID_ALG_PARAMS = []
 for alg_code in Algorithms.codes():
     try:
         alg = getattr(Algorithms, alg_code)
-        VALID_ALG_PARAMS.extend([k.lower() for k in alg.parameters.keys()])
+        VALID_ALG_PARAMS.extend([k.lower() for k in list(alg.parameters.keys())])
     except Exception as e:
         #print(str(e))
         pass

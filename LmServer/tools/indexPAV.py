@@ -113,7 +113,7 @@ def getPostDocument(pav, prj, occ, pam, sciName, pavFname):
     # Process presence centroids
     rowHeaders = pavMtx.getRowHeaders()
     
-    for i in xrange(pavMtx.data.shape[0]):
+    for i in range(pavMtx.data.shape[0]):
         if pavMtx.data[i]:
             _, x, y = rowHeaders[i]
             fields.append((SOLR_FIELDS.PRESENCE, '{},{}'.format(y, x)))

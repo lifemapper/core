@@ -208,16 +208,16 @@ def getColumns(dbcmd, fulltablename):
    getColumnsStmt = ' {} --command=\"\d {}\" | grep \'|\' | awk \'!print $1?\''.format(dbcmd, fulltablename)
    getColumnsStmt = getColumnsStmt.replace('!', '{')
    getColumnsStmt = getColumnsStmt.replace('?', '}')
-   print 
-   print getColumnsStmt
-   print 
+   print() 
+   print(getColumnsStmt)
+   print() 
    columnStr = subprocess.check_output(getColumnsStmt, preexec_fn=SetPass, shell=True)
    cols = columnStr.split('\n')
    for str in ('Column', ''):
       try:
          cols.remove(str)
       except:
-         print str
+         print(str)
          pass
    return cols
 
@@ -242,7 +242,7 @@ def copyOutDatabaseUsers(outpath, basefname, lmusers, dbcmd, tableInfo, restrict
          copyToStmt = '\"COPY ({}) TO STDOUT \"'.format(queryStmt)      
          dumptableStmt = '{} --command={}'.format(dbcmd, copyToStmt)
          
-         print 'Dumping table: ', tablename
+         print('Dumping table: ', tablename)
          with open(outfname, 'w') as outf:
             dProc = subprocess.Popen(dumptableStmt, stdout=outf, preexec_fn=SetPass, shell=True)
          outf.close()
@@ -262,10 +262,10 @@ def ingestRecordData(inpath, inbasename, tablename, columnStr, dbuser, dbname):
    dbcmd = 'psql --username={} --dbname={} '.format(dbuser, dbname)
    copyFromStmt = '\"COPY {} ({}) FROM STDIN \"'.format(tablename, columnStr)
    ingesttableStmt = '{} --command={}'.format(dbcmd, copyFromStmt)
-   print
-   print('# Copying records from {} into {} ...'.format(ingestfname, tablename))
-   print('infname = \'{}\''.format(infname))
-   print('ingesttableStmt = \'{}\''.format(ingesttableStmt))
+   print()
+   print(('# Copying records from {} into {} ...'.format(ingestfname, tablename)))
+   print(('infname = \'{}\''.format(infname)))
+   print(('ingesttableStmt = \'{}\''.format(ingesttableStmt)))
    print('with open(infname, \'r\') as inf:')
    print('   retcode = subprocess.call(ingesttableStmt, stdin=inf, shell=True)')
 #    with open(infname, 'r') as inf:
@@ -356,7 +356,7 @@ def getActiveUsers(dbuser, dbname, dbschema, ignoreUsers, ignoreUserPrefixes,
    for usr in backupusers:
       if not ignoreUser(usr, ignoreUsers, ignoreUserPrefixes):
          activeUsers.append(usr)
-   print 'Active Users: ', str(activeUsers)
+   print('Active Users: ', str(activeUsers))
    return activeUsers
 
 # ...............................................
@@ -525,13 +525,13 @@ if __name__ == '__main__':
          backupChoice = args.singleUser
       outpath = args.outpath
       if not os.path.exists(outpath):
-         print '{} does not exist'.format(outpath)
+         print('{} does not exist'.format(outpath))
          exit(-1)
          
    elif cmd == 'restore':
       ingestfname = args.infile
       if not os.path.exists(ingestfname):
-         print '{} does not exist'.format(ingestfname)
+         print('{} does not exist'.format(ingestfname))
          exit(-1)
       outpath = os.path.split(ingestfname)[0]
           
@@ -550,7 +550,7 @@ if __name__ == '__main__':
       # Explain outputs
       readmeFname = writeReadme(outpath, basefname2, helpLines2)
       
-      print 'Instructions for using output from this script are in {}'.format(readmeFname)
+      print('Instructions for using output from this script are in {}'.format(readmeFname))
       
    elif cmd == 'restore':
 #       untarFileData(outpath, scriptname)

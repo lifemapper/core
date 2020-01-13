@@ -44,5 +44,5 @@ def validate_package(obj_generator):
    
       shutil.rmtree(outDir)
       return True
-   except Exception, e:
+   except Exception as e:
       return False

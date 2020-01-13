@@ -96,7 +96,7 @@ class Janitor(LMObject):
             if fn is not None and os.path.exists(fn):
                 try:
                     os.remove(fn)
-                except Exception, e:
+                except Exception as e:
                     self.scribe.log.error('Failed to remove {}, {}'
                                           .format(fn, str(e)))
                 else:
@@ -113,7 +113,7 @@ class Janitor(LMObject):
                 solr_resp = delete_from_archive_index(
                     pav_id=del_pav_ids, user_id=usr)
         except Exception as e:
-            print(str(e))
+            print((str(e)))
             self.scribe.log.error(
                 'Failed to delete pavs from solr: {}, check solr logs'.format(
                     str(e)))
@@ -179,7 +179,7 @@ class Janitor(LMObject):
                     if os.path.exists(opth):
                         try:
                             shutil.rmtree(opth)
-                        except Exception, e:
+                        except Exception as e:
                             self.scribe.log.error('Failed to remove {}, {}'
                                                   .format(opth, str(e)))
                         else:
@@ -279,9 +279,9 @@ if __name__ == '__main__':
     obsolete_date = args.obsolete_date
     total = args.count
     
-    print("""Janitor arguments: 
+    print(("""Janitor arguments: 
     gridsetid {}; usr {}; count {}; obsolete_date {}"""
-    .format(gridsetid, usr, total, obsolete_date))
+    .format(gridsetid, usr, total, obsolete_date)))
     
     # TODO: add method to walk files and rmtree dirs for occset absent from DB
     jan = Janitor()
@@ -293,10 +293,10 @@ if __name__ == '__main__':
             if obsolete_date is None:
                 import math
                 future_date = math.ceil(currtime)
-                print("""--obsolete_date argument must be provided, in MJD format,
+                print(("""--obsolete_date argument must be provided, in MJD format,
                 to delete {} user data. To clear all data for the user, provide
                 a date in the future (i.e. 12am tomorrow, {})"""
-                .format(usr, future_date))
+                .format(usr, future_date)))
             elif obsolete_date > currtime:
                 jan.clearUserData(usr)
             else:

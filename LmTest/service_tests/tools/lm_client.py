@@ -4,10 +4,10 @@ Todo:
     * Document all parameters
     * Add option to list public content for count and list service calls
 """
-import cookielib
-import urllib
-import urllib2
-from urlparse import urlparse
+import http.cookiejar
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
+from urllib.parse import urlparse
 
 from LmServer.common.localconstants import PUBLIC_FQDN
 from LmWebServer.common.lmconstants import HTTPMethod
@@ -102,9 +102,9 @@ class LmWebClient(object):
         """
         try:
             q_params = [
-                (k, v) for k, v in dict(
-                    query_parameters).items() if v is not None]
-            url_params = urllib.urlencode(q_params)
+                (k, v) for k, v in list(dict(
+                    query_parameters).items()) if v is not None]
+            url_params = urllib.parse.urlencode(q_params)
     
             if body is None and len(
                     q_params) > 0 and method.upper() == HTTPMethod.POST:
@@ -114,13 +114,13 @@ class LmWebClient(object):
             
             if headers is None:
                 headers = {}
-            req = urllib2.Request(req_url, data=body, headers=headers)
+            req = urllib.request.Request(req_url, data=body, headers=headers)
             req.get_method = lambda: method.upper()
             
-            return urllib2.urlopen(req)
-        except Exception, e:
-            print('The failed URL was: {}'.format(req_url))
-            print('Error: {}'.format(str(e)))
+            return urllib.request.urlopen(req)
+        except Exception as e:
+            print(('The failed URL was: {}'.format(req_url)))
+            print(('Error: {}'.format(str(e))))
             raise e
 
     # ========================
@@ -1043,12 +1043,12 @@ class LmWebClient(object):
         """Logs in to the server
         """
         policyServer = urlparse(self.server).netloc
-        policy = cookielib.DefaultCookiePolicy(
+        policy = http.cookiejar.DefaultCookiePolicy(
             allowed_domains=(policyServer,))
-        self.cookieJar = cookielib.LWPCookieJar(policy=policy)
-        opener = urllib2.build_opener(
-            urllib2.HTTPCookieProcessor(self.cookieJar))
-        urllib2.install_opener(opener)
+        self.cookieJar = http.cookiejar.LWPCookieJar(policy=policy)
+        opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(self.cookieJar))
+        urllib.request.install_opener(opener)
         
         req = self._make_request(
             self._build_base_url(_SERVICE.LOGIN), userid=userId, pword=passwd,

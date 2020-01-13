@@ -111,7 +111,7 @@ def _create_spatial_vector(spatial_vector):
             SubElement(attrib_list_element, 'attribute', value=colHeader)
         SubElement(sv_element, 'geometry', value='polygon')
     else:
-        for _, v in spatial_vector.featureAttributes.items():
+        for _, v in list(spatial_vector.featureAttributes.items()):
             SubElement(attrib_list_element, 'attribute', value=v[0])
         SubElement(sv_element, 'geometry', value='polygon')
     
@@ -246,5 +246,5 @@ def _formatObject(obj):
         cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}.eml"'.format(obj.name)
         return makeEml(obj)
     else:
-        raise TypeError, "Cannot format object of type: {}".format(type(obj))
+        raise TypeError("Cannot format object of type: {}".format(type(obj)))
 

@@ -55,7 +55,7 @@ def readyFilename(fullfilename, overwrite=False):
     else:
         pth, basename = os.path.split(fullfilename)
         try:
-            os.makedirs(pth, 0775)
+            os.makedirs(pth, 0o775)
         except:
             pass
             
@@ -88,19 +88,19 @@ def deleteFile(fname, deleteDir=False):
                         simbase, simext = os.path.splitext(simfname)
                         if simext in LMFormat.SHAPE.getExtensions():
                             os.remove(simfname)
-                except Exception, e:
+                except Exception as e:
                     success = False
                     msg = 'Failed to remove {}, {}'.format(simfname, str(e))
             else:
                 try:
                     os.remove(fname)
-                except Exception, e:
+                except Exception as e:
                     success = False
                     msg = 'Failed to remove {}, {}'.format(fname, str(e))
             if deleteDir and len(os.listdir(pth)) == 0:
                 try:
                     os.removedirs(pth)
-                except Exception, e:
+                except Exception as e:
                     success = False
                     msg = 'Failed to remove {}, {}'.format(pth, str(e))
     return success, msg
@@ -114,19 +114,19 @@ def get_unicodecsv_reader(csv_list_or_file, delimiter):
     openfile = None  
     unicodecsv.field_size_limit(sys.maxsize)
     if not os.path.exists(csv_list_or_file):
-        print('{} is not an existing filename, trying to parse as data'
-               .format(csv_list_or_file))
+        print(('{} is not an existing filename, trying to parse as data'
+               .format(csv_list_or_file)))
         data = csv_list_or_file
     else:
         try:
             data = open(csv_list_or_file, 'rb')
             openfile = data
-        except Exception, e: 
+        except Exception as e: 
             raise
 
     try:
         reader = unicodecsv.reader(data, delimiter=delimiter, encoding=ENCODING)
-    except Exception, e:
+    except Exception as e:
         reader = None
         if openfile:
             msg = ('Failed to read data from {}, ({})'.format(csv_list_or_file, e))
@@ -151,7 +151,7 @@ def get_unicodecsv_writer(datafile, delimiter, doAppend=True):
         f = open(datafile, mode) 
         writer = unicodecsv.writer(f, delimiter=delimiter, encoding=ENCODING)
 
-    except Exception, e:
+    except Exception as e:
         raise Exception('Failed to read or open {}, ({})'
                              .format(datafile, str(e)))
     return writer, f

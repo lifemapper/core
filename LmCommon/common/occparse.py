@@ -121,8 +121,8 @@ class OccDataParser(LMObject):
         fieldmeta, doMatchHeader = self.readMetadata(self._rawMetadata)
         if doMatchHeader:
             # Read CSV header
-            tmpList = self._csvreader.next()
-            print ('Header = {}'.format(tmpList))
+            tmpList = next(self._csvreader)
+            print(('Header = {}'.format(tmpList)))
             self.header = [fldname.strip() for fldname in tmpList]
         
         (self.columnMeta,
@@ -250,10 +250,10 @@ class OccDataParser(LMObject):
             # from file
             with open(metadata) as f:
                 meta = json.load(f)
-        except IOError, e:
-            print( 'Failed to open {} err: {}'.format(metadata, str(e)))
+        except IOError as e:
+            print(( 'Failed to open {} err: {}'.format(metadata, str(e))))
             raise
-        except Exception, e:
+        except Exception as e:
             # or string/stream
             try:
                 meta = json.loads(metadata)
@@ -264,7 +264,7 @@ class OccDataParser(LMObject):
                 meta = OccDataParser.readOldMetadata(metalines)
            
         # Convert fieldtype string to OGR constant
-        for colIdx in meta.keys():
+        for colIdx in list(meta.keys()):
             ftype = meta[colIdx][OccDataParser.FIELD_TYPE_KEY]
             ogrtype = OccDataParser.getOgrFieldType(ftype)
             meta[colIdx][OccDataParser.FIELD_TYPE_KEY] = ogrtype
@@ -272,7 +272,7 @@ class OccDataParser(LMObject):
         # If keys are column indices, change to ints
         doMatchHeader = False
         columnMeta = {}
-        for k, v in meta.iteritems():
+        for k, v in meta.items():
             try:
                 columnMeta[int(k)] = v
             except:
@@ -312,7 +312,7 @@ class OccDataParser(LMObject):
                             key = None
                     if key is not None:
                         if len(tmp) < 3:
-                            print('Skipping field {} without name or type'.format(key))
+                            print(('Skipping field {} without name or type'.format(key)))
                             fieldmeta[key] = None
                         else:
                             # Required second value is fieldname, must 
@@ -338,7 +338,7 @@ class OccDataParser(LMObject):
                                 # Remaining values are acceptable values for this field
                                 if len(rest) >= 1:
                                     fieldmeta[key][OccDataParser.FIELD_VALS_KEY] = rest
-        except Exception, e:
+        except Exception as e:
             raise Exception('Failed to parse metadata, ({})'.format(e))
                        
         return fieldmeta
@@ -385,7 +385,7 @@ class OccDataParser(LMObject):
                 except:
                     fieldIndexMeta[i] = None
         
-        for idx, vals in fieldIndexMeta.iteritems():
+        for idx, vals in fieldIndexMeta.items():
             # add placeholders in the fieldnames and fieldTypes lists for 
             # columns we will not process 
             ogrtype = role = acceptedVals = None
@@ -412,22 +412,22 @@ class OccDataParser(LMObject):
                     fieldIndexMeta[idx]['role'] = role
                     if role == OccDataParser.FIELD_ROLE_IDENTIFIER:
                         idIdx = idx
-                        print ('Found id index {}').format(idx)
+                        print(('Found id index {}').format(idx))
                     elif role == OccDataParser.FIELD_ROLE_LONGITUDE:
                         xIdx = idx
-                        print ('Found X index {}').format(idx)
+                        print(('Found X index {}').format(idx))
                     elif role == OccDataParser.FIELD_ROLE_LATITUDE:
                         yIdx = idx
-                        print ('Found Y index {}').format(idx)
+                        print(('Found Y index {}').format(idx))
                     elif role == OccDataParser.FIELD_ROLE_GEOPOINT:
                         ptIdx = idx
-                        print ('Found point index {}').format(idx)
+                        print(('Found point index {}').format(idx))
                     elif role == OccDataParser.FIELD_ROLE_TAXANAME:
                         nameIdx = idx
-                        print ('Found name index {}').format(idx)
+                        print(('Found name index {}').format(idx))
                     elif role == OccDataParser.FIELD_ROLE_GROUPBY:
                         groupByIdx = idx
-                        print ('Found group index {}').format(idx)
+                        print(('Found group index {}').format(idx))
             filters[idx] = acceptedVals
         
         # Check existence of required roles
@@ -437,7 +437,7 @@ class OccDataParser(LMObject):
         if nameIdx is None:
             raise Exception('Missing `TAXANAME` required role in metadata')
         if (xIdx is None or yIdx is None) and ptIdx is None:
-            print ('Found x {}, y {}, point {}').format(xIdx, yIdx, ptIdx)
+            print(('Found x {}, y {}, point {}').format(xIdx, yIdx, ptIdx))
             raise Exception('Missing `LATITUDE`-`LONGITUDE` pair or `GEOPOINT` roles in metadata')
         if groupByIdx is None:
             groupByIdx = nameIdx
@@ -470,8 +470,8 @@ class OccDataParser(LMObject):
             elif typestr in ('float', 'real'):
                 return OFTReal
             else:
-                print('Unsupported field type {} (requires None, int, string, real)'
-                               .format(typestr))
+                print(('Unsupported field type {} (requires None, int, string, real)'
+                               .format(typestr)))
         return None
     
     # ...............................................
@@ -514,13 +514,13 @@ class OccDataParser(LMObject):
         
         if len(line) == 1:
             self.log.info('Line has only one element - is delimiter set correctly?')
-        if len(line) < len(self.columnMeta.keys()):
+        if len(line) < len(list(self.columnMeta.keys())):
             raise LMError('Line has {} elements; expecting {} fields'.format(
-              len(line), len(self.columnMeta.keys())))
+              len(line), len(list(self.columnMeta.keys()))))
         self.recTotal += 1
         
         # Field filters
-        for filterIdx, acceptedVals in self.filters.iteritems():
+        for filterIdx, acceptedVals in self.filters.items():
             val = line[filterIdx]
             try:
                 val = val.lower()
@@ -534,7 +534,7 @@ class OccDataParser(LMObject):
         # Sort/Group value; may be a string or integer
         try:
             gval = self._getGroupByValue(line)
-        except Exception, e:
+        except Exception as e:
             self.badGroups += 1
             goodEnough = False
         else:
@@ -544,7 +544,7 @@ class OccDataParser(LMObject):
         if self._idIdx is not None:
             try:
                 int(line[self._idIdx])
-            except Exception, e:
+            except Exception as e:
                 if line[self._idIdx] == '':
                     self.badIds += 1
                     goodEnough = False
@@ -554,7 +554,7 @@ class OccDataParser(LMObject):
         try:
             float(x)
             float(y)
-        except Exception, e:
+        except Exception as e:
             self.badGeos += 1
             goodEnough = False
         else:
@@ -575,18 +575,18 @@ class OccDataParser(LMObject):
         line = None
         while not success and self._csvreader is not None:
             try:
-                line = self._csvreader.next()
+                line = next(self._csvreader)
                 if len(line) > 0:
                     goodEnough = self._testLine(line)
                     success = True
-            except OverflowError, e:
+            except OverflowError as e:
                 self.log.debug( 'Overflow on {}; {}'.format(self.currRecnum, e))
             except StopIteration:
                 self.log.debug('EOF after rec {}'.format(self.currRecnum))
                 self.close()
                 self.currLine = None
                 success = True
-            except Exception, e:
+            except Exception as e:
                 self.log.warning('Bad record {}'.format(e))
            
         return line, goodEnough
@@ -648,7 +648,7 @@ class OccDataParser(LMObject):
                         self.groupVal = None
                         self.log.info('Unable to pullNextValidRec; completed')
                     
-        except Exception, e:
+        except Exception as e:
             self.log.error('Failed in pullNextValidRec, currRecnum={}, {}'
                            .format(self.currRecnum, e))
             self.currLine = self.groupVal = None
@@ -678,7 +678,7 @@ class OccDataParser(LMObject):
             """.format(self.csv_fname, self.recTotal, self.recTotalGood, 
                        len(self.groupVals), self.badIds, self.badGeos, 
                        self.badGroups, self.badNames, self.badFilters,  
-                       str(self.filters.keys()), str(self.filters.values()), 
+                       str(list(self.filters.keys())), str(list(self.filters.values())), 
                        str(self.badFilterVals))
             self.log.info(report)
 
@@ -716,7 +716,7 @@ class OccDataParser(LMObject):
                     if self.currLine is None:
                         complete = True
                                        
-            except Exception, e:
+            except Exception as e:
                 self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
                           % (str(self.currRecnum), str(e)))
                 self.currLine = self.groupVal = None
@@ -733,7 +733,7 @@ class OccDataParser(LMObject):
             summary[chunkGroup] = (chunkName, len(chunk))
             self.log.info('Pulled chunk {} for name {} with {} records'.format(
                 chunkGroup, chunkName, len(chunk)))
-        count = len(summary.keys())
+        count = len(list(summary.keys()))
         self.log.info('Pulled {} total chunks'.format(count))
         return summary
     
@@ -752,7 +752,7 @@ class OccDataParser(LMObject):
                     complete = True
                 else:
                     self.pullNextValidRec()
-        except Exception, e:
+        except Exception as e:
             self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
                       % (str(self.currRecnum), str(e)))
             self.currLine = self.groupVal = None      

@@ -67,7 +67,7 @@ class IDigBioOccurrenceService(LmService):
                 'Could not get occurrence points from iDigBio for GBIF taxon IDs: {}'
                 .format(str(e)))
         else:
-            for key, val in summary.iteritems():
+            for key, val in summary.items():
                 if key != GbifAPI.GBIF_MISSING_KEY:
                     ret.append({GbifAPI.TAXON_ID_KEY : key,
                                 IdigbioAPI.OCCURRENCE_COUNT_KEY : val})

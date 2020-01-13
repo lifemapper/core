@@ -1,6 +1,6 @@
 """Tests for the occurrence set web services
 """
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from LmCommon.common.lmconstants import (
     CSV_INTERFACE, EML_INTERFACE, GEO_JSON_INTERFACE, KML_INTERFACE,
@@ -81,7 +81,7 @@ class Test_occurrence_layer_web_services(object):
             # If there was a failure, try to delete the dummy occ with the
             #    scribe to clean things up
             scribe.deleteObject(inserted_dummy_occ)
-            print(str(e_info))
+            print((str(e_info)))
             raise e_info
         assert resp_status == HTTPStatus.NO_CONTENT
         # Check that test occurrence set was deleted
@@ -121,7 +121,7 @@ class Test_occurrence_layer_web_services(object):
             #    scribe to clean things up
             scribe.deleteObject(inserted_dummy_prj)
             scribe.deleteObject(inserted_dummy_occ)
-            print(str(e_info))
+            print((str(e_info)))
             raise e_info
         assert resp_status == HTTPStatus.NO_CONTENT
         # Check that test occurrence set was deleted
@@ -140,7 +140,7 @@ class Test_occurrence_layer_web_services(object):
                 querying the database
         """
         bad_occ_id = 999999999
-        with pytest.raises(urllib2.HTTPError) as e_info:
+        with pytest.raises(urllib.error.HTTPError) as e_info:
             public_client.delete_occurrence_set(bad_occ_id)
             assert e_info.code == HTTPStatus.NOT_FOUND
     
@@ -156,7 +156,7 @@ class Test_occurrence_layer_web_services(object):
                 querying the database
         """
         bad_occ_id = 999999999
-        with pytest.raises(urllib2.HTTPError) as e_info:
+        with pytest.raises(urllib.error.HTTPError) as e_info:
             public_client.get_occurrence_set(bad_occ_id)
             assert e_info.code == HTTPStatus.NOT_FOUND
     
@@ -234,7 +234,7 @@ class Test_occurrence_layer_web_services(object):
         assert resp_raw.code == HTTPStatus.OK
         occ_resp = public_client.deserialize(resp_raw)
         assert occ_resp['id'] == occ_id
-        assert 'spatialVector' in occ_resp.keys()
+        assert 'spatialVector' in list(occ_resp.keys())
         assert validate_json(resp_raw)
 
     # ............................

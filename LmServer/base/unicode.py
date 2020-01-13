@@ -23,7 +23,7 @@ from http://docs.python.org/library/csv.html
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import csv, codecs, cStringIO
+import csv, codecs, io
 
 # .............................................................................
 class UTF8Recoder:
@@ -36,11 +36,11 @@ class UTF8Recoder:
    def __iter__(self):
       return self
 
-   def next(self):
+   def __next__(self):
 #      return self.reader.next().encode("utf-8")
       try:
          item = self.reader.next().encode("utf-8")
-      except Exception, e:
+      except Exception as e:
          raise
       else:
          return item
@@ -57,13 +57,13 @@ class UnicodeReader:
         f = UTF8Recoder(f, encoding)
         self.reader = csv.reader(f, dialect=dialect, **kwds)
 
-    def next(self):
-        row = self.reader.next()
+    def __next__(self):
+        row = next(self.reader)
         for s in row:
-           us = unicode(s, "utf-8")
+           us = str(s, "utf-8")
            if s != us:
-              print s, us
-        return [unicode(s, "utf-8") for s in row]
+              print(s, us)
+        return [str(s, "utf-8") for s in row]
 
     def __iter__(self):
         return self
@@ -77,7 +77,7 @@ class UnicodeWriter:
 
     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
         # Redirect output to a queue
-        self.queue = cStringIO.StringIO()
+        self.queue = io.StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
         self.stream = f
         self.encoder = codecs.getincrementalencoder(encoding)()

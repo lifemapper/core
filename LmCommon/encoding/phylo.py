@@ -105,7 +105,7 @@ class PhyloEncoding(object):
               self.tree.isBinary(): 
             # Check that matrix indices in tree match PAM
             # List of matrix indices (based on PAM column count)
-            pamMatrixIndices = range(self.pam.data.shape[1])
+            pamMatrixIndices = list(range(self.pam.data.shape[1]))
             # All matrix indices in tree
             
             treeMatrixIndices = [int(mtxId) for _, mtxId in self.tree.getAnnotations(
@@ -172,10 +172,10 @@ class PhyloEncoding(object):
                 # We will add this value to the branch length list for all of the 
                 #     tips in this clade.  It is the branch length of this clade 
                 #     divided by the number of tips in the clade
-                addVal = 1.0 * childBL / len(childBlDict.keys())
+                addVal = 1.0 * childBL / len(list(childBlDict.keys()))
                 
                 # Process each of the tips in childBlDict
-                for k in childBlDict.keys():
+                for k in list(childBlDict.keys()):
                     
                     # The formula for calculating the P-value is:
                     # P(tip)(node) = (l1 + l2/2 + l3/3 + ... ln/n) / Sum of branch lengths to node
@@ -277,8 +277,8 @@ class PhyloEncoding(object):
         
         # We need a mapping of node path id to matrix column.  I don't think 
         #     order matters
-        nodeColumnIndex = dict(zip(internalNodeLabels, 
-                                            range(len(internalNodeLabels))))
+        nodeColumnIndex = dict(list(zip(internalNodeLabels, 
+                                            list(range(len(internalNodeLabels))))))
         
         # The matrix index of the tip in the PAM maps to the row index of P
         for rowIdx, tipProp in tipProps:
@@ -286,7 +286,7 @@ class PhyloEncoding(object):
                 matrix[rowIdx][nodeColumnIndex[nodeCladeId]] = val
                 
         return Matrix(matrix, headers={'0': labels,
-                                        '1': [k for k,_ in nodeColumnIndex.iteritems()]})  
+                                        '1': [k for k,_ in nodeColumnIndex.items()]})  
     
     # ..............................    
     def _buildPMatrixTipProportionList(self, node, visited=[]):
@@ -377,19 +377,19 @@ class PhyloEncoding(object):
         
         # Initialize the matrix
         labels = self.pam.getColumnHeaders()
-        matrix = np.zeros((len(labels), len(pValDict.keys())), 
+        matrix = np.zeros((len(labels), len(list(pValDict.keys()))), 
                                 dtype=np.float)
 
         # We need a mapping of node path id to matrix column.  I don't think 
         #     order matters
-        nodeColumnIndex = dict(zip(pValDict.keys(), range(len(pValDict.keys()))))
+        nodeColumnIndex = dict(list(zip(list(pValDict.keys()), list(range(len(list(pValDict.keys())))))))
         
-        for nodeCladeId in pValDict.keys():
+        for nodeCladeId in list(pValDict.keys()):
             
-            for tipMtxIdx in pValDict[nodeCladeId].keys():
+            for tipMtxIdx in list(pValDict[nodeCladeId].keys()):
                 matrix[int(tipMtxIdx)][nodeColumnIndex[nodeCladeId]] = pValDict[
                                                                             nodeCladeId][tipMtxIdx]
                 
         return Matrix(matrix, headers={'0': labels,
-                                        '1': [k for k,_ in nodeColumnIndex.iteritems()]})  
+                                        '1': [k for k,_ in nodeColumnIndex.items()]})  
     

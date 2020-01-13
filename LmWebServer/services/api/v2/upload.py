@@ -10,7 +10,7 @@ Todo: Use sub-services for different upload types rather than query parameter
 import cherrypy
 import json
 import os
-from StringIO import StringIO
+from io import StringIO
 import zipfile
 
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, HTTPStatus,
@@ -212,7 +212,7 @@ class UserUploadService(LmService):
             m_stringio.seek(0)
             metadata = json.load(m_stringio)
             self.log.debug('Metadata: {}'.format(metadata))
-            if 'field' not in metadata.keys() or 'role' not in metadata.keys():
+            if 'field' not in list(metadata.keys()) or 'role' not in list(metadata.keys()):
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST, 'Metadata not in expected format')
             else:
@@ -224,7 +224,7 @@ class UserUploadService(LmService):
                 header_row = data.split('\n')[0]
                 meta_obj = {}
                 # Check for delimiter
-                if 'delimiter' in metadata.keys():
+                if 'delimiter' in list(metadata.keys()):
                     delim = metadata['delimiter']
                 else:
                     delim = ','
@@ -265,22 +265,22 @@ class UserUploadService(LmService):
                         'type' : field_type,
                         'name' : short_name
                     }
-                    if 'geopoint' in roles.keys() and f[
+                    if 'geopoint' in list(roles.keys()) and f[
                             'key'] == roles['geopoint']:
                         field_obj['role'] = 'geopoint'
-                    elif 'taxaName' in roles.keys() and f[
+                    elif 'taxaName' in list(roles.keys()) and f[
                             'key'] == roles['taxaName']:
                         field_obj['role'] = 'taxaName'
-                    elif 'latitude' in roles.keys() and f[
+                    elif 'latitude' in list(roles.keys()) and f[
                             'key'] == roles['latitude']:
                         field_obj['role'] = 'latitude'
-                    elif 'longitude' in roles.keys() and f[
+                    elif 'longitude' in list(roles.keys()) and f[
                             'key'] == roles['longitude']:
                         field_obj['role'] = 'longitude'
-                    elif 'uniqueId' in roles.keys() and f[
+                    elif 'uniqueId' in list(roles.keys()) and f[
                             'key'] == roles['uniqueId']:
                         field_obj['role'] = 'uniqueId'
-                    elif 'groupBy' in roles.keys() and f[
+                    elif 'groupBy' in list(roles.keys()) and f[
                             'key'] == roles['groupBy']:
                         field_obj['role'] = 'groupby'
                     meta_obj[field_idx] = field_obj

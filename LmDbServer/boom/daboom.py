@@ -59,11 +59,11 @@ class DaBoom(Daemon):
         
     # .............................
     def run(self):
-        print('Running daBoom with configFname = {}'.format(self.boomer.configFname))
+        print(('Running daBoom with configFname = {}'.format(self.boomer.configFname)))
         try:
             while self.boomer.keepWalken:
                 self.boomer.processSpud()
-        except Exception, e:
+        except Exception as e:
             self.log.debug('Exception {} on potato'.format(str(e)))            
             tb = traceback.format_exc()
             self.log.error("An error occurred")
@@ -98,7 +98,7 @@ class DaBoom(Daemon):
 # .............................................................................
 if __name__ == "__main__":
     if not isLMUser():
-        print("Run this script as `{}`".format(LM_USER))
+        print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
     earl = EarlJr()
     defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG, 
@@ -123,8 +123,8 @@ if __name__ == "__main__":
     cmd = args.cmd.lower()
     
     print('')
-    print('Running daboom with configFilename={} and command={}'
-            .format(configFname, cmd))
+    print(('Running daboom with configFilename={} and command={}'
+            .format(configFname, cmd)))
     print('')
     boomer = DaBoom(BOOM_PID_FILE, configFname)
     
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     elif cmd == 'status':
         boomer.status()
     else:
-        print("Unknown command: {}".format(cmd))
+        print(("Unknown command: {}".format(cmd)))
         sys.exit(2)
         
 """

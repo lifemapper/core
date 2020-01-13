@@ -66,13 +66,13 @@ class colorPalette:
                    "bluered":self.blueredscale,
                    "bluegreen":self.bluegreenscale,
                    "greenred":self.greenredscale}
-    if self.ptype not in self.ptypes.keys():
+    if self.ptype not in list(self.ptypes.keys()):
       self.ptype = "gray"
     self.method = self.ptypes[self.ptype]
     self.method()
 
   def keys(self):
-    return self.ptypes.keys()
+    return list(self.ptypes.keys())
 
   def __getitem__(self,key):
     return self.pal.__getitem__(key)
@@ -324,7 +324,7 @@ def allPalettesToHTML():
   nc = 125
   pals = []
   cp = colorPalette(n=1)
-  names = cp.keys()
+  names = list(cp.keys())
   for name in names:
     pals.append(colorPalette(ptype=name,n=nc))
   s = ""

@@ -144,10 +144,10 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
         scnId = match[SOLR_FIELDS.PROJ_SCENARIO_ID]
         algCode = match[SOLR_FIELDS.ALGORITHM_CODE]
         
-        if not matchGroups.has_key(scnId):
+        if scnId not in matchGroups:
             matchGroups[scnId] = {}
         
-        if not matchGroups[scnId].has_key(algCode):
+        if algCode not in matchGroups[scnId]:
             matchGroups[scnId][algCode] = []
             
         matchGroups[scnId][algCode].append(match)
@@ -201,18 +201,18 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
     if method in [SubsetMethod.COLUMN, SubsetMethod.SPATIAL]:
         # PAMs
         # --------
-        for scnId in matchGroups.keys():
-            for algCode, mtxMatches in matchGroups[scnId].iteritems():
+        for scnId in list(matchGroups.keys()):
+            for algCode, mtxMatches in matchGroups[scnId].items():
                 
                 
                 scnCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_CODE]
                 dateCode = altPredCode = gcmCode = None
                 
-                if mtxMatches[0].has_key(SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE):
+                if SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE in mtxMatches[0]:
                     dateCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE]
-                if mtxMatches[0].has_key(SOLR_FIELDS.PROJ_SCENARIO_GCM):
+                if SOLR_FIELDS.PROJ_SCENARIO_GCM in mtxMatches[0]:
                     gcmCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_GCM]
-                if mtxMatches[0].has_key(SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE):
+                if SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE in mtxMatches[0]:
                     altPredCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE]
                 
                 scnMeta = {
@@ -272,7 +272,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                 'keywords' : ['subset'],
                 'description' : 'Subset of GRIM {}'.format(grim.getId())
             }
-            if grim.mtxMetadata.has_key('keywords'):
+            if 'keywords' in grim.mtxMetadata:
                 grimMetadata['keywords'].extend(grim.mtxMetadata['keywords'])
             
             insertedGrim.updateStatus(
@@ -340,18 +340,18 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
         
         # PAMs
         # --------
-        for scnId in matchGroups.keys():
-            for algCode, mtxMatches in matchGroups[scnId].iteritems():
+        for scnId in list(matchGroups.keys()):
+            for algCode, mtxMatches in matchGroups[scnId].items():
                 
                 
                 scnCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_CODE]
                 dateCode = altPredCode = gcmCode = None
                 
-                if mtxMatches[0].has_key(SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE):
+                if SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE in mtxMatches[0]:
                     dateCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE]
-                if mtxMatches[0].has_key(SOLR_FIELDS.PROJ_SCENARIO_GCM):
+                if SOLR_FIELDS.PROJ_SCENARIO_GCM in mtxMatches[0]:
                     gcmCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_GCM]
-                if mtxMatches[0].has_key(SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE):
+                if SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE in mtxMatches[0]:
                     altPredCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE]
                 
                 scnMeta = {
@@ -377,7 +377,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                     try:
                         prj = scribe.getSDMProject(
                             int(mtxMatches[i][SOLR_FIELDS.PROJ_ID]))
-                    except Exception, e:
+                    except Exception as e:
                         prj = None
                         log.debug(
                             'Could not add projection {}: {}'.format(
@@ -449,7 +449,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                 'keywords' : ['subset'],
                 'description' : 'Reintersection of GRIM {}'.format(grim.getId())
             }
-            if grim.mtxMetadata.has_key('keywords'):
+            if 'keywords' in grim.mtxMetadata:
                 grimMetadata['keywords'].extend(grim.mtxMetadata['keywords'])
             
             # Get corresponding grim layers (scenario)

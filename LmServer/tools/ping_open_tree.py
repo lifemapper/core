@@ -47,7 +47,7 @@ if __name__ == '__main__':
     try:
         id_map = get_ottids_from_gbifids(test_ids)
         ott_ids = []
-        for k, v in id_map.items():
+        for k, v in list(id_map.items()):
             if v is not None:
                 ott_ids.append(v)
         # Get the tree

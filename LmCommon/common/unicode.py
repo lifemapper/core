@@ -38,11 +38,11 @@ def toUnicode(item, encoding=ENCODING):
    @param encoding: (optional) The encoding of the text
    """
    value = item
-   if isinstance(item, basestring):
-      if not isinstance(item, unicode):
-         value = unicode(item, encoding)
+   if isinstance(item, str):
+      if not isinstance(item, str):
+         value = str(item, encoding)
    else:
-      value = unicode(str(item), encoding)
+      value = str(str(item), encoding)
    return value
 
 # .............................................................................

@@ -52,5 +52,5 @@ setup(name="common",
       license="http://www.lifemapper.org",
       platforms = ["any"],
       description = doclines[0],
-      classifiers = filter(None, classifiers.split("\n")),
+      classifiers = [_f for _f in classifiers.split("\n") if _f],
       long_description = "\n".join(doclines[2:]))

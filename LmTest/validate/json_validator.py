@@ -23,7 +23,7 @@ def validate_json_file(json_filename):
             with open(json_filename) as in_json:
                 json_obj = json.load(in_json)
             valid = True
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
     else:
         msg = 'File does not exist'

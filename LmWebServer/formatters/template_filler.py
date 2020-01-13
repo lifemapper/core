@@ -11,7 +11,7 @@ class TemplateFiller(object):
         arg_dict = dict(args)
         self.param_dict = {}
         # Convert keys to lower case
-        for k in arg_dict.keys():
+        for k in list(arg_dict.keys()):
             self.param_dict[k.lower()] = arg_dict[k]
 
     # ..............................

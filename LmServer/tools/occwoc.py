@@ -34,7 +34,7 @@ import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.apiquery import GbifAPI
-from LmCommon.common.unicode import fromUnicode, toUnicode
+from LmCommon.common.str import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
@@ -130,7 +130,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                     try:
                         linenum = int(line)
                         complete = True
-                    except Exception, e:
+                    except Exception as e:
                         # Ignore comment lines
                         pass
             os.remove(self.startFile)
@@ -143,21 +143,21 @@ class _SpeciesWeaponOfChoice(LMObject):
         while not infile.closed and not success:
             try:
                 if csvreader is not None:
-                    line = csvreader.next()
+                    line = next(csvreader)
                 else:
-                    line = infile.next()
-            except StopIteration, e:
+                    line = next(infile)
+            except StopIteration as e:
                 self.finishedInput = True
                 self.log.debug('Finished file {} on line {}'
                                     .format(infile.name, self._linenum))
                 infile.close()
                 self._linenum = -9999
                 success = True
-            except OverflowError, e:
+            except OverflowError as e:
                 self._linenum += 1
                 self.log.debug( 'OverflowError on {} ({}), moving on'
                                      .format(self._linenum, e))
-            except Exception, e:
+            except Exception as e:
                 self._linenum += 1
                 self.log.debug('Exception reading line {} ({}), moving on'
                                     .format(self._linenum, e))
@@ -189,7 +189,7 @@ class _SpeciesWeaponOfChoice(LMObject):
     def _readProviderKeys(self, providerKeyFile, providerKeyColname):
         providers = {}
         provKeyCol = None
-        for colidx, desc in self.occParser.columnMeta.iteritems():
+        for colidx, desc in self.occParser.columnMeta.items():
             if desc['name'] == providerKeyColname:
                 provKeyCol = colidx
                 break
@@ -256,7 +256,7 @@ class _SpeciesWeaponOfChoice(LMObject):
         try:
             occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
             self.log.info('    Found/inserted OccLayer {}'.format(occ.getId()))
-        except Exception, e:
+        except Exception as e:
             if not isinstance(e, LMError):
                 e = LMError(currargs=e.args, lineno=self.getLineno())
             raise e
@@ -302,7 +302,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                  nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
                  familyStr, genusStr, speciesStr, genusKey, speciesKey, 
                  loglines) = GbifAPI.getTaxonomy(taxonKey)
-            except Exception, e:
+            except Exception as e:
                 self.log.info('Failed lookup for key {}, ({})'.format(
                                                                     taxonKey, e))
             else:
@@ -335,7 +335,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                         sciName = self._scribe.findOrInsertTaxon(sciName=sname)
                         self.log.info('Inserted sciName for taxonKey {}, {}'
                                           .format(taxonKey, sciName.scientificName))
-                    except Exception, e:
+                    except Exception as e:
                         if not isinstance(e, LMError):
                             e = LMError(currargs='Failed on taxonKey {}, linenum {}'
                                                         .format(taxonKey, self._linenum), 
@@ -435,7 +435,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
                                                      self._userOccMeta, 
                                                      delimiter=self._delimiter,
                                                      pullChunks=True) 
-        except Exception, e:
+        except Exception as e:
             raise LMError('Failed to construct OccDataParser, {}'.format(e))
         
         self._fieldNames = self.occParser.header
@@ -583,7 +583,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
             for rec in data:
                 writer.writerow(rec)
             f.close()
-        except Exception, e:
+        except Exception as e:
             rdloc = None
             self.log.debug('Unable to write CSV file {} ({})'.format(rdloc, e))
         else:
@@ -661,7 +661,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                                     .format(basename))
         try:
             _ = fromUnicode(toUnicode(binomial))
-        except Exception, _:
+        except Exception as _:
             self.log.error('Failed to convert binomial to and from unicode')
             binomial = None            
                     
@@ -754,7 +754,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         if line is not None:
             try:              
                 fullOccFname = line.strip()
-            except Exception, e:
+            except Exception as e:
                 self.log.debug('Exception reading line {} ({})'
                                     .format(self._linenum, e))
         return fullOccFname
@@ -865,13 +865,13 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
         while line is not None and not self.complete:
             try:
                 tmp = line.strip()
-            except Exception, e:
+            except Exception as e:
                 self._scribe.log.info('Error reading line {} ({}), skipping'
                                      .format(self._linenum, str(e)))
             else:
                 try:
                     occid = int(tmp)
-                except Exception, e:
+                except Exception as e:
                     self._scribe.log.info('Unable to get Id from data {} on line {}'
                                          .format(tmp, self._linenum))
                 else:

@@ -98,8 +98,8 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
         new_cols = encoder.encode_biogeographic_hypothesis(
              lyr.getDLocation(), column_name, min_coverage, 
              event_field=valAttribute)
-        print('layer name={}, eventField={}, dloc={}'
-                .format(lyr.name, valAttribute, lyr.getDLocation()))
+        print(('layer name={}, eventField={}, dloc={}'
+                .format(lyr.name, valAttribute, lyr.getDLocation())))
         
         # Add matrix columns for the newly encoded layers
         for col_name in new_cols:
@@ -157,14 +157,14 @@ def squidifyTree(scribe, usr, tree):
 
     tree.annotateTree(PhyloTreeKeys.SQUID, squidDict)
 
-    print "Adding interior node labels to tree"
+    print("Adding interior node labels to tree")
     # Add node labels
     tree.addNodeLabels()
     
     # Update tree properties
     tree.clearDLocation()
     tree.setDLocation()
-    print "Write tree to final location"
+    print("Write tree to final location")
     tree.writeTree()
     tree.updateModtime(mx.DateTime.gmt().mjd)
     success = scribe.updateObject(tree)
@@ -201,7 +201,7 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
 # .............................................................................
 if __name__ == '__main__':
     if not isLMUser():
-        print("Run this script as '{}'".format(LM_USER))
+        print(("Run this script as '{}'".format(LM_USER)))
         sys.exit(2)
 
     parser = argparse.ArgumentParser(

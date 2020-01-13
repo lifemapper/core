@@ -21,7 +21,7 @@ def validate_lm_matrix_file(lmmatrix_filename):
         try:
             mtx = Matrix.load(lmmatrix_filename)
             valid = True
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
     else:
         msg = 'File does not exist'

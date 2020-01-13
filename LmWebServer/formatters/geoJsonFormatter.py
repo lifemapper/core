@@ -20,7 +20,7 @@ def right_hand_rule(coordinates):
     @note: Coordinates will be a list of polygons lists where each is a list of 
                  x,y lists
     """
-    for i in xrange(len(coordinates)):
+    for i in range(len(coordinates)):
         coordinates[i].reverse()
 
 # .............................................................................
@@ -75,7 +75,7 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
         ft['id'] = feat.GetFID()
         
         # Join matrix attributes
-        if rowLookup.has_key(joinAttrib):
+        if joinAttrib in rowLookup:
             i = rowLookup[joinAttrib]
             
             # Set data or individuals
@@ -147,8 +147,8 @@ def geoJsonify(shpFilename, matrix=None, mtxJoinAttrib=None):
         joinAttrib = feat.GetFID()
         
         # Join matrix attributes
-        if attLookup.has_key(joinAttrib):
-            if not ft.has_key('properties'):
+        if joinAttrib in attLookup:
+            if 'properties' not in ft:
                 ft['properties'] = {}
             ft['properties'].update(attLookup[joinAttrib])
         

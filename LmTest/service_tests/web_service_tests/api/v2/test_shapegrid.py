@@ -190,7 +190,7 @@ class TestWebShapegridService(UserTestCase):
          with contextlib.closing(self.cl.get_shapegrid(sgId)) as x:
             sgMeta = json.load(x)
             
-         self.assertTrue(sgMeta.has_key('cellSides'))
+         self.assertTrue('cellSides' in sgMeta)
          self.assertEqual(sgMeta['user'], self._get_session_user(), 
                         'User id on shapegrid = {}, session user = {}'.format(
                                     sgMeta['user'], self._get_session_user()))

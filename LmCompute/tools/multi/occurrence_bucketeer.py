@@ -35,7 +35,7 @@ def splitIntoBuckets(inputFilenames, outputBasename, groupPos, strPos=0,
         k = (DEF_CHAR*numCmp + str(i))[-numCmp:]
         # Some keys end up duplicated so only add if doesn't exist (9 can become 
         #     '900', etc)
-        if not buckets.has_key(k):
+        if k not in buckets:
             buckets[k] = UnicodeWriter(
                 open('{}{}.csv'.format(outputBasename, k), 'w'))
             #buckets[k] = csv.writer(
@@ -58,11 +58,11 @@ def splitIntoBuckets(inputFilenames, outputBasename, groupPos, strPos=0,
                             b = DEF_CHAR
                         b += DEF_CHAR*numCmp
                         buckets[b[0:numCmp]].writerow(row)
-                    except Exception, e:
-                        print str(e)
+                    except Exception as e:
+                        print(str(e))
             
     # Close bucket files
-    for k in buckets.keys():
+    for k in list(buckets.keys()):
         buckets[k].stream.close()
 
 # .............................................................................

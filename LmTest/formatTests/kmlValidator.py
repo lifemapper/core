@@ -35,5 +35,5 @@ def validate_kml(obj_generator):
       # Just try to validate XML
       el = deserialize(fromstring(obj_generator))
       return True
-   except Exception, e:
+   except Exception as e:
       return False

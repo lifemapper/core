@@ -8,7 +8,7 @@ from collections import defaultdict
 import json
 import os
 import mapscript
-from StringIO import StringIO
+from io import StringIO
 import zipfile
 
 import unicodecsv
@@ -217,9 +217,9 @@ def createHeaderLookup(headers, squids=False, scribe=None, userId=None):
     if squids and scribe and userId:
         return [
             getSquidHeaderDict(
-                headers[i], i, scribe, userId) for i in xrange(len(headers))]
+                headers[i], i, scribe, userId) for i in range(len(headers))]
     else:
-        return [getHeaderDict(headers[i], i) for i in xrange(len(headers))]
+        return [getHeaderDict(headers[i], i) for i in range(len(headers))]
 
 # .............................................................................
 def mung(data):
@@ -290,7 +290,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
             
             # string io object
             occ_string_io = StringIO()
-            headers = occ.getFeatureAttributes().items()
+            headers = list(occ.getFeatureAttributes().items())
             with open(sys_occ_path) as in_f:
                 # Get Delimiter
                 dialect = sniffer.sniff(in_f.read(32))
