@@ -1,28 +1,4 @@
-"""
-@summary: Module containing functions to create a shapefile from occurrence data
-@author: Aimee Stewart
-
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
+"""Module containing functions to create a shapefile from occurrence data
 """
 import json
 import os
@@ -34,7 +10,7 @@ from LmCommon.common.lmconstants import (GBIF, PROVIDER_FIELD_COMMON,
         LM_WKT_FIELD, JobStatus, DWCNames, LMFormat, DEFAULT_EPSG)
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
-from LmCommon.common.str import fromUnicode, toUnicode
+from LmCommon.common.str import from_unicode, to_unicode
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
@@ -121,7 +97,7 @@ class ShapeShifter(object):
         try:
             self._fillFeature(feat, recDict)
         except Exception as e:
-            print(('Failed to _createFillFeat, e = {}'.format(fromUnicode(toUnicode(e)))))
+            print(('Failed to _createFillFeat, e = {}'.format(from_unicode(to_unicode(e)))))
             raise e
         else:
             # Create new feature, setting FID, in this layer
@@ -328,7 +304,7 @@ class ShapeShifter(object):
             except Exception as e:
                 badRecCount += 1
                 print(('Exception reading line {} ({})'.format(self.op.currRecnum, 
-                                                                      fromUnicode(toUnicode(e)))))
+                                                                      from_unicode(to_unicode(e)))))
         if success:
             for idx, vals in self.op.columnMeta.items():
                 if vals is not None and idx not in (self.op.xIdx, self.op.yIdx):
@@ -452,7 +428,7 @@ class ShapeShifter(object):
                         val = recDict[name]
                         if val is not None and val != 'None':
                             if isinstance(val, UnicodeType):
-                                val = fromUnicode(val)
+                                val = from_unicode(val)
                             feat.SetField(fldidx, val)
         except Exception as e:
             print(('Failed to fillFeature with recDict {}, e = {}'.format(str(recDict), e)))

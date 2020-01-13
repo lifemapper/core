@@ -1,25 +1,4 @@
-"""
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
+"""Occurrence data weapon-of-choice
 """
 import shutil
 try:
@@ -34,7 +13,7 @@ import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.apiquery import GbifAPI
-from LmCommon.common.str import fromUnicode, toUnicode
+from LmCommon.common.str import from_unicode, to_unicode
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
@@ -660,7 +639,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                 self.log.error('Unable to parse filename {} into binomial and opentreeId'
                                     .format(basename))
         try:
-            _ = fromUnicode(toUnicode(binomial))
+            _ = from_unicode(to_unicode(binomial))
         except Exception as _:
             self.log.error('Failed to convert binomial to and from unicode')
             binomial = None            

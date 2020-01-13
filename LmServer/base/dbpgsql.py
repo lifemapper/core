@@ -1,38 +1,11 @@
-"""
-     Library to interact with the Lifemapper PostgreSQL/PostGIS databases 
-     (RAD, MAL)
-     @author: Aimee Stewart
-     @requires: psycopg2 (tested with v2.0.5.1), 
-                    available from http://www.initd.org/
-
-@license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
+"""Library to interact with the Lifemapper PostgreSQL/PostGIS databases 
 """
 import psycopg2
 from types import (IntType, LongType, FloatType, NoneType, BooleanType)
 
 from LmBackend.common.lmobj import LMError
 
-from LmCommon.common.str import fromUnicode, toUnicode
+from LmCommon.common.str import from_unicode, to_unicode
 
 from LmServer.base.atom import Atom
 from LmServer.base.lmobj import LMAbstractObject
@@ -140,7 +113,7 @@ class DbPostgresql(LMAbstractObject):
                  configuration.
         """
         if isinstance(val, str):
-            val = fromUnicode(toUnicode(val))
+            val = from_unicode(to_unicode(val))
             val = val.replace('\'', "''")
             val = val.replace('\\', '\\\\')
             dbVal = "E'%s'" % (val)
