@@ -4,7 +4,6 @@
 TODO: CONSIDER REMOVING, Does not appear to be used now.
 """
 import decimal
-import mx.DateTime
 import numpy
 from types import (BuiltinFunctionType, BuiltinMethodType, CodeType, 
             FloatType, FunctionType, IntType, LambdaType, MethodType, NoneType, 
@@ -14,6 +13,7 @@ from LmBackend.common.lmobj import LMObject
 
 from LmCommon.common.lmconstants import (LM_USER, ISO_8601_TIME_FORMAT_FULL, 
             ISO_8601_TIME_FORMAT_TRUNCATED, LM_NAMESPACE, YMD_HH_MM_SS, ENCODING)
+from LmCommon.common.time import gmt, LmTime
 
 from LmServer.common.lmconstants import STRING_ESCAPE_FORMATS
 from LmServer.common.localconstants import PUBLIC_USER
@@ -169,9 +169,9 @@ def formatTimeAtom(dt=None):
     @rtype: String
     """
     if dt is None:
-        dTime = mx.DateTime.gmt()
+        dTime = gmt()
     else:
-        dTime = mx.DateTime.DateTimeFromMJD(dt)
+        dTime = LmTime(dtime=dt)
     return dTime.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 # .............................................
@@ -183,9 +183,9 @@ def formatTimeYear(dt=None):
     @rtype: String
     """
     if dt is None:
-        dTime = mx.DateTime.gmt()
+        dTime = gmt()
     else:
-        dTime = mx.DateTime.DateTimeFromMJD(dt)
+        dTime = LmTime(dtime=dt)
     return dTime.strftime('%Y')
 
 # ...........................................
@@ -197,11 +197,11 @@ def formatTimeHuman(dt=None):
     @rtype: String
     """
     if dt is None:
-        dTime = mx.DateTime.gmt()
+        dTime = gmt()
     elif dt == 0:
         return ""
     else:
-        dTime = mx.DateTime.DateTimeFromMJD(dt)
+        dTime = LmTime(dtime=dt)
     return dTime.strftime('%Y-%m-%d %H:%M:%S')
 
 # ...........................................
@@ -212,7 +212,7 @@ def formatTimeUrl(dt=None):
     if dt is None or dt == 0:
         return ""
     else:
-        dTime = mx.DateTime.DateTimeFromMJD(dt)
+        dTime = LmTime(dtime=dt)
         return dTime.strftime('%Y-%m-%d')
 
 # ...........................................
@@ -222,17 +222,15 @@ def getColor(colorString, allowRamp=False):
 # ...........................................
 def getMjdTimeFromISO8601(dt):
     try:
-        return mx.DateTime.strptime(dt, 
-                                                 ISO_8601_TIME_FORMAT_FULL).mjd
+        return LmTime.strptime(dt, ISO_8601_TIME_FORMAT_FULL).mjd
     except:
         try:
-            return mx.DateTime.strptime(dt, YMD_HH_MM_SS).mjd
+            return LmTime.strptime(dt, YMD_HH_MM_SS).mjd
         except:
             try:
-                return mx.DateTime.strptime(dt, 
-                                          ISO_8601_TIME_FORMAT_TRUNCATED).mjd
+                return LmTime.strptime(dt, ISO_8601_TIME_FORMAT_TRUNCATED).mjd
             except:
-                return mx.DateTime.gmt().mjd
+                return gmt().mjd
     
 # .............................................................................
 def getPackageId(item, separator='.'):

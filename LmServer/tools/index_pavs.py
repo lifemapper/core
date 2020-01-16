@@ -2,7 +2,6 @@
 """
 import argparse
 import json
-from mx.DateTime import DateTimeFromMJD
 import os
 from osgeo import ogr
 
@@ -13,6 +12,7 @@ from LmServer.common.solr import buildSolrDocument, postSolrDocument
 from LmServer.db.borgscribe import BorgScribe
 from LmBackend.common.lmconstants import RegistryKey
 from LmCommon.compression.binaryList import decompress
+from LmCommon.common.time import LmTime
 
 # .............................................................................
 def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
@@ -42,11 +42,11 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
     occ_mod_time = prj_mod_time = None
     
     if occ.modTime is not None:
-        occ_mod_time = DateTimeFromMJD(
+        occ_mod_time = LmTime.from_mjd(
             occ.modTime).strftime('%Y-%m-%dT%H:%M:%SZ')
     
     if prj.modTime is not None:
-        prj_mod_time = DateTimeFromMJD(
+        prj_mod_time = LmTime.from_mjd(
             prj.modTime).strftime('%Y-%m-%dT%H:%M:%SZ')
 
     # Taxonomy fields

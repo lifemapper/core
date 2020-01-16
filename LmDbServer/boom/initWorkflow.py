@@ -2,7 +2,6 @@
 """
 import configparser
 import json
-import mx.DateTime
 import os
 import stat
 import types
@@ -22,6 +21,7 @@ from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
       SERVER_SDM_ALGORITHM_HEADING_PREFIX,
       SERVER_DEFAULT_HEADING_POSTFIX)
 from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.time import gmt
 
 from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
@@ -128,7 +128,7 @@ class BOOMFiller(LMObject):
          self.compute_mcpa, 
          self.num_permutations, 
          self.other_lyr_names) = self.readParamVals()
-        self.woof_time_mjd = mx.DateTime.gmt().mjd
+        self.woof_time_mjd = gmt().mjd
         earl = EarlJr()
         self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                      objCode=self.archiveName, 
@@ -463,7 +463,7 @@ class BOOMFiller(LMObject):
                 raise Exception('Failed to configure TAXON_NAME_FILENAME for DATA_SOURCE=TAXON_NAMES')
         # ..........................    
         minpoints = self._getBoomParam(config, BoomKeys.POINT_COUNT_MIN)
-        today = mx.DateTime.gmt()
+        today = gmt()
         expyr = self._getBoomParam(config, BoomKeys.OCC_EXP_YEAR, defaultValue=today.year)
         expmo = self._getBoomParam(config, BoomKeys.OCC_EXP_MONTH, defaultValue=today.month)
         expdy = self._getBoomParam(config, BoomKeys.OCC_EXP_DAY, defaultValue=today.day)
@@ -720,7 +720,7 @@ class BOOMFiller(LMObject):
         @summary Adds provided userid to the database
         """
         user = LMUser(self.userId, self.userEmail, self.userEmail, 
-                      modTime=mx.DateTime.gmt().mjd)
+                      modTime=gmt().mjd)
         self.scribe.log.info('  Find or insert user {} ...'.format(self.userId))
         updatedUser = self.scribe.findOrInsertUser(user)
         # If exists, found by unique Id or Email, update values
@@ -771,7 +771,7 @@ class BOOMFiller(LMObject):
         shp = ShapeGrid(self.gridname, self.userId, self.scenPkg.epsgcode, self.cellsides, 
                         self.cellsize, self.scenPkg.mapUnits, self.gridbbox,
                         status=JobStatus.INITIALIZE, 
-                        statusModTime=mx.DateTime.gmt().mjd)
+                        statusModTime=gmt().mjd)
         newshp = self.scribe.findOrInsertShapeGrid(shp)
         validData = False
         if newshp: 
@@ -823,7 +823,7 @@ class BOOMFiller(LMObject):
                            metadata=pamMeta, userId=self.userId, 
                            gridset=gridset, 
                            status=JobStatus.GENERAL, 
-                           statusModTime=mx.DateTime.gmt().mjd)
+                           statusModTime=gmt().mjd)
         gpam = self.scribe.findOrInsertMatrix(tmpGpam)
         return gpam
 
@@ -848,7 +848,7 @@ class BOOMFiller(LMObject):
                            metadata=grimMeta, userId=self.userId, 
                            gridset=gridset, 
                            status=JobStatus.GENERAL, 
-                           statusModTime=mx.DateTime.gmt().mjd)
+                           statusModTime=gmt().mjd)
         grim = self.scribe.findOrInsertMatrix(tmpGrim)
         for lyr in scen.layers:
             # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
@@ -982,7 +982,7 @@ class BOOMFiller(LMObject):
             tree.clearDLocation()
             tree.setDLocation()
             tree.writeTree()
-            tree.updateModtime(mx.DateTime.gmt().mjd)
+            tree.updateModtime(gmt().mjd)
             # Update database
             success = self.scribe.updateObject(tree)        
             self._fixPermissions(files=[tree.getDLocation()])
@@ -1372,7 +1372,7 @@ class BOOMFiller(LMObject):
                 }
             new_mfc = MFChain(
                 self.userId, priority=Priority.HIGH, metadata=meta,
-                status=JobStatus.GENERAL, statusModTime=mx.DateTime.gmt().mjd)
+                status=JobStatus.GENERAL, statusModTime=gmt().mjd)
             gridset_mf = self.scribe.insertMFChain(
                 new_mfc, boomGridset.getId())
             target_dir = gridset_mf.getRelativeDirectory()
@@ -1462,7 +1462,6 @@ if __name__ == '__main__':
 """
 import ConfigParser
 import json
-import mx.DateTime
 import os
 import stat
 import types

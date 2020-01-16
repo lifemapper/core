@@ -1,11 +1,6 @@
 """Occurrence data weapon-of-choice
 """
 import shutil
-try:
-    import mx.DateTime as dt
-except:
-    pass
-
 import csv
 import json
 import os
@@ -13,11 +8,12 @@ import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.apiquery import GbifAPI
-from LmCommon.common.str import from_unicode, to_unicode
+from LmCommon.common.unicode import from_unicode, to_unicode
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import (readyFilename, get_unicodecsv_writer)
+from LmCommon.common.time import gmt, LmTime
 
 from LmServer.base.taxon import ScientificName
 from LmServer.common.datalocator import EarlJr
@@ -82,7 +78,7 @@ class _SpeciesWeaponOfChoice(LMObject):
 
 # ...............................................
     def reset_expiration_date(self, new_date_mjd):
-        currtime = dt.gmt().mjd
+        currtime =     gmt().mjd
         if new_date_mjd < currtime:
             self._obsoleteTime = new_date_mjd
         else:
@@ -222,7 +218,7 @@ class _SpeciesWeaponOfChoice(LMObject):
         @param dataCount: reported number of points for taxon in input dataset
         @param data: raw point data, stream or filename
         """
-        currtime = dt.gmt().mjd
+        currtime = gmt().mjd
         occ = None
         # Find existing
         # TODO: CJ, change this if we want canonical name displayed for GBIF data instead of scientificName
@@ -296,7 +292,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                             self.log.warning('No accepted key for taxonKey {}'.format(taxonKey))
                             return None
                         
-                    currtime = dt.gmt().mjd
+                    currtime =     gmt().mjd
                     # Do not tie GBIF taxonomy to one userid
                     sname = ScientificName(scinameStr, 
                                          rank=rankStr, 
@@ -709,7 +705,8 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
             self._recreateFile(filename)
         elif expDate is not None:
             ticktime = os.path.getmtime(filename)
-            modtime = dt.DateFromTicks(ticktime).mjd
+            modtime = LmTime(
+                dtime=datetime.datetime.fromtimestamp(ticktime)).mjd
             if modtime < expDate:
                 self._recreateFile(filename)
 
@@ -906,10 +903,6 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
     
 """
 import shutil
-try:
-    import mx.DateTime as dt
-except:
-    pass
 
 import csv
 import glob

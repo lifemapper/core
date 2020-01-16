@@ -1,42 +1,17 @@
 """
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
 """
-try:
-    from io import StringIO
-except:
-    from io import StringIO
+from io import StringIO
 import glob
-import mx.DateTime
 import os
 from osgeo import gdal, gdalconst, ogr, osr
 import subprocess
-from types import ListType, TupleType
 import zipfile
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmAttObject import LmAttObj
 from LmCommon.common.lmconstants import (GEOTIFF_INTERFACE, 
                                 SHAPEFILE_INTERFACE, OFTInteger, OFTString)
+from LmCommon.common.time import gmt
 from LmCommon.common.verify import computeHash, verifyHash
 
 from LmServer.base.lmobj import LMSpatialObject
@@ -1522,7 +1497,7 @@ class Vector(_Layer):
             self.writeShapefile(dlocation=outFile, overwrite=overwrite)
         # No file, no features, srcData is iterable, write as CSV
         elif srcData is not None:
-            if isinstance(srcData, ListType) or isinstance(srcData, TupleType):
+            if isinstance(srcData, (list, tuple)):
                 if not outFile.endswith(LMFormat.CSV.ext):
                     raise LMError('Iterable input vector data can only be written to CSV')
                 else:
@@ -1983,7 +1958,7 @@ class Vector(_Layer):
                      DO NOT delete temporary files or reset dlocation 
         @raise LMError: on failure to write file.
         """
-        currtime = str(mx.DateTime.gmt().mjd)
+        currtime = str(gmt().mjd)
         pid = str(os.getpid())
         dumpname = os.path.join(UPLOAD_PATH, '%s_%s_dump.csv' % (currtime, pid))
         f1 = open(dumpname, 'w')

@@ -1,43 +1,21 @@
 """
-@license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
 """
 # import argparse
-import mx.DateTime as DT
 import os
-from types import ListType, TupleType
 
-from LmServer.notifications.email import EmailNotifier
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, 
                                     ONE_MONTH, ONE_DAY, ONE_HOUR, JobStatus)
+from LmCommon.common.time import gmt
+from LmServer.common.lmconstants import ReferenceType
 from LmServer.common.localconstants import PUBLIC_USER, TROUBLESHOOTERS
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.common.lmconstants import ReferenceType
+from LmServer.notifications.email import EmailNotifier
 
-oneHourAgo = "{0:.2f}".format((DT.gmt() - ONE_HOUR).mjd)
-oneDayAgo = "{0:.2f}".format((DT.gmt() - ONE_DAY).mjd)
-oneWeekAgo = "{0:.2f}".format((DT.gmt() - ONE_DAY*7).mjd)
-oneMonthAgo = "{0:.2f}".format((DT.gmt() - ONE_MONTH).mjd)
+oneHourAgo = "{0:.2f}".format((gmt() - ONE_HOUR).mjd)
+oneDayAgo = "{0:.2f}".format((gmt() - ONE_DAY).mjd)
+oneWeekAgo = "{0:.2f}".format((gmt() - ONE_DAY*7).mjd)
+oneMonthAgo = "{0:.2f}".format((gmt() - ONE_MONTH).mjd)
 
 DISPLAY = {oneHourAgo: 'Hour', 
               oneDayAgo: 'Day', 
@@ -48,8 +26,7 @@ TIMES = (oneHourAgo, oneDayAgo, oneWeekAgo, None)
 
 # ...............................................
 def notifyPeople(logger, subject, message, recipients=TROUBLESHOOTERS):
-    if not (isinstance(recipients, ListType) 
-              or isinstance(recipients, TupleType)):
+    if not isinstance(recipients, (list, tuple)):
         recipients = [recipients]
     notifier = EmailNotifier()
     try:
@@ -134,9 +111,7 @@ if __name__ == '__main__':
     
     
 """
-import mx.DateTime as DT
 import os
-from types import ListType, TupleType
 
 from LmServer.notifications.email import EmailNotifier
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, 
@@ -147,9 +122,9 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.lmconstants import ReferenceType
 from LmServer.tools.checkProgress import *
 
-oneHourAgo = "{0:.2f}".format((DT.gmt() - ONE_HOUR).mjd)
-oneDayAgo = "{0:.2f}".format((DT.gmt() - ONE_DAY).mjd)
-oneMonthAgo = "{0:.2f}".format((DT.gmt() - ONE_MONTH).mjd)
+oneHourAgo = "{0:.2f}".format((gmt() - ONE_HOUR).mjd)
+oneDayAgo = "{0:.2f}".format((gmt() - ONE_DAY).mjd)
+oneMonthAgo = "{0:.2f}".format((gmt() - ONE_MONTH).mjd)
 
 DISPLAY = {oneHourAgo: 'Hour', 
               oneDayAgo: 'Day', 

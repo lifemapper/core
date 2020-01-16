@@ -5,11 +5,10 @@
 import argparse
 import os
 
-from mx.DateTime.DateTime import gmt
-
 from LmBackend.command.common import SystemCommand
 from LmBackend.command.server import LmTouchCommand
 from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.time import gmt
 from LmServer.common.lmconstants import Priority
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe

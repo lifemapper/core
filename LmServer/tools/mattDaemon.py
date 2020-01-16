@@ -8,7 +8,6 @@ Todo:
 """
 import argparse
 import glob
-from mx.DateTime.DateTime import gmt
 import os
 import shutil
 import signal
@@ -20,6 +19,7 @@ import traceback
 from LmBackend.common.daemon import Daemon, DaemonCommands
 
 from LmCommon.common.lmconstants import LM_USER, JobStatus
+from LmCommon.common.time import gmt
 
 from LmServer.common.lmconstants import (
     CATALOG_SERVER_BIN, CS_OPTIONS, LOG_PATH, MAKEFLOW_BIN, MAKEFLOW_OPTIONS,

@@ -9,13 +9,13 @@ Todo:
 import cherrypy
 from configparser import ConfigParser
 import json
-from mx.DateTime import gmt
 import os
 import random
 
 from LmCommon.common.lmconstants import (BoomKeys,
     HTTPStatus,LMFormat, SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX,
     SERVER_SDM_ALGORITHM_HEADING_PREFIX)
+from LmCommon.common.time import gmt
 #from LmDbServer.boom.boominput import ArchiveFiller
 #from LmDbServer.boom.initboom import initBoom
 from LmDbServer.boom.initWorkflow import BOOMFiller

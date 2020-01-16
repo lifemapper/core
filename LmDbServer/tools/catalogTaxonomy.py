@@ -1,11 +1,11 @@
 import csv
-import mx.DateTime
 import os
 
 from LmBackend.command.server import CatalogTaxonomyCommand
 from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.lmconstants import GBIF, JobStatus, LMFormat
+from LmCommon.common.time import gmt
 
 from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
 
@@ -190,7 +190,7 @@ class TaxonFiller(LMObject):
         .format(PUBLIC_USER, self._taxonomySourceName)}
         newMFC = MFChain(PUBLIC_USER, priority=Priority.HIGH, 
                               metadata=meta, status=JobStatus.GENERAL, 
-                              statusModTime=mx.DateTime.gmt().mjd)
+                              statusModTime=gmt().mjd)
         mfChain = self.scribe.insertMFChain(newMFC, None)
     
         # Create a rule from the MF and Arf file creation

@@ -1,30 +1,6 @@
-"""
-@summary Module that contains the Matrix class
-@author Aimee Stewart
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
+"""Module that contains the Matrix class
 """
 import os
-import mx.DateTime
 
 #from LmBackend.command.common import (ConcatenateMatricesCommand, SystemCommand, 
 #                                      ChainCommand)
@@ -32,6 +8,7 @@ from LmBackend.common.lmobj import LMError
 #from LmBackend.command.server import StockpileCommand, LmTouchCommand
 
 from LmCommon.common.lmconstants import CSV_INTERFACE, MatrixType
+from LmCommon.common.time import gmt
 #from LmCommon.common.lmconstants import (MatrixType, ProcessType, CSV_INTERFACE, 
 #                                         LMFormat, JobStatus)
 from LmCommon.common.matrix import Matrix
@@ -118,7 +95,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         return mtxobj
 
     # ...............................................
-    def updateStatus(self, status, metadata=None, modTime=mx.DateTime.gmt().mjd):
+    def updateStatus(self, status, metadata=None, modTime=gmt().mjd):
         """
         @summary: Updates matrixIndex, paramMetadata, and modTime.
         @param metadata: Dictionary of Matrix metadata keys/values; key constants  

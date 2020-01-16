@@ -10,13 +10,13 @@ Note:
 """
 import argparse
 import logging
-import mx.DateTime as dt
 import os, sys, time
 import signal
 
 from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.lmconstants import JobStatus, LM_USER
+import LmCommon.common.time as lt
 
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
@@ -235,7 +235,7 @@ class Boomer(LMObject):
         if self.christopher.complete() and self.christopher.moreDataToProcess():
             # Rename old file
             oldfname = self.christopher.weaponOfChoice.occParser.dataFname
-            ts = dt.localtime().tuple()
+            ts = lt.localtime().tuple()
             timestamp = '{}{:02d}{:02d}-{:02d}{:02d}'.format(ts[0], ts[1], ts[2], ts[3], ts[4])
             newfname = oldfname + '.' + timestamp
             try:
@@ -254,7 +254,7 @@ class Boomer(LMObject):
         }
         newMFC = MFChain(self.christopher.userId, priority=self.priority, 
                          metadata=meta, status=JobStatus.GENERAL, 
-                         statusModTime=dt.gmt().mjd)
+                         statusModTime=lt.gmt().mjd)
         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
         return mfChain
 
@@ -267,7 +267,7 @@ class Boomer(LMObject):
 #         }
 #         newMFC = MFChain(self.christopher.userId, priority=self.priority, 
 #                          metadata=meta, status=JobStatus.GENERAL, 
-#                          statusModTime=dt.gmt().mjd)
+#                          statusModTime=lt.gmt().mjd)
 #         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
 #         return mfChain
 
@@ -371,7 +371,7 @@ if __name__ == "__main__":
 from LmDbServer.boom.boomer import Boomer
 
 import logging
-import mx.DateTime as dt
+import LmCommon.common.time as lt
 import os, sys, time
 import signal
 
@@ -414,7 +414,7 @@ boomer.initializeMe()
 
 import shutil
 try:
-    import mx.DateTime as dt
+    import LmCommon.common.time as lt
 except:
     pass
 

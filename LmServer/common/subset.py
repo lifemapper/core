@@ -6,7 +6,6 @@ Todo:
     Clean up code and rewrite where necessary
 """
 
-from mx.DateTime import gmt
 import os
 
 import numpy as np
@@ -17,6 +16,7 @@ from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
 from LmCommon.common.matrix import Matrix
 from LmCommon.compression.binaryList import decompress
 from LmCommon.encoding.layer_encoder import LayerEncoder
+from LmCommon.common.time import gmt
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import SOLR_FIELDS, SubsetMethod, Priority
 from LmServer.common.log import LmPublicLogger

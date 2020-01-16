@@ -1,6 +1,5 @@
 """Module containing class and functions representing shapegrid objects
 """
-import mx.DateTime
 from osgeo import ogr, osr
 import os
 from types import IntType
@@ -8,6 +7,7 @@ from types import IntType
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (LMFormat, JobStatus, ProcessType)
 from LmCommon.shapes.buildShapegrid import buildShapegrid
+from LmCommon.common.time import gmt
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, LMServiceType)
@@ -98,7 +98,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 
     # ...............................................
     def updateStatus(self, status, matrixIndex=None, metadata=None,
-                     modTime=mx.DateTime.gmt().mjd):
+                     modTime=gmt().mjd):
         """
         @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
         @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()

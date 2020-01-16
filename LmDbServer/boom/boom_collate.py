@@ -1,7 +1,6 @@
 """Tools for generating Makeflow rules for multi-species analyses
 """
 import argparse
-import mx.DateTime
 import os
 
 from LmBackend.command.common import CreateSignificanceMatrixCommand
@@ -14,6 +13,7 @@ from LmBackend.common.lmobj import LMObject
 
 from LmCommon.common.lmconstants import (
     JobStatus, LMFormat, MatrixType, ProcessType)
+from LmCommon.common.time import gmt
 
 from LmServer.common.lmconstants import (
     DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE)
@@ -473,7 +473,7 @@ class BoomCollate(LMObject):
         }
         new_makeflow = MFChain(
             self.user_id, metadata=meta, status=JobStatus.GENERAL,
-            statusModTime=mx.DateTime.gmt().mjd)
+            statusModTime=gmt().mjd)
         mf_chain = self._scribe.insertMFChain(
             new_makeflow, self.gridset.getId())
         self._scribe.updateObject(mf_chain)

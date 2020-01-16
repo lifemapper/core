@@ -1,7 +1,6 @@
 """This module wraps interactions with Solr
 """
 from ast import literal_eval
-from mx.DateTime import DateTimeFromMJD
 import urllib.request, urllib.error, urllib.parse
 
 from LmServer.common.lmconstants import (
@@ -11,6 +10,7 @@ from LmServer.common.log import SolrLogger
 from LmServer.common.localconstants import PUBLIC_USER
 import json
 from urllib.error import URLError
+from LmCommon.common.time import LmTime
 
 # .............................................................................
 def buildSolrDocument(docPairs):
@@ -397,12 +397,12 @@ def querySnippetIndex(ident1=None, provider=None, collection=None,
     fqParams = []
     if afterTime is not None or beforeTime is not None:
         if afterTime is not None:
-            aTime = DateTimeFromMJD(afterTime).strftime('%Y-%m-%dT%H:%M:%SZ')
+            aTime = LmTime.from_mjd(afterTime).strftime('%Y-%m-%dT%H:%M:%SZ')
         else:
             aTime = '*'
 
         if beforeTime is not None:
-            bTime = DateTimeFromMJD(beforeTime).strftime('%Y-%m-%dT%H:%M:%SZ')
+            bTime = LmTime.from_mjd(beforeTime).strftime('%Y-%m-%dT%H:%M:%SZ')
         else:
             bTime = '*'
     

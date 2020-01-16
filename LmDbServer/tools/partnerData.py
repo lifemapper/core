@@ -1,28 +1,4 @@
-"""
-@summary: Module containing functions for API Queries
-@status: beta
-
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+"""Module containing functions for API Queries
 """
 try:
     from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
@@ -33,7 +9,6 @@ except:
     OFTBinary = 8
 
 import json
-import mx.DateTime
 import os
 import sys
 import urllib.request, urllib.error, urllib.parse
@@ -43,6 +18,7 @@ from LmBackend.common.lmobj import LMError
 from LmCommon.common.apiquery import GbifAPI
 from LmCommon.common.lmconstants import PhyloTreeKeys
 from LmCommon.common.readyfile import get_unicodecsv_writer
+from LmCommon.common.time import gmt
 
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 
@@ -186,7 +162,7 @@ class PartnerQuery(object):
             else:
                 # if no species key, this is not a species
                 if rankStr in ('SPECIES', 'GENUS') and taxStatus == 'ACCEPTED':
-                    currtime = mx.DateTime.gmt().mjd
+                    currtime = gmt().mjd
                     sname = ScientificName(scinameStr, 
                                   rank=rankStr, 
                                   canonicalName=canonicalStr,

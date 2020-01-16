@@ -1,8 +1,3 @@
-try:
-    import mx.DateTime as dt
-except:
-    pass
-
 import logging
 import os
 import time

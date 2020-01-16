@@ -264,7 +264,7 @@ def processLayersJSON(layerJSON, symDir=None):
 
 """
 from hashlib import md5
-from mx.DateTime import gmt
+from LmCommon.common.time import gmt
 import numpy
 import os
 from osgeo import gdal

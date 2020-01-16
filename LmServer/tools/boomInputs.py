@@ -3,7 +3,6 @@
 @todo: How to specify multiple hypotheses with different event fields?
 """
 import argparse
-import mx.DateTime
 import os
 import sys
 
@@ -11,6 +10,8 @@ from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (LM_USER, JobStatus, PhyloTreeKeys, 
                                          MatrixType, ProcessType, 
                                          SERVER_BOOM_HEADING, BoomKeys)
+from LmCommon.common.time import gmt
+
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
 from LmServer.base.utilities import isLMUser
@@ -58,7 +59,7 @@ def _getBioGeoMatrix(scribe, usr, gridset, layers=[]):
                                 processType=ProcessType.ENCODE_HYPOTHESES,
                                 userId=usr, gridset=gridset, metadata=meta,
                                 status=JobStatus.INITIALIZE, 
-                                statusModTime=mx.DateTime.gmt().mjd)
+                                statusModTime=gmt().mjd)
         bgMtx = scribe.findOrInsertMatrix(tmpMtx)
         if bgMtx is None:
             scribe.log.info('  Failed to add biogeo hypotheses matrix')
@@ -120,7 +121,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
                                     shapegrid=shapegrid, intersectParams=intParams, 
                                     metadata=metadata, postToSolr=False,
                                     status=JobStatus.COMPLETE, 
-                                    statusModTime=mx.DateTime.gmt().mjd)
+                                    statusModTime=gmt().mjd)
             updatedMC = scribe.findOrInsertMatrixColumn(mc)
             mtxCols.append(updatedMC)
         
@@ -131,7 +132,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
     
     # Save matrix and update record
     bgMtx.write(overwrite=True)
-    bgMtx.updateStatus(JobStatus.COMPLETE, modTime=mx.DateTime.gmt().mjd)
+    bgMtx.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
     success = scribe.updateObject(bgMtx)
     return bgMtx
 
@@ -163,7 +164,7 @@ def squidifyTree(scribe, usr, tree):
     tree.setDLocation()
     print("Write tree to final location")
     tree.writeTree()
-    tree.updateModtime(mx.DateTime.gmt().mjd)
+    tree.updateModtime(gmt().mjd)
     success = scribe.updateObject(tree)
     return tree
 
@@ -235,7 +236,6 @@ if __name__ == '__main__':
     
 """
 import argparse
-import mx.DateTime
 import os
 import sys
 
@@ -312,7 +312,7 @@ for lyr in layers:
                                 shapegrid=shapegrid, intersectParams=intParams, 
                                 metadata=metadata, postToSolr=False,
                                 status=JobStatus.COMPLETE, 
-                                statusModTime=mx.DateTime.gmt().mjd)
+                                statusModTime=gmt().mjd)
         updatedMC = scribe.findOrInsertMatrixColumn(mc)
         mtxCols.append(updatedMC)
     
@@ -323,7 +323,7 @@ for lyr in layers:
     
 # Save matrix and update record
 bgMtx.write(overwrite=True)
-bgMtx.updateStatus(JobStatus.COMPLETE, modTime=mx.DateTime.gmt().mjd)
+bgMtx.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
 success = scribe.updateObject(bgMtx)
 return bgMtx
 

@@ -7,7 +7,6 @@ Todo:
 
 """
 import argparse
-import mx.DateTime
 import os
 import sys
 
@@ -19,6 +18,7 @@ from LmCommon.common.lmconstants import (LM_USER, JobStatus, BoomKeys,
                                          SERVER_BOOM_HEADING)
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.encoding.layer_encoder import LayerEncoder
+from LmCommon.common.time import gmt
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
@@ -63,7 +63,7 @@ def _getBioGeoMatrix(scribe, usr, gridset, layers=[]):
                                 processType=ProcessType.ENCODE_HYPOTHESES,
                                 userId=usr, gridset=gridset, metadata=meta,
                                 status=JobStatus.INITIALIZE, 
-                                statusModTime=mx.DateTime.gmt().mjd)
+                                statusModTime=gmt().mjd)
         bgMtx = scribe.findOrInsertMatrix(tmpMtx)
         if bgMtx is not None:
             scribe.log.info('  Found or added biogeo hypotheses matrix {}'
@@ -131,7 +131,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
                                     shapegrid=shapegrid, intersectParams=intParams, 
                                     metadata=metadata, postToSolr=False,
                                     status=JobStatus.COMPLETE, 
-                                    statusModTime=mx.DateTime.gmt().mjd)
+                                    statusModTime=gmt().mjd)
             updatedMC = scribe.findOrInsertMatrixColumn(mc)
             mtxCols.append(updatedMC)
         
@@ -142,7 +142,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
     
     # Save matrix and update record
     bgMtx.write(overwrite=True)
-    bgMtx.updateStatus(JobStatus.COMPLETE, modTime=mx.DateTime.gmt().mjd)
+    bgMtx.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
     success = scribe.updateObject(bgMtx)
     
     msg = 'Wrote matrix {} to final location and updated db'.format(bgMtx.getId())
@@ -202,7 +202,7 @@ def _writeSuccessFile(message, successFname):
 #                             .format(usr, gridname)}
 #     newMFC = MFChain(usr, priority=Priority.HIGH, 
 #                            metadata=meta, status=JobStatus.GENERAL, 
-#                            statusModTime=mx.DateTime.gmt().mjd)
+#                            statusModTime=gmt().mjd)
 #     mfChain = scribe.insertMFChain(newMFC, None)
 # 
 #     # Create a rule from the MF 

@@ -4,9 +4,9 @@
 """
 import cherrypy
 import dendropy
-import mx.DateTime
 
 from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_TREE_SCHEMA
+from LmCommon.common.time import gmt
 from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
@@ -95,7 +95,7 @@ class TreeService(LmService):
         updated_tree = self.scribe.findOrInsertTree(new_tree)
         updated_tree.setTree(tree)
         updated_tree.writeTree()
-        updated_tree.modTime = mx.DateTime.gmt().mjd
+        updated_tree.modTime = gmt().mjd
         self.scribe.updateObject(updated_tree)
         
         return updated_tree

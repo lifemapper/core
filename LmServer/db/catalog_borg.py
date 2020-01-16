@@ -1,30 +1,8 @@
+"""Module containing lower level functions for accessing database
 """
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
-"""
-import mx.DateTime
-    
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import MatrixType, LMFormat, JobStatus
+from LmCommon.common.time import gmt, LmTime
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
@@ -523,7 +501,7 @@ class Borg(DbPostgresql):
         @return: new or existing Algorithm
         """
         if not modtime:
-            modtime = mx.DateTime.utc().mjd
+            modtime = gmt().mjd
         meta = alg.dumpAlgMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertAlgorithm', 
                                                               alg.code, meta, modtime)
@@ -541,7 +519,7 @@ class Borg(DbPostgresql):
         taxSourceId = None
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTaxonSource', 
                                                               taxonSourceName, taxonSourceUrl, 
-                                                              mx.DateTime.gmt().mjd)
+                                                              gmt().mjd)
         if row is not None:
             taxSourceId = self._getColumnValue(row,idxs,['taxonomysourceid'])
         return taxSourceId
@@ -767,7 +745,7 @@ class Borg(DbPostgresql):
         @param scen: The scenario to insert
         @return: new or existing Scenario
         """
-        scen.modTime = mx.DateTime.utc().mjd
+        scen.modTime = gmt().mjd
         wkt = None
         if scen.epsgcode == DEFAULT_EPSG:
             wkt = scen.getWkt()
@@ -864,7 +842,7 @@ class Borg(DbPostgresql):
         @param envtype: An EnvType or EnvLayer object
         @return: new or existing EnvironmentalType
         """
-        currtime = mx.DateTime.utc().mjd
+        currtime = gmt().mjd
         meta = envtype.dumpParamMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvType',
                                                                      envtype.getParamId(),
@@ -1193,7 +1171,7 @@ class Borg(DbPostgresql):
         @param lyr: layer to insert
         @return: new or existing EnvironmentalLayer
         """
-        lyr.modTime = mx.DateTime.utc().mjd
+        lyr.modTime = gmt().mjd
         wkt = None
         if lyr.epsgcode == DEFAULT_EPSG:
             wkt = lyr.getWkt()
@@ -1329,7 +1307,7 @@ class Borg(DbPostgresql):
         @param usr: LMUser object to insert
         @return: new or existing LMUser
         """
-        usr.modTime = mx.DateTime.utc().mjd
+        usr.modTime = gmt().mjd
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertUser', 
                                         usr.userid, usr.firstName, usr.lastName, 
                                         usr.institution, usr.address1, usr.address2, 
@@ -1348,7 +1326,7 @@ class Borg(DbPostgresql):
         @param usr: LMUser object to update
         @return: updated LMUser
         """
-        usr.modTime = mx.DateTime.utc().mjd
+        usr.modTime = gmt().mjd
         success = self.executeModifyFunction('lm_updateUser', 
                                         usr.userid, usr.firstName, usr.lastName, 
                                         usr.institution, usr.address1, usr.address2, 
@@ -1505,7 +1483,7 @@ class Borg(DbPostgresql):
         @return: new or existing ScientificName
         """
         scientificname = None
-        currtime = mx.DateTime.gmt().mjd
+        currtime = gmt().mjd
         usr = squid = kingdom = phylum = cls = ordr = family = genus = None
         rank = canname = sciname = genkey = spkey = keyhierarchy = lastcount = None
         try:
@@ -1566,7 +1544,7 @@ class Borg(DbPostgresql):
                                                          sciName.sourceSpeciesKey,
                                                          sciName.sourceKeyHierarchy, 
                                                          sciName.lastOccurrenceCount, 
-                                                         mx.DateTime.gmt().mjd)        
+                                                         gmt().mjd)        
         return success
 
 # ...............................................
@@ -1846,7 +1824,7 @@ class Borg(DbPostgresql):
         @return: list of occurrenceset ids for deleted data.
         """
         occids = []
-        tmstr = mx.DateTime.DateTimeFromMJD(beforetime).localtime().strftime()
+        time_str = LmTime.from_mjd(beforetime).strftime()
         rows, idxs = self.executeSelectAndModifyManyFunction(
             'lm_clearSomeObsoleteSpeciesDataForUser2', userid, beforetime, max_num)        
         for r in rows:
@@ -1855,7 +1833,7 @@ class Borg(DbPostgresql):
             
         self.log.info('''Deleted {} Occurrencesets older than {} and dependent 
         objects for User {}; returning occurrencesetids'''
-        .format(len(rows), tmstr, userid))
+        .format(len(rows), time_str, userid))
         return occids
 
 
@@ -1869,7 +1847,7 @@ class Borg(DbPostgresql):
         @return: list of occurrenceset ids for deleted data.
         """
         mtxcolids = []
-        tmstr = mx.DateTime.DateTimeFromMJD(beforetime).localtime().strftime()
+        time_str = LmTime.from_mjd(beforetime).strftime()
         rows, idxs = self.executeSelectAndModifyManyFunction(
             'lm_clearSomeObsoleteMtxcolsForUser', userid, beforetime, max_num)
         for r in rows:
@@ -1878,7 +1856,7 @@ class Borg(DbPostgresql):
             
         self.log.info('''Deleted {} MatrixColumns for Occurrencesets older 
         than {}, returning matrixColumnIds'''
-        .format(len(rows), tmstr, userid, mtxcolids))
+        .format(len(rows), time_str, userid, mtxcolids))
         return mtxcolids
 
 # # ...............................................
@@ -2584,7 +2562,7 @@ class Borg(DbPostgresql):
         @return: list of MFChains
         """
         mfchainList = []
-        modtime = mx.DateTime.utc().mjd
+        modtime = gmt().mjd
         rows, idxs = self.executeSelectManyFunction('lm_findMFChains', count, 
                                                     userId, oldStatus, newStatus,
                                                     modtime)

@@ -1,34 +1,14 @@
-"""
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
+"""Troubleshooter
 
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
+Todo:
+    * Most likely remove this module.  It is very likely out of date
 """
-import mx.DateTime as dt
-from types import ListType, TupleType
-
 from LmCommon.common.lmconstants import JobStatus, ONE_HOUR
 
 from LmBackend.common.lmobj import LMError
+from LmCommon.common.time import gmt
 from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.db.scribe import Scribe
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.notifications.email import EmailNotifier
 
 TROUBLESHOOT_UPDATE_INTERVAL = 2 * ONE_HOUR
@@ -36,7 +16,7 @@ TROUBLESHOOT_UPDATE_INTERVAL = 2 * ONE_HOUR
 # .............................................................................
 class Troubleshooter(object):
     def __init__(self, cmd):
-        currTime = dt.gmt().mjd
+        currTime = gmt().mjd
 
 # ...............................................
     def _organizeProblemObjects(self, objects, objname):
@@ -52,8 +32,7 @@ class Troubleshooter(object):
     def _notifyPeople(self, subject, message, recipients=None):
         if recipients is None:
             recipients = self.developers
-        elif not (isinstance(recipients, ListType) 
-                     or isinstance(recipients, TupleType)):
+        elif not (isinstance(recipients, (list, tuple))):
             recipients = [recipients]
         notifier = EmailNotifier()
         try:
@@ -81,8 +60,7 @@ class Troubleshooter(object):
                 probs[usr]['Projection'] = pprobs[usr]['Projection']
             
         if list(probs.keys()):
-            msg = ('Problem SDM Data started before %s (mjd=%d)' 
-                     % (dt.DateTimeFromMJD(oldtime).localtime().Format()))
+            msg = ('Problem SDM Data started before {}'.format(oldtime))
             for usr in list(probs.keys()):
                 msg += '%s\n' % usr
                 msg += '  ModelId  Status\n'
@@ -93,7 +71,7 @@ class Troubleshooter(object):
         
 # ...............................................
     def run(self, commandList):
-        currtime = dt.gmt().mjd
+        currtime = gmt().mjd
         oldtime = currtime - TROUBLESHOOT_UPDATE_INTERVAL
         for cmd in commandList:
             cmd = cmd.lower()

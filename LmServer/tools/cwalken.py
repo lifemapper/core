@@ -6,8 +6,8 @@ Note:
 
 """
 # .............................................................................
+import datetime
 import glob
-import mx.DateTime as dt
 from osgeo.ogr import wkbPoint
 import os
 from types import IntType, FloatType
@@ -24,7 +24,8 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat, GBIF,
           SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, BoomKeys,
           SERVER_SDM_ALGORITHM_HEADING_PREFIX,
           SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
-          MatrixType) 
+          MatrixType)
+from LmCommon.common.time import gmt, LmTime
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 
 from LmServer.common.datalocator import EarlJr
@@ -222,9 +223,11 @@ class ChristopherWalken(LMObject):
                        
         # Expiration date for retrieved species data 
         # TODO: get expiration date as MJD, written as woof date in ini file
-        expDate = dt.DateTime(self._getBoomOrDefault(BoomKeys.OCC_EXP_YEAR), 
-                              self._getBoomOrDefault(BoomKeys.OCC_EXP_MONTH), 
-                              self._getBoomOrDefault(BoomKeys.OCC_EXP_DAY)).mjd
+        expDate = LmTime(
+            dtime=datetime.datetime(
+                self._getBoomOrDefault(BoomKeys.OCC_EXP_YEAR), 
+                self._getBoomOrDefault(BoomKeys.OCC_EXP_MONTH), 
+                self._getBoomOrDefault(BoomKeys.OCC_EXP_DAY)).mjd
 
         # Copy public data to user space
         # TODO: Handle taxonomy, useGBIFTaxonomy=??
@@ -585,7 +588,7 @@ class ChristopherWalken(LMObject):
         spudRules = []
         index_pavs_document_filename = None
         gsid = 0
-        currtime = dt.gmt().mjd
+        currtime = gmt().mjd
         
         try:
             gsid = self.boomGridset.getId()
@@ -612,7 +615,7 @@ class ChristopherWalken(LMObject):
                     for prj_scen in self.prjScens:
                         pamcode = '{}_{}'.format(prj_scen.code, alg.code) 
                         prj = self._findOrInsertSDMProject(
-                            occ, alg, prj_scen, dt.gmt().mjd)
+                            occ, alg, prj_scen, gmt().mjd)
                         if prj is not None:
                             prjs.append(prj)
                             mtx = self.globalPAMs[pamcode]

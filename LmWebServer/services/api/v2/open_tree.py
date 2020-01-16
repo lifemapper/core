@@ -11,10 +11,9 @@ import hashlib
 import json
 import os
 
-from mx.DateTime import gmt
-
 from LmCommon.common.lmconstants import HTTPStatus
 from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.time import gmt
 
 from LmDbServer.tools.partnerData import (
     get_ottids_from_gbifids, induced_subtree, Partners)

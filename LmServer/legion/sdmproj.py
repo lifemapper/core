@@ -3,10 +3,10 @@
 import glob 
 from hashlib import md5
 import json
-import mx.DateTime
 import os
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.time import gmt
 
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
@@ -54,7 +54,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
                 input data and parameters
         """
         if status is not None and statusModTime is None:
-            statusModTime = mx.DateTime.utc().mjd
+            statusModTime = gmt().mjd
             
         _LayerParameters.__init__(
             self, userId, paramId=projectId, matrixIndex=-1,
@@ -367,7 +367,7 @@ class SDMProjection(_ProjectionType, Raster):
 # Public methods
 # .............................................................................
     def updateStatus(self, status, metadata=None,
-                     modTime=mx.DateTime.gmt().mjd):
+                     modTime=gmt().mjd):
         """
         @summary Update status, metadata, modTime attributes on the
             SDMProjection. 

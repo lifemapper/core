@@ -1,10 +1,10 @@
 """This script adds SQUIDs to the tips of a tree
 """
 import argparse
-from mx.DateTime import gmt
 
 from LmCommon.common.lmconstants import PhyloTreeKeys
 from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.time import gmt
 
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe

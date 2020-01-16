@@ -1,30 +1,10 @@
+"""Catalog a scenario package for a user
 """
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
- 
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-   
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-   
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
-"""
-import mx.DateTime
 import os
 
 from LmBackend.common.lmobj import LMError, LMObject
+
+from LmCommon.common.time import gmt
 
 from LmServer.common.lmconstants import (ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
@@ -35,7 +15,7 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.scenario import Scenario, ScenPackage
 
-CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
+CURRDATE = (gmt().year, gmt().month, gmt().day)
 
 # .............................................................................
 class SPFiller(LMObject):
@@ -165,7 +145,7 @@ class SPFiller(LMObject):
                             dataFormat=maskMeta['gdalformat'], 
                             gdalType=maskMeta['gdaltype'], 
                             bbox=maskMeta['region'],
-                            modTime=mx.DateTime.gmt().mjd)
+                            modTime=gmt().mjd)
         except KeyError:
             raise LMError(currargs='Missing one of: name, res, region, gdaltype, ' + 
                          'gdalformat in SDM_MASK_META in scenPkg metadata')
@@ -178,7 +158,7 @@ class SPFiller(LMObject):
         @summary Adds or finds PUBLIC_USER, DEFAULT_POST_USER and USER arguments 
                  in the database
         """
-        currtime = mx.DateTime.gmt().mjd
+        currtime = gmt().mjd
         # Nothing changes if these are already present
         user = LMUser(self.userId, self.userEmail, self.userEmail, modTime=currtime)
         self.scribe.log.info('  Find or insert user {} ...'.format(self.userId))
@@ -202,7 +182,7 @@ class SPFiller(LMObject):
         scenPkg = ScenPackage(spName, self.userId, 
                               epsgcode=pkgMeta['epsg'],
                               mapunits=pkgMeta['mapunits'],
-                              modTime=mx.DateTime.gmt().mjd)
+                              modTime=gmt().mjd)
         
         # Current
         baseCode = pkgMeta['baseline']
@@ -256,7 +236,7 @@ class SPFiller(LMObject):
         """
         @summary Assembles layer metadata for a single layerset
         """
-        currtime = mx.DateTime.gmt().mjd
+        currtime = gmt().mjd
         layers = []
         try:
             dateCode = scenMeta['date']
@@ -339,7 +319,7 @@ class SPFiller(LMObject):
                         altpredCode=altpredCode, 
                         dateCode=dateCode,
                         bbox=scenMeta['region'], 
-                        modTime=mx.DateTime.gmt().mjd,  
+                        modTime=gmt().mjd,  
                         layers=lyrs)
         return scen
    
@@ -469,7 +449,6 @@ if __name__ == '__main__':
             
    
 """
-import mx.DateTime
 import os
 
 from LmBackend.command.server import CatalogScenarioPackageCommand

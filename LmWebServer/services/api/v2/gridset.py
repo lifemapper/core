@@ -3,7 +3,6 @@
 """This module provides REST services for grid sets
 """
 import json
-from mx.DateTime import gmt
 import os
 import zipfile
 
@@ -15,6 +14,7 @@ from LmCommon.common.lmconstants import (DEFAULT_TREE_SCHEMA, HTTPStatus,
                                          ProcessType)
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.layer_encoder import LayerEncoder
+from LmCommon.common.time import gmt
 
 from LmDbServer.boom.boom_collate import BoomCollate
 

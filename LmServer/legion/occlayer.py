@@ -1,12 +1,12 @@
 """Module containing classes and functions for occurrence sets
 """
-import mx.DateTime
 import os
 from osgeo import ogr
 
 from LmBackend.common.lmobj import LMError
 
 from LmCommon.common.lmconstants import LMFormat
+from LmCommon.common.time import gmt
 
 from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
@@ -78,7 +78,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         self.paramModTime = modTime
     
     # ...............................................
-    def updateStatus(self, status, modTime=mx.DateTime.gmt().mjd,
+    def updateStatus(self, status, modTime=gmt().mjd,
                      queryCount=None):
         """
         @note: Overrides ProcessObject.updateStatus
