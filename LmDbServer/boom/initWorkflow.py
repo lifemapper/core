@@ -1151,7 +1151,7 @@ class BOOMFiller(LMObject):
                 intersect_cmd = GrimRasterCommand(
                     shapegrid_filename, mtxcol.layer.getDLocation(),
                     col_filename, minPercent=min_percent, ident=mtxcol.ident)
-                rules.append(intersect_cmd.getMakeflowRule())
+                rules.append(intersect_cmd.get_makeflow_rule())
                
                 # Keep track of intersection filenames for matrix concatenation
                 colFilenames.append(col_filename)
@@ -1184,7 +1184,7 @@ class BOOMFiller(LMObject):
             work_dir, 'mtx_{}{}'.format(matrix_id, LMFormat.MATRIX.ext))
         concat_cmd = ConcatenateMatricesCommand(
             col_filenames, '1', mtx_out_filename)
-        rules.append(concat_cmd.getMakeflowRule())
+        rules.append(concat_cmd.get_makeflow_rule())
         
         # Stockpile matrix
         mtx_success_filename = os.path.join(
@@ -1192,7 +1192,7 @@ class BOOMFiller(LMObject):
         stockpile_cmd = StockpileCommand(
             process_type, matrix_id, mtx_success_filename, mtx_out_filename,
             status=JobStatus.COMPLETE)
-        rules.append(stockpile_cmd.getMakeflowRule(local=True))
+        rules.append(stockpile_cmd.get_makeflow_rule(local=True))
         return rules
 
 
@@ -1295,7 +1295,7 @@ class BOOMFiller(LMObject):
             self.occFname = point_output_file
             self.occSep = IdigbioAPI.DELIMITER
             # Add command to this Makeflow
-            rules.append(idigCmd.getMakeflowRule(local=True))
+            rules.append(idigCmd.get_makeflow_rule(local=True))
             # Boom requires iDigBio data
             boomCmd.inputs.extend(idigCmd.outputs)
             
@@ -1303,12 +1303,12 @@ class BOOMFiller(LMObject):
         cattaxCmd, taxSuccessFname = self._getTaxonomyCommand(target_dir)
         if cattaxCmd:
             # Add catalog taxonomy command to this Makeflow
-            rules.append(cattaxCmd.getMakeflowRule(local=True))
+            rules.append(cattaxCmd.get_makeflow_rule(local=True))
             # Boom requires catalog taxonomy completion
             boomCmd.inputs.append(taxSuccessFname)
         
         # Add boom command to this Makeflow
-        rules.append(boomCmd.getMakeflowRule(local=True))
+        rules.append(boomCmd.get_makeflow_rule(local=True))
         return rules
 
     # .............................................................................
@@ -1403,7 +1403,7 @@ class BOOMFiller(LMObject):
                 bgh_success_fname = os.path.join(target_dir, 'bg.success')
                 bg_cmd = EncodeBioGeoHypothesesCommand(
                     self.userId, boomGridset.name, bgh_success_fname)
-                rules.append(bg_cmd.getMakeflowRule(local=True))
+                rules.append(bg_cmd.get_makeflow_rule(local=True))
 
             # This also adds commands for iDigBio occurrence data retrieval 
             #   and taxonomy insertion before Boom

@@ -660,7 +660,7 @@ class ChristopherWalken(LMObject):
                 param_sweep_cmd = SpeciesParameterSweepCommand(
                     species_config_filename, sweep_config.get_input_files(),
                     sweep_config.get_output_files(workdir), workdir)
-                spudRules.append(param_sweep_cmd.getMakeflowRule())
+                spudRules.append(param_sweep_cmd.get_makeflow_rule())
     
                 # Add stockpile rule
                 stockpile_success_filename = os.path.join(
@@ -672,7 +672,7 @@ class ChristopherWalken(LMObject):
                     pav_filename=os.path.join(
                         workdir, sweep_config.pavs_filename))
                 spudRules.append(
-                    stockpile_cmd.getMakeflowRule(local=True))
+                    stockpile_cmd.get_makeflow_rule(local=True))
     
                 # Add multi-index rule if we added PAVs
                 if len(sweep_config.pavs) > 0:
@@ -682,7 +682,7 @@ class ChristopherWalken(LMObject):
                     index_cmd = MultiIndexPAVCommand(
                         os.path.join(workdir, sweep_config.pavs_filename),
                         index_pavs_document_filename)
-                    spudRules.append(index_cmd.getMakeflowRule(local=True))
+                    spudRules.append(index_cmd.get_makeflow_rule(local=True))
 
             # TODO: Add metrics / snippets processing
         return squid, spudRules, index_pavs_document_filename

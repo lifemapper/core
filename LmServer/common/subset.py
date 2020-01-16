@@ -424,9 +424,9 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                             ProcessType.INTERSECT_RASTER, mtxCol.getId(),
                             pav_success_fname, [pav_fname])
                         # Add rules to list
-                        rules.append(intersect_cmd.getMakeflowRule())
-                        rules.append(index_cmd.getMakeflowRule(local=True))
-                        rules.append(stockpile_cmd.getMakeflowRule(local=True))
+                        rules.append(intersect_cmd.get_makeflow_rule())
+                        rules.append(index_cmd.get_makeflow_rule(local=True))
+                        rules.append(stockpile_cmd.get_makeflow_rule(local=True))
                     
                 
                 # Initialize PAM after matrix columns inserted
@@ -482,8 +482,8 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
                     ProcessType.INTERSECT_RASTER_GRIM, mtxCol.getId(),
                     grim_col_success_fname, [grim_col_fname])
                 # Add rules to list
-                rules.append(intersect_cmd.getMakeflowRule())
-                rules.append(stockpile_cmd.getMakeflowRule(local=True))
+                rules.append(intersect_cmd.get_makeflow_rule())
+                rules.append(stockpile_cmd.get_makeflow_rule(local=True))
             
             insertedGrim.updateStatus(JobStatus.INITIALIZE)
             scribe.updateObject(insertedGrim)

@@ -80,7 +80,7 @@ def rebuild_index_for_gridset(gridset_id):
                                                     'touch.out')
                         touch_cmd = LmTouchCommand(prj_touch_fn)
                         my_wf.addCommands(
-                            touch_cmd.getMakeflowRule(local=True))
+                            touch_cmd.get_makeflow_rule(local=True))
                         
                         prj_name = os.path.basename(
                              os.path.splitext(lyr.getDLocation())[0])
@@ -93,7 +93,7 @@ def rebuild_index_for_gridset(gridset_id):
                             inputs=[prj_touch_fn], 
                             outputs=[prj_status_filename])
                         my_wf.addCommands(
-                            touchStatusCommand.getMakeflowRule(local=True))
+                            touchStatusCommand.get_makeflow_rule(local=True))
     
         my_wf.write()
         my_wf.updateStatus(JobStatus.INITIALIZE)

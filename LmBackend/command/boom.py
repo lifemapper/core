@@ -65,7 +65,7 @@ class CatalogBoomCommand(_LmCommand):
             timestamp = "{}".format(
                 time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
             logname = '{}.{}.{}'.format(
-                self.scriptBasename, boomBasename, timestamp)
+                self.script_basename, boomBasename, timestamp)
             logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
             
         # Script args

@@ -208,7 +208,7 @@ def _writeSuccessFile(message, successFname):
 #     # Create a rule from the MF 
 #     bgCmd = EncodeBioGeoHypothesesCommand(usr, gridname, success_file)
 # 
-#     mfChain.addCommands([bgCmd.getMakeflowRule(local=True)])
+#     mfChain.addCommands([bgCmd.get_makeflow_rule(local=True)])
 #     mfChain.write()
 #     mfChain.updateStatus(JobStatus.INITIALIZE)
 #     scribe.updateObject(mfChain)

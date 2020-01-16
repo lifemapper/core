@@ -1,7 +1,7 @@
 """This module contains command objects for server processes
 
 Server commands are commands that run tools only found in the LmServer roll.
-By default, these commands have their getMakeflowRule function set to use
+By default, these commands have their get_makeflow_rule function set to use
 local=True to tell Makeflow that the command should not be distributed to a
 compute resource that is not the front end.
 
@@ -19,6 +19,7 @@ from LmBackend.common.lmconstants import (
 
 from LmCommon.common.lmconstants import LMFormat
 
+
 # .............................................................................
 class _LmServerCommand(_LmCommand):
     """A command subclass for server commands
@@ -28,7 +29,7 @@ class _LmServerCommand(_LmCommand):
     """
     relDir = SERVER_SCRIPTS_DIR
     # ................................
-    def getMakeflowRule(self, local=True):
+    def get_makeflow_rule(self, local=True):
         """Get a MfRule object for this command
 
         Args:
@@ -37,7 +38,8 @@ class _LmServerCommand(_LmCommand):
         Note:
             This differs from the superclass because the default local is True
         """
-        return super(_LmServerCommand, self).getMakeflowRule(local=local)
+        return super(_LmServerCommand, self).get_makeflow_rule(local=local)
+
 
 # .............................................................................
 class _LmDbServerCommand(_LmServerCommand):
@@ -47,6 +49,7 @@ class _LmDbServerCommand(_LmServerCommand):
     server command classes should inherit from.
     """
     relDir = DB_SERVER_SCRIPTS_DIR
+
 
 # .............................................................................
 class AddBioGeoAndTreeCommand(_LmServerCommand):
@@ -70,7 +73,7 @@ class AddBioGeoAndTreeCommand(_LmServerCommand):
                 shapefiles
         """
         _LmServerCommand.__init__(self)
-        
+
         self.args = str(gridsetId)
         if isinstance(hypothesesFilenames, list):
             self.inputs.extend(hypothesesFilenames)
@@ -82,12 +85,13 @@ class AddBioGeoAndTreeCommand(_LmServerCommand):
         if treeFilename is not None:
             self.opt_args += ' -t {}'.format(treeFilename)
             self.inputs.append(treeFilename)
-        
+
         if treeName is not None:
             self.opt_args += ' -tn {}'.format(treeName)
-            
+
         if eventField is not None:
             self.opt_args += ' -e {}'.format(eventField)
+
 
 # .............................................................................
 class AssemblePamFromSolrQueryCommand(_LmServerCommand):
@@ -109,17 +113,18 @@ class AssemblePamFromSolrQueryCommand(_LmServerCommand):
                 files that should exist before running this command
         """
         _LmServerCommand.__init__(self)
-        
+
         self.args = '{} {}'.format(pam_id, success_filename)
         self.outputs.append(success_filename)
         self.outputs.append(pam_filename)
-        
+
         if dependency_files is not None:
             if isinstance(dependency_files, list):
                 self.inputs.extend(dependency_files)
             else:
                 self.inputs.append(dependency_files)
-    
+
+
 # .............................................................................
 class CatalogScenarioPackageCommand(_LmDbServerCommand):
     """This command will catalog a scenario package
@@ -137,7 +142,7 @@ class CatalogScenarioPackageCommand(_LmDbServerCommand):
             user_email: The user email for this package
         """
         _LmDbServerCommand.__init__(self)
-        
+
         # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
         if not os.path.exists(package_metadata_filename):
             raise Exception(
@@ -151,10 +156,10 @@ class CatalogScenarioPackageCommand(_LmDbServerCommand):
             timestamp = "{}".format(
                 time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
             logname = '{}.{}.{}.{}'.format(
-                self.scriptBasename, spBasename, user_id, timestamp)
+                self.script_basename, spBasename, user_id, timestamp)
             # Logfile is created by script in LOG_DIR
             logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
-            
+
         # Required args
         self.args = '{} {}'.format(package_metadata_filename, user_id)
         # Optional arg, we also want for output 
@@ -162,7 +167,7 @@ class CatalogScenarioPackageCommand(_LmDbServerCommand):
         # Optional arg, if user is not there, add with dummy email if not provided
         if user_email is not None:
             self.opt_args += ' --user_email={}'.format(user_email)
-            
+
         self.outputs.append(logfilename)
 
 
@@ -196,31 +201,34 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
                 'Missing Taxonomy data file {}'.format(taxon_data_filename))
         else:
             dataBasename, _ = os.path.splitext(
-                os.path.basename(taxon_data_filename)) 
+                os.path.basename(taxon_data_filename))
             # file ends up in LOG_PATH
             secs = time.time()
             timestamp = "{}".format(
                 time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
             logname = '{}.{}.{}'.format(
-                self.scriptBasename, dataBasename, timestamp)
-            
+                self.script_basename, dataBasename, timestamp)
+
         # Optional script args, required here
-        self.opt_args =  ' --taxon_source_name="{}"'.format(source_name)
-        self.opt_args += ' --taxon_data_filename={}'.format(taxon_data_filename)
-        self.opt_args += ' --success_filename={}'.format(taxon_success_filename)      
+        self.opt_args = ' --taxon_source_name="{}"'.format(source_name)
+        self.opt_args += ' --taxon_data_filename={}'.format(
+            taxon_data_filename)
+        self.opt_args += ' --success_filename={}'.format(
+            taxon_success_filename)
         self.opt_args += ' --logname={}'.format(logname)
 
         # Optional args
         if source_url:
             self.opt_args += ' --taxon_source_url={}'.format(source_url)
-        if delimiter != '\t': 
+        if delimiter != '\t':
             self.opt_args += ' --delimiter={}'.format(delimiter)
-            
+
         self.outputs.append(taxon_success_filename)
 #         # Logfile is created by script in LOG_DIR
 #         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
 #         self.outputs.append(logfilename)
-            
+
+
 # .............................................................................
 class EncodeBioGeoHypothesesCommand(_LmServerCommand):
     """Command to encode biogeographic hypotheses
@@ -236,12 +244,12 @@ class EncodeBioGeoHypothesesCommand(_LmServerCommand):
             gridset_name: The unique gridset name
         """
         _LmServerCommand.__init__(self)
-        
+
         # file ends up in LOG_PATH
         secs = time.time()
         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-        logname = '{}.{}'.format(self.scriptBasename, timestamp)
-            
+        logname = '{}.{}'.format(self.script_basename, timestamp)
+
         # Required args
         self.args = '{} {} {}'.format(user_id, gridset_name, success_file)
         # Optional arg, we also want for output 
@@ -251,7 +259,8 @@ class EncodeBioGeoHypothesesCommand(_LmServerCommand):
 #         # Logfile is created by script in LOG_DIR
 #         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
 #         self.outputs.append(logfilename)
-            
+
+
 # .............................................................................
 class CreateBlankMaskTiffCommand(_LmServerCommand):
     """This command will create a mask Tiff file of all ones
@@ -267,10 +276,10 @@ class CreateBlankMaskTiffCommand(_LmServerCommand):
             outRasterFilename: The file location to write the output raster
         """
         _LmServerCommand.__init__(self)
-        
+
         self.args = '{} {}'.format(inRasterFilename, outRasterFilename)
         self.outputs.append(outRasterFilename)
-            
+
 
 # .............................................................................
 class CreateConvexHullShapefileCommand(_LmServerCommand):
@@ -291,7 +300,8 @@ class CreateConvexHullShapefileCommand(_LmServerCommand):
         self.args = '{} {}'.format(occId, outFilename)
         if bufferDistance is not None:
             self.opt_args += ' -b {}'.format(bufferDistance)
-        
+
+
 # .............................................................................
 class CreateMaskTiffCommand(_LmServerCommand):
     """This command will create a mask Tiff file
@@ -311,12 +321,12 @@ class CreateMaskTiffCommand(_LmServerCommand):
             outRasterFilename: The file location to write the output raster
         """
         _LmServerCommand.__init__(self)
-        
+
         self.args = '{} {} {}'.format(inRasterFilename, pointsFilename, 
                                                 outRasterFilename)
         #self.inputs.extend([inRasterFilename, pointsFilename])
         self.outputs.append(outRasterFilename)
-            
+
 # .............................................................................
 class IndexPAVCommand(_LmServerCommand):
     """This command will post PAV information to a solr index
@@ -337,9 +347,10 @@ class IndexPAVCommand(_LmServerCommand):
         _LmServerCommand.__init__(self)
         self.inputs.append(pavFilename)
         self.outputs.append(pavIdxFilename)
-        
+
         self.args = '{} {} {} {} {}'.format(
             pavFilename, pavId, projId, pamId, pavIdxFilename)
+
 
 # .............................................................................
 class LmTouchCommand(_LmServerCommand):
@@ -357,6 +368,7 @@ class LmTouchCommand(_LmServerCommand):
         _LmServerCommand.__init__(self)
         self.outputs.append(filename)
         self.args = filename
+
 
 # .............................................................................
 class MultiIndexPAVCommand(_LmServerCommand):
@@ -376,6 +388,7 @@ class MultiIndexPAVCommand(_LmServerCommand):
         self.inputs.append(pavs_filename)
         self.outputs.append(post_doc_filename)
         self.args = '{} {}'.format(pavs_filename, post_doc_filename)
+
 
 # .............................................................................
 class MultiStockpileCommand(_LmServerCommand):
@@ -423,20 +436,20 @@ class ShootSnippetsCommand(_LmServerCommand):
         """
         _LmServerCommand.__init__(self)
         self.outputs.append(postFilename)
-        
+
         self.args = '{} {} {}'.format(occSetId, operation, postFilename)
         if o2ident is not None:
             self.opt_args += ' -o2ident {}'.format(o2ident)
-        
+
         if url is not None:
             self.opt_args += ' -url {}'.format(url)
-            
+
         if who is not None:
             self.opt_args += ' -who {}'.format(who)
-            
+
         if agent is not None:
             self.opt_args += ' -agent {}'.format(agent)
-            
+
         if why is not None:
             self.opt_args += ' -why {}'.format(why)
 
@@ -458,7 +471,7 @@ class SquidAndLabelTreeCommand(_LmServerCommand):
         """
         _LmServerCommand.__init__(self)
         self.outputs.append(success_filename)
-        
+
         self.args = '{} {} {}'.format(tree_id, user_id, success_filename)
 
 # .............................................................................
@@ -488,55 +501,24 @@ class StockpileCommand(_LmServerCommand):
             use status in stockpile script
         """
         _LmServerCommand.__init__(self)
-        
+
         self.args = '{} {} {}'.format(pType, objectId, successFilename)
         self.outputs.append(successFilename)
-        
+
         if isinstance(objOutputFilenames, list):
             self.inputs.extend(objOutputFilenames)
             self.args += ' {}'.format(' '.join(objOutputFilenames))
         else:
             self.inputs.append(objOutputFilenames)
             self.args += ' {}'.format(objOutputFilenames)
-        
+
         if status is not None:
             self.opt_args += ' -s {}'.format(status)
-            
+
         if statusFilename is not None:
             self.opt_args += ' -f {}'.format(statusFilename)
             self.inputs.append(statusFilename)
-            
+
         if metadataFilename is not None:
             self.inputs.append(metadataFilename)
             self.opt_args += ' -m {}'.format(metadataFilename)
-
-# # .............................................................................
-# class TriageCommand(_LmServerCommand):
-#     """
-#     @summary: This command will determine which files referenced in the input
-#                      file exist and will output a file containing those references
-#     """
-#     scriptName = 'triage.py'
-# 
-#     # ................................
-#     def __init__(self, inFilename, outFilename):
-#         """
-#         @summary: Construct the command object
-#         @param inFilename: The file location of a file containing a list of 
-#                                      potential target filenames
-#         @param outFilename: The file location to write the output file indicating
-#                                       which of the potential targets actually exist
-#         """
-#         _LmServerCommand.__init__(self)
-#         self.inputs.append(inFilename)
-#         self.outputs.append(outFilename)
-#         
-#         self.args = [inFilename, outFilename]
-# 
-#     # ................................
-#     def getCommand(self):
-#         """
-#         @summary: Get the raw command to run on the system
-#         """
-#         return '{} {} {}'.format(CMD_PYBIN, self.getScript(), ' '.join(self.args))
-

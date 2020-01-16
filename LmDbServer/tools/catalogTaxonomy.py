@@ -198,7 +198,7 @@ class TaxonFiller(LMObject):
                                                       self.taxonomyFname,
                                                       source_url=self._taxonomySourceUrl,
                                                       delimiter=self._delimiter)
-        mfChain.addCommands([cattaxCmd.getMakeflowRule(local=True)])
+        mfChain.addCommands([cattaxCmd.get_makeflow_rule(local=True)])
         mfChain.write()
         mfChain.updateStatus(JobStatus.INITIALIZE)
         self.scribe.updateObject(mfChain)

@@ -102,7 +102,7 @@ class BoomCollate(LMObject):
             aggregation_rules.append(
                 CreateSignificanceMatrixCommand(
                     obs_pam_stats_filenames[i], out_mtx_filename, rand_fns,
-                    use_abs=True, fdr=self.fdr).getMakeflowRule())
+                    use_abs=True, fdr=self.fdr).get_makeflow_rule())
             sig_pam_stats_filenames.append(out_mtx_filename)
 
         if obs_mcpa_filenames is not None and len(obs_mcpa_filenames) > 0:
@@ -113,7 +113,7 @@ class BoomCollate(LMObject):
                 CreateSignificanceMatrixCommand(
                     obs_mcpa_filenames[0], out_mtx_filename,
                     rand_mcpa_filenames, use_abs=True, fdr=self.fdr,
-                    test_matrix=obs_mcpa_filenames[1]).getMakeflowRule())
+                    test_matrix=obs_mcpa_filenames[1]).get_makeflow_rule())
             sig_mcpa_stats_filenames.append(out_mtx_filename)
         self.log.debug(
             'Created {} aggregation rules for pam {}'.format(
@@ -137,7 +137,7 @@ class BoomCollate(LMObject):
             anc_pam_rule.inputs.append(dependency_filename)
             if pam_success_filename is not None:
                 anc_pam_rule.inputs.append(pam_success_filename)
-            anc_pam_rules.append(anc_pam_rule.getMakeflowRule())
+            anc_pam_rules.append(anc_pam_rule.get_makeflow_rule())
         else:
             anc_pam_filename = None
         return (anc_pam_filename, anc_pam_rules)
@@ -211,7 +211,7 @@ class BoomCollate(LMObject):
         mcpa_tree_encode_rules.append(
             EncodePhylogenyCommand(
                 tree_filename, pam_filename, encoded_tree_filename
-                ).getMakeflowRule())
+                ).get_makeflow_rule())
         self.log.debug(
             'Added {} tree encode rules for pam {}'.format(
                 len(mcpa_tree_encode_rules), pam_id))
@@ -274,7 +274,7 @@ class BoomCollate(LMObject):
                 #species_covariance_filename=None,
                 mcpa_output_filename=mcpa_filename,
                 mcpa_f_matrix_filename=mcpa_f_vals_filename,
-                pam_success_filename=pam_success_filename).getMakeflowRule())
+                pam_success_filename=pam_success_filename).get_makeflow_rule())
         self.log.debug(
             'Adding {} run rules for pam {}'.format(len(run_rules), pam_id))
         return pam_stats_return, mcpa_return, run_rules
@@ -338,7 +338,7 @@ class BoomCollate(LMObject):
                 pruned_metadata_filename)
             sync_command.inputs.append(pam_success_filename)
             
-            pam_rules.append(sync_command.getMakeflowRule())
+            pam_rules.append(sync_command.get_makeflow_rule())
 
             # Ancestral PAM rules -- send pruned tree as dependency so that we
             #    know that the tree has squids
@@ -355,7 +355,7 @@ class BoomCollate(LMObject):
                 StockpileCommand(
                     ProcessType.RAD_CALCULATE, anc_pam_mtx.getId(),
                     self._create_filename(pam_id, 'anc_pam.success'),
-                    [anc_pam_filename]).getMakeflowRule())
+                    [anc_pam_filename]).get_makeflow_rule())
         
 
         # If MCPA, sync tree and PAM
@@ -406,17 +406,17 @@ class BoomCollate(LMObject):
                 StockpileCommand(
                     ProcessType.RAD_CALCULATE, diversity_obs_mtx.getId(),
                     self._create_filename(pam_id, 'diversity_stats.success'),
-                    [pam_stats_filenames[0]]).getMakeflowRule())
+                    [pam_stats_filenames[0]]).get_makeflow_rule())
             pam_rules.append(
                 StockpileCommand(
                     ProcessType.RAD_CALCULATE, species_obs_mtx.getId(),
                     self._create_filename(pam_id, 'species_stats.success'),
-                    [pam_stats_filenames[1]]).getMakeflowRule())
+                    [pam_stats_filenames[1]]).get_makeflow_rule())
             pam_rules.append(
                 StockpileCommand(
                     ProcessType.RAD_CALCULATE, sites_obs_mtx.getId(),
                     self._create_filename(pam_id, 'site_stats.success'),
-                    [pam_stats_filenames[2]]).getMakeflowRule())
+                    [pam_stats_filenames[2]]).get_makeflow_rule())
         
         # Add stockpile for MCPA
         if len(mcpa_filenames) > 0:
@@ -424,7 +424,7 @@ class BoomCollate(LMObject):
                 StockpileCommand(
                     ProcessType.MCPA_ASSEMBLE, mcpa_out_mtx.getId(),
                     self._create_filename(pam_id, 'mcpa.success'),
-                    mcpa_filenames).getMakeflowRule())
+                    mcpa_filenames).get_makeflow_rule())
 
         self.log.debug(
             'Adding {} total rules for PAM {}'.format(len(pam_rules), pam_id))
@@ -447,7 +447,7 @@ class BoomCollate(LMObject):
             pam_id, 'pam_{}_assembly.success'.format(pam.getId()))
         assembly_rules.append(AssemblePamFromSolrQueryCommand(
             pam_id, pam.getDLocation(), pam_assembly_success_filename,
-            dependency_files=self.dependencies).getMakeflowRule())
+            dependency_files=self.dependencies).get_makeflow_rule())
         self.log.debug(
             'Adding {} assembly rules for pam {}'.format(
                 len(assembly_rules), pam_id))
@@ -509,7 +509,7 @@ class BoomCollate(LMObject):
                 self.gridset.tree.getId(), self.user_id,
                 tree_success_filename)
             tree_cmd.inputs.append(self.squid_tree_filename)
-            rules.append(tree_cmd.getMakeflowRule(local=True))
+            rules.append(tree_cmd.get_makeflow_rule(local=True))
             
             # Add tree success to dependencies
             self.dependencies.append(tree_success_filename)
