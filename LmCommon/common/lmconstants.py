@@ -3,11 +3,11 @@
 try:
     from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
 except:
-    OFTInteger = 0 
-    OFTReal = 2 
+    OFTInteger = 0
+    OFTReal = 2
     OFTString = 4
     OFTBinary = 8
-   
+
 # .............................................................................
 # .    Configuration file headings
 # .............................................................................

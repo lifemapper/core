@@ -7,8 +7,7 @@ from types import (BuiltinFunctionType, BuiltinMethodType, FunctionType,
 
 import xml.etree.ElementTree as ET
 
-from LmCommon.common.lmAttObject import LmAttList, LmAttObj
-from LmCommon.common.unicode import to_unicode
+from LmCommon.common.attribute_object import LmAttList, LmAttObj
 
 # Functions / Classes directly mapped to the Element Tree versions
 # ..............................................................................
