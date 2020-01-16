@@ -83,7 +83,8 @@ class Daemon(object):
         # write pidfile
         atexit.register(self.delpid)
         pid = str(os.getpid())
-        file(self.pidfile,'w+').write("%s\n" % pid)
+        with open(self.pidfile, 'w') as pid_out_f:
+            pid_out_f.write('{}\n'.format(pid))
          
     # .............................
     def delpid(self):
@@ -119,9 +120,8 @@ class Daemon(object):
         """
         # Check for a pidfile to see if the daemon already runs
         try:
-            pf = file(self.pidfile,'r')
-            pid = int(pf.read().strip())
-            pf.close()
+            with open(self.pidfile, 'r') as pf:
+                pid = int(pf.read().strip())
         except IOError:
             pid = None
         
@@ -187,9 +187,8 @@ class Daemon(object):
         """
         # Check for a pidfile to see if the daemon is running
         try:
-            pf = file(self.pidfile,'r')
-            pid = int(pf.read().strip())
-            pf.close()
+            with open(self.pidfile, 'r') as pf:
+                pid = int(pf.read().strip())
         except IOError:
             pid = None
         
@@ -224,9 +223,8 @@ class Daemon(object):
         """
         # Get the pid from the pidfile
         try:
-            pf = file(self.pidfile,'r')
-            pid = int(pf.read().strip())
-            pf.close()
+            with open(self.pidfile, 'r') as pf:
+                pid = int(pf.read().strip())
         except IOError:
             pid = None
         
