@@ -4,8 +4,6 @@ import psycopg2
 
 from LmBackend.common.lmobj import LMError
 
-from LmCommon.common.unicode import from_unicode, to_unicode
-
 from LmServer.base.atom import Atom
 from LmServer.base.lmobj import LMAbstractObject
 from LmServer.common.lmconstants import LM_SCHEMA        
@@ -112,7 +110,6 @@ class DbPostgresql(LMAbstractObject):
                  configuration.
         """
         if isinstance(val, str):
-            val = from_unicode(to_unicode(val))
             val = val.replace('\'', "''")
             val = val.replace('\\', '\\\\')
             dbVal = "E'%s'" % (val)

@@ -8,7 +8,6 @@ import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.apiquery import GbifAPI
-from LmCommon.common.unicode import from_unicode, to_unicode
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
@@ -634,12 +633,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
             else:
                 self.log.error('Unable to parse filename {} into binomial and opentreeId'
                                     .format(basename))
-        try:
-            _ = from_unicode(to_unicode(binomial))
-        except Exception as _:
-            self.log.error('Failed to convert binomial to and from unicode')
-            binomial = None            
-                    
+
         with open(bubbleFname) as f:
             for idx, line in enumerate(f):
                 pass

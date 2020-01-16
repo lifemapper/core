@@ -8,7 +8,7 @@ import subprocess
 import zipfile
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmAttObject import LmAttObj
+from LmCommon.common.attribute_object import LmAttObj
 from LmCommon.common.lmconstants import (GEOTIFF_INTERFACE, 
                                 SHAPEFILE_INTERFACE, OFTInteger, OFTString)
 from LmCommon.common.time import gmt
