@@ -4,8 +4,9 @@ from http.client import BadStatusLine
 import json
 from math import ceil
 import time
-from types import ListType, TupleType, BooleanType
-import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
+import urllib.error
+import urllib.parse
+import urllib.request
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import (GBIF, ONE_MIN, URL_ESCAPES)
@@ -303,11 +304,11 @@ class GBIFData(LMObject):
         fullPredicate = GBIF.QUERY_PARAMS[GBIF.DOWNLOAD_COMMAND].copy()
         predicates = []
         for key, val in queryParams.items():
-            if isinstance(val, ListType) or isinstance(val, TupleType):
+            if isinstance(val, (list, tuple)):
                 for v in val:
                     pred = {"type": "equals", "key": key, "value": v}
             elif key not in ['offset', 'limit']:
-                if isinstance(val, BooleanType):
+                if isinstance(val, bool):
                     val = str(val).lower()
                 pred = {"type": "equals", "key": key, "value": val}
             predicates.append(pred)

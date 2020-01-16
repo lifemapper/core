@@ -1,11 +1,10 @@
 """Library to interact with the Lifemapper PostgreSQL/PostGIS databases 
 """
 import psycopg2
-from types import (IntType, LongType, FloatType, NoneType, BooleanType)
 
 from LmBackend.common.lmobj import LMError
 
-from LmCommon.common.str import from_unicode, to_unicode
+from LmCommon.common.unicode import from_unicode, to_unicode
 
 from LmServer.base.atom import Atom
 from LmServer.base.lmobj import LMAbstractObject
@@ -117,15 +116,13 @@ class DbPostgresql(LMAbstractObject):
             val = val.replace('\'', "''")
             val = val.replace('\\', '\\\\')
             dbVal = "E'%s'" % (val)
-        elif isinstance(val, BooleanType):
+        elif isinstance(val, bool):
             dbVal = '%s' % (str(val).upper())
-        elif isinstance(val, IntType):
+        elif isinstance(val, int):
             dbVal = '%d' % (val)
-        elif isinstance(val, LongType):
-            dbVal = '%d' % (val)
-        elif isinstance(val, FloatType):
+        elif isinstance(val, float):
             dbVal = '%s' % (str(val))
-        elif isinstance(val, NoneType):
+        elif val is None:
             dbVal = 'NULL'
         else:
             raise LMError(currargs='DbConn._formatVal: unsupported type {} for {}'

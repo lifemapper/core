@@ -1,25 +1,4 @@
 """
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
 """
 import inspect
 from osgeo.gdalconst import (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16, 
@@ -29,7 +8,6 @@ from osgeo.ogr import (wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint,
                        wkbMultiLineString, wkbMultiPolygon)
    
 import os.path
-from types import IntType, FloatType,StringType
 
 from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat, 
                                          ProcessType)
@@ -725,236 +703,236 @@ STRING_ESCAPE_FORMATS = {
 
 # ...............................................
 # Algorithm constants
-BIOCLIM_PARAMS = {'StandardDeviationCutoff':  {'type': FloatType,
+BIOCLIM_PARAMS = {'StandardDeviationCutoff':  {'type': float,
                                                'min': 0.0, 'default': 0.674, 
                                                'max': None} }
 CSMBS_PARAMS = {'Randomisations': 
-                  {'type': IntType,
+                  {'type': int,
                    'min': 1, 'default': 8, 'max': 1000},
                 'StandardDeviations':
-                  {'type': FloatType,
+                  {'type': float,
                    'min': -10.0, 'default': 2.0, 'max': 10.0},
                 'MinComponents': 
-                  {'type': IntType,
+                  {'type': int,
                    'min': 1, 'default': 1, 'max': 20},
                 'VerboseDebugging': 
-                  {'type': IntType,
+                  {'type': int,
                    'min': 0, 'default': 0, 'max': 1}}
 ENVDIST_PARAMS = {'DistanceType':
-                     {'type': IntType,
+                     {'type': int,
                       'min': 1, 'default': 1, 'max': 4 },
                   'NearestPoints':
-                     {'type': IntType,
+                     {'type': int,
                       'min': 0, 'default': 1, 'max': None },
                   'MaxDistance':
-                     {'type': FloatType,
+                     {'type': float,
                       'min': 0.1, 'default': 0.1, 'max': 1.0 }}
 
 GARP_PARAMS =  {'MaxGenerations':
-                {'type': IntType,
+                {'type': int,
                  'min': 1, 'default': 400, 'max': None },
                 'ConvergenceLimit':
-                {'type': FloatType,
+                {'type': float,
                  'min': 0.0, 'default': 0.01, 'max': 1.0 },
                 'PopulationSize':
-                {'type': IntType,
+                {'type': int,
                  'min': 1, 'default': 50, 'max': 500 },
                 'Resamples':
-                {'type': IntType,
+                {'type': int,
                  'min': 1, 'default': 2500, 'max': 100000 }}
 
 GARP_BS_PARAMS = {'TrainingProportion': 
-                   {'type': FloatType,
+                   {'type': float,
                     'min': 0, 'default': 50, 'max': 100 },
                   'TotalRuns': 
-                   {'type': IntType,
+                   {'type': int,
                     'min': 0, 'default': 20, 'max': 10000 },
                   'HardOmissionThreshold': 
-                   {'type': FloatType,
+                   {'type': float,
                     'min': 0, 'default': 100, 'max': 100 },
                   'ModelsUnderOmissionThreshold': 
-                   {'type': IntType,
+                   {'type': int,
                     'min': 0, 'default': 20, 'max': 10000 },
                   'CommissionThreshold': 
-                   {'type': FloatType,
+                   {'type': float,
                     'min': 0, 'default': 50, 'max': 100 },
                   'CommissionSampleSize': 
-                   {'type': IntType,
+                   {'type': int,
                     'min': 1, 'default': 10000, 'max': None },
                   'MaxThreads': 
-                   {'type': IntType,
+                   {'type': int,
                     'min': 1, 'default': 1, 'max': 1024 },
                   'MaxGenerations': 
-                   {'type': IntType,
+                   {'type': int,
                     'min': 1, 'default': 400, 'max': None },
                   'ConvergenceLimit': 
-                   {'type': FloatType,
+                   {'type': float,
                     'min': 0.0, 'default': 0.1, 'max': 1.0 },
                   'PopulationSize': 
-                   {'type': IntType,
+                   {'type': int,
                     'min': 1, 'default': 50, 'max': 500 },
                   'Resamples': 
-                   {'type': IntType,
+                   {'type': int,
                     'min': 1, 'default': 2500, 'max': 10000 } }
 
 OM_MAXENT_PARAMS = {"NumberOfBackgroundPoints":
-                      {'type' : IntType,
+                      {'type' : int,
                        'min': 0,
                        'default': 10000,
                        'max': 10000 },
                     'UseAbsencesAsBackground':
                       {'min': 0,
                        'max': 1,
-                       'type': IntType,
+                       'type': int,
                        'default': 0},
                     "IncludePresencePointsInBackground":
                       {'min': 0,
                        'max': 1,
-                       'type': IntType,
+                       'type': int,
                        'default': 1},
                     "NumberOfIterations":
                       {'min': 1,
                        'max': None,
-                       'type': IntType,
+                       'type': int,
                        'default': 500},
                     "TerminateTolerance":
                       {'min': 0,
                        'max': None,
-                       'type': FloatType,
+                       'type': float,
                        'default': 0.00001},
                     "OutputFormat":
                       {'min': 1,
                        'max': 2,
-                       'type': IntType,
+                       'type': int,
                        'default': 2},
                     "QuadraticFeatures":
                       {'min': 0,
                        'max': 1,
-                       'type': IntType,
+                       'type': int,
                        'default': 1},
                     "ProductFeatures":
                       {'min': 0,
                        'max': 1,
-                       'type': IntType,
+                       'type': int,
                        'default': 1},
                     "HingeFeatures":
                       {'min': 0,
                        'max': 1,
-                       'type': IntType,
+                       'type': int,
                        'default': 1},
                     "ThresholdFeatures":
                       {'min': 0,
                        'max': 1,
-                       'type': IntType,
+                       'type': int,
                        'default': 1},
                     "AutoFeatures":
                       {'min': 0,
                        'max': 1,
-                       'type': IntType,
+                       'type': int,
                        'default': 1},
                     "MinSamplesForProductThreshold":
                       {'min': 1,
                        'max': None,
-                       'type': IntType,
+                       'type': int,
                        'default': 80},
                     "MinSamplesForQuadratic":
                       {'min': 1,
                        'max': None,
-                       'type': IntType,
+                       'type': int,
                        'default': 10},
                     "MinSamplesForHinge":
                       {'min': 1,
                        'max': None,
-                       'type': IntType,
+                       'type': int,
                        'default': 15} } 
 ATT_MAXENT_PARAMS = {'responsecurves': 
-                         {'type': IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type': int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'pictures': 
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'jackknife': 
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'outputformat': # 0 - raw, 1 - logistic, 2 - cumulative, 3 - cloglog
-                         {'type' : IntType, 'min' : 0, 'max' : 3, 'default' : 3},
+                         {'type' : int, 'min' : 0, 'max' : 3, 'default' : 3},
                      'randomseed': 
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'logscale': 
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'removeduplicates': 
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'writeclampgrid': 
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'writemess':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'randomtestpoints':
-                         {'type' : IntType, 'min' : 0, 'max' : 100, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 100, 'default' : 0},
                      'betamultiplier':
-                         {'type' : FloatType, 'min' : 0, 'max' : None, 'default' : 1.0},
+                         {'type' : float, 'min' : 0, 'max' : None, 'default' : 1.0},
                      'maximumbackground':
-                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 10000},
+                         {'type' : int, 'min' : 0, 'max' : None, 'default' : 10000},
                      'replicates':
-                         {'type' : IntType, 'min' : 1, 'max' : None, 'default' : 1},
+                         {'type' : int, 'min' : 1, 'max' : None, 'default' : 1},
                      'replicatetype': # 0 - cross validate, 1 - bootstrap, 2 - subsample
-                         {'type' : IntType, 'min' : 0, 'max' : 2, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 2, 'default' : 0},
                      'perspeciesresults':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'writebackgroundpredictions':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'responsecurvesexponent':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'linear':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'quadratic':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'product':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'threshold':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'hinge':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'writeplotdata':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'fadebyclamping':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'extrapolate':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'autofeature':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'doclamp':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'outputgrids':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'plots':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 1},
                      'appendtoresultsfile':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'maximumiterations':
-                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 500},
+                         {'type' : int, 'min' : 0, 'max' : None, 'default' : 500},
                      'convergencethreshold':
-                         {'type' : FloatType, 'min' : 0, 'max' : None, 'default' : 0.00001},
+                         {'type' : float, 'min' : 0, 'max' : None, 'default' : 0.00001},
                      'adjustsampleradius':
-                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : None, 'default' : 0},
                      'lq2lqptthreshold':
-                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 80},
+                         {'type' : int, 'min' : 0, 'max' : None, 'default' : 80},
                      'l2lqthreshold':
-                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 10},
+                         {'type' : int, 'min' : 0, 'max' : None, 'default' : 10},
                      'hingethreshold':
-                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 15},
+                         {'type' : int, 'min' : 0, 'max' : None, 'default' : 15},
                      'beta_threshold':
-                         {'type' : FloatType, 'min' : None, 'max' : None, 'default' : -1.0},
+                         {'type' : float, 'min' : None, 'max' : None, 'default' : -1.0},
                      'beta_categorical':
-                         {'type' : FloatType, 'min' : None,'max' : None, 'default' : -1.0},
+                         {'type' : float, 'min' : None,'max' : None, 'default' : -1.0},
                      'beta_lqp':
-                         {'type' : FloatType, 'min' : None, 'max' : None, 'default' : -1.0},
+                         {'type' : float, 'min' : None, 'max' : None, 'default' : -1.0},
                      'beta_hinge':
-                         {'type' : FloatType, 'min' : None, 'max' : None, 'default' : -1.0},
+                         {'type' : float, 'min' : None, 'max' : None, 'default' : -1.0},
                      'defaultprevalence':
-                         {'type' : FloatType, 'min' : 0.0, 'max' : 1.0, 'default' : 0.5},
+                         {'type' : float, 'min' : 0.0, 'max' : 1.0, 'default' : 0.5},
                      'addallsamplestobackground':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'addsamplestobackground':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'allowpartialdata':
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0},
                      'applythresholdrule':
                          # 0 - None
                          # 1 - Fixed cumulative value 1
@@ -967,9 +945,9 @@ ATT_MAXENT_PARAMS = {'responsecurves':
                          # 8 - Equal test sensitivity and specificity
                          # 9 - Maximum test sensitivity plus specificity
                          # 10 - Equate entropy of thresholded and origial distributions
-                         {'type' : IntType, 'min' : 0, 'max' : 10, 'default' : 0},
+                         {'type' : int, 'min' : 0, 'max' : 10, 'default' : 0},
                      'verbose': 
-                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0}
+                         {'type' : int, 'min' : 0, 'max' : 1, 'default' : 0}
                      # Disabled
                       # askoverwrite - not needed for us
                       # autorun - we need this to always be on
@@ -991,71 +969,71 @@ ATT_MAXENT_PARAMS = {'responsecurves':
                       # biasfile - Specifies relative sampling effort (grid)
                       # testsamplesfile - Specifies presence locations for testing (points)
                      }
-SVM_PARAMS = {'svmtype': {'type': IntType,
+SVM_PARAMS = {'svmtype': {'type': int,
                            'min': 0, 'default': 0, 'max': 2},
-              'KernelType': {'type': IntType,
+              'KernelType': {'type': int,
                               'min': 0, 'default': 2, 'max': 4},
-              'Degree': {'type': IntType,
+              'Degree': {'type': int,
                           'min': 0, 'default': 3, 'max': None},
-              'Gamma': {'type': FloatType,
+              'Gamma': {'type': float,
                          'min': None, 'default': 0.0, 
                          'max': None},
-              'Coef0': {'type': FloatType,
+              'Coef0': {'type': float,
                          'min': None, 'default': 0.0, 
                          'max': None},
               # Cost
-              'C': {'type': FloatType,
+              'C': {'type': float,
                         'min': 0.001, 'default': 1.0, 
                         'max': None},
-              'Nu': {'type': FloatType, 
+              'Nu': {'type': float, 
                       'min': 0.001, 'default': 0.5, 'max': 1},
-              'ProbabilisticOutput': {'type': IntType,
+              'ProbabilisticOutput': {'type': int,
                                        'min': 0, 'default': 1, 
                                        'max': 1 },
-              'NumberOfPseudoAbsences': {'type': IntType,
+              'NumberOfPseudoAbsences': {'type': int,
                                           'min': 0, 
                                           'default': 0, 
                                           'max': None } } 
 ANN_PARAMS = {'HiddenLayerNeurons':
-                {'type': IntType,
+                {'type': int,
                  'min': 0, 'default': 8, 'max': None },
               'LearningRate':
-                {'type': FloatType,
+                {'type': float,
                  'min': 0.0, 'default': 0.3, 'max': 1.0 },
               'Momentum':
-                {'type': FloatType,
+                {'type': float,
                  'min': 0.0, 'default': 0.05, 'max': 1.0 },
               'Choice':
-                {'type': IntType,
+                {'type': int,
                  'min': 0, 'default': 0, 'max': 1 },
               'Epoch':
-                {'type': IntType,
+                {'type': int,
                  'min': 1, 'default': 50000, 'max': None },
               # Note: There is a typo in openModeller so it is maintained here
               'MinimunError':
-                {'type': FloatType,
+                {'type': float,
                  'min': 0.0, 'default': 0.01, 'max': 0.05} }
 
 AQUAMAPS_PARAMS = {'UseSurfaceLayers':
-                      {'type': IntType,
+                      {'type': int,
                        'min': -1, 'default': -1, 'max': 1 },
                    'UseDepthRange':
-                      {'type': IntType,
+                      {'type': int,
                        'min': 0,  'default': 1, 'max': 1 },
                    'UseIceConcentration':
-                      {'type': IntType,
+                      {'type': int,
                        'min': 0, 'default': 1, 'max': 1 },
                    'UseDistanceToLand':
-                      {'type': IntType,
+                      {'type': int,
                        'min': 0, 'default': 1, 'max': 1 },
                    'UsePrimaryProduction':
-                      {'type': IntType,
+                      {'type': int,
                        'min': 0, 'default': 1, 'max': 1 },
                    'usesalinity':
-                      {'type': IntType,
+                      {'type': int,
                        'min': 0, 'default': 1, 'max': 1 },
                    'usetemperature':
-                      {'type': IntType,
+                      {'type': int,
                        'min': 0, 'default': 1, 'max': 1 }} 
 
 # .............................................................................
@@ -1131,11 +1109,11 @@ class Algorithms:
                                   'Convex Hull Region Intersect',
                                   isDiscreteOutput=True,
                                   parameters = {'buffer':
-                                                 {'type': FloatType,
+                                                 {'type': float,
                                                   'min': 0, 'default': 0.5, 'max': 2 },
                                                 # Region MUST be supplied by user
                                                 'region':
-                                                 {'type': StringType, 
+                                                 {'type': str, 
                                                   'default': None }})
     
     @staticmethod
@@ -1181,11 +1159,11 @@ class SdmMasks(object):
                                  'Convex Hull Region Intersect',
                                  isDiscreteOutput=True,
                                  parameters = {'buffer':
-                                                {'type': FloatType,
+                                                {'type': float,
                                                  'min': 0, 'default': 0.5, 'max': 2 },
                                                # Region MUST be supplied by user
                                                'region':
-                                                {'type': StringType }})
+                                                {'type': str }})
 
 # ============================================================================
 # =                              Snippet Constants                              =

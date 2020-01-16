@@ -1,32 +1,7 @@
 """
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
 """
-try:
-    import pickle as pickle
-except:
-    import pickle
+import pickle
 import json
-from types import StringType, IntType, FloatType, NoneType
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import Algorithms
@@ -252,7 +227,7 @@ class Algorithm(LMObject):
         @param val: The new value for the parameter
         @exception InvalidParameterError: Thrown if the parameter is not valid 
                                                     for the algorithm
-        @exception InvalidValueError: Thrown if a StringType parameter is set to 
+        @exception InvalidValueError: Thrown if a str parameter is set to 
                                                 an unknown option
         @exception WrongTypeError: Thrown if the value does not match the expected 
                                             type
@@ -263,11 +238,11 @@ class Algorithm(LMObject):
             paramName = self._getParamKey(name)
             if paramName is not None:
                 constraints = self._parameterConstraints[paramName]
-                if (isinstance(val, NoneType)):
+                if val is None:
                     val = constraints['default']
                     
-                if constraints['type'] == StringType:
-                    if (isinstance(val, StringType)):
+                if constraints['type'] == str:
+                    if (isinstance(val, str)):
                         val = val.lower()
                         try:
                             valOptions = constraints['options']
@@ -278,26 +253,23 @@ class Algorithm(LMObject):
                                 raise InvalidValueError(['Invalid value {}; Valid options are {}'
                                                                  .format(val, str(valOptions))])
                     else :
-                        raise WrongTypeError(['Expected StringType, Received %s - type %s' % 
+                        raise WrongTypeError(['Expected str, Received %s - type %s' % 
                                                      (str(val), str(type(val))) ])
         
                 # Check valid float value
-                elif constraints['type'] == FloatType:
-                    if (isinstance(val, FloatType) or isinstance(val, IntType)): 
+                elif constraints['type'] == float:
+                    if isinstance(val, (float, int)): 
                         self._checkNumericValue(val, constraints)
-#                     elif (isinstance(val, NoneType)):
-#                         val = constraints['default']
                     else :
-                        raise WrongTypeError(['Expected FloatType, Received %s - type %s' % 
+                        raise WrongTypeError(['Expected float, Received %s - type %s' % 
                                                      (str(val), str(type(val))) ])
                             
                 # Check valid int value
-                elif constraints['type'] == IntType:
-                    if (isinstance(val, IntType) or 
-                         isinstance(val, FloatType) and (val % 1 == 0) ):
+                elif constraints['type'] == int:
+                    if (isinstance(val, (float, int)) and (val % 1 == 0) ):
                         self._checkNumericValue(val, constraints)
                     else :
-                        raise WrongTypeError(['Expected IntType, Received %s - type %s' % 
+                        raise WrongTypeError(['Expected int, Received %s - type %s' % 
                                                      (str(val), str(type(val))) ])
                 # Successfully ran the gauntlet
                 self._parameters[paramName] = val                
