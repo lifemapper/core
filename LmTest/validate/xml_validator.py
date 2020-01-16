@@ -7,7 +7,7 @@ Todo:
 """
 import os
 
-from LmCommon.common.lmXml import deserialize, fromstring
+from LmCommon.common.lm_xml import deserialize, fromstring
 
 # .............................................................................
 def validate_xml_file(xml_filename):

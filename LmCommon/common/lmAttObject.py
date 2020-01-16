@@ -1,8 +1,9 @@
 """Module containing some base Lifemapper objects
 """
 
+
 # .............................................................................
-class LmAttObj(object):
+class LmAttObj:
     """Object that includes attributes.
 
     Note:
@@ -100,6 +101,7 @@ class LmAttObj(object):
             return list(attrs)
 
         return dir2(self)
+
 
 # .............................................................................
 class LmAttList(list, LmAttObj):

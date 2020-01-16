@@ -16,7 +16,7 @@ import unicodecsv
 from LmCommon.common.lmconstants import LMFormat, MatrixType, JobStatus,\
     HTTPStatus, PamStatKeys
 from LmCommon.common.matrix import Matrix
-from LmCommon.common.lmXml import tostring
+from LmCommon.common.lm_xml import tostring
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import MAP_TEMPLATE

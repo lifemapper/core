@@ -5,7 +5,7 @@ import os
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmCommon.common.matrix import Matrix
-from LmCommon.common.lmXml import Element, SubElement, tostring
+from LmCommon.common.lm_xml import Element, SubElement, tostring
 
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.sdmproj import SDMProjection

@@ -7,7 +7,7 @@ import signal
 from subprocess import Popen, PIPE
 from time import sleep
 
-from LmCommon.common.lmXml import serialize, tostring
+from LmCommon.common.lm_xml import serialize, tostring
 
 CONCURRENT_PROCESSES = max(1, multiprocessing.cpu_count() - 2)
 WAIT_TIME = 10

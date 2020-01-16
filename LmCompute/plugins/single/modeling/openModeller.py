@@ -5,7 +5,7 @@ import os
 from LmBackend.common.metrics import LmMetricNames
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
-from LmCommon.common.lmXml import (Element, fromstring, SubElement, tostring)
+from LmCommon.common.lm_xml import (Element, fromstring, SubElement, tostring)
 
 from LmCompute.plugins.single.modeling.base import ModelSoftwareWrapper
 from LmCompute.plugins.single.modeling.openModeller_constants import (

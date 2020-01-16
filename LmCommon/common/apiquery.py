@@ -2,8 +2,6 @@
 """
 import json
 import os
-from types import (BooleanType, DictionaryType, TupleType, FloatType, IntType, 
-                   StringType, UnicodeType, ListType)
 import urllib
 
 import requests
@@ -13,15 +11,15 @@ import idigbio
 from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
                                          IDIGBIO, IDIGBIO_QUERY, 
                                          URL_ESCAPES, HTTPStatus, DWCNames)
-from LmCommon.common.lmXml import fromstring, deserialize
+from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import (readyFilename, get_unicodecsv_writer, 
-                                       get_unicodecsv_reader)
+from LmCommon.common.readyfile import (
+    get_unicodecsv_reader, get_unicodecsv_writer, readyFilename)
+
 
 # .............................................................................
-class APIQuery(object):
-    """
-    Class to query APIs and return results.  
+class APIQuery:
+    """Class to query APIs and return results.
     @note: CSV files are created with tab delimiter
     """
     ENCODING = 'utf-8'
@@ -115,7 +113,7 @@ class APIQuery(object):
     # ...............................................
     def _assembleKeyValFilters(self, ofDict):
         for k, v in ofDict.items():
-            if isinstance(v, BooleanType):
+            if isinstance(v, bool):
                 v = str(v).lower()
             ofDict[k] = str(v).encode('utf-8')         
         filterString = urllib.parse.urlencode(ofDict)
@@ -124,16 +122,16 @@ class APIQuery(object):
     # ...............................................
     def _interpretQClause(self, key, val):
         cls = None
-        if isinstance(val, (FloatType, IntType, StringType, UnicodeType)):
+        if isinstance(val, (float, int, str)):
             cls = '{}:{}'.format(key, str(val))
         # Tuple for negated or range value
-        elif isinstance(val, TupleType):            
+        elif isinstance(val, tuple):
             # negated filter
             if isinstance(val[0], BooleanType) and val[0] is False:
                 cls = 'NOT ' + key + ':' + str(val[1])
             # range filter (better be numbers)
-            elif ((isinstance(val[0], IntType) or isinstance(val[0], FloatType))
-                  and (isinstance(val[1], IntType) or isinstance(val[1], FloatType))):
+            elif isinstance(
+                    val[0], (float, int)) and isinstance(val[1], (float, int)):
                 cls = '{}:[{} TO {}]'.format(key, str(val[0]), str(val[1]))
             else:
                 print('Unexpected value type {}'.format(val))
@@ -145,7 +143,7 @@ class APIQuery(object):
     def _assembleQItem(self, key, val):
         itmClauses = []
         # List for multiple values of same key
-        if isinstance(val, ListType):
+        if isinstance(val, list):
             for v in val:
                 itmClauses.append(self._interpretQClause(key, v))
         else:
@@ -240,7 +238,7 @@ class APIQuery(object):
                     reason = 'Unknown Error'
                 print(('Failed on URL {}, code = {}, reason = {} ({})'.format(
                                   self.url, retcode, reason, str(e))))
-        
+
         if response.ok:
             try:
                 if outputType == 'json':
@@ -313,16 +311,16 @@ class BisonAPI(APIQuery):
     # ...............................................
     def _burrow(self, keylst):
         thisdict = self.output
-        if isinstance(thisdict, DictionaryType):
+        if isinstance(thisdict, dict):
             for key in keylst:
-                try:         
+                try:
                     thisdict = thisdict[key]
-                except KeyError as e:
+                except KeyError:
                     raise Exception('Missing key {} in output'.format(key))
         else:
             raise Exception('Invalid output type ({})'.format(type(thisdict)))
         return thisdict
-          
+
     # ...............................................
     @staticmethod
     def getTsnListForBinomials():
@@ -778,7 +776,6 @@ class GbifAPI(APIQuery):
 
 # .............................................................................
 class IdigbioAPI(APIQuery):
-# .............................................................................
     """
     Class to query iDigBio APIs and return results
     """
@@ -791,7 +788,7 @@ class IdigbioAPI(APIQuery):
         """
         idigSearchUrl = '/'.join((IDIGBIO.SEARCH_PREFIX, IDIGBIO.SEARCH_POSTFIX, 
                                   IDIGBIO.OCCURRENCE_POSTFIX))
-        
+
         # Add/replace Q filters to defaults for this instance 
         allQFilters = IDIGBIO_QUERY.QFILTERS.copy()
         for key, val in qFilters.items():
@@ -823,12 +820,12 @@ class IdigbioAPI(APIQuery):
         @summary: Queries the API and sets 'output' attribute to a JSON object 
         """
         APIQuery.queryByPost(self, outputType='json')
-           
+
     # ...............................................
     @staticmethod
     def getTaxonIdsBinomials():
         pass
-    
+
     # ...............................................
     def queryByGBIFTaxonId(self, taxonKey):
         """
@@ -857,8 +854,8 @@ class IdigbioAPI(APIQuery):
         newMeta = {}
         for colIdx in range(len(origFldnames)):
             fldname = origFldnames[colIdx]
-            
-            valdict = {'name': fldname , 
+
+            valdict = {'name': fldname,
                        'type': 'str'}
             if fldname == 'uuid':
                 valdict['role'] = OccDataParser.FIELD_ROLE_IDENTIFIER
@@ -866,15 +863,15 @@ class IdigbioAPI(APIQuery):
                 valdict['role'] = OccDataParser.FIELD_ROLE_GROUPBY
             elif fldname == 'geopoint':
                 valdict['role'] = OccDataParser.FIELD_ROLE_GEOPOINT
-            elif fldname == 'canonicalname':            
+            elif fldname == 'canonicalname':
                 valdict['role'] = OccDataParser.FIELD_ROLE_TAXANAME
-            elif fldname == 'dec_long':            
+            elif fldname == 'dec_long':
                 valdict['role'] = OccDataParser.FIELD_ROLE_LONGITUDE
-            elif fldname == 'dec_lat':            
+            elif fldname == 'dec_lat':
                 valdict['role'] = OccDataParser.FIELD_ROLE_LATITUDE
             newMeta[str(colIdx)] = valdict
-        
-        readyFilename(metaFname, overwrite=True)    
+
+        readyFilename(metaFname, overwrite=True)
         with open(metaFname, 'w') as outf:
             json.dump(newMeta, outf)
         return newMeta
@@ -896,7 +893,7 @@ class IdigbioAPI(APIQuery):
         @param gbifTaxonIds: one GBIF TaxonId or a list
         """
         api = idigbio.json()
-        recordQuery = {'taxonid':str(gbifTaxonId), 
+        recordQuery = {'taxonid': str(gbifTaxonId),
                        'geopoint': {'type': 'exists'}}
         try:
             output = api.search_records(rq=recordQuery, limit=1, offset=0)
@@ -917,7 +914,7 @@ class IdigbioAPI(APIQuery):
         offset = 0
         currcount = 0
         total = 0
-        recordQuery = {'taxonid':str(gbifTaxonId), 
+        recordQuery = {'taxonid': str(gbifTaxonId),
                        'geopoint': {'type': 'exists'}}
         while offset <= total:
             try:
@@ -928,7 +925,7 @@ class IdigbioAPI(APIQuery):
                 total = 0
             else:
                 total = output['itemCount']
-                
+
                 # First gbifTaxonId where this data retrieval is successful, 
                 # get and write header and metadata
                 if total > 0 and fields is None:
@@ -1198,15 +1195,13 @@ import json
 import os
 import requests
 import sys
-from types import (BooleanType, DictionaryType, TupleType, FloatType, IntType, 
-                   StringType, UnicodeType, ListType)
 import unicodecsv
 import urllib
 
-from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
-                                         IDIGBIO, IDIGBIO_QUERY, 
+from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
+                                         IDIGBIO, IDIGBIO_QUERY,
                                          URL_ESCAPES, HTTPStatus, DWCNames)
-from LmCommon.common.lmXml import fromstring, deserialize
+from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename, get_unicodecsv_reader
 from LmCommon.common.apiquery import IdigbioAPI, GbifAPI
