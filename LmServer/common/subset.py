@@ -37,6 +37,9 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
     @summary: Create a subset of a global PAM and create a new grid set
     @param archiveName: The name of this new grid set
     @param matches: Solr hits to be used for subsetting
+
+    Todo:
+        Rewrite and use multi pav index.  then get rid of IndexPAVCommand
     """
     method = SubsetMethod.COLUMN
     

@@ -2,6 +2,7 @@
 """
 from LmBackend.common.lmobj import LMObject
 
+
 # ............................................................................
 class MfRule(LMObject):
     """Class to create commands for a makeflow document
@@ -33,9 +34,9 @@ class MfRule(LMObject):
         else:
             self.dependencies = dependencies
         self.comment = comment
-        
+
     # ...............................................
-    def addDependencies(self, dependencies):
+    def add_dependencies(self, dependencies):
         """Adds dependencies to the rule.
 
         Args:
@@ -43,7 +44,7 @@ class MfRule(LMObject):
                 should be added to the rule as dependencies.  All paths should
                 be relative to the Makeflow workspace.
         """
-        if type(dependencies) in (list, tuple):
+        if isinstance(dependencies, (list, tuple)):
             self.dependencies.extend(dependencies)
-        elif type(dependencies) == str:
+        elif isinstance(dependencies, str):
             self.dependencies.append(dependencies)

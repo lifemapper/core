@@ -30,17 +30,19 @@ from LmServer.common.localconstants import MAX_MAKEFLOWS, WORKER_PATH
 from LmServer.common.log import LmServerLogger
 from LmServer.db.borgscribe import BorgScribe
 
+
 # .............................................................................
-class KeepAction(object):
+class KeepAction:
     """Constants class for determining delete action level
     """
     NONE = 0
     ERROR = 1
     ALL = 2
-    
+
     @staticmethod
     def options():
         return [KeepAction.NONE, KeepAction.ERROR, KeepAction.ALL]
+
 
 # .............................................................................
 class MattDaemon(Daemon):
@@ -50,13 +52,13 @@ class MattDaemon(Daemon):
     connect to.  Once one of the Makeflow processes completes, it is replaced
     by the next available job chain.  Workers can be located anywhere, but at
     least one should probably run locally for local processes like database
-    updates. 
+    updates.
     """
     keep_logs = KeepAction.NONE
     keep_makeflows = KeepAction.NONE
     keep_outputs = KeepAction.NONE
     log_dir = LOG_PATH
-    
+
     # .............................
     def initialize(self):
         """Initialize the MattDaemon
@@ -69,44 +71,44 @@ class MattDaemon(Daemon):
         self.sleep_time = 30
         self.max_makeflows = MAX_MAKEFLOWS
         self.workspace = MAKEFLOW_WORKSPACE
-        
+
         # Establish db connection
         self.scribe = BorgScribe(self.log)
         self.scribe.openConnections()
-        
+
         # Start catalog server
         self.start_catalog_server()
-        
+
         # Start worker factory
         self.start_worker_factory()
-    
+
     # .............................
     def run(self):
         """Runs workflows until told to stop
 
-        This method will continue to run while the self.keepRunning attribute
+        This method will continue to run while the self.keep_running attribute
         is true
         """
         try:
             self.log.info("Running")
-            
-            while self.keepRunning and os.path.exists(self.pidfile):
-                
+
+            while self.keep_running and os.path.exists(self.pidfile):
+
                 # Check if catalog server and factory are running
                 # TODO: Should we attempt to restart these if they are stopped?
                 if self.cs_proc.poll() is not None:
                     raise Exception('Catalog server has stopped')
-                
+
                 if self.wf_proc.poll() is not None:
                     raise Exception('Worker factory has stopped')
-                
+
                 # Check if there are any empty slots
                 num_running = self.get_number_of_running_processes()
-                
+
                 #  Add mf processes for empty slots
                 for mf_obj, mf_doc_fn in self.get_makeflows(
-                    self.max_makeflows - num_running):
-                    
+                        self.max_makeflows - num_running):
+
                     if os.path.exists(mf_doc_fn):
                         if mf_obj.priority is not None:
                             priority = mf_obj.priority
@@ -116,7 +118,7 @@ class MattDaemon(Daemon):
                             'lifemapper-{0}'.format(mf_obj.getId()), mf_doc_fn,
                             priority=priority)
                         self.log.debug(cmd)
-                        
+
                         # File outputs
                         out_log_filename = os.path.join(
                             self.log_dir, 'mf_{}.out'.format(mf_obj.getId()))
@@ -124,11 +126,11 @@ class MattDaemon(Daemon):
                             self.log_dir, 'mf_{}.err'.format(mf_obj.getId()))
                         proc_out = open(out_log_filename, 'a')
                         proc_err = open(err_log_filename, 'a')
-                        
+
                         mf_proc = subprocess.Popen(
                             cmd, shell=True, stdout=proc_out, stderr=proc_err,
                             preexec_fn=os.setsid)
-                        
+
                         self._mf_pool.append(
                             [mf_obj, mf_doc_fn, mf_proc, proc_out, proc_err])
                     else:
@@ -138,7 +140,7 @@ class MattDaemon(Daemon):
                 # Sleep
                 self.log.info('Sleep for {} seconds'.format(self.sleep_time))
                 sleep(self.sleep_time)
-                
+
             self.log.debug('Exiting')
         except Exception as e:
             tb = traceback.format_exc()
@@ -147,7 +149,7 @@ class MattDaemon(Daemon):
             self.log.error(tb)
             self.stop_worker_factory()
             self.stop_catalog_server()
-    
+
     # .............................
     def get_makeflows(self, count):
         """Get available makeflow documents and move to workspace
@@ -163,7 +165,7 @@ class MattDaemon(Daemon):
                 we should try to continue
         """
         raw_mfs = self.scribe.findMFChains(count)
-        
+
         mfs = []
         for mf_obj in raw_mfs:
             # New filename
@@ -182,7 +184,7 @@ class MattDaemon(Daemon):
                 self.log.debug('Could not move mf doc: {}'.format(str(e)))
 
         return mfs
-        
+
     # .............................
     def get_number_of_running_processes(self):
         """Returns the number of running processes
@@ -204,7 +206,7 @@ class MattDaemon(Daemon):
                     proc_out.close()
                     proc_err.close()
                     self._mf_pool[idx] = None
-                    
+
                     self._cleanup_makeflow(
                         mf_obj, mf_doc_fn, exit_status, log_files=log_files)
 
@@ -212,26 +214,26 @@ class MattDaemon(Daemon):
         return num_running
 
     # .............................
-    def onUpdate(self):
+    def on_update(self):
         """Called on Daemon update request
         """
         # Read configuration
-        self.readConfiguration()
-        
+        # self.read_configuration()
+
         self.log.debug('Update signal caught!')
-        
+
     # .............................
-    def onShutdown(self):
+    def on_shutdown(self):
         """Called on Daemon shutdown request
         """
         self.log.debug('Shutdown signal caught!')
         self.scribe.closeConnections()
-        Daemon.onShutdown(self)
+        Daemon.on_shutdown(self)
 
         # Wait for makeflows to finish
         # 60 * 3 -- CJG: Changed to 30 seconds, need to send time via signal or
         #    something
-        max_time = 30 
+        max_time = 30
         time_waited = 0
         num_running = self.get_number_of_running_processes()
         self.log.debug(
@@ -246,7 +248,7 @@ class MattDaemon(Daemon):
                 num_running = self.get_number_of_running_processes()
             except:
                 num_running = 0
-            
+
         if time_waited >= max_time:
             self.log.debug(
                 'Waited for {} seconds.  Stopping.'.format(time_waited))
@@ -266,19 +268,19 @@ class MattDaemon(Daemon):
                     self.scribe.updateObject(mf_obj)
                 except Exception as e:
                     self.log.debug(str(e))
-        
+
         # Stop worker factory
         try:
             self.stop_worker_factory()
         except:
             pass
-        
+
         # Stop catalog server
         try:
             self.stop_catalog_server()
         except:
             pass
-    
+
     # .............................
     def set_debug(self, debug_logs, debug_makeflows, debug_outputs, log_dir):
         """Set debugging options
@@ -295,7 +297,7 @@ class MattDaemon(Daemon):
         self.keep_outputs = debug_outputs
         if log_dir is not None:
             self.log_dir = log_dir
-        
+
     # .............................
     def start_catalog_server(self):
         """Start the local catalog server
@@ -305,14 +307,14 @@ class MattDaemon(Daemon):
         self.cs_proc = subprocess.Popen(
             cmd, shell=True, preexec_fn=os.setsid, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
-    
+
     # .............................
     def stop_catalog_server(self):
         """Stop the local catalog server
         """
         self.log.debug('Stopping catalog server')
         os.killpg(os.getpgid(self.cs_proc.pid), signal.SIGTERM)
-    
+
     # .............................
     def start_worker_factory(self):
         """Start worker factory
@@ -322,19 +324,20 @@ class MattDaemon(Daemon):
         # Sleep until we remove all of the old work directories
         while rm_proc.poll() is None:
             sleep(1)
-        
+
         self.log.debug('Starting worker factory')
         cmd = '{} {}'.format(WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS)
         self.wf_proc = subprocess.Popen(cmd, shell=True, preexec_fn=os.setsid)
-    
+
     # .............................
     def stop_worker_factory(self):
         """Kill worker factory
         """
         self.log.debug('Kill worker factory')
         os.killpg(os.getpgid(self.wf_proc.pid), signal.SIGTERM)
-    
+
     # .............................
+    @staticmethod
     def _get_makeflow_command(self, name, mf_doc_fn, priority=1):
         """Assemble Makeflow command
 
@@ -344,9 +347,9 @@ class MattDaemon(Daemon):
             priority (int): The priority that this makeflow should run.  The
                 greater the number the higher the priority for this makeflow.
         """
-        mfCmd = '{} {} -N {} -P {} {}'.format(
+        mf_cmd = '{} {} -N {} -P {} {}'.format(
             MAKEFLOW_BIN, MAKEFLOW_OPTIONS, name, priority, mf_doc_fn)
-        return mfCmd
+        return mf_cmd
 
     # .............................
     def _cleanup_failure_dirs(self):
@@ -358,9 +361,9 @@ class MattDaemon(Daemon):
             shutil.rmtree(dir_name)
 
     # .............................
-    def _cleanup_makeflow(self, mf_obj, mf_doc_fn, exit_status, lm_status=None, 
+    def _cleanup_makeflow(self, mf_obj, mf_doc_fn, exit_status, lm_status=None,
                           log_files=None):
-        """Clean up a makeflow that has finished, by completion, error, or signal
+        """Clean up a makeflow that has finished
 
         Args:
             mf_obj (:obj:`MFChain`): The workflow chain object.
@@ -379,25 +382,25 @@ class MattDaemon(Daemon):
         delete_log = True
         delete_makeflow = True
         delete_output = True
-        
+
         # Log files
         if self.keep_logs == KeepAction.ALL or (
-            self.keep_logs == KeepAction.ERROR and exit_status != 0):
+                self.keep_logs == KeepAction.ERROR and exit_status != 0):
 
             delete_log = False
-        
+
         # Output files
         if self.keep_outputs == KeepAction.ALL or (
-            self.keep_outputs == KeepAction.ERROR and exit_status != 0):
-            
+                self.keep_outputs == KeepAction.ERROR and exit_status != 0):
+
             delete_output = False
-        
+
         # Makeflow (original)
         if self.keep_makeflows == KeepAction.ALL or (
-            self.keep_makeflows == KeepAction.ERROR and exit_status != 0):
+                self.keep_makeflows == KeepAction.ERROR and exit_status != 0):
 
             delete_makeflow = False
-        
+
         # Delete output files
         if mf_rel_dir is not None and delete_output:
             mf_ws_dir = os.path.join(WORKER_PATH, mf_rel_dir)
@@ -407,12 +410,12 @@ class MattDaemon(Daemon):
             except Exception as e:
                 self.log.debug(
                     'Could not delete: {} - {}'.format(mf_ws_dir, str(e)))
-        
+
         # Delete log files
         if delete_log and log_files is not None:
             for log_fn in log_files:
                 os.remove(log_fn)
-        
+
         # Delete makeflow
         if delete_makeflow:
             orig_mf = mf_obj.getDLocation()
@@ -438,30 +441,27 @@ class MattDaemon(Daemon):
                     lm_status = JobStatus.COMPLETE
             mf_obj.updateStatus(lm_status, modTime=gmt().mjd)
             self.scribe.updateObject(mf_obj)
-        
-        
+
         # Remove makeflow files from workspace
         del_files = glob.glob('{}*'.format(mf_doc_fn))
-        for fn in del_files:
-            os.remove(fn)
+        for file_name in del_files:
+            os.remove(file_name)
 
         # Clean up any failed makeflows
         self._cleanup_failure_dirs()
-    
+
+
 # .............................................................................
-if __name__ == "__main__":
+def main():
+    """Main method for script.
+    """
     if not isLMUser():
         print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
-        
-    if os.path.exists(MATT_DAEMON_PID_FILE):
-        pid = open(MATT_DAEMON_PID_FILE).read().strip()
-    else:
-        pid = os.getpid()
-    
+
     parser = argparse.ArgumentParser(
         prog='Lifemapper Makeflow Daemon (Matt Daemon)',
-        description='Controls a pool of Makeflow processes', version='1.1.0')
+        description='Controls a pool of Makeflow processes')
 
     # Keep logs, makeflows, data, log dir
     parser.add_argument(
@@ -493,7 +493,7 @@ if __name__ == "__main__":
     mf_daemon = MattDaemon(
         MATT_DAEMON_PID_FILE,
         log=LmServerLogger("mattDaemon", addConsole=True, addFile=True))
-    
+
     # Set debugging
     mf_daemon.set_debug(
         args.debug_log, args.debug_makeflows, args.debug_outputs, args.log_dir)
@@ -509,4 +509,8 @@ if __name__ == "__main__":
     else:
         print(('Unknown command: {}'.format(args.cmd.lower())))
         sys.exit(2)
-    
+
+
+# .............................................................................
+if __name__ == "__main__":
+    main()

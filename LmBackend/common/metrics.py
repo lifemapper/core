@@ -4,16 +4,19 @@ Todo:
     * Consider adding constants for collected metric names
     * Make file name optional or only used in write method
 """
+from enum import Enum
 import json
 import os
 
 from LmBackend.common.lmobj import LMObject
 
+
 # .............................................................................
-class LmMetricNames(object):
-    """
-    @summary: Class containing standard metric names
-    @note: Other metric names can be used, but these are common metrics
+class LmMetricNames(Enum):
+    """Class containing standard metric names
+
+    Note:
+        Other metric names can be used, but these are common metrics
     """
     ALGORITHM_CODE = 'algorithm_code'
     NUMBER_OF_FEATURES = 'num_features'
@@ -23,10 +26,10 @@ class LmMetricNames(object):
     SOFTWARE_VERSION = 'software_version'
     STATUS = 'status'
 
+
 # .............................................................................
 class LmMetrics(LMObject):
-    """
-    @summary: This class is used to track performance metrics
+    """This class is used to track performance metrics.
     """
     # ................................
     def __init__(self, out_file):
@@ -39,9 +42,9 @@ class LmMetrics(LMObject):
             This allows you to always collect metrics and only conditionally
                 write them.
         """
-        self.out_file = out_file
+        self.out_file_name = out_file
         self._metrics = {}
-    
+
     # ................................
     def add_metric(self, name, value):
         """Add a metric to track
@@ -51,7 +54,7 @@ class LmMetrics(LMObject):
             value : The value of the metric
         """
         self._metrics[name] = value
-    
+
     # ................................
     def get_metric(self, name):
         """Gets the value of a metric if available.
@@ -64,14 +67,15 @@ class LmMetrics(LMObject):
         """
         if name in self._metrics.keys():
             return self._metrics[name]
-        else:
-            return None
+
+        return None
 
     # ................................
     def get_dir_size(self, dir_name):
         """Get the size of a directory
-        
-        Get the size of a directory, presumably for determining output footprint
+
+        Get the size of a directory, presumably for determining output
+        footprint.
 
         Args:
             dir_name : The directory to determine the size of
@@ -84,19 +88,18 @@ class LmMetrics(LMObject):
             elif os.path.isdir(itempath):
                 total_size += self.get_dir_size(itempath)
         return total_size
-    
+
     # ................................
     def get_metrics_dictionary(self):
         """Return a dictionary of metrics.
         """
         return self._metrics
-    
+
     # ................................
     def write_metrics(self):
         """Write the metrics to the specified file
         """
-        if self.out_file is not None:
-            self.readyFilename(self.out_file, overwrite=True)
-            with open(self.out_file, 'w') as outF:
-                json.dump(self._metrics, outF)
-            
+        if self.out_file_name is not None:
+            self.readyFilename(self.out_file_name, overwrite=True)
+            with open(self.out_file_name, 'w') as out_file:
+                json.dump(self._metrics, out_file)

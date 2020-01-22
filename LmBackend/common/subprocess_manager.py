@@ -11,13 +11,14 @@ from LmCommon.common.lm_xml import serialize, tostring
 
 CONCURRENT_PROCESSES = max(1, multiprocessing.cpu_count() - 2)
 WAIT_TIME = 10
-MAX_RUN_TIME = 60 * 60 * 24 # 24 hours
+MAX_RUN_TIME = 60 * 60 * 24  # 24 hours
+
 
 # .............................................................................
 class LongRunningProcessError(Exception):
     """Exception indicating that the process took too long to run
     """
-    pass
+
 
 # .............................................................................
 def pid_exists(pid):
@@ -40,24 +41,25 @@ def pid_exists(pid):
         if err.errno == errno.ESRCH:
             # ESRCH == No such process
             return False
-        elif err.errno == errno.EPERM:
+        if err.errno == errno.EPERM:
             # EPERM clearly means there's a process to deny access to
             return True
-        else:
-            # According to "man 2 kill" possible error values are
-            # (EINVAL, EPERM, ESRCH)
-            raise
+
+        # According to "man 2 kill" possible error values are
+        # (EINVAL, EPERM, ESRCH)
+        raise
     else:
         return True
 
+
 # .............................................................................
-class VariableContainer(object):
+class VariableContainer:
     """Creates a container for variables to be passed to a subprocess
     """
     # .............................
     def __init__(self, values):
         self.values = values
-    
+
     # .............................
     def __str__(self):
         return tostring(serialize(self))
@@ -66,89 +68,95 @@ class VariableContainer(object):
     def __unicode__(self):
         return tostring(serialize(self))
 
+
 # .............................................................................
-class SubprocessManager(object):
+class SubprocessManager:
     """This class manages subprocesses
+
+    Todo:
+        Determine if this is still used.
     """
     # .............................
-    def __init__(self, commandList=[], maxConcurrent=CONCURRENT_PROCESSES):
+    def __init__(self, command_list=None, max_concurrent=CONCURRENT_PROCESSES):
         """
         Args:
-            * commandList: A list of commands to run as subprocesses
-            * maxConcurrent: (optional) The maximum number of subprocesses to 
-                run concurrently
+            command_list: A list of commands to run as subprocesses
+            max_concurrent: (optional) The maximum number of subprocesses to
+                run concurrently.
         """
-        self.procs = commandList
-        self.maxConcurrent = maxConcurrent
-        self._runningProcs = []
-    
+        self.procs = [] if command_list is None else command_list
+        self.max_concurrent = max_concurrent
+        self._running_procs = []
+
     # .............................
-    def addProcessCommands(self, commandList):
-        """Adds a list of commands to the list to run 
+    def add_process_commands(self, command_list):
+        """Adds a list of commands to the list to run.
         """
-        self.procs.extend(commandList)
-    
+        self.procs.extend(command_list)
+
     # .............................
-    def runProcesses(self):
+    def run_processes(self):
         """Runs the processes in self.procs
         """
         while len(self.procs) > 0:
-            numRunning = self.getNumberOfRunningProcesses()
-            num = min((self.maxConcurrent - numRunning), len(self.procs))
-            
+            num_running = self.get_running_proc_count()
+            num = min((self.max_concurrent - num_running), len(self.procs))
+
             while num > 0:
                 proc = self.procs.pop(0)
-                self.launchProcess(proc)
+                self.launch_process(proc)
                 num = num - 1
-            
+
             self.wait()
-        
-        while self.getNumberOfRunningProcesses() > 0:
+
+        while self.get_running_proc_count() > 0:
             self.wait()
-        
+
     # .............................
-    def wait(self, waitSeconds=WAIT_TIME):
+    @staticmethod
+    def wait(wait_seconds=WAIT_TIME):
         """Waits the specified amount of time
         """
-        sleep(waitSeconds)
-    
+        sleep(wait_seconds)
+
     # .............................
-    def launchProcess(self, cmd):
+    def launch_process(self, cmd):
         """Launches a subprocess for the command provided
         """
-        self._runningProcs.append(Popen(cmd, shell=True))
-    
+        self._running_procs.append(Popen(cmd, shell=True))
+
     # .............................
-    def getNumberOfRunningProcesses(self):
+    def get_running_proc_count(self):
         """Returns the number of running processes
         """
-        numRunning = 0
-        for idx in range(len(self._runningProcs)):
-            if self._runningProcs[idx].poll() is None:
-                numRunning = numRunning +1
+        num_running = 0
+        for idx in range(len(self._running_procs)):
+            if self._running_procs[idx].poll() is None:
+                num_running = num_running + 1
             else:
-                self._runningProcs[idx] = None
-        self._runningProcs = [_f for _f in self._runningProcs if _f]
-        return numRunning
+                self._running_procs[idx] = None
+        self._running_procs = [_f for _f in self._running_procs if _f]
+        return num_running
+
 
 # .............................................................................
-class SubprocessRunner(object):
+class SubprocessRunner:
     """This class manages a subprocess
     """
     # .............................
-    def __init__(self, cmd, waitSeconds=WAIT_TIME, killTime=MAX_RUN_TIME):
+    def __init__(self, cmd, wait_seconds=WAIT_TIME, kill_time=MAX_RUN_TIME):
         """Constructor for single command runner
 
         Args:
-            * cmd: The command to run
-            * waitSeconds: The number of seconds to wait between polls
-            * killTime: The number of seconds to wait before killing the process
+            cmd: The command to run
+            wait_seconds: The number of seconds to wait between polls
+            kill_time: The number of seconds to wait before killing the process
         """
         self.cmd = cmd
-        self.waitTime = waitSeconds
-        self.killTime = killTime
-        self.myProc = None
-    
+        self.wait_time = wait_seconds
+        self.kill_time = kill_time
+        self.my_proc = None
+
     # .............................
     def run(self):
         """Run the command
@@ -156,41 +164,41 @@ class SubprocessRunner(object):
         Returns:
             exit status code, standard error
         """
-        stdErr = None
-        self.myProc = Popen(
+        std_err = None
+        self.my_proc = Popen(
             self.cmd, shell=True, stderr=PIPE, preexec_fn=os.setsid)
-        pid = self.myProc.pid
+        pid = self.my_proc.pid
         self._wait()
-        runTime = 0
-        while self.myProc.poll() is None and \
-                runTime < self.killTime and pid_exists(pid):
+        run_time = 0
+        while self.my_proc.poll() is None and \
+                run_time < self.kill_time and pid_exists(pid):
             self._wait()
             # Get std err.  This bumps process in case of immediate fail of
             #    Maxent
-            _ = self.myProc.stderr.read()
-            runTime += self.waitTime
-            
-        if runTime >= self.killTime:
+            _ = self.my_proc.stderr.read()
+            run_time += self.wait_time
+
+        if run_time >= self.kill_time:
             self.signal(signal.SIGTERM)
             raise LongRunningProcessError(
                 'Process took too long to run (> {} seconds)'.format(
-                    self.killTime))
-            
+                    self.kill_time))
+
         # Get output
-        exitCode = self.myProc.poll()
-        if self.myProc.stderr is not None:
-            stdErr = self.myProc.stderr.read()
-        return exitCode, stdErr
-    
+        exit_code = self.my_proc.poll()
+        if self.my_proc.stderr is not None:
+            std_err = self.my_proc.stderr.read()
+        return exit_code, std_err
+
     # .............................
     def signal(self, signum):
         """Signal the running process
         """
-        if self.myProc is not None:
-            os.killpg(os.getpgid(self.myProc.pid), signum)
-                
+        if self.my_proc is not None:
+            os.killpg(os.getpgid(self.my_proc.pid), signum)
+
     # .............................
     def _wait(self):
         """Sleeps the specified amount of time
         """
-        sleep(self.waitTime)
+        sleep(self.wait_time)

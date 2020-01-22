@@ -16,6 +16,7 @@ import time
 MJD_EPOCH_TIME = datetime.datetime(1858, 11, 17, 0, 0, 0, 0)
 SECONDS_IN_DAY = 86400
 
+
 # .............................................................................
 class LmTime:
     """Subclass for time for Lifemapper purposes
@@ -102,11 +103,13 @@ class LmTime:
         """
         return self._time.tm_year
 
+
 # .............................................................................
 def from_timestamp(ticks):
     """Return an LmTime object from timestamp ticks
     """
     return LmTime(dtime=datetime.datetime.fromtimestamp(ticks))
+
 
 # .............................................................................
 def gmt():
@@ -114,11 +117,13 @@ def gmt():
     """
     return LmTime(dtime=time.gmtime())
 
+
 # .............................................................................
 def localtime():
     """Return a LmTime object for time.localtime.
     """
     return LmTime(dtime=time.localtime())
+
 
 # .............................................................................
 def time_delta_from_mjd(mjd_value):

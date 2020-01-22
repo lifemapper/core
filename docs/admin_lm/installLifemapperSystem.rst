@@ -20,7 +20,7 @@ Current versions
 
 #. **Stop the mattDaemon** as lmwriter::
 
-     lmwriter$ $PYTHON /opt/lifemapper/LmServer/tools/mattDaemon.py stop
+     lmwriter$ $PYTHON /opt/lifemapper/LmServer/tools/matt_daemon.py stop
 
 #. **Caution** If want to **completely destroy** existing install, including
    deleting the database and clearing lm data from filesystem, run::

@@ -12,24 +12,24 @@ from LmCommon.common.lmconstants import LMFormat
 class BoomerCommand(_LmCommand):
     """This command will run the boomer
     """
-    relDir = BOOM_SCRIPTS_DIR
-    scriptName = 'boomer.py'
+    relative_directory = BOOM_SCRIPTS_DIR
+    script_name = 'boomer.py'
 
     # ................................
-    def __init__(self, configFile, successFile):
+    def __init__(self, config_file_name, success_file_name):
         """Constructs the command object
 
         Args:
-            configFile (str) : The file path to a BOOM config file.
-            successFile (str) : The relative file path f
-        @param configFile: Configuration file for the boom run
+            config_file_name (str) : The file path to a BOOM config file.
+            success_file_name (str) : The relative file path f
+        @param config_file_name: Configuration file for the boom run
         """
         _LmCommand.__init__(self)
-        if configFile is not None and successFile is not None:
-            self.inputs.append(configFile)
-            self.outputs.append(successFile)
-            self.opt_args += ' --config_file={}'.format(configFile)
-            self.opt_args += ' --success_file={}'.format(successFile)
+        if config_file_name is not None and success_file_name is not None:
+            self.inputs.append(config_file_name)
+            self.outputs.append(success_file_name)
+            self.opt_args += ' --config_file={}'.format(config_file_name)
+            self.opt_args += ' --success_file={}'.format(success_file_name)
 
 
 # .............................................................................
@@ -43,8 +43,8 @@ class CatalogBoomCommand(_LmCommand):
         * create an archive ini file, and
         * start the Boomer to walk through inputs
     """
-    relDir = BOOM_SCRIPTS_DIR
-    scriptName = 'initWorkflow.py'
+    relative_directory = BOOM_SCRIPTS_DIR
+    script_name = 'initWorkflow.py'
 
     # ................................
     def __init__(self, config_filename, init_makeflow=False):
@@ -59,16 +59,15 @@ class CatalogBoomCommand(_LmCommand):
         if not os.path.exists(config_filename):
             raise Exception(
                 'Missing Boom configuration file {}'.format(config_filename))
-        else:
-            boomBasename, _ = os.path.splitext(
-                os.path.basename(config_filename))
-            # Logfile goes to LOG_DIR
-            secs = time.time()
-            timestamp = "{}".format(
-                time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-            logname = '{}.{}.{}'.format(
-                self.script_basename, boomBasename, timestamp)
-            logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
+
+        boom_base_name, _ = os.path.splitext(os.path.basename(config_filename))
+        # Logfile goes to LOG_DIR
+        secs = time.time()
+        timestamp = '{}'.format(
+            time.strftime('%Y%m%d-%H%M', time.localtime(secs)))
+        logname = '{}.{}.{}'.format(
+            self.script_basename, boom_base_name, timestamp)
+        logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
 
         # Script args
         self.args = config_filename

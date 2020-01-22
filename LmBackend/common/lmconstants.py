@@ -1,5 +1,7 @@
 """Lifemapper backend constants module
 """
+from enum import Enum
+
 # Relative paths
 # For LmCompute command construction by LmServer (for Makeflow)
 SINGLE_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/single'
@@ -10,19 +12,21 @@ BOOM_SCRIPTS_DIR = 'LmDbServer/boom'
 SERVER_SCRIPTS_DIR = 'LmServer/tools'
 DB_SERVER_SCRIPTS_DIR = 'LmDbServer/tools'
 
-# This is just for the command objects.  There is probably a better way 
+# This is just for the command objects.  There is probably a better way
 CMD_PYBIN = '$PYTHON'
+
 
 # Constants for configuration and processing of single species processes
 # .............................................................................
-class MaskMethod(object):
+class MaskMethod(Enum):
     """Constants for SDM masking methods
     """
     HULL_REGION_INTERSECT = 'hull_region_intersect'
     BLANK_MASK = 'blank_mask'
 
+
 # .............................................................................
-class RegistryKey(object):
+class RegistryKey(Enum):
     """Constants for dictionary keys used when processing single species SDMs
     """
     ALGORITHM_CODE = 'algorithm_code'
@@ -37,7 +41,7 @@ class RegistryKey(object):
     SNIPPETS = 'snippets'
     STATUS = 'status'
     VALUE = 'value'
-    
+
     # TODO: Should these be somewhere else?  Used for config, not SDM process
     OCCURRENCE_SET_ID = 'occ_set_id'
     OCCURRENCE_SET_PATH = 'occ_set_path'
@@ -58,7 +62,7 @@ class RegistryKey(object):
     PROJECTION_PATH = 'projection_path'
     PAV_FILENAME = 'pav_path'
     COMPRESSED_PAV_DATA = 'compressed_data'
-    
+
     # ..................
     # Types
     # ..................
@@ -68,7 +72,7 @@ class RegistryKey(object):
     OCCURRENCE = 'occurrence'
     PAV = 'pav'
     PROJECTION = 'projection'
-    
+
     # ........................................
     @staticmethod
     def group_keys():
@@ -76,4 +80,3 @@ class RegistryKey(object):
         """
         return [RegistryKey.MASK, RegistryKey.MODEL, RegistryKey.OCCURRENCE,
                 RegistryKey.PAV, RegistryKey.PROJECTION]
-

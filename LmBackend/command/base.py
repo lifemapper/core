@@ -20,8 +20,8 @@ class _LmCommand:
             all commands can add to the input / output attributes with
             potentially unforeseen values
     """
-    relDir = None
-    scriptName = None
+    relative_directory = None
+    script_name = None
 
     # ................................
     def __init__(self):
@@ -72,15 +72,16 @@ class _LmCommand:
     def get_script(self):
         """Gets the path to the script to run
         """
-        return os.path.join(APP_PATH, self.relDir, self.scriptName)
+        return os.path.join(
+            APP_PATH, self.relative_directory, self.script_name)
 
     # ................................
     @property
     def script_basename(self):
         """Script basename property
         """
-        scriptbase, _ = os.path.splitext(self.scriptName)
-        return scriptbase
+        script_base, _ = os.path.splitext(self.script_name)
+        return script_base
 
     # ................................
     def Popen(self, **kwargs):
@@ -100,8 +101,8 @@ class LmWrapperCommand(_LmCommand):
     Todo:
         * Make this a base class that we can inherit from
     """
-    relDir = BACKEND_SCRIPTS_DIR
-    scriptName = 'lm_wrapper.py'
+    relative_directory = BACKEND_SCRIPTS_DIR
+    script_name = 'lm_wrapper.py'
 
     # ................................
     def __init__(self, wrap_command, inputs, outputs, required_inputs):
@@ -110,8 +111,8 @@ class LmWrapperCommand(_LmCommand):
         _LmCommand.__init__(self)
 
         opt_args = ''
-        for fn in required_inputs:
-            opt_args += '-i {} '.format(fn)
+        for file_name in required_inputs:
+            opt_args += '-i {} '.format(file_name)
         self.args = '{}"{}" {}'.format(
             opt_args, wrap_command, ' '.join(outputs))
         self.outputs = outputs
