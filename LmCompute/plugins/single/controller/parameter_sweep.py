@@ -25,7 +25,7 @@ from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmCommon.common.readyfile import readyFilename
-from LmCommon.compression.binaryList import compress
+from LmCommon.compression.binary_list import compress
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
 from LmCompute.common.log import LmComputeLogger

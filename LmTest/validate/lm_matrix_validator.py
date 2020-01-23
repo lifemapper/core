@@ -6,7 +6,7 @@ Todo:
 """
 import os
 
-from LmCommon.common.matrix import Matrix
+from lmpy import Matrix
 
 # .............................................................................
 def validate_lm_matrix_file(lmmatrix_filename):
@@ -19,7 +19,7 @@ def validate_lm_matrix_file(lmmatrix_filename):
     valid = False
     if os.path.exists(lmmatrix_filename):
         try:
-            mtx = Matrix.load(lmmatrix_filename)
+            mtx = Matrix.load_flo(lmmatrix_filename)
             valid = True
         except Exception as e:
             msg = str(e)

@@ -11,12 +11,13 @@ Todo:
     * Cite paper
 """
 from random import random, choice, randint, shuffle
-import numpy as np
 import time
 
-from LmCommon.common.matrix import Matrix
+from lmpy import Matrix
+import numpy as np
 
-SEARCH_THRESHOLD = 100000 # Number of times to look for a match when fixing problems
+# Number of times to look for a match when fixing problems
+SEARCH_THRESHOLD = 100000
 
 # .............................................................................
 def randPresAbs(threshold):
@@ -73,7 +74,7 @@ def gradyRandomize(mtx):
     Args:
         mtx: A Matrix object representation of a PAM
     """
-    mtxData = mtx.data
+    mtxData = mtx
     mtxHeaders = mtx.getHeaders()
     
     # Step 1: Get the marginal totals of the matrix
@@ -83,8 +84,8 @@ def gradyRandomize(mtx):
     colTots = np.sum(mtxData, axis=0)
     nRows, nCols = mtxData.shape
     
-    valid_rows = np.sum(mtx.data, axis=1) != 0 
-    valid_cols = np.sum(mtx.data, axis=0) != 0
+    valid_rows = np.sum(mtx, axis=1) != 0 
+    valid_cols = np.sum(mtx, axis=0) != 0
 
     
     #initialTotal = np.sum(rowTots)

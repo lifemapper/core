@@ -8,13 +8,13 @@ Todo:
 
 import os
 
+from lmpy import Matrix
 import numpy as np
 from osgeo import ogr
 
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
                                                       ProcessType)
-from LmCommon.common.matrix import Matrix
-from LmCommon.compression.binaryList import decompress
+from LmCommon.compression.binary_list import decompress
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmCommon.common.time import gmt
 from LmServer.base.serviceobject2 import ServiceObject
@@ -283,7 +283,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
             scribe.updateObject(insertedGrim)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
-            grimMtx = Matrix.load(grim.getDLocation())
+            grimMtx = Matrix.load_flo(grim.getDLocation())
             
             # If we need to spatially subset, slice the matrix
             if method == SubsetMethod.SPATIAL:
@@ -306,7 +306,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
             scribe.updateObject(insertedBG)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
-            bgMtx = Matrix.load(bg.getDLocation())
+            bgMtx = Matrix.load_flo(bg.getDLocation())
             
             # If we need to spatially subset, slice the matrix
             if method == SubsetMethod.SPATIAL:
@@ -554,7 +554,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
             enc_mtx = encoder.get_encoded_matrix()
             # Write matrix
             # TODO(CJ): Evaluate if this is how we want to do it
-            insertedBG.data = enc_mtx.data
+            insertedBG = enc_mtx
             insertedBG.setHeaders(enc_mtx.getHeaders())
             insertedBG.write(overwrite=True)
             insertedBG.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)

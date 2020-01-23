@@ -10,9 +10,10 @@ import json
 import os
 import zipfile
 
+from lmpy import Matrix
+
 from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmCommon.common.lm_xml import tostring
-from LmCommon.common.matrix import Matrix
 
 from LmServer.common.lmconstants import TEMP_PATH
 from LmServer.common.log import ConsoleLogger
@@ -97,7 +98,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, userId):
          print(('Matrix: ({} of {}) {}'.format(i, len(matrices), 
                                               mtx.getDLocation())))
          print(' - Loading matrix')
-         mtxObj = Matrix.load(mtx.getDLocation())
+         mtxObj = Matrix.load_flo(mtx.getDLocation())
          print(' - Loaded')
 
          # Need to get geojson where we can

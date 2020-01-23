@@ -7,9 +7,9 @@ Todo:
         PAM stats and MCPA
 """
 import argparse
+from lmpy import Matrix
 import numpy as np
 
-from LmCommon.common.matrix import Matrix
 from LmCompute.plugins.multi.mcpa.mcpa import mcpa, mcpa_parallel
 
 # .............................................................................
@@ -52,10 +52,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Load the matrices
-    incidence_matrix = Matrix.load(args.incidence_matrix_filename)
-    phylo_matrix = Matrix.load(args.phylo_encoding_filename)
-    env_pred_matrix = Matrix.load(args.env_predictors_filename)
-    bg_pred_matrix = Matrix.load(args.biogeo_predictors_filename)
+    incidence_matrix = Matrix.load_flo(args.incidence_matrix_filename)
+    phylo_matrix = Matrix.load_flo(args.phylo_encoding_filename)
+    env_pred_matrix = Matrix.load_flo(args.env_predictors_filename)
+    bg_pred_matrix = Matrix.load_flo(args.biogeo_predictors_filename)
 
     if args.parallel:
         mcpa_method = mcpa_parallel
@@ -81,18 +81,18 @@ if __name__ == "__main__":
 
         # Create an array of indices.  This will be used to reorder the
         #    predictor matrices.
-        index_order = np.arange(env_pred_matrix.data.shape[0])
-        phylo_order = np.arange(phylo_matrix.data.shape[1])
+        index_order = np.arange(env_pred_matrix.shape[0])
+        phylo_order = np.arange(phylo_matrix.shape[1])
         for i in range(num_permutations):
             # Note: Keep the predictor matrices in sync by using the same row
             #    order for both.
             np.random.shuffle(index_order)
-            env_pred_matrix.data = env_pred_matrix.data[index_order]
-            bg_pred_matrix.data = bg_pred_matrix.data[index_order]
+            env_pred_matrix = env_pred_matrix[index_order]
+            bg_pred_matrix = bg_pred_matrix[index_order]
             
             # Shuffle phylo matrix columns
             np.random.shuffle(phylo_order)
-            phylo_matrix.data = phylo_matrix.data[:, phylo_order]
+            phylo_matrix = phylo_matrix[:, phylo_order]
 
             _, f_matrix = mcpa_method(incidence_matrix, phylo_matrix,
                                         env_pred_matrix, bg_pred_matrix)

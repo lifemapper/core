@@ -12,7 +12,7 @@ from LmCommon.common.attribute_object import LmAttObj
 from LmCommon.common.lmconstants import (GEOTIFF_INTERFACE, 
                                 SHAPEFILE_INTERFACE, OFTInteger, OFTString)
 from LmCommon.common.time import gmt
-from LmCommon.common.verify import computeHash, verifyHash
+from LmCommon.common.verify import compute_hash, verify_hash
 
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
@@ -206,11 +206,11 @@ class _Layer(LMSpatialObject, ServiceObject):
         @return: hash string for data file
         """
         if content is not None:
-            value = computeHash(content=content)
+            value = compute_hash(content=content)
         else:
             if dlocation is None:
                 dlocation = self._dlocation
-            value = computeHash(dlocation=dlocation)
+            value = compute_hash(dlocation=dlocation)
  
         return value
  
@@ -221,11 +221,11 @@ class _Layer(LMSpatialObject, ServiceObject):
         @param hash: hash string to compare with data
         """
         if content is not None:
-            verified = verifyHash(hashval, content=content)
+            verified = verify_hash(hashval, content=content)
         else:
             if dlocation is None:
                 dlocation = self._dlocation
-            verified = verifyHash(hashval, dlocation=dlocation)
+            verified = verify_hash(hashval, dlocation=dlocation)
         return verified
      
 # ...............................................

@@ -2,31 +2,30 @@
 """
 import os
 
+from lmpy import TreeWrapper
+
 from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import JSON_INTERFACE, DEFAULT_TREE_SCHEMA
-from LmCommon.trees.lmTree import LmTree
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import LMServiceType, LMFileType
-   
+
 # .........................................................................
-class Tree(LmTree, ServiceObject):
-    """       
-    Class to hold Tree data  
+class Tree(TreeWrapper, ServiceObject):
+    """Class to hold Tree data
     """
     # .............................................................................
     # Constructor
     # .............................................................................
-    def __init__(self, name, metadata={}, dlocation=None, data=None, 
+    def __init__(self, name, metadata={}, dlocation=None, data=None,
                  schema=DEFAULT_TREE_SCHEMA,
                  metadataUrl=None, userId=None, gridsetId=None, treeId=None, 
                  modTime=None):
-        """
-        @summary Constructor for the Tree class.  
-        @copydoc LmCommon.trees.lmTree.LmTree::fromFile()
-        @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
-        @param name: The user-provided name of this tree
-        @param dlocation: file of data for LmTree base object
-        @param treeId: dbId  for ServiceObject
+        """Constructor for the tree class.
+
+        Args:
+            name: The user-provided name of this tree
+            dlocation: file of data for TreeWrapper base object
+            treeId: dbId  for ServiceObject
         """
         ServiceObject.__init__(self, userId, treeId, LMServiceType.TREES, 
                                metadataUrl=metadataUrl, parentId=gridsetId, 
@@ -35,18 +34,18 @@ class Tree(LmTree, ServiceObject):
         self._dlocation = dlocation
         self.treeMetadata = {}
         self.loadTreeMetadata(metadata)
-           
+
         # Read tree if available
         if dlocation is None:
             dlocation = self.getDLocation()
-           
+
+        # TODO (CJG): Make sure that this will load the tree appropriately
         if data is not None:
-            LmTree.__init__(self, data=data, schema=schema)
+            self.get(data=data, schema=schema)
         elif dlocation is not None:
             if os.path.exists(dlocation):
-                LmTree.__init__(self, filename=dlocation, schema=schema)
-            
-      
+                self.from_filename(dlocation)
+
     # ..............................
     def read(self, dlocation=None, schema=DEFAULT_TREE_SCHEMA):
         """
@@ -54,9 +53,8 @@ class Tree(LmTree, ServiceObject):
         """
         if dlocation is None:
             dlocation = self.getDLocation()
-        
-        LmTree.__init__(self, filename=dlocation, schema=schema)
-   
+        self.get(path=dlocation, schema=schema)
+
     # ..............................
     def setTree(self, tree):
         """
@@ -65,7 +63,7 @@ class Tree(LmTree, ServiceObject):
                      method other than reading a file directly
         @param tree: An instance of dendropy 
         """
-        LmTree.__init__(self, tree=tree)
+        raise Exception('CJ - Implement this correctly')
       
     # ..............................
     def writeTree(self):
@@ -73,7 +71,7 @@ class Tree(LmTree, ServiceObject):
         @summary: Writes the tree JSON to disk
         """
         dloc = self.getDLocation()
-        LmTree.writeTree(self, dloc)
+        self.write(path=dloc, schema=DEFAULT_TREE_SCHEMA)
 
     # ...............................................
     def getRelativeDLocation(self):

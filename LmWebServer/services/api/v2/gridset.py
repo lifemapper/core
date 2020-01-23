@@ -8,11 +8,11 @@ import zipfile
 
 import cherrypy
 import dendropy
+from lmpy import Matrix
 
 from LmCommon.common.lmconstants import (DEFAULT_TREE_SCHEMA, HTTPStatus, 
                                          JobStatus, LMFormat, MatrixType, 
                                          ProcessType)
-from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmCommon.common.time import gmt
 
@@ -219,7 +219,7 @@ class GridsetBioGeoService(LmService):
                 insertedBG.updateStatus(JobStatus.COMPLETE)
                 self.scribe.updateObject(insertedBG)
                 # Save the original grim data into the new location
-                bgMtx = Matrix.load(bg.getDLocation())
+                bgMtx = Matrix.load_flo(bg.getDLocation())
                 with open(insertedBG.getDLocation(), 'w') as outF:
                     bgMtx.save(outF)
                 ret.append(insertedBG)

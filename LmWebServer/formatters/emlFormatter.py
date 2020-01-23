@@ -1,10 +1,11 @@
 """Module functions for converting object to EML
 """
-import cherrypy
 import os
 
+import cherrypy
+from lmpy import Matrix
+
 from LmCommon.common.lmconstants import LMFormat, MatrixType
-from LmCommon.common.matrix import Matrix
 from LmCommon.common.lm_xml import Element, SubElement, tostring
 
 from LmServer.legion.gridset import Gridset
@@ -34,8 +35,8 @@ def _create_data_table_section(data_table):
         value='Lifemapper Matrix Json')
     
     alEl = SubElement(dt_el, 'attributeList')
-    mtx = Matrix.load(data_table.getDLocation())
-    for colHeader in mtx.getColumnHeaders():
+    mtx = Matrix.load_flo(data_table.getDLocation())
+    for colHeader in mtx.get_column_headers():
         SubElement(alEl, 'attribute', value=colHeader)
     return dt_el
 
@@ -106,7 +107,7 @@ def _create_spatial_vector(spatial_vector):
     
     attrib_list_element = SubElement(sv_element, 'attributeList')
     if isinstance(spatial_vector, Matrix):
-        mtx = Matrix.load(spatial_vector.getDLocation())
+        mtx = Matrix.load_flo(spatial_vector.getDLocation())
         for colHeader in mtx.getColumnHeaders():
             SubElement(attrib_list_element, 'attribute', value=colHeader)
         SubElement(sv_element, 'geometry', value='polygon')

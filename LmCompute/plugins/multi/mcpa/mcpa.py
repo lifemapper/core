@@ -7,10 +7,10 @@ See:
 """
 from concurrent.futures import ThreadPoolExecutor as ExecutorClass
 from functools import partial
-import numpy as np
 import threading
 
-from LmCommon.common.matrix import Matrix
+from lmpy import Matrix
+import numpy as np
 
 # Note: This lock is used when calculating beta to keep memory usage down
 lock = threading.Lock()
@@ -337,7 +337,7 @@ def get_p_values(observed_value, test_values, num_permutations=None):
         num_permutations = 1.0
 
     # Create the P-Values matrix
-    p_vals = np.zeros(observed_value.data.shape, dtype=float)
+    p_vals = np.zeros(observed_value.shape, dtype=float)
     # For each matrix in test values
     for test_mtx in test_values:
         # Add 1 where every value in the test matrix is greater than or equal
@@ -346,13 +346,13 @@ def get_p_values(observed_value, test_values, num_permutations=None):
         #    p_vals matrix will be treated as 1 for True and 0 for False
 
         # If this is a stack
-        if test_mtx.data.ndim == 3:
-            for i in range(test_mtx.data.shape[2]):
-                p_vals += np.abs(np.round(test_mtx.data[:,:,[i]], 5)
-                                 ) >= np.abs(np.round(observed_value.data, 5))
+        if test_mtx.ndim == 3:
+            for i in range(test_mtx.shape[2]):
+                p_vals += np.abs(np.round(test_mtx[:,:,[i]], 5)
+                                 ) >= np.abs(np.round(observed_value, 5))
         else:
-            p_vals += np.abs(np.round(test_mtx.data, 5)
-                             ) >= np.abs(np.round(observed_value.data, 5))
+            p_vals += np.abs(np.round(test_mtx, 5)
+                             ) >= np.abs(np.round(observed_value, 5))
     # Reshape and adding depth header
     if len(p_vals.shape) == 2:
         p_vals = np.expand_dims(p_vals, axis=2)
@@ -386,15 +386,15 @@ def mcpa(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
         * A Matrix object representing the F-pseudo values from the
             calculation.
     """
-    site_present = np.any(incidence_matrix.data, axis=1)
+    site_present = np.any(incidence_matrix, axis=1)
     empty_sites = np.where(site_present == False)[0]
     
     # Initial purge of empty sites
-    init_incidence = np.delete(incidence_matrix.data, empty_sites, axis=0)
-    env_predictors = np.delete(env_mtx.data, empty_sites, axis=0)
-    bg_predictors = np.delete(bg_mtx.data, empty_sites, axis=0)
+    init_incidence = np.delete(incidence_matrix, empty_sites, axis=0)
+    env_predictors = np.delete(env_mtx, empty_sites, axis=0)
+    bg_predictors = np.delete(bg_mtx, empty_sites, axis=0)
     
-    num_nodes = phylo_mtx.data.shape[1]
+    num_nodes = phylo_mtx.shape[1]
     num_predictors = env_predictors.shape[1] + bg_predictors.shape[1]
     
     obs_results = np.empty((num_nodes, num_predictors + 2))
@@ -403,7 +403,7 @@ def mcpa(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
         #print('Node {} of {}'.format(i+1, num_nodes))
         obs, f_vals = _mcpa_for_node(
             init_incidence, env_predictors, bg_predictors,
-            phylo_mtx.data[:, [i]])
+            phylo_mtx[:, [i]])
         obs_results[i] = obs
         f_results[i] = f_vals
 
@@ -459,15 +459,15 @@ def mcpa_parallel(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
         * A Matrix object representing the F-pseudo values from the
             calculation.
     """
-    site_present = np.any(incidence_matrix.data, axis=1)
+    site_present = np.any(incidence_matrix, axis=1)
     empty_sites = np.where(site_present == False)[0]
     
     # Initial purge of empty sites
-    init_incidence = np.delete(incidence_matrix.data, empty_sites, axis=0)
-    env_predictors = np.delete(env_mtx.data, empty_sites, axis=0)
-    bg_predictors = np.delete(bg_mtx.data, empty_sites, axis=0)
+    init_incidence = np.delete(incidence_matrix, empty_sites, axis=0)
+    env_predictors = np.delete(env_mtx, empty_sites, axis=0)
+    bg_predictors = np.delete(bg_mtx, empty_sites, axis=0)
     
-    num_nodes = phylo_mtx.data.shape[1]
+    num_nodes = phylo_mtx.shape[1]
     num_predictors = env_predictors.shape[1] + bg_predictors.shape[1]
     
     obs_results = np.empty((num_nodes, num_predictors + 2))
@@ -482,7 +482,7 @@ def mcpa_parallel(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
     #    module for more information about executor class and concurrency
     with ExecutorClass(CONCURRENCY_FACTOR) as executor:
         r = executor.map(
-            func, [phylo_mtx.data[:, [i]] for i in range(num_nodes)])
+            func, [phylo_mtx[:, [i]] for i in range(num_nodes)])
         i = 0
         for obs, f in r:
             obs_results[i] = obs

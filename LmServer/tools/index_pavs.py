@@ -11,7 +11,7 @@ from LmServer.common.log import ConsoleLogger
 from LmServer.common.solr import buildSolrDocument, postSolrDocument
 from LmServer.db.borgscribe import BorgScribe
 from LmBackend.common.lmconstants import RegistryKey
-from LmCommon.compression.binaryList import decompress
+from LmCommon.compression.binary_list import decompress
 from LmCommon.common.time import LmTime
 
 # .............................................................................

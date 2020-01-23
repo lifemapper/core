@@ -6,7 +6,7 @@ from types import IntType
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (LMFormat, JobStatus, ProcessType)
-from LmCommon.shapes.buildShapegrid import buildShapegrid
+from LmCommon.shapes.build_shapegrid import build_shapegrid
 from LmCommon.common.time import gmt
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
@@ -46,7 +46,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
         @param size: Total number of cells in shapegrid
         """
         # siteIndices are a dictionary of {siteIndex: (FID, centerX, centerY)}
-        # created from the data file and passed to LmCommon.common.Matrix for headers
+        # created from the data file and passed to lmpy.Matrix for headers
         self._siteIndices = None
         # field with unique values identifying each site
         self.siteId = siteId
@@ -248,7 +248,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             self._setCellMeasurements()
             return 
         self.readyFilename(self._dlocation, overwrite=overwrite)
-        cellCount = buildShapegrid(
+        cellCount = build_shapegrid(
             self._dlocation, self.minX, self.minY, self.maxX, self.maxY,
             self.cellsize, self.epsgcode, self._cellsides, siteId=self.siteId,
             siteX=self.siteX, siteY=self.siteY, cutoutWKT=cutout)

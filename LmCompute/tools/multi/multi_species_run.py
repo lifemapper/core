@@ -10,12 +10,11 @@ Todo:
 """
 import argparse
 
-from LmCommon.common.matrix import Matrix
+from lmpy import Matrix, TreeWrapper
 
 from LmCompute.plugins.multi.calculate.calculate import PamStats
 from LmCompute.plugins.multi.mcpa.mcpa import mcpa, mcpa_parallel
 from LmCompute.plugins.multi.randomize.grady import gradyRandomize
-from LmCommon.trees.lmTree import LmTree
 
 # .............................................................................
 def do_runs(pam, num_permutations, do_mcpa=False, tree=None, biogeo=None,
@@ -177,19 +176,19 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
 
-    pam = Matrix.load(args.pam_filename)
+    pam = Matrix.load_flo(args.pam_filename)
     tree = None
     biogeo = None
     grim = None
     tree_mtx = None
 
     if args.tree_filename is not None:
-        tree = LmTree(filename=args.tree_filename, schema='nexus')
+        tree = TreeWrapper.from_filename(args.tree_filename)
     if args.do_mcpa:
         try:
-            biogeo = Matrix.load(args.biogeo)
-            grim = Matrix.load(args.grim)
-            tree_mtx = Matrix.load(args.tree_matrix)
+            biogeo = Matrix.load_flo(args.biogeo)
+            grim = Matrix.load_flo(args.grim)
+            tree_mtx = Matrix.load_flo(args.tree_matrix)
         except Exception as e:
             print((str(e)))
             print(('Cannot perform MCPA without PAM, Grim, Biogeo,'
@@ -248,4 +247,4 @@ if __name__ == '__main__':
     if args.mcpa_f_matrix_filename is not None:
         with open(args.mcpa_f_matrix_filename, 'w') as out_f:
             mcpa_f_mtx = Matrix.concatenate(mcpa_fs, axis=2)
-            mcpa_f_mtx.save(out_f)    
+            mcpa_f_mtx.save(out_f)

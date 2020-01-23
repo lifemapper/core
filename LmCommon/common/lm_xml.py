@@ -43,7 +43,7 @@ __DEFAULT_NAMESPACE__ = None
 
 
 # .............................................................................
-def setDefaultNamespace(defNamespace):
+def set_default_namespace(def_namespace):
     """Set the default namespace.
 
     Args:
@@ -51,7 +51,7 @@ def setDefaultNamespace(defNamespace):
     """
     # Need to specify that we are setting the global variable
     global __DEFAULT_NAMESPACE__
-    __DEFAULT_NAMESPACE__ = defNamespace
+    __DEFAULT_NAMESPACE__ = def_namespace
 
 
 # .............................................................................

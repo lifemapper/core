@@ -3,12 +3,12 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-from types import ListType, TupleType
 import sys
+import tempfile
 import traceback
 
-from LmCommon.common.lmconstants import (LOG_DATE_FORMAT, LOG_FORMAT,
-    LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES)
+from LmCommon.common.lmconstants import (
+    LOG_DATE_FORMAT, LOG_FORMAT, LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES)
 
 # TODO: send function name to logger for better info on source of problem
 #         thisFunctionName = sys._getframe().f_code.co_name
@@ -16,6 +16,8 @@ from LmCommon.common.lmconstants import (LOG_DATE_FORMAT, LOG_FORMAT,
 # TODO: CJG - Either do a better job of subclassing logging.Logger or at a
 #    minimum enable the same parameters for logging to different levels.
 
+
+# .............................................................................
 class LmLogger(logging.Logger):
     """
     @summary: Logging.logger wrapper
@@ -32,7 +34,7 @@ class LmLogger(logging.Logger):
         self.log = logging.getLogger(loggerName)
         self.log.setLevel(level)
         self.formatter = logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT)
-    
+
     # ..............................................
     def critical(self, message):
         """
@@ -43,23 +45,22 @@ class LmLogger(logging.Logger):
             self.log.critical(message)
         except Exception as e:
             pass
-        
+
     # ..............................................
     def debug(self, message, location=None):
         """
         @summary: Wrapper around logging.Logger.debug
         @param message: The message to be output
         '{0}.{1} failed at line {2}; Exception: {3}'.
-                        format(__name__, self.__class__.__name__, lineno(), str(e))
+                   format(__name__, self.__class__.__name__, lineno(), str(e))
         """
         if location is not None:
-#            message = '{0}: {1}'.format(location, message)
             message = '{}: {}'.format(location, message)
         try:
             self.log.debug(message)
         except Exception as e:
             pass
-        
+
     # ..............................................
     def error(self, message):
         """
@@ -70,7 +71,7 @@ class LmLogger(logging.Logger):
             self.log.error(message)
         except Exception as e:
             pass
-    
+
     # ..............................................
     def exception(self, message):
         """
@@ -81,7 +82,7 @@ class LmLogger(logging.Logger):
             self.log.exception(message)
         except Exception as e:
             pass
-    
+
     # ..............................................
     def info(self, message):
         """
@@ -92,7 +93,7 @@ class LmLogger(logging.Logger):
             self.log.info(message)
         except Exception as e:
             pass
-    
+
     # ..............................................
     def log(self, level, message):
         """
@@ -104,7 +105,7 @@ class LmLogger(logging.Logger):
             self.log.log(level, message)
         except Exception as e:
             pass
-        
+
     # ..............................................
     def warning(self, message):
         """
@@ -115,10 +116,10 @@ class LmLogger(logging.Logger):
             self.log.warning(message)
         except Exception as e:
             pass
-        
+
     # ...............................................
     def reportError(self, msg):
-        if type(msg) is ListType or type(msg) is TupleType:
+        if isinstance(msg, (list, tuple)):
             msg = ' '.join(msg)
         sysinfo = sys.exc_info()
         argStr = '\n'.join(str(arg) for arg in sysinfo[1].args)
@@ -143,7 +144,7 @@ class LmLogger(logging.Logger):
                 consoleLogHandler.setFormatter(self.formatter)
                 self.log.addHandler(consoleLogHandler)
         except:
-            pass # Fails if the stream handler already exists
+            pass  # Fails if the stream handler already exists
 
     # ..............................................
     def _addFileHandler(self, filename):
@@ -152,13 +153,13 @@ class LmLogger(logging.Logger):
         @param filename: The name of the file to output to
         """
         if not self._hasHandler(filename):
-            fileLogHandler = RotatingFileHandler(filename, 
-                                                             maxBytes=LOGFILE_MAX_BYTES, 
-                                                             backupCount=LOGFILE_BACKUP_COUNT)
+            fileLogHandler = RotatingFileHandler(
+                filename, maxBytes=LOGFILE_MAX_BYTES,
+                backupCount=LOGFILE_BACKUP_COUNT)
             fileLogHandler.setLevel(self.log.level)
             fileLogHandler.setFormatter(self.formatter)
             self.log.addHandler(fileLogHandler)
-    
+
     # ..............................................
     def _hasHandler(self, name):
         """
@@ -173,7 +174,7 @@ class LmLogger(logging.Logger):
             except:
                 pass
         return False
-    
+
     # ...............................................
     @property
     def baseFilename(self):
@@ -184,7 +185,8 @@ class LmLogger(logging.Logger):
                 return fname
             except:
                 pass
-    
+
+
 # .............................................................................
 class DaemonLogger(LmLogger):
     """
@@ -197,6 +199,5 @@ class DaemonLogger(LmLogger):
         else:
             name = 'daemon.{}'.format(pid)
         LmLogger.__init__(self, name, level=level)
-        import tempfile
         fn = os.path.join(tempfile.mkdtemp(), '{}.log'.format(name))
         self._addFileHandler(fn)

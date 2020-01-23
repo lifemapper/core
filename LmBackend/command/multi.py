@@ -142,15 +142,13 @@ class EncodePhylogenyCommand(_LmCommand):
     script_name = 'encode_phylogeny.py'
 
     # ................................
-    def __init__(self, tree_file_name, pam_file_name, out_mtx_file_name,
-                 mashed_potato_file_name=None):
+    def __init__(self, tree_file_name, pam_file_name, out_mtx_file_name):
         """Construct the command object
 
         Args:
             tree_file_name: The file location of the tree to use for encoding
             pam_file_name: The file location of the PAM to use for encoding
             out_mtx_file_name: The file location to write the encoded tree
-            mashed_potato_file_name: The file location of the mashed potato
 
         Todo:
             * Evaluate if we can remove mashed_potato_file_name
@@ -162,9 +160,6 @@ class EncodePhylogenyCommand(_LmCommand):
 
         self.args = '{} {} {}'.format(
             tree_file_name, pam_file_name, out_mtx_file_name)
-        if mashed_potato_file_name is not None:
-            self.opt_args += ' -m {}'.format(mashed_potato_file_name)
-            self.inputs.append(mashed_potato_file_name)
 
 
 # .............................................................................

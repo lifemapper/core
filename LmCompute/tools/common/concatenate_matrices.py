@@ -3,8 +3,10 @@
 """
 import argparse
 
+from lmpy import Matrix
+
 from LmBackend.common.lmobj import LMObject
-from LmCommon.common.matrix import Matrix
+
 
 # .............................................................................
 if __name__ == "__main__":
@@ -32,10 +34,10 @@ if __name__ == "__main__":
         with open(args.mashedPotato, 'r') as mashIn:
             for line in mashIn:
                 squid, pav = line.split(':')
-                mtxs.append(Matrix.load(pav.strip()))
+                mtxs.append(Matrix.load_flo(pav.strip()))
     if args.mtxFn:
         for mtxFn in args.mtxFn:
-            mtxs.append(Matrix.load(mtxFn))
+            mtxs.append(Matrix.load_flo(mtxFn))
     
     joinedMtx = Matrix.concatenate(mtxs, axis=args.axis)
 

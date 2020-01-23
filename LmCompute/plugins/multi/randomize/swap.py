@@ -2,7 +2,7 @@
 """
 from random import randrange
 
-from LmCommon.common.matrix import Matrix
+from lmpy import Matrix
 
 MAX_TRIES_WITHOUT_SWAP = 1000000
 
@@ -20,10 +20,10 @@ def swapRandomize(matrix, num_swaps, max_tries=MAX_TRIES_WITHOUT_SWAP):
         Allow num_swaps to be specified as a percentage of the matrix fill
     """
     mtx_headers = matrix.getHeaders()
-    swapped_mtx = matrix.data.copy().astype(int)
+    swapped_mtx = matrix.copy().astype(int)
     counter = 0
     num_tries = 0
-    row_len, col_len = matrix.data.shape
+    row_len, col_len = matrix.shape
 
     #num_tries is a safety to kill the loop if nothing is ever found
     while counter < num_swaps and num_tries < max_tries:

@@ -4,8 +4,9 @@
 import hashlib
 import os
 
+
 # .............................................................................
-def _getHexHashValue(dlocation=None, content=None):
+def _get_hex_hash_value(dlocation=None, content=None):
     """Returns a hexidecimal representation of the sha256sum of a datafile
 
     Args:
@@ -18,9 +19,8 @@ def _getHexHashValue(dlocation=None, content=None):
     hexhash = None
     if content is None:
         if dlocation and os.path.exists(dlocation):
-            f = open(dlocation, 'r')
-            content = f.read()
-            f.close()
+            with open(dlocation, 'rb') as in_f:
+                content = in_f.read()
         else:
             print(('Failed to hash missing file {}'.format(dlocation)))
     if content is not None:
@@ -30,24 +30,26 @@ def _getHexHashValue(dlocation=None, content=None):
         print('Failed to hash empty content')
     return hexhash
 
+
 # .............................................................................
-def computeHash(dlocation=None, content=None):
+def compute_hash(dlocation=None, content=None):
     """Computes an sha256sum on data or a datafile
 
     Args:
         dlocation: File on which to compute hash
         content: Data or object on which to compute hash
     """
-    hexhash = _getHexHashValue(dlocation=dlocation, content=content)
+    hexhash = _get_hex_hash_value(dlocation=dlocation, content=content)
     return hexhash
 
+
 # .............................................................................
-def verifyHash(verify, dlocation=None, content=None):
+def verify_hash(verify, dlocation=None, content=None):
     """Computes an sha256sum on a datafile and compares it to the one sent
 
     Args:
         dlocation: The file on which to compute the hash
         verify: The hash to compare results
     """
-    hexhash = _getHexHashValue(dlocation=dlocation, content=content)
+    hexhash = _get_hex_hash_value(dlocation=dlocation, content=content)
     return hexhash == verify

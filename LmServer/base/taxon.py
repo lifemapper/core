@@ -1,28 +1,7 @@
 """
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
 """
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.verify import computeHash
+from LmCommon.common.verify import compute_hash
 
 # ..............................................................................
 class ScientificName(LMObject):
@@ -110,10 +89,10 @@ class ScientificName(LMObject):
     def _setSquid(self, squid=None):
         if squid is None:            
             if self._sourceId is not None and self._sourceKey is not None:
-                squid = computeHash(content='{}:{}'.format(self._sourceId, self._sourceKey))
+                squid = compute_hash(content='{}:{}'.format(self._sourceId, self._sourceKey))
             elif self.userId is not None and self.scientificName is not None:
                 mod_sciname = self.scientificName.replace('_', ' ')
-                squid = computeHash(content='{}:{}'.format(self.userId, mod_sciname))
+                squid = compute_hash(content='{}:{}'.format(self.userId, mod_sciname))
             else:
                 raise LMError('Scientific name requires unique identifier comprised of: '+
                                     'taxonomySourceId/taxonomySourceKey OR userid/scientificName')

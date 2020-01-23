@@ -11,11 +11,9 @@ Note:
         that both sides are present
 """
 import argparse
-import numpy as np
 
-from LmCommon.common.matrix import Matrix
-from LmCommon.trees.lmTree import LmTree
-from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA, PhyloTreeKeys
+from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
+import numpy as np
 
 # Local constants for this module
 LEFT_SQUIDS_KEY = 'leftSquids'
@@ -76,7 +74,7 @@ def build_ancestral_pam(pam, tree):
 
     Args:
         pam: A PAM to use to build the ancestral PAM
-        tree: An LmTree object to use for phylogenetic information
+        tree: An TreeWrapper object to use for phylogenetic information
 
     Note:
         * Tree should be binary
@@ -141,8 +139,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Read in inputs
-    pam = Matrix.load(args.pamFn)
-    tree = LmTree.initFromFile(args.treeFn, DEFAULT_TREE_SCHEMA)
+    pam = Matrix.load_flo(args.pamFn)
+    tree = TreeWrapper.from_filename(args.treeFn)
     
     # Build the Ancestral PAM
     ancPam = build_ancestral_pam(pam, tree)

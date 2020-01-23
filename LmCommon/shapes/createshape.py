@@ -2,15 +2,16 @@
 """
 import json
 import os
-from osgeo import ogr, osr
 import subprocess
-from types import UnicodeType, StringType
 
-from LmCommon.common.lmconstants import (GBIF, PROVIDER_FIELD_COMMON, 
-        LM_WKT_FIELD, JobStatus, DWCNames, LMFormat, DEFAULT_EPSG)
+from osgeo import ogr, osr
+
+from LmCommon.common.lmconstants import (
+    DEFAULT_EPSG, DWCNames, GBIF, JobStatus, LM_WKT_FIELD, LMFormat,
+    PROVIDER_FIELD_COMMON)
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import readyFilename
-from LmCommon.common.str import from_unicode, to_unicode
+
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
@@ -19,33 +20,35 @@ try:
 except:
     from LmCompute.common.lmconstants import BIN_PATH
 
+
 # .............................................................................
-class ShapeShifter(object):
-# .............................................................................
+class ShapeShifter:
+    """Class to write a shapefile from GBIF CSV output or BISON JSON output.
+
+    Note:
+        Puts all valid records from input csv file into a single shapefile.
     """
-    Class to write a shapefile from GBIF CSV output or BISON JSON output. 
-    Puts all valid records from input csv file into a single shapefile.
-    """
-# ............................................................................
-# Constructor
-# .............................................................................
-    def __init__(self, csv_fname, metadata, logger=None, 
-                 delimiter='\t', isGbif=False):
-        """
-        @param csv_fname: File containing CSV data of species occurrence records
-        @param metadata: dictionary or filename containing JSON format metadata
-        @param logger: logger for debugging output
-        @param delimiter: delimiter of values in csv records
-        @param isGbif: boolean flag to indicate whether data contains GBIF/DwC 
-               fields.
-        
+    # .......................
+    def __init__(self, csv_fname, metadata, logger=None, delimiter='\t',
+                 isGbif=False):
+        """Constructor
+
+        Args:
+            csv_fname: File containing CSV data of species occurrence records
+            metadata: dictionary or filename containing JSON format metadata
+            logger: logger for debugging output
+            delimiter: delimiter of values in csv records
+            isGbif: boolean flag to indicate whether data contains GBIF/DwC
+                fields.
         """
         if not os.path.exists(csv_fname):
-            raise LmException(JobStatus.LM_RAW_POINT_DATA_ERROR, 
-                              'Raw data file {} does not exist')
+            raise LmException(
+                JobStatus.LM_RAW_POINT_DATA_ERROR,
+                'Raw data file {} does not exist'.format(csv_fname))
         if not metadata:
-            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                              'Failed to get metadata')
+            raise LmException(
+                JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                'Failed to get metadata')
         if logger is None:
             logname, _ = os.path.splitext(os.path.basename(__file__))
             logger = LmComputeLogger(logname, addConsole=True)
@@ -97,7 +100,7 @@ class ShapeShifter(object):
         try:
             self._fillFeature(feat, recDict)
         except Exception as e:
-            print(('Failed to _createFillFeat, e = {}'.format(from_unicode(to_unicode(e)))))
+            print(('Failed to _createFillFeat, e = {}'.format(e))
             raise e
         else:
             # Create new feature, setting FID, in this layer
@@ -303,8 +306,9 @@ class ShapeShifter(object):
                 badRecCount += 1
             except Exception as e:
                 badRecCount += 1
-                print(('Exception reading line {} ({})'.format(self.op.currRecnum, 
-                                                                      from_unicode(to_unicode(e)))))
+                print(('Exception reading line {} ({})'.format(
+                    self.op.currRecnum, str(e))))
+
         if success:
             for idx, vals in self.op.columnMeta.items():
                 if vals is not None and idx not in (self.op.xIdx, self.op.yIdx):
@@ -383,7 +387,7 @@ class ShapeShifter(object):
                     prov = recDict[self.providerKeyField]
                 except:
                     pass
-                if not (isinstance(prov, StringType) or isinstance(prov, UnicodeType)):
+                if not isinstance(prov, str):
                     prov = ''
                 feat.SetField(self.computedProviderField, prov)
 
@@ -427,8 +431,6 @@ class ShapeShifter(object):
                         fldidx = feat.GetFieldIndex(str(fldname))
                         val = recDict[name]
                         if val is not None and val != 'None':
-                            if isinstance(val, UnicodeType):
-                                val = from_unicode(val)
                             feat.SetField(fldidx, val)
         except Exception as e:
             print(('Failed to fillFeature with recDict {}, e = {}'.format(str(recDict), e)))
@@ -442,7 +444,6 @@ if __name__ == '__main__':
 from osgeo import ogr, osr
 import StringIO
 import subprocess
-from types import ListType, TupleType, UnicodeType, StringType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.shapes.createshape import ShapeShifter

@@ -1,11 +1,12 @@
 """Module functions for converting object to GeoJSON
 """
-import cherrypy
 import json
+
+import cherrypy
+from lmpy import Matrix
 import ogr
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType
-from LmCommon.common.matrix import Matrix
 
 from LmServer.base.layer2 import Vector
 from LmServer.legion.lmmatrix import LMMatrix
@@ -39,23 +40,23 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
         flo.write('{}"propertyLookupFilename" : "{}",\n'.format(
             ident, headerLookupFilename))
     flo.write('{}"features" : [\n'.format(ident))
-    
+
     rowLookup = {}
-    
+
     if matrix is not None:
-        colHeaders = matrix.getColumnHeaders()
+        colHeaders = matrix.get_column_headers()
         colEnum = [(j, str(k)) for j, k in enumerate(colHeaders)]
-        rowHeaders = matrix.getRowHeaders()
-        
+        rowHeaders = matrix.get_row_headers()
+
         for i in range(len(rowHeaders)):
             rowLookup[rowHeaders[i][mtxJoinAttrib]] = i
-        
+
         # Define cast function, necessary if matrix if full of booleans
-        if matrix.data.dtype == bool:
+        if matrix.dtype == bool:
             castFunc = lambda x: int(x)
         else:
             castFunc = lambda x: x
-            
+
     # Build features list
     drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
     ds = drv.Open(shpFilename, 0)
@@ -82,13 +83,13 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
             if headerLookupFilename:
                 ft['properties'] = {
                     'data' : transform(
-                        [castFunc(j.item()) for j in matrix.data[i]])
+                        [castFunc(j.item()) for j in matrix[i]])
                     }
             else:
                 ft['properties'] = dict(
                     [(k, transform(
                         castFunc(
-                            matrix.data[i,j].item()))) for j, k in colEnum])
+                            matrix[i,j].item()))) for j, k in colEnum])
             # Need to conditionally write comma
             if x >= num_feats:
                 flo.write('{}\n'.format(json.dumps(ft)))
@@ -110,12 +111,12 @@ def geoJsonify(shpFilename, matrix=None, mtxJoinAttrib=None):
     
     # Build matrix lookup
     if matrix is not None:
-        colHeaders = matrix.getColumnHeaders()
-        rowHeaders = matrix.getRowHeaders()
+        colHeaders = matrix.get_column_headers()
+        rowHeaders = matrix.get_row_headers()
         
         # Define a cast function, necessary if the matrix is full of booleans 
         #     because they cannot be encoded correctly for JSON
-        if matrix.data.dtype == bool:
+        if matrix.dtype == bool:
             castFunc = lambda x: int(x)
         else:
             castFunc = lambda x: x
@@ -129,7 +130,7 @@ def geoJsonify(shpFilename, matrix=None, mtxJoinAttrib=None):
             for j in range(len(colHeaders)):
                 try:
                     attLookup[joinAtt][colHeaders[j]
-                                       ] = castFunc(matrix.data[i,j].item())
+                                       ] = castFunc(matrix[i,j].item())
                 except:
                     pass
     
@@ -190,7 +191,7 @@ def _formatObject(obj):
             MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM):
             
             sg = obj.getGridset().getShapegrid()
-            mtx = Matrix.load(obj.getDLocation())
+            mtx = Matrix.load_flo(obj.getDLocation())
             cherrypy.response.headers[
                 'Content-Disposition'
                 ] = 'attachment; filename="mtx_{}.geojson"'.format(obj.getId())

@@ -4,7 +4,7 @@
 """
 import argparse
 
-from LmCommon.shapes.buildShapegrid import buildShapegrid
+from LmCommon.shapes.build_shapegrid import build_shapegrid
 
 # .............................................................................
 if __name__ == "__main__":
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if args.cutoutFn is not None:
         cutout = args.cutoutFn
 
-    buildShapegrid(
+    build_shapegrid(
         args.shapegridFn, args.minX, args.minY, args.maxX, args.maxY,
         args.cellSize, args.epsg, args.cellSides, cutoutWKT=cutout)
     

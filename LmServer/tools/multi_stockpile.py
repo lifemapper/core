@@ -7,16 +7,17 @@ import argparse
 import json
 import os
 
+from lmpy import Matrix
+
 from LmBackend.common.lmconstants import RegistryKey
 from LmBackend.common.lmobj import LMError
 
 from LmCommon.common.lmconstants import JobStatus, LMFormat, ProcessType
-from LmCommon.common.matrix import Matrix
+from LmCommon.compression.binary_list import decompress
 
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmCommon.compression.binaryList import decompress
 
 # .............................................................................
 def stockpile_pavs(pav_list):
@@ -110,7 +111,7 @@ def test_matrix(matrix_filename):
     test_status = JobStatus.COMPLETE
     if os.path.exists(matrix_filename):
         try:
-            Matrix.load(matrix_filename)
+            Matrix.load_flo(matrix_filename)
         except:
             test_status = JobStatus.IO_GENERAL_ERROR
     else:

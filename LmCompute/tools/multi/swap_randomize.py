@@ -7,7 +7,8 @@ Todo:
 """
 import argparse
 
-from LmCommon.common.matrix import Matrix
+from lmpy import Matrix
+
 from LmCompute.plugins.multi.randomize.swap import swapRandomize
 
 # .............................................................................
@@ -27,7 +28,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    pam = Matrix.load(args.pamFn)
+    pam = Matrix.load_flo(args.pamFn)
     
     randPam = swapRandomize(pam, args.numSwaps)
     

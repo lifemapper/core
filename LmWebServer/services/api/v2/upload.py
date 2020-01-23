@@ -7,16 +7,18 @@ Todo:
         discover limitations
 Todo: Use sub-services for different upload types rather than query parameter
 """
-import cherrypy
+from io import StringIO
 import json
 import os
-from io import StringIO
 import zipfile
 
+import cherrypy
+from lmpy import TreeWrapper
+
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, HTTPStatus,
-                                         LMFormat, PhyloTreeKeys)
+                                         LMFormat, PhyloTreeKeys,
+    DEFAULT_TREE_SCHEMA)
 from LmCommon.common.readyfile import readyFilename
-from LmCommon.trees.lmTree import LmTree
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
@@ -363,11 +365,11 @@ class UserUploadService(LmService):
                 data = cherrypy.request.body.read()
             for schema in ['newick', 'nexus', 'phyloxml']:
                 try:
-                    tree = LmTree.initFromData(data, schema)
-                    
+                    tree = TreeWrapper.get(data=data, schema=schema)
                     # Add squids
                     squid_dict = {}
                     user_id = self.getUserId()
+
                     if user_id == PUBLIC_USER:
                         user_id = DEFAULT_POST_USER
                     for label in tree.getLabels():
@@ -375,11 +377,11 @@ class UserUploadService(LmService):
                             userId=user_id, taxonName=label)
                         if sno is not None:
                             squid_dict[label] = sno.squid
-                    tree.annotateTree(PhyloTreeKeys.SQUID, squid_dict)
+                    tree.annotate_tree_tips(PhyloTreeKeys.SQUID, squid_dict)
                     # Add internal node labels
-                    tree.addNodeLabels()
-                    
-                    tree.writeTree(out_tree_filename)
+                    tree.add_node_labels()
+                    tree.write(
+                        path=out_tree_filename, schema=DEFAULT_TREE_SCHEMA)
                     break
                 except Exception as e:
                     pass
@@ -390,7 +392,7 @@ class UserUploadService(LmService):
         # Set HTTP status code
         cherrypy.response.status = HTTPStatus.ACCEPTED
         return {
-            'file_name' : tree_name,
-            'upload_type' : TREE_UPLOAD,
-            'status' : HTTPStatus.ACCEPTED
+            'file_name': tree_name,
+            'upload_type': TREE_UPLOAD,
+            'status': HTTPStatus.ACCEPTED
         }

@@ -1,9 +1,13 @@
 """Module containing functions to calculate PAM statistics
+
+Todo:
+    Convert to use Matrix instead of numpy matrices
 """
 import numpy as np
 
+from lmpy import Matrix
+
 from LmCommon.common.lmconstants import PamStatKeys, PhyloTreeKeys
-from LmCommon.common.matrix import Matrix
 
 from LmCompute.plugins.multi.calculate import ot_phylo
 
@@ -17,12 +21,12 @@ class PamStats(object):
         """
         @summary: Constructor
         @param pam: A Present / Absence Matrix to compute statistics for
-        @param tree: An optional LmTree object to use for additional statistics
+        @param tree: An optional TreeWrapper object to use for additional statistics
         """
         # Ensure PAM is a Matrix object.  PAM data will be shortcut to data
         if isinstance(pam, Matrix):
             self.pam = pam
-            self.pamData = pam.data
+            self.pamData = pam
         else:
             self.pam = Matrix(pam)
             self.pamData = pam
@@ -118,7 +122,7 @@ class PamStats(object):
                     keep_columns.append(i)
                     taxon_labels.append(squid_dict[squids[i]])
             # Slice the PAM to remove missing squid columns
-            sl_pam = self.pam.slice(list(range(self.pam.data.shape[0])), 
+            sl_pam = self.pam.slice(list(range(self.pam.shape[0])), 
                                     keep_columns)
             
             statColumns.extend([

@@ -9,7 +9,7 @@ import numpy as np
 from osgeo import ogr
 
 from LmCommon.common.lmconstants import LMFormat, JobStatus
-from LmCommon.compression.binaryList import decompress
+from LmCommon.compression.binary_list import decompress
 from LmCommon.common.readyfile import readyFilename
 
 from LmServer.common.lmconstants import SOLR_FIELDS

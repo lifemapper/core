@@ -2,16 +2,12 @@
 """
 import os
 
-#from LmBackend.command.common import (ConcatenateMatricesCommand, SystemCommand, 
-#                                      ChainCommand)
+from lmpy import Matrix
+
 from LmBackend.common.lmobj import LMError
-#from LmBackend.command.server import StockpileCommand, LmTouchCommand
 
 from LmCommon.common.lmconstants import CSV_INTERFACE, MatrixType
 from LmCommon.common.time import gmt
-#from LmCommon.common.lmconstants import (MatrixType, ProcessType, CSV_INTERFACE, 
-#                                         LMFormat, JobStatus)
-from LmCommon.common.matrix import Matrix
 
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMServiceType, LMFileType)
@@ -39,9 +35,6 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                      matrixId=None,
                      status=None, statusModTime=None):
         """
-        @copydoc LmCommon.common.matrix.Matrix::__init__()
-        @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
-        @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
         @param matrix: data (numpy) array for Matrix base object
         @param matrixType: Constant from LmCommon.common.lmconstants.MatrixType
         @param gcmCode: Code for the Global Climate Model used to create these data

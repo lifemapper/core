@@ -8,9 +8,8 @@ Todo:
 """
 import argparse
 
-from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA
-from LmCommon.common.matrix import Matrix
-from LmCommon.trees.lmTree import LmTree
+from lmpy import Matrix, TreeWrapper
+
 from LmCompute.plugins.multi.calculate.calculate import PamStats
 
 # .............................................................................
@@ -50,11 +49,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Load PAM
-    pam = Matrix.load(args.pamFn)
+    pam = Matrix.load_flo(args.pamFn)
     
     # Load tree if exists
     if args.treeFn is not None:
-        tree = LmTree.initFromFile(args.treeFn, DEFAULT_TREE_SCHEMA)
+        tree = TreeWrapper.from_filename(args.treeFn)
     else:
         tree = None
     

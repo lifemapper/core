@@ -5,9 +5,9 @@ from io import StringIO
 import zipfile
 
 import cherrypy
+from lmpy import Matrix
 
 from LmCommon.common.lmconstants import LMFormat
-from LmCommon.common.matrix import Matrix
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.legion.lmmatrix import LMMatrix
 
@@ -58,7 +58,7 @@ def csvObjectFormatter(obj):
     """
     if isinstance(obj, LMMatrix):
         cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="mtx{}.csv"'.format(obj.getId())
-        m = Matrix.load(obj.getDLocation())
+        m = Matrix.load_flo(obj.getDLocation())
         outStream = StringIO()
         m.writeCSV(outStream)
         outStream.seek(0)

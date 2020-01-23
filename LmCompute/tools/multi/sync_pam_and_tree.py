@@ -10,11 +10,10 @@ Todo:
 """
 import argparse
 import json
+
+from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
 import numpy as np
 
-from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA, PhyloTreeKeys
-from LmCommon.common.matrix import Matrix
-from LmCommon.trees.lmTree import LmTree
 
 # .............................................................................
 def prunePamAndTree(pam, tree):
@@ -26,7 +25,7 @@ def prunePamAndTree(pam, tree):
     Args:
         pam: A PAM matrix to prune.  We assume that the column headers are
             present and are SQUIDs
-        tree: A LmTree to prune.  We assume that it has SQUIDs.
+        tree: A TreeWrapper to prune.  We assume that it has SQUIDs.
 
     Return:
         A pruned PAM, a pruned Tree (with matrix indexes), metadata documenting
@@ -97,8 +96,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Get the inputs
-    pam = Matrix.load(args.inPamFn)
-    tree = LmTree.initFromFile(args.inTreeFn, DEFAULT_TREE_SCHEMA)
+    pam = Matrix.load_flo(args.inPamFn)
+    tree = TreeWrapper.from_filename(args.inTreeFn)
     
     # Prune the PAM and tree
     outPam, outTree, metadata = prunePamAndTree(pam, tree)

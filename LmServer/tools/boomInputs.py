@@ -244,7 +244,7 @@ from LmServer.tools.boomInputs import (_getBoomBioGeoParams, _getBioGeoMatrix,
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, PhyloTreeKeys, MatrixType, 
                                                       ProcessType, SERVER_BOOM_HEADING)
-from LmCommon.common.matrix import Matrix
+from lmpy import Matrix
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType

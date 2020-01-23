@@ -6,7 +6,7 @@ import cherrypy
 from osgeo import ogr
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.lm_xml import (CDATA, Element, register_namespace, 
-                                  setDefaultNamespace, SubElement, tostring)
+                                  set_default_namespace, SubElement, tostring)
 #from LmCommon.common.lmconstants import ENCODING, HTTPStatus
 
 from LmServer.legion.occlayer import OccurrenceLayer
@@ -128,7 +128,7 @@ def getKML(myObj):
    @param obj: The object to return in KML
    """
    register_namespace('', KML_NS)
-   setDefaultNamespace(KML_NS)
+   set_default_namespace(KML_NS)
    root = Element("kml")
    doc = SubElement(root, "Document")
    SubElement(doc, "styleUrl", value="#lmBalloon")

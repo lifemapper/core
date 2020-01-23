@@ -10,12 +10,12 @@ from io import StringIO
 import zipfile
 
 import cherrypy
+from lmpy import Matrix
 import mapscript
 import unicodecsv
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType, JobStatus,\
     HTTPStatus, PamStatKeys
-from LmCommon.common.matrix import Matrix
 from LmCommon.common.lm_xml import tostring
 
 from LmServer.common.datalocator import EarlJr
@@ -417,25 +417,25 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
             if mtx.status == JobStatus.COMPLETE and mtx.dateCode == 'Curr':
                 # Handle each matrix type
                 if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
-                    pam = Matrix.load(mtx.getDLocation())
+                    pam = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'pam_{}.csv'.format(mtx.getId()))
                 elif mtx.matrixType == MatrixType.ANC_PAM:
-                    anc_pam = Matrix.load(mtx.getDLocation())
+                    anc_pam = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'anc_pam_{}.csv'.format(mtx.getId()))
                 elif mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
-                    sites_cov_obs = Matrix.load(mtx.getDLocation())
+                    sites_cov_obs = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'sitesCovarianceObserved_{}.csv'.format(
                             mtx.getId()))
                 elif mtx.matrixType == MatrixType.SITES_OBSERVED:
-                    sites_obs = Matrix.load(mtx.getDLocation())
+                    sites_obs = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'sitesObserved_{}.csv'.format(mtx.getId()))
                     do_pam_stats = True
                 elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
-                    mcpa_mtx = Matrix.load(mtx.getDLocation())
+                    mcpa_mtx = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'mcpa_{}.csv'.format(mtx.getId()))
                     do_mcpa = True
@@ -447,7 +447,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
 
                 # If we should write the CSV file, and the matrix exists, do it
                 if include_csv and os.path.exists(mtx.getDLocation()):
-                    mtx_obj = Matrix.load(mtx.getDLocation())
+                    mtx_obj = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_str = StringIO()
                     mtx_obj.writeCSV(csv_mtx_str)
                     csv_mtx_str.seek(0)
@@ -599,7 +599,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if sites_cov_obs is not None:
                     mtx_str = StringIO()
                     mtx_2d = Matrix(
-                        sites_cov_obs.data[:, :, 0],
+                        sites_cov_obs[:, :, 0],
                         headers={
                             '0': sites_cov_obs.getRowHeaders(),
                             '1': sites_cov_obs.getColumnHeaders()})
@@ -616,7 +616,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if sites_obs is not None:
                     mtx_str = StringIO()
                     mtx_2d = Matrix(
-                        sites_obs.data[:, :, 0],
+                        sites_obs[:, :, 0],
                         headers={
                             '0': sites_obs.getRowHeaders(),
                             '1': sites_obs.getColumnHeaders()})

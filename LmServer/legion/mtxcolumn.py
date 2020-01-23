@@ -1,7 +1,8 @@
 """
 """
+from lmpy import Matrix
+
 from LmCommon.common.lmconstants import LMFormat, BoomKeys
-from LmCommon.common.matrix import Matrix
 from LmCommon.common.time import gmt
 
 from LmServer.base.layer2 import _LayerParameters
@@ -11,7 +12,6 @@ from LmServer.common.lmconstants import LMServiceType
 # .............................................................................
 # .............................................................................
 # .............................................................................
-# TODO: This should inherit from LmCommon.common.matrix.Matrix
 class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
     # BoomKeys uses these strings, prefixed by 'INTERSECT_'
     # Query to filter layer for intersect
