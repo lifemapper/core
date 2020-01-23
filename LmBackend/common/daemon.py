@@ -64,8 +64,9 @@ class Daemon:
             if pid > 0:
                 # exit first parent
                 sys.exit(0)
-        except OSError as e:
-            self.log.error("Fork #1 failed: %d (%s)" % e.errno, e.strerror)
+        except OSError as err:
+            self.log.error(
+                'Fork #1 failed: {} ({})'.format(err.errno, err.strerror))
             sys.exit(1)
 
         # decouple from parent environment
@@ -79,8 +80,9 @@ class Daemon:
             if pid > 0:
                 # exit from second parent
                 sys.exit(0)
-        except OSError as e:
-            self.log.error("fork #2 failed: %d (%s)" % (e.errno, e.strerror))
+        except OSError as err:
+            self.log.error(
+                'Fork #2 failed: {} ({})'.format(err.errno, err.strerror))
             sys.exit(1)
 
         # redirect standard file descriptors
@@ -193,8 +195,8 @@ class Daemon:
         """
         # Check for a pidfile to see if the daemon is running
         try:
-            with open(self.pidfile, 'r') as pf:
-                pid = int(pf.read().strip())
+            with open(self.pidfile, 'r') as pid_f:
+                pid = int(pid_f.read().strip())
         except IOError:
             pid = None
 
@@ -229,8 +231,8 @@ class Daemon:
         """
         # Get the pid from the pidfile
         try:
-            with open(self.pidfile, 'r') as pf:
-                pid = int(pf.read().strip())
+            with open(self.pidfile, 'r') as pid_f:
+                pid = int(pid_f.read().strip())
         except IOError:
             pid = None
 

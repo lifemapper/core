@@ -13,7 +13,7 @@ import os
 import shutil
 from time import sleep
 
-from LmBackend.common.layerTools import convertAsciisToMxes
+from LmBackend.common.layer_tools import convert_ascii_to_mxe
 from LmBackend.common.lmconstants import RegistryKey
 from LmBackend.common.metrics import LmMetricNames
 
@@ -116,12 +116,12 @@ class MaxentWrapper(ModelSoftwareWrapper):
         work_mask_filename = os.path.join(layer_dir,
                                           'mask{}'.format(LMFormat.MXE.ext))
         if not os.path.exists(work_mask_filename):
-            convertAsciisToMxes(os.path.split(mask_filename)[0])
+            convert_ascii_to_mxe(os.path.split(mask_filename)[0])
             shutil.move('{}{}'.format(
                 os.path.splitext(os.path.abspath(mask_filename))[0], 
                 LMFormat.MXE.ext), work_mask_filename)
         return 'togglelayertype=mask'
-        
+
     # ...................................
     def _process_parameters(self, parameter_json):
         """Process provided algorithm parameters JSON and return a list

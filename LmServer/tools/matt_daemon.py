@@ -246,7 +246,7 @@ class MattDaemon(Daemon):
             time_waited += self.sleep_time
             try:
                 num_running = self.get_number_of_running_processes()
-            except:
+            except Exception:
                 num_running = 0
 
         if time_waited >= max_time:
@@ -272,7 +272,7 @@ class MattDaemon(Daemon):
         # Stop worker factory
         try:
             self.stop_worker_factory()
-        except:
+        except Exception:
             pass
 
         # Stop catalog server
@@ -338,7 +338,7 @@ class MattDaemon(Daemon):
 
     # .............................
     @staticmethod
-    def _get_makeflow_command(self, name, mf_doc_fn, priority=1):
+    def _get_makeflow_command(name, mf_doc_fn, priority=1):
         """Assemble Makeflow command
 
         Args:

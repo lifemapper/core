@@ -1,7 +1,9 @@
 """Module containing the base Lifemapper object class.
 """
+import glob
 import inspect
 import json
+import os
 import sys
 import traceback
 
@@ -30,31 +32,27 @@ class LMObject:
     # ..........................
     @classmethod
     def readyFilename(cls, fullfilename, overwrite=False):
-        """
-        @summary: On existing file, 
-                         if overwrite true: delete
-                                         false: return false
-                     Non-existing file:
-                         create parent directories if needed
-                         return true if parent directory exists
+        """Prepare a file location for writing by creating needed parent dirs.
+
+        Args:
+            fullfilename (str): The file location to prepare.
+            overwrite (bool): If true, deletes existing file.  If false,
+                returns False.
         """
         if fullfilename is None:
             raise LMError('Full filename is None')
 
-        import os
-
         if os.path.exists(fullfilename):
             if overwrite:
-                success, msg = cls.deleteFile(fullfilename)
+                success, _ = cls.deleteFile(fullfilename)
                 if not success:
                     raise LMError('Unable to delete {}'.format(fullfilename))
-                else:
-                    return True
+                return True
             else:
                 print(('File {} exists, overwrite=False'.format(fullfilename)))
                 return False
         else:
-            pth, basename = os.path.split(fullfilename)
+            pth, _ = os.path.split(fullfilename)
 
             # If the file path is in cwd we don't need to create directories
             if len(pth) == 0:
@@ -62,43 +60,43 @@ class LMObject:
 
             try:
                 os.makedirs(pth, 0o775)
-            except:
+            except IOError:
                 pass
 
             if os.path.isdir(pth):
                 return True
-            else:
-                raise LMError('Failed to create directories {}'.format(pth))
+
+            # Else, fail
+            raise LMError('Failed to create directories {}'.format(pth))
 
     # ..........................
     @classmethod
-    def deleteFile(self, fname, deleteDir=False):
-        """
-        @summary: Delete the file if it exists, delete enclosing directory if 
-                     it is now empty, print only warning if fails.  If filename is a 
-                     shapefile (ends in '.shp'), delete all other files that comprise
-                     the shapefile.
+    def deleteFile(cls, fname, deleteDir=False):
+        """Delete the file if it exists and parent directory if it is empty.
+
+        Note:
+            If file path is a shapefile extension (.shp), delete all other
+                files that comprise the shapefile.
         """
         success = True
         msg = ''
         if fname is None:
             msg = 'Cannot delete file \'None\''
         else:
-            import os
-            pth, basename = os.path.split(fname)
+            pth, _ = os.path.split(fname)
             if fname is not None and os.path.exists(fname):
                 base, ext = os.path.splitext(fname)
-                if  ext == LMFormat.SHAPE.ext:
-                    import glob
+                if ext == LMFormat.SHAPE.ext:
                     similarFnames = glob.glob(base + '.*')
                     try:
                         for simfname in similarFnames:
-                            simbase, simext = os.path.splitext(simfname)
+                            _, simext = os.path.splitext(simfname)
                             if simext in LMFormat.SHAPE.getExtensions():
                                 os.remove(simfname)
                     except Exception as e:
                         success = False
-                        msg = 'Failed to remove {}, {}'.format(simfname, str(e))
+                        msg = 'Failed to remove {}, {}'.format(
+                            simfname, str(e))
                 else:
                     try:
                         os.remove(fname)
@@ -118,11 +116,11 @@ class LMObject:
         for key, val in newMetadataDict.items():
             try:
                 existingVal = existingMetadataDict[key]
-            except:
+            except Exception:
                 existingMetadataDict[key] = val
             else:
                 # if metadata exists and is ...
-                if type(existingVal) is list: 
+                if type(existingVal) is list:
                     # a list, add to it
                     if type(val) is list:
                         newVal = list(set(existingVal.extend(val)))
@@ -150,14 +148,15 @@ class LMObject:
         """
         objMetadata = {}
         if newMetadata is not None:
-            if type(newMetadata) is dict: 
+            if isinstance(newMetadata, dict):
                 objMetadata = newMetadata
             else:
                 try:
                     objMetadata = json.loads(newMetadata)
                 except Exception as e:
-                    print(('Failed to load JSON object from type {} object {}'
-                            .format(type(newMetadata), newMetadata)))
+                    print(
+                        'Failed to load JSON from type {} object {}'.format(
+                            type(newMetadata), newMetadata))
         return objMetadata
 
 

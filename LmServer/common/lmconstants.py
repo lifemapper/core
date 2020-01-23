@@ -1203,7 +1203,7 @@ PROCESSING_KEY = 'processing'
 
 
 class SubsetMethod(Enum):
-    """
+    """Subset method enumeration
     """
     COLUMN = 0  # Same shapegrid, just cut out columns
     SPATIAL = 1  # Spatial subset of original shapegrid.  Column and row,

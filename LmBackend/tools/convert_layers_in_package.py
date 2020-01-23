@@ -3,7 +3,7 @@
 import argparse
 import os
 
-from LmBackend.common.layerTools import convertLayersInDirectory
+from LmBackend.common.layer_tools import convert_layers_in_dir
 
 DESCRIPTION = """\
 This script converts all of the layers in a directory to ASCIIs and MXEs"""
@@ -20,7 +20,7 @@ def main():
     args = parser.parse_args()
 
     if os.path.exists(args.layer_directory):
-        convertLayersInDirectory(args.layer_directory)
+        convert_layers_in_dir(args.layer_directory)
     else:
         raise Exception(
             'Layer directory: {}, does not exist'.format(args.layer_directory))

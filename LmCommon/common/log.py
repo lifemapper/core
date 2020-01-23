@@ -13,6 +13,9 @@ from LmCommon.common.lmconstants import (LOG_DATE_FORMAT, LOG_FORMAT,
 # TODO: send function name to logger for better info on source of problem
 #         thisFunctionName = sys._getframe().f_code.co_name
 
+# TODO: CJG - Either do a better job of subclassing logging.Logger or at a
+#    minimum enable the same parameters for logging to different levels.
+
 class LmLogger(logging.Logger):
     """
     @summary: Logging.logger wrapper

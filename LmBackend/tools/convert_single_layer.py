@@ -2,7 +2,7 @@
 """
 import argparse
 
-from LmBackend.common.layerTools import convertTiffToAscii
+from LmBackend.common.layer_tools import convert_tiff_to_ascii
 
 
 # .............................................................................
@@ -16,7 +16,7 @@ def main():
     parser.add_argument('ascii_fn', type=str)
     args = parser.parse_args()
 
-    convertTiffToAscii(args.tiff_fn, args.ascii_fn)
+    convert_tiff_to_ascii(args.tiff_fn, args.ascii_fn)
 
 
 # .............................................................................

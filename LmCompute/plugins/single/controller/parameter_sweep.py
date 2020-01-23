@@ -20,7 +20,7 @@ import os
 from osgeo import ogr
 from time import sleep
 
-import LmBackend.common.layerTools as layer_tools
+import LmBackend.common.layer_tools as layer_tools
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
@@ -241,7 +241,7 @@ class ParameterSweep(object):
                             try:
                                 raw_prj_filename = wrapper.get_projection_filename()
                                 # Convert layer and scale layer
-                                layer_tools.convertAndModifyAsciiToTiff(
+                                layer_tools.convert_and_modify_ascii_to_tiff(
                                     raw_prj_filename, projection_path,
                                     scale=scale_params, multiplier=multiplier)
                                 wrapper.get_output_package(
@@ -510,7 +510,7 @@ class ParameterSweep(object):
                                     raw_prj_filename = \
                                         wrapper.get_projection_filename()
                                     # Convert layer and scale layer
-                                    layer_tools.convertAndModifyAsciiToTiff(
+                                    layer_tools.convert_and_modify_ascii_to_tiff(
                                         raw_prj_filename, projection_path,
                                         scale=scale_params, multiplier=multiplier)
     

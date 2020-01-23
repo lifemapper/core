@@ -13,7 +13,7 @@ import shutil
 import time
 import zipfile
 
-from LmBackend.common.layerTools import processLayersJSON
+from LmBackend.common.layer_tools import process_layers_json
 from LmBackend.common.metrics import LmMetricNames, LmMetrics
 from LmBackend.common.subprocessManager import (
     LongRunningProcessError, SubprocessRunner)
@@ -88,7 +88,7 @@ class ModelSoftwareWrapper(object):
             layer_dir : If present, create sym links in the directory to the 
                 layers.
         """
-        lyrs = processLayersJSON(layer_json, symDir=layer_dir)
+        lyrs = process_layers_json(layer_json, sym_dir=layer_dir)
         return lyrs
     
     # ...................................

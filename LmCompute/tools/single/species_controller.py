@@ -37,7 +37,7 @@ import os
 from osgeo import ogr
 from time import sleep
 
-import LmBackend.common.layerTools as layer_tools
+import LmBackend.common.layer_tools as layer_tools
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
