@@ -2,19 +2,20 @@
 # -*- coding: utf-8 -*-
 """This module provides REST services for Occurrence sets
 """
-import cherrypy
 import json
+
+import cherrypy
 
 from LmCommon.common.lmconstants import (
     DEFAULT_POST_USER, HTTPStatus, JobStatus)
 from LmServer.base.atom import Atom
 from LmServer.common.localconstants import PUBLIC_USER
-#from LmServer.legion.occlayer import OccurrenceLayer
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.common.accessControl import checkUserPermission
-from LmWebServer.services.common.boomPost import BoomPoster
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.common.access_control import check_user_permission
+from LmWebServer.services.common.boom_post import BoomPoster
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
+
 
 # .............................................................................
 @cherrypy.expose
@@ -26,165 +27,163 @@ class OccurrenceLayerService(LmService):
     """
     # ................................
     def DELETE(self, pathOccSetId):
-        """
-        @summary: Attempts to delete an occurrence set
-        @param pathOccSetId: The id of the occurrence set to delete
+        """Attempts to delete an occurrence set
+
+        Args:
+            pathOccSetId (int): The id of the occurrence set to delete.
         """
         occ = self.scribe.getOccurrenceSet(occId=int(pathOccSetId))
-        
+
         if occ is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND, 'Occurrence set not found')
-        
+
         # If allowed to, delete
-        if checkUserPermission(self.getUserId(), occ, HTTPMethod.DELETE):
+        if check_user_permission(self.get_user_id(), occ, HTTPMethod.DELETE):
             success = self.scribe.deleteObject(occ)
             if success:
                 cherrypy.response.status = HTTPStatus.NO_CONTENT
                 return
-            else:
-                raise cherrypy.HTTPError(
-                    HTTPStatus.INTERNAL_SERVER_ERROR,
-                    'Failed to delete occurrence set')
-        else:
+
+            # If unsuccessful, fail
             raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN, 
-                'User does not have permission to delete this occurrence set')
-        
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                'Failed to delete occurrence set')
+
+        # If no permission to delete, raise HTTP 403
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN,
+            'User does not have permission to delete this occurrence set')
+
     # ................................
-    @lmFormatter
+    @lm_formatter
     def GET(self, pathOccSetId=None, afterTime=None, beforeTime=None,
             displayName=None, epsgCode=None, minimumNumberOfPoints=1,
             limit=100, offset=0, urlUser=None, status=None, gridSetId=None,
             fillPoints=False, **params):
-        """
-        @summary: Performs a GET request.  If an occurrence set id is provided,
-                         attempt to return that item.  If not, return a list of 
-                         occurrence sets that match the provided parameters
+        """GET request.  Either an occurrence set or list of them.
         """
         if pathOccSetId is None:
-            return self._listOccurrenceSets(
-                self.getUserId(urlUser=urlUser), afterTime=afterTime,
+            return self._list_occurrence_sets(
+                self.get_user_id(urlUser=urlUser), afterTime=afterTime,
                 beforeTime=beforeTime, displayName=displayName,
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints,
                 limit=limit, offset=offset, gridSetId=gridSetId, status=status)
-        elif pathOccSetId.lower() == 'count':
-            return self._countOccurrenceSets(
-                self.getUserId(urlUser=urlUser), afterTime=afterTime,
+
+        if pathOccSetId.lower() == 'count':
+            return self._count_occurrence_sets(
+                self.get_user_id(urlUser=urlUser), afterTime=afterTime,
                 beforeTime=beforeTime, displayName=displayName,
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints,
                 gridSetId=gridSetId, status=status)
-        elif pathOccSetId.lower() == 'web':
+
+        if pathOccSetId.lower() == 'web':
             return self._list_web_occurrence_sets(
-                self.getUserId(urlUser=urlUser), afterTime=afterTime,
+                self.get_user_id(urlUser=urlUser), afterTime=afterTime,
                 beforeTime=beforeTime, displayName=displayName,
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints,
                 limit=limit, offset=offset, gridSetId=gridSetId, status=status)
-        else:
-            return self._getOccurrenceSet(pathOccSetId, fillPoints=fillPoints)
-    
+
+        # Fallback to just get an individual occurrence set
+        return self._get_occurrence_set(pathOccSetId, fill_points=fillPoints)
+
     # ................................
-    #@cherrypy.tools.json_out
-    @lmFormatter
+    # @cherrypy.tools.json_out
+    @lm_formatter
     def POST(self, **params):
+        """Posts a new BOOM archive
         """
-        @summary: Posts a new BOOM archive
-        @todo: Do we want to enable single occurrence set posts still?
-        """
-        #projectionData = cherrypy.request.json
-        projectionData = json.loads(cherrypy.request.body.read())
-        
-        if self.getUserId() == PUBLIC_USER:
+        projection_data = json.loads(cherrypy.request.body.read())
+
+        if self.get_user_id() == PUBLIC_USER:
             usr = self.scribe.findUser(DEFAULT_POST_USER)
         else:
-            usr = self.scribe.findUser(self.getUserId())
-        
-        bp = BoomPoster(usr.userid, usr.email, projectionData, self.scribe)
-        gridset = bp.init_boom()
+            usr = self.scribe.findUser(self.get_user_id())
 
-        # TODO: What do we return?
+        boom_post = BoomPoster(
+            usr.userid, usr.email, projection_data, self.scribe)
+        gridset = boom_post.init_boom()
+
         cherrypy.response.status = HTTPStatus.ACCEPTED
-        return Atom(gridset.getId(), gridset.name, gridset.metadataUrl, 
-                        gridset.modTime, epsg=gridset.epsgcode)
+        return Atom(
+            gridset.getId(), gridset.name, gridset.metadataUrl,
+            gridset.modTime, epsg=gridset.epsgcode)
 
     # ................................
-    def _countOccurrenceSets(self, userId, afterTime=None, beforeTime=None,
-                             displayName=None, epsgCode=None,
-                             minimumNumberOfPoints=1, status=None,
-                             gridSetId=None):
+    def _count_occurrence_sets(self, userId, afterTime=None, beforeTime=None,
+                               displayName=None, epsgCode=None,
+                               minimumNumberOfPoints=1, status=None,
+                               gridSetId=None):
+        """Return a count of occurrence sets matching the specified criteria
         """
-        @summary: Return a count of occurrence sets matching the specified 
-                         criteria
-        """
-        afterStatus = None
-        beforeStatus = None
+        after_status = None
+        before_status = None
 
         # Process status parameter
         if status:
             if status < JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE - 1
             elif status == JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE + 1
-                afterStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE + 1
+                after_status = JobStatus.COMPLETE - 1
             else:
-                afterStatus = status - 1
-        
-        occCount = self.scribe.countOccurrenceSets(
+                after_status = status - 1
+
+        occ_count = self.scribe.countOccurrenceSets(
             userId=userId, minOccurrenceCount=minimumNumberOfPoints,
             displayName=displayName, afterTime=afterTime,
-            beforeTime=beforeTime, epsg=epsgCode, beforeStatus=beforeStatus,
-            afterStatus=afterStatus, gridsetId=gridSetId)
-        return {'count' : occCount}
+            beforeTime=beforeTime, epsg=epsgCode, beforeStatus=before_status,
+            afterStatus=after_status, gridsetId=gridSetId)
+        return {'count': occ_count}
 
     # ................................
-    def _getOccurrenceSet(self, pathOccSetId, fillPoints=False):
-        """
-        @summary: Attempt to get an occurrence set
+    def _get_occurrence_set(self, pathOccSetId, fill_points=False):
+        """Attempt to get an occurrence set
         """
         occ = self.scribe.getOccurrenceSet(occId=int(pathOccSetId))
-        
+
         if occ is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND, 'Occurrence set not found')
-        
+
         # If allowed to, return
-        if checkUserPermission(self.getUserId(), occ, HTTPMethod.GET):
-            if fillPoints:
+        if check_user_permission(self.get_user_id(), occ, HTTPMethod.GET):
+            if fill_points:
                 occ.readShapefile()
             return occ
-        else:
-            raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN, 
-                'User {} does not have permission to GET this occurrence set'.format(
-                    self.getUserId()))
-    
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN,
+            'User {} does not have permission to GET occurrence set'.format(
+                self.get_user_id()))
+
     # ................................
-    def _listOccurrenceSets(self, userId, afterTime=None, beforeTime=None,
-                            displayName=None, epsgCode=None,
-                            minimumNumberOfPoints=1, limit=100, offset=0,
-                            status=None, gridSetId=None):
+    def _list_occurrence_sets(self, userId, afterTime=None, beforeTime=None,
+                              displayName=None, epsgCode=None,
+                              minimumNumberOfPoints=1, limit=100, offset=0,
+                              status=None, gridSetId=None):
         """Return a list of occurrence sets matching the specified criteria
         """
-        afterStatus = None
-        beforeStatus = None
-        
+        after_status = None
+        before_status = None
+
         # Process status parameter
         if status:
             if status < JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE - 1
             elif status == JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE + 1
-                afterStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE + 1
+                after_status = JobStatus.COMPLETE - 1
             else:
-                afterStatus = status - 1
-        
-        occAtoms = self.scribe.listOccurrenceSets(offset, limit, userId=userId,
-                            minOccurrenceCount=minimumNumberOfPoints, 
-                            displayName=displayName, afterTime=afterTime, 
-                            beforeTime=beforeTime, epsg=epsgCode, 
-                            beforeStatus=beforeStatus, afterStatus=afterStatus,
-                            gridsetId=gridSetId)
-        return occAtoms
+                after_status = status - 1
+
+        occ_atoms = self.scribe.listOccurrenceSets(
+            offset, limit, userId=userId,
+            minOccurrenceCount=minimumNumberOfPoints, displayName=displayName,
+            afterTime=afterTime, beforeTime=beforeTime, epsg=epsgCode,
+            beforeStatus=before_status, afterStatus=after_status,
+            gridsetId=gridSetId)
+        return occ_atoms
 
     # ................................
     def _list_web_occurrence_sets(
@@ -193,24 +192,24 @@ class OccurrenceLayerService(LmService):
             status=None, gridSetId=None):
         """Return a list of occurrence set web objects matching criteria
         """
-        afterStatus = None
-        beforeStatus = None
-        
+        after_status = None
+        before_status = None
+
         # Process status parameter
         if status:
             if status < JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE - 1
             elif status == JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE + 1
-                afterStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE + 1
+                after_status = JobStatus.COMPLETE - 1
             else:
-                afterStatus = status - 1
-        
+                after_status = status - 1
+
         occs = self.scribe.listOccurrenceSets(
             offset, limit, userId=userId,
             minOccurrenceCount=minimumNumberOfPoints, displayName=displayName,
             afterTime=afterTime, beforeTime=beforeTime, epsg=epsgCode,
-            beforeStatus=beforeStatus, afterStatus=afterStatus,
+            beforeStatus=before_status, afterStatus=after_status,
             gridsetId=gridSetId, atom=False)
         occ_objs = []
         for occ in occs:
@@ -218,11 +217,11 @@ class OccurrenceLayerService(LmService):
                 {
                     'id': occ.getId(),
                     'metadata_url': occ.metadataUrl,
-                    'name' : occ.displayName,
-                    'modification_time' : occ.statusModTime,
-                    'epsg' : occ.epsgcode,
-                    'status' : occ.status,
-                    'count' : occ.queryCount
+                    'name': occ.displayName,
+                    'modification_time': occ.statusModTime,
+                    'epsg': occ.epsgcode,
+                    'status': occ.status,
+                    'count': occ.queryCount
                 }
             )
         return occ_objs

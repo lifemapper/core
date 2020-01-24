@@ -8,7 +8,7 @@ import json
 from LmCommon.common.apiquery import GbifAPI
 from LmCommon.common.lmconstants import HTTPStatus
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
 
 # TODO: These need to go into a constants file
 ACCEPTED_NAME_KEY = 'accepted_name'
@@ -22,7 +22,7 @@ class GBIFNamesService(LmService):
     """
     """
     # ................................
-    @lmFormatter
+    @lm_formatter
     def POST(self):
         """Queries GBIF for accepted names matching the provided list of names
         """

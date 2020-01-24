@@ -6,10 +6,11 @@ Todo:
     * Use opentree wrapper code
     * Catch service errors from OpenTree
 """
-import cherrypy
 import hashlib
 import json
 import os
+
+import cherrypy
 
 from LmCommon.common.lmconstants import HTTPStatus
 from LmCommon.common.readyfile import readyFilename
@@ -18,16 +19,13 @@ from LmCommon.common.time import gmt
 from LmDbServer.tools.partnerData import (
     get_ottids_from_gbifids, induced_subtree, Partners)
 
-from LmServer.common.lmconstants import ARCHIVE_PATH
+from LmServer.common.lmconstants import (
+    ARCHIVE_PATH, NONTREE_GBIF_IDS_KEY, TREE_DATA_KEY, TREE_FORMAT_KEY,
+    TREE_NAME_KEY, UNMATCHED_GBIF_IDS_KEY)
 
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
 
-NONTREE_GBIF_IDS_KEY = 'nontree_ids'
-TREE_DATA_KEY = 'tree_data'
-TREE_FORMAT_KEY = 'tree_format'
-TREE_NAME_KEY = 'tree_name'
-UNMATCHED_GBIF_IDS_KEY = 'unmatched_ids'
 
 # .............................................................................
 @cherrypy.expose
@@ -35,7 +33,7 @@ class OpenTreeService(LmService):
     """Open Tree wrapper service for retrieving trees from GBIF Ids
     """
     # ................................
-    @lmFormatter
+    @lm_formatter
     def POST(self):
         """Gets an Open Tree tree for a list of GBIF taxon ids
         """
@@ -53,9 +51,10 @@ class OpenTreeService(LmService):
             unmatched_gbif_ids = [
                 k for k in list(gbif_to_ott.keys()) if gbif_to_ott[k] is None]
             # Create a reverse lookup for OTT to GBIF IDs
-            ott_to_gbif = dict([(v, k) for (k, v) in gbif_to_ott.items()])
+            ott_to_gbif = {v: k for (k, v) in gbif_to_ott.items()}
             # Get the ids and drop Nones
-            ott_ids = [oid for oid in list(gbif_to_ott.values()) if oid is not None]
+            ott_ids = [
+                oid for oid in list(gbif_to_ott.values()) if oid is not None]
             if len(ott_ids) <= 1:
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST,
@@ -66,7 +65,8 @@ class OpenTreeService(LmService):
             # Get the list of GBIF IDs that matched to OTT IDs but were not in
             #    tree
             nontree_ids = [
-                int(ott_to_gbif[ott]) for ott in output[Partners.OTT_MISSING_KEY]]
+                int(ott_to_gbif[ott]) for ott in output[
+                    Partners.OTT_MISSING_KEY]]
         except cherrypy.HTTPError:
             raise
         except Exception as e:
@@ -74,11 +74,11 @@ class OpenTreeService(LmService):
                 HTTPStatus.SERVICE_UNAVAILABLE,
                 'We are having trouble connecting to Open Tree: {}'.format(
                     str(e)))
-            
+
         # Determine a name for the tree, use user id, 16 characters of hashed
         #    tree data, and mjd
         tree_name = '{}-{}-{}.tre'.format(
-            self.getUserId(), hashlib.md5(tree_data).hexdigest()[:16],
+            self.get_user_id(), hashlib.md5(tree_data).hexdigest()[:16],
             gmt().mjd)
         # Write the tree
         out_filename = os.path.join(self._get_user_dir(), tree_name)
@@ -90,13 +90,13 @@ class OpenTreeService(LmService):
             raise cherrypy.HTTPError(
                 HTTPStatus.CONFLICT,
                 'Tree with this name already exists in the user space')
-        
+
         resp = {
-            NONTREE_GBIF_IDS_KEY : nontree_ids,
-            TREE_DATA_KEY : tree_data,
-            TREE_FORMAT_KEY : Partners.OTT_TREE_FORMAT, # Newick
-            TREE_NAME_KEY : tree_name,
-            UNMATCHED_GBIF_IDS_KEY : unmatched_gbif_ids,
+            NONTREE_GBIF_IDS_KEY: nontree_ids,
+            TREE_DATA_KEY: tree_data,
+            TREE_FORMAT_KEY: Partners.OTT_TREE_FORMAT,  # Newick
+            TREE_NAME_KEY: tree_name,
+            UNMATCHED_GBIF_IDS_KEY: unmatched_gbif_ids,
         }
 
         return resp
@@ -108,4 +108,5 @@ class OpenTreeService(LmService):
         Todo:
             * Move this function to base class and generalize
         """
-        return os.path.join(ARCHIVE_PATH, self.getUserId(), 'uploads', 'tree')
+        return os.path.join(
+            ARCHIVE_PATH, self.get_user_id(), 'uploads', 'tree')

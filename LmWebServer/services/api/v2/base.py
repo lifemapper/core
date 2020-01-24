@@ -9,8 +9,9 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.borgscribe import BorgScribe
 
+
 # .............................................................................
-class LmService(object):
+class LmService:
     """This is the base Lifemapper service object
 
     This is the base Lifemapper service object that the services can inherit
@@ -27,14 +28,14 @@ class LmService(object):
         as a CherryPy Tool)
         """
         log = LmPublicLogger()
-        #self.scribe = cherrypy.thread_data.scribeRetriever.getScribe()
+        # self.scribe = cherrypy.thread_data.scribeRetriever.get_scribe()
         self.scribe = BorgScribe(log)
         self.scribe.openConnections()
-        #self.log = cherrypy.session.log
+        # self.log = cherrypy.session.log
         self.log = log
-    
+
     # ..........................
-    def getUserId(self, urlUser=None):
+    def get_user_id(self, urlUser=None):
         """Gets the user id for the service call.
 
         Gets the user id for the service call.  If urlUser is provided, try
@@ -45,12 +46,12 @@ class LmService(object):
         if urlUser is not None:
             if urlUser.lower() == 'public'.lower():
                 return PUBLIC_USER
-            elif urlUser.lower() == DEFAULT_POST_USER.lower():
+            if urlUser.lower() == DEFAULT_POST_USER.lower():
                 return DEFAULT_POST_USER
         # Try to get the user from the session
         try:
             return cherrypy.session.user
-        except:
+        except Exception:
             # Fall back to PUBLIC_USER
             return PUBLIC_USER
 

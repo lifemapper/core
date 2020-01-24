@@ -29,9 +29,9 @@ from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.api.v2.matrix import MatrixService
-from LmWebServer.services.common.accessControl import checkUserPermission
+from LmWebServer.services.common.accessControl import check_user_permission
 from LmWebServer.services.common.boomPost import BoomPoster
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
 
 BG_REF_ID_KEY = 'identifier'
 BG_REF_KEY = 'hypothesis_package_reference'
@@ -80,7 +80,7 @@ class GridsetAnalysisService(LmService):
     # ................................
     # TODO: Enable GET?  Could this just be the outputs?
     # ................................
-    @lmFormatter
+    @lm_formatter
     def POST(self, pathGridSetId, doMcpa=False, numPermutations=500, 
              doCalc=False, **params):
         """Adds a set of biogeographic hypotheses to the gridset
@@ -130,13 +130,13 @@ class GridsetAnalysisService(LmService):
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
                 'GridSet {} was not found'.format(pathGridSetId))
-        if checkUserPermission(self.getUserId(), gs, HTTPMethod.GET):
+        if check_user_permission(self.get_user_id(), gs, HTTPMethod.GET):
             return gs
         else:
             raise cherrypy.HTTPError(
                 HTTPStatus.FORBIDDEN, 
                 'User {} does not have permission to access GridSet {}'.format(
-                    self.getUserId(), pathGridSetId))
+                    self.get_user_id(), pathGridSetId))
    
     # ................................
     def _get_user_dir(self):
@@ -147,7 +147,7 @@ class GridsetAnalysisService(LmService):
                 same path construction as the getBoomPackage script
         """
         return os.path.join(
-            ARCHIVE_PATH, self.getUserId(), 'uploads', 'biogeo')
+            ARCHIVE_PATH, self.get_user_id(), 'uploads', 'biogeo')
 
 # .............................................................................
 @cherrypy.expose
@@ -156,7 +156,7 @@ class GridsetBioGeoService(LmService):
     """Service class for gridset biogeographic hypotheses
     """
     # ................................
-    @lmFormatter
+    @lm_formatter
     def GET(self, pathGridSetId, pathBioGeoId=None, **params):
         """There is not a true service for limiting the biogeographic
                hypothesis matrices in a gridset, but return all when listing
@@ -179,7 +179,7 @@ class GridsetBioGeoService(LmService):
                 pathBioGeoId, pathGridSetId))
         
     # ................................
-    @lmFormatter
+    @lm_formatter
     def POST(self, pathGridSetId, **params):
         """Adds a set of biogeographic hypotheses to the gridset
         """
@@ -356,13 +356,13 @@ class GridsetBioGeoService(LmService):
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
                 'GridSet {} was not found'.format(pathGridSetId))
-        if checkUserPermission(self.getUserId(), gs, HTTPMethod.GET):
+        if check_user_permission(self.get_user_id(), gs, HTTPMethod.GET):
             return gs
         else:
             raise cherrypy.HTTPError(
                 HTTPStatus.FORBIDDEN,
                 'User {} does not have permission to access GridSet {}'.format(
-                    self.getUserId(), pathGridSetId))
+                    self.get_user_id(), pathGridSetId))
     
     # ................................
     def _get_user_dir(self):
@@ -371,7 +371,7 @@ class GridsetBioGeoService(LmService):
         @todo: Change this to use something at a lower level.  This is using the
                      same path construction as the getBoomPackage script
         """
-        return os.path.join(ARCHIVE_PATH, self.getUserId(), 'uploads', 'biogeo')
+        return os.path.join(ARCHIVE_PATH, self.get_user_id(), 'uploads', 'biogeo')
     
 # .............................................................................
 @cherrypy.expose
@@ -379,7 +379,7 @@ class GridsetProgressService(LmService):
     """Service class for gridset progress
     """
     # ................................
-    @lmFormatter
+    @lm_formatter
     def GET(self, pathGridSetId, detail=False, **params):
         """Get progress for a gridset
         """
@@ -405,7 +405,7 @@ class GridsetTreeService(LmService):
             raise cherrypy.HTTPError(404, "Tree {} not found".format(pathTreeId))
         
         # If allowed to, delete
-        if checkUserPermission(self.getUserId(), tree, HTTPMethod.DELETE):
+        if check_user_permission(self.get_user_id(), tree, HTTPMethod.DELETE):
             success = self.scribe.deleteObject(tree)
             if success:
                 cherrypy.response.status = 204
@@ -420,7 +420,7 @@ class GridsetTreeService(LmService):
                       "User does not have permission to delete this tree")
 
     # ................................
-    @lmFormatter
+    @lm_formatter
     def GET(self, pathGridSetId, pathTreeId=None, includeCSV=None, 
             includeSDMs=None, **params):
         """
@@ -432,7 +432,7 @@ class GridsetTreeService(LmService):
         return gs.tree
         
     # ................................
-    @lmFormatter
+    @lm_formatter
     def POST(self, pathGridSetId, pathTreeId=None, name=None,
              treeSchema=DEFAULT_TREE_SCHEMA, **params):
         """
@@ -444,14 +444,14 @@ class GridsetTreeService(LmService):
                 raise cherrypy.HTTPError(
                     HTTPStatus.NOT_FOUND,
                     'Tree {} was not found'.format(pathTreeId))
-            if checkUserPermission(self.getUserId(), tree, HTTPMethod.GET):
+            if check_user_permission(self.get_user_id(), tree, HTTPMethod.GET):
                 pass
             else:
                 # Raise exception if user does not have permission
                 raise cherrypy.HTTPError(
                     HTTPStatus.FORBIDDEN,
                     'User {} does not have permission to access tree {}'.format(
-                                self.getUserId(), pathTreeId))
+                                self.get_user_id(), pathTreeId))
         else:
             if name is None:
                 raise cherrypy.HTTPError(
@@ -459,7 +459,7 @@ class GridsetTreeService(LmService):
                     'Must provide name for tree')
             tree = dendropy.Tree.get(file=cherrypy.request.body, 
                                      schema=treeSchema)
-            newTree = Tree(name, userId=self.getUserId())
+            newTree = Tree(name, userId=self.get_user_id())
             updatedTree = self.scribe.findOrInsertTree(newTree)
             updatedTree.setTree(tree)
             updatedTree.writeTree()
@@ -483,13 +483,13 @@ class GridsetTreeService(LmService):
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
                 'GridSet {} was not found'.format(pathGridSetId))
-        if checkUserPermission(self.getUserId(), gs, HTTPMethod.GET):
+        if check_user_permission(self.get_user_id(), gs, HTTPMethod.GET):
             return gs
         else:
             raise cherrypy.HTTPError(
                 HTTPStatus.FORBIDDEN,
                 'User {} does not have permission to access GridSet {}'.format(
-                    self.getUserId(), pathGridSetId))
+                    self.get_user_id(), pathGridSetId))
     
 # .............................................................................
 @cherrypy.expose
@@ -518,7 +518,7 @@ class GridsetService(LmService):
                 HTTPStatus.NOT_FOUND, "Grid set not found")
         
         # If allowed to, delete
-        if checkUserPermission(self.getUserId(), gs, HTTPMethod.DELETE):
+        if check_user_permission(self.get_user_id(), gs, HTTPMethod.DELETE):
             success = self.scribe.deleteObject(gs)
             if success:
                 cherrypy.response.status = HTTPStatus.NO_CONTENT
@@ -535,7 +535,7 @@ class GridsetService(LmService):
                 "User does not have permission to delete this grid set")
 
     # ................................
-    @lmFormatter
+    @lm_formatter
     def GET(self, pathGridSetId=None, afterTime=None, beforeTime=None, 
               epsgCode=None, limit=100, metaString=None, offset=0, urlUser=None, 
               shapegridId=None, **params):
@@ -546,12 +546,12 @@ class GridsetService(LmService):
         """
         if pathGridSetId is None:
             return self._listGridSets(
-                self.getUserId(urlUser=urlUser), afterTime=afterTime, 
+                self.get_user_id(urlUser=urlUser), afterTime=afterTime, 
                 beforeTime=beforeTime, epsgCode=epsgCode, limit=limit, 
                 metaString=metaString, offset=offset, shapegridId=shapegridId)
         elif pathGridSetId.lower() == 'count':
             return self._countGridSets(
-                self.getUserId(urlUser=urlUser), afterTime=afterTime, 
+                self.get_user_id(urlUser=urlUser), afterTime=afterTime, 
                 beforeTime=beforeTime, epsgCode=epsgCode, 
                 metaString=metaString, shapegridId=shapegridId)
         else:
@@ -578,7 +578,7 @@ class GridsetService(LmService):
         """
         gridsetData = json.loads(cherrypy.request.body.read())
         
-        usr = self.scribe.findUser(self.getUserId())
+        usr = self.scribe.findUser(self.get_user_id())
         
         bp = BoomPoster(usr.userid, usr.email, gridsetData, self.scribe)
         gridset = bp.init_boom()
@@ -618,13 +618,13 @@ class GridsetService(LmService):
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND, 
                 'GridSet {} was not found'.format(pathGridSetId))
-        if checkUserPermission(self.getUserId(), gs, HTTPMethod.GET):
+        if check_user_permission(self.get_user_id(), gs, HTTPMethod.GET):
             return gs
         else:
             raise cherrypy.HTTPError(
                 HTTPStatus.FORBIDDEN, 
                 'User {} does not have permission to access GridSet {}'.format(
-                    self.getUserId(), pathGridSetId))
+                    self.get_user_id(), pathGridSetId))
     
     # ................................
     def _listGridSets(self, userId, afterTime=None, beforeTime=None, 

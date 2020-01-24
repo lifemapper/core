@@ -1,74 +1,74 @@
+"""Module containing user services for basic authentication
 """
-@summary: Module containing user services for basic authentication
-"""
-import cherrypy
 import os
 import shutil
 
+import cherrypy
+
+from LmCommon.common.lmconstants import HTTPStatus
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
-from LmWebServer.common.lmconstants import REFERER_KEY, SESSION_KEY, SESSION_PATH
+from LmWebServer.common.lmconstants import (
+    REFERER_KEY, SESSION_KEY, SESSION_PATH)
 from LmWebServer.services.api.v2.base import LmService
 
 
 # .............................................................................
 @cherrypy.expose
 class UserLogin(LmService):
-    """
-    @summary: This is the user login service.  Sending a GET request will return
-                     a login page.  POSTing will attempt to login with the user's
-                     credentials
+    """User login service.
     """
     # ................................
     def GET(self):
-        """
-        @summary: Present the user with a login page if they are not already 
-                         logged in.  If they are, return their user name
+        """Present the user with a login page if not logged in.
         """
         # Check if the user is logged in
         user = cherrypy.session.user
         if user is not None and user != PUBLIC_USER:
             # Already logged in
             return "Welcome {}".format(cherrypy.session.user)
-        else:
-            # Return login page
-            return _get_login_page()
+
+        # Return login page
+        return _get_login_page()
 
     # ................................
     def POST(self, userId=None, pword=None):
-        """
-        @summary: Attempt to log in using the provided credentials
+        """Attempt to log in using the provided credentials
         """
         if userId is None or pword is None:
-            raise cherrypy.HTTPError(400, "Must provide user name and password")
-        
-        refererPage = None
-        
+            raise cherrypy.HTTPError(
+                HTTPStatus.BAD_REQUEST, 'Must provide user name and password')
+
+        referer_page = None
+
         try:
             cookie = cherrypy.request.cookie
             if REFERER_KEY in cookie:
-                refererPage = cookie[REFERER_KEY].value
+                referer_page = cookie[REFERER_KEY].value
             else:
-                refererPage = cherrypy.request.headers['referer']
+                referer_page = cherrypy.request.headers['referer']
                 cookie = cherrypy.response.cookie
-                cookie[REFERER_KEY] = refererPage
+                cookie[REFERER_KEY] = referer_page
                 cookie[REFERER_KEY]['path'] = '/api/login'
                 cookie[REFERER_KEY]['max-age'] = 30
                 cookie[REFERER_KEY]['version'] = 1
         except:
             pass
-        
+
         user = self.scribe.findUser(userId=userId)
         if user is not None and user.checkPassword(pword):
             # Provided correct credentials
             cherrypy.session.regenerate()
-            cherrypy.session[SESSION_KEY] = cherrypy.request.login = user.getUserId()
+            cherrypy.session[SESSION_KEY] = user.getUserId()
+            cherrypy.request.login = user.getUserId()
             cookie = cherrypy.response.cookie
-            cookie[REFERER_KEY] = refererPage
+            cookie[REFERER_KEY] = referer_page
             cookie[REFERER_KEY]['expires'] = 0
-            raise cherrypy.HTTPRedirect(refererPage or '/')
-        else:
-            raise cherrypy.HTTPError(403, 'Invalid username / password combination')
+            raise cherrypy.HTTPRedirect(referer_page or '/')
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN, 'Invalid username / password combination')
+
 
 # .............................................................................
 @cherrypy.expose
@@ -78,17 +78,20 @@ class UserLogout(LmService):
     """
     # ................................
     def GET(self):
+        """Log out
+        """
         cherrypy.lib.sessions.expire()
         cherrypy.session[SESSION_KEY] = cherrypy.request.login = None
-        sessionFn = os.path.join(SESSION_PATH, 
-                                         'session-{}'.format(cherrypy.session.id))
+        session_file_name = os.path.join(
+            SESSION_PATH, 'session-{}'.format(cherrypy.session.id))
         try:
-            shutil.rmtree(sessionFn)
+            shutil.rmtree(session_file_name)
         except:
             pass
-        
+
         raise cherrypy.HTTPRedirect('/api/login')
-    
+
+
 # .............................................................................
 @cherrypy.expose
 class UserSignUp(LmService):
@@ -101,50 +104,59 @@ class UserSignUp(LmService):
         @summary: Present a new user form
         """
         return _get_signup_page()
-    
+
     # ................................
-    def POST(self, userId, email, firstName, pword1, lastName=None, 
-                institution=None, address1=None, address2=None, address3=None, 
-                phone=None):
-        
+    def POST(self, userId, email, firstName, pword1, lastName=None,
+             institution=None, address1=None, address2=None, address3=None,
+             phone=None):
+
         if not _verify_length(userId, maxLength=20, minLength=5):
-            raise cherrypy.HTTPError(400, 
-                                         'User ID must have between 5 and 20 characters')
+            raise cherrypy.HTTPError(
+                HTTPStatus.BAD_REQUEST,
+                'User ID must have between 5 and 20 characters')
         if not _verify_length(firstName, minLength=2, maxLength=50):
-            raise cherrypy.HTTPError(400, 
-                                     'First name must have between 2 and 50 characters')
+            raise cherrypy.HTTPError(
+                HTTPStatus.BAD_REQUEST,
+                'First name must have between 2 and 50 characters')
         if not _verify_length(lastName, minLength=2, maxLength=50):
-            raise cherrypy.HTTPError(400, 
-                                      'Last name must have between 2 and 50 characters')
-        if phone is not None and len(phone) > 0 and not _verify_length(phone, minLength=10, maxLength=20):
-            raise cherrypy.HTTPError(400, 
-                                 'Phone number must have between 10 and 20 characters')
+            raise cherrypy.HTTPError(
+                HTTPStatus.BAD_REQUEST,
+                'Last name must have between 2 and 50 characters')
+        if phone is not None and len(phone) > 0 and not _verify_length(
+                phone, minLength=10, maxLength=20):
+            raise cherrypy.HTTPError(
+                HTTPStatus.BAD_REQUEST,
+                'Phone number must have between 10 and 20 characters')
         if not _verify_length(email, minLength=9, maxLength=64):
-            raise cherrypy.HTTPError(400, 
-                                            'Email must have between 9 and 64 characters')
+            raise cherrypy.HTTPError(
+                HTTPStatus.BAD_REQUEST,
+                'Email must have between 9 and 64 characters')
         if not _verify_length(pword1, minLength=8, maxLength=32):
-            raise cherrypy.HTTPError(400, 
-                                          'Password must be between 8 and 32 characters')
-            
-        checkUser = self.scribe.findUser(userId, email)
-        
-        if checkUser is None:
-            usr = LMUser(userId, email, pword1, firstName=firstName, 
-                             lastName=lastName, institution=institution, 
-                             addr1=address1, addr2=address2, addr3=address3, 
-                             phone=phone)
-            insUsr = self.scribe.findOrInsertUser(usr)
-            
+            raise cherrypy.HTTPError(
+                HTTPStatus.BAD_REQUEST,
+                'Password must be between 8 and 32 characters')
+
+        check_user = self.scribe.findUser(userId, email)
+
+        if check_user is None:
+            usr = LMUser(
+                userId, email, pword1, firstName=firstName, lastName=lastName,
+                institution=institution, addr1=address1, addr2=address2,
+                addr3=address3, phone=phone)
+            ins_usr = self.scribe.findOrInsertUser(usr)
+
             cherrypy.session[SESSION_KEY] = cherrypy.request.login = userId
-            
-            welcomeMsg = _get_welcome_msg(firstName, userId, pword1)
-            return welcomeMsg
-        else:
-            raise cherrypy.HTTPError(409, 'Duplicate user credentials')
-        
+
+            welcome_msg = _get_welcome_msg(firstName, userId, pword1)
+            return welcome_msg
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.CONFLICT, 'Duplicate user credentials')
+
+
 # .............................................................................
 def _get_login_page():
-    loginPage = """\
+    login_page = """\
 <html>
     <head>
         <title>Log in to Lifemapper</title>
@@ -156,7 +168,7 @@ def _get_login_page():
                     <table>
                         <tr>
                             <td style="text-align: right;">
-                                User Name: 
+                                User Name:
                             </td>
                             <td style="text-align: left;">
                                 <input type="text" name="userid" />
@@ -174,15 +186,18 @@ def _get_login_page():
                 </div>
                 <input type="submit" value="Log In" /><br /><br />
                 New user? <a href="/api/signup">Sign up</a> here!<br /><br />
-                Forgot your password? Contact us at lifemapper at ku dot edu.<br />
+                Forgot your password? Contact us at lifemapper at ku dot edu.
+                <br />
             </form>
         </div>
     </body>
 </html>"""
-    return loginPage
+    return login_page
 
+
+# .............................................................................
 def _get_signup_page():
-    signupPage = """\
+    signup_page = """\
 <html>
     <head>
         <title>
@@ -191,7 +206,7 @@ def _get_signup_page():
     </head>
     <body>
 <div align="center" class="signup">
-    <form name="signup" action="/api/signup" method="post" 
+    <form name="signup" action="/api/signup" method="post"
             onsubmit="return validateNewUser(this);">
         <div align="center">
             <table>
@@ -200,8 +215,9 @@ def _get_signup_page():
                         User Id:
                     </td>
                     <td class="signupInput">
-                        <input name="userId" id="userIdField" type="text" 
-                                                            onchange="checkUserName(this);" />
+                        <input name="userId"
+                               id="userIdField" type="text"
+                               onchange="checkUserName(this);" />
                     </td>
                     <td class="signupRequired">
                         (Required)
@@ -212,8 +228,8 @@ def _get_signup_page():
                         Email Address:
                     </td>
                     <td class="signupInput">
-                        <input name="email" id="emailField" type="text" 
-                                                                onchange="checkEmail(this);" />
+                        <input name="email" id="emailField" type="text"
+                               onchange="checkEmail(this);" />
                     </td>
                     <td class="signupRequired">
                         (Required)
@@ -414,7 +430,7 @@ function validateLength(val, maxLen) {
         return false;
     }
 }
-    
+
 
 function checkEmail(fld) {
     if (!validateEmail(fld.value)) {
@@ -434,13 +450,14 @@ function checkUserName(fld) {
 </script>
     </body>
 </html>"""
-    return signupPage
+    return signup_page
 
-def _get_welcome_msg(firstName, userId, pword):
+
+# .............................................................................
+def _get_welcome_msg(first_name, userId, pword):
+    """Get a welcome message for the new user
     """
-    @summary: Get a welcome message for the new user
-    """
-    welcomeMsg = """\
+    welcome_msg = """\
 <html>
     <head>
         <title>
@@ -453,11 +470,14 @@ def _get_welcome_msg(firstName, userId, pword):
         </p>
     </body>
 </html>""".format(userName=userId, pword=pword)
-    return welcomeMsg
+    return welcome_msg
 
+
+# .............................................................................
 def _verify_length(item, minLength=0, maxLength=50):
+    """
+    """
     if item is None or (len(item) <= maxLength and len(item) >= minLength):
         return True
-    else:
-        return False
-    
+
+    return False

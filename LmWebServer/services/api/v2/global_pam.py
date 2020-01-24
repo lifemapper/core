@@ -10,7 +10,8 @@ from LmServer.common.solr import facetArchiveOnGridset, queryArchiveIndex
 from LmServer.common.subset import subsetGlobalPAM
 
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
+
 
 # .............................................................................
 @cherrypy.expose
@@ -18,7 +19,7 @@ class GridsetFacetService(LmService):
     """This service retrieves gridsets within the solr index for the user
     """
     # ................................
-    @lmFormatter
+    @lm_formatter
     def GET(self, urlUser=None, **params):
         """Queries the Global PAM for matching results
         """
@@ -28,14 +29,15 @@ class GridsetFacetService(LmService):
         counts = []
         while i < len(facets):
             counts.append({
-                SOLR_FIELDS.GRIDSET_ID : str(facets[i]),
-                'count' : int(facets[i+1])
+                SOLR_FIELDS.GRIDSET_ID: str(facets[i]),
+                'count': int(facets[i+1])
             })
             i += 2
 
         return {
             SOLR_FIELDS.GRIDSET_ID: counts
         }
+
 
 # .............................................................................
 @cherrypy.expose
@@ -46,9 +48,9 @@ class GlobalPAMService(LmService):
         * The dispatcher is responsible for calling the correct method
     """
     gridset = GridsetFacetService()
-    
+
     # ................................
-    @lmFormatter
+    @lm_formatter
     def GET(self, algorithmCode=None, bbox=None, displayName=None,
             gridSetId=None, modelScenarioCode=None, pointMax=None,
             pointMin=None, urlUser=None, prjScenCode=None, squid=None,
@@ -65,9 +67,9 @@ class GlobalPAMService(LmService):
             taxKingdom=taxonKingdom, taxPhylum=taxonPhylum,
             taxClass=taxonClass, taxOrder=taxonOrder, taxFamily=taxonFamily,
             taxGenus=taxonGenus, taxSpecies=taxonSpecies)
-    
+
     # ................................
-    @lmFormatter
+    @lm_formatter
     def POST(self, archiveName, gridSetId, algorithmCode=None, bbox=None,
              cellSize=None, modelScenarioCode=None, pointMax=None,
              pointMin=None, urlUser=None, prjScenCode=None, squid=None,
@@ -81,20 +83,20 @@ class GlobalPAMService(LmService):
             gridSetId=gridSetId, modelScenarioCode=modelScenarioCode,
             pointMax=pointMax, pointMin=pointMin, urlUser=urlUser,
             projectionScenarioCode=prjScenCode, squid=squid,
-            taxKingdom=taxonKingdom, taxPhylum=taxonPhylum, taxClass=taxonClass,
-            taxOrder=taxonOrder, taxFamily=taxonFamily, taxGenus=taxonGenus,
-            taxSpecies=taxonSpecies)
+            taxKingdom=taxonKingdom, taxPhylum=taxonPhylum,
+            taxClass=taxonClass, taxOrder=taxonOrder, taxFamily=taxonFamily,
+            taxGenus=taxonGenus, taxSpecies=taxonSpecies)
         # Make bbox tuple
         if bbox:
-            bbox = tuple([float(i) for i in bbox.split(',')])        
+            bbox = tuple([float(i) for i in bbox.split(',')])
 
-        gridset = self._subsetGlobalPAM(
-            archiveName, matches, bbox=bbox, cellSize=cellSize)
+        gridset = self._subset_global_pam(
+            archiveName, matches, bbox=bbox, cell_size=cellSize)
         cherrypy.response.status = 202
         return Atom(
             gridset.getId(), gridset.name, gridset.metadataUrl,
             gridset.modTime, epsg=gridset.epsgcode)
-    
+
     # ................................
     def _make_solr_query(self, algorithmCode=None, bbox=None, displayName=None,
                          gridSetId=None, modelScenarioCode=None, pointMax=None,
@@ -103,7 +105,6 @@ class GlobalPAMService(LmService):
                          taxKingdom=None, taxPhylum=None, taxClass=None,
                          taxOrder=None, taxFamily=None, taxGenus=None,
                          taxSpecies=None):
-        
         return queryArchiveIndex(
             algorithmCode=algorithmCode, bbox=bbox, displayName=displayName,
             gridSetId=gridSetId, modelScenarioCode=modelScenarioCode,
@@ -111,17 +112,17 @@ class GlobalPAMService(LmService):
             projectionScenarioCode=projectionScenarioCode, squid=squid,
             taxKingdom=taxKingdom, taxPhylum=taxPhylum, taxClass=taxClass,
             taxOrder=taxOrder, taxFamily=taxFamily, taxGenus=taxGenus,
-            taxSpecies=taxSpecies, userId=self.getUserId(urlUser=urlUser))
-    
+            taxSpecies=taxSpecies, userId=self.get_user_id(urlUser=urlUser))
+
     # ................................
-    def _subsetGlobalPAM(self, archiveName, matches, bbox=None, cellSize=None):
+    def _subset_global_pam(self, archive_name, matches, bbox=None,
+                           cell_size=None):
         """Creates a subset of a global PAM and create a new grid set
 
         Args:
-            * archiveName (str) : The name of this new grid set
-            * matches (list) : Solr hits to be used for subsetting
+            archiveName (str) : The name of this new grid set
+            matches (list) : Solr hits to be used for subsetting
         """
-        newGridSet = subsetGlobalPAM(
-            archiveName, matches, self.getUserId(), bbox=bbox,
-            cellSize=cellSize, scribe=self.scribe)
-        return newGridSet
+        return subsetGlobalPAM(
+            archive_name, matches, self.get_user_id(), bbox=bbox,
+            cellSize=cell_size, scribe=self.scribe)

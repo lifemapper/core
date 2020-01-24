@@ -13,17 +13,18 @@ from LmServer.common.lmconstants import SnippetOperations
 from LmServer.common.snippet import SnippetShooter
 
 from LmWebServer.formatters.fileFormatter import (
-    csvObjectFormatter, file_formatter, gtiffObjectFormatter,
-    shapefileObjectFormatter)
-from LmWebServer.formatters.geoJsonFormatter import geoJsonObjectFormatter
-from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
-from LmWebServer.formatters.kmlFormatter import kmlObjectFormatter
-from LmWebServer.formatters.packageFormatter import gridsetPackageFormatter
+    csv_object_formatter, file_formatter, gtiff_object_formatter,
+    shapefile_object_formatter)
+from LmWebServer.formatters.geo_json_formatter import geo_json_object_formatter
+from LmWebServer.formatters.json_formatter import json_object_formatter
+from LmWebServer.formatters.kml_formatter import kml_object_formatter
+from LmWebServer.formatters.package_formatter import gridset_package_formatter
 from LmWebServer.formatters.progress_formatter import progress_object_formatter
-from LmWebServer.formatters.emlFormatter import emlObjectFormatter
+from LmWebServer.formatters.eml_formatter import eml_object_formatter
+
 
 # .............................................................................
-def lmFormatter(f):
+def lm_formatter(f):
     """Wrapper method for formatting service objects
 
     Use this as a decorator for methods that return objects that should be sent
@@ -37,75 +38,65 @@ def lmFormatter(f):
             handler_result = f(*args, **kwargs)
         except TypeError:
             raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 'Bad request')
-        
+
         accept_headers = cherrypy.request.headers.get('Accept')
-        
+
         try:
             raw_headers = accept_headers.split(',')
             valued_accepts = []
-            for h in raw_headers:
-                if len(h.split(';')) > 1:
-                    mime, val = h.split(';')
+            for hdr in raw_headers:
+                if len(hdr.split(';')) > 1:
+                    mime, val = hdr.split(';')
                     valued_accepts.append(
                         (mime.strip(), float(val.strip('q='))))
                 else:
                     valued_accepts.append((h.strip(), 1.0))
-        except:
+        except Exception:
             valued_accepts = [('*/*', 1.0)]
-        
+
         sorted_accepts = sorted(
             valued_accepts, key=lambda x: x[1], reverse=True)
-        
-        for ah, _ in sorted_accepts:
+
+        for accept_hdr, _ in sorted_accepts:
             try:
-                if ah == LMFormat.GEO_JSON.getMimeType():
-                    return geoJsonObjectFormatter(handler_result)
+                if accept_hdr == LMFormat.GEO_JSON.getMimeType():
+                    return geo_json_object_formatter(handler_result)
                 # If JSON or default
-                if ah in [LMFormat.JSON.getMimeType(), '*/*']:
-                    shootSnippets(handler_result, SnippetOperations.VIEWED, 
-                                      JSON_INTERFACE)
-                    return jsonObjectFormatter(handler_result)
-                elif ah == LMFormat.EML.getMimeType():
-                    return emlObjectFormatter(handler_result)
-                elif ah == LMFormat.KML.getMimeType():
-                    return kmlObjectFormatter(handler_result)
-                elif ah == LMFormat.GTIFF.getMimeType():
-                    return gtiffObjectFormatter(handler_result)
-                elif ah == LMFormat.SHAPE.getMimeType():
-                    shootSnippets(
+                if accept_hdr in [LMFormat.JSON.getMimeType(), '*/*']:
+                    shoot_snippets(
+                        handler_result, SnippetOperations.VIEWED,
+                        JSON_INTERFACE)
+                    return json_object_formatter(handler_result)
+                if accept_hdr == LMFormat.EML.getMimeType():
+                    return eml_object_formatter(handler_result)
+                if accept_hdr == LMFormat.KML.getMimeType():
+                    return kml_object_formatter(handler_result)
+                if accept_hdr == LMFormat.GTIFF.getMimeType():
+                    return gtiff_object_formatter(handler_result)
+                if accept_hdr == LMFormat.SHAPE.getMimeType():
+                    shoot_snippets(
                         handler_result, SnippetOperations.DOWNLOADED,
                         SHAPEFILE_INTERFACE)
-                    return shapefileObjectFormatter(handler_result)
-                elif ah == LMFormat.CSV.getMimeType():
-                    shootSnippets(
+                    return shapefile_object_formatter(handler_result)
+                if accept_hdr == LMFormat.CSV.getMimeType():
+                    shoot_snippets(
                         handler_result, SnippetOperations.DOWNLOADED,
                         CSV_INTERFACE)
-                    return csvObjectFormatter(handler_result)
-                elif ah == LMFormat.NEWICK.getMimeType():
+                    return csv_object_formatter(handler_result)
+                if accept_hdr == LMFormat.NEWICK.getMimeType():
                     raise cherrypy.HTTPError(
                         HTTPStatus.BAD_REQUEST,
                         'Newick response not enabled yet')
                     # TODO: Use dendropy to convert nexus to newick
+                    # return file_formatter(handler_result.getDLocation())
+                if accept_hdr == LMFormat.NEXUS.getMimeType():
                     return file_formatter(handler_result.getDLocation())
-                elif ah == LMFormat.NEXUS.getMimeType():
-                    return file_formatter(handler_result.getDLocation())
-                elif ah == LMFormat.ZIP.getMimeType():
-                    # TODO: use constants
-                    #try:
-                    #    csvs = cherrypy.request.params.get('includeCSVs')
-                    #except:
-                    #    csvs = True
-                    #    
-                    #try:
-                    #    sdms = cherrypy.request.params.get('includeSDMs')
-                    #except:
-                    #    sdms = True
+                if accept_hdr == LMFormat.ZIP.getMimeType():
                     csvs = True
                     sdms = True
-                    
-                    return gridsetPackageFormatter(
+                    return gridset_package_formatter(
                         handler_result, includeCSV=csvs, includeSDM=sdms)
-                elif ah == LMFormat.PROGRESS.getMimeType():
+                if accept_hdr == LMFormat.PROGRESS.getMimeType():
                     obj_type, obj_id, detail = handler_result
                     return progress_object_formatter(
                         obj_type, obj_id, detail=detail)
@@ -117,15 +108,15 @@ def lmFormatter(f):
         # If we cannot find an acceptable formatter, raise HTTP error
         raise cherrypy.HTTPError(
             HTTPStatus.NOT_ACCEPTABLE, 'Could not find an acceptable format')
-                
-        return jsonObjectFormatter(handler_result)
-    
+
+        # return json_object_formatter(handler_result)
+
     return wrapper
 
+
 # .............................................................................
-def shootSnippets(obj, operation, formatString):
-    """
-    @summary: Attempt to shoot snippets for downloads / viewings / etc
+def shoot_snippets(obj, operation, format_string):
+    """Attempt to shoot snippets for downloads / viewings / etc
     """
     # Only shoot public data snippets
     try:
@@ -133,9 +124,9 @@ def shootSnippets(obj, operation, formatString):
             shooter = SnippetShooter()
             shooter.addSnippets(
                 obj, operation, url='{}/{}'.format(
-                    obj.metadataUrl, formatString),
+                    obj.metadataUrl, format_string),
                 who='user', agent='webService', why='request')
             shooter.shootSnippets()
-    except:
+    except Exception:
+        # TODO: Log exceptions for snippets
         pass
-        

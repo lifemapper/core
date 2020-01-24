@@ -14,16 +14,19 @@ from LmCommon.common.lmconstants import (
     JSON_INTERFACE, KML_INTERFACE, LMFormat, NEXUS_INTERFACE, NEWICK_INTERFACE,
     PACKAGE_INTERFACE, PROGRESS_INTERFACE, SHAPEFILE_INTERFACE)
 
+
 # .............................................................................
 class LmDispatcher(MethodDispatcher):
+    """MethodDispatcher subclass that sets accept headers based on url
+    """
     # ...........................
     def __call__(self, path_info):
-        
+
         path_info_pieces = path_info.lower().strip('/').split('/')
         new_path_info = path_info.lower()
         set_accept = None
         last_segment = path_info_pieces[-1]
-        
+
         if last_segment == JSON_INTERFACE:
             set_accept = LMFormat.JSON.getMimeType()
         elif last_segment == GEO_JSON_INTERFACE:
@@ -48,15 +51,10 @@ class LmDispatcher(MethodDispatcher):
             set_accept = LMFormat.PROGRESS.getMimeType()
             # Last one is stripped away but needed for formatting
             path_info_pieces.append(PROGRESS_INTERFACE)
-        
+
         if set_accept is not None:
             cherrypy.request.headers['Accept'] = set_accept
-            
+
             new_path_info = '/'.join(path_info_pieces[:-1])
 
         return MethodDispatcher.__call__(self, new_path_info)
-
-
-
-
-

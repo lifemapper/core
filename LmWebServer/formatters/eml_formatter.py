@@ -119,7 +119,7 @@ def _create_spatial_vector(spatial_vector):
     return sv_element
 
 # .............................................................................
-def makeEml(my_obj):
+def make_eml(my_obj):
     """
     @summary: Generate an EML document representing metadata for the provided 
                      object

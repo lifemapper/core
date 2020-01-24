@@ -17,7 +17,7 @@ from lmpy import TreeWrapper
 
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, HTTPStatus,
                                          LMFormat, PhyloTreeKeys,
-    DEFAULT_TREE_SCHEMA)
+                                         DEFAULT_TREE_SCHEMA)
 from LmCommon.common.readyfile import readyFilename
 
 from LmServer.common.datalocator import EarlJr
@@ -27,8 +27,8 @@ from LmServer.common.lmconstants import ENV_DATA_PATH, LMFileType
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.common.localconstants import MAX_ANON_UPLOAD_SIZE
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.common.accessControl import checkUserPermission
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.common.access_control import check_user_permission
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
 
 
 # TODO: Move to constants
@@ -36,7 +36,7 @@ BIOGEO_UPLOAD = 'biogeo'
 CLIMATE_UPLOAD = 'climate'
 OCCURRENCE_UPLOAD = 'occurrence'
 TREE_UPLOAD = 'tree'
-DEFAULT_POST_USER
+
 
 # .............................................................................
 @cherrypy.expose
@@ -47,13 +47,13 @@ class UserUploadService(LmService):
         * This dispatcher is responsible for calling the correct method.
     """
     # ................................
-    @lmFormatter
+    @lm_formatter
     def POST(self, fileName=None, uploadType=None, metadata=None, file=None,
              **params):
         """Posts the new file to the user's space
         """
-        if checkUserPermission(self.getUserId(), self, HTTPMethod.POST):
-            
+        if check_user_permission(self.get_user_id(), self, HTTPMethod.POST):
+
             if uploadType is None:
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST, 'Must provide upload type')
@@ -72,7 +72,7 @@ class UserUploadService(LmService):
         else:
             raise cherrypy.HTTPError(
                 HTTPStatus.FORBIDDEN, 'Only logged in users can upload here')
-        
+
     # ................................
     def _get_user_dir(self):
         """Get the user's workspace directory
@@ -82,14 +82,14 @@ class UserUploadService(LmService):
                 the same path construction as the getBoomPackage script
         """
         earl = EarlJr()
-        userId = self.getUserId()
+        userId = self.get_user_id()
         if userId == PUBLIC_USER:
             userId = DEFAULT_POST_USER
         pth = earl.createDataPath(userId, LMFileType.TMP_JSON)
         if not os.path.exists(pth):
             os.makedirs(pth)
         return pth
-    
+
     # ................................
     def _upload_biogeo(self, package_filename, upload_file):
         """Write the biogeographic hypotheses to the user's workspace
@@ -115,14 +115,14 @@ class UserUploadService(LmService):
         instr = StringIO()
         instr.write(data)
         instr.seek(0)
-        
+
         valid_extensions = [LMFormat.JSON.ext]
         valid_extensions.extend(LMFormat.SHAPE.getExtensions())
-        
+
         # Unzip files and name provided name
         with zipfile.ZipFile(instr, allowZip64=True) as zipF:
             for zfname in zipF.namelist():
-                #fn = os.path.basename(zfname)
+                # fn = os.path.basename(zfname)
                 _, ext = os.path.splitext(zfname)
                 if ext in valid_extensions:
                     outFn = os.path.join(outDir, os.path.basename(zfname))
@@ -131,20 +131,20 @@ class UserUploadService(LmService):
                             HTTPStatus.CONFLICT,
                             '{} exists, {}'.format(outFn, zfname))
                     else:
-                        #zipF.extract(zfname, outFn)
+                        # zipF.extract(zfname, outFn)
                         with zipF.open(zfname) as zf:
                             with open(outFn, 'w') as outF:
                                 for line in zf:
                                     outF.write(line)
-        
+
         # Set HTTP status
         cherrypy.response.status = HTTPStatus.ACCEPTED
         return {
-            'package_name' : package_filename,
-            'upload_type' : BIOGEO_UPLOAD,
-            'status' : HTTPStatus.ACCEPTED
+            'package_name': package_filename,
+            'upload_type': BIOGEO_UPLOAD,
+            'status': HTTPStatus.ACCEPTED
         }
-            
+
     # ................................
     def _upload_climate_data(self, climateDataFilename):
         """
@@ -165,13 +165,13 @@ class UserUploadService(LmService):
                         '{}{} exists'.format(climateDataFilename, ext))
                 else:
                     zipF.extract(zfname, outFn)
-        
+
         return {
-            'package_name' : climateDataFilename,
-            'upload_type' : CLIMATE_UPLOAD,
-            'status' : HTTPStatus.ACCEPTED
+            'package_name': climateDataFilename,
+            'upload_type': CLIMATE_UPLOAD,
+            'status': HTTPStatus.ACCEPTED
         }
-            
+
     # ................................
     def _upload_occurrence_data(self, package_name, metadata, upload_file):
         """
@@ -188,11 +188,12 @@ class UserUploadService(LmService):
             package_name = package_name[
                 :package_name.lower().find(LMFormat.CSV.ext)]
         csvFilename = os.path.join(
-            self._get_user_dir(), '{}{}'.format(package_name, LMFormat.CSV.ext))
+            self._get_user_dir(), '{}{}'.format(
+                package_name, LMFormat.CSV.ext))
         metaFilename = os.path.join(
             self._get_user_dir(),
             '{}{}'.format(package_name, LMFormat.JSON.ext))
-        
+
         # Check to see if files exist
         if os.path.exists(csvFilename):
             raise cherrypy.HTTPError(
@@ -202,7 +203,7 @@ class UserUploadService(LmService):
             raise cherrypy.HTTPError(
                 HTTPStatus.CONFLICT,
                 '{} exists'.format(os.path.basename(metaFilename)))
-        
+
         # Process metadata
         if metadata is None:
             raise cherrypy.HTTPError(
@@ -214,7 +215,8 @@ class UserUploadService(LmService):
             m_stringio.seek(0)
             metadata = json.load(m_stringio)
             self.log.debug('Metadata: {}'.format(metadata))
-            if 'field' not in list(metadata.keys()) or 'role' not in list(metadata.keys()):
+            if 'field' not in list(
+                    metadata.keys()) or 'role' not in list(metadata.keys()):
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST, 'Metadata not in expected format')
             else:
@@ -222,7 +224,7 @@ class UserUploadService(LmService):
                     data = upload_file.file.read()
                 else:
                     data = cherrypy.request.body.read()
-                
+
                 header_row = data.split('\n')[0]
                 meta_obj = {}
                 # Check for delimiter
@@ -233,7 +235,7 @@ class UserUploadService(LmService):
                 meta_obj['delimiter'] = delim
                 headers = header_row.split(delim)
                 short_names = []
-                
+
                 roles = metadata['role']
                 for f in metadata['field']:
                     if f['fieldType'].lower() == 'string':
@@ -247,7 +249,7 @@ class UserUploadService(LmService):
                             HTTPStatus.BAD_REQUEST,
                             'Field type: {} is unknown'.format(f['fieldType']))
                     field_idx = f['key']
-                    
+
                     # If short name is None or has zero-length, get from csv
                     short_name = f['shortName']
                     if short_name is None or len(short_name) == 0:
@@ -264,8 +266,8 @@ class UserUploadService(LmService):
                         short_names.append(test_name)
                         short_name = test_name
                     field_obj = {
-                        'type' : field_type,
-                        'name' : short_name
+                        'type': field_type,
+                        'name': short_name
                     }
                     if 'geopoint' in list(roles.keys()) and f[
                             'key'] == roles['geopoint']:
@@ -286,12 +288,12 @@ class UserUploadService(LmService):
                             'key'] == roles['groupBy']:
                         field_obj['role'] = 'groupby'
                     meta_obj[field_idx] = field_obj
-            
+
                 with open(metaFilename, 'w') as outF:
                     json.dump(meta_obj, outF)
         # Process file
         instr = StringIO()
-        #data = cherrypy.request.body.read()
+        # data = cherrypy.request.body.read()
         instr.write(data)
         instr.seek(0)
         csv_done = False
@@ -309,7 +311,7 @@ class UserUploadService(LmService):
                         else:
                             # Determine if we are dealing with anonymous user
                             #    once instead of checking at every line
-                            anon_user = self.getUserId() == DEFAULT_POST_USER
+                            anon_user = self.get_user_id() == DEFAULT_POST_USER
                             with zip_f.open(z_fname) as zf:
                                 with open(csvFilename, 'w') as outF:
                                     num_lines = 0
@@ -327,23 +329,23 @@ class UserUploadService(LmService):
                                         'Anonymous users may only upload occurrence data less than {} lines'.format(MAX_ANON_UPLOAD_SIZE))
                         csv_done = True
         else:
-            #self.log.debug('Data: {}'.format(data))
-            if self.getUserId() == DEFAULT_POST_USER and \
+            # self.log.debug('Data: {}'.format(data))
+            if self.get_user_id() == DEFAULT_POST_USER and \
                     len(data.split('\n')) > MAX_ANON_UPLOAD_SIZE:
                 raise cherrypy.HTTPError(
                     HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
                     'Anonymous users may only upload occurrence data less than {} lines'.format(MAX_ANON_UPLOAD_SIZE))
             with open(csvFilename, 'w') as out_f:
                 out_f.write(data)
-                    
+
         # Return
         cherrypy.response.status = HTTPStatus.ACCEPTED
         return {
-            'package_name' : package_name,
-            'upload_type' : OCCURRENCE_UPLOAD,
-            'status' : HTTPStatus.ACCEPTED
+            'package_name': package_name,
+            'upload_type': OCCURRENCE_UPLOAD,
+            'status': HTTPStatus.ACCEPTED
         }
-            
+
     # ................................
     def _upload_tree(self, tree_name, upload_file):
         """Write the tree to the user's work space
@@ -368,7 +370,7 @@ class UserUploadService(LmService):
                     tree = TreeWrapper.get(data=data, schema=schema)
                     # Add squids
                     squid_dict = {}
-                    user_id = self.getUserId()
+                    user_id = self.get_user_id()
 
                     if user_id == PUBLIC_USER:
                         user_id = DEFAULT_POST_USER

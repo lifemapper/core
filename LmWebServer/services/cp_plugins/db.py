@@ -17,8 +17,9 @@ import cherrypy
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.borgscribe import BorgScribe
 
+
 # .............................................................................
-class _ScribeRetriever(object):
+class _ScribeRetriever:
     """Provide a single public method for getting a scribe connection.
 
     This class provides a single public method for getting a scribe connection.
@@ -32,7 +33,7 @@ class _ScribeRetriever(object):
         self.scribe.openConnections()
 
     # ..........................
-    def getScribe(self):
+    def get_scribe(self):
         """Returns a log and scribe for the request
 
         Todo:
@@ -40,21 +41,21 @@ class _ScribeRetriever(object):
                 connection, if it does not, refresh and send a new one
         """
         return self.scribe
-    
+
 # .............................................................................
-def connectDb(thread_index):
+def connect_db(thread_index):
     """Sets up a database connection and logger for a thread
 
     Args:
         thread_index: A thread index provided by CherryPy
     """
     cherrypy.thread_data.scribeRetriever = _ScribeRetriever()
-    
+
+
 # .............................................................................
-def disconnectDb(thread_index):
+def disconnect_db(thread_index):
     """Attempt to close a database connection on thread close
     """
-    scribe = cherrypy.thread_data.scribeRetriever.getScribe()
-    
+    scribe = cherrypy.thread_data.scribeRetriever.get_scribe()
+
     scribe.closeConnections()
-    

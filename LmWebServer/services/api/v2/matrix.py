@@ -7,9 +7,10 @@ import cherrypy
 from LmCommon.common.lmconstants import HTTPStatus, JobStatus
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.api.v2.matrixColumn import MatrixColumnService
-from LmWebServer.services.common.accessControl import checkUserPermission
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.api.v2.matrix_column import MatrixColumnService
+from LmWebServer.services.common.access_control import check_user_permission
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
+
 
 # .............................................................................
 @cherrypy.expose
@@ -18,156 +19,152 @@ class MatrixService(LmService):
     """This class is reponsible for matrix services.
     """
     column = MatrixColumnService()
-    
+
     # ................................
     def DELETE(self, pathGridSetId, pathMatrixId):
-        """
-        @summary: Attempts to delete a matrix
-        @param pathMatrixId: The id of the matrix to delete
+        """Attempts to delete a matrix
+
+        Args:
+            pathMatrixId: The id of the matrix to delete
         """
         mtx = self.scribe.getMatrix(mtxId=pathMatrixId)
 
         if mtx is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND, 'Matrix not found')
-        
+
         # If allowed to, delete
-        if checkUserPermission(self.getUserId(), mtx, HTTPMethod.DELETE):
+        if check_user_permission(self.get_user_id(), mtx, HTTPMethod.DELETE):
             success = self.scribe.deleteObject(mtx)
             if success:
                 cherrypy.response.status = HTTPStatus.NO_CONTENT
-                return 
-            else:
-                # TODO: How can this happen?  Make sure we catch those cases and 
-                #             respond appropriately.  We don't want 500 errors
-                raise cherrypy.HTTPError(
-                    HTTPStatus.INTERNAL_SERVER_ERROR,
-                    'Failed to delete matrix')
-        else:
+                return
+
             raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN,
-                'User does not have permission to delete this matrix')
+                HTTPStatus.INTERNAL_SERVER_ERROR, 'Failed to delete matrix')
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN,
+            'User does not have permission to delete this matrix')
 
     # ................................
-    @lmFormatter
+    @lm_formatter
     def GET(self, pathGridSetId, pathMatrixId=None, afterTime=None,
             altPredCode=None, beforeTime=None, dateCode=None, epsgCode=None,
             gcmCode=None, keyword=None, limit=100, matrixType=None, offset=0,
             urlUser=None, status=None, **params):
-        """
-        @summary: Performs a GET request.  If a matrix id is provided,
-                         attempt to return that item.  If not, return a list of 
-                         matrices that match the provided parameters
+        """GET a matrix object, list, or count
         """
         if pathMatrixId is None:
-            return self._listMatrices(
-                self.getUserId(urlUser=urlUser), gridSetId=pathGridSetId,
-                afterTime=afterTime, altPredCode=altPredCode,
-                beforeTime=beforeTime, dateCode=dateCode, epsgCode=epsgCode,
-                gcmCode=gcmCode, keyword=keyword, limit=limit,
-                matrixType=matrixType, offset=offset, status=status)
-        elif pathMatrixId.lower() == 'count':
-            return self._countMatrices(
-                self.getUserId(urlUser=urlUser), gridSetId=pathGridSetId,
-                afterTime=afterTime, altPredCode=altPredCode,
-                beforeTime=beforeTime, dateCode=dateCode, epsgCode=epsgCode,
-                gcmCode=gcmCode, keyword=keyword, matrixType=matrixType,
+            return self._list_matrices(
+                self.get_user_id(urlUser=urlUser), gridset_id=pathGridSetId,
+                after_time=afterTime, alt_pred_code=altPredCode,
+                before_time=beforeTime, date_code=dateCode, epsg_code=epsgCode,
+                gcm_code=gcmCode, keyword=keyword, limit=limit,
+                matrix_type=matrixType, offset=offset, status=status)
+
+        if pathMatrixId.lower() == 'count':
+            return self._count_matrices(
+                self.get_user_id(urlUser=urlUser), gridset_id=pathGridSetId,
+                after_time=afterTime, alt_pred_code=altPredCode,
+                before_time=beforeTime, date_code=dateCode, epsg_code=epsgCode,
+                gcm_code=gcmCode, keyword=keyword, matrix_type=matrixType,
                 status=status)
-        else:
-            return self._getMatrix(pathGridSetId, pathMatrixId)
-        
+
+        return self._get_matrix(pathGridSetId, pathMatrixId)
+
     # ................................
-    def _countMatrices(self, userId, gridSetId, afterTime=None,
-                       altPredCode=None, beforeTime=None, dateCode=None,
-                       epsgCode=None, gcmCode=None, keyword=None,
-                       matrixType=None, status=None):
+    def _count_matrices(self, user_id, gridset_id, after_time=None,
+                        alt_pred_code=None, before_time=None, date_code=None,
+                        epsg_code=None, gcm_code=None, keyword=None,
+                        matrix_type=None, status=None):
+        """Count matrix objects matching the specified criteria
+
+        Args:
+            userId: The user to count matrices for.  Note that this may not be
+                the same user logged into the system
+            afterTime: Return matrices modified after this time (Modified
+                Julian Day)
+            beforeTime: Return matrices modified before this time (Modified
+                Julian Day)
+            epsgCode: (optional) Return matrices with this EPSG code
         """
-        @summary: Count matrix objects matching the specified criteria
-        @param userId: The user to count matrices for.  Note that this may not 
-                                be the same user logged into the system
-        @param afterTime: (optional) Return matrices modified after this time 
-                                    (Modified Julian Day)
-        @param beforeTime: (optional) Return matrices modified before this time 
-                                     (Modified Julian Day)
-        @param epsgCode: (optional) Return matrices with this EPSG code
-        """
-        afterStatus = None
-        beforeStatus = None
+        after_status = None
+        before_status = None
 
         # Process status parameter
         if status:
             if status < JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE - 1
             elif status == JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE + 1
-                afterStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE + 1
+                after_status = JobStatus.COMPLETE - 1
             else:
-                afterStatus = status - 1
+                after_status = status - 1
 
-        mtxCount = self.scribe.countMatrices(
-            userId=userId, matrixType=matrixType, gcmCode=gcmCode,
-            altpredCode=altPredCode, dateCode=dateCode, keyword=keyword,
-            gridsetId=gridSetId, afterTime=afterTime, beforeTime=beforeTime,
-            epsg=epsgCode, afterStatus=afterStatus, beforeStatus=beforeStatus)
-        # Format return
-        # Set headers
-        return {"count" : mtxCount}
+        mtx_count = self.scribe.countMatrices(
+            userId=user_id, matrixType=matrix_type, gcmCode=gcm_code,
+            altpredCode=alt_pred_code, dateCode=date_code, keyword=keyword,
+            gridsetId=gridset_id, afterTime=after_time, beforeTime=before_time,
+            epsg=epsg_code, afterStatus=after_status,
+            beforeStatus=before_status)
+
+        return {'count': mtx_count}
 
     # ................................
-    def _getMatrix(self, pathGridSetId, pathMatrixId):
-        """
-        @summary: Attempt to get a matrix
+    def _get_matrix(self, path_gridset_id, path_matrix_id):
+        """Attempt to get a matrix
         """
         mtx = self.scribe.getMatrix(
-            gridsetId=pathGridSetId, mtxId=pathMatrixId)
+            gridsetId=path_gridset_id, mtxId=path_matrix_id)
         if mtx is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
-                'matrix {} was not found'.format(pathMatrixId))
-        if checkUserPermission(self.getUserId(), mtx, HTTPMethod.GET):
+                'matrix {} was not found'.format(path_matrix_id))
+        if check_user_permission(self.get_user_id(), mtx, HTTPMethod.GET):
             return mtx
-        else:
-            raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN,
-                'User {} does not have permission to access matrix {}'.format(
-                    self.getUserId(), pathMatrixId))
-    
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN,
+            'User {} does not have permission to access matrix {}'.format(
+                self.get_user_id(), path_matrix_id))
+
     # ................................
-    def _listMatrices(self, userId, gridSetId, afterTime=None,
-                      altPredCode=None, beforeTime=None, dateCode=None,
-                      epsgCode=None, gcmCode=None, keyword=None, limit=100,
-                      matrixType=None, offset=0, status=None):
+    def _list_matrices(self, user_id, gridset_id, after_time=None,
+                       alt_pred_code=None, before_time=None, date_code=None,
+                       epsg_code=None, gcm_code=None, keyword=None, limit=100,
+                       matrix_type=None, offset=0, status=None):
+        """Count matrix objects matching the specified criteria
+
+        Args:
+            userId: The user to count matrices for.  Note that this may not be
+                the same user logged into the system
+            afterTime: Return matrices modified after this time (Modified
+                Julian Day)
+            beforeTime: Return matrices modified before this time (Modified
+                Julian Day)
+            epsgCode: Return matrices with this EPSG code
+            limit: Return this number of matrices, at most
+            offset: Offset the returned matrices by this number
         """
-        @summary: Count matrix objects matching the specified criteria
-        @param userId: The user to count matrices for.  Note that this may not 
-                                be the same user logged into the system
-        @param afterTime: (optional) Return matrices modified after this time 
-                                    (Modified Julian Day)
-        @param beforeTime: (optional) Return matrices modified before this time 
-                                     (Modified Julian Day)
-        @param epsgCode: (optional) Return matrices with this EPSG code
-        @param limit: (optional) Return this number of matrices, at most
-        @param offset: (optional) Offset the returned matrices by this number
-        """
-        afterStatus = None
-        beforeStatus = None
+        after_status = None
+        before_status = None
 
         # Process status parameter
         if status:
             if status < JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE - 1
             elif status == JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE + 1
-                afterStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE + 1
+                after_status = JobStatus.COMPLETE - 1
             else:
-                afterStatus = status - 1
+                after_status = status - 1
 
-        mtxAtoms = self.scribe.listMatrices(
-            offset, limit, userId=userId, matrixType=matrixType,
-            gcmCode=gcmCode, altpredCode=altPredCode, dateCode=dateCode,
-            keyword=keyword, gridsetId=gridSetId, afterTime=afterTime,
-            beforeTime=beforeTime, epsg=epsgCode, afterStatus=afterStatus,
-            beforeStatus=beforeStatus)
-        # Format return
-        # Set headers
-        return mtxAtoms
+        mtx_atoms = self.scribe.listMatrices(
+            offset, limit, userId=user_id, matrixType=matrix_type,
+            gcmCode=gcm_code, altpredCode=alt_pred_code, dateCode=date_code,
+            keyword=keyword, gridsetId=gridset_id, afterTime=after_time,
+            beforeTime=before_time, epsg=epsg_code, afterStatus=after_status,
+            beforeStatus=before_status)
+
+        return mtx_atoms

@@ -9,8 +9,8 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.common.accessControl import checkUserPermission
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.common.accessControl import check_user_permission
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
 
 # .............................................................................
 @cherrypy.expose
@@ -32,7 +32,7 @@ class MatrixColumnService(LmService):
                  HTTPStatus.NOT_FOUND, 'Matrix column not found')
         
         # If allowed to, delete
-        if checkUserPermission(self.getUserId(), mc, HTTPMethod.DELETE):
+        if check_user_permission(self.get_user_id(), mc, HTTPMethod.DELETE):
             success = self.scribe.deleteObject(mc)
             if success:
                 cherrypy.response.status = HTTPStatus.NO_CONTENT
@@ -49,7 +49,7 @@ class MatrixColumnService(LmService):
                 'User does not have permission to delete this matrix')
 
     # ................................
-    @lmFormatter
+    @lm_formatter
     def GET(self, pathGridSetId, pathMatrixId, pathMatrixColumnId=None,
             afterTime=None, beforeTime=None, epsgCode=None, ident=None,
             layerId=None, limit=100, offset=0, urlUser=None, squid=None,
@@ -61,13 +61,13 @@ class MatrixColumnService(LmService):
         """
         if pathMatrixColumnId is None:
             return self._listMatrixColumns(
-                pathGridSetId, pathMatrixId, self.getUserId(urlUser=urlUser),
+                pathGridSetId, pathMatrixId, self.get_user_id(urlUser=urlUser),
                 afterTime=afterTime, beforeTime=beforeTime, epsgCode=epsgCode,
                 ident=ident, layerId=layerId, limit=limit, offset=offset,
                 squid=squid, status=status)
         elif pathMatrixColumnId.lower() == 'count':
             return self._countMatrixColumns(
-                pathGridSetId, pathMatrixId, self.getUserId(urlUser=urlUser),
+                pathGridSetId, pathMatrixId, self.get_user_id(urlUser=urlUser),
                 afterTime=afterTime, beforeTime=beforeTime, epsgCode=epsgCode,
                 ident=ident, layerId=layerId, squid=squid, status=status)
         else:
@@ -75,7 +75,7 @@ class MatrixColumnService(LmService):
                 pathGridSetId, pathMatrixId, pathMatrixColumnId)
         
     # ................................
-    @lmFormatter
+    @lm_formatter
     def POST(self, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout,
              **params):
         """
@@ -84,7 +84,7 @@ class MatrixColumnService(LmService):
         @todo: Take a completed matrix?
         """
         sg = MatrixColumn(
-            name, self.getUserId(), epsgCode, cellSides, cellSize, mapUnits,
+            name, self.get_user_id(), epsgCode, cellSides, cellSize, mapUnits,
             bbox)
         updatedSg = self.scribe.findOrInsertmatrix(sg, cutout=cutout)
         return updatedSg
@@ -123,13 +123,13 @@ class MatrixColumnService(LmService):
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
                 'Matrix column {} was not found'.format(pathMatrixColumnId))
-        if checkUserPermission(self.getUserId(), mtxCol, HTTPMethod.GET):
+        if check_user_permission(self.get_user_id(), mtxCol, HTTPMethod.GET):
             return mtxCol
         else:
             raise cherrypy.HTTPError(
                 HTTPStatus.FORBIDDEN,
                 'User {} does not have permission to access matrix {}'.format(
-                    self.getUserId(), pathMatrixId))
+                    self.get_user_id(), pathMatrixId))
 
     # ................................
     def _listMatrixColumns(self, pathGridSetId, pathMatrixId, userId,

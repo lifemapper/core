@@ -25,7 +25,7 @@ def right_hand_rule(coordinates):
         coordinates[i].reverse()
 
 # .............................................................................
-def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None, 
+def geo_jsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None, 
                                 ident=3, headerLookupFilename=None, 
                                 transform=lambda x: x):
     """
@@ -102,7 +102,7 @@ def geoJsonify_flo(flo, shpFilename, matrix=None, mtxJoinAttrib=None,
     flo.write('}')
 
 # .............................................................................
-def geoJsonify(shpFilename, matrix=None, mtxJoinAttrib=None):
+def geo_jsonify(shpFilename, matrix=None, mtxJoinAttrib=None):
     """
     @summary: Creates GeoJSON for the features in a shapefile.  If a matrix is 
                      provided, attempt to join the features contained.

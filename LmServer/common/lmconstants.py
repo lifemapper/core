@@ -1217,3 +1217,13 @@ class SubsetMethod(Enum):
 # ============================================================================
 DEFAULT_NUM_PERMUTATIONS = 1000
 DEFAULT_RANDOM_GROUP_SIZE = 10
+
+
+# ============================================================================
+# =                           Open Tree Constants                            =
+# ============================================================================
+NONTREE_GBIF_IDS_KEY = 'nontree_ids'
+TREE_DATA_KEY = 'tree_data'
+TREE_FORMAT_KEY = 'tree_format'
+TREE_NAME_KEY = 'tree_name'
+UNMATCHED_GBIF_IDS_KEY = 'unmatched_ids'
