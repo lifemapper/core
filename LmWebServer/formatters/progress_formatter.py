@@ -9,6 +9,7 @@ from LmCommon.common.lmconstants import JobStatus, LMFormat
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.borgscribe import BorgScribe
 
+
 # .............................................................................
 def summarize_object_statuses(summary):
     """Summarizes a summary
@@ -33,6 +34,7 @@ def summarize_object_statuses(summary):
             error += count
         total += count
     return (waiting, running, complete, error, total)
+
 
 # .............................................................................
 def format_gridset(gridset_id, detail=False):
@@ -76,49 +78,52 @@ def format_gridset(gridset_id, detail=False):
         elif waiting_mfs == total_mfs:
             progress = 0.0
             line_pos = scribe.countPriorityMFChains(gridset_id)
+            base_msg = 'Your project is {} in the processing queue'
             if line_pos == 0:
-                message = 'Your project is running or next in the processing queue'
+                message = base_msg.format('running or next')
             else:
-                message = 'Your project is number {} in the processing queue'.format(line_pos)
+                message = base_msg.format('number {}'.format(line_pos))
         else:
-            # 0.5 * number running + 1.0 * number complete + number error / total
+            # 0.5 * number running + 1.0 * number complete + number error /
+            #    total
             progress = (
-                0.5 * running_mfs + 1.0 * (complete_mfs + error_mfs)) / total_mfs
+                0.5 * running_mfs + 1.0 * (complete_mfs + error_mfs)
+                ) / total_mfs
             message = 'Workflows are running'
 
         progress_dict = {
-            'matrices' : {
-                'complete' : complete_mtxs,
-                'error' : error_mtxs,
-                'running' : running_mtxs,
-                'waiting' : waiting_mtxs
+            'matrices': {
+                'complete': complete_mtxs,
+                'error': error_mtxs,
+                'running': running_mtxs,
+                'waiting': waiting_mtxs
             },
-            'matrix_columns' : {
-                'complete' : complete_mcs,
-                'error' : error_mcs,
-                'running' : running_mcs,
-                'waiting' : waiting_mcs
+            'matrix_columns': {
+                'complete': complete_mcs,
+                'error': error_mcs,
+                'running': running_mcs,
+                'waiting': waiting_mcs
             },
-            'occurrences' : {
-                'complete' : complete_occs,
-                'error' : error_occs,
-                'running' : running_occs,
-                'waiting' : waiting_occs
+            'occurrences': {
+                'complete': complete_occs,
+                'error': error_occs,
+                'running': running_occs,
+                'waiting': waiting_occs
             },
-            'progress' : progress,
-            'projections' : {
-                'complete' : complete_prjs,
-                'error' : error_prjs,
-                'running' : running_prjs,
-                'waiting' : waiting_prjs
+            'progress': progress,
+            'projections': {
+                'complete': complete_prjs,
+                'error': error_prjs,
+                'running': running_prjs,
+                'waiting': waiting_prjs
             },
-            'workflows' : {
-                'complete' : complete_mfs,
-                'error' : error_mfs,
-                'running' : running_mfs,
-                'waiting' : waiting_mfs
+            'workflows': {
+                'complete': complete_mfs,
+                'error': error_mfs,
+                'running': running_mfs,
+                'waiting': waiting_mfs
             },
-            'message' : message
+            'message': message
         }
     else:
         if total_mfs == 0 or (waiting_mfs + running_mfs) == 0:
@@ -127,20 +132,24 @@ def format_gridset(gridset_id, detail=False):
         elif waiting_mfs == total_mfs:
             progress = 0.0
             line_pos = scribe.countPriorityMFChains(gridset_id)
+            base_msg = 'Your project is {} in the processing queue'
             if line_pos == 0:
-                message = 'Your project is running or next in the processing queue'
+                message = base_msg.format('running or next')
             else:
-                message = 'Your project is number {} in the processing queue'.format(line_pos)
+                message = base_msg.format('number {}'.format(line_pos))
         else:
-            # 0.5 * number running + 1.0 * number complete + number error / total
+            # 0.5 * number running + 1.0 * number complete + number error /
+            #    total
             progress = (
-                0.5 * running_mfs + 1.0 * (complete_mfs + error_mfs)) / total_mfs
+                0.5 * running_mfs + 1.0 * (complete_mfs + error_mfs)
+                ) / total_mfs
             message = 'Workflows are running'
         progress_dict = {
-            'progress' : progress
+            'progress': progress
         }
     scribe.closeConnections()
     return progress_dict
+
 
 # .............................................................................
 def progress_object_formatter(obj_type, obj_id, detail=False):
@@ -152,6 +161,7 @@ def progress_object_formatter(obj_type, obj_id, detail=False):
     """
     formatted_obj = _format_object(obj_type, obj_id, detail=detail)
     return json.dumps(formatted_obj, indent=3)
+
 
 # .............................................................................
 def _format_object(obj_type, obj_id, detail=False):

@@ -1,474 +1,472 @@
 """Module containing KML formatter clas
 @note: This needs to be cleaned up a lot.  This is a patch to get us through
-          until we can spend some time on this
+             until we can spend some time on this
 """
 import cherrypy
 from osgeo import ogr
-from LmCommon.common.lmconstants import LMFormat
-from LmCommon.common.lm_xml import (CDATA, Element, register_namespace, 
-                                  set_default_namespace, SubElement, tostring)
-#from LmCommon.common.lmconstants import ENCODING, HTTPStatus
 
+from LmCommon.common.lmconstants import LMFormat
+from LmCommon.common.lm_xml import (
+    CDATA, Element, register_namespace, set_default_namespace, SubElement,
+    tostring)
+
+from LmServer.base.utilities import formatTimeHuman
+from LmServer.common.lmconstants import OccurrenceFieldNames
+from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.common.localconstants import WEBSERVICES_ROOT
-from LmServer.base.utilities import formatTimeHuman
-#from LmServer.base.layer2 import Raster
-#from LmServer.base.lmobj import LmHTTPError
-#from LmServer.base.serviceobject import ServiceObject
-#from LmServer.base.utilities import escapeString, formatTimeHuman
-#from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import OccurrenceFieldNames
-#from LmServer.common.localconstants import WEBSERVICES_ROOT
-#from LmServer.sdm.occlayer import OccurrenceLayer
-#from LmServer.sdm.sdmexperiment import SDMExperiment
-#from LmServer.sdm.sdmprojection import SDMProjection
-
-#from LmWebServer.formatters.formatter import Formatter, FormatterResponse
 
 KML_NS = "http://www.opengis.net/kml/2.2"
 
-# .............................................................................
-def addOccurrenceSet(parent, occ):
-   """
-   @summary: Adds an SDM Occurrence Set to the KML output
-   @param parent: The parent element to add it to
-   @param occ: The occurrence set object to add
-   """
-   SubElement(parent, "name", 
-           value='{} points (Occ Id: {})'.format(occ.displayName, occ.getId()))
-   SubElement(parent, "open", value="1")
-   SubElement(parent, "description", 
-           value='{} points (Occ Id: {})'.format(occ.displayName, occ.getId()))
-   
-   
-   # TODO: Look at feature attributes and decide what to read
-   for pt in occ.features:
-      addPoint(parent, pt)
-   
-# .............................................................................
-def addPoint(parent, point):
-   """
-   """
-   name = getNameForPoint(point)
-   lat, lon = getLatLonForPoint(point)
 
-   pmEl = SubElement(parent, "Placemark")
-   SubElement(pmEl, "name", value=name)
-   SubElement(pmEl, "styleUrl", value="#lmUserOccurrenceBalloon")
-   
-   ptEl = SubElement(pmEl, "Point")
-   SubElement(ptEl, "coordinates", value="%s,%s,0" % (lon, lat))
-
-   ext = SubElement(pmEl, "ExtendedData")
-   latEl = SubElement(ext, "Data", attrib={"name": "latitude"})
-   SubElement(latEl, "value", value=lat)
-   
-   lonEl = SubElement(ext, "Data", attrib={"name": "longitude"})
-   SubElement(lonEl, "value", value=lon)
-      
 # .............................................................................
-def addProjection(parent, prj, visibility, indent=0):
-   """
-   @summary: Adds a projection to the KML output
-   @param parent: The parent element to add it to
-   @param point: The projection to add
-   """
-   prjName = "Lifemapper projection %s - %s" % (prj.getId(), prj.speciesName)
-   if indent == 0:
-      SubElement(parent, "name", value=prjName)
-      SubElement(parent, "description", value=prjName)
-   
-   # Ground Overlay
-   goEl = SubElement(parent, "GroundOverlay")
-   SubElement(goEl, "styleUrl", value="#lmProjectionBalloon")
-   SubElement(goEl, "name", value=prjName)
-   SubElement(goEl, "visibility", value=visibility)
-   
-   # Look at
-   lookAt = SubElement(goEl, "LookAt")
-   SubElement(lookAt, "latitude", value="0.0")
-   SubElement(lookAt, "longitude", value="0.0")
-   SubElement(lookAt, "altitude", value="0.0")
-   SubElement(lookAt, "range", value="500000")
-   SubElement(lookAt, "tilt", value="0.0")
-   SubElement(lookAt, "heading", value="0.0")
-   
-   # Icon
-   iconEl = SubElement(goEl, "Icon")
-   
-   mapUrl = prj._earlJr.constructLMMapRequest('{}/{}{}'.format(
-                               WEBSERVICES_ROOT, 'api/v2/ogc', prj._mapPrefix), 
-                                            400, 200, prj.bbox, color='ff0000')
-   SubElement(iconEl, "href", value=mapUrl)
-   
-   # Latitude Longitude Box
-   latLonBoxEl = SubElement(goEl, "LatLonBox")
-   SubElement(latLonBoxEl, "north", value=prj.bbox[3])
-   SubElement(latLonBoxEl, "south", value=prj.bbox[1])
-   SubElement(latLonBoxEl, "west", value=prj.bbox[0])
-   SubElement(latLonBoxEl, "east", value=prj.bbox[2])
-   SubElement(latLonBoxEl, "rotation", value="0.0")
-   
-   # Extended Data
-   extData = SubElement(goEl, "ExtendedData")
-   
-   lastModEl = SubElement(extData, "Data", attrib={"name": "lastModified"})
-   SubElement(lastModEl, "value", value=formatTimeHuman(prj.modTime))
+def add_occurrence_set(parent, occ):
+    """Adds an SDM Occurrence Set to the KML output
 
-   scnTitleEl = SubElement(extData, "Data", attrib={"name": "scenarioTitle"})
-   # TODO: Get the title for this scenario
-   SubElement(scnTitleEl, "value", value=prj._projScenario.code)
+    Args:
+        parent: The parent element to add it to
+        occ: The occurrence set object to add
+    """
+    SubElement(
+        parent, 'name', value='{} points (Occ Id: {})'.format(
+            occ.displayName, occ.getId()))
+    SubElement(parent, 'open', value='1')
+    SubElement(
+        parent, 'description', value='{} points (Occ Id: {})'.format(
+            occ.displayName, occ.getId()))
+
+    # TODO: Look at feature attributes and decide what to read
+    for pt in occ.features:
+        add_point(parent, pt)
 
 
 # .............................................................................
-def getKML(myObj):
-   """
-   @summary: Gets a KML document for the object
-   @param obj: The object to return in KML
-   """
-   register_namespace('', KML_NS)
-   set_default_namespace(KML_NS)
-   root = Element("kml")
-   doc = SubElement(root, "Document")
-   SubElement(doc, "styleUrl", value="#lmBalloon")
-   
-   # lmBalloon style
-   lmBalloon = SubElement(doc, "Style", attrib={"id": "lmBalloon"})
-   
-   # Nested parent elements that don't add extra attributes
-   SubElement(SubElement(lmBalloon, "BalloonStyle"), "text").append(
-      CDATA("""\
-               <table>
-                  <tr>
-                     <td>
-                        <img src="{WEBSITE}/images/lmlogosmall.jpg" />
-                     </td>
-                     <td>
-                        <h3>$[name]</h3>
-                     </td>
-                  </tr>
-                  <tr>
-                     <td colspan="2">
-                        $[description]
-                     </td>
-                  </tr>
-               </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
+def add_point(parent, point):
+    """Create a point subelement
+    """
+    name = get_name_for_point(point)
+    lat, lon = get_lat_lon_for_point(point)
 
-   # lmLayerBalloon style
-   lmLayerBalloon = SubElement(doc, "Style", attrib={"id": "lmLayerBalloon"})
+    placemark_el = SubElement(parent, 'Placemark')
+    SubElement(placemark_el, 'name', value=name)
+    SubElement(placemark_el, 'styleUrl', value='#lmUserOccurrenceBalloon')
 
-   # Nested parent elements that don't add extra attributes
-   SubElement(SubElement(lmLayerBalloon, "BalloonStyle"), "text").append(
-      CDATA("""\
-               <table>
-                  <tr>
-                     <td>
-                        <img src="{WEBSITE}/images/lmlogosmall.jpg" />
-                     </td>
-                     <td>
-                        <h3>$[name]</h3>
-                     </td>
-                  </tr>
-                  <tr>
-                     <td colspan="2">
-                        <table width="300">
-                           <tr>
-                              <th align="right">
-                                 Title:
-                              </th>
-                              <td>
-                                 $[layerTitle]
-                              </td>
-                           </tr>
-                           <tr>
-                              <th align="right">
-                                 Last Modified:
-                              </th>
-                              <td>
-                                 $[lastModified]
-                              </td>
-                           </tr>
-                        </table>
-                     </td>
-                  </tr>
-               </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
+    point_el = SubElement(placemark_el, 'Point')
+    SubElement(point_el, 'coordinates', value='{},{},0'.format(lon, lat))
 
-   # lmGbifOccurrenceBalloon
-   lmGbif = SubElement(doc, "Style", attrib={"id": "lmGbifOccurrenceBalloon"})
-   #SubElement(
-   #     # Nested parent elements that don't add extra attributes
-   #     SubElement(SubElement(lmGbif, "IconStyle"), "Icon"), 
-   #     "href", value="%s/images/pushpin.png" % WEBSERVICES_ROOT)
+    ext = SubElement(placemark_el, 'ExtendedData')
+    lat_el = SubElement(ext, 'Data', attrib={'name': 'latitude'})
+    SubElement(lat_el, 'value', value=lat)
 
-   # Nested parent elements that don't add extra attributes
-   SubElement(SubElement(lmGbif, "BalloonStyle"), "text").append(CDATA("""\
-               <table>
-                  <tr>
-                     <td>
-                        <img src="{WEBSITE}/images/lmlogosmall.jpg" />
-                     </td>
-                     <td>
-                        <h3>$[name]</h3>
-                     </td>
-                  </tr>
-                  <tr>
-                     <td colspan="2">
-                        <table width="300">
-                           <tr>
-                              <th align="right">
-                                 Provider:
-                              </th>
-                              <td>
-                                 $[providerName]
-                              </td>
-                           </tr>
-                           <tr>
-                              <th align="right">
-                                 Resource:
-                              </th>
-                              <td>
-                                 $[resourceName]
-                              </td>
-                           </tr>
-                           <tr>
-                              <th align="right">
-                                 Latitude:
-                              </th>
-                              <td>
-                                 $[latitude]
-                              </td>
-                           </tr>
-                           <tr>
-                              <th align="right">
-                                 Longitude:
-                              </th>
-                              <td>
-                                 $[longitude]
-                              </td>
-                           </tr>
-                           <tr>
-                              <th align="right">
-                                 Collector:
-                              </th>
-                              <td>
-                                 $[collector]
-                              </td>
-                           </tr>
-                           <tr>
-                              <th align="right">
-                                 Collection Date:
-                              </th>
-                              <td>
-                                 $[colDate]
-                              </td>
-                           </tr>
-                        </table>
-                     </td>
-                  </tr>
-               </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
-
-   # lmUserOccurrenceBalloon
-   lmUser = SubElement(doc, "Style", attrib={"id": "lmUserOccurrenceBalloon"})
-   #SubElement(
-   #     # Nested parent elements that don't add extra attributes
-   #     SubElement(SubElement(lmUser, "IconStyle"), "Icon"), 
-   #     "href", value="%s/images/pushpin.png" % WEBSERVICES_ROOT)
-
-   # Nested parent elements that don't add extra attributes
-   SubElement(SubElement(lmUser, "BalloonStyle"), "text").append(CDATA("""\
-               <table>
-                  <tr>
-                     <td>
-                        <img src="{WEBSITE}/images/lmlogosmall.jpg" />
-                     </td>
-                     <td>
-                        <h3>$[name]</h3>
-                     </td>
-                  </tr>
-                  <tr>
-                     <td colspan="2">
-                        <table width="300">
-                           <tr>
-                              <th align="right">
-                                 Latitude:
-                              </th>
-                              <td>
-                                 $[latitude]
-                              </td>
-                           </tr>
-                           <tr>
-                              <th align="right">
-                                 Longitude:
-                              </th>
-                              <td>
-                                 $[longitude]
-                              </td>
-                           </tr>
-                        </table>
-                     </td>
-                  </tr>
-               </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
-
-   # lmProjectionBalloon
-   lmPrj = SubElement(doc, "Style", attrib={"id": "lmProjectionBalloon"})
-
-   # Nested parent elements that don't add extra attributes
-   SubElement(SubElement(lmPrj, "BalloonStyle"), "text").append(CDATA("""\
-               <table>
-                  <tr>
-                     <td>
-                        <img src="{WEBSITE}/images/lmlogosmall.jpg" />
-                     </td>
-                     <td>
-                        <h3>$[name]</h3>
-                     </td>
-                  </tr>
-                  <tr>
-                     <td colspan="2">
-                        <table width="300">
-                           <tr>
-                              <th align="right">
-                                 Scenario Title:
-                              </th>
-                              <td>
-                                 $[scenarioTitle]
-                              </td>
-                           </tr>
-                           <tr>
-                              <th align="right">
-                                 Last Modified:
-                              </th>
-                              <td>
-                                 $[lastModified]
-                              </td>
-                           </tr>
-                        </table>
-                     </td>
-                  </tr>
-               </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
-
-   # Add object
-   if isinstance(myObj, SDMProjection):
-      addProjection(doc, myObj, 1)
-   elif isinstance(myObj, OccurrenceLayer):
-      #myObj.readData(doReadData=True)
-      myObj.readShapefile()
-      addOccurrenceSet(doc, myObj)
-      
-   temp = tostring(root)
-   temp = temp.replace('&lt;', '<')
-   temp = temp.replace('&gt;', '>')
-   return temp
-
-# .............................................................................
-def kmlObjectFormatter(obj):
-   """
-   @summary: Looks at object and converts to KML based on its type
-   """
-   #cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
-   cherrypy.response.headers['Content-Type'] = LMFormat.KML.getMimeType()
-   cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}.kml"'.format(obj.name)
-   kmlStr = getKML(obj)
-   return kmlStr
-
-
-
+    lon_el = SubElement(ext, 'Data', attrib={'name': 'longitude'})
+    SubElement(lon_el, 'value', value=lon)
 
 
 # .............................................................................
-def getNameForPoint(pt):
-   """
-   @summary: Get a name for a point.  Tries to get the taxon name, falls back 
-                to local id
-   @param pt: A point object
-   """
-   name = None
-   
-   try:
-      return pt.sciname
-   except:
-      try:
-         return pt.occurid
-      except:
-         pass
-   
-   for att in OccurrenceFieldNames.DATANAME:
-      try:
-         name = pt.__getattribute__(att)
-         return name
-      except:
-         pass
-   
-   # If no data name fields were available
-   for att in OccurrenceFieldNames.LOCAL_ID:
-      try:
-         name = pt.__getattribute__(att)
-         return name
-      except:
-         pass
-   
-   # Return unknown if we can't find a name
-   return "Unknown"
+def add_projection(parent, prj, visibility, indent=0):
+    """Adds a projection to the KML output
+
+    Args:
+        parent: The parent element to add it to
+        point: The projection to add
+    """
+    prj_name = 'Lifemapper projection {} - {}'.format(
+        prj.getId(), prj.speciesName)
+    if indent == 0:
+        SubElement(parent, 'name', value=prj_name)
+        SubElement(parent, 'description', value=prj_name)
+
+    # Ground Overlay
+    ground_overlay_el = SubElement(parent, 'GroundOverlay')
+    SubElement(ground_overlay_el, 'styleUrl', value='#lmProjectionBalloon')
+    SubElement(ground_overlay_el, 'name', value=prj_name)
+    SubElement(ground_overlay_el, 'visibility', value=visibility)
+
+    # Look at
+    look_at_el = SubElement(ground_overlay_el, 'LookAt')
+    SubElement(look_at_el, 'latitude', value='0.0')
+    SubElement(look_at_el, 'longitude', value='0.0')
+    SubElement(look_at_el, 'altitude', value='0.0')
+    SubElement(look_at_el, 'range', value='500000')
+    SubElement(look_at_el, 'tilt', value='0.0')
+    SubElement(look_at_el, 'heading', value='0.0')
+
+    # Icon
+    icon_el = SubElement(ground_overlay_el, 'Icon')
+
+    map_url = prj._earlJr.constructLMMapRequest(
+        '{}/{}{}'.format(WEBSERVICES_ROOT, 'api/v2/ogc', prj._mapPrefix),
+        400, 200, prj.bbox, color='ff0000')
+    SubElement(icon_el, 'href', value=map_url)
+
+    # Latitude Longitude Box
+    lat_lon_box_el = SubElement(ground_overlay_el, 'LatLonBox')
+    SubElement(lat_lon_box_el, 'north', value=prj.bbox[3])
+    SubElement(lat_lon_box_el, 'south', value=prj.bbox[1])
+    SubElement(lat_lon_box_el, 'west', value=prj.bbox[0])
+    SubElement(lat_lon_box_el, 'east', value=prj.bbox[2])
+    SubElement(lat_lon_box_el, 'rotation', value='0.0')
+
+    # Extended Data
+    ext_data = SubElement(ground_overlay_el, 'ExtendedData')
+
+    last_mod_el = SubElement(ext_data, 'Data', attrib={'name': 'lastModified'})
+    SubElement(last_mod_el, 'value', value=formatTimeHuman(prj.modTime))
+
+    scn_title_el = SubElement(
+        ext_data, 'Data', attrib={'name': 'scenarioTitle'})
+    # TODO: Get the title for this scenario
+    SubElement(scn_title_el, 'value', value=prj._projScenario.code)
+
 
 # .............................................................................
-def getLatLonForPoint(pt):
-   """
-   @summary: Get's the x and y for a point
-   @param pt: A point object
-   @note: Tries to get this from the geometry first, falls back to attributes
-   """
-   # Try wkt first
-   wkt = None
-   for att in OccurrenceFieldNames.GEOMETRY_WKT:
-      try:
-         wkt = pt._attrib[att]
-         break
-      except:
-         pass
-      
-   if wkt is not None:
-      lon, lat, _ = ogr.CreateGeometryFromWkt(wkt).GetPoint()
-      return lat, lon
-   else:
-      # Find lat and lon
-      lat = None
-      for att in OccurrenceFieldNames.LATITUDE:
-         try:
-            lat = pt._attrib[att]
-            break
-         except:
+def get_kml(my_obj):
+    """Gets a KML document for the object
+
+    Args:
+        my_obj: The object to return in KML
+    """
+    register_namespace('', KML_NS)
+    set_default_namespace(KML_NS)
+    root = Element('kml')
+    doc = SubElement(root, 'Document')
+    SubElement(doc, 'styleUrl', value='#lmBalloon')
+
+    # lmBalloon style
+    lm_balloon = SubElement(doc, 'Style', attrib={'id': 'lmBalloon'})
+
+    # Nested parent elements that don't add extra attributes
+    SubElement(SubElement(lm_balloon, 'BalloonStyle'), 'text').append(
+        CDATA("""\
+                    <table>
+                        <tr>
+                            <td>
+                                <img src="{WEBSITE}/images/lmlogosmall.jpg" />
+                            </td>
+                            <td>
+                                <h3>$[name]</h3>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                $[description]
+                            </td>
+                        </tr>
+                    </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
+
+    # lmLayerBalloon style
+    lm_layer_balloon = SubElement(
+        doc, 'Style', attrib={'id': 'lmLayerBalloon'})
+
+    # Nested parent elements that don't add extra attributes
+    SubElement(SubElement(lm_layer_balloon, 'BalloonStyle'), 'text').append(
+        CDATA("""\
+                    <table>
+                        <tr>
+                            <td>
+                                <img src="{WEBSITE}/images/lmlogosmall.jpg" />
+                            </td>
+                            <td>
+                                <h3>$[name]</h3>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <table width="300">
+                                    <tr>
+                                        <th align="right">
+                                            Title:
+                                        </th>
+                                        <td>
+                                            $[layerTitle]
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th align="right">
+                                            Last Modified:
+                                        </th>
+                                        <td>
+                                            $[lastModified]
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
+
+    # lmGbifOccurrenceBalloon
+    lm_gbif = SubElement(
+        doc, 'Style', attrib={'id': 'lmGbifOccurrenceBalloon'})
+
+    # Nested parent elements that don't add extra attributes
+    SubElement(SubElement(lm_gbif, 'BalloonStyle'), 'text').append(CDATA("""\
+                    <table>
+                        <tr>
+                            <td>
+                                <img src="{WEBSITE}/images/lmlogosmall.jpg" />
+                            </td>
+                            <td>
+                                <h3>$[name]</h3>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <table width="300">
+                                    <tr>
+                                        <th align="right">
+                                            Provider:
+                                        </th>
+                                        <td>
+                                            $[providerName]
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th align="right">
+                                            Resource:
+                                        </th>
+                                        <td>
+                                            $[resourceName]
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th align="right">
+                                            Latitude:
+                                        </th>
+                                        <td>
+                                            $[latitude]
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th align="right">
+                                            Longitude:
+                                        </th>
+                                        <td>
+                                            $[longitude]
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th align="right">
+                                            Collector:
+                                        </th>
+                                        <td>
+                                            $[collector]
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th align="right">
+                                            Collection Date:
+                                        </th>
+                                        <td>
+                                            $[colDate]
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
+
+    # lmUserOccurrenceBalloon
+    lm_user = SubElement(
+        doc, 'Style', attrib={'id': 'lmUserOccurrenceBalloon'})
+
+    # Nested parent elements that don't add extra attributes
+    SubElement(SubElement(lm_user, 'BalloonStyle'), 'text').append(CDATA("""\
+                    <table>
+                        <tr>
+                            <td>
+                                <img src="{WEBSITE}/images/lmlogosmall.jpg" />
+                            </td>
+                            <td>
+                                <h3>$[name]</h3>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <table width="300">
+                                    <tr>
+                                        <th align="right">
+                                            Latitude:
+                                        </th>
+                                        <td>
+                                            $[latitude]
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th align="right">
+                                            Longitude:
+                                        </th>
+                                        <td>
+                                            $[longitude]
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
+
+    # lmProjectionBalloon
+    lm_prj = SubElement(doc, 'Style', attrib={'id': 'lmProjectionBalloon'})
+
+    # Nested parent elements that don't add extra attributes
+    SubElement(SubElement(lm_prj, 'BalloonStyle'), 'text').append(CDATA("""\
+                    <table>
+                        <tr>
+                            <td>
+                                <img src="{WEBSITE}/images/lmlogosmall.jpg" />
+                            </td>
+                            <td>
+                                <h3>$[name]</h3>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <table width="300">
+                                    <tr>
+                                        <th align="right">
+                                            Scenario Title:
+                                        </th>
+                                        <td>
+                                            $[scenarioTitle]
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th align="right">
+                                            Last Modified:
+                                        </th>
+                                        <td>
+                                            $[lastModified]
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>""".format(WEBSITE=WEBSERVICES_ROOT)))
+
+    # Add object
+    if isinstance(my_obj, SDMProjection):
+        add_projection(doc, my_obj, 1)
+    elif isinstance(my_obj, OccurrenceLayer):
+        my_obj.readShapefile()
+        add_occurrence_set(doc, my_obj)
+
+    temp = tostring(root)
+    temp = temp.replace('&lt;', '<')
+    temp = temp.replace('&gt;', '>')
+    return temp
+
+
+# .............................................................................
+def kml_object_formatter(obj):
+    """Looks at object and converts to KML based on its type
+    """
+    # cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
+    cherrypy.response.headers['Content-Type'] = LMFormat.KML.getMimeType()
+    cherrypy.response.headers[
+        'Content-Disposition'] = 'attachment; filename="{}.kml"'.format(
+            obj.name)
+    kml_str = get_kml(obj)
+    return kml_str
+
+
+# .............................................................................
+def get_name_for_point(point):
+    """Get a name for a point.  Try taxon name, falls back to local id
+
+    Args:
+        pt: A point object
+    """
+    name = None
+
+    try:
+        return point.sciname
+    except:
+        try:
+            return point.occurid
+        except:
             pass
-      
-      lon = None
-      for att in OccurrenceFieldNames.LONGITUDE:
-         try:
-            lon = pt._attrib[att]
-            break
-         except:
+
+    for att in OccurrenceFieldNames.DATANAME:
+        try:
+            name = point.__getattribute__(att)
+            return name
+        except:
             pass
-      
-      if lat is not None and lon is not None:
-         return lat, lon
-   
-   # Raise exception if we get to here without determining lat and lon
-   raise Exception("Could not retrieve latitude and / or longitude for point")
+
+    # If no data name fields were available
+    for att in OccurrenceFieldNames.LOCAL_ID:
+        try:
+            name = point.__getattribute__(att)
+            return name
+        except:
+            pass
+
+    # Return unknown if we can't find a name
+    return 'Unknown'
+
 
 # .............................................................................
-def getLocalIdForPoint(pt):
-   """
-   @summary: Get a local id for a point.
-   @param pt: A point object
-   """
-   localId = None
-   
-   # If no data name fields were available
-   for att in OccurrenceFieldNames.LOCAL_ID:
-      try:
-         localId = pt.__getattribute__(att)
-         return localId
-      except:
-         pass
-   
-   # Return unknown if we can't find a name
-   return "Unknown"
+def get_lat_lon_for_point(point):
+    """Get's the x and y for a point
+
+    Args:
+        point: A point object
+
+    Note:
+        Tries to get this from the geometry first, falls back to attributes
+    """
+    # Try wkt first
+    wkt = None
+    for att in OccurrenceFieldNames.GEOMETRY_WKT:
+        try:
+            wkt = point._attrib[att]
+            break
+        except:
+            pass
+
+    if wkt is not None:
+        lon, lat, _ = ogr.CreateGeometryFromWkt(wkt).GetPoint()
+        return lat, lon
+    else:
+        # Find lat and lon
+        lat = None
+        for att in OccurrenceFieldNames.LATITUDE:
+            try:
+                lat = point._attrib[att]
+                break
+            except:
+                pass
+
+        lon = None
+        for att in OccurrenceFieldNames.LONGITUDE:
+            try:
+                lon = point._attrib[att]
+                break
+            except:
+                pass
+
+        if lat is not None and lon is not None:
+            return lat, lon
+
+    # Raise exception if we get to here without determining lat and lon
+    raise Exception('Could not retrieve latitude and / or longitude for point')
+
+
+# .............................................................................
+def get_local_id_for_point(point):
+    """Get a local id for a point.
+
+    Args:
+        point: A point object.
+    """
+    local_id = None
+
+    # If no data name fields were available
+    for att in OccurrenceFieldNames.LOCAL_ID:
+        try:
+            local_id = point.__getattribute__(att)
+            return local_id
+        except:
+            pass
+
+    # Return unknown if we can't find a name
+    return 'Unknown'

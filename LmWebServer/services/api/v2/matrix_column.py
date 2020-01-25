@@ -5,48 +5,43 @@
 import cherrypy
 
 from LmCommon.common.lmconstants import HTTPStatus, JobStatus
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.legion.mtxcolumn import MatrixColumn
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.common.accessControl import check_user_permission
+from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+
 
 # .............................................................................
 @cherrypy.expose
 @cherrypy.popargs('pathMatrixColumnId')
 class MatrixColumnService(LmService):
-    """
-    @summary: This class is for the matrix column service.  The dispatcher is 
-                     responsible for calling the correct method.
+    """Matrix column service class.
     """
     # ................................
     def DELETE(self, pathGridSetId, pathMatrixId, pathMatrixColumnId):
+        """Attempts to delete a matrix column
         """
-        @summary: Attempts to delete a matrix column
-        """
-        mc = self.scribe.getMatrixColumn(mtxcolId=pathMatrixColumnId)
+        mtx_col = self.scribe.getMatrixColumn(mtxcolId=pathMatrixColumnId)
 
-        if mc is None:
+        if mtx_col is None:
             raise cherrypy.HTTPError(
                  HTTPStatus.NOT_FOUND, 'Matrix column not found')
-        
+
         # If allowed to, delete
-        if check_user_permission(self.get_user_id(), mc, HTTPMethod.DELETE):
-            success = self.scribe.deleteObject(mc)
+        if check_user_permission(
+                self.get_user_id(), mtx_col, HTTPMethod.DELETE):
+            success = self.scribe.deleteObject(mtx_col)
             if success:
                 cherrypy.response.status = HTTPStatus.NO_CONTENT
-                return 
-            else:
-                # TODO: How can this happen?  Make sure we catch those cases and 
-                #             respond appropriately.  We don't want 500 errors
-                raise cherrypy.HTTPError(
-                    HTTPStatus.INTERNAL_SERVER_ERROR,
-                    'Failed to delete matrix column')
-        else:
+                return
+
             raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN,
-                'User does not have permission to delete this matrix')
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                'Failed to delete matrix column')
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN,
+            'User does not have permission to delete this matrix')
 
     # ................................
     @lm_formatter
@@ -54,105 +49,87 @@ class MatrixColumnService(LmService):
             afterTime=None, beforeTime=None, epsgCode=None, ident=None,
             layerId=None, limit=100, offset=0, urlUser=None, squid=None,
             status=None, **params):
-        """
-        @summary: Performs a GET request.  If a matrix id is provided,
-                         attempt to return that item.  If not, return a list of 
-                         matrices that match the provided parameters
+        """GET request.  Individual, count, or list
         """
         if pathMatrixColumnId is None:
-            return self._listMatrixColumns(
+            return self._list_matrix_columns(
                 pathGridSetId, pathMatrixId, self.get_user_id(urlUser=urlUser),
                 afterTime=afterTime, beforeTime=beforeTime, epsgCode=epsgCode,
                 ident=ident, layerId=layerId, limit=limit, offset=offset,
                 squid=squid, status=status)
-        elif pathMatrixColumnId.lower() == 'count':
-            return self._countMatrixColumns(
+        if pathMatrixColumnId.lower() == 'count':
+            return self._count_matrix_columns(
                 pathGridSetId, pathMatrixId, self.get_user_id(urlUser=urlUser),
                 afterTime=afterTime, beforeTime=beforeTime, epsgCode=epsgCode,
                 ident=ident, layerId=layerId, squid=squid, status=status)
-        else:
-            return self._getMatrixColumn(
-                pathGridSetId, pathMatrixId, pathMatrixColumnId)
-        
-    # ................................
-    @lm_formatter
-    def POST(self, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout,
-             **params):
-        """
-        @summary: Posts a new layer
-        @todo: Add cutout
-        @todo: Take a completed matrix?
-        """
-        sg = MatrixColumn(
-            name, self.get_user_id(), epsgCode, cellSides, cellSize, mapUnits,
-            bbox)
-        updatedSg = self.scribe.findOrInsertmatrix(sg, cutout=cutout)
-        return updatedSg
-    
-    # ................................
-    def _countMatrixColumns(self, pathGridSetId, pathMatrixId, userId,
-                            afterTime=None, beforeTime=None, epsgCode=None,
-                            ident=None, layerId=None, squid=None, status=None):
 
-        afterStatus = None
-        beforeStatus = None
+        return self._get_matrix_column(
+            pathGridSetId, pathMatrixId, pathMatrixColumnId)
+
+    # ................................
+    def _count_matrix_columns(self, pathGridSetId, pathMatrixId, userId,
+                              afterTime=None, beforeTime=None, epsgCode=None,
+                              ident=None, layerId=None, squid=None,
+                              status=None):
+
+        after_status = None
+        before_status = None
 
         # Process status parameter
         if status:
             if status < JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE - 1
             elif status == JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE + 1
-                afterStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE + 1
+                after_status = JobStatus.COMPLETE - 1
             else:
-                afterStatus = status - 1
+                after_status = status - 1
 
-        mtxColCount = self.scribe.countMatrixColumns(
+        mtx_col_count = self.scribe.countMatrixColumns(
             userId=userId, squid=squid, ident=ident, afterTime=afterTime,
-            beforeTime=beforeTime, epsg=epsgCode, afterStatus=afterStatus,
-            beforeStatus=beforeStatus, matrixId=pathMatrixId, layerId=layerId)
-        return {'count' : mtxColCount}
+            beforeTime=beforeTime, epsg=epsgCode, afterStatus=after_status,
+            beforeStatus=before_status, matrixId=pathMatrixId, layerId=layerId)
+        return {'count': mtx_col_count}
 
     # ................................
-    def _getMatrixColumn(self, pathGridSetId, pathMatrixId, pathMatrixColumnId):
+    def _get_matrix_column(self, pathGridSetId, pathMatrixId,
+                           pathMatrixColumnId):
+        """Attempt to get a matrix column
         """
-        @summary: Attempt to get a matrix column
-        """
-        mtxCol = self.scribe.getMatrixColumn(mtxcolId=pathMatrixColumnId)
-        if mtxCol is None:
+        mtx_col = self.scribe.getMatrixColumn(mtxcolId=pathMatrixColumnId)
+        if mtx_col is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
                 'Matrix column {} was not found'.format(pathMatrixColumnId))
-        if check_user_permission(self.get_user_id(), mtxCol, HTTPMethod.GET):
-            return mtxCol
-        else:
-            raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN,
-                'User {} does not have permission to access matrix {}'.format(
-                    self.get_user_id(), pathMatrixId))
+        if check_user_permission(self.get_user_id(), mtx_col, HTTPMethod.GET):
+            return mtx_col
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN,
+            'User {} does not have permission to access matrix {}'.format(
+                self.get_user_id(), pathMatrixId))
 
     # ................................
-    def _listMatrixColumns(self, pathGridSetId, pathMatrixId, userId,
-                           afterTime=None, beforeTime=None, epsgCode=None,
-                           ident=None, layerId=None, limit=100, offset=0,
-                           squid=None, status=None):
-        afterStatus = None
-        beforeStatus = None
+    def _list_matrix_columns(self, pathGridSetId, pathMatrixId, userId,
+                             afterTime=None, beforeTime=None, epsgCode=None,
+                             ident=None, layerId=None, limit=100, offset=0,
+                             squid=None, status=None):
+        after_status = None
+        before_status = None
 
         # Process status parameter
         if status:
             if status < JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE - 1
             elif status == JobStatus.COMPLETE:
-                beforeStatus = JobStatus.COMPLETE + 1
-                afterStatus = JobStatus.COMPLETE - 1
+                before_status = JobStatus.COMPLETE + 1
+                after_status = JobStatus.COMPLETE - 1
             else:
-                afterStatus = status - 1
+                after_status = status - 1
 
-        mtxAtoms = self.scribe.listMatrixColumns(
+        mtx_atoms = self.scribe.listMatrixColumns(
             offset, limit, userId=userId, squid=squid, ident=ident,
             afterTime=afterTime, beforeTime=beforeTime, epsg=epsgCode,
-            afterStatus=afterStatus, beforeStatus=beforeStatus,
+            afterStatus=after_status, beforeStatus=before_status,
             matrixId=pathMatrixId, layerId=layerId)
-        return mtxAtoms
-
+        return mtx_atoms

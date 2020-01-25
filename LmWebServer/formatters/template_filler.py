@@ -1,6 +1,7 @@
 """This module contains functions for filling in templated strings
 """
 
+
 # .............................................................................
 class TemplateFiller:
     """Class responsible for filling templated strings
@@ -100,7 +101,8 @@ class TemplateFiller:
                         # Process as a replace string
                         if token.lower().find('.') > 0:
                             token_parts = token.lower().split('.')
-                            token_val = self.param_dict[token_parts[0]][token_parts[1]]
+                            token_val = self.param_dict[
+                                token_parts[0]][token_parts[1]]
                         else:
                             token_val = self.param_dict[token.lower()]
                         ret_str += token_val

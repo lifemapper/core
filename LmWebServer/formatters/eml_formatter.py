@@ -13,6 +13,7 @@ from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.base.layer2 import Raster, Vector
 
+
 # .............................................................................
 def _create_data_table_section(data_table):
     """Create a data table subsection for an object
@@ -21,7 +22,7 @@ def _create_data_table_section(data_table):
         data_table (:obj: `Matrix`): A matrix object formatted as CSV
     """
     dt_el = Element(
-        'otherEntity', attrib={'id' : 'mtx_{}'.format(data_table.getId())})
+        'otherEntity', attrib={'id': 'mtx_{}'.format(data_table.getId())})
     SubElement(dt_el, 'entityName', value='mtx_{}'.format(data_table.getId()))
     phys = SubElement(dt_el, 'physical')
     SubElement(
@@ -29,16 +30,15 @@ def _create_data_table_section(data_table):
     SubElement(phys, 'encodingMethod', value='ASCII')
     SubElement(
         SubElement(
-            SubElement(phys, 'dataFormat'), 
-            'externallyDefinedFormat'),
-        'formatName', 
-        value='Lifemapper Matrix Json')
-    
-    alEl = SubElement(dt_el, 'attributeList')
+            SubElement(phys, 'dataFormat'), 'externallyDefinedFormat'),
+        'formatName', value='Lifemapper Matrix Json')
+
+    att_list_el = SubElement(dt_el, 'attributeList')
     mtx = Matrix.load_flo(data_table.getDLocation())
-    for colHeader in mtx.get_column_headers():
-        SubElement(alEl, 'attribute', value=colHeader)
+    for col_header in mtx.get_column_headers():
+        SubElement(att_list_el, 'attribute', value=col_header)
     return dt_el
+
 
 # .............................................................................
 def _create_other_entity(entity):
@@ -48,20 +48,18 @@ def _create_other_entity(entity):
         entity (:obj: `Gridset`): A gridset object to format as EML
     """
     entity_element = Element(
-        'otherEntity', attrib={'id' : 'mtx_{}'.format(entity.getId())})
+        'otherEntity', attrib={'id': 'mtx_{}'.format(entity.getId())})
     SubElement(
         entity_element, 'entityName', value='mtx_{}'.format(entity.getId()))
     phys = SubElement(entity_element, 'physical')
     SubElement(phys, 'objectName', value='tree_{}.nex'.format(entity.getId()))
     SubElement(phys, 'encodingMethod', value='ASCII')
     SubElement(
-        SubElement(
-            SubElement(phys, 'dataFormat'), 
-            'externallyDefinedFormat'),
-        'formatName', 
-        value='nexus')
+        SubElement(SubElement(phys, 'dataFormat'), 'externallyDefinedFormat'),
+        'formatName', value='nexus')
     SubElement(entity_element, 'entityType', value='tree')
     return entity_element
+
 
 # .............................................................................
 def _create_spatial_raster(spatial_raster):
@@ -72,19 +70,17 @@ def _create_spatial_raster(spatial_raster):
         sr_element, 'cellSizeXDirection', value=spatial_raster.resolution)
     SubElement(
         sr_element, 'cellSizeYDirection', value=spatial_raster.resolution)
-    SubElement(
-        sr_element, 'numberOfBands', value='1')
+    SubElement(sr_element, 'numberOfBands', value='1')
     min_x, min_y, max_x, max_y = spatial_raster.bbox
     num_cols = int((max_x - min_x) / spatial_raster.resolution)
     num_rows = int((max_y - min_y) / spatial_raster.resolution)
     SubElement(sr_element, 'rasterOrigin', value='Lower Left')
     SubElement(sr_element, 'rows', value=str(num_rows))
     SubElement(sr_element, 'cols', value=str(num_cols))
-    SubElement(
-        sr_element, 'verticals', value='1')
-    SubElement(
-        sr_element, 'cellGeometry', value='pixel')
+    SubElement(sr_element, 'verticals', value='1')
+    SubElement(sr_element, 'cellGeometry', value='pixel')
     return sr_element
+
 
 # .............................................................................
 def _create_spatial_vector(spatial_vector):
@@ -94,7 +90,7 @@ def _create_spatial_vector(spatial_vector):
         spatial_vector (:obj: `Vector`): A vector object to format as EML
     """
     vector_id = 'mtx_{}'.format(spatial_vector.getId())
-    sv_element = Element('spatialVector', attrib={'id' : vector_id})
+    sv_element = Element('spatialVector', attrib={'id': vector_id})
     phys = SubElement(sv_element, 'physical')
     SubElement(
         phys, 'objectName', value='mtx_{}.geojson'.format(
@@ -104,119 +100,115 @@ def _create_spatial_vector(spatial_vector):
         SubElement(
             SubElement(phys, 'dataFormat'),
             'externallyDefinedFormat'), 'formatName', value='geojson')
-    
+
     attrib_list_element = SubElement(sv_element, 'attributeList')
     if isinstance(spatial_vector, Matrix):
         mtx = Matrix.load_flo(spatial_vector.getDLocation())
-        for colHeader in mtx.getColumnHeaders():
-            SubElement(attrib_list_element, 'attribute', value=colHeader)
+        for col_header in mtx.get_column_headers():
+            SubElement(attrib_list_element, 'attribute', value=col_header)
         SubElement(sv_element, 'geometry', value='polygon')
     else:
-        for _, v in list(spatial_vector.featureAttributes.items()):
-            SubElement(attrib_list_element, 'attribute', value=v[0])
+        for _, val in list(spatial_vector.featureAttributes.items()):
+            SubElement(attrib_list_element, 'attribute', value=val[0])
         SubElement(sv_element, 'geometry', value='polygon')
-    
+
     return sv_element
+
 
 # .............................................................................
 def make_eml(my_obj):
-    """
-    @summary: Generate an EML document representing metadata for the provided 
-                     object
+    """Generate an EML document representing metadata for the provided object
     """
     # TODO: Add name
     if isinstance(my_obj, Gridset):
-        topEl = Element('eml', 
-                             attrib={
-                                 # TODO: Better package ids
-                                'packageId' : 'org.lifemapper.gridset.{}'.format(
-                                    my_obj.getId()),
-                                'system' : 'http://svc.lifemapper.org'
-                              })
-        dsEl = SubElement(
-            topEl, 'dataset', attrib={'id' : 'gridset_{}'.format(
+        top_el = Element(
+            'eml',
+            attrib={
+                # TODO: Better package ids
+                'packageId': 'org.lifemapper.gridset.{}'.format(
+                    my_obj.getId()),
+                'system': 'http://svc.lifemapper.org'})
+        ds_el = SubElement(
+            top_el, 'dataset', attrib={'id': 'gridset_{}'.format(
                 my_obj.getId())})
         # Contact
         SubElement(
-            SubElement(dsEl, 'contact'), 'organizationName',
+            SubElement(ds_el, 'contact'), 'organizationName',
             value='Lifemapper')
-        
+
         try:
-            dsName = my_obj.name
+            ds_name = my_obj.name
         except:
-            dsName = 'Gridset {}'.format(my_obj.getId())
-        
-        SubElement(dsEl, 'name', value=dsName)
-        
+            ds_name = 'Gridset {}'.format(my_obj.getId())
+
+        SubElement(ds_el, 'name', value=ds_name)
+
         for mtx in my_obj.getMatrices():
             if os.path.exists(mtx.getDLocation()):
                 # TODO: Enable GRIMs
                 if mtx.matrixType in [
-                    MatrixType.ANC_PAM, #MatrixType.GRIM,
-                    MatrixType.PAM, MatrixType.SITES_OBSERVED]:
-                    dsEl.append(_create_spatial_vector(mtx))
-                elif mtx.matrixType in [MatrixType.ANC_STATE, 
-                                                MatrixType.DIVERSITY_OBSERVED, 
-                                                MatrixType.MCPA_OUTPUTS,
-                                                MatrixType.SPECIES_OBSERVED]:
-                    dsEl.append(_create_data_table_section(mtx))
+                        MatrixType.ANC_PAM,  # MatrixType.GRIM,
+                        MatrixType.PAM, MatrixType.SITES_OBSERVED]:
+                    ds_el.append(_create_spatial_vector(mtx))
+                elif mtx.matrixType in [
+                        MatrixType.ANC_STATE, MatrixType.DIVERSITY_OBSERVED,
+                        MatrixType.MCPA_OUTPUTS, MatrixType.SPECIES_OBSERVED]:
+                    ds_el.append(_create_data_table_section(mtx))
         if my_obj.tree is not None:
-            dsEl.append(_create_other_entity(my_obj.tree))
+            ds_el.append(_create_other_entity(my_obj.tree))
     elif isinstance(my_obj, SDMProjection):
-        topEl = Element(
+        top_el = Element(
             'eml',
             attrib={
-                'packageId' : 'org.lifemapper.sdmproject.{}'.format(
+                'packageId': 'org.lifemapper.sdmproject.{}'.format(
                     my_obj.getId()),
-                'system' : 'http://svc.lifemapper.org'})
+                'system': 'http://svc.lifemapper.org'})
         ds_el = SubElement(
-            topEl, 'dataset',
-            attrib={'id' : 'sdmproject_{}'.format(my_obj.getId())})
+            top_el, 'dataset',
+            attrib={'id': 'sdmproject_{}'.format(my_obj.getId())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'),
             'organizationName', value='Lifemapper')
         ds_el.append(_create_spatial_raster(my_obj))
     elif isinstance(my_obj, EnvLayer):
-        topEl = Element(
+        top_el = Element(
             'eml',
             attrib={
-                'packageId' : 'org.lifemapper.envlayer.{}'.format(
+                'packageId': 'org.lifemapper.envlayer.{}'.format(
                     my_obj.getId()),
-                'system' : 'http://svc.lifemapper.org'})
+                'system': 'http://svc.lifemapper.org'})
         ds_el = SubElement(
-            topEl, 'dataset',
-            attrib={'id' : 'envlayer_{}'.format(my_obj.getId())})
+            top_el, 'dataset',
+            attrib={'id': 'envlayer_{}'.format(my_obj.getId())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'),
             'organizationName', value='Lifemapper')
         ds_el.append(_create_spatial_raster(my_obj))
     elif isinstance(my_obj, Raster):
-        topEl = Element(
+        top_el = Element(
             'eml',
             attrib={
-                'packageId' : 'org.lifemapper.layer.{}'.format(
-                    my_obj.getId()),
-                'system' : 'http://svc.lifemapper.org'})
+                'packageId': 'org.lifemapper.layer.{}'.format(my_obj.getId()),
+                'system': 'http://svc.lifemapper.org'})
         ds_el = SubElement(
-            topEl, 'dataset',
-            attrib={'id' : 'layer_{}'.format(my_obj.getId())})
+            top_el, 'dataset',
+            attrib={'id': 'layer_{}'.format(my_obj.getId())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'),
             'organizationName', value='Lifemapper')
         ds_el.append(_create_spatial_raster(my_obj))
     elif isinstance(my_obj, Vector):
-        topEl = Element(
+        top_el = Element(
             'eml',
             attrib={
-                'packageId' : 'org.lifemapper.layer.{}'.format(
-                    my_obj.getId()),
-                'system' : 'http://svc.lifemapper.org'})
+                'packageId': 'org.lifemapper.layer.{}'.format(my_obj.getId()),
+                'system': 'http://svc.lifemapper.org'})
         ds_el = SubElement(
-            topEl, 'dataset',
-            attrib={'id' : 'layer_{}'.format(my_obj.getId())})
+            top_el, 'dataset',
+            attrib={'id': 'layer_{}'.format(my_obj.getId())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'),
@@ -225,27 +217,28 @@ def make_eml(my_obj):
     else:
         raise Exception(
             'Cannot create eml for {} currently'.format(my_obj.__class__))
-    return topEl
-    
+    return top_el
+
+
 # .............................................................................
-def emlObjectFormatter(obj):
+def eml_object_formatter(obj):
+    """Looks at object and converts to EML based on its type
     """
-    @summary: Looks at object and converts to EML based on its type
-    """
-    response = _formatObject(obj)
-    
+    response = _format_object(obj)
+
     return tostring(response)
 
+
 # .............................................................................
-def _formatObject(obj):
-    """
-    @summary: Helper method to format an individual object based on its type
+def _format_object(obj):
+    """Helper method to format an individual object based on its type
     """
     cherrypy.response.headers['Content-Type'] = LMFormat.EML.getMimeType()
-    
-    if isinstance(obj, (EnvLayer, Gridset, SDMProjection, Raster, Vector)):
-        cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}.eml"'.format(obj.name)
-        return makeEml(obj)
-    else:
-        raise TypeError("Cannot format object of type: {}".format(type(obj)))
 
+    if isinstance(obj, (EnvLayer, Gridset, SDMProjection, Raster, Vector)):
+        cherrypy.response.headers[
+            'Content-Disposition'] = 'attachment; filename="{}.eml"'.format(
+                obj.name)
+        return make_eml(obj)
+
+    raise TypeError("Cannot format object of type: {}".format(type(obj)))
