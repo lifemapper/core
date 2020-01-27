@@ -8,7 +8,7 @@ from LmBackend.command.multi import (OccurrenceBucketeerCommand,
                                  OccurrenceSorterCommand)#, OccurrenceSplitterCommand)
 
 from LmServer.legion.processchain import MFChain
-from LmBackend.command.server import LmTouchCommand
+from LmBackend.command.server import TouchFileCommand
 
 # .............................................................................
 def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='', 
@@ -47,7 +47,7 @@ def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='',
         
         # Add out directory touch rule
         touchFn = os.path.join(outDir, 'touch.out')
-        touchCmd = LmTouchCommand(touchFn)
+        touchCmd = TouchFileCommand(touchFn)
         rules.append(touchCmd.get_makeflow_rule(local=True))
         bucketeerCmd = OccurrenceBucketeerCommand(os.path.join(outDir, basename), 
                                                                 groupPos, inFn, 

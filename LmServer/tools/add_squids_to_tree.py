@@ -3,7 +3,7 @@
 import argparse
 
 from LmCommon.common.lmconstants import PhyloTreeKeys
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
 
 from LmServer.common.log import ScriptLogger
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # Set up the argument parser
     parser = argparse.ArgumentParser(
       description='This script adds SQUIDs to the tips of a tree and labels nodes')
-   
+
     parser.add_argument('tree_id', type=int, help='The id of this tree')
     parser.add_argument(
         'user_id', type=str, help='The user this tree belongs to')
@@ -38,21 +38,20 @@ if __name__ == "__main__":
         sno = scribe.getTaxon(userId=user_id, taxonName=label)
         if sno is not None:
             squid_dict[label] = sno.squid
-   
+
     tree.annotateTree(PhyloTreeKeys.SQUID, squid_dict)
-   
+
     # Write tree
     tree.clearDLocation()
     tree.setDLocation()
     tree.writeTree()
-    
+
     # Update metadata
     tree.updateModtime(gmt().mjd)
     success = scribe.updateObject(tree)
 
     scribe.closeConnections()
 
-    readyFilename(args.success_filename, overwrite=True)
+    ready_filename(args.success_filename, overwrite=True)
     with open(args.success_filename, 'w') as out_f:
         out_f.write('1\n')
-   

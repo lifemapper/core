@@ -5,7 +5,7 @@
 import argparse
 import os
 
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
 # .............................................................................
@@ -47,6 +47,6 @@ if __name__ == "__main__":
     
     grim_col = encoder.get_encoded_matrix()
     
-    readyFilename(args.grim_column_filename, overwrite=True)
+    ready_filename(args.grim_column_filename, overwrite=True)
     with open(args.grim_column_filename, 'w') as grim_col_out_f:
         grim_col.save(grim_col_out_f)

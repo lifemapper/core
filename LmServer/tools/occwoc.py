@@ -11,7 +11,7 @@ from LmCommon.common.apiquery import GbifAPI
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import (readyFilename, get_unicodecsv_writer)
+from LmCommon.common.ready_file import (ready_filename, get_unicodecsv_writer)
 from LmCommon.common.time import gmt, LmTime
 
 from LmServer.base.taxon import ScientificName
@@ -563,7 +563,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
         else:
             # Write interpreted metadata along with raw CSV
             rawmeta_dloc = rdloc + LMFormat.JSON.ext
-            readyFilename(rawmeta_dloc, overwrite=True)
+            ready_filename(rawmeta_dloc, overwrite=True)
             with open(rawmeta_dloc, 'w') as f:
                 json.dump(metadata, f)
         return rdloc, rawmeta_dloc
@@ -709,7 +709,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         """
         Create a new file from BISON TSN query for binomials with > 20 points. 
         """
-        self.readyFilename(dirContentsFname, overwrite=True)
+        self.ready_filename(dirContentsFname, overwrite=True)
         with open(dirContentsFname, 'w') as f:
             for root, dirs, files in os.walk(self._occCSVDir):
                 for fname in files:
@@ -750,12 +750,12 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         if data is None:
             raise LMError(currargs='Missing data file for occurrenceSet')
         rdloc = occ.createLocalDLocation(raw=True)
-        occ.readyFilename(rdloc, overwrite=True)
+        occ.ready_filename(rdloc, overwrite=True)
         shutil.copyfile(data, rdloc)
         
         if metadata is not None:
             rawmeta_dloc = rdloc + LMFormat.JSON.ext
-            readyFilename(rawmeta_dloc, overwrite=True)
+            ready_filename(rawmeta_dloc, overwrite=True)
             with open(rawmeta_dloc, 'w') as f:
                 json.dump(metadata, f)
         return rdloc, rawmeta_dloc

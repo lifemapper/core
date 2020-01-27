@@ -6,7 +6,7 @@ import argparse
 import os
 
 from LmBackend.command.common import SystemCommand
-from LmBackend.command.server import LmTouchCommand
+from LmBackend.command.server import TouchFileCommand
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCommon.common.time import gmt
 from LmServer.common.lmconstants import Priority
@@ -72,16 +72,16 @@ def rebuild_index_for_gridset(gridset_id):
                         mc.updateStatus(JobStatus.INITIALIZE)
                         scribe.updateObject(mc)
                         my_wf.addCommands(mc.computeMe(workDir=work_dir))
-                        
+
                         prj_target_dir = os.path.join(
                              work_dir, os.path.splitext(
                                  lyr.getRelativeDLocation())[0])
                         prj_touch_fn = os.path.join(prj_target_dir, 
                                                     'touch.out')
-                        touch_cmd = LmTouchCommand(prj_touch_fn)
+                        touch_cmd = TouchFileCommand(prj_touch_fn)
                         my_wf.addCommands(
                             touch_cmd.get_makeflow_rule(local=True))
-                        
+
                         prj_name = os.path.basename(
                              os.path.splitext(lyr.getDLocation())[0])
 

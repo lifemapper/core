@@ -6,7 +6,7 @@ import os
 
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 from LmCommon.common.lmconstants import LMFormat, ProcessType
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.readyfile import ready_filename
 
 # Local dictionary keys for determining the type of masks to create
 DO_ASCII = 'do_ascii'
@@ -496,7 +496,7 @@ class ParameterSweepConfiguration:
         }
 
         if not hasattr(fn_or_flo, 'write'):
-            readyFilename(fn_or_flo, overwrite=True)
+            ready_filename(fn_or_flo, overwrite=True)
             with open(fn_or_flo, 'w') as out_f:
                 json.dump(config, out_f)
         else:

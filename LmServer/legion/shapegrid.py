@@ -11,7 +11,6 @@ from LmCommon.common.time import gmt
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, LMServiceType)
-from LmBackend.command.server import LmTouchCommand
 from LmBackend.command.common import SystemCommand, ChainCommand
 from LmBackend.command.multi import BuildShapegridCommand
 
@@ -208,7 +207,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             if os.path.exists(dloc):
                 raise LMError("Shapegrid file already exists at: %s" % dloc)
             else:
-                self.readyFilename(dloc, overwrite=False)
+                self.ready_filename(dloc, overwrite=False)
                 
         t_srs = osr.SpatialReference()
         t_srs.ImportFromEPSG(self.epsgcode)
@@ -247,7 +246,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             self.readData(doReadData=False)
             self._setCellMeasurements()
             return 
-        self.readyFilename(self._dlocation, overwrite=overwrite)
+        self.ready_filename(self._dlocation, overwrite=overwrite)
         cellCount = build_shapegrid(
             self._dlocation, self.minX, self.minY, self.maxX, self.maxY,
             self.cellsize, self.epsgcode, self._cellsides, siteId=self.siteId,

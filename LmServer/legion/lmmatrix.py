@@ -208,7 +208,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         """
         if dlocation is None:
             dlocation = self.getDLocation()
-        self.readyFilename(dlocation, overwrite=overwrite)
+        self.ready_filename(dlocation, overwrite=overwrite)
 
         with open(dlocation, 'w') as outF:
             self.save(outF)

@@ -20,7 +20,7 @@ from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
       SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX, 
       SERVER_SDM_ALGORITHM_HEADING_PREFIX,
       SERVER_DEFAULT_HEADING_POSTFIX)
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
 
 from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
@@ -645,7 +645,7 @@ class BOOMFiller(LMObject):
         if tree is not None:
             config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree.name)
               
-        readyFilename(self.outConfigFilename, overwrite=True)
+        ready_filename(self.outConfigFilename, overwrite=True)
         with open(self.outConfigFilename, 'wb') as configfile:
             config.write(configfile)
         self._fixPermissions(files=[self.outConfigFilename])
@@ -1480,7 +1480,7 @@ from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
       SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX, 
       SERVER_SDM_ALGORITHM_HEADING_PREFIX,
       SERVER_DEFAULT_HEADING_POSTFIX, SERVER_PIPELINE_HEADING)
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 
 from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 

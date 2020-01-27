@@ -10,14 +10,14 @@ from LmCommon.common.lmconstants import (
     DEFAULT_EPSG, DWCNames, GBIF, JobStatus, LM_WKT_FIELD, LMFormat,
     PROVIDER_FIELD_COMMON)
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
 try:
     from LmServer.common.lmconstants import BIN_PATH
-except:
+except ImportError:
     from LmCompute.common.lmconstants import BIN_PATH
 
 
@@ -153,7 +153,7 @@ class ShapeShifter:
                   CSV files.  ** This restriction will be removed.  
         @note: This function assumes all records go into the same shapefile.
         """
-        if not readyFilename(outfname, overwrite=overwrite):
+        if not ready_filename(outfname, overwrite=overwrite):
             raise LmException('{} is not ready for write (overwrite={})'.format
                                     (outfname, overwrite))
         discardIndices = self._getSubset(maxPoints)
@@ -166,7 +166,7 @@ class ShapeShifter:
 
             # Do we need a BIG dataset?
             if len(discardIndices) > 0 and bigfname is not None:
-                if not readyFilename(bigfname, overwrite=overwrite):
+                if not ready_filename(bigfname, overwrite=overwrite):
                     raise LmException('{} is not ready for write (overwrite={})'
                                             .format(bigfname, overwrite))
                 bigDs = self._createDataset(bigfname)
@@ -484,8 +484,8 @@ big_out_fn = '/state/partition1/lmscratch/temp/big_test_points'
 metadata = '/share/lmserver/data/species/gbif_occ_subset-2019.01.10.json'
 delimiter = '\t'
 maxPoints = 500
-readyFilename(out_fn, overwrite=True)
-readyFilename(big_out_fn, overwrite=True)
+ready_filename(out_fn, overwrite=True)
+ready_filename(big_out_fn, overwrite=True)
 
 
 with open(csv_fn) as inF:

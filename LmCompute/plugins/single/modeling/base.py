@@ -19,7 +19,7 @@ from LmBackend.common.subprocessManager import (
     LongRunningProcessError, SubprocessRunner)
 
 from LmCommon.common.lmconstants import JobStatus, LMFormat, ONE_HOUR_SECONDS
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
@@ -199,7 +199,7 @@ class ModelSoftwareWrapper(object):
             destination_filename : The location to write the (zipped) package
             overwrite : Should the file location be overwritten
         """
-        readyFilename(destination_filename, overwrite=overwrite)
+        ready_filename(destination_filename, overwrite=overwrite)
         
         with zipfile.ZipFile(destination_filename, 'w', 
                              compression=zipfile.ZIP_DEFLATED, 
@@ -265,11 +265,11 @@ class ModelSoftwareWrapper(object):
             overwrite : Should the file location be overwritten. 
         """
         if os.path.exists(source_filename):
-            readyFilename(destination_filename, overwrite=overwrite)
+            ready_filename(destination_filename, overwrite=overwrite)
             shutil.copy(source_filename, destination_filename)
         else:
             raise IOError('{} does not exist'.format(source_filename))
-        
+
     # ...................................
     def copy_ruleset(self, destination_filename, overwrite=False):
         """Copy the ruleset to the specified destination
@@ -281,7 +281,7 @@ class ModelSoftwareWrapper(object):
         self._copy_file(
             self.get_ruleset_filename(), destination_filename, 
             overwrite=overwrite)
-    
+
     # ...................................
     def copy_projection(self, destination_filename, overwrite=False):
         """Copy the projection raster to the specified destination

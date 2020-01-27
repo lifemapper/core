@@ -123,7 +123,7 @@ class TaxonFiller(LMObject):
         
     # ...............................................
     def writeSuccessFile(self, message):
-        self.readyFilename(self._successFname, overwrite=True)
+        self.ready_filename(self._successFname, overwrite=True)
         try:
             f = open(self._successFname, 'w')
             f.write(message)

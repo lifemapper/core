@@ -16,7 +16,7 @@ from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (LM_USER, JobStatus, BoomKeys, 
                                          MatrixType, ProcessType, 
                                          SERVER_BOOM_HEADING)
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmCommon.common.time import gmt
 from LmServer.base.utilities import isLMUser
@@ -182,7 +182,7 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
 
 # ...............................................
 def _writeSuccessFile(message, successFname):
-    readyFilename(successFname, overwrite=True)
+    ready_filename(successFname, overwrite=True)
     try:
         with open(successFname, 'w') as f:
             f.write(message)
@@ -268,7 +268,7 @@ from LmServer.tools.encodeBioGeoHypotheses import *
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (LM_USER, JobStatus, 
                                             MatrixType, ProcessType, SERVER_BOOM_HEADING)
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmServer.base.utilities import isLMUser
 from LmServer.common.datalocator import EarlJr

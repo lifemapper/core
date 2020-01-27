@@ -13,7 +13,7 @@ from types import StringType
 #                                                  McpaCorrectPValuesCommand,
 #                                                  CreateAncestralPamCommand,
 #                                                  SyncPamAndTreeCommand, McpaRunCommand)
-# from LmBackend.command.server import (LmTouchCommand, SquidIncCommand, 
+# from LmBackend.command.server import (TouchFileCommand, SquidIncCommand, 
 #                                                   StockpileCommand)
 from LmBackend.common.lmobj import LMError
 

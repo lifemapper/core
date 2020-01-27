@@ -70,6 +70,6 @@ if __name__ == '__main__':
         for fn in args.touch_files:
             if not os.path.exists(fn):
                 lmo = LMObject()
-                lmo.readyFilename(fn)
+                lmo.ready_filename(fn)
                 with open(fn, 'a') as outF:
                     os.utime(fn, None)

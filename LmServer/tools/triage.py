@@ -58,7 +58,7 @@ class EMT(LMObject):
              completion of a Spud (single-species MF). 
       """
       lmo = LMObject()
-      lmo.readyFilename(outfname)
+      lmo.ready_filename(outfname)
 
       with open(infname, 'r') as inPotato:
          with open(outfname, 'w') as outMashed:

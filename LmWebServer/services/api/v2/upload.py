@@ -18,7 +18,7 @@ from lmpy import TreeWrapper
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, HTTPStatus,
                                          LMFormat, PhyloTreeKeys,
                                          DEFAULT_TREE_SCHEMA)
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
@@ -158,7 +158,7 @@ class UserUploadService(LmService):
                 _, ext = os.path.splitext(zfname)
                 outFn = os.path.join(outDir, '{}{}'.format(
                                               climateDataFilename, ext))
-                readyFilename(outFn)
+                ready_filename(outFn)
                 if os.path.exists(outFn):
                     raise cherrypy.HTTPError(
                         HTTPStatus.CONFLICT,
@@ -360,7 +360,7 @@ class UserUploadService(LmService):
         out_tree_filename = os.path.join(self._get_user_dir(), tree_name)
         if not os.path.exists(out_tree_filename):
             # Make sure the user directory exists
-            readyFilename(out_tree_filename)
+            ready_filename(out_tree_filename)
             if upload_file is not None:
                 data = upload_file.file.read()
             else:

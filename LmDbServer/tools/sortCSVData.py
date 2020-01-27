@@ -365,7 +365,7 @@ import sys
 
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import *
+from LmCommon.common.ready_file import *
 
 from LmServer.common.log import ScriptLogger
 

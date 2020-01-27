@@ -7,7 +7,7 @@ import unicodecsv
 
 from LmCommon.common.lmconstants import LMFormat, ENCODING
 # ...............................................
-def readyFilename(fullfilename, overwrite=False):
+def ready_filename(fullfilename, overwrite=False):
     """
     @summary: On existing file, 
                      if overwrite true: delete and return true on success
@@ -40,7 +40,7 @@ def readyFilename(fullfilename, overwrite=False):
         if os.path.isdir(pth):
             return True
         else:
-            raise Exception('Failed to create directories {}, checking for readyFilename {}'
+            raise Exception('Failed to create directories {}, checking for ready_filename {}'
                             .format(pth, fullfilename))
 
 # ...............................................
@@ -124,7 +124,7 @@ def get_unicodecsv_writer(datafile, delimiter, doAppend=True):
     else:
         mode = 'wb'
         
-    readyFilename(datafile, overwrite=(not doAppend))
+    ready_filename(datafile, overwrite=(not doAppend))
     try:
         f = open(datafile, mode) 
         writer = unicodecsv.writer(f, delimiter=delimiter, encoding=ENCODING)

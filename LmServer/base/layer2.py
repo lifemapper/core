@@ -802,7 +802,7 @@ class Raster(_Layer):
         if outFile is None:
             outFile = self.getDLocation()
         if outFile is not None:
-            self.readyFilename(outFile, overwrite=overwrite)
+            self.ready_filename(outFile, overwrite=overwrite)
             
             # Copy from input file using GDAL (no test necessary later)
             if srcFile is not None:
@@ -893,7 +893,7 @@ class Raster(_Layer):
         if not dlocation.endswith(correctExt):
             dlocation += correctExt
         
-        self.readyFilename(dlocation)
+        self.ready_filename(dlocation)
 
         try:
             self._copyGDALData(1, sourceDataLocation, dlocation, format=format)
@@ -1731,7 +1731,7 @@ class Vector(_Layer):
         if dlocation is None:
             dlocation = self._dlocation
         didWrite = False
-        success = self.readyFilename(dlocation, overwrite=overwrite)
+        success = self.ready_filename(dlocation, overwrite=overwrite)
         if success:
             try:
                 with open(dlocation, 'wb') as csvfile:
@@ -1773,7 +1773,7 @@ class Vector(_Layer):
             return success
         
         self.setDLocation(dlocation) 
-        self.readyFilename(self._dlocation)          
+        self.ready_filename(self._dlocation)          
                 
         try:
             # Create the file object, a layer, and attributes
@@ -1917,7 +1917,7 @@ class Vector(_Layer):
                     basename, dext = os.path.splitext(basefilename)
                     newfnamewoext = os.path.join(pth, basename)
                     outfname = os.path.join(UPLOAD_PATH, basefilename)
-                    ready = self.readyFilename(outfname, overwrite=overwrite)
+                    ready = self.ready_filename(outfname, overwrite=overwrite)
                     break
             if outfname is None:
                 raise Exception('Invalid shapefile, zipped data does not contain .shp')
@@ -1930,7 +1930,7 @@ class Vector(_Layer):
             pth, basefilename = os.path.split(outfname)
             basename, dext = os.path.splitext(basefilename)
             newfnamewoext = os.path.join(pth, basename)
-            ready = self.readyFilename(outfname, overwrite=overwrite)
+            ready = self.ready_filename(outfname, overwrite=overwrite)
         
         if ready:
             # unzip zip file stream

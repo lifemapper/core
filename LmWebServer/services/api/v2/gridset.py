@@ -10,9 +10,9 @@ import cherrypy
 import dendropy
 from lmpy import Matrix
 
-from LmCommon.common.lmconstants import (DEFAULT_TREE_SCHEMA, HTTPStatus, 
-                                         JobStatus, LMFormat, MatrixType, 
-                                         ProcessType)
+from LmCommon.common.lmconstants import (
+    DEFAULT_TREE_SCHEMA, HTTPStatus, JobStatus, LMFormat, MatrixType,
+    ProcessType)
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmCommon.common.time import gmt
 
@@ -29,8 +29,8 @@ from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.api.v2.matrix import MatrixService
-from LmWebServer.services.common.accessControl import check_user_permission
-from LmWebServer.services.common.boomPost import BoomPoster
+from LmWebServer.services.common.access_control import check_user_permission
+from LmWebServer.services.common.boom_post import BoomPoster
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
 
 BG_REF_ID_KEY = 'identifier'
@@ -41,6 +41,7 @@ FILE_NAME_KEY = 'file_name'
 HYPOTHESIS_NAME_KEY = 'hypothesis_name'
 KEYWORD_KEY = 'keywords'
 LAYERS_KEY = 'layers'
+
 
 # .............................................................................
 def summarize_object_statuses(summary):
@@ -67,45 +68,47 @@ def summarize_object_statuses(summary):
         total += count
     return (waiting, running, complete, error, total)
 
+
 # .............................................................................
 @cherrypy.expose
 class GridsetAnalysisService(LmService):
     """This class is for the service representing gridset analyses.
 
-    Note: 
+    Note:
         The dispatcher is responsible for calling the correct method.
+
+    Todo:
+        * Enable DELETE?  Could remove all existing analysis matrices
+        * Enable GET?  Could this just be the outputs?
     """
     # ................................
-    # TODO: Enable DELETE? Could remove all existing analysis matrices
-    # ................................
-    # TODO: Enable GET?  Could this just be the outputs?
-    # ................................
     @lm_formatter
-    def POST(self, pathGridSetId, doMcpa=False, numPermutations=500, 
+    def POST(self, pathGridSetId, doMcpa=False, numPermutations=500,
              doCalc=False, **params):
         """Adds a set of biogeographic hypotheses to the gridset
         """
         # Get gridset
-        gridset = self._getGridSet(pathGridSetId)#, method=HTTPMethod.POST)
+        gridset = self._get_gridset(pathGridSetId)
 
         # Check status of all matrices
         if not all(
-            [mtx.status == JobStatus.COMPLETE for mtx in gridset.getMatrices()
-             ]):
-            raise cherrypy.HTTPError(HTTPStatus.CONFLICT, 
-               ('The gridset is not ready for analysis.  ' 
-               'All matrices must be complete'))
+                [mtx.status == JobStatus.COMPLETE \
+                 for mtx in gridset.getMatrices()]):
+            raise cherrypy.HTTPError(
+                HTTPStatus.CONFLICT,
+                ('The gridset is not ready for analysis.  '
+                'All matrices must be complete'))
 
         if doMcpa:
-            mcpaPossible = len(
+            mcpa_possible = len(
                 gridset.getBiogeographicHypotheses()
                 ) > 0 and gridset.tree is not None
-        if not mcpaPossible:
+        if not mcpa_possible:
             raise cherrypy.HTTPError(
-                HTTPStatus.CONFLICT, 
+                HTTPStatus.CONFLICT,
                 ('The gridset must have a tree and biogeographic '
                  'hypotheses to perform MCPA'))
-      
+
         # If everything is ready and we have analyses to run, do so
         if doMcpa or doCalc:
             bc = BoomCollate(
@@ -113,7 +116,7 @@ class GridsetAnalysisService(LmService):
                 num_permutations=numPermutations)
             bc.create_workflow()
             bc.close()
-            
+
             cherrypy.response.status = HTTPStatus.ACCEPTED
             return gridset
         else:
@@ -122,7 +125,7 @@ class GridsetAnalysisService(LmService):
                 'Must specify at least one analysis to perform')
 
     # ................................
-    def _getGridSet(self, pathGridSetId):
+    def _get_gridset(self, pathGridSetId):
         """Attempt to get a GridSet
         """
         gs = self.scribe.getGridset(gridsetId=pathGridSetId, fillMatrices=True)
@@ -161,7 +164,7 @@ class GridsetBioGeoService(LmService):
         """There is not a true service for limiting the biogeographic
                hypothesis matrices in a gridset, but return all when listing
         """
-        gs = self._getGridSet(pathGridSetId)
+        gs = self._get_gridset(pathGridSetId)
         
         bgHyps = gs.getBiogeographicHypotheses()
         
@@ -184,7 +187,7 @@ class GridsetBioGeoService(LmService):
         """Adds a set of biogeographic hypotheses to the gridset
         """
         # Get gridset
-        gridset = self._getGridSet(pathGridSetId)
+        gridset = self._g_get_gridsetathGridSetId)
 
         # Process JSON
         hypothesisJson = json.loads(cherrypy.request.body.read())
@@ -203,7 +206,7 @@ class GridsetBioGeoService(LmService):
                     HTTPStatus.BAD_REQUEST, 
                     'Cannot get gridset for reference identfier {}'.format(
                         refObj[BG_REF_ID_KEY]))
-            refGridset = self._getGridSet(refGsId)
+            refGridset = self._get_gridset(refGsId)
 
             # Get hypotheses from other gridset
             ret = []
@@ -348,7 +351,7 @@ class GridsetBioGeoService(LmService):
         return ret
 
     # ................................
-    def _getGridSet(self, pathGridSetId):
+    def _get_gridset(self, pathGridSetId):
         """Attempts to get a GridSet
         """
         gs = self.scribe.getGridset(gridsetId=pathGridSetId, fillMatrices=True)
@@ -428,7 +431,7 @@ class GridsetTreeService(LmService):
                          For now, we won't even take a tree id parameter and instead
                          will just return the gridset's tree object
         """
-        gs = self._getGridSet(pathGridSetId)
+        gs = self._get_gridset(pathGridSetId)
         return gs.tree
         
     # ................................
@@ -466,7 +469,7 @@ class GridsetTreeService(LmService):
             updatedTree.modTime = gmt().mjd
             self.scribe.updateObject(updatedTree)
             
-        gridset = self._getGridSet(pathGridSetId)
+        gridset = self._get_gridset(pathGridSetId)
         gridset.addTree(tree)
         gridset.updateModtime(gmt().mjd)
         self.scribe.updateObject(gridset)
@@ -474,7 +477,7 @@ class GridsetTreeService(LmService):
         return updatedTree
 
     # ................................
-    def _getGridSet(self, pathGridSetId):
+    def _get_gridset(self, pathGridSetId):
         """
         @summary: Attempt to get a GridSet
         """
@@ -555,7 +558,7 @@ class GridsetService(LmService):
                 beforeTime=beforeTime, epsgCode=epsgCode, 
                 metaString=metaString, shapegridId=shapegridId)
         else:
-            return self._getGridSet(pathGridSetId)
+            return self._get_gridset(pathGridSetId)
         
     # ................................
     def HEAD(self, pathGridSetId=None):
@@ -609,7 +612,7 @@ class GridsetService(LmService):
         return {"count" : gsCount}
 
     # ................................
-    def _getGridSet(self, pathGridSetId):
+    def _get_gridset(self, pathGridSetId):
         """
         @summary: Attempt to get a GridSet
         """

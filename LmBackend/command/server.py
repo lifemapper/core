@@ -360,10 +360,10 @@ class IndexPAVCommand(_LmServerCommand):
 
 
 # .............................................................................
-class LmTouchCommand(_LmServerCommand):
+class TouchFileCommand(_LmServerCommand):
     """This command will touch a file, creating necessary directories.
     """
-    script_name = 'lmTouch.py'
+    script_name = 'touch_file.py'
 
     # ................................
     def __init__(self, filename):

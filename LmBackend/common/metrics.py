@@ -100,6 +100,6 @@ class LmMetrics(LMObject):
         """Write the metrics to the specified file
         """
         if self.out_file_name is not None:
-            self.readyFilename(self.out_file_name, overwrite=True)
+            self.ready_filename(self.out_file_name, overwrite=True)
             with open(self.out_file_name, 'w') as out_file:
                 json.dump(self._metrics, out_file)

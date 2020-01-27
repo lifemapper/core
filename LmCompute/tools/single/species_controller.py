@@ -41,7 +41,7 @@ import LmBackend.common.layer_tools as layer_tools
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
 from LmCompute.common.log import LmComputeLogger
@@ -80,8 +80,8 @@ log = self.log
 (csv_fname, metadata, out_fname, big_fname) = (url_fn_or_key, 
             metadata, out_file, big_out_file)
 
-readyFilename(out_fname, overwrite=True)
-readyFilename(big_fname, overwrite=True)
+ready_filename(out_fname, overwrite=True)
+ready_filename(big_fname, overwrite=True)
 
 csvreader, f = _getCSVReader(csv_fname, delimiter)
 lines = []

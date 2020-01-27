@@ -13,7 +13,7 @@ import os
 import cherrypy
 
 from LmCommon.common.lmconstants import HTTPStatus
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
 
 from LmDbServer.tools.partnerData import (
@@ -83,7 +83,7 @@ class OpenTreeService(LmService):
         # Write the tree
         out_filename = os.path.join(self._get_user_dir(), tree_name)
         if not os.path.exists(out_filename):
-            readyFilename(out_filename)
+            ready_filename(out_filename)
             with open(out_filename, 'w') as out_f:
                 out_f.write(tree_data)
         else:

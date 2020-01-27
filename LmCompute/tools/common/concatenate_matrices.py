@@ -42,7 +42,7 @@ if __name__ == "__main__":
     joinedMtx = Matrix.concatenate(mtxs, axis=args.axis)
 
     # Make sure directory exists
-    LMObject().readyFilename(args.outFn)
+    LMObject().ready_filename(args.outFn)
     
     with open(args.outFn, 'w') as outF:
         joinedMtx.save(outF)

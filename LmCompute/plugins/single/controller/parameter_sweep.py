@@ -24,7 +24,7 @@ import LmBackend.common.layer_tools as layer_tools
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.compression.binary_list import compress
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
@@ -61,7 +61,7 @@ class ParameterSweep(object):
         self.work_dir = os.path.join(base_work_dir, self.sweep_config.work_dir)
         log_filename = os.path.join(
             base_work_dir, self.sweep_config.log_filename)
-        readyFilename(log_filename)
+        ready_filename(log_filename)
         
         log_name = os.path.basename(self.work_dir)
         self.log = LmComputeLogger(
@@ -198,7 +198,7 @@ class ParameterSweep(object):
                 # Get points
                 points = self._get_model_points(occ_shp_filename)
                 work_dir = os.path.join(self.work_dir, model_id)
-                readyFilename(work_dir)
+                ready_filename(work_dir)
 
                 # TODO(CJ): Get species name and CRS WKT from somewhere
                 species_name = 'species'
@@ -392,7 +392,7 @@ class ParameterSweep(object):
             
             # Prepend a work directory if provided
             pav_filename = os.path.join(self.work_dir, pav_filename)
-            readyFilename(pav_filename, overwrite=True)
+            ready_filename(pav_filename, overwrite=True)
             # TODO(CJ) : Consider if we can reuse the encoder
             encoder = LayerEncoder(shapegrid_filename)
             
@@ -479,7 +479,7 @@ class ParameterSweep(object):
                     # Get points
                     work_dir = os.path.join(self.work_dir, 'prj_{}'.format(
                         projection_id))
-                    readyFilename(work_dir)
+                    ready_filename(work_dir)
     
                     # TODO(CJ): Get species name from somewhere
                     species_name = 'species'

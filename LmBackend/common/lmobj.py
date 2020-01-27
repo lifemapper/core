@@ -31,7 +31,7 @@ class LMObject:
 
     # ..........................
     @classmethod
-    def readyFilename(cls, fullfilename, overwrite=False):
+    def ready_filename(cls, fullfilename, overwrite=False):
         """Prepare a file location for writing by creating needed parent dirs.
 
         Args:

@@ -6,7 +6,7 @@ import argparse
 import os
 
 from LmCommon.common.lmconstants import JobStatus
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
 # .............................................................................
@@ -62,23 +62,23 @@ if __name__ == "__main__":
         min_coverage = args.min_coverage
         if min_coverage > 1.0:
             min_coverage = min_coverage / 100.0
-    
+
         encoder = LayerEncoder(args.shapegrid_filename)
         encoder.encode_presence_absence(
             args.raster_filename, squid, args.min_presence, args.max_presence, 
             min_coverage)
         pav = encoder.get_encoded_matrix()
-        
+
         if pav is not None:
-            readyFilename(args.pav_filename, overwrite=True)
+            ready_filename(args.pav_filename, overwrite=True)
             with open(args.pav_filename, 'w') as pav_out_f:
                 pav.save(pav_out_f)
         if args.status_file is not None:
-            readyFilename(args.status_file, overwrite=True)
+            ready_filename(args.status_file, overwrite=True)
             with open(args.status_file, 'w') as outF:
                 outF.write('{}'.format(JobStatus.COMPUTED))
     else:
         if args.status_file is not None:
-            readyFilename(args.status_file, overwrite=True)
+            ready_filename(args.status_file, overwrite=True)
             with open(args.status_file, 'w') as outF:
                 outF.write('{}'.format(lyrStatus))

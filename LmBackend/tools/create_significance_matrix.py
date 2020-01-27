@@ -12,7 +12,7 @@ import argparse
 
 from lmpy import Matrix
 
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.readyfile import ready_filename
 from LmCommon.statistics import permutation_testing as ptest
 
 
@@ -80,7 +80,7 @@ def main():
     out_matrix = Matrix.concatenate(
         [obs, p_values, sig_values], axis=concat_axis)
 
-    readyFilename(args.out_matrix_filename)
+    ready_filename(args.out_matrix_filename)
     with open(args.out_matrix_filename, 'w') as out_f:
         out_matrix.save(out_f)
 

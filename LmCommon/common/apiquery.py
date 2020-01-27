@@ -14,7 +14,7 @@ from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
 from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.readyfile import (
-    get_unicodecsv_reader, get_unicodecsv_writer, readyFilename)
+    get_unicodecsv_reader, get_unicodecsv_writer, ready_filename)
 
 
 # .............................................................................
@@ -871,7 +871,7 @@ class IdigbioAPI(APIQuery):
                 valdict['role'] = OccDataParser.FIELD_ROLE_LATITUDE
             newMeta[str(colIdx)] = valdict
 
-        readyFilename(metaFname, overwrite=True)
+        ready_filename(metaFname, overwrite=True)
         with open(metaFname, 'w') as outf:
             json.dump(newMeta, outf)
         return newMeta
@@ -1203,7 +1203,7 @@ from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
                                          URL_ESCAPES, HTTPStatus, DWCNames)
 from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import readyFilename, get_unicodecsv_reader
+from LmCommon.common.ready_file import ready_filename, get_unicodecsv_reader
 from LmCommon.common.apiquery import IdigbioAPI, GbifAPI
 
 pth = '/tank/zdata/taiwan/species'

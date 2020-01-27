@@ -7,7 +7,7 @@ from osgeo import gdal, gdalconst, ogr, osr
 
 from LmCommon.common.lmconstants import DEFAULT_NODATA, LMFormat, DEFAULT_EPSG,\
     ENCODING
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 
 # TODO: Move to constants probably
 NUM_QUAD_SEGS = 30
@@ -112,7 +112,7 @@ def create_convex_hull_array(base_path, convex_hull, bbox, cell_size, epsg,
     
     shp_drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
     
-    assert readyFilename(tmp_shp_filename, overwrite=True)
+    assert ready_filename(tmp_shp_filename, overwrite=True)
     
     # Create the convex hull shapefile
     out_ds = shp_drv.CreateDataSource(tmp_shp_filename)
@@ -269,7 +269,7 @@ def write_ascii(out_filename, bbox, cell_size, data, epsg,
         miny = round(miny, header_precision)
         cell_size = round(cell_size, header_precision)
 
-    readyFilename(out_filename, overwrite=True)
+    ready_filename(out_filename, overwrite=True)
     with open(out_filename, 'w') as outF:
         outF.write('ncols    {}\n'.format(num_cols))
         outF.write('nrows    {}\n'.format(num_rows))
@@ -306,7 +306,7 @@ def write_tiff(out_filename, bbox, cell_size, data, epsg,
     minx, miny, maxx, maxy = bbox
     (num_rows, num_cols) = data.shape
     
-    readyFilename(out_filename, overwrite=True)
+    ready_filename(out_filename, overwrite=True)
     
     drv = gdal.GetDriverByName(LMFormat.GTIFF.driver)
     ds = drv.Create(out_filename, num_cols, num_rows, 1, gdalconst.GDT_Byte)

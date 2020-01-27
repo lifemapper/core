@@ -4,8 +4,8 @@ import os
 
 from LmCommon.common.lmconstants import (ENCODING, JobStatus, LMFormat)
 from LmCommon.shapes.createshape import ShapeShifter
-    
-from LmCommon.common.readyfile import readyFilename
+
+from LmCommon.common.ready_file import ready_filename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
@@ -54,8 +54,8 @@ def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points
     @param log: If provided, use this logger.  If not, will create new
     """    
     # Ready file names
-    readyFilename(out_fname, overwrite=True)
-    readyFilename(big_fname, overwrite=True)
+    ready_filename(out_fname, overwrite=True)
+    ready_filename(big_fname, overwrite=True)
     
     delimiter = str(delimiter)
 
@@ -136,7 +136,7 @@ from LmCommon.common.lmconstants import (ENCODING, GBIF, GBIF_QUERY,
                     LM_WKT_FIELD, ProcessType, JobStatus,
                     DWCNames, LMFormat, DEFAULT_EPSG)
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCompute.common.lmObj import LmException
 try:
     from LmServer.common.lmconstants import BIN_PATH
@@ -160,7 +160,7 @@ shaper = ShapeShifter(rawdata, metadata, count, logger=log,
 self = shaper                        
 (outfname, maxPoints, bigfname, overwrite) = (out_fname, max_points, big_fname, True) 
 
-readyFilename(outfname, overwrite=overwrite)
+ready_filename(outfname, overwrite=overwrite)
 outDs = self._createDataset(outfname)
 outLyr = self._addUserFieldDef(outDs)
 lyrDef = outLyr.GetLayerDefn()

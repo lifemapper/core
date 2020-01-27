@@ -5,7 +5,7 @@
 import argparse
 import os
 
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
 # .............................................................................
@@ -66,6 +66,6 @@ if __name__ == '__main__':
     pav = encoder.get_encoded_matrix()
         
     if pav is not None:
-        readyFilename(args.pav_filename, overwrite=True)
+        ready_filename(args.pav_filename, overwrite=True)
         with open(args.pav_filename, 'w') as pav_out_f:
             pav.save(pav_out_f)

@@ -306,7 +306,7 @@ class Boomer(LMObject):
 
     # ...............................................
     def writeSuccessFile(self, message):
-        self.readyFilename(self._successFname, overwrite=True)
+        self.ready_filename(self._successFname, overwrite=True)
         try:
             f = open(self._successFname, 'w')
             f.write(message)
@@ -428,7 +428,7 @@ from LmCommon.common.apiquery import GbifAPI
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import (readyFilename)
+from LmCommon.common.ready_file import (ready_filename)
 
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH

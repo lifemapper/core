@@ -10,12 +10,13 @@ from osgeo import ogr
 
 from LmCommon.common.lmconstants import LMFormat, JobStatus
 from LmCommon.compression.binary_list import decompress
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.ready_file import ready_filename
 
 from LmServer.common.lmconstants import SOLR_FIELDS
 from LmServer.common.log import ConsoleLogger
 from LmServer.common.solr import queryArchiveIndex
 from LmServer.db.borgscribe import BorgScribe
+
 
 # .............................................................................
 def _get_row_headers_from_shapegrid(shapegrid_filename):
@@ -112,10 +113,7 @@ if __name__ == '__main__':
         print((str(e)))
         success = 0
 
-    readyFilename(args.success_filename)
+    ready_filename(args.success_filename)
     with open(args.success_filename, 'w') as out_f:
         out_f.write(str(success))
 
-    
-    
-    
