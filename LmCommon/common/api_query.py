@@ -875,7 +875,7 @@ class IdigbioAPI(APIQuery):
         with open(metaFname, 'w') as outf:
             json.dump(newMeta, outf)
         return newMeta
-   
+
     # .............................................................................
     def _getIdigbioFields(self, rec):
         """
@@ -1204,7 +1204,7 @@ from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
 from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.ready_file import ready_filename, get_unicodecsv_reader
-from LmCommon.common.apiquery import IdigbioAPI, GbifAPI
+from LmCommon.common.api_query import IdigbioAPI, GbifAPI
 
 pth = '/tank/zdata/taiwan/species'
 basename = 'nmmst_species_data.csv'

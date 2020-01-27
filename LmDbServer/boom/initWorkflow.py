@@ -13,7 +13,7 @@ from LmBackend.command.server import (
     CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand, StockpileCommand)
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.apiquery import IdigbioAPI
+from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
       ProcessType, DEFAULT_POST_USER, GBIF, BoomKeys,
@@ -1473,7 +1473,7 @@ from LmBackend.command.server import (
     CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand, StockpileCommand)
 from LmBackend.common.lmobj import LMError, LMObject
 
-from LmCommon.common.apiquery import IdigbioAPI
+from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
       ProcessType, DEFAULT_POST_USER, GBIF, BoomKeys,

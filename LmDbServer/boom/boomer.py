@@ -424,7 +424,7 @@ import os
 import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.apiquery import GbifAPI
+from LmCommon.common.api_query import GbifAPI
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser

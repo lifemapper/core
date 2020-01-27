@@ -8,7 +8,7 @@ import random
 
 import cherrypy
 
-from LmCommon.common.apiquery import IdigbioAPI, GbifAPI
+from LmCommon.common.api_query import IdigbioAPI, GbifAPI
 from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_POST_USER
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter

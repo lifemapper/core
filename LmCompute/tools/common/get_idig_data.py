@@ -4,7 +4,7 @@
 import argparse
 import os
 
-from LmCommon.common.apiquery import IdigbioAPI
+from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.ready_file import ready_filename
 
 # ...............................................
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 """
 import os
 
-from LmCommon.common.apiquery import IdigbioAPI
+from LmCommon.common.api_query import IdigbioAPI
 
 def _getUserInput(filename):
     items = []

@@ -15,7 +15,7 @@ import urllib.request, urllib.error, urllib.parse
 
 from LmBackend.common.lmobj import LMError
 
-from LmCommon.common.apiquery import GbifAPI
+from LmCommon.common.api_query import GbifAPI
 from LmCommon.common.lmconstants import PhyloTreeKeys
 from LmCommon.common.readyfile import get_unicodecsv_writer
 from LmCommon.common.time import gmt
@@ -507,7 +507,7 @@ import unicodecsv
 import urllib2
 
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.apiquery import GbifAPI
+from LmCommon.common.api_query import GbifAPI
 from LmCommon.common.lmconstants import PhyloTreeKeys, GBIF
 from LmCommon.common.occparse import OccDataParser
 
@@ -517,7 +517,7 @@ from LmServer.base.taxon import ScientificName
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ScriptLogger
 from LmServer.legion.tree import Tree
-from LmCommon.common.apiquery import IdigbioAPI
+from LmCommon.common.api_query import IdigbioAPI
 
 from LmDbServer.tools.partnerData import PartnerQuery
 

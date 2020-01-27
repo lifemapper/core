@@ -7,7 +7,7 @@ import os
 import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.apiquery import GbifAPI
+from LmCommon.common.api_query import GbifAPI
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
 from LmCommon.common.occparse import OccDataParser
@@ -906,7 +906,7 @@ from time import sleep
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.apiquery import BisonAPI, GbifAPI
+from LmCommon.common.api_query import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
                                                 ProcessType, JobStatus, ONE_HOUR, LMFormat, IDIG_DUMP) 
 from LmServer.base.taxon import ScientificName

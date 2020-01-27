@@ -5,7 +5,7 @@
 import cherrypy
 import json
 
-from LmCommon.common.apiquery import GbifAPI
+from LmCommon.common.api_query import GbifAPI
 from LmCommon.common.lmconstants import HTTPStatus
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
