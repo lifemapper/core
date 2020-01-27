@@ -100,7 +100,7 @@ class ShapeShifter:
         try:
             self._fillFeature(feat, recDict)
         except Exception as e:
-            print(('Failed to _createFillFeat, e = {}'.format(e))
+            print(('Failed to _createFillFeat, e = {}'.format(e)))
             raise e
         else:
             # Create new feature, setting FID, in this layer

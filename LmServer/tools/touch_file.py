@@ -17,8 +17,8 @@ def main():
     lmo = LMObject()
     lmo.ready_filename(args.file_name)
 
-    with open(args.file_name, 'w') as outF:
-        outF.write('1')
+    with open(args.file_name, 'w') as out_f:
+        out_f.write('1')
 
 
 # .............................................................................

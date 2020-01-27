@@ -187,7 +187,7 @@ class GridsetBioGeoService(LmService):
         """Adds a set of biogeographic hypotheses to the gridset
         """
         # Get gridset
-        gridset = self._g_get_gridsetathGridSetId)
+        gridset = self._get_gridset(pathGridSetId)
 
         # Process JSON
         hypothesisJson = json.loads(cherrypy.request.body.read())

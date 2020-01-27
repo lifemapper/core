@@ -4,6 +4,7 @@ Todo:
     Split up some functions into smaller chunks
 """
 from collections import defaultdict
+import csv
 import json
 import os
 from io import StringIO
@@ -12,10 +13,9 @@ import zipfile
 import cherrypy
 from lmpy import Matrix
 import mapscript
-import unicodecsv
 
-from LmCommon.common.lmconstants import LMFormat, MatrixType, JobStatus,\
-    HTTPStatus, PamStatKeys
+from LmCommon.common.lmconstants import (
+    HTTPStatus, JobStatus, LMFormat, MatrixType, PamStatKeys)
 from LmCommon.common.lm_xml import tostring
 
 from LmServer.common.datalocator import EarlJr
@@ -27,21 +27,14 @@ from LmServer.legion.gridset import Gridset
 from LmWebServer.common.lmconstants import (
     DYN_PACKAGE_DIR, GRIDSET_DIR, MATRIX_DIR, MAX_PROJECTIONS, SDM_PRJ_DIR,
     STATIC_PACKAGE_PATH)
-from LmWebServer.formatters.emlFormatter import makeEml
-from LmWebServer.formatters.geoJsonFormatter import geoJsonify_flo
+from LmWebServer.formatters.eml_formatter import make_eml
+from LmWebServer.formatters.geo_json_formatter import geo_jsonify_flo
 from LmWebServer.formatters.template_filler import TemplateFiller
 
 
-# # .............................................................................
-# # TODO: Move to lmconstants
-# GRIDSET_DIR = 'gridset'
-# MATRIX_DIR = os.path.join(GRIDSET_DIR, 'matrix')
-# # TODO: Assmble from constants
-# STATIC_PACKAGE_PATH = '/opt/lifemapper/LmWebServer/assets/gridset_package'
-# DYN_PACKAGE_DIR = 'package'
-# SDM_PRJ_DIR = os.path.join(GRIDSET_DIR, 'sdm')
-# MAX_PROJECTIONS = 1000
+# # ...........................................................................
 PACKAGE_VERSION = '1.0.2'
+
 
 # .............................................................................
 def get_map_content_for_proj(prj, scribe):
@@ -57,26 +50,19 @@ def get_map_content_for_proj(prj, scribe):
     map_params = [
         ('map', prj.mapName),
         ('bbox', str(prj.bbox).strip('(').strip(')')),
-        #('bgcolor', bgcolor),
-        #('coverage', coverage),
-        #('crs', crs),
-        #('exceptions', exceptions),
         ('height', '500'),
-        #('layer', layer),
         ('layers', 'bmng,{}'.format(prj.mapLayername)),
-        #('point', point),
         ('request', 'GetMap'),
         ('format', 'image/png'),
         ('service', 'WMS'),
         ('srs', 'EPSG:{}'.format(prj.epsgcode)),
         ('styles', ''),
-        #('transparent', transparent),
         ('version', '1.1.0'),
         ('width', '1000')
     ]
-    for k, v in map_params:
-        if v is not None:
-            ows_req.setParameter(k, str(v))
+    for k, val in map_params:
+        if val is not None:
+            ows_req.setParameter(k, str(val))
     map_obj = mapscript.mapObj(map_filename)
     # TODO: Color
     mapscript.msIO_installStdoutToBuffer()
@@ -86,182 +72,184 @@ def get_map_content_for_proj(prj, scribe):
     mapscript.msIO_resetHandlers()
     return content
 
+
 # .............................................................................
-def createStatsMeta():
-    """
-    @summary: Create a statistic metadata lookup for all stats
+def create_stats_meta():
+    """Create a statistic metadata lookup for all stats
     """
     return {
-        PamStatKeys.ALPHA : {
-            'name' : 'Alpha Diversity',
-            'description' : (
+        PamStatKeys.ALPHA: {
+            'name': 'Alpha Diversity',
+            'description': (
                 'Alpha Diversity is the species richness (number of species '
                 'present) per site')
         },
-        PamStatKeys.ALPHA_PROP : {
-            'name' : 'Proportional Alpha Diversity',
-            'description' : (
+        PamStatKeys.ALPHA_PROP: {
+            'name': 'Proportional Alpha Diversity',
+            'description': (
                 'Proportional Alpha Diversity is the proportion of the entire '
                 'population of species that are present per site')
         },
-        PamStatKeys.PHI : {
-            'name' : 'Range Size Per Site',
-            'description' : (
+        PamStatKeys.PHI: {
+            'name': 'Range Size Per Site',
+            'description': (
                 'Range Size per site is the sum of the range sizes of each '
                 'species present at each site')
         },
-        PamStatKeys.PHI_AVG_PROP : {
-            'name' : 'Proportional Range Size Per Site',
-            'description' : (
-                'Proportional range size per site is the sum of the range sizes '
-                'at each site as a proportion of the sum of the ranges of all '
-                'species in the study pool')
+        PamStatKeys.PHI_AVG_PROP: {
+            'name': 'Proportional Range Size Per Site',
+            'description': (
+                'Proportional range size per site is the sum of the range '
+                'sizes at each site as a proportion of the sum of the ranges '
+                'of all species in the study pool')
         },
-        PamStatKeys.MNTD : {
-            'name' : 'Mean Nearest Taxon Distance',
-            'description' : (
+        PamStatKeys.MNTD: {
+            'name': 'Mean Nearest Taxon Distance',
+            'description': (
                 'Mean Nearest Taxon Distance is the average of the distance '
-                'between each present species and the (phylogenetically) nearest '
-                'present species for each site')
+                'between each present species and the (phylogenetically) '
+                'nearest present species for each site')
         },
-        PamStatKeys.MPD : {
-            'name' : 'Mean Pairwise Distance',
-            'description' : (
+        PamStatKeys.MPD: {
+            'name': 'Mean Pairwise Distance',
+            'description': (
                 'Mean pairwise distance is the average phylogenetic distance '
                 'between all species present at each site')
         },
-        PamStatKeys.PEARSON : {
-            'name' : "Pearson's Correlation Coefficient",
-            'description' : ''
+        PamStatKeys.PEARSON: {
+            'name': "Pearson's Correlation Coefficient",
+            'description': ''
         },
-        PamStatKeys.PD : {
-            'name' : 'Phylogenetic Diversity',
-            'description' : (
+        PamStatKeys.PD: {
+            'name': 'Phylogenetic Diversity',
+            'description': (
                 'Phylogenetic Diversity is the sum of the branch lengths for '
                 'the minimum spanning tree for all species at a site')
         },
-        PamStatKeys.MNND : {
-            'name' : 'Mean Nearest Neighbor Distance',
-            'description' : (
-                'Mean nearest neighbor distance is the average phylogenetic distance '
-                'to the nearest neighbor of each species present at a site')
+        PamStatKeys.MNND: {
+            'name': 'Mean Nearest Neighbor Distance',
+            'description': (
+                'Mean nearest neighbor distance is the average phylogenetic '
+                'distance to the nearest neighbor of each species present at '
+                'a site')
         },
-        PamStatKeys.MPHYLODIST : {
-            'name' : 'Mean Phylogenetic Distance',
-            'description' : (
+        PamStatKeys.MPHYLODIST: {
+            'name': 'Mean Phylogenetic Distance',
+            'description': (
                 'Mean phylogenetic distance is the average phylogenetic '
                 'distance between all species present at a site')
         },
-        PamStatKeys.SPD : {
-            'name' : 'Sum of Phylogenetic Distance',
-            'description' : (
+        PamStatKeys.SPD: {
+            'name': 'Sum of Phylogenetic Distance',
+            'description': (
                 'Sum of phylogenetic distance is the total phylogenetic '
                 'distance between all species present at a site')
         },
-        PamStatKeys.OMEGA : {
-            'name' : 'Species Range Size',
-            'description' : (
+        PamStatKeys.OMEGA: {
+            'name': 'Species Range Size',
+            'description': (
                 'Species range size is the number of sites where each species '
                 'is present')
         },
-        PamStatKeys.OMEGA_PROP : {
-            'name' : 'Proportional Species Range Size',
-            'description' : (
+        PamStatKeys.OMEGA_PROP: {
+            'name': 'Proportional Species Range Size',
+            'description': (
                 'Proportional species range size the the proportion of the '
                 'number of sites where each species is present to the total '
                 'number of sites in the study area')
         },
         # TODO: Verify and clarify
-        PamStatKeys.PSI : {
-            'name' : 'Species Range Richness',
-            'description' : (
-                'Species range richness is the sum of the range sizes of all of '
-                'the species present at a site')
+        PamStatKeys.PSI: {
+            'name': 'Species Range Richness',
+            'description': (
+                'Species range richness is the sum of the range sizes of '
+                'all of the species present at a site')
         },
         # TODO: Verify and clarify
-        PamStatKeys.PSI_AVG_PROP : {
-            'name' : 'Mean Proportional Species Diversity',
-            'description' : (
+        PamStatKeys.PSI_AVG_PROP: {
+            'name': 'Mean Proportional Species Diversity',
+            'description': (
                 'Mean Proportional Species Diversity is the average species '
-                'range richness proportional to the total species range richness')
+                'range richness proportional to the total species range '
+                'richness')
         },
-        PamStatKeys.WHITTAKERS_BETA : {
-            'name' : 'Whittaker\'s Beta Diversity',
-            'description' : 'Whittaker\'s Beta Diversity'
+        PamStatKeys.WHITTAKERS_BETA: {
+            'name': 'Whittaker\'s Beta Diversity',
+            'description': 'Whittaker\'s Beta Diversity'
         },
-        PamStatKeys.LANDES_ADDATIVE_BETA : {
-            'name' : 'Landes Addative Beta Diveristy',
-            'description' : 'Landes Addative Beta Diversity'
+        PamStatKeys.LANDES_ADDATIVE_BETA: {
+            'name': 'Landes Addative Beta Diveristy',
+            'description': 'Landes Addative Beta Diversity'
         },
-        PamStatKeys.LEGENDRES_BETA : {
-            'name' : 'Legendres Beta Diversity',
-            'description' : 'Legendres Beta Diversity'
+        PamStatKeys.LEGENDRES_BETA: {
+            'name': 'Legendres Beta Diversity',
+            'description': 'Legendres Beta Diversity'
         },
-        PamStatKeys.SITES_COVARIANCE : {
-            'name' : 'Sites Covariance',
-            'description' : 'Sites covariance'
+        PamStatKeys.SITES_COVARIANCE: {
+            'name': 'Sites Covariance',
+            'description': 'Sites covariance'
         },
-        PamStatKeys.SPECIES_COVARIANCE : {
-            'name' : 'Species Covariance',
-            'description' : 'Species covariance'
+        PamStatKeys.SPECIES_COVARIANCE: {
+            'name': 'Species Covariance',
+            'description': 'Species covariance'
         },
-        PamStatKeys.SPECIES_VARIANCE_RATIO : {
-            'name' : 'Schluter\'s Species Variance Ratio',
-            'description' : 'Schluter\'s species covariance'
+        PamStatKeys.SPECIES_VARIANCE_RATIO: {
+            'name': 'Schluter\'s Species Variance Ratio',
+            'description': 'Schluter\'s species covariance'
         },
-        PamStatKeys.SITES_VARIANCE_RATIO : {
-            'name' : 'Schluter\'s Sites Variance Ratio',
-            'description' : 'Schluter\'s sites covariance'
+        PamStatKeys.SITES_VARIANCE_RATIO: {
+            'name': 'Schluter\'s Sites Variance Ratio',
+            'description': 'Schluter\'s sites covariance'
         }
     }
 
+
 # .............................................................................
-def createHeaderLookup(headers, squids=False, scribe=None, userId=None):
+def create_header_lookup(headers, squids=False, scribe=None, user_id=None):
+    """Generate a header lookup to be included in the package metadata
     """
-    @summary: Generate a header lookup to be included in the package metadata
-    """
-    def getHeaderDict(header, idx):
+    def get_header_dict(header, idx):
         return {
-            'header' : header,
-            'index' : idx
+            'header': header,
+            'index': idx
         }
 
-    def getSquidHeaderDict(header, idx, scribe, userId):
-        taxon = scribe.getTaxon(squid=header, userId=userId)
-        ret = getHeaderDict(header, idx)
+    def get_squid_header_dict(header, idx, scribe, user_id):
+        taxon = scribe.getTaxon(squid=header, userId=user_id)
+        ret = get_header_dict(header, idx)
 
-        for attrib, key in [('scientificName', 'scientific_name'),
-                            ('canonicalName', 'canonical_name'),
-                            ('rank', 'taxon_rank'),
-                            ('kingdom', 'taxon_kingdom'),
-                            ('phylum', 'taxon_phylum'),
-                            ('txClass', 'taxon_class'),
-                            ('txOrder', 'taxon_order'),
-                            ('family', 'taxon_family'),
-                            ('genus', 'taxon_genus')
-                           ]:
+        for attrib, key in [
+                ('scientificName', 'scientific_name'),
+                ('canonicalName', 'canonical_name'),
+                ('rank', 'taxon_rank'),
+                ('kingdom', 'taxon_kingdom'),
+                ('phylum', 'taxon_phylum'),
+                ('txClass', 'taxon_class'),
+                ('txOrder', 'taxon_order'),
+                ('family', 'taxon_family'),
+                ('genus', 'taxon_genus')]:
             val = getattr(taxon, attrib)
             if val is not None:
                 ret[key] = val
         return ret
 
-    if squids and scribe and userId:
+    if squids and scribe and user_id:
         return [
-            getSquidHeaderDict(
-                headers[i], i, scribe, userId) for i in range(len(headers))]
-    return [getHeaderDict(headers[i], i) for i in range(len(headers))]
+            get_squid_header_dict(
+                headers[i], i, scribe, user_id) for i in range(len(headers))]
+    return [get_header_dict(headers[i], i) for i in range(len(headers))]
+
 
 # .............................................................................
 def mung(data):
-    """
-    @summary: Replace a list of values with a map from the non-zero values to
-                     the indexes at which they occur
+    """Replace a list of values with a map of non-zero values
     """
     munged = defaultdict(list)
     for i, datum in enumerate(data):
         if datum != 0:
             munged[datum].append(i)
     return munged
+
 
 # .............................................................................
 def _add_sdms_to_package(zip_f, projections, scribe):
@@ -280,7 +268,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
     occ_info = []
     prj_info = []
 
-    sniffer = unicodecsv.Sniffer()
+    sniffer = csv.Sniffer()
 
     for prj in projections:
         occ = prj.occurrenceSet
@@ -296,17 +284,17 @@ def _add_sdms_to_package(zip_f, projections, scribe):
             scn = prj.projScenario
             prj_info.append(
                 {
-                    'prj_id' : prj.getId(),
-                    'file_path' : arc_prj_path,
-                    'image_path' : arc_prj_img_path,
-                    'scenario_code' : prj.projScenarioCode,
-                    'species_name' : prj.speciesName,
-                    'algorithm_code' : prj.algorithmCode,
-                    'gcm_code' : scn.gcmCode,
-                    'alt_pred_code' : scn.altpredCode,
-                    'date_code' : scn.dateCode,
-                    'epsg' : prj.epsgcode,
-                    'label' : '{} {} {} {}'.format(
+                    'prj_id': prj.getId(),
+                    'file_path': arc_prj_path,
+                    'image_path': arc_prj_img_path,
+                    'scenario_code': prj.projScenarioCode,
+                    'species_name': prj.speciesName,
+                    'algorithm_code': prj.algorithmCode,
+                    'gcm_code': scn.gcmCode,
+                    'alt_pred_code': scn.altpredCode,
+                    'date_code': scn.dateCode,
+                    'epsg': prj.epsgcode,
+                    'label': '{} {} {} {}'.format(
                         prj.displayName, prj.algorithmCode,
                         prj.projScenarioCode, arc_prj_path)
                 })
@@ -328,7 +316,8 @@ def _add_sdms_to_package(zip_f, projections, scribe):
                 delimiter = dialect.delimiter
 
                 # Write header line
-                header_line = delimiter.join([i[1][0] for i in sorted(headers)])
+                header_line = delimiter.join(
+                    [i[1][0] for i in sorted(headers)])
                 occ_string_io.write('{}\n'.format(header_line))
                 # Write the rest of the lines
                 for line in in_f:
@@ -336,17 +325,18 @@ def _add_sdms_to_package(zip_f, projections, scribe):
             occ_string_io.seek(0)
             zip_f.writestr(arc_occ_path, occ_string_io.getvalue())
             occ_string_io = None
-            #zip_f.write(sys_occ_path, arc_occ_path)
+            # zip_f.write(sys_occ_path, arc_occ_path)
             added_occ_ids.append(occ.getId())
             occ_info.append(
                 {
-                    'occ_id' : occ.getId(),
-                    'species_name' : occ.displayName,
-                    'num_points' : occ.queryCount,
-                    'file_path' : arc_occ_path
+                    'occ_id': occ.getId(),
+                    'species_name': occ.displayName,
+                    'num_points': occ.queryCount,
+                    'file_path': arc_occ_path
                 })
 
     return occ_info, prj_info
+
 
 # .............................................................................
 def _get_known_package_files():
@@ -358,13 +348,14 @@ def _get_known_package_files():
     static_files = []
     template_files = []
     for f_dir, _, fns in os.walk(STATIC_PACKAGE_PATH):
-        for fn in fns:
-            a_path = os.path.join(f_dir, fn)
+        for file_name in fns:
+            a_path = os.path.join(f_dir, file_name)
             if a_path.lower().endswith('.template'):
                 template_files.append(a_path)
             else:
                 static_files.append(a_path)
     return (static_files, template_files)
+
 
 # .............................................................................
 def _package_gridset(gridset, include_csv=False, include_sdm=False):
@@ -458,7 +449,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
         # Add Generated Files
         # -------------------
         # Gridset EML
-        gs_eml = tostring(makeEml(gridset))
+        gs_eml = tostring(make_eml(gridset))
         zip_f.writestr(
             os.path.join(
                 GRIDSET_DIR, 'gridset_{}.eml'.format(gridset.getId())), gs_eml)
@@ -475,15 +466,16 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
         static_files, template_files = _get_known_package_files()
 
         # Add static files
-        for fn in static_files:
-            r_path = fn.replace(STATIC_PACKAGE_PATH, '')
-            zip_f.write(fn, r_path)
+        for static_file_name in static_files:
+            r_path = static_file_name.replace(STATIC_PACKAGE_PATH, '')
+            zip_f.write(static_file_name, r_path)
 
         # Process template files
         for template_fn in template_files:
             # Remove .template and leading static package path
             r_path = template_fn.replace(
-                '.template', '').replace(STATIC_PACKAGE_PATH, '').replace('//', '/')
+                '.template', '').replace(
+                    STATIC_PACKAGE_PATH, '').replace('//', '/')
             if r_path.startswith('/'):
                 r_path = r_path[1:]
             # Should we write this template?  Default to true and change if
@@ -524,7 +516,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                         sdm_info=json.dumps({
                             'projections': prj_info,
                             'occurrences': occ_info
-                        }, indent=3))
+                        }, indent=4))
                 else:
                     write_template = False
             elif r_path.endswith('tree.js'):
@@ -539,13 +531,13 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     write_template = False
             elif r_path.endswith('statNameLookup.json'):
                 temp_filler = TemplateFiller(
-                    stats_json=json.dumps(createStatsMeta(), indent=3))
+                    stats_json=json.dumps(create_stats_meta(), indent=4))
             elif r_path.endswith('pam.js'):
                 if pam is not None:
                     header_lookup_fn = os.path.join(
                         DYN_PACKAGE_DIR, 'squidLookup.json')
                     pam_str = StringIO()
-                    geoJsonify_flo(
+                    geo_jsonify_flo(
                         pam_str, shapegrid.getDLocation(), matrix=pam,
                         mtxJoinAttrib=0, ident=0,
                         headerLookupFilename=header_lookup_fn, transform=mung)
@@ -558,17 +550,17 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if pam is not None:
                     temp_filler = TemplateFiller(
                         squid_lookup=json.dumps(
-                            createHeaderLookup(
+                            create_header_lookup(
                                 pam.getColumnHeaders(), squids=True,
-                                scribe=scribe, userId=user_id), indent=3))
+                                scribe=scribe, user_id=user_id), indent=4))
                 else:
                     write_template = False
             elif r_path.endswith('nodeLookup.js'):
                 if anc_pam is not None:
                     temp_filler = TemplateFiller(
                         node_lookup_json=json.dumps(
-                            createHeaderLookup(
-                                anc_pam.getColumnHeaders()), indent=3))
+                            create_header_lookup(
+                                anc_pam.getColumnHeaders()), indent=4))
                 else:
                     write_template = False
             elif r_path.endswith('ancPam.js'):
@@ -576,7 +568,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     header_lookup_fn = os.path.join(
                         DYN_PACKAGE_DIR, 'nodeLookup.json')
                     anc_pam_str = StringIO()
-                    geoJsonify_flo(
+                    geo_jsonify_flo(
                         anc_pam_str, shapegrid.getDLocation(), matrix=anc_pam,
                         mtxJoinAttrib=0, ident=0,
                         headerLookupFilename=header_lookup_fn, transform=mung)
@@ -603,7 +595,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                         headers={
                             '0': sites_cov_obs.getRowHeaders(),
                             '1': sites_cov_obs.getColumnHeaders()})
-                    geoJsonify_flo(
+                    geo_jsonify_flo(
                         mtx_str, shapegrid.getDLocation(), mtx_2d,
                         mtxJoinAttrib=0, ident=0)
                     mtx_str.seek(0)
@@ -620,7 +612,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                         headers={
                             '0': sites_obs.getRowHeaders(),
                             '1': sites_obs.getColumnHeaders()})
-                    geoJsonify_flo(
+                    geo_jsonify_flo(
                         mtx_str, shapegrid.getDLocation(), mtx_2d,
                         mtxJoinAttrib=0, ident=0)
                     mtx_str.seek(0)
@@ -636,6 +628,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     template_str = in_file.read()
                 zip_f.writestr(
                     r_path, temp_filler.fill_templated_string(template_str))
+
 
 # .............................................................................
 def summarize_object_statuses(summary):
@@ -664,11 +657,9 @@ def summarize_object_statuses(summary):
 
 
 # .............................................................................
-def gridsetPackageFormatter(gridset, includeCSV=True, includeSDM=True,
-                            stream=False):
-    """
-    @summary: Create a Gridset download package for the user to explore locally
-    @todo: Break this into smaller functions
+def gridset_package_formatter(gridset, include_csv=True, include_sdm=True,
+                              stream=False):
+    """Create a Gridset download package for the user to explore locally
     """
     # Check that it is a gridset
     if not isinstance(gridset, Gridset):
@@ -687,21 +678,21 @@ def gridsetPackageFormatter(gridset, includeCSV=True, includeSDM=True,
 
         # Check progress counts
         gridset_id = gridset.getId()
-        #prj_summary = scribe.summarizeSDMProjectsForGridset(gridset_id)
-        #mtx_summary = scribe.summarizeMatricesForGridset(gridset_id)
+        # prj_summary = scribe.summarizeSDMProjectsForGridset(gridset_id)
+        # mtx_summary = scribe.summarizeMatricesForGridset(gridset_id)
         mf_summary = scribe.summarizeMFChainsForGridset(gridset_id)
-        #mc_summary = scribe.summarizeMtxColumnsForGridset(gridset_id)
-        #occ_summary = scribe.summarizeOccurrenceSetsForGridset(gridset_id)
+        # mc_summary = scribe.summarizeMtxColumnsForGridset(gridset_id)
+        # occ_summary = scribe.summarizeOccurrenceSetsForGridset(gridset_id)
 
-        #(waiting_prjs, running_prjs, complete_prjs, error_prjs, total_prjs
+        # (waiting_prjs, running_prjs, complete_prjs, error_prjs, total_prjs
         # ) = summarize_object_statuses(prj_summary)
-        #(waiting_mtxs, running_mtxs, complete_mtxs, error_mtxs, total_mtxs
+        # (waiting_mtxs, running_mtxs, complete_mtxs, error_mtxs, total_mtxs
         # ) = summarize_object_statuses(mtx_summary)
         (waiting_mfs, running_mfs, _, _, _
          ) = summarize_object_statuses(mf_summary)
-        #(waiting_occs, running_occs, complete_occs, error_occs, total_occs
+        # (waiting_occs, running_occs, complete_occs, error_occs, total_occs
         # ) = summarize_object_statuses(occ_summary)
-        #(waiting_mcs, running_mcs, complete_mcs, error_mcs, total_mcs
+        # (waiting_mcs, running_mcs, complete_mcs, error_mcs, total_mcs
         # ) = summarize_object_statuses(mc_summary)
         scribe.closeConnections()
 
@@ -710,15 +701,15 @@ def gridsetPackageFormatter(gridset, includeCSV=True, includeSDM=True,
         # See if we can create it
         # CJG - Assume we can create package if no makeflows
         # TODO: Check other objects and raise error status if necessary
-        #if cnt == 0 and all([mtx.status >= JobStatus.COMPLETE for \
+        # if cnt == 0 and all([mtx.status >= JobStatus.COMPLETE for \
         #        mtx in gridset.getMatrices() if mtx.matrixType not in [
         #            MatrixType.PAM, MatrixType.ROLLING_PAM]]):
         # Assume we will never be able to create package if makeflow errors
-        #if error_mfs > 0
+        # if error_mfs > 0
         if cnt == 0:
             # Create the package
             _package_gridset(
-                gridset, include_csv=includeCSV, include_sdm=includeSDM)
+                gridset, include_csv=include_csv, include_sdm=include_sdm)
         else:
             # Not ready, so just return HTTP ACCEPTED
             cherrypy.response.status = HTTPStatus.ACCEPTED
