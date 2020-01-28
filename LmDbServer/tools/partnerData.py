@@ -180,9 +180,9 @@ class PartnerQuery(object):
                                       .format(taxonKey, sciName.scientificName))
                     except Exception as e:
                         if not isinstance(e, LMError):
-                            e = LMError(currargs='Failed on taxonKey {}'
-                                        .format(taxonKey), 
-                                        prevargs=e.args, lineno=self.getLineno())
+                            e = LMError(
+                                'Failed on taxonKey {}'.format(taxonKey), e,
+                                line_num=self.get_line_num())
                             raise e
                 else:
                     self.log.info('taxonKey {} is not an accepted genus or species'

@@ -30,7 +30,7 @@ def stockpile_pavs(pav_list):
         pav_id = int(pav_dict[RegistryKey.IDENTIFIER])
         pav = scribe.getMatrixColumn(mtxcolId=pav_id)
         if pav is None:
-            raise LMError(currargs='Failed to get PAV {}'.format(pav_id))
+            raise LMError('Failed to get PAV {}'.format(pav_id))
         try:
             pav_data = decompress(pav_dict[RegistryKey.COMPRESSED_PAV_DATA])
             status = JobStatus.COMPLETE
@@ -71,11 +71,11 @@ def stockpile_objects(stockpile_list):
             test_method = test_matrix
         else:
             raise LMError(
-                currargs='Unsupported process type {} for object {}'.format(
+                'Unsupported process type {} for object {}'.format(
                     process_type, obj_id))
         if obj is None:
             raise LMError(
-                currargs='Failed to get object {} for process {}'.format(
+                'Failed to get object {} for process {}'.format(
                     obj_id, process_type))
         
         log.debug('Test object: ptype {}, object id {}, status {}'.format(

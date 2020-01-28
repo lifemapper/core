@@ -116,13 +116,13 @@ class Tree(TreeWrapper, ServiceObject):
 
     # ...............................................
     def dumpTreeMetadata(self):
-        return LMObject._dumpMetadata(self, self.treeMetadata)
+        return LMObject._dump_metadata(self, self.treeMetadata)
  
     def loadTreeMetadata(self, newMetadata):
-        self.treeMetadata = LMObject._loadMetadata(self, newMetadata)
+        self.treeMetadata = LMObject._load_metadata(self, newMetadata)
 
     def addTreeMetadata(self, newMetadataDict):
-        self.treeMetadata = LMObject._addMetadata(self, newMetadataDict, 
+        self.treeMetadata = LMObject._add_metadata(self, newMetadataDict, 
                                   existingMetadataDict=self.treeMetadata)
 
     # ...............................................

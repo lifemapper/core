@@ -232,7 +232,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             self.log.info('    Found/inserted OccLayer {}'.format(occ.getId()))
         except Exception as e:
             if not isinstance(e, LMError):
-                e = LMError(currargs=e.args, lineno=self.getLineno())
+                e = LMError(e, line_num=self.get_line_num())
             raise e
 
         if occ is not None:
@@ -240,7 +240,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             rdloc, rawmeta_dloc = self._writeRawData(occ, data=data, 
                                                      metadata=metadata)
             if not rdloc:
-                raise LMError(currargs='    Failed to find raw data location')
+                raise LMError('    Failed to find raw data location')
             occ.setRawDLocation(rdloc, currtime)
             # Set processType and metadata location (from config, not saved in DB)
             occ.processType = self.processType
@@ -311,9 +311,9 @@ class _SpeciesWeaponOfChoice(LMObject):
                                           .format(taxonKey, sciName.scientificName))
                     except Exception as e:
                         if not isinstance(e, LMError):
-                            e = LMError(currargs='Failed on taxonKey {}, linenum {}'
+                            e = LMError('Failed on taxonKey {}, linenum {}'
                                                         .format(taxonKey, self._linenum), 
-                                            prevargs=e.args, lineno=self.getLineno())
+                                            e, line_num=self.get_line_num())
                         raise e
                 else:
                     self.log.info('taxonKey {} is not an accepted genus or species'
@@ -322,7 +322,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             
 # ...............................................
     def _raiseSubclassError(self):
-        raise LMError(currargs='Function must be implemented in subclass')
+        raise LMError('Function must be implemented in subclass')
 
 # ...............................................
     def _writeRawData(self, occ, data=None, metadata=None):
@@ -599,7 +599,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         try:
             self._dirContentsFile = open(dirContentsFname, 'r')
         except:
-            raise LMError(currargs='Unable to open {}'.format(dirContentsFname))
+            raise LMError('Unable to open {}'.format(dirContentsFname))
         self.useGBIFTaxonomy = useGBIFTaxonomy
 
 # ...............................................
@@ -748,7 +748,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
 # ...............................................
     def _writeRawData(self, occ, data=None, metadata=None):
         if data is None:
-            raise LMError(currargs='Missing data file for occurrenceSet')
+            raise LMError('Missing data file for occurrenceSet')
         rdloc = occ.createLocalDLocation(raw=True)
         occ.ready_filename(rdloc, overwrite=True)
         shutil.copyfile(data, rdloc)
@@ -787,7 +787,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
         try:
             self._idfile = open(occIdFname, 'r')
         except:
-            raise LMError(currargs='Failed to open {}'.format(occIdFname))
+            raise LMError('Failed to open {}'.format(occIdFname))
 
 
 # ...............................................

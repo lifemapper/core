@@ -132,15 +132,15 @@ class ScenPackage(ServiceObject, LMSpatialObject):
 
 # ...............................................
     def dumpScenpkgMetadata(self):
-        return super(ScenPackage, self)._dumpMetadata(self.scenpkgMetadata)
+        return super(ScenPackage, self)._dump_metadata(self.scenpkgMetadata)
  
 # ...............................................
     def loadScenpkgMetadata(self, newMetadata):
-        self.scenpkgMetadata = super(ScenPackage, self)._loadMetadata(newMetadata)
+        self.scenpkgMetadata = super(ScenPackage, self)._load_metadata(newMetadata)
 
 # ...............................................
     def addScenpkgMetadata(self, newMetadataDict):
-        self.scenpkgMetadata = super(ScenPackage, self)._addMetadata(newMetadataDict, 
+        self.scenpkgMetadata = super(ScenPackage, self)._add_metadata(newMetadataDict, 
                                              existingMetadataDict=self.scenpkgMetadata)
 
 
@@ -206,15 +206,15 @@ class Scenario(MapLayerSet):
 
 # ...............................................
     def dumpScenMetadata(self):
-        return super(Scenario, self)._dumpMetadata(self.scenMetadata)
+        return super(Scenario, self)._dump_metadata(self.scenMetadata)
  
 # ...............................................
     def loadScenMetadata(self, newMetadata):
-        self.scenMetadata = super(Scenario, self)._loadMetadata(newMetadata)
+        self.scenMetadata = super(Scenario, self)._load_metadata(newMetadata)
 
 # ...............................................
     def addScenMetadata(self, newMetadataDict):
-        self.scenMetadata = super(Scenario, self)._addMetadata(newMetadataDict, 
+        self.scenMetadata = super(Scenario, self)._add_metadata(newMetadataDict, 
                                              existingMetadataDict=self.scenMetadata)
 
 

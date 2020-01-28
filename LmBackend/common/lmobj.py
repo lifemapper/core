@@ -15,23 +15,30 @@ class LMObject:
     """Base class for all objects in the Lifemapper project.
     """
     # ..........................
-    def getLineno(self):
+    @staticmethod
+    def get_line_num():
+        """Get the current line number
+        """
         return inspect.currentframe().f_back.f_lineno
 
     # ..........................
-    def getModuleName(self):
+    def get_module_name(self):
+        """Get the name of the current module
+        """
         return '{}.{}'.format(__name__, self.__class__.__name__)
 
     # ..........................
-    def getLocation(self, lineno=None):
+    def get_location(self, line_num=None):
+        """Get the current location
+        """
         loc = '{}.{}'.format(__name__, self.__class__.__name__)
-        if lineno:
-            loc += ' Line {}'.format(lineno)
+        if line_num:
+            loc += ' Line {}'.format(line_num)
         return loc
 
     # ..........................
     @classmethod
-    def ready_filename(cls, fullfilename, overwrite=False):
+    def ready_filename(cls, full_filename, overwrite=False):
         """Prepare a file location for writing by creating needed parent dirs.
 
         Args:
@@ -39,39 +46,39 @@ class LMObject:
             overwrite (bool): If true, deletes existing file.  If false,
                 returns False.
         """
-        if fullfilename is None:
+        if full_filename is None:
             raise LMError('Full filename is None')
 
-        if os.path.exists(fullfilename):
+        if os.path.exists(full_filename):
             if overwrite:
-                success, _ = cls.deleteFile(fullfilename)
+                success, _ = cls.delete_file(full_filename)
                 if not success:
-                    raise LMError('Unable to delete {}'.format(fullfilename))
-                return True
-            else:
-                print(('File {} exists, overwrite=False'.format(fullfilename)))
-                return False
-        else:
-            pth, _ = os.path.split(fullfilename)
-
-            # If the file path is in cwd we don't need to create directories
-            if len(pth) == 0:
+                    raise LMError('Unable to delete {}'.format(full_filename))
                 return True
 
-            try:
-                os.makedirs(pth, 0o775)
-            except IOError:
-                pass
+            print(('File {} exists, overwrite=False'.format(full_filename)))
+            return False
 
-            if os.path.isdir(pth):
-                return True
+        pth, _ = os.path.split(full_filename)
 
-            # Else, fail
-            raise LMError('Failed to create directories {}'.format(pth))
+        # If the file path is in cwd we don't need to create directories
+        if len(pth) == 0:
+            return True
+
+        try:
+            os.makedirs(pth, 0o775)
+        except IOError:
+            pass
+
+        if os.path.isdir(pth):
+            return True
+
+        # Else, fail
+        raise LMError('Failed to create directories {}'.format(pth))
 
     # ..........................
     @classmethod
-    def deleteFile(cls, fname, deleteDir=False):
+    def delete_file(cls, file_name, delete_dir=False):
         """Delete the file if it exists and parent directory if it is empty.
 
         Note:
@@ -80,16 +87,16 @@ class LMObject:
         """
         success = True
         msg = ''
-        if fname is None:
+        if file_name is None:
             msg = 'Cannot delete file \'None\''
         else:
-            pth, _ = os.path.split(fname)
-            if fname is not None and os.path.exists(fname):
-                base, ext = os.path.splitext(fname)
+            pth, _ = os.path.split(file_name)
+            if file_name is not None and os.path.exists(file_name):
+                base, ext = os.path.splitext(file_name)
                 if ext == LMFormat.SHAPE.ext:
-                    similarFnames = glob.glob(base + '.*')
+                    similar_file_names = glob.glob(base + '.*')
                     try:
-                        for simfname in similarFnames:
+                        for simfname in similar_file_names:
                             _, simext = os.path.splitext(simfname)
                             if simext in LMFormat.SHAPE.getExtensions():
                                 os.remove(simfname)
@@ -99,11 +106,12 @@ class LMObject:
                             simfname, str(e))
                 else:
                     try:
-                        os.remove(fname)
+                        os.remove(file_name)
                     except Exception as e:
                         success = False
-                        msg = 'Failed to remove {}, {}'.format(fname, str(e))
-                if deleteDir and len(os.listdir(pth)) == 0:
+                        msg = 'Failed to remove {}, {}'.format(
+                            file_name, str(e))
+                if delete_dir and len(os.listdir(pth)) == 0:
                     try:
                         os.removedirs(pth)
                     except Exception as e:
@@ -112,52 +120,56 @@ class LMObject:
         return success, msg
 
     # ..........................
-    def _addMetadata(self, newMetadataDict, existingMetadataDict={}):
-        for key, val in newMetadataDict.items():
+    @staticmethod
+    def _add_metadata(new_metadata_dict, existing_metadata_dict=None):
+        if existing_metadata_dict is None:
+            existing_metadata_dict = {}
+        for key, val in new_metadata_dict.items():
             try:
-                existingVal = existingMetadataDict[key]
+                existing_val = existing_metadata_dict[key]
             except Exception:
-                existingMetadataDict[key] = val
+                existing_metadata_dict[key] = val
             else:
                 # if metadata exists and is ...
-                if type(existingVal) is list:
+                if isinstance(existing_val, list):
                     # a list, add to it
-                    if type(val) is list:
-                        newVal = list(set(existingVal.extend(val)))
-                        existingMetadataDict[key] = newVal
+                    if isinstance(val, list):
+                        new_val = list(set(existing_val.extend(val)))
+                        existing_metadata_dict[key] = new_val
 
                     else:
-                        newVal = list(set(existingVal.append(val)))
-                        existingMetadataDict[key] = newVal
+                        new_val = list(set(existing_val.append(val)))
+                        existing_metadata_dict[key] = new_val
                 else:
                     # not a set, replace it
-                    existingMetadataDict[key] = val
-        return existingMetadataDict
+                    existing_metadata_dict[key] = val
+        return existing_metadata_dict
 
     # ..........................
-    def _dumpMetadata(self, metadataDict):
-        metadataStr = None
-        if metadataDict:
-            metadataStr = json.dumps(metadataDict)
-        return metadataStr
+    @staticmethod
+    def _dump_metadata(metadata_dict):
+        metadata_str = None
+        if metadata_dict:
+            metadata_str = json.dumps(metadata_dict)
+        return metadata_str
 
     # ..........................
-    def _loadMetadata(self, newMetadata):
+    @staticmethod
+    def _load_metadata(new_metadata):
+        """Load metadata into a dictionary
         """
-        @note: Adds to dictionary or modifies values for existing keys
-        """
-        objMetadata = {}
-        if newMetadata is not None:
-            if isinstance(newMetadata, dict):
-                objMetadata = newMetadata
+        obj_metadata = {}
+        if new_metadata is not None:
+            if isinstance(new_metadata, dict):
+                obj_metadata = new_metadata
             else:
                 try:
-                    objMetadata = json.loads(newMetadata)
+                    obj_metadata = json.loads(new_metadata)
                 except Exception as e:
                     print(
                         'Failed to load JSON from type {} object {}'.format(
-                            type(newMetadata), newMetadata))
-        return objMetadata
+                            type(new_metadata), new_metadata))
+        return obj_metadata
 
 
 # .............................................................................
@@ -165,69 +177,43 @@ class LMError(Exception, LMObject):
     """Base class for exceptions in the lifemapper project.
     """
     # ..........................
-    def __init__(self, currargs=None, prevargs=None, lineno=None,
-                 doTrace=False, logger=None):
-        """
-        @todo: Exception will change in Python 3.0: update this.  
-                 args will no longer exist, message can be any object
-        @summary Constructor for the LMError class
-        @param currargs: Current arguments (sequence or single string)
-        @param prevargs: (optional) sequence of previous arguments for exception
-                                being wrapped by LMError
-        """
-        super(LMError, self).__init__()
-        self.lineno = lineno
+    def __init__(self, *args, do_trace=False, line_num=None, **kwargs):
+        """Constructor for LMError
 
-        allargs = []
-        if doTrace:
-            sysinfo = sys.exc_info()
-            tb = sysinfo[2]
-            if tb is not None:
-                tbargs = traceback.format_tb(tb)
+        Args:
+            *args: Any positional agruments sent to this constructor
+            do_trace (bool): Should a traceback be attached to the exception
+            line_num (int): A line number to attach to this exception
+            **kwargs: Any additional keyword arguements sent to the constructor
+
+        Note:
+            Assembles all arguments into Exception.args
+        """
+        LMObject.__init__(self)
+        self.line_number = line_num
+        self.previous_exceptions = []
+        list_args = []
+        for arg in args:
+            if isinstance(arg, Exception):
+                self.previous_exceptions.append(arg)
             else:
-                tbargs = [str(sysinfo)]
+                list_args.append(arg)
 
-            for r in tbargs:
-                allargs.append(r)
-
-        if isinstance(currargs, (list, tuple)):
-            allargs.extend(currargs)
-        elif currargs is not None:
-            allargs.append(currargs)
-
-        if isinstance(prevargs, (list, tuple)):
-            allargs.extend(prevargs)
-        elif prevargs is not None:
-            allargs.append(prevargs)
-        self.args = tuple(allargs)
+        kw_arg_dict = dict(kwargs)
+        if line_num:
+            kw_arg_dict['Line number'] = line_num
+        kw_arg_dict['Location'] = self.get_location(line_num=line_num)
+        if do_trace:
+            self.traceback = self.get_traceback()
+            kw_arg_dict['Traceback'] = self.traceback
+        list_args.append(kw_arg_dict)
+        self.args = tuple(list_args)
+        Exception.__init__(self, self.args)
 
     # ..........................
-    def __str__(self):
+    @staticmethod
+    def get_traceback():
+        """Get the traceback for this exception
         """
-        @summary get the string representation of an LMError
-        @return String representation of an LMError
-        """
-        # Added because the error number was coming through as an integer
-        l = [self.getLocation(), self.getTraceback()]
-        for x in self.args:
-            try:
-                sarg = str(x)
-            except UnicodeDecodeError as e:
-                sarg = 'some unicode arg'
-            except Exception as e:
-                sarg = 'some other non-string arg ({})'.format(e)
-            l.append(sarg)
-
-        return repr('\n'.join(l))
-
-    # ..........................
-    def getTraceback(self):
-        msg = '\n'
-        excType, excValue, thisTraceback = sys.exc_info()
-        while thisTraceback :
-            framecode = thisTraceback.tb_frame.f_code
-            filename = str(framecode.co_filename)
-            line_no = str(traceback.tb_lineno(thisTraceback))
-            msg += 'Traceback : Line: {}; File: {}\n'.format(line_no, filename)
-            thisTraceback = thisTraceback.tb_next
-        return msg
+        exc_type, exc_val, this_traceback = sys.exc_info()
+        return traceback.format_exception(exc_type, exc_val, this_traceback)

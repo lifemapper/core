@@ -36,8 +36,8 @@ class SPFiller(LMObject):
         super(SPFiller, self).__init__()
         self.name = self.__class__.__name__.lower()
         if not os.path.exists(spMetaFname):
-            raise LMError(currargs='Climate metadata {} does not exist'
-                         .format(spMetaFname))
+            raise LMError(
+                'Climate metadata {} does not exist'.format(spMetaFname))
         layer_base_path, fname = os.path.split(spMetaFname)
         spBasename, _ = os.path.splitext(fname)
         self.layer_base_path = layer_base_path
@@ -47,8 +47,9 @@ class SPFiller(LMObject):
             import imp
             self.spMeta  = imp.load_source('currentmetadata', spMetaFname)
         except Exception as e:
-            raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                          .format(spMetaFname, e))
+            raise LMError(
+                'Climate metadata {} cannot be imported; ({})'.format(
+                    spMetaFname, e))
         
         spkgNames = ','.join(list(self.spMeta.CLIMATE_PACKAGES.keys()))
         
@@ -131,7 +132,8 @@ class SPFiller(LMObject):
         try:
             dloc = os.path.join(self.layer_base_path, maskMeta['file'])
         except KeyError:
-            raise LMError(currargs='Missing `file` key in SDM_MASK_META in scenPkg metadata')
+            raise LMError(
+                'Missing `file` key in SDM_MASK_META in scenPkg metadata')
         else:
             if not os.path.exists(dloc):
                 raise LMError('Missing local data {}'.format(dloc))
@@ -147,7 +149,7 @@ class SPFiller(LMObject):
                             bbox=maskMeta['region'],
                             modTime=gmt().mjd)
         except KeyError:
-            raise LMError(currargs='Missing one of: name, res, region, gdaltype, ' + 
+            raise LMError('Missing one of: name, res, region, gdaltype, ' + 
                          'gdalformat in SDM_MASK_META in scenPkg metadata')
         
         return masklyr

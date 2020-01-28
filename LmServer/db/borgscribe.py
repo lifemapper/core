@@ -106,9 +106,9 @@ class BorgScribe(LMObject):
             if lyr.isValidDataset():
                 updatedLyr = self._borg.findOrInsertEnvLayer(lyr, scenarioId)
             else:
-                raise LMError(currargs='Invalid environmental layer: {}'
+                raise LMError('Invalid environmental layer: {}'
                                                 .format(lyr.getDLocation()), 
-                                  lineno=self.getLineno())
+                                  line_num=self.get_line_num())
         return updatedLyr
 
 # ...............................................
@@ -183,7 +183,7 @@ class BorgScribe(LMObject):
         if isinstance(envType, EnvType):
             newOrExistingET = self._borg.findOrInsertEnvType(envtype=envType)
         else:
-            raise LMError(currargs='Invalid object for EnvType insertion')
+            raise LMError('Invalid object for EnvType insertion')
         return newOrExistingET
 
 # .............................................................................

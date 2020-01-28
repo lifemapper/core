@@ -71,7 +71,7 @@ class ChristopherWalken(LMObject):
         if configFname is not None and os.path.exists(configFname):
             self.cfg = Config(site_fn=configFname)
         else:
-            raise LMError(currargs='Missing config file {}'.format(configFname))
+            raise LMError('Missing config file {}'.format(configFname))
         
         # JSON or ini based configuration
         if jsonFname is not None:
@@ -87,10 +87,10 @@ class ChristopherWalken(LMObject):
                 self._scribe = BorgScribe(self.log)
                 success = self._scribe.openConnections()
             except Exception as e:
-                raise LMError(currargs='Exception opening database', prevargs=e.args)
+                raise LMError('Exception opening database', e)
             else:
                 if not success:
-                    raise LMError(currargs='Failed to open database')
+                    raise LMError('Failed to open database')
                 else:
                     self.log.info('{} opened databases'.format(self.name))
         
@@ -410,14 +410,14 @@ class ChristopherWalken(LMObject):
         # Put params into SDMProject metadata
         maskAlgList = self._getAlgorithms(sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
         if len(maskAlgList) > 1:
-            raise LMError(currargs='Unable to handle > 1 SDM pre-process')
+            raise LMError('Unable to handle > 1 SDM pre-process')
         elif len(maskAlgList) == 1:
             sdmMaskAlg = maskAlgList[0]
            
             # TODO: Handle if there is more than one input layer?
             maskData = sdmMaskAlg.getInputs()
             if maskData and len(maskData) > 1:
-                raise LMError(currargs='Unable to process > 1 input SDM mask layer')
+                raise LMError('Unable to process > 1 input SDM mask layer')
             
             lyrname = list(maskData.values())[0]
             
@@ -484,7 +484,7 @@ class ChristopherWalken(LMObject):
             sdmMaskAlg = maskAlgList[0]
             # TODO: Handle if there is more than one input layer
             if len(sdmMaskAlg.getInputs()) > 1:
-                raise LMError(currargs='Unable to process > 1 input SDM mask layer')
+                raise LMError('Unable to process > 1 input SDM mask layer')
             for inputKey, lyrname in sdmMaskAlg.getInputs().items():
                 sdmMaskInputLayer = self._scribe.getLayer(userId=userId, 
                                                           lyrName=lyrname, epsg=epsg)
@@ -514,7 +514,7 @@ class ChristopherWalken(LMObject):
         @summary: Get user, archive, path, and configuration object 
         """
         if configFname is None or not os.path.exists(configFname):
-            raise LMError(currargs='Missing config file {}'.format(configFname))
+            raise LMError('Missing config file {}'.format(configFname))
         config = Config(site_fn=configFname)
         return config
          
@@ -530,7 +530,7 @@ class ChristopherWalken(LMObject):
                                                  defaultValue=Priority.NORMAL)
         # Get user-archive configuration file
         if userId is None or archiveName is None:
-            raise LMError(currargs='Missing ARCHIVE_USER or ARCHIVE_NAME in {}'
+            raise LMError('Missing ARCHIVE_USER or ARCHIVE_NAME in {}'
                           .format(self.cfg.configFiles))
         earl = EarlJr()
         boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)

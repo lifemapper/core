@@ -7,47 +7,36 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import Algorithms
 
 # .........................................................................
-class NotImplementedError( LMError ):
+class InvalidParameterError(LMError):
+    """Error thrown when a property does not exist for the algorithm
     """
-    Error thrown when a function is not implemented
-    @todo: Can this be removed?
-    """
-    def __init__(self, currargs, prevargs=None, doTrace=False):
-        LMError.__init__(self, currargs, prevargs, doTrace)
+    def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
+        LMError.__init__(self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
 
 # .........................................................................
-class InvalidParameterError( LMError ):
+class InvalidValueError(LMError):
+    """Error thrown when a string value is not a valid choice for the parameter
     """
-    Error thrown when a property does not exist for the algorithm
-    """
-    def __init__(self, currargs, prevargs=None, doTrace=False):
-        LMError.__init__(self, currargs, prevargs, doTrace)
-
-# .........................................................................
-class InvalidValueError( LMError ):
-    """
-    Error thrown when a string value is not a valid choice for the parameter
-    """
-    def __init__(self, currargs, prevargs=None, doTrace=False):
-        LMError.__init__(self, currargs, prevargs, doTrace)
+    def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
+        LMError.__init__(self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
 
 # .........................................................................
 class WrongTypeError( LMError ):
     """
     Error thrown when a value is of the wrong type for a parameter
     """
-    def __init__(self, currargs, prevargs=None, doTrace=False):
-        LMError.__init__(self, currargs, prevargs, doTrace)
+    def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
+        LMError.__init__(self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
 
 # .........................................................................
 class OutOfRangeError( LMError ):
     """
     Error thrown when a value is out of range for a parameter
     """
-    def __init__(self, currargs, prevargs=None, doTrace=False):
-        LMError.__init__(self, currargs, prevargs, doTrace)
+    def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
+        LMError.__init__(self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
 
-    
+
 # .........................................................................
 class Algorithm(LMObject):
     """         
@@ -165,20 +154,20 @@ class Algorithm(LMObject):
 
 # ...............................................
     def dumpAlgParameters(self):
-        return LMObject._dumpMetadata(self, self._parameters)
+        return LMObject._dump_metadata(self, self._parameters)
 
     def loadAlgParameters(self, newMetadata):
-        self._parameters = LMObject._loadMetadata(self, newMetadata)
+        self._parameters = LMObject._load_metadata(self, newMetadata)
 
 # ...............................................
     def dumpAlgMetadata(self):
-        return LMObject._dumpMetadata(self, self.algMetadata)
+        return LMObject._dump_metadata(self, self.algMetadata)
  
     def loadAlgMetadata(self, newMetadata):
-        self.algMetadata = LMObject._loadMetadata(self, newMetadata)
+        self.algMetadata = LMObject._load_metadata(self, newMetadata)
 
     def addAlgMetadata(self, newMetadataDict):
-        self.algMetadata = LMObject._addMetadata(self, newMetadataDict, 
+        self.algMetadata = LMObject._add_metadata(self, newMetadataDict, 
                                              existingMetadataDict=self.algMetadata)
 
     # ...............................................

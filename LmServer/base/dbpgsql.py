@@ -122,8 +122,9 @@ class DbPostgresql(LMAbstractObject):
         elif val is None:
             dbVal = 'NULL'
         else:
-            raise LMError(currargs='DbConn._formatVal: unsupported type {} for {}'
-                              .format(type(val), val), lineno=self.getLineno())
+            raise LMError(
+                'DbConn._formatVal: unsupported type {} for {}'.format(
+                    type(val), val), line_num=self.get_line_num())
         return dbVal
 
 # ............................................................................
@@ -142,7 +143,7 @@ class DbPostgresql(LMAbstractObject):
                                           host=self.host, port=self.port, 
                                           database=self.db)
         if self.pconn is None:
-            raise LMError(currargs='Unable to open connection to {}'.format(self.db))
+            raise LMError('Unable to open connection to {}'.format(self.db))
 
 # ............................................................................
     def close(self):
@@ -294,8 +295,8 @@ class DbPostgresql(LMAbstractObject):
 #         if isinstance(e, LMError):
 #             raise e
 #         else:
-#             raise LMError(currargs='Exception on command {}'.format(self.lastCommands), 
-#                               prevargs=e.args, doTrace=True)
+#             raise LMError('Exception on command {}'.format(self.lastCommands), 
+#                               e, do_trace=True)
 
     # ............................................................................
     def executeModifyFunction(self, fnName, *fnArgs):
@@ -359,17 +360,17 @@ class DbPostgresql(LMAbstractObject):
             if len(rows) == 1:
                 retval = rows[0][0]
                 if retval is None or retval == -1:
-                    raise LMError(currargs='Error inserting record: {}'
-                                      .format(self.lastCommands))
+                    raise LMError('Error inserting record: {}'.format(
+                        self.lastCommands))
                 else:
                     return retval
 
             else:
-                raise LMError(currargs=['DbPostgresql.executeInsertFunction returned multiple rows',
-                                    str(self.lastCommands)])
+                raise LMError('DbPostgresql.executeInsertFunction returned multiple rows',
+                                    str(self.lastCommands))
         else:
-            raise LMError(currargs=['DbPostgresql.executeInsertFunction returned nothing',
-                                str(self.lastCommands)])
+            raise LMError('DbPostgresql.executeInsertFunction returned nothing',
+                                str(self.lastCommands))
 
     # ............................................................................
     def executeInsertAndSelectOneFunction(self, fnName, *fnArgs):
@@ -459,13 +460,13 @@ class DbPostgresql(LMAbstractObject):
             except LMError as e: 
                 raise
             except Exception as e:
-                raise LMError(currargs='Exception on command {}'
-                                  .format(self.lastCommands), prevargs=e.args, doTrace=True)
+                raise LMError('Exception on command {}'.format(
+                    self.lastCommands), e, do_trace=True)
 
             cursor.close()
             return rows, idxs
         else:
-            raise LMError(currargs='Database connection is still None!')
+            raise LMError('Database connection is still None!')
 
 # ............................................................................ 
     def _createAtom(self, row, idxs):
@@ -497,7 +498,7 @@ class DbPostgresql(LMAbstractObject):
         if row:
             return row[0]
         else:
-            raise LMError(currargs='Failed to return count', doTrace=True)
+            raise LMError('Failed to return count', do_trace=True)
 
 # ...............................................
     def _getColumnValue(self, r, idxs, fldnameList):

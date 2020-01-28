@@ -69,7 +69,7 @@ class EnvLayer(EnvType, Raster):
       @copydoc LmServer.base.legion.EnvType::__init__()
       """
       if name is None:
-         raise LMError(currargs='EnvLayer.name is required')
+         raise LMError('EnvLayer.name is required')
       EnvType.__init__(self, envCode, userId, 
                 gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode, 
                 metadata=envMetadata, modTime=envModTime, envTypeId=envTypeId)

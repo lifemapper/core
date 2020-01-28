@@ -106,20 +106,21 @@ class Boomer(LMObject):
         try:
             success = self._scribe.openConnections()
         except Exception as e:
-            raise LMError(currargs='Exception opening database', prevargs=e.args)
+            raise LMError('Exception opening database', e)
         else:
             if not success:
-                raise LMError(currargs='Failed to open database')
+                raise LMError('Failed to open database')
             else:
                 self.log.info('{} opened databases'.format(self.name))
-              
+
         try:
             self.christopher = ChristopherWalken(self.configFname,
                                                  scribe=self._scribe)
             self.christopher.initializeMe()
         except Exception as e:
-            raise LMError(currargs='Failed to initialize Chris with config {} ({})'
-                         .format(self.configFname, e))
+            raise LMError(
+                'Failed to initialize Chris with config {} ({})'.format(
+                    self.configFname, e))
         try:
             self.gridset = self.christopher.boomGridset
             self.gridsetId = self.christopher.boomGridset.getId()

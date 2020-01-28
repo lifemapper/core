@@ -121,13 +121,13 @@ class Stockpile(LMObject):
             elif ProcessType.isIntersect(ptype):
                 obj = scribe.getMatrixColumn(mtxcolId=objId)
             else:
-                raise LMError(currargs='Unsupported ProcessType {} for object {}'
+                raise LMError('Unsupported ProcessType {} for object {}'
                                   .format(ptype, objId))
         except Exception as e:
-            raise LMError(currargs='Failed to get object {} for process {}, exception {}'
+            raise LMError('Failed to get object {} for process {}, exception {}'
                               .format(objId, ptype, str(e)))
         if obj is None:
-            raise LMError(currargs='Failed to get object {} for process {}'
+            raise LMError('Failed to get object {} for process {}'
                               .format(objId, ptype))
         return obj
 
@@ -164,7 +164,7 @@ class Stockpile(LMObject):
                     os.remove(obj.getDLocation())
                 shutil.copy(fileNames[0], obj.getDLocation())
         except Exception as e:
-            raise LMError(currargs='Exception copying primary {} or ancillary output, ({})'
+            raise LMError('Exception copying primary {} or ancillary output, ({})'
                               .format(obj.getDLocation(), str(e)))
 
 # .............................................................................
@@ -185,7 +185,7 @@ class Stockpile(LMObject):
         try:
             scribe.updateObject(obj)
         except Exception as e:
-            raise LMError(currargs='Exception updating object {} for process {}, ({})'
+            raise LMError('Exception updating object {} for process {}, ({})'
                               .format(objId, ptype, str(e)))
 
     # ...............................................

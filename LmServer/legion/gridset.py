@@ -221,7 +221,7 @@ class Gridset(ServiceObject): #LMMap
                                          LMFileType.UNSPECIFIED_RAD,
                                          epsg=self._epsg, gridsetId=self.getId())
             else:
-                raise LMError
+                raise LMError()
             
     @property
     def path(self):
@@ -471,15 +471,15 @@ class Gridset(ServiceObject): #LMMap
 # .............................................................................
 # ...............................................
     def dumpGrdMetadata(self):
-        return super(Gridset, self)._dumpMetadata(self.grdMetadata)
+        return super(Gridset, self)._dump_metadata(self.grdMetadata)
  
 # ...............................................
     def loadGrdMetadata(self, newMetadata):
-        self.grdMetadata = super(Gridset, self)._loadMetadata(newMetadata)
+        self.grdMetadata = super(Gridset, self)._load_metadata(newMetadata)
 
 # ...............................................
     def addGrdMetadata(self, newMetadataDict):
-        self.grdMetadata = super(Gridset, self)._addMetadata(newMetadataDict, 
+        self.grdMetadata = super(Gridset, self)._add_metadata(newMetadataDict, 
                                              existingMetadataDict=self.grdMetadata)
                 
 # .............................................................................

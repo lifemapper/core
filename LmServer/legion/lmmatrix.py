@@ -190,16 +190,16 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
     
 # ...............................................
     def dumpMtxMetadata(self):
-        return super(LMMatrix, self)._dumpMetadata(self.mtxMetadata)
+        return super(LMMatrix, self)._dump_metadata(self.mtxMetadata)
 
 # ...............................................
     def addMtxMetadata(self, newMetadataDict):
-        self.mtxMetadata = super(LMMatrix, self)._addMetadata(newMetadataDict, 
+        self.mtxMetadata = super(LMMatrix, self)._add_metadata(newMetadataDict, 
                                              existingMetadataDict=self.mtxMetadata)
 
 # ...............................................
     def loadMtxMetadata(self, newMetadata):
-        self.mtxMetadata = super(LMMatrix, self)._loadMetadata(newMetadata)
+        self.mtxMetadata = super(LMMatrix, self)._load_metadata(newMetadata)
 
     # .............................
     def write(self, dlocation=None, overwrite=False):

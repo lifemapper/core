@@ -356,14 +356,14 @@ class BOOMFiller(LMObject):
 #     def _findScenPkgMeta(self, scenpkgName):
 #         scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkgName + '.py')
 #         if not os.path.exists(scenpkg_meta_file):
-#             raise LMError(currargs='Climate metadata {} does not exist'
+#             raise LMError('Climate metadata {} does not exist'
 #                          .format(scenpkg_meta_file))
 #         # TODO: change to importlib on python 2.7 --> 3.3+  
 #         try:
 #             import imp
 #             SPMETA = imp.load_source('currentmetadata', scenpkg_meta_file)
 #         except Exception, e:
-#             raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
+#             raise LMError('Climate metadata {} cannot be imported; ({})'
 #                           .format(scenpkg_meta_file, e)) 
 #         pkgMeta = SPMETA.CLIMATE_PACKAGES[scenpkgName]
 #         mask_lyrname = SPMETA.SDM_MASK_META['name']
@@ -379,15 +379,17 @@ class BOOMFiller(LMObject):
         elif os.path.exists(user_scenpkg_meta_file):
             scenpkg_meta_file = user_scenpkg_meta_file
         else:
-            raise LMError(currargs='Climate metadata does not exist in {} or {}'
-                         .format(public_scenpkg_meta_file, user_scenpkg_meta_file))
+            raise LMError(
+                'Climate metadata does not exist in {} or {}'.format(
+                    public_scenpkg_meta_file, user_scenpkg_meta_file))
         # TODO: change to importlib on python 2.7 --> 3.3+  
         try:
             import imp
             SPMETA = imp.load_source('currentmetadata', scenpkg_meta_file)
         except Exception as e:
-            raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                          .format(scenpkg_meta_file, e)) 
+            raise LMError(
+                'Climate metadata {} cannot be imported; ({})'.format(
+                    scenpkg_meta_file, e)) 
         pkgMeta = SPMETA.CLIMATE_PACKAGES[scenpkgName]
         # Mask is optional
         try:
@@ -787,14 +789,14 @@ class BOOMFiller(LMObject):
                 except Exception as e:
                     self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
                 if not validData:
-                    raise LMError(currargs='Failed to write Shapegrid {}'.format(dloc))
+                    raise LMError('Failed to write Shapegrid {}'.format(dloc))
             if validData and newshp.status != JobStatus.COMPLETE:
                 newshp.updateStatus(JobStatus.COMPLETE)
                 success = self.scribe.updateObject(newshp)
                 if success is False:
                     self.scribe.log.warning('Failed to update Shapegrid record')
         else:
-            raise LMError(currargs='Failed to find or insert Shapegrid')
+            raise LMError('Failed to find or insert Shapegrid')
         return newshp
       
     # ...............................................

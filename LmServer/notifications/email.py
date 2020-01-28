@@ -36,6 +36,6 @@ class EmailNotifier(object):
         try:
             self.server.sendmail(self.fromAddr, toAddrs, mailMsg)
         except Exception as e:
-            #raise LMError(currargs=e.args)
+            #raise LMError(e.args)
             # This had to be changed because we don't want to put LMError on LmBackend
             raise e

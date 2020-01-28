@@ -51,7 +51,7 @@ class EarlJr(LMObject):
         elif lyrId is not None:
             basename = NAME_SEPARATOR.join([GENERIC_LAYER_NAME_PREFIX, str(lyrId)])
         else:
-            raise LMError(currargs='Must supply OccsetId or ProjId for layer name')
+            raise LMError('Must supply OccsetId or ProjId for layer name')
         return basename
     
     # ...............................................
@@ -624,7 +624,7 @@ class EarlJr(LMObject):
             except:
                 msg = 'Improper Archive Data mapname %s ; ' % mapname
                 msg += 'Should be %s + OccurrenceSetId' % MapPrefix.SDM
-                raise LMError(currargs=msg, doTrace=True)
+                raise LMError(msg, do_trace=True)
         # RAD_MAP mapname = rad_<gridsetId>
         elif parts[0] == MapPrefix.RAD:
             try:
@@ -632,7 +632,7 @@ class EarlJr(LMObject):
             except:
                 msg = 'Improper RAD mapname %s ; ' % mapname
                 msg += 'Should be %s + gridsetId' % MapPrefix.RAD
-                raise LMError(currargs=msg, doTrace=True)
+                raise LMError(msg, do_trace=True)
            
         # User maps are usr_<usr>_<epsg>
         elif parts[0] == MapPrefix.USER:
@@ -650,5 +650,5 @@ class EarlJr(LMObject):
             msg = 'Improper mapname %s - ' % mapname
             msg += '  requires prefix %s, %s, %s, or %s' % (MapPrefix.SCEN, 
                                  MapPrefix.SDM, MapPrefix.USER, MapPrefix.ANC)
-            raise LMError(currargs=msg, doTrace=True)
+            raise LMError(msg, do_trace=True)
         return fileType, scencode, occsetId, gridsetId, usr, ancillary, epsg

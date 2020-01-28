@@ -106,7 +106,7 @@ class GBIFData(LMObject):
                                                                     str(e.args), str(e.message))
             self.log.error(msg)
             self._nubUUID = None
-            raise LMError(msg=msg)
+            raise LMError(msg)
         output = response.read()
         try:
             outputDict = json.loads(output)
@@ -371,7 +371,7 @@ class GBIFData(LMObject):
                                                                             primaryEnv, originalOcc=origOcc)                
                 except Exception as e:
                     if not isinstance(e, LMError):
-                        e = LMError(currargs=e.args, lineno=self.getLineno(), 
-                                        location=self.getLocation())
+                        e = LMError(e, line_num=self.get_line_num(), 
+                                        location=self.get_location())
                     raise e
 

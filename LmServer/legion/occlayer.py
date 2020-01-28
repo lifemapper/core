@@ -199,8 +199,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
             float(x)
             float(y)
         except:
-            raise LMError(currargs=['Invalid point coordinates; x = {}, y = {}'
-                                            .format(x, y)])
+            raise LMError('Invalid point coordinates; x = {}, y = {}'
+                                            .format(x, y))
         else:
             x = round(x, 4)
             y = round(y, 4)

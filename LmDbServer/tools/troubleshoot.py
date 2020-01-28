@@ -50,7 +50,7 @@ class Troubleshooter(object):
                                                     ignoreUser=PUBLIC_USER)
         except Exception as e:
             if not isinstance(e, LMError):
-                e = LMError(currargs=e.args, lineno=self.getLineno())
+                e = LMError(e, line_num=self.get_line_num())
             raise e
             
         probs = self._organizeProblemObjects(models, 'Model')

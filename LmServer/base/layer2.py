@@ -178,7 +178,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 #             try:
 #                 LegalMapUnits.index(mapunits)
 #             except:
-#                 raise LMError(['Illegal Unit type', mapunits])
+#                 raise LMError('Illegal Unit type', mapunits)
 #             else:
 #                 self._mapunits = mapunits
 #     
@@ -197,7 +197,7 @@ class _Layer(LMSpatialObject, ServiceObject):
         @return: boolean for success/failure 
         @raise LMError: on failure to read data.
         """
-        raise LMError(currargs='readData must be implemented in Subclass')
+        raise LMError('readData must be implemented in Subclass')
 
 # ...............................................
     def computeHash(self, dlocation=None, content=None):
@@ -343,15 +343,15 @@ class _Layer(LMSpatialObject, ServiceObject):
                         
 # ...............................................
     def dumpLyrMetadata(self):
-        return super(_Layer, self)._dumpMetadata(self.lyrMetadata)
+        return super(_Layer, self)._dump_metadata(self.lyrMetadata)
  
 # ...............................................
     def loadLyrMetadata(self, newMetadata):
-        self.lyrMetadata = super(_Layer, self)._loadMetadata(newMetadata)
+        self.lyrMetadata = super(_Layer, self)._load_metadata(newMetadata)
 
 # ...............................................
     def addLyrMetadata(self, newMetadataDict):
-        self.lyrMetadata = super(_Layer, self)._addMetadata(newMetadataDict, 
+        self.lyrMetadata = super(_Layer, self)._add_metadata(newMetadataDict, 
                                              existingMetadataDict=self.lyrMetadata)
 
     # ...............................................
@@ -404,15 +404,15 @@ class _LayerParameters(LMObject):
         
 # ...............................................
     def dumpParamMetadata(self):
-        return super(_LayerParameters, self)._dumpMetadata(self.paramMetadata)
+        return super(_LayerParameters, self)._dump_metadata(self.paramMetadata)
  
 # ...............................................
     def loadParamMetadata(self, newMetadata):
-        self.paramMetadata = super(_LayerParameters, self)._loadMetadata(newMetadata)
+        self.paramMetadata = super(_LayerParameters, self)._load_metadata(newMetadata)
 
 # ...............................................
     def addParamMetadata(self, newMetadataDict):
-        self.paramMetadata = super(_LayerParameters, self)._addMetadata(
+        self.paramMetadata = super(_LayerParameters, self)._add_metadata(
                                                     newMetadataDict, 
                                                     existingMetadataDict=self.paramMetadata)
 
@@ -606,12 +606,12 @@ class Raster(_Layer):
             try:
                 dataset = gdal.Open(str(dlocation), gdalconst.GA_ReadOnly)
             except Exception as e:
-                raise LMError(currargs='Unable to open dataset {} with GDAL ({})'
+                raise LMError('Unable to open dataset {} with GDAL ({})'
                                     .format(dlocation, str(e)))
             try:
                 band = dataset.GetRasterBand(1)
             except Exception as e:
-                raise LMError(currargs='No band {} in dataset {} ({})'
+                raise LMError('No band {} in dataset {} ({})'
                                     .format(band, dlocation, str(e)))
         except:
             success = False
@@ -815,7 +815,7 @@ class Raster(_Layer):
                     f.write(srcData)
                     f.close()
                 except Exception as e:
-                    raise LMError(currargs='Error writing data to raster %s (%s)' 
+                    raise LMError('Error writing data to raster %s (%s)' 
                                       % (outFile, str(e)))
                 else:
                     self.setDLocation(dlocation=outFile)
@@ -824,11 +824,10 @@ class Raster(_Layer):
                     self.populateStats()
                 except Exception as e:
                     success, msg = self.deleteFile(outFile)
-                    raise LMError(currargs='Invalid data written to %s (%s); Deleted (success=%s, %s)' 
+                    raise LMError('Invalid data written to %s (%s); Deleted (success=%s, %s)' 
                                       % (outFile, str(e), str(success), msg))
             else:
-                raise LMError(currargs=
-                                  'Source data or source filename required for write to %s' 
+                raise LMError('Source data or source filename required for write to %s' 
                                   % self._dlocation)
         else:
             raise LMError(['Must setDLocation before writing file'])
@@ -859,16 +858,16 @@ class Raster(_Layer):
         metadata = driver.GetMetadata()
         if not (gdal.DCAP_CREATECOPY in metadata 
                      and metadata[gdal.DCAP_CREATECOPY] == 'YES'):
-            raise LMError(currargs='Driver %s does not support CreateCopy() method.' 
+            raise LMError('Driver %s does not support CreateCopy() method.' 
                               % format)
         inds = gdal.Open( infname )
         try:
             outds = driver.CreateCopy(outfname, inds, 0, options)
         except Exception as e:
-            raise LMError(currargs='Creation failed for %s from band %d of %s (%s)'
+            raise LMError('Creation failed for %s from band %d of %s (%s)'
                                           % (outfname, bandnum, infname, str(e)))
         if outds is None:
-            raise LMError(currargs='Creation failed for %s from band %d of %s)'
+            raise LMError('Creation failed for %s from band %d of %s)'
                                           % (outfname, bandnum, infname))
         # Close new dataset to flush to disk
         outds = None
@@ -878,7 +877,7 @@ class Raster(_Layer):
     def copyData(self, sourceDataLocation, targetDataLocation=None, 
                      format='GTiff'):
         if not format in LMFormat.GDALDrivers():
-            raise LMError(currargs='Unsupported raster format %s' % format)
+            raise LMError('Unsupported raster format %s' % format)
         if sourceDataLocation is not None and os.path.exists(sourceDataLocation):
             if targetDataLocation is not None:
                 dlocation = targetDataLocation
@@ -898,7 +897,7 @@ class Raster(_Layer):
         try:
             self._copyGDALData(1, sourceDataLocation, dlocation, format=format)
         except Exception as e:
-            raise LMError(currargs='Failed to copy data source from %s to %s (%s)' 
+            raise LMError('Failed to copy data source from %s to %s (%s)' 
                               % (sourceDataLocation, dlocation, str(e)))
                     
 # ...............................................
@@ -914,7 +913,7 @@ class Raster(_Layer):
             ds = None
             return srs
         else:
-            raise LMError(currargs='Input file %s does not exist' % self._dlocation)
+            raise LMError('Input file %s does not exist' % self._dlocation)
 
 # ...............................................
     def writeSRS(self, srs):
@@ -1002,7 +1001,7 @@ class Raster(_Layer):
         """
         @note: All implemented _Rasters will also be a Subclass of ServiceObject 
         """
-        raise LMError(currargs='getWCSRequest must be implemented in Subclasses also inheriting from ServiceObject')
+        raise LMError('getWCSRequest must be implemented in Subclasses also inheriting from ServiceObject')
 
 # .............................................................................
 # Vector class (inherits from _Layer)
@@ -1097,9 +1096,9 @@ class Vector(_Layer):
         """
         # OGR dataFormat is required (may be a placeholder and changed later)
         if ogrFormat not in LMFormat.OGRDrivers():
-            raise LMError(['Unsupported Vector OGR dataFormat', ogrFormat])
+            raise LMError('Unsupported Vector OGR dataFormat', ogrFormat)
         if ogrType is not None and ogrType not in OGRDataTypes:
-            raise LMError(['Unsupported Vector ogrType', ogrType])
+            raise LMError('Unsupported Vector ogrType', ogrType)
         
 # .............................................................................
 # Properties
@@ -1372,7 +1371,7 @@ class Vector(_Layer):
 #                 except LMError, e:
 #                     raise
 #                 except Exception, e:
-#                     raise LMError(currargs='Unable to read vector data {}: {}'
+#                     raise LMError('Unable to read vector data {}: {}'
 #                                        .format(dlocation, str(e)))
                          
 # ...............................................
@@ -1827,7 +1826,7 @@ class Vector(_Layer):
                 print('Unable to create shapetree index on %s: %s' % (self._dlocation, 
                                                                                         str(e)))
         except Exception as e:
-            raise LMError(['Failed to create shapefile %s' % self._dlocation, str(e)])
+            raise LMError('Failed to create shapefile %s' % self._dlocation, e)
             
         return success
                         
@@ -1847,7 +1846,7 @@ class Vector(_Layer):
                 self.readData()
             except Exception as e:
                 raise LMError('Invalid uploaded data in temp file %s (%s)' 
-                                  % (self._dlocation, str(e)), doTrace=True )
+                                  % (self._dlocation, str(e)), do_trace=True )
         elif uploadedType == 'csv':
             self.writeTempFromCSV(data)
             self._dataFormat = 'CSV'
@@ -1948,7 +1947,7 @@ class Vector(_Layer):
             self.clearDLocation()
             self.setDLocation(outfname)
         else:
-            raise LMError(currargs='{} exists, overwrite = False'.format(outfname))
+            raise LMError('{} exists, overwrite = False'.format(outfname))
                 
 # ...............................................
     def writeTempFromCSV(self, csvdata):
@@ -1971,7 +1970,7 @@ class Vector(_Layer):
             for line in f1:
                 f2.write(line)
         except Exception as e:
-            raise LMError(currargs=['Unable to parse input CSV data', str(e)])
+            raise LMError('Unable to parse input CSV data', e)
         finally:
             f1.close()
             f2.close()
@@ -2095,13 +2094,13 @@ class Vector(_Layer):
         try:
             ds = drv.Open(sourceDataLocation)
         except Exception as e:
-            raise LMError(['Invalid datasource' % sourceDataLocation, str(e)])
+            raise LMError('Invalid datasource' % sourceDataLocation, str(e))
         
         try:
             newds = drv.CopyDataSource(ds, targetDataLocation)
             newds.Destroy()
         except Exception as e:
-            raise LMError(currargs='Failed to copy data source')
+            raise LMError('Failed to copy data source')
 
 # ...............................................
     def verifyField(self, dlocation, ogrFormat, attrname):
@@ -2125,7 +2124,7 @@ class Vector(_Layer):
                 try:
                     ds = drv.Open(dlocation)
                 except Exception as e:
-                    raise LMError(['Invalid datasource' % dlocation, str(e)])
+                    raise LMError('Invalid datasource' % dlocation, str(e))
                 
                 lyrDef = ds.GetLayer(0).GetLayerDefn()
                 # Make sure given field exists and is the correct type
@@ -2286,14 +2285,14 @@ class Vector(_Layer):
             try:
                 ds = drv.Open(dlocation)
             except Exception as e:
-                raise LMError(['Invalid datasource' % dlocation, str(e)])
+                raise LMError('Invalid datasource' % dlocation, str(e))
                           
             self.clearFeatures() 
             try:
                 slyr = ds.GetLayer(0)
             except Exception as e:
-                raise LMError(currargs='#### Failed to GetLayer from %s' % dlocation,
-                                  prevargs=e.args, doTrace=True)
+                raise LMError('#### Failed to GetLayer from %s' % dlocation,
+                                  e, do_trace=True)
 
             # Get bounding box
             (minX, maxX, minY, maxY) = slyr.GetExtent()
@@ -2357,8 +2356,8 @@ class Vector(_Layer):
                             # Add the feature values with key=localId to the dictionary 
                             feats[localid] = currFeatureVals
                 except Exception as e:
-                    raise LMError(currargs='Failed to read features from %s (%s)' 
-                                      % (dlocation, str(e)), doTrace=True)
+                    raise LMError('Failed to read features from %s (%s)' 
+                                      % (dlocation, str(e)), do_trace=True)
             
 #             self.setFeatures(features, featAttrs, featureCount=featCount)
         else:
@@ -2518,7 +2517,7 @@ class Vector(_Layer):
                 srs = self.createSRSFromEPSG()
             return srs
         else:
-            raise LMError(currargs='Input file %s does not exist' % self._dlocation)
+            raise LMError('Input file %s does not exist' % self._dlocation)
         
 # .............................................................................
 # Private methods

@@ -6,7 +6,7 @@ import os
 
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 from LmCommon.common.lmconstants import LMFormat, ProcessType
-from LmCommon.common.readyfile import ready_filename
+from LmCommon.common.ready_file import ready_filename
 
 # Local dictionary keys for determining the type of masks to create
 DO_ASCII = 'do_ascii'
@@ -52,7 +52,7 @@ class ParameterSweepConfiguration:
         """
         try:
             config = json.load(fn_or_flo)
-        except Exception:
+        except AttributeError:
             # Try to load as if argument is a file name
             with open(fn_or_flo) as in_file:
                 config = json.load(in_file)
@@ -74,7 +74,8 @@ class ParameterSweepConfiguration:
         return my_obj
 
     # ........................................
-    def _process_algorithm(self, algorithm):
+    @staticmethod
+    def _process_algorithm(algorithm):
         """Generates an identifier and JSON for an algorithm
 
         Args:
@@ -89,13 +90,13 @@ class ParameterSweepConfiguration:
             RegistryKey.PARAMETER: []
         }
 
-        for param in algorithm._parameters.keys():
+        for param in algorithm.parameters.keys():
             algorithm_object[RegistryKey.PARAMETER].append(
                 {
                     RegistryKey.NAME: param,
-                    RegistryKey.VALUE: algorithm._parameters[param]
+                    RegistryKey.VALUE: algorithm.parameters[param]
                 })
-            algorithm_info.append((param, str(algorithm._parameters[param])))
+            algorithm_info.append((param, str(algorithm.parameters[param])))
 
         identifier = md5(str(set(algorithm_info))).hexdigest()[:16]
 
@@ -114,7 +115,7 @@ class ParameterSweepConfiguration:
         mask_id = None
         if mask_info is not None:
             mask_id = md5(
-                str(set([(k, mask_info[k]) for k in mask_info.keys()]))
+                str(set((k, val) for k, val in mask_info.items()))
                 ).hexdigest()[:16]
             # See if the mask has been defined, if not, add it
             if mask_id not in self.masks.keys():
@@ -130,7 +131,8 @@ class ParameterSweepConfiguration:
         return mask_id
 
     # ........................................
-    def _process_scenario(self, scenario, ext):
+    @staticmethod
+    def _process_scenario(scenario, ext):
         """Generates an identifier and JSON for scenario layers
 
         Args:

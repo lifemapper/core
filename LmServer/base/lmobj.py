@@ -62,7 +62,7 @@ class LMSpatialObject(LMObject):
 
 # ...............................................
     def getSRS(self):
-        raise LMError(currargs='getSRS is only implemented on subclasses')
+        raise LMError('getSRS is only implemented on subclasses')
 
     def getSRSAsWkt(self):
         try:
@@ -555,54 +555,19 @@ class LmHTTPError(LMError):
     @note: Status codes are found in LmCommon.common.lmconstants.HTTPStatus
     """
     
-    def __init__(self, code, msg=None, currargs=None, prevargs=None, lineno=None, 
-                     doTrace=False):
+    def __init__(self, code, *args, msg=None, line_num=None, do_trace=False, **kwargs):
         """
         @summary: Constructor for the LmHTTPError class
         @param code: (optional - HTTPException does not have a code) 
                          The HTTP error code of this error
         @param msg: A message to return in the headers
         """
-        LMError.__init__(self, currargs=currargs, prevargs=prevargs, 
-                              lineno=lineno, doTrace=doTrace)
+        LMError.__init__(
+            self, *args, code=code, msg=msg, line_num=line_num, do_trace=do_trace)
         self.code = code
         self.msg = msg
-    
-    # ......................................
-    def __repr__(self):
-        return "LmHTTPError {} ({})".format(self.code, self.msg)
+        self.args = self.args + (self.code, self.msg)
 
-    # ......................................
-    def __str__(self):
-        return "LmHTTPError {} ({})".format(self.code, self.msg)
-
-# ============================================================================
-class LMMissingDataError(LMError):
-    """
-    @summary: Error class for missing data errors.  
-    @note: Wrapper method for LMError allowing code to handle missing data.
-    """
-    
-    def __init__(self, code, msg=None, currargs=None, prevargs=None, lineno=None, 
-                     doTrace=False):
-        """
-        @summary: Constructor for the LmHTTPError class
-        @param code: (optional - HTTPException does not have a code) 
-                         The HTTP error code of this error
-        @param msg: A message to return in the headers
-        """
-        LMError.__init__(self, currargs=currargs, prevargs=prevargs, 
-                              lineno=lineno, doTrace=doTrace)
-        self.code = code
-        self.msg = msg
-    
-    # ......................................
-    def __repr__(self):
-        return "{} [] ({})".format(self.__class__.__name__, self.code, self.msg)
-
-    # ......................................
-    def __str__(self):
-        return "{} {} ({})".format(self.__class__.__name__, self.code, self.msg)
 
 # .............................................................................
 class LMMessage(list, LMObject):

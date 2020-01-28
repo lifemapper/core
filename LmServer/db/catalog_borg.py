@@ -1424,7 +1424,7 @@ class Borg(DbPostgresql):
                                                                         taxonSourceName)
             except Exception as e:
                 if not isinstance(e, LMError):
-                    e = LMError(currargs=e.args, lineno=self.getLineno())
+                    e = LMError(e, line_num=self.get_line_num())
                 raise e
             if row is not None:
                 txSourceId = self._getColumnValue(row, idxs, ['taxonomysourceid'])
@@ -1448,7 +1448,7 @@ class Borg(DbPostgresql):
                                                                     tsId, tsName, tsUrl)
         except Exception as e:
             if not isinstance(e, LMError):
-                e = LMError(currargs=e.args, lineno=self.getLineno())
+                e = LMError(e, line_num=self.get_line_num())
             raise e
         if row is not None:
             import collections
