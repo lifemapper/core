@@ -3,7 +3,7 @@
 import os
 
 from LmCommon.common.lmconstants import (ENCODING, JobStatus, LMFormat)
-from LmCommon.shapes.createshape import ShapeShifter
+from LmCommon.shapes.create_shape import ShapeShifter
 
 from LmCommon.common.ready_file import ready_filename
 from LmCompute.common.lmObj import LmException
@@ -66,7 +66,7 @@ def createShapefileFromCSV(csv_fname, metadata, out_fname, big_fname, max_points
 
     try:
         shaper = ShapeShifter(csv_fname, metadata, logger=log, 
-                              delimiter=delimiter, isGbif=is_gbif)
+                              delimiter=delimiter, is_gbif=is_gbif)
         shaper.writeOccurrences(out_fname, maxPoints=max_points, 
                                 bigfname=big_fname)
         log.debug('Shaper wrote occurrences')
@@ -124,7 +124,7 @@ from types import UnicodeType, StringType
 
 from LmServer.common.log import ScriptLogger
 
-from LmCommon.shapes.createshape import ShapeShifter
+from LmCommon.shapes.create_shape import ShapeShifter
 from LmCommon.common.lmconstants import (
     ENCODING, JobStatus, LMFormat, ProcessType)
     
@@ -151,7 +151,7 @@ except:
 rawdata, count, log = _prepareInputs(csv_fname, out_fname, big_fname, log)
 
 shaper = ShapeShifter(rawdata, metadata, count, logger=log, 
-                              isGbif=is_gbif)
+                              is_gbif=is_gbif)
 
 # 
 # shaper.writeOccurrences(

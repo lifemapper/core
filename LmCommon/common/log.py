@@ -3,15 +3,10 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-import sys
 import tempfile
-import traceback
 
 from LmCommon.common.lmconstants import (
     LOG_DATE_FORMAT, LOG_FORMAT, LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES)
-
-# TODO: send function name to logger for better info on source of problem
-#         thisFunctionName = sys._getframe().f_code.co_name
 
 
 # .............................................................................
@@ -73,7 +68,7 @@ class LmLogger(logging.Logger):
 
     # ...............................
     @property
-    def baseFilename(self):
+    def base_filename(self):
         """Return the first available handler base filename.
         """
         fname = None
@@ -95,5 +90,5 @@ class DaemonLogger(LmLogger):
         else:
             name = 'daemon.{}'.format(pid)
         LmLogger.__init__(self, name, level=level)
-        fn = os.path.join(tempfile.mkdtemp(), '{}.log'.format(name))
-        self._add_file_handler(fn)
+        file_name = os.path.join(tempfile.mkdtemp(), '{}.log'.format(name))
+        self._add_file_handler(file_name)

@@ -14,7 +14,6 @@ Todo:
     * CJ - Add a debugging or "dry run" mode that does not move files to their
         final location
 """
-from exceptions import ZeroDivisionError
 import json
 import os
 from osgeo import ogr
