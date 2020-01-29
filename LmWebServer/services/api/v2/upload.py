@@ -5,7 +5,7 @@
 Todo:
     * Make much more robust.  This is a minimum to get something working and
         discover limitations
-Todo: Use sub-services for different upload types rather than query parameter
+    * Use sub-services for different upload types rather than query parameter
 """
 from io import StringIO
 import json
@@ -59,19 +59,19 @@ class UserUploadService(LmService):
                     HTTPStatus.BAD_REQUEST, 'Must provide upload type')
             if uploadType.lower() == TREE_UPLOAD:
                 return self._upload_tree(fileName, file)
-            elif uploadType.lower() == BIOGEO_UPLOAD:
+            if uploadType.lower() == BIOGEO_UPLOAD:
                 return self._upload_biogeo(fileName, file)
-            elif uploadType.lower() == OCCURRENCE_UPLOAD:
+            if uploadType.lower() == OCCURRENCE_UPLOAD:
                 return self._upload_occurrence_data(fileName, metadata, file)
-            elif uploadType.lower() == CLIMATE_UPLOAD:
+            if uploadType.lower() == CLIMATE_UPLOAD:
                 return self._upload_climate_data(fileName)
-            else:
-                raise cherrypy.HTTPError(
-                    HTTPStatus.BAD_REQUEST,
-                    'Unknown upload type: {}'.format(uploadType))
-        else:
+
             raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN, 'Only logged in users can upload here')
+                HTTPStatus.BAD_REQUEST,
+                'Unknown upload type: {}'.format(uploadType))
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN, 'Only logged in users can upload here')
 
     # ................................
     def _get_user_dir(self):
@@ -82,10 +82,10 @@ class UserUploadService(LmService):
                 the same path construction as the getBoomPackage script
         """
         earl = EarlJr()
-        userId = self.get_user_id()
-        if userId == PUBLIC_USER:
-            userId = DEFAULT_POST_USER
-        pth = earl.createDataPath(userId, LMFileType.TMP_JSON)
+        user_id = self.get_user_id()
+        if user_id == PUBLIC_USER:
+            user_id = DEFAULT_POST_USER
+        pth = earl.createDataPath(user_id, LMFileType.TMP_JSON)
         if not os.path.exists(pth):
             os.makedirs(pth)
         return pth
@@ -104,9 +104,9 @@ class UserUploadService(LmService):
             * More docs
         """
         # Determine where to write the files
-        outDir = os.path.join(self._get_user_dir(), package_filename)
-        if not os.path.exists(outDir):
-            os.makedirs(outDir)
+        out_dir = os.path.join(self._get_user_dir(), package_filename)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
 
         if upload_file is not None:
             data = upload_file.file.read()
@@ -120,22 +120,22 @@ class UserUploadService(LmService):
         valid_extensions.extend(LMFormat.SHAPE.getExtensions())
 
         # Unzip files and name provided name
-        with zipfile.ZipFile(instr, allowZip64=True) as zipF:
-            for zfname in zipF.namelist():
+        with zipfile.ZipFile(instr, allowZip64=True) as zip_f:
+            for zfname in zip_f.namelist():
                 # fn = os.path.basename(zfname)
                 _, ext = os.path.splitext(zfname)
                 if ext in valid_extensions:
-                    outFn = os.path.join(outDir, os.path.basename(zfname))
-                    if os.path.exists(outFn):
+                    out_fn = os.path.join(out_dir, os.path.basename(zfname))
+                    if os.path.exists(out_fn):
                         raise cherrypy.HTTPError(
                             HTTPStatus.CONFLICT,
-                            '{} exists, {}'.format(outFn, zfname))
-                    else:
-                        # zipF.extract(zfname, outFn)
-                        with zipF.open(zfname) as zf:
-                            with open(outFn, 'w') as outF:
-                                for line in zf:
-                                    outF.write(line)
+                            '{} exists, {}'.format(out_fn, zfname))
+
+                    # zipF.extract(zfname, outFn)
+                    with zip_f.open(zfname) as zip_f2:
+                        with open(out_fn, 'w') as out_f:
+                            for line in zip_f2:
+                                out_f.write(line)
 
         # Set HTTP status
         cherrypy.response.status = HTTPStatus.ACCEPTED
@@ -146,151 +146,158 @@ class UserUploadService(LmService):
         }
 
     # ................................
-    def _upload_climate_data(self, climateDataFilename):
+    @staticmethod
+    def _upload_climate_data(climate_data_filename):
+        """Write the climate data to the layers space
+
+        Args:
+            climate_data_filename: The name of the directory to unzip files in
+
+        Todo:
+            Sanity checking
         """
-        @summary: Write the climate data to the layers space
-        @param climateDataFilename: The name of the directory to unzip files in
-        @todo: Sanity checking
-        """
-        outDir = os.path.join(ENV_DATA_PATH, climateDataFilename)
-        with zipfile.ZipFile(cherrypy.request.body, allowZip64=True) as zipF:
-            for zfname in zipF.namelist():
-                _, ext = os.path.splitext(zfname)
-                outFn = os.path.join(outDir, '{}{}'.format(
-                                              climateDataFilename, ext))
-                ready_filename(outFn)
-                if os.path.exists(outFn):
+        out_dir = os.path.join(ENV_DATA_PATH, climate_data_filename)
+        with zipfile.ZipFile(cherrypy.request.body, allowZip64=True) as zip_f:
+            for zf_name in zip_f.namelist():
+                _, ext = os.path.splitext(zf_name)
+                out_fn = os.path.join(
+                    out_dir, '{}{}'.format(climate_data_filename, ext))
+                ready_filename(out_fn)
+                if os.path.exists(out_fn):
                     raise cherrypy.HTTPError(
                         HTTPStatus.CONFLICT,
-                        '{}{} exists'.format(climateDataFilename, ext))
-                else:
-                    zipF.extract(zfname, outFn)
+                        '{}{} exists'.format(climate_data_filename, ext))
+                zip_f.extract(zf_name, out_fn)
 
         return {
-            'package_name': climateDataFilename,
+            'package_name': climate_data_filename,
             'upload_type': CLIMATE_UPLOAD,
             'status': HTTPStatus.ACCEPTED
         }
 
     # ................................
     def _upload_occurrence_data(self, package_name, metadata, upload_file):
-        """
-        @summary: Write the occurrence data to the user's workspace
-        @param package_name: The name of the occurrence data
-        @param metadata: A JSON document with metadata about the CSV data
-        @todo: Sanity checking
-        @todo: Use constants
-        @todo: Case insensitive
+        """Write the occurrence data to the user's workspace
+
+        Args:
+            package_name: The name of the occurrence data
+            metadata: A JSON document with metadata about the CSV data
+
+        Todo:
+            Sanity checking
+            Use constants
+            Case insensitive
         """
         self.log.debug('In occ upload')
         # If the package name ends in .csv, strip it
         if package_name.lower().find(LMFormat.CSV.ext) > 0:
             package_name = package_name[
                 :package_name.lower().find(LMFormat.CSV.ext)]
-        csvFilename = os.path.join(
+        csv_filename = os.path.join(
             self._get_user_dir(), '{}{}'.format(
                 package_name, LMFormat.CSV.ext))
-        metaFilename = os.path.join(
+        meta_filename = os.path.join(
             self._get_user_dir(),
             '{}{}'.format(package_name, LMFormat.JSON.ext))
 
         # Check to see if files exist
-        if os.path.exists(csvFilename):
+        if os.path.exists(csv_filename):
             raise cherrypy.HTTPError(
                 HTTPStatus.CONFLICT,
-                '{} exists'.format(os.path.basename(csvFilename)))
-        if os.path.exists(metaFilename):
+                '{} exists'.format(os.path.basename(csv_filename)))
+        if os.path.exists(meta_filename):
             raise cherrypy.HTTPError(
                 HTTPStatus.CONFLICT,
-                '{} exists'.format(os.path.basename(metaFilename)))
+                '{} exists'.format(os.path.basename(meta_filename)))
 
         # Process metadata
         if metadata is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.BAD_REQUEST,
                 'Must provide metadata with occurrence data upload')
+
+        m_stringio = StringIO()
+        m_stringio.write(metadata)
+        m_stringio.seek(0)
+        metadata = json.load(m_stringio)
+        self.log.debug('Metadata: {}'.format(metadata))
+        if 'field' not in list(
+                metadata.keys()) or 'role' not in list(metadata.keys()):
+            raise cherrypy.HTTPError(
+                HTTPStatus.BAD_REQUEST, 'Metadata not in expected format')
+
+        if upload_file is not None:
+            data = upload_file.file.read()
         else:
-            m_stringio = StringIO()
-            m_stringio.write(metadata)
-            m_stringio.seek(0)
-            metadata = json.load(m_stringio)
-            self.log.debug('Metadata: {}'.format(metadata))
-            if 'field' not in list(
-                    metadata.keys()) or 'role' not in list(metadata.keys()):
-                raise cherrypy.HTTPError(
-                    HTTPStatus.BAD_REQUEST, 'Metadata not in expected format')
+            data = cherrypy.request.body.read()
+
+        header_row = data.split('\n')[0]
+        meta_obj = {}
+        # Check for delimiter
+        if 'delimiter' in list(metadata.keys()):
+            delim = metadata['delimiter']
+        else:
+            delim = ','
+        meta_obj['delimiter'] = delim
+        headers = header_row.split(delim)
+        short_names = []
+
+        roles = metadata['role']
+        for fld in metadata['field']:
+            if fld['fieldType'].lower() == 'string':
+                field_type = 'string'  # 4
+            elif fld['fieldType'].lower() == 'integer':
+                field_type = 'integer'  # 0
+            elif fld['fieldType'].lower() == 'real':
+                field_type = 'real'  # 2
             else:
-                if upload_file is not None:
-                    data = upload_file.file.read()
-                else:
-                    data = cherrypy.request.body.read()
+                raise cherrypy.HTTPError(
+                    HTTPStatus.BAD_REQUEST,
+                    'Field type: {} is unknown'.format(fld['fieldType']))
+            field_idx = fld['key']
 
-                header_row = data.split('\n')[0]
-                meta_obj = {}
-                # Check for delimiter
-                if 'delimiter' in list(metadata.keys()):
-                    delim = metadata['delimiter']
-                else:
-                    delim = ','
-                meta_obj['delimiter'] = delim
-                headers = header_row.split(delim)
-                short_names = []
+            # If short name is None or has zero-length, get from csv
+            short_name = fld['shortName']
+            if short_name is None or len(short_name) == 0:
+                short_name = headers[int(fld['key'])].strip()
+            # If short name is too long
+            i = 0
+            if len(short_name) > 9:
+                test_name = short_name[:9] + str(i)
+                while test_name in short_names:
+                    i += 1
+                    test_name = short_name[:9] + str(i)
+                    self.log.debug(
+                        'Trying test name: {}'.format(test_name))
+                short_names.append(test_name)
+                short_name = test_name
+            field_obj = {
+                'type': field_type,
+                'name': short_name
+            }
+            if 'geopoint' in list(roles.keys()) and fld[
+                    'key'] == roles['geopoint']:
+                field_obj['role'] = 'geopoint'
+            elif 'taxaName' in list(roles.keys()) and fld[
+                    'key'] == roles['taxaName']:
+                field_obj['role'] = 'taxaName'
+            elif 'latitude' in list(roles.keys()) and fld[
+                    'key'] == roles['latitude']:
+                field_obj['role'] = 'latitude'
+            elif 'longitude' in list(roles.keys()) and fld[
+                    'key'] == roles['longitude']:
+                field_obj['role'] = 'longitude'
+            elif 'uniqueId' in list(roles.keys()) and fld[
+                    'key'] == roles['uniqueId']:
+                field_obj['role'] = 'uniqueId'
+            elif 'groupBy' in list(roles.keys()) and fld[
+                    'key'] == roles['groupBy']:
+                field_obj['role'] = 'groupby'
+            meta_obj[field_idx] = field_obj
 
-                roles = metadata['role']
-                for f in metadata['field']:
-                    if f['fieldType'].lower() == 'string':
-                        field_type = 'string'  #4
-                    elif f['fieldType'].lower() == 'integer':
-                        field_type = 'integer'  #0
-                    elif f['fieldType'].lower() == 'real':
-                        field_type = 'real' #2
-                    else:
-                        raise cherrypy.HTTPError(
-                            HTTPStatus.BAD_REQUEST,
-                            'Field type: {} is unknown'.format(f['fieldType']))
-                    field_idx = f['key']
+        with open(meta_filename, 'w') as out_f:
+            json.dump(meta_obj, out_f)
 
-                    # If short name is None or has zero-length, get from csv
-                    short_name = f['shortName']
-                    if short_name is None or len(short_name) == 0:
-                        short_name = headers[int(f['key'])].strip()
-                    # If short name is too long
-                    i = 0
-                    if len(short_name) > 9:
-                        test_name = short_name[:9] + str(i)
-                        while test_name in short_names:
-                            i += 1
-                            test_name = short_name[:9] + str(i)
-                            self.log.debug(
-                                'Trying test name: {}'.format(test_name))
-                        short_names.append(test_name)
-                        short_name = test_name
-                    field_obj = {
-                        'type': field_type,
-                        'name': short_name
-                    }
-                    if 'geopoint' in list(roles.keys()) and f[
-                            'key'] == roles['geopoint']:
-                        field_obj['role'] = 'geopoint'
-                    elif 'taxaName' in list(roles.keys()) and f[
-                            'key'] == roles['taxaName']:
-                        field_obj['role'] = 'taxaName'
-                    elif 'latitude' in list(roles.keys()) and f[
-                            'key'] == roles['latitude']:
-                        field_obj['role'] = 'latitude'
-                    elif 'longitude' in list(roles.keys()) and f[
-                            'key'] == roles['longitude']:
-                        field_obj['role'] = 'longitude'
-                    elif 'uniqueId' in list(roles.keys()) and f[
-                            'key'] == roles['uniqueId']:
-                        field_obj['role'] = 'uniqueId'
-                    elif 'groupBy' in list(roles.keys()) and f[
-                            'key'] == roles['groupBy']:
-                        field_obj['role'] = 'groupby'
-                    meta_obj[field_idx] = field_obj
-
-                with open(metaFilename, 'w') as outF:
-                    json.dump(meta_obj, outF)
         # Process file
         instr = StringIO()
         # data = cherrypy.request.body.read()
@@ -308,25 +315,26 @@ class UserUploadService(LmService):
                             raise cherrypy.HTTPError(
                                 HTTPStatus.BAD_REQUEST,
                                 'Must only provide one .csv file')
-                        else:
-                            # Determine if we are dealing with anonymous user
-                            #    once instead of checking at every line
-                            anon_user = self.get_user_id() == DEFAULT_POST_USER
-                            with zip_f.open(z_fname) as zf:
-                                with open(csvFilename, 'w') as outF:
-                                    num_lines = 0
-                                    for line in zf:
-                                        num_lines += 1
-                                        if anon_user and num_lines >= MAX_ANON_UPLOAD_SIZE:
-                                            fail_to_upload = True
-                                            break
-                                        else:
-                                            outF.write(line)
-                                if fail_to_upload:
-                                    os.remove(csvFilename)
-                                    raise cherrypy.HTTPError(
-                                        HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
-                                        'Anonymous users may only upload occurrence data less than {} lines'.format(MAX_ANON_UPLOAD_SIZE))
+                        # Determine if we are dealing with anonymous user
+                        #    once instead of checking at every line
+                        anon_user = self.get_user_id() == DEFAULT_POST_USER
+                        with zip_f.open(z_fname) as z_f:
+                            with open(csv_filename, 'w') as out_f:
+                                num_lines = 0
+                                for line in z_f:
+                                    num_lines += 1
+                                    if (anon_user and
+                                            num_lines >= MAX_ANON_UPLOAD_SIZE):
+                                        fail_to_upload = True
+                                        break
+                                    out_f.write(line)
+                            if fail_to_upload:
+                                os.remove(csv_filename)
+                                raise cherrypy.HTTPError(
+                                    HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                                    ('Anonymous users may only upload '
+                                     'occurrence data less than {} '
+                                     'lines'.format(MAX_ANON_UPLOAD_SIZE)))
                         csv_done = True
         else:
             # self.log.debug('Data: {}'.format(data))
@@ -334,8 +342,9 @@ class UserUploadService(LmService):
                     len(data.split('\n')) > MAX_ANON_UPLOAD_SIZE:
                 raise cherrypy.HTTPError(
                     HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
-                    'Anonymous users may only upload occurrence data less than {} lines'.format(MAX_ANON_UPLOAD_SIZE))
-            with open(csvFilename, 'w') as out_f:
+                    ('Anonymous users may only upload occurrence data less '
+                     'than {} lines'.format(MAX_ANON_UPLOAD_SIZE)))
+            with open(csv_filename, 'w') as out_f:
                 out_f.write(data)
 
         # Return
