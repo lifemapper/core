@@ -9,7 +9,7 @@ import argparse
 
 from lmpy import Matrix
 
-from LmCompute.plugins.multi.randomize.swap import swapRandomize
+from LmCompute.plugins.multi.randomize.swap import swap_randomize
 
 # .............................................................................
 if __name__ == "__main__":
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     
     pam = Matrix.load_flo(args.pamFn)
     
-    randPam = swapRandomize(pam, args.numSwaps)
+    randPam = swap_randomize(pam, args.numSwaps)
     
     with open(args.outRandomFn, 'w') as outPamF:
         randPam.save(outPamF)
