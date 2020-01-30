@@ -92,3 +92,15 @@ class DaemonLogger(LmLogger):
         LmLogger.__init__(self, name, level=level)
         file_name = os.path.join(tempfile.mkdtemp(), '{}.log'.format(name))
         self._add_file_handler(file_name)
+
+
+# .............................................................................
+class TestLogger(LmLogger):
+    """Logger for tests
+    """
+    def __init__(self, script_name, level=logging.DEBUG):
+        LmLogger.__init__(self, script_name, level=level)
+        self._add_console_handler()
+        file_name = os.path.join(
+            tempfile.mkdtemp(), '{}.log'.format(script_name))
+        self._add_file_handler(file_name)

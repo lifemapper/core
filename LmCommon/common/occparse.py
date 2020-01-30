@@ -753,7 +753,7 @@ class OccDataParser(LMObject):
 
 
 if __name__ == '__main__':
-    from LmCompute.common.log import TestLogger
+    from LmCommon.common.log import TestLogger
 
     try:
         from LmServer.common.localconstants import APP_PATH
@@ -784,7 +784,7 @@ from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.lmconstants import (LMFormat, ENCODING,
                                          OFTInteger, OFTReal, OFTString)
 from LmCommon.common.ready_file import get_unicodecsv_reader
-from LmCompute.common.log import TestLogger
+from LmCommon.common.log import TestLogger
 from LmServer.common.localconstants import APP_PATH
 
 dataname = 'LmTest/data/sdm/heuchera_all'
