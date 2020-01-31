@@ -12,87 +12,93 @@ from lmpy import Matrix, TreeWrapper
 
 from LmCompute.plugins.multi.calculate.calculate import PamStats
 
+
 # .............................................................................
-if __name__ == "__main__":
-    
+def main():
+    """Script main method
+    """
     # Set up the argument parser
     parser = argparse.ArgumentParser(
-        description="This script calculates statistics for the PAM") 
-    
-    parser.add_argument('pamFn', type=str, help="File location of PAM")
+        description='This script calculates statistics for the PAM')
+
+    parser.add_argument('pam_fn', type=str, help='File location of PAM')
     parser.add_argument(
-        'sitesFn', type=str,
-        help="File location to store sites statistics Matrix")
+        'sites_fn', type=str,
+        help='File location to store sites statistics Matrix')
     parser.add_argument(
-        'speciesFn', type=str,
-        help="File location to store species statistics Matrix")
+        'species_fn', type=str,
+        help='File location to store species statistics Matrix')
     parser.add_argument(
-        'diversityFn', type=str,
-        help="File location to store diversity statistics Matrix")
-    
+        'diversity_fn', type=str,
+        help='File location to store diversity statistics Matrix')
+
     parser.add_argument(
-        '-t', '--tree_file', dest='treeFn', type=str,
-        help="File location of tree if tree stats should be computed")
+        '-t', '--tree_file', dest='tree_fn', type=str,
+        help='File location of tree if tree stats should be computed')
 
     parser.add_argument(
         '--schluter', dest='schluter', action='store_true',
         help=('If this argument exists, compute Schluter statistics and'
               ' append them to diversity stats'))
-    
+
     parser.add_argument(
-        '--speciesCovFn', dest='spCovFn', type=str,
-        help="If provided, write species covariance matrix here")
+        '--species_cov_fn', dest='sp_cov_fn', type=str,
+        help='If provided, write species covariance matrix here')
     parser.add_argument(
-        '--siteCovFn', dest='siteCovFn', type=str,
-        help="If provided, write site covariance matrix here")
-    
+        '--site_cov_fn', dest='site_cov_fn', type=str,
+        help='If provided, write site covariance matrix here')
+
     args = parser.parse_args()
 
     # Load PAM
-    pam = Matrix.load_flo(args.pamFn)
-    
+    pam = Matrix.load_flo(args.pam_fn)
+
     # Load tree if exists
-    if args.treeFn is not None:
-        tree = TreeWrapper.from_filename(args.treeFn)
+    if args.tree_fn is not None:
+        tree = TreeWrapper.from_filename(args.tree_fn)
     else:
         tree = None
-    
+
     calculator = PamStats(pam, tree=tree)
-    
+
     # Write site statistics
-    siteStats = calculator.getSiteStatistics()
-    with open(args.sitesFn, 'w') as sitesOut:
-        siteStats.save(sitesOut)
-        
+    site_stats = calculator.get_site_statistics()
+    with open(args.sites_fn, 'w') as sites_out:
+        site_stats.save(sites_out)
+
     # Write species statistics
-    speciesStats = calculator.getSpeciesStatistics()
-    with open(args.speciesFn, 'w') as speciesOut:
-        speciesStats.save(speciesOut)
-        
+    species_stats = calculator.get_species_statistics()
+    with open(args.species_fn, 'w') as species_out:
+        species_stats.save(species_out)
+
     # Write diversity statistics
-    diversityStats = calculator.getDiversityStatistics()
+    diversity_stats = calculator.get_diversity_statistics()
     # Check if Schluter should be calculated
     if args.schluter:
-        schluterStats = calculator.getSchluterCovariances()
-        diversityStats.append(schluterStats, axis=1)
-    with open(args.diversityFn, 'w') as diversityOut:
-        diversityStats.save(diversityOut)
-        
+        schluter_stats = calculator.get_schluter_covariances()
+        diversity_stats.append(schluter_stats, axis=1)
+    with open(args.diversity_fn, 'w') as diversity_out:
+        diversity_stats.save(diversity_out)
+
     # Check if covariance matrices should be computed
-    if args.spCovFn is not None or args.siteCovFn is not None:
-        sigmaSites, sigmaSpecies = calculator.getCovarianceMatrices()
-        
+    if args.sp_cov_fn is not None or args.site_cov_fn is not None:
+        sigma_sites, sigma_species = calculator.get_covariance_matrices()
+
         # Try writing covariance matrices.  Will throw exception and pass if
         #    None
         try:
-            with open(args.spCovFn, 'w') as spCovOut:
-                sigmaSpecies.save(spCovOut)
-        except:
+            with open(args.sp_cov_fn, 'w') as sp_cov_out:
+                sigma_species.save(sp_cov_out)
+        except AttributeError:
             pass
 
         try:
-            with open(args.siteCovFn, 'w') as siteCovOut:
-                sigmaSites.save(siteCovOut)
-        except:
+            with open(args.site_cov_fn, 'w') as site_cov_out:
+                sigma_sites.save(site_cov_out)
+        except AttributeError:
             pass
-        
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

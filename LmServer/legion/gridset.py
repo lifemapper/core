@@ -12,7 +12,7 @@ from types import StringType
 #                                                  EncodePhylogenyCommand,
 #                                                  McpaCorrectPValuesCommand,
 #                                                  CreateAncestralPamCommand,
-#                                                  SyncPamAndTreeCommand, McpaRunCommand)
+#                                                  SyncPamAndTreeCommand, )
 # from LmBackend.command.server import (TouchFileCommand, SquidIncCommand, 
 #                                                   StockpileCommand)
 from LmBackend.common.lmobj import LMError

@@ -9,41 +9,39 @@ from LmBackend.common.lmobj import LMObject
 
 
 # .............................................................................
-if __name__ == "__main__":
+def main():
+    """Main method of the script
+    """
     # Set up the argument parser
     parser = argparse.ArgumentParser(
-        description="This script concatenates two (or more) matrices along an axis")
-    
+        description='Concatenate two (or more) matrices along an axis')
+
     parser.add_argument(
-        "outFn", type=str,
-        help="The file location to write the resulting matrix")
+        'out_fn', type=str,
+        help='The file location to write the resulting matrix')
     parser.add_argument(
-        "axis", type=int,
-        help="The (Matrix) axis to concatenate these matrices on")
+        'axis', type=int,
+        help='The (Matrix) axis to concatenate these matrices on')
     parser.add_argument(
-        "mtxFn", type=str, nargs='*',
+        'mtx_fn', type=str, nargs='*',
         help="The file location of the first matrix")
-    parser.add_argument(
-        "--mashedPotato", type=str, dest="mashedPotato",
-        help="A mashed potato file of file names to concatenate")
-    
+
     args = parser.parse_args()
-    
+
     mtxs = []
-    if args.mashedPotato is not None:
-        with open(args.mashedPotato, 'r') as mashIn:
-            for line in mashIn:
-                squid, pav = line.split(':')
-                mtxs.append(Matrix.load_flo(pav.strip()))
-    if args.mtxFn:
-        for mtxFn in args.mtxFn:
-            mtxs.append(Matrix.load_flo(mtxFn))
-    
-    joinedMtx = Matrix.concatenate(mtxs, axis=args.axis)
+    if args.mtx_fn:
+        for mtx_fn in args.mtx_fn:
+            mtxs.append(Matrix.load_flo(mtx_fn))
+
+    joined_mtx = Matrix.concatenate(mtxs, axis=args.axis)
 
     # Make sure directory exists
-    LMObject().ready_filename(args.outFn)
-    
-    with open(args.outFn, 'w') as outF:
-        joinedMtx.save(outF)
+    LMObject().ready_filename(args.out_fn)
 
+    with open(args.out_fn, 'w') as out_f:
+        joined_mtx.save(out_f)
+
+
+# .............................................................................
+if __name__ == "__main__":
+    main()

@@ -217,3 +217,30 @@ class LMError(Exception, LMObject):
         """
         exc_type, exc_val, this_traceback = sys.exc_info()
         return traceback.format_exception(exc_type, exc_val, this_traceback)
+
+
+# .............................................................................
+class JobError(LMError):
+    """Exception class for job failures.
+    """
+    # ..........................
+    def __init__(self, code, msg, *args, do_trace=False, line_num=None,
+                 **kwargs):
+        """Constructor for LMError
+
+        Args:
+            code (int): Job error code
+            msg (str): An error message
+            *args: Any positional agruments sent to this constructor
+            do_trace (bool): Should a traceback be attached to the exception
+            line_num (int): A line number to attach to this exception
+            **kwargs: Any additional keyword arguements sent to the constructor
+
+        Note:
+            Assembles all arguments into Exception.args
+        """
+        LMError.__init__(
+            self, code, msg, *args, do_trace=do_trace, line_num=line_num,
+            **kwargs)
+        self.code = code
+        self.msg = msg

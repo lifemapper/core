@@ -16,9 +16,11 @@ import os
 
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
+
 # .............................................................................
-if __name__ == "__main__":
-    # Set up the argument parser
+def main():
+    """Main method for script
+    """
     parser = argparse.ArgumentParser(
         description="This script encodes a biogeographic hypothesis shapegrid")
 
@@ -31,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument(
         'shapegrid_filename', type=str,
         help="The file location of the shapegrid to use for encoding")
-    parser.add_argument("out_filename", type=str, 
+    parser.add_argument("out_filename", type=str,
                         help="The file location to write the resulting matrix")
     parser.add_argument(
         "layer", type=str, nargs='+',
@@ -52,3 +54,7 @@ if __name__ == "__main__":
 
     with open(args.out_filename, 'w') as out_f:
         bg_mtx.save(out_f)
+
+
+if __name__ == "__main__":
+    main()

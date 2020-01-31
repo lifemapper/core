@@ -163,55 +163,6 @@ class EncodePhylogenyCommand(_LmCommand):
 
 
 # .............................................................................
-class McpaRunCommand(_LmCommand):
-    """This command will perform one run of MCPA
-
-    Note:
-        This will likely be obsolete in favor of MultiSpeciesRun
-    """
-    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
-    script_name = 'mcpa_run.py'
-
-    # ................................
-    def __init__(self, pam_file_name, tree_mtx_file_name, grim_file_name,
-                 bg_file_name, obs_file_name=None, f_mtx_file_name=None,
-                 randomize=False, num_permutations=1):
-        """Construct the command object
-
-        Args:
-            pam_file_name: The file location of the PAM Matrix to use
-            tree_mtx_file_name: The file location of the encoded phylogenetic
-                tree Matrix to use
-            grim_file_name: The file location of the grim Matrix
-            bg_file_name: The file location of the encoded biogeographic
-                hypotheses Matrix to use
-            obs_file_name: If provided, write the observed semi-partial
-                correlation values Matrix here (only for observed runs).
-            f_mtx_file_name: If provided, write the F-values Matrix, or stack,
-                to this location
-            randomize: If True, perform a randomized run
-            num_permutations: If randomizing, perform this many runs in this
-                call
-        """
-        _LmCommand.__init__(self)
-        self.args = ' {} {} {} {}'.format(
-            pam_file_name, tree_mtx_file_name, grim_file_name, bg_file_name)
-        self.inputs.extend(
-            [pam_file_name, tree_mtx_file_name, grim_file_name, bg_file_name])
-
-        if obs_file_name is not None:
-            self.outputs.append(obs_file_name)
-            self.opt_args += ' -co {}'.format(obs_file_name)
-
-        if f_mtx_file_name is not None:
-            self.outputs.append(f_mtx_file_name)
-            self.opt_args += ' -fo {}'.format(f_mtx_file_name)
-
-        if randomize:
-            self.opt_args += ' --randomize -n {}'.format(num_permutations)
-
-
-# .............................................................................
 class MultiSpeciesRunCommand(_LmCommand):
     """This command performs an observed or randomized multi-species run
     """
@@ -410,51 +361,6 @@ class OccurrenceSplitterCommand(_LmCommand):
         self.args = '{} {} {}'.format(group_position, in_file_name, out_dir)
         if prefix is not None:
             self.opt_args += ' -p {}'.format(prefix)
-
-
-# .............................................................................
-class RandomizeGradyCommand(_LmCommand):
-    """This command will randomize a PAM using CJ's method
-    """
-    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
-    script_name = 'grady_randomize.py'
-
-    # ................................
-    def __init__(self, pam_file_name, rand_pam_file_name):
-        """Construct the command object
-
-        Args:
-            pam_file_name: The file location of the PAM to randomize
-            rand_pam_file_name: The file location to write the randomized PAM
-        """
-        _LmCommand.__init__(self)
-        self.inputs.append(pam_file_name)
-        self.outputs.append(rand_pam_file_name)
-
-        self.args = '{} {}'.format(pam_file_name, rand_pam_file_name)
-
-
-# .............................................................................
-class RandomizeSwapCommand(_LmCommand):
-    """This command will randomize a PAM using the swap method
-    """
-    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
-    script_name = 'swap_randomize.py'
-
-    # ................................
-    def __init__(self, pam_file_name, num_swaps, out_file_name):
-        """Construct the command object
-
-        Args:
-            pam_file_name: The file location of the PAM
-            num_swaps: The number of successful swaps to perform
-            out_file_name: The file location to write the randomized PAM
-        """
-        _LmCommand.__init__(self)
-        self.inputs.append(pam_file_name)
-        self.outputs.append(out_file_name)
-
-        self.args = '{} {} {}'.format(pam_file_name, num_swaps, out_file_name)
 
 
 # .............................................................................

@@ -70,16 +70,13 @@ class ConcatenateMatricesCommand(_LmCommand):
     script_name = 'concatenate_matrices.py'
 
     # ................................
-    def __init__(self, matrices, axis, out_mtx_file_name,
-                 mashed_potato_file_name=None):
+    def __init__(self, matrices, axis, out_mtx_file_name):
         """Construct the command object
 
         Args:
             matrices: A list of zero or more matrix filenames to concatenate
             axis: The axis to concatenate the matrices on
             out_mtx_file_name: The output location of the resulting matrix
-            mashed_potato_file_name: (optional) If present, get the input
-                matrix file names from this file instead.
         """
         _LmCommand.__init__(self)
 
@@ -88,9 +85,6 @@ class ConcatenateMatricesCommand(_LmCommand):
 
         self.inputs.extend(matrices)
         self.outputs.append(out_mtx_file_name)
-        if mashed_potato_file_name is not None:
-            self.outputs.append(mashed_potato_file_name)
-            self.opt_args = '--mashedPotato={}'.format(mashed_potato_file_name)
 
 
 # .............................................................................

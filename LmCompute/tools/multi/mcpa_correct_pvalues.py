@@ -9,10 +9,13 @@ from lmpy import Matrix
 from LmCommon.statistics.permutation_testing import correct_p_values
 from LmCompute.plugins.multi.mcpa.mcpa import get_p_values
 
+
 # .............................................................................
-if __name__ == "__main__":
+def main():
+    """Main method for script
+    """
     parser = argparse.ArgumentParser(
-                   description="This script calculates and corrects P-Values")
+        description="This script calculates and corrects P-Values")
 
     parser.add_argument(
         'observed_filename', type=str,
@@ -56,3 +59,8 @@ if __name__ == "__main__":
 
     with open(args.bh_values_filename, 'w') as bh_val_f:
         bh_values.save(bh_val_f)
+
+
+# .............................................................................
+if __name__ == "__main__":
+    main()
