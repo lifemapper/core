@@ -3,16 +3,18 @@
 import argparse
 import json
 import os
+
 from osgeo import ogr
 
 # TODO: Different logger
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS)
 from LmServer.common.log import ConsoleLogger
-from LmServer.common.solr import buildSolrDocument, postSolrDocument
+from LmServer.common.solr import build_solr_document, post_solr_document
 from LmServer.db.borgscribe import BorgScribe
 from LmBackend.common.lmconstants import RegistryKey
 from LmCommon.compression.binary_list import decompress
 from LmCommon.common.time import LmTime
+
 
 # .............................................................................
 def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
@@ -32,19 +34,19 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
     shapegrid = pam.getShapegrid()
     mdl_scn = prj.modelScenario
     prj_scn = prj.projScenario
-    
+
     try:
-        sp = sci_name.scientificName.split(' ')[1]
-    except:
-        sp = None
+        species = sci_name.scientificName.split(' ')[1]
+    except Exception:
+        species = None
 
     # Mod times
     occ_mod_time = prj_mod_time = None
-    
+
     if occ.modTime is not None:
         occ_mod_time = LmTime.from_mjd(
             occ.modTime).strftime('%Y-%m-%dT%H:%M:%SZ')
-    
+
     if prj.modTime is not None:
         prj_mod_time = LmTime.from_mjd(
             prj.modTime).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -54,7 +56,7 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
     tax_phylum = None
     tax_class = None
     tax_order = None
-    tax_family = None 
+    tax_family = None
     tax_genus = None
 
     try:
@@ -64,10 +66,9 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
         tax_order = sci_name.txOrder
         tax_family = sci_name.family
         tax_genus = sci_name.genus
-    except:
+    except Exception:
         pass
-    
-    
+
     fields = [
         (SOLR_FIELDS.ID, pav.getId()),
         (SOLR_FIELDS.USER_ID, pav.getUserId()),
@@ -79,7 +80,7 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
         (SOLR_FIELDS.TAXON_ORDER, tax_order),
         (SOLR_FIELDS.TAXON_FAMILY, tax_family),
         (SOLR_FIELDS.TAXON_GENUS, tax_genus),
-        (SOLR_FIELDS.TAXON_SPECIES, sp),
+        (SOLR_FIELDS.TAXON_SPECIES, species),
         (SOLR_FIELDS.ALGORITHM_CODE, prj.algorithmCode),
         (SOLR_FIELDS.ALGORITHM_PARAMETERS,
          prj.dumpAlgorithmParametersAsString()),
@@ -106,7 +107,7 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
         (SOLR_FIELDS.PROJ_DATA_URL, prj.getDataUrl()),
         (SOLR_FIELDS.PROJ_MOD_TIME, prj_mod_time),
         (SOLR_FIELDS.PAV_META_URL, pav.metadataUrl),
-        #(SOLR_FIELDS.PAV_DATA_URL, pav.getDataUrl()),
+        # (SOLR_FIELDS.PAV_DATA_URL, pav.getDataUrl()),
         (SOLR_FIELDS.EPSG_CODE, prj.epsgcode),
         (SOLR_FIELDS.GRIDSET_META_URL, pam.gridsetUrl),
         (SOLR_FIELDS.GRIDSET_ID, pam.gridsetId),
@@ -135,19 +136,21 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
         feat = shapegrid_layer.GetNextFeature()
     return fields
 
+
 # .............................................................................
-if __name__ == '__main__':
+def main():
+    """Main method of script
+    """
     parser = argparse.ArgumentParser(
         prog='Lifemapper Solr index POST for Presence Absence Vectors',
-        description='This script adds PAVs to the Lifemapper Solr index',
-        version='2.0')
-    
+        description='This script adds PAVs to the Lifemapper Solr index')
+
     parser.add_argument(
         'pavs_filename', type=str, help='A JSON file with PAV information')
     parser.add_argument(
         'post_index_filename', type=str,
         help='A file location to be used for Solr POST')
-    
+
     args = parser.parse_args()
 
     with open(args.pavs_filename) as in_file:
@@ -157,7 +160,7 @@ if __name__ == '__main__':
     scribe.openConnections()
     doc_pairs = []
     for pav_info in pav_config:
-        #pav_filename = pav_info[RegistryKey.PAV_FILENAME]
+        # pav_filename = pav_info[RegistryKey.PAV_FILENAME]
         compressed_pav = pav_info[RegistryKey.COMPRESSED_PAV_DATA]
         pav_id = pav_info[RegistryKey.IDENTIFIER]
         proj_id = pav_info[RegistryKey.PROJECTION_ID]
@@ -167,23 +170,29 @@ if __name__ == '__main__':
         occ = prj.occurrenceSet
         pam = scribe.getMatrix(mtxId=pav.parentId)
         sci_name = scribe.getTaxon(squid=pav.squid)
-    
-        val_pairs = get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav)
+
+        val_pairs = get_post_pairs(
+            pav, prj, occ, pam, sci_name, compressed_pav)
         if len(val_pairs) > 0:
             doc_pairs.append(val_pairs)
-    
+
     # Get all the information for a POST
     if len(doc_pairs) > 0:
-        doc = buildSolrDocument(doc_pairs)
-        
+        doc = build_solr_document(doc_pairs)
+
         # Write the post document
         with open(args.post_index_filename, 'w') as out_f:
             out_f.write(doc)
-    
-        postSolrDocument(SOLR_ARCHIVE_COLLECTION, args.post_index_filename)
+
+        post_solr_document(SOLR_ARCHIVE_COLLECTION, args.post_index_filename)
     else:
         print('No documents to post')
         with open(args.post_index_filename, 'a'):
             os.utime(args.post_index_filename, None)
 
     scribe.closeConnections()
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

@@ -10,7 +10,7 @@ import os
 import cherrypy
 
 from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.log import LmPublicLogger, UserLogger
+from LmServer.common.log import WebLogger, UserLogger
 from LmWebServer.common.lmconstants import SESSION_KEY, SESSION_PATH
 
 
@@ -19,7 +19,7 @@ def get_user_name():
     """Attempt to get the session user name
     """
     user = PUBLIC_USER
-    log = LmPublicLogger()
+    log = WebLogger()
 
     try:
         session_file_name = os.path.join(

@@ -6,7 +6,7 @@ import cherrypy
 
 from LmCommon.common.lmconstants import JobStatus, LMFormat
 
-from LmServer.common.log import LmPublicLogger
+from LmServer.common.log import WebLogger
 from LmServer.db.borgscribe import BorgScribe
 
 
@@ -43,7 +43,7 @@ def format_gridset(gridset_id, detail=False):
     Args:
         gridset_id (:obj:`int`): The gridset id to get progress for
     """
-    scribe = BorgScribe(LmPublicLogger())
+    scribe = BorgScribe(WebLogger())
     scribe.openConnections()
 
     message = ''

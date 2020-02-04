@@ -1,19 +1,20 @@
 """This module wraps interactions with Solr
 """
 from ast import literal_eval
-import urllib.request, urllib.error, urllib.parse
-
-from LmServer.common.lmconstants import (
-     SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER, 
-     SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
-from LmServer.common.log import SolrLogger
-from LmServer.common.localconstants import PUBLIC_USER
 import json
 from urllib.error import URLError
+import urllib.request
+
 from LmCommon.common.time import LmTime
 
+from LmServer.common.lmconstants import (
+     SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER,
+     SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
+from LmServer.common.log import SolrLogger
+
+
 # .............................................................................
-def buildSolrDocument(docPairs):
+def build_solr_document(docPairs):
     """
     @summary: Builds a document for a Solr POST from the key, value pairs
     @param docPairs: A list of lists of [field name, value] pairs -- 
@@ -41,7 +42,7 @@ def buildSolrDocument(docPairs):
     return '\n'.join(docLines)
 
 # .............................................................................
-def postSolrDocument(collection, docFilename):
+def post_solr_document(collection, docFilename):
     """
     @summary: Posts a document to a Solr index
     @param collection: The name of the Solr core (index) to add this document to

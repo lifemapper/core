@@ -6,7 +6,7 @@ import cherrypy
 
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.log import LmPublicLogger
+from LmServer.common.log import WebLogger
 from LmServer.db.borgscribe import BorgScribe
 
 
@@ -27,7 +27,7 @@ class LmService:
         class in case we decide that we need to use a different mechanism (such
         as a CherryPy Tool)
         """
-        log = LmPublicLogger()
+        log = WebLogger()
         # self.scribe = cherrypy.thread_data.scribeRetriever.get_scribe()
         self.scribe = BorgScribe(log)
         self.scribe.openConnections()

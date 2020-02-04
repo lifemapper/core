@@ -19,7 +19,7 @@ from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmCommon.common.time import gmt
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import SOLR_FIELDS, SubsetMethod, Priority
-from LmServer.common.log import LmPublicLogger
+from LmServer.common.log import WebLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
@@ -44,7 +44,7 @@ def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
     method = SubsetMethod.COLUMN
     
     if scribe is None:
-        log = LmPublicLogger()
+        log = WebLogger()
         scribe = BorgScribe(log)
     else:
         log = scribe.log

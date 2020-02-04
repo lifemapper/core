@@ -20,7 +20,7 @@ from LmCommon.common.lm_xml import tostring
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import MAP_TEMPLATE
-from LmServer.common.log import LmPublicLogger
+from LmServer.common.log import WebLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
 
@@ -364,7 +364,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
     # Initialization
     # --------------
     package_filename = gridset.getPackageLocation()
-    scribe = BorgScribe(LmPublicLogger())
+    scribe = BorgScribe(WebLogger())
     user_id = gridset.getUserId()
     occ_info = None
     prj_info = None
@@ -673,7 +673,7 @@ def gridset_package_formatter(gridset, include_csv=True, include_sdm=True,
     if not os.path.exists(package_filename):
 
         # Look for makeflows
-        scribe = BorgScribe(LmPublicLogger())
+        scribe = BorgScribe(WebLogger())
         scribe.openConnections()
 
         # Check progress counts

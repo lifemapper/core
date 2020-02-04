@@ -14,7 +14,7 @@ Note:
 """
 import cherrypy
 
-from LmServer.common.log import LmPublicLogger
+from LmServer.common.log import WebLogger
 from LmServer.db.borgscribe import BorgScribe
 
 
@@ -28,7 +28,7 @@ class _ScribeRetriever:
    """
     # ..........................
     def __init__(self):
-        log = LmPublicLogger()
+        log = WebLogger()
         self.scribe = BorgScribe(log)
         self.scribe.openConnections()
 
