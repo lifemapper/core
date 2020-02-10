@@ -77,8 +77,8 @@ Reload Rocks on Yeti
    #. Edit sharenfs attribute. Two options, did both, nothing worked until 411 
       stuff below.  First is command, second added line to /etc/exports::
 
-      zfs set sharenfs=rw=@<private ip prefix>.0/24 tank/lmdata
-      /tank/lmdata 192.168.201.1(rw,async,no_root_squash) 192.168.201.0/255.255.255.0(rw,async)
+       zfs set sharenfs=rw=@<private ip prefix>.0/24 tank/lmdata
+       /tank/lmdata 192.168.201.1(rw,async,no_root_squash) 192.168.201.0/255.255.255.0(rw,async)
 
 #. in /var/411 remake the maps and then force getting new files on compute nodes, 
    plus resetart autofs::
@@ -88,5 +88,53 @@ Reload Rocks on Yeti
      rocks sync users
      systemctl restart autofs
      rocks run host compute "411get --all; systemctl restart autofs"
+
+#. SGE Errors, slots in all.q were empty, hostlist empty, make sure slots for 
+   each compute node correspond to the number of cores on that machine
+
+   * qconf -sq all.q
+
+  qname                 all.q
+  hostlist              @allhosts
+  seq_no                0
+  load_thresholds       np_load_avg=1.75
+  ...
+  pe_list               make mpich mpi orte
+  rerun                 FALSE
+  slots                 1
+  tmpdir                /tmp
+  ...
+  h_rss                 INFINITY
+  s_vmem                INFINITY
+  h_vmem                INFINITY
+
+  
+   * qconf -mq all.q
+
+  qname                 all.q
+  hostlist              @allhosts
+  seq_no                0
+  load_thresholds       np_load_avg=1.75
+  ...
+  pe_list               make mpich mpi orte
+  rerun                 FALSE
+  slots                 1,[compute-0-0.local=32],[compute-0-1.local=24], \
+                        [compute-0-2.local=24],[compute-0-3.local=24], \
+                        [compute-0-4.local=24]
+  tmpdir                /tmp
+  ...
+  h_rss                 INFINITY
+  s_vmem                INFINITY
+  h_vmem                INFINITY
+
+   * qconf -shgrp @allhosts
+
+group_name @allhosts
+hostlist None
+
+   * qconf -mhgrp @allhosts
+group_name @allhosts
+hostlist compute-0-0.local compute-0-1.local compute-0-2.local \
+         compute-0-3.local compute-0-4.local
 
    

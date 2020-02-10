@@ -36,7 +36,7 @@ Install new RPMs on test server
 -------------------------------
 
 #. Move new rpms (including noarch rpms) to 
-   /export/rocks/install/contrib/6.2/x86_64/RPMS/ 
+   /export/rocks/install/contrib/7.0/x86_64/RPMS/ 
 
 #. **Create distribution**::
 
