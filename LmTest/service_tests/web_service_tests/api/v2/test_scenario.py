@@ -31,15 +31,14 @@ import unittest
 import warnings
 
 from LmCommon.common.lmconstants import EML_INTERFACE, JSON_INTERFACE
-
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.scenario import Scenario
-
-from LmTest.webTestsLite.common.userUnitTest import UserTestCase
-from LmTest.webTestsLite.common.webClient import LmWebClient
 from LmTest.formatTests.emlValidator import validate_eml
 from LmTest.formatTests.jsonValidator import validate_json
+from LmTest.webTestsLite.common.userUnitTest import UserTestCase
+from LmTest.webTestsLite.common.webClient import LmWebClient
+
 
 # .............................................................................
 class TestScribeScenarioService(UserTestCase):

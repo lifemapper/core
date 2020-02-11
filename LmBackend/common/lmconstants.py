@@ -2,6 +2,7 @@
 """
 from enum import Enum
 
+
 # Relative paths
 # For LmCompute command construction by LmServer (for Makeflow)
 SINGLE_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/single'

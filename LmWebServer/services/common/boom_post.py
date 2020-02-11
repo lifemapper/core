@@ -12,24 +12,20 @@ import os
 import random
 import time
 
-import cherrypy
-
 from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.lmconstants import (
     BoomKeys, HTTPStatus, LMFormat, SERVER_BOOM_HEADING,
     SERVER_SDM_MASK_HEADING_PREFIX, SERVER_SDM_ALGORITHM_HEADING_PREFIX)
 from LmCommon.common.time import gmt
-
 from LmDbServer.boom.initWorkflow import BOOMFiller
 from LmDbServer.common.lmconstants import SpeciesDatasource
 from LmDbServer.tools.catalogScenPkg import SPFiller
-
 from LmServer.base.lmobj import LmHTTPError
 from LmServer.common.lmconstants import (
     ARCHIVE_PATH, ECOREGION_MASK_METHOD, ENV_DATA_PATH, Priority, TEMP_PATH)
 from LmServer.common.localconstants import PUBLIC_USER
-
 from LmWebServer.common.lmconstants import APIPostKeys
+import cherrypy
 
 
 # .............................................................................

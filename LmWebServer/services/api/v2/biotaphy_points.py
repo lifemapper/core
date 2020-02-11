@@ -6,15 +6,14 @@ import json
 import os
 import random
 
-import cherrypy
-
 from LmCommon.common.api_query import IdigbioAPI, GbifAPI
 from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_POST_USER
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import LMFileType, FileFix
+from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.lmconstants import LMFileType, FileFix
+import cherrypy
 
 
 # .............................................................................

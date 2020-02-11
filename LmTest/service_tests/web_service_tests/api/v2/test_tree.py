@@ -6,19 +6,17 @@ import json
 import unittest
 import warnings
 
-from lmpy import TreeWrapper
-
-from LmCommon.common.lmconstants import (EML_INTERFACE, JSON_INTERFACE, 
+from LmCommon.common.lmconstants import (EML_INTERFACE, JSON_INTERFACE,
                                                       NEWICK_INTERFACE, NEXUS_INTERFACE)
-
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
-
 from LmTest.formatTests.emlValidator import validate_eml
 from LmTest.formatTests.jsonValidator import validate_json
 from LmTest.formatTests.treeValidator import validate_newick, validate_nexus
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
+from lmpy import TreeWrapper
+
 
 # .............................................................................
 class TestScribeTreeService(UserTestCase):

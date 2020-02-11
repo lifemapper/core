@@ -5,31 +5,28 @@ Todo:
 """
 from collections import defaultdict
 import csv
+from io import StringIO
 import json
 import os
-from io import StringIO
 import zipfile
 
-import cherrypy
-from lmpy import Matrix
-import mapscript
-
+from LmCommon.common.lm_xml import tostring
 from LmCommon.common.lmconstants import (
     HTTPStatus, JobStatus, LMFormat, MatrixType, PamStatKeys)
-from LmCommon.common.lm_xml import tostring
-
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import MAP_TEMPLATE
 from LmServer.common.log import WebLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
-
 from LmWebServer.common.lmconstants import (
     DYN_PACKAGE_DIR, GRIDSET_DIR, MATRIX_DIR, MAX_PROJECTIONS, SDM_PRJ_DIR,
     STATIC_PACKAGE_PATH)
 from LmWebServer.formatters.eml_formatter import make_eml
 from LmWebServer.formatters.geo_json_formatter import geo_jsonify_flo
 from LmWebServer.formatters.template_filler import TemplateFiller
+import cherrypy
+from lmpy import Matrix
+import mapscript
 
 
 # # ...........................................................................

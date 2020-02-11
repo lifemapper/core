@@ -5,9 +5,10 @@ Todo:
     * Generalize
 """
 import os
-from osgeo import gdal
 
 from LmCommon.common.lmconstants import LMFormat
+from osgeo import gdal
+
 
 # .............................................................................
 def validate_raster_file(raster_filename, raster_format=None):

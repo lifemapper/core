@@ -11,11 +11,9 @@ Todo:
 """
 from random import shuffle
 
-import numpy as np
-
-from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
-
 from LmCommon.encoding.encoding_exception import EncodingException
+from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
+import numpy as np
 
 
 # .............................................................................

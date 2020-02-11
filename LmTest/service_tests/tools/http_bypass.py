@@ -8,12 +8,12 @@ Note:
     * This is out of date and needs to be updated
 """
 import types
-import urllib.request, urllib.parse, urllib.error
 import urllib.request, urllib.error, urllib.parse
+import urllib.request, urllib.parse, urllib.error
 
 from LmClient.lmClientLib import removeNonesFromTupleList
-
 from LmDebug.tools.cherrypyWrapper import createRequest
+
 
 def installHTTPBypass(cLib, remoteIP='127.0.0.1'):
     """

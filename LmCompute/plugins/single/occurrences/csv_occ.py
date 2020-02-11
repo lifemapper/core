@@ -3,11 +3,9 @@
 import os
 
 from LmBackend.common.lmobj import JobError
-
 from LmCommon.common.lmconstants import JobStatus, LMFormat
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.shapes.create_shape import ShapeShifter
-
 from LmCompute.common.log import LmComputeLogger
 
 

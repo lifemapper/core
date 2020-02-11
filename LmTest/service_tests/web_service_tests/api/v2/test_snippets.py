@@ -33,6 +33,7 @@ import warnings
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
+
 # .............................................................................
 class TestWebSnippetService(UserTestCase):
    """

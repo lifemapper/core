@@ -7,17 +7,17 @@ Note:
     * Based this on 
         https://bitbucket.org/Lawouach/cherrypy-recipes/src/tip/testing/unit/serverless/
 """
-import cherrypy
+from io import StringIO
 import os
 import pickle
-from io import StringIO
-import urllib.request, urllib.parse, urllib.error
 from urllib.parse import urlparse
+import urllib.request, urllib.parse, urllib.error
 
-from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmCommon.common.singleton import singleton
-from LmWebServer.services.common.svc import svc 
 from LmServer.common.lmconstants import CHERRYPY_CONFIG_FILE
+from LmServer.common.localconstants import WEBSERVICES_ROOT
+from LmWebServer.services.common.svc import svc
+import cherrypy
 
 
 LOCAL_IP = '127.0.0.1'

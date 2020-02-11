@@ -10,17 +10,15 @@ import json
 import os
 import zipfile
 
-from lmpy import Matrix
-
-from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmCommon.common.lm_xml import tostring
-
+from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmServer.common.lmconstants import TEMP_PATH
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
-
 from LmWebServer.formatters.eml_formatter import make_eml
 from LmWebServer.formatters.geo_json_formatter import geo_jsonify_flo
+from lmpy import Matrix
+
 
 # .............................................................................
 def create_header_lookup(headers, squids=False, scribe=None, userId=None):

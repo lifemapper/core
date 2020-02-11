@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 """The module provides a base Lifemapper service class
 """
-import cherrypy
-
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import WebLogger
 from LmServer.db.borgscribe import BorgScribe
+import cherrypy
 
 
 # .............................................................................

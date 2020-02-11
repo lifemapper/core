@@ -8,28 +8,26 @@ Todo:
 
 import os
 
-import numpy as np
-
-from lmpy import Matrix
-from osgeo import ogr
-
+from LmBackend.command.server import IndexPAVCommand, StockpileCommand
+from LmBackend.command.single import IntersectRasterCommand, GrimRasterCommand
 from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
                                          ProcessType)
+from LmCommon.common.time import gmt
 from LmCommon.compression.binary_list import decompress
 from LmCommon.encoding.layer_encoder import LayerEncoder
-from LmCommon.common.time import gmt
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import SOLR_FIELDS, SubsetMethod, Priority
 from LmServer.common.log import WebLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.shapegrid import ShapeGrid
-from LmServer.legion.tree import Tree
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
-from LmBackend.command.single import IntersectRasterCommand, GrimRasterCommand
-from LmBackend.command.server import IndexPAVCommand, StockpileCommand
+from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.legion.tree import Tree
+from lmpy import Matrix
+import numpy as np
+from osgeo import ogr
 
 
 # .............................................................................

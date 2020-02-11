@@ -10,11 +10,10 @@ Todo:
 """
 import argparse
 import json
-import numpy as np
-
-from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
 
 from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA
+from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
+import numpy as np
 
 
 # .............................................................................

@@ -7,9 +7,9 @@ Todo:
 """
 import os
 
+from LmCommon.common.lmconstants import LMFormat
 from lmpy import TreeWrapper
 
-from LmCommon.common.lmconstants import LMFormat
 
 # .............................................................................
 def validate_tree_file(tree_filename, schema=None):

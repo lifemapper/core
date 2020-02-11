@@ -5,7 +5,6 @@ import logging
 import os
 
 from LmCommon.common.log import LmLogger
-
 from LmCompute.common.lmconstants import COMPUTE_LOG_PATH
 
 

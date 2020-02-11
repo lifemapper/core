@@ -7,6 +7,7 @@ Todo:
 """
 import os
 
+
 # .............................................................................
 def validate_text_file(text_filename, read_lines=False):
     """Validates a text file by seeing if the lines can be loaded

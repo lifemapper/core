@@ -11,9 +11,8 @@ Todo:
 """
 import argparse
 
-from lmpy import Matrix, TreeWrapper
-
 from LmCommon.encoding.phylo import PhyloEncoding
+from lmpy import Matrix, TreeWrapper
 
 
 # .............................................................................

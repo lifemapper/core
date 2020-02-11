@@ -4,12 +4,12 @@ from io import StringIO
 import os
 import zipfile
 
-import cherrypy
-from lmpy import Matrix
-
 from LmCommon.common.lmconstants import LMFormat
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.legion.lmmatrix import LMMatrix
+import cherrypy
+from lmpy import Matrix
+
 
 # .............................................................................
 def file_formatter(filename, readMode='r', stream=False, contentType=None):

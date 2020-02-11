@@ -6,13 +6,12 @@ path_info and the accept header is updated.  This dispatcher also sets the
 path_info string to lower case so that the services can be case insensitive.
 Finally, forward to the MethodDispatcher base class
 """
-import cherrypy
-from cherrypy._cpdispatch import MethodDispatcher
-
 from LmCommon.common.lmconstants import (
     CSV_INTERFACE, EML_INTERFACE, GEO_JSON_INTERFACE, GEOTIFF_INTERFACE,
     JSON_INTERFACE, KML_INTERFACE, LMFormat, NEXUS_INTERFACE, NEWICK_INTERFACE,
     PACKAGE_INTERFACE, PROGRESS_INTERFACE, SHAPEFILE_INTERFACE)
+import cherrypy
+from cherrypy._cpdispatch import MethodDispatcher
 
 
 # .............................................................................

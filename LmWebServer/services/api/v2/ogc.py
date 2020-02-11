@@ -4,16 +4,16 @@
 """
 import os
 
-import cherrypy
-import mapscript
-
 from LmCommon.common.lmconstants import HTTPStatus
-from LmServer.common.datalocator import EarlJr
 from LmServer.common.colorpalette import colorPalette
+from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (
     LINE_SIZE, LINE_SYMBOL, MAP_TEMPLATE, MapPrefix, OCC_NAME_PREFIX,
     POINT_SIZE, POINT_SYMBOL, POLYGON_SIZE, PRJ_PREFIX)
 from LmWebServer.services.api.v2.base import LmService
+import cherrypy
+import mapscript
+
 
 PALETTES = (
     'gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia',

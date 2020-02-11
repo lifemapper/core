@@ -8,6 +8,7 @@ from LmServer.common.lmconstants import SESSION_DIR
 from LmServer.common.localconstants import SCRATCH_PATH, APP_PATH
 from LmWebServer.common.localconstants import PACKAGING_DIR
 
+
 # CherryPy constants
 SESSION_PATH = os.path.join(SCRATCH_PATH, SESSION_DIR)
 SESSION_KEY = '_cp_username'

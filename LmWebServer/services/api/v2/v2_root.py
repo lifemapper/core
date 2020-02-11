@@ -3,8 +3,6 @@
 """This module provides REST services for service objects
 """
 
-import cherrypy
-
 from LmWebServer.services.api.v2.biotaphy_names import GBIFTaxonService
 from LmWebServer.services.api.v2.biotaphy_points import \
     IDigBioOccurrenceService
@@ -26,6 +24,7 @@ from LmWebServer.services.api.v2.species_hint import SpeciesHintService
 from LmWebServer.services.api.v2.taxonomy import TaxonomyHintService
 from LmWebServer.services.api.v2.tree import TreeService
 from LmWebServer.services.api.v2.upload import UserUploadService
+import cherrypy
 
 
 # .............................................................................

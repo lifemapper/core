@@ -9,6 +9,7 @@ Todo:
 import json
 import os
 
+
 # .............................................................................
 def validate_json_file(json_filename):
     """Validates a JSON document by seeing if it can be loaded

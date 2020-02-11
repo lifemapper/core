@@ -10,21 +10,17 @@ import hashlib
 import json
 import os
 
-import cherrypy
-
 from LmCommon.common.lmconstants import HTTPStatus
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
-
 from LmDbServer.tools.partnerData import (
     get_ottids_from_gbifids, induced_subtree, Partners)
-
 from LmServer.common.lmconstants import (
     ARCHIVE_PATH, NONTREE_GBIF_IDS_KEY, TREE_DATA_KEY, TREE_FORMAT_KEY,
     TREE_NAME_KEY, UNMATCHED_GBIF_IDS_KEY)
-
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+import cherrypy
 
 
 # .............................................................................

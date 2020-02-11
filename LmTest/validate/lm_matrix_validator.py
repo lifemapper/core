@@ -8,6 +8,7 @@ import os
 
 from lmpy import Matrix
 
+
 # .............................................................................
 def validate_lm_matrix_file(lmmatrix_filename):
     """Validates a LM Matrix by seeing if it can be loaded

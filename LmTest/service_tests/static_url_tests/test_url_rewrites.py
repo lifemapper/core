@@ -4,6 +4,7 @@ import urllib.request, urllib.error, urllib.parse
 
 from LmCommon.common.lmconstants import HTTPStatus
 
+
 ORIG_URL_KEY = 'orig_url'  # The original URL that should be rewritten
 REWRITE_URL_KEY = 'rewrite_url'  # The desired rewritten URL
 TEST_STATUS_KEY = 'test_status'  # The HTTP status we expect for this rewrite

@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 """This module provides a raw interface to solr
 """
-import cherrypy
 import json
 
-# from LmServer.common.lmconstants import SOLR_TAXONOMY_COLLECTION
 from LmServer.common.solr import raw_query
 from LmWebServer.services.api.v2.base import LmService
+import cherrypy
 
 
+# from LmServer.common.lmconstants import SOLR_TAXONOMY_COLLECTION
 # .............................................................................
 @cherrypy.expose
 class RawSolrService(LmService):

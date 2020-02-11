@@ -33,11 +33,9 @@ import warnings
 from LmCommon.common.lmconstants import (EML_INTERFACE, GEO_JSON_INTERFACE,
                                  GEOTIFF_INTERFACE, JSON_INTERFACE,
                                  KML_INTERFACE, SHAPEFILE_INTERFACE)
-
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
-
 from LmTest.formatTests.emlValidator import validate_eml
 from LmTest.formatTests.geoJsonValidator import validate_geojson
 from LmTest.formatTests.jsonValidator import validate_json
@@ -46,6 +44,7 @@ from LmTest.formatTests.shapefileValidator import validate_shapefile
 from LmTest.formatTests.tiffValidator import validate_tiff
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
+
 
 # .............................................................................
 class TestScribeLayerService(UserTestCase):

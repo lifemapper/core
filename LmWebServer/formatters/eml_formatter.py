@@ -2,16 +2,14 @@
 """
 import os
 
-import cherrypy
-from lmpy import Matrix
-
-from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmCommon.common.lm_xml import Element, SubElement, tostring
-
+from LmCommon.common.lmconstants import LMFormat, MatrixType
+from LmServer.base.layer2 import Raster, Vector
+from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.legion.envlayer import EnvLayer
-from LmServer.base.layer2 import Raster, Vector
+import cherrypy
+from lmpy import Matrix
 
 
 # .............................................................................

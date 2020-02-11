@@ -5,9 +5,9 @@ Note: Mainly wraps elementTree functionality to fit Lifemapper needs
 from types import (BuiltinFunctionType, BuiltinMethodType, FunctionType,
                    LambdaType, MethodType)
 
+from LmCommon.common.attribute_object import LmAttList, LmAttObj
 import xml.etree.ElementTree as ET
 
-from LmCommon.common.attribute_object import LmAttList, LmAttObj
 
 # Functions / Classes directly mapped to the Element Tree versions
 # ..............................................................................

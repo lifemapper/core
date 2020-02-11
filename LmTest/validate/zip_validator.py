@@ -7,6 +7,7 @@ Todo:
 import os
 import zipfile
 
+
 # .............................................................................
 def validate_zip_file(zip_filename):
     """Validates a zip file by seeing if it can be loaded and inspected

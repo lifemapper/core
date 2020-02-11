@@ -5,6 +5,7 @@ import os
 
 from LmBackend.common.layer_tools import convert_layers_in_dir
 
+
 DESCRIPTION = """\
 This script converts all of the layers in a directory to ASCIIs and MXEs"""
 

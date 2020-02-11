@@ -5,7 +5,6 @@ from random import randint
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.time import gmt, LmTime
-
 from LmServer.common.lmconstants import (
     SnippetFields, SOLR_SERVER, SOLR_SNIPPET_COLLECTION, UPLOAD_PATH)
 from LmServer.common.solr import build_solr_document, post_solr_document

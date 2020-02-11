@@ -2,6 +2,7 @@
 """
 from enum import Enum
 
+
 try:
     from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
 except:

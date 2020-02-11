@@ -3,9 +3,8 @@
 """
 import argparse
 
-from lmpy import Matrix
-
 from LmBackend.common.lmobj import LMObject
+from lmpy import Matrix
 
 
 # .............................................................................

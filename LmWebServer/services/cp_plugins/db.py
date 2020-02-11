@@ -12,10 +12,9 @@ Note:
           and we could use a tool, but this will limit the overall number of
           connections.
 """
-import cherrypy
-
 from LmServer.common.log import WebLogger
 from LmServer.db.borgscribe import BorgScribe
+import cherrypy
 
 
 # .............................................................................

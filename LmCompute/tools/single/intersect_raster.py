@@ -9,6 +9,7 @@ from LmCommon.common.lmconstants import JobStatus
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
+
 # .............................................................................
 def main():
     """Main method for script

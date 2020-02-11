@@ -6,9 +6,10 @@ Todo:
     * Expand to more than shapefiles
 """
 import os
-from osgeo import ogr
 
 from LmCommon.common.lmconstants import LMFormat
+from osgeo import ogr
+
 
 # .............................................................................
 def validate_vector_file(vector_filename):

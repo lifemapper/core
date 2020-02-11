@@ -4,18 +4,17 @@ import argparse
 import json
 import os
 
-from osgeo import ogr
-
-# TODO: Different logger
+from LmBackend.common.lmconstants import RegistryKey
+from LmCommon.common.time import LmTime
+from LmCommon.compression.binary_list import decompress
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS)
 from LmServer.common.log import ConsoleLogger
 from LmServer.common.solr import build_solr_document, post_solr_document
 from LmServer.db.borgscribe import BorgScribe
-from LmBackend.common.lmconstants import RegistryKey
-from LmCommon.compression.binary_list import decompress
-from LmCommon.common.time import LmTime
+from osgeo import ogr
 
 
+# TODO: Different logger
 # .............................................................................
 def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
     """Gets a list of (field name, field value) tuples for the pav

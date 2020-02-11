@@ -18,17 +18,15 @@ import json
 import os
 from random import shuffle
 
+from LmCommon.common.lmconstants import DEFAULT_NODATA, LMFormat
+from lmpy import Matrix
 import numpy as np
 from osgeo import gdal, ogr
 
-from lmpy import Matrix
-
-from LmCommon.common.lmconstants import DEFAULT_NODATA, LMFormat
 
 # DEFAULT_SCALE is the scale of the layer data array to the shapegrid cellsize
 #     The number of data array cells in a (square) shapegrid cell is::
 #         1.0 / DEFAULT_SCALE^2
-
 DEFAULT_SCALE = 0.1  # Default scale for data array versus shapegrid cells
 
 # .............................................................................

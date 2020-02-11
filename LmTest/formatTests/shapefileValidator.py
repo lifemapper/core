@@ -30,8 +30,9 @@ import random
 import shutil
 import zipfile
 
-from LmServer.common.lmconstants import TEMP_PATH
 from LmServer.base.layer2 import Vector
+from LmServer.common.lmconstants import TEMP_PATH
+
 
 def validate_shapefile(obj_generator):
    

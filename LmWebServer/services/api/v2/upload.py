@@ -12,23 +12,20 @@ import json
 import os
 import zipfile
 
-import cherrypy
-from lmpy import TreeWrapper
-
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, HTTPStatus,
                                          LMFormat, PhyloTreeKeys,
                                          DEFAULT_TREE_SCHEMA)
 from LmCommon.common.ready_file import ready_filename
-
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmconstants import ENV_DATA_PATH, LMFileType
-
+from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.common.localconstants import MAX_ANON_UPLOAD_SIZE
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+import cherrypy
+from lmpy import TreeWrapper
 
 
 # TODO: Move to constants

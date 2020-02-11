@@ -6,7 +6,6 @@ from urllib.error import URLError
 import urllib.request
 
 from LmCommon.common.time import LmTime
-
 from LmServer.common.lmconstants import (
      SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER,
      SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)

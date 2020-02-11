@@ -11,9 +11,10 @@ Note:
         that both sides are present
 """
 import argparse
-import numpy as np
 
 from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
+import numpy as np
+
 
 # Local constants for this module
 LEFT_SQUIDS_KEY = 'left_squids'

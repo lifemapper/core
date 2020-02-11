@@ -10,6 +10,7 @@ Todo:
 """
 from LmCommon.common.lmconstants import JobStatus
 
+
 # .............................................................................
 class Test_ogc_services_public(object):
     """Tests OGC services over HTTP with public data

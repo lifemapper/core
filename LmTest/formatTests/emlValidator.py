@@ -2,6 +2,7 @@
 """
 from LmCommon.common.lm_xml import deserialize, fromstring
 
+
 def validate_eml(obj_generator):
     """Very simple validator for EML
     """

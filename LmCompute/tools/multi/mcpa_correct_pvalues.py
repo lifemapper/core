@@ -4,10 +4,9 @@
 """
 import argparse
 
-from lmpy import Matrix
-
 from LmCommon.statistics.permutation_testing import correct_p_values
 from LmCompute.plugins.multi.mcpa.mcpa import get_p_values
+from lmpy import Matrix
 
 
 # .............................................................................

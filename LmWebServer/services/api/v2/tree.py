@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """This module provides REST services for trees
 """
-import cherrypy
 import dendropy
 
 from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_TREE_SCHEMA
@@ -12,6 +11,7 @@ from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+import cherrypy
 
 
 # .............................................................................

@@ -3,15 +3,12 @@
 This module provides a tool for formatting outputs of service calls based on
 the accept headers of the request
 """
-import cherrypy
-
 from LmCommon.common.lmconstants import (
     CSV_INTERFACE, HTTPStatus, JSON_INTERFACE, LMFormat, SHAPEFILE_INTERFACE)
-
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmconstants import SnippetOperations
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.snippet import SnippetShooter
-
+from LmWebServer.formatters.eml_formatter import eml_object_formatter
 from LmWebServer.formatters.fileFormatter import (
     csv_object_formatter, file_formatter, gtiff_object_formatter,
     shapefile_object_formatter)
@@ -20,7 +17,7 @@ from LmWebServer.formatters.json_formatter import json_object_formatter
 from LmWebServer.formatters.kml_formatter import kml_object_formatter
 from LmWebServer.formatters.package_formatter import gridset_package_formatter
 from LmWebServer.formatters.progress_formatter import progress_object_formatter
-from LmWebServer.formatters.eml_formatter import eml_object_formatter
+import cherrypy
 
 
 # .............................................................................

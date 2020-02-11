@@ -3,14 +3,13 @@
 import os
 import shutil
 
-import cherrypy
-
 from LmCommon.common.lmconstants import HTTPStatus
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.common.lmconstants import (
     REFERER_KEY, SESSION_KEY, SESSION_PATH)
 from LmWebServer.services.api.v2.base import LmService
+import cherrypy
 
 
 # .............................................................................

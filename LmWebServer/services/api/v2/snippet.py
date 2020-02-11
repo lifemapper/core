@@ -2,12 +2,10 @@
 # -*- coding: utf-8 -*-
 """This module provides services for querying snippets
 """
-import cherrypy
-
 from LmServer.common.solr import querySnippetIndex
-
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+import cherrypy
 
 
 # .............................................................................

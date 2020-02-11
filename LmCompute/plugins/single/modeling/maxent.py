@@ -16,17 +16,15 @@ from time import sleep
 from LmBackend.common.layer_tools import convert_ascii_to_mxe
 from LmBackend.common.lmconstants import RegistryKey
 from LmBackend.common.metrics import LmMetricNames
-
 from LmCommon.common.lmconstants import JobStatus, LMFormat, ProcessType
-
 from LmCompute.common.lmconstants import JAVA_CMD, ME_CMD
 from LmCompute.plugins.single.modeling.base import ModelSoftwareWrapper
 from LmCompute.plugins.single.modeling.maxent_constants import (
     DEFAULT_MAXENT_OPTIONS, DEFAULT_MAXENT_PARAMETERS, MAXENT_MODEL_TOOL,
     MAXENT_PROJECT_TOOL, MAXENT_VERSION)
-
-from LmTest.validate.text_validator import validate_text_file
 from LmTest.validate.raster_validator import validate_raster_file
+from LmTest.validate.text_validator import validate_text_file
+
 
 # TODO: Should these be in constants somewhere?
 ALGO_PARAMETERS_KEY = 'parameters'

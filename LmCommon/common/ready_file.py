@@ -1,7 +1,7 @@
 """Module containing file creation functions
 """
-import os
 import glob
+import os
 
 from LmCommon.common.lmconstants import LMFormat
 

@@ -7,7 +7,6 @@ Todo:
 import os
 
 from LmCommon.common.lmconstants import LMFormat
-
 from LmTest.validate.csv_validator import validate_csv_file
 from LmTest.validate.json_validator import validate_json_file
 from LmTest.validate.lm_matrix_validator import validate_lm_matrix_file
@@ -17,6 +16,7 @@ from LmTest.validate.tree_validator import validate_tree_file
 from LmTest.validate.vector_validator import validate_vector_file
 from LmTest.validate.xml_validator import validate_xml_file
 from LmTest.validate.zip_validator import validate_zip_file
+
 
 # .............................................................................
 def validate_file(filename):

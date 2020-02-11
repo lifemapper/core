@@ -1,7 +1,9 @@
 """Module containing Lifemapper constants for openModeller SDM jobs
 """
 import os
+
 from LmCompute.common.lmconstants import BIN_PATH
+
 
 FILE_TYPES = ["FloatingHFA", "FloatingTiff", "GreyTiff"]
 DEFAULT_FILE_TYPE = 'GreyTiff100'

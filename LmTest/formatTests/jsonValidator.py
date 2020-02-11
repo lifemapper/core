@@ -26,6 +26,7 @@
 """
 import json
 
+
 def validate_json(obj_generator):
    """
    @summary: Validates that the response is json by trying to load it

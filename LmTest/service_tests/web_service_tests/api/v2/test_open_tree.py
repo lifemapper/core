@@ -7,10 +7,11 @@ Todo:
     * Keys should be in constants somewhere and used by both service and tests
 """
 from copy import deepcopy
+import pytest
 from random import randint, shuffle
 
 import dendropy
-import pytest
+
 
 NONTREE_GBIF_IDS_KEY = 'nontree_ids'
 TREE_DATA_KEY = 'tree_data'

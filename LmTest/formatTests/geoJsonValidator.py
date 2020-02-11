@@ -26,6 +26,7 @@
 """
 import json
 
+
 def validate_geojson(obj_generator):
    """
    @summary: Very simple validator to see if response has a couple keys

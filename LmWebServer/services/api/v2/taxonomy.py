@@ -2,12 +2,10 @@
 # -*- coding: utf-8 -*-
 """This module contains service code for performing searches on taxonomy.
 """
-import cherrypy
-
 from LmServer.common.solr import query_taxonomy_index
-
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+import cherrypy
 
 
 # .............................................................................

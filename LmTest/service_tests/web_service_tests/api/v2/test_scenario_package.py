@@ -31,14 +31,13 @@ import unittest
 import warnings
 
 from LmCommon.common.lmconstants import JSON_INTERFACE
-
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.scenario import ScenPackage
-
 from LmTest.formatTests.jsonValidator import validate_json
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
+
 
 # .............................................................................
 class TestScribeScenarioPackageService(UserTestCase):

@@ -5,7 +5,6 @@ import os
 import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
-
 from LmCommon.common.lmconstants import (
     LMFormat, OFTInteger, OFTReal, OFTString)
 from LmCommon.common.readyfile import get_unicodecsv_reader

@@ -2,12 +2,10 @@
 """
 import json
 
-import cherrypy
-
 from LmCommon.common.lmconstants import JobStatus, LMFormat
-
 from LmServer.common.log import WebLogger
 from LmServer.db.borgscribe import BorgScribe
+import cherrypy
 
 
 # .............................................................................

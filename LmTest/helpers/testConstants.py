@@ -28,11 +28,11 @@
 """
 import os
 
+
 # TODO: Find a better mechanism for this.
 #         1. This is fragile.  Any path change will break it
 #         2. This is not flexible.  It would be nice if we could specify a
 #               testing data directory
-
 TEST_DATA_PATH = os.path.join(os.path.dirname(__file__), '..', 'data')
 
 # Input data

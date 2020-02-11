@@ -5,8 +5,8 @@ Todo:
 """
 import argparse
 
-from LmServer.common.log import ConsoleLogger
 from LmServer.common.lmconstants import SnippetOperations
+from LmServer.common.log import ConsoleLogger
 from LmServer.common.snippet import SnippetShooter
 from LmServer.db.borgscribe import BorgScribe
 

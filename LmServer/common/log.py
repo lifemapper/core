@@ -6,7 +6,6 @@ import os
 
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.log import LmLogger
-
 from LmServer.common.lmconstants import LOG_PATH, USER_LOG_PATH
 
 

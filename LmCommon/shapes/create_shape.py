@@ -4,17 +4,14 @@ import json
 import os
 from random import shuffle
 
-from osgeo import ogr, osr
-
 from LmBackend.common.lmobj import LMError
-
 from LmCommon.common.lmconstants import (
     DEFAULT_EPSG, DWCNames, GBIF, JobStatus, LM_WKT_FIELD, LMFormat,
     PROVIDER_FIELD_COMMON)
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.ready_file import ready_filename
-
 from LmCompute.common.log import LmComputeLogger
+from osgeo import ogr, osr
 
 
 # .............................................................................

@@ -5,14 +5,13 @@ Note:
         used with the tests it discovers
 """
 import os
-
 import pytest
 
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.common.log import UnittestLogger
 from LmServer.common.localconstants import WEBSERVICES_ROOT
-
+from LmServer.common.log import UnittestLogger
+from LmServer.db.borgscribe import BorgScribe
 from LmTest.service_tests.tools.lm_client import LmWebClient
+
 
 # .............................................................................
 # .                                 Constants                                 .

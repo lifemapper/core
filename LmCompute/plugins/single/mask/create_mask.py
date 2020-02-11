@@ -3,12 +3,12 @@
 import math
 import os
 
+from LmCommon.common.lmconstants import DEFAULT_NODATA, LMFormat, DEFAULT_EPSG, \
+    ENCODING
+from LmCommon.common.ready_file import ready_filename
 import numpy as np
 from osgeo import gdal, gdalconst, ogr, osr
 
-from LmCommon.common.lmconstants import DEFAULT_NODATA, LMFormat, DEFAULT_EPSG,\
-    ENCODING
-from LmCommon.common.ready_file import ready_filename
 
 # TODO: Move to constants probably
 NUM_QUAD_SEGS = 30

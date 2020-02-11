@@ -4,16 +4,15 @@ import os
 
 from LmBackend.common.lmconstants import RegistryKey
 from LmBackend.common.metrics import LmMetricNames
-
-from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
 from LmCommon.common.lm_xml import (Element, fromstring, SubElement, tostring)
-
+from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
 from LmCompute.plugins.single.modeling.base import ModelSoftwareWrapper
 from LmCompute.plugins.single.modeling.openModeller_constants import (
     DEFAULT_FILE_TYPE, OM_DEFAULT_LOG_LEVEL, OM_MODEL_TOOL, OM_PROJECT_TOOL,
     OM_VERSION)
-from LmTest.validate.xml_validator import validate_xml_file
 from LmTest.validate.raster_validator import validate_raster_file
+from LmTest.validate.xml_validator import validate_xml_file
+
 
 # TODO: Should these be in constants somewhere?
 ALGORITHM_CODE_KEY = 'algorithmCode'

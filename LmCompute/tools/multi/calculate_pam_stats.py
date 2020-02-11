@@ -8,9 +8,8 @@ Todo:
 """
 import argparse
 
-from lmpy import Matrix, TreeWrapper
-
 from LmCompute.plugins.multi.calculate.calculate import PamStats
+from lmpy import Matrix, TreeWrapper
 
 
 # .............................................................................

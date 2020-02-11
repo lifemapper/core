@@ -18,21 +18,19 @@ import json
 import os
 from time import sleep
 
-from osgeo import ogr
-
 import LmBackend.common.layer_tools as layer_tools
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
-
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.compression.binary_list import compress
 from LmCommon.encoding.layer_encoder import LayerEncoder
-
 from LmCompute.common.log import LmComputeLogger
 import LmCompute.plugins.single.mask.create_mask as create_mask
 from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
 from LmCompute.plugins.single.occurrences.csv_occ import createShapefileFromCSV
+from osgeo import ogr
+
 
 WAIT_THRESHOLD = 60
 

@@ -2,15 +2,12 @@
 # -*- coding: utf-8 -*-
 """This module provides services for fuzzy search for occurrence sets
 """
-import cherrypy
-
 from LmCommon.common.lmconstants import HTTPStatus
-
 from LmServer.common.lmconstants import SOLR_FIELDS
 from LmServer.common.solr import query_archive_index
-
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+import cherrypy
 
 
 # .............................................................................

@@ -3,13 +3,10 @@
 Todo:
     Convert to use Matrix instead of numpy matrices
 """
-import numpy as np
-
-from lmpy import Matrix
-
 from LmCommon.common.lmconstants import PamStatKeys, PhyloTreeKeys
-
 from LmCompute.plugins.multi.calculate import ot_phylo
+from lmpy import Matrix
+import numpy as np
 
 
 # .............................................................................

@@ -27,8 +27,9 @@
 import os
 import random
 
-from LmServer.common.lmconstants import TEMP_PATH
 from LmServer.base.layer2 import Raster
+from LmServer.common.lmconstants import TEMP_PATH
+
 
 def validate_tiff(obj_generator):
    fn = os.path.join(TEMP_PATH, 'tmp_{}.tif'.format(random.randint(10000)))

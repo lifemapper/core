@@ -30,14 +30,12 @@ import json
 import unittest
 import warnings
 
-from LmCommon.common.lmconstants import (CSV_INTERFACE, EML_INTERFACE, 
-                                         GEO_JSON_INTERFACE, JSON_INTERFACE, 
+from LmCommon.common.lmconstants import (CSV_INTERFACE, EML_INTERFACE,
+                                         GEO_JSON_INTERFACE, JSON_INTERFACE,
                                          SHAPEFILE_INTERFACE)
-
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.lmmatrix import Matrix
-
 from LmTest.formatTests.csvValidator import validate_csv
 from LmTest.formatTests.emlValidator import validate_eml
 from LmTest.formatTests.fileValidator import validate_file
@@ -46,6 +44,7 @@ from LmTest.formatTests.jsonValidator import validate_json
 from LmTest.formatTests.shapefileValidator import validate_shapefile
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
+
 
 # .............................................................................
 class TestScribeMatrixService(UserTestCase):

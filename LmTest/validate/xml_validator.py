@@ -9,6 +9,7 @@ import os
 
 from LmCommon.common.lm_xml import deserialize, fromstring
 
+
 # .............................................................................
 def validate_xml_file(xml_filename):
     """Validates an XML file by seeing if it can be ready by ElementTree

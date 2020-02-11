@@ -4,20 +4,19 @@ from enum import Enum
 import inspect
 import os
 
+from LmCommon.common.lmconstants import (
+    DWCNames, JobStatus, LMFormat, MatrixType)
+from LmServer.common.localconstants import (
+    APP_PATH, CS_PORT, DATA_PATH, DEFAULT_EPSG, EXTRA_CS_OPTIONS,
+    EXTRA_MAKEFLOW_OPTIONS, EXTRA_WORKER_FACTORY_OPTIONS, EXTRA_WORKER_OPTIONS,
+    LM_DISK, MASTER_WORKER_PATH, MAX_WORKERS, PID_PATH, PUBLIC_FQDN,
+    SCRATCH_PATH, SHARED_DATA_PATH, SPECIES_DIR, WEBSERVICES_ROOT, WORKER_PATH)
 from osgeo.gdalconst import (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16,
                      GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64,
                      GDT_CInt16, GDT_CInt32, GDT_CFloat32, GDT_CFloat64)
 from osgeo.ogr import (wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint,
                        wkbMultiLineString, wkbMultiPolygon)
 
-from LmCommon.common.lmconstants import (
-    DWCNames, JobStatus, LMFormat, MatrixType)
-
-from LmServer.common.localconstants import (
-    APP_PATH, CS_PORT, DATA_PATH, DEFAULT_EPSG, EXTRA_CS_OPTIONS,
-    EXTRA_MAKEFLOW_OPTIONS, EXTRA_WORKER_FACTORY_OPTIONS, EXTRA_WORKER_OPTIONS,
-    LM_DISK, MASTER_WORKER_PATH, MAX_WORKERS, PID_PATH, PUBLIC_FQDN,
-    SCRATCH_PATH, SHARED_DATA_PATH, SPECIES_DIR, WEBSERVICES_ROOT, WORKER_PATH)
 
 WEB_SERVICE_VERSION = 'v2'
 API_PATH = 'api'

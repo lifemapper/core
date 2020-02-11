@@ -36,6 +36,7 @@ from LmServer.db.borgscribe import BorgScribe
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
 
+
 # .............................................................................
 class TestWebSpeciesHintService(UserTestCase):
    """

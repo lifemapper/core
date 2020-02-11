@@ -9,6 +9,7 @@ import os
 
 from LmCommon.common.unicodeCsv import UnicodeReader
 
+
 # .............................................................................
 def validate_csv_file(csv_filename, read_lines=False):
     """Validates a CSV file by seeing if it can be loaded

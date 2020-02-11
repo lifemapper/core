@@ -11,6 +11,7 @@ from LmServer.common.lmconstants import MAKEFLOW_OPTIONS, MAKEFLOW_BIN
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 
+
 # .............................................................................
 def cleanupMakeflow(mfDag, workspace, cleanupVal, success, log):
     """

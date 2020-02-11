@@ -10,6 +10,7 @@ import argparse
 import csv
 import os
 
+
 BASE_BUCKET_NUM = 10 # 10 possibilities for numeric characters
 DEF_CHAR = '0' # Default character
 
