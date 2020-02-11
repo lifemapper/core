@@ -159,7 +159,6 @@ def main():
     scribe.openConnections()
     doc_pairs = []
     for pav_info in pav_config:
-        # pav_filename = pav_info[RegistryKey.PAV_FILENAME]
         compressed_pav = pav_info[RegistryKey.COMPRESSED_PAV_DATA]
         pav_id = pav_info[RegistryKey.IDENTIFIER]
         proj_id = pav_info[RegistryKey.PROJECTION_ID]

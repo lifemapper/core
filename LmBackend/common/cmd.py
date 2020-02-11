@@ -35,17 +35,3 @@ class MfRule(LMObject):
         else:
             self.dependencies = dependencies
         self.comment = comment
-
-    # ...............................................
-    def add_dependencies(self, dependencies):
-        """Adds dependencies to the rule.
-
-        Args:
-            dependencies (str, list, or tuple) : A file or list of files that
-                should be added to the rule as dependencies.  All paths should
-                be relative to the Makeflow workspace.
-        """
-        if isinstance(dependencies, (list, tuple)):
-            self.dependencies.extend(dependencies)
-        elif isinstance(dependencies, str):
-            self.dependencies.append(dependencies)

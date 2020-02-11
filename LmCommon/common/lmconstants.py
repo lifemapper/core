@@ -39,7 +39,6 @@ LM_USER = 'lmwriter'
 # .                               File constants                              .
 # .............................................................................
 # DATA FORMATS
-MASK_TYPECODE = 'MASK'
 ENCODING = 'utf-8'
 
 
@@ -93,7 +92,6 @@ class BoomKeys(Enum):
     MAPUNITS = 'MAPUNITS'
 
     OCC_DATA_NAME = 'OCC_DATA_NAME'
-    OCC_DATA_DIR = 'OCC_DATA_DIR'
     OCC_DATA_DELIMITER = 'OCC_DATA_DELIMITER'  # NEW
     OCC_ID_FILENAME = 'OCC_ID_FILENAME'  # NEw
     OCC_EXP_MJD = 'OCC_EXP_MJD'
@@ -311,31 +309,15 @@ class LMFormat:
 # Web object interfaces
 CSV_INTERFACE = 'csv'
 EML_INTERFACE = 'eml'
-FILE_INTERFACE = 'file'
 GEO_JSON_INTERFACE = 'geojson'
 GEOTIFF_INTERFACE = 'gtiff'
 JSON_INTERFACE = 'json'
 KML_INTERFACE = 'kml'
 NEXUS_INTERFACE = 'nexus'
 NEWICK_INTERFACE = 'newick'
-OGC_INTERFACE = 'ogc'
 PACKAGE_INTERFACE = 'package'
 PROGRESS_INTERFACE = 'progress'
 SHAPEFILE_INTERFACE = 'shapefile'
-
-
-# .............................................................................
-# .                               Job constants                               .
-# .............................................................................
-class InputDataType(Enum):
-    """Enumeration of data types
-    """
-    LM_LOWRES_CLIMATE = 1
-    LM_HIRES_CLIMATE = 2
-    EDAC = 3
-
-    USER_PRESENCE_ABSENCE = 11
-    USER_ANCILLARY = 12
 
 
 # .............................................................................
@@ -379,14 +361,7 @@ class JobStatus(Enum):
     GENERAL = 0  # Not ready
     INITIALIZE = 1  # Ready to run
     PULL_REQUESTED = 90  # Pull requested from job server
-    PULL_COMPLETE = 100  # Pulled from job server to compute
-    ACQUIRING_INPUTS = 105  # Acquiring inputs for computation
-    COMPUTE_INITIALIZED = 110  # Initialized for compute
-    RUNNING = 120  # LmCompute is working on it
     COMPUTED = 130  # Finished computation
-    PUSH_REQUESTED = 140  # Waiting to push results back to server
-    PUSHED = 150  # Results pushed to server
-    PUSH_COMPLETE = 200
 
     # NOTIFY_READY = 210
 
@@ -400,12 +375,6 @@ class JobStatus(Enum):
 
     GENERAL_ERROR = 1000  # Any status greater than this is an error
     UNKNOWN_ERROR = 1001  # Unknown error occurred
-    DEPENDENCY_ERROR = 1002
-    UNKNOWN_CLUSTER_ERROR = 1003
-    PUSH_FAILED = 1100  # Failed to push results to server
-
-    # Remote kill status.  This happens when something signals a stop
-    REMOTE_KILL = 1150
 
     # =========================================================================
     # =                              Common Errors                            =
@@ -429,93 +398,22 @@ class JobStatus(Enum):
     # =========================================================================
     # LM_GENERAL_ERROR = 2000 - conflicts with MODEL_ERROR and is not used.
 
-    # Python errors
-    # ............................................
-    LM_PYTHON_ERROR = 2100
-    LM_PYTHON_MODULE_IMPORT_ERROR = 2101
-    LM_PYTHON_ATTRIBUTE_ERROR = 2102
-    LM_PYTHON_EXPAT_ERROR = 2103
-
-    # Lifemapper job errors
-    # ............................................
-    LM_JOB_ERROR = 2200
-    LM_JOB_NOT_FOUND = 2201
-    LM_JOB_NOT_READY = 2202
-    LM_JOB_APPLICATION_NOT_FOUND = 2204
-
     # Lifemapper data errors
     # ............................................
-    LM_DATA_ERROR = 2300
     LM_POINT_DATA_ERROR = 2301
     LM_RAW_POINT_DATA_ERROR = 2302
-
-    # Lifemapper Pipeline errors
-    LM_PIPELINE_ERROR = 2400
-    LM_PIPELINE_WRITEFILE_ERROR = 2401
-    LM_PIPELINE_WRITEDB_ERROR = 2402
-    LM_PIPELINE_UPDATEOCC_ERROR = 2403
-
-    LM_PIPELINE_DISPATCH_ERROR = 2415
 
     LM_LONG_RUNNING_JOB_ERROR = 2499
 
     # =========================================================================
     # =                             SDM Errors                                =
     # =========================================================================
-    # General model error, previously 1002
-    MODEL_ERROR = 2000
 
     # Mask error
     MASK_ERROR = 2500
     # openModeller errors
     # ............................................
     OM_GENERAL_ERROR = 3000
-
-    # Error in request file
-    # ............................................
-    OM_REQ_ERROR = 3100
-
-    # Algorithm error
-    # ............................................
-    OM_REQ_ALGO_ERROR = 3110
-    OM_REQ_ALGO_MISSING_ERROR = 3111
-    OM_REQ_ALGO_INVALID_ERROR = 3112
-
-    # Algorithm Parameter error
-    # ............................................
-    # ............................................
-    OM_REQ_ALGOPARAM_ERROR = 3120
-    OM_REQ_ALGOPARAM_MISSING_ERROR = 3121
-    OM_REQ_ALGOPARAM_INVALID_ERROR = 3122
-    OM_REQ_ALGOPARAM_OUT_OF_RANGE_ERROR = 3123
-
-    # Layer error
-    # ............................................
-    OM_REQ_LAYER_ERROR = 3130
-    OM_REQ_LAYER_MISSING_ERROR = 3131
-    OM_REQ_LAYER_INVALID_ERROR = 3132
-    OM_REQ_LAYER_BAD_FORMAT_ERROR = 3134
-    OM_REQ_LAYER_BAD_URL_ERROR = 3135
-
-    # Points error
-    # ............................................
-    OM_REQ_POINTS_ERROR = 3140
-    OM_REQ_POINTS_MISSING_ERROR = 3141
-    OM_REQ_POINTS_OUT_OF_RANGE_ERROR = 3143
-
-    # Projection error
-    # ............................................
-    OM_REQ_PROJECTION_ERROR = 3150
-
-    # Coordinate system error
-    # ............................................
-    OM_REQ_COORDSYS_ERROR = 3160
-    OM_REQ_COORDSYS_MISSING_ERROR = 3161
-    OM_REQ_COORDSYS_INVALID_ERROR = 3162
-
-    # Error in openModeller execution
-    # ............................................
-    OM_EXEC_ERROR = 3200
 
     # Error generating model
     # ............................................
@@ -540,11 +438,6 @@ class JobStatus(Enum):
     # Maxent points issues
     # ............................................
     ME_POINTS_ERROR = 3740
-
-    # Maxent configuration issues
-    # ............................................
-    # Base error status for problems with ME configuration
-    ME_CONFIG_ERROR = 3750
 
     # Not enough points to trigger any feature classes
     ME_NO_FEATURES_CLASSES_AVAILABLE = 3751
@@ -596,39 +489,6 @@ class JobStatus(Enum):
     HTTP_SERVER_HTTP_VERSION_NOT_SUPPORTED = 4505
 
     # =========================================================================
-    # =                            Database Errors                            =
-    # =========================================================================
-    #   """
-    #   Last digit meaning:
-    #      0: General error
-    #      1: Failed to read
-    #      2: Failed to write
-    #      3: Failed to delete
-    #   """
-    DB_GENERAL_ERROR = 5000
-
-    # Job
-    # ............................................
-    DB_JOB_ERROR = 5100
-    DB_JOB_READ_ERROR = 5101
-    DB_JOB_WRITE_ERROR = 5102
-    DB_JOB_DELETE_ERROR = 5103
-
-    # Layer
-    # ............................................
-    DB_LAYER_ERROR = 5200
-    DB_LAYER_READ_ERROR = 5201
-    DB_LAYER_WRITE_ERROR = 5202
-    DB_LAYER_DELETE_ERROR = 5203
-
-    # Layer node
-    # ............................................
-    DB_LAYERNODE_ERROR = 5300
-    DB_LAYERNODE_READ_ERROR = 5301
-    DB_LAYERNODE_WRITE_ERROR = 5302
-    DB_LAYERNODE_DELETE_ERROR = 5303
-
-    # =========================================================================
     # =                               IO Errors                               =
     # =========================================================================
     #   """
@@ -639,114 +499,14 @@ class JobStatus(Enum):
     #      3: Failed to delete
     #   """
     IO_GENERAL_ERROR = 6000
-    IO_NOT_FOUND = 6001
-
-    # Model
-    # ............................................
-    IO_MODEL_ERROR = 6100
-
-    # Model request
-    # ............................................
-    IO_MODEL_REQUEST_ERROR = 6110
-    IO_MODEL_REQUEST_READ_ERROR = 6111
-    IO_MODEL_REQUEST_WRITE_ERROR = 6112
-    IO_MODEL_REQUEST_DELETE_ERROR = 6113
-
-    # Model script
-    # ............................................
-    IO_MODEL_SCRIPT_ERROR = 6120
-    IO_MODEL_SCRIPT_READ_ERROR = 6121
-    IO_MODEL_SCRIPT_WRITE_ERROR = 6122
-    IO_MODEL_SCRIPT_DELETE_ERROR = 6123
-
-    # Model output
-    # ............................................
-    IO_MODEL_OUTPUT_ERROR = 6130
-    IO_MODEL_OUTPUT_READ_ERROR = 6131
-    IO_MODEL_OUTPUT_WRITE_ERROR = 6132
-    IO_MODEL_OUTPUT_DELETE_ERROR = 6133
-
-    # Projection
-    # ............................................
-    IO_PROJECTION_ERROR = 6200
-
-    # Projection request
-    # ............................................
-    IO_PROJECTION_REQUEST_ERROR = 6210
-    IO_PROJECTION_REQUEST_READ_ERROR = 6211
-    IO_PROJECTION_REQUEST_WRITE_ERROR = 6212
-    IO_PROJECTION_REQUEST_DELETE_ERROR = 6213
-
-    # Projection script
-    # ............................................
-    IO_PROJECTION_SCRIPT_ERROR = 6220
-    IO_PROJECTION_SCRIPT_READ_ERROR = 6221
-    IO_PROJECTION_SCRIPT_WRITE_ERROR = 6222
-    IO_PROJECTION_SCRIPT_DELETE_ERROR = 6223
-
-    # Projection output
-    # ............................................
-    IO_PROJECTION_OUTPUT_ERROR = 6230
-    IO_PROJECTION_OUTPUT_READ_ERROR = 6231
-    IO_PROJECTION_OUTPUT_WRITE_ERROR = 6232
-    IO_PROJECTION_OUTPUT_DELETE_ERROR = 6233
-
-    # Layer
-    # ............................................
-    IO_LAYER_ERROR = 6300
-    IO_LAYER_READ_ERROR = 6301
-    IO_LAYER_WRITE_ERROR = 6302
-    IO_LAYER_DELETE_ERROR = 6303
 
     # Matrix
     # ............................................
-    IO_MATRIX_ERROR = 6400
     IO_MATRIX_READ_ERROR = 6401
-    IO_MATRIX_WRITE_ERROR = 6402
-    IO_MATRIX_DELETE_ERROR = 6403
-
-    # Pickled RAD Objects
-    # ............................................
-    IO_INDICES_ERROR = 6500
-    IO_INDICES_READ_ERROR = 6501
-    IO_INDICES_WRITE_ERROR = 6502
-    IO_INDICES_DELETE_ERROR = 6503
 
     # Occurrence Set jobs
     # ............................................
-    IO_OCCURRENCE_SET_ERROR = 6600
-    IO_OCCURRENCE_SET_READ_ERROR = 6601
     IO_OCCURRENCE_SET_WRITE_ERROR = 6602
-    IO_OCCURRENCE_SET_DELETE_ERROR = 6603
-
-    # =========================================================================
-    # =                               SGE Errors                              =
-    # =========================================================================
-    SGE_GENERAL_ERROR = 7000
-    SGE_BASH_ERROR = 7100
-
-    # =========================================================================
-    # =                           RAD Errors                                  =
-    # =========================================================================
-    RAD_GENERAL_ERROR = 8000
-
-    RAD_INTERSECT_ERROR = 8100
-    RAD_INTERSECT_ZERO_LAYERS_ERROR = 8110
-
-    RAD_COMPRESS_ERROR = 8200
-
-    RAD_CALCULATE_ERROR = 8300
-    RAD_CALCULATE_FAILED_TO_CREATE_SHAPEFILE = 8312
-
-    RAD_SWAP_ERROR = 8400
-    RAD_SWAP_TOO_FEW_COLUMNS_OR_ROWS_ERROR = 8410
-
-    RAD_SPLOTCH_ERROR = 8500
-    RAD_SPLOTCH_PYSAL_NEIGHBOR_ERROR = 8510
-
-    RAD_SHAPEGRID_ERROR = 8600
-    RAD_SHAPEGRID_INVALID_PARAMETERS = 8601
-    RAD_SHAPEGRID_NO_CELLS = 8610
 
     # =========================================================================
     #                               Compute Status                            =
@@ -767,8 +527,6 @@ class JobStatus(Enum):
 
     # 301000-301999  - Process (3) openModeller SDM Projection (02)
     # ............................................
-    OM_PROJECTION_ERROR = 302150
-
     BLANK_PROJECTION_ERROR = 303100
 
     ENCODING_ERROR = 304100
@@ -777,13 +535,6 @@ class JobStatus(Enum):
     @staticmethod
     def waiting(stat):
         if stat == JobStatus.GENERAL or stat == JobStatus.INITIALIZE:
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def inProcess(stat):
-        if stat > JobStatus.INITIALIZE and stat < JobStatus.COMPLETE:
             return True
         else:
             return False
@@ -824,7 +575,6 @@ class ProcessType(Enum):
     # SDM project
     ATT_PROJECT = 120
     OM_PROJECT = 220
-    PROJECT_REQUEST = 105
     # Occurrences
     GBIF_TAXA_OCCURRENCE = 405
 #     BISON_TAXA_OCCURRENCE = 410
@@ -845,7 +595,6 @@ class ProcessType(Enum):
     RAD_CALCULATE = 340
     ENCODE_HYPOTHESES = 350
     ENCODE_PHYLOGENY = 360
-    SQUID_INC = 365
     BUILD_ANC_PAM = 370
     # Randomize
     RAD_SWAP = 331
@@ -859,11 +608,6 @@ class ProcessType(Enum):
     # .......... Notify ..........
     SMTP = 610
     CONCATENATE_MATRICES = 620
-    UPDATE_OBJECT = 630
-    MF_TRIAGE = 640
-    TOUCH = 650
-    SOLR_POST = 660
-    SNIPPET_POST = 670
 
     # BOOM
     BOOM_INIT = 710
@@ -876,32 +620,11 @@ class ProcessType(Enum):
     RAD_INTERSECT = 310
 
     @staticmethod
-    def isSingle(ptype):
-        if ptype in [ProcessType.SMTP,
-                     ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT,
-                     ProcessType.OM_MODEL, ProcessType.OM_PROJECT,
-                     ProcessType.GBIF_TAXA_OCCURRENCE,
-                     # ProcessType.BISON_TAXA_OCCURRENCE,
-                     # ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                     ProcessType.USER_TAXA_OCCURRENCE,
-                     ProcessType.INTERSECT_RASTER,
-                     ProcessType.INTERSECT_VECTOR,
-                     ProcessType.INTERSECT_RASTER_GRIM]:
-            return True
-        return False
-
-    @staticmethod
     def isOccurrence(ptype):
         if ptype in [ProcessType.GBIF_TAXA_OCCURRENCE,
                      # ProcessType.BISON_TAXA_OCCURRENCE,
                      # ProcessType.IDIGBIO_TAXA_OCCURRENCE,
                      ProcessType.USER_TAXA_OCCURRENCE]:
-            return True
-        return False
-
-    @staticmethod
-    def isModel(ptype):
-        if ptype in [ProcessType.ATT_MODEL, ProcessType.OM_MODEL]:
             return True
         return False
 
@@ -935,21 +658,6 @@ class ProcessType(Enum):
         return False
 
     @staticmethod
-    def isRADPrep(ptype):
-        if ptype in [
-                ProcessType.RAD_BUILDGRID, ProcessType.RAD_CALCULATE,
-                ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY,
-                ProcessType.BUILD_ANC_PAM]:
-            return True
-        return False
-
-    @staticmethod
-    def isBoom(ptype):
-        if ptype in [ProcessType.BOOM_INIT, ProcessType.BOOMER]:
-            return True
-        return False
-
-    @staticmethod
     def isMatrix(ptype):
         if ptype in [
                 ProcessType.CONCATENATE_MATRICES, ProcessType.RAD_CALCULATE,
@@ -960,57 +668,6 @@ class ProcessType(Enum):
                 ProcessType.MCPA_RANDOM, ProcessType.BUILD_ANC_PAM]:
             return True
         return False
-
-    @staticmethod
-    def isAggregate(ptype):
-        return ptype in [ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER,
-                         ProcessType.OCC_SPLITTER]
-
-    @staticmethod
-    def randomTypes():
-        return [ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH,
-                ProcessType.RAD_GRADY]
-
-    @staticmethod
-    def isRandom(ptype):
-        if ptype in ProcessType.randomTypes():
-            return True
-        return False
-
-    @staticmethod
-    def encodeTypes():
-        return [ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]
-
-    @staticmethod
-    def isEncode(ptype):
-        if ptype in ProcessType.encodeTypes():
-            return True
-        return False
-
-    @staticmethod
-    def mcpaTypes():
-        return [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
-                ProcessType.MCPA_RANDOM, ProcessType.MCPA_ASSEMBLE]
-
-    @staticmethod
-    def isMCPA(ptype):
-        if ptype in [
-                ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
-                ProcessType.MCPA_RANDOM, ProcessType.MCPA_ASSEMBLE]:
-            return True
-        return False
-
-
-# .............................................................................
-# .                               RAD constants                               .
-# .............................................................................
-class RandomizeMethods(Enum):
-    """Randomization method enumeration
-    """
-    NOT_RANDOM = 0
-    SWAP = 1
-    SPLOTCH = 2
-    GRADY = 3
 
 
 # .............................................................................
@@ -1029,7 +686,6 @@ ISO_8601_TIME_FORMAT_TRUNCATED = "%Y-%m-%d"
 YMD_HH_MM_SS = "%Y-%m-%d %H:%M%S"
 
 ONE_HOUR_SECONDS = 60 * 60
-ONE_DAY_SECONDS = 60 * 60 * 24.0
 
 # .............................................................................
 # .                               User constants                              .
@@ -1042,25 +698,7 @@ DEFAULT_POST_USER = 'anon'
 DEFAULT_GLOBAL_EXTENT = (-180.0, -60.0, 180.0, 90.0)
 DEFAULT_EPSG = 4326
 DEFAULT_MAPUNITS = 'dd'
-DEFAULT_CELLSIDES = 4
-DEFAULT_CELLSIZE = 1.0
 DEFAULT_NODATA = -9999
-
-# .............................................................................
-# .                             Instance constants                            .
-# .............................................................................
-LM_CLIENT_VERSION_URL = "http://svc.lifemapper.org/clients/versions.xml"
-LM_INSTANCES_URL = "http://svc.lifemapper.org/clients/instances.xml"
-
-
-class Instances(Enum):
-    """These are Lifemapper instances that we know how to work with externally
-    """
-    IDIGBIO = "IDIGBIO"
-    BISON = "BISON"
-    GBIF = "GBIF"
-    CHARLIE = "Charlie"
-    LIFEMAPPER = "Lifemapper"
 
 
 DWC_QUALIFIER = 'dwc:'
@@ -1097,15 +735,6 @@ class DWCNames(Enum):
                 DWCNames.SCIENTIFIC_NAME, DWCNames.DAY,
                 DWCNames.MONTH, DWCNames.YEAR, DWCNames.RECORDED_BY,
                 DWCNames.COUNTRY_CODE, DWCNames.STATE_PROVINCE]
-
-    @staticmethod
-    def getShortName(fullname):
-        if fullname.startswith(DWC_QUALIFIER):
-            fullname = fullname[len(DWC_QUALIFIER):]
-        for dn in DWCNames._definedNames():
-            if dn['FULL'] == fullname:
-                return dn['SHORT']
-        return None
 
 
 # ......................................................
@@ -1591,7 +1220,6 @@ class IDIGBIO_QUERY(Enum):
 # .............................................................................
 # .                  Provider/Local data fieldname constants                  .
 # .............................................................................
-LM_ID_FIELD = 'lmid'
 LM_WKT_FIELD = 'geomwkt'
 
 # .............................................................................
@@ -1658,16 +1286,6 @@ class HTTPStatus(Enum):
     HTTP_VERSION_NOT_SUPPORTED = 505
 
 
-# .............................................................................
-# .                            Namespace constants                            .
-# .............................................................................
-# Lifemapper Namespace constants
-LM_NAMESPACE = "http://lifemapper.org"
-LM_NS_PREFIX = "lm"
-LM_RESPONSE_SCHEMA_LOCATION = "/schemas/serviceResponse.xsd"
-LM_PROC_NAMESPACE = "http://lifemapper.org/process"
-LM_PROC_NS_PREFIX = "lmProc"
-LM_PROC_SCHEMA_LOCATION = "/schemas/lmProcess.xsd"
 
 # .............................................................................
 # .                             Logging constants                             .

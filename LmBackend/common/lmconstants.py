@@ -60,7 +60,6 @@ class RegistryKey(Enum):
     RULESET_PATH = 'ruleset_path'
     LOG_PATH = 'log_path'
     PROJECTION_PATH = 'projection_path'
-    PAV_FILENAME = 'pav_path'
     COMPRESSED_PAV_DATA = 'compressed_data'
 
     # ..................

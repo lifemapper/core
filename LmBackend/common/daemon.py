@@ -115,7 +115,7 @@ class Daemon:
         elif sig_num == signal.SIGTERM:
             self.on_shutdown()
         else:
-            message = 'Unknown signal: {}'.format(sig_num)
+            message = 'Unknown signal: {}, stack: {}'.format(sig_num, stack)
             self.log.error(message)
 
     # ..........................................................................

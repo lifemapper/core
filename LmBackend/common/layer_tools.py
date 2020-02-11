@@ -181,9 +181,8 @@ def convert_tiff_to_ascii(tiff_file_name, asc_file_name, header_precision=6):
         x_res = round(x_res, header_precision)
 
     options = ['FORCE_CELLSIZE=True']
-    ds_out = drv.CreateCopy(asc_file_name, ds_in, 0, options)
+    drv.CreateCopy(asc_file_name, ds_in, 0, options)
     ds_in = None
-    ds_out = None
 
     # Rewrite  ASCII header with tiff info
     output = []

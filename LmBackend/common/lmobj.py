@@ -23,12 +23,6 @@ class LMObject:
         return inspect.currentframe().f_back.f_lineno
 
     # ..........................
-    def get_module_name(self):
-        """Get the name of the current module
-        """
-        return '{}.{}'.format(__name__, self.__class__.__name__)
-
-    # ..........................
     def get_location(self, line_num=None):
         """Get the current location
         """
@@ -192,7 +186,6 @@ class LMError(Exception, LMObject):
             Assembles all arguments into Exception.args
         """
         LMObject.__init__(self)
-        self.line_number = line_num
         self.previous_exceptions = []
         list_args = []
         for arg in args:
