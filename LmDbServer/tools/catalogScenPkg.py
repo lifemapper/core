@@ -338,7 +338,7 @@ class SPFiller(LMObject):
             self.scribe.log.info('Insert scenario {}'.format(scode))
             # Insert Scenario and its Layers
             newscen = self.scribe.findOrInsertScenario(scen, 
-                                            scenPkgId=updatedScenPkg.getId())
+                                            scenPkgId=updatedScenPkg.get_id())
             updatedScens.append(newscen)
         updatedScenPkg.setScenarios(updatedScens)
         return updatedScenPkg
@@ -378,7 +378,7 @@ class SPFiller(LMObject):
                                                 masklyr.getDLocation()))
                 updatedScenPkg = self.addPackageScenariosLayers(scenPkg)
                 if (updatedScenPkg is not None 
-                    and updatedScenPkg.getId() is not None
+                    and updatedScenPkg.get_id() is not None
                     and updatedScenPkg.name == spName
                     and updatedScenPkg.getUserId() == self.userId):
                     self.scribe.log.info('Successfully added scenario package {} for user {}'
@@ -437,7 +437,7 @@ if __name__ == '__main__':
         filler.initializeMe()
         updatedScenPkg = filler.catalogScenPackages()
         if updatedScenPkg is not None:
-            pkgid = updatedScenPkg.getId()
+            pkgid = updatedScenPkg.get_id()
             if (pkgid is not None and updatedScenPkg.getUserId() == user_id):
                 print(('Successfully added scenario package {} for user {}'
                       .format(pkgid, user_id)))

@@ -105,7 +105,7 @@ class SdmProjectService(LmService):
 
         cherrypy.response.status = HTTPStatus.ACCEPTED
         return Atom(
-            gridset.getId(), gridset.name, gridset.metadataUrl,
+            gridset.get_id(), gridset.name, gridset.metadataUrl,
             gridset.modTime, epsg=gridset.epsgcode)
 
     # ................................

@@ -72,7 +72,7 @@ class Test_occurrence_layer_web_services(object):
         dummy_occ = OccurrenceLayer('dummy test occ', PUBLIC_USER, 4326, 1)
         inserted_dummy_occ = scribe.findOrInsertOccurrenceSet(dummy_occ)
 
-        test_occ_id = inserted_dummy_occ.getId()
+        test_occ_id = inserted_dummy_occ.get_id()
 
         try:
             resp = public_client.delete_occurrence_set(test_occ_id)
@@ -101,7 +101,7 @@ class Test_occurrence_layer_web_services(object):
         dummy_occ = OccurrenceLayer('dummy test occ', PUBLIC_USER, 4326, 1)
         inserted_dummy_occ = scribe.findOrInsertOccurrenceSet(dummy_occ)
 
-        test_occ_id = inserted_dummy_occ.getId()
+        test_occ_id = inserted_dummy_occ.get_id()
 
         scn_id = scribe.listScenarios(0, 1)[0].id
         scn = scribe.getScenario(scn_id)
@@ -111,7 +111,7 @@ class Test_occurrence_layer_web_services(object):
         prj = SDMProjection(inserted_dummy_occ, algo, scn, scn)
         inserted_dummy_prj = scribe.findOrInsertSDMProject(prj)
         
-        test_prj_id = inserted_dummy_prj.getId()
+        test_prj_id = inserted_dummy_prj.get_id()
 
         try:
             resp = public_client.delete_occurrence_set(test_occ_id)

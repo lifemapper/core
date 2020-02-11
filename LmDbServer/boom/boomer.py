@@ -123,7 +123,7 @@ class Boomer(LMObject):
                     self.configFname, e))
         try:
             self.gridset = self.christopher.boomGridset
-            self.gridsetId = self.christopher.boomGridset.getId()
+            self.gridsetId = self.christopher.boomGridset.get_id()
         except:
             self.log.warning('Exception getting christopher.boomGridset id!!')
         if self.gridsetId is None:

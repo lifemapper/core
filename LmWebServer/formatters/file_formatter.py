@@ -61,7 +61,7 @@ def csv_object_formatter(obj):
     if isinstance(obj, LMMatrix):
         cherrypy.response.headers[
             'Content-Disposition'] = 'attachment; filename="mtx{}.csv"'.format(
-                obj.getId())
+                obj.get_id())
         mtx = Matrix.load_flo(obj.getDLocation())
         out_stream = StringIO()
         mtx.write_csv(out_stream)

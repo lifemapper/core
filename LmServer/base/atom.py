@@ -1,32 +1,32 @@
-"""Module contianin Atom class
+"""Module containing Atom class
 """
 from LmBackend.common.lmobj import LMObject
 
+
 # ..............................................................................
 class Atom(LMObject):
+    """Used for returning simple objects for REST url construction
     """
-    Used for returning simple objects for REST url construction 
-    """
-    
-    def __init__(self, id, name, url, modTime, epsg=None):
+    # ................................
+    def __init__(self, obj_id, name, url, mod_time, epsg=None):
+        """Constructor
+
+        Args:
+            obj_id: The database identifier for the object
+            name: A name for the object
+            url: A url for object metadata
+            mod_time: The date / time that the object was last modified
+            epsg: The EPSG code for the object if it is spatial
         """
-        @summary: Constructor for the Atom class
-        @param id: database id of the object
-        @param name: name of the object
-        @param modTime: time/date last modified
-        """
-        LMObject.__init__(self)
-        self.id = id
+        super().__init__(self)
+        self.id = obj_id
         self.name = name
         self.url = url
-        self.modTime = modTime
+        self.modTime = mod_time
         self.epsgcode = epsg
 
-# ...............................................
-# included only to allow use of full or atom objects in Scribe/Peruser methods
-    def getId(self):
-        """
-        @summary: Return the database id for this object
+    # ................................
+    def get_id(self):
+        """Return the database id for this object
         """
         return self.id
-    

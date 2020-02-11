@@ -115,15 +115,15 @@ class MattDaemon(Daemon):
                         else:
                             priority = 1
                         cmd = self._get_makeflow_command(
-                            'lifemapper-{0}'.format(mf_obj.getId()), mf_doc_fn,
+                            'lifemapper-{0}'.format(mf_obj.get_id()), mf_doc_fn,
                             priority=priority)
                         self.log.debug(cmd)
 
                         # File outputs
                         out_log_filename = os.path.join(
-                            self.log_dir, 'mf_{}.out'.format(mf_obj.getId()))
+                            self.log_dir, 'mf_{}.out'.format(mf_obj.get_id()))
                         err_log_filename = os.path.join(
-                            self.log_dir, 'mf_{}.err'.format(mf_obj.getId()))
+                            self.log_dir, 'mf_{}.err'.format(mf_obj.get_id()))
                         proc_out = open(out_log_filename, 'a')
                         proc_err = open(err_log_filename, 'a')
 

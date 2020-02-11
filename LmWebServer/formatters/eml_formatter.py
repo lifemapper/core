@@ -22,11 +22,11 @@ def _create_data_table_section(data_table):
         data_table (:obj: `Matrix`): A matrix object formatted as CSV
     """
     dt_el = Element(
-        'otherEntity', attrib={'id': 'mtx_{}'.format(data_table.getId())})
-    SubElement(dt_el, 'entityName', value='mtx_{}'.format(data_table.getId()))
+        'otherEntity', attrib={'id': 'mtx_{}'.format(data_table.get_id())})
+    SubElement(dt_el, 'entityName', value='mtx_{}'.format(data_table.get_id()))
     phys = SubElement(dt_el, 'physical')
     SubElement(
-        phys, 'objectName', value='mtx_{}.csv'.format(data_table.getId()))
+        phys, 'objectName', value='mtx_{}.csv'.format(data_table.get_id()))
     SubElement(phys, 'encodingMethod', value='ASCII')
     SubElement(
         SubElement(
@@ -48,11 +48,11 @@ def _create_other_entity(entity):
         entity (:obj: `Gridset`): A gridset object to format as EML
     """
     entity_element = Element(
-        'otherEntity', attrib={'id': 'mtx_{}'.format(entity.getId())})
+        'otherEntity', attrib={'id': 'mtx_{}'.format(entity.get_id())})
     SubElement(
-        entity_element, 'entityName', value='mtx_{}'.format(entity.getId()))
+        entity_element, 'entityName', value='mtx_{}'.format(entity.get_id()))
     phys = SubElement(entity_element, 'physical')
-    SubElement(phys, 'objectName', value='tree_{}.nex'.format(entity.getId()))
+    SubElement(phys, 'objectName', value='tree_{}.nex'.format(entity.get_id()))
     SubElement(phys, 'encodingMethod', value='ASCII')
     SubElement(
         SubElement(SubElement(phys, 'dataFormat'), 'externallyDefinedFormat'),
@@ -89,12 +89,12 @@ def _create_spatial_vector(spatial_vector):
     Args:
         spatial_vector (:obj: `Vector`): A vector object to format as EML
     """
-    vector_id = 'mtx_{}'.format(spatial_vector.getId())
+    vector_id = 'mtx_{}'.format(spatial_vector.get_id())
     sv_element = Element('spatialVector', attrib={'id': vector_id})
     phys = SubElement(sv_element, 'physical')
     SubElement(
         phys, 'objectName', value='mtx_{}.geojson'.format(
-            spatial_vector.getId()))
+            spatial_vector.get_id()))
     SubElement(phys, 'encodingMethod', value='ASCII')
     SubElement(
         SubElement(
@@ -126,11 +126,11 @@ def make_eml(my_obj):
             attrib={
                 # TODO: Better package ids
                 'packageId': 'org.lifemapper.gridset.{}'.format(
-                    my_obj.getId()),
+                    my_obj.get_id()),
                 'system': 'http://svc.lifemapper.org'})
         ds_el = SubElement(
             top_el, 'dataset', attrib={'id': 'gridset_{}'.format(
-                my_obj.getId())})
+                my_obj.get_id())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'), 'organizationName',
@@ -139,7 +139,7 @@ def make_eml(my_obj):
         try:
             ds_name = my_obj.name
         except:
-            ds_name = 'Gridset {}'.format(my_obj.getId())
+            ds_name = 'Gridset {}'.format(my_obj.get_id())
 
         SubElement(ds_el, 'name', value=ds_name)
 
@@ -161,11 +161,11 @@ def make_eml(my_obj):
             'eml',
             attrib={
                 'packageId': 'org.lifemapper.sdmproject.{}'.format(
-                    my_obj.getId()),
+                    my_obj.get_id()),
                 'system': 'http://svc.lifemapper.org'})
         ds_el = SubElement(
             top_el, 'dataset',
-            attrib={'id': 'sdmproject_{}'.format(my_obj.getId())})
+            attrib={'id': 'sdmproject_{}'.format(my_obj.get_id())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'),
@@ -176,11 +176,11 @@ def make_eml(my_obj):
             'eml',
             attrib={
                 'packageId': 'org.lifemapper.envlayer.{}'.format(
-                    my_obj.getId()),
+                    my_obj.get_id()),
                 'system': 'http://svc.lifemapper.org'})
         ds_el = SubElement(
             top_el, 'dataset',
-            attrib={'id': 'envlayer_{}'.format(my_obj.getId())})
+            attrib={'id': 'envlayer_{}'.format(my_obj.get_id())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'),
@@ -190,11 +190,11 @@ def make_eml(my_obj):
         top_el = Element(
             'eml',
             attrib={
-                'packageId': 'org.lifemapper.layer.{}'.format(my_obj.getId()),
+                'packageId': 'org.lifemapper.layer.{}'.format(my_obj.get_id()),
                 'system': 'http://svc.lifemapper.org'})
         ds_el = SubElement(
             top_el, 'dataset',
-            attrib={'id': 'layer_{}'.format(my_obj.getId())})
+            attrib={'id': 'layer_{}'.format(my_obj.get_id())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'),
@@ -204,11 +204,11 @@ def make_eml(my_obj):
         top_el = Element(
             'eml',
             attrib={
-                'packageId': 'org.lifemapper.layer.{}'.format(my_obj.getId()),
+                'packageId': 'org.lifemapper.layer.{}'.format(my_obj.get_id()),
                 'system': 'http://svc.lifemapper.org'})
         ds_el = SubElement(
             top_el, 'dataset',
-            attrib={'id': 'layer_{}'.format(my_obj.getId())})
+            attrib={'id': 'layer_{}'.format(my_obj.get_id())})
         # Contact
         SubElement(
             SubElement(ds_el, 'contact'),

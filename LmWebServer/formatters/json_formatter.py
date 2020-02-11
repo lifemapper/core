@@ -52,7 +52,7 @@ def format_env_layer(lyr):
         * Value units
     """
     layer_dict = _get_lifemapper_metadata(
-        'environmental layer', lyr.getId(), lyr.metadataUrl, lyr.getUserId(),
+        'environmental layer', lyr.get_id(), lyr.metadataUrl, lyr.getUserId(),
         metadata=lyr.lyrMetadata)
     data_url = lyr.getDataUrl()
     min_val = lyr.minVal
@@ -76,7 +76,7 @@ def format_gridset(gridset):
     """Convert a grid set to a dictionary
     """
     gridset_dict = _get_lifemapper_metadata(
-        'gridset', gridset.getId(), gridset.metadataUrl, gridset.getUserId(),
+        'gridset', gridset.get_id(), gridset.metadataUrl, gridset.getUserId(),
         metadata=gridset.grdMetadata)
     gridset_dict['epsg'] = gridset.epsgcode
 
@@ -89,7 +89,7 @@ def format_gridset(gridset):
     for mtx in gridset.getBiogeographicHypotheses():
         gridset_dict['bioGeoHypotheses'].append(
             {
-                'id': mtx.getId(),
+                'id': mtx.get_id(),
                 'url': mtx.metadataUrl
             }
         )
@@ -98,7 +98,7 @@ def format_gridset(gridset):
     for mtx in gridset.getAllPAMs():
         gridset_dict['pams'].append(
             {
-                'id': mtx.getId(),
+                'id': mtx.get_id(),
                 'url': mtx.metadataUrl
             }
         )
@@ -107,7 +107,7 @@ def format_gridset(gridset):
     for mtx in gridset.getGRIMs():
         gridset_dict['grims'].append(
             {
-                'id': mtx.getId(),
+                'id': mtx.get_id(),
                 'url': mtx.metadataUrl
             }
         )
@@ -134,7 +134,7 @@ def format_matrix(mtx):
     """Convert a matrix object into a dictionary
     """
     matrix_dict = _get_lifemapper_metadata(
-        'matrix', mtx.getId(), mtx.metadataUrl, mtx.getUserId(),
+        'matrix', mtx.get_id(), mtx.metadataUrl, mtx.getUserId(),
         status=mtx.status, statusModTime=mtx.statusModTime,
         metadata=mtx.mtxMetadata)
     matrix_dict['altPredCode'] = mtx.altpredCode
@@ -159,11 +159,11 @@ def format_occurrence_set(occ):
         * Taxon id
     """
     occ_dict = _get_lifemapper_metadata(
-        'occurrence set', occ.getId(), occ.metadataUrl, occ.getUserId(),
+        'occurrence set', occ.get_id(), occ.metadataUrl, occ.getUserId(),
         status=occ.status, statusModTime=occ.statusModTime,
         metadata=occ.lyrMetadata)
     map_name = EarlJr().createBasename(
-        LMFileType.SDM_MAP, objCode=occ.getId(), usr=occ.getUserId(),
+        LMFileType.SDM_MAP, objCode=occ.get_id(), usr=occ.getUserId(),
         epsg=occ.epsgcode)
     occ_dict['map'] = _get_map_metadata(OGC_SERVICE_URL, map_name, occ.name)
     data_url = occ.getDataUrl()
@@ -194,12 +194,12 @@ def format_projection(prj):
         * Occurrence set metadata url
     """
     prj_dict = _get_lifemapper_metadata(
-        'projection', prj.getId(), prj.metadataUrl, prj.getUserId(),
+        'projection', prj.get_id(), prj.metadataUrl, prj.getUserId(),
         status=prj.status, statusModTime=prj.statusModTime,
         metadata=prj.lyrMetadata)
     occ = prj._occurrenceSet
     map_name = EarlJr().createBasename(
-        LMFileType.SDM_MAP, objCode=occ.getId(), usr=occ.getUserId(),
+        LMFileType.SDM_MAP, objCode=occ.get_id(), usr=occ.getUserId(),
         epsg=occ.epsgcode)
     prj_dict['map'] = _get_map_metadata(OGC_SERVICE_URL, map_name, prj.name)
     data_url = prj.getDataUrl()
@@ -218,13 +218,13 @@ def format_projection(prj):
 
     prj_dict['modelScenario'] = {
         'code': prj.modelScenario.code,
-        'id': prj.modelScenario.getId(),
+        'id': prj.modelScenario.get_id(),
         'metadataUrl': prj.modelScenario.metadataUrl
     }
 
     prj_dict['projectionScenario'] = {
         'code': prj.projScenario.code,
-        'id': prj.projScenario.getId(),
+        'id': prj.projScenario.get_id(),
         'metadataUrl': prj.projScenario.metadataUrl
     }
 
@@ -249,7 +249,7 @@ def format_raster_layer(lyr):
         * Value units
     """
     layer_dict = _get_lifemapper_metadata(
-        'raster layer', lyr.getId(), lyr.metadataUrl, lyr.getUserId(),
+        'raster layer', lyr.get_id(), lyr.metadataUrl, lyr.getUserId(),
         metadata=lyr.lyrMetadata)
     data_url = lyr.getDataUrl()
     min_val = lyr.minVal
@@ -273,7 +273,7 @@ def format_scenario(scn):
         * GCM / alt pred code / etc
     """
     scenario_dict = _get_lifemapper_metadata(
-        'scenario', scn.getId(), scn.metadataUrl, scn.getUserId(),
+        'scenario', scn.get_id(), scn.metadataUrl, scn.getUserId(),
         metadata=scn.scenMetadata)
     map_name = EarlJr().createBasename(
         LMFileType.SCENARIO_MAP, objCode=scn.code, usr=scn.getUserId(),
@@ -297,7 +297,7 @@ def format_scenario_package(scen_package):
     """Converts a scenario package object into a dictionary
     """
     scen_package_dict = _get_lifemapper_metadata(
-        'scenario package', scen_package.getId(), scen_package.metadataUrl,
+        'scenario package', scen_package.get_id(), scen_package.metadataUrl,
         scen_package.getUserId(), metadata=scen_package.scenpkgMetadata)
     scen_package_dict['name'] = scen_package.name
     scen_package_dict['scenarios'] = [
@@ -310,7 +310,7 @@ def format_shapegrid(shapegrid):
     """Convert a shapegrid into a dictionary
     """
     shapegrid_dict = _get_lifemapper_metadata(
-        'shapegrid', shapegrid.getId(), shapegrid.metadataUrl,
+        'shapegrid', shapegrid.get_id(), shapegrid.metadataUrl,
         shapegrid.getUserId(), status=shapegrid.status,
         statusModTime=shapegrid.statusModTime, metadata=shapegrid.lyrMetadata)
     shapegrid_dict['spatialVector'] = _get_spatial_vector_metadata(
@@ -332,7 +332,7 @@ def format_tree(tree):
         * CJG - Add more tree metadata.  Check notes from Ryan conversation
     """
     tree_dict = _get_lifemapper_metadata(
-        'tree', tree.getId(), tree.metadataUrl, tree.getUserId(),
+        'tree', tree.get_id(), tree.metadataUrl, tree.getUserId(),
         metadata=tree.treeMetadata)
     tree_dict['ultrametric'] = tree.isUltrametric()
     tree_dict['binary'] = tree.isBinary()
@@ -344,7 +344,7 @@ def format_vector(vector_layer):
     """Convert a vector into a dictionary
     """
     vector_dict = _get_lifemapper_metadata(
-        'Vector Layer', vector_layer.getId(), vector_layer.metadataUrl,
+        'Vector Layer', vector_layer.get_id(), vector_layer.metadataUrl,
         vector_layer.getUserId(), metadata=vector_layer.lyrMetadata)
     vector_dict['spatialVector'] = _get_spatial_vector_metadata(
         vector_layer.epsgcode, vector_layer.bbox, vector_layer.mapUnits,

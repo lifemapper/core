@@ -62,7 +62,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         gridsetUrl = gridsetId = None
         if gridset is not None:
             gridsetUrl = gridset.metadataUrl
-            gridsetId = gridset.getId()
+            gridsetId = gridset.get_id()
         Matrix.__init__(self, matrix, headers=headers)
         ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
                                       metadataUrl=metadataUrl, 
@@ -115,7 +115,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
     def gridsetId(self):
         gid = None
         if self._gridset is not None:
-            gid = self._gridset.getId()
+            gid = self._gridset.get_id()
         return gid
 
 # ...............................................
@@ -128,7 +128,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
 # ...............................................
     def getDataUrl(self, interface=CSV_INTERFACE):
-        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.get_id(), 
                                                             interface)
         return durl
 
@@ -155,7 +155,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         if self.parentId is None:
             raise LMError('Must have parent gridset ID for filepath')
         dloc = self._earlJr.createFilename(ftype, gridsetId=self.parentId, 
-                                                     objCode=self.getId(), 
+                                                     objCode=self.get_id(), 
                                                      usr=self.getUserId())
         return dloc
 

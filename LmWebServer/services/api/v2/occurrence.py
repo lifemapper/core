@@ -106,7 +106,7 @@ class OccurrenceLayerService(LmService):
 
         cherrypy.response.status = HTTPStatus.ACCEPTED
         return Atom(
-            gridset.getId(), gridset.name, gridset.metadataUrl,
+            gridset.get_id(), gridset.name, gridset.metadataUrl,
             gridset.modTime, epsg=gridset.epsgcode)
 
     # ................................
@@ -215,7 +215,7 @@ class OccurrenceLayerService(LmService):
         for occ in occs:
             occ_objs.append(
                 {
-                    'id': occ.getId(),
+                    'id': occ.get_id(),
                     'metadata_url': occ.metadataUrl,
                     'name': occ.displayName,
                     'modification_time': occ.statusModTime,

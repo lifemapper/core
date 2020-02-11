@@ -81,7 +81,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
             outfile, mode='w', compression=zipfile.ZIP_DEFLATED,
             allowZip64=True) as out_zip:
         print('Write out EML')
-        out_zip.writestr('gridset_{}.eml'.format(gridset.getId()), gs_eml)
+        out_zip.writestr('gridset_{}.eml'.format(gridset.get_id()), gs_eml)
         print('Write tree')
         out_zip.write(
             gridset.tree.getDLocation(),

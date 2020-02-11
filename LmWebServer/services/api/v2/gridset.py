@@ -174,7 +174,7 @@ class GridsetBioGeoService(LmService):
             return bg_hyps
 
         for hyp in bg_hyps:
-            if hyp.getId() == pathBioGeoId:
+            if hyp.get_id() == pathBioGeoId:
                 return hyp
 
         # If not found 404...
@@ -600,7 +600,7 @@ class GridsetService(LmService):
         # TODO: What do we return?
         cherrypy.response.status = HTTPStatus.ACCEPTED
         return Atom(
-            gridset.getId(), gridset.name, gridset.metadataUrl,
+            gridset.get_id(), gridset.name, gridset.metadataUrl,
             gridset.modTime, epsg=gridset.epsgcode)
 
     # ................................

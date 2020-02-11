@@ -51,14 +51,14 @@ class ServiceObject(LMObject):
 # .............................................................................
 # Public methods
 # .............................................................................
-    def getId(self):
+    def get_id(self):
         """
         @summary Returns the database id from the object table
         @return integer database id of the object
         """
         return self._dbId
     
-    def setId(self, dbid):
+    def set_id(self, dbid):
         """
         @summary: Sets the database id on the object
         @param dbid: The database id for the object
@@ -120,7 +120,7 @@ class ServiceObject(LMObject):
         @summary Gets the REST service URL for this object
         @return URL string representing a webservice request for metadata of this object
         """          
-        objId = self.getId() 
+        objId = self.get_id() 
         if objId is None:
             objId = ID_PLACEHOLDER
         murl = self._earlJr.constructLMMetadataUrl(self.serviceType, 
@@ -150,7 +150,7 @@ class ServiceObject(LMObject):
 # .............................................................................
     
     # The database id of the object
-    id = property(getId)
+    id = property(get_id)
     
     # The user id of the object
     user = property(getUserId)

@@ -42,14 +42,14 @@ class ScientificName(LMObject):
 # .............................................................................
 # Public methods
 # .............................................................................
-    def getId(self):
+    def get_id(self):
         """
         @summary Returns the database id from the object table
         @return integer database id of the object
         """
         return self._dbId
     
-    def setId(self, id):
+    def set_id(self, id):
         """
         @summary: Sets the database id on the object
         @param id: The database id for the object

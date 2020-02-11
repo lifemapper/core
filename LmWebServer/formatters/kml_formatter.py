@@ -29,11 +29,11 @@ def add_occurrence_set(parent, occ):
     """
     SubElement(
         parent, 'name', value='{} points (Occ Id: {})'.format(
-            occ.displayName, occ.getId()))
+            occ.displayName, occ.get_id()))
     SubElement(parent, 'open', value='1')
     SubElement(
         parent, 'description', value='{} points (Occ Id: {})'.format(
-            occ.displayName, occ.getId()))
+            occ.displayName, occ.get_id()))
 
     # TODO: Look at feature attributes and decide what to read
     for pt in occ.features:
@@ -71,7 +71,7 @@ def add_projection(parent, prj, visibility, indent=0):
         point: The projection to add
     """
     prj_name = 'Lifemapper projection {} - {}'.format(
-        prj.getId(), prj.speciesName)
+        prj.get_id(), prj.speciesName)
     if indent == 0:
         SubElement(parent, 'name', value=prj_name)
         SubElement(parent, 'description', value=prj_name)

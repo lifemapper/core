@@ -40,7 +40,7 @@ def rebuild_index_for_gridset(gridset_id):
             MFChain.META_CREATED_BY : os.path.basename(__file__),
             MFChain.META_DESCRIPTION : \
                 'Reindex PAMs for gridset {}, PAM {}'.format(
-                    gridset_id, pam.getId())
+                    gridset_id, pam.get_id())
         }
         new_wf = MFChain(user_id, priority=Priority.REQUESTED, metadata=wfMeta,
                              status=JobStatus.GENERAL, statusModTime=gmt().mjd)
@@ -49,7 +49,7 @@ def rebuild_index_for_gridset(gridset_id):
         # TODO: Determine what work directory should be
         work_dir = my_wf.getRelativeDirectory()
     
-        matrix_id = pam.getId()
+        matrix_id = pam.get_id()
         num_columns = scribe.countMatrixColumns(userId=user_id, 
                                                 matrixId=matrix_id)
         i = 0
@@ -63,7 +63,7 @@ def rebuild_index_for_gridset(gridset_id):
                 if os.path.exists(lyr.getDLocation()):
                     if lyr.minVal == lyr.maxVal and lyr.minVal == 0.0:
                         print(('No prediction for layer {}, skipping'.format(
-                            lyr.getId())))
+                            lyr.get_id())))
                     else:
                         mc.layer = lyr
                         mc.shapegrid = shapegrid

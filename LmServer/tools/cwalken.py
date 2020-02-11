@@ -591,7 +591,7 @@ class ChristopherWalken(LMObject):
         currtime = gmt().mjd
         
         try:
-            gsid = self.boomGridset.getId()
+            gsid = self.boomGridset.get_id()
         except:
             self.log.warning('Missing self.boomGridset id!!')
             
@@ -604,7 +604,7 @@ class ChristopherWalken(LMObject):
         if occ:
             squid = occ.squid
             
-            occ_work_dir = 'occ_{}'.format(occ.getId())
+            occ_work_dir = 'occ_{}'.format(occ.get_id())
             sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
             
             # If we have enough points to model
@@ -653,7 +653,7 @@ class ChristopherWalken(LMObject):
                 species_config_filename = os.path.join(
                     os.path.dirname(occ.getDLocation()),
                     'species_config_{}{}'.format(
-                        occ.getId(), LMFormat.JSON.ext))
+                        occ.get_id(), LMFormat.JSON.ext))
                 sweep_config.save_config(species_config_filename)
     
                 # Add sweep rule
@@ -665,7 +665,7 @@ class ChristopherWalken(LMObject):
                 # Add stockpile rule
                 stockpile_success_filename = os.path.join(
                     workdir, occ_work_dir, 'occ_{}stockpile.success'.format(
-                        occ.getId()))
+                        occ.get_id()))
                 stockpile_cmd = MultiStockpileCommand(
                     os.path.join(workdir, sweep_config.stockpile_filename),
                     stockpile_success_filename,
@@ -709,7 +709,7 @@ class ChristopherWalken(LMObject):
     # ...............................
     def _fill_sweep_config(self, sweep_config, alg, occ, prjs, mtxcols):
     #def _getSweepConfig(self, workdir, alg, occ, prjs, mtxcols):
-        #occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.getId()))
+        #occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.get_id()))
         #sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
         
         # Add occurrence set if status = 1 and there is a process to perform
@@ -717,7 +717,7 @@ class ChristopherWalken(LMObject):
             rawmeta_dloc = occ.getRawDLocation() + LMFormat.JSON.ext
             # TODO: replace metadata filename with metadata dict in self.columnMeta?
             sweep_config.add_occurrence_set(
-                occ.processType, occ.getId(), occ.getRawDLocation(),
+                occ.processType, occ.get_id(), occ.getRawDLocation(),
                 occ.getDLocation(), occ.getDLocation(largeFile=True),
                 POINT_COUNT_MAX, metadata=rawmeta_dloc,
                 delimiter=self.occ_delimiter)
@@ -746,7 +746,7 @@ class ChristopherWalken(LMObject):
                 multiplier = None
 
             sweep_config.add_projection(
-                prj.processType, prj.getId(), prj.getOccurrenceSetId(),
+                prj.processType, prj.get_id(), prj.getOccurrenceSetId(),
                 prj.occurrenceSet.getDLocation(),
                 alg, prj.modelScenario, prj.projScenario,
                 prj.getDLocation(), prj.getProjPackageFilename(),
@@ -757,10 +757,10 @@ class ChristopherWalken(LMObject):
 
         for mtxcol in mtxcols:
             pav_filename = os.path.join(
-                'pavs', 'pav_{}{}'.format(mtxcol.getId(), LMFormat.MATRIX.ext))
+                'pavs', 'pav_{}{}'.format(mtxcol.get_id(), LMFormat.MATRIX.ext))
             sweep_config.add_pav_intersect(
                  mtxcol.shapegrid.getDLocation(),
-                 mtxcol.getId(), prj.getId(), pav_filename,
+                 mtxcol.get_id(), prj.get_id(), pav_filename,
                  prj.squid,
                  mtxcol.intersectParams[
                      mtxcol.INTERSECT_PARAM_MIN_PRESENCE],
@@ -796,7 +796,7 @@ class ChristopherWalken(LMObject):
             else:
                 ptype = ProcessType.INTERSECT_VECTOR
             
-            tmpCol = MatrixColumn(None, mtx.getId(), self.userId, 
+            tmpCol = MatrixColumn(None, mtx.get_id(), self.userId, 
                            layer=prj, shapegrid=self.boomGridset.getShapegrid(), 
                            intersectParams=self.intersectParams, 
                            squid=prj.squid, ident=prj.ident,
@@ -805,7 +805,7 @@ class ChristopherWalken(LMObject):
                            status=JobStatus.GENERAL, statusModTime=currtime)
             mtxcol = self._scribe.findOrInsertMatrixColumn(tmpCol)
             if mtxcol is not None:
-                self.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
+                self.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.get_id()))
                 
                 # Reset processType, shapegrid obj (not in db)
                 mtxcol.processType = ptype
@@ -854,7 +854,7 @@ class ChristopherWalken(LMObject):
                            status=JobStatus.GENERAL, statusModTime=currtime)
             prj = self._scribe.findOrInsertSDMProject(tmpPrj)
             if prj is not None:
-                self.log.debug('Found/inserted SDMProject {}'.format(prj.getId()))
+                self.log.debug('Found/inserted SDMProject {}'.format(prj.get_id()))
                 # Fill in projection with input scenario layers, masks
                 prj._modelScenario = self.mdlScen
                 prj._projScenario = prjscen

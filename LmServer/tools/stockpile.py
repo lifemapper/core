@@ -166,7 +166,7 @@ class Stockpile(LMObject):
         except Exception as err:
             raise LMError(
                 'Exception updating object {} ({})'.format(
-                    obj.getId(), str(err)), err)
+                    obj.get_id(), str(err)), err)
 
     # ...............................................
     @classmethod

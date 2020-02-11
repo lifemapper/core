@@ -57,7 +57,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 # ...............................................
     def getScientificNameId(self):
         if self._scientificName is not None:
-            return self._scientificName.getId()
+            return self._scientificName.get_id()
         else:
             return None
 
@@ -234,7 +234,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         super(OccurrenceLayer, self).setId(occid)
         if occid is not None:
             if self.name is None:
-                self.name = self._earlJr.createLayername(occsetId=self.getId())
+                self.name = self._earlJr.createLayername(occsetId=self.get_id())
             self.setDLocation()
             self.resetMetadataUrl()
             self.setLocalMapFilename()
@@ -262,7 +262,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             related to this object
         """
         dloc = None
-        if self.getId() is not None:
+        if self.get_id() is not None:
             if raw:
                 ftype = LMFileType.OCCURRENCE_RAW_FILE
             elif makeflow:
@@ -271,7 +271,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 ftype = LMFileType.OCCURRENCE_LARGE_FILE
             else:
                 ftype = LMFileType.OCCURRENCE_FILE
-            occid = self.getId()
+            occid = self.get_id()
             dloc = self._earlJr.createFilename(
                 ftype, occsetId=occid, objCode=occid, usr=self._userId)
         return dloc
@@ -311,7 +311,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         @note: If the object has not yet been inserted into the database, a 
                  placeholder is used until replacement after database insertion.
         """
-        occid = self.getId()
+        occid = self.get_id()
         if occid is None:
             occid = ID_PLACEHOLDER
         lyrname = self._earlJr.createBasename(
@@ -343,7 +343,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         """
         @summary: Find mapfile containing this layer.  
         """
-        occid = self.getId()
+        occid = self.get_id()
         mapfilename = self._earlJr.createFilename(
             LMFileType.SDM_MAP, occsetId=occid, objCode=occid, usr=self._userId)
         return mapfilename      
@@ -377,7 +377,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # ...............................................
     @property
     def layerName(self):
-        return self._earlJr.createLayername(occsetId=self.getId())
+        return self._earlJr.createLayername(occsetId=self.get_id())
     
 # ...............................................
     def clearLocalMapfile(self):

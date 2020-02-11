@@ -229,7 +229,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                 rawMetaDLocation=self.metaFilename)
         try:
             occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
-            self.log.info('    Found/inserted OccLayer {}'.format(occ.getId()))
+            self.log.info('    Found/inserted OccLayer {}'.format(occ.get_id()))
         except Exception as e:
             if not isinstance(e, LMError):
                 e = LMError(e, line_num=self.get_line_num())
@@ -544,7 +544,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
                                 data=dataChunk, metadata=self.occParser.columnMeta)
                 if occ is not None:
                     self.log.info('WOC processed occset {}, name {}, with {} records; next start {}'
-                                  .format(occ.getId(), sciName.scientificName, 
+                                  .format(occ.get_id(), sciName.scientificName, 
                                           len(dataChunk), self.nextStart))
         return occ
     
@@ -742,7 +742,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                                                       data=bubbleFname)
             if occ:
                 self.log.info('WOC processed occset {}, opentreeId {}, with {} points; next start {}'
-                                  .format(occ.getId(), opentreeId, recordCount, self.nextStart))
+                                  .format(occ.get_id(), opentreeId, recordCount, self.nextStart))
         return occ
 
 # ...............................................
@@ -866,7 +866,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
             if occ.getUserId() == self.userId:
                 userOcc = occ
                 self.log.info('Found user occset {}, with {} points; next start {}'
-                                  .format(occ.getId(), occ.queryCount, self.nextStart))
+                                  .format(occ.get_id(), occ.queryCount, self.nextStart))
             elif occ.getUserId() == PUBLIC_USER:
                 tmpOcc = occ.copyForUser(self.userId)
                 sciName = self._scribe.getTaxon(squid=occ.squid)
@@ -888,11 +888,11 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                 
                 self._scribe.updateObject(userOcc)
                 self.log.info('Copy/insert occset {} to {}, with {} points; next start {}'
-                                  .format(occ.getId(), userOcc.getId(), 
+                                  .format(occ.get_id(), userOcc.get_id(), 
                                              userOcc.queryCount, self.nextStart))
             else:
                 self._scribe.log.info('Unauthorized user {} for ID {}'
-                                            .format(occ.getUserId(), occ.getId()))
+                                            .format(occ.getUserId(), occ.get_id()))
         return userOcc
     
 """

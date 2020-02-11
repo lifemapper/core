@@ -139,13 +139,13 @@ class ParameterSweepConfiguration:
             scenario : A Scenario object populated with layers
             ext : The raster extension to use for layers (.tif or .asc)
         """
-        identifier = 'scenario_{}_{}'.format(scenario.getId(), ext)
+        identifier = 'scenario_{}_{}'.format(scenario.get_id(), ext)
         layer_obj = {RegistryKey.LAYER: []}
 
         for lyr in scenario.layers:
             layer_obj[RegistryKey.LAYER].append(
                 {
-                    RegistryKey.IDENTIFIER: 'layer-{}'.format(lyr.getId()),
+                    RegistryKey.IDENTIFIER: 'layer-{}'.format(lyr.get_id()),
                     RegistryKey.PATH: '{}{}'.format(os.path.splitext(
                         lyr.getDLocation())[0], ext)})
         return identifier, layer_obj

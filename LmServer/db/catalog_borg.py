@@ -671,7 +671,7 @@ class Borg(DbPostgresql):
                     with Scenarios
         """
         if scenPkg:
-            scenPkgId = scenPkg.getId()
+            scenPkgId = scenPkg.get_id()
             userId = scenPkg.getUserId()
             scenPkgName = scenPkg.name
         row, idxs = self.executeSelectOneFunction('lm_getScenPackage',
@@ -698,7 +698,7 @@ class Borg(DbPostgresql):
         """
         scenPkgs = []
         if scen:
-            scenId = scen.getId()
+            scenId = scen.get_id()
             userId = scen.getUserId()
             scenCode = scen.code
         rows, idxs = self.executeSelectManyFunction('lm_getScenPackagesForScenario',
@@ -724,7 +724,7 @@ class Borg(DbPostgresql):
         """
         scens = []
         if scenPkg:
-            scenPkgId = scenPkg.getId()
+            scenPkgId = scenPkg.get_id()
             userId = scenPkg.getUserId()
             scenPkgName = scenPkg.name
         rows, idxs = self.executeSelectManyFunction('lm_getScenariosForScenPackage',
@@ -732,7 +732,7 @@ class Borg(DbPostgresql):
         for r in rows:
             scen = self._createScenario(r, idxs, isForModel=False)
             if scen is not None and fillLayers:
-                lyrs = self.getScenarioLayers(scen.getId())
+                lyrs = self.getScenarioLayers(scen.get_id())
                 scen.setLayers(lyrs)
             scens.append(scen)
 
@@ -868,7 +868,7 @@ class Borg(DbPostgresql):
             wkt = lyr.getWkt()
         meta = lyr.dumpLyrMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer',
-                                    lyr.getId(), lyr.getUserId(), lyr.squid, lyr.verify, 
+                                    lyr.get_id(), lyr.getUserId(), lyr.squid, lyr.verify, 
                                     lyr.name, lyr.getDLocation(), meta, lyr.dataFormat, 
                                     lyr.gdalType, lyr.ogrType, lyr.valUnits, 
                                     lyr.nodataVal, lyr.minVal, lyr.maxVal, 
@@ -890,7 +890,7 @@ class Borg(DbPostgresql):
         meta = shpgrd.dumpParamMetadata()
         gdaltype = valunits = nodataval = minval = maxval = None
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
-                                    shpgrd.getId(), shpgrd.getUserId(), 
+                                    shpgrd.get_id(), shpgrd.getUserId(), 
                                     shpgrd.squid, shpgrd.verify, shpgrd.name,
                                     shpgrd.getDLocation(), meta,
                                     shpgrd.dataFormat, gdaltype, shpgrd.ogrType, 
@@ -912,7 +912,7 @@ class Borg(DbPostgresql):
         """
         meta = grdset.dumpGrdMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertGridset',
-                                                                            grdset.getId(),
+                                                                            grdset.get_id(),
                                                                             grdset.getUserId(),
                                                                             grdset.name,
                                                                             grdset.shapeGridId,
@@ -995,7 +995,7 @@ class Borg(DbPostgresql):
                                                   userId, name)
         fullGset = self._createGridset(row, idxs)
         if fullGset is not None and fillMatrices:
-            mtxs = self.getMatricesForGridset(fullGset.getId(), None)
+            mtxs = self.getMatricesForGridset(fullGset.get_id(), None)
             for m in mtxs:
                 # addMatrix sets userid
                 fullGset.addMatrix(m)
@@ -1062,7 +1062,7 @@ class Borg(DbPostgresql):
         """
         meta = grdset.dumpGrdMetadata()
         success = self.executeModifyFunction('lm_updateGridset', 
-                                             grdset.getId(), 
+                                             grdset.get_id(), 
                                              grdset.treeId, 
                                              grdset.getDLocation(),
                                              meta, grdset.modTime)
@@ -1101,7 +1101,7 @@ class Borg(DbPostgresql):
         """
         meta = shpgrd.dumpLyrMetadata()
         success = self.executeModifyFunction('lm_updateShapeGrid',
-                                shpgrd.getId(), shpgrd.verify, shpgrd.getDLocation(),
+                                shpgrd.get_id(), shpgrd.verify, shpgrd.getDLocation(),
                                 meta, shpgrd.modTime, shpgrd.size, 
                                 shpgrd.status, shpgrd.statusModTime)
         return success
@@ -1178,7 +1178,7 @@ class Borg(DbPostgresql):
         envmeta = lyr.dumpParamMetadata()
         lyrmeta = lyr.dumpLyrMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction(
-                                    'lm_findOrInsertEnvLayer', lyr.getId(), 
+                                    'lm_findOrInsertEnvLayer', lyr.get_id(), 
                                     lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
                                     lyr.getDLocation(), 
                                     lyrmeta, lyr.dataFormat,  lyr.gdalType, lyr.ogrType, 
@@ -1283,7 +1283,7 @@ class Borg(DbPostgresql):
 #         @return: True/False for success of operation
 #         """
 #         success = self.executeModifyFunction('lm_deleteScenarioLayer', 
-#                                                          envlyr.getId(), scenarioId)            
+#                                                          envlyr.get_id(), scenarioId)            
 #         return success
 
 # ...............................................
@@ -1297,7 +1297,7 @@ class Borg(DbPostgresql):
         @note: If the EnvType is orphaned, it will also be removed
         """
         success = self.executeModifyFunction('lm_deleteEnvLayer', 
-                                                         envlyr.getId())            
+                                                         envlyr.get_id())            
         return success
 
 # ...............................................
@@ -1531,7 +1531,7 @@ class Borg(DbPostgresql):
                  values, (taxonomySource, taxonKey, userId, sciname).
         """
         success = self.executeModifyFunction('lm_updateTaxon', 
-                                                         sciName.getId(),
+                                                         sciName.get_id(),
                                                          sciName.kingdom, 
                                                          sciName.phylum,
                                                          sciName.txClass, 
@@ -1582,7 +1582,7 @@ class Borg(DbPostgresql):
                                                                 userId, code)
         scen = self._createScenario(row, idxs)
         if scen is not None and fillLayers:
-            lyrs = self.getScenarioLayers(scen.getId())
+            lyrs = self.getScenarioLayers(scen.get_id())
             scen.setLayers(lyrs)
         return scen
 
@@ -1637,7 +1637,7 @@ class Borg(DbPostgresql):
             pass
         try:
             success = self.executeModifyFunction('lm_updateOccurrenceSet', 
-                                                             occ.getId(), 
+                                                             occ.get_id(), 
                                                              occ.verify,
                                                              occ.displayName,
                                                              occ.getDLocation(), 
@@ -1677,7 +1677,7 @@ class Borg(DbPostgresql):
         try:
             success = self.executeModifyFunction('lm_updateSDMProjectLayer', 
                                                              proj.getParamId(), 
-                                                             proj.getId(), 
+                                                             proj.get_id(), 
                                                              proj.verify,
                                                              proj.getDLocation(), 
                                                              lyrmeta,
@@ -1712,7 +1712,7 @@ class Borg(DbPostgresql):
             pointswkt = occ.getWkt()
             
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceSet', 
-                                        occ.getId(), occ.getUserId(), occ.squid, 
+                                        occ.get_id(), occ.getUserId(), occ.squid, 
                                         occ.verify, occ.displayName,
                                         occ.getDLocation(), occ.getRawDLocation(),
                                         pointtotal, occ.getCSVExtentString(), occ.epsgcode,
@@ -1809,8 +1809,8 @@ class Borg(DbPostgresql):
         @note: If dependent SDMProject is input to a MatrixColumn of a 
                  Rolling (Global) PAM, the MatrixColumn will also be deleted.
         """
-        pavDelcount = self._deleteOccsetDependentMatrixCols(occ.getId(), occ.getUserId())
-        success = self.executeModifyFunction('lm_deleteOccurrenceSet', occ.getId())
+        pavDelcount = self._deleteOccsetDependentMatrixCols(occ.get_id(), occ.getUserId())
+        success = self.executeModifyFunction('lm_deleteOccurrenceSet', occ.get_id())
         return success
 
 # ...............................................
@@ -1874,14 +1874,14 @@ class Borg(DbPostgresql):
 #                                                     None, None, True)
 #         self.log.info('{} ROLLING PAMs for User {}'.format(len(gpamMtxAtoms), usr))
 #         if len(gpamMtxAtoms) > 0:
-#             gpamIds = [gpam.getId() for gpam in gpamMtxAtoms]
+#             gpamIds = [gpam.get_id() for gpam in gpamMtxAtoms]
 #             # Database will trigger delete of dependent projections on Occset delete
 #             _, pavs = self._findOccsetDependents(occId, usr, returnProjs=False, 
 #                                                              returnMtxCols=True)
 #             for pav in pavs:
 #                 if pav.parentId in gpamIds:
 #                     success = self.executeModifyFunction('lm_deleteMatrixColumn', 
-#                                                                      pav.getId())
+#                                                                      pav.get_id())
 #                     if success:
 #                         delcount += 1
 #             self.log.info('Deleted {} PAVs from {} ROLLING PAMs'
@@ -1906,7 +1906,7 @@ class Borg(DbPostgresql):
                                              None, None, occId, None, None, None, not(returnProjs))
         if returnMtxCols:
             for prj in prjs:
-                layerid = prj.getId() 
+                layerid = prj.get_id() 
                 pavs = self.listMatrixColumns(0, 500, usr, None, None, None, None, 
                                                         None, None, None, None, layerid, False)
         if not returnProjs:
@@ -1927,7 +1927,7 @@ class Borg(DbPostgresql):
         prjmeta = proj.dumpParamMetadata()
         algparams = proj.dumpAlgorithmParametersAsString()
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProjectLayer', 
-                            proj.getParamId(), proj.getId(), proj.getUserId(), 
+                            proj.getParamId(), proj.get_id(), proj.getUserId(), 
                             proj.squid, proj.verify, proj.name, proj.getDLocation(), 
                             lyrmeta, proj.dataFormat, proj.gdalType,
                             proj.ogrType, proj.valUnits, proj.nodataVal, proj.minVal,
@@ -2028,7 +2028,7 @@ class Borg(DbPostgresql):
                 lyrid = newOrExistingLyr.getLayerId()
 
                 # Shapegrid is already in db
-                shpid = mtxcol.shapegrid.getId()
+                shpid = mtxcol.shapegrid.get_id()
 
         mcmeta = mtxcol.dumpParamMetadata()
         intparams = mtxcol.dumpIntersectParams()
@@ -2053,7 +2053,7 @@ class Borg(DbPostgresql):
         meta = mtxcol.dumpParamMetadata()
         intparams = mtxcol.dumpIntersectParams()
         success = self.executeModifyFunction('lm_updateMatrixColumn', 
-                                                         mtxcol.getId(), 
+                                                         mtxcol.get_id(), 
                                                          mtxcol.getMatrixIndex(),
                                                          meta, intparams,
                                                          mtxcol.status, mtxcol.statusModTime)
@@ -2073,7 +2073,7 @@ class Borg(DbPostgresql):
         if mtxcol is not None:
             intparams = mtxcol.dumpIntersectParams()
             row, idxs = self.executeSelectOneFunction('lm_getMatrixColumn', 
-                                                                    mtxcol.getId(),
+                                                                    mtxcol.get_id(),
                                                                     mtxcol.parentId,
                                                                     mtxcol.getMatrixIndex(),
                                                                     mtxcol.getLayerId(),
@@ -2263,7 +2263,7 @@ class Borg(DbPostgresql):
         """
         meta = mtx.dumpMtxMetadata()
         success = self.executeModifyFunction('lm_updateMatrix', 
-                                                         mtx.getId(), mtx.getDLocation(),
+                                                         mtx.get_id(), mtx.getDLocation(),
                                                          meta, mtx.status, mtx.statusModTime)
         return success
     
@@ -2350,7 +2350,7 @@ class Borg(DbPostgresql):
         """
         meta = mtx.dumpMtxMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrix', 
-                            mtx.getId(), mtx.matrixType, mtx.parentId, 
+                            mtx.get_id(), mtx.matrixType, mtx.parentId, 
                             mtx.gcmCode, mtx.altpredCode, mtx.dateCode, 
                             mtx.algorithmCode,
                             mtx.getDLocation(), meta, mtx.status, 
@@ -2426,7 +2426,7 @@ class Borg(DbPostgresql):
         """
         meta = tree.dumpTreeMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTree', 
-                            tree.getId(), tree.getUserId(), tree.name, 
+                            tree.get_id(), tree.getUserId(), tree.name, 
                             tree.getDLocation(), tree.isBinary(), tree.isUltrametric(),
                             tree.hasBranchLengths(), meta, tree.modTime)
         newOrExistingTree = self._createTree(row, idxs)
@@ -2442,7 +2442,7 @@ class Borg(DbPostgresql):
         """
         row = None
         if tree is not None:
-            row, idxs = self.executeSelectOneFunction('lm_getTree', tree.getId(),
+            row, idxs = self.executeSelectOneFunction('lm_getTree', tree.get_id(),
                                                                     tree.getUserId(),
                                                                     tree.name)
         else:
@@ -2618,7 +2618,7 @@ class Borg(DbPostgresql):
             success = self.updateTaxon(obj)
         elif isinstance(obj, Tree):
             meta = obj.dumpTreeMetadata()
-            success = self.executeModifyFunction('lm_updateTree', obj.getId(),
+            success = self.executeModifyFunction('lm_updateTree', obj.get_id(),
                                                              obj.getDLocation(), 
                                                              obj.isBinary(), 
                                                              obj.isUltrametric(), 
@@ -2644,7 +2644,7 @@ class Borg(DbPostgresql):
                  OccurrenceSet delete or recalc 
         """
         try:
-            objid = obj.getId()
+            objid = obj.get_id()
         except:
             try:
                 obj = obj.objId
@@ -2662,7 +2662,7 @@ class Borg(DbPostgresql):
             # Deletes ScenarioLayer join; only deletes layers if they are orphaned
             for lyr in obj.layers:
                 success = self.executeModifyFunction('lm_deleteScenarioLayer', 
-                                                                 lyr.getId(), objid)            
+                                                                 lyr.get_id(), objid)            
             success = self.executeModifyFunction('lm_deleteScenario', objid)
         elif isinstance(obj, MatrixColumn):
             success = self.executeModifyFunction('lm_deleteMatrixColumn', objid)

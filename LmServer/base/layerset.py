@@ -298,7 +298,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
     def setMapPrefix(self, mapprefix=None):
         if mapprefix is None:
             mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.OTHER_MAP, 
-                                      objCode=self.getId(), mapname=self.mapName, 
+                                      objCode=self.get_id(), mapname=self.mapName, 
                                       usr=self._userId, epsg=self.epsgcode)
         self._mapPrefix = mapprefix
       
@@ -311,13 +311,13 @@ class MapLayerSet(_LayerSet, ServiceObject):
         fname = None
         if self._mapType == LMFileType.SDM_MAP:
             fname = self._earlJr.createFilename(self._mapType, 
-                                               occsetId=self.getId(), 
+                                               occsetId=self.get_id(), 
                                                usr=self._userId)
         # This will not occur here? only in 
         # LmServer.base.legion.gridset.Gridset
         elif self._mapType == LMFileType.RAD_MAP:
             fname = self._earlJr.createFilename(self._mapType, 
-                                               gridsetId=self.getId(),
+                                               gridsetId=self.get_id(),
                                                usr=self._userId)
         elif self._mapType == LMFileType.OTHER_MAP:
             fname = self._earlJr.createFilename(self._mapType, 

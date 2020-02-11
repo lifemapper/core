@@ -94,7 +94,7 @@ class GlobalPAMService(LmService):
             archiveName, matches, bbox=bbox, cell_size=cellSize)
         cherrypy.response.status = 202
         return Atom(
-            gridset.getId(), gridset.name, gridset.metadataUrl,
+            gridset.get_id(), gridset.name, gridset.metadataUrl,
             gridset.modTime, epsg=gridset.epsgcode)
 
     # ................................

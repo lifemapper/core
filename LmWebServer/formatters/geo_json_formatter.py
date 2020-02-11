@@ -203,7 +203,7 @@ def _format_object(obj):
             mtx = Matrix.load_flo(obj.getDLocation())
             cherrypy.response.headers[
                 'Content-Disposition'
-                ] = 'attachment; filename="mtx_{}.geojson"'.format(obj.getId())
+                ] = 'attachment; filename="mtx_{}.geojson"'.format(obj.get_id())
             return geo_jsonify(
                 shapegrid.getDLocation(), matrix=mtx, mtxJoinAttrib=0)
 

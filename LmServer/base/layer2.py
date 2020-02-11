@@ -657,7 +657,7 @@ class Raster(_Layer):
         @note: the ServiceObject._dbId may contain a join id or LayerId depending 
                  on the type of Layer being requested
         """
-        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.get_id(), 
                                                             interface)
         return durl
 
@@ -1260,7 +1260,7 @@ class Vector(_Layer):
         @note: the ServiceObject._dbId may contain a join id or LayerId depending 
                  on the type of Layer being requested
         """
-        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.get_id(), 
                                                             interface)
         return durl
 

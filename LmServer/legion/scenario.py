@@ -283,7 +283,7 @@ class Scenario(MapLayerSet):
         @raise LMError: on layer that is not EnvLayer 
         """
         if lyr is not None:
-            if lyr.getId() is None or self.getLayer(lyr.metadataUrl) is None:
+            if lyr.get_id() is None or self.getLayer(lyr.metadataUrl) is None:
                 if isinstance(lyr, EnvLayer):
                     self._layers.append(lyr)
                     self._bbox = MapLayerSet._getIntersectBounds(self)

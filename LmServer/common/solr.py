@@ -172,7 +172,7 @@ def add_taxa_to_taxonomy_index(sciname_objects):
                    [SOLR_TAXONOMY_FIELDS.USER_ID, sno.userId],
                    [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
                     sno.taxonomySourceId],
-                   [SOLR_TAXONOMY_FIELDS.ID, sno.getId()]
+                   [SOLR_TAXONOMY_FIELDS.ID, sno.get_id()]
         ])
     post_doc = build_solr_document(doc_pairs)
     # Note: This is somewhat redundant.

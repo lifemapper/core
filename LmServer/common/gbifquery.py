@@ -342,7 +342,7 @@ class GBIFData(LMObject):
         # Should already be simple/canonical name
         simplename = self._simplifyName(occ.displayName)
         self.log.info('Updating existing Occ %d: %s (simplified %s)' 
-                          % (occ.getId(), occ.displayName, simplename))
+                          % (occ.get_id(), occ.displayName, simplename))
         
         # just in case we have leftover complex name, or redefine 'simple'
         if occ.displayName != simplename:

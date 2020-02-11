@@ -54,9 +54,9 @@ class BoomCollate(LMObject):
         self.user_id = gridset.getUserId()
         if work_dir is not None:
             self.workspace_dir = os.path.join(
-                work_dir, 'gs_{}'.format(gridset.getId()))
+                work_dir, 'gs_{}'.format(gridset.get_id()))
         else:
-            self.workspace_dir = 'gs_{}'.format(gridset.getId())
+            self.workspace_dir = 'gs_{}'.format(gridset.get_id())
         
         if dependencies is None:
             self.dependencies = []
@@ -200,7 +200,7 @@ class BoomCollate(LMObject):
         Args:
             pam (:obj: `Matrix`): The PAM to use for MCPA
         """
-        pam_id = pam.getId()
+        pam_id = pam.get_id()
         mcpa_tree_encode_rules = []
         
         # File names
@@ -298,7 +298,7 @@ class BoomCollate(LMObject):
             userId=self.user_id, gridset=self.gridset)
         mtx = self._scribe.findOrInsertMatrix(new_mtx)
         mtx.updateStatus(JobStatus.INITIALIZE)
-        self.log.debug('Inserted or found matrix {}'.format(mtx.getId()))
+        self.log.debug('Inserted or found matrix {}'.format(mtx.get_id()))
         return mtx
 
     # ................................
@@ -313,7 +313,7 @@ class BoomCollate(LMObject):
         (pam_success_filename, pam_assembly_rules
          ) = self._get_rules_for_pam_assembly(pam)
         pam_rules.extend(pam_assembly_rules)
-        pam_id = pam.getId()
+        pam_id = pam.get_id()
         
         # Initialize variables
         pruned_pam_filename = pam.getDLocation()
@@ -344,7 +344,7 @@ class BoomCollate(LMObject):
             #    know that the tree has squids
             (anc_pam_filename, anc_pam_rules
              ) = self._get_ancestral_pam_rules_for_pam(
-                 pam.getId(), pam.getDLocation(), self.squid_tree_filename,
+                 pam.get_id(), pam.getDLocation(), self.squid_tree_filename,
                  pruned_tree_filename,
                  pam_success_filename=pam_success_filename)
             pam_rules.extend(anc_pam_rules)
@@ -353,7 +353,7 @@ class BoomCollate(LMObject):
                 pam.altpredCode, pam.dateCode)
             pam_rules.append(
                 StockpileCommand(
-                    ProcessType.RAD_CALCULATE, anc_pam_mtx.getId(),
+                    ProcessType.RAD_CALCULATE, anc_pam_mtx.get_id(),
                     self._create_filename(pam_id, 'anc_pam.success'),
                     [anc_pam_filename]).get_makeflow_rule())
         
@@ -390,7 +390,7 @@ class BoomCollate(LMObject):
         # Analysis rules
         (pam_stats_filenames, mcpa_filenames, analysis_rules
          ) = self._get_analysis_rules_for_pam(
-             pam.getId(), pruned_pam_filename, grim_filename=grim_filename,
+             pam.get_id(), pruned_pam_filename, grim_filename=grim_filename,
              biogeo_filename=biogeo_filename,
              phylo_filename=encoded_tree_filename,
              tree_filename=pruned_tree_filename,
@@ -404,17 +404,17 @@ class BoomCollate(LMObject):
         if len(pam_stats_filenames) > 0:
             pam_rules.append(
                 StockpileCommand(
-                    ProcessType.RAD_CALCULATE, diversity_obs_mtx.getId(),
+                    ProcessType.RAD_CALCULATE, diversity_obs_mtx.get_id(),
                     self._create_filename(pam_id, 'diversity_stats.success'),
                     [pam_stats_filenames[0]]).get_makeflow_rule())
             pam_rules.append(
                 StockpileCommand(
-                    ProcessType.RAD_CALCULATE, species_obs_mtx.getId(),
+                    ProcessType.RAD_CALCULATE, species_obs_mtx.get_id(),
                     self._create_filename(pam_id, 'species_stats.success'),
                     [pam_stats_filenames[1]]).get_makeflow_rule())
             pam_rules.append(
                 StockpileCommand(
-                    ProcessType.RAD_CALCULATE, sites_obs_mtx.getId(),
+                    ProcessType.RAD_CALCULATE, sites_obs_mtx.get_id(),
                     self._create_filename(pam_id, 'site_stats.success'),
                     [pam_stats_filenames[2]]).get_makeflow_rule())
         
@@ -422,7 +422,7 @@ class BoomCollate(LMObject):
         if len(mcpa_filenames) > 0:
             pam_rules.append(
                 StockpileCommand(
-                    ProcessType.MCPA_ASSEMBLE, mcpa_out_mtx.getId(),
+                    ProcessType.MCPA_ASSEMBLE, mcpa_out_mtx.get_id(),
                     self._create_filename(pam_id, 'mcpa.success'),
                     mcpa_filenames).get_makeflow_rule())
 
@@ -442,9 +442,9 @@ class BoomCollate(LMObject):
             Tuple of PAM file location and assembly rules
         """
         assembly_rules = []
-        pam_id = pam.getId()
+        pam_id = pam.get_id()
         pam_assembly_success_filename = self._create_filename(
-            pam_id, 'pam_{}_assembly.success'.format(pam.getId()))
+            pam_id, 'pam_{}_assembly.success'.format(pam.get_id()))
         assembly_rules.append(AssemblePamFromSolrQueryCommand(
             pam_id, pam.getDLocation(), pam_assembly_success_filename,
             dependency_files=self.dependencies).get_makeflow_rule())
@@ -475,7 +475,7 @@ class BoomCollate(LMObject):
             self.user_id, metadata=meta, status=JobStatus.GENERAL,
             statusModTime=gmt().mjd)
         mf_chain = self._scribe.insertMFChain(
-            new_makeflow, self.gridset.getId())
+            new_makeflow, self.gridset.get_id())
         self._scribe.updateObject(mf_chain)
         
         # Get rules
@@ -506,7 +506,7 @@ class BoomCollate(LMObject):
             tree_success_filename = os.path.join(
                 self.workspace_dir, 'tree_squid.success')
             tree_cmd = SquidAndLabelTreeCommand(
-                self.gridset.tree.getId(), self.user_id,
+                self.gridset.tree.get_id(), self.user_id,
                 tree_success_filename)
             tree_cmd.inputs.append(self.squid_tree_filename)
             rules.append(tree_cmd.get_makeflow_rule(local=True))
@@ -518,7 +518,7 @@ class BoomCollate(LMObject):
             self.squid_tree_filename = None
 
         for pam in self.gridset.getAllPAMs():
-            self.log.debug('Adding rules for PAM {}'.format(pam.getId()))
+            self.log.debug('Adding rules for PAM {}'.format(pam.get_id()))
             rules.extend(self._get_rules_for_pam(pam))
         
         return rules

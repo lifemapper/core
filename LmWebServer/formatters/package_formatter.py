@@ -284,7 +284,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
             scn = prj.projScenario
             prj_info.append(
                 {
-                    'prj_id': prj.getId(),
+                    'prj_id': prj.get_id(),
                     'file_path': arc_prj_path,
                     'image_path': arc_prj_img_path,
                     'scenario_code': prj.projScenarioCode,
@@ -300,7 +300,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
                 })
 
         # Add occurrence set
-        if occ.getId() not in added_occ_ids:
+        if occ.get_id() not in added_occ_ids:
             arc_occ_path = os.path.join(
                 prj_dir, '{}.csv'.format(occ.displayName))
             sys_occ_path = '{}{}'.format(
@@ -326,10 +326,10 @@ def _add_sdms_to_package(zip_f, projections, scribe):
             zip_f.writestr(arc_occ_path, occ_string_io.getvalue())
             occ_string_io = None
             # zip_f.write(sys_occ_path, arc_occ_path)
-            added_occ_ids.append(occ.getId())
+            added_occ_ids.append(occ.get_id())
             occ_info.append(
                 {
-                    'occ_id': occ.getId(),
+                    'occ_id': occ.get_id(),
                     'species_name': occ.displayName,
                     'num_points': occ.queryCount,
                     'file_path': arc_occ_path
@@ -372,7 +372,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
     try:
         gs_name = gridset.name
     except AttributeError:
-        gs_name = 'Gridset {}'.format(gridset.getId())
+        gs_name = 'Gridset {}'.format(gridset.get_id())
     shapegrid = gridset.getShapegrid()
     matrices = gridset.getMatrices()
     do_mcpa = False
@@ -396,7 +396,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 0, MAX_PROJECTIONS, userId=user_id,
                 afterStatus=JobStatus.COMPLETE - 1,
                 beforeStatus=JobStatus.COMPLETE + 1,
-                gridsetId=gridset.getId(), atom=False)
+                gridsetId=gridset.get_id(), atom=False)
             occ_info, prj_info = _add_sdms_to_package(
                 zip_f, projections, scribe)
 
@@ -410,25 +410,25 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
                     pam = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
-                        MATRIX_DIR, 'pam_{}.csv'.format(mtx.getId()))
+                        MATRIX_DIR, 'pam_{}.csv'.format(mtx.get_id()))
                 elif mtx.matrixType == MatrixType.ANC_PAM:
                     anc_pam = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
-                        MATRIX_DIR, 'anc_pam_{}.csv'.format(mtx.getId()))
+                        MATRIX_DIR, 'anc_pam_{}.csv'.format(mtx.get_id()))
                 elif mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
                     sites_cov_obs = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'sitesCovarianceObserved_{}.csv'.format(
-                            mtx.getId()))
+                            mtx.get_id()))
                 elif mtx.matrixType == MatrixType.SITES_OBSERVED:
                     sites_obs = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
-                        MATRIX_DIR, 'sitesObserved_{}.csv'.format(mtx.getId()))
+                        MATRIX_DIR, 'sitesObserved_{}.csv'.format(mtx.get_id()))
                     do_pam_stats = True
                 elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
                     mcpa_mtx = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
-                        MATRIX_DIR, 'mcpa_{}.csv'.format(mtx.getId()))
+                        MATRIX_DIR, 'mcpa_{}.csv'.format(mtx.get_id()))
                     do_mcpa = True
                 else:
                     csv_mtx_fn = os.path.join(
@@ -452,7 +452,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
         gs_eml = tostring(make_eml(gridset))
         zip_f.writestr(
             os.path.join(
-                GRIDSET_DIR, 'gridset_{}.eml'.format(gridset.getId())), gs_eml)
+                GRIDSET_DIR, 'gridset_{}.eml'.format(gridset.get_id())), gs_eml)
 
         # Tree
         if gridset.tree is not None and \
@@ -677,7 +677,7 @@ def gridset_package_formatter(gridset, include_csv=True, include_sdm=True,
         scribe.openConnections()
 
         # Check progress counts
-        gridset_id = gridset.getId()
+        gridset_id = gridset.get_id()
         # prj_summary = scribe.summarizeSDMProjectsForGridset(gridset_id)
         # mtx_summary = scribe.summarizeMatricesForGridset(gridset_id)
         mf_summary = scribe.summarizeMFChainsForGridset(gridset_id)
@@ -721,7 +721,7 @@ def gridset_package_formatter(gridset, include_csv=True, include_sdm=True,
     sanitized_gridset_name = ''.join(
         [c for c in gridset.name if c.isalnum() or c in keep_chars]).rstrip()
     if len(sanitized_gridset_name) == 0:
-        sanitized_gridset_name = 'gridset-{}'.format(gridset.getId())
+        sanitized_gridset_name = 'gridset-{}'.format(gridset.get_id())
     out_package_name = '{}{}'.format(sanitized_gridset_name, LMFormat.ZIP.ext)
     cherrypy.response.headers[
         'Content-Disposition'] = 'attachment; filename="{}"'.format(

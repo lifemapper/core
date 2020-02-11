@@ -92,7 +92,7 @@ class Tree(TreeWrapper, ServiceObject):
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
         """
-        dloc = self._earlJr.createFilename(LMFileType.TREE,  objCode=self.getId(), 
+        dloc = self._earlJr.createFilename(LMFileType.TREE,  objCode=self.get_id(), 
                                            usr=self.getUserId())
         return dloc
 
@@ -127,7 +127,7 @@ class Tree(TreeWrapper, ServiceObject):
 
     # ...............................................
     def getDataUrl(self, interface=JSON_INTERFACE):
-        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.get_id(), 
                                                interface)
         return durl
 

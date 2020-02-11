@@ -62,7 +62,7 @@ class Gridset(ServiceObject): #LMMap
             if userId is None:
                 userId = shapeGrid.getUserId()
             if shapeGridId is None:
-                shapeGridId = shapeGrid.getId()
+                shapeGridId = shapeGrid.get_id()
             if epsgcode is None:
                 epsgcode = shapeGrid.epsgcode
             elif epsgcode != shapeGrid.epsgcode:
@@ -118,7 +118,7 @@ class Gridset(ServiceObject): #LMMap
     @property
     def treeId(self):
         try:
-            return self._tree.getId()
+            return self._tree.get_id()
         except:
             return None
             
@@ -135,7 +135,7 @@ class Gridset(ServiceObject): #LMMap
         """
         if mapfname is None:
             mapfname = self._earlJr.createFilename(LMFileType.RAD_MAP, 
-                                                            gridsetId=self.getId(),
+                                                            gridsetId=self.get_id(),
                                                             usr=self._userId)
         self._mapFilename = mapfname
 
@@ -158,7 +158,7 @@ class Gridset(ServiceObject): #LMMap
         @note: If the object has not yet been inserted into the database, a 
                  placeholder is used until replacement after database insertion.
         """
-        grdid = self.getId()
+        grdid = self.get_id()
         if grdid is None:
             grdid = ID_PLACEHOLDER
         mapprefix = self._earlJr.constructMapPrefixNew(urlprefix=self.metadataUrl,
@@ -215,11 +215,11 @@ class Gridset(ServiceObject): #LMMap
     def setPath(self):
         if self._path is None:
             if (self._userId is not None and 
-                 self.getId() and 
+                 self.get_id() and 
                  self._getEPSG() is not None):
                 self._path = self._earlJr.createDataPath(self._userId, 
                                          LMFileType.UNSPECIFIED_RAD,
-                                         epsg=self._epsg, gridsetId=self.getId())
+                                         epsg=self._epsg, gridsetId=self.get_id())
             else:
                 raise LMError()
             
@@ -236,8 +236,8 @@ class Gridset(ServiceObject): #LMMap
         @note: If the object does not have an ID, this returns None
         """
         dloc = self._earlJr.createFilename(LMFileType.GRIDSET_PACKAGE, 
-                                                      objCode=self.getId(), 
-                                                      gridsetId=self.getId(), 
+                                                      objCode=self.get_id(), 
+                                                      gridsetId=self.get_id(), 
                                                       usr=self.getUserId())
         return dloc
 
@@ -270,7 +270,7 @@ class Gridset(ServiceObject): #LMMap
                      function name, modify the package formatter.
         """
         return os.path.join(os.path.dirname(self.getDLocation()), 
-                            'gs_{}_package{}'.format(self.getId(), LMFormat.ZIP.ext))
+                            'gs_{}_package{}'.format(self.get_id(), LMFormat.ZIP.ext))
 
 # ...............................................
     def setMatrices(self, matrices, doRead=False):
@@ -292,8 +292,8 @@ class Gridset(ServiceObject): #LMMap
         if isinstance(tree, Tree):
             tree.setUserId(self.getUserId())
             # Make sure to set the parent Id and URL
-            if self.getId() is not None:
-                tree.parentId = self.getId()
+            if self.get_id() is not None:
+                tree.parentId = self.get_id()
                 tree.setParentMetadataUrl(self.metadataUrl)
             self._tree = tree
 
@@ -314,14 +314,14 @@ class Gridset(ServiceObject): #LMMap
                 mtx.setUserId(usr)
             if mtx is not None:
                 # Make sure to set the parent Id and URL
-                if self.getId() is not None:
-                    mtx.parentId = self.getId()
+                if self.get_id() is not None:
+                    mtx.parentId = self.get_id()
                     mtx.setParentMetadataUrl(self.metadataUrl)
-                if mtx.getId() is None:
+                if mtx.get_id() is None:
                     self._matrices.append(mtx)
                 else:
-                    existingIds = [m.getId() for m in self._matrices]
-                    if mtx.getId() not in existingIds:
+                    existingIds = [m.get_id() for m in self._matrices]
+                    if mtx.get_id() not in existingIds:
                         self._matrices.append(mtx)
                                                     
     def getMatrices(self):

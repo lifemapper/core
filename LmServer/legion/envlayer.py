@@ -92,7 +92,7 @@ class EnvLayer(EnvType, Raster):
    @classmethod
    def initFromParts(cls, raster, envType, envLayerId=None, scencode=None):
       envLyr = EnvLayer(raster.name, raster.getUserId(), raster.epsgcode, 
-                  scencode=scencode, lyrId=raster.getId(), squid=raster.squid, 
+                  scencode=scencode, lyrId=raster.get_id(), squid=raster.squid, 
                   ident=raster.ident, verify=raster.verify, dlocation=raster.getDLocation(),
                   lyrMetadata=raster.lyrMetadata, dataFormat=raster.dataFormat, 
                   gdalType=raster.gdalType, valUnits=raster.valUnits, 

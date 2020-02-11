@@ -67,7 +67,7 @@ def _getBioGeoMatrix(scribe, usr, gridset, layers=[]):
         bgMtx = scribe.findOrInsertMatrix(tmpMtx)
         if bgMtx is not None:
             scribe.log.info('  Found or added biogeo hypotheses matrix {}'
-                            .format(bgMtx.getId()))
+                            .format(bgMtx.get_id()))
         else:
             scribe.log.info('  Failed to add biogeo hypotheses matrix')
     return bgMtx
@@ -127,7 +127,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
             'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
                 ServiceObject.META_TITLE.lower() : 
             'Biogeographic hypothesis column ({})'.format(col_name)}
-            mc = MatrixColumn(len(mtxCols), bgMtx.getId(), usr, layer=lyr,
+            mc = MatrixColumn(len(mtxCols), bgMtx.get_id(), usr, layer=lyr,
                                     shapegrid=shapegrid, intersectParams=intParams, 
                                     metadata=metadata, postToSolr=False,
                                     status=JobStatus.COMPLETE, 
@@ -145,7 +145,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
     bgMtx.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
     success = scribe.updateObject(bgMtx)
     
-    msg = 'Wrote matrix {} to final location and updated db'.format(bgMtx.getId())
+    msg = 'Wrote matrix {} to final location and updated db'.format(bgMtx.get_id())
     scribe.log.info(msg)
     _writeSuccessFile(msg, successFname)
     

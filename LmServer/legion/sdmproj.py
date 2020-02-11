@@ -74,28 +74,28 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 # OccurrenceSet, Algorithm, ModelMask, ModelScenario, ProjMask, ProjScenario 
 # ...............................................
     def getOccurrenceSetId(self):
-        return self._occurrenceSet.getId()
+        return self._occurrenceSet.get_id()
 
     def dumpAlgorithmParametersAsString(self):
         return self._algorithm.dumpAlgParameters()
     
     def getModelMaskId(self):
         try:
-            return self._modelMask.getId()
+            return self._modelMask.get_id()
         except:
             return None
 
     def getModelScenarioId(self):
-        return self._modelScenario.getId()
+        return self._modelScenario.get_id()
 
     def getProjMaskId(self):
         try:
-            return self._projMask.getId()
+            return self._projMask.get_id()
         except:
             return None
 
     def getProjScenarioId(self):
-        return self._projScenario.getId()
+        return self._projScenario.get_id()
     
     def isOpenModeller(self):
         return Algorithms.isOpenModeller(self._algorithm.code)
@@ -174,7 +174,7 @@ class SDMProjection(_ProjectionType, Raster):
 
     Note:
         * Uses layerid for filename, layername construction
-        * Uses layerid for _dbId, getId(), ServiceObject
+        * Uses layerid for _dbId, get_id(), ServiceObject
         * Uses sdmprojectid for objId, ProcessObject
     """
 # .............................................................................
@@ -233,7 +233,7 @@ class SDMProjection(_ProjectionType, Raster):
             processType=processType, modelMask=modelMask, projMask=projMask,
             projMetadata=projMetadata, status=status,
             statusModTime=statusModTime, sdmProjectionId=sdmProjectionId,
-            name=layer.name, epsgcode=layer.epsgcode, lyrId=layer.getId(),
+            name=layer.name, epsgcode=layer.epsgcode, lyrId=layer.get_id(),
             squid=layer.squid, verify=layer.verify, dlocation=layer._dlocation,
             lyrMetadata=layer.lyrMetadata, dataFormat=layer.dataFormat,
             gdalType=layer.gdalType, valUnits=layer.valUnits,
@@ -267,10 +267,10 @@ class SDMProjection(_ProjectionType, Raster):
         @summary: Create data location
         """
         dloc = None
-        if self.getId() is not None:
+        if self.get_id() is not None:
             dloc = self._earlJr.createFilename(
-                LMFileType.PROJECTION_LAYER, objCode=self.getId(),
-                occsetId=self._occurrenceSet.getId(), usr=self._userId,
+                LMFileType.PROJECTION_LAYER, objCode=self.get_id(),
+                occsetId=self._occurrenceSet.get_id(), usr=self._userId,
                 epsg=self._epsg)
         return dloc
 
@@ -424,8 +424,8 @@ class SDMProjection(_ProjectionType, Raster):
 # ...............................................
     def getProjPackageFilename(self):
         fname = self._earlJr.createFilename(
-            LMFileType.PROJECTION_PACKAGE, objCode=self.getId(),
-            occsetId=self._occurrenceSet.getId(), usr=self._userId,
+            LMFileType.PROJECTION_PACKAGE, objCode=self.get_id(),
+            occsetId=self._occurrenceSet.get_id(), usr=self._userId,
             epsg=self._epsg)
         return fname
 
@@ -502,7 +502,7 @@ class SDMProjection(_ProjectionType, Raster):
                  placeholder is used until replacement after database insertion.
         """
         # Recompute in case we have a new db ID 
-        projid = self.getId()
+        projid = self.get_id()
         if projid is None:
             projid = ID_PLACEHOLDER
         lyrname = self._earlJr.createBasename(

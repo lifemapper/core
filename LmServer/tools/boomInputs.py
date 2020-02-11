@@ -117,7 +117,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
             'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
                 ServiceObject.META_TITLE.lower() : 
             'Biogeographic hypothesis column ({})'.format(col_name)}
-            mc = MatrixColumn(len(mtxCols), bgMtx.getId(), usr, layer=lyr,
+            mc = MatrixColumn(len(mtxCols), bgMtx.get_id(), usr, layer=lyr,
                                     shapegrid=shapegrid, intersectParams=intParams, 
                                     metadata=metadata, postToSolr=False,
                                     status=JobStatus.COMPLETE, 
@@ -308,7 +308,7 @@ for lyr in layers:
         'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
             ServiceObject.META_TITLE.lower() : 
         'Biogeographic hypothesis column ({})'.format(col_name)}
-        mc = MatrixColumn(len(mtxCols), bgMtx.getId(), usr, layer=lyr,
+        mc = MatrixColumn(len(mtxCols), bgMtx.get_id(), usr, layer=lyr,
                                 shapegrid=shapegrid, intersectParams=intParams, 
                                 metadata=metadata, postToSolr=False,
                                 status=JobStatus.COMPLETE, 

@@ -14,7 +14,7 @@ from LmCommon.common.ready_file import ready_filename
 
 from LmServer.common.lmconstants import SOLR_FIELDS
 from LmServer.common.log import ConsoleLogger
-from LmServer.common.solr import queryArchiveIndex
+from LmServer.common.solr import query_archive_index
 from LmServer.db.borgscribe import BorgScribe
 
 
@@ -55,9 +55,9 @@ def assemble_pam(pam_id):
     
     pam = scribe.getMatrix(mtxId=pam_id)
     
-    matches = queryArchiveIndex(gridSetId=pam.gridsetId, userId=pam.user)
+    matches = query_archive_index(gridSetId=pam.gridsetId, userId=pam.user)
     mtx_cols = scribe.listMatrixColumns(
-        0, 10000, matrixId=pam.getId(), userId=pam.user)
+        0, 10000, matrixId=pam.get_id(), userId=pam.user)
     mtx_col_ids = [int(c.id) for c in mtx_cols]
 
     # ......................

@@ -487,7 +487,7 @@ class DbPostgresql(LMAbstractObject):
         for r in rows: 
             atom = self._createAtom(r, idxs)
             if serviceType is not None:
-                url = earl.constructLMMetadataUrl(serviceType, atom.getId(),
+                url = earl.constructLMMetadataUrl(serviceType, atom.get_id(),
                                                   parentMetadataUrl=parentMetadataUrl)
             atom.url = url
             atoms.append(atom)            

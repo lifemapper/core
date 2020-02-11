@@ -181,17 +181,17 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 tree_data = otree.tree
             # TODO: Remove this
             except Exception:  # Handle bad dlocation from gridset tree
-                otree = scribe.getTree(treeId=otree.getId())
+                otree = scribe.getTree(treeId=otree.get_id())
                 otree.read()
                 tree_data = otree.tree
 
         if otree.name:
             tree_name = otree.name
         else:
-            tree_name = otree.getId()
+            tree_name = otree.get_id()
         new_tree = Tree(
             'Copy of {} tree at {}'.format(tree_name, gmt().mjd), metadata={},
-            userId=user_id, gridsetId=updated_gs.getId(), modTime=gmt().mjd)
+            userId=user_id, gridsetId=updated_gs.get_id(), modTime=gmt().mjd)
         new_tree.setTree(tree_data)
         inserted_tree = scribe.findOrInsertTree(new_tree)
         new_tree.tree = tree_data
@@ -200,7 +200,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         updated_gs.addTree(inserted_tree, doRead=True)
         log.debug(
             'Tree for gridset {} is {}'.format(
-                updated_gs.getId(), updated_gs.tree.getId()))
+                updated_gs.get_id(), updated_gs.tree.get_id()))
         scribe.updateObject(updated_gs)
 
     # If we can reuse data from Solr index, do it
@@ -277,7 +277,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             grim_metadata = grim.mtxMetadata
             grim_metadata['keywords'].append('subset')
             grim_metadata['description'] = 'Subset of GRIM {}'.format(
-                grim.getId())
+                grim.get_id())
 
             if 'keywords' in grim.mtxMetadata:
                 grim_metadata['keywords'].extend(grim.mtxMetadata['keywords'])
@@ -328,13 +328,13 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             MFChain.META_CREATED_BY: os.path.basename(__file__),
             MFChain.META_DESCRIPTION:
                 'Subset makeflow.  Orig gridset: {}, new gridset: {}'.format(
-                    orig_gs.getId(), updated_gs.getId())
+                    orig_gs.get_id(), updated_gs.get_id())
         }
         new_wf = MFChain(
             user_id, priority=Priority.REQUESTED, metadata=wf_meta,
             status=JobStatus.GENERAL, statusModTime=gmt().mjd)
 
-        my_wf = scribe.insertMFChain(new_wf, updated_gs.getId())
+        my_wf = scribe.insertMFChain(new_wf, updated_gs.get_id())
         rules = []
 
         work_dir = my_wf.getRelativeDirectory()
@@ -395,7 +395,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                         prj_meta = {}  # TODO: Add something here?
 
                         tmp_col = MatrixColumn(
-                            None, pam.getId(), user_id, layer=prj,
+                            None, pam.get_id(), user_id, layer=prj,
                             shapegrid=my_shp, intersectParams=intersect_params,
                             squid=prj.squid, ident=prj.ident,
                             processType=ProcessType.INTERSECT_RASTER,
@@ -407,12 +407,12 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                         # Need to intersect this projection with the new
                         #    shapegrid, stockpile it, and post to solr
                         pav_fname = os.path.join(
-                            work_dir, 'pav_{}.lmm'.format(mtx_col.getId()))
+                            work_dir, 'pav_{}.lmm'.format(mtx_col.get_id()))
                         pav_post_fname = os.path.join(
                             work_dir, 'pav_{}_post.xml'.format(
-                                mtx_col.getId()))
+                                mtx_col.get_id()))
                         pav_success_fname = os.path.join(
-                            work_dir, 'pav_{}.success'.format(mtx_col.getId()))
+                            work_dir, 'pav_{}.success'.format(mtx_col.get_id()))
 
                         # Intersect parameters
                         min_presence = mtx_col.intersectParams[
@@ -427,10 +427,10 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                             pav_fname, min_presence, max_presence, min_percent,
                             squid=prj.squid)
                         index_cmd = IndexPAVCommand(
-                            pav_fname, mtx_col.getId(), prj.getId(),
-                            pam.getId(), pav_post_fname)
+                            pav_fname, mtx_col.get_id(), prj.get_id(),
+                            pam.get_id(), pav_post_fname)
                         stockpile_cmd = StockpileCommand(
-                            ProcessType.INTERSECT_RASTER, mtx_col.getId(),
+                            ProcessType.INTERSECT_RASTER, mtx_col.get_id(),
                             pav_success_fname, [pav_fname])
                         # Add rules to list
                         rules.append(intersect_cmd.get_makeflow_rule())
@@ -456,19 +456,19 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             grim_metadata['keywords'].append('subset')
             grim_metadata = {
                 'keywords': ['subset'],
-                'description': 'Reintersection of GRIM {}'.format(grim.getId())
+                'description': 'Reintersection of GRIM {}'.format(grim.get_id())
             }
             if 'keywords' in grim.mtxMetadata:
                 grim_metadata['keywords'].extend(grim.mtxMetadata['keywords'])
 
             # Get corresponding grim layers (scenario)
-            old_grim_cols = scribe.getColumnsForMatrix(grim.getId())
+            old_grim_cols = scribe.getColumnsForMatrix(grim.get_id())
 
             for old_col in old_grim_cols:
                 # TODO: Metadata
                 grim_lyr_meta = {}
                 tmp_col = MatrixColumn(
-                    None, inserted_grim.getId(), user_id, layer=old_col.layer,
+                    None, inserted_grim.get_id(), user_id, layer=old_col.layer,
                     shapegrid=my_shp, intersectParams=old_col.intersectParams,
                     squid=old_col.squid, ident=old_col.ident,
                     processType=ProcessType.INTERSECT_RASTER_GRIM,
@@ -479,9 +479,9 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
                 # Add rules to workflow, intersect and stockpile
                 grim_col_fname = os.path.join(
-                    work_dir, 'grim_col_{}.lmm'.format(mtx_col.getId()))
+                    work_dir, 'grim_col_{}.lmm'.format(mtx_col.get_id()))
                 grim_col_success_fname = os.path.join(
-                    work_dir, 'grim_col_{}.success'.format(mtx_col.getId()))
+                    work_dir, 'grim_col_{}.success'.format(mtx_col.get_id()))
                 min_percent = mtx_col.intersectParams[
                     MatrixColumn.INTERSECT_PARAM_MIN_PERCENT]
                 intersect_cmd = GrimRasterCommand(
@@ -489,7 +489,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                     grim_col_fname, minPercent=min_percent,
                     ident=mtx_col.ident)
                 stockpile_cmd = StockpileCommand(
-                    ProcessType.INTERSECT_RASTER_GRIM, mtx_col.getId(),
+                    ProcessType.INTERSECT_RASTER_GRIM, mtx_col.get_id(),
                     grim_col_success_fname, [grim_col_fname])
                 # Add rules to list
                 rules.append(intersect_cmd.get_makeflow_rule())
@@ -510,7 +510,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 status=JobStatus.INITIALIZE)
             inserted_bg = scribe.findOrInsertMatrix(new_bg)
             mtx_cols = []
-            old_cols = scribe.getColumnsForMatrix(orig_bg.getId())
+            old_cols = scribe.getColumnsForMatrix(orig_bg.get_id())
 
             encoder = LayerEncoder(my_shp.getDLocation())
             # TODO(CJ): This should be pulled from a default config or the
@@ -556,7 +556,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                             'Biogeographic hypothesis column ({})'.format(col)
                     }
                     mc = MatrixColumn(
-                        len(mtx_cols), inserted_bg.getId(), user_id, layer=lyr,
+                        len(mtx_cols), inserted_bg.get_id(), user_id, layer=lyr,
                         shapegrid=my_shp, intersectParams=int_params,
                         metadata=metadata, postToSolr=False,
                         status=JobStatus.COMPLETE, statusModTime=gmt().mjd)

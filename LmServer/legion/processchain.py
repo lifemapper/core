@@ -57,7 +57,7 @@ class MFChain(ProcessObject):
                                    existingMetadataDict=self.mtxColMetadata)
     
     # ...............................................
-    def setId(self, mfid):
+    def set_id(self, mfid):
         """
         @summary: Sets the database id on the object, and sets the 
                   dlocation of the file if it is None.
@@ -67,7 +67,7 @@ class MFChain(ProcessObject):
         self.setDLocation()
     
     # ...............................................
-    def getId(self):
+    def get_id(self):
         """
         @summary Returns the database id from the object table
         @return integer database id of the object

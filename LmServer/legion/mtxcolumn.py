@@ -78,7 +78,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
         self.postToSolr = postToSolr
 
 # ...............................................
-    def setId(self, mtxcolId):
+    def set_id(self, mtxcolId):
         """
         @summary: Sets the database id on the object, and sets the 
                      dlocation of the file if it is None.
@@ -87,7 +87,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
         self.objId = mtxcolId
 
 # ...............................................
-    def getId(self):
+    def get_id(self):
         """
         @summary Returns the database id from the object table
         @return integer database id of the object
@@ -97,7 +97,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
 # ...............................................
     def getLayerId(self):
         if self.layer is not None:
-            return self.layer.getId()
+            return self.layer.get_id()
         elif self._layerId is not None:
             return self._layerId
         return None
@@ -146,5 +146,5 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
         @todo: Replace with consistent file construction from 
                LmServer.common.datalocator.EarlJr.createBasename!
         """
-        relFname = 'mtxcol_{}{}'.format(self.getId(), LMFormat.MATRIX.ext)
+        relFname = 'mtxcol_{}{}'.format(self.get_id(), LMFormat.MATRIX.ext)
         return relFname

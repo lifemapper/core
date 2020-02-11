@@ -217,11 +217,11 @@ class BorgScribe(LMObject):
 #         # if existing, pull existing scenarios
 #         if updatedScenPkg.modTime == scenPkg.modTime:
 #             existingScens = self.getScenariosForScenPackage(
-#                                                     scenPkgId=updatedScenPkg.getId())
+#                                                     scenPkgId=updatedScenPkg.get_id())
 #             updatedScenPkg.setScenarios(existingScens)
 #         else:
 #             for code, scen in scenPkg.scenarios.iteritems():
-#                 updatedScen = self.findOrInsertScenario(scen, updatedScenPkg.getId())
+#                 updatedScen = self.findOrInsertScenario(scen, updatedScenPkg.get_id())
 #                 updatedScenPkg.addScenario(updatedScen)
         return updatedScenPkg
 
@@ -287,7 +287,7 @@ class BorgScribe(LMObject):
         @note: This returns the updated Scenario filled with Layers
         """
         updatedScen = self._borg.findOrInsertScenario(scen, scenPkgId)
-        scenId = updatedScen.getId()
+        scenId = updatedScen.get_id()
         for lyr in scen.layers:
             updatedLyr = self.findOrInsertEnvLayer(lyr, scenId)
             updatedScen.addLayer(updatedLyr)
@@ -497,7 +497,7 @@ class BorgScribe(LMObject):
         @note: if mtx parameter is present, it overrides individual parameters
         """
         if mtx is not None:
-            mtxId = mtx.getId()
+            mtxId = mtx.get_id()
             mtxType = mtx.matrixType
             gridsetId = mtx.parentId
             gcmCode = mtx.gcmCode
@@ -588,7 +588,7 @@ class BorgScribe(LMObject):
         @note: gridset object values override gridsetId, userId, name
         """
         if gridset is not None:
-            gridsetId=gridset.getId() 
+            gridsetId=gridset.get_id() 
             userId = gridset.getUserId()
             name = gridset.name
         existingGridset = self._borg.getGridset(gridsetId, userId, name, 
@@ -849,7 +849,7 @@ class BorgScribe(LMObject):
         @summary: Initialize model, projections for inputs/algorithm.
         """
         newOrExistingMtxcol = None
-        if mtx is not None and mtx.getId() is not None:
+        if mtx is not None and mtx.get_id() is not None:
             # TODO: Save this into the DB??
             if lyr.dataFormat in LMFormat.GDALDrivers():
                 if mtx.matrixType in (MatrixType.PAM, MatrixType.ROLLING_PAM):
@@ -859,7 +859,7 @@ class BorgScribe(LMObject):
             else:
                 ptype = ProcessType.INTERSECT_VECTOR
 
-            mtxcol = MatrixColumn(None, mtx.getId(), mtx.getUserId(), 
+            mtxcol = MatrixColumn(None, mtx.get_id(), mtx.getUserId(), 
                      layer=lyr, shapegrid=None, intersectParams=intersectParams, 
                      squid=lyr.squid, ident=lyr.ident,
                      processType=ptype, metadata={}, matrixColumnId=None, 
@@ -1074,14 +1074,14 @@ class BorgScribe(LMObject):
         try:
             int(occLyrOrId)
         except:
-            occLyrOrId = occLyrOrId.getId()
+            occLyrOrId = occLyrOrId.get_id()
         occ = self.getOccurrenceSet(occId=occLyrOrId)
         lyrs = self.listSDMProjects(0, 500, userId=occ.getUserId(), 
                                              occsetId=occLyrOrId, atom=False)
         lyrs.append(occ)
-        mapname = EarlJr().createBasename(LMFileType.SDM_MAP, objCode=occ.getId(), 
+        mapname = EarlJr().createBasename(LMFileType.SDM_MAP, objCode=occ.get_id(), 
                                                      usr=occ.getUserId())
-        mapsvc = MapLayerSet(mapname, layers=lyrs, dbId=occ.getId(), 
+        mapsvc = MapLayerSet(mapname, layers=lyrs, dbId=occ.get_id(), 
                             userId=occ.getUserId(), epsgcode=occ.epsgcode, 
                             bbox=occ.bbox, mapunits=occ.mapUnits, 
                             mapType=LMFileType.SDM_MAP)
@@ -1116,7 +1116,7 @@ class BorgScribe(LMObject):
         """
         pams = self.getMatricesForGridset(gridsetid, mtxType=MatrixType.PAM)
         for pam in pams:
-            occs = self._borg.getOccLayersForMatrix(pam.getId())
+            occs = self._borg.getOccLayersForMatrix(pam.get_id())
         return occs
 
 # ...............................................
@@ -1136,7 +1136,7 @@ class BorgScribe(LMObject):
         allPairs = []
         pams = self.getMatricesForGridset(gridsetid, mtxType=MatrixType.PAM)
         for pam in pams:
-            colPrjPairs = self.getSDMColumnsForMatrix(pam.getId(), 
+            colPrjPairs = self.getSDMColumnsForMatrix(pam.get_id(), 
                                                       returnColumns, 
                                                       returnProjections)
             allPairs.extend(colPrjPairs)

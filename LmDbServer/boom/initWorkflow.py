@@ -818,7 +818,7 @@ class BOOMFiller(LMObject):
         
         tmpGpam = LMMatrix(None, matrixType=pamType,
                            # TODO: replace 3 codes with scenarioId 
-                           scenarioid=scen.getId(),
+                           scenarioid=scen.get_id(),
                            gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
                            dateCode=scen.dateCode, 
                            algCode=alg.code, 
@@ -844,7 +844,7 @@ class BOOMFiller(LMObject):
         
         tmpGrim = LMMatrix(None, matrixType=MatrixType.GRIM, 
                            # TODO: replace 3 codes with scenarioId 
-                           scenarioid=scen.getId(),
+                           scenarioid=scen.get_id(),
                            gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
                            dateCode=scen.dateCode, 
                            metadata=grimMeta, userId=self.userId, 
@@ -882,15 +882,15 @@ class BOOMFiller(LMObject):
             self.scribe.updateObject(updatedGrdset)
             
             # TODO: Decide: do we want to delete old makeflows for this gridset?
-            fnames = self.scribe.deleteMFChainsReturnFilenames(updatedGrdset.getId())
+            fnames = self.scribe.deleteMFChainsReturnFilenames(updatedGrdset.get_id())
             for fn in fnames:
                 os.remove(fn)
                 
             self.scribe.log.info('  Found and updated modtime for gridset {}'
-                                 .format(updatedGrdset.getId()))
+                                 .format(updatedGrdset.get_id()))
         else:
             self.scribe.log.info('  Inserted new gridset {}'
-                                 .format(updatedGrdset.getId()))
+                                 .format(updatedGrdset.get_id()))
             
         # TODO: Reset expiration date to Woof-date in MJD
         
@@ -922,10 +922,10 @@ class BOOMFiller(LMObject):
                 ptype = ProcessType.INTERSECT_RASTER_GRIM
             else:
                 self.scribe.log.debug('Vector intersect not yet implemented for GRIM column {}'
-                                      .format(mtxcol.getId()))
+                                      .format(mtxcol.get_id()))
             
             # TODO: Change ident to lyr.ident when that is populated
-            tmpCol = MatrixColumn(None, mtx.getId(), self.userId, 
+            tmpCol = MatrixColumn(None, mtx.get_id(), self.userId, 
                    layer=lyr, shapegrid=self.shapegrid, 
                    intersectParams=intersectParams, 
                    squid=lyr.squid, ident=lyr.name, processType=ptype, 
@@ -939,7 +939,7 @@ class BOOMFiller(LMObject):
             # TODO: This is a hack, post to solr needs to be retrieved from DB
             mtxcol.postToSolr = False
             if mtxcol is not None:
-                self.scribe.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
+                self.scribe.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.get_id()))
                 # Reset processType (not in db)
                 mtxcol.processType = ptype            
         return mtxcol
@@ -971,7 +971,7 @@ class BOOMFiller(LMObject):
             treeFilename = os.path.join(self.userIdPath, self.treeFname) 
             if os.path.exists(treeFilename):
                 baretree = Tree(name, dlocation=treeFilename, userId=self.userId, 
-                                gridsetId=gridset.getId(), modTime=self.woof_time_mjd)
+                                gridsetId=gridset.get_id(), modTime=self.woof_time_mjd)
                 baretree.read()
                 tree = self.scribe.findOrInsertTree(baretree)
             else:
@@ -1130,7 +1130,7 @@ class BOOMFiller(LMObject):
         shapegrid_filename = self.shapegrid.getDLocation()
         
         for code, grim in defaultGrims.items():
-            mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
+            mtxcols = self.scribe.getColumnsForMatrix(grim.get_id())
             self.scribe.log.info('  Adding {} grim columns for scencode {}'
                           .format(len(mtxcols), code))
             
@@ -1160,7 +1160,7 @@ class BOOMFiller(LMObject):
             
             # Add concatenate command
             rules.extend(self._get_matrix_assembly_and_stockpile_rules(
-                grim.getId(), ProcessType.CONCATENATE_MATRICES, colFilenames,
+                grim.get_id(), ProcessType.CONCATENATE_MATRICES, colFilenames,
                 work_dir=target_dir))
             
         return rules
@@ -1368,15 +1368,15 @@ class BOOMFiller(LMObject):
             script_name = os.path.splitext(os.path.basename(__file__))[0]
             meta = {
                 MFChain.META_CREATED_BY: script_name,
-                MFChain.META_GRIDSET : boomGridset.getId(),
+                MFChain.META_GRIDSET : boomGridset.get_id(),
                 MFChain.META_DESCRIPTION : 'Makeflow for gridset {}'.format(
-                    boomGridset.getId())
+                    boomGridset.get_id())
                 }
             new_mfc = MFChain(
                 self.userId, priority=Priority.HIGH, metadata=meta,
                 status=JobStatus.GENERAL, statusModTime=gmt().mjd)
             gridset_mf = self.scribe.insertMFChain(
-                new_mfc, boomGridset.getId())
+                new_mfc, boomGridset.get_id())
             target_dir = gridset_mf.getRelativeDirectory()
             rules = []
             
@@ -1458,7 +1458,7 @@ if __name__ == '__main__':
     
     filler = BOOMFiller(paramFname, logname=logname)
     gs = filler.initBoom()
-    print(('Completed initWorkflow creating gridset: {}'.format(gs.getId())))
+    print(('Completed initWorkflow creating gridset: {}'.format(gs.get_id())))
 
     
 """
