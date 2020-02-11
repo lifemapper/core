@@ -1,28 +1,28 @@
 """Tests for the occurrence set web services
 """
+import pytest
 import urllib.request, urllib.error, urllib.parse
 
 from LmCommon.common.lmconstants import (
     CSV_INTERFACE, EML_INTERFACE, GEO_JSON_INTERFACE, KML_INTERFACE,
     SHAPEFILE_INTERFACE, HTTPStatus, JobStatus)
-
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.occlayer import OccurrenceLayer
-
+from LmServer.legion.sdmproj import SDMProjection
 from LmTest.formatTests.csvValidator import validate_csv
 from LmTest.formatTests.emlValidator import validate_eml
 from LmTest.formatTests.geoJsonValidator import validate_geojson
 from LmTest.formatTests.jsonValidator import validate_json
 from LmTest.formatTests.kmlValidator import validate_kml
 from LmTest.formatTests.shapefileValidator import validate_shapefile
-import pytest
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.legion.sdmproj import SDMProjection
-from LmServer.legion.algorithm import Algorithm
+
 
 # .............................................................................
 class Test_occurrence_layer_web_services(object):
     """Test class for occurrence set services
     """
+
     # ............................
     def test_count_occurrence_sets_no_parameters(self, public_client, scribe):
         """Tests the count service with the default parameters
@@ -39,7 +39,7 @@ class Test_occurrence_layer_web_services(object):
             public_client.count_occurrence_sets())
         assert scribe_count == service_count
         assert scribe_count >= 0
-    
+
     # ............................
     def test_count_occurrence_sets_with_parameters(self, public_client,
                                                    scribe):
@@ -103,14 +103,14 @@ class Test_occurrence_layer_web_services(object):
 
         test_occ_id = inserted_dummy_occ.get_id()
 
-        scn_id = scribe.listScenarios(0, 1)[0].id
+        scn_id = scribe.listScenarios(0, 1)[0].get_id()
         scn = scribe.getScenario(scn_id)
 
         algo = Algorithm('ATT_MAXENT')
         algo.fillWithDefaults()
         prj = SDMProjection(inserted_dummy_occ, algo, scn, scn)
         inserted_dummy_prj = scribe.findOrInsertSDMProject(prj)
-        
+
         test_prj_id = inserted_dummy_prj.get_id()
 
         try:
@@ -143,7 +143,7 @@ class Test_occurrence_layer_web_services(object):
         with pytest.raises(urllib.error.HTTPError) as e_info:
             public_client.delete_occurrence_set(bad_occ_id)
             assert e_info.code == HTTPStatus.NOT_FOUND
-    
+
     # ............................
     def test_get_occ_does_not_exist(self, public_client):
         """Tests that user cannot get an occurrence set that does not exist
@@ -159,7 +159,7 @@ class Test_occurrence_layer_web_services(object):
         with pytest.raises(urllib.error.HTTPError) as e_info:
             public_client.get_occurrence_set(bad_occ_id)
             assert e_info.code == HTTPStatus.NOT_FOUND
-    
+
     # ............................
     def test_get_occ_for_user_csv(self, public_client, scribe):
         """Tests that user occurrence set can be retrieved in CSV format
@@ -172,7 +172,7 @@ class Test_occurrence_layer_web_services(object):
                 querying the database
         """
         occ_id = scribe.listOccurrenceSets(
-            0, 1, status=JobStatus.COMPLETE)[0].id
+            0, 1, status=JobStatus.COMPLETE)[0].get_id()
 
         resp_raw = public_client.get_occurrence_set(
             occ_id, response_format=CSV_INTERFACE)
@@ -191,7 +191,7 @@ class Test_occurrence_layer_web_services(object):
                 querying the database
         """
         occ_id = scribe.listOccurrenceSets(
-            0, 1, status=JobStatus.COMPLETE)[0].id
+            0, 1, status=JobStatus.COMPLETE)[0].get_id()
 
         resp_raw = public_client.get_occurrence_set(
             occ_id, response_format=EML_INTERFACE)
@@ -210,7 +210,7 @@ class Test_occurrence_layer_web_services(object):
                 querying the database
         """
         occ_id = scribe.listOccurrenceSets(
-            0, 1, status=JobStatus.COMPLETE)[0].id
+            0, 1, status=JobStatus.COMPLETE)[0].get_id()
 
         resp_raw = public_client.get_occurrence_set(
             occ_id, response_format=GEO_JSON_INTERFACE)
@@ -228,7 +228,7 @@ class Test_occurrence_layer_web_services(object):
             scribe (:obj:`BorgScribe`): A Lifemapper BorgScribe object used for
                 querying the database
         """
-        occ_id = scribe.listOccurrenceSets(0, 1)[0].id
+        occ_id = scribe.listOccurrenceSets(0, 1)[0].get_id()
 
         resp_raw = public_client.get_occurrence_set(occ_id)
         assert resp_raw.code == HTTPStatus.OK
@@ -249,7 +249,7 @@ class Test_occurrence_layer_web_services(object):
                 querying the database
         """
         occ_id = scribe.listOccurrenceSets(
-            0, 1, status=JobStatus.COMPLETE)[0].id
+            0, 1, status=JobStatus.COMPLETE)[0].get_id()
 
         resp_raw = public_client.get_occurrence_set(
             occ_id, response_format=KML_INTERFACE)
@@ -268,7 +268,7 @@ class Test_occurrence_layer_web_services(object):
                 querying the database
         """
         occ_id = scribe.listOccurrenceSets(
-            0, 1, status=JobStatus.COMPLETE)[0].id
+            0, 1, status=JobStatus.COMPLETE)[0].get_id()
 
         resp_raw = public_client.get_occurrence_set(
             occ_id, response_format=SHAPEFILE_INTERFACE)

@@ -26,10 +26,11 @@
 @todo: Does this need to be more robust?
 """
 import argparse
+
+from LmCommon.common.lmconstants import DEFAULT_NODATA
 import numpy as np
 from osgeo import gdal, gdalconst
 
-from LmCommon.common.lmconstants import DEFAULT_NODATA
 
 # .............................................................................
 def createMaskRaster(inRasterFn, outRasterFn):
@@ -38,39 +39,39 @@ def createMaskRaster(inRasterFn, outRasterFn):
    """
    ds = gdal.Open(inRasterFn)
    band = ds.GetRasterBand(1)
-   
+
    cols = ds.RasterXSize
    rows = ds.RasterYSize
-   
+
    data = band.ReadAsArray(0, 0, cols, rows)
-   
+
    newData = np.ones(data.shape, dtype=int)
-   
+
    drv = ds.GetDriver()
    outDs = drv.Create(outRasterFn, cols, rows, 1, gdalconst.GDT_Int32)
    outBand = outDs.GetRasterBand(1)
-   
+
    # Write the data
    outBand.WriteArray(newData, 0, 0)
    outBand.FlushCache()
    outBand.SetNoDataValue(DEFAULT_NODATA)
-   
+
    # Georeference the image and set the projection
    outDs.SetGeoTransform(ds.GetGeoTransform())
    outDs.SetProjection(ds.GetProjection())
    del newData
 
-    
+
 # ................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser(
          description='This script creates a blank mask layer for projections')
-   
-   parser.add_argument('inRasterFilename', type=str, 
+
+   parser.add_argument('inRasterFilename', type=str,
                        help='The input raster to base the mask on')
-   parser.add_argument('outRasterFilename', type=str, 
+   parser.add_argument('outRasterFilename', type=str,
                        help='The file location to write the output raster')
-   
+
    args = parser.parse_args()
 
    createMaskRaster(args.inRasterFilename, args.outRasterFilename)

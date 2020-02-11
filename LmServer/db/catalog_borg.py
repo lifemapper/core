@@ -1,5 +1,7 @@
 """Module containing lower level functions for accessing database
 """
+from collections import namedtuple
+
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import MatrixType, LMFormat, JobStatus
 from LmCommon.common.time import gmt, LmTime
@@ -17,16 +19,17 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
-from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
-from collections import namedtuple
+
 
 # .............................................................................
 class Borg(DbPostgresql):
     """
     Class to control modifications to the Borg database.
     """
+
 # .............................................................................
 # Constructor
 # .............................................................................
@@ -37,7 +40,7 @@ class Borg(DbPostgresql):
         @param dbHost: hostname for database machine
         @param dbPort: port for database connection
         """
-        DbPostgresql.__init__(self, logger, db=DB_STORE, user=dbUser, 
+        DbPostgresql.__init__(self, logger, db=DB_STORE, user=dbUser,
                                      password=dbKey, host=dbHost, port=dbPort,
                                      schema=LM_SCHEMA_BORG)
 
@@ -45,15 +48,14 @@ class Borg(DbPostgresql):
     def _createUser(self, row, idxs):
         usr = None
         if row is not None:
-            usr = LMUser(row[idxs['userid']], row[idxs['email']], 
-                             row[idxs['password']], isEncrypted=True, 
-                             firstName=row[idxs['firstname']], lastName=row[idxs['lastname']], 
-                             institution=row[idxs['institution']], 
-                             addr1=row[idxs['address1']], addr2=row[idxs['address2']], 
-                             addr3=row[idxs['address3']], phone=row[idxs['phone']], 
+            usr = LMUser(row[idxs['userid']], row[idxs['email']],
+                             row[idxs['password']], isEncrypted=True,
+                             firstName=row[idxs['firstname']], lastName=row[idxs['lastname']],
+                             institution=row[idxs['institution']],
+                             addr1=row[idxs['address1']], addr2=row[idxs['address2']],
+                             addr3=row[idxs['address3']], phone=row[idxs['phone']],
                              mod_time=row[idxs['modtime']])
         return usr
-    
 
 # ...............................................
     def _createScientificName(self, row, idxs):
@@ -68,15 +70,15 @@ class Borg(DbPostgresql):
         sciname = None
         if row is not None:
             scientificname = self._getColumnValue(row, idxs, ['sciname'])
-            
+
             if scientificname is not None:
                 taxonid = self._getColumnValue(row, idxs, ['taxonid'])
-                taxonomySourceId = self._getColumnValue(row, idxs, ['taxonomysourceid']) 
-                usr = self._getColumnValue(row, idxs, ['userid']) 
+                taxonomySourceId = self._getColumnValue(row, idxs, ['taxonomysourceid'])
+                usr = self._getColumnValue(row, idxs, ['userid'])
                 srckey = self._getColumnValue(row, idxs, ['taxonomykey'])
                 squid = self._getColumnValue(row, idxs, ['squid'])
                 kingdom = self._getColumnValue(row, idxs, ['kingdom'])
-                phylum = self._getColumnValue(row, idxs, ['phylum']) 
+                phylum = self._getColumnValue(row, idxs, ['phylum'])
                 txClass = self._getColumnValue(row, idxs, ['tx_class'])
                 txOrder = self._getColumnValue(row, idxs, ['tx_order'])
                 family = self._getColumnValue(row, idxs, ['family'])
@@ -89,22 +91,22 @@ class Borg(DbPostgresql):
                 lcnt = self._getColumnValue(row, idxs, ['lastcount'])
                 mod_time = self._getColumnValue(row, idxs, ['taxmodtime', 'modtime'])
 
-                sciname = ScientificName(scientificname, 
-                                                 rank=rank, canonicalName=canonical, 
+                sciname = ScientificName(scientificname,
+                                                 rank=rank, canonicalName=canonical,
                                                  userId=usr, squid=squid,
-                                                 kingdom=kingdom, phylum=phylum,  
-                                                 txClass=txClass, txOrder=txOrder, 
-                                                 family=family, genus=genus, 
-                                                 lastOccurrenceCount=lcnt, 
-                                                 mod_time=mod_time, 
-                                                 taxonomySourceId=taxonomySourceId, 
-                                                 taxonomySourceKey=srckey, 
-                                                 taxonomySourceGenusKey=genkey, 
-                                                 taxonomySourceSpeciesKey=spkey, 
+                                                 kingdom=kingdom, phylum=phylum,
+                                                 txClass=txClass, txOrder=txOrder,
+                                                 family=family, genus=genus,
+                                                 lastOccurrenceCount=lcnt,
+                                                 mod_time=mod_time,
+                                                 taxonomySourceId=taxonomySourceId,
+                                                 taxonomySourceKey=srckey,
+                                                 taxonomySourceGenusKey=genkey,
+                                                 taxonomySourceSpeciesKey=spkey,
                                                  taxonomySourceKeyHierarchy=hier,
                                                  scientificNameId=taxonid)
         return sciname
-    
+
 # ...............................................
     def _createAlgorithm(self, row, idxs):
         """
@@ -117,26 +119,26 @@ class Borg(DbPostgresql):
         except:
             alg = None
         return alg
-    
+
 # ...............................................
     def _createMFChain(self, row, idxs):
         mfchain = None
         if row is not None:
-            mfchain = MFChain(self._getColumnValue(row, idxs, ['userid']), 
-                            dlocation=self._getColumnValue(row, idxs, 
-                                                ['mfpdlocation', 'dlocation']), 
-                            priority=self._getColumnValue(row, idxs, 
-                                                ['priority']), 
-                            metadata=self._getColumnValue(row, idxs, 
-                                                ['mfpmetadata', 'metadata']),  
-                            status=self._getColumnValue(row, idxs, 
-                                                ['mfpstatus', 'status']), 
-                            status_mod_time=self._getColumnValue(row, idxs, 
-                                        ['mfpstatusmodtime', 'statusmodtime']), 
-                            mfChainId=self._getColumnValue(row, idxs, 
+            mfchain = MFChain(self._getColumnValue(row, idxs, ['userid']),
+                            dlocation=self._getColumnValue(row, idxs,
+                                                ['mfpdlocation', 'dlocation']),
+                            priority=self._getColumnValue(row, idxs,
+                                                ['priority']),
+                            metadata=self._getColumnValue(row, idxs,
+                                                ['mfpmetadata', 'metadata']),
+                            status=self._getColumnValue(row, idxs,
+                                                ['mfpstatus', 'status']),
+                            status_mod_time=self._getColumnValue(row, idxs,
+                                        ['mfpstatusmodtime', 'statusmodtime']),
+                            mfChainId=self._getColumnValue(row, idxs,
                                                 ['mfprocessid']))
         return mfchain
-    
+
 # ...............................................
     def _createScenario(self, row, idxs, isForModel=True):
         """
@@ -145,9 +147,9 @@ class Borg(DbPostgresql):
         scen = None
         if isForModel:
             scenid = self._getColumnValue(row, idxs, ['mdlscenarioid', 'scenarioid'])
-            scencode = self._getColumnValue(row, idxs, ['mdlscenariocode', 
+            scencode = self._getColumnValue(row, idxs, ['mdlscenariocode',
                                                                       'scenariocode'])
-            meta = self._getColumnValue(row, idxs, ['mdlscenmetadata', 
+            meta = self._getColumnValue(row, idxs, ['mdlscenmetadata',
                                                                  'scenmetadata', 'metadata'])
             gcmcode = self._getColumnValue(row, idxs, ['mdlscengcmcode', 'gcmcode'])
             altpredcode = self._getColumnValue(row, idxs, ['mdlscenaltpredcode', 'altpredcode'])
@@ -159,7 +161,7 @@ class Borg(DbPostgresql):
             gcmcode = self._getColumnValue(row, idxs, ['prjscengcmcode', 'gcmcode'])
             altpredcode = self._getColumnValue(row, idxs, ['prjscenaltpredcode', 'altpredcode'])
             datecode = self._getColumnValue(row, idxs, ['prjscendatecode', 'datecode'])
-            
+
         usr = self._getColumnValue(row, idxs, ['userid'])
         meta = self._getColumnValue(row, idxs, ['metadata'])
         units = self._getColumnValue(row, idxs, ['units'])
@@ -167,9 +169,9 @@ class Borg(DbPostgresql):
         epsg = self._getColumnValue(row, idxs, ['epsgcode'])
         bbox = self._getColumnValue(row, idxs, ['bbox'])
         mod_time = self._getColumnValue(row, idxs, ['scenmodtime', 'modtime'])
-     
+
         if row is not None:
-            scen = Scenario(scencode, usr, epsg, metadata=meta, units=units, res=res, 
+            scen = Scenario(scencode, usr, epsg, metadata=meta, units=units, res=res,
                             gcmCode=gcmcode, altpredCode=altpredcode, dateCode=datecode,
                             bbox=bbox, mod_time=mod_time, layers=None, scenarioid=scenid)
         return scen
@@ -188,9 +190,9 @@ class Borg(DbPostgresql):
         bbox = self._getColumnValue(row, idxs, ['pkgbbox', 'bbox'])
         units = self._getColumnValue(row, idxs, ['pkgunits', 'units'])
         mod_time = self._getColumnValue(row, idxs, ['pkgmodtime', 'modtime'])
-     
+
         if row is not None:
-            scen = ScenPackage(name, usr, metadata=meta, epsgcode=epsg, bbox=bbox, 
+            scen = ScenPackage(name, usr, metadata=meta, epsgcode=epsg, bbox=bbox,
                                      mapunits=units, mod_time=mod_time,
                                      scenPackageId=pkgid)
         return scen
@@ -211,11 +213,11 @@ class Borg(DbPostgresql):
             mod_time = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
             usr = self._getColumnValue(row, idxs, ['envuserid', 'userid'])
             ltid = self._getColumnValue(row, idxs, ['envtypeid'])
-            lyrType = EnvType(envcode, usr, gcmCode=gcmcode, altpredCode=altcode, 
-                                    dateCode=dtcode, metadata=meta, mod_time=mod_time, 
+            lyrType = EnvType(envcode, usr, gcmCode=gcmcode, altpredCode=altcode,
+                                    dateCode=dtcode, metadata=meta, mod_time=mod_time,
                                     envTypeId=ltid)
         return lyrType
-    
+
 # ...............................................
     def _createGridset(self, row, idxs):
         """
@@ -235,12 +237,12 @@ class Borg(DbPostgresql):
             epsg = self._getColumnValue(row, idxs, ['grdepsgcode', 'epsgcode'])
             meta = self._getColumnValue(row, idxs, ['grdmetadata', 'metadata'])
             mtime = self._getColumnValue(row, idxs, ['grdmodtime', 'modtime'])
-            grdset = Gridset(name=name, metadata=meta, shapeGrid=shp, 
-                                  shapeGridId=shpId, tree=tree, 
-                                  dlocation=dloc, epsgcode=epsg, userId=usr, 
+            grdset = Gridset(name=name, metadata=meta, shapeGrid=shp,
+                                  shapeGridId=shpId, tree=tree,
+                                  dlocation=dloc, epsgcode=epsg, userId=usr,
                                   gridsetId=grdid, mod_time=mtime)
         return grdset
-    
+
 # ...............................................
     def _createTree(self, row, idxs):
         """
@@ -259,10 +261,10 @@ class Borg(DbPostgresql):
                 haslen = self._getColumnValue(row, idxs, ['hasbranchlengths'])
                 meta = self._getColumnValue(row, idxs, ['treemetadata', 'metadata'])
                 mod_time = self._getColumnValue(row, idxs, ['treemodtime', 'modtime'])
-                tree = Tree(name, metadata=meta, dlocation=dloc, userId=usr, 
+                tree = Tree(name, metadata=meta, dlocation=dloc, userId=usr,
                                 treeId=treeid, mod_time=mod_time)
         return tree
-    
+
 # ...............................................
     def _createLMMatrix(self, row, idxs):
         """
@@ -276,25 +278,25 @@ class Borg(DbPostgresql):
             mtype = self._getColumnValue(row, idxs, ['matrixtype'])
             scenid = self._getColumnValue(row, idxs, ['scenarioid'])
 #             TODO: replace 3 Codes with scenarioId
-            gcm = self._getColumnValue(row, idxs, ['gcmcode']) 
-            rcp  = self._getColumnValue(row, idxs, ['altpredcode'])
-            dt =  self._getColumnValue(row, idxs, ['datecode'])
-            alg =  self._getColumnValue(row, idxs, ['algorithmcode'])
+            gcm = self._getColumnValue(row, idxs, ['gcmcode'])
+            rcp = self._getColumnValue(row, idxs, ['altpredcode'])
+            dt = self._getColumnValue(row, idxs, ['datecode'])
+            alg = self._getColumnValue(row, idxs, ['algorithmcode'])
             dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
             meta = self._getColumnValue(row, idxs, ['mtxmetadata', 'metadata'])
             usr = self._getColumnValue(row, idxs, ['userid'])
             stat = self._getColumnValue(row, idxs, ['mtxstatus', 'status'])
-            stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime', 
+            stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime',
                                                         'statusmodtime'])
-            mtx = LMMatrix(None, matrixType=mtype, 
+            mtx = LMMatrix(None, matrixType=mtype,
                            scenarioid=scenid,
                            gcmCode=gcm, altpredCode=rcp, dateCode=dt,
                            algCode=alg,
-                           metadata=meta, dlocation=dloc, userId=usr, 
-                           gridset=grdset, matrixId=mtxid, 
+                           metadata=meta, dlocation=dloc, userId=usr,
+                           gridset=grdset, matrixId=mtxid,
                            status=stat, status_mod_time=stattime)
         return mtx
-    
+
     # ...............................................
     def _createMatrixColumn(self, row, idxs):
         """
@@ -305,25 +307,25 @@ class Borg(DbPostgresql):
             # Returned by only some functions
             inputLyr = self._createLayer(row, idxs)
             # Ids of joined input layers
-            lyrid = self._getColumnValue(row,idxs,['layerid']) 
-            shpgrdid = self._getColumnValue(row,idxs,['shplayerid']) 
-            mtxcolid = self._getColumnValue(row,idxs,['matrixcolumnid']) 
-            mtxid = self._getColumnValue(row,idxs,['matrixid']) 
-            mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
-            squid = self._getColumnValue(row,idxs,['mtxcolsquid','squid'])
-            ident = self._getColumnValue(row,idxs,['mtxcolident', 'ident'])
-            mtxcolmeta = self._getColumnValue(row,idxs,['mtxcolmetatadata'])
-            intparams = self._getColumnValue(row,idxs,['intersectparams'])
-            mtxcolstat = self._getColumnValue(row,idxs,['mtxcolstatus']) 
-            mtxcolstattime = self._getColumnValue(row,idxs,['mtxcolstatusmodtime']) 
-            usr = self._getColumnValue(row,idxs,['userid'])
+            lyrid = self._getColumnValue(row, idxs, ['layerid'])
+            shpgrdid = self._getColumnValue(row, idxs, ['shplayerid'])
+            mtxcolid = self._getColumnValue(row, idxs, ['matrixcolumnid'])
+            mtxid = self._getColumnValue(row, idxs, ['matrixid'])
+            mtxIndex = self._getColumnValue(row, idxs, ['matrixindex'])
+            squid = self._getColumnValue(row, idxs, ['mtxcolsquid', 'squid'])
+            ident = self._getColumnValue(row, idxs, ['mtxcolident', 'ident'])
+            mtxcolmeta = self._getColumnValue(row, idxs, ['mtxcolmetatadata'])
+            intparams = self._getColumnValue(row, idxs, ['intersectparams'])
+            mtxcolstat = self._getColumnValue(row, idxs, ['mtxcolstatus'])
+            mtxcolstattime = self._getColumnValue(row, idxs, ['mtxcolstatusmodtime'])
+            usr = self._getColumnValue(row, idxs, ['userid'])
 
-            mtxcol = MatrixColumn(mtxIndex, mtxid, usr, 
-                                layer=inputLyr, layerId=lyrid, shapeGridId=shpgrdid, 
+            mtxcol = MatrixColumn(mtxIndex, mtxid, usr,
+                                layer=inputLyr, layerId=lyrid, shapeGridId=shpgrdid,
                                 intersectParams=intparams,
                                 squid=squid, ident=ident,
-                                processType=None, metadata=mtxcolmeta, 
-                                matrixColumnId=mtxcolid, status=mtxcolstat, 
+                                processType=None, metadata=mtxcolmeta,
+                                matrixColumnId=mtxcolid, status=mtxcolstat,
                                 status_mod_time=mtxcolstattime)
         return mtxcol
 
@@ -354,8 +356,8 @@ class Borg(DbPostgresql):
         res = self._getColumnValue(row, idxs, ['resolution'])
         dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
         bbox = self._getColumnValue(row, idxs, ['bbox'])
-        return (dbid, usr, verify, squid, name, dloc, meta, vtype, rtype, 
-                  vunits, vattr, nodata, minval, maxval, fformat, epsg, munits, res, 
+        return (dbid, usr, verify, squid, name, dloc, meta, vtype, rtype,
+                  vunits, vattr, nodata, minval, maxval, fformat, epsg, munits, res,
                   dtmod, bbox)
 
 # ...............................................
@@ -389,19 +391,19 @@ class Borg(DbPostgresql):
                 res = self._getColumnValue(row, idxs, ['resolution'])
                 dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
                 bbox = self._getColumnValue(row, idxs, ['lyrbbox', 'bbox'])
-                        
+
                 if fformat in LMFormat.OGRDrivers():
-                    lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
-                                     dlocation=dloc, metadata=meta, dataFormat=fformat, 
+                    lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify,
+                                     dlocation=dloc, metadata=meta, dataFormat=fformat,
                                      ogrType=vtype, valUnits=vunits, valAttribute=vattr,
-                                     nodataVal=nodata, minVal=minval, maxVal=maxval, 
-                                     mapunits=munits, resolution=res, bbox=bbox, 
+                                     nodataVal=nodata, minVal=minval, maxVal=maxval,
+                                     mapunits=munits, resolution=res, bbox=bbox,
                                      mod_time=dtmod)
                 elif fformat in LMFormat.GDALDrivers():
-                    lyr = Raster(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
-                                     dlocation=dloc, metadata=meta, dataFormat=fformat, 
-                                     gdalType=rtype, valUnits=vunits, nodataVal=nodata, 
-                                     minVal=minval, maxVal=maxval, mapunits=munits, 
+                    lyr = Raster(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify,
+                                     dlocation=dloc, metadata=meta, dataFormat=fformat,
+                                     gdalType=rtype, valUnits=vunits, nodataVal=nodata,
+                                     minVal=minval, maxVal=maxval, mapunits=munits,
                                      resolution=res, bbox=bbox, mod_time=dtmod)
         return lyr
 
@@ -411,14 +413,14 @@ class Borg(DbPostgresql):
         Create an EnvLayer from a lm_envlayer or lm_scenlayer record in the Borg
         """
         envRst = None
-        envLayerId = self._getColumnValue(row,idxs,['envlayerid'])
+        envLayerId = self._getColumnValue(row, idxs, ['envlayerid'])
         if row is not None:
-            scenid = self._getColumnValue(row,idxs,['scenarioid'])
-            scencode = self._getColumnValue(row,idxs,['scenariocode'])
+            scenid = self._getColumnValue(row, idxs, ['scenarioid'])
+            scencode = self._getColumnValue(row, idxs, ['scenariocode'])
             rst = self._createLayer(row, idxs)
             if rst is not None:
                 etype = self._createEnvType(row, idxs)
-                envRst = EnvLayer.initFromParts(rst, etype, envLayerId=envLayerId, 
+                envRst = EnvLayer.initFromParts(rst, etype, envLayerId=envLayerId,
                                                           scencode=scencode)
         return envRst
 
@@ -432,16 +434,16 @@ class Borg(DbPostgresql):
             lyr = self._createLayer(row, idxs)
             # Shapegrid may be optional
             if lyr is not None:
-                shg = ShapeGrid.initFromParts(lyr, 
-                            self._getColumnValue(row,idxs,['cellsides']), 
-                            self._getColumnValue(row,idxs,['cellsize']),
-                            siteId = self._getColumnValue(row,idxs,['idattribute']), 
-                            siteX = self._getColumnValue(row,idxs,['xattribute']), 
-                            siteY = self._getColumnValue(row,idxs,['yattribute']), 
-                            size = self._getColumnValue(row,idxs,['vsize']),
+                shg = ShapeGrid.initFromParts(lyr,
+                            self._getColumnValue(row, idxs, ['cellsides']),
+                            self._getColumnValue(row, idxs, ['cellsize']),
+                            siteId=self._getColumnValue(row, idxs, ['idattribute']),
+                            siteX=self._getColumnValue(row, idxs, ['xattribute']),
+                            siteY=self._getColumnValue(row, idxs, ['yattribute']),
+                            size=self._getColumnValue(row, idxs, ['vsize']),
                             # todo: will these ever be accessed without 'shpgrd' prefix?
-                            status = self._getColumnValue(row,idxs,['shpgrdstatus', 'status']), 
-                            status_mod_time = self._getColumnValue(row,idxs,
+                            status=self._getColumnValue(row, idxs, ['shpgrdstatus', 'status']),
+                            status_mod_time=self._getColumnValue(row, idxs,
                                                     ['shpgrdstatusmodtime', 'statusmodtime']))
         return shg
 
@@ -452,20 +454,20 @@ class Borg(DbPostgresql):
         """
         occ = None
         if row is not None:
-            name = self._getColumnValue(row,idxs,['displayname'])
-            usr = self._getColumnValue(row,idxs,['occuserid','userid'])
-            epsg = self._getColumnValue(row,idxs,['occepsgcode', 'epsgcode'])
-            qcount = self._getColumnValue(row,idxs,['querycount'])
+            name = self._getColumnValue(row, idxs, ['displayname'])
+            usr = self._getColumnValue(row, idxs, ['occuserid', 'userid'])
+            epsg = self._getColumnValue(row, idxs, ['occepsgcode', 'epsgcode'])
+            qcount = self._getColumnValue(row, idxs, ['querycount'])
             occ = OccurrenceLayer(name, usr, epsg, qcount,
-                    squid=self._getColumnValue(row,idxs,['occsquid', 'squid']), 
-                    verify=self._getColumnValue(row,idxs,['occverify','verify']), 
-                    dlocation=self._getColumnValue(row,idxs,['occdlocation','dlocation']), 
-                    rawDLocation=self._getColumnValue(row,idxs,['rawdlocation']),
-                    bbox=self._getColumnValue(row,idxs,['occbbox','bbox']), 
-                    occurrenceSetId=self._getColumnValue(row,idxs,['occurrencesetid']), 
-                    occMetadata=self._getColumnValue(row,idxs,['occmetadata','metadata']), 
-                    status=self._getColumnValue(row,idxs,['occstatus','status']), 
-                    status_mod_time=self._getColumnValue(row,idxs,['occstatusmodtime',
+                    squid=self._getColumnValue(row, idxs, ['occsquid', 'squid']),
+                    verify=self._getColumnValue(row, idxs, ['occverify', 'verify']),
+                    dlocation=self._getColumnValue(row, idxs, ['occdlocation', 'dlocation']),
+                    rawDLocation=self._getColumnValue(row, idxs, ['rawdlocation']),
+                    bbox=self._getColumnValue(row, idxs, ['occbbox', 'bbox']),
+                    occurrenceSetId=self._getColumnValue(row, idxs, ['occurrencesetid']),
+                    occMetadata=self._getColumnValue(row, idxs, ['occmetadata', 'metadata']),
+                    status=self._getColumnValue(row, idxs, ['occstatus', 'status']),
+                    status_mod_time=self._getColumnValue(row, idxs, ['occstatusmodtime',
                                                                                 'statusmodtime']))
         return occ
 
@@ -484,10 +486,10 @@ class Borg(DbPostgresql):
             if layer is None:
                 layer = self._createLayer(row, idxs)
             prj = SDMProjection.initFromParts(occ, alg, mdlscen, prjscen, layer,
-                        projMetadata=self._getColumnValue(row, idxs, ['prjmetadata']), 
-                        status=self._getColumnValue(row,idxs,['prjstatus']), 
-                        status_mod_time=self._getColumnValue(row,idxs,['prjstatusmodtime']), 
-                        sdmProjectionId=self._getColumnValue(row,idxs,['sdmprojectid']))                        
+                        projMetadata=self._getColumnValue(row, idxs, ['prjmetadata']),
+                        status=self._getColumnValue(row, idxs, ['prjstatus']),
+                        status_mod_time=self._getColumnValue(row, idxs, ['prjstatusmodtime']),
+                        sdmProjectionId=self._getColumnValue(row, idxs, ['sdmprojectid']))
         return prj
 
 # .............................................................................
@@ -503,7 +505,7 @@ class Borg(DbPostgresql):
         if not mod_time:
             mod_time = gmt().mjd
         meta = alg.dumpAlgMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertAlgorithm', 
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertAlgorithm',
                                                               alg.code, meta, mod_time)
         algo = self._createAlgorithm(row, idxs)
         return algo
@@ -517,11 +519,11 @@ class Borg(DbPostgresql):
         @return: record id for the new or existing Taxonomy Source 
         """
         taxSourceId = None
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTaxonSource', 
-                                                              taxonSourceName, taxonSourceUrl, 
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTaxonSource',
+                                                              taxonSourceName, taxonSourceUrl,
                                                               gmt().mjd)
         if row is not None:
-            taxSourceId = self._getColumnValue(row,idxs,['taxonomysourceid'])
+            taxSourceId = self._getColumnValue(row, idxs, ['taxonomysourceid'])
         return taxSourceId
 
 # ...............................................
@@ -536,7 +538,7 @@ class Borg(DbPostgresql):
         @param lyrid: Layer EPSG code
         @return: LmServer.base.layer2._Layer object
         """
-        row, idxs = self.executeSelectOneFunction('lm_getLayer', lyrid, lyrverify, 
+        row, idxs = self.executeSelectOneFunction('lm_getLayer', lyrid, lyrverify,
                                                                 lyruser, lyrname, epsgcode)
         lyr = self._createLayer(row, idxs)
         return lyr
@@ -552,12 +554,12 @@ class Borg(DbPostgresql):
         @param epsg: filter by this EPSG code
         @return: a count of OccurrenceSets
         """
-        row, idxs = self.executeSelectOneFunction('lm_countLayers', 
+        row, idxs = self.executeSelectOneFunction('lm_countLayers',
                                                 userId, squid, afterTime, beforeTime, epsg)
         return self._getCount(row)
 
 # .............................................................................
-    def listLayers(self, firstRecNum, maxNum, userId, squid, 
+    def listLayers(self, firstRecNum, maxNum, userId, squid,
                         afterTime, beforeTime, epsg, atom):
         """
         @summary: Return Layer Objects or Atoms matching filter conditions 
@@ -572,14 +574,14 @@ class Borg(DbPostgresql):
         @return: a list of Layer atoms or full objects
         """
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listLayerAtoms', 
-                                        firstRecNum, maxNum, userId, squid, 
+            rows, idxs = self.executeSelectManyFunction('lm_listLayerAtoms',
+                                        firstRecNum, maxNum, userId, squid,
                                         afterTime, beforeTime, epsg)
             objs = self._getAtoms(rows, idxs, LMServiceType.LAYERS)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listLayerObjects', 
-                                        firstRecNum, maxNum, userId, squid, 
+            rows, idxs = self.executeSelectManyFunction('lm_listLayerObjects',
+                                        firstRecNum, maxNum, userId, squid,
                                         afterTime, beforeTime, epsg)
             for r in rows:
                 objs.append(self._createLayer(r, idxs))
@@ -599,14 +601,14 @@ class Borg(DbPostgresql):
         if scenPkg.epsgcode == DEFAULT_EPSG:
             wkt = scenPkg.getWkt()
         meta = scenPkg.dumpScenpkgMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenPackage', 
-                                    scenPkg.getUserId(), scenPkg.name, meta, 
-                                    scenPkg.mapUnits, scenPkg.epsgcode, 
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenPackage',
+                                    scenPkg.getUserId(), scenPkg.name, meta,
+                                    scenPkg.mapUnits, scenPkg.epsgcode,
                                     scenPkg.getCSVExtentString(), wkt,
                                     scenPkg.mod_time)
         newOrExistingScenPkg = self._createScenPackage(row, idxs)
         return newOrExistingScenPkg
-    
+
 # .............................................................................
     def countScenPackages(self, userId, afterTime, beforeTime, epsg, scenId):
         """
@@ -619,13 +621,13 @@ class Borg(DbPostgresql):
         @param scenId: filter by a Scenario 
         @return: number of ScenarioPackages fitting the given filter conditions
         """
-        row, idxs = self.executeSelectOneFunction('lm_countScenPackages', userId, 
-                                                                afterTime, beforeTime, epsg, 
+        row, idxs = self.executeSelectOneFunction('lm_countScenPackages', userId,
+                                                                afterTime, beforeTime, epsg,
                                                                 scenId)
         return self._getCount(row)
 
 # .............................................................................
-    def listScenPackages(self, firstRecNum, maxNum, userId, afterTime, beforeTime, 
+    def listScenPackages(self, firstRecNum, maxNum, userId, afterTime, beforeTime,
                                 epsg, scenId, atom):
         """
         @summary: Return ScenPackage Objects or Atoms fitting the given filters 
@@ -641,25 +643,24 @@ class Borg(DbPostgresql):
                  with layers.
         """
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listScenPackageAtoms', 
-                                                                      firstRecNum, maxNum, userId, 
-                                                                      afterTime, beforeTime,  
+            rows, idxs = self.executeSelectManyFunction('lm_listScenPackageAtoms',
+                                                                      firstRecNum, maxNum, userId,
+                                                                      afterTime, beforeTime,
                                                                       epsg, scenId)
             objs = self._getAtoms(rows, idxs, LMServiceType.SCEN_PACKAGES)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listScenPackageObjects', 
-                                                                      firstRecNum, maxNum, userId, 
-                                                                      afterTime, beforeTime, 
+            rows, idxs = self.executeSelectManyFunction('lm_listScenPackageObjects',
+                                                                      firstRecNum, maxNum, userId,
+                                                                      afterTime, beforeTime,
                                                                       epsg, scenId)
             for r in rows:
                 objs.append(self._createScenPackage(r, idxs))
-                #objs.append(self._createScenario(r, idxs))
+                # objs.append(self._createScenario(r, idxs))
         return objs
 
-
 # ...............................................
-    def getScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName, 
+    def getScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName,
                              fillLayers):
         """
         @summary Find all ScenPackages that contain the given Scenario
@@ -678,11 +679,10 @@ class Borg(DbPostgresql):
                                                                   scenPkgId, userId, scenPkgName)
         foundScenPkg = self._createScenPackage(row, idxs)
         if foundScenPkg:
-            scens = self.getScenariosForScenPackage(foundScenPkg, None, None, None, 
+            scens = self.getScenariosForScenPackage(foundScenPkg, None, None, None,
                                                                  fillLayers)
             foundScenPkg.setScenarios(scens)
         return foundScenPkg
-    
 
 # ...............................................
     def getScenPackagesForScenario(self, scen, scenId, userId, scenCode, fillLayers):
@@ -709,7 +709,7 @@ class Borg(DbPostgresql):
             epkg.setScenarios(scens)
             scenPkgs.append(epkg)
         return scenPkgs
-    
+
 # ...............................................
     def getScenariosForScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName,
                                              fillLayers):
@@ -737,7 +737,7 @@ class Borg(DbPostgresql):
             scens.append(scen)
 
         return scens
-    
+
 # ...............................................
     def findOrInsertScenario(self, scen, scenPkgId):
         """
@@ -750,10 +750,10 @@ class Borg(DbPostgresql):
         if scen.epsgcode == DEFAULT_EPSG:
             wkt = scen.getWkt()
         meta = scen.dumpScenMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
-                                    scen.getUserId(), scen.code, meta, 
-                                    scen.gcmCode, scen.altpredCode, scen.dateCode, 
-                                    scen.mapUnits, scen.resolution, scen.epsgcode, 
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario',
+                                    scen.getUserId(), scen.code, meta,
+                                    scen.gcmCode, scen.altpredCode, scen.dateCode,
+                                    scen.mapUnits, scen.resolution, scen.epsgcode,
                                     scen.getCSVExtentString(), wkt, scen.mod_time)
         newOrExistingScen = self._createScenario(row, idxs)
         if scenPkgId is not None:
@@ -764,9 +764,9 @@ class Borg(DbPostgresql):
                 raise LMError('Failed to join ScenPackage {} to Scenario {}'
                                   .format(scenPkgId, scenarioId))
         return newOrExistingScen
-    
+
 # .............................................................................
-    def countScenarios(self, userId, afterTime, beforeTime, epsg, 
+    def countScenarios(self, userId, afterTime, beforeTime, epsg,
                              gcmCode, altpredCode, dateCode, scenPackageId):
         """
         @summary: Return the number of scenarios fitting the given filter conditions
@@ -780,14 +780,14 @@ class Borg(DbPostgresql):
         @param scenPackageId: filter by a ScenPackage 
         @return: number of scenarios fitting the given filter conditions
         """
-        row, idxs = self.executeSelectOneFunction('lm_countScenarios', userId, 
+        row, idxs = self.executeSelectOneFunction('lm_countScenarios', userId,
                                                                 afterTime, beforeTime, epsg,
                                                                 gcmCode, altpredCode, dateCode,
                                                                 scenPackageId)
         return self._getCount(row)
 
 # .............................................................................
-    def listScenarios(self, firstRecNum, maxNum, userId, afterTime, beforeTime, 
+    def listScenarios(self, firstRecNum, maxNum, userId, afterTime, beforeTime,
                             epsg, gcmCode, altpredCode, dateCode, scenPackageId, atom):
         """
         @summary: Return scenario Objects or Atoms fitting the given filters 
@@ -804,18 +804,18 @@ class Borg(DbPostgresql):
         @param atom: True if return objects will be Atoms, False if full objects
         """
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listScenarioAtoms', 
-                                                                      firstRecNum, maxNum, userId, 
+            rows, idxs = self.executeSelectManyFunction('lm_listScenarioAtoms',
+                                                                      firstRecNum, maxNum, userId,
                                                                       afterTime, beforeTime, epsg,
-                                                                      gcmCode, altpredCode, 
+                                                                      gcmCode, altpredCode,
                                                                       dateCode, scenPackageId)
             objs = self._getAtoms(rows, idxs, LMServiceType.SCENARIOS)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listScenarioObjects', 
-                                                                      firstRecNum, maxNum, userId, 
+            rows, idxs = self.executeSelectManyFunction('lm_listScenarioObjects',
+                                                                      firstRecNum, maxNum, userId,
                                                                       afterTime, beforeTime, epsg,
-                                                                      gcmCode, altpredCode, 
+                                                                      gcmCode, altpredCode,
                                                                       dateCode, scenPackageId)
             for r in rows:
                 objs.append(self._createScenario(r, idxs))
@@ -827,7 +827,7 @@ class Borg(DbPostgresql):
             if typeId is not None:
                 row, idxs = self.executeSelectOneFunction('lm_getLayerType', typeId)
             else:
-                row, idxs = self.executeSelectOneFunction('lm_getLayerType', 
+                row, idxs = self.executeSelectOneFunction('lm_getLayerType',
                                                                         usrid, typecode)
         except:
             envType = None
@@ -855,7 +855,7 @@ class Borg(DbPostgresql):
                                                                      currtime)
         newOrExistingEnvType = self._createLayerType(row, idxs)
         return newOrExistingEnvType
-                                      
+
 # ...............................................
     def findOrInsertLayer(self, lyr):
         """
@@ -868,15 +868,15 @@ class Borg(DbPostgresql):
             wkt = lyr.getWkt()
         meta = lyr.dumpLyrMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer',
-                                    lyr.get_id(), lyr.getUserId(), lyr.squid, lyr.verify, 
-                                    lyr.name, lyr.getDLocation(), meta, lyr.dataFormat, 
-                                    lyr.gdalType, lyr.ogrType, lyr.valUnits, 
-                                    lyr.nodataVal, lyr.minVal, lyr.maxVal, 
-                                    lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
+                                    lyr.get_id(), lyr.getUserId(), lyr.squid, lyr.verify,
+                                    lyr.name, lyr.getDLocation(), meta, lyr.dataFormat,
+                                    lyr.gdalType, lyr.ogrType, lyr.valUnits,
+                                    lyr.nodataVal, lyr.minVal, lyr.maxVal,
+                                    lyr.epsgcode, lyr.mapUnits, lyr.resolution,
                                     lyr.getCSVExtentString(), wkt, lyr.mod_time)
         updatedLyr = self._createLayer(row, idxs)
         return updatedLyr
-    
+
 # ...............................................
     def findOrInsertShapeGrid(self, shpgrd, cutout):
         """
@@ -890,19 +890,19 @@ class Borg(DbPostgresql):
         meta = shpgrd.dumpParamMetadata()
         gdaltype = valunits = nodataval = minval = maxval = None
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
-                                    shpgrd.get_id(), shpgrd.getUserId(), 
+                                    shpgrd.get_id(), shpgrd.getUserId(),
                                     shpgrd.squid, shpgrd.verify, shpgrd.name,
                                     shpgrd.getDLocation(), meta,
-                                    shpgrd.dataFormat, gdaltype, shpgrd.ogrType, 
-                                    valunits, nodataval, minval, maxval, 
-                                    shpgrd.epsgcode, shpgrd.mapUnits, shpgrd.resolution, 
-                                    shpgrd.getCSVExtentString(), wkt, shpgrd.mod_time, 
-                                    shpgrd.cellsides, shpgrd.cellsize, shpgrd.size, 
-                                    shpgrd.siteId, shpgrd.siteX, shpgrd.siteY, 
+                                    shpgrd.dataFormat, gdaltype, shpgrd.ogrType,
+                                    valunits, nodataval, minval, maxval,
+                                    shpgrd.epsgcode, shpgrd.mapUnits, shpgrd.resolution,
+                                    shpgrd.getCSVExtentString(), wkt, shpgrd.mod_time,
+                                    shpgrd.cellsides, shpgrd.cellsize, shpgrd.size,
+                                    shpgrd.siteId, shpgrd.siteX, shpgrd.siteY,
                                     shpgrd.status, shpgrd.status_mod_time)
         updatedShpgrd = self._createShapeGrid(row, idxs)
         return updatedShpgrd
-    
+
 # ...............................................
     def findOrInsertGridset(self, grdset):
         """
@@ -926,7 +926,7 @@ class Borg(DbPostgresql):
             updatedGrdset.getDLocation()
             success = self.updateGridset(updatedGrdset)
         return updatedGrdset
-        
+
 # ...............................................
     def findUserGridsets(self, userid, obsolete_time=None):
         """
@@ -936,14 +936,14 @@ class Borg(DbPostgresql):
         @return: List of gridset ids for user
         """
         grdids = []
-        rows, idxs = self.executeSelectManyFunction('lm_findUserGridsets', userid, 
+        rows, idxs = self.executeSelectManyFunction('lm_findUserGridsets', userid,
                                                     obsolete_time)
         for r in rows:
             if r[0] is not None:
                 grdids.append(r[0])
-                
+
         return grdids
-            
+
 # ...............................................
     def deleteGridsetReturnFilenames(self, gridsetId):
         """
@@ -958,9 +958,9 @@ class Borg(DbPostgresql):
         for r in rows:
             if r[0] is not None:
                 filenames.append(r[0])
-                
+
         return filenames
-        
+
 # ...............................................
     def deleteGridsetReturnMtxcolids(self, gridsetId):
         """
@@ -969,17 +969,17 @@ class Borg(DbPostgresql):
         @return: List of ids for all deleted MatrixColumns
         """
         mtxcolids = []
-        rows, idxs = self.executeSelectAndModifyManyFunction('lm_deleteGridsetMatrixColumns', 
+        rows, idxs = self.executeSelectAndModifyManyFunction('lm_deleteGridsetMatrixColumns',
                                                     gridsetId)
         self.log.info('Returned {} matrixcolumn ids deleted from gridset {}'
                       .format(len(rows), gridsetId))
-        
+
         for r in rows:
             if r[0] is not None:
                 mtxcolids.append(r[0])
-            
+
         return mtxcolids
-        
+
 # ...............................................
     def getGridset(self, gridsetId, userId, name, fillMatrices):
         """
@@ -1016,12 +1016,12 @@ class Borg(DbPostgresql):
         metamatch = None
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
-        row, idxs = self.executeSelectOneFunction('lm_countGridsets', userId, 
+        row, idxs = self.executeSelectOneFunction('lm_countGridsets', userId,
                                     shpgrdLyrid, metamatch, afterTime, beforeTime, epsg)
         return self._getCount(row)
 
 # .............................................................................
-    def listGridsets(self, firstRecNum, maxNum, userId, shpgrdLyrid, metastring, 
+    def listGridsets(self, firstRecNum, maxNum, userId, shpgrdLyrid, metastring,
                           afterTime, beforeTime, epsg, atom):
         """
         @summary: Return Matrix Objects or Atoms matching filter conditions 
@@ -1040,14 +1040,14 @@ class Borg(DbPostgresql):
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listGridsetAtoms', 
-                                            firstRecNum, maxNum, userId, shpgrdLyrid, 
+            rows, idxs = self.executeSelectManyFunction('lm_listGridsetAtoms',
+                                            firstRecNum, maxNum, userId, shpgrdLyrid,
                                             metamatch, afterTime, beforeTime, epsg)
             objs = self._getAtoms(rows, idxs, LMServiceType.GRIDSETS)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listGridsetObjects', 
-                                            firstRecNum, maxNum, userId, shpgrdLyrid, 
+            rows, idxs = self.executeSelectManyFunction('lm_listGridsetObjects',
+                                            firstRecNum, maxNum, userId, shpgrdLyrid,
                                             metamatch, afterTime, beforeTime, epsg)
             for r in rows:
                 objs.append(self._createGridset(r, idxs))
@@ -1061,15 +1061,15 @@ class Borg(DbPostgresql):
         @return: Boolean success/failure
         """
         meta = grdset.dumpGrdMetadata()
-        success = self.executeModifyFunction('lm_updateGridset', 
-                                             grdset.get_id(), 
-                                             grdset.treeId, 
+        success = self.executeModifyFunction('lm_updateGridset',
+                                             grdset.get_id(),
+                                             grdset.treeId,
                                              grdset.getDLocation(),
                                              meta, grdset.mod_time)
         return success
-    
+
 # ...............................................
-    def getMatrix(self, mtxId, gridsetId, gridsetName, userId, mtxType, 
+    def getMatrix(self, mtxId, gridsetId, gridsetName, userId, mtxType,
                       gcmCode, altpredCode, dateCode, algCode):
         """
         @summary: Retrieve an LmServer.legion.LMMatrix object with its gridset 
@@ -1085,12 +1085,12 @@ class Borg(DbPostgresql):
         @param algCode: algorithm code of the LMMatrix
         @return: Existing LmServer.legion.lmmatrix.LMMatrix
         """
-        row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtxId, 
+        row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtxId,
                 mtxType, gridsetId, gcmCode, altpredCode, dateCode, algCode,
                 gridsetName, userId)
         fullMtx = self._createLMMatrix(row, idxs)
         return fullMtx
-        
+
 # ...............................................
     def updateShapeGrid(self, shpgrd):
         """
@@ -1102,7 +1102,7 @@ class Borg(DbPostgresql):
         meta = shpgrd.dumpLyrMetadata()
         success = self.executeModifyFunction('lm_updateShapeGrid',
                                 shpgrd.get_id(), shpgrd.verify, shpgrd.getDLocation(),
-                                meta, shpgrd.mod_time, shpgrd.size, 
+                                meta, shpgrd.mod_time, shpgrd.size,
                                 shpgrd.status, shpgrd.status_mod_time)
         return success
 
@@ -1117,7 +1117,7 @@ class Borg(DbPostgresql):
                                                                     lyrId, userId, lyrName, epsg)
         shpgrid = self._createShapeGrid(row, idxs)
         return shpgrid
-    
+
 # .............................................................................
     def countShapeGrids(self, userId, cellsides, cellsize, afterTime, beforeTime, epsg):
         """
@@ -1130,12 +1130,12 @@ class Borg(DbPostgresql):
         @param epsg: filter by this EPSG code
         @return: a count of OccurrenceSets
         """
-        row, idxs = self.executeSelectOneFunction('lm_countShapegrids', userId, 
+        row, idxs = self.executeSelectOneFunction('lm_countShapegrids', userId,
                                         cellsides, cellsize, afterTime, beforeTime, epsg)
         return self._getCount(row)
 
 # .............................................................................
-    def listShapeGrids(self, firstRecNum, maxNum, userId, cellsides, cellsize, 
+    def listShapeGrids(self, firstRecNum, maxNum, userId, cellsides, cellsize,
                              afterTime, beforeTime, epsg, atom):
         """
         @summary: Return Layer Objects or Atoms matching filter conditions 
@@ -1151,14 +1151,14 @@ class Borg(DbPostgresql):
         @return: a list of Layer atoms or full objects
         """
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listShapegridAtoms', 
-                                        firstRecNum, maxNum, userId, cellsides, cellsize, 
+            rows, idxs = self.executeSelectManyFunction('lm_listShapegridAtoms',
+                                        firstRecNum, maxNum, userId, cellsides, cellsize,
                                         afterTime, beforeTime, epsg)
             objs = self._getAtoms(rows, idxs, LMServiceType.SHAPEGRIDS)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listShapegridObjects', 
-                                        firstRecNum, maxNum, userId, cellsides, cellsize, 
+            rows, idxs = self.executeSelectManyFunction('lm_listShapegridObjects',
+                                        firstRecNum, maxNum, userId, cellsides, cellsize,
                                         afterTime, beforeTime, epsg)
             for r in rows:
                 objs.append(self._createShapeGrid(r, idxs))
@@ -1178,20 +1178,20 @@ class Borg(DbPostgresql):
         envmeta = lyr.dumpParamMetadata()
         lyrmeta = lyr.dumpLyrMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction(
-                                    'lm_findOrInsertEnvLayer', lyr.get_id(), 
+                                    'lm_findOrInsertEnvLayer', lyr.get_id(),
                                     lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
-                                    lyr.getDLocation(), 
-                                    lyrmeta, lyr.dataFormat,  lyr.gdalType, lyr.ogrType, 
-                                    lyr.valUnits, lyr.nodataVal, lyr.minVal, lyr.maxVal, 
-                                    lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
-                                    lyr.getCSVExtentString(), wkt, lyr.mod_time, 
+                                    lyr.getDLocation(),
+                                    lyrmeta, lyr.dataFormat, lyr.gdalType, lyr.ogrType,
+                                    lyr.valUnits, lyr.nodataVal, lyr.minVal, lyr.maxVal,
+                                    lyr.epsgcode, lyr.mapUnits, lyr.resolution,
+                                    lyr.getCSVExtentString(), wkt, lyr.mod_time,
                                     lyr.getParamId(), lyr.envCode, lyr.gcmCode,
-                                    lyr.altpredCode, lyr.dateCode, envmeta, 
+                                    lyr.altpredCode, lyr.dateCode, envmeta,
                                     lyr.paramModTime)
         newOrExistingLyr = self._createEnvLayer(row, idxs)
         if scenarioId is not None:
             jrow, jidxs = self.executeInsertAndSelectOneFunction(
-                        'lm_joinScenarioLayer', scenarioId, 
+                        'lm_joinScenarioLayer', scenarioId,
                         newOrExistingLyr.getLayerId(), newOrExistingLyr.getParamId())
         return newOrExistingLyr
 
@@ -1208,14 +1208,13 @@ class Borg(DbPostgresql):
         @param lyrid: Layer EPSG code
         @return: LmServer.base.layer2._Layer object
         """
-        row, idxs = self.executeSelectOneFunction('lm_getEnvLayer', envlyrId, 
+        row, idxs = self.executeSelectOneFunction('lm_getEnvLayer', envlyrId,
                                             lyrid, lyrverify, lyruser, lyrname, epsgcode)
         lyr = self._createEnvLayer(row, idxs)
         return lyr
 
-
 # .............................................................................
-    def countEnvLayers(self, userId, envCode, gcmcode, altpredCode, dateCode, 
+    def countEnvLayers(self, userId, envCode, gcmcode, altpredCode, dateCode,
                              afterTime, beforeTime, epsg, envTypeId, scenarioCode):
         """
         @summary: Count all EnvLayers matching the filter conditions 
@@ -1230,14 +1229,14 @@ class Borg(DbPostgresql):
         @param envTypeId: filter by the DB id of EnvironmentalType
         @return: a count of EnvLayers
         """
-        row, idxs = self.executeSelectOneFunction('lm_countEnvLayers', 
-                                    userId, envCode, gcmcode, altpredCode, dateCode, 
+        row, idxs = self.executeSelectOneFunction('lm_countEnvLayers',
+                                    userId, envCode, gcmcode, altpredCode, dateCode,
                                     afterTime, beforeTime, epsg, envTypeId, scenarioCode)
         return self._getCount(row)
 
 # .............................................................................
-    def listEnvLayers(self, firstRecNum, maxNum, userId, envCode, gcmcode, 
-                            altpredCode, dateCode, afterTime, beforeTime, epsg, 
+    def listEnvLayers(self, firstRecNum, maxNum, userId, envCode, gcmcode,
+                            altpredCode, dateCode, afterTime, beforeTime, epsg,
                             envTypeId, scenCode, atom):
         """
         @todo: Add scenarioId!!
@@ -1259,16 +1258,16 @@ class Borg(DbPostgresql):
                                                                 NULL,NULL,NULL,NULL);
         """
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerAtoms', 
-                                    firstRecNum, maxNum, userId, envCode, gcmcode, 
-                                    altpredCode, dateCode, afterTime, beforeTime, epsg, 
+            rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerAtoms',
+                                    firstRecNum, maxNum, userId, envCode, gcmcode,
+                                    altpredCode, dateCode, afterTime, beforeTime, epsg,
                                     envTypeId, scenCode)
             objs = self._getAtoms(rows, idxs, LMServiceType.ENVIRONMENTAL_LAYERS)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerObjects', 
-                                    firstRecNum, maxNum, userId, envCode, gcmcode, 
-                                    altpredCode, dateCode, afterTime, beforeTime, epsg, 
+            rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerObjects',
+                                    firstRecNum, maxNum, userId, envCode, gcmcode,
+                                    altpredCode, dateCode, afterTime, beforeTime, epsg,
                                     envTypeId, scenCode)
             for r in rows:
                 objs.append(self._createEnvLayer(r, idxs))
@@ -1279,11 +1278,11 @@ class Borg(DbPostgresql):
 #         """
 #         @summary: Un-joins EnvLayer from scenario (if not None)
 #         @param envlyr: EnvLayer to remove from Scenario
-#         @param scenarioId: Id for scenario from which to remove EnvLayer 
+#         @param scenarioId: Id for scenario from which to remove EnvLayer
 #         @return: True/False for success of operation
 #         """
-#         success = self.executeModifyFunction('lm_deleteScenarioLayer', 
-#                                                          envlyr.get_id(), scenarioId)            
+#         success = self.executeModifyFunction('lm_deleteScenarioLayer',
+#                                                          envlyr.get_id(), scenarioId)
 #         return success
 
 # ...............................................
@@ -1296,8 +1295,8 @@ class Borg(DbPostgresql):
         @note: The layer will not be removed if it is used in any scenarios
         @note: If the EnvType is orphaned, it will also be removed
         """
-        success = self.executeModifyFunction('lm_deleteEnvLayer', 
-                                                         envlyr.get_id())            
+        success = self.executeModifyFunction('lm_deleteEnvLayer',
+                                                         envlyr.get_id())
         return success
 
 # ...............................................
@@ -1308,10 +1307,10 @@ class Borg(DbPostgresql):
         @return: new or existing LMUser
         """
         usr.mod_time = gmt().mjd
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertUser', 
-                                        usr.userid, usr.firstName, usr.lastName, 
-                                        usr.institution, usr.address1, usr.address2, 
-                                        usr.address3, usr.phone, usr.email, usr.mod_time, 
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertUser',
+                                        usr.userid, usr.firstName, usr.lastName,
+                                        usr.institution, usr.address1, usr.address2,
+                                        usr.address3, usr.phone, usr.email, usr.mod_time,
                                         usr.getPassword())
         newOrExistingUsr = self._createUser(row, idxs)
         if usr.userid != newOrExistingUsr.userid:
@@ -1327,15 +1326,15 @@ class Borg(DbPostgresql):
         @return: updated LMUser
         """
         usr.mod_time = gmt().mjd
-        success = self.executeModifyFunction('lm_updateUser', 
-                                        usr.userid, usr.firstName, usr.lastName, 
-                                        usr.institution, usr.address1, usr.address2, 
-                                        usr.address3, usr.phone, usr.email, usr.mod_time, 
+        success = self.executeModifyFunction('lm_updateUser',
+                                        usr.userid, usr.firstName, usr.lastName,
+                                        usr.institution, usr.address1, usr.address2,
+                                        usr.address3, usr.phone, usr.email, usr.mod_time,
                                         usr.getPassword())
         return success
 
 # ...............................................
-    def findUserForObject(self, layerId, scenCode, occId, matrixId, gridsetId, 
+    def findUserForObject(self, layerId, scenCode, occId, matrixId, gridsetId,
                                  mfprocessId):
         """
         @summary: find a userId for an LM Object identifier in the database
@@ -1380,7 +1379,7 @@ class Borg(DbPostgresql):
 
         if occDelCount > 0:
             success = True
-        return success 
+        return success
 
 # ...............................................
     def clearUser(self, userId):
@@ -1396,17 +1395,17 @@ class Borg(DbPostgresql):
 
         if delCount > 0:
             success = True
-        return success 
+        return success
 
 # .............................................................................
-    def countJobChains(self, status, userId=None):        
+    def countJobChains(self, status, userId=None):
         """
         @summary: Return the number of jobchains fitting the given filter conditions
         @param status: include only jobs with this status
         @param userId: (optional) include only jobs with this userid
         @return: number of jobs fitting the given filter conditions
         """
-        row, idxs = self.executeSelectOneFunction('lm_countJobChains', 
+        row, idxs = self.executeSelectOneFunction('lm_countJobChains',
                                                                 userId, status)
         return self._getCount(row)
 
@@ -1420,7 +1419,7 @@ class Borg(DbPostgresql):
         txSourceId = url = moddate = None
         if taxonSourceName is not None:
             try:
-                row, idxs = self.executeSelectOneFunction('lm_findTaxonSource', 
+                row, idxs = self.executeSelectOneFunction('lm_findTaxonSource',
                                                                         taxonSourceName)
             except Exception as e:
                 if not isinstance(e, LMError):
@@ -1429,9 +1428,9 @@ class Borg(DbPostgresql):
             if row is not None:
                 txSourceId = self._getColumnValue(row, idxs, ['taxonomysourceid'])
                 url = self._getColumnValue(row, idxs, ['url'])
-                moddate =  self._getColumnValue(row, idxs, ['modtime'])
+                moddate = self._getColumnValue(row, idxs, ['modtime'])
         return txSourceId, url, moddate
-    
+
 # ...............................................
     def getTaxonSource(self, tsId, tsName, tsUrl):
         """
@@ -1444,7 +1443,7 @@ class Borg(DbPostgresql):
         """
         ts = None
         try:
-            row, idxs = self.executeSelectOneFunction('lm_getTaxonSource', 
+            row, idxs = self.executeSelectOneFunction('lm_getTaxonSource',
                                                                     tsId, tsName, tsUrl)
         except Exception as e:
             if not isinstance(e, LMError):
@@ -1453,24 +1452,24 @@ class Borg(DbPostgresql):
         if row is not None:
             import collections
             fldnames = []
-            for key, _ in sorted(iter(idxs.items()), key=lambda k_v: (k_v[1],k_v[0])):
+            for key, _ in sorted(iter(idxs.items()), key=lambda k_v: (k_v[1], k_v[0])):
                 fldnames.append(key)
             TaxonSource = collections.namedtuple('TaxonSource', fldnames)
             ts = TaxonSource(*row)
         return ts
-    
+
 # ...............................................
     def findTaxon(self, taxonSourceId, taxonkey):
         try:
-            row, idxs = self.executeSelectOneFunction('lm_findOrInsertTaxon', 
-                                taxonSourceId, taxonkey, None, None, None, None, None, 
-                                None, None, None, None, None, None, None, None, None, 
+            row, idxs = self.executeSelectOneFunction('lm_findOrInsertTaxon',
+                                taxonSourceId, taxonkey, None, None, None, None, None,
+                                None, None, None, None, None, None, None, None, None,
                                 None, None)
         except Exception as e:
             raise e
         sciname = self._createScientificName(row, idxs)
         return sciname
-    
+
 # ...............................................
     def findOrInsertTaxon(self, taxonSourceId, taxonKey, sciName):
         """
@@ -1507,18 +1506,18 @@ class Borg(DbPostgresql):
         except:
             pass
         try:
-            row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTaxon', 
+            row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTaxon',
                                                                 taxonSourceId, taxonKey,
                                                                 usr, squid, kingdom, phylum,
                                                                 cls, ordr, family, genus, rank,
                                                                 canname, sciname, genkey, spkey,
-                                                                keyhierarchy, lastcount, 
+                                                                keyhierarchy, lastcount,
                                                                 currtime)
         except Exception as e:
             raise e
         else:
             scientificname = self._createScientificName(row, idxs)
-        
+
         return scientificname
 
 # ...............................................
@@ -1530,21 +1529,21 @@ class Borg(DbPostgresql):
         @note: Does not modify any foreign key (squid), or unique-constraint  
                  values, (taxonomySource, taxonKey, userId, sciname).
         """
-        success = self.executeModifyFunction('lm_updateTaxon', 
+        success = self.executeModifyFunction('lm_updateTaxon',
                                                          sciName.get_id(),
-                                                         sciName.kingdom, 
+                                                         sciName.kingdom,
                                                          sciName.phylum,
-                                                         sciName.txClass, 
-                                                         sciName.txOrder, 
-                                                         sciName.family, 
-                                                         sciName.genus, 
+                                                         sciName.txClass,
+                                                         sciName.txOrder,
+                                                         sciName.family,
+                                                         sciName.genus,
                                                          sciName.rank,
-                                                         sciName.canonicalName, 
-                                                         sciName.sourceGenusKey, 
+                                                         sciName.canonicalName,
+                                                         sciName.sourceGenusKey,
                                                          sciName.sourceSpeciesKey,
-                                                         sciName.sourceKeyHierarchy, 
-                                                         sciName.lastOccurrenceCount, 
-                                                         gmt().mjd)        
+                                                         sciName.sourceKeyHierarchy,
+                                                         sciName.lastOccurrenceCount,
+                                                         gmt().mjd)
         return success
 
 # ...............................................
@@ -1563,7 +1562,7 @@ class Borg(DbPostgresql):
         row, idxs = self.executeSelectOneFunction('lm_getTaxon', squid,
                                                 taxonSourceId, taxonKey, userId, taxonName)
         scientificname = self._createScientificName(row, idxs)
-        
+
         return scientificname
 
 # .............................................................................
@@ -1578,7 +1577,7 @@ class Borg(DbPostgresql):
                  layers from to be fetched.
         @return: a LmServer.legion.scenario.Scenario object
         """
-        row, idxs = self.executeSelectOneFunction('lm_getScenario', scenid, 
+        row, idxs = self.executeSelectOneFunction('lm_getScenario', scenid,
                                                                 userId, code)
         scen = self._createScenario(row, idxs)
         if scen is not None and fillLayers:
@@ -1599,7 +1598,7 @@ class Borg(DbPostgresql):
             lyr = self._createEnvLayer(r, idxs)
             lyrs.append(lyr)
         return lyrs
-    
+
 # .............................................................................
     def getOccurrenceSet(self, occId, squid, userId, epsg):
         """
@@ -1613,7 +1612,7 @@ class Borg(DbPostgresql):
                                                                   occId, userId, squid, epsg)
         occ = self._createOccurrenceLayer(row, idxs)
         return occ
-    
+
 # ...............................................
     def updateOccurrenceSet(self, occ):
         """
@@ -1636,19 +1635,19 @@ class Borg(DbPostgresql):
         except:
             pass
         try:
-            success = self.executeModifyFunction('lm_updateOccurrenceSet', 
-                                                             occ.get_id(), 
+            success = self.executeModifyFunction('lm_updateOccurrenceSet',
+                                                             occ.get_id(),
                                                              occ.verify,
                                                              occ.displayName,
-                                                             occ.getDLocation(), 
-                                                             occ.getRawDLocation(), 
-                                                             occ.queryCount, 
-                                                             occ.getCSVExtentString(), 
-                                                             occ.epsgcode, 
+                                                             occ.getDLocation(),
+                                                             occ.getRawDLocation(),
+                                                             occ.queryCount,
+                                                             occ.getCSVExtentString(),
+                                                             occ.epsgcode,
                                                              metadata,
-                                                             occ.status, 
-                                                             occ.status_mod_time, 
-                                                             polyWkt, 
+                                                             occ.status,
+                                                             occ.status_mod_time,
+                                                             polyWkt,
                                                              pointsWkt)
         except Exception as e:
             raise e
@@ -1675,11 +1674,11 @@ class Borg(DbPostgresql):
         lyrmeta = proj.dumpLyrMetadata()
         prjmeta = proj.dumpParamMetadata()
         try:
-            success = self.executeModifyFunction('lm_updateSDMProjectLayer', 
-                                                             proj.getParamId(), 
-                                                             proj.get_id(), 
+            success = self.executeModifyFunction('lm_updateSDMProjectLayer',
+                                                             proj.getParamId(),
+                                                             proj.get_id(),
                                                              proj.verify,
-                                                             proj.getDLocation(), 
+                                                             proj.getDLocation(),
                                                              lyrmeta,
                                                              proj.valUnits,
                                                              proj.nodataVal,
@@ -1690,7 +1689,7 @@ class Borg(DbPostgresql):
                                                              proj.getWkt(),
                                                              proj.mod_time,
                                                              prjmeta,
-                                                             proj.status, 
+                                                             proj.status,
                                                              proj.status_mod_time)
         except Exception as e:
             raise e
@@ -1710,9 +1709,9 @@ class Borg(DbPostgresql):
             pointtotal = occ.featureCount
             polywkt = occ.getConvexHullWkt()
             pointswkt = occ.getWkt()
-            
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceSet', 
-                                        occ.get_id(), occ.getUserId(), occ.squid, 
+
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceSet',
+                                        occ.get_id(), occ.getUserId(), occ.squid,
                                         occ.verify, occ.displayName,
                                         occ.getDLocation(), occ.getRawDLocation(),
                                         pointtotal, occ.getCSVExtentString(), occ.epsgcode,
@@ -1722,7 +1721,7 @@ class Borg(DbPostgresql):
         return newOrExistingOcc
 
 # .............................................................................
-    def countOccurrenceSets(self, userId, squid, minOccurrenceCount, displayName, 
+    def countOccurrenceSets(self, userId, squid, minOccurrenceCount, displayName,
                                 afterTime, beforeTime, epsg, afterStatus, beforeStatus,
                                 gridsetId):
         """
@@ -1748,8 +1747,8 @@ class Borg(DbPostgresql):
         return self._getCount(row)
 
 # .............................................................................
-    def listOccurrenceSets(self, firstRecNum, maxNum, userId, squid, 
-                                  minOccurrenceCount, displayName, afterTime, beforeTime, 
+    def listOccurrenceSets(self, firstRecNum, maxNum, userId, squid,
+                                  minOccurrenceCount, displayName, afterTime, beforeTime,
                                   epsg, afterStatus, beforeStatus, gridsetId, atom):
         """
         @summary: Return OccurrenceSet Objects or Atoms matching filter conditions 
@@ -1770,21 +1769,21 @@ class Borg(DbPostgresql):
         if displayName is not None:
             displayName = displayName.strip() + '%'
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listOccSetAtoms', 
+            rows, idxs = self.executeSelectManyFunction('lm_listOccSetAtoms',
                                         firstRecNum, maxNum, userId, squid, minOccurrenceCount,
-                                        displayName, afterTime, beforeTime, epsg, 
+                                        displayName, afterTime, beforeTime, epsg,
                                         afterStatus, beforeStatus, gridsetId)
             objs = self._getAtoms(rows, idxs, LMServiceType.OCCURRENCES)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listOccSetObjects', 
+            rows, idxs = self.executeSelectManyFunction('lm_listOccSetObjects',
                                         firstRecNum, maxNum, userId, squid, minOccurrenceCount,
-                                        displayName, afterTime, beforeTime, epsg, 
+                                        displayName, afterTime, beforeTime, epsg,
                                         afterStatus, beforeStatus, gridsetId)
             for r in rows:
                 objs.append(self._createOccurrenceLayer(r, idxs))
         return objs
-    
+
 # ...............................................
     def summarizeOccurrenceSetsForGridset(self, gridsetid):
         """
@@ -1793,7 +1792,7 @@ class Borg(DbPostgresql):
         @return: a list of tuples containing count, status
         """
         status_total_pairs = []
-        rows, idxs = self.executeSelectManyFunction('lm_summarizeOccSetsForGridset', 
+        rows, idxs = self.executeSelectManyFunction('lm_summarizeOccSetsForGridset',
                                                     gridsetid, MatrixType.PAM,
                                                     MatrixType.ROLLING_PAM)
         for r in rows:
@@ -1826,16 +1825,15 @@ class Borg(DbPostgresql):
         occids = []
         time_str = LmTime.from_mjd(beforetime).strftime()
         rows, idxs = self.executeSelectAndModifyManyFunction(
-            'lm_clearSomeObsoleteSpeciesDataForUser2', userid, beforetime, max_num)        
+            'lm_clearSomeObsoleteSpeciesDataForUser2', userid, beforetime, max_num)
         for r in rows:
             if r[0] is not None and r[0] != '':
                 occids.append(r[0])
-            
+
         self.log.info('''Deleted {} Occurrencesets older than {} and dependent 
         objects for User {}; returning occurrencesetids'''
         .format(len(rows), time_str, userid))
         return occids
-
 
 # ...............................................
     def deleteObsoleteSDMMtxcolsReturnIds(self, userid, beforetime, max_num):
@@ -1853,7 +1851,7 @@ class Borg(DbPostgresql):
         for r in rows:
             if r[0] is not None and r[0] != '':
                 mtxcolids.append(r[0])
-            
+
         self.log.info('''Deleted {} MatrixColumns for Occurrencesets older 
         than {}, returning matrixColumnIds'''
         .format(len(rows), time_str, userid, mtxcolids))
@@ -1862,25 +1860,25 @@ class Borg(DbPostgresql):
 # # ...............................................
 #     def _deleteOccsetDependentMatrixCols(self, occId, usr):
 #         """
-#         @summary: Deletes dependent MatrixColumns IFF they belong to a ROLLING_PAM  
+#         @summary: Deletes dependent MatrixColumns IFF they belong to a ROLLING_PAM
 #                      for the OccurrenceSet specified by occId
 #         @param occId: OccurrenceSet for which to delete dependent MatrixCols
 #         @param usr: User (owner) of the OccurrenceSet for which to delete MatrixCols
 #         @return: Count of MatrixCols for success of operation
 #         """
 #         delcount = 0
-#         gpamMtxAtoms = self.listMatrices(0, 500, usr, MatrixType.ROLLING_PAM, None, 
-#                                                     None, None, None, None, None, None, None, 
+#         gpamMtxAtoms = self.listMatrices(0, 500, usr, MatrixType.ROLLING_PAM, None,
+#                                                     None, None, None, None, None, None, None,
 #                                                     None, None, True)
 #         self.log.info('{} ROLLING PAMs for User {}'.format(len(gpamMtxAtoms), usr))
 #         if len(gpamMtxAtoms) > 0:
 #             gpamIds = [gpam.get_id() for gpam in gpamMtxAtoms]
 #             # Database will trigger delete of dependent projections on Occset delete
-#             _, pavs = self._findOccsetDependents(occId, usr, returnProjs=False, 
+#             _, pavs = self._findOccsetDependents(occId, usr, returnProjs=False,
 #                                                              returnMtxCols=True)
 #             for pav in pavs:
 #                 if pav.parentId in gpamIds:
-#                     success = self.executeModifyFunction('lm_deleteMatrixColumn', 
+#                     success = self.executeModifyFunction('lm_deleteMatrixColumn',
 #                                                                      pav.get_id())
 #                     if success:
 #                         delcount += 1
@@ -1902,17 +1900,17 @@ class Borg(DbPostgresql):
         @return: list of projection atoms/objects, list of MatrixColumns
         """
         pavs = []
-        prjs = self.listSDMProjects(0, 500, usr, None, None, None, None, None, 
+        prjs = self.listSDMProjects(0, 500, usr, None, None, None, None, None,
                                              None, None, occId, None, None, None, not(returnProjs))
         if returnMtxCols:
             for prj in prjs:
-                layerid = prj.get_id() 
-                pavs = self.listMatrixColumns(0, 500, usr, None, None, None, None, 
+                layerid = prj.get_id()
+                pavs = self.listMatrixColumns(0, 500, usr, None, None, None, None,
                                                         None, None, None, None, layerid, False)
         if not returnProjs:
             prjs = []
         return prjs, pavs
-                
+
 # ...............................................
     def findOrInsertSDMProject(self, proj):
         """
@@ -1926,23 +1924,23 @@ class Borg(DbPostgresql):
         lyrmeta = proj.dumpLyrMetadata()
         prjmeta = proj.dumpParamMetadata()
         algparams = proj.dumpAlgorithmParametersAsString()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProjectLayer', 
-                            proj.getParamId(), proj.get_id(), proj.getUserId(), 
-                            proj.squid, proj.verify, proj.name, proj.getDLocation(), 
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProjectLayer',
+                            proj.getParamId(), proj.get_id(), proj.getUserId(),
+                            proj.squid, proj.verify, proj.name, proj.getDLocation(),
                             lyrmeta, proj.dataFormat, proj.gdalType,
                             proj.ogrType, proj.valUnits, proj.nodataVal, proj.minVal,
                             proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
                             proj.getCSVExtentString(), proj.getWkt(), proj.mod_time,
                             proj.getOccurrenceSetId(), proj.algorithmCode, algparams,
-                            proj.getModelScenarioId(), 
+                            proj.getModelScenarioId(),
                             proj.getProjScenarioId(), prjmeta,
                             proj.processType, proj.status, proj.status_mod_time)
         newOrExistingProj = self._createSDMProjection(row, idxs)
         return newOrExistingProj
 
 # .............................................................................
-    def countSDMProjects(self, userId, squid, displayName, 
-                                afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+    def countSDMProjects(self, userId, squid, displayName,
+                                afterTime, beforeTime, epsg, afterStatus, beforeStatus,
                                 occsetId, algCode, mdlscenCode, prjscenCode, gridsetId):
         """
         @summary: Count all SDMProjects matching the filter conditions 
@@ -1963,16 +1961,16 @@ class Borg(DbPostgresql):
         """
         if displayName is not None:
             displayName = displayName.strip() + '%'
-        row, idxs = self.executeSelectOneFunction('lm_countSDMProjects', 
+        row, idxs = self.executeSelectOneFunction('lm_countSDMProjects',
                                     userId, squid, displayName, afterTime, beforeTime, epsg,
-                                    afterStatus, beforeStatus, occsetId, algCode, 
+                                    afterStatus, beforeStatus, occsetId, algCode,
                                     mdlscenCode, prjscenCode, gridsetId)
         return self._getCount(row)
 
 # .............................................................................
-    def listSDMProjects(self, firstRecNum, maxNum, userId, squid, displayName, 
-                              afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
-                              occsetId, algCode, mdlscenCode, prjscenCode, gridsetId, 
+    def listSDMProjects(self, firstRecNum, maxNum, userId, squid, displayName,
+                              afterTime, beforeTime, epsg, afterStatus, beforeStatus,
+                              occsetId, algCode, mdlscenCode, prjscenCode, gridsetId,
                               atom):
         """
         @summary: Return SDMProjects Objects or Atoms matching filter conditions 
@@ -1997,16 +1995,16 @@ class Borg(DbPostgresql):
         if displayName is not None:
             displayName = displayName.strip() + '%'
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectAtoms', 
-                                    firstRecNum, maxNum, userId, squid, displayName, afterTime, 
-                                    beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
+            rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectAtoms',
+                                    firstRecNum, maxNum, userId, squid, displayName, afterTime,
+                                    beforeTime, epsg, afterStatus, beforeStatus, occsetId,
                                     algCode, mdlscenCode, prjscenCode, gridsetId)
             objs = self._getAtoms(rows, idxs, LMServiceType.PROJECTIONS)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectObjects', 
-                                    firstRecNum, maxNum, userId, squid, displayName, afterTime, 
-                                    beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
+            rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectObjects',
+                                    firstRecNum, maxNum, userId, squid, displayName, afterTime,
+                                    beforeTime, epsg, afterStatus, beforeStatus, occsetId,
                                     algCode, mdlscenCode, prjscenCode, gridsetId)
             for r in rows:
                 objs.append(self._createSDMProjection(r, idxs))
@@ -2032,13 +2030,13 @@ class Borg(DbPostgresql):
 
         mcmeta = mtxcol.dumpParamMetadata()
         intparams = mtxcol.dumpIntersectParams()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
-                            mtxcol.getParamUserId(), mtxcol.getParamId(), mtxcol.parentId, 
-                            mtxcol.getMatrixIndex(), lyrid, mtxcol.squid, mtxcol.ident, 
-                            mcmeta, intparams, 
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn',
+                            mtxcol.getParamUserId(), mtxcol.getParamId(), mtxcol.parentId,
+                            mtxcol.getMatrixIndex(), lyrid, mtxcol.squid, mtxcol.ident,
+                            mcmeta, intparams,
                             mtxcol.status, mtxcol.status_mod_time)
         newOrExistingMtxCol = self._createMatrixColumn(row, idxs)
-        # Put shapegrid into updated matrixColumn 
+        # Put shapegrid into updated matrixColumn
         newOrExistingMtxCol.shapegrid = mtxcol.shapegrid
         newOrExistingMtxCol.processType = mtxcol.processType
         return newOrExistingMtxCol
@@ -2052,8 +2050,8 @@ class Borg(DbPostgresql):
         """
         meta = mtxcol.dumpParamMetadata()
         intparams = mtxcol.dumpIntersectParams()
-        success = self.executeModifyFunction('lm_updateMatrixColumn', 
-                                                         mtxcol.get_id(), 
+        success = self.executeModifyFunction('lm_updateMatrixColumn',
+                                                         mtxcol.get_id(),
                                                          mtxcol.getMatrixIndex(),
                                                          meta, intparams,
                                                          mtxcol.status, mtxcol.status_mod_time)
@@ -2072,14 +2070,14 @@ class Borg(DbPostgresql):
         row = None
         if mtxcol is not None:
             intparams = mtxcol.dumpIntersectParams()
-            row, idxs = self.executeSelectOneFunction('lm_getMatrixColumn', 
+            row, idxs = self.executeSelectOneFunction('lm_getMatrixColumn',
                                                                     mtxcol.get_id(),
                                                                     mtxcol.parentId,
                                                                     mtxcol.getMatrixIndex(),
                                                                     mtxcol.getLayerId(),
                                                                     intparams)
         elif mtxcolId is not None:
-            row, idxs = self.executeSelectOneFunction('lm_getMatrixColumn', 
+            row, idxs = self.executeSelectOneFunction('lm_getMatrixColumn',
                                                             mtxcolId, None, None, None, None)
         mtxColumn = self._createMatrixColumn(row, idxs)
         return mtxColumn
@@ -2094,7 +2092,7 @@ class Borg(DbPostgresql):
         """
         mtxColumns = []
         if mtxId is not None:
-            rows, idxs = self.executeSelectManyFunction('lm_getColumnsForMatrix', 
+            rows, idxs = self.executeSelectManyFunction('lm_getColumnsForMatrix',
                                                                       mtxId)
             for r in rows:
                 mtxcol = self._createMatrixColumn(r, idxs)
@@ -2116,7 +2114,7 @@ class Borg(DbPostgresql):
         """
         colPrjPairs = []
         if mtxId is not None:
-            rows, idxs = self.executeSelectManyFunction('lm_getSDMColumnsForMatrix', 
+            rows, idxs = self.executeSelectManyFunction('lm_getSDMColumnsForMatrix',
                                                                       mtxId)
             for r in rows:
                 mtxcol = sdmprj = layer = None
@@ -2127,7 +2125,7 @@ class Borg(DbPostgresql):
                     sdmprj = self._createSDMProjection(r, idxs, layer=layer)
                 colPrjPairs.append((mtxcol, sdmprj))
         return colPrjPairs
-    
+
 # ...............................................
     def summarizeSDMProjectsForGridset(self, gridsetid):
         """
@@ -2136,7 +2134,7 @@ class Borg(DbPostgresql):
         @return: a list of tuples containing count, status
         """
         status_total_pairs = []
-        rows, idxs = self.executeSelectManyFunction('lm_summarizeSDMColumnsForGridset', 
+        rows, idxs = self.executeSelectManyFunction('lm_summarizeSDMColumnsForGridset',
                                                     gridsetid, MatrixType.PAM,
                                                     MatrixType.ROLLING_PAM)
         for r in rows:
@@ -2152,7 +2150,7 @@ class Borg(DbPostgresql):
         @return: a list of tuples containing count, status
         """
         status_total_pairs = []
-        rows, idxs = self.executeSelectManyFunction('lm_summarizeMtxColsForGridset', 
+        rows, idxs = self.executeSelectManyFunction('lm_summarizeMtxColsForGridset',
                                                     gridsetid, mtx_type)
         for r in rows:
             status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
@@ -2167,7 +2165,7 @@ class Borg(DbPostgresql):
         @return: a list of tuples containing count, status
         """
         status_total_pairs = []
-        rows, idxs = self.executeSelectManyFunction('lm_summarizeMatricesForGridset', 
+        rows, idxs = self.executeSelectManyFunction('lm_summarizeMatricesForGridset',
                                                     gridsetid, mtx_type)
         for r in rows:
             status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
@@ -2184,15 +2182,15 @@ class Borg(DbPostgresql):
         """
         occsets = []
         if mtxId is not None:
-            rows, idxs = self.executeSelectManyFunction('lm_getOccLayersForMatrix', 
+            rows, idxs = self.executeSelectManyFunction('lm_getOccLayersForMatrix',
                                                                       mtxId)
             for r in rows:
                 occsets.append(self._createOccurrenceLayer(r, idxs))
         return occsets
 
 # .............................................................................
-    def countMatrixColumns(self, userId, squid, ident, afterTime, beforeTime, 
-                                  epsg, afterStatus, beforeStatus, 
+    def countMatrixColumns(self, userId, squid, ident, afterTime, beforeTime,
+                                  epsg, afterStatus, beforeStatus,
                                   gridsetId, matrixId, layerId):
         """
         @summary: Return count of MatrixColumns matching filter conditions 
@@ -2210,15 +2208,15 @@ class Borg(DbPostgresql):
         @param layerId: filter by Layer input identifier
         @return: a count of MatrixColumns
         """
-        row, idxs = self.executeSelectOneFunction('lm_countMtxCols', userId, 
-                                        squid, ident, afterTime, beforeTime, epsg, 
-                                        afterStatus, beforeStatus, 
+        row, idxs = self.executeSelectOneFunction('lm_countMtxCols', userId,
+                                        squid, ident, afterTime, beforeTime, epsg,
+                                        afterStatus, beforeStatus,
                                         gridsetId, matrixId, layerId)
         return self._getCount(row)
 
 # .............................................................................
-    def listMatrixColumns(self, firstRecNum, maxNum, userId, squid, ident, 
-                                 afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+    def listMatrixColumns(self, firstRecNum, maxNum, userId, squid, ident,
+                                 afterTime, beforeTime, epsg, afterStatus, beforeStatus,
                                  gridsetId, matrixId, layerId, atom):
         """
         @summary: Return MatrixColumn Objects or Atoms matching filter conditions 
@@ -2238,16 +2236,16 @@ class Borg(DbPostgresql):
         @return: a list of MatrixColumn atoms or full objects
         """
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listMtxColAtoms', 
-                            firstRecNum, maxNum, userId, squid, ident, 
-                            afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+            rows, idxs = self.executeSelectManyFunction('lm_listMtxColAtoms',
+                            firstRecNum, maxNum, userId, squid, ident,
+                            afterTime, beforeTime, epsg, afterStatus, beforeStatus,
                             gridsetId, matrixId, layerId)
             objs = self._getAtoms(rows, idxs, LMServiceType.MATRIX_COLUMNS)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listMtxColObjects', 
-                                firstRecNum, maxNum, userId, squid, ident, 
-                                afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+            rows, idxs = self.executeSelectManyFunction('lm_listMtxColObjects',
+                                firstRecNum, maxNum, userId, squid, ident,
+                                afterTime, beforeTime, epsg, afterStatus, beforeStatus,
                                 gridsetId, matrixId, layerId)
             for r in rows:
                 objs.append(self._createMatrixColumn(r, idxs))
@@ -2262,14 +2260,14 @@ class Borg(DbPostgresql):
         @TODO: allow update of MatrixType, gcmCode, altpredCode, dateCode?
         """
         meta = mtx.dumpMtxMetadata()
-        success = self.executeModifyFunction('lm_updateMatrix', 
+        success = self.executeModifyFunction('lm_updateMatrix',
                                                          mtx.get_id(), mtx.getDLocation(),
                                                          meta, mtx.status, mtx.status_mod_time)
         return success
-    
+
 # .............................................................................
-    def countMatrices(self, userId, matrixType, gcmCode, altpredCode, dateCode, 
-                      algCode, metastring, gridsetId, afterTime, beforeTime, 
+    def countMatrices(self, userId, matrixType, gcmCode, altpredCode, dateCode,
+                      algCode, metastring, gridsetId, afterTime, beforeTime,
                       epsg, afterStatus, beforeStatus):
         """
         @summary: Count Matrices matching filter conditions 
@@ -2290,16 +2288,16 @@ class Borg(DbPostgresql):
         metamatch = None
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
-        row, idxs = self.executeSelectOneFunction('lm_countMatrices', userId, 
-                            matrixType, gcmCode, altpredCode, dateCode, algCode, 
-                            metamatch, gridsetId, afterTime, beforeTime, epsg, 
+        row, idxs = self.executeSelectOneFunction('lm_countMatrices', userId,
+                            matrixType, gcmCode, altpredCode, dateCode, algCode,
+                            metamatch, gridsetId, afterTime, beforeTime, epsg,
                             afterStatus, beforeStatus)
         return self._getCount(row)
 
 # .............................................................................
-    def listMatrices(self, firstRecNum, maxNum, userId, matrixType, gcmCode, 
-                     altpredCode, dateCode, algCode, metastring, gridsetId, 
-                     afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+    def listMatrices(self, firstRecNum, maxNum, userId, matrixType, gcmCode,
+                     altpredCode, dateCode, algCode, metastring, gridsetId,
+                     afterTime, beforeTime, epsg, afterStatus, beforeStatus,
                      atom):
         """
         @summary: Return Matrix Objects or Atoms matching filter conditions 
@@ -2324,18 +2322,18 @@ class Borg(DbPostgresql):
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listMatrixAtoms', 
-                                firstRecNum, maxNum, userId, matrixType, 
-                                gcmCode, altpredCode, dateCode, algCode, 
-                                metamatch, gridsetId, afterTime, beforeTime, 
+            rows, idxs = self.executeSelectManyFunction('lm_listMatrixAtoms',
+                                firstRecNum, maxNum, userId, matrixType,
+                                gcmCode, altpredCode, dateCode, algCode,
+                                metamatch, gridsetId, afterTime, beforeTime,
                                 epsg, afterStatus, beforeStatus)
             objs = self._getAtoms(rows, idxs, LMServiceType.MATRICES)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listMatrixObjects', 
-                                firstRecNum, maxNum, userId, matrixType, 
-                                gcmCode, altpredCode, dateCode, algCode, 
-                                metamatch, gridsetId, afterTime, beforeTime, 
+            rows, idxs = self.executeSelectManyFunction('lm_listMatrixObjects',
+                                firstRecNum, maxNum, userId, matrixType,
+                                gcmCode, altpredCode, dateCode, algCode,
+                                metamatch, gridsetId, afterTime, beforeTime,
                                 epsg, afterStatus, beforeStatus)
             for r in rows:
                 objs.append(self._createLMMatrix(r, idxs))
@@ -2349,11 +2347,11 @@ class Borg(DbPostgresql):
         @return new or existing Matrix
         """
         meta = mtx.dumpMtxMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrix', 
-                            mtx.get_id(), mtx.matrixType, mtx.parentId, 
-                            mtx.gcmCode, mtx.altpredCode, mtx.dateCode, 
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrix',
+                            mtx.get_id(), mtx.matrixType, mtx.parentId,
+                            mtx.gcmCode, mtx.altpredCode, mtx.dateCode,
                             mtx.algorithmCode,
-                            mtx.getDLocation(), meta, mtx.status, 
+                            mtx.getDLocation(), meta, mtx.status,
                             mtx.status_mod_time)
         newOrExistingMtx = self._createLMMatrix(row, idxs)
         return newOrExistingMtx
@@ -2376,14 +2374,14 @@ class Borg(DbPostgresql):
         metamatch = None
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
-        row, idxs = self.executeSelectOneFunction('lm_countTrees', userId, 
-                                            afterTime, beforeTime, name, metamatch,  
+        row, idxs = self.executeSelectOneFunction('lm_countTrees', userId,
+                                            afterTime, beforeTime, name, metamatch,
                                             isBinary, isUltrametric, hasBranchLengths)
         return self._getCount(row)
 
 # .............................................................................
-    def listTrees(self, firstRecNum, maxNum, userId, afterTime, beforeTime, 
-                      name, metastring,  isBinary, isUltrametric, hasBranchLengths, 
+    def listTrees(self, firstRecNum, maxNum, userId, afterTime, beforeTime,
+                      name, metastring, isBinary, isUltrametric, hasBranchLengths,
                       atom):
         """
         @summary: Return Tree Objects or Atoms matching filter conditions 
@@ -2404,14 +2402,14 @@ class Borg(DbPostgresql):
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listTreeAtoms', 
-                            firstRecNum, maxNum, userId, afterTime, beforeTime, 
+            rows, idxs = self.executeSelectManyFunction('lm_listTreeAtoms',
+                            firstRecNum, maxNum, userId, afterTime, beforeTime,
                             name, metamatch, isBinary, isUltrametric, hasBranchLengths)
             objs = self._getAtoms(rows, idxs, LMServiceType.TREES)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listTreeObjects', 
-                            firstRecNum, maxNum, userId, afterTime, beforeTime, 
+            rows, idxs = self.executeSelectManyFunction('lm_listTreeObjects',
+                            firstRecNum, maxNum, userId, afterTime, beforeTime,
                             name, metamatch, isBinary, isUltrametric, hasBranchLengths)
             for r in rows:
                 objs.append(self._createTree(r, idxs))
@@ -2425,8 +2423,8 @@ class Borg(DbPostgresql):
         @return new or existing Tree
         """
         meta = tree.dumpTreeMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTree', 
-                            tree.get_id(), tree.getUserId(), tree.name, 
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTree',
+                            tree.get_id(), tree.getUserId(), tree.name,
                             tree.getDLocation(), tree.isBinary(), tree.isUltrametric(),
                             tree.hasBranchLengths(), meta, tree.mod_time)
         newOrExistingTree = self._createTree(row, idxs)
@@ -2458,18 +2456,18 @@ class Borg(DbPostgresql):
         @return: updated MFChain object
         """
         meta = mfchain.dumpMfMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_insertMFChain', 
-                                                            mfchain.getUserId(), 
+        row, idxs = self.executeInsertAndSelectOneFunction('lm_insertMFChain',
+                                                            mfchain.getUserId(),
                                                             gridsetId,
-                                                            mfchain.getDLocation(), 
-                                                            mfchain.priority, 
-                                                            meta, mfchain.status, 
+                                                            mfchain.getDLocation(),
+                                                            mfchain.priority,
+                                                            meta, mfchain.status,
                                                             mfchain.status_mod_time)
         mfchain = self._createMFChain(row, idxs)
         return mfchain
 
 # .............................................................................
-    def countMFChains(self, userId, gridsetId, metastring, afterStat, beforeStat, 
+    def countMFChains(self, userId, gridsetId, metastring, afterStat, beforeStat,
                       afterTime, beforeTime):
         """
         @summary: Return the number of MFChains fitting the given filter conditions
@@ -2485,12 +2483,12 @@ class Borg(DbPostgresql):
         metamatch = None
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
-        row, idxs = self.executeSelectOneFunction('lm_countMFProcess', userId, 
-                                                  gridsetId, metamatch, 
-                                                  afterStat, beforeStat, 
+        row, idxs = self.executeSelectOneFunction('lm_countMFProcess', userId,
+                                                  gridsetId, metamatch,
+                                                  afterStat, beforeStat,
                                                   afterTime, beforeTime)
         return self._getCount(row)
-    
+
 # .............................................................................
     def countPriorityMFChains(self, gridsetId):
         """
@@ -2500,13 +2498,12 @@ class Borg(DbPostgresql):
         @return: count of MFChains with higher priority or 
                  same priority and earlier timestamp
         """
-        row, idxs = self.executeSelectOneFunction('lm_countMFProcessAhead', 
+        row, idxs = self.executeSelectOneFunction('lm_countMFProcessAhead',
                                                   gridsetId, JobStatus.COMPLETE)
-        return self._getCount(row)    
-    
+        return self._getCount(row)
 
 # .............................................................................
-    def listMFChains(self, firstRecNum, maxNum, userId, gridsetId, metastring, 
+    def listMFChains(self, firstRecNum, maxNum, userId, gridsetId, metastring,
                      afterStat, beforeStat, afterTime, beforeTime, atom):
         """
         @summary: Return MFChain Objects or Atoms matching filter conditions 
@@ -2523,19 +2520,19 @@ class Borg(DbPostgresql):
         @return: a list of MFProcess/Gridset atoms or full objects
         """
         if atom:
-            rows, idxs = self.executeSelectManyFunction('lm_listMFProcessAtoms', 
-                            firstRecNum, maxNum, userId, gridsetId, metastring, 
+            rows, idxs = self.executeSelectManyFunction('lm_listMFProcessAtoms',
+                            firstRecNum, maxNum, userId, gridsetId, metastring,
                             afterStat, beforeStat, afterTime, beforeTime)
             objs = self._getAtoms(rows, idxs, None)
         else:
             objs = []
-            rows, idxs = self.executeSelectManyFunction('lm_listMFProcessObjects', 
-                            firstRecNum, maxNum, userId, gridsetId, metastring, 
+            rows, idxs = self.executeSelectManyFunction('lm_listMFProcessObjects',
+                            firstRecNum, maxNum, userId, gridsetId, metastring,
                             afterStat, beforeStat, afterTime, beforeTime)
             for r in rows:
                 objs.append(self._createMFChain(r, idxs))
         return objs
-    
+
 # ...............................................
     def summarizeMFChainsForGridset(self, gridsetid):
         """
@@ -2544,7 +2541,7 @@ class Borg(DbPostgresql):
         @return: a list of tuples containing count, status
         """
         status_total_pairs = []
-        rows, idxs = self.executeSelectManyFunction('lm_summarizeMFProcessForGridset', 
+        rows, idxs = self.executeSelectManyFunction('lm_summarizeMFProcessForGridset',
                                                     gridsetid)
         for r in rows:
             status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
@@ -2563,14 +2560,14 @@ class Borg(DbPostgresql):
         """
         mfchainList = []
         mod_time = gmt().mjd
-        rows, idxs = self.executeSelectManyFunction('lm_findMFChains', count, 
+        rows, idxs = self.executeSelectManyFunction('lm_findMFChains', count,
                                                     userId, oldStatus, newStatus,
                                                     mod_time)
         for r in rows:
             mfchain = self._createMFChain(r, idxs)
             mfchainList.append(mfchain)
         return mfchainList
-        
+
 # ...............................................
     def deleteMFChainsReturnFilenames(self, gridsetid):
         """
@@ -2585,7 +2582,7 @@ class Borg(DbPostgresql):
             fname = r[0]
             flist.append(fname)
         return flist
-        
+
 # ...............................................
     def getMFChain(self, mfprocessid):
         """
@@ -2596,7 +2593,7 @@ class Borg(DbPostgresql):
         row, idxs = self.executeSelectManyFunction('lm_getMFChain', mfprocessid)
         mfchain = self._createMFChain(row, idxs)
         return mfchain
-        
+
     # ...............................................
     def updateObject(self, obj):
         """
@@ -2619,14 +2616,14 @@ class Borg(DbPostgresql):
         elif isinstance(obj, Tree):
             meta = obj.dumpTreeMetadata()
             success = self.executeModifyFunction('lm_updateTree', obj.get_id(),
-                                                             obj.getDLocation(), 
-                                                             obj.isBinary(), 
-                                                             obj.isUltrametric(), 
+                                                             obj.getDLocation(),
+                                                             obj.isBinary(),
+                                                             obj.isUltrametric(),
                                                              obj.hasBranchLengths(),
                                                              meta, obj.mod_time)
         elif isinstance(obj, MFChain):
             success = self.executeModifyFunction('lm_updateMFChain', obj.objId,
-                                                             obj.getDLocation(), 
+                                                             obj.getDLocation(),
                                                              obj.status, obj.status_mod_time)
         elif isinstance(obj, Gridset):
             success = self.updateGridset(obj)
@@ -2661,8 +2658,8 @@ class Borg(DbPostgresql):
         elif isinstance(obj, Scenario):
             # Deletes ScenarioLayer join; only deletes layers if they are orphaned
             for lyr in obj.layers:
-                success = self.executeModifyFunction('lm_deleteScenarioLayer', 
-                                                                 lyr.get_id(), objid)            
+                success = self.executeModifyFunction('lm_deleteScenarioLayer',
+                                                                 lyr.get_id(), objid)
             success = self.executeModifyFunction('lm_deleteScenario', objid)
         elif isinstance(obj, MatrixColumn):
             success = self.executeModifyFunction('lm_deleteMatrixColumn', objid)
@@ -2682,7 +2679,7 @@ class Borg(DbPostgresql):
                for one type of LMMatrix
         """
         mtxs = []
-        rows, idxs = self.executeSelectManyFunction('lm_getMatricesForGridset', 
+        rows, idxs = self.executeSelectManyFunction('lm_getMatricesForGridset',
                                                     gridsetid, mtxType)
         for r in rows:
             mtxs.append(self._createLMMatrix(r, idxs))

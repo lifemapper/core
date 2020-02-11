@@ -24,6 +24,7 @@ STOCKPILE_FILENAME = 'stockpile.json'
 class ParameterSweepConfiguration:
     """This class handles configuration of a parameter sweep
     """
+
     # ........................................
     def __init__(self, work_dir=''):
         """Constructor

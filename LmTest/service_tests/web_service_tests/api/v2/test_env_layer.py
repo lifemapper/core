@@ -89,7 +89,7 @@ class TestScribeEnvLayerService(UserTestCase):
          self.fail(
             'Cannot get an environmental layer because listing found none')
       else:
-         lyr = self.scribe.getEnvLayer(envlyrId=envLyrAtoms[0].id,
+         lyr = self.scribe.getEnvLayer(envlyrId=envLyrAtoms[0].get_id(),
                                        userId=self._get_session_user())
          self.assertIsInstance(lyr, EnvLayer)
          self.assertEqual(lyr.getUserId(), self._get_session_user(),
@@ -110,7 +110,7 @@ class TestScribeEnvLayerService(UserTestCase):
             'List returned 0 environmental layers for user: {}'.format(
                self._get_session_user()))
       else:
-         lyr = self.scribe.getEnvLayer(envlyrId=envLyrAtoms[0].id,
+         lyr = self.scribe.getEnvLayer(envlyrId=envLyrAtoms[0].get_id(),
                                        userId=self._get_session_user())
          self.assertEqual(lyr.getUserId(), self._get_session_user(),
                'User id on layer = {}, session user = {}'.format(

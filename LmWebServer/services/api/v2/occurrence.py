@@ -4,8 +4,6 @@
 """
 import json
 
-import cherrypy
-
 from LmCommon.common.lmconstants import (
     DEFAULT_POST_USER, HTTPStatus, JobStatus)
 from LmServer.base.atom import Atom
@@ -15,6 +13,7 @@ from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.common.boom_post import BoomPoster
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+import cherrypy
 
 
 # .............................................................................
@@ -25,6 +24,7 @@ class OccurrenceLayerService(LmService):
     @summary: This class is for the occurrence sets service.  The dispatcher is
                      responsible for calling the correct method
     """
+
     # ................................
     def DELETE(self, pathOccSetId):
         """Attempts to delete an occurrence set

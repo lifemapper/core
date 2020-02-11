@@ -2,12 +2,14 @@
 """
 import os
 
+from LmBackend.common.cmd import MfRule
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.time import gmt
 from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
-from LmBackend.common.cmd import MfRule
+
+
 # .........................................................................
 class MFChain(ProcessObject):
     # .............................................................................
@@ -15,8 +17,9 @@ class MFChain(ProcessObject):
     META_GRIDSET = 'gridsetId'
     META_DESCRIPTION = 'description'
     META_SQUID = 'squid'
+
     # .............................................................................
-    def __init__(self, userId, dlocation=None, priority=None, metadata=None,  
+    def __init__(self, userId, dlocation=None, priority=None, metadata=None,
                  status=None, statusModTime=None, headers=None, mfChainId=None):
         """
         @summary Class used to generate a Makeflow document with Lifemapper 
@@ -40,22 +43,22 @@ class MFChain(ProcessObject):
         self.priority = priority
         self.mfMetadata = {}
         self.loadMfMetadata(metadata)
-        ProcessObject.__init__(self, objId=mfChainId, processType=None, 
+        ProcessObject.__init__(self, objId=mfChainId, processType=None,
                                status=status, statusModTime=statusModTime)
-       
+
     # ...............................................
     def dumpMfMetadata(self):
         return super(MFChain, self)._dump_metadata(self.mfMetadata)
-    
+
     # ...............................................
     def loadMfMetadata(self, newMetadata):
         self.mfMetadata = super(MFChain, self)._load_metadata(newMetadata)
-    
+
     # ...............................................
     def addMfMetadata(self, newMetadataDict):
-        self.mfMetadata = super(MFChain, self)._add_metadata(newMetadataDict, 
+        self.mfMetadata = super(MFChain, self)._add_metadata(newMetadataDict,
                                    existingMetadataDict=self.mtxColMetadata)
-    
+
     # ...............................................
     def set_id(self, mfid):
         """
@@ -65,7 +68,7 @@ class MFChain(ProcessObject):
         """
         self.objId = mfid
         self.setDLocation()
-    
+
     # ...............................................
     def get_id(self):
         """
@@ -73,12 +76,12 @@ class MFChain(ProcessObject):
         @return integer database id of the object
         """
         return self.objId
-    
+
     # .............................................................................
     # Superclass methods overridden
-    ## .............................................................................
+    # # .............................................................................
     # ...............................................
-    
+
     # ...............................................
     def getRelativeDirectory(self):
         """
@@ -105,15 +108,15 @@ class MFChain(ProcessObject):
         dloc = None
         if self.objId is not None:
             earlJr = EarlJr()
-            dloc = earlJr.createFilename(LMFileType.MF_DOCUMENT, 
-                                              objCode=self.objId, 
+            dloc = earlJr.createFilename(LMFileType.MF_DOCUMENT,
+                                              objCode=self.objId,
                                               usr=self._userId)
         return dloc
-    
+
     def getDLocation(self):
         self.setDLocation()
         return self._dlocation
-    
+
     def setDLocation(self, dlocation=None):
         """
         @note: Does NOT override existing dlocation, use clearDLocation for that
@@ -122,10 +125,10 @@ class MFChain(ProcessObject):
             if dlocation is None:
                 dlocation = self.createLocalDLocation()
             self._dlocation = dlocation
-    
-    def clearDLocation(self): 
+
+    def clearDLocation(self):
         self._dlocation = None
-    
+
     # ...............................................
     def getArfFilename(self, arfDir=None, prefix='mf'):
         """
@@ -133,16 +136,16 @@ class MFChain(ProcessObject):
                   of this MFChain.
         @param arfDir: A directory to put the arf file. Else use relative dir
         """
-        #TODO: Update with something more specific
-        #earlJr = EarlJr()
-        #pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
-        #fname = os.path.join(pth, '{}_{}.arf'.format(prefix, self.objId))
+        # TODO: Update with something more specific
+        # earlJr = EarlJr()
+        # pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT)
+        # fname = os.path.join(pth, '{}_{}.arf'.format(prefix, self.objId))
         if arfDir is None:
             arfDir = self.getRelativeDirectory()
-        fname = os.path.join(arfDir, 'arf', 
+        fname = os.path.join(arfDir, 'arf',
                              '{}_{}.arf'.format(prefix, self.objId))
         return fname
-    
+
     # ...............................................
     def getTriageFilename(self, prefix='potato'):
         """
@@ -154,13 +157,13 @@ class MFChain(ProcessObject):
         if prefix == 'mashedPotato':
             fname = os.path.join(prefix, '{}_{}{}'.format(prefix, self.objId, LMFormat.TXT.ext))
         else:
-            #TODO: Update
+            # TODO: Update
             earlJr = EarlJr()
-            pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
+            pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT)
             fname = os.path.join(pth, '{}_{}{}'.format
                               (prefix, self.objId, LMFormat.TXT.ext))
         return fname
-    
+
     # ...............................................
     def getTriageOutputname(self, prefix='mashed'):
         """
@@ -168,14 +171,14 @@ class MFChain(ProcessObject):
                   This file is used as input for triage to jettison failures
                   from inputs to another MF.
         """
-        #TODO: Update
-        #earlJr = EarlJr()
-        #pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
-        #fname = os.path.join(pth, '{}_{}{}'.format
+        # TODO: Update
+        # earlJr = EarlJr()
+        # pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT)
+        # fname = os.path.join(pth, '{}_{}{}'.format
         #                     (prefix, self.objId, LMFormat.TXT.ext))
         fname = os.path.join(prefix, '{}_{}{}'.format(prefix, self.objId, LMFormat.TXT.ext))
         return fname
-    
+
     # ...............................................
     def getUserId(self):
         """
@@ -190,7 +193,7 @@ class MFChain(ProcessObject):
         @param usr: The user id for the object
         """
         self._userId = usr
-    
+
     # ...........................
     def _addJobCommand(self, outputs, cmd, dependencies=[], comment=''):
         """
@@ -201,7 +204,7 @@ class MFChain(ProcessObject):
                                 this job can run
         """
         job = "# {comment}\n{outputs}: {dependencies}\n\t{cmd}\n".format(
-           outputs=' '.join(outputs), 
+           outputs=' '.join(outputs),
            cmd=cmd, comment=comment,
            dependencies=' '.join(dependencies))
         self.jobs.append(job)
@@ -211,7 +214,7 @@ class MFChain(ProcessObject):
         for target in outputs:
             if not os.path.isabs(target):
                 self.targets.append(target)
-    
+
     # ...........................
     def addCommands(self, ruleList):
         """
@@ -221,7 +224,7 @@ class MFChain(ProcessObject):
         # Check if this is just a single tuple, if so, make it a list
         if isinstance(ruleList, MfRule):
             ruleList = [ruleList]
-           
+
         # For each tuple in the list
         for rule in ruleList:
             # If dependency is not absolute path
@@ -229,16 +232,16 @@ class MFChain(ProcessObject):
             targets = rule.targets
             cmd = rule.command
             comment = rule.comment
-            
+
             # Check to see if these targets are already defined by creating a new
             #    list of targets that are not in self.targets
             newTargets = [t for t in targets if t not in self.targets]
-            
+
             # If there are targets that have not been defined before
             if len(newTargets) > 0:
                 self._addJobCommand(
                     newTargets, cmd, dependencies=deps, comment=comment)
-    
+
     # ...........................
     def addHeaders(self, headers):
         """
@@ -248,7 +251,7 @@ class MFChain(ProcessObject):
         if isinstance(headers, tuple):
             headers = [headers]
         self.headers.extend(headers)
-    
+
     # ...........................
     def write(self, filename=None):
         """
@@ -268,8 +271,8 @@ class MFChain(ProcessObject):
                 outF.write("{header}={value}\n".format(header=header, value=value))
             for job in self.jobs:
                 # These have built-in newlines
-                outF.write(job) 
-       
+                outF.write(job)
+
     # ...............................................
     def updateStatus(self, status, mod_time=gmt().mjd):
         """

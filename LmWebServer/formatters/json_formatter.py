@@ -7,10 +7,7 @@ Todo:
 from hashlib import md5
 import json
 
-import cherrypy
-
 from LmCommon.common.lmconstants import LMFormat
-
 from LmServer.base.atom import Atom
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.utilities import format_time_human
@@ -24,6 +21,7 @@ from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
+import cherrypy
 
 
 # Format object method looks at object type and calls formatters appropriately
@@ -34,7 +32,7 @@ def format_atom(obj):
     """
     return {
         'epsg': obj.epsgcode,
-        'id': obj.id,
+        'id': obj.get_id(),
         'modificationTime': format_time_human(obj.mod_time),
         'name': obj.name,
         'url': obj.url
@@ -125,7 +123,7 @@ def format_gridset(gridset):
         gridset_dict['tree'] = gridset.tree.metadataUrl
 
     gridset_dict['name'] = gridset.name
-    gridset_dict['modTime'] = gridset.mod_time
+    gridset_dict['mod_time'] = gridset.mod_time
     return gridset_dict
 
 

@@ -32,7 +32,7 @@ class ColorPalette:
                        "green": self.greenscale,
                        "blue": self.bluescale,
                        "yellow": self.yellowscale,
-                       "fuschia": self.fuschiascale, 
+                       "fuschia": self.fuschiascale,
                        "aqua": self.aquascale,
                        "safe": self.safetycolors,
                        "pretty": self.prettyscale,
@@ -71,9 +71,9 @@ class ColorPalette:
         """
         self.pal = []
         a = 0
-        scl = 255.0/(self.n * 1.0)
-        for i in range(0, self.n+1):
-            v = int(i*scl)
+        scl = 255.0 / (self.n * 1.0)
+        for i in range(0, self.n + 1):
+            v = int(i * scl)
             if i == self.alpha:
                 a = 0
             else:
@@ -86,9 +86,9 @@ class ColorPalette:
         """
         self.pal = []
         a = 0
-        scl = 255.0/(self.n * 1.0)
-        for i in range(0, self.n+1):
-            v = int(i*scl)
+        scl = 255.0 / (self.n * 1.0)
+        for i in range(0, self.n + 1):
+            v = int(i * scl)
             if i == self.alpha:
                 a = 0
             else:
@@ -101,9 +101,9 @@ class ColorPalette:
         """
         self.pal = []
         a = 0
-        scl = 255.0/(self.n * 1.0)
-        for i in range(0, self.n+1):
-            v = int(i*scl)
+        scl = 255.0 / (self.n * 1.0)
+        for i in range(0, self.n + 1):
+            v = int(i * scl)
             if i == self.alpha:
                 a = 0
             else:
@@ -116,9 +116,9 @@ class ColorPalette:
         """
         self.pal = []
         a = 0
-        scl = 255.0/(self.n * 1.0)
-        for i in range(0, self.n+1):
-            v = int(i*scl)
+        scl = 255.0 / (self.n * 1.0)
+        for i in range(0, self.n + 1):
+            v = int(i * scl)
             if i == self.alpha:
                 a = 0
             else:
@@ -131,9 +131,9 @@ class ColorPalette:
         """
         self.pal = []
         a = 0
-        scl = 255.0/(self.n * 1.0)
-        for i in range(0, self.n+1):
-            v = int(i*scl)
+        scl = 255.0 / (self.n * 1.0)
+        for i in range(0, self.n + 1):
+            v = int(i * scl)
             if i == self.alpha:
                 a = 0
             else:
@@ -146,9 +146,9 @@ class ColorPalette:
         """
         self.pal = []
         a = 0
-        scl = 255.0/(self.n * 1.0)
-        for i in range(0, self.n+1):
-            v = int(i*scl)
+        scl = 255.0 / (self.n * 1.0)
+        for i in range(0, self.n + 1):
+            v = int(i * scl)
             if i == self.alpha:
                 a = 0
             else:
@@ -161,9 +161,9 @@ class ColorPalette:
         """
         self.pal = []
         a = 0
-        scl = 255.0/(self.n * 1.0)
-        for i in range(0, self.n+1):
-            v = int(i*scl)
+        scl = 255.0 / (self.n * 1.0)
+        for i in range(0, self.n + 1):
+            v = int(i * scl)
             if i == self.alpha:
                 a = 0
             else:
@@ -180,11 +180,11 @@ class ColorPalette:
         a = 0
         idx = 0
         for i in range(0, 6):
-            b = i*0x33
+            b = i * 0x33
             for j in range(0, 6):
-                g = j*0x33
+                g = j * 0x33
                 for k in range(0, 6):
-                    r = k*0x33
+                    r = k * 0x33
                     if idx == self.alpha:
                         a = 0
                     else:
@@ -201,13 +201,13 @@ class ColorPalette:
         import math
         self.pal = []
         a = 0
-        rscl = [0.0, -1.0, math.pi/(self.n*0.8)]
-        gscl = [0.3, 0.7, math.pi/(self.n*1.0)]
-        bscl = [0.0, 1.0, math.pi/(self.n*1.5)]
-        for i in range(0, self.n+1):
-            r = rscl[0] + rscl[1] * math.cos(i*rscl[2])
-            g = gscl[0] + gscl[1] * math.sin(i*gscl[2])
-            b = bscl[0] + bscl[1] * math.cos(i*bscl[2])
+        rscl = [0.0, -1.0, math.pi / (self.n * 0.8)]
+        gscl = [0.3, 0.7, math.pi / (self.n * 1.0)]
+        bscl = [0.0, 1.0, math.pi / (self.n * 1.5)]
+        for i in range(0, self.n + 1):
+            r = rscl[0] + rscl[1] * math.cos(i * rscl[2])
+            g = gscl[0] + gscl[1] * math.sin(i * gscl[2])
+            b = bscl[0] + bscl[1] * math.cos(i * bscl[2])
             if r < 0: r = 0
             elif r > 1.0: r = 1.0
             if g < 0: g = 0
@@ -218,7 +218,7 @@ class ColorPalette:
                 a = 0
             else:
                 a = 255
-            self.pal.append([int(r*255), int(g*255), int(b*255), a])
+            self.pal.append([int(r * 255), int(g * 255), int(b * 255), a])
 
     def blueredscale(self):
         """
@@ -226,9 +226,9 @@ class ColorPalette:
         """
         self.pal = []
         a = 0
-        scl = 255.0/(self.n * 1.0)
-        for i in range(0, self.n+1):
-            vr = int(i*scl)
+        scl = 255.0 / (self.n * 1.0)
+        for i in range(0, self.n + 1):
+            vr = int(i * scl)
             vb = int((self.n - i) * scl)
             if i == self.alpha:
                 a = 0
@@ -242,9 +242,9 @@ class ColorPalette:
         """
         self.pal = []
         a = 0
-        scl = 255.0/(self.n * 1.0)
-        for i in range(0, self.n+1):
-            vg = int(i*scl)
+        scl = 255.0 / (self.n * 1.0)
+        for i in range(0, self.n + 1):
+            vg = int(i * scl)
             vb = int((self.n - i) * scl)
             if i == self.alpha:
                 a = 0
@@ -258,9 +258,9 @@ class ColorPalette:
         """
         self.pal = []
         a = 0
-        scl = 255.0/(self.n * 1.0)
-        for i in range(0, self.n+1):
-            vr = int(i*scl)
+        scl = 255.0 / (self.n * 1.0)
+        for i in range(0, self.n + 1):
+            vr = int(i * scl)
             vg = int((self.n - i) * scl)
             if i == self.alpha:
                 a = 0

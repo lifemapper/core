@@ -2,36 +2,35 @@
 """
 import os
 
-from lmpy import Matrix
-
 from LmBackend.common.lmobj import LMError
-
 from LmCommon.common.lmconstants import CSV_INTERFACE, MatrixType
 from LmCommon.common.time import gmt
-
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMServiceType, LMFileType)
+from lmpy import Matrix
+
 
 # .............................................................................
 class LMMatrix(Matrix, ServiceObject, ProcessObject):
     """
     The Matrix class contains a 2-dimensional numeric matrix.
     """
+
 # .............................................................................
 # Constructor
 # .............................................................................
     def __init__(self, matrix, headers=None,
-                     matrixType=MatrixType.PAM, 
+                     matrixType=MatrixType.PAM,
                      processType=None,
                      # TODO: replace 3 codes with scenarioId
                      scenarioid=None,
-                     gcmCode=None, altpredCode=None, dateCode=None, 
+                     gcmCode=None, altpredCode=None, dateCode=None,
                      algCode=None,
                      metadata={},
-                     dlocation=None, 
+                     dlocation=None,
                      metadataUrl=None,
                      userId=None,
-                     gridset=None, 
+                     gridset=None,
                      matrixId=None,
                      status=None, statusModTime=None):
         """
@@ -64,26 +63,26 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
             gridsetUrl = gridset.metadataUrl
             gridsetId = gridset.get_id()
         Matrix.__init__(self, matrix, headers=headers)
-        ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
-                                      metadataUrl=metadataUrl, 
+        ServiceObject.__init__(self, userId, matrixId, LMServiceType.MATRICES,
+                                      metadataUrl=metadataUrl,
                                       parentMetadataUrl=gridsetUrl,
-                                      parentId=gridsetId, 
+                                      parentId=gridsetId,
                                       mod_time=statusModTime)
         ProcessObject.__init__(self, objId=matrixId, processType=processType,
-                                      status=status, statusModTime=statusModTime)         
+                                      status=status, statusModTime=statusModTime)
 
 # ...............................................
     @classmethod
-    def initFromParts(cls, baseMtx, gridset=None, 
+    def initFromParts(cls, baseMtx, gridset=None,
                             processType=None, metadataUrl=None, userId=None,
                             status=None, statusModTime=None):
-        mtxobj = LMMatrix(None, matrixType=baseMtx.matrixType, 
+        mtxobj = LMMatrix(None, matrixType=baseMtx.matrixType,
                                 processType=processType, metadata=baseMtx.mtxMetadata,
-                                dlocation=baseMtx.getDLocation(), 
+                                dlocation=baseMtx.getDLocation(),
                                 columnIndices=baseMtx.getColumnIndices(),
                                 columnIndicesFilename=baseMtx.getColumnIndicesFilename(),
-                                metadataUrl=metadataUrl, userId=userId, gridset=gridset, 
-                                matrixId=baseMtx.getMatrixId(), status=baseMtx.status, 
+                                metadataUrl=metadataUrl, userId=userId, gridset=gridset,
+                                matrixId=baseMtx.getMatrixId(), status=baseMtx.status,
                                 statusModTime=baseMtx.statusModTime)
         return mtxobj
 
@@ -109,7 +108,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         if self._gridset is not None:
             name = self._gridset.name
         return name
-    
+
 # ...............................................
     @property
     def gridsetId(self):
@@ -128,7 +127,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
 # ...............................................
     def getDataUrl(self, interface=CSV_INTERFACE):
-        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.get_id(), 
+        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.get_id(),
                                                             interface)
         return durl
 
@@ -154,8 +153,8 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         ftype = LMFileType.getMatrixFiletype(self.matrixType)
         if self.parentId is None:
             raise LMError('Must have parent gridset ID for filepath')
-        dloc = self._earlJr.createFilename(ftype, gridsetId=self.parentId, 
-                                                     objCode=self.get_id(), 
+        dloc = self._earlJr.createFilename(ftype, gridsetId=self.parentId,
+                                                     objCode=self.get_id(),
                                                      usr=self.getUserId())
         return dloc
 
@@ -165,7 +164,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         """
         self.setDLocation()
         return self._dlocation
-    
+
     def setDLocation(self, dlocation=None):
         """
         @summary: Set the _dlocation attribute if it is None.  Use dlocation
@@ -173,11 +172,11 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         @note: Does NOT override existing dlocation, use clearDLocation for that
         """
         if self._dlocation is None:
-            if dlocation is None: 
+            if dlocation is None:
                 dlocation = self.createLocalDLocation()
             self._dlocation = dlocation
 
-    def clearDLocation(self): 
+    def clearDLocation(self):
         self._dlocation = None
 
 # ...............................................
@@ -186,15 +185,15 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
 # ...............................................
     def getShapegrid(self):
-        return self._gridset.getShapegrid()    
-    
+        return self._gridset.getShapegrid()
+
 # ...............................................
     def dumpMtxMetadata(self):
         return super(LMMatrix, self)._dump_metadata(self.mtxMetadata)
 
 # ...............................................
     def addMtxMetadata(self, newMetadataDict):
-        self.mtxMetadata = super(LMMatrix, self)._add_metadata(newMetadataDict, 
+        self.mtxMetadata = super(LMMatrix, self)._add_metadata(newMetadataDict,
                                              existingMetadataDict=self.mtxMetadata)
 
 # ...............................................

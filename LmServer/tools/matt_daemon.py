@@ -17,15 +17,13 @@ from time import sleep
 import traceback
 
 from LmBackend.common.daemon import Daemon, DaemonCommands
-
 from LmCommon.common.lmconstants import LM_USER, JobStatus
 from LmCommon.common.time import gmt
-
+from LmServer.base.utilities import is_lm_user
 from LmServer.common.lmconstants import (
     CATALOG_SERVER_BIN, CS_OPTIONS, LOG_PATH, MAKEFLOW_BIN, MAKEFLOW_OPTIONS,
     MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, RM_OLD_WORKER_DIRS_CMD,
     WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS)
-from LmServer.base.utilities import is_lm_user
 from LmServer.common.localconstants import MAX_MAKEFLOWS, WORKER_PATH
 from LmServer.common.log import LmServerLogger
 from LmServer.db.borgscribe import BorgScribe

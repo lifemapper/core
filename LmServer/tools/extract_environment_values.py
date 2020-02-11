@@ -41,7 +41,7 @@ import json
 
 from lmpy import Matrix
 import numpy as np
-from osgeo import gdal,ogr
+from osgeo import gdal, ogr
 
 
 # .............................................................................
@@ -49,7 +49,8 @@ def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
     """
     @summary: Test if two values are almost equal
     """
-    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
 
 # .............................................................................
 def get_layer_info(layer_json_file):
@@ -58,14 +59,15 @@ def get_layer_info(layer_json_file):
     """
     with open(layer_json_file) as inF:
         raw_layers = json.load(inF)
-    
+
     layers = []
     for lyr in raw_layers:
         layers.append((lyr['identifier'], lyr['dlocation']))
     return layers
 
+
 # .............................................................................
-def get_metrics(points_filename, layer_info, identifier, 
+def get_metrics(points_filename, layer_info, identifier,
                      removeDuplicateLocations=True):
     """
     @summary: Get metrics for the data
@@ -74,31 +76,32 @@ def get_metrics(points_filename, layer_info, identifier,
                   ('maximum', np.max),
                   ('mean', np.mean)]
     metricFunctions = [f for _, f in metrics]
-    
+
     # Add an extra dimension so we can attach a header for this set and then
     #     stack this matrix with others
     metricsData = np.zeros((len(metrics), len(layer_info), 1), dtype=np.float)
 
     # Get the points
-    points = get_point_xys(points_filename, 
+    points = get_point_xys(points_filename,
                                   removeDuplicateLocations=removeDuplicateLocations)
-    
+
     # Get matrics for layers
     for i in range(len(layer_info)):
         # Get metrics for a layer
-        lyrMetrics = get_metrics_for_layer(points, layer_info[i][1], 
+        lyrMetrics = get_metrics_for_layer(points, layer_info[i][1],
                                                       metricFunctions)
-        
+
         # Set values in matrix
         for j in range(len(lyrMetrics)):
-            metricsData[j,i,0] = lyrMetrics[j]
-    
+            metricsData[j, i, 0] = lyrMetrics[j]
+
     metricsMatrix = Matrix(metricsData, headers={
         '0' : [h for h, _ in metrics],
         '1' : [lyr[0] for lyr in layer_info],
         '2' : [identifier]
         })
     return metricsMatrix
+
 
 # .............................................................................
 def get_metrics_for_layer(points, layer_filename, metricFunctions):
@@ -110,9 +113,9 @@ def get_metrics_for_layer(points, layer_filename, metricFunctions):
     data = np.array(band.ReadAsArray())
     gt = ds.GetGeoTransform()
     nodataVal = band.GetNoDataValue()
-    
+
     values = []
-    
+
     for x, y in points:
         px = int((x - gt[0]) / gt[1])
         py = int((y - gt[3]) / gt[5])
@@ -124,14 +127,15 @@ def get_metrics_for_layer(points, layer_filename, metricFunctions):
                 print('Could not append value at ({}, {}): {}'.format(px, py, val))
         except Exception as e:
                 print('Could not append value at ({}, {}): {}'.format(px, py, str(e)))
-    
+
     arr = np.array(values)
-    
+
     mVals = []
     for func in metricFunctions:
         mVals.append(func(arr))
     return mVals
-     
+
+
 # .............................................................................
 def get_point_xys(points_filename, removeDuplicateLocations=True):
     """
@@ -151,19 +155,20 @@ def get_point_xys(points_filename, removeDuplicateLocations=True):
 
     return points
 
+
 # .............................................................................
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         description='This script extracts environmental data metrics for points')
 
-    parser.add_argument('points_file', type=str, 
+    parser.add_argument('points_file', type=str,
                               help='The file location of the points shapefile')
-    parser.add_argument('points_name', type=str, 
+    parser.add_argument('points_name', type=str,
             help='A name (such as the squid) to be associated with these points')
-    parser.add_argument('layer_json_file', type=str, 
+    parser.add_argument('layer_json_file', type=str,
                               help='JSON file containing layer information')
-    parser.add_argument('output_file', type=str, 
+    parser.add_argument('output_file', type=str,
                               help='File location to write the output matrix')
     # TODO: Add parameters for metrics to collect
     args = parser.parse_args()

@@ -1,12 +1,11 @@
 """Library to interact with the Lifemapper PostgreSQL/PostGIS databases 
 """
-import psycopg2
-
 from LmBackend.common.lmobj import LMError
-
 from LmServer.base.atom import Atom
 from LmServer.base.lmobj import LMAbstractObject
-from LmServer.common.lmconstants import LM_SCHEMA        
+from LmServer.common.lmconstants import LM_SCHEMA
+import psycopg2
+
 
 # ............................................................................
 class DbPostgresql(LMAbstractObject):
@@ -14,9 +13,10 @@ class DbPostgresql(LMAbstractObject):
     This class is specific for interacting with a simple PostgreSQL/PostGIS 
     database.
     @todo: Reference LmServer.base.DBConn documentation (how?)
-    """     
+    """
     RETRY_COUNT = 4
-    def __init__(self, logger, db=None, user=None, password=None, host=None, 
+
+    def __init__(self, logger, db=None, user=None, password=None, host=None,
                      port=None, schema=LM_SCHEMA):
         """
         @summary Constructor for the DbPostgresql class
@@ -26,7 +26,7 @@ class DbPostgresql(LMAbstractObject):
         @param host: full dns name of the database hosting server 
                          (i.e. 'lm2hydra.nhm.ku.edu')
         """
-        self.mapConnStr =("user={} password={} dbname={} host={} port={}"
+        self.mapConnStr = ("user={} password={} dbname={} host={} port={}"
                                 .format(user, password, db, host, port))
         self.log = logger
         self.user = user
@@ -38,7 +38,7 @@ class DbPostgresql(LMAbstractObject):
         self.lastCommands = []
         self.pconn = None
         self.cursor = None
-        
+
 # ............................................................................
 # ............................................................................
     def _isOpen(self):
@@ -69,7 +69,7 @@ class DbPostgresql(LMAbstractObject):
                 results[d[0]] = column
                 column = column + 1
         return results
-    
+
 # ............................................................................
     def _getColName(self, colArgName):
         """
@@ -92,8 +92,8 @@ class DbPostgresql(LMAbstractObject):
         formattedArgs = []
         for val in fnArgs:
             formattedArgs.append(self._formatVal(val))
-        return ','.join(formattedArgs) 
-    
+        return ','.join(formattedArgs)
+
 # ............................................................................
     def _formatVal(self, val):
         """
@@ -136,11 +136,11 @@ class DbPostgresql(LMAbstractObject):
         # if pconn is open, do nothing
         if self.pconn is not None and self.pconn.closed:
             self.pconn = None
-            
+
         if self.pconn is None:
-            self.pconn = psycopg2.connect(user=self.user, 
-                                          password=self.password, 
-                                          host=self.host, port=self.port, 
+            self.pconn = psycopg2.connect(user=self.user,
+                                          password=self.password,
+                                          host=self.host, port=self.port,
                                           database=self.db)
         if self.pconn is None:
             raise LMError('Unable to open connection to {}'.format(self.db))
@@ -153,7 +153,7 @@ class DbPostgresql(LMAbstractObject):
         if self.pconn is not None:
             self.pconn.close()
         self.pconn = None
-        
+
 # ............................................................................
     def reopen(self):
         """
@@ -161,7 +161,7 @@ class DbPostgresql(LMAbstractObject):
         """
         self.close()
         self.open()
-        
+
     # ............................................................................
     def executeQueryOneFunction(self, qry):
         """
@@ -174,12 +174,12 @@ class DbPostgresql(LMAbstractObject):
         cmd = 'select * from {};'.format(qry)
         try:
             rows, idxs = self._sendCommand(cmd)
-        except Exception as e: 
-            # Sometimes needs a reset, try up to 5 times 
+        except Exception as e:
+            # Sometimes needs a reset, try up to 5 times
             tries = 0
             success = False
             self.log.warning('Db command failed! Try more times ...')
-            self.reopen()            
+            self.reopen()
             while not success and tries < self.RETRY_COUNT:
                 tries += 1
                 try:
@@ -188,13 +188,13 @@ class DbPostgresql(LMAbstractObject):
                 except Exception as e:
                     self.log.warning('   #{} Trying to re-open, isOpen {}, ...'
                                      .format(tries, self.isOpen))
-                    self.reopen()            
+                    self.reopen()
         if rows:
             for val in rows[0]:
                 if val is not None:
                     return rows[0], idxs
         return None, None
-    
+
     # ............................................................................
     def executeQueryFunction(self, cols, fromClause, whereEtcClause=None):
         """
@@ -213,12 +213,12 @@ class DbPostgresql(LMAbstractObject):
             cmd += ';'
         try:
             rows, idxs = self._sendCommand(cmd)
-        except Exception as e: 
-            # Sometimes needs a reset, try up to 5 times 
+        except Exception as e:
+            # Sometimes needs a reset, try up to 5 times
             tries = 0
             success = False
             self.log.warning('Db command failed! Try more times ...')
-            self.reopen()            
+            self.reopen()
             while not success and tries < self.RETRY_COUNT:
                 tries += 1
                 try:
@@ -257,7 +257,7 @@ class DbPostgresql(LMAbstractObject):
                 if val is not None:
                     return rows[0], idxs
         return None, None
-    
+
     # ............................................................................
     def executeSelectManyFunction(self, fnName, *fnArgs):
         """
@@ -269,7 +269,7 @@ class DbPostgresql(LMAbstractObject):
         """
         rows, idxs = self._executeFunction(fnName, fnArgs)
         return rows, idxs
-        
+
     # ............................................................................
     def executeSelectAndModifyManyFunction(self, fnName, *fnArgs):
         """
@@ -282,7 +282,7 @@ class DbPostgresql(LMAbstractObject):
         @raise LMError: on error returned from the database.
         """
         rows, idxs = self._executeFunction(fnName, fnArgs)
-        self.pconn.commit() 
+        self.pconn.commit()
         return rows, idxs
 
 #     # ............................................................................
@@ -295,7 +295,7 @@ class DbPostgresql(LMAbstractObject):
 #         if isinstance(e, LMError):
 #             raise e
 #         else:
-#             raise LMError('Exception on command {}'.format(self.lastCommands), 
+#             raise LMError('Exception on command {}'.format(self.lastCommands),
 #                               e, do_trace=True)
 
     # ............................................................................
@@ -327,12 +327,12 @@ class DbPostgresql(LMAbstractObject):
         """
         rows, idxs = self._executeFunction(fnName, fnArgs)
         self.pconn.commit()
-            
+
         if len(rows) == 1:
             return rows[0][0]
         else:
             return None
-    
+
     # ............................................................................
     def executeInsertFunction(self, fnName, *fnArgs):
         """
@@ -399,7 +399,7 @@ class DbPostgresql(LMAbstractObject):
                 if val is not None:
                     return rows[0], idxs
         return None, None
-                
+
 # ............................................................................
     def _executeFunction(self, fnName, fnArgs):
         """
@@ -415,11 +415,11 @@ class DbPostgresql(LMAbstractObject):
         try:
             rows, idxs = self._sendCommand(cmd)
         except Exception as e:
-            # Sometimes needs a reset, try up to 5 times 
+            # Sometimes needs a reset, try up to 5 times
             tries = 0
             success = False
             self.log.warning('Db command failed! Try more times ...')
-            self.reopen()            
+            self.reopen()
             while not success and tries < self.RETRY_COUNT:
                 tries += 1
                 try:
@@ -434,7 +434,7 @@ class DbPostgresql(LMAbstractObject):
                               .format(cmd, self.pconn, e))
         return rows, idxs
 
-# ............................................................................ 
+# ............................................................................
     def _sendCommand(self, *cmds):
         """
         @summary Execute one or more commands in the database, returning rows  
@@ -447,17 +447,17 @@ class DbPostgresql(LMAbstractObject):
         """
         idxs = None
         self.lastCommands = [cmds]
-                    
+
         if self.isOpen:
             cursor = self.pconn.cursor()
             try:
                 for cmd in cmds:
                     cursor.execute(cmd)
-                    
-                idxs = self._getColPositionsByName(cursor)                
+
+                idxs = self._getColPositionsByName(cursor)
                 rows = cursor.fetchall()
 
-            except LMError as e: 
+            except LMError as e:
                 raise
             except Exception as e:
                 raise LMError('Exception on command {}'.format(
@@ -468,31 +468,31 @@ class DbPostgresql(LMAbstractObject):
         else:
             raise LMError('Database connection is still None!')
 
-# ............................................................................ 
+# ............................................................................
     def _createAtom(self, row, idxs):
         atom = None
         if row is not None:
             atom = Atom(row[idxs['id']], row[idxs['name']], None,
                             row[idxs['modtime']], epsg=row[idxs['epsgcode']])
         return atom
-        
-# ............................................................................ 
+
+# ............................................................................
     def _getAtoms(self, rows, idxs, serviceType, parentMetadataUrl=None):
         from LmServer.common.datalocator import EarlJr
         earl = EarlJr()
 
         atoms = []
         url = None
-        
-        for r in rows: 
+
+        for r in rows:
             atom = self._createAtom(r, idxs)
             if serviceType is not None:
                 url = earl.constructLMMetadataUrl(serviceType, atom.get_id(),
                                                   parentMetadataUrl=parentMetadataUrl)
             atom.url = url
-            atoms.append(atom)            
+            atoms.append(atom)
         return atoms
-    
+
 # ...............................................
     def _getCount(self, row):
         if row:
@@ -504,7 +504,7 @@ class DbPostgresql(LMAbstractObject):
     def _getColumnValue(self, r, idxs, fldnameList):
         val = None
         for fldname in fldnameList:
-            try: 
+            try:
                 val = r[idxs[fldname]]
             except:
                 pass

@@ -86,7 +86,7 @@ class TestScribeScenarioService(UserTestCase):
          self.fail(
             'Cannot get an scenario because listing found none')
       else:
-         scn = self.scribe.getScenario(scnAtoms[0].id,
+         scn = self.scribe.getScenario(scnAtoms[0].get_id(),
                                                userId=self._get_session_user())
          self.assertIsInstance(scn, Scenario)
          self.assertEqual(scn.getUserId(), self._get_session_user(),
@@ -107,7 +107,7 @@ class TestScribeScenarioService(UserTestCase):
             'List returned 0 scenarios for user: {}'.format(
                self._get_session_user()))
       else:
-         scn = self.scribe.getScenario(scnAtoms[0].id,
+         scn = self.scribe.getScenario(scnAtoms[0].get_id(),
                                                userId=self._get_session_user())
          self.assertEqual(scn.getUserId(), self._get_session_user(),
                'User id on scenario = {}, session user = {}'.format(

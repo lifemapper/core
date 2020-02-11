@@ -84,7 +84,7 @@ class TestScribeScenarioPackageService(UserTestCase):
       if len(scnPkgAtoms) == 0:
          self.fail('Cannot get an scenario package because listing found none')
       else:
-         scnPkg = self.scribe.getScenPackage(scenPkgId=scnPkgAtoms[0].id,
+         scnPkg = self.scribe.getScenPackage(scenPkgId=scnPkgAtoms[0].get_id(),
                                        userId=self._get_session_user())
          self.assertIsInstance(scnPkg, ScenPackage)
          self.assertEqual(scnPkg.getUserId(), self._get_session_user(),
@@ -104,7 +104,7 @@ class TestScribeScenarioPackageService(UserTestCase):
          warnings.warn('List returned 0 scenario packages for user: {}'.format(
                                                      self._get_session_user()))
       else:
-         scnPkg = self.scribe.getScenPackage(scenPkgId=scnPkgAtoms[0].id,
+         scnPkg = self.scribe.getScenPackage(scenPkgId=scnPkgAtoms[0].get_id(),
                                        userId=self._get_session_user())
          self.assertIsInstance(scnPkg, ScenPackage)
          self.assertEqual(scnPkg.getUserId(), self._get_session_user(),

@@ -2,16 +2,14 @@
 """
 import json
 
-import cherrypy
-from lmpy import Matrix
-import ogr
-
 from LmCommon.common.lmconstants import LMFormat, MatrixType
-
 from LmServer.base.layer2 import Vector
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.shapegrid import ShapeGrid
+import cherrypy
+from lmpy import Matrix
+import ogr
 
 
 # .............................................................................
@@ -45,7 +43,7 @@ def geo_jsonify_flo(flo, shp_file_name, matrix=None, mtxJoinAttrib=None,
     @summary: A string generator for matrix GeoJSON
     """
     if isinstance(ident, int):
-        ident = ' '*ident
+        ident = ' ' * ident
 
     flo.write('{\n')
     flo.write('{}"type" : "FeatureCollection",\n'.format(ident))

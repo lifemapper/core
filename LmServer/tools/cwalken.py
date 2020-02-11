@@ -8,40 +8,39 @@ Note:
 # .............................................................................
 import datetime
 import glob
-from osgeo.ogr import wkbPoint
 import os
 from types import IntType, FloatType
 
+from LmBackend.command.server import (MultiIndexPAVCommand,
+                                      MultiStockpileCommand)
+from LmBackend.command.single import SpeciesParameterSweepCommand
 from LmBackend.common.lmconstants import RegistryKey, MaskMethod
 from LmBackend.common.lmobj import LMError, LMObject
 from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
-from LmBackend.command.server import (MultiIndexPAVCommand, 
-                                      MultiStockpileCommand)
-from LmBackend.command.single import SpeciesParameterSweepCommand
-
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat, GBIF,
           SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, BoomKeys,
           SERVER_SDM_ALGORITHM_HEADING_PREFIX,
-          SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX, 
+          SERVER_SDM_MASK_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX,
           MatrixType)
 from LmCommon.common.time import gmt, LmTime
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
-            Priority, BUFFER_KEY, CODE_KEY, ECOREGION_MASK_METHOD, MASK_KEY, 
-            MASK_LAYER_KEY, PRE_PROCESS_KEY, PROCESSING_KEY, 
-            MASK_LAYER_NAME_KEY,SCALE_PROJECTION_MINIMUM, 
+            Priority, BUFFER_KEY, CODE_KEY, ECOREGION_MASK_METHOD, MASK_KEY,
+            MASK_LAYER_KEY, PRE_PROCESS_KEY, PROCESSING_KEY,
+            MASK_LAYER_NAME_KEY, SCALE_PROJECTION_MINIMUM,
             SCALE_PROJECTION_MAXIMUM, DEFAULT_NUM_PERMUTATIONS)
-from LmServer.common.localconstants import (PUBLIC_USER, DEFAULT_EPSG, 
+from LmServer.common.localconstants import (PUBLIC_USER, DEFAULT_EPSG,
                                             POINT_COUNT_MAX)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.tools.occwoc import (UserWoC, ExistingWoC)
+from osgeo.ogr import wkbPoint
+
 
 # .............................................................................
 class ChristopherWalken(LMObject):

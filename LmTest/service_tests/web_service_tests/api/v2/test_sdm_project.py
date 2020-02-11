@@ -87,7 +87,7 @@ class TestScribeSdmProjectService(UserTestCase):
       if len(prjAtoms) == 0:
          self.fail('Cannot get an SDM projection because listing found none')
       else:
-         prj = self.scribe.getSDMProject(prjAtoms[0].id)
+         prj = self.scribe.getSDMProject(prjAtoms[0].get_id())
          self.assertIsInstance(prj, SDMProjection)
          self.assertEqual(prj.getUserId(), self._get_session_user(),
                'User id on projection = {}, session user = {}'.format(
@@ -106,7 +106,7 @@ class TestScribeSdmProjectService(UserTestCase):
          warnings.warn('List returned 0 SDM projections for user: {}'.format(
                                                      self._get_session_user()))
       else:
-         prj = self.scribe.getSDMProject(prjAtoms[0].id)
+         prj = self.scribe.getSDMProject(prjAtoms[0].get_id())
          self.assertEqual(prj.getUserId(), self._get_session_user(),
                'User id on projection = {}, session user = {}'.format(
                                     prj.getUserId(), self._get_session_user()))

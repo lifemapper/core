@@ -10,11 +10,9 @@ from LmBackend.command.multi import (
 from LmBackend.command.server import (
     AssemblePamFromSolrQueryCommand, StockpileCommand, SquidAndLabelTreeCommand)
 from LmBackend.common.lmobj import LMObject
-
 from LmCommon.common.lmconstants import (
     JobStatus, LMFormat, MatrixType, ProcessType)
 from LmCommon.common.time import gmt
-
 from LmServer.common.lmconstants import (
     DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE)
 from LmServer.common.log import ConsoleLogger
@@ -22,10 +20,12 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.processchain import MFChain
 
+
 # .............................................................................
 class BoomCollate(LMObject):
     """Class to manage multi-species calculation initiation
     """
+
     # ................................
     def __init__(self, gridset, dependencies=None, do_pam_stats=True,
                  do_mcpa=False, num_permutations=DEFAULT_NUM_PERMUTATIONS,
@@ -57,14 +57,14 @@ class BoomCollate(LMObject):
                 work_dir, 'gs_{}'.format(gridset.get_id()))
         else:
             self.workspace_dir = 'gs_{}'.format(gridset.get_id())
-        
+
         if dependencies is None:
             self.dependencies = []
         elif isinstance(dependencies, list):
             self.dependencies = dependencies
         else:
             self.dependencies = [dependencies]
-            
+
         # Todo: Check if required inputs are present
         self.do_mcpa = bool(do_mcpa)
         self.do_pam_stats = bool(do_pam_stats)
@@ -72,7 +72,7 @@ class BoomCollate(LMObject):
         self.random_group_size = random_group_size
         self.do_parallel = False
         self.fdr = 0.05
-        
+
     # ................................
     def _create_filename(self, pam_id, *parts):
         """Create a file path
@@ -84,7 +84,7 @@ class BoomCollate(LMObject):
         path_parts = [self.workspace_dir, 'pam_{}'.format(pam_id)]
         path_parts.extend(list(parts))
         return os.path.join(*path_parts)
-        
+
     # ................................
     def _get_aggregation_rules_for_pam(
             self, pam_id, obs_pam_stats_filenames, obs_mcpa_filenames,
@@ -160,13 +160,13 @@ class BoomCollate(LMObject):
             'Created {} observed rules for pam {}'.format(
                 len(obs_rules), pam_id))
         pam_analysis_rules.extend(obs_rules)
-        
+
         # Randomized
         rand_pam_stats_filenames = []
         rand_mcpa_stats_filenames = []
         for i, v in enumerate(
             range(0, self.num_permutations, self.random_group_size)):
-            
+
             (pam_stats_filenames, mcpa_filenames, rand_rules
              ) = self._get_multispecies_run_rules_for_pam(
                  pam_id, 'rand{}'.format(i), pam_filename,
@@ -177,7 +177,7 @@ class BoomCollate(LMObject):
             rand_pam_stats_filenames.append(pam_stats_filenames)
             rand_mcpa_stats_filenames.append(mcpa_filenames)
             pam_analysis_rules.extend(rand_rules)
-        
+
         # Aggregates
         (sig_pam_stats_filenames, sig_mcpa_filenames, agg_rules
          ) = self._get_aggregation_rules_for_pam(pam_id,
@@ -185,7 +185,7 @@ class BoomCollate(LMObject):
              rand_pam_stats_filenames, rand_mcpa_stats_filenames)
         # Add aggregation rules
         pam_analysis_rules.extend(agg_rules)
-        
+
         self.log.debug(
             'Added {} total analysis rules for pam {}'.format(
                 len(pam_analysis_rules), pam_id))
@@ -202,7 +202,7 @@ class BoomCollate(LMObject):
         """
         pam_id = pam.get_id()
         mcpa_tree_encode_rules = []
-        
+
         # File names
         encoded_tree_filename = self._create_filename(
             pam_id, 'encoded_tree{}'.format(LMFormat.MATRIX.ext))
@@ -216,7 +216,7 @@ class BoomCollate(LMObject):
             'Added {} tree encode rules for pam {}'.format(
                 len(mcpa_tree_encode_rules), pam_id))
         return (encoded_tree_filename, mcpa_tree_encode_rules)
-    
+
     # ................................
     def _get_multispecies_run_rules_for_pam(
             self, pam_id, group_prefix, pam_filename, num_permutations,
@@ -236,7 +236,7 @@ class BoomCollate(LMObject):
         mcpa_f_vals_filename = None
         pam_stats_return = None
         mcpa_return = None
-        
+
         if self.do_pam_stats:
             div_stats_filename = self._create_filename(
                 pam_id, 'div_stats_{}{}'.format(
@@ -270,8 +270,8 @@ class BoomCollate(LMObject):
                 diversity_stats_filename=div_stats_filename,
                 site_stats_filename=site_stats_filename,
                 species_stats_filename=species_stats_filename,
-                #site_covariance_filename=None,
-                #species_covariance_filename=None,
+                # site_covariance_filename=None,
+                # species_covariance_filename=None,
                 mcpa_output_filename=mcpa_filename,
                 mcpa_f_matrix_filename=mcpa_f_vals_filename,
                 pam_success_filename=pam_success_filename).get_makeflow_rule())
@@ -314,14 +314,14 @@ class BoomCollate(LMObject):
          ) = self._get_rules_for_pam_assembly(pam)
         pam_rules.extend(pam_assembly_rules)
         pam_id = pam.get_id()
-        
+
         # Initialize variables
         pruned_pam_filename = pam.getDLocation()
         pruned_tree_filename = self.squid_tree_filename
         encoded_tree_filename = None
         grim_filename = None
         biogeo_filename = None
-        
+
         # If there is a tree, the PAM and tree must be synced before we can do
         #    some of the other stats
         if self.gridset.tree is not None:
@@ -337,7 +337,7 @@ class BoomCollate(LMObject):
                 self.squid_tree_filename, pruned_tree_filename,
                 pruned_metadata_filename)
             sync_command.inputs.append(pam_success_filename)
-            
+
             pam_rules.append(sync_command.get_makeflow_rule())
 
             # Ancestral PAM rules -- send pruned tree as dependency so that we
@@ -356,7 +356,6 @@ class BoomCollate(LMObject):
                     ProcessType.RAD_CALCULATE, anc_pam_mtx.get_id(),
                     self._create_filename(pam_id, 'anc_pam.success'),
                     [anc_pam_filename]).get_makeflow_rule())
-        
 
         # If MCPA, sync tree and PAM
         if self.do_mcpa:
@@ -374,7 +373,6 @@ class BoomCollate(LMObject):
             biogeo = self.gridset.getBiogeographicHypotheses()[0]
             biogeo_filename = biogeo.getDLocation()
 
-
         # If PAM stats, initialize matrices
         if self.do_pam_stats:
             sites_obs_mtx = self._get_or_insert_matrix(
@@ -386,7 +384,7 @@ class BoomCollate(LMObject):
             diversity_obs_mtx = self._get_or_insert_matrix(
                 MatrixType.DIVERSITY_OBSERVED, ProcessType.RAD_CALCULATE,
                 pam.gcmCode, pam.altpredCode, pam.dateCode)
-        
+
         # Analysis rules
         (pam_stats_filenames, mcpa_filenames, analysis_rules
          ) = self._get_analysis_rules_for_pam(
@@ -397,7 +395,7 @@ class BoomCollate(LMObject):
              pam_success_filename=pam_success_filename)
         # Add analysis rules
         pam_rules.extend(analysis_rules)
-        
+
         # Add stockpile rules
         # TODO: This is ugly and fragile.  Figure out a better way to determine
         #    what stats are present in what order
@@ -417,7 +415,7 @@ class BoomCollate(LMObject):
                     ProcessType.RAD_CALCULATE, sites_obs_mtx.get_id(),
                     self._create_filename(pam_id, 'site_stats.success'),
                     [pam_stats_filenames[2]]).get_makeflow_rule())
-        
+
         # Add stockpile for MCPA
         if len(mcpa_filenames) > 0:
             pam_rules.append(
@@ -451,9 +449,9 @@ class BoomCollate(LMObject):
         self.log.debug(
             'Adding {} assembly rules for pam {}'.format(
                 len(assembly_rules), pam_id))
-        #return pam.getDLocation(), assembly_rules
+        # return pam.getDLocation(), assembly_rules
         return pam_assembly_success_filename, assembly_rules
-        
+
     # ................................
     def close(self):
         """Close scribe connections
@@ -477,7 +475,7 @@ class BoomCollate(LMObject):
         mf_chain = self._scribe.insertMFChain(
             new_makeflow, self.gridset.get_id())
         self._scribe.updateObject(mf_chain)
-        
+
         # Get rules
         rules = self.get_collate_rules()
         mf_chain.addCommands(rules)
@@ -510,18 +508,19 @@ class BoomCollate(LMObject):
                 tree_success_filename)
             tree_cmd.inputs.append(self.squid_tree_filename)
             rules.append(tree_cmd.get_makeflow_rule(local=True))
-            
+
             # Add tree success to dependencies
             self.dependencies.append(tree_success_filename)
-            
+
         else:
             self.squid_tree_filename = None
 
         for pam in self.gridset.getAllPAMs():
             self.log.debug('Adding rules for PAM {}'.format(pam.get_id()))
             rules.extend(self._get_rules_for_pam(pam))
-        
+
         return rules
+
 
 # .............................................................................
 if __name__ == '__main__':
@@ -543,7 +542,7 @@ if __name__ == '__main__':
     parser.add_argument('-w', type=str, default='./', help='A work directory')
 
     args = parser.parse_args()
-    
+
     scribe = BorgScribe(ConsoleLogger())
     scribe.openConnections()
     gridset = scribe.getGridset(gridsetId=args.gridset_id, fillMatrices=True)
@@ -555,4 +554,3 @@ if __name__ == '__main__':
     collator.create_workflow()
     collator.close()
     scribe.closeConnections()
-    

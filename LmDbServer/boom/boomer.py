@@ -14,24 +14,23 @@ import os, sys, time
 import signal
 
 from LmBackend.common.lmobj import LMError, LMObject
-
 from LmCommon.common.lmconstants import JobStatus, LM_USER
 import LmCommon.common.time as lt
-
+from LmDbServer.boom.boom_collate import BoomCollate
 from LmServer.base.utilities import is_lm_user
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
-                                         PUBLIC_ARCHIVE_NAME) 
-from LmServer.common.localconstants import PUBLIC_USER 
+                                         PUBLIC_ARCHIVE_NAME)
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
-from LmDbServer.boom.boom_collate import BoomCollate
 
 # Only relevant for "archive" public data, all user workflows will put all
-# spuds into a single makeflow, along with multi-species commands to follow SDMs 
+# spuds into a single makeflow, along with multi-species commands to follow SDMs
 SPUD_LIMIT = 5000
+
 
 # .............................................................................
 class Boomer(LMObject):
@@ -50,8 +49,9 @@ class Boomer(LMObject):
     @todo: Next instance of boom.Walker will create new MFChains, but add data
     to the existing Global PAM matrices.  
     """
+
     # .............................
-    def __init__(self, configFname, successFname, log=None):      
+    def __init__(self, configFname, successFname, log=None):
         self.name = self.__class__.__name__.lower()
         # Logfile
         if log is None:
@@ -60,13 +60,13 @@ class Boomer(LMObject):
             logname = '{}.{}'.format(self.name, timestamp)
             log = ScriptLogger(logname, level=logging.INFO)
         self.log = log
-        
+
         self.configFname = configFname
         self._successFname = successFname
-        
+
 #         self.do_intersect = None
-        self.do_pam_stats = None 
-        self.do_mcpa = None 
+        self.do_pam_stats = None
+        self.do_mcpa = None
         # Send Database connection
         self._scribe = BorgScribe(self.log)
         # iterator tool for species
@@ -75,13 +75,13 @@ class Boomer(LMObject):
 #         # Dictionary of {scenCode: (potatoChain, triagePotatoFile)}
 #         self.potatoes = None
 
-        # MFChain for lots of spuds 
+        # MFChain for lots of spuds
         self.potatoBushel = None
         self.squidNames = None
         # Stop indicator
         self.keepWalken = False
-        
-        signal.signal(signal.SIGTERM, self._receiveSignal) # Stop signal
+
+        signal.signal(signal.SIGTERM, self._receiveSignal)  # Stop signal
 
     # .............................
     def _receiveSignal(self, sigNum, stack):
@@ -128,24 +128,24 @@ class Boomer(LMObject):
             self.log.warning('Exception getting christopher.boomGridset id!!')
         if self.gridsetId is None:
             self.log.warning('Missing christopher.boomGridset id!!')
-        
-        self.do_pam_stats = self.christopher.compute_pam_stats 
-        self.do_mcpa = self.christopher.compute_mcpa 
+
+        self.do_pam_stats = self.christopher.compute_pam_stats
+        self.do_mcpa = self.christopher.compute_mcpa
         self.priority = self.christopher.priority
-        
-        # Start where we left off 
+
+        # Start where we left off
         self.christopher.moveToStart()
         self.log.debug('Starting Chris at location {} ... '
                        .format(self.christopher.currRecnum))
         self.keepWalken = True
-        
+
         self.pav_index_filenames = []
         # master MF chain
         self.masterPotatoHead = None
         self.log.info('Create first potato')
         self.potatoBushel = self._createBushelMakeflow()
         self.squidNames = []
-         
+
     # .............................
     def processOneSpecies(self):
         try:
@@ -156,24 +156,24 @@ class Boomer(LMObject):
                 workdir)
             if idx_success_filename is not None:
                 self.pav_index_filenames.append(idx_success_filename)
-            
+
             # TODO: Track squids
             if squid is not None:
                 self.squidNames.append(squid)
-            
+
             self.keepWalken = not self.christopher.complete
-            # TODO: Master process for occurrence only? SDM only? 
+            # TODO: Master process for occurrence only? SDM only?
             if spudRules:
-                self.log.debug('Processing spud for potatoes') 
+                self.log.debug('Processing spud for potatoes')
                 self.potatoBushel.addCommands(spudRules)
                 # TODO: Don't write triage file, but don't delete code
-                #if potatoInputs:
+                # if potatoInputs:
                 #   for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
                 #      pavFname = potatoInputs[scencode]
                 #      triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
                 #   self.log.info('Wrote spud squid to {} triage files'
                 #                 .format(len(potatoInputs)))
-                #if len(self.spudArfFnames) >= SPUD_LIMIT:
+                # if len(self.spudArfFnames) >= SPUD_LIMIT:
                 if not self.do_pam_stats and len(self.squidNames) >= SPUD_LIMIT:
                     self.rotatePotatoes()
             self.log.info('-----------------')
@@ -196,7 +196,7 @@ class Boomer(LMObject):
 
                     # Add rules to bushel workflow
                     self.potatoBushel.addCommands(collate_rules)
-                    
+
                 self.potatoBushel.write()
                 self.potatoBushel.updateStatus(JobStatus.INITIALIZE)
                 self._scribe.updateObject(self.potatoBushel)
@@ -208,21 +208,20 @@ class Boomer(LMObject):
         else:
             self.log.info('   No existing potatoBushel')
 
-
     # .............................
     def rotatePotatoes(self):
         """
         """
         if self.potatoBushel:
             self._writeBushel()
-        
+
         # Create new bushel IFF do_pam_stats is False, i.e. Rolling PAM,
         #   and there are more species to process
         if not self.christopher.complete and not self.do_pam_stats:
             self.potatoBushel = self._createBushelMakeflow()
             self.log.info('Create new potato')
             self.squidNames = []
-            
+
     # .............................
     def close(self):
         self.keepWalken = False
@@ -251,10 +250,10 @@ class Boomer(LMObject):
         meta = {MFChain.META_CREATED_BY: self.name,
                 MFChain.META_DESCRIPTION: 'Bushel for User {}, Archive {}'
                     .format(self.christopher.userId, self.christopher.archiveName),
-                MFChain.META_GRIDSET: self.gridsetId 
+                MFChain.META_GRIDSET: self.gridsetId
         }
-        newMFC = MFChain(self.christopher.userId, priority=self.priority, 
-                         metadata=meta, status=JobStatus.GENERAL, 
+        newMFC = MFChain(self.christopher.userId, priority=self.priority,
+                         metadata=meta, status=JobStatus.GENERAL,
                          statusModTime=lt.gmt().mjd)
         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
         return mfChain
@@ -264,10 +263,10 @@ class Boomer(LMObject):
 #         meta = {MFChain.META_CREATED_BY: self.name,
 #                 MFChain.META_DESCRIPTION: 'MasterPotatoHead for User {}, Archive {}'
 #                     .format(self.christopher.userId, self.christopher.archiveName),
-#                 MFChain.META_GRIDSET: self.gridsetId 
+#                 MFChain.META_GRIDSET: self.gridsetId
 #         }
-#         newMFC = MFChain(self.christopher.userId, priority=self.priority, 
-#                          metadata=meta, status=JobStatus.GENERAL, 
+#         newMFC = MFChain(self.christopher.userId, priority=self.priority,
+#                          metadata=meta, status=JobStatus.GENERAL,
 #                          statusModTime=lt.gmt().mjd)
 #         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
 #         return mfChain
@@ -295,14 +294,14 @@ class Boomer(LMObject):
             A list of compute rules for the gridset
         """
         work_dir = self.potatoBushel.getRelativeDirectory()
-        bc = BoomCollate(self.gridset, dependencies=self.pav_index_filenames, 
-                         do_pam_stats=self.do_pam_stats, 
-                         do_mcpa=self.do_mcpa, 
+        bc = BoomCollate(self.gridset, dependencies=self.pav_index_filenames,
+                         do_pam_stats=self.do_pam_stats,
+                         do_mcpa=self.do_mcpa,
                          num_permutations=self.christopher.num_permutations,
-                         random_group_size=DEFAULT_RANDOM_GROUP_SIZE, 
+                         random_group_size=DEFAULT_RANDOM_GROUP_SIZE,
                          work_dir=work_dir, log=self.log)
         rules = bc.get_collate_rules()
-        
+
         return rules
 
     # ...............................................
@@ -328,19 +327,18 @@ class Boomer(LMObject):
         self.writeSuccessFile('Boomer finished walken {} species'.format(count))
 
 
-
 # .............................................................................
 if __name__ == "__main__":
     if not is_lm_user():
         print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
     earl = EarlJr()
-    defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG, 
-                                            objCode=PUBLIC_ARCHIVE_NAME, 
+    defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG,
+                                            objCode=PUBLIC_ARCHIVE_NAME,
                                             usr=PUBLIC_USER)
     parser = argparse.ArgumentParser(
              description=('Populate a Lifemapper archive with metadata ' +
-                          'for single- or multi-species computations ' + 
+                          'for single- or multi-species computations ' +
                           'specific to the configured input data or the ' +
                           'data package named.'))
     parser.add_argument('--config_file', default=defaultConfigFile,
@@ -348,7 +346,7 @@ if __name__ == "__main__":
                    'to be created from these data.'))
     parser.add_argument('--success_file', default=None,
              help=('Filename to be written on successful completion of script.'))
-    
+
     args = parser.parse_args()
     configFname = args.config_file
     successFname = args.success_file
@@ -357,17 +355,17 @@ if __name__ == "__main__":
     if successFname is None:
         boombasename, _ = os.path.splitext(configFname)
         successFname = boombasename + '.success'
-    
+
     secs = time.time()
     timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-    
+
     scriptname = os.path.splitext(os.path.basename(__file__))[0]
     logname = '{}.{}'.format(scriptname, timestamp)
     logger = ScriptLogger(logname, level=logging.INFO)
     boomer = Boomer(configFname, successFname, log=logger)
     boomer.initializeMe()
     boomer.processAllSpecies()
-   
+
 """
 from LmDbServer.boom.boomer import Boomer
 

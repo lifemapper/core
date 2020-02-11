@@ -1,13 +1,12 @@
 """
 """
-from lmpy import Matrix
-
 from LmCommon.common.lmconstants import LMFormat, BoomKeys
 from LmCommon.common.time import gmt
-
 from LmServer.base.layer2 import _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMServiceType
+from lmpy import Matrix
+
 
 # .............................................................................
 # .............................................................................
@@ -24,26 +23,27 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
     INTERSECT_PARAM_VAL_UNITS = 'val_units'
     # Minimum spatial coverage for gridcell intersect computation
     INTERSECT_PARAM_MIN_PERCENT = 'min_percent'
-    # Minimum percentage of acceptable value for PAM gridcell intersect computation 
+    # Minimum percentage of acceptable value for PAM gridcell intersect computation
     INTERSECT_PARAM_MIN_PRESENCE = 'min_presence'
-    # Maximum percentage of acceptable value for PAM gridcell intersect computation 
+    # Maximum percentage of acceptable value for PAM gridcell intersect computation
     INTERSECT_PARAM_MAX_PRESENCE = 'max_presence'
 
     # Types of GRIM gridcell intersect computation
     INTERSECT_PARAM_WEIGHTED_MEAN = 'weighted_mean'
     INTERSECT_PARAM_LARGEST_CLASS = 'largest_class'
+
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, matrixIndex, matrixId, userId, 
-                     # inputs if this is connected to a layer and shapegrid 
-                     layer=None, layerId=None, 
-                     shapegrid=None, shapeGridId=None, 
-                     intersectParams={}, 
+    def __init__(self, matrixIndex, matrixId, userId,
+                     # inputs if this is connected to a layer and shapegrid
+                     layer=None, layerId=None,
+                     shapegrid=None, shapeGridId=None,
+                     intersectParams={},
                      squid=None, ident=None,
-                     processType=None, 
-                     metadata={}, 
-                     matrixColumnId=None, 
+                     processType=None,
+                     metadata={},
+                     matrixColumnId=None,
                      postToSolr=True,
                      status=None, statusModTime=None):
         """
@@ -60,13 +60,13 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
         @param squid: species unique identifier for column
         @param ident: (non-species) unique identifier for column
         """
-        _LayerParameters.__init__(self, userId, paramId=matrixColumnId, 
-                                          matrixIndex=matrixIndex, metadata=metadata, 
+        _LayerParameters.__init__(self, userId, paramId=matrixColumnId,
+                                          matrixIndex=matrixIndex, metadata=metadata,
                                           mod_time=statusModTime)
-        ServiceObject.__init__(self,  userId, matrixColumnId, 
-                                      LMServiceType.MATRIX_COLUMNS, parentId=matrixId, 
+        ServiceObject.__init__(self, userId, matrixColumnId,
+                                      LMServiceType.MATRIX_COLUMNS, parentId=matrixId,
                                       mod_time=statusModTime)
-        ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
+        ProcessObject.__init__(self, objId=matrixColumnId, processType=processType,
                                       status=status, statusModTime=statusModTime)
         self.layer = layer
         self._layerId = layerId
@@ -93,7 +93,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
         @return integer database id of the object
         """
         return self.objId
-    
+
 # ...............................................
     def getLayerId(self):
         if self.layer is not None:
@@ -101,7 +101,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
         elif self._layerId is not None:
             return self._layerId
         return None
-    
+
 # ...............................................
     @property
     def displayName(self):
@@ -117,16 +117,16 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
 # ...............................................
     def dumpIntersectParams(self):
         return super(MatrixColumn, self)._dump_metadata(self.intersectParams)
- 
+
 # ...............................................
     def loadIntersectParams(self, newIntersectParams):
         self.intersectParams = super(MatrixColumn, self)._load_metadata(newIntersectParams)
 
 # ...............................................
     def addIntersectParams(self, newIntersectParams):
-        self.intersectParams = super(MatrixColumn, self)._add_metadata(newIntersectParams, 
+        self.intersectParams = super(MatrixColumn, self)._add_metadata(newIntersectParams,
                                              existingMetadataDict=self.intersectParams)
-    
+
 # ...............................................
     def updateStatus(self, status, matrixIndex=None, metadata=None, mod_time=gmt().mjd):
         """
@@ -136,7 +136,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
         @copydoc LmServer.base.layer2._LayerParameters::updateParams()
         """
         ProcessObject.updateStatus(self, status, mod_time)
-        _LayerParameters.updateParams(self, mod_time, matrixIndex=matrixIndex, 
+        _LayerParameters.updateParams(self, mod_time, matrixIndex=matrixIndex,
                                                 metadata=metadata)
 
 # ...............................................

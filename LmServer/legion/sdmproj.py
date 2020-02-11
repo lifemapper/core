@@ -1,25 +1,26 @@
 """Module containing the projection object class and methods.
 """
-import glob 
+import glob
 from hashlib import md5
 import json
 import os
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCommon.common.time import gmt
-
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (
-    Algorithms, ID_PLACEHOLDER,LMFileType, LMServiceType)
+    Algorithms, ID_PLACEHOLDER, LMFileType, LMServiceType)
+
 
 # .........................................................................
 class _ProjectionType(_LayerParameters, ProcessObject):
 # .............................................................................
     """
     """
+
 # .............................................................................
-    def __init__(self, occurrenceSet, algorithm, modelScenario, modelMask, 
+    def __init__(self, occurrenceSet, algorithm, modelScenario, modelMask,
                      projScenario, projMask, processType, projMetadata,
                      status, statusModTime, userId, projectId):
         """Constructor for the _ProjectionType class
@@ -55,7 +56,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
         """
         if status is not None and statusModTime is None:
             statusModTime = gmt().mjd
-            
+
         _LayerParameters.__init__(
             self, userId, paramId=projectId, matrixIndex=-1,
             metadata=projMetadata, mod_time=statusModTime)
@@ -68,17 +69,17 @@ class _ProjectionType(_LayerParameters, ProcessObject):
         self._modelScenario = modelScenario
         self._projMask = projMask
         self._projScenario = projScenario
-        
+
 # ...............................................
-# Projection Input Data Object attributes: 
-# OccurrenceSet, Algorithm, ModelMask, ModelScenario, ProjMask, ProjScenario 
+# Projection Input Data Object attributes:
+# OccurrenceSet, Algorithm, ModelMask, ModelScenario, ProjMask, ProjScenario
 # ...............................................
     def getOccurrenceSetId(self):
         return self._occurrenceSet.get_id()
 
     def dumpAlgorithmParametersAsString(self):
         return self._algorithm.dumpAlgParameters()
-    
+
     def getModelMaskId(self):
         try:
             return self._modelMask.get_id()
@@ -96,7 +97,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
     def getProjScenarioId(self):
         return self._projScenario.get_id()
-    
+
     def isOpenModeller(self):
         return Algorithms.isOpenModeller(self._algorithm.code)
 
@@ -118,10 +119,10 @@ class _ProjectionType(_LayerParameters, ProcessObject):
     @property
     def projMask(self):
         return self._projMask
-    
+
     def setProjMask(self, lyr):
         self._projMask = lyr
-    
+
     @property
     def occurrenceSet(self):
         return self._occurrenceSet
@@ -141,7 +142,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
     @property
     def algorithmCode(self):
         return self._algorithm.code
-    
+
     @property
     def modelScenario(self):
         return self._modelScenario
@@ -149,20 +150,21 @@ class _ProjectionType(_LayerParameters, ProcessObject):
     @property
     def modelScenarioCode(self):
         return self._modelScenario.code
-    
+
     @property
     def modelMask(self):
         return self._modelMask
-    
+
     def setModelMask(self, lyr):
         self._modelMask = lyr
-    
+
     @property
     def projInputLayers(self):
         """
         @summary Gets the layers of the projection Scenario
         """
         return self._projScenario.layers
+
 
 # .............................................................................
 class SDMProjection(_ProjectionType, Raster):
@@ -177,6 +179,7 @@ class SDMProjection(_ProjectionType, Raster):
         * Uses layerid for _dbId, get_id(), ServiceObject
         * Uses sdmprojectid for objId, ProcessObject
     """
+
 # .............................................................................
 # Constructor
 # .............................................................................
@@ -214,15 +217,15 @@ class SDMProjection(_ProjectionType, Raster):
             resolution=resolution, bbox=bbox, svcObjId=lyrId,
             serviceType=LMServiceType.PROJECTIONS, metadataUrl=metadataUrl,
             parentMetadataUrl=parentMetadataUrl, mod_time=statusModTime)
-        # TODO: clean this up.  Do not allow layer to calculate dlocation,  
+        # TODO: clean this up.  Do not allow layer to calculate dlocation,
         #         subclass SDMProjection must override
         self.setId(lyrId)
         self.setLocalMapFilename()
         self._setMapPrefix()
-    
+
 # .............................................................................
 # another Constructor
-## .............................................................................
+# # .............................................................................
     @classmethod
     def initFromParts(cls, occurrenceSet, algorithm, modelScenario,
                       projScenario, layer, processType=None, modelMask=None,
@@ -246,7 +249,7 @@ class SDMProjection(_ProjectionType, Raster):
 
 # .............................................................................
 # Superclass methods overridden
-## .............................................................................
+# # .............................................................................
     def setId(self, lyrid):
         """
         @summary: Sets the database id on the object, and sets the 
@@ -260,7 +263,7 @@ class SDMProjection(_ProjectionType, Raster):
             self.setDLocation()
             self.title = '%s Projection %s' % (self.speciesName, str(lyrid))
             self._setMapPrefix()
-            
+
 # ...............................................
     def createLocalDLocation(self):
         """
@@ -275,7 +278,7 @@ class SDMProjection(_ProjectionType, Raster):
         return dloc
 
 # ...............................................
-    def getDLocation(self): 
+    def getDLocation(self):
         self.setDLocation()
         return self._dlocation
 
@@ -288,7 +291,7 @@ class SDMProjection(_ProjectionType, Raster):
         """
         # Only set DLocation if it is currently None
         if self._dlocation is None:
-            if dlocation is None: 
+            if dlocation is None:
                 dlocation = self.createLocalDLocation()
             self._dlocation = dlocation
 
@@ -301,7 +304,7 @@ class SDMProjection(_ProjectionType, Raster):
         return self._occurrenceSet.getAbsolutePath()
 
 # ...............................................
-    def _createMetadata(self, prjScenario, speciesName, algorithmCode, 
+    def _createMetadata(self, prjScenario, speciesName, algorithmCode,
                               title=None, isDiscreteData=False):
         """
         @summary: Assemble SDMProjection metadata the first time it is created.
@@ -312,7 +315,7 @@ class SDMProjection(_ProjectionType, Raster):
         keywds.extend(prjKeywds)
         # remove duplicates
         keywds = list(set(keywds))
-        
+
         metadata[ServiceObject.META_KEYWORDS] = keywds
         metadata[ServiceObject.META_DESCRIPTION] = (
             'Modeled habitat for {} projected onto {} datalayers'.format(
@@ -321,7 +324,7 @@ class SDMProjection(_ProjectionType, Raster):
         if title is not None:
             metadata[Raster.META_TITLE] = title
         return metadata
-    
+
 # ...............................................
     def _getDefaultsFromInputs(self, lyrId, occurrenceSet, algorithm,
                                modelScenario, projScenario, name, squid,
@@ -378,7 +381,7 @@ class SDMProjection(_ProjectionType, Raster):
         ProcessObject.updateStatus(self, status, mod_time)
         ServiceObject.updateModtime(self, mod_time)
         _LayerParameters.updateParams(self, mod_time, metadata=metadata)
-        
+
         # If projection will be updated with a successful complete status,
         #     clear the map file so that it can be regenerated
         try:
@@ -386,7 +389,7 @@ class SDMProjection(_ProjectionType, Raster):
                 self.clearLocalMapfile()
         except:
             pass
-            
+
 # ...............................................
     def clearProjectionFiles(self):
         reqfname = self.getProjRequestFilename()
@@ -394,11 +397,11 @@ class SDMProjection(_ProjectionType, Raster):
         pkgfname = self.getProjPackageFilename()
         success, msg = self.deleteFile(pkgfname)
         # metadata files
-        prjfnames = glob.glob(self._dlocation+'*')
+        prjfnames = glob.glob(self._dlocation + '*')
         for fname in prjfnames:
             success, msg = self.deleteFile(fname)
         self.clearDLocation()
-        
+
 # ...............................................
     def clearOutputFiles(self):
         reqfname = self.getProjRequestFilename()
@@ -406,11 +409,11 @@ class SDMProjection(_ProjectionType, Raster):
         pkgfname = self.getProjPackageFilename()
         success, msg = self.deleteFile(pkgfname)
         # metadata files
-        prjfnames = glob.glob(self._dlocation+'*')
+        prjfnames = glob.glob(self._dlocation + '*')
         for fname in prjfnames:
             success, msg = self.deleteFile(fname)
         self.clearDLocation()
-        
+
 # ...............................................
     def rollback(self, status=JobStatus.GENERAL):
         """
@@ -440,26 +443,26 @@ class SDMProjection(_ProjectionType, Raster):
         # This is a list of algorithm information that will be used for hashing
         algoInfo = []
         algoInfo.append(algorithm.code)
-        
+
         algoObj = {
             "algorithmCode" : algorithm.code,
             "parameters" : []
         }
-            
+
         for param in list(algorithm._parameters.keys()):
             algoObj["parameters"].append(
-                {"name" : param, 
+                {"name" : param,
                  "value" : str(algorithm._parameters[param])})
             algoInfo.append((param, str(algorithm._parameters[param])))
-        
+
         paramsSet = set(algoInfo)
         paramsHash = md5(str(paramsSet)).hexdigest()
 
         # TODO: Determine if we should copy this to the workspace or something?
         paramsFname = self._earlJr.createFilename(
             LMFileType.TMP_JSON, objCode=paramsHash[:16], usr=self.getUserId())
-        
-        # Write if it does not exist        
+
+        # Write if it does not exist
         if not os.path.exists(paramsFname):
             with open(paramsFname, 'w') as paramsOut:
                 json.dump(algoObj, paramsOut)
@@ -481,16 +484,15 @@ class SDMProjection(_ProjectionType, Raster):
         """
         self._occurrenceSet.setLocalMapFilename()
 
-
 # ...............................................
     @property
     def mapFilename(self):
         return self._occurrenceSet.mapFilename
-    
+
     @property
     def mapName(self):
         return self._occurrenceSet.mapName
-    
+
 # ...............................................
     def _createMapPrefix(self):
         """
@@ -501,7 +503,7 @@ class SDMProjection(_ProjectionType, Raster):
         @note: If the object has not yet been inserted into the database, a 
                  placeholder is used until replacement after database insertion.
         """
-        # Recompute in case we have a new db ID 
+        # Recompute in case we have a new db ID
         projid = self.get_id()
         if projid is None:
             projid = ID_PLACEHOLDER
@@ -517,7 +519,7 @@ class SDMProjection(_ProjectionType, Raster):
     def _setMapPrefix(self):
         mapprefix = self._createMapPrefix()
         self._mapPrefix = mapprefix
-        
+
 # ...............................................
     @property
     def mapPrefix(self):
@@ -530,4 +532,4 @@ class SDMProjection(_ProjectionType, Raster):
         lyrname = None
         if self._dbId is not None:
             lyrname = self._earlJr.createLayername(projId=self._dbId)
-        return lyrname 
+        return lyrname

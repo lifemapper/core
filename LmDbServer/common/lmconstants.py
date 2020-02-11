@@ -1,6 +1,11 @@
 """LmDbServer constants
 """
-import os.path 
+import os.path
+
+from LmDbServer.common.localconstants import (GBIF_TAXONOMY_FILENAME,
+      GBIF_PROVIDER_FILENAME)
+from LmServer.common.lmconstants import SPECIES_DATA_PATH
+
 try:
     from osgeo.ogr import wkbPolygon
 except:
@@ -8,9 +13,6 @@ except:
 
 # from LmCommon.common.lmconstants import LMFormat
 # from LmServer.common.localconstants import PID_PATH
-from LmServer.common.lmconstants import SPECIES_DATA_PATH
-from LmDbServer.common.localconstants import (GBIF_TAXONOMY_FILENAME, 
-      GBIF_PROVIDER_FILENAME)
 
 # ............................................................................
 
@@ -27,12 +29,13 @@ GBIF_PROVIDER_DUMP_FILE = os.path.join(
 #     SPECIES_DATA_PATH, IDIG_OCCURRENCE_DATA + LMFormat.CSV.ext)
 # IDIG_OCCURRENCE_META = os.path.join(
 #     SPECIES_DATA_PATH, IDIG_OCCURRENCE_DATA + LMFormat.METADATA.ext)
-# 
+#
 # USER_OCCURRENCE_CSV = os.path.join(
 #     SPECIES_DATA_PATH, USER_OCCURRENCE_DATA + LMFormat.CSV.ext)
 # USER_OCCURRENCE_META = os.path.join(
 #     SPECIES_DATA_PATH, USER_OCCURRENCE_DATA + LMFormat.METADATA.ext)
-    
+
+
 # ............................................................................
 class SpeciesDatasource:
     """
@@ -71,15 +74,15 @@ class SpeciesDatasource:
     EXISTING = 'EXISTING'
     TAXON_IDS = 'TAXON_IDS'
     TAXON_NAMES = 'TAXON_NAMES'
-    
+
 # ...............................................
     @staticmethod
     def isUser(datasource):
-        if datasource in (SpeciesDatasource.BISON, SpeciesDatasource.GBIF, 
+        if datasource in (SpeciesDatasource.BISON, SpeciesDatasource.GBIF,
                                 SpeciesDatasource.IDIGBIO):
             return False
         return True
-        
+
 
 # ??? Key must match DATASOURCE in config/boom.public.params.in
 TAXONOMIC_SOURCE = {
@@ -93,6 +96,7 @@ TAXONOMIC_SOURCE = {
 #                 'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'}}
 }
 
+
 class TNCMetadata:
     """
     @summary: Metadata describing The Nature Conservancy Global Ecoregion data.
@@ -101,9 +105,9 @@ class TNCMetadata:
     author = 'The Nature Conservancy'
     isCategorical = True
     description = ' '.join(('Global Ecoregions, Major Habitat Types,',
-    'Biogeographical Realms and The Nature Conservancy Terrestrial Assessment', 
-    'Units as of December 14, 2009 Purpose: Developed originally by Olson, D. M.', 
-    'and E. Dinerstein (2002), Bailey (1995) and Environment Canada (Wiken,', 
+    'Biogeographical Realms and The Nature Conservancy Terrestrial Assessment',
+    'Units as of December 14, 2009 Purpose: Developed originally by Olson, D. M.',
+    'and E. Dinerstein (2002), Bailey (1995) and Environment Canada (Wiken,',
     '1986), these data layers were modified by The Nature Conservancy (TNC) to',
     'be used in its Biodiversity Planning exercises in the process known as',
     'Ecoregional Assessments. Several Ecoregions were modified from the',
@@ -116,7 +120,7 @@ class TNCMetadata:
     '(2002) and (Wiken, 1986) were replaced where the TNC modified-Bailey (1995)',
     'overlayed them. This layer was split from the terrestrial ecoregional',
     'assessment layer in June 2008.'))
-    keywords = ['Terrestrial Ecoregions', 'Major Habitat Types', 
+    keywords = ['Terrestrial Ecoregions', 'Major Habitat Types',
                     'Biogeographic Realms', 'TNC', 'World', 'Global']
     url = 'http://maps.tnc.org'
     citation = ' '.join(('Olson, D. M. and E. Dinerstein. 2002. The Global 200:',

@@ -89,7 +89,7 @@ class TestScribeLayerService(UserTestCase):
       if len(lyrAtoms) == 0:
          self.fail('Cannot get a layer because listing found none')
       else:
-         lyr = self.scribe.getLayer(lyrId=lyrAtoms[0].id,
+         lyr = self.scribe.getLayer(lyrId=lyrAtoms[0].get_id(),
                                        userId=self._get_session_user())
          self.assertIsInstance(lyr, (Raster, Vector))
          self.assertEqual(lyr.getUserId(), self._get_session_user(),
@@ -108,7 +108,7 @@ class TestScribeLayerService(UserTestCase):
          warnings.warn('List returned 0 layers for user: {}'.format(
                                                      self._get_session_user()))
       else:
-         lyr = self.scribe.getLayer(lyrId=lyrAtoms[0].id,
+         lyr = self.scribe.getLayer(lyrId=lyrAtoms[0].get_id(),
                                        userId=self._get_session_user())
          self.assertEqual(lyr.getUserId(), self._get_session_user(),
                'User id on layer = {}, session user = {}'.format(

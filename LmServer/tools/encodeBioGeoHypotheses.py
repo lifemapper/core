@@ -10,25 +10,25 @@ import argparse
 import os
 import sys
 
-# from LmBackend.command.server import EncodeBioGeoHypothesesCommand
-
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (LM_USER, JobStatus, BoomKeys, 
-                                         MatrixType, ProcessType, 
+from LmCommon.common.lmconstants import (LM_USER, JobStatus, BoomKeys,
+                                         MatrixType, ProcessType,
                                          SERVER_BOOM_HEADING)
 from LmCommon.common.ready_file import ready_filename
-from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmCommon.common.time import gmt
+from LmCommon.encoding.layer_encoder import LayerEncoder
+from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import is_lm_user
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
+from LmServer.common.localconstants import DEFAULT_EPSG
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.localconstants import DEFAULT_EPSG
 
+
+# from LmBackend.command.server import EncodeBioGeoHypothesesCommand
 # .................................
 def _getBioGeoMatrix(scribe, usr, gridset, layers=[]):
     """
@@ -56,13 +56,13 @@ def _getBioGeoMatrix(scribe, usr, gridset, layers=[]):
                 kwds = []
             mtxKeywords.extend(kwds)
         # Add the matrix to contain biogeo hypotheses layer intersections
-        meta={ServiceObject.META_DESCRIPTION.lower(): 
+        meta = {ServiceObject.META_DESCRIPTION.lower():
                 'Biogeographic Hypotheses for archive {}'.format(gridset.name),
                 ServiceObject.META_KEYWORDS.lower(): mtxKeywords}
-        tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
+        tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
                                 processType=ProcessType.ENCODE_HYPOTHESES,
                                 userId=usr, gridset=gridset, metadata=meta,
-                                status=JobStatus.INITIALIZE, 
+                                status=JobStatus.INITIALIZE,
                                 statusModTime=gmt().mjd)
         bgMtx = scribe.findOrInsertMatrix(tmpMtx)
         if bgMtx is not None:
@@ -71,6 +71,7 @@ def _getBioGeoMatrix(scribe, usr, gridset, layers=[]):
         else:
             scribe.log.info('  Failed to add biogeo hypotheses matrix')
     return bgMtx
+
 
 # .................................
 def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
@@ -89,10 +90,10 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
     bgMtx = _getBioGeoMatrix(scribe, usr, gridset, layers)
     shapegrid = gridset.getShapegrid()
     encoder = LayerEncoder(shapegrid.getDLocation())
-    
+
     # TODO(CJ): Minimum coverage should be pulled from config or database
     min_coverage = 0.25
-    
+
     for lyr in layers:
         try:
             valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
@@ -104,11 +105,11 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
             valAttribute = None
             column_name = lyr.name
         new_cols = encoder.encode_biogeographic_hypothesis(
-             lyr.getDLocation(), column_name, min_coverage, 
+             lyr.getDLocation(), column_name, min_coverage,
              event_field=valAttribute)
         scribe.log.info(' Encoded layer {} for eventField={}, dloc={}'
                 .format(lyr.name, valAttribute, lyr.getDLocation()))
-        
+
         # Add matrix columns for the newly encoded layers
         for col_name in new_cols:
             # TODO: Fill in params and metadata
@@ -123,32 +124,32 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
             else:
                 intParams = None
             metadata = {
-                ServiceObject.META_DESCRIPTION.lower() : 
+                ServiceObject.META_DESCRIPTION.lower() :
             'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
-                ServiceObject.META_TITLE.lower() : 
+                ServiceObject.META_TITLE.lower() :
             'Biogeographic hypothesis column ({})'.format(col_name)}
             mc = MatrixColumn(len(mtxCols), bgMtx.get_id(), usr, layer=lyr,
-                                    shapegrid=shapegrid, intersectParams=intParams, 
+                                    shapegrid=shapegrid, intersectParams=intParams,
                                     metadata=metadata, postToSolr=False,
-                                    status=JobStatus.COMPLETE, 
+                                    status=JobStatus.COMPLETE,
                                     statusModTime=gmt().mjd)
             updatedMC = scribe.findOrInsertMatrixColumn(mc)
             mtxCols.append(updatedMC)
-        
+
         enc_mtx = encoder.get_encoded_matrix()
 
         bgMtx.data = enc_mtx.data
         bgMtx.setHeaders(enc_mtx.getHeaders())
-    
+
     # Save matrix and update record
     bgMtx.write(overwrite=True)
     bgMtx.updateStatus(JobStatus.COMPLETE, mod_time=gmt().mjd)
     success = scribe.updateObject(bgMtx)
-    
+
     msg = 'Wrote matrix {} to final location and updated db'.format(bgMtx.get_id())
     scribe.log.info(msg)
     _writeSuccessFile(msg, successFname)
-    
+
     return bgMtx
 
 
@@ -157,7 +158,7 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
     epsg = DEFAULT_EPSG
     layers = []
     earl = EarlJr()
-    configFname = earl.createFilename(LMFileType.BOOM_CONFIG, 
+    configFname = earl.createFilename(LMFileType.BOOM_CONFIG,
                                                  objCode=gridname, usr=usr)
     if configFname is not None and os.path.exists(configFname):
         cfg = Config(site_fn=configFname)
@@ -180,6 +181,7 @@ def _getBoomBioGeoParams(scribe, gridname, usr):
             layers.append(scribe.getLayer(userId=usr, lyrName=lname, epsg=epsg))
     return layers
 
+
 # ...............................................
 def _writeSuccessFile(message, successFname):
     ready_filename(successFname, overwrite=True)
@@ -189,7 +191,6 @@ def _writeSuccessFile(message, successFname):
     except:
         raise
 
-
 # # ...............................................
 # def createEncodeBioGeoMF(scribe, usr, gridname, success_file):
 #     """
@@ -197,17 +198,17 @@ def _writeSuccessFile(message, successFname):
 #     """
 #     scriptname, _ = os.path.splitext(os.path.basename(__file__))
 #     meta = {MFChain.META_CREATED_BY: scriptname,
-#                MFChain.META_DESCRIPTION: 
+#                MFChain.META_DESCRIPTION:
 #                             'Encode biogeographic hypotheses task for user {} grid {}'
 #                             .format(usr, gridname)}
-#     newMFC = MFChain(usr, priority=Priority.HIGH, 
-#                            metadata=meta, status=JobStatus.GENERAL, 
+#     newMFC = MFChain(usr, priority=Priority.HIGH,
+#                            metadata=meta, status=JobStatus.GENERAL,
 #                            statusModTime=gmt().mjd)
 #     mfChain = scribe.insertMFChain(newMFC, None)
-# 
-#     # Create a rule from the MF 
+#
+#     # Create a rule from the MF
 #     bgCmd = EncodeBioGeoHypothesesCommand(usr, gridname, success_file)
-# 
+#
 #     mfChain.addCommands([bgCmd.get_makeflow_rule(local=True)])
 #     mfChain.write()
 #     mfChain.updateStatus(JobStatus.INITIALIZE)
@@ -227,14 +228,14 @@ if __name__ == '__main__':
     # Required
     parser.add_argument('user_id', type=str,
                               help=('User owner of the tree'))
-    parser.add_argument('gridset_name', type=str, 
+    parser.add_argument('gridset_name', type=str,
                               help="Gridset name for encoding Biogeographic Hypotheses")
     parser.add_argument('success_file', default=None,
                 help=('Filename to be written on successful completion of script.'))
     # Optional
     parser.add_argument('--logname', type=str, default=None,
                 help=('Basename of the logfile, without extension'))
-        
+
     args = parser.parse_args()
     usr = args.user_id
     grid_name = args.gridset_name
@@ -298,4 +299,4 @@ if gridset and layers:
 scribe.closeConnections()
 
 """
-    
+

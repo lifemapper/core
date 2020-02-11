@@ -4,6 +4,7 @@ from LmBackend.common.lmobj import LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import ID_PLACEHOLDER
 
+
 # .............................................................................
 class ServiceObject(LMObject):
     """
@@ -16,11 +17,11 @@ class ServiceObject(LMObject):
     META_KEYWORDS = 'keywords'
     META_CITATION = 'citation'
     META_PARAMS = 'parameters'
-    
+
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, userId, dbId, serviceType, metadataUrl=None, 
+    def __init__(self, userId, dbId, serviceType, metadataUrl=None,
                      parentMetadataUrl=None, parentId=None, mod_time=None):
         """
         @summary Constructor for the abstract ServiceObject class
@@ -46,8 +47,8 @@ class ServiceObject(LMObject):
         self._parentMetadataUrl = parentMetadataUrl
         self.mod_time = mod_time
         if serviceType is None:
-            raise Exception('Object %s does not have serviceType' % str(type(self)))        
-        
+            raise Exception('Object %s does not have serviceType' % str(type(self)))
+
 # .............................................................................
 # Public methods
 # .............................................................................
@@ -57,14 +58,14 @@ class ServiceObject(LMObject):
         @return integer database id of the object
         """
         return self._dbId
-    
+
     def set_id(self, dbid):
         """
         @summary: Sets the database id on the object
         @param dbid: The database id for the object
         """
         self._dbId = dbid
-    
+
 # ...............................................
     def getUserId(self):
         """
@@ -91,42 +92,42 @@ class ServiceObject(LMObject):
         @return URL string representing a webservice request for this object
         """
         if self._metadataUrl is None:
-            try: 
-                self._metadataUrl = self.constructMetadataUrl() 
+            try:
+                self._metadataUrl = self.constructMetadataUrl()
             except Exception as e:
                 print(str(e))
                 pass
         return self._metadataUrl
-    
+
     def setParentMetadataUrl(self, url):
         self._parentMetadataUrl = url
-        
+
     @property
     def parentMetadataUrl(self):
-        return self._parentMetadataUrl 
-        
-# ...............................................    
+        return self._parentMetadataUrl
+
+# ...............................................
     def resetMetadataUrl(self):
         """
         @summary Gets the REST service URL for this object
         @return URL string representing a webservice request for metadata of this object
-        """          
+        """
         self._metadataUrl = self.constructMetadataUrl()
         return self._metadataUrl
-    
-# ...............................................    
+
+# ...............................................
     def constructMetadataUrl(self):
         """
         @summary Gets the REST service URL for this object
         @return URL string representing a webservice request for metadata of this object
-        """          
-        objId = self.get_id() 
+        """
+        objId = self.get_id()
         if objId is None:
             objId = ID_PLACEHOLDER
-        murl = self._earlJr.constructLMMetadataUrl(self.serviceType, 
+        murl = self._earlJr.constructLMMetadataUrl(self.serviceType,
                                     objId, parentMetadataUrl=self._parentMetadataUrl)
         return murl
-    
+
 # ...............................................
     def getURL(self, format=None):
         """
@@ -140,7 +141,7 @@ class ServiceObject(LMObject):
         if format is not None:
             dataurl = '%s/%s' % (self.metadataUrl, format)
         return dataurl
-    
+
     # ...............................................
     def updatemod_time(self, mod_time):
         self.mod_time = mod_time
@@ -148,22 +149,24 @@ class ServiceObject(LMObject):
 # .............................................................................
 # Read-0nly Properties
 # .............................................................................
-    
+
     # The database id of the object
     id = property(get_id)
-    
+
     # The user id of the object
     user = property(getUserId)
-    
+
+
 # .............................................................................
 class ProcessObject(LMObject):
     """
     Class to hold information about a parameterized object for processing. 
     """
+
 # .............................................................................
 # Constructor
-# .............................................................................    
-    def __init__(self, objId=None, processType=None, 
+# .............................................................................
+    def __init__(self, objId=None, processType=None,
                      status=None, statusmod_time=None):
         """
         @param objId: Unique identifier for this parameterized object
@@ -178,7 +181,7 @@ class ProcessObject(LMObject):
         self.processType = processType
         self._status = status
         self._statusmod_time = statusmod_time
-        
+
     # ...............................................
     @property
     def status(self):
@@ -192,5 +195,4 @@ class ProcessObject(LMObject):
     def updateStatus(self, status, mod_time):
         self._status = status
         self._statusmod_time = mod_time
-
 

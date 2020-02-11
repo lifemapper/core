@@ -6,11 +6,12 @@ Note:
 import os
 
 import numpy
-from osgeo import gdal, gdalconst
-from osgeo import gdalconst
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import DEFAULT_NODATA
+from osgeo import gdal, gdalconst
+from osgeo import gdalconst
+
 
 # ............................................................................
 class GeoFileInfo(LMObject):
@@ -18,6 +19,7 @@ class GeoFileInfo(LMObject):
     @summary: Class for getting information from a raster dataset readable
                  by GDAL.
     """
+
     def __init__(self, dlocation, varpattern=None, updateable=False):
         """
         @param dlocation: dataset location, interpretable by GDAL
@@ -35,7 +37,7 @@ class GeoFileInfo(LMObject):
         self._max = None
         self._mean = None
         self._stddev = None
-        
+
         # General dataset info
         self.dlocation = dlocation
         fname = os.path.basename(self.dlocation)
@@ -44,7 +46,7 @@ class GeoFileInfo(LMObject):
         self.variable = basename
         # filled in when dataset is opened below
         self.gdalFormat = None
-    
+
         try:
             self.openDataSet(varpattern, updateable)
         except LMError as e:
@@ -60,16 +62,16 @@ class GeoFileInfo(LMObject):
             self.xsize = self._dataset.RasterXSize
             self.ysize = self._dataset.RasterYSize
             self.geoTransform = self._dataset.GetGeoTransform()
-    
+
             # GDAL data type
             self.gdalBandType = self._band.DataType
             self.nodata = self._band.GetNoDataValue()
-            
+
             self.ulx = self.geoTransform[0]
             self.xPixelSize = self.geoTransform[1]
             self.uly = self.geoTransform[3]
             self.yPixelSize = self.geoTransform[5]
-    
+
             self.lrx = self.ulx + self.xPixelSize * self.xsize
             self.lry = self.uly + self.yPixelSize * self.ysize
 
@@ -96,15 +98,15 @@ class GeoFileInfo(LMObject):
         else:
             if self._dataset is None:
                 raise LMError(['Unable to open %s' % self.dlocation])
-            
+
             drv = self._dataset.GetDriver()
             self.gdalFormat = drv.GetDescription()
-                        
+
         self.units = self._dataset.GetMetadataItem('UNITS')
         # Subdatasets for NIES IPCC AR4 netcdf data
         # Resets dlocation, _dataset, variable, units, description
         self._checkSubDatasets(varpattern)
-    
+
 # .............................................
     def writeWktSRS(self, srs):
         """
@@ -114,14 +116,14 @@ class GeoFileInfo(LMObject):
         """
         try:
             self.openDataSet(updateable=True)
-            self._dataset.SetProjection( srs )
+            self._dataset.SetProjection(srs)
             self._dataset.FlushCache()
             self._dataset = None
             self.srs = srs
         except Exception as e:
-            raise LMError(['Unable to write SRS info to file', srs, 
+            raise LMError(['Unable to write SRS info to file', srs,
                                 self.dlocation, str(e)])
-    
+
 # .............................................
     def copySRS(self, fname):
         """
@@ -131,7 +133,7 @@ class GeoFileInfo(LMObject):
         """
         newsrs = GeoFileInfo.getSRSAsWkt(fname)
         self.writeWktProjection(newsrs)
-        
+
 # .............................................
     def copyWithoutProjection(self, outfname, format='GTiff'):
         """
@@ -142,19 +144,19 @@ class GeoFileInfo(LMObject):
         """
         self.openDataSet()
         driver = gdal.GetDriverByName(format)
-        
+
         outds = driver.Create(outfname, self.xsize, self.ysize, 1, self.gdalBandType)
         if outds is None:
-            print('Creation failed for %s from band %d of %s' % (outfname, 1, 
+            print('Creation failed for %s from band %d of %s' % (outfname, 1,
                                                                                   self.dlocation))
-            return 0 
-        
+            return 0
+
         outds.SetGeoTransform(self.geoTransform)
         outband = outds.GetRasterBand(1)
         outband.SetNoDataValue(self.nodata)
         outds.SetProjection('')
         rstArray = self._dataset.ReadAsArray()
-        outband.WriteArray( rstArray )
+        outband.WriteArray(rstArray)
 
         # Close new dataset to flush to disk
         outds.FlushCache()
@@ -178,15 +180,13 @@ class GeoFileInfo(LMObject):
                     self.description = subdesc
                     found = True
                     break
-                    
+
             if found:
                 # Replace enclosing dataset with subdataset
                 self._dataset = None
                 self._dataset = gdal.Open(self.dlocation, gdalconst.GA_ReadOnly)
                 # Replace units of subdataset
-                self.units = self._dataset.GetMetadataItem(self.variable+'#units')
-                
-
+                self.units = self._dataset.GetMetadataItem(self.variable + '#units')
 
 # .............................................
     def _cycleRow(self, scanline, arrtype, left, center, right):
@@ -210,13 +210,13 @@ class GeoFileInfo(LMObject):
             newline[c] = scanline[col]
             c += 1
         return newline
-    
+
     # ............................................................................
     def _getNumpyType(self, othertype):
         if othertype == gdalconst.GDT_Float32:
             arrtype = numpy.float32
         return arrtype
-    
+
 # .............................................
     def getArray(self, bandnum, doFlip=False, doShift=False):
         """
@@ -231,25 +231,25 @@ class GeoFileInfo(LMObject):
             inband = inds.GetRasterBand(bandnum)
             arrtype = self._getNumpyType(self.gdalBandType)
             outArr = numpy.empty([self.ysize, self.xsize], dtype=arrtype)
-            
+
             for row in range(self.ysize):
                 scanline = inband.ReadAsArray(0, row, self.xsize, 1, self.xsize, 1)
-                
+
                 if doShift:
-                    scanline = self._cycleRow(scanline, arrtype, 0, self.xsize/2, 
+                    scanline = self._cycleRow(scanline, arrtype, 0, self.xsize / 2,
                                                       self.xsize)
                 if doFlip:
-                    newrow = self.ysize-row-1
+                    newrow = self.ysize - row - 1
                 else:
                     newrow = row
-    
+
                 outArr[newrow] = scanline
-    
-            inds = None    
+
+            inds = None
             return outArr
         else:
             raise LMError('numpy missing - unable to getArray')
-        
+
 # .............................................
     def copyDataset(self, bandnum, outfname, format='GTiff', kwargs={}):
         """
@@ -268,11 +268,11 @@ class GeoFileInfo(LMObject):
         """
         driver = gdal.GetDriverByName(format)
         metadata = driver.GetMetadata()
-        if not (gdal.DCAP_CREATECOPY in metadata 
+        if not (gdal.DCAP_CREATECOPY in metadata
                      and metadata[gdal.DCAP_CREATECOPY] == 'YES'):
-            raise LMError('Driver %s does not support CreateCopy() method.' 
+            raise LMError('Driver %s does not support CreateCopy() method.'
                               % format)
-        inds = gdal.Open( self.dlocation )
+        inds = gdal.Open(self.dlocation)
         try:
             outds = driver.CreateCopy(outfname, inds, 0, **kwargs)
         except Exception as e:
@@ -281,15 +281,14 @@ class GeoFileInfo(LMObject):
         if outds is None:
             raise LMError('Creation failed for %s from band %d of %s)'
                                           % (outfname, bandnum, self.dlocation))
-        
+
         # Close new dataset to flush to disk
         outds = None
         inds = None
 
-        
 # ...............................................
 # .............................................
-    def writeBand(self, bandnum, outfname, format='GTiff', doFlip=False, 
+    def writeBand(self, bandnum, outfname, format='GTiff', doFlip=False,
                      doShift=False, nodata=None, srs=None):
         """
         @summary: Write the dataset into a new file, line by line.  
@@ -307,22 +306,22 @@ class GeoFileInfo(LMObject):
         """
         driver = gdal.GetDriverByName(format)
         metadata = driver.GetMetadata()
-        if not (gdal.DCAP_CREATE in metadata 
+        if not (gdal.DCAP_CREATE in metadata
                   and metadata[gdal.DCAP_CREATE] == 'YES'):
-            raise LMError('Driver %s does not support Create() method.' 
+            raise LMError('Driver %s does not support Create() method.'
                                           % format)
-            
+
         outds = driver.Create(outfname, self.xsize, self.ysize, 1, self.gdalBandType)
         if outds is None:
             raise LMError('Creation failed for %s from band %d of %s'
                                 % (outfname, bandnum, self.dlocation))
-        
+
         outds.SetGeoTransform(self.geoTransform)
-        
+
         inds = gdal.Open(self.dlocation, gdalconst.GA_ReadOnly)
         inband = inds.GetRasterBand(bandnum)
         outband = outds.GetRasterBand(1)
-        
+
         if nodata is None:
             nodata = inband.GetNoDataValue()
         if nodata is not None:
@@ -330,27 +329,27 @@ class GeoFileInfo(LMObject):
         if srs is None:
             srs = self.srs
         outds.SetProjection(srs)
-        
+
         for row in range(self.ysize):
             scanline = inband.ReadAsArray(0, row, self.xsize, 1, self.xsize, 1)
-            
+
             if doShift:
                 arrType = self._getNumpyType(self.gdalBandType)
-                scanline = self._cycleRow(scanline, arrType, 0, self.xsize/2, 
+                scanline = self._cycleRow(scanline, arrType, 0, self.xsize / 2,
                                                   self.xsize)
 
             if doFlip:
-                outband.WriteArray(scanline, 0, self.ysize-row-1)
+                outband.WriteArray(scanline, 0, self.ysize - row - 1)
             else:
                 outband.WriteArray(scanline, 0, row)
         # Close new dataset to flush to disk
         outds = None
         inds = None
-        
+
 # ...............................................
     def __unicode__(self):
         return '%s (%s)' % (self.name, self.dlocation)
-    
+
 # ...............................................
     def loadBand(self, bandnum=1):
         """
@@ -362,14 +361,14 @@ class GeoFileInfo(LMObject):
             if self._dataset is None:
                 self.openDataSet(None)
             self._band = self._dataset.GetRasterBand(bandnum)
-     
+
 # ...............................................
     def _getStats(self, bandnum=1):
-        if (self._min is None or self._max is None 
+        if (self._min is None or self._max is None
              or self._mean is None or self._stddev is None):
             self.loadBand(bandnum)
             try:
-                min, max, mean, stddev = self._band.GetStatistics(False,True)
+                min, max, mean, stddev = self._band.GetStatistics(False, True)
 #                min, max, mean, stddev = self._band.ComputeBandStats(False)
             except Exception as e:
                 print(('Exception in GeoFileInfo._getStats: band.GetStatistics %s' % str(e)))
@@ -379,7 +378,7 @@ class GeoFileInfo(LMObject):
             self._mean = mean
             self._stddev = stddev
         return min, max, mean, stddev
-    
+
 # ...............................................
     def getHistogram(self, bandnum=1):
         """
@@ -389,7 +388,7 @@ class GeoFileInfo(LMObject):
         @note: this returns only a list, not a true histogram.  
         @note: this only works on 8-bit data.
         """
-        vals = []        
+        vals = []
         # Get histogram only for 8bit data (projections)
         if self.gdalBandType == gdalconst.GDT_Byte:
             self.loadBand(bandnum)
@@ -401,37 +400,38 @@ class GeoFileInfo(LMObject):
             print('Histogram calculated only for 8-bit data')
         return vals
 
-    
 # ...............................................
     def _getMin(self):
         if self._min is None:
             self._getStats()
         return self._min
-    
+
     min = property(_getMin)
-    
+
 # ...............................................
     def _getMax(self):
         if self._max is None:
             self._getStats()
         return self._max
-    
+
     max = property(_getMax)
+
 # ...............................................
     def _getMean(self):
         if self._mean is None:
             self._getStats()
         return self._mean
-    
+
     mean = property(_getMean)
+
 # ...............................................
     def _getStddev(self):
         if self._stddev is None:
             self._getStats()
         return self._stddev
-    
+
     stddev = property(_getStddev)
-    
+
 # ...............................................
     def pointInside(self, point):
         '''
@@ -443,7 +443,7 @@ class GeoFileInfo(LMObject):
             if (point[1] >= ext[1] and point[1] <= ext[3]):
                 return True
         return False
-  
+
 # ...............................................
     def getZvalues(self, points, missingv=DEFAULT_NODATA):
         '''
@@ -451,18 +451,19 @@ class GeoFileInfo(LMObject):
         @param points: A sequence of points (tuples of x and y)
         @param missingv: Value to return if the point is at a nodata cell
         '''
+
         #-------------------
         def pointsortfunc(p1, p2):
             '''
             Used to sort in increasing y value
             '''
-            if p1[1] < p2[1]: 
+            if p1[1] < p2[1]:
                 return -1
             if p1[1] > p2[1]:
                 return 1
             return 0
         #-------------------
-        
+
         ppos = 0
         self.loadBand()
         if len(points) > 1:
@@ -477,16 +478,16 @@ class GeoFileInfo(LMObject):
                     try:
                         self._scanline = self._band.ReadAsArray(0, self._cscanline, self.xsize, 1)
                     except:
-                        #could not create buffer
+                        # could not create buffer
                         pass
                 try:
-                    z = self._scanline[0,cxy[0]]
+                    z = self._scanline[0, cxy[0]]
                 except Exception as e:
                     z = self.nodata
                 if z == self.nodata:
                     rpoint.append(missingv)
                 else:
-                    #return the real value, this changes from float
+                    # return the real value, this changes from float
 #                    newz = z * self.scalef
                     rpoint.append(z)
             else:
@@ -502,7 +503,7 @@ class GeoFileInfo(LMObject):
         '''
         bounds = [self.ulx, self.lry, self.lrx, self.uly]
         return bounds
-          
+
 # ...............................................
     @staticmethod
     def rasterSize(datasrc):
@@ -510,7 +511,7 @@ class GeoFileInfo(LMObject):
         @summary: Return [width, height] in pixels
         '''
         datasrc = gdal.Open(str(datasrc))
-        return [datasrc.RasterXSize, datasrc.RasterYSize]        
+        return [datasrc.RasterXSize, datasrc.RasterYSize]
 
 # ...............................................
     @staticmethod
@@ -528,7 +529,7 @@ class GeoFileInfo(LMObject):
             return srs
         else:
             raise LMError(['Unable to read file %s' % filename])
-     
+
 '''
 Implements some tools for visualizing points
 '''

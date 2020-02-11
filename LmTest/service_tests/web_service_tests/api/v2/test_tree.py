@@ -61,7 +61,7 @@ class TestScribeTreeService(UserTestCase):
         if len(treeAtoms) == 0:
             self.fail('Cannot get an tree because listing found none')
         else:
-            tree = self.scribe.getTree(treeId=treeAtoms[0].id)
+            tree = self.scribe.getTree(treeId=treeAtoms[0].get_id())
             self.assertIsInstance(tree, TreeWrapper)
             self.assertEqual(tree.getUserId(), self._get_session_user(),
                                         'User id on tree = {}, session user = {}'.format(
@@ -79,7 +79,7 @@ class TestScribeTreeService(UserTestCase):
             warnings.warn('List returned 0 trees for user: {}'.format(
                                                                       self._get_session_user()))
         else:
-            tree = self.scribe.getTree(treeId=treeAtoms[0].id)
+            tree = self.scribe.getTree(treeId=treeAtoms[0].get_id())
             self.assertEqual(tree.getUserId(), self._get_session_user(),
                                         'User id on tree = {}, session user = {}'.format(
                                               tree.getUserId(), self._get_session_user()))

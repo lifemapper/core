@@ -3,20 +3,22 @@
 from collections import namedtuple
 from fractions import Fraction
 import inspect
-from osgeo.osr import CoordinateTransformation, SpatialReference
 from types import TupleType, ListType, FloatType, IntType, StringType, UnicodeType
 
 from LmBackend.common.lmobj import LMObject, LMError
 from LmCommon.common.lmconstants import (LegalMapUnits, DEFAULT_EPSG,
     DEFAULT_MAPUNITS)
 from LmServer.common.localconstants import SMTP_SENDER
+from osgeo.osr import CoordinateTransformation, SpatialReference
+
 
 # ............................................................................
 # ............................................................................
 class LMAbstractObject(LMObject):
     """
     Base class for all abstract objects in the Lifemapper project
-    """    
+    """
+
 # ...............................................
     def abstract(self):
         """
@@ -26,13 +28,14 @@ class LMAbstractObject(LMObject):
         caller = inspect.getouterframes(inspect.currentframe())[1][3]
         raise NotImplementedError(caller + ' must be implemented in subclass')
 
+
 # ............................................................................
 # ............................................................................
 class LMSpatialObject(LMObject):
     """
     Class to ensure that bounding boxes are consistent and logical
     """
-    
+
     def __init__(self, epsgcode, bbox, mapunits):
         """
         @summary Constructor for the LMSpatialObject class
@@ -47,7 +50,7 @@ class LMSpatialObject(LMObject):
         self._setEPSG(epsgcode)
         self._bbox = None
         self._setBBox(bbox)
-        self._mapunits = None 
+        self._mapunits = None
         self._setUnits(mapunits)
         LMObject.__init__(self)
 
@@ -71,7 +74,7 @@ class LMSpatialObject(LMObject):
             raise
         else:
             wkt = srs.ExportToWkt()
-            return wkt 
+            return wkt
 
     def getSRSAsString(self):
         """
@@ -79,7 +82,7 @@ class LMSpatialObject(LMObject):
         """
         if self._epsg is not None:
             return 'epsg:' + str(self._epsg)
-        
+
 # .............................................................................
     def _getEPSG(self):
         return self._epsg
@@ -88,7 +91,7 @@ class LMSpatialObject(LMObject):
         if epsg == None:
             self._epsg = None
         else:
-            if isinstance(epsg, (StringType, UnicodeType)): 
+            if isinstance(epsg, (StringType, UnicodeType)):
                 try:
                     epsg = int(epsg)
                     self._epsg = epsg
@@ -105,8 +108,9 @@ class LMSpatialObject(LMObject):
                                       .format(epsgcodes))
             else:
                 raise LMError('Invalid EPSG code {} type {}'.format(epsg, type(epsg)))
+
     epsgcode = property(_getEPSG, _setEPSG)
-            
+
 # ...............................................
     def _setUnits(self, mapunits):
         """
@@ -125,7 +129,7 @@ class LMSpatialObject(LMObject):
                 raise LMError(['Illegal Unit type', mapunits])
             else:
                 self._mapunits = mapunits
-    
+
     def _getUnits(self):
         """
         @todo: REMOVE THIS HACK!
@@ -136,7 +140,7 @@ class LMSpatialObject(LMObject):
         return self._mapunits
 
     mapUnits = property(_getUnits, _setUnits)
-                
+
 # ..............................................................................
     def getHeightWidthByBBox(self, bbox=None, limitWidth=1000):
         if bbox is None or len(bbox) != 4:
@@ -144,7 +148,7 @@ class LMSpatialObject(LMObject):
         ratio = (bbox[3] - bbox[1]) / (bbox[2] - bbox[0])
         frac = Fraction(ratio).limit_denominator(limitWidth)
         return frac.numerator, frac.denominator
-    
+
 # ..............................................................................
     def _getBBox(self):
         """
@@ -165,19 +169,19 @@ class LMSpatialObject(LMObject):
         """
         if bbox is None:
             self._bbox = bbox
-            
+
         else:
             try:
                 if (isinstance(bbox, (StringType, UnicodeType))):
                     bbox = tuple([float(b) for b in bbox.split(',')])
                 elif isinstance(bbox, ListType):
                     bbox = tuple(bbox)
-                    
+
                 if (isinstance(bbox, TupleType) and len(bbox) == 4):
                     for v in bbox:
                         if not(isinstance(v, FloatType) or isinstance(v, IntType)):
                             raise LMError('Invalid bounding box type(s) {}'.format(bbox))
-                        
+
                     if LMSpatialObject._checkBounds(bbox):
                         self._bbox = bbox
                     else:
@@ -193,9 +197,8 @@ class LMSpatialObject(LMObject):
                 print(('Invalid bounding box boundaries {}'.format(bbox)))
                 self._bbox = None
 
-
 # ..............................................................................
-    ## Tuple representation of bounding box, i.e. (minX, minY, maxX, maxY)
+    # # Tuple representation of bounding box, i.e. (minX, minY, maxX, maxY)
     bbox = property(_getBBox, _setBBox)
 
 # ...............................................
@@ -219,7 +222,7 @@ class LMSpatialObject(LMObject):
         bboxStr = None
         if bboxList is not None:
             bboxStr = ('{:.2f}{sep}{:.2f}{sep}{:.2f}{sep}{:.2f}'
-            .format(bboxList[0], bboxList[1], bboxList[2], bboxList[3], 
+            .format(bboxList[0], bboxList[1], bboxList[2], bboxList[3],
                       sep=separator))
         return bboxStr
 
@@ -253,7 +256,7 @@ class LMSpatialObject(LMObject):
             return self._bbox[0]
         else:
             return None
-    
+
     def getMinY(self):
         """
         @summary Gets the minimum y value
@@ -263,7 +266,7 @@ class LMSpatialObject(LMObject):
             return self._bbox[1]
         else:
             return None
-    
+
     def getMaxX(self):
         """
         @summary Gets the maximum x value
@@ -273,7 +276,7 @@ class LMSpatialObject(LMObject):
             return self._bbox[2]
         else:
             return None
-    
+
     def getMaxY(self):
         """
         @summary Gets the maximum y value
@@ -283,7 +286,7 @@ class LMSpatialObject(LMObject):
             return self._bbox[3]
         else:
             return None
-        
+
     minX = property(getMinX)
     minY = property(getMinY)
     maxX = property(getMaxX)
@@ -308,7 +311,7 @@ class LMSpatialObject(LMObject):
             wkt = 'POLYGON(({}))'.format(corners);
             return wkt
         else:
-            return None            
+            return None
 
 # ..............................................................................
     def getLLUR(self):
@@ -316,10 +319,10 @@ class LMSpatialObject(LMObject):
         @summary: Return lower left and upper right points.
         @return: String in the format 'minX minY, maxX maxY'
         """
-        llur = '{} {}, {} {}'.format(self.getMinX(), self.getMinY(), 
+        llur = '{} {}, {} {}'.format(self.getMinX(), self.getMinY(),
                                          self.getMaxX(), self.getMaxY())
         return llur
-            
+
 # ..............................................................................
     def equalExtents(self, spObj):
         """
@@ -362,7 +365,7 @@ class LMSpatialObject(LMObject):
                 return None
         else:
             return None
-    
+
     @staticmethod
     def unionBoundingBoxes(bboxSeq):
         """
@@ -387,7 +390,7 @@ class LMSpatialObject(LMObject):
                 raise LMError('Invalid bounding box boundaries {}'.format(bboxSeq))
         else:
             return None
-        
+
     # ..............................................................................
     @staticmethod
     def _checkBounds(bbox):
@@ -402,7 +405,7 @@ class LMSpatialObject(LMObject):
         """
         minX, minY, maxX, maxY = bbox
         return ((minX <= maxX) and (minY <= maxY))
-    
+
     # ..............................................................................
     @staticmethod
     def processWkt(wkt):
@@ -422,42 +425,42 @@ class LMSpatialObject(LMObject):
         """
         PrjCS = namedtuple('PROJCS', ['name', 'geogcs', 'projectionName', 'parameters', 'unit'])
         Parameter = namedtuple('Parameter', ['name', 'value'])
-        
+
         # Name
         name = prjcsStr.split('"')[1]
-        
+
         # GeoGCS
         geocsStr = "GEOGCS{}".format(prjcsStr.split('GEOGCS')[1].split('PROJECTION')[0])
         geocs = LMSpatialObject._processGEOGCS(geocsStr)
-        
+
         # Projection Name
         try:
             prjName = prjcsStr.split('PROJECTION')[1].split('"')[1]
         except:
             prjName = ""
-        
+
         # Parameters
         parameters = []
         parametersGroup = prjcsStr.split('PARAMETER')
-        
+
         try:
-            for param in parametersGroup[1:]: # Cut out beginning string
+            for param in parametersGroup[1:]:  # Cut out beginning string
                 n = param.split('"')[1]
                 v = param.split(']')[0].split(',')[1]
                 parameters.append(Parameter(name=n, value=v))
         except:
             pass
-        
+
         # Unit
         unit = prjcsStr.split('UNIT')[-1].split('"')[1]
-        if unit.lower() == "metre": # Must match for EML
+        if unit.lower() == "metre":  # Must match for EML
             unit = "meter"
         elif unit == "Degree":
             unit = "degree"
-        
+
         ret = PrjCS(name, geocs, prjName, parameters, unit)
         return ret
-    
+
     # ..............................................................................
     @staticmethod
     def _processGEOGCS(geocsStr):
@@ -467,14 +470,14 @@ class LMSpatialObject(LMObject):
         GeoCS = namedtuple('GEOGCS', ['name', 'datum', 'spheroid', 'primeMeridian', 'unit'])
         Spheroid = namedtuple('Spheroid', ['name', 'semiAxisMajor', 'denomFlatRatio'])
         PrimeM = namedtuple('PrimeMeridian', ['name', 'longitude'])
-        
+
         # Name
         name = geocsStr.split('"')[1]
-        
+
         # Datum
         datumString = geocsStr.split('DATUM')[1].split('PRIMEM')[0]
         datum = datumString.split('"')[1]
-        
+
         # Spheroid
         spheroidString = datumString.split('SPHEROID')[1]
         spheroidParts = spheroidString.split(',')
@@ -483,22 +486,22 @@ class LMSpatialObject(LMObject):
                                   semiAxisMajor=float(spheroidParts[1]),
                                   denomFlatRatio=float(spheroidParts[2].split(']')[0])
                                  )
-        
+
         # Prime Meridian
         pmString = geocsStr.split('PRIMEM')[1].split('UNIT')[0]
         primeM = PrimeM(name=pmString.split('"')[1],
                              longitude=float(pmString.split(',')[1].split(']')[0]))
-    
+
         # Unit
         unit = geocsStr.split('UNIT')[1].split('"')[1]
-        if unit.lower() == "metre": # Must match for EML
+        if unit.lower() == "metre":  # Must match for EML
             unit = "meter"
         elif unit == "Degree":
             unit = "degree"
-        
+
         ret = GeoCS(name, datum, spheroid, primeM, unit)
         return ret
-    
+
     # ..............................................................................
     @staticmethod
     def translatePoints(points, srcWKT=None, srcEPSG=None, dstWKT=None, dstEPSG=None):
@@ -520,7 +523,7 @@ class LMSpatialObject(LMObject):
             srcSR.ImportFromEPSG(srcEPSG)
         else:
             raise Exception("Either srcWKT or srcEPSG must be specified")
-    
+
         dstSR = SpatialReference()
         if dstWKT is not None:
             dstSR.ImportFromWkt(dstWKT)
@@ -528,16 +531,15 @@ class LMSpatialObject(LMObject):
             dstSR.ImportFromEPSG(dstEPSG)
         else:
             raise Exception("Either dstWKT or dstEPSG must be specified")
-        
+
         transPoints = []
-        
+
         trans = CoordinateTransformation(srcSR, dstSR)
         for pt in points:
             x, y, _ = trans.TransformPoint(pt[0], pt[1])
             transPoints.append((x, y))
         trans = None
         return transPoints
-    
 
 
 # ============================================================================
@@ -554,7 +556,7 @@ class LmHTTPError(LMError):
                  500.  It is for internal server error.
     @note: Status codes are found in LmCommon.common.lmconstants.HTTPStatus
     """
-    
+
     def __init__(self, code, *args, msg=None, line_num=None, do_trace=False, **kwargs):
         """
         @summary: Constructor for the LmHTTPError class
@@ -574,6 +576,7 @@ class LMMessage(list, LMObject):
     """
     @summary: Object used for communication, by email, text, etc
     """
+
     def __init__(self, body, toAddressList, fromAddress=SMTP_SENDER, subject=None):
         """
         @summary: Constructor
@@ -583,6 +586,6 @@ class LMMessage(list, LMObject):
         @param subject: (optional) Subject line for the message 
         """
         self.body = body
-        self.fromAddress = fromAddress 
+        self.fromAddress = fromAddress
         self.toAddresses = toAddressList
         self.subject = subject

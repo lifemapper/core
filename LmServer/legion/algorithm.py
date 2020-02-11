@@ -1,38 +1,46 @@
 """
 """
-import pickle
 import json
+import pickle
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import Algorithms
+
 
 # .........................................................................
 class InvalidParameterError(LMError):
     """Error thrown when a property does not exist for the algorithm
     """
+
     def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
         LMError.__init__(self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
+
 
 # .........................................................................
 class InvalidValueError(LMError):
     """Error thrown when a string value is not a valid choice for the parameter
     """
+
     def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
         LMError.__init__(self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
 
+
 # .........................................................................
-class WrongTypeError( LMError ):
+class WrongTypeError(LMError):
     """
     Error thrown when a value is of the wrong type for a parameter
     """
+
     def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
         LMError.__init__(self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
 
+
 # .........................................................................
-class OutOfRangeError( LMError ):
+class OutOfRangeError(LMError):
     """
     Error thrown when a value is out of range for a parameter
     """
+
     def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
         LMError.__init__(self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
 
@@ -42,6 +50,7 @@ class Algorithm(LMObject):
     """         
     Class to hold algorithm and its parameter values and constraints  
     """
+
 # .............................................................................
 # Constructor
 # .............................................................................
@@ -59,7 +68,7 @@ class Algorithm(LMObject):
         self.code = code
         if not metadata:
             metadata = {'name': name}
-            
+
         self.algMetadata = {}
         self.loadAlgMetadata(metadata)
         self._initParameters()
@@ -67,7 +76,7 @@ class Algorithm(LMObject):
             self._setParameters(parameters)
         self._inputData = {}
         self.setInputs(inputs)
-        
+
     # ...............................................
     def _initParameters(self):
         self._parameters = {}
@@ -93,7 +102,7 @@ class Algorithm(LMObject):
         @param params: A list of AlgorithmParameter objects for the algorithm 
         """
         if params is not None:
-            if type(params) is dict: 
+            if type(params) is dict:
                 newParams = params
             else:
                 try:
@@ -102,18 +111,18 @@ class Algorithm(LMObject):
                     print(('Failed to load JSON object from type {} object {}'
                             .format(type(params), params)))
 
-        if type(newParams) is dict: 
+        if type(newParams) is dict:
             try:
                 for k, v in newParams.items():
-                    self.setParameter(k,v)
+                    self.setParameter(k, v)
             except Exception as e:
                 raise LMError('Failed to load parameter {} with value {}'.format(k, v))
         else:
             raise LMError('Algorithm Parameters must be a dictionary or a JSON-encoded dictionary')
-            
-    ## List of algorithm parameters
+
+    # # List of algorithm parameters
     parameters = property(_getParameters, _setParameters)
-        
+
     # .........................................................................
 # Public Methods
 # .........................................................................
@@ -125,7 +134,7 @@ class Algorithm(LMObject):
         @param inputs: A dictionary of Layer objects for the algorithm 
         """
         if inputs is not None:
-            if type(inputs) is dict: 
+            if type(inputs) is dict:
                 newInputs = inputs
             else:
                 try:
@@ -162,12 +171,12 @@ class Algorithm(LMObject):
 # ...............................................
     def dumpAlgMetadata(self):
         return LMObject._dump_metadata(self, self.algMetadata)
- 
+
     def loadAlgMetadata(self, newMetadata):
         self.algMetadata = LMObject._load_metadata(self, newMetadata)
 
     def addAlgMetadata(self, newMetadataDict):
-        self.algMetadata = LMObject._add_metadata(self, newMetadataDict, 
+        self.algMetadata = LMObject._add_metadata(self, newMetadataDict,
                                              existingMetadataDict=self.algMetadata)
 
     # ...............................................
@@ -175,7 +184,7 @@ class Algorithm(LMObject):
         self._parameters = {}
         for key, constraints in self._parameterConstraints.items():
             self._parameters[key] = constraints['default']
-            
+
     # ...............................................
     def findParamNameType(self, name):
         """
@@ -229,7 +238,7 @@ class Algorithm(LMObject):
                 constraints = self._parameterConstraints[paramName]
                 if val is None:
                     val = constraints['default']
-                    
+
                 if constraints['type'] == str:
                     if (isinstance(val, str)):
                         val = val.lower()
@@ -242,32 +251,32 @@ class Algorithm(LMObject):
                                 raise InvalidValueError(['Invalid value {}; Valid options are {}'
                                                                  .format(val, str(valOptions))])
                     else :
-                        raise WrongTypeError(['Expected str, Received %s - type %s' % 
+                        raise WrongTypeError(['Expected str, Received %s - type %s' %
                                                      (str(val), str(type(val))) ])
-        
+
                 # Check valid float value
                 elif constraints['type'] == float:
-                    if isinstance(val, (float, int)): 
+                    if isinstance(val, (float, int)):
                         self._checkNumericValue(val, constraints)
                     else :
-                        raise WrongTypeError(['Expected float, Received %s - type %s' % 
+                        raise WrongTypeError(['Expected float, Received %s - type %s' %
                                                      (str(val), str(type(val))) ])
-                            
+
                 # Check valid int value
                 elif constraints['type'] == int:
-                    if (isinstance(val, (float, int)) and (val % 1 == 0) ):
+                    if (isinstance(val, (float, int)) and (val % 1 == 0)):
                         self._checkNumericValue(val, constraints)
                     else :
-                        raise WrongTypeError(['Expected int, Received %s - type %s' % 
+                        raise WrongTypeError(['Expected int, Received %s - type %s' %
                                                      (str(val), str(type(val))) ])
                 # Successfully ran the gauntlet
-                self._parameters[paramName] = val                
+                self._parameters[paramName] = val
             else:
                 # If didn't find name and return
                 raise InvalidParameterError(['Invalid parameter %s' % str(name)])
         else:
             raise LMError(currargs='Error: parameterConstraints not initialized')
-            
+
     # ...............................................
     def _checkNumericValue(self, val, constraints):
         '''
@@ -275,11 +284,11 @@ class Algorithm(LMObject):
         '''
         if constraints['min'] is not None:
             if val < constraints['min']:
-                raise OutOfRangeError(["Value %s must be greater than %s" % 
+                raise OutOfRangeError(["Value %s must be greater than %s" %
                                               (str(val), str(constraints['min']))])
         if constraints['max'] is not None:
             if val > constraints['max']:
-                raise OutOfRangeError(["Value %s must be less than %s" % 
+                raise OutOfRangeError(["Value %s must be less than %s" %
                                               (str(val), str(constraints['max']))])
 
     # ...............................................
@@ -295,7 +304,7 @@ class Algorithm(LMObject):
             return self._parameters[name]
         # If didn't find name and return
         raise InvalidParameterError(['Unknown parameter %s' % str(name)])
-    
+
     # ...............................................
     def hasParameter(self, name):
         """
@@ -338,10 +347,9 @@ class Algorithm(LMObject):
             "algorithmCode" : self.code,
             "parameters" : []
         }
-            
+
         for param in list(self._parameters.keys()):
             algoObj["parameters"].append(
-                {"name" : param, 
+                {"name" : param,
                  "value" : str(self._parameters[param])})
         return algoObj
-  

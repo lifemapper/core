@@ -1,19 +1,18 @@
 """Occurrence data weapon-of-choice
 """
-import shutil
 import csv
 import json
 import os
+import shutil
 import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.api_query import GbifAPI
-from LmCommon.common.lmconstants import (GBIF, ProcessType, 
-                                         JobStatus, ONE_HOUR, LMFormat) 
+from LmCommon.common.lmconstants import (GBIF, ProcessType,
+                                         JobStatus, ONE_HOUR, LMFormat)
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.ready_file import (ready_filename, get_unicodecsv_writer)
 from LmCommon.common.time import gmt, LmTime
-
 from LmServer.base.taxon import ScientificName
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
@@ -22,10 +21,12 @@ from LmServer.legion.occlayer import OccurrenceLayer
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
+
 # .............................................................................
 class _SpeciesWeaponOfChoice(LMObject):
+
     # .............................
-    def __init__(self, scribe, user, archiveName, epsg, expDate, inputFname,  
+    def __init__(self, scribe, user, archiveName, epsg, expDate, inputFname,
                      metaFname=None, taxonSourceName=None, logger=None):
         """
         @param scribe: An open LmServer.db.borgscribe.BorgScribe object
@@ -77,7 +78,7 @@ class _SpeciesWeaponOfChoice(LMObject):
 
 # ...............................................
     def reset_expiration_date(self, new_date_mjd):
-        currtime =     gmt().mjd
+        currtime = gmt().mjd
         if new_date_mjd < currtime:
             self._obsoleteTime = new_date_mjd
         else:
@@ -90,7 +91,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             return self._delimiter
         except:
             return None
-    
+
 # ...............................................
     def _findStart(self):
         linenum = 0
@@ -109,7 +110,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                         pass
             os.remove(self.startFile)
         return linenum
-                        
+
 # ...............................................
     def _getNextLine(self, infile, csvreader=None):
         success = False
@@ -129,7 +130,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                 success = True
             except OverflowError as e:
                 self._linenum += 1
-                self.log.debug( 'OverflowError on {} ({}), moving on'
+                self.log.debug('OverflowError on {} ({}), moving on'
                                      .format(self._linenum, e))
             except Exception as e:
                 self._linenum += 1
@@ -176,8 +177,8 @@ class _SpeciesWeaponOfChoice(LMObject):
 #             self.log.error('Unable to find {} in fieldnames'
 #                                 .format(providerKeyColname))
 #             provKeyCol = None
-            
-        if providerKeyFile is not None and providerKeyColname is not None: 
+
+        if providerKeyFile is not None and providerKeyColname is not None:
             if not os.path.exists(providerKeyFile):
                 self.log.error('Missing provider file {}'.format(providerKeyFile))
             else:
@@ -193,7 +194,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                         pass
                 dumpfile.close()
         return providers, provKeyCol
-            
+
 # ...............................................
     def _willCompute(self, status, statusModTime, dlocation, rawDataLocation):
         willCompute = False
@@ -210,7 +211,7 @@ class _SpeciesWeaponOfChoice(LMObject):
         return willCompute
 
 # ...............................................
-    def _findOrInsertOccurrenceset(self, sciName, dataCount, data=None, 
+    def _findOrInsertOccurrenceset(self, sciName, dataCount, data=None,
                                    metadata={}):
         """
         @param sciName: ScientificName object
@@ -221,11 +222,11 @@ class _SpeciesWeaponOfChoice(LMObject):
         occ = None
         # Find existing
         # TODO: CJ, change this if we want canonical name displayed for GBIF data instead of scientificName
-#         tmpocc = OccurrenceLayer(sciName.canonicalName, self.userId, self.epsg, 
-        tmpocc = OccurrenceLayer(sciName.scientificName, self.userId, self.epsg, 
+#         tmpocc = OccurrenceLayer(sciName.canonicalName, self.userId, self.epsg,
+        tmpocc = OccurrenceLayer(sciName.scientificName, self.userId, self.epsg,
                 dataCount, squid=sciName.squid,
-                processType=self.processType, status=JobStatus.INITIALIZE, 
-                statusModTime=currtime, sciName=sciName, 
+                processType=self.processType, status=JobStatus.INITIALIZE,
+                statusModTime=currtime, sciName=sciName,
                 rawMetaDLocation=self.metaFilename)
         try:
             occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
@@ -237,7 +238,7 @@ class _SpeciesWeaponOfChoice(LMObject):
 
         if occ is not None:
             # Write raw data regardless
-            rdloc, rawmeta_dloc = self._writeRawData(occ, data=data, 
+            rdloc, rawmeta_dloc = self._writeRawData(occ, data=data,
                                                      metadata=metadata)
             if not rdloc:
                 raise LMError('    Failed to find raw data location')
@@ -245,9 +246,9 @@ class _SpeciesWeaponOfChoice(LMObject):
             # Set processType and metadata location (from config, not saved in DB)
             occ.processType = self.processType
             occ.rawMetaDLocation = self.metaFilename
-            
+
             # Do reset existing or new Occ?
-            willCompute = self._willCompute(occ.status, occ.statusModTime, 
+            willCompute = self._willCompute(occ.status, occ.statusModTime,
                                             occ.getDLocation(), occ.getRawDLocation())
             if willCompute:
                 self.log.info('    Init new or existing OccLayer status, count')
@@ -258,23 +259,23 @@ class _SpeciesWeaponOfChoice(LMObject):
                 # Return existing, completed, unchanged
                 self.log.info('    Returning up-to-date OccLayer')
         return occ
-    
+
 # ...............................................
     def _getInsertSciNameForGBIFSpeciesKey(self, taxonKey, taxonCount):
         """
         Returns an existing or newly inserted ScientificName
         """
-        sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
+        sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId,
                                                               taxonKey=taxonKey)
         if sciName is not None:
             self.log.info('Found sciName for taxonKey {}, {}, with {} points'
                               .format(taxonKey, sciName.scientificName, taxonCount))
         else:
-            # Use API to get and insert species name 
+            # Use API to get and insert species name
             try:
-                (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
-                 nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
-                 familyStr, genusStr, speciesStr, genusKey, speciesKey, 
+                (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr,
+                 nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr,
+                 familyStr, genusStr, speciesStr, genusKey, speciesKey,
                  loglines) = GbifAPI.getTaxonomy(taxonKey)
             except Exception as e:
                 self.log.info('Failed lookup for key {}, ({})'.format(
@@ -290,20 +291,20 @@ class _SpeciesWeaponOfChoice(LMObject):
                         else:
                             self.log.warning('No accepted key for taxonKey {}'.format(taxonKey))
                             return None
-                        
-                    currtime =     gmt().mjd
+
+                    currtime = gmt().mjd
                     # Do not tie GBIF taxonomy to one userid
-                    sname = ScientificName(scinameStr, 
-                                         rank=rankStr, 
+                    sname = ScientificName(scinameStr,
+                                         rank=rankStr,
                                          canonicalName=canonicalStr, squid=None,
                                          lastOccurrenceCount=taxonCount,
-                                         kingdom=kingdomStr, phylum=phylumStr, 
-                                         txClass=classStr, txOrder=orderStr, 
-                                         family=familyStr, genus=genusStr, 
-                                         mod_time=currtime, 
-                                         taxonomySourceId=self._taxonSourceId, 
-                                         taxonomySourceKey=taxonKey, 
-                                         taxonomySourceGenusKey=genusKey, 
+                                         kingdom=kingdomStr, phylum=phylumStr,
+                                         txClass=classStr, txOrder=orderStr,
+                                         family=familyStr, genus=genusStr,
+                                         mod_time=currtime,
+                                         taxonomySourceId=self._taxonSourceId,
+                                         taxonomySourceKey=taxonKey,
+                                         taxonomySourceGenusKey=genusKey,
                                          taxonomySourceSpeciesKey=speciesKey)
                     try:
                         sciName = self._scribe.findOrInsertTaxon(sciName=sname)
@@ -312,14 +313,14 @@ class _SpeciesWeaponOfChoice(LMObject):
                     except Exception as e:
                         if not isinstance(e, LMError):
                             e = LMError('Failed on taxonKey {}, linenum {}'
-                                                        .format(taxonKey, self._linenum), 
+                                                        .format(taxonKey, self._linenum),
                                             e, line_num=self.get_line_num())
                         raise e
                 else:
                     self.log.info('taxonKey {} is not an accepted genus or species'
                                       .format(taxonKey))
         return sciName
-            
+
 # ...............................................
     def _raiseSubclassError(self):
         raise LMError('Function must be implemented in subclass')
@@ -327,30 +328,30 @@ class _SpeciesWeaponOfChoice(LMObject):
 # ...............................................
     def _writeRawData(self, occ, data=None, metadata=None):
         self._raiseSubclassError()
-        
+
 # ...............................................
     def close(self):
         self._raiseSubclassError()
-        
+
 # ...............................................
     @property
     def complete(self):
         self._raiseSubclassError()
-                        
+
 # ...............................................
     @property
     def nextStart(self):
         self._raiseSubclassError()
-    
+
 # ...............................................
     @property
     def thisStart(self):
         self._raiseSubclassError()
-    
+
 # ...............................................
     def moveToStart(self):
         self._raiseSubclassError()
-    
+
 # ...............................................
     @property
     def currRecnum(self):
@@ -358,6 +359,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             return 0
         else:
             return self._linenum
+
 
 # ..............................................................................
 class UserWoC(_SpeciesWeaponOfChoice):
@@ -371,14 +373,15 @@ class UserWoC(_SpeciesWeaponOfChoice):
                  should name the field containing the GBIF TaxonID for the accepted 
                  Taxon of each record in the group. 
     """
-    def __init__(self, scribe, user, archiveName, epsg, expDate, 
-                     userOccCSV, userOccMeta, userOccDelimiter, 
-                     logger=None, processType=ProcessType.USER_TAXA_OCCURRENCE, 
-                     providerFname=None, useGBIFTaxonomy=False, 
+
+    def __init__(self, scribe, user, archiveName, epsg, expDate,
+                     userOccCSV, userOccMeta, userOccDelimiter,
+                     logger=None, processType=ProcessType.USER_TAXA_OCCURRENCE,
+                     providerFname=None, useGBIFTaxonomy=False,
                      taxonSourceName=None):
-        super(UserWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                                                userOccCSV, metaFname=userOccMeta, 
-                                                taxonSourceName=taxonSourceName, 
+        super(UserWoC, self).__init__(scribe, user, archiveName, epsg, expDate,
+                                                userOccCSV, metaFname=userOccMeta,
+                                                taxonSourceName=taxonSourceName,
                                                 logger=logger)
         # Save known GBIF provider/IDs for lookup if available
         self._providers = []
@@ -396,8 +399,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
         self._userOccMeta = userOccMeta
         self._delimiter = userOccDelimiter
         self.occParser = None
-            
-        
+
     # .............................
     def initializeMe(self):
         """
@@ -405,15 +407,15 @@ class UserWoC(_SpeciesWeaponOfChoice):
                      and MFChain objects for workflow computation requests.
         """
         try:
-            self.occParser = OccDataParser(self.log, self._userOccCSV, 
-                                                     self._userOccMeta, 
+            self.occParser = OccDataParser(self.log, self._userOccCSV,
+                                                     self._userOccMeta,
                                                      delimiter=self._delimiter,
-                                                     pullChunks=True) 
+                                                     pullChunks=True)
         except Exception as e:
             raise LMError('Failed to construct OccDataParser, {}'.format(e))
-        
+
         self._fieldNames = self.occParser.header
-        self.occParser.initializeMe()         
+        self.occParser.initializeMe()
 
 # ...............................................
     def close(self):
@@ -426,7 +428,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 dataname = None
             self.log.error('Unable to close OccDataParser with file/data {}'
                                 .format(dataname))
-                    
+
 # ...............................................
     @property
     def complete(self):
@@ -434,7 +436,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
             return self.occParser.closed
         except:
             return True
-         
+
 # ...............................................
     @property
     def thisStart(self):
@@ -467,7 +469,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 return self.occParser.currRecnum
             except:
                 return 0
-            
+
 # ...............................................
     def moveToStart(self):
         startline = self._findStart()
@@ -476,7 +478,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
             self.occParser.skipToRecord(startline)
         elif startline < 0:
             self._currRec = None
-            
+
 # ...............................................
     def _replaceLookupKeys(self, dataChunk):
         chunk = []
@@ -484,7 +486,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
             try:
                 provkey = line[self._provCol]
             except:
-                self.log.debug('Failed to find providerKey on record {} ({})' 
+                self.log.debug('Failed to find providerKey on record {} ({})'
                         .format(self._linenum, line))
             else:
                 provname = provkey
@@ -495,12 +497,12 @@ class UserWoC(_SpeciesWeaponOfChoice):
                         provname = GbifAPI.getPublishingOrg(provkey)
                         self._providers[provkey] = provname
                     except:
-                        self.log.debug('Failed to find providerKey {} in providers or GBIF API' 
+                        self.log.debug('Failed to find providerKey {} in providers or GBIF API'
                                       .format(provkey))
 
                 line[self._provCol] = provname
                 chunk.append(line)
-        return chunk        
+        return chunk
 
 # ...............................................
     def getOne(self):
@@ -523,11 +525,11 @@ class UserWoC(_SpeciesWeaponOfChoice):
             # If data is from GBIF, replace Provider key with name
             if self._provCol is not None:
                 dataChunk = self._replaceLookupKeys(dataChunk)
-                        
+
             # Get or insert ScientificName (squid)
             if self.useGBIFTaxonomy:
-                # returns None if GBIF API does NOT return this or another key as ACCEPTED  
-                sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, 
+                # returns None if GBIF API does NOT return this or another key as ACCEPTED
+                sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey,
                                                                   len(dataChunk))
 #                 if sciName:
 #                     updatedTaxonKey = sciName.sourceTaxonKey
@@ -540,18 +542,18 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
 
             if sciName is not None:
-                occ = self._findOrInsertOccurrenceset(sciName, len(dataChunk), 
+                occ = self._findOrInsertOccurrenceset(sciName, len(dataChunk),
                                 data=dataChunk, metadata=self.occParser.columnMeta)
                 if occ is not None:
                     self.log.info('WOC processed occset {}, name {}, with {} records; next start {}'
-                                  .format(occ.get_id(), sciName.scientificName, 
+                                  .format(occ.get_id(), sciName.scientificName,
                                           len(dataChunk), self.nextStart))
         return occ
-    
+
 # ...............................................
     def _writeRawData(self, occ, data=None, metadata=None):
         rdloc = occ.createLocalDLocation(raw=True)
-        writer, f = get_unicodecsv_writer(rdloc, delimiter=self._delimiter, 
+        writer, f = get_unicodecsv_writer(rdloc, delimiter=self._delimiter,
                                           doAppend=False)
         try:
             for rec in data:
@@ -567,7 +569,8 @@ class UserWoC(_SpeciesWeaponOfChoice):
             with open(rawmeta_dloc, 'w') as f:
                 json.dump(metadata, f)
         return rdloc, rawmeta_dloc
-         
+
+
 # ..............................................................................
 class TinyBubblesWoC(_SpeciesWeaponOfChoice):
     """
@@ -581,13 +584,14 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
            should name the field containing the GBIF TaxonID for the accepted 
            Taxon of each record in the group. 
     """
-    def __init__(self, scribe, user, archiveName, epsg, expDate, 
+
+    def __init__(self, scribe, user, archiveName, epsg, expDate,
                      occCSVDir, occMeta, occDelimiter, dirContentsFname,
-                     logger=None, processType=ProcessType.USER_TAXA_OCCURRENCE, 
+                     logger=None, processType=ProcessType.USER_TAXA_OCCURRENCE,
                      useGBIFTaxonomy=False, taxonSourceName=None):
-        super(TinyBubblesWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                                             occCSVDir, metaFname=occMeta, 
-                                             taxonSourceName=taxonSourceName, 
+        super(TinyBubblesWoC, self).__init__(scribe, user, archiveName, epsg, expDate,
+                                             occCSVDir, metaFname=occMeta,
+                                             taxonSourceName=taxonSourceName,
                                              logger=logger)
         # specific attributes
         self.processType = ProcessType.USER_TAXA_OCCURRENCE
@@ -621,7 +625,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
             basename, _ = os.path.splitext(fname)
             parts = basename.split('_')
             if len(parts) >= 2:
-                genus =  parts[0]
+                genus = parts[0]
                 species = parts[1]
                 try:
                     idstr = parts[2]
@@ -640,15 +644,15 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         recordCount = idx
 
         return binomial, opentreeId, recordCount
- 
+
 # ...............................................
     def  _getInsertSciNameForTinyBubble(self, binomial, opentreeId, recordCount):
         if binomial is not None:
             if opentreeId is not None:
                 sciName = ScientificName(binomial,
                                          lastOccurrenceCount=recordCount,
-                                         taxonomySourceId=self._taxonSourceId, 
-                                         taxonomySourceKey=opentreeId, 
+                                         taxonomySourceId=self._taxonSourceId,
+                                         taxonomySourceKey=opentreeId,
                                          taxonomySourceSpeciesKey=opentreeId)
             else:
                 sciName = ScientificName(binomial, userId=self.userId,
@@ -658,14 +662,14 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                                   .format(opentreeId, binomial))
 
         return sciName
-    
+
 # ...............................................
     def close(self):
         try:
             self._dirContentsFile.close()
         except:
             self.log.error('Unable to close dirContentsFile {}'.format(self._dirContentsFile))
-            
+
 # ...............................................
     @property
     def nextStart(self):
@@ -689,7 +693,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
             return self._dirContentsFile.closed
         except:
             return True
-        
+
 # ...............................................
     def _updateFile(self, filename, expDate):
         """
@@ -722,7 +726,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         fullOccFname = None
         line = self._getNextLine(self._dirContentsFile)
         if line is not None:
-            try:              
+            try:
                 fullOccFname = line.strip()
             except Exception as e:
                 self.log.debug('Exception reading line {} ({})'
@@ -735,7 +739,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         bubbleFname = self._getNextFilename()
         binomial, opentreeId, recordCount = self._parseBubble(bubbleFname)
         if binomial is not None and opentreeId is not None:
-            sciName = self._getInsertSciNameForTinyBubble(binomial, opentreeId, 
+            sciName = self._getInsertSciNameForTinyBubble(binomial, opentreeId,
                                                           recordCount)
             if sciName is not None:
                 occ = self._findOrInsertOccurrenceset(sciName, recordCount,
@@ -752,7 +756,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         rdloc = occ.createLocalDLocation(raw=True)
         occ.ready_filename(rdloc, overwrite=True)
         shutil.copyfile(data, rdloc)
-        
+
         if metadata is not None:
             rawmeta_dloc = rdloc + LMFormat.JSON.ext
             ready_filename(rawmeta_dloc, overwrite=True)
@@ -762,15 +766,16 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
 
 # ...............................................
     def moveToStart(self):
-        startline = self._findStart()  
+        startline = self._findStart()
         if startline < 1:
             self._linenum = 0
             self._currRec = None
         else:
             fullOccFname = self._getNextFilename()
-            while fullOccFname is not None and self._linenum < startline-1:
+            while fullOccFname is not None and self._linenum < startline - 1:
                 fullOccFname = self._getNextFilename()
-  
+
+
 # ..............................................................................
 class ExistingWoC(_SpeciesWeaponOfChoice):
     """
@@ -778,17 +783,17 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                  text chunk to a file, then creates an OccurrenceJob for it and 
                  updates the Occurrence record and inserts a job.
     """
-    def __init__(self, scribe, user, archiveName, epsg, expDate, occIdFname, 
+
+    def __init__(self, scribe, user, archiveName, epsg, expDate, occIdFname,
                      logger=None):
-        super(ExistingWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
+        super(ExistingWoC, self).__init__(scribe, user, archiveName, epsg, expDate,
                                                   occIdFname, logger=logger)
-        # Copy the occurrencesets 
+        # Copy the occurrencesets
         self.processType = None
         try:
             self._idfile = open(occIdFname, 'r')
         except:
             raise LMError('Failed to open {}'.format(occIdFname))
-
 
 # ...............................................
     def close(self):
@@ -796,7 +801,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
             self._idfile.close()
         except:
             self.log.error('Unable to close {}'.format(self._dumpfile))
-            
+
 # ...............................................
     @property
     def complete(self):
@@ -804,7 +809,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
             return self._idfile.closed
         except:
             return True
-            
+
 # ...............................................
     @property
     def nextStart(self):
@@ -820,12 +825,12 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
             return 0
         else:
             return self._currKeyFirstRecnum
-                
+
 # ...............................................
     def moveToStart(self):
-        startline = self._findStart()  
+        startline = self._findStart()
         if startline > 1:
-            while self._linenum < startline-1:
+            while self._linenum < startline - 1:
                 _ = self._getNextLine(self._idfile)
 
 # ...............................................
@@ -846,11 +851,11 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                                          .format(tmp, self._linenum))
                 else:
                     occ = self._scribe.getOccurrenceSet(occId=occid)
-                    if occ is None:                            
+                    if occ is None:
                         self._scribe.log.info('Unable to get Occset for Id {} on line {}'
                                                     .format(tmp, self._linenum))
                     else:
-                        if occ.status != JobStatus.COMPLETE: 
+                        if occ.status != JobStatus.COMPLETE:
                             self._scribe.log.info('Incomplete or failed occSet for id {} on line {}'
                                                         .format(occid, self._linenum))
             line = None
@@ -872,29 +877,29 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                 sciName = self._scribe.getTaxon(squid=occ.squid)
                 if sciName is not None:
                     tmpOcc.setScientificName(sciName)
-                tmpOcc.readData(dlocation=occ.getDLocation(), 
+                tmpOcc.readData(dlocation=occ.getDLocation(),
                                       dataFormat=occ.dataFormat)
                 userOcc = self._scribe.findOrInsertOccurrenceSet(tmpOcc)
                 # Read the data from the original occurrence set
-                userOcc.readData(dlocation=occ.getDLocation(), 
+                userOcc.readData(dlocation=occ.getDLocation(),
                                       dataFormat=occ.dataFormat, doReadData=True)
                 userOcc.writeLayer()
-                
+
                 # Copy metadata file
                 shutil.copyfile('{}{}'.format(os.path.splitext(occ.getDLocation())[0],
                                                         LMFormat.METADATA.ext),
                                      '{}{}'.format(os.path.splitext(userOcc.getDLocation())[0],
                                                         LMFormat.METADATA.ext))
-                
+
                 self._scribe.updateObject(userOcc)
                 self.log.info('Copy/insert occset {} to {}, with {} points; next start {}'
-                                  .format(occ.get_id(), userOcc.get_id(), 
+                                  .format(occ.get_id(), userOcc.get_id(),
                                              userOcc.queryCount, self.nextStart))
             else:
                 self._scribe.log.info('Unauthorized user {} for ID {}'
                                             .format(occ.getUserId(), occ.get_id()))
         return userOcc
-    
+
 """
 import shutil
 

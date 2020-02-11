@@ -1,9 +1,17 @@
 """Module that contains the RADExperiment class
 """
 import os
-from osgeo import ogr
 import subprocess
 from types import StringType
+
+from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import (LMFormat, MatrixType)
+from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType,
+                                                      LMServiceType)
+from LmServer.legion.lmmatrix import LMMatrix
+from LmServer.legion.tree import Tree
+from osgeo import ogr
 
 # from LmBackend.command.common import (ChainCommand,
 #                                                   ConcatenateMatricesCommand,
@@ -13,37 +21,28 @@ from types import StringType
 #                                                  McpaCorrectPValuesCommand,
 #                                                  CreateAncestralPamCommand,
 #                                                  SyncPamAndTreeCommand, )
-# from LmBackend.command.server import (TouchFileCommand, SquidIncCommand, 
+# from LmBackend.command.server import (TouchFileCommand, SquidIncCommand,
 #                                                   StockpileCommand)
-from LmBackend.common.lmobj import LMError
-
-from LmCommon.common.lmconstants import (LMFormat, MatrixType) 
 #                                          JobStatus, ProcessType)
-
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType, 
-                                                      LMServiceType)
-from LmServer.legion.lmmatrix import LMMatrix                                             
-from LmServer.legion.tree import Tree                                             
-
 # TODO: Move these to localconstants
 NUM_RAND_GROUPS = 30
 NUM_RAND_PER_GROUP = 2
 
 
 # .............................................................................
-class Gridset(ServiceObject): #LMMap
+class Gridset(ServiceObject):  # LMMap
     """
     The Gridset class contains all of the information for one view (extent and 
     resolution) of a RAD experiment.  
     """
+
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, name=None, metadata={}, 
+    def __init__(self, name=None, metadata={},
                      shapeGrid=None, shapeGridId=None, tree=None, treeId=None,
-                     siteIndicesFilename=None, 
-                     dlocation=None, epsgcode=None, matrices=None, 
+                     siteIndicesFilename=None,
+                     dlocation=None, epsgcode=None, matrices=None,
                      userId=None, gridsetId=None, metadataUrl=None, mod_time=None):
         """
         @summary Constructor for the Gridset class
@@ -70,11 +69,11 @@ class Gridset(ServiceObject): #LMMap
                                   .format(self._epsg, shapeGrid.epsgcode))
             bbox = shapeGrid.bbox
             mapunits = shapeGrid.mapUnits
-                
-        ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS, 
+
+        ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS,
                                       metadataUrl=metadataUrl, mod_time=mod_time)
         title = 'Matrix map for Gridset {}'.format(name)
-        #LMMap.__init__(self, name, title, self._mapPrefix, 
+        # LMMap.__init__(self, name, title, self._mapPrefix,
         #                    epsgcode, bbox, mapunits, mapType=LMFileType.OTHER_MAP)
         # TODO: Aimee, do you want to move this somewhere else?
         self._dlocation = None
@@ -92,7 +91,7 @@ class Gridset(ServiceObject): #LMMap
         self._matrices = []
         self.setMatrices(matrices, doRead=False)
         self._tree = tree
-        
+
 # ...............................................
     @classmethod
     def initFromFiles(cls):
@@ -113,7 +112,7 @@ class Gridset(ServiceObject): #LMMap
         return self._epsg
 
     epsgcode = property(_getEPSG, _setEPSG)
-        
+
 # ...............................................
     @property
     def treeId(self):
@@ -121,11 +120,11 @@ class Gridset(ServiceObject): #LMMap
             return self._tree.get_id()
         except:
             return None
-            
+
     @property
     def tree(self):
         return self._tree
-            
+
 # ...............................................
     def setLocalMapFilename(self, mapfname=None):
         """
@@ -134,7 +133,7 @@ class Gridset(ServiceObject): #LMMap
                      Gridset. 
         """
         if mapfname is None:
-            mapfname = self._earlJr.createFilename(LMFileType.RAD_MAP, 
+            mapfname = self._earlJr.createFilename(LMFileType.RAD_MAP,
                                                             gridsetId=self.get_id(),
                                                             usr=self._userId)
         self._mapFilename = mapfname
@@ -162,16 +161,16 @@ class Gridset(ServiceObject): #LMMap
         if grdid is None:
             grdid = ID_PLACEHOLDER
         mapprefix = self._earlJr.constructMapPrefixNew(urlprefix=self.metadataUrl,
-                                        ftype=LMFileType.RAD_MAP, mapname=self.mapName, 
+                                        ftype=LMFileType.RAD_MAP, mapname=self.mapName,
                                         usr=self._userId)
         return mapprefix
-    
+
     def _setMapPrefix(self):
         mapprefix = self._createMapPrefix()
         self._mapPrefix = mapprefix
-             
+
     @property
-    def mapPrefix(self): 
+    def mapPrefix(self):
         return self._mapPrefix
 
 # ...............................................
@@ -180,7 +179,7 @@ class Gridset(ServiceObject): #LMMap
         if self._mapFilename is None:
             self.setLocalMapFilename()
         return self._mapFilename
-    
+
 # ...............................................
     @property
     def mapName(self):
@@ -189,7 +188,6 @@ class Gridset(ServiceObject): #LMMap
             pth, mapfname = os.path.split(self._mapFilename)
             mapname, ext = os.path.splitext(mapfname)
         return mapname
-    
 
 # .............................................................................
 # Private methods
@@ -197,7 +195,7 @@ class Gridset(ServiceObject): #LMMap
 # .............................................................................
 # Methods
 # .............................................................................
-    
+
 # ...............................................
     def getShapegrid(self):
         return self._shapeGrid
@@ -214,15 +212,15 @@ class Gridset(ServiceObject): #LMMap
 # ...............................................
     def setPath(self):
         if self._path is None:
-            if (self._userId is not None and 
-                 self.get_id() and 
+            if (self._userId is not None and
+                 self.get_id() and
                  self._getEPSG() is not None):
-                self._path = self._earlJr.createDataPath(self._userId, 
+                self._path = self._earlJr.createDataPath(self._userId,
                                          LMFileType.UNSPECIFIED_RAD,
                                          epsg=self._epsg, gridsetId=self.get_id())
             else:
                 raise LMError()
-            
+
     @property
     def path(self):
         if self._path is None:
@@ -235,9 +233,9 @@ class Gridset(ServiceObject): #LMMap
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
         """
-        dloc = self._earlJr.createFilename(LMFileType.GRIDSET_PACKAGE, 
-                                                      objCode=self.get_id(), 
-                                                      gridsetId=self.get_id(), 
+        dloc = self._earlJr.createFilename(LMFileType.GRIDSET_PACKAGE,
+                                                      objCode=self.get_id(),
+                                                      gridsetId=self.get_id(),
                                                       usr=self.getUserId())
         return dloc
 
@@ -247,7 +245,7 @@ class Gridset(ServiceObject): #LMMap
         """
         self.setDLocation()
         return self._dlocation
-    
+
     def setDLocation(self, dlocation=None):
         """
         @summary: Set the _dlocation attribute if it is None.  Use dlocation
@@ -255,11 +253,11 @@ class Gridset(ServiceObject): #LMMap
         @note: Does NOT override existing dlocation, use clearDLocation for that
         """
         if self._dlocation is None:
-            if dlocation is None: 
+            if dlocation is None:
                 dlocation = self.createLocalDLocation()
             self._dlocation = dlocation
 
-    def clearDLocation(self): 
+    def clearDLocation(self):
         self._dlocation = None
 
     # .............................
@@ -269,7 +267,7 @@ class Gridset(ServiceObject): #LMMap
         @todo: Aimee, please change this as you see fit.  If you change the 
                      function name, modify the package formatter.
         """
-        return os.path.join(os.path.dirname(self.getDLocation()), 
+        return os.path.join(os.path.dirname(self.getDLocation()),
                             'gs_{}_package{}'.format(self.get_id(), LMFormat.ZIP.ext))
 
 # ...............................................
@@ -308,7 +306,7 @@ class Gridset(ServiceObject): #LMMap
             if isinstance(mtxFileOrObj, StringType) and os.path.exists(mtxFileOrObj):
                 mtx = LMMatrix(dlocation=mtxFileOrObj, userId=usr)
                 if doRead:
-                    mtx.readData()                
+                    mtx.readData()
             elif isinstance(mtxFileOrObj, LMMatrix):
                 mtx = mtxFileOrObj
                 mtx.setUserId(usr)
@@ -323,7 +321,7 @@ class Gridset(ServiceObject): #LMMap
                     existingIds = [m.get_id() for m in self._matrices]
                     if mtx.get_id() not in existingIds:
                         self._matrices.append(mtx)
-                                                    
+
     def getMatrices(self):
         return self._matrices
 
@@ -353,17 +351,17 @@ class Gridset(ServiceObject): #LMMap
 
     def getGRIMForCodes(self, gcmCode, altpredCode, dateCode):
         for grim in self.getGRIMs():
-            if (grim.gcmCode == gcmCode and 
-                grim.altpredCode == altpredCode and 
+            if (grim.gcmCode == gcmCode and
+                grim.altpredCode == altpredCode and
                 grim.dateCode == dateCode):
                 return grim
         return None
 
     def getPAMForCodes(self, gcmCode, altpredCode, dateCode, algorithmCode):
         for pam in self.getAllPAMs():
-            if (pam.gcmCode == gcmCode and 
-                 pam.altpredCode == altpredCode and 
-                 pam.dateCode == dateCode and 
+            if (pam.gcmCode == gcmCode and
+                 pam.altpredCode == altpredCode and
+                 pam.dateCode == dateCode and
                  pam.algorithmCode == algorithmCode):
                 return pam
         return None
@@ -394,7 +392,7 @@ class Gridset(ServiceObject): #LMMap
         if matrix is None or self._shapeGrid is None:
             return False
         else:
-            self._shapeGrid.copyData(self._shapeGrid.getDLocation(), 
+            self._shapeGrid.copyData(self._shapeGrid.getDLocation(),
                                             targetDataLocation=shpfilename,
                                             format=self._shapeGrid.dataFormat)
             ogr.RegisterAll()
@@ -409,54 +407,54 @@ class Gridset(ServiceObject): #LMMap
             fldtype = matrix.ogrDataType
             # For each layer present, add a field/column to the shapefile
             for lyridx in range(mlyrCount):
-                if (not self._layersPresent 
+                if (not self._layersPresent
                      or (self._layersPresent and self._layersPresent[lyridx])):
                     # 8 character limit, must save fieldname
                     fldname = 'lyr%s' % str(lyridx)
                     fldDefn = ogr.FieldDefn(fldname, fldtype)
                     if shpLyr.CreateField(fldDefn) != 0:
-                        raise LMError('CreateField failed for %s in %s' 
-                                          % (fldname, shpfilename))                 
+                        raise LMError('CreateField failed for %s in %s'
+                                          % (fldname, shpfilename))
 
             # For each site/feature, fill with value from matrix
             currFeat = shpLyr.GetNextFeature()
             sitesKeys = sorted(self.getSitesPresent().keys())
-            print("starting feature loop")            
+            print("starting feature loop")
             while currFeat is not None:
-                #for lyridx in range(mlyrCount):
-                for lyridx,exists in self._layersPresent.items():
+                # for lyridx in range(mlyrCount):
+                for lyridx, exists in self._layersPresent.items():
                     if exists:
                         # add field to the layer
                         fldname = 'lyr%s' % str(lyridx)
                         siteidx = currFeat.GetFieldAsInteger(self._shapeGrid.siteId)
-                        #sitesKeys = sorted(self.getSitesPresent().keys())
+                        # sitesKeys = sorted(self.getSitesPresent().keys())
                         realsiteidx = sitesKeys.index(siteidx)
-                        currval = matrix.getValue(realsiteidx,lyridx)
+                        currval = matrix.getValue(realsiteidx, lyridx)
                         # debug
                         currFeat.SetField(fldname, currval)
                 # add feature to the layer
                 shpLyr.SetFeature(currFeat)
                 currFeat.Destroy()
                 currFeat = shpLyr.GetNextFeature()
-            #print 'Last siteidx %d' % siteidx
-    
+            # print 'Last siteidx %d' % siteidx
+
             # Closes and flushes to disk
             shpDs.Destroy()
             print(('Closed/wrote dataset %s' % shpfilename))
             success = True
             try:
                 retcode = subprocess.call(["shptree", "%s" % shpfilename])
-                if retcode != 0: 
+                if retcode != 0:
                     print('Unable to create shapetree index on %s' % shpfilename)
             except Exception as e:
-                print('Unable to create shapetree index on %s: %s' % (shpfilename, 
+                print('Unable to create shapetree index on %s: %s' % (shpfilename,
                                                                                         str(e)))
         return success
-        
+
     # ...............................................
     def writeMap(self, mapfilename):
         pass
-        #LMMap.writeMap(self, mapfilename, shpGrid=self._shapeGrid, 
+        # LMMap.writeMap(self, mapfilename, shpGrid=self._shapeGrid,
         #                    matrices=self._matrices)
 
 #     # ...............................................
@@ -472,16 +470,16 @@ class Gridset(ServiceObject): #LMMap
 # ...............................................
     def dumpGrdMetadata(self):
         return super(Gridset, self)._dump_metadata(self.grdMetadata)
- 
+
 # ...............................................
     def loadGrdMetadata(self, newMetadata):
         self.grdMetadata = super(Gridset, self)._load_metadata(newMetadata)
 
 # ...............................................
     def addGrdMetadata(self, newMetadataDict):
-        self.grdMetadata = super(Gridset, self)._add_metadata(newMetadataDict, 
+        self.grdMetadata = super(Gridset, self)._add_metadata(newMetadataDict,
                                              existingMetadataDict=self.grdMetadata)
-                
+
 # .............................................................................
 # Read-0nly Properties
 # .............................................................................

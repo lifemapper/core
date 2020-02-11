@@ -90,7 +90,7 @@ class TestScribeMatrixService(UserTestCase):
       if len(mtxAtoms) == 0:
          self.fail('Cannot get an matrix because listing found none')
       else:
-         mtx = self.scribe.getMatrix(mtxId=mtxAtoms[0].id,
+         mtx = self.scribe.getMatrix(mtxId=mtxAtoms[0].get_id(),
                                                userId=self._get_session_user())
          self.assertIsInstance(mtx, Matrix)
          self.assertEqual(mtx.getUserId(), self._get_session_user(),
@@ -110,7 +110,7 @@ class TestScribeMatrixService(UserTestCase):
          warnings.warn('List returned 0 matrices for user: {}'.format(
                                                      self._get_session_user()))
       else:
-         mtx = self.scribe.getMatrix(mtxId=mtxAtoms[0].id,
+         mtx = self.scribe.getMatrix(mtxId=mtxAtoms[0].get_id(),
                                                userId=self._get_session_user())
          self.assertEqual(mtx.getUserId(), self._get_session_user(),
                           'User id on matrix = {}, session user = {}'.format(
@@ -196,7 +196,7 @@ class TestWebMatrixService(UserTestCase):
          self.fail('Cannot get an matrix because listing found none')
       else:
          gridsetId = mtxAtoms[0].gridsetId
-         mtxId = mtxAtoms[0].id
+         mtxId = mtxAtoms[0].get_id()
 
          with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId)) as x:
             mtxMeta = json.load(x)

@@ -7,7 +7,6 @@ import shutil
 
 from LmCommon.common.lmconstants import ONE_DAY, DEFAULT_POST_USER
 from LmCommon.common.time import gmt
-
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
 from LmServer.common.log import ScriptLogger
@@ -18,22 +17,24 @@ USER = "anon"
 DAYS_OLD = 14
 failedFile = "/home/cjgrady/failed.txt"
 
+
 def reportFailure(mesgs):
     notifier = EmailNotifier()
-    notifier.sendMessage(['cjgrady@ku.edu'], 
-                         "Failed to delete user occurrence sets", 
+    notifier.sendMessage(['cjgrady@ku.edu'],
+                         "Failed to delete user occurrence sets",
                          '\n'.join(mesgs))
-    
+
+
 # ...............................................
 def deleteObsoleteSDMs(scribe, userid, obsolete_date, max_num):
-    # Should be able to just list old occurrence sets and then have the scribe 
+    # Should be able to just list old occurrence sets and then have the scribe
     #     delete experiments associated with them
-    occ_ids = scribe.deleteObsoleteSDMDataReturnIds(userid, obsolete_date, 
-                                                    max_num=max_num)    
+    occ_ids = scribe.deleteObsoleteSDMDataReturnIds(userid, obsolete_date,
+                                                    max_num=max_num)
     earl = EarlJr()
     for oid in occ_ids:
         if oid is not None:
-            opth = earl.createDataPath(userid, LMFileType.OCCURRENCE_FILE, 
+            opth = earl.createDataPath(userid, LMFileType.OCCURRENCE_FILE,
                                        occsetId=oid)
             if os.path.exists(opth):
                 try:
@@ -44,13 +45,13 @@ def deleteObsoleteSDMs(scribe, userid, obsolete_date, max_num):
                     scribe.log.info('Removed {} for occset {}'.format(opth, oid))
             else:
                 scribe.log.info('Path {} does not exist'.format(opth))
-                
-    
+
+
 # ...............................................
 def deleteObsoleteGridsets(scribe, userid, obsolete_date):
-    # Should be able to just list old occurrence sets and then have the scribe 
+    # Should be able to just list old occurrence sets and then have the scribe
     #     delete experiments associated with them
-    gs_fnames = scribe.deleteGridsetReturnFilenames(userid, obsolete_date)    
+    gs_fnames = scribe.deleteGridsetReturnFilenames(userid, obsolete_date)
     for fname in gs_fnames:
         if fname is not None and os.path.exists(fname):
             try:
@@ -59,7 +60,7 @@ def deleteObsoleteGridsets(scribe, userid, obsolete_date):
                 scribe.log.error('Failed to remove {}, {}'.format(fname, str(e)))
             else:
                 scribe.log.error('Removed {}'.format(fname))
-    
+
 
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -70,7 +71,7 @@ if __name__ == "__main__":
              description=(""""Delete species occurrencesets older than 
              <date in MJD format>, SDM projections, and MatrixColumns computed 
              from those SDM projections for <user>"""))
-             
+
     parser.add_argument('user_id', default=DEFAULT_POST_USER,
              help=('User to delete data for'))
     parser.add_argument('mjd_date', type=float, default=anon_obsolesence_date,
@@ -79,20 +80,20 @@ if __name__ == "__main__":
                         help=('Maximum number of occurrencesets to delete'))
     parser.add_argument('--logname', type=str, default=None,
              help=('Basename of the logfile, without extension'))
-    
+
     args = parser.parse_args()
     usr = args.user_id
     mjd_date = args.mjd_date
     max_num = args.max_num
     logname = args.logname
-    
+
     if logname is None:
         import time
         scriptname, _ = os.path.splitext(os.path.basename(__file__))
         secs = time.time()
         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(scriptname, timestamp)
-    
+
     log = ScriptLogger(logname)
     scribe = BorgScribe(log)
     try:

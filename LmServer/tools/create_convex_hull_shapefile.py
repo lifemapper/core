@@ -1,4 +1,4 @@
-#!/bin/bash
+# !/bin/bash
 """
 @summary: This script retrieves the convex hull of an occurrence set from the 
              object and writes it to a new shapefile
@@ -29,11 +29,11 @@
           02110-1301, USA.
 """
 import argparse
-from osgeo import ogr
 
 from LmCommon.common.lmconstants import LMFormat
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
+from osgeo import ogr
 
 # .............................................................................
 if __name__ == "__main__":
@@ -42,38 +42,36 @@ if __name__ == "__main__":
       description='This script writes the convex hull for an occurrence set')
 
    parser.add_argument('occId', type=int, help='The occurrence set database id')
-   parser.add_argument('outFile', type=str, 
+   parser.add_argument('outFile', type=str,
                        help='The file location to write the shapefile')
-   parser.add_argument('-b', '--buffer', type=float, 
+   parser.add_argument('-b', '--buffer', type=float,
                        help='How big the buffer should be (in map units)')
 
-
    args = parser.parse_args()
-   
+
    scribe = BorgScribe(ConsoleLogger())
    scribe.openConnections()
-   
+
    occ = scribe.getOccurrenceSet(occId=args.occId)
    occ.readShapefile()
-   
+
    chWkt = occ.getConvexHullWkt(convexHullBuffer=args.buffer)
-   
+
    scribe.closeConnections()
-   
+
    drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
    ds = drv.CreateDataSource(args.outFile)
    lyr = ds.CreateLayer('', None, ogr.wkbPolygon)
    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
    defn = lyr.GetLayerDefn()
-   
+
    feat = ogr.Feature(defn)
    feat.SetField('id', 1)
    geom = ogr.CreateGeometryFromWkt(chWkt)
    feat.SetGeometry(geom)
    lyr.CreateFeature(feat)
-   
+
    feat = None
    geom = None
    lyr = None
    ds = None
-   

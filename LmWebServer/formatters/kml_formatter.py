@@ -2,19 +2,17 @@
 @note: This needs to be cleaned up a lot.  This is a patch to get us through
              until we can spend some time on this
 """
-import cherrypy
-from osgeo import ogr
-
-from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.lm_xml import (
     CDATA, Element, register_namespace, set_default_namespace, SubElement,
     tostring)
-
+from LmCommon.common.lmconstants import LMFormat
 from LmServer.base.utilities import format_time_human
 from LmServer.common.lmconstants import OccurrenceFieldNames
 from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
+import cherrypy
+from osgeo import ogr
 
 KML_NS = "http://www.opengis.net/kml/2.2"
 

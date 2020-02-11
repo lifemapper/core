@@ -7,14 +7,13 @@ import urllib
 
 import requests
 
-import idigbio
-
+from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.lmconstants import (
     BISON, BISON_QUERY, DWCNames, GBIF, HTTPStatus, IDIGBIO, IDIGBIO_QUERY,
     ITIS, URL_ESCAPES)
-from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.occparse import OccDataParser
 from LmCommon.common.ready_file import ready_filename
+import idigbio
 
 
 # .............................................................................
@@ -288,6 +287,7 @@ class APIQuery:
 class BisonAPI(APIQuery):
     """Class to query BISON APIs and return results
     """
+
     # ...............................................
     def __init__(self, q_filters=None, other_filters=None, filter_string=None,
                  headers=None):
@@ -415,6 +415,7 @@ class BisonAPI(APIQuery):
 class ItisAPI(APIQuery):
     """Class to query BISON APIs and return results
     """
+
     # ...............................................
     def __init__(self, other_filters={}):
         """Constructor for ItisAPI class

@@ -11,11 +11,12 @@ import urllib.request
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import (GBIF, ONE_MIN, URL_ESCAPES)
 from LmCommon.common.time import gmt, time_delta_from_mjd
-
 from LmServer.base.lmobj import LmHTTPError
+
 
 # .............................................................................
 class GBIFData(LMObject):
+
     def __init__(self, updateInterval, usr=None, pword=None):
         self.updateInterval = updateInterval
         self._gbifQueryTime = None
@@ -40,7 +41,7 @@ class GBIFData(LMObject):
                 secondsLeft = ceil(timeLeft.seconds)
                 self.log.info('Give GBIF a %d second break ...' % secondsLeft)
                 time.sleep(secondsLeft)
-                
+
 # ...............................................
     def _waitForGBIF(self):
         """
@@ -49,7 +50,7 @@ class GBIFData(LMObject):
         if self.lockOwner:
             self._freeLock()
         self.log.info('Sleeping %d min while waiting for GBIF services ...' %
-                          (GBIF.WAIT_TIME/ONE_MIN))
+                          (GBIF.WAIT_TIME / ONE_MIN))
         elapsedTime = 0
         while elapsedTime < GBIF.WAIT_TIME:
             time.sleep(ONE_MIN)
@@ -62,25 +63,25 @@ class GBIFData(LMObject):
             passwordMgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
             passwordMgr.add_password('GBIF', GBIF.REST_URL, usr, pword)
             handler = urllib.request.HTTPBasicAuthHandler(passwordMgr)
-            
+
             # Create and Install opener - now all calls to urllib2.urlopen use our opener.
             opener = urllib.request.build_opener(handler)
             urllib.request.install_opener(opener)
             self.signedIn = True
-        
+
 # # ...............................................
 #     def _giveGbifABreak(self):
 #         """
 #         @note: Never call this when in possession of the lock
 #         """
 #         if self._gbifQueryTime is not None:
-#             timeLeft = time_delta_from_mjd(GBIF.WAIT_TIME - 
+#             timeLeft = time_delta_from_mjd(GBIF.WAIT_TIME -
 #                                            (gmt().mjd - self._gbifQueryTime))
 #             if timeLeft > 0:
 #                 secondsLeft = ceil(timeLeft.seconds)
 #                 self.log.info('Give GBIF a %d second break ...' % secondsLeft)
 #                 time.sleep(secondsLeft)
-                
+
 # ...............................................
     def _getGBIFResults(self, url):
         """
@@ -93,16 +94,16 @@ class GBIFData(LMObject):
             response = urllib.request.urlopen(url.decode('utf-8'))
 #             response = urllib2.urlopen(url)
         except BadStatusLine as e:
-            msg = 'Failed GBIF request with %s (BadStatusLine: %s, reason: %s)' % (url, 
+            msg = 'Failed GBIF request with %s (BadStatusLine: %s, reason: %s)' % (url,
                                                                     str(e.line), str(e.message))
         except urllib.error.HTTPError as e:
-            msg = 'Failed GBIF request with %s (HTTPException: %s, reason: %s)' % (url, 
+            msg = 'Failed GBIF request with %s (HTTPException: %s, reason: %s)' % (url,
                                                                     str(e.args), str(e.message))
             self.log.error(msg)
             self._nubUUID = None
             raise LmHTTPError(e.code, msg=msg)
         except Exception as e:
-            msg = 'Failed GBIF request with %s (HTTPException: %s, reason: %s)' % (url, 
+            msg = 'Failed GBIF request with %s (HTTPException: %s, reason: %s)' % (url,
                                                                     str(e.args), str(e.message))
             self.log.error(msg)
             self._nubUUID = None
@@ -111,7 +112,7 @@ class GBIFData(LMObject):
         try:
             outputDict = json.loads(output)
         except Exception as e:
-            raise LMError('Unexpected non-JSON results: %s (%s)' % (str(output), 
+            raise LMError('Unexpected non-JSON results: %s (%s)' % (str(output),
                                                                                       str(e)))
         if GBIF.RESPONSE_RESULT_KEY in outputDict:
             results = outputDict[GBIF.RESPONSE_RESULT_KEY]
@@ -130,43 +131,43 @@ class GBIFData(LMObject):
             raise LMError('Must be signed in to access secure GBIF services')
         queryParams = GBIF.QUERY_PARAMS[GBIF.OCCURRENCE_SERVICE].copy()
         queryParams[GBIF.REQUEST_TAXON_KEY] = taxonKey
-        
+
         jsonPredicate = self._assembleDownloadPredicate(queryParams)
-        url = '%s/%s/%s/%s'% (GBIF.REST_URL, GBIF.OCCURRENCE_SERVICE, 
+        url = '%s/%s/%s/%s' % (GBIF.REST_URL, GBIF.OCCURRENCE_SERVICE,
                                  GBIF.DOWNLOAD_COMMAND, GBIF.DOWNLOAD_REQUEST_COMMAND)
         headers = {'Content-Type': 'application/json'}
-    
+
         # POST
         self._gbifQueryTime = gmt().mjd
         try:
             req = urllib.request.Request(url, jsonPredicate, headers)
             response = urllib.request.urlopen(req)
         except urllib.error.HTTPError as e:
-            msg = ('Failed GBIF request with url %s; predicate %s (args: %s, reason: %s)' 
+            msg = ('Failed GBIF request with url %s; predicate %s (args: %s, reason: %s)'
                      % (url, str(jsonPredicate), str(e.args), str(e.reason)))
             self.log.error(msg)
             self._nubUUID = None
             raise LmHTTPError(e.code, msg=msg)
         except Exception as e:
-            raise LMError('Failed GBIF download request with %s (%s)' 
+            raise LMError('Failed GBIF download request with %s (%s)'
                               % (url, str(e.reason)))
         else:
             downloadKey = response.read()
         return downloadKey
-    
+
 # ...............................................
     def _getGBIFTaxonomyUUID(self):
         """
         @raise LmHTTPError: on GBIF service failure
         @raise LMError: on failure to find GBIF Backbone Taxonomy UUID
         """
-        url = '%s/%s?%s=%s'% (GBIF.REST_URL, GBIF.DATASET_SERVICE, 
-                                     GBIF.REQUEST_SIMPLE_QUERY_KEY, 
+        url = '%s/%s?%s=%s' % (GBIF.REST_URL, GBIF.DATASET_SERVICE,
+                                     GBIF.REQUEST_SIMPLE_QUERY_KEY,
                                      GBIF.DATASET_BACKBONE_VALUE)
         for replaceStr, withStr in URL_ESCAPES:
             url = url.replace(replaceStr, withStr)
         total, isEnd, resultList = self._getGBIFResults(url)
-        if total == 1: 
+        if total == 1:
             uuid = resultList[0][GBIF.RESPONSE_IDENTIFIER_KEY]
             return uuid
         else:
@@ -177,23 +178,23 @@ class GBIFData(LMObject):
         """
         """
         queryParams = GBIF.QUERY_PARAMS[GBIF.SPECIES_SERVICE].copy()
-        url = '%s/%s/%s'% (GBIF.REST_URL, GBIF.SPECIES_SERVICE, GBIF.MATCH_COMMAND)
+        url = '%s/%s/%s' % (GBIF.REST_URL, GBIF.SPECIES_SERVICE, GBIF.MATCH_COMMAND)
         # Simple taxa query
         try:
-            # Equal = unicode(name, "utf-8", 'strict') 
+            # Equal = unicode(name, "utf-8", 'strict')
             uname = name.decode('utf-8')
         except Exception as e:
-            raise LMError('Failed to convert to unicode with utf-8: %s (%s)' 
+            raise LMError('Failed to convert to unicode with utf-8: %s (%s)'
                               % (name, str(e)))
-        
+
         queryParams[GBIF.REQUEST_NAME_QUERY_KEY] = uname
         queryParams[GBIF.REQUEST_DATASET_KEY] = self._nubUUID
         queryParams[GBIF.REQUEST_RANK_KEY] = rank.upper()
-        
+
         try:
             newurl = self._assembleUrl(url, queryParams)
         except Exception as e:
-            raise LMError('Failed to convert to assembleUrl with utf-8: %s (%s)' 
+            raise LMError('Failed to convert to assembleUrl with utf-8: %s (%s)'
                               % (newurl, str(e)))
         return newurl
 
@@ -207,16 +208,16 @@ class GBIFData(LMObject):
             raise Exception('Must provide taxonKey')
         queryParams = GBIF.QUERY_PARAMS[GBIF.OCCURRENCE_SERVICE].copy()
         queryParams[GBIF.REQUEST_TAXON_KEY] = taxonKey
-        queryParams['offset'] = offset 
+        queryParams['offset'] = offset
         queryParams['limit'] = limit
-        
-        url = '%s/%s/%s'% (GBIF.REST_URL, GBIF.OCCURRENCE_SERVICE, GBIF.SEARCH_COMMAND)
+
+        url = '%s/%s/%s' % (GBIF.REST_URL, GBIF.OCCURRENCE_SERVICE, GBIF.SEARCH_COMMAND)
 #         filterString = urllib.urlencode(queryParams)
 #         if filterString:
 #             url += '?%s' % filterString
         url = self._assembleUrl(url, queryParams)
         return url
-    
+
 # ...............................................
     def _getGBIFSpeciesGenusKeys(self, canonicalName):
         """
@@ -255,11 +256,11 @@ class GBIFData(LMObject):
             if results is None:
                 self.log.info('    Failed to find %s in GBC Backbone' % (canonicalName))
             elif (GBIF.RESPONSE_MATCH_KEY in results and
-                    results[GBIF.RESPONSE_MATCH_KEY].lower() 
+                    results[GBIF.RESPONSE_MATCH_KEY].lower()
                     == GBIF.RESPONSE_NOMATCH_VALUE.lower()):
                 self.log.info('    Failed to match %s in GBC Backbone' % (canonicalName))
 #             elif (not results.has_key(GBIF.RESPONSE_GENUS_ID_KEY):
-#                 self.log.info('    Failed to find unique genus for %s in GBC Backbone (%s)' 
+#                 self.log.info('    Failed to find unique genus for %s in GBC Backbone (%s)'
 #                          % (canonicalName, str(results)))
             else:
                 if GBIF.RESPONSE_GENUS_ID_KEY in results:
@@ -269,21 +270,21 @@ class GBIFData(LMObject):
                     speciesKey = results[GBIF.RESPONSE_SPECIES_ID_KEY]
                     speciesName = results[GBIF.RESPONSE_SPECIES_KEY]
                 try:
-                    exactMatch = (canonicalName.decode('utf-8') in 
-                                      (speciesName.decode('utf-8'), 
+                    exactMatch = (canonicalName.decode('utf-8') in
+                                      (speciesName.decode('utf-8'),
                                         genusName.decode('utf-8')))
                 except Exception as e:
                     pass
-                
+
                 try:
-                    self.log.info('    Canonical %s; %s %s, %s in GBC Backbone' 
+                    self.log.info('    Canonical %s; %s %s, %s in GBC Backbone'
                                       % (canonicalName, 'matches' if exactMatch else '',
                                           str(genusName), str(speciesName)))
                 except:
                     self.log.info('    Stupid encoding (logging) errors')
-        return [genusKey, genusName, rank == 'GENUS'], [speciesKey, speciesName, 
+        return [genusKey, genusName, rank == 'GENUS'], [speciesKey, speciesName,
                      rank == 'SPECIES'], exactMatch
-        
+
 # ...............................................
     def _getGBIFGeoPointCount(self, taxonKey):
         """
@@ -315,21 +316,21 @@ class GBIFData(LMObject):
         predicate = {"type": "and",
                          "predicates": predicates}
         fullPredicate["predicate"] = predicate
-        jsonPred  = json.dumps(fullPredicate)
+        jsonPred = json.dumps(fullPredicate)
         return jsonPred
 
 # ...............................................
     def _assembleUrl(self, url, queryParams):
         for k, v in queryParams.items():
             queryParams[k] = str(v).encode('utf-8')
-                    
+
         filterString = urllib.parse.urlencode(queryParams)
-        
+
         if filterString:
             url += '?%s' % filterString
-            
+
         return url
-    
+
 # ...............................................
     def _requestGBIFUpdate(self, occ):
         """
@@ -341,9 +342,9 @@ class GBIFData(LMObject):
         # Should already have lock
         # Should already be simple/canonical name
         simplename = self._simplifyName(occ.displayName)
-        self.log.info('Updating existing Occ %d: %s (simplified %s)' 
+        self.log.info('Updating existing Occ %d: %s (simplified %s)'
                           % (occ.get_id(), occ.displayName, simplename))
-        
+
         # just in case we have leftover complex name, or redefine 'simple'
         if occ.displayName != simplename:
             # removes associated experiments too
@@ -358,7 +359,7 @@ class GBIFData(LMObject):
             except Exception as e:
                 self.log.info('  Ignore for now; unable to _getGBIFSpeciesGenusKeys')
             else:
-                try:                             
+                try:
                     if not exactMatch:
                         deletedOriginal = self._scribe.completelyRemoveOccurrenceSet(occ)
                     else:
@@ -367,11 +368,11 @@ class GBIFData(LMObject):
                             if isOrig:
                                 origOcc = occ
                             if self._nubUUID is not None:
-                                occSet, deletedOriginal = self._createUpdateDeleteName(name, key, 
-                                                                            primaryEnv, originalOcc=origOcc)                
+                                occSet, deletedOriginal = self._createUpdateDeleteName(name, key,
+                                                                            primaryEnv, originalOcc=origOcc)
                 except Exception as e:
                     if not isinstance(e, LMError):
-                        e = LMError(e, line_num=self.get_line_num(), 
+                        e = LMError(e, line_num=self.get_line_num(),
                                         location=self.get_location())
                     raise e
 

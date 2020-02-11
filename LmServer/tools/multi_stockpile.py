@@ -7,17 +7,15 @@ import argparse
 import json
 import os
 
-from lmpy import Matrix
-
 from LmBackend.common.lmconstants import RegistryKey
 from LmBackend.common.lmobj import LMError
-
 from LmCommon.common.lmconstants import JobStatus, LMFormat, ProcessType
 from LmCommon.compression.binary_list import decompress
-
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
+from lmpy import Matrix
+
 
 # .............................................................................
 def stockpile_pavs(pav_list):
@@ -36,11 +34,11 @@ def stockpile_pavs(pav_list):
             status = JobStatus.COMPLETE
         except:
             status = JobStatus.IO_MATRIX_READ_ERROR
-        
+
         pav.updateStatus(status)
         scribe.updateObject(pav)
     scribe.closeConnections()
-    
+
 
 # .............................................................................
 def stockpile_objects(stockpile_list):
@@ -55,7 +53,7 @@ def stockpile_objects(stockpile_list):
         test_file = stockpile_dict[RegistryKey.PRIMARY_OUTPUT]
         process_type = int(stockpile_dict[RegistryKey.PROCESS_TYPE])
         status = int(stockpile_dict[RegistryKey.STATUS])
-        
+
         # Get object
         if ProcessType.isOccurrence(process_type):
             obj = scribe.getOccurrenceSet(occId=obj_id)
@@ -77,7 +75,7 @@ def stockpile_objects(stockpile_list):
             raise LMError(
                 'Failed to get object {} for process {}'.format(
                     obj_id, process_type))
-        
+
         log.debug('Test object: ptype {}, object id {}, status {}'.format(
             process_type, obj_id, status))
         if status < JobStatus.GENERAL_ERROR:
@@ -89,17 +87,18 @@ def stockpile_objects(stockpile_list):
             except AttributeError:
                 # If the object doesn't have the setVerify method, pass
                 pass
-            
+
             # TODO: Test secondary outputs
-            
+
         # Update the object in the database
         log.debug(
             'Updating process type {}, object {}, with status {}'.format(
                 process_type, obj_id, status))
         obj.updateStatus(status)
         scribe.updateObject(obj)
-        
+
     scribe.closeConnections()
+
 
 # .............................................................................
 def test_matrix(matrix_filename):
@@ -117,6 +116,7 @@ def test_matrix(matrix_filename):
     else:
         test_status = JobStatus.NOT_FOUND
     return test_status
+
 
 # .............................................................................
 def test_spatial(spatial_filename):
@@ -148,6 +148,7 @@ def test_spatial(spatial_filename):
         test_status = JobStatus.NOT_FOUND
     return test_status
 
+
 # .............................................................................
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Stockpile multiple objects')
@@ -159,7 +160,7 @@ if __name__ == '__main__':
     parser.add_argument('success_filename', type=str,
                         help='A file location to write an indication of success')
     args = parser.parse_args()
-    
+
     try:
         with open(args.stockpile_filename) as in_stockpile:
             stockpile_list = json.load(in_stockpile)
@@ -172,6 +173,6 @@ if __name__ == '__main__':
         with open(args.pavs_filename) as in_pavs:
             pav_list = json.load(in_pavs)
             stockpile_pavs(pav_list)
-    
+
     with open(args.success_filename, 'w') as out_success:
         out_success.write(msg)

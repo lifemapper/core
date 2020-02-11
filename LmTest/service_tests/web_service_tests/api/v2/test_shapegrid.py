@@ -89,7 +89,7 @@ class TestScribeShapegridService(UserTestCase):
       if len(sgAtoms) == 0:
          self.fail('Cannot get an shapegrid because listing found none')
       else:
-         sg = self.scribe.getShapeGrid(lyrId=sgAtoms[0].id,
+         sg = self.scribe.getShapeGrid(lyrId=sgAtoms[0].get_id(),
                                                userId=self._get_session_user())
          self.assertIsInstance(sg, ShapeGrid)
          self.assertEqual(sg.getUserId(), self._get_session_user(),
@@ -109,7 +109,7 @@ class TestScribeShapegridService(UserTestCase):
          warnings.warn('List returned 0 shapegrids for user: {}'.format(
                                                      self._get_session_user()))
       else:
-         sg = self.scribe.getShapeGrid(lyrId=sgAtoms[0].id,
+         sg = self.scribe.getShapeGrid(lyrId=sgAtoms[0].get_id(),
                                                userId=self._get_session_user())
          self.assertEqual(sg.getUserId(), self._get_session_user(),
                         'User id on shapegrid = {}, session user = {}'.format(

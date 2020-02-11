@@ -1,17 +1,16 @@
 """Module containing classes and functions for occurrence sets
 """
 import os
-from osgeo import ogr
 
 from LmBackend.common.lmobj import LMError
-
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.time import gmt
-
 from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
-from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType, 
+from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType,
                                          LMServiceType, OccurrenceFieldNames)
+from osgeo import ogr
+
 
 # .............................................................................
 # .............................................................................
@@ -22,12 +21,13 @@ class OccurrenceType(_LayerParameters, ProcessObject):
     The point data class interfaces with the GBIF Cache and 
     creates a point data file that can be read by openModeller.
     """
+
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, displayName, queryCount, mod_time, userId, 
-                     occurrenceSetId, metadata={}, sciName=None, 
-                     rawDLocation=None, processType=None, 
+    def __init__(self, displayName, queryCount, mod_time, userId,
+                     occurrenceSetId, metadata={}, sciName=None,
+                     rawDLocation=None, processType=None,
                      status=None, statusModTime=None):
         """
         @summary Initialize the _Occurrences class instance
@@ -43,7 +43,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         @param rawDLocation: URL or file location of raw data to be processed
         """
         _LayerParameters.__init__(self, userId, paramId=occurrenceSetId,
-                                          matrixIndex=-1, metadata=metadata, 
+                                          matrixIndex=-1, metadata=metadata,
                                           mod_time=mod_time)
         ProcessObject.__init__(
             self, objId=occurrenceSetId, processType=processType,
@@ -53,7 +53,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         self._rawDLocation = rawDLocation
         self._bigDLocation = None
         self._scientificName = sciName
-        
+
 # ...............................................
     def getScientificNameId(self):
         if self._scientificName is not None:
@@ -72,11 +72,11 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 # ...............................................
     def getRawDLocation(self):
         return self._rawDLocation
-    
+
     def setRawDLocation(self, rawDLocation, mod_time):
         self._rawDLocation = rawDLocation
         self.paramModTime = mod_time
-    
+
     # ...............................................
     def updateStatus(self, status, mod_time=gmt().mjd,
                      queryCount=None):
@@ -84,14 +84,16 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         @note: Overrides ProcessObject.updateStatus
         """
         ProcessObject.updateStatus(self, status, mod_time)
-        if queryCount is not None: 
+        if queryCount is not None:
             self.queryCount = queryCount
             self.paramModTime = self.statusModTime
 
 # .............................................................................
 # .............................................................................
 
+
 class OccurrenceLayer(OccurrenceType, Vector):
+
 # .............................................................................
 # .............................................................................
 # Constructor
@@ -133,7 +135,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             fidAttribute=fidAttribute)
         self.rawMetaDLocation = rawMetaDLocation
         self.setId(occurrenceSetId)
-                         
+
 # .............................................................................
 # Class and Static methods
 # .............................................................................
@@ -144,11 +146,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
         featureAttributes = {
             0 : (Vector._localIdFieldName, Vector._localIdFieldType),
             1 : (OccurrenceFieldNames.LONGITUDE[0], ogr.OFTReal),
-            2 : (OccurrenceFieldNames.LATITUDE[0],  ogr.OFTReal),
+            2 : (OccurrenceFieldNames.LATITUDE[0], ogr.OFTReal),
             3 : (Vector._geomFieldName, Vector._geomFieldType)
             }
         return featureAttributes
-    
+
 # ...............................................
     @staticmethod
     def getUserPointFeature(id, x, y):
@@ -170,7 +172,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 return False
             else:
                 return True
-            
+
 # ...............................................
     @staticmethod
     def getPointFromWkt(wkt):
@@ -179,7 +181,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         start = wkt.find('(')
         end = wkt.rfind(')')
         if (start != -1 and end != -1):
-            x,y = wkt[start+1:end].split()
+            x, y = wkt[start + 1:end].split()
             try:
                 x = float(x)
                 y = float(y)
@@ -187,8 +189,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 raise LMError ('Invalid point WKT {}'.format(wkt))
             else:
                 return (x, y)
-        
-            
+
     @staticmethod
     def getPointWkt(x, y):
         """
@@ -205,7 +206,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             x = round(x, 4)
             y = round(y, 4)
             return 'POINT ( {} {} )'.format(x, y)
-                  
+
 # .............................................................................
 # Properties, getters, setters
 # .............................................................................
@@ -216,12 +217,12 @@ class OccurrenceLayer(OccurrenceType, Vector):
         @return The number of points for this dataset
         """
         return self._getFeatureCount()
-            
+
     count = property(_getCount)
-                                    
+
 # .............................................................................
 # Superclass methods overridden
-## .............................................................................
+# # .............................................................................
     def setId(self, occid):
         """
         @summary: Sets the database id on the object, and sets the 
@@ -275,9 +276,9 @@ class OccurrenceLayer(OccurrenceType, Vector):
             dloc = self._earlJr.createFilename(
                 ftype, occsetId=occid, objCode=occid, usr=self._userId)
         return dloc
-    
+
 # ...............................................
-    # Overrides layer.getDLocation, allowing optional keyword 
+    # Overrides layer.getDLocation, allowing optional keyword
     def getDLocation(self, largeFile=False):
         if largeFile:
             if self._bigDLocation is None:
@@ -321,22 +322,22 @@ class OccurrenceLayer(OccurrenceType, Vector):
             urlprefix=self.metadataUrl, ftype=LMFileType.SDM_MAP,
             mapname=self.mapName, lyrname=lyrname, usr=self._userId)
         return mapprefix
-    
+
     def _setMapPrefix(self):
         mapprefix = self._createMapPrefix()
         self._mapPrefix = mapprefix
-             
+
     @property
-    def mapPrefix(self): 
+    def mapPrefix(self):
         return self._mapPrefix
-    
+
 # ...............................................
     @property
     def mapLayername(self):
         lyrname = None
         if self._dbId is not None:
             lyrname = self._earlJr.createLayername(occsetId=self._dbId)
-        return lyrname 
+        return lyrname
 
 # ...............................................
     def createLocalMapFilename(self):
@@ -346,8 +347,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
         occid = self.get_id()
         mapfilename = self._earlJr.createFilename(
             LMFileType.SDM_MAP, occsetId=occid, objCode=occid, usr=self._userId)
-        return mapfilename      
-    
+        return mapfilename
+
 # ...............................................
     def setLocalMapFilename(self, mapfname=None):
         """
@@ -369,16 +370,16 @@ class OccurrenceLayer(OccurrenceType, Vector):
     @property
     def mapName(self):
         if self._mapFilename is None:
-            self.setLocalMapFilename()        
+            self.setLocalMapFilename()
         pth, fname = os.path.split(self._mapFilename)
-        mapname, ext = os.path.splitext(fname)            
+        mapname, ext = os.path.splitext(fname)
         return mapname
 
 # ...............................................
     @property
     def layerName(self):
         return self._earlJr.createLayername(occsetId=self.get_id())
-    
+
 # ...............................................
     def clearLocalMapfile(self):
         """
@@ -388,12 +389,12 @@ class OccurrenceLayer(OccurrenceType, Vector):
             self.setLocalMapFilename()
         self.deleteLocalMapfile()
         self._mapFilename = None
-        
+
 # ...............................................
     def clearOutputFiles(self):
         self.deleteData()
         self.clearDLocation()
- 
+
 # ...............................................
     def deleteLocalMapfile(self):
         """
@@ -416,7 +417,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             status=self.status, statusModTime=self.statusModTime)
         return newOcc
 
-## ...............................................            
+# # ...............................................
     def getFeaturesIdLongLat(self):
         """
         @summary: Returns a list of feature/point tuples - (FID, x, y)
@@ -424,7 +425,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         microVals = []
         if self._localIdIdx is None:
             self.getLocalIdIndex()
-                
+
         geomIdx = self.getFieldIndex(self._geomFieldName)
         for featureFID in list(self._features.keys()):
             fid = self.getFeatureValByFieldIndex(self._localIdIdx, featureFID)
@@ -433,7 +434,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             # returns values id, longitude(x), latitude(y)
             microVals.append((fid, x, y))
         return microVals
-            
+
 # ..............................................................................
     def getWkt(self):
         wkt = None

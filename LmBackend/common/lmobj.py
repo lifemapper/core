@@ -14,6 +14,7 @@ from LmCommon.common.lmconstants import LMFormat
 class LMObject:
     """Base class for all objects in the Lifemapper project.
     """
+
     # ..........................
     @staticmethod
     def get_line_num():
@@ -176,6 +177,7 @@ class LMObject:
 class LMError(Exception, LMObject):
     """Base class for exceptions in the lifemapper project.
     """
+
     # ..........................
     def __init__(self, *args, do_trace=False, line_num=None, **kwargs):
         """Constructor for LMError
@@ -223,6 +225,7 @@ class LMError(Exception, LMObject):
 class JobError(LMError):
     """Exception class for job failures.
     """
+
     # ..........................
     def __init__(self, code, msg, *args, do_trace=False, line_num=None,
                  **kwargs):

@@ -5,10 +5,8 @@ import os
 import shutil
 
 from LmBackend.common.lmobj import LMError, LMObject
-
 from LmCommon.common.lmconstants import ONE_DAY
 from LmCommon.common.time import gmt
-
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType, LMFormat
 from LmServer.common.log import ScriptLogger
@@ -22,12 +20,14 @@ failedFile = "/home/cjgrady/failed.txt"
 #    way the query is structure, so chuck it up into groups
 DELETE_GROUP_SIZE = 999
 
+
 # .............................................................................
 class Janitor(LMObject):
     """
     Class to populate a Lifemapper database with inputs for a BOOM archive, and 
     write a configuration file for computations on the inputs.
     """
+
 # .............................................................................
 # Constructor
 # .............................................................................
@@ -40,13 +40,13 @@ class Janitor(LMObject):
         # Get database
         try:
             self.scribe = self._getDb()
-        except: 
+        except:
             raise
-        
+
     # ...............................................
     def open(self):
         success = self.scribe.openConnections()
-        if not success: 
+        if not success:
             raise LMError('Failed to open database')
 
         # ...............................................
@@ -61,7 +61,7 @@ class Janitor(LMObject):
         except:
             fname = None
         return fname
-    
+
     # ...............................................
     def _getDb(self):
         basefilename = os.path.basename(__file__)
@@ -69,7 +69,7 @@ class Janitor(LMObject):
         logger = ScriptLogger(basename)
         scribe = BorgScribe(logger)
         return scribe
-    
+
     # ...............................................
     def _deleteFiles(self, fnames):
         for fn in fnames:
@@ -81,7 +81,7 @@ class Janitor(LMObject):
                                           .format(fn, str(e)))
                 else:
                     self.scribe.log.info('Removed {}'.format(fn))
-        
+
     # ...............................................
     def _deletePavsFromSolr(self, pavids):
         try:
@@ -101,26 +101,26 @@ class Janitor(LMObject):
     # ...............................................
     def reportFailure(self, mesgs):
         notifier = EmailNotifier()
-        notifier.sendMessage(['aimee.stewart@ku.edu'], 
-                             "Failed to delete user data", 
+        notifier.sendMessage(['aimee.stewart@ku.edu'],
+                             "Failed to delete user data",
                              '\n'.join(mesgs))
-        
+
     # ...............................................
     def clearUserData(self, usr):
         count, pavids = self.scribe.clearUser(usr)
 
         # Remove PAVs from Solr
         self._deletePavsFromSolr(pavids)
-        
+
         # Delete subdirs under user directory
         usrpth = self._earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
-        if os.path.exists(usrpth):            
+        if os.path.exists(usrpth):
             contents = os.listdir(usrpth)
             for c in contents:
                 pth = os.path.join(usrpth, c)
                 if os.path.isdir(pth):
                     shutil.rmtree(pth)
-    
+
             # Delete all files under user directory
             contents = os.listdir(usrpth)
             for c in contents:
@@ -129,7 +129,7 @@ class Janitor(LMObject):
                 self.scribe.log.info('Removed {}'.format(fn))
         else:
             self.scribe.log.error('User {} dir does not exist'.format(usr))
-                
+
     # ...............................................
     def deleteGridset(self, gridsetid):
         fnames, pavids = self.scribe.deleteGridsetReturnFilenamesMtxcolids(gridsetid)
@@ -138,23 +138,22 @@ class Janitor(LMObject):
         # Delete gridset-related files
         self._deleteFiles(fnames)
 
-
     # ...............................................
     def deleteObsoleteSDMs(self, usr, obsolete_date, max_num):
         earl = EarlJr()
-        total_obsolete_occs = self.scribe.countOccurrenceSets(userId=usr, 
+        total_obsolete_occs = self.scribe.countOccurrenceSets(userId=usr,
                                 beforeTime=obsolete_date)
 
         for i in range(0, total_obsolete_occs, max_num):
-            occids, pavids = self.scribe.deleteObsoleteSDMDataReturnIds(usr, 
+            occids, pavids = self.scribe.deleteObsoleteSDMDataReturnIds(usr,
                                             obsolete_date, max_num=max_num)
             # Remove PAVs from Solr
             self._deletePavsFromSolr(pavids)
-                        
+
             # Delete occurrence SDM files/directories
             for oid in occids:
                 if oid is not None:
-                    opth = earl.createDataPath(usr, LMFileType.OCCURRENCE_FILE, 
+                    opth = earl.createDataPath(usr, LMFileType.OCCURRENCE_FILE,
                                                occsetId=oid)
                     if os.path.exists(opth):
                         try:
@@ -168,11 +167,11 @@ class Janitor(LMObject):
                     else:
                         self.scribe.log.info('Path {} does not exist'
                                              .format(opth))
-        
+
     # ...............................................
     def deleteObsoleteGridsets(self, usr, obsolete_date):
-        fnames, pavids = self.scribe.deleteObsoleteUserGridsetsReturnFilenamesMtxcolids(usr, 
-                                                        obsolete_date)    
+        fnames, pavids = self.scribe.deleteObsoleteUserGridsetsReturnFilenamesMtxcolids(usr,
+                                                        obsolete_date)
         # Remove PAVs from Solr
         self._deletePavsFromSolr(pavids)
 
@@ -211,7 +210,7 @@ class Janitor(LMObject):
 #             self.scribe.log.error('Exception in walk loop {}'.format(e))
 #         finally:
 #             allf.close()
-#              
+#
 #         # TODO: Scribe fn to check a list of user/occsets for existence
 #         curr_occids = []
 #         try:
@@ -225,7 +224,8 @@ class Janitor(LMObject):
 #                 else:
 #                     curr_occids.append(occid)
 #             obs_occids = self.scribe.testUserOccsets(curr_occids)
-                 
+
+
 # ...............................................
 if __name__ == '__main__':
     import math
@@ -238,7 +238,7 @@ if __name__ == '__main__':
                 description=("""Clear a Lifemapper archive of 
                 obsolete or all data for a user 
                 or MatrixColumns, Matrices, and Makeflows for a gridset"""))
-    parser.add_argument('gridsetid_or_userid', type=str, 
+    parser.add_argument('gridsetid_or_userid', type=str,
             help=('GridsetId or UserId to delete data for'))
     parser.add_argument('--obsolete_date', type=float, default=None,
             help=("""Cutoff date as in MJD format for deleting data for this user. 
@@ -248,21 +248,21 @@ if __name__ == '__main__':
             help=("""Maximum number of occurrencesets (with dependent SDMs) 
             to delete"""))
     args = parser.parse_args()
-    
+
     gridsetid = usr = None
     gridsetid_or_userid = args.gridsetid_or_userid
     try:
         gridsetid = int(gridsetid_or_userid)
     except:
         usr = gridsetid_or_userid
-        
+
     obsolete_date = args.obsolete_date
     total = args.count
-    
+
     print(("""Janitor arguments: 
     gridsetid {}; usr {}; count {}; obsolete_date {}"""
     .format(gridsetid, usr, total, obsolete_date)))
-    
+
     # TODO: add method to walk files and rmtree dirs for occset absent from DB
     jan = Janitor()
     jan.open()
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     else:
         print('No valid option for clearing gridset or user data')
     jan.close()
-      
+
 """
 
 

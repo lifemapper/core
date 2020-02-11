@@ -1,6 +1,7 @@
 """This script runs several monitoring tests on a Lifemapper front end.
 """
 import subprocess
+
 from LmServer.common.localconstants import WEBSERVICES_ROOT, TROUBLESHOOTERS
 from LmServer.notifications.email import EmailNotifier
 
@@ -134,7 +135,7 @@ if __name__ == '__main__':
         msgs.append(
             'Matt Daemon is NOT running on {}'.format(WEBSERVICES_ROOT))
         is_okay = False
-        
+
     # Look for makeflows running for more than 12 hours
     long_makeflows = get_long_running_processes(
         'makeflow', test_age=(0, 12, 0, 0))

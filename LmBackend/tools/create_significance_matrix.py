@@ -10,7 +10,7 @@ considered significant after undergoing p-value correction.
 """
 import argparse
 
-from LmCommon.common.readyfile import ready_filename
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.statistics import permutation_testing as ptest
 from lmpy import Matrix
 

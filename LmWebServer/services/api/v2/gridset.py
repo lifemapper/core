@@ -6,18 +6,14 @@ import json
 import os
 import zipfile
 
-import cherrypy
 import dendropy
-from lmpy import Matrix
 
 from LmCommon.common.lmconstants import (
     DEFAULT_TREE_SCHEMA, HTTPStatus, JobStatus, LMFormat, MatrixType,
     ProcessType)
-from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmCommon.common.time import gmt
-
+from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmDbServer.boom.boom_collate import BoomCollate
-
 from LmServer.base.atom import Atom
 from LmServer.base.layer2 import Vector
 from LmServer.base.serviceobject2 import ServiceObject
@@ -25,13 +21,14 @@ from LmServer.common.lmconstants import ARCHIVE_PATH
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.tree import Tree
-
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.api.v2.matrix import MatrixService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.common.boom_post import BoomPoster
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+import cherrypy
+from lmpy import Matrix
 
 BG_REF_ID_KEY = 'identifier'
 BG_REF_KEY = 'hypothesis_package_reference'
@@ -81,6 +78,7 @@ class GridsetAnalysisService(LmService):
         * Enable DELETE?  Could remove all existing analysis matrices
         * Enable GET?  Could this just be the outputs?
     """
+
     # ................................
     @lm_formatter
     def POST(self, pathGridSetId, doMcpa=False, numPermutations=500,
@@ -160,6 +158,7 @@ class GridsetAnalysisService(LmService):
 class GridsetBioGeoService(LmService):
     """Service class for gridset biogeographic hypotheses
     """
+
     # ................................
     @lm_formatter
     def GET(self, pathGridSetId, pathBioGeoId=None, **params):
@@ -393,6 +392,7 @@ class GridsetBioGeoService(LmService):
 class GridsetProgressService(LmService):
     """Service class for gridset progress
     """
+
     # ................................
     @lm_formatter
     def GET(self, pathGridSetId, detail=False, **params):
@@ -407,6 +407,7 @@ class GridsetProgressService(LmService):
 class GridsetTreeService(LmService):
     """Service for the tree of a gridset
     """
+
     # ................................
     def DELETE(self, pathTreeId):
         """Attempts to delete a tree

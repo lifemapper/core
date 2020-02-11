@@ -31,6 +31,7 @@ class LmMetricNames(Enum):
 class LmMetrics(LMObject):
     """This class is used to track performance metrics.
     """
+
     # ................................
     def __init__(self, out_file):
         """Metrics constructor

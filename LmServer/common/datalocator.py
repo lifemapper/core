@@ -5,20 +5,22 @@ import os
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import LMFormat, DEFAULT_GLOBAL_EXTENT
 from LmServer.base.lmobj import LMSpatialObject
-from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
 from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR, LOG_PATH,
    LMFileType, FileFix, GENERIC_LAYER_NAME_PREFIX,
-   OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT, 
-   DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, ARCHIVE_PATH, USER_LAYER_DIR, 
-   MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, WMS_LAYER_KEY, WCS_LAYER_KEY, 
-   RAD_EXPERIMENT_DIR_PREFIX, USER_MAKEFLOW_DIR, USER_TEMP_DIR, 
+   OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT,
+   DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, ARCHIVE_PATH, USER_LAYER_DIR,
+   MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, WMS_LAYER_KEY, WCS_LAYER_KEY,
+   RAD_EXPERIMENT_DIR_PREFIX, USER_MAKEFLOW_DIR, USER_TEMP_DIR,
    API_URL, OGC_SERVICE_URL)
-         
+from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
+
+
 # .............................................................................
 class EarlJr(LMObject):
     """
     @summary: Object to construct and parse filenames and URLs.
     """
+
     # .............................................................................
     # Constructor
     # .............................................................................
@@ -29,13 +31,13 @@ class EarlJr(LMObject):
         LMObject.__init__(self)
         self.ogcUrl = OGC_SERVICE_URL
         self._scribe = scribe
-        
+
     # ...............................................
     def createStartWalkenFilename(self, user, archiveName):
         name = '{}_{}'.format(user, archiveName)
-        fname = os.path.join(LOG_PATH, 'start.{}.txt'.format(name)) 
+        fname = os.path.join(LOG_PATH, 'start.{}.txt'.format(name))
         return fname
-    
+
     # ...............................................
     def createLayername(self, occsetId=None, projId=None, lyrId=None):
         """
@@ -53,14 +55,14 @@ class EarlJr(LMObject):
         else:
             raise LMError('Must supply OccsetId or ProjId for layer name')
         return basename
-    
+
     # ...............................................
-    def createSDMProjectTitle(self, userId, taxaname, algCode, mdlscenCode, 
+    def createSDMProjectTitle(self, userId, taxaname, algCode, mdlscenCode,
                              prjscenCode):
         name = '{} modeled with {} projected onto {}'.format(
-              taxaname, algCode, prjscenCode )
+              taxaname, algCode, prjscenCode)
         return name
-    
+
     # ...............................................
     def _parseSDMId(self, idstr, parts):
         """
@@ -70,16 +72,16 @@ class EarlJr(LMObject):
         """
         if len(idstr) > 1:
             self._parseSDMId(idstr[:-3], parts)
-        
+
         if len(idstr) > 0:
             lastpart = idstr[-3:]
-            for i in range(3-len(lastpart)):
+            for i in range(3 - len(lastpart)):
                 lastpart = ''.join(['0', lastpart])
             parts.append(lastpart)
         return parts
-   
+
     # ...............................................
-    def createDataPath(self, usr, filetype, occsetId=None, epsg=None, 
+    def createDataPath(self, usr, filetype, occsetId=None, epsg=None,
                        gridsetId=None):
         """
         @note: returns path without trailing /
@@ -100,17 +102,17 @@ class EarlJr(LMObject):
         if usr is None :
             raise LMError('createDataPath requires userId')
         pth = os.path.join(ARCHIVE_PATH, usr)
-        
+
         # General user documents go directly in user directory
         if LMFileType.isUserSpace(filetype):
             pass
-        
+
         elif filetype == LMFileType.TEMP_USER_DATA:
             pth = os.path.join(pth, USER_TEMP_DIR)
-        
+
         elif filetype == LMFileType.MF_DOCUMENT:
             pth = os.path.join(pth, USER_MAKEFLOW_DIR)
-        
+
         # OccurrenceSet path overrides general map path for SDM maps
         elif LMFileType.isSDM(filetype):
             if occsetId is not None:
@@ -120,15 +122,15 @@ class EarlJr(LMObject):
                 pth = os.path.join(pth, *dirparts)
             else:
                 raise LMError('Missing occurrenceSetId for SDM filepath')
-           
+
         # All non-SDM Maps go under user map dir
         elif LMFileType.isMap(filetype):
             pth = os.path.join(pth, MAP_DIR)
-                               
+
         else:
             if not (LMFileType.isUserLayer(filetype) or LMFileType.isRAD(filetype)):
                 raise LMError('Unknown filetype {}'.format(filetype))
-            
+
             # Rest, User Layer and RAD data, are separated by epsg
             if epsg is not None:
                 pthparts = [pth, str(epsg)]
@@ -142,7 +144,7 @@ class EarlJr(LMObject):
                     else:
                         raise LMError('Missing gridsetId {}'.format(filetype))
                 pth = os.path.join(*pthparts)
-              
+
         return pth
 
     # ...............................................
@@ -157,7 +159,7 @@ class EarlJr(LMObject):
         if usr is None :
             raise LMError('getTopLevelUserSDMPaths requires userId')
         pth = os.path.join(ARCHIVE_PATH, usr)
-        
+
         contents = os.listdir(pth)
         for name in contents:
             fulldir = os.path.join(pth, name)
@@ -186,7 +188,7 @@ class EarlJr(LMObject):
         return os.path.join(pth, lyrName)
 
     # ...............................................
-    def createBasename(self, ftype, objCode=None, 
+    def createBasename(self, ftype, objCode=None,
                        lyrname=None, usr=None, epsg=None):
         """
         @summary: Return the base filename for given filetype and parameters 
@@ -201,29 +203,29 @@ class EarlJr(LMObject):
         @param epsg: File or object EPSG code
         """
         basename = None
-        
+
         nameparts = []
         # Prefix
         if FileFix.PREFIX[ftype] is not None:
             nameparts.append(FileFix.PREFIX[ftype])
-           
+
         # MAPs
         if ftype in (LMFileType.SCENARIO_MAP, LMFileType.RAD_MAP):
             nameparts.append(usr)
         # User Maps for unconnected user layers (not SCENARIO_MAP or SDM_MAP)
         elif ftype == LMFileType.OTHER_MAP:
             nameparts.extend([usr, epsg])
-           
+
         # User layers
         if LMFileType.isUserLayer(ftype):
             nameparts.append(lyrname)
-        # All non-UserLayer files add objCode 
+        # All non-UserLayer files add objCode
         elif objCode:
             nameparts.append(objCode)
-           
+
         else:
             return None
-           
+
         fileparts = [str(p) for p in nameparts if p is not None ]
         try:
             basename = NAME_SEPARATOR.join(fileparts)
@@ -232,8 +234,8 @@ class EarlJr(LMObject):
         return basename
 
     # ...............................................
-    def createFilename(self, ftype, 
-                       occsetId=None, gridsetId=None, objCode=None, 
+    def createFilename(self, ftype,
+                       occsetId=None, gridsetId=None, objCode=None,
                        lyrname=None, usr=None, epsg=None, pth=None):
         """
         @summary: Return the absolute filename for given filetype and parameters 
@@ -246,8 +248,8 @@ class EarlJr(LMObject):
         """
         if occsetId is not None and objCode is None:
             objCode = occsetId
-        basename = self.createBasename(ftype, objCode=objCode, lyrname=lyrname, 
-                                       usr=usr, epsg=epsg)   
+        basename = self.createBasename(ftype, objCode=objCode, lyrname=lyrname,
+                                       usr=usr, epsg=epsg)
         if basename is None:
             filename = None
         else:
@@ -256,28 +258,28 @@ class EarlJr(LMObject):
                                           epsg=epsg, occsetId=occsetId)
                 filename = os.path.join(pth, basename + FileFix.EXTENSION[ftype])
         return filename
-   
+
     # ...............................................
     def getMapFilenameFromMapname(self, mapname):
-        pth = self._createStaticMapPath()       
+        pth = self._createStaticMapPath()
         if mapname == MAP_TEMPLATE:
             usr = None
         else:
-            (fileType, scencode, occsetId, gridsetId, usr, ancillary, 
+            (fileType, scencode, occsetId, gridsetId, usr, ancillary,
              epsg) = self._parseMapname(mapname)
-            
+
             if usr is None:
                 usr = self._findUserForObject(occId=occsetId)
-            
+
             if not ancillary:
-                pth = self.createDataPath(usr, fileType, 
+                pth = self.createDataPath(usr, fileType,
                              occsetId=occsetId, gridsetId=gridsetId)
-        
+
         if not mapname.endswith(LMFormat.MAP.ext):
-            mapname = mapname+LMFormat.MAP.ext
+            mapname = mapname + LMFormat.MAP.ext
         mapfname = os.path.join(pth, mapname)
         return mapfname
-    
+
     # ...............................................
     def constructLMDataUrl(self, serviceType, objectId, interface, parentMetadataUrl=None):
         """
@@ -290,14 +292,14 @@ class EarlJr(LMObject):
                  The nested structure will begin with a '/', and take a form like: 
                     /grandParentClassType/grandParentId/parentClassType/parentId
         """
-        postfix = self._createWebServicePostfix(serviceType, objectId, 
+        postfix = self._createWebServicePostfix(serviceType, objectId,
                                                parentMetadataUrl=parentMetadataUrl,
                                                interface=interface)
         url = '/'.join((API_URL, postfix))
         return url
-    
+
     # ...............................................
-    def constructLMMetadataUrl(self, serviceType, objectId, 
+    def constructLMMetadataUrl(self, serviceType, objectId,
                                parentMetadataUrl=None):
         """
         @summary Return the REST service url for data in the Lifemapper Archive 
@@ -309,13 +311,13 @@ class EarlJr(LMObject):
                     /grandParentClassType/grandParentId/parentClassType/parentId
         @param interface: The format in which to return the results, 
         """
-        postfix = self._createWebServicePostfix(serviceType, objectId, 
+        postfix = self._createWebServicePostfix(serviceType, objectId,
                                                parentMetadataUrl=parentMetadataUrl)
         url = '/'.join((API_URL, postfix))
         return url
-    
+
     # ...............................................
-    def _createWebServicePostfix(self, serviceType, objectId, 
+    def _createWebServicePostfix(self, serviceType, objectId,
                                 parentMetadataUrl=None, interface=None):
         """
         @summary Return the relative REST service url for data in the 
@@ -341,14 +343,13 @@ class EarlJr(LMObject):
         urlpath = '/'.join(parts)
         return urlpath
 
-
     # ...............................................
     def _getOWSParams(self, mapprefix, owsLayerKey, bbox):
         params = []
         if not bbox:
             bbox = DEFAULT_GLOBAL_EXTENT
         bbstr = LMSpatialObject.getExtentAsString(bbox, separator=',')
-        params.append(('bbox', bbstr))   
+        params.append(('bbox', bbstr))
         mapname = lyrname = None
         svcurl_rest = mapprefix.split('?')
         svcurl = svcurl_rest[0]
@@ -357,18 +358,18 @@ class EarlJr(LMObject):
             for kv in pairs:
                 k, v = kv.split('=')
                 k = k.lower()
-                if k  == MAP_KEY:
+                if k == MAP_KEY:
                     mapname = v
                 elif k == WMS_LAYER_KEY:
                     lyrname = v
                 elif k == WCS_LAYER_KEY:
-                    lyrname = v   
+                    lyrname = v
             if mapname is not None:
                 params.append(('map', mapname))
             if lyrname is not None:
                 params.append((owsLayerKey, lyrname))
         return svcurl, params
-    
+
     # ...............................................
     def _getGETQuery(self, urlprefix, paramTpls):
         """
@@ -380,13 +381,13 @@ class EarlJr(LMObject):
         """
         kvSep = '&'
         paramsSep = '?'
-         
+
         pairs = []
         for key, val in paramTpls:
             if isinstance(val, str):
                 val = val.replace(' ', '%20')
             pairs.append('%s=%s' % (key, val))
-         
+
         # Don't end in key/value pair separator
         if urlprefix.endswith(paramsSep) or urlprefix.endswith('&amp;') :
             raise LMError(['Improperly formatted URL prefix %s' % urlprefix])
@@ -396,7 +397,7 @@ class EarlJr(LMObject):
         # > one key/value pair on the urlprefix, add separator before more pairs
         elif not urlprefix.endswith('?') and pairs:
             urlprefix = urlprefix + kvSep
-         
+
         return urlprefix + kvSep.join(pairs)
 
     # ...............................................
@@ -430,10 +431,10 @@ class EarlJr(LMObject):
         if color is not None:
             params.append(('color', color))
         wmsUrl = self._getGETQuery(url, params)
-        return wmsUrl   
-    
+        return wmsUrl
+
     # ...............................................
-    def constructLMRasterRequest(self, mapprefix, bbox, resolution=1, 
+    def constructLMRasterRequest(self, mapprefix, bbox, resolution=1,
                                  format=DEFAULT_WCS_FORMAT, crs=DEFAULT_SRS):
         """
         @summary Return a GET query for the Lifemapper WCS GetCoverage request
@@ -456,12 +457,12 @@ class EarlJr(LMObject):
                   ('resy', resolution)]
         url, moreparams = self._getOWSParams(mapprefix, 'coverage', bbox)
         params.extend(moreparams)
-        
+
         wcsUrl = self._getGETQuery(url, params)
-        return wcsUrl   
+        return wcsUrl
 
     # ...............................................
-    def constructMapPrefixNew(self, urlprefix=None, mapname=None, ftype=None, 
+    def constructMapPrefixNew(self, urlprefix=None, mapname=None, ftype=None,
                               objCode=None, lyrname=None, usr=None, epsg=None):
         """
         @summary: Construct a Lifemapper URL (prefix) for a map or map layer, 
@@ -479,28 +480,28 @@ class EarlJr(LMObject):
         """
         if mapname is not None:
             if mapname.endswith(LMFormat.MAP.ext):
-                mapname = mapname[:-1*len(LMFormat.MAP.ext)]
+                mapname = mapname[:-1 * len(LMFormat.MAP.ext)]
         else:
             if LMFileType.isMap(ftype):
-                mapname = self.createBasename(ftype, objCode=objCode, usr=usr, 
+                mapname = self.createBasename(ftype, objCode=objCode, usr=usr,
                                             epsg=epsg)
             else:
                 raise LMError('Invalid LMFileType %s' % ftype)
-        
+
         if urlprefix is None:
             urlprefix = self.ogcUrl
         fullprefix = '?map={}'.format(mapname)
-           
+
         if lyrname is not None:
             fullprefix += '&layers={}'.format(lyrname)
-           
+
         return fullprefix
-    
+
     # ...............................................
     def _createStaticMapPath(self):
         pth = os.path.join(APP_PATH, WEB_DIR, MAP_DIR)
         return pth
-    
+
     # ...............................................
     def _parseDataPathParts(self, parts):
         occsetId = epsg = gridsetId = None
@@ -546,7 +547,7 @@ class EarlJr(LMObject):
         """
         usr = occsetId = epsg = gridsetId = None
         ancPth = self._createStaticMapPath()
-        
+
         if fullpath.startswith(ancPth):
             pass
         elif fullpath.startswith(ARCHIVE_PATH):
@@ -555,68 +556,68 @@ class EarlJr(LMObject):
             # Remove empty string from leading path separator
             if '' in parts:
                 parts.remove('')
-            # Check last entry - if ends w/ trailing slash, this is a directory 
-            last = parts[len(parts)-1]
+            # Check last entry - if ends w/ trailing slash, this is a directory
+            last = parts[len(parts) - 1]
             if last == '':
                 parts = parts[:-1]
-               
-            (usr, occsetId, epsg, gridsetId, 
+
+            (usr, occsetId, epsg, gridsetId,
              isLayers, nonSDMMap) = self._parseDataPathParts(parts)
-               
+
         return usr, occsetId, epsg, gridsetId, isLayers, nonSDMMap
-    
+
     # ...............................................
     def parseMapFilename(self, mapfname):
         fullpath, fname = os.path.split(mapfname)
         mapname, ext = os.path.splitext(fname)
         # Get path info
-        (usr, occsetId, epsg, gridsetId, isLayers, 
-         nonSDMMap) = self._parseNewDataPath(fullpath) 
+        (usr, occsetId, epsg, gridsetId, isLayers,
+         nonSDMMap) = self._parseNewDataPath(fullpath)
         # Get filename info
-        (fileType, scencode, occsetId, gridsetId, usr2, ancillary, 
+        (fileType, scencode, occsetId, gridsetId, usr2, ancillary,
          epsg2) = self._parseMapname(mapname)
-         
+
         if usr is None: usr = usr2
         if epsg is None: epsg = epsg2
-        
+
         return (mapname, ancillary, usr, epsg, occsetId, gridsetId, scencode)
 
     # ...............................................
-    def _findUserForObject(self, layerId=None, occId=None, 
+    def _findUserForObject(self, layerId=None, occId=None,
                            matrixId=None, gridsetId=None, mfprocessId=None):
         if self._scribe is not None:
-            usr = self._scribe.findUserForObject(layerId=layerId, occId=occId, 
-                                                matrixId=matrixId, 
-                                                gridsetId=gridsetId, 
+            usr = self._scribe.findUserForObject(layerId=layerId, occId=occId,
+                                                matrixId=matrixId,
+                                                gridsetId=gridsetId,
                                                 mfprocessId=mfprocessId)
         else:
             from LmServer.common.log import ConsoleLogger
             from LmServer.db.borgscribe import BorgScribe
             scribe = BorgScribe(ConsoleLogger())
             scribe.openConnections()
-            usr = scribe.findUserForObject(layerId=layerId, occId=occId, 
-                                           matrixId=matrixId, gridsetId=gridsetId, 
+            usr = scribe.findUserForObject(layerId=layerId, occId=occId,
+                                           matrixId=matrixId, gridsetId=gridsetId,
                                            mfprocessId=mfprocessId)
             scribe.closeConnections()
         return usr
-    
+
     # ...............................................
     def _parseMapname(self, mapname):
         scencode = occsetId = usr = epsg = gridsetId = None
         ancillary = False
         # Remove extension
         if mapname.endswith(LMFormat.MAP.ext):
-            mapname = mapname[:-1*len(LMFormat.MAP.ext)]
-           
+            mapname = mapname[:-1 * len(LMFormat.MAP.ext)]
+
         parts = mapname.split(NAME_SEPARATOR)
-        
+
         fileType = FileFix.getMaptypeFromName(prefix=parts[0])
-        
+
         # SCENARIO_MAP mapname = scen_<user>_<scencode>
         if parts[0] == MapPrefix.SCEN:
             usr = parts[1]
             scencode = parts[2]
-           
+
         elif parts[0] == MapPrefix.SDM:
             occsetIdStr = parts[1]
             try:
@@ -633,7 +634,7 @@ class EarlJr(LMObject):
                 msg = 'Improper RAD mapname %s ; ' % mapname
                 msg += 'Should be %s + gridsetId' % MapPrefix.RAD
                 raise LMError(msg, do_trace=True)
-           
+
         # User maps are usr_<usr>_<epsg>
         elif parts[0] == MapPrefix.USER:
             usr = parts[1]
@@ -641,14 +642,14 @@ class EarlJr(LMObject):
                 epsg = int(parts[2])
             except:
                 pass
-        
+
         elif mapname.startswith(MapPrefix.ANC):
             ancillary = True
-            usr = PUBLIC_USER 
-           
+            usr = PUBLIC_USER
+
         else:
             msg = 'Improper mapname %s - ' % mapname
-            msg += '  requires prefix %s, %s, %s, or %s' % (MapPrefix.SCEN, 
+            msg += '  requires prefix %s, %s, %s, or %s' % (MapPrefix.SCEN,
                                  MapPrefix.SDM, MapPrefix.USER, MapPrefix.ANC)
             raise LMError(msg, do_trace=True)
         return fileType, scencode, occsetId, gridsetId, usr, ancillary, epsg

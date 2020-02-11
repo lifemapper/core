@@ -22,13 +22,16 @@
           02110-1301, USA.
 """
 from LmBackend.common.lmobj import LMError
-from LmServer.common.lmconstants import LMServiceType, LMFileType
 from LmServer.base.layer2 import Raster, _LayerParameters
+from LmServer.common.lmconstants import LMServiceType, LMFileType
+
+
 # .........................................................................
 class EnvType(_LayerParameters):
+
 # .............................................................................
-   def __init__(self, envCode, userId, 
-                gcmCode=None, altpredCode=None, dateCode=None, 
+   def __init__(self, envCode, userId,
+                gcmCode=None, altpredCode=None, dateCode=None,
                 metadata={}, mod_time=None, envTypeId=None):
       """
       @summary Initialize the EnvType  class instance
@@ -40,29 +43,31 @@ class EnvType(_LayerParameters):
              these data
       @param dateCode: Code for the time period for which these data are predicted.
       """
-      _LayerParameters.__init__(self, userId, paramId=envTypeId, 
+      _LayerParameters.__init__(self, userId, paramId=envTypeId,
                                 metadata=metadata, mod_time=mod_time)
       self.envCode = envCode
       self.gcmCode = gcmCode
       self.altpredCode = altpredCode
       self.dateCode = dateCode
 
+
 # .........................................................................
 class EnvLayer(EnvType, Raster):
    """       
    Class to hold a Raster object used for species distribution modeling.
    """
+
 # .............................................................................
-   def __init__(self, name, userId, epsgcode, scencode=None, lyrId=None, 
-                squid=None, ident=None, verify=None, dlocation=None, 
-                lyrMetadata={}, dataFormat=None, gdalType=None, 
-                valUnits=None, valAttribute=None, 
-                nodataVal=None, minVal=None, maxVal=None, 
-                mapunits=None, resolution=None, 
-                bbox=None, envLayerId=None, metadataUrl=None, 
-                parentMetadataUrl=None, mod_time=None,                
+   def __init__(self, name, userId, epsgcode, scencode=None, lyrId=None,
+                squid=None, ident=None, verify=None, dlocation=None,
+                lyrMetadata={}, dataFormat=None, gdalType=None,
+                valUnits=None, valAttribute=None,
+                nodataVal=None, minVal=None, maxVal=None,
+                mapunits=None, resolution=None,
+                bbox=None, envLayerId=None, metadataUrl=None,
+                parentMetadataUrl=None, mod_time=None,
                 # EnvType
-                envCode=None, gcmCode=None, altpredCode=None, dateCode=None, 
+                envCode=None, gcmCode=None, altpredCode=None, dateCode=None,
                 envMetadata={}, envModTime=None, envTypeId=None):
       """
       @copydoc LmServer.base.layer2.Raster::__init__()
@@ -70,20 +75,20 @@ class EnvLayer(EnvType, Raster):
       """
       if name is None:
          raise LMError('EnvLayer.name is required')
-      EnvType.__init__(self, envCode, userId, 
-                gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode, 
+      EnvType.__init__(self, envCode, userId,
+                gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode,
                 metadata=envMetadata, mod_time=envModTime, envTypeId=envTypeId)
       self._mapPrefix = None
-      # Raster metadataUrl and serviceType override those of EnvType 
+      # Raster metadataUrl and serviceType override those of EnvType
       # if it is a full EnvLayer
-      Raster.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
-                squid=squid, ident=ident, verify=verify, dlocation=dlocation, 
-                metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType, 
-                valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
-                mapunits=mapunits, resolution=resolution, 
-                bbox=bbox, svcObjId=envLayerId, 
-                serviceType=LMServiceType.ENVIRONMENTAL_LAYERS, 
-                metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
+      Raster.__init__(self, name, userId, epsgcode, lyrId=lyrId,
+                squid=squid, ident=ident, verify=verify, dlocation=dlocation,
+                metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType,
+                valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, maxVal=maxVal,
+                mapunits=mapunits, resolution=resolution,
+                bbox=bbox, svcObjId=envLayerId,
+                serviceType=LMServiceType.ENVIRONMENTAL_LAYERS,
+                metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
                 mod_time=mod_time)
       self._scenCode = scencode
       self._setMapPrefix(scencode=scencode)
@@ -91,26 +96,25 @@ class EnvLayer(EnvType, Raster):
 # ...............................................
    @classmethod
    def initFromParts(cls, raster, envType, envLayerId=None, scencode=None):
-      envLyr = EnvLayer(raster.name, raster.getUserId(), raster.epsgcode, 
-                  scencode=scencode, lyrId=raster.get_id(), squid=raster.squid, 
+      envLyr = EnvLayer(raster.name, raster.getUserId(), raster.epsgcode,
+                  scencode=scencode, lyrId=raster.get_id(), squid=raster.squid,
                   ident=raster.ident, verify=raster.verify, dlocation=raster.getDLocation(),
-                  lyrMetadata=raster.lyrMetadata, dataFormat=raster.dataFormat, 
-                  gdalType=raster.gdalType, valUnits=raster.valUnits, 
-                  nodataVal=raster.nodataVal, minVal=raster.minVal, 
-                  maxVal=raster.maxVal, mapunits=raster.mapUnits, 
+                  lyrMetadata=raster.lyrMetadata, dataFormat=raster.dataFormat,
+                  gdalType=raster.gdalType, valUnits=raster.valUnits,
+                  nodataVal=raster.nodataVal, minVal=raster.minVal,
+                  maxVal=raster.maxVal, mapunits=raster.mapUnits,
                   resolution=raster.resolution, bbox=raster.bbox,
                   # Join table for EnvironmentalLayer ServiceObject unique id
-                  envLayerId=envLayerId, 
-                  metadataUrl=raster.metadataUrl, 
-                  parentMetadataUrl=raster.parentMetadataUrl, 
-                  mod_time=raster.mod_time,                
+                  envLayerId=envLayerId,
+                  metadataUrl=raster.metadataUrl,
+                  parentMetadataUrl=raster.parentMetadataUrl,
+                  mod_time=raster.mod_time,
                   # EnvType
-                  envCode=envType.envCode, gcmCode=envType.gcmCode, 
-                  altpredCode=envType.altpredCode, dateCode=envType.dateCode, 
-                  envMetadata=envType.paramMetadata, envModTime=envType.paramModTime, 
+                  envCode=envType.envCode, gcmCode=envType.gcmCode,
+                  altpredCode=envType.altpredCode, dateCode=envType.dateCode,
+                  envMetadata=envType.paramMetadata, envModTime=envType.paramModTime,
                   envTypeId=envType.getParamId())
       return envLyr
-
 
 # ...............................................
 # other methods
@@ -129,9 +133,9 @@ class EnvLayer(EnvType, Raster):
          scencode = self._scenCode
       mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.SCENARIO_MAP,
                                                      objCode=scencode,
-                                                     lyrname=self.name, 
-                                                     usr=self._userId, 
-                                                     epsg=self._epsg)      
+                                                     lyrname=self.name,
+                                                     usr=self._userId,
+                                                     epsg=self._epsg)
       return mapprefix
 
 # ...............................................
@@ -141,19 +145,19 @@ class EnvLayer(EnvType, Raster):
 
 # ...............................................
    @property
-   def mapPrefix(self): 
+   def mapPrefix(self):
       return self._mapPrefix
-    
+
    def _setMapPrefix(self, mapprefix=None, scencode=None):
       if mapprefix is None:
          mapprefix = self._createMapPrefix(scencode=self._scenCode)
       self._mapPrefix = mapprefix
-          
+
 # ...............................................
    @property
-   def scenCode(self): 
+   def scenCode(self):
       return self._scenCode
-    
+
    def setScenCode(self, scencode=None):
       self._scenCode = scencode
 
@@ -165,11 +169,11 @@ class EnvLayer(EnvType, Raster):
       """
       if scencode is None:
          scencode = self._scenCode
-      mapfname = self._earlJr.createFilename(LMFileType.SCENARIO_MAP, 
-                                             objCode=scencode, 
+      mapfname = self._earlJr.createFilename(LMFileType.SCENARIO_MAP,
+                                             objCode=scencode,
                                              usr=self._userId, epsg=self._epsg)
       return mapfname
-   
+
 # ...............................................
    def setLocalMapFilename(self, mapfname=None, scencode=None):
       """
@@ -190,11 +194,11 @@ class EnvLayer(EnvType, Raster):
       @param envType: an LmServer.legion.EnvironmentalType object
       """
       # _LayerParameters
-      self.envCode=envType.envCode
-      self.gcmCode=envType.gcmCode, 
-      self.altpredCode=envType.altpredCode
-      self.dateCode=envType.dateCode 
+      self.envCode = envType.envCode
+      self.gcmCode = envType.gcmCode,
+      self.altpredCode = envType.altpredCode
+      self.dateCode = envType.dateCode
       self.loadParamMetadata(envType.paramMetadata)
-      self.envModTime=envType.mod_time
+      self.envModTime = envType.mod_time
       self.setParamId(envType.getParamId())
       self.paramModTime = envType.paramModTime

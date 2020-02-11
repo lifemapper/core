@@ -7,6 +7,7 @@ from LmBackend.common.lmobj import LMObject
 class Atom(LMObject):
     """Used for returning simple objects for REST url construction
     """
+
     # ................................
     def __init__(self, obj_id, name, url, mod_time, epsg=None):
         """Constructor
@@ -19,7 +20,7 @@ class Atom(LMObject):
             epsg: The EPSG code for the object if it is spatial
         """
         super().__init__(self)
-        self.id = obj_id
+        self.object_id = obj_id
         self.name = name
         self.url = url
         self.mod_time = mod_time
@@ -29,4 +30,4 @@ class Atom(LMObject):
     def get_id(self):
         """Return the database id for this object
         """
-        return self.id
+        return self.object_id

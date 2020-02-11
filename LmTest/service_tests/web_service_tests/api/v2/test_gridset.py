@@ -36,12 +36,12 @@ from LmCommon.common.lmconstants import (EML_INTERFACE, JSON_INTERFACE,
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.gridset import Gridset
-
 from LmTest.formatTests.emlValidator import validate_eml
 from LmTest.formatTests.jsonValidator import validate_json
 from LmTest.formatTests.packageValidator import validate_package
 from LmTest.webTestsLite.common.userUnitTest import UserTestCase
 from LmTest.webTestsLite.common.webClient import LmWebClient
+
 
 # .............................................................................
 class TestScribeGridsetService(UserTestCase):
@@ -49,6 +49,7 @@ class TestScribeGridsetService(UserTestCase):
    @summary: This is a test class for running scribe tests for the gridset 
                 service
    """
+
    # ............................
    def setUp(self):
       """
@@ -56,14 +57,14 @@ class TestScribeGridsetService(UserTestCase):
       """
       self.scribe = BorgScribe(ConsoleLogger())
       self.scribe.openConnections()
-      
+
    # ............................
    def tearDown(self):
       """
       @summary: Clean up after test
       """
       self.scribe.closeConnections()
-      
+
    # ............................
    def test_count(self):
       """
@@ -76,7 +77,7 @@ class TestScribeGridsetService(UserTestCase):
          warnings.warn(
             'Count returned 0 gridsets for user: {}'.format(
                self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
@@ -88,13 +89,13 @@ class TestScribeGridsetService(UserTestCase):
          self.fail(
             'Cannot get a gridset because listing found none')
       else:
-         gs = self.scribe.getGridset(gridsetId=gsAtoms[0].id, 
+         gs = self.scribe.getGridset(gridsetId=gsAtoms[0].get_id(),
                                      userId=self._get_session_user())
          self.assertIsInstance(gs, Gridset)
-         self.assertEqual(gs.getUserId(), self._get_session_user(), 
+         self.assertEqual(gs.getUserId(), self._get_session_user(),
                'User id on gridset = {}, session user = {}'.format(
                   gs.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_atoms(self):
       """
@@ -107,12 +108,12 @@ class TestScribeGridsetService(UserTestCase):
          warnings.warn('List returned 0 gridsets for user: {}'.format(
                self._get_session_user()))
       else:
-         gs = self.scribe.getGridset(gridsetId=gsAtoms[0].id, 
+         gs = self.scribe.getGridset(gridsetId=gsAtoms[0].get_id(),
                                        userId=self._get_session_user())
-         self.assertEqual(gs.getUserId(), self._get_session_user(), 
+         self.assertEqual(gs.getUserId(), self._get_session_user(),
                'User id on gridset = {}, session user = {}'.format(
                   gs.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_objects(self):
       """
@@ -128,16 +129,18 @@ class TestScribeGridsetService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(gsObjs[0], Gridset)
-         self.assertEqual(gsObjs[0].getUserId(), self._get_session_user(), 
+         self.assertEqual(gsObjs[0].getUserId(), self._get_session_user(),
                'User id on gridset {} = {}, session user = {}'.format(
-                  gsObjs[0].get_id(), gsObjs[0].getUserId(), 
+                  gsObjs[0].get_id(), gsObjs[0].getUserId(),
                   self._get_session_user()))
+
 
 # .............................................................................
 class TestWebGridsetService(UserTestCase):
    """
    @summary: This is a test class for running web tests for the gridset service
    """
+
    # ............................
    def setUp(self):
       """
@@ -147,7 +150,7 @@ class TestWebGridsetService(UserTestCase):
       if self.userId is not None:
          # Log in
          self.cl.login(self.userId, self.passwd)
-      
+
    # ............................
    def tearDown(self):
       """
@@ -157,7 +160,7 @@ class TestWebGridsetService(UserTestCase):
          # Log out
          self.cl.logout()
       self.cl = None
-      
+
    # ............................
    def test_count(self):
       """
@@ -166,13 +169,13 @@ class TestWebGridsetService(UserTestCase):
       with contextlib.closing(self.cl.count_gridsets()) as x:
          ret = json.load(x)
       count = int(ret['count'])
-      
+
       self.assertGreaterEqual(count, 0)
       if count == 0:
          warnings.warn(
             'Count returned 0 gridsets for user: {}'.format(
                self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
@@ -181,34 +184,34 @@ class TestWebGridsetService(UserTestCase):
       """
       with contextlib.closing(self.cl.list_gridsets()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          self.fail(
             'Cannot get a gridset listing found none')
       else:
          gsId = ret[0]['id']
-         
+
          with contextlib.closing(self.cl.get_gridset(gsId)) as x:
             gsMeta = json.load(x)
-            
+
          self.assertTrue('name' in gsMeta)
-         self.assertEqual(gsMeta['user'], self._get_session_user(), 
+         self.assertEqual(gsMeta['user'], self._get_session_user(),
                'User id on gridset {} = {}, session user = {}'.format(
                   gsMeta['id'], gsMeta['user'], self._get_session_user()))
-         
+
          # EML
-         with contextlib.closing(self.cl.get_gridset(gsId, 
+         with contextlib.closing(self.cl.get_gridset(gsId,
                                           responseFormat=EML_INTERFACE)) as x:
             self.assertTrue(validate_eml(x))
          # JSON
-         with contextlib.closing(self.cl.get_gridset(gsId, 
+         with contextlib.closing(self.cl.get_gridset(gsId,
                                           responseFormat=JSON_INTERFACE)) as x:
             self.assertTrue(validate_json(x))
          # Package
-         with contextlib.closing(self.cl.get_gridset(gsId, 
+         with contextlib.closing(self.cl.get_gridset(gsId,
                                        responseFormat=PACKAGE_INTERFACE)) as x:
             self.assertTrue(validate_package(x))
-   
+
    # ............................
    def test_list(self):
       """
@@ -217,12 +220,13 @@ class TestWebGridsetService(UserTestCase):
       """
       with contextlib.closing(self.cl.list_gridsets()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          warnings.warn(
             'Count returned 0 gridsets for user: {}'.format(
                self._get_session_user()))
-   
+
+
 # .............................................................................
 def get_test_classes():
    """
@@ -234,6 +238,7 @@ def get_test_classes():
       TestScribeGridsetService,
       TestWebGridsetService
    ]
+
 
 # .............................................................................
 def get_test_suite(userId=None, pwd=None):
@@ -248,20 +253,21 @@ def get_test_suite(userId=None, pwd=None):
    suite.addTest(UserTestCase.parameterize(TestWebGridsetService))
 
    if userId is not None:
-      suite.addTest(UserTestCase.parameterize(TestScribeGridsetService, 
+      suite.addTest(UserTestCase.parameterize(TestScribeGridsetService,
                                               userId=userId, pwd=pwd))
-      suite.addTest(UserTestCase.parameterize(TestWebGridsetService, 
+      suite.addTest(UserTestCase.parameterize(TestWebGridsetService,
                                               userId=userId, pwd=pwd))
-      
+
    return suite
+
 
 # .............................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser(description='Run gridset service tests')
-   parser.add_argument('-u', '--user', type=str, 
-                 help='If provided, run tests for this user (and anonymous)' )
+   parser.add_argument('-u', '--user', type=str,
+                 help='If provided, run tests for this user (and anonymous)')
    parser.add_argument('-p', '--pwd', type=str, help='Password for user')
-   
+
    args = parser.parse_args()
    suite = get_test_suite(userId=args.user, pwd=args.pwd)
    unittest.TextTestRunner(verbosity=2).run(suite)

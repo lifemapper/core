@@ -1,15 +1,16 @@
-"""Module containg a user class for Lifemapper
+"""Module containing a user class for Lifemapper
 """
 import hashlib
 
 from LmBackend.common.lmobj import LMObject
 from LmServer.common.lmconstants import SALT
 
+
 # .............................................................................
 class LMUser(LMObject):
 
-    def __init__(self, userid, email, password, isEncrypted=False, 
-                     firstName=None, lastName=None, institution=None, 
+    def __init__(self, userid, email, password, isEncrypted=False,
+                     firstName=None, lastName=None, institution=None,
                      addr1=None, addr2=None, addr3=None, phone=None, mod_time=None):
         """
         @summary Layer superclass constructor
@@ -81,6 +82,7 @@ class LMUser(LMObject):
 
 # .............................................................................
 class DbUser:
+
     def __init__(self, user, password):
         username = user
         password = password

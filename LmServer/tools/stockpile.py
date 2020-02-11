@@ -1,9 +1,9 @@
-#!/bin/bash
+# !/bin/bash
 """This script updates a Lifemapper object in the database
 """
 import argparse
-import json
 import glob
+import json
 import os
 import shutil
 
@@ -18,6 +18,7 @@ from LmServer.db.borgscribe import BorgScribe
 class Stockpile(LMObject):
     """Update database with status of generated object files
     """
+
     # ..................................
     @classmethod
     def test_and_stash(cls, ptype, obj_id, status, success_f_name,

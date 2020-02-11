@@ -2,15 +2,13 @@
 # -*- coding: utf-8 -*-
 """This module provides services for query and subsetting of global PAMs
 """
-import cherrypy
-
 from LmServer.base.atom import Atom
 from LmServer.common.lmconstants import SOLR_FIELDS
 from LmServer.common.solr import facet_archive_on_gridset, query_archive_index
 from LmServer.common.subset import subset_global_pam
-
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+import cherrypy
 
 
 # .............................................................................
@@ -18,6 +16,7 @@ from LmWebServer.services.cp_tools.lm_format import lm_formatter
 class GridsetFacetService(LmService):
     """This service retrieves gridsets within the solr index for the user
     """
+
     # ................................
     @lm_formatter
     def GET(self, urlUser=None, **params):
@@ -30,7 +29,7 @@ class GridsetFacetService(LmService):
         while i < len(facets):
             counts.append({
                 SOLR_FIELDS.GRIDSET_ID: str(facets[i]),
-                'count': int(facets[i+1])
+                'count': int(facets[i + 1])
             })
             i += 2
 

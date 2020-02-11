@@ -5,7 +5,6 @@ import argparse
 from LmCommon.common.lmconstants import PhyloTreeKeys
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
-
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 
@@ -21,15 +20,15 @@ if __name__ == "__main__":
     parser.add_argument(
         'success_filename', type=str,
         help='Write an indication of success here')
-   
+
     args = parser.parse_args()
 
     user_id = args.user_id
-   
+
     # Do stuff
     scribe = BorgScribe(ScriptLogger('squid_tree'))
     scribe.openConnections()
-    
+
     tree = scribe.getTree(treeId=args.tree_id)
 
     squid_dict = {}

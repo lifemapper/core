@@ -84,7 +84,7 @@ class _LmCommand:
         return script_base
 
     # ................................
-    def Popen(self, **kwargs):
+    def popen(self, **kwargs):
         """Wrapper for subprocess.Popen
 
         Wrapper around subprocess.Popen, named arguments sent to this function
