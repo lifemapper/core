@@ -8,12 +8,13 @@ Todo:
 
 import os
 
-from lmpy import Matrix
 import numpy as np
+
+from lmpy import Matrix
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType, 
-                                                      ProcessType)
+from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
+                                         ProcessType)
 from LmCommon.compression.binary_list import decompress
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmCommon.common.time import gmt
@@ -30,562 +31,575 @@ from LmServer.legion.processchain import MFChain
 from LmBackend.command.single import IntersectRasterCommand, GrimRasterCommand
 from LmBackend.command.server import IndexPAVCommand, StockpileCommand
 
+
 # .............................................................................
-def subsetGlobalPAM(archiveName, matches, userId, bbox=None, cellSize=None,
-                          scribe=None):
-    """
-    @summary: Create a subset of a global PAM and create a new grid set
-    @param archiveName: The name of this new grid set
-    @param matches: Solr hits to be used for subsetting
+def subset_global_pam(archive_name, matches, user_id, bbox=None,
+                      cell_size=None, scribe=None):
+    """Subset the global PAM and use that to create a new gridset.
+
+    Args:
+        archive_name (str): The name of the new gridset.
+        matches: Solr hits to be used for subsetting
+        user_id (str): The user that will own the new gridset
 
     Todo:
         Rewrite and use multi pav index.  then get rid of IndexPAVCommand
     """
     method = SubsetMethod.COLUMN
-    
+
     if scribe is None:
         log = WebLogger()
         scribe = BorgScribe(log)
     else:
         log = scribe.log
-        
+
     # Get metadata
-    match1 = matches[0]
-    origShp = scribe.getShapeGrid(match1[SOLR_FIELDS.SHAPEGRID_ID])
-    origNrows = origShp.featureCount
-    epsgCode = match1[SOLR_FIELDS.EPSG_CODE]
-    origGSId = match1[SOLR_FIELDS.GRIDSET_ID]
-    origGS = scribe.getGridset(gridsetId=origGSId, fillMatrices=True)
+    match_1 = matches[0]
+    orig_shp = scribe.getShapeGrid(match_1[SOLR_FIELDS.SHAPEGRID_ID])
+    orig_num_rows = orig_shp.featureCount
+    epsg = match_1[SOLR_FIELDS.EPSG_CODE]
+    orig_gs_id = match_1[SOLR_FIELDS.GRIDSET_ID]
+    orig_gs = scribe.getGridset(gridsetId=orig_gs_id, fillMatrices=True)
 
     # Initialize variables we'll test
     if bbox is None:
-        bbox = origShp.bbox
-    if cellSize is None:
-        cellSize = origShp.cellsize
-    
+        bbox = orig_shp.bbox
+    if cell_size is None:
+        cell_size = orig_shp.cellsize
+
     # TODO: Add these to function so they can be specified by user
-    intersectParams = {
+    intersect_params = {
         MatrixColumn.INTERSECT_PARAM_FILTER_STRING: None,
         MatrixColumn.INTERSECT_PARAM_VAL_NAME: 'pixel',
         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: 1,
         MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: 255,
         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 25
     }
-  
-    origRowHeaders = getRowHeaders(origShp.getDLocation())
-    
+
+    orig_row_headers = get_row_headers(orig_shp.getDLocation())
+
     # If bounding box, resolution, or user is different, create a new shapegrid
-    if bbox != origShp.bbox or cellSize != origShp.cellsize or \
-                userId != origGS.getUserId():
-         
-        mySgName = 'Shapegrid_{}_{}'.format(
-            str(bbox).replace(' ', '_'), cellSize)
-        newshp = ShapeGrid(
-            mySgName, userId, origGS.epsgcode, origShp.cellsides, cellSize,
-            origShp.mapUnits, bbox, status=JobStatus.INITIALIZE,
+    if bbox != orig_shp.bbox or cell_size != orig_shp.cellsize or \
+            user_id != orig_gs.getUserId():
+
+        my_sg_name = 'Shapegrid_{}_{}'.format(
+            str(bbox).replace(' ', '_'), cell_size)
+        new_shp = ShapeGrid(
+            my_sg_name, user_id, orig_gs.epsgcode, orig_shp.cellsides,
+            cell_size, orig_shp.mapUnits, bbox, status=JobStatus.INITIALIZE,
             statusModTime=gmt().mjd)
 
         # Insert our new shapegrid
-        myShp = scribe.findOrInsertShapeGrid(newshp)
+        my_shp = scribe.findOrInsertShapeGrid(new_shp)
 
         # Determine how to create the data files
         # ----------------
-        # If the cell size is different or the bounding box is not completely 
+        # If the cell size is different or the bounding box is not completely
         #     within the original, we need to reintersect
-        if cellSize != origShp.cellsize or bbox[0] < origShp.bbox[0] or \
-                bbox[1] < origShp.bbox[1] or bbox[2] > origShp.bbox[2] or \
-                bbox[3] > origShp.bbox[3]:
+        if cell_size != orig_shp.cellsize or bbox[0] < orig_shp.bbox[0] or \
+                bbox[1] < orig_shp.bbox[1] or bbox[2] > orig_shp.bbox[2] or \
+                bbox[3] > orig_shp.bbox[3]:
             method = SubsetMethod.REINTERSECT
-            
+
             # Write shapefile
-            myShp.buildShape()
-            myShp.writeShapefile(myShp.getDLocation())
+            my_shp.buildShape()
+            my_shp.writeShapefile(my_shp.getDLocation())
 
         # Else, if the bounding box is different, we need to spatially subset
-        elif bbox != origShp.bbox:
+        elif bbox != orig_shp.bbox:
             method = SubsetMethod.SPATIAL
-            bboxWKT = 'POLYGON(({0} {1},{0} {3},{2} {3},{2} {1},{0} {1}))'.format(
-                                    *bbox)
-            origShp.cutout(bboxWKT, dloc=myShp.getDLocation())
-            
-            rowHeaders = getRowHeaders(myShp.getDLocation())
-            origRowHeaders = getRowHeaders(origShp.getDLocation())
-            
-            keepSites = []
-            for i in range(len(origRowHeaders)):
-                if origRowHeaders[i] in rowHeaders:
-                    keepSites.append(i)
+            bbox_wkt = \
+                'POLYGON(({0} {1},{0} {3},{2} {3},{2} {1},{0} {1}))'.format(
+                    *bbox)
+            orig_shp.cutout(bbox_wkt, dloc=my_shp.getDLocation())
+
+            row_headers = get_row_headers(my_shp.getDLocation())
+            orig_row_headers = get_row_headers(orig_shp.getDLocation())
+
+            keep_sites = []
+            for i, hdr in enumerate(orig_row_headers):
+                if hdr in row_headers:
+                    keep_sites.append(i)
 
         # Else, we can just subset the PAM columns
         else:
             method = SubsetMethod.COLUMN
-            
-            rowHeaders = getRowHeaders(origShp.getDLocation())
-            
+
+            row_headers = getRowHeaders(orig_shp.getDLocation())
+
             # Copy original shapegrid to new location
-            origShp.writeShapefile(myShp.getDLocation())
-        
+            orig_shp.writeShapefile(my_shp.getDLocation())
+
     else:
         # We can use the original shapegrid
-        myShp = origShp
+        my_shp = orig_shp
 
-    gsMeta = {
-        ServiceObject.META_DESCRIPTION: \
-                                'Subset of Global PAM, gridset {}'.format(origGSId),
+    gs_meta = {
+        ServiceObject.META_DESCRIPTION:
+            'Subset of Global PAM, gridset {}'.format(orig_gs_id),
         ServiceObject.META_KEYWORDS: ['subset']
     }
 
 
     # TODO: This really needs to be by original matrix (PAM) id
-    #     For now, we can get close if we group by scenario id and algorithm
-    #     Another option would be to hash a set of the algorithm parameter values
-    #         That will split into groups of like algorithms
-    
-    # Create a dictionary of matches by scenario and algorithm
-    matchGroups = {}
-    for match in matches:
-        scnId = match[SOLR_FIELDS.PROJ_SCENARIO_ID]
-        algCode = match[SOLR_FIELDS.ALGORITHM_CODE]
-        
-        if scnId not in matchGroups:
-            matchGroups[scnId] = {}
-        
-        if algCode not in matchGroups[scnId]:
-            matchGroups[scnId][algCode] = []
-            
-        matchGroups[scnId][algCode].append(match)
+    #    For now, we can get close if we group by scenario id and algorithm
+    #    Another option would be to hash a set of the algorithm parameter
+    #    values that will split into groups of like algorithms
 
-    
+    # Create a dictionary of matches by scenario and algorithm
+    match_groups = {}
+    for match in matches:
+        scn_id = match[SOLR_FIELDS.PROJ_SCENARIO_ID]
+        alg_code = match[SOLR_FIELDS.ALGORITHM_CODE]
+
+        if scn_id not in match_groups:
+            match_groups[scn_id] = {}
+
+        if alg_code not in match_groups[scn_id]:
+            match_groups[scn_id][alg_code] = []
+
+        match_groups[scn_id][alg_code].append(match)
+
     # Create grid set
-    gs = Gridset(
-        name=archiveName, metadata=gsMeta, shapeGrid=myShp, epsgcode=epsgCode,
-        userId=userId, modTime=gmt().mjd)
-    updatedGS = scribe.findOrInsertGridset(gs)
-    
-    
+    gridset = Gridset(
+        name=archive_name, metadata=gs_meta, shapeGrid=my_shp, epsgcode=epsg,
+        userId=user_id, modTime=gmt().mjd)
+    updated_gs = scribe.findOrInsertGridset(gridset)
+
     # Copy the tree if available.  It may be subsetted according to the data in
     #     the gridset and therefore should be separate
-    if origGS.tree is not None:
-        
+    if orig_gs.tree is not None:
+
         # Need to get and fill in tree
-        otree = origGS.tree
-        
+        otree = orig_gs.tree
+
         try:
-            treeData = otree.tree
-        except: # May need to be read
+            tree_data = otree.tree
+        except Exception:  # May need to be read
             try:
                 otree.read()
-                treeData = otree.tree
+                tree_data = otree.tree
             # TODO: Remove this
-            except: # Handle bad dlocation from gridset tree
+            except Exception:  # Handle bad dlocation from gridset tree
                 otree = scribe.getTree(treeId=otree.getId())
                 otree.read()
-                treeData = otree.tree
-        
+                tree_data = otree.tree
+
         if otree.name:
             tree_name = otree.name
         else:
             tree_name = otree.getId()
-        newTree = Tree(
+        new_tree = Tree(
             'Copy of {} tree at {}'.format(tree_name, gmt().mjd), metadata={},
-            userId=userId, gridsetId=updatedGS.getId(), modTime=gmt().mjd)
-        newTree.setTree(treeData)
-        insertedTree = scribe.findOrInsertTree(newTree)
-        newTree.tree = treeData
-        insertedTree.setTree(treeData)
-        insertedTree.writeTree()
-        updatedGS.addTree(insertedTree, doRead=True)
+            userId=user_id, gridsetId=updated_gs.getId(), modTime=gmt().mjd)
+        new_tree.setTree(tree_data)
+        inserted_tree = scribe.findOrInsertTree(new_tree)
+        new_tree.tree = tree_data
+        inserted_tree.setTree(tree_data)
+        inserted_tree.writeTree()
+        updated_gs.addTree(inserted_tree, doRead=True)
         log.debug(
             'Tree for gridset {} is {}'.format(
-                updatedGS.getId(), updatedGS.tree.getId()))
-        scribe.updateObject(updatedGS)
-    
+                updated_gs.getId(), updated_gs.tree.getId()))
+        scribe.updateObject(updated_gs)
+
     # If we can reuse data from Solr index, do it
     if method in [SubsetMethod.COLUMN, SubsetMethod.SPATIAL]:
         # PAMs
         # --------
-        for scnId in list(matchGroups.keys()):
-            for algCode, mtxMatches in matchGroups[scnId].items():
-                
-                
-                scnCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_CODE]
-                dateCode = altPredCode = gcmCode = None
-                
-                if SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE in mtxMatches[0]:
-                    dateCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE]
-                if SOLR_FIELDS.PROJ_SCENARIO_GCM in mtxMatches[0]:
-                    gcmCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_GCM]
-                if SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE in mtxMatches[0]:
-                    altPredCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE]
-                
-                scnMeta = {
-                    ServiceObject.META_DESCRIPTION: \
-                        'Subset of grid set {}, scenario {}, algorithm {}'.format(
-                            origGSId, scnId, algCode),
-                    ServiceObject.META_KEYWORDS: ['subset', scnCode, algCode]
+        for scn_id in list(match_groups.keys()):
+            for alg_code, mtx_matches in match_groups[scn_id].items():
+
+                scn_code = mtx_matches[0][SOLR_FIELDS.PROJ_SCENARIO_CODE]
+                date_code = alt_pred_code = gcm_code = None
+
+                if SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE in mtx_matches[0]:
+                    date_code = mtx_matches[0][
+                        SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE]
+                if SOLR_FIELDS.PROJ_SCENARIO_GCM in mtx_matches[0]:
+                    gcm_code = mtx_matches[0][SOLR_FIELDS.PROJ_SCENARIO_GCM]
+                if SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE in mtx_matches[0]:
+                    alt_pred_code = mtx_matches[0][
+                        SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE]
+
+                scn_meta = {
+                    ServiceObject.META_DESCRIPTION:
+                        'Subset of grid set {}, scn {}, algorithm {}'.format(
+                            orig_gs_id, scn_id, alg_code),
+                    ServiceObject.META_KEYWORDS: ['subset', scn_code, alg_code]
                 }
-                
+
                 # Assemble full matrix
-                pamData = np.zeros((origNrows, len(mtxMatches)), dtype=int)
+                pam_data = np.zeros(
+                    (orig_num_rows, len(mtx_matches)), dtype=int)
                 squids = []
-                
-                for i in range(len(mtxMatches)):
-                    pamData[:,i] = decompress(
-                        mtxMatches[i][SOLR_FIELDS.COMPRESSED_PAV])
-                    squids.append(mtxMatches[i][SOLR_FIELDS.SQUID])
-                
+
+                for i, match_i in enumerate(mtx_matches):
+                    pam_data[:, i] = decompress(
+                        match_i[SOLR_FIELDS.COMPRESSED_PAV])
+                    squids.append(match_i[SOLR_FIELDS.SQUID])
+
                 # Create object
-                # NOTE: We use original row headers even though we are going to slice
-                #             them immediately after construction.  We do this to keep
-                #             consistent with other matrix slicing
-                pamMtx = LMMatrix(
-                    pamData, matrixType=MatrixType.PAM, gcmCode=gcmCode,
-                    altpredCode=altPredCode, dateCode=dateCode,
-                    metadata=scnMeta, userId=userId, gridset=updatedGS,
-                    status=JobStatus.GENERAL, statusModTime=gmt().mjd, 
-                    headers={'0' : origRowHeaders, '1' : squids})
-                
+                # NOTE: We use original row headers even though we are going to
+                #    slice them immediately after construction.  We do this to
+                #    keep consistent with other matrix slicing
+                pam_mtx = LMMatrix(
+                    pam_data, matrixType=MatrixType.PAM, gcmCode=gcm_code,
+                    altpredCode=alt_pred_code, dateCode=date_code,
+                    metadata=scn_meta, userId=user_id, gridset=updated_gs,
+                    status=JobStatus.GENERAL, statusModTime=gmt().mjd,
+                    headers={'0': orig_row_headers, '1': squids})
+
                 # If we need to spatially subset, slice the matrix
                 if method == SubsetMethod.SPATIAL:
-                    pamMtx.slice(keepSites)
-    
+                    pam_mtx.slice(keep_sites)
+
                 # Insert it into db
-                updatedPamMtx = scribe.findOrInsertMatrix(pamMtx)
-                updatedPamMtx.updateStatus(JobStatus.COMPLETE)
-                scribe.updateObject(updatedPamMtx)
+                updated_pam_mtx = scribe.findOrInsertMatrix(pam_mtx)
+                updated_pam_mtx.updateStatus(JobStatus.COMPLETE)
+                scribe.updateObject(updated_pam_mtx)
                 log.debug(
-                    "Dlocation for updated pam: {}".format(
-                        updatedPamMtx.getDLocation()))
-                with open(updatedPamMtx.getDLocation(), 'w') as outF:
-                    pamMtx.save(outF)
+                    'Dlocation for updated pam: {}'.format(
+                        updated_pam_mtx.getDLocation()))
+                with open(updated_pam_mtx.getDLocation(), 'w') as out_file:
+                    pam_mtx.save(out_file)
 
         # GRIMs
         # --------
-        for grim in origGS.getGRIMs():
-            newGrim = LMMatrix(
+        for grim in orig_gs.getGRIMs():
+            new_grim = LMMatrix(
                 None, matrixType=MatrixType.GRIM,
                 processType=ProcessType.RAD_INTERSECT, gcmCode=grim.gcmCode,
                 altpredCode=grim.altpredCode, dateCode=grim.dateCode,
-                metadata=grim.mtxMetadata, userId=userId, gridset=updatedGS,
+                metadata=grim.mtxMetadata, userId=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
-            insertedGrim = scribe.findOrInsertMatrix(newGrim)
-            grimMetadata = grim.mtxMetadata
-            grimMetadata['keywords'].append('subset')
-            grimMetadata = {
-                'keywords' : ['subset'],
-                'description' : 'Subset of GRIM {}'.format(grim.getId())
-            }
+            inserted_grim = scribe.findOrInsertMatrix(new_grim)
+            grim_metadata = grim.mtxMetadata
+            grim_metadata['keywords'].append('subset')
+            grim_metadata['description'] = 'Subset of GRIM {}'.format(
+                grim.getId())
+
             if 'keywords' in grim.mtxMetadata:
-                grimMetadata['keywords'].extend(grim.mtxMetadata['keywords'])
-            
-            insertedGrim.updateStatus(
-                JobStatus.COMPLETE, metadata=grimMetadata)
-            scribe.updateObject(insertedGrim)
+                grim_metadata['keywords'].extend(grim.mtxMetadata['keywords'])
+
+            inserted_grim.updateStatus(
+                JobStatus.COMPLETE, metadata=grim_metadata)
+            scribe.updateObject(inserted_grim)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
-            grimMtx = Matrix.load_flo(grim.getDLocation())
-            
+            grim_mtx = Matrix.load_flo(grim.getDLocation())
+
             # If we need to spatially subset, slice the matrix
             if method == SubsetMethod.SPATIAL:
-                grimMtx = grimMtx.slice(keepSites)
-            
-            with open(insertedGrim.getDLocation(), 'w') as outF:
-                grimMtx.save(outF)
-        
+                grim_mtx = grim_mtx.slice(keep_sites)
+
+            with open(inserted_grim.getDLocation(), 'w') as out_file:
+                grim_mtx.save(out_file)
+
         # BioGeo
         # --------
-        for bg in origGS.getBiogeographicHypotheses():
-            newBG = LMMatrix(
+        for orig_bg in orig_gs.getBiogeographicHypotheses():
+            new_bg = LMMatrix(
                 None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
-                processType=ProcessType.ENCODE_HYPOTHESES, gcmCode=bg.gcmCode,
-                altpredCode=bg.altpredCode, dateCode=bg.dateCode,
-                metadata=bg.mtxMetadata, userId=userId, gridset=updatedGS,
+                processType=ProcessType.ENCODE_HYPOTHESES,
+                gcmCode=orig_bg.gcmCode, altpredCode=orig_bg.altpredCode,
+                dateCode=orig_bg.dateCode, metadata=orig_bg.mtxMetadata,
+                userId=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
-            insertedBG = scribe.findOrInsertMatrix(newBG)
-            insertedBG.updateStatus(JobStatus.COMPLETE)
-            scribe.updateObject(insertedBG)
+            inserted_bg = scribe.findOrInsertMatrix(new_bg)
+            inserted_bg.updateStatus(JobStatus.COMPLETE)
+            scribe.updateObject(inserted_bg)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
-            bgMtx = Matrix.load_flo(bg.getDLocation())
-            
+            bg_mtx = Matrix.load_flo(orig_bg.getDLocation())
+
             # If we need to spatially subset, slice the matrix
             if method == SubsetMethod.SPATIAL:
-                bgMtx = bgMtx.slice(keepSites)
-    
-            with open(insertedBG.getDLocation(), 'w') as outF:
-                bgMtx.save(outF)
-    
+                bg_mtx = bg_mtx.slice(keep_sites)
+
+            with open(inserted_bg.getDLocation(), 'w') as out_file:
+                bg_mtx.save(out_file)
+
     else:
         # Reintersect everything
-    
+
         # Create a new Makeflow object
-        wfMeta = {
+        wf_meta = {
             MFChain.META_CREATED_BY: os.path.basename(__file__),
-            MFChain.META_DESCRIPTION: \
-                 'Subset makeflow.  Original gridset: {}, new gridset: {}'.format(
-                     origGS.getId(), updatedGS.getId())
+            MFChain.META_DESCRIPTION:
+                'Subset makeflow.  Orig gridset: {}, new gridset: {}'.format(
+                    orig_gs.getId(), updated_gs.getId())
         }
-        newWf = MFChain(
-            userId, priority=Priority.REQUESTED, metadata=wfMeta,
+        new_wf = MFChain(
+            user_id, priority=Priority.REQUESTED, metadata=wf_meta,
             status=JobStatus.GENERAL, statusModTime=gmt().mjd)
-        
-        myWf = scribe.insertMFChain(newWf, updatedGS.getId())
+
+        my_wf = scribe.insertMFChain(new_wf, updated_gs.getId())
         rules = []
-    
-        work_dir = myWf.getRelativeDirectory()
-        
+
+        work_dir = my_wf.getRelativeDirectory()
+
         # TODO: Make this asynchronous
         # Add shapegrid to workflow
-        myShp.buildShape()
-        myShp.writeShapefile(myShp.getDLocation())
-        myShp.updateStatus(JobStatus.COMPLETE)
-        scribe.updateObject(myShp)
-        
+        my_shp.buildShape()
+        my_shp.writeShapefile(my_shp.getDLocation())
+        my_shp.updateStatus(JobStatus.COMPLETE)
+        scribe.updateObject(my_shp)
+
         # PAMs
         # --------
-        for scnId in list(matchGroups.keys()):
-            for algCode, mtxMatches in matchGroups[scnId].items():
-                
-                
-                scnCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_CODE]
-                dateCode = altPredCode = gcmCode = None
-                
-                if SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE in mtxMatches[0]:
-                    dateCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE]
-                if SOLR_FIELDS.PROJ_SCENARIO_GCM in mtxMatches[0]:
-                    gcmCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_GCM]
-                if SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE in mtxMatches[0]:
-                    altPredCode = mtxMatches[0][SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE]
-                
+        for scn_id in list(match_groups.keys()):
+            for alg_code, mtx_matches in match_groups[scn_id].items():
+
+                scn_code = mtx_matches[0][SOLR_FIELDS.PROJ_SCENARIO_CODE]
+                date_code = alt_pred_code = gcm_code = None
+
+                if SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE in mtx_matches[0]:
+                    date_code = mtx_matches[0][
+                        SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE]
+                if SOLR_FIELDS.PROJ_SCENARIO_GCM in mtx_matches[0]:
+                    gcm_code = mtx_matches[0][SOLR_FIELDS.PROJ_SCENARIO_GCM]
+                if SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE in mtx_matches[0]:
+                    alt_pred_code = mtx_matches[0][
+                        SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE]
+
                 scnMeta = {
-                    ServiceObject.META_DESCRIPTION: \
-                        'Subset of grid set {}, scenario {}, algorithm {}'.format(
-                            origGSId, scnId, algCode),
-                    ServiceObject.META_KEYWORDS: ['subset', scnCode, algCode]
+                    ServiceObject.META_DESCRIPTION:
+                        'Subset of grid set {}, scen {}, algorithm {}'.format(
+                            orig_gs_id, scn_id, alg_code),
+                    ServiceObject.META_KEYWORDS: ['subset', scn_code, alg_code]
                 }
-                
+
                 # TODO: Get intersect parameters from Solr or user provided
-                
-                
+
                 # Create PAM
-                pamMtx = LMMatrix(
-                    None, matrixType=MatrixType.PAM, gcmCode=gcmCode,
-                    altpredCode=altPredCode, dateCode=dateCode,
-                    metadata=scnMeta, userId=userId, gridset=updatedGS,
+                pam_mtx = LMMatrix(
+                    None, matrixType=MatrixType.PAM, gcmCode=gcm_code,
+                    altpredCode=alt_pred_code, dateCode=date_code,
+                    metadata=scnMeta, userId=user_id, gridset=updated_gs,
                     status=JobStatus.GENERAL, statusModTime=gmt().mjd)
-                pam = scribe.findOrInsertMatrix(pamMtx)
-                
+                pam = scribe.findOrInsertMatrix(pam_mtx)
+
                 # Insert matrix columns for each match
-                for i in range(len(mtxMatches)):
+                for i, mtx_match in enumerate(mtx_matches):
                     try:
                         prj = scribe.getSDMProject(
-                            int(mtxMatches[i][SOLR_FIELDS.PROJ_ID]))
-                    except Exception as e:
+                            int(mtx_match[SOLR_FIELDS.PROJ_ID]))
+                    except Exception as err:
                         prj = None
                         log.debug(
                             'Could not add projection {}: {}'.format(
-                                mtxMatches[i][SOLR_FIELDS.PROJ_ID], str(e)))
-                    
+                                mtx_matches[i][SOLR_FIELDS.PROJ_ID], str(err)))
+
                     if prj is not None:
-                        prjMeta = {} # TODO: Add something here?
-                        
-                        tmpCol = MatrixColumn(
-                            None, pam.getId(), userId, layer=prj,
-                            shapegrid=myShp, intersectParams=intersectParams,
+                        prj_meta = {}  # TODO: Add something here?
+
+                        tmp_col = MatrixColumn(
+                            None, pam.getId(), user_id, layer=prj,
+                            shapegrid=my_shp, intersectParams=intersect_params,
                             squid=prj.squid, ident=prj.ident,
                             processType=ProcessType.INTERSECT_RASTER,
-                            metadata=prjMeta, matrixColumnId=None,
+                            metadata=prj_meta, matrixColumnId=None,
                             postToSolr=True, status=JobStatus.GENERAL,
                             statusModTime=gmt().mjd)
-                        mtxCol = scribe.findOrInsertMatrixColumn(tmpCol)
-                        
+                        mtx_col = scribe.findOrInsertMatrixColumn(tmp_col)
+
                         # Need to intersect this projection with the new
                         #    shapegrid, stockpile it, and post to solr
                         pav_fname = os.path.join(
-                            work_dir, 'pav_{}.lmm'.format(mtxCol.getId()))
+                            work_dir, 'pav_{}.lmm'.format(mtx_col.getId()))
                         pav_post_fname = os.path.join(
-                            work_dir, 'pav_{}_post.xml'.format(mtxCol.getId()))
+                            work_dir, 'pav_{}_post.xml'.format(
+                                mtx_col.getId()))
                         pav_success_fname = os.path.join(
-                            work_dir, 'pav_{}.success'.format(mtxCol.getId()))
-                        
+                            work_dir, 'pav_{}.success'.format(mtx_col.getId()))
+
                         # Intersect parameters
-                        min_presence = mtxCol.intersectParams[
+                        min_presence = mtx_col.intersectParams[
                             MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE]
-                        max_presence = mtxCol.intersectParams[
+                        max_presence = mtx_col.intersectParams[
                             MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE]
-                        min_percent = mtxCol.intersectParams[
+                        min_percent = mtx_col.intersectParams[
                             MatrixColumn.INTERSECT_PARAM_MIN_PERCENT]
-                        
+
                         intersect_cmd = IntersectRasterCommand(
-                            myShp.getDLocation(), prj.getDLocation(),
+                            my_shp.getDLocation(), prj.getDLocation(),
                             pav_fname, min_presence, max_presence, min_percent,
                             squid=prj.squid)
                         index_cmd = IndexPAVCommand(
-                            pav_fname, mtxCol.getId(), prj.getId(),
+                            pav_fname, mtx_col.getId(), prj.getId(),
                             pam.getId(), pav_post_fname)
                         stockpile_cmd = StockpileCommand(
-                            ProcessType.INTERSECT_RASTER, mtxCol.getId(),
+                            ProcessType.INTERSECT_RASTER, mtx_col.getId(),
                             pav_success_fname, [pav_fname])
                         # Add rules to list
                         rules.append(intersect_cmd.get_makeflow_rule())
                         rules.append(index_cmd.get_makeflow_rule(local=True))
-                        rules.append(stockpile_cmd.get_makeflow_rule(local=True))
-                    
-                
+                        rules.append(
+                            stockpile_cmd.get_makeflow_rule(local=True))
+
                 # Initialize PAM after matrix columns inserted
                 pam.updateStatus(JobStatus.INITIALIZE)
                 scribe.updateObject(pam)
-                
+
         # GRIMs
         # --------
-        for grim in origGS.getGRIMs():
-            newGrim = LMMatrix(
+        for grim in orig_gs.getGRIMs():
+            new_grim = LMMatrix(
                 None, matrixType=MatrixType.GRIM,
                 processType=ProcessType.RAD_INTERSECT, gcmCode=grim.gcmCode,
                 altpredCode=grim.altpredCode, dateCode=grim.dateCode,
-                metadata=grim.mtxMetadata, userId=userId, gridset=updatedGS,
+                metadata=grim.mtxMetadata, userId=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
-            insertedGrim = scribe.findOrInsertMatrix(newGrim)
-            grimMetadata = grim.mtxMetadata
-            grimMetadata['keywords'].append('subset')
-            grimMetadata = {
-                'keywords' : ['subset'],
-                'description' : 'Reintersection of GRIM {}'.format(grim.getId())
+            inserted_grim = scribe.findOrInsertMatrix(new_grim)
+            grim_metadata = grim.mtxMetadata
+            grim_metadata['keywords'].append('subset')
+            grim_metadata = {
+                'keywords': ['subset'],
+                'description': 'Reintersection of GRIM {}'.format(grim.getId())
             }
             if 'keywords' in grim.mtxMetadata:
-                grimMetadata['keywords'].extend(grim.mtxMetadata['keywords'])
-            
+                grim_metadata['keywords'].extend(grim.mtxMetadata['keywords'])
+
             # Get corresponding grim layers (scenario)
-            oldGrimCols = scribe.getColumnsForMatrix(grim.getId())
-            
-            for oldCol in oldGrimCols:
+            old_grim_cols = scribe.getColumnsForMatrix(grim.getId())
+
+            for old_col in old_grim_cols:
                 # TODO: Metadata
-                grimLyrMeta = {}
-                tmpCol = MatrixColumn(
-                    None, insertedGrim.getId(), userId, layer=oldCol.layer,
-                    shapegrid=myShp, intersectParams=oldCol.intersectParams,
-                    squid=oldCol.squid, ident=oldCol.ident,
+                grim_lyr_meta = {}
+                tmp_col = MatrixColumn(
+                    None, inserted_grim.getId(), user_id, layer=old_col.layer,
+                    shapegrid=my_shp, intersectParams=old_col.intersectParams,
+                    squid=old_col.squid, ident=old_col.ident,
                     processType=ProcessType.INTERSECT_RASTER_GRIM,
-                    metadata=grimLyrMeta, matrixColumnId=None,
+                    metadata=grim_lyr_meta, matrixColumnId=None,
                     postToSolr=False, status=JobStatus.GENERAL,
                     statusModTime=gmt().mjd)
-                mtxCol = scribe.findOrInsertMatrixColumn(tmpCol)
-                
+                mtx_col = scribe.findOrInsertMatrixColumn(tmp_col)
+
                 # Add rules to workflow, intersect and stockpile
                 grim_col_fname = os.path.join(
-                    work_dir, 'grim_col_{}.lmm'.format(mtxCol.getId()))
+                    work_dir, 'grim_col_{}.lmm'.format(mtx_col.getId()))
                 grim_col_success_fname = os.path.join(
-                    work_dir, 'grim_col_{}.success'.format(mtxCol.getId()))
-                min_percent = mtxCol.intersectParams[
+                    work_dir, 'grim_col_{}.success'.format(mtx_col.getId()))
+                min_percent = mtx_col.intersectParams[
                     MatrixColumn.INTERSECT_PARAM_MIN_PERCENT]
                 intersect_cmd = GrimRasterCommand(
-                    myShp.getDLocation(), oldCol.layer.getDLocation(),
-                    grim_col_fname, minPercent=min_percent, ident=mtxCol.ident)
+                    my_shp.getDLocation(), old_col.layer.getDLocation(),
+                    grim_col_fname, minPercent=min_percent,
+                    ident=mtx_col.ident)
                 stockpile_cmd = StockpileCommand(
-                    ProcessType.INTERSECT_RASTER_GRIM, mtxCol.getId(),
+                    ProcessType.INTERSECT_RASTER_GRIM, mtx_col.getId(),
                     grim_col_success_fname, [grim_col_fname])
                 # Add rules to list
                 rules.append(intersect_cmd.get_makeflow_rule())
                 rules.append(stockpile_cmd.get_makeflow_rule(local=True))
-            
-            insertedGrim.updateStatus(JobStatus.INITIALIZE)
-            scribe.updateObject(insertedGrim)
-            
+
+            inserted_grim.updateStatus(JobStatus.INITIALIZE)
+            scribe.updateObject(inserted_grim)
+
         # BioGeo
         # --------
-        for bg in origGS.getBiogeographicHypotheses():
-            newBG = LMMatrix(
+        for orig_bg in orig_gs.getBiogeographicHypotheses():
+            new_bg = LMMatrix(
                 None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
-                processType=ProcessType.ENCODE_HYPOTHESES, gcmCode=bg.gcmCode,
-                altpredCode=bg.altpredCode, dateCode=bg.dateCode,
-                metadata=bg.mtxMetadata, userId=userId, gridset=updatedGS,
+                processType=ProcessType.ENCODE_HYPOTHESES,
+                gcmCode=orig_bg.gcmCode, altpredCode=orig_bg.altpredCode,
+                dateCode=orig_bg.dateCode, metadata=orig_bg.mtxMetadata,
+                userId=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
-            insertedBG = scribe.findOrInsertMatrix(newBG)
-            mtxCols = []
-            oldCols = scribe.getColumnsForMatrix(bg.getId())
-            
-            encoder = LayerEncoder(myShp.getDLocation())
+            inserted_bg = scribe.findOrInsertMatrix(new_bg)
+            mtx_cols = []
+            old_cols = scribe.getColumnsForMatrix(orig_bg.getId())
+
+            encoder = LayerEncoder(my_shp.getDLocation())
             # TODO(CJ): This should be pulled from a default config or the
             #     database or somewhere
             min_coverage = .25
             # Do this for each layer because we need to have the layer object
             #     do create a matrix column
-            for oldCol in oldCols:
-                lyr = oldCol.layer
-                
+            for old_col in old_cols:
+                lyr = old_col.layer
+
                 try:
-                    valAttribute = oldCol.layer.lyrMetadata[
+                    val_attribute = old_col.layer.lyrMetadata[
                         MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
                 except KeyError:
-                    valAttribute = None
-                
+                    val_attribute = None
+
                 new_cols = encoder.encode_biogeographic_hypothesis(
-                     lyr.getDLocation(), lyr.name, min_coverage, 
-                     event_field=valAttribute)
-                
+                     lyr.getDLocation(), lyr.name, min_coverage,
+                     event_field=val_attribute)
+
                 for col in new_cols:
                     try:
-                        efValue = col.split(' - ')[1]
-                    except:
-                        efValue = col
-                        
-                    if valAttribute is not None:
-                        intParams = {
-                            MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
-                            # TODO(CJ): Pick a better name if we need to do this
-                            MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): lyr.name
+                        ef_value = col.split(' - ')[1]
+                    except Exception:
+                        ef_value = col
+
+                    if val_attribute is not None:
+                        int_params = {
+                            MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower():
+                                val_attribute,
+                            # TODO(CJ): Pick a better name if we need this
+                            MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower():
+                                lyr.name
                         }
                     else:
-                        intParams = None
-                    
+                        int_params = None
+
                     metadata = {
-                        ServiceObject.META_DESCRIPTION.lower() : 
-                    'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
-                        ServiceObject.META_TITLE.lower() : 
-                    'Biogeographic hypothesis column ({})'.format(col)}
+                        ServiceObject.META_DESCRIPTION.lower(): (
+                            'Encoded Helmert contrasts using the Lifemapper'
+                            ' bioGeoContrasts module'),
+                        ServiceObject.META_TITLE.lower():
+                            'Biogeographic hypothesis column ({})'.format(col)
+                    }
                     mc = MatrixColumn(
-                        len(mtxCols), insertedBG.getId(), userId, layer=lyr,
-                        shapegrid=myShp, intersectParams=intParams,
+                        len(mtx_cols), inserted_bg.getId(), user_id, layer=lyr,
+                        shapegrid=my_shp, intersectParams=int_params,
                         metadata=metadata, postToSolr=False,
                         status=JobStatus.COMPLETE, statusModTime=gmt().mjd)
-                    updatedMC = scribe.findOrInsertMatrixColumn(mc)
-                    mtxCols.append(updatedMC)
-                    
+                    updated_mc = scribe.findOrInsertMatrixColumn(mc)
+                    mtx_cols.append(updated_mc)
+
             enc_mtx = encoder.get_encoded_matrix()
             # Write matrix
             # TODO(CJ): Evaluate if this is how we want to do it
-            insertedBG = enc_mtx
-            insertedBG.setHeaders(enc_mtx.getHeaders())
-            insertedBG.write(overwrite=True)
-            insertedBG.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
-            scribe.updateObject(insertedBG)
-            
+            inserted_bg = enc_mtx
+            inserted_bg.setHeaders(enc_mtx.getHeaders())
+            inserted_bg.write(overwrite=True)
+            inserted_bg.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
+            scribe.updateObject(inserted_bg)
+
         # Write workflow and update db object
-        myWf.addCommands(rules)
-        myWf.write()
-        myWf.updateStatus(JobStatus.INITIALIZE)
-        scribe.updateObject(myWf)
-    
-    return updatedGS
+        my_wf.addCommands(rules)
+        my_wf.write()
+        my_wf.updateStatus(JobStatus.INITIALIZE)
+        scribe.updateObject(my_wf)
+
+    return updated_gs
+
 
 # ............................................................................
-def getRowHeaders(shapefileFilename):
-    """
-    @summary: Get a (sorted by feature id) list of row headers for a shapefile
-    @todo: Move this to LmCommon or LmBackend and use with LmCompute.  This is
-                 a rough copy of what is now used for rasterIntersect
+def get_row_headers(shapefile_filename):
+    """Get a (sorted by feature id) list of row headers for a shapefile
+
+    Todo:
+        Move this to LmCommon or LmBackend and use with LmCompute.  This is a
+            rough copy of what is now used for rasterIntersect
     """
     ogr.RegisterAll()
     drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
-    ds = drv.Open(shapefileFilename)
-    lyr = ds.GetLayer(0)
-    
-    rowHeaders = []
-    
+    dataset = drv.Open(shapefile_filename)
+    lyr = dataset.GetLayer(0)
+
+    row_headers = []
+
     for j in range(lyr.GetFeatureCount()):
-        curFeat = lyr.GetFeature(j)
-        siteIdx = curFeat.GetFID()
-        x, y = curFeat.geometry().Centroid().GetPoint_2D()
-        rowHeaders.append((siteIdx, x, y))
-        
-    return sorted(rowHeaders)
+        cur_feat = lyr.GetFeature(j)
+        site_idx = cur_feat.GetFID()
+        x_coord, y_coord = cur_feat.geometry().Centroid().GetPoint_2D()
+        row_headers.append((site_idx, x_coord, y_coord))
+
+    return sorted(row_headers)

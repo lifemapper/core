@@ -1,47 +1,44 @@
-"""
+"""Layer module
 """
 from io import StringIO
 import glob
 import os
-from osgeo import gdal, gdalconst, ogr, osr
 import subprocess
 import zipfile
 
+from osgeo import gdal, gdalconst, ogr, osr
+
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.attribute_object import LmAttObj
-from LmCommon.common.lmconstants import (GEOTIFF_INTERFACE, 
-                                SHAPEFILE_INTERFACE, OFTInteger, OFTString)
+from LmCommon.common.lmconstants import (
+    GEOTIFF_INTERFACE, OFTInteger, OFTString, SHAPEFILE_INTERFACE)
 from LmCommon.common.time import gmt
 from LmCommon.common.verify import compute_hash, verify_hash
 
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
 
-from LmServer.common.lmconstants import (UPLOAD_PATH, OccurrenceFieldNames, 
-                GDALDataTypes, OGRDataTypes, LMFormat, LMServiceType)
+from LmServer.common.geotools import GeoFileInfo
+from LmServer.common.lmconstants import (
+    GDALDataTypes, OGRDataTypes, LMFormat, LMServiceType, OccurrenceFieldNames,
+    UPLOAD_PATH)
 from LmServer.common.localconstants import APP_PATH, DEFAULT_EPSG
+
 
 # .............................................................................
 class _Layer(LMSpatialObject, ServiceObject):
     META_IS_CATEGORICAL = 'isCategorical'
     META_IS_DISCRETE = 'isDiscrete'
-# .............................................................................
-# Constructor
-# .............................................................................
-    def __init__(self, name, userId, epsgcode, lyrId=None, 
-                     squid=None, ident=None, verify=None, dlocation=None, 
-                     metadata={}, dataFormat=None, gdalType=None, ogrType=None,
-                     valUnits=None, valAttribute=None, 
-                     nodataVal=None, minVal=None, maxVal=None, resolution=None, 
-                     # LMSpatialObject
-                     bbox=None, mapunits=None, 
-                     # ServiceObject
-                     svcObjId=None, serviceType=LMServiceType.LAYERS, 
-                     metadataUrl=None, parentMetadataUrl=None, modTime=None):
-        """
-        @summary Layer superclass constructor
-        @copydoc LmServer.base.lmobj.LMSpatialObject::__init__()
-        @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
+    # .............................
+    def __init__(self, name, userId, epsgcode, lyrId=None, squid=None,
+                 ident=None, verify=None, dlocation=None, metadata={},
+                 dataFormat=None, gdalType=None, ogrType=None, valUnits=None,
+                 valAttribute=None, nodataVal=None, minVal=None, maxVal=None,
+                 resolution=None, bbox=None, mapunits=None, svcObjId=None,
+                 serviceType=LMServiceType.LAYERS, metadataUrl=None,
+                 parentMetadataUrl=None, modTime=None):
+        """Layer superclass constructor
+
         @note: svcObjId may be filled with the base LayerId or a unique 
                  parameterized id.
         @param name: Short name, unique with userid and epsq.  
@@ -70,10 +67,9 @@ class _Layer(LMSpatialObject, ServiceObject):
         if svcObjId is None:
             svcObjId = lyrId
         LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
-        ServiceObject.__init__(self,  userId, svcObjId, serviceType, 
-                                      metadataUrl=metadataUrl, 
-                                      parentMetadataUrl=parentMetadataUrl, 
-                                      modTime=modTime)
+        ServiceObject.__init__(
+            self, userId, svcObjId, serviceType, metadataUrl=metadataUrl,
+            parentMetadataUrl=parentMetadataUrl, modTime=modTime)
 #        ogr.UseExceptions()
         self.name = name
         self._layerUserId = userId
@@ -88,7 +84,7 @@ class _Layer(LMSpatialObject, ServiceObject):
         self.valUnits = valUnits
         self._valAttribute = valAttribute
         self.nodataVal = nodataVal
-        self.minVal = minVal 
+        self.minVal = minVal
         self.maxVal = maxVal
         self.resolution = resolution
         self._dlocation = None
@@ -96,7 +92,7 @@ class _Layer(LMSpatialObject, ServiceObject):
         self._verify = None
 #         self.setVerify(verify=verify)
         self._mapFilename = None
-        
+
 # ...............................................
     @staticmethod
     def isGeoSimilar(self, lyr1, lyr2):
@@ -105,42 +101,40 @@ class _Layer(LMSpatialObject, ServiceObject):
         if lyr1.bbox != lyr2.bbox:
             return False
         if ((lyr1.resolution is not None and lyr2.resolution is not None) and
-             (lyr1.resolution != lyr2.resolution)):
+                (lyr1.resolution != lyr2.resolution)):
             return False
         return True
-        
+
 # ...............................................
     def setLayerId(self, lyrid):
         """
-        @summary: Sets the database id of the Layer record, which can be used  
+        @summary: Sets the database id of the Layer record, which can be used
                      by multiple Parameterized Layer objects
-        @param lyrid: The record id for the database 
+        @param lyrid: The record id for the database
         """
         self._layerId = lyrid
 
     def getLayerId(self):
-        """
-        @summary: Returns the database id of the Layer record, which can be used  
-                     by multiple Parameterized Layer objects
+        """Returns the database id of the layer record.
         """
         return self._layerId
 
 # ...............................................
     def setLayerUserId(self, lyruserid):
         """
-        @summary: Sets the User id of the Layer record, which can be used by 
+        @summary: Sets the User id of the Layer record, which can be used by
                      by multiple Parameterized Layer objects
-        @param lyruserid: The user id for the layer 
+        @param lyruserid: The user id for the layer
         """
         self._layerUserId = lyruserid
 
     def getLayerUserId(self):
         """
-        @summary: Returns the User id of the Layer record, which can be used by 
+        @summary: Returns the User id of the Layer record, which can be used by
                      by multiple Parameterized Layer objects
         """
         return self._layerUserId
-    
+
 # ...............................................
     # TODO: remove this??
     def getValAttribute(self):
@@ -150,7 +144,7 @@ class _Layer(LMSpatialObject, ServiceObject):
     @property
     def dataFormat(self):
         return self._dataFormat
-    
+
     @property
     def gdalType(self):
         return self._gdalType
@@ -158,11 +152,11 @@ class _Layer(LMSpatialObject, ServiceObject):
     @property
     def ogrType(self):
         return self._ogrType
-    
+
     @property
     def valAttribute(self):
         return self._valAttribute
-    
+
 # # ...............................................
 #     def _setUnits(self, mapunits):
 #         """
@@ -194,7 +188,7 @@ class _Layer(LMSpatialObject, ServiceObject):
         @param ogrType: GDAL or OGR-supported data format type code, available at
                              http://www.gdal.org/formats_list.html and
                              http://www.gdal.org/ogr/ogr_formats.html
-        @return: boolean for success/failure 
+        @return: boolean for success/failure
         @raise LMError: on failure to read data.
         """
         raise LMError('readData must be implemented in Subclass')
@@ -211,9 +205,9 @@ class _Layer(LMSpatialObject, ServiceObject):
             if dlocation is None:
                 dlocation = self._dlocation
             value = compute_hash(dlocation=dlocation)
- 
+
         return value
- 
+
 # ...............................................
     def verifyHash(self, hashval, dlocation=None, content=None):
         """
@@ -227,7 +221,7 @@ class _Layer(LMSpatialObject, ServiceObject):
                 dlocation = self._dlocation
             verified = verify_hash(hashval, dlocation=dlocation)
         return verified
-     
+
 # ...............................................
     def setVerify(self, verify=None, dlocation=None, content=None):
         value = None
@@ -238,8 +232,8 @@ class _Layer(LMSpatialObject, ServiceObject):
                 value = self.computeHash(content=content)
             else:
                 if dlocation is None:
-                    dlocation = self._dlocation  
-                if dlocation is not None and os.path.exists(dlocation):         
+                    dlocation = self._dlocation
+                if dlocation is not None and os.path.exists(dlocation):
                     value = self.computeHash(dlocation=dlocation)
             self._verify = value
 
@@ -261,8 +255,8 @@ class _Layer(LMSpatialObject, ServiceObject):
         """
         @summary: Return the relative filepath for object data
         @note: If the object does not have an ID, this returns None
-        @note: This is to be pre-pended with a relative directory name for data  
-                 used by a single workflow/Makeflow 
+        @note: This is to be pre-pended with a relative directory name for data
+                 used by a single workflow/Makeflow
         """
         basename = None
         self.setDLocation()
@@ -275,25 +269,25 @@ class _Layer(LMSpatialObject, ServiceObject):
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
         """
-        dloc = self._earlJr.createOtherLayerFilename(self._layerUserId, self._epsg, 
-                                                            self.name, ext=extension)
+        dloc = self._earlJr.createOtherLayerFilename(
+            self._layerUserId, self._epsg, self.name, ext=extension)
         return dloc
-    
-    def getDLocation(self): 
+
+    def getDLocation(self):
         """
         @summary: Return the _dlocation attribute
-        @note: Do not create and populate value by default. 
+        @note: Do not create and populate value by default.
         """
         return self._dlocation
-    
-    def clearDLocation(self): 
+
+    def clearDLocation(self):
         """
         @summary: Clear the _dlocation attribute
         """
         self._dlocation = None
-        self._absolutePath = None 
+        self._absolutePath = None
         self._baseFilename = None
-    
+
     def setDLocation(self, dlocation=None):
         """
         @summary: Set the Layer._dlocation attribute if it is None.  Use dlocation
@@ -307,30 +301,33 @@ class _Layer(LMSpatialObject, ServiceObject):
             self._dlocation = dlocation
         # Populate absolutePath and baseFilename attributes
         if self._dlocation is not None:
-            self._absolutePath, self._baseFilename = os.path.split(self._dlocation)
+            self._absolutePath, self._baseFilename = os.path.split(
+                self._dlocation)
         else:
             self._absolutePath, self._baseFilename = None, None
-                        
+
 # ...............................................
     def clearData(self):
         raise LMError('Method must be implemented in subclass')
-                        
+
 # ...............................................
     def copyData(self):
         raise LMError('Method must be implemented in subclass')
-                        
+
 # ...............................................
     def getAbsolutePath(self):
         if self._absolutePath is None and self._dlocation is not None:
-            self._absolutePath, self._baseFilename = os.path.split(self._dlocation)
+            self._absolutePath, self._baseFilename = os.path.split(
+                self._dlocation)
         return self._absolutePath
-        
+
 # ...............................................
     def getBaseFilename(self):
         if self._baseFilename is None and self._dlocation is not None:
-            self._absolutePath, self._baseFilename = os.path.split(self._dlocation)
+            self._absolutePath, self._baseFilename = os.path.split(
+                self._dlocation)
         return self._baseFilename
-    
+
 # ...............................................
     def getSRSAsWkt(self):
         try:
@@ -339,27 +336,28 @@ class _Layer(LMSpatialObject, ServiceObject):
             raise
         else:
             wkt = srs.ExportToWkt()
-            return wkt 
-                        
+            return wkt
+
 # ...............................................
     def dumpLyrMetadata(self):
         return super(_Layer, self)._dump_metadata(self.lyrMetadata)
- 
+
 # ...............................................
     def loadLyrMetadata(self, newMetadata):
         self.lyrMetadata = super(_Layer, self)._load_metadata(newMetadata)
 
 # ...............................................
     def addLyrMetadata(self, newMetadataDict):
-        self.lyrMetadata = super(_Layer, self)._add_metadata(newMetadataDict, 
-                                             existingMetadataDict=self.lyrMetadata)
+        self.lyrMetadata = super(
+            _Layer, self)._add_metadata(
+                newMetadataDict, existingMetadataDict=self.lyrMetadata)
 
     # ...............................................
     def updateLayer(self, modTime, metadata=None):
         """
         @summary: Updates modTime, data verification hash, metadata.
         @param modTime: time/date last modified
-        @param metadata: Dictionary of metadata keys/values; key constants are 
+        @param metadata: Dictionary of metadata keys/values; key constants are
                               class attributes.
         """
         self.updateModtime(modTime)
@@ -369,14 +367,14 @@ class _Layer(LMSpatialObject, ServiceObject):
 
 # ...............................................
 # Properties
-# ...............................................              
+# ...............................................
 # .............................................................................
 class _LayerParameters(LMObject):
     # Constants for metadata dictionary keys
     PARAM_FILTER_STRING = 'filterString'
     PARAM_VAL_NAME = 'valName'
     PARAM_VAL_UNITS = 'valUnits'
-    
+
 # .............................................................................
 # Constructor
 # .............................................................................
@@ -401,46 +399,47 @@ class _LayerParameters(LMObject):
         self.loadParamMetadata(metadata)
         self._matrixIndex = matrixIndex
         self.paramModTime = modTime
-        
+
 # ...............................................
     def dumpParamMetadata(self):
         return super(_LayerParameters, self)._dump_metadata(self.paramMetadata)
- 
+
 # ...............................................
     def loadParamMetadata(self, newMetadata):
-        self.paramMetadata = super(_LayerParameters, self)._load_metadata(newMetadata)
+        self.paramMetadata = super(
+            _LayerParameters, self)._load_metadata(newMetadata)
 
 # ...............................................
     def addParamMetadata(self, newMetadataDict):
-        self.paramMetadata = super(_LayerParameters, self)._add_metadata(
-                                                    newMetadataDict, 
-                                                    existingMetadataDict=self.paramMetadata)
+        self.paramMetadata = super(
+            _LayerParameters, self)._add_metadata(
+                newMetadataDict, existingMetadataDict=self.paramMetadata)
 
 # ...............................................
     def setParametersId(self, paramid):
         """
-        @summary: Sets the database id of the Layer Parameters (either 
-                     PresenceAbsence or AncillaryValues) record, which can be used by 
-                     multiple Parameterized Layer objects
-        @param paramid: The record id for the database 
+        @summary: Sets the database id of the Layer Parameters (either
+                     PresenceAbsence or AncillaryValues) record, which can be
+                     used by multiple Parameterized Layer objects
+        @param paramid: The record id for the database
         """
         self._paramId = paramid
 
     def getParamId(self):
         """
-        @summary: Returns the database id of the Layer Parameters (either 
-                     PresenceAbsence or AncillaryValues) record, which can be used by 
-                     multiple Parameterized Layer objects
+        @summary: Returns the database id of the Layer Parameters (either
+                     PresenceAbsence or AncillaryValues) record, which can be
+                     used by multiple Parameterized Layer objects
         """
         return self._paramId
 
 # ...............................................
     def setParamUserId(self, usr):
         """
-        @summary: Sets the User id of the Layer Parameters (either 
-                     PresenceAbsence or AncillaryValues) record, which can be used by 
-                     multiple Parameterized Layer objects
-        @param usr: The user id for the parameters 
+        @summary: Sets the User id of the Layer Parameters (either
+                     PresenceAbsence or AncillaryValues) record, which can be
+                     used by multiple Parameterized Layer objects
+        @param usr: The user id for the parameters
         """
         self._paramUserId = usr
 
@@ -451,7 +450,7 @@ class _LayerParameters(LMObject):
                      multiple Parameterized Layer objects
         """
         return self._paramUserId
-    
+
 # ...............................................
     def setMatrixIndex(self, matrixIdx):
         """
@@ -929,14 +928,13 @@ class Raster(_Layer):
         @postcondition: The raster file is updated with new srs information.
         @raise LMError: on failure to open dataset or write srs
         """
-        from LmServer.common.geotools import GeoFileInfo
 
         if (self._dlocation is not None and os.path.exists(self._dlocation)):
             geoFI = GeoFileInfo(self._dlocation, updateable=True)
             if isinstance(srs, osr.SpatialReference):
                 srs = srs.ExportToWkt()
             geoFI.writeWktSRS(srs)
-                
+
 # ...............................................
     def copySRSFromFile(self, fname):
         """
@@ -1010,17 +1008,16 @@ class Vector(_Layer):
     """
     Class to hold information about a vector dataset.
     """
-    # ...............................................         
-    def __init__(self, name, userId, epsgcode, lyrId=None, 
-                     squid=None, ident=None, verify=None, dlocation=None, 
-                     metadata={}, dataFormat=LMFormat.getDefaultOGR().driver, ogrType=None,
-                     valUnits=None, valAttribute=None, 
-                     nodataVal=None, minVal=None, maxVal=None, 
-                     mapunits=None, resolution=None, 
-                     bbox=None,
-                     svcObjId=None, serviceType=LMServiceType.LAYERS, 
-                     metadataUrl=None, parentMetadataUrl=None, modTime=None,
-                     featureCount=0, featureAttributes={}, features={}, fidAttribute=None):
+    # ..............................................
+    def __init__(self, name, userId, epsgcode, lyrId=None, squid=None,
+                 ident=None, verify=None, dlocation=None, metadata={},
+                 dataFormat=LMFormat.getDefaultOGR().driver, ogrType=None,
+                 valUnits=None, valAttribute=None, nodataVal=None, minVal=None,
+                 maxVal=None, mapunits=None, resolution=None, bbox=None,
+                 svcObjId=None, serviceType=LMServiceType.LAYERS,
+                 metadataUrl=None, parentMetadataUrl=None, modTime=None,
+                 featureCount=0, featureAttributes={}, features={},
+                 fidAttribute=None):
         """
         @summary Vector constructor, inherits from _Layer
         @copydoc LmServer.base.layer2._Layer::__init__()
@@ -2488,19 +2485,19 @@ class Vector(_Layer):
             else:
                 findLocalId = False
             for fldidx, (fldname, fldtype) in self._featureAttributes.items():
-                
+
                 if fldname == fieldname:
                     fieldIdx = fldidx
                     break
                 elif findLocalId and fldname in OccurrenceFieldNames.LOCAL_ID:
                     fieldIdx = fldidx
                     break
-                
+
             return fieldIdx
         else:
             raise LMError('Dataset featureAttributes are empty.')
 
-        
+
 # ...............................................
     def getSRS(self):
         if self._dlocation is not None and os.path.exists(self._dlocation):
@@ -2518,7 +2515,7 @@ class Vector(_Layer):
             return srs
         else:
             raise LMError('Input file %s does not exist' % self._dlocation)
-        
+
 # .............................................................................
 # Private methods
 # .............................................................................
@@ -2532,4 +2529,4 @@ class Vector(_Layer):
                 feat.SetGeometryDirectly(geom)
             elif val is not None and val != 'None':
                 feat.SetField(fldname, val)
-        
+

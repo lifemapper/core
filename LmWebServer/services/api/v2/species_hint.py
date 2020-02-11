@@ -7,7 +7,7 @@ import cherrypy
 from LmCommon.common.lmconstants import HTTPStatus
 
 from LmServer.common.lmconstants import SOLR_FIELDS
-from LmServer.common.solr import queryArchiveIndex
+from LmServer.common.solr import query_archive_index
 
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
@@ -37,9 +37,9 @@ class SpeciesHintService(LmService):
             genus = '{}*'.format(parts[0])
             species_search = None
 
-        matches = queryArchiveIndex(
-            taxGenus=genus.title(), taxSpecies=species_search,
-            userId=self.get_user_id(urlUser=urlUser))
+        matches = query_archive_index(
+            tax_genus=genus.title(), tax_species=species_search,
+            user_id=self.get_user_id(urlUser=urlUser))
 
         occ_ids = []
         ret = []

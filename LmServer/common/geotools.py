@@ -3,13 +3,10 @@
 Note:
      From http://perrygeo.googlecode.com/svn/trunk/gis-bin/flip_raster.py
 """
-try:
-    import numpy
-except:
-    print('Unable to import numpy')
-    
 import os
-from osgeo import gdal
+
+import numpy
+from osgeo import gdal, gdalconst
 from osgeo import gdalconst
 
 from LmBackend.common.lmobj import LMError, LMObject
@@ -535,87 +532,6 @@ class GeoFileInfo(LMObject):
 '''
 Implements some tools for visualizing points
 '''
-from math import floor
 
 DEFAULT_PROJ = 'GEOGCS["WGS84", DATUM["WGS84", SPHEROID["WGS84", 6378137.0, 298.257223563]], PRIMEM["Greenwich", 0.0], UNIT["degree", 0.017453292519943295], AXIS["Longitude",EAST], AXIS["Latitude",NORTH]]'
 
-# ...............................................
-def gxy2xy(gxy,gt):
-    """
-    @summary: Convert geographic coordinates to pixel coordinates.
-    
-    Given a geographic coordinate (in the form of a two element, one
-    dimensional array, [0] = x, [1] = y), and an affine transform, this
-    function returns the inverse of the transform, that is, the pixel
-    coordinates corresponding to the geographic coordinates.
-    
-    Arguments:
-    @param gxy: sequence of two elements [x coordinate, y coordinate]
-    @param gt: the affine transformation associated with a dataset
-    @return: list of 2 elements [x pixel, y pixel] or None if the transform is 
-                invalid.
-    """
-    xy = [0,0]
-    gx = gxy[0]
-    gy = gxy[1]
-    
-    # Determinant of affine transformation
-    det = gt[1]*gt[5] - gt[4]*gt[2]
-
-    # If the transformation is not invertable return None
-    if det == 0.0:
-        return None
-    
-    t1 = gx*gt[5] - gt[0]*gt[5] - gt[2]*gy + gt[2]*gt[3]
-    
-    #
-    # Note:  by using floor() instead of int(x-0.5) (which truncates) the pixels
-    # around the origin are not an extra half unit wide.
-    #
-    xy[0] = floor( t1 / det )
-    t1 = gy*gt[1] - gt[1]*gt[3] - gx*gt[4] + gt[4]*gt[0]
-    xy[1] = floor( t1 / det )
-    xy[0] = int(xy[0])
-    xy[1] = int(xy[1])
-    return xy
-
-# ...............................................
-def xy2gxy(xy, gt, at='center'):
-    """
-    @summary: Compute geographic coordinates from pixel coordinates.
-    @param xy: sequence of two elements [pixel x, pixel y]
-    @param gt: the affine transformation associated with a dataset
-    @param at: determines where in the pixel the transformation occurrs
-            valid values are: 'bl', 'br', 'tr', 'tl', 'center'
-    @return: list of two elements [geo x, geo y]
-    """
-    gxy = [0,0]
-    at_delta = { 'bl': (0.0, 0.0),
-                     'br': (1.0, 0.0),
-                     'tr': (1.0, 1.0),
-                     'tl': (0.0, 1.0),
-                     'center': (0.5, 0.5) }
-    xx = xy[0] + at_delta[at][0]
-    yy = xy[1] + at_delta[at][1]
-    gxy[0] = gt[0] + gt[1]*xx + gt[2]*yy
-    gxy[1] = gt[3] + gt[4]*xx + gt[5]*yy
-    return gxy
-
-# ...............................................
-def makeTransform(height, width, extent):
-    '''
-    @summary: Generates a simple geographic transform based on the provided 
-                 height and width in pixels, and the extent as 
-                 [minx, miny, maxx, maxy].
-    @param height: height in pixels of the desired transform
-    @param width: width in pixels of the desired transform
-    @param extent: list of bounding coordinates in format[minx, miny, maxx, maxy]
-    @return: a tuple of 6 elements, a geo-transform as defined by GDAL
-    '''
-    transform = (extent[0],
-                     (extent[2]-extent[0])/width,
-                     0.,
-                     extent[3],
-                     0.,
-                     -(extent[3]-extent[1])/height)
-    return transform
