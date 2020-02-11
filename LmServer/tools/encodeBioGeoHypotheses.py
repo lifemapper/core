@@ -19,7 +19,7 @@ from LmCommon.common.lmconstants import (LM_USER, JobStatus, BoomKeys,
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmCommon.common.time import gmt
-from LmServer.base.utilities import isLMUser
+from LmServer.base.utilities import is_lm_user
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
 from LmServer.common.log import ScriptLogger
@@ -217,7 +217,7 @@ def _writeSuccessFile(message, successFname):
 
 # .............................................................................
 if __name__ == '__main__':
-    if not isLMUser():
+    if not is_lm_user():
         print(("Run this script as '{}'".format(LM_USER)))
         sys.exit(2)
 
@@ -270,7 +270,7 @@ from LmCommon.common.lmconstants import (LM_USER, JobStatus,
                                             MatrixType, ProcessType, SERVER_BOOM_HEADING)
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.encoding.layer_encoder import LayerEncoder
-from LmServer.base.utilities import isLMUser
+from LmServer.base.utilities import is_lm_user
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
 from LmServer.common.log import ScriptLogger

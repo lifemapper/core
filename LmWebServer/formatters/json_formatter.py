@@ -13,7 +13,7 @@ from LmCommon.common.lmconstants import LMFormat
 
 from LmServer.base.atom import Atom
 from LmServer.base.layer2 import Raster, Vector
-from LmServer.base.utilities import formatTimeHuman
+from LmServer.base.utilities import format_time_human
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import OGC_SERVICE_URL, LMFileType
 from LmServer.legion.envlayer import EnvLayer
@@ -35,7 +35,7 @@ def format_atom(obj):
     return {
         'epsg': obj.epsgcode,
         'id': obj.id,
-        'modificationTime': formatTimeHuman(obj.modTime),
+        'modificationTime': format_time_human(obj.modTime),
         'name': obj.name,
         'url': obj.url
     }
@@ -419,7 +419,7 @@ def _get_lifemapper_metadata(object_type, lm_id, url, user_id, status=None,
     if status is not None:
         lm_dict['status'] = status
     if status_mod_time is not None:
-        lm_dict['statusModTime'] = formatTimeHuman(status_mod_time)
+        lm_dict['statusModTime'] = format_time_human(status_mod_time)
         lm_dict['etag'] = md5('{}-{}'.format(url, status_mod_time)).hexdigest()
     if metadata is not None:
         lm_dict['metadata'] = metadata

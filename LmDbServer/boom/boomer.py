@@ -18,7 +18,7 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import JobStatus, LM_USER
 import LmCommon.common.time as lt
 
-from LmServer.base.utilities import isLMUser
+from LmServer.base.utilities import is_lm_user
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
                                          PUBLIC_ARCHIVE_NAME) 
@@ -331,7 +331,7 @@ class Boomer(LMObject):
 
 # .............................................................................
 if __name__ == "__main__":
-    if not isLMUser():
+    if not is_lm_user():
         print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
     earl = EarlJr()
@@ -380,7 +380,7 @@ from LmBackend.common.lmobj import LMError, LMObject
 
 from LmCommon.common.lmconstants import JobStatus, LM_USER
 
-from LmServer.base.utilities import isLMUser
+from LmServer.base.utilities import is_lm_user
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (
     DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE, LMFileType,

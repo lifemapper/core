@@ -25,7 +25,7 @@ from LmServer.common.lmconstants import (
     CATALOG_SERVER_BIN, CS_OPTIONS, LOG_PATH, MAKEFLOW_BIN, MAKEFLOW_OPTIONS,
     MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, RM_OLD_WORKER_DIRS_CMD,
     WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS)
-from LmServer.base.utilities import isLMUser
+from LmServer.base.utilities import is_lm_user
 from LmServer.common.localconstants import MAX_MAKEFLOWS, WORKER_PATH
 from LmServer.common.log import LmServerLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -455,7 +455,7 @@ class MattDaemon(Daemon):
 def main():
     """Main method for script.
     """
-    if not isLMUser():
+    if not is_lm_user():
         print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
 

@@ -10,7 +10,7 @@ from LmCommon.common.lm_xml import (
     CDATA, Element, register_namespace, set_default_namespace, SubElement,
     tostring)
 
-from LmServer.base.utilities import formatTimeHuman
+from LmServer.base.utilities import format_time_human
 from LmServer.common.lmconstants import OccurrenceFieldNames
 from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.legion.occlayer import OccurrenceLayer
@@ -111,7 +111,7 @@ def add_projection(parent, prj, visibility, indent=0):
     ext_data = SubElement(ground_overlay_el, 'ExtendedData')
 
     last_mod_el = SubElement(ext_data, 'Data', attrib={'name': 'lastModified'})
-    SubElement(last_mod_el, 'value', value=formatTimeHuman(prj.modTime))
+    SubElement(last_mod_el, 'value', value=format_time_human(prj.modTime))
 
     scn_title_el = SubElement(
         ext_data, 'Data', attrib={'name': 'scenarioTitle'})

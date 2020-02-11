@@ -37,7 +37,7 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isLMUser
+from LmServer.base.utilities import is_lm_user
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
@@ -259,7 +259,7 @@ class BOOMFiller(LMObject):
 
     # ...............................................
     def _fixPermissions(self, files=[], dirs=[]):
-        if isLMUser:
+        if is_lm_user:
             print('Permissions created correctly by LMUser')
         else:
             dirname = os.path.dirname(self.outConfigFilename)
@@ -1498,7 +1498,7 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.layer2 import Vector
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isLMUser
+from LmServer.base.utilities import is_lm_user
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset

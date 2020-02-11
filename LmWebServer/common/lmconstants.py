@@ -3,7 +3,7 @@
 from enum import Enum
 import os
 
-from LmServer.base.utilities import getColor, getMjdTimeFromISO8601
+from LmServer.base.utilities import get_mjd_time_from_iso_8601
 from LmServer.common.lmconstants import SESSION_DIR
 from LmServer.common.localconstants import SCRATCH_PATH, APP_PATH
 from LmWebServer.common.localconstants import PACKAGING_DIR
@@ -53,7 +53,7 @@ QUERY_PARAMETERS = {
     },
     'aftertime': {
         QP_NAME_KEY: 'afterTime',
-        QP_PROCESS_KEY: getMjdTimeFromISO8601
+        QP_PROCESS_KEY: get_mjd_time_from_iso_8601
     },
     'agent': {
         QP_NAME_KEY: 'agent'
@@ -73,7 +73,7 @@ QUERY_PARAMETERS = {
     },
     'beforetime': {
         QP_NAME_KEY: 'beforeTime',
-        QP_PROCESS_KEY: getMjdTimeFromISO8601
+        QP_PROCESS_KEY: get_mjd_time_from_iso_8601
     },
     'bbox': {
         # Comes in as a comma separated list, turn it into a tuple of floats
@@ -82,7 +82,6 @@ QUERY_PARAMETERS = {
     },
     'bgcolor': {
         QP_NAME_KEY: 'bgcolor',
-        QP_PROCESS_KEY: lambda x: getColor(x, allowRamp=False)
     },
     'canonicalname': {
         QP_NAME_KEY: 'canonicalName'
@@ -103,7 +102,6 @@ QUERY_PARAMETERS = {
     },
     'color': {
         QP_NAME_KEY: 'color',
-        QP_PROCESS_KEY: lambda x: getColor(x, allowRamp=True)
     },
     'coverage': {
         QP_NAME_KEY: 'coverage'
