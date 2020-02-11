@@ -44,7 +44,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
                      epsgcode=None, 
                      bbox=None, 
                      mapunits=None,
-                     modTime=None, 
+                     mod_time=None, 
                      scenarios=None, 
                      scenPackageId=None):
         """
@@ -56,7 +56,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
         ServiceObject.__init__(self, userId, scenPackageId, 
                                       LMServiceType.SCEN_PACKAGES, 
                                       metadataUrl=metadataUrl, 
-                                      modTime=modTime)
+                                      mod_time=mod_time)
         LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
         self.name = name
         self.loadScenpkgMetadata(metadata)
@@ -158,14 +158,14 @@ class Scenario(MapLayerSet):
                      metadataUrl=None, 
                      units=None, res=None, 
                      gcmCode=None, altpredCode=None, dateCode=None,
-                     bbox=None, modTime=None, 
+                     bbox=None, mod_time=None, 
                      layers=None, scenarioid=None):
         """
         @summary Constructor for the scenario class 
         @copydoc LmServer.base.layerset.MapLayerSet::__init__()
         @param code: The code for this set of layers
         @param res: size of each side of a pixel (assumes square pixels)
-        @param modTime: (optional) Last modification time of the object (any of 
+        @param mod_time: (optional) Last modification time of the object (any of 
                                 the points (saved in the PBJ) included in this 
                                 OccurrenceSet) in modified julian date format; 
                                 0 if points have not yet been collected and saved
@@ -178,7 +178,7 @@ class Scenario(MapLayerSet):
         MapLayerSet.__init__(self, code, 
                                     url=metadataUrl, 
                                     epsgcode=epsgcode, userId=userId, dbId=scenarioid,
-                                    bbox=bbox, mapunits=units, modTime=modTime,
+                                    bbox=bbox, mapunits=units, mod_time=mod_time,
                                     serviceType=LMServiceType.SCENARIOS,
                                     mapType=LMFileType.SCENARIO_MAP)
         # aka MapLayerSet.name     

@@ -107,7 +107,7 @@ class OccurrenceLayerService(LmService):
         cherrypy.response.status = HTTPStatus.ACCEPTED
         return Atom(
             gridset.get_id(), gridset.name, gridset.metadataUrl,
-            gridset.modTime, epsg=gridset.epsgcode)
+            gridset.mod_time, epsg=gridset.epsgcode)
 
     # ................................
     def _count_occurrence_sets(self, userId, afterTime=None, beforeTime=None,

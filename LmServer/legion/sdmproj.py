@@ -58,7 +58,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
             
         _LayerParameters.__init__(
             self, userId, paramId=projectId, matrixIndex=-1,
-            metadata=projMetadata, modTime=statusModTime)
+            metadata=projMetadata, mod_time=statusModTime)
         ProcessObject.__init__(
             self, objId=projectId, processType=processType, status=status,
             statusModTime=statusModTime)
@@ -213,7 +213,7 @@ class SDMProjection(_ProjectionType, Raster):
             minVal=minVal, maxVal=maxVal, mapunits=mapunits,
             resolution=resolution, bbox=bbox, svcObjId=lyrId,
             serviceType=LMServiceType.PROJECTIONS, metadataUrl=metadataUrl,
-            parentMetadataUrl=parentMetadataUrl, modTime=statusModTime)
+            parentMetadataUrl=parentMetadataUrl, mod_time=statusModTime)
         # TODO: clean this up.  Do not allow layer to calculate dlocation,  
         #         subclass SDMProjection must override
         self.setId(lyrId)
@@ -367,17 +367,17 @@ class SDMProjection(_ProjectionType, Raster):
 # Public methods
 # .............................................................................
     def updateStatus(self, status, metadata=None,
-                     modTime=gmt().mjd):
+                     mod_time=gmt().mjd):
         """
-        @summary Update status, metadata, modTime attributes on the
+        @summary Update status, metadata, mod_time attributes on the
             SDMProjection. 
         @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
         @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
         @copydoc LmServer.base.layer2._LayerParameters::updateParams()
         """
-        ProcessObject.updateStatus(self, status, modTime)
-        ServiceObject.updateModtime(self, modTime)
-        _LayerParameters.updateParams(self, modTime, metadata=metadata)
+        ProcessObject.updateStatus(self, status, mod_time)
+        ServiceObject.updateModtime(self, mod_time)
+        _LayerParameters.updateParams(self, mod_time, metadata=metadata)
         
         # If projection will be updated with a successful complete status,
         #     clear the map file so that it can be regenerated

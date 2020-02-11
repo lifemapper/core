@@ -27,7 +27,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                  bbox, siteId='siteid', siteX='centerX', siteY='centerY',
                  size=None, lyrId=None, verify=None, dlocation=None,
                  metadata={}, resolution=None, metadataUrl=None,
-                 parentMetadataUrl=None, modTime=None, featureCount=0,
+                 parentMetadataUrl=None, mod_time=None, featureCount=0,
                  featureAttributes={}, features={}, fidAttribute=None,
                  status=None, statusModTime=None):
         """
@@ -54,7 +54,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
         # field with latitude of the centroid of a site
         self.siteY = siteY
 
-        _LayerParameters.__init__(self, userId, paramId=lyrId, modTime=modTime)
+        _LayerParameters.__init__(self, userId, paramId=lyrId, mod_time=mod_time)
         Vector.__init__(
             self, name, userId, epsgcode, lyrId=lyrId, verify=verify,
             dlocation=dlocation, metadata=metadata,
@@ -62,7 +62,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             mapunits=mapunits, resolution=resolution, bbox=bbox,
             svcObjId=lyrId, serviceType=LMServiceType.SHAPEGRIDS,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
-            modTime=modTime, featureCount=featureCount,
+            mod_time=mod_time, featureCount=featureCount,
             featureAttributes=featureAttributes, features=features,
             fidAttribute=fidAttribute)
         ProcessObject.__init__(
@@ -88,7 +88,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             verify=vector.verify, dlocation=vector.getDLocation(),
             metadata=vector.lyrMetadata, resolution=vector.resolution,
             metadataUrl=vector.metadataUrl,
-            parentMetadataUrl=vector.parentMetadataUrl, modTime=vector.modTime,
+            parentMetadataUrl=vector.parentMetadataUrl, mod_time=vector.mod_time,
             featureCount=vector.featureCount,
             featureAttributes=vector.featureAttributes,
             features=vector.features, fidAttribute=vector.fidAttribute,
@@ -97,16 +97,16 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 
     # ...............................................
     def updateStatus(self, status, matrixIndex=None, metadata=None,
-                     modTime=gmt().mjd):
+                     mod_time=gmt().mjd):
         """
         @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
         @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
         @copydoc LmServer.base.layer2._LayerParameters::updateParams()
         """
-        ProcessObject.updateStatus(self, status, modTime)
-        ServiceObject.updateModtime(self, modTime)
+        ProcessObject.updateStatus(self, status, mod_time)
+        ServiceObject.updateModtime(self, mod_time)
         _LayerParameters.updateParams(
-            self, modTime, matrixIndex=matrixIndex, metadata=metadata)
+            self, mod_time, matrixIndex=matrixIndex, metadata=metadata)
              
 # ...............................................
     def _setCellsides(self, cellsides):

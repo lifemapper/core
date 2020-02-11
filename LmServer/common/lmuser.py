@@ -10,7 +10,7 @@ class LMUser(LMObject):
 
     def __init__(self, userid, email, password, isEncrypted=False, 
                      firstName=None, lastName=None, institution=None, 
-                     addr1=None, addr2=None, addr3=None, phone=None, modTime=None):
+                     addr1=None, addr2=None, addr3=None, phone=None, mod_time=None):
         """
         @summary Layer superclass constructor
         @param userid: user chosen unique id
@@ -22,7 +22,7 @@ class LMUser(LMObject):
         @param addr2: Address, line 1, of user (optional)
         @param addr3: Address, line 1, of user (optional)
         @param phone: Phone number of user (optional)
-        @param modTime: Last modification time of this object (optional)
+        @param mod_time: Last modification time of this object (optional)
         """
         LMObject.__init__(self)
         self.userid = userid
@@ -35,7 +35,7 @@ class LMUser(LMObject):
         self.address2 = addr2
         self.address3 = addr3
         self.phone = phone
-        self.modTime = modTime
+        self.mod_time = mod_time
 
 # ...............................................
     def getUserId(self):

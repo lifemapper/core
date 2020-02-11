@@ -36,7 +36,7 @@ class _Layer(LMSpatialObject, ServiceObject):
                  valAttribute=None, nodataVal=None, minVal=None, maxVal=None,
                  resolution=None, bbox=None, mapunits=None, svcObjId=None,
                  serviceType=LMServiceType.LAYERS, metadataUrl=None,
-                 parentMetadataUrl=None, modTime=None):
+                 parentMetadataUrl=None, mod_time=None):
         """Layer superclass constructor
 
         @note: svcObjId may be filled with the base LayerId or a unique 
@@ -69,7 +69,7 @@ class _Layer(LMSpatialObject, ServiceObject):
         LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
         ServiceObject.__init__(
             self, userId, svcObjId, serviceType, metadataUrl=metadataUrl,
-            parentMetadataUrl=parentMetadataUrl, modTime=modTime)
+            parentMetadataUrl=parentMetadataUrl, mod_time=mod_time)
 #        ogr.UseExceptions()
         self.name = name
         self._layerUserId = userId
@@ -353,14 +353,14 @@ class _Layer(LMSpatialObject, ServiceObject):
                 newMetadataDict, existingMetadataDict=self.lyrMetadata)
 
     # ...............................................
-    def updateLayer(self, modTime, metadata=None):
+    def updateLayer(self, mod_time, metadata=None):
         """
-        @summary: Updates modTime, data verification hash, metadata.
-        @param modTime: time/date last modified
+        @summary: Updates mod_time, data verification hash, metadata.
+        @param mod_time: time/date last modified
         @param metadata: Dictionary of metadata keys/values; key constants are
                               class attributes.
         """
-        self.updateModtime(modTime)
+        self.update_mod_time(mod_time)
         if metadata is not None:
             self.loadLyrMetadata(metadata)
         self.setVerify()
@@ -378,7 +378,7 @@ class _LayerParameters(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, userId, paramId=None, matrixIndex=-1, metadata={}, modTime=None):
+    def __init__(self, userId, paramId=None, matrixIndex=-1, metadata={}, mod_time=None):
         """
         @summary Initialize the _LayerParameters class instance
         @param userId: Id for the owner of these data.  If these 
@@ -391,14 +391,14 @@ class _LayerParameters(LMObject):
                              Parameterized Layer is not a Matrix input, value is -1.
         @param metadata: Dictionary of metadata keys/values; key constants are 
                               class attributes.
-        @param modTime: time/date last modified
+        @param mod_time: time/date last modified
         """
         self._paramUserId = userId
         self._paramId = paramId
         self.paramMetadata = {}
         self.loadParamMetadata(metadata)
         self._matrixIndex = matrixIndex
-        self.paramModTime = modTime
+        self.param_mod_time = mod_time
 
 # ...............................................
     def dumpParamMetadata(self):
@@ -486,10 +486,10 @@ class _LayerParameters(LMObject):
         return self._treeIndex
 
     # ...............................................
-    def updateParams(self, modTime, matrixIndex=None, metadata=None):
+    def updateParams(self, mod_time, matrixIndex=None, metadata=None):
         """
-        @summary: Updates matrixIndex, paramMetadata, and modTime.
-        @param modTime: time/date last modified
+        @summary: Updates matrixIndex, paramMetadata, and mod_time.
+        @param mod_time: time/date last modified
         @param matrixIndex: Index of the position in PAM or other matrix.  If this 
                              Parameterized Layer is not a Matrix input, or part of 
                              a Global PAM, created dynamically upon query of existing
@@ -498,7 +498,7 @@ class _LayerParameters(LMObject):
                               class attributes.
         @note: Missing keyword parameters are ignored.
         """
-        self.paramModTime = modTime
+        self.param_mod_time = mod_time
         if metadata is not None:
             self.loadParamMetadata(metadata)
         if matrixIndex is not None:
@@ -519,7 +519,7 @@ class Raster(_Layer):
                      valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
                      mapunits=None, resolution=None, bbox=None,
                      svcObjId=None, serviceType=LMServiceType.LAYERS, 
-                     metadataUrl=None, parentMetadataUrl=None, modTime=None):
+                     metadataUrl=None, parentMetadataUrl=None, mod_time=None):
         """
         @summary Raster constructor, inherits from _Layer
         @copydoc LmServer.base.layer2._Layer::__init__()
@@ -552,7 +552,7 @@ class Raster(_Layer):
                      mapunits=mapunits, resolution=resolution, bbox=bbox,
                      svcObjId=svcObjId, serviceType=serviceType, 
                      metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
-                     modTime=modTime)
+                     mod_time=mod_time)
 
 # ...............................................
     def getFormatLongName(self):
@@ -1015,7 +1015,7 @@ class Vector(_Layer):
                  valUnits=None, valAttribute=None, nodataVal=None, minVal=None,
                  maxVal=None, mapunits=None, resolution=None, bbox=None,
                  svcObjId=None, serviceType=LMServiceType.LAYERS,
-                 metadataUrl=None, parentMetadataUrl=None, modTime=None,
+                 metadataUrl=None, parentMetadataUrl=None, mod_time=None,
                  featureCount=0, featureAttributes={}, features={},
                  fidAttribute=None):
         """
@@ -1055,7 +1055,7 @@ class Vector(_Layer):
                      mapunits=mapunits, resolution=resolution, bbox=bbox,
                      svcObjId=svcObjId, serviceType=serviceType, 
                      metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
-                     modTime=modTime)
+                     mod_time=mod_time)
         self._verifyDataDescription(ogrType, dataFormat)
         # The following may be reset by setFeatures:
         # features, featureAttributes, featureCount, geomIdx, localIdIdx, geom, convexHull

@@ -95,7 +95,7 @@ class TreeService(LmService):
         updated_tree = self.scribe.findOrInsertTree(new_tree)
         updated_tree.setTree(tree)
         updated_tree.writeTree()
-        updated_tree.modTime = gmt().mjd
+        updated_tree.mod_time = gmt().mjd
         self.scribe.updateObject(updated_tree)
 
         return updated_tree

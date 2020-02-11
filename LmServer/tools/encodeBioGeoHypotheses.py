@@ -142,7 +142,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
     
     # Save matrix and update record
     bgMtx.write(overwrite=True)
-    bgMtx.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
+    bgMtx.updateStatus(JobStatus.COMPLETE, mod_time=gmt().mjd)
     success = scribe.updateObject(bgMtx)
     
     msg = 'Wrote matrix {} to final location and updated db'.format(bgMtx.get_id())

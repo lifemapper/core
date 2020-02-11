@@ -44,7 +44,7 @@ class Gridset(ServiceObject): #LMMap
                      shapeGrid=None, shapeGridId=None, tree=None, treeId=None,
                      siteIndicesFilename=None, 
                      dlocation=None, epsgcode=None, matrices=None, 
-                     userId=None, gridsetId=None, metadataUrl=None, modTime=None):
+                     userId=None, gridsetId=None, metadataUrl=None, mod_time=None):
         """
         @summary Constructor for the Gridset class
         @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
@@ -72,7 +72,7 @@ class Gridset(ServiceObject): #LMMap
             mapunits = shapeGrid.mapUnits
                 
         ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS, 
-                                      metadataUrl=metadataUrl, modTime=modTime)
+                                      metadataUrl=metadataUrl, mod_time=mod_time)
         title = 'Matrix map for Gridset {}'.format(name)
         #LMMap.__init__(self, name, title, self._mapPrefix, 
         #                    epsgcode, bbox, mapunits, mapType=LMFileType.OTHER_MAP)
@@ -460,11 +460,11 @@ class Gridset(ServiceObject): #LMMap
         #                    matrices=self._matrices)
 
 #     # ...............................................
-#     def updateModtime(self, modTime=gmt().mjd):
+#     def updateModtime(self, mod_time=gmt().mjd):
 #         """
 #         @copydoc LmServer.base.serviceobject2.ProcessObject::updateModtime()
 #         """
-#         ServiceObject.updateModtime(self, modTime)
+#         ServiceObject.updateModtime(self, mod_time)
 
 # .............................................................................
 # Public methods

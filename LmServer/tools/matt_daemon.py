@@ -264,7 +264,7 @@ class MattDaemon(Daemon):
                     # TODO: Set up a pause status or some way to recover from
                     #    where it was at
                     mf_obj.updateStatus(
-                        JobStatus.INITIALIZE, modTime=gmt().mjd)
+                        JobStatus.INITIALIZE, mod_time=gmt().mjd)
                     self.scribe.updateObject(mf_obj)
                 except Exception as e:
                     self.log.debug(str(e))
@@ -439,7 +439,7 @@ class MattDaemon(Daemon):
                 else:
                     # Success
                     lm_status = JobStatus.COMPLETE
-            mf_obj.updateStatus(lm_status, modTime=gmt().mjd)
+            mf_obj.updateStatus(lm_status, mod_time=gmt().mjd)
             self.scribe.updateObject(mf_obj)
 
         # Remove makeflow files from workspace

@@ -169,7 +169,7 @@ class PartnerQuery(object):
                                   kingdom=kingdomStr, phylum=phylumStr, 
                                   txClass=classStr, txOrder=orderStr, 
                                   family=familyStr, genus=genusStr, 
-                                  modTime=currtime, 
+                                  mod_time=currtime, 
                                   taxonomySourceId=gbifSrcId, 
                                   taxonomySourceKey=taxonKey, 
                                   taxonomySourceGenusKey=genusKey, 

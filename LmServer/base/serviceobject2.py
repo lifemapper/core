@@ -21,7 +21,7 @@ class ServiceObject(LMObject):
 # Constructor
 # .............................................................................
     def __init__(self, userId, dbId, serviceType, metadataUrl=None, 
-                     parentMetadataUrl=None, parentId=None, modTime=None):
+                     parentMetadataUrl=None, parentId=None, mod_time=None):
         """
         @summary Constructor for the abstract ServiceObject class
         @param userId: id for the owner of these data
@@ -32,7 +32,7 @@ class ServiceObject(LMObject):
                                             parent container object
         @param parentId: Id of container, if any, associated with one instance of 
                               this parameterized object
-        @param modTime: Last modification Time/Date, in MJD format
+        @param mod_time: Last modification Time/Date, in MJD format
         """
         LMObject.__init__(self)
         self._earlJr = EarlJr()
@@ -44,7 +44,7 @@ class ServiceObject(LMObject):
         # Moved from ProcessObject
         self.parentId = parentId
         self._parentMetadataUrl = parentMetadataUrl
-        self.modTime = modTime
+        self.mod_time = mod_time
         if serviceType is None:
             raise Exception('Object %s does not have serviceType' % str(type(self)))        
         
@@ -142,8 +142,8 @@ class ServiceObject(LMObject):
         return dataurl
     
     # ...............................................
-    def updateModtime(self, modTime):
-        self.modTime = modTime
+    def updatemod_time(self, mod_time):
+        self.mod_time = mod_time
 
 # .............................................................................
 # Read-0nly Properties
@@ -164,12 +164,12 @@ class ProcessObject(LMObject):
 # Constructor
 # .............................................................................    
     def __init__(self, objId=None, processType=None, 
-                     status=None, statusModTime=None):
+                     status=None, statusmod_time=None):
         """
         @param objId: Unique identifier for this parameterized object
         @param processType: Integer code LmCommon.common.lmconstants.ProcessType
         @param status: status of processing
-        @param statusModTime: last status modification time in MJD format 
+        @param statusmod_time: last status modification time in MJD format 
         @note: The object with objId can be instantiated for each container, 
                  all use the same base object, but will be subject to different 
                  processes (for example PALayers intersected for every bucket)
@@ -177,7 +177,7 @@ class ProcessObject(LMObject):
         self.objId = objId
         self.processType = processType
         self._status = status
-        self._statusmodtime = statusModTime
+        self._statusmod_time = statusmod_time
         
     # ...............................................
     @property
@@ -185,12 +185,12 @@ class ProcessObject(LMObject):
         return self._status
 
     @property
-    def statusModTime(self):
-        return self._statusmodtime
+    def statusmod_time(self):
+        return self._statusmod_time
 
     # ...............................................
-    def updateStatus(self, status, modTime):
+    def updateStatus(self, status, mod_time):
         self._status = status
-        self._statusmodtime = modTime
+        self._statusmod_time = mod_time
 
 

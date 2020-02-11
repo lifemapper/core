@@ -85,7 +85,7 @@ class Defcat(LMObject):
         for usr in defUsers:
             email = '{}{}'.format(usr, DEFAULT_EMAIL_POSTFIX)
             # Nothing changes if these are already present
-            lmuser = LMUser(usr, email, email, modTime=currtime)
+            lmuser = LMUser(usr, email, email, mod_time=currtime)
             
             self.scribe.log.info('  Find or insert user {} ...'.format(usr))
             # If exists, found by unique Id or unique Email, update object and return existing
@@ -120,7 +120,7 @@ class Defcat(LMObject):
                             ogrType=TNCMetadata.ogrType,
                             valAttribute=TNCMetadata.valAttribute, 
                             mapunits=DEFAULT_MAPUNITS, bbox=TNCMetadata.bbox,
-                            modTime=gmt().mjd)
+                            mod_time=gmt().mjd)
         updatedEcoregions = self.scribe.findOrInsertLayer(ecoregions)
         return updatedEcoregions
     

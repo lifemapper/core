@@ -62,10 +62,10 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
         """
         _LayerParameters.__init__(self, userId, paramId=matrixColumnId, 
                                           matrixIndex=matrixIndex, metadata=metadata, 
-                                          modTime=statusModTime)
+                                          mod_time=statusModTime)
         ServiceObject.__init__(self,  userId, matrixColumnId, 
                                       LMServiceType.MATRIX_COLUMNS, parentId=matrixId, 
-                                      modTime=statusModTime)
+                                      mod_time=statusModTime)
         ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
                                       status=status, statusModTime=statusModTime)
         self.layer = layer
@@ -128,15 +128,15 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                                              existingMetadataDict=self.intersectParams)
     
 # ...............................................
-    def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=gmt().mjd):
+    def updateStatus(self, status, matrixIndex=None, metadata=None, mod_time=gmt().mjd):
         """
-        @summary Update status, matrixIndex, metadata, modTime attributes on the 
+        @summary Update status, matrixIndex, metadata, mod_time attributes on the 
                     Matrix layer. 
         @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
         @copydoc LmServer.base.layer2._LayerParameters::updateParams()
         """
-        ProcessObject.updateStatus(self, status, modTime)
-        _LayerParameters.updateParams(self, modTime, matrixIndex=matrixIndex, 
+        ProcessObject.updateStatus(self, status, mod_time)
+        _LayerParameters.updateParams(self, mod_time, matrixIndex=matrixIndex, 
                                                 metadata=metadata)
 
 # ...............................................

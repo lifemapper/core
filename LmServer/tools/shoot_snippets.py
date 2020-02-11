@@ -64,7 +64,7 @@ def main():
     if args.obj2ident is not None:
         mod_time = None  # WIll get current time
     else:
-        mod_time = occ.modTime
+        mod_time = occ.mod_time
         if url is None:
             url = occ.metadataUrl
 

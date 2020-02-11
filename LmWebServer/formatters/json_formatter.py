@@ -35,7 +35,7 @@ def format_atom(obj):
     return {
         'epsg': obj.epsgcode,
         'id': obj.id,
-        'modificationTime': format_time_human(obj.modTime),
+        'modificationTime': format_time_human(obj.mod_time),
         'name': obj.name,
         'url': obj.url
     }
@@ -125,7 +125,7 @@ def format_gridset(gridset):
         gridset_dict['tree'] = gridset.tree.metadataUrl
 
     gridset_dict['name'] = gridset.name
-    gridset_dict['modTime'] = gridset.modTime
+    gridset_dict['modTime'] = gridset.mod_time
     return gridset_dict
 
 

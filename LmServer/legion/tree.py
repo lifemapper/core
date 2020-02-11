@@ -19,7 +19,7 @@ class Tree(TreeWrapper, ServiceObject):
     def __init__(self, name, metadata={}, dlocation=None, data=None,
                  schema=DEFAULT_TREE_SCHEMA,
                  metadataUrl=None, userId=None, gridsetId=None, treeId=None, 
-                 modTime=None):
+                 mod_time=None):
         """Constructor for the tree class.
 
         Args:
@@ -29,7 +29,7 @@ class Tree(TreeWrapper, ServiceObject):
         """
         ServiceObject.__init__(self, userId, treeId, LMServiceType.TREES, 
                                metadataUrl=metadataUrl, parentId=gridsetId, 
-                               modTime=modTime)
+                               mod_time=mod_time)
         self.name = name
         self._dlocation = dlocation
         self.treeMetadata = {}

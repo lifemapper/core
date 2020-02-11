@@ -263,7 +263,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # .............................................................................   
     def __init__(self, mapname, title=None, 
               url=None, dlocation=None, keywords=None, epsgcode=None, layers=None, 
-              userId=None, dbId=None, modTime=None, 
+              userId=None, dbId=None, mod_time=None, 
               bbox=None, mapunits=None,
               # This must be specified
               serviceType=LMServiceType.LAYERSETS, 
@@ -283,7 +283,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
                            epsgcode=epsgcode, layers=layers, 
                            bbox=bbox, mapunits=mapunits)
         ServiceObject.__init__(self, userId, dbId, serviceType, metadataUrl=url, 
-                               modTime=modTime)
+                               mod_time=mod_time)
         self._mapFilename = dlocation
         self._mapType = mapType
         self._mapPrefix = None

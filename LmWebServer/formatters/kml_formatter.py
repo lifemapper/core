@@ -111,7 +111,7 @@ def add_projection(parent, prj, visibility, indent=0):
     ext_data = SubElement(ground_overlay_el, 'ExtendedData')
 
     last_mod_el = SubElement(ext_data, 'Data', attrib={'name': 'lastModified'})
-    SubElement(last_mod_el, 'value', value=format_time_human(prj.modTime))
+    SubElement(last_mod_el, 'value', value=format_time_human(prj.mod_time))
 
     scn_title_el = SubElement(
         ext_data, 'Data', attrib={'name': 'scenarioTitle'})

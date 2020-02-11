@@ -68,11 +68,11 @@ class BorgScribe(LMObject):
         self._borg.close()
         
 # ...............................................
-    def findOrInsertAlgorithm(self, alg, modtime=None):
+    def findOrInsertAlgorithm(self, alg, mod_time=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertAlgorithm()
         """
-        algo = self._borg.findOrInsertAlgorithm(alg, modtime)
+        algo = self._borg.findOrInsertAlgorithm(alg, mod_time)
         return algo
 
 # ...............................................
@@ -215,7 +215,7 @@ class BorgScribe(LMObject):
         """
         updatedScenPkg = self._borg.findOrInsertScenPackage(scenPkg)
 #         # if existing, pull existing scenarios
-#         if updatedScenPkg.modTime == scenPkg.modTime:
+#         if updatedScenPkg.mod_time == scenPkg.mod_time:
 #             existingScens = self.getScenariosForScenPackage(
 #                                                     scenPkgId=updatedScenPkg.get_id())
 #             updatedScenPkg.setScenarios(existingScens)
@@ -844,7 +844,7 @@ class BorgScribe(LMObject):
         return mtxcol
         
 # ...............................................
-    def initOrRollbackIntersect(self, lyr, mtx, intersectParams, modtime):
+    def initOrRollbackIntersect(self, lyr, mtx, intersectParams, mod_time):
         """
         @summary: Initialize model, projections for inputs/algorithm.
         """
@@ -863,19 +863,19 @@ class BorgScribe(LMObject):
                      layer=lyr, shapegrid=None, intersectParams=intersectParams, 
                      squid=lyr.squid, ident=lyr.ident,
                      processType=ptype, metadata={}, matrixColumnId=None, 
-                     status=JobStatus.GENERAL, statusModTime=modtime)
+                     status=JobStatus.GENERAL, status_mod_time=mod_time)
             newOrExistingMtxcol = self._borg.findOrInsertMatrixColumn(mtxcol)
             # Reset processType (not in db)
             newOrExistingMtxcol.processType = ptype
             
             if JobStatus.finished(newOrExistingMtxcol.status):
-                newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, modTime=modtime)
+                newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, mod_time=mod_time)
                 success = self.updateMatrixColumn(newOrExistingMtxcol)
         return newOrExistingMtxcol
 
 # ...............................................
     def initOrRollbackSDMProjects(self, occ, mdlScen, projScenList, alg,  
-                                  modtime=gmt().mjd, email=None):
+                                  mod_time=gmt().mjd, email=None):
         """
         @summary: Initialize or rollback existing LMArchive SDMProjection
                     dependent on this occurrenceset and algorithm.
@@ -885,14 +885,14 @@ class BorgScribe(LMObject):
         @param prjScenList: Scenarios for SDM project computations
         @param alg: List of algorithm objects for SDM computations on this 
                              OccurrenceSet
-        @param modtime: timestamp of modification, in MJD format 
+        @param mod_time: timestamp of modification, in MJD format 
         @param email: email address for notifications 
         """
         prjs = []
         for projScen in projScenList:
             prj = SDMProjection(occ, alg, mdlScen, projScen, 
                                 dataFormat=LMFormat.getDefaultGDAL().driver,
-                                status=JobStatus.GENERAL, statusModTime=modtime)
+                                status=JobStatus.GENERAL, status_mod_time=mod_time)
             newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
             # Instead of re-pulling unchanged scenario layers, update 
             # with input arguments
@@ -900,7 +900,7 @@ class BorgScribe(LMObject):
             newOrExistingPrj._projScenario = projScen
             # Rollback if finished
             if JobStatus.finished(newOrExistingPrj.status):
-                newOrExistingPrj.updateStatus(JobStatus.GENERAL, modTime=modtime)
+                newOrExistingPrj.updateStatus(JobStatus.GENERAL, mod_time=mod_time)
                 newOrExistingPrj = self.updateSDMProject(newOrExistingPrj)
             
             prjs.append(newOrExistingPrj)
@@ -928,7 +928,7 @@ class BorgScribe(LMObject):
              occ.queryCount >= minPointCount): 
             for alg in algList:
                 prjs = self.initOrRollbackSDMProjects(occ, mdlScen, prjScenList, alg, 
-                                        modtime=currtime)
+                                        mod_time=currtime)
                 objs.extend(prjs)
                 # Intersect if intersectGrid is provided
                 if gridset is not None and gridset.pam is not None:

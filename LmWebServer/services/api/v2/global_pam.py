@@ -95,7 +95,7 @@ class GlobalPAMService(LmService):
         cherrypy.response.status = 202
         return Atom(
             gridset.get_id(), gridset.name, gridset.metadataUrl,
-            gridset.modTime, epsg=gridset.epsgcode)
+            gridset.mod_time, epsg=gridset.epsgcode)
 
     # ................................
     def _make_solr_query(self, algorithm_code=None, bbox=None,

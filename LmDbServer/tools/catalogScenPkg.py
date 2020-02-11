@@ -147,7 +147,7 @@ class SPFiller(LMObject):
                             dataFormat=maskMeta['gdalformat'], 
                             gdalType=maskMeta['gdaltype'], 
                             bbox=maskMeta['region'],
-                            modTime=gmt().mjd)
+                            mod_time=gmt().mjd)
         except KeyError:
             raise LMError('Missing one of: name, res, region, gdaltype, ' + 
                          'gdalformat in SDM_MASK_META in scenPkg metadata')
@@ -162,7 +162,7 @@ class SPFiller(LMObject):
         """
         currtime = gmt().mjd
         # Nothing changes if these are already present
-        user = LMUser(self.userId, self.userEmail, self.userEmail, modTime=currtime)
+        user = LMUser(self.userId, self.userEmail, self.userEmail, mod_time=currtime)
         self.scribe.log.info('  Find or insert user {} ...'.format(self.userId))
         thisUser = self.scribe.findOrInsertUser(user)
         # If exists, found by unique Id or Email, update values
@@ -184,7 +184,7 @@ class SPFiller(LMObject):
         scenPkg = ScenPackage(spName, self.userId, 
                               epsgcode=pkgMeta['epsg'],
                               mapunits=pkgMeta['mapunits'],
-                              modTime=gmt().mjd)
+                              mod_time=gmt().mjd)
         
         # Current
         baseCode = pkgMeta['baseline']
@@ -279,13 +279,13 @@ class SPFiller(LMObject):
                               mapunits=pkgMeta['mapunits'], 
                               resolution=res_val, 
                               bbox=region, 
-                              modTime=currtime, 
+                              mod_time=currtime, 
                               envCode=envcode, 
                               gcmCode=gcmCode, 
                               altpredCode=altpredCode, 
                               dateCode=dateCode,
                               envMetadata=envmeta,
-                              envModTime=currtime)
+                              env_mod_time=currtime)
             layers.append(envlyr)
         return layers         
 
@@ -321,7 +321,7 @@ class SPFiller(LMObject):
                         altpredCode=altpredCode, 
                         dateCode=dateCode,
                         bbox=scenMeta['region'], 
-                        modTime=gmt().mjd,  
+                        mod_time=gmt().mjd,  
                         layers=lyrs)
         return scen
    

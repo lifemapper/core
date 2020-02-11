@@ -22,7 +22,7 @@ class Atom(LMObject):
         self.id = obj_id
         self.name = name
         self.url = url
-        self.modTime = mod_time
+        self.mod_time = mod_time
         self.epsgcode = epsg
 
     # ................................

@@ -87,7 +87,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         new_shp = ShapeGrid(
             my_sg_name, user_id, orig_gs.epsgcode, orig_shp.cellsides,
             cell_size, orig_shp.mapUnits, bbox, status=JobStatus.INITIALIZE,
-            statusModTime=gmt().mjd)
+            status_mod_time=gmt().mjd)
 
         # Insert our new shapegrid
         my_shp = scribe.findOrInsertShapeGrid(new_shp)
@@ -163,7 +163,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
     # Create grid set
     gridset = Gridset(
         name=archive_name, metadata=gs_meta, shapeGrid=my_shp, epsgcode=epsg,
-        userId=user_id, modTime=gmt().mjd)
+        userId=user_id, mod_time=gmt().mjd)
     updated_gs = scribe.findOrInsertGridset(gridset)
 
     # Copy the tree if available.  It may be subsetted according to the data in
@@ -191,7 +191,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             tree_name = otree.get_id()
         new_tree = Tree(
             'Copy of {} tree at {}'.format(tree_name, gmt().mjd), metadata={},
-            userId=user_id, gridsetId=updated_gs.get_id(), modTime=gmt().mjd)
+            userId=user_id, gridsetId=updated_gs.get_id(), mod_time=gmt().mjd)
         new_tree.setTree(tree_data)
         inserted_tree = scribe.findOrInsertTree(new_tree)
         new_tree.tree = tree_data
@@ -247,7 +247,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                     pam_data, matrixType=MatrixType.PAM, gcmCode=gcm_code,
                     altpredCode=alt_pred_code, dateCode=date_code,
                     metadata=scn_meta, userId=user_id, gridset=updated_gs,
-                    status=JobStatus.GENERAL, statusModTime=gmt().mjd,
+                    status=JobStatus.GENERAL, status_mod_time=gmt().mjd,
                     headers={'0': orig_row_headers, '1': squids})
 
                 # If we need to spatially subset, slice the matrix
@@ -332,7 +332,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         }
         new_wf = MFChain(
             user_id, priority=Priority.REQUESTED, metadata=wf_meta,
-            status=JobStatus.GENERAL, statusModTime=gmt().mjd)
+            status=JobStatus.GENERAL, status_mod_time=gmt().mjd)
 
         my_wf = scribe.insertMFChain(new_wf, updated_gs.get_id())
         rules = []
@@ -377,7 +377,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                     None, matrixType=MatrixType.PAM, gcmCode=gcm_code,
                     altpredCode=alt_pred_code, dateCode=date_code,
                     metadata=scnMeta, userId=user_id, gridset=updated_gs,
-                    status=JobStatus.GENERAL, statusModTime=gmt().mjd)
+                    status=JobStatus.GENERAL, status_mod_time=gmt().mjd)
                 pam = scribe.findOrInsertMatrix(pam_mtx)
 
                 # Insert matrix columns for each match
@@ -401,7 +401,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                             processType=ProcessType.INTERSECT_RASTER,
                             metadata=prj_meta, matrixColumnId=None,
                             postToSolr=True, status=JobStatus.GENERAL,
-                            statusModTime=gmt().mjd)
+                            status_mod_time=gmt().mjd)
                         mtx_col = scribe.findOrInsertMatrixColumn(tmp_col)
 
                         # Need to intersect this projection with the new
@@ -474,7 +474,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                     processType=ProcessType.INTERSECT_RASTER_GRIM,
                     metadata=grim_lyr_meta, matrixColumnId=None,
                     postToSolr=False, status=JobStatus.GENERAL,
-                    statusModTime=gmt().mjd)
+                    status_mod_time=gmt().mjd)
                 mtx_col = scribe.findOrInsertMatrixColumn(tmp_col)
 
                 # Add rules to workflow, intersect and stockpile
@@ -559,7 +559,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                         len(mtx_cols), inserted_bg.get_id(), user_id, layer=lyr,
                         shapegrid=my_shp, intersectParams=int_params,
                         metadata=metadata, postToSolr=False,
-                        status=JobStatus.COMPLETE, statusModTime=gmt().mjd)
+                        status=JobStatus.COMPLETE, status_mod_time=gmt().mjd)
                     updated_mc = scribe.findOrInsertMatrixColumn(mc)
                     mtx_cols.append(updated_mc)
 
@@ -569,7 +569,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             inserted_bg = enc_mtx
             inserted_bg.setHeaders(enc_mtx.getHeaders())
             inserted_bg.write(overwrite=True)
-            inserted_bg.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
+            inserted_bg.updateStatus(JobStatus.COMPLETE, mod_time=gmt().mjd)
             scribe.updateObject(inserted_bg)
 
         # Write workflow and update db object

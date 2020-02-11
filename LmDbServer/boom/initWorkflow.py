@@ -722,7 +722,7 @@ class BOOMFiller(LMObject):
         @summary Adds provided userid to the database
         """
         user = LMUser(self.userId, self.userEmail, self.userEmail, 
-                      modTime=gmt().mjd)
+                      mod_time=gmt().mjd)
         self.scribe.log.info('  Find or insert user {} ...'.format(self.userId))
         updatedUser = self.scribe.findOrInsertUser(user)
         # If exists, found by unique Id or Email, update values
@@ -773,7 +773,7 @@ class BOOMFiller(LMObject):
         shp = ShapeGrid(self.gridname, self.userId, self.scenPkg.epsgcode, self.cellsides, 
                         self.cellsize, self.scenPkg.mapUnits, self.gridbbox,
                         status=JobStatus.INITIALIZE, 
-                        statusModTime=gmt().mjd)
+                        status_mod_time=gmt().mjd)
         newshp = self.scribe.findOrInsertShapeGrid(shp)
         validData = False
         if newshp: 
@@ -825,7 +825,7 @@ class BOOMFiller(LMObject):
                            metadata=pamMeta, userId=self.userId, 
                            gridset=gridset, 
                            status=JobStatus.GENERAL, 
-                           statusModTime=gmt().mjd)
+                           status_mod_time=gmt().mjd)
         gpam = self.scribe.findOrInsertMatrix(tmpGpam)
         return gpam
 
@@ -850,7 +850,7 @@ class BOOMFiller(LMObject):
                            metadata=grimMeta, userId=self.userId, 
                            gridset=gridset, 
                            status=JobStatus.GENERAL, 
-                           statusModTime=gmt().mjd)
+                           status_mod_time=gmt().mjd)
         grim = self.scribe.findOrInsertMatrix(tmpGrim)
         for lyr in scen.layers:
             # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
@@ -875,10 +875,10 @@ class BOOMFiller(LMObject):
                 'parameters': self.inParamFname}
         grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
                          epsgcode=self.scenPkg.epsgcode, 
-                         userId=self.userId, modTime=self.woof_time_mjd)
+                         userId=self.userId, mod_time=self.woof_time_mjd)
         updatedGrdset = self.scribe.findOrInsertGridset(grdset)
-        if updatedGrdset.modTime < self.woof_time_mjd:
-            updatedGrdset.modTime = self.woof_time_mjd
+        if updatedGrdset.mod_time < self.woof_time_mjd:
+            updatedGrdset.mod_time = self.woof_time_mjd
             self.scribe.updateObject(updatedGrdset)
             
             # TODO: Decide: do we want to delete old makeflows for this gridset?
@@ -886,7 +886,7 @@ class BOOMFiller(LMObject):
             for fn in fnames:
                 os.remove(fn)
                 
-            self.scribe.log.info('  Found and updated modtime for gridset {}'
+            self.scribe.log.info('  Found and updated mod_time for gridset {}'
                                  .format(updatedGrdset.get_id()))
         else:
             self.scribe.log.info('  Inserted new gridset {}'
@@ -929,7 +929,7 @@ class BOOMFiller(LMObject):
                    layer=lyr, shapegrid=self.shapegrid, 
                    intersectParams=intersectParams, 
                    squid=lyr.squid, ident=lyr.name, processType=ptype, 
-                   status=JobStatus.GENERAL, statusModTime=self.woof_time_mjd,
+                   status=JobStatus.GENERAL, status_mod_time=self.woof_time_mjd,
                    postToSolr=False)
             mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
             
@@ -971,7 +971,7 @@ class BOOMFiller(LMObject):
             treeFilename = os.path.join(self.userIdPath, self.treeFname) 
             if os.path.exists(treeFilename):
                 baretree = Tree(name, dlocation=treeFilename, userId=self.userId, 
-                                gridsetId=gridset.get_id(), modTime=self.woof_time_mjd)
+                                gridsetId=gridset.get_id(), mod_time=self.woof_time_mjd)
                 baretree.read()
                 tree = self.scribe.findOrInsertTree(baretree)
             else:
@@ -984,15 +984,15 @@ class BOOMFiller(LMObject):
             tree.clearDLocation()
             tree.setDLocation()
             tree.writeTree()
-            tree.updateModtime(gmt().mjd)
+            tree.update_mod_time(gmt().mjd)
             # Update database
-            success = self.scribe.updateObject(tree)        
+            success = self.scribe.updateObject(tree)
             self._fixPermissions(files=[tree.getDLocation()])
             
             # Save tree link to gridset
             print("Add tree to grid set")
             gridset.addTree(tree)
-            gridset.updateModtime(self.woof_time_mjd)
+            gridset.update_mod_time(self.woof_time_mjd)
             
             self.scribe.updateObject(gridset)
         return tree
@@ -1055,14 +1055,14 @@ class BOOMFiller(LMObject):
                 lyr = Vector(lyrname, self.userId, self.scenPkg.epsgcode, 
                              dlocation=fname,  
                              dataFormat=LMFormat.SHAPE.driver, 
-                             modTime=self.woof_time_mjd)
+                             mod_time=self.woof_time_mjd)
                 updatedLyr = self.scribe.findOrInsertLayer(lyr)
                 otherLayerNames.append(updatedLyr.name)
             elif fname.endswith(LMFormat.GTIFF.ext):
                 lyr = Raster(lyrname, self.userId, self.scenPkg.epsgcode, 
                              dlocation=fname, 
                              dataFormat=LMFormat.getDefaultGDAL().driver, 
-                             modTime=self.woof_time_mjd)
+                             mod_time=self.woof_time_mjd)
             if lyr is not None:
                 updatedLyr = self.scribe.findOrInsertLayer(lyr)
                 otherLayerNames.append(updatedLyr.name)        
@@ -1104,7 +1104,7 @@ class BOOMFiller(LMObject):
                     lyr = Vector(name, self.userId, self.scenPkg.epsgcode, 
                                  dlocation=bgFname, metadata=lyrMeta, 
                                  dataFormat=LMFormat.SHAPE.driver, 
-                                 valAttribute=valAttr, modTime=self.woof_time_mjd)
+                                 valAttribute=valAttr, mod_time=self.woof_time_mjd)
                     updatedLyr = self.scribe.findOrInsertLayer(lyr)
                     biogeoLayerNames.append(updatedLyr.name)
                     self.scribe.log.info('  Added {} layers for biogeo hypotheses matrix'
@@ -1116,7 +1116,7 @@ class BOOMFiller(LMObject):
             tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
                               processType=ProcessType.ENCODE_HYPOTHESES,
                               userId=self.userId, gridset=gridset, metadata=meta,
-                              status=JobStatus.INITIALIZE, statusModTime=self.woof_time_mjd)
+                              status=JobStatus.INITIALIZE, status_mod_time=self.woof_time_mjd)
             bgMtx = self.scribe.findOrInsertMatrix(tmpMtx)
             if bgMtx is None:
                 self.scribe.log.info('  Failed to add biogeo hypotheses matrix')
@@ -1374,7 +1374,7 @@ class BOOMFiller(LMObject):
                 }
             new_mfc = MFChain(
                 self.userId, priority=Priority.HIGH, metadata=meta,
-                status=JobStatus.GENERAL, statusModTime=gmt().mjd)
+                status=JobStatus.GENERAL, status_mod_time=gmt().mjd)
             gridset_mf = self.scribe.insertMFChain(
                 new_mfc, boomGridset.get_id())
             target_dir = gridset_mf.getRelativeDirectory()

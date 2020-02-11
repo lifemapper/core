@@ -29,7 +29,7 @@ class EnvType(_LayerParameters):
 # .............................................................................
    def __init__(self, envCode, userId, 
                 gcmCode=None, altpredCode=None, dateCode=None, 
-                metadata={}, modTime=None, envTypeId=None):
+                metadata={}, mod_time=None, envTypeId=None):
       """
       @summary Initialize the EnvType  class instance
       @copydoc LmServer.base.layer2._LayerParameters::__init__()
@@ -41,7 +41,7 @@ class EnvType(_LayerParameters):
       @param dateCode: Code for the time period for which these data are predicted.
       """
       _LayerParameters.__init__(self, userId, paramId=envTypeId, 
-                                metadata=metadata, modTime=modTime)
+                                metadata=metadata, mod_time=mod_time)
       self.envCode = envCode
       self.gcmCode = gcmCode
       self.altpredCode = altpredCode
@@ -60,7 +60,7 @@ class EnvLayer(EnvType, Raster):
                 nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, 
                 bbox=None, envLayerId=None, metadataUrl=None, 
-                parentMetadataUrl=None, modTime=None,                
+                parentMetadataUrl=None, mod_time=None,                
                 # EnvType
                 envCode=None, gcmCode=None, altpredCode=None, dateCode=None, 
                 envMetadata={}, envModTime=None, envTypeId=None):
@@ -72,7 +72,7 @@ class EnvLayer(EnvType, Raster):
          raise LMError('EnvLayer.name is required')
       EnvType.__init__(self, envCode, userId, 
                 gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode, 
-                metadata=envMetadata, modTime=envModTime, envTypeId=envTypeId)
+                metadata=envMetadata, mod_time=envModTime, envTypeId=envTypeId)
       self._mapPrefix = None
       # Raster metadataUrl and serviceType override those of EnvType 
       # if it is a full EnvLayer
@@ -84,7 +84,7 @@ class EnvLayer(EnvType, Raster):
                 bbox=bbox, svcObjId=envLayerId, 
                 serviceType=LMServiceType.ENVIRONMENTAL_LAYERS, 
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
-                modTime=modTime)
+                mod_time=mod_time)
       self._scenCode = scencode
       self._setMapPrefix(scencode=scencode)
 
@@ -103,7 +103,7 @@ class EnvLayer(EnvType, Raster):
                   envLayerId=envLayerId, 
                   metadataUrl=raster.metadataUrl, 
                   parentMetadataUrl=raster.parentMetadataUrl, 
-                  modTime=raster.modTime,                
+                  mod_time=raster.mod_time,                
                   # EnvType
                   envCode=envType.envCode, gcmCode=envType.gcmCode, 
                   altpredCode=envType.altpredCode, dateCode=envType.dateCode, 
@@ -195,6 +195,6 @@ class EnvLayer(EnvType, Raster):
       self.altpredCode=envType.altpredCode
       self.dateCode=envType.dateCode 
       self.loadParamMetadata(envType.paramMetadata)
-      self.envModTime=envType.modTime
+      self.envModTime=envType.mod_time
       self.setParamId(envType.getParamId())
       self.paramModTime = envType.paramModTime

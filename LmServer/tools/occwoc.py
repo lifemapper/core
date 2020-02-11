@@ -251,7 +251,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                                             occ.getDLocation(), occ.getRawDLocation())
             if willCompute:
                 self.log.info('    Init new or existing OccLayer status, count')
-                occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime,
+                occ.updateStatus(JobStatus.INITIALIZE, mod_time=currtime,
                      queryCount=dataCount)
                 _ = self._scribe.updateObject(occ)
             else:
@@ -300,7 +300,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                                          kingdom=kingdomStr, phylum=phylumStr, 
                                          txClass=classStr, txOrder=orderStr, 
                                          family=familyStr, genus=genusStr, 
-                                         modTime=currtime, 
+                                         mod_time=currtime, 
                                          taxonomySourceId=self._taxonSourceId, 
                                          taxonomySourceKey=taxonKey, 
                                          taxonomySourceGenusKey=genusKey, 
@@ -699,9 +699,9 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
             self._recreateFile(filename)
         elif expDate is not None:
             ticktime = os.path.getmtime(filename)
-            modtime = LmTime(
+            mod_time = LmTime(
                 dtime=datetime.datetime.fromtimestamp(ticktime)).mjd
-            if modtime < expDate:
+            if mod_time < expDate:
                 self._recreateFile(filename)
 
 # ...............................................

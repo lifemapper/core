@@ -292,7 +292,7 @@ class GridsetBioGeoService(LmService):
                                     gridset.epsg, dlocation=None,
                                     metadata=lyr_meta,
                                     dataFormat=LMFormat.SHAPE.driver,
-                                    valAttribute=event_field, modTime=currtime)
+                                    valAttribute=event_field, mod_time=currtime)
                                 updated_lyr = self.scribe.findOrInsertLayer(
                                     lyr)
 
@@ -477,7 +477,7 @@ class GridsetTreeService(LmService):
             updated_tree = self.scribe.findOrInsertTree(new_tree)
             updated_tree.setTree(tree)
             updated_tree.writeTree()
-            updated_tree.modTime = gmt().mjd
+            updated_tree.mod_time = gmt().mjd
             self.scribe.updateObject(updated_tree)
 
         gridset = self._get_gridset(pathGridSetId)
@@ -601,7 +601,7 @@ class GridsetService(LmService):
         cherrypy.response.status = HTTPStatus.ACCEPTED
         return Atom(
             gridset.get_id(), gridset.name, gridset.metadataUrl,
-            gridset.modTime, epsg=gridset.epsgcode)
+            gridset.mod_time, epsg=gridset.epsgcode)
 
     # ................................
     def _count_gridsets(self, user_id, after_time=None, before_time=None,

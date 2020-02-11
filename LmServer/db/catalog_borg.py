@@ -51,7 +51,7 @@ class Borg(DbPostgresql):
                              institution=row[idxs['institution']], 
                              addr1=row[idxs['address1']], addr2=row[idxs['address2']], 
                              addr3=row[idxs['address3']], phone=row[idxs['phone']], 
-                             modTime=row[idxs['modtime']])
+                             mod_time=row[idxs['modtime']])
         return usr
     
 
@@ -87,7 +87,7 @@ class Borg(DbPostgresql):
                 spkey = self._getColumnValue(row, idxs, ['specieskey'])
                 hier = self._getColumnValue(row, idxs, ['keyhierarchy'])
                 lcnt = self._getColumnValue(row, idxs, ['lastcount'])
-                modtime = self._getColumnValue(row, idxs, ['taxmodtime', 'modtime'])
+                mod_time = self._getColumnValue(row, idxs, ['taxmodtime', 'modtime'])
 
                 sciname = ScientificName(scientificname, 
                                                  rank=rank, canonicalName=canonical, 
@@ -96,7 +96,7 @@ class Borg(DbPostgresql):
                                                  txClass=txClass, txOrder=txOrder, 
                                                  family=family, genus=genus, 
                                                  lastOccurrenceCount=lcnt, 
-                                                 modTime=modtime, 
+                                                 mod_time=mod_time, 
                                                  taxonomySourceId=taxonomySourceId, 
                                                  taxonomySourceKey=srckey, 
                                                  taxonomySourceGenusKey=genkey, 
@@ -131,7 +131,7 @@ class Borg(DbPostgresql):
                                                 ['mfpmetadata', 'metadata']),  
                             status=self._getColumnValue(row, idxs, 
                                                 ['mfpstatus', 'status']), 
-                            statusModTime=self._getColumnValue(row, idxs, 
+                            status_mod_time=self._getColumnValue(row, idxs, 
                                         ['mfpstatusmodtime', 'statusmodtime']), 
                             mfChainId=self._getColumnValue(row, idxs, 
                                                 ['mfprocessid']))
@@ -166,12 +166,12 @@ class Borg(DbPostgresql):
         res = self._getColumnValue(row, idxs, ['resolution'])
         epsg = self._getColumnValue(row, idxs, ['epsgcode'])
         bbox = self._getColumnValue(row, idxs, ['bbox'])
-        modtime = self._getColumnValue(row, idxs, ['scenmodtime', 'modtime'])
+        mod_time = self._getColumnValue(row, idxs, ['scenmodtime', 'modtime'])
      
         if row is not None:
             scen = Scenario(scencode, usr, epsg, metadata=meta, units=units, res=res, 
                             gcmCode=gcmcode, altpredCode=altpredcode, dateCode=datecode,
-                            bbox=bbox, modTime=modtime, layers=None, scenarioid=scenid)
+                            bbox=bbox, mod_time=mod_time, layers=None, scenarioid=scenid)
         return scen
 
 # ...............................................
@@ -187,11 +187,11 @@ class Borg(DbPostgresql):
         epsg = self._getColumnValue(row, idxs, ['pkgepsgcode', 'epsgcode'])
         bbox = self._getColumnValue(row, idxs, ['pkgbbox', 'bbox'])
         units = self._getColumnValue(row, idxs, ['pkgunits', 'units'])
-        modtime = self._getColumnValue(row, idxs, ['pkgmodtime', 'modtime'])
+        mod_time = self._getColumnValue(row, idxs, ['pkgmodtime', 'modtime'])
      
         if row is not None:
             scen = ScenPackage(name, usr, metadata=meta, epsgcode=epsg, bbox=bbox, 
-                                     mapunits=units, modTime=modtime,
+                                     mapunits=units, mod_time=mod_time,
                                      scenPackageId=pkgid)
         return scen
 
@@ -208,11 +208,11 @@ class Borg(DbPostgresql):
             altcode = self._getColumnValue(row, idxs, ['altpredcode'])
             dtcode = self._getColumnValue(row, idxs, ['datecode'])
             meta = self._getColumnValue(row, idxs, ['envmetadata', 'metadata'])
-            modtime = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
+            mod_time = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
             usr = self._getColumnValue(row, idxs, ['envuserid', 'userid'])
             ltid = self._getColumnValue(row, idxs, ['envtypeid'])
             lyrType = EnvType(envcode, usr, gcmCode=gcmcode, altpredCode=altcode, 
-                                    dateCode=dtcode, metadata=meta, modTime=modtime, 
+                                    dateCode=dtcode, metadata=meta, mod_time=mod_time, 
                                     envTypeId=ltid)
         return lyrType
     
@@ -238,7 +238,7 @@ class Borg(DbPostgresql):
             grdset = Gridset(name=name, metadata=meta, shapeGrid=shp, 
                                   shapeGridId=shpId, tree=tree, 
                                   dlocation=dloc, epsgcode=epsg, userId=usr, 
-                                  gridsetId=grdid, modTime=mtime)
+                                  gridsetId=grdid, mod_time=mtime)
         return grdset
     
 # ...............................................
@@ -258,9 +258,9 @@ class Borg(DbPostgresql):
                 isultra = self._getColumnValue(row, idxs, ['isultrametric'])
                 haslen = self._getColumnValue(row, idxs, ['hasbranchlengths'])
                 meta = self._getColumnValue(row, idxs, ['treemetadata', 'metadata'])
-                modtime = self._getColumnValue(row, idxs, ['treemodtime', 'modtime'])
+                mod_time = self._getColumnValue(row, idxs, ['treemodtime', 'modtime'])
                 tree = Tree(name, metadata=meta, dlocation=dloc, userId=usr, 
-                                treeId=treeid, modTime=modtime)
+                                treeId=treeid, mod_time=mod_time)
         return tree
     
 # ...............................................
@@ -292,7 +292,7 @@ class Borg(DbPostgresql):
                            algCode=alg,
                            metadata=meta, dlocation=dloc, userId=usr, 
                            gridset=grdset, matrixId=mtxid, 
-                           status=stat, statusModTime=stattime)
+                           status=stat, status_mod_time=stattime)
         return mtx
     
     # ...............................................
@@ -324,7 +324,7 @@ class Borg(DbPostgresql):
                                 squid=squid, ident=ident,
                                 processType=None, metadata=mtxcolmeta, 
                                 matrixColumnId=mtxcolid, status=mtxcolstat, 
-                                statusModTime=mtxcolstattime)
+                                status_mod_time=mtxcolstattime)
         return mtxcol
 
 # ...............................................
@@ -396,13 +396,13 @@ class Borg(DbPostgresql):
                                      ogrType=vtype, valUnits=vunits, valAttribute=vattr,
                                      nodataVal=nodata, minVal=minval, maxVal=maxval, 
                                      mapunits=munits, resolution=res, bbox=bbox, 
-                                     modTime=dtmod)
+                                     mod_time=dtmod)
                 elif fformat in LMFormat.GDALDrivers():
                     lyr = Raster(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
                                      dlocation=dloc, metadata=meta, dataFormat=fformat, 
                                      gdalType=rtype, valUnits=vunits, nodataVal=nodata, 
                                      minVal=minval, maxVal=maxval, mapunits=munits, 
-                                     resolution=res, bbox=bbox, modTime=dtmod)
+                                     resolution=res, bbox=bbox, mod_time=dtmod)
         return lyr
 
 # ...............................................
@@ -441,7 +441,7 @@ class Borg(DbPostgresql):
                             size = self._getColumnValue(row,idxs,['vsize']),
                             # todo: will these ever be accessed without 'shpgrd' prefix?
                             status = self._getColumnValue(row,idxs,['shpgrdstatus', 'status']), 
-                            statusModTime = self._getColumnValue(row,idxs,
+                            status_mod_time = self._getColumnValue(row,idxs,
                                                     ['shpgrdstatusmodtime', 'statusmodtime']))
         return shg
 
@@ -465,7 +465,7 @@ class Borg(DbPostgresql):
                     occurrenceSetId=self._getColumnValue(row,idxs,['occurrencesetid']), 
                     occMetadata=self._getColumnValue(row,idxs,['occmetadata','metadata']), 
                     status=self._getColumnValue(row,idxs,['occstatus','status']), 
-                    statusModTime=self._getColumnValue(row,idxs,['occstatusmodtime',
+                    status_mod_time=self._getColumnValue(row,idxs,['occstatusmodtime',
                                                                                 'statusmodtime']))
         return occ
 
@@ -486,7 +486,7 @@ class Borg(DbPostgresql):
             prj = SDMProjection.initFromParts(occ, alg, mdlscen, prjscen, layer,
                         projMetadata=self._getColumnValue(row, idxs, ['prjmetadata']), 
                         status=self._getColumnValue(row,idxs,['prjstatus']), 
-                        statusModTime=self._getColumnValue(row,idxs,['prjstatusmodtime']), 
+                        status_mod_time=self._getColumnValue(row,idxs,['prjstatusmodtime']), 
                         sdmProjectionId=self._getColumnValue(row,idxs,['sdmprojectid']))                        
         return prj
 
@@ -494,17 +494,17 @@ class Borg(DbPostgresql):
 # Public functions
 # .............................................................................
 # ...............................................
-    def findOrInsertAlgorithm(self, alg, modtime):
+    def findOrInsertAlgorithm(self, alg, mod_time):
         """
         @summary Inserts an Algorithm into the database
         @param alg: The algorithm to add
         @return: new or existing Algorithm
         """
-        if not modtime:
-            modtime = gmt().mjd
+        if not mod_time:
+            mod_time = gmt().mjd
         meta = alg.dumpAlgMetadata()
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertAlgorithm', 
-                                                              alg.code, meta, modtime)
+                                                              alg.code, meta, mod_time)
         algo = self._createAlgorithm(row, idxs)
         return algo
 
@@ -603,7 +603,7 @@ class Borg(DbPostgresql):
                                     scenPkg.getUserId(), scenPkg.name, meta, 
                                     scenPkg.mapUnits, scenPkg.epsgcode, 
                                     scenPkg.getCSVExtentString(), wkt,
-                                    scenPkg.modTime)
+                                    scenPkg.mod_time)
         newOrExistingScenPkg = self._createScenPackage(row, idxs)
         return newOrExistingScenPkg
     
@@ -745,7 +745,7 @@ class Borg(DbPostgresql):
         @param scen: The scenario to insert
         @return: new or existing Scenario
         """
-        scen.modTime = gmt().mjd
+        scen.mod_time = gmt().mjd
         wkt = None
         if scen.epsgcode == DEFAULT_EPSG:
             wkt = scen.getWkt()
@@ -754,7 +754,7 @@ class Borg(DbPostgresql):
                                     scen.getUserId(), scen.code, meta, 
                                     scen.gcmCode, scen.altpredCode, scen.dateCode, 
                                     scen.mapUnits, scen.resolution, scen.epsgcode, 
-                                    scen.getCSVExtentString(), wkt, scen.modTime)
+                                    scen.getCSVExtentString(), wkt, scen.mod_time)
         newOrExistingScen = self._createScenario(row, idxs)
         if scenPkgId is not None:
             scenarioId = self._getColumnValue(row, idxs, ['scenarioid'])
@@ -873,7 +873,7 @@ class Borg(DbPostgresql):
                                     lyr.gdalType, lyr.ogrType, lyr.valUnits, 
                                     lyr.nodataVal, lyr.minVal, lyr.maxVal, 
                                     lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
-                                    lyr.getCSVExtentString(), wkt, lyr.modTime)
+                                    lyr.getCSVExtentString(), wkt, lyr.mod_time)
         updatedLyr = self._createLayer(row, idxs)
         return updatedLyr
     
@@ -896,10 +896,10 @@ class Borg(DbPostgresql):
                                     shpgrd.dataFormat, gdaltype, shpgrd.ogrType, 
                                     valunits, nodataval, minval, maxval, 
                                     shpgrd.epsgcode, shpgrd.mapUnits, shpgrd.resolution, 
-                                    shpgrd.getCSVExtentString(), wkt, shpgrd.modTime, 
+                                    shpgrd.getCSVExtentString(), wkt, shpgrd.mod_time, 
                                     shpgrd.cellsides, shpgrd.cellsize, shpgrd.size, 
                                     shpgrd.siteId, shpgrd.siteX, shpgrd.siteY, 
-                                    shpgrd.status, shpgrd.statusModTime)
+                                    shpgrd.status, shpgrd.status_mod_time)
         updatedShpgrd = self._createShapeGrid(row, idxs)
         return updatedShpgrd
     
@@ -919,7 +919,7 @@ class Borg(DbPostgresql):
                                                                             grdset.getDLocation(),
                                                                             grdset.epsgcode,
                                                                             meta,
-                                                                            grdset.modTime)
+                                                                            grdset.mod_time)
         updatedGrdset = self._createGridset(row, idxs)
         # Populate dlocation in obj then db if this is a new Gridset
         if updatedGrdset._dlocation is None:
@@ -1065,7 +1065,7 @@ class Borg(DbPostgresql):
                                              grdset.get_id(), 
                                              grdset.treeId, 
                                              grdset.getDLocation(),
-                                             meta, grdset.modTime)
+                                             meta, grdset.mod_time)
         return success
     
 # ...............................................
@@ -1095,15 +1095,15 @@ class Borg(DbPostgresql):
     def updateShapeGrid(self, shpgrd):
         """
         @summary: Update Shapegrid attributes: 
-            verify, dlocation, metadata, modtime, size, status, statusModTime
+            verify, dlocation, metadata, mod_time, size, status, status_mod_time
         @param shpgrd: ShapeGrid to be updated.  
         @return: Updated record for successful update.
         """
         meta = shpgrd.dumpLyrMetadata()
         success = self.executeModifyFunction('lm_updateShapeGrid',
                                 shpgrd.get_id(), shpgrd.verify, shpgrd.getDLocation(),
-                                meta, shpgrd.modTime, shpgrd.size, 
-                                shpgrd.status, shpgrd.statusModTime)
+                                meta, shpgrd.mod_time, shpgrd.size, 
+                                shpgrd.status, shpgrd.status_mod_time)
         return success
 
 # ...............................................
@@ -1171,7 +1171,7 @@ class Borg(DbPostgresql):
         @param lyr: layer to insert
         @return: new or existing EnvironmentalLayer
         """
-        lyr.modTime = gmt().mjd
+        lyr.mod_time = gmt().mjd
         wkt = None
         if lyr.epsgcode == DEFAULT_EPSG:
             wkt = lyr.getWkt()
@@ -1184,7 +1184,7 @@ class Borg(DbPostgresql):
                                     lyrmeta, lyr.dataFormat,  lyr.gdalType, lyr.ogrType, 
                                     lyr.valUnits, lyr.nodataVal, lyr.minVal, lyr.maxVal, 
                                     lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
-                                    lyr.getCSVExtentString(), wkt, lyr.modTime, 
+                                    lyr.getCSVExtentString(), wkt, lyr.mod_time, 
                                     lyr.getParamId(), lyr.envCode, lyr.gcmCode,
                                     lyr.altpredCode, lyr.dateCode, envmeta, 
                                     lyr.paramModTime)
@@ -1307,11 +1307,11 @@ class Borg(DbPostgresql):
         @param usr: LMUser object to insert
         @return: new or existing LMUser
         """
-        usr.modTime = gmt().mjd
+        usr.mod_time = gmt().mjd
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertUser', 
                                         usr.userid, usr.firstName, usr.lastName, 
                                         usr.institution, usr.address1, usr.address2, 
-                                        usr.address3, usr.phone, usr.email, usr.modTime, 
+                                        usr.address3, usr.phone, usr.email, usr.mod_time, 
                                         usr.getPassword())
         newOrExistingUsr = self._createUser(row, idxs)
         if usr.userid != newOrExistingUsr.userid:
@@ -1326,11 +1326,11 @@ class Borg(DbPostgresql):
         @param usr: LMUser object to update
         @return: updated LMUser
         """
-        usr.modTime = gmt().mjd
+        usr.mod_time = gmt().mjd
         success = self.executeModifyFunction('lm_updateUser', 
                                         usr.userid, usr.firstName, usr.lastName, 
                                         usr.institution, usr.address1, usr.address2, 
-                                        usr.address3, usr.phone, usr.email, usr.modTime, 
+                                        usr.address3, usr.phone, usr.email, usr.mod_time, 
                                         usr.getPassword())
         return success
 
@@ -1619,7 +1619,7 @@ class Borg(DbPostgresql):
         """
         @summary: Update OccurrenceLayer attributes: 
                      verify, displayName, dlocation, rawDlocation, queryCount, 
-                     bbox, metadata, status, statusModTime, geometries if valid
+                     bbox, metadata, status, status_mod_time, geometries if valid
         @note: Does not update the userid, squid, and epsgcode (unique constraint) 
         @param occ: OccurrenceLayer to be updated.  
         @return: True/False for successful update.
@@ -1647,7 +1647,7 @@ class Borg(DbPostgresql):
                                                              occ.epsgcode, 
                                                              metadata,
                                                              occ.status, 
-                                                             occ.statusModTime, 
+                                                             occ.status_mod_time, 
                                                              polyWkt, 
                                                              pointsWkt)
         except Exception as e:
@@ -1668,7 +1668,7 @@ class Borg(DbPostgresql):
     def updateSDMProject(self, proj):
         """
         @summary Method to update an SDMProjection object in the database with 
-                    the verify hash, metadata, data extent and values, status/statusmodtime.
+                    the verify hash, metadata, data extent and values, status/status_mod_time.
         @param proj the SDMProjection object to update
         """
         success = False
@@ -1688,10 +1688,10 @@ class Borg(DbPostgresql):
                                                              proj.epsgcode,
                                                              proj.getCSVExtentString(),
                                                              proj.getWkt(),
-                                                             proj.modTime,
+                                                             proj.mod_time,
                                                              prjmeta,
                                                              proj.status, 
-                                                             proj.statusModTime)
+                                                             proj.status_mod_time)
         except Exception as e:
             raise e
         return success
@@ -1717,7 +1717,7 @@ class Borg(DbPostgresql):
                                         occ.getDLocation(), occ.getRawDLocation(),
                                         pointtotal, occ.getCSVExtentString(), occ.epsgcode,
                                         occ.dumpLyrMetadata(),
-                                        occ.status, occ.statusModTime, polywkt, pointswkt)
+                                        occ.status, occ.status_mod_time, polywkt, pointswkt)
         newOrExistingOcc = self._createOccurrenceLayer(row, idxs)
         return newOrExistingOcc
 
@@ -1932,11 +1932,11 @@ class Borg(DbPostgresql):
                             lyrmeta, proj.dataFormat, proj.gdalType,
                             proj.ogrType, proj.valUnits, proj.nodataVal, proj.minVal,
                             proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
-                            proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
+                            proj.getCSVExtentString(), proj.getWkt(), proj.mod_time,
                             proj.getOccurrenceSetId(), proj.algorithmCode, algparams,
                             proj.getModelScenarioId(), 
                             proj.getProjScenarioId(), prjmeta,
-                            proj.processType, proj.status, proj.statusModTime)
+                            proj.processType, proj.status, proj.status_mod_time)
         newOrExistingProj = self._createSDMProjection(row, idxs)
         return newOrExistingProj
 
@@ -2036,7 +2036,7 @@ class Borg(DbPostgresql):
                             mtxcol.getParamUserId(), mtxcol.getParamId(), mtxcol.parentId, 
                             mtxcol.getMatrixIndex(), lyrid, mtxcol.squid, mtxcol.ident, 
                             mcmeta, intparams, 
-                            mtxcol.status, mtxcol.statusModTime)
+                            mtxcol.status, mtxcol.status_mod_time)
         newOrExistingMtxCol = self._createMatrixColumn(row, idxs)
         # Put shapegrid into updated matrixColumn 
         newOrExistingMtxCol.shapegrid = mtxcol.shapegrid
@@ -2056,7 +2056,7 @@ class Borg(DbPostgresql):
                                                          mtxcol.get_id(), 
                                                          mtxcol.getMatrixIndex(),
                                                          meta, intparams,
-                                                         mtxcol.status, mtxcol.statusModTime)
+                                                         mtxcol.status, mtxcol.status_mod_time)
         return success
 
 # ...............................................
@@ -2264,7 +2264,7 @@ class Borg(DbPostgresql):
         meta = mtx.dumpMtxMetadata()
         success = self.executeModifyFunction('lm_updateMatrix', 
                                                          mtx.get_id(), mtx.getDLocation(),
-                                                         meta, mtx.status, mtx.statusModTime)
+                                                         meta, mtx.status, mtx.status_mod_time)
         return success
     
 # .............................................................................
@@ -2354,7 +2354,7 @@ class Borg(DbPostgresql):
                             mtx.gcmCode, mtx.altpredCode, mtx.dateCode, 
                             mtx.algorithmCode,
                             mtx.getDLocation(), meta, mtx.status, 
-                            mtx.statusModTime)
+                            mtx.status_mod_time)
         newOrExistingMtx = self._createLMMatrix(row, idxs)
         return newOrExistingMtx
 
@@ -2428,7 +2428,7 @@ class Borg(DbPostgresql):
         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTree', 
                             tree.get_id(), tree.getUserId(), tree.name, 
                             tree.getDLocation(), tree.isBinary(), tree.isUltrametric(),
-                            tree.hasBranchLengths(), meta, tree.modTime)
+                            tree.hasBranchLengths(), meta, tree.mod_time)
         newOrExistingTree = self._createTree(row, idxs)
         return newOrExistingTree
 
@@ -2464,7 +2464,7 @@ class Borg(DbPostgresql):
                                                             mfchain.getDLocation(), 
                                                             mfchain.priority, 
                                                             meta, mfchain.status, 
-                                                            mfchain.statusModTime)
+                                                            mfchain.status_mod_time)
         mfchain = self._createMFChain(row, idxs)
         return mfchain
 
@@ -2562,10 +2562,10 @@ class Borg(DbPostgresql):
         @return: list of MFChains
         """
         mfchainList = []
-        modtime = gmt().mjd
+        mod_time = gmt().mjd
         rows, idxs = self.executeSelectManyFunction('lm_findMFChains', count, 
                                                     userId, oldStatus, newStatus,
-                                                    modtime)
+                                                    mod_time)
         for r in rows:
             mfchain = self._createMFChain(r, idxs)
             mfchainList.append(mfchain)
@@ -2623,11 +2623,11 @@ class Borg(DbPostgresql):
                                                              obj.isBinary(), 
                                                              obj.isUltrametric(), 
                                                              obj.hasBranchLengths(),
-                                                             meta, obj.modTime)
+                                                             meta, obj.mod_time)
         elif isinstance(obj, MFChain):
             success = self.executeModifyFunction('lm_updateMFChain', obj.objId,
                                                              obj.getDLocation(), 
-                                                             obj.status, obj.statusModTime)
+                                                             obj.status, obj.status_mod_time)
         elif isinstance(obj, Gridset):
             success = self.updateGridset(obj)
         else:

@@ -68,7 +68,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                                       metadataUrl=metadataUrl, 
                                       parentMetadataUrl=gridsetUrl,
                                       parentId=gridsetId, 
-                                      modTime=statusModTime)
+                                      mod_time=statusModTime)
         ProcessObject.__init__(self, objId=matrixId, processType=processType,
                                       status=status, statusModTime=statusModTime)         
 
@@ -88,9 +88,9 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         return mtxobj
 
     # ...............................................
-    def updateStatus(self, status, metadata=None, modTime=gmt().mjd):
+    def updateStatus(self, status, metadata=None, mod_time=gmt().mjd):
         """
-        @summary: Updates matrixIndex, paramMetadata, and modTime.
+        @summary: Updates matrixIndex, paramMetadata, and mod_time.
         @param metadata: Dictionary of Matrix metadata keys/values; key constants  
                               are ServiceObject class attributes.
         @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
@@ -99,8 +99,8 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         """
         if metadata is not None:
             self.loadMtxMetadata(metadata)
-        ProcessObject.updateStatus(self, status, modTime)
-        ServiceObject.updateModtime(self, modTime)
+        ProcessObject.updateStatus(self, status, mod_time)
+        ServiceObject.updateModtime(self, mod_time)
 
 # ...............................................
     @property

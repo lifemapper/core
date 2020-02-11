@@ -43,13 +43,13 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
     # Mod times
     occ_mod_time = prj_mod_time = None
 
-    if occ.modTime is not None:
+    if occ.mod_time is not None:
         occ_mod_time = LmTime.from_mjd(
-            occ.modTime).strftime('%Y-%m-%dT%H:%M:%SZ')
+            occ.mod_time).strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    if prj.modTime is not None:
+    if prj.mod_time is not None:
         prj_mod_time = LmTime.from_mjd(
-            prj.modTime).strftime('%Y-%m-%dT%H:%M:%SZ')
+            prj.mod_time).strftime('%Y-%m-%dT%H:%M:%SZ')
 
     # Taxonomy fields
     tax_kingdom = None

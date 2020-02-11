@@ -547,7 +547,7 @@ class ChristopherWalken(LMObject):
         # Global PAM inputs
         (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                               archiveName, epsg)
-        new_date_mjd = boomGridset.modTime
+        new_date_mjd = boomGridset.mod_time
         expDate = new_date_mjd
         weaponOfChoice.reset_expiration_date(new_date_mjd)
         

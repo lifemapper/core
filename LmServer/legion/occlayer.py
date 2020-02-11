@@ -25,7 +25,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, displayName, queryCount, modTime, userId, 
+    def __init__(self, displayName, queryCount, mod_time, userId, 
                      occurrenceSetId, metadata={}, sciName=None, 
                      rawDLocation=None, processType=None, 
                      status=None, statusModTime=None):
@@ -44,7 +44,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         """
         _LayerParameters.__init__(self, userId, paramId=occurrenceSetId,
                                           matrixIndex=-1, metadata=metadata, 
-                                          modTime=modTime)
+                                          mod_time=mod_time)
         ProcessObject.__init__(
             self, objId=occurrenceSetId, processType=processType,
             status=status, statusModTime=statusModTime)
@@ -73,17 +73,17 @@ class OccurrenceType(_LayerParameters, ProcessObject):
     def getRawDLocation(self):
         return self._rawDLocation
     
-    def setRawDLocation(self, rawDLocation, modTime):
+    def setRawDLocation(self, rawDLocation, mod_time):
         self._rawDLocation = rawDLocation
-        self.paramModTime = modTime
+        self.paramModTime = mod_time
     
     # ...............................................
-    def updateStatus(self, status, modTime=gmt().mjd,
+    def updateStatus(self, status, mod_time=gmt().mjd,
                      queryCount=None):
         """
         @note: Overrides ProcessObject.updateStatus
         """
-        ProcessObject.updateStatus(self, status, modTime)
+        ProcessObject.updateStatus(self, status, mod_time)
         if queryCount is not None: 
             self.queryCount = queryCount
             self.paramModTime = self.statusModTime
@@ -128,7 +128,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             maxVal=maxVal, mapunits=mapunits, resolution=resolution, bbox=bbox,
             svcObjId=occurrenceSetId, serviceType=serviceType,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
-            modTime=statusModTime, featureCount=featureCount,
+            mod_time=statusModTime, featureCount=featureCount,
             featureAttributes=featureAttributes, features=features,
             fidAttribute=fidAttribute)
         self.rawMetaDLocation = rawMetaDLocation

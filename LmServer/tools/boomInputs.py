@@ -132,7 +132,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
     
     # Save matrix and update record
     bgMtx.write(overwrite=True)
-    bgMtx.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
+    bgMtx.updateStatus(JobStatus.COMPLETE, mod_time=gmt().mjd)
     success = scribe.updateObject(bgMtx)
     return bgMtx
 
@@ -323,7 +323,7 @@ for lyr in layers:
     
 # Save matrix and update record
 bgMtx.write(overwrite=True)
-bgMtx.updateStatus(JobStatus.COMPLETE, modTime=gmt().mjd)
+bgMtx.updateStatus(JobStatus.COMPLETE, mod_time=gmt().mjd)
 success = scribe.updateObject(bgMtx)
 return bgMtx
 
