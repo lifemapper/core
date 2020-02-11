@@ -49,6 +49,7 @@ class TestScribeEnvLayerService(UserTestCase):
    @summary: This is a test class for running scribe tests for the 
                 environmental layer service
    """
+
    # ............................
    def setUp(self):
       """
@@ -56,14 +57,14 @@ class TestScribeEnvLayerService(UserTestCase):
       """
       self.scribe = BorgScribe(ConsoleLogger())
       self.scribe.openConnections()
-      
+
    # ............................
    def tearDown(self):
       """
       @summary: Clean up after test
       """
       self.scribe.closeConnections()
-      
+
    # ............................
    def test_count(self):
       """
@@ -75,33 +76,33 @@ class TestScribeEnvLayerService(UserTestCase):
          warnings.warn(
             'Count returned 0 environmental layers for user: {}'.format(
                self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
       @summary: Basic test that tries to get an environmental layer object 
                    belonging to a user
       """
-      envLyrAtoms = self.scribe.listEnvLayers(0, 1, 
+      envLyrAtoms = self.scribe.listEnvLayers(0, 1,
                                               userId=self._get_session_user())
       if len(envLyrAtoms) == 0:
          self.fail(
             'Cannot get an environmental layer because listing found none')
       else:
-         lyr = self.scribe.getEnvLayer(envlyrId=envLyrAtoms[0].id, 
+         lyr = self.scribe.getEnvLayer(envlyrId=envLyrAtoms[0].id,
                                        userId=self._get_session_user())
          self.assertIsInstance(lyr, EnvLayer)
-         self.assertEqual(lyr.getUserId(), self._get_session_user(), 
+         self.assertEqual(lyr.getUserId(), self._get_session_user(),
                'User id on layer = {}, session user = {}'.format(
                   lyr.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_atoms(self):
       """
       @summary: Basic test that tries to get a list of environmental layer
                    atoms from the scribe
       """
-      envLyrAtoms = self.scribe.listEnvLayers(0, 1, 
+      envLyrAtoms = self.scribe.listEnvLayers(0, 1,
                                               userId=self._get_session_user())
       self.assertGreaterEqual(len(envLyrAtoms), 0)
       if len(envLyrAtoms) == 0:
@@ -109,12 +110,12 @@ class TestScribeEnvLayerService(UserTestCase):
             'List returned 0 environmental layers for user: {}'.format(
                self._get_session_user()))
       else:
-         lyr = self.scribe.getEnvLayer(envlyrId=envLyrAtoms[0].id, 
+         lyr = self.scribe.getEnvLayer(envlyrId=envLyrAtoms[0].id,
                                        userId=self._get_session_user())
-         self.assertEqual(lyr.getUserId(), self._get_session_user(), 
+         self.assertEqual(lyr.getUserId(), self._get_session_user(),
                'User id on layer = {}, session user = {}'.format(
                   lyr.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_objects(self):
       """
@@ -130,9 +131,10 @@ class TestScribeEnvLayerService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(envLyrObjs[0], EnvLayer)
-         self.assertEqual(envLyrObjs[0].getUserId(), self._get_session_user(), 
+         self.assertEqual(envLyrObjs[0].getUserId(), self._get_session_user(),
                'User id on layer = {}, session user = {}'.format(
                   envLyrObjs[0].getUserId(), self._get_session_user()))
+
 
 # .............................................................................
 class TestWebEnvLayerService(UserTestCase):
@@ -140,6 +142,7 @@ class TestWebEnvLayerService(UserTestCase):
    @summary: This is a test class for running web tests for the environmental 
                 layer service
    """
+
    # ............................
    def setUp(self):
       """
@@ -149,7 +152,7 @@ class TestWebEnvLayerService(UserTestCase):
       if self.userId is not None:
          # Log in
          self.cl.login(self.userId, self.passwd)
-      
+
    # ............................
    def tearDown(self):
       """
@@ -159,7 +162,7 @@ class TestWebEnvLayerService(UserTestCase):
          # Log out
          self.cl.logout()
       self.cl = None
-      
+
    # ............................
    def test_count(self):
       """
@@ -168,13 +171,13 @@ class TestWebEnvLayerService(UserTestCase):
       with contextlib.closing(self.cl.count_environmental_layers()) as x:
          ret = json.load(x)
       count = int(ret['count'])
-      
+
       self.assertGreaterEqual(count, 0)
       if count == 0:
          warnings.warn(
             'Count returned 0 environmental layers for user: {}'.format(
                self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
@@ -183,41 +186,41 @@ class TestWebEnvLayerService(UserTestCase):
       """
       with contextlib.closing(self.cl.list_environmental_layers()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          self.fail(
             'Cannot get an environmental layer because listing found none')
       else:
          layerId = ret[0]['id']
-         
+
          with contextlib.closing(self.cl.get_environmental_layer(layerId)) as x:
             lyrMeta = json.load(x)
-            
+
          self.assertTrue('envCode' in lyrMeta)
-         self.assertEqual(lyrMeta['user'], self._get_session_user(), 
+         self.assertEqual(lyrMeta['user'], self._get_session_user(),
                'User id on layer = {}, session user = {}'.format(
                   lyrMeta['user'], self._get_session_user()))
 
          # Check formats
          # JSON
-         with contextlib.closing(self.cl.get_layer(layerId, 
+         with contextlib.closing(self.cl.get_layer(layerId,
                                                responseFormat=JSON_INTERFACE)):
             self.assertTrue(validate_json(x))
          # EML
-         with contextlib.closing(self.cl.get_layer(layerId, 
+         with contextlib.closing(self.cl.get_layer(layerId,
                                                 responseFormat=EML_INTERFACE)):
             self.assertTrue(validate_eml(x))
-            
+
          # File
          # Tiff
-         with contextlib.closing(self.cl.get_layer(layerId, 
+         with contextlib.closing(self.cl.get_layer(layerId,
                                          responseFormat=GEOTIFF_INTERFACE)):
             self.assertTrue(validate_tiff(x))
          # KML
-         with contextlib.closing(self.cl.get_layer(layerId, 
+         with contextlib.closing(self.cl.get_layer(layerId,
                                                 responseFormat=KML_INTERFACE)):
             self.assertTrue(validate_kml(x))
-   
+
    # ............................
    def test_list(self):
       """
@@ -226,12 +229,13 @@ class TestWebEnvLayerService(UserTestCase):
       """
       with contextlib.closing(self.cl.list_environmental_layers()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          warnings.warn(
             'Count returned 0 environmental layers for user: {}'.format(
                self._get_session_user()))
-   
+
+
 # .............................................................................
 def get_test_classes():
    """
@@ -243,6 +247,7 @@ def get_test_classes():
       TestScribeEnvLayerService,
       TestWebEnvLayerService
    ]
+
 
 # .............................................................................
 def get_test_suite(userId=None, pwd=None):
@@ -257,21 +262,22 @@ def get_test_suite(userId=None, pwd=None):
    suite.addTest(UserTestCase.parameterize(TestWebEnvLayerService))
 
    if userId is not None:
-      suite.addTest(UserTestCase.parameterize(TestScribeEnvLayerService, 
+      suite.addTest(UserTestCase.parameterize(TestScribeEnvLayerService,
                                               userId=userId, pwd=pwd))
-      suite.addTest(UserTestCase.parameterize(TestWebEnvLayerService, 
+      suite.addTest(UserTestCase.parameterize(TestWebEnvLayerService,
                                               userId=userId, pwd=pwd))
-      
+
    return suite
+
 
 # .............................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser(
                         description='Run environmental layer service tests')
-   parser.add_argument('-u', '--user', type=str, 
-                 help='If provided, run tests for this user (and anonymous)' )
+   parser.add_argument('-u', '--user', type=str,
+                 help='If provided, run tests for this user (and anonymous)')
    parser.add_argument('-p', '--pwd', type=str, help='Password for user')
-   
+
    args = parser.parse_args()
    suite = get_test_suite(userId=args.user, pwd=args.pwd)
    unittest.TextTestRunner(verbosity=2).run(suite)

@@ -17,7 +17,6 @@ from osgeo.gdalconst import (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16,
 from osgeo.ogr import (wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint,
                        wkbMultiLineString, wkbMultiPolygon)
 
-
 WEB_SERVICE_VERSION = 'v2'
 API_PATH = 'api'
 API_URL = '/'.join([WEBSERVICES_ROOT, API_PATH, WEB_SERVICE_VERSION])
@@ -79,7 +78,6 @@ WORKER_FACTORY_OPTIONS = '-w {} -W {} -E "{}" -S {} {}'.format(
 # Remove old worker directories command
 RM_OLD_WORKER_DIRS_CMD = 'rocks run host compute "rm -rf {}/worker-*"'.format(
                            WORKER_PATH)
-
 
 DEFAULT_CONFIG = 'config'
 
@@ -280,8 +278,8 @@ class LMFileType(Enum):
     # ..............................
     # Multi-species
     UNSPECIFIED_RAD = 200
-    ATTR_MATRIX = 210    # not yet used
-    SHAPEGRID = 201     # TODO: delete??
+    ATTR_MATRIX = 210  # not yet used
+    SHAPEGRID = 201  # TODO: delete??
     PAM = 222
     GRIM = 223
     ANC_PAM = 224
@@ -658,7 +656,6 @@ OGRDataTypes = (
     wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString,
     wkbMultiPolygon)
 
-
 MAP_KEY = 'map'
 WMS_LAYER_KEY = 'layers'
 WCS_LAYER_KEY = 'coverage'
@@ -715,7 +712,6 @@ STRING_ESCAPE_FORMATS = {
     'xml': XML_ESCAPES
 }
 
-
 # .............................................................................
 # Algorithm constants
 BIOCLIM_PARAMS = {
@@ -735,7 +731,7 @@ CSMBS_PARAMS = {
         'max': 1000
     },
     'StandardDeviations': {
-        'type': float, 'min': -10.0, 'default': 2.0, 'max': 10.0},
+        'type': float, 'min':-10.0, 'default': 2.0, 'max': 10.0},
     'MinComponents': {
         'type': int, 'min': 1, 'default': 1, 'max': 20},
     'VerboseDebugging': {
@@ -856,11 +852,11 @@ ATT_MAXENT_PARAMS = {
     'l2lqthreshold': {'type': int, 'min': 0, 'max': None, 'default': 10},
     'hingethreshold': {'type': int, 'min': 0, 'max': None, 'default': 15},
     'beta_threshold': {
-        'type': float, 'min': None, 'max': None, 'default': -1.0},
+        'type': float, 'min': None, 'max': None, 'default':-1.0},
     'beta_categorical': {
-        'type': float, 'min': None, 'max': None, 'default': -1.0},
-    'beta_lqp': {'type': float, 'min': None, 'max': None, 'default': -1.0},
-    'beta_hinge': {'type': float, 'min': None, 'max': None, 'default': -1.0},
+        'type': float, 'min': None, 'max': None, 'default':-1.0},
+    'beta_lqp': {'type': float, 'min': None, 'max': None, 'default':-1.0},
+    'beta_hinge': {'type': float, 'min': None, 'max': None, 'default':-1.0},
     'defaultprevalence': {
         'type': float, 'min': 0.0, 'max': 1.0, 'default': 0.5},
     'addallsamplestobackground': {
@@ -927,8 +923,8 @@ ANN_PARAMS = {
     'MinimunError': {'type': float, 'min': 0.0, 'default': 0.01, 'max': 0.05}}
 
 AQUAMAPS_PARAMS = {
-    'UseSurfaceLayers': {'type': int, 'min': -1, 'default': -1, 'max': 1},
-    'UseDepthRange': {'type': int, 'min': 0,  'default': 1, 'max': 1},
+    'UseSurfaceLayers': {'type': int, 'min':-1, 'default':-1, 'max': 1},
+    'UseDepthRange': {'type': int, 'min': 0, 'default': 1, 'max': 1},
     'UseIceConcentration': {'type': int, 'min': 0, 'default': 1, 'max': 1},
     'UseDistanceToLand': {'type': int, 'min': 0, 'default': 1, 'max': 1},
     'UsePrimaryProduction': {'type': int, 'min': 0, 'default': 1, 'max': 1},
@@ -940,6 +936,7 @@ AQUAMAPS_PARAMS = {
 class AlgQualities:
     """Algorithm qualities metadata class.
     """
+
     # ...........................
     def __init__(self, code, name, isDiscreteOutput=False,
                  outputFormat=LMFormat.getDefaultGDAL().driver,
@@ -1186,7 +1183,6 @@ SCALE_PROJECTION_MINIMUM = 0
 SCALE_PROJECTION_MAXIMUM = 100
 SCALE_DATA_TYPE = "int"
 
-
 # ============================================================================
 # =                            Processing Constants                          =
 # ============================================================================
@@ -1216,7 +1212,6 @@ class SubsetMethod(Enum):
 # ============================================================================
 DEFAULT_NUM_PERMUTATIONS = 1000
 DEFAULT_RANDOM_GROUP_SIZE = 10
-
 
 # ============================================================================
 # =                           Open Tree Constants                            =

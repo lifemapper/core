@@ -25,6 +25,7 @@ class _ScribeRetriever:
     The purpose of this class is to handle any errors that may occur with that
     connection between requests and get a fresh connection if necessary
    """
+
     # ..........................
     def __init__(self):
         log = WebLogger()
@@ -40,6 +41,7 @@ class _ScribeRetriever:
                 connection, if it does not, refresh and send a new one
         """
         return self.scribe
+
 
 # .............................................................................
 def connect_db(thread_index):

@@ -45,6 +45,7 @@ class TestScribeScenarioPackageService(UserTestCase):
    @summary: This is a test class for running scribe tests for the 
                 scenario package service
    """
+
    # ............................
    def setUp(self):
       """
@@ -52,14 +53,14 @@ class TestScribeScenarioPackageService(UserTestCase):
       """
       self.scribe = BorgScribe(ConsoleLogger())
       self.scribe.openConnections()
-      
+
    # ............................
    def tearDown(self):
       """
       @summary: Clean up after test
       """
       self.scribe.closeConnections()
-      
+
    # ............................
    def test_count(self):
       """
@@ -71,45 +72,45 @@ class TestScribeScenarioPackageService(UserTestCase):
          warnings.warn(
                      'Count returned 0 scenario packages for user: {}'.format(
                         self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
       @summary: Basic test that tries to get an scenario package object 
                    belonging to a user
       """
-      scnPkgAtoms = self.scribe.listScenPackages(0, 1, 
+      scnPkgAtoms = self.scribe.listScenPackages(0, 1,
                                               userId=self._get_session_user())
       if len(scnPkgAtoms) == 0:
          self.fail('Cannot get an scenario package because listing found none')
       else:
-         scnPkg = self.scribe.getScenPackage(scenPkgId=scnPkgAtoms[0].id, 
+         scnPkg = self.scribe.getScenPackage(scenPkgId=scnPkgAtoms[0].id,
                                        userId=self._get_session_user())
          self.assertIsInstance(scnPkg, ScenPackage)
-         self.assertEqual(scnPkg.getUserId(), self._get_session_user(), 
+         self.assertEqual(scnPkg.getUserId(), self._get_session_user(),
                'User id on scenario package = {}, session user = {}'.format(
                                  scnPkg.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_atoms(self):
       """
       @summary: Basic test that tries to get a list of scenario package atoms
                    from the scribe
       """
-      scnPkgAtoms = self.scribe.listScenPackages(0, 1, 
+      scnPkgAtoms = self.scribe.listScenPackages(0, 1,
                                               userId=self._get_session_user())
       self.assertGreaterEqual(len(scnPkgAtoms), 0)
       if len(scnPkgAtoms) == 0:
          warnings.warn('List returned 0 scenario packages for user: {}'.format(
                                                      self._get_session_user()))
       else:
-         scnPkg = self.scribe.getScenPackage(scenPkgId=scnPkgAtoms[0].id, 
+         scnPkg = self.scribe.getScenPackage(scenPkgId=scnPkgAtoms[0].id,
                                        userId=self._get_session_user())
          self.assertIsInstance(scnPkg, ScenPackage)
-         self.assertEqual(scnPkg.getUserId(), self._get_session_user(), 
+         self.assertEqual(scnPkg.getUserId(), self._get_session_user(),
                'User id on scenario package = {}, session user = {}'.format(
                                  scnPkg.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_objects(self):
       """
@@ -124,9 +125,10 @@ class TestScribeScenarioPackageService(UserTestCase):
                                                      self._get_session_user()))
       else:
          self.assertIsInstance(scnPkgObjs[0], ScenPackage)
-         self.assertEqual(scnPkgObjs[0].getUserId(), self._get_session_user(), 
+         self.assertEqual(scnPkgObjs[0].getUserId(), self._get_session_user(),
                'User id on scenario package = {}, session user = {}'.format(
                           scnPkgObjs[0].getUserId(), self._get_session_user()))
+
 
 # .............................................................................
 class TestWebScenarioPackageService(UserTestCase):
@@ -134,6 +136,7 @@ class TestWebScenarioPackageService(UserTestCase):
    @summary: This is a test class for running web tests for the scenario  
                 package service
    """
+
    # ............................
    def setUp(self):
       """
@@ -143,7 +146,7 @@ class TestWebScenarioPackageService(UserTestCase):
       if self.userId is not None:
          # Log in
          self.cl.login(self.userId, self.passwd)
-      
+
    # ............................
    def tearDown(self):
       """
@@ -153,7 +156,7 @@ class TestWebScenarioPackageService(UserTestCase):
          # Log out
          self.cl.logout()
       self.cl = None
-      
+
    # ............................
    def test_count(self):
       """
@@ -162,13 +165,13 @@ class TestWebScenarioPackageService(UserTestCase):
       with contextlib.closing(self.cl.count_scenario_packages()) as x:
          ret = json.load(x)
       count = int(ret['count'])
-      
+
       self.assertGreaterEqual(count, 0)
       if count == 0:
          warnings.warn(
             'Count returned 0 scenario packages for user: {}'.format(
                self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
@@ -177,25 +180,25 @@ class TestWebScenarioPackageService(UserTestCase):
       """
       with contextlib.closing(self.cl.list_scenario_packages()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          self.fail(
             'Cannot get an scenario package because listing found none')
       else:
          scnPkgId = ret[0]['id']
-         
+
          with contextlib.closing(self.cl.get_scenario_package(scnPkgId)) as x:
             scnMeta = json.load(x)
-            
+
          self.assertTrue('scenarios' in scnMeta)
-         self.assertEqual(scnMeta['user'], self._get_session_user(), 
+         self.assertEqual(scnMeta['user'], self._get_session_user(),
                'User id on scenario package = {}, session user = {}'.format(
                   scnMeta['user'], self._get_session_user()))
-         
-         with contextlib.closing(self.cl.get_scenario_package(scnPkgId, 
+
+         with contextlib.closing(self.cl.get_scenario_package(scnPkgId,
                                           responseFormat=JSON_INTERFACE)) as x:
             self.assertTrue(validate_json(x))
-   
+
    # ............................
    def test_list(self):
       """
@@ -204,12 +207,13 @@ class TestWebScenarioPackageService(UserTestCase):
       """
       with contextlib.closing(self.cl.list_scenario_packages()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          warnings.warn(
             'Count returned 0 scenario packages for user: {}'.format(
                self._get_session_user()))
-   
+
+
 # .............................................................................
 def get_test_classes():
    """
@@ -221,6 +225,7 @@ def get_test_classes():
       TestScribeScenarioPackageService,
       TestWebScenarioPackageService
    ]
+
 
 # .............................................................................
 def get_test_suite(userId=None, pwd=None):
@@ -235,21 +240,22 @@ def get_test_suite(userId=None, pwd=None):
    suite.addTest(UserTestCase.parameterize(TestWebScenarioPackageService))
 
    if userId is not None:
-      suite.addTest(UserTestCase.parameterize(TestScribeScenarioPackageService, 
+      suite.addTest(UserTestCase.parameterize(TestScribeScenarioPackageService,
                                               userId=userId, pwd=pwd))
-      suite.addTest(UserTestCase.parameterize(TestWebScenarioPackageService, 
+      suite.addTest(UserTestCase.parameterize(TestWebScenarioPackageService,
                                               userId=userId, pwd=pwd))
-      
+
    return suite
+
 
 # .............................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser(
                         description='Run scenario package service tests')
-   parser.add_argument('-u', '--user', type=str, 
-                 help='If provided, run tests for this user (and anonymous)' )
+   parser.add_argument('-u', '--user', type=str,
+                 help='If provided, run tests for this user (and anonymous)')
    parser.add_argument('-p', '--pwd', type=str, help='Password for user')
-   
+
    args = parser.parse_args()
    suite = get_test_suite(userId=args.user, pwd=args.pwd)
    unittest.TextTestRunner(verbosity=2).run(suite)

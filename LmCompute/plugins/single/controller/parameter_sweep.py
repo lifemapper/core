@@ -31,7 +31,6 @@ from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
 from LmCompute.plugins.single.occurrences.csv_occ import createShapefileFromCSV
 from osgeo import ogr
 
-
 WAIT_THRESHOLD = 60
 
 
@@ -39,6 +38,7 @@ WAIT_THRESHOLD = 60
 class ParameterSweep:
     """This class performs a parameter sweep for a single species
     """
+
     # ........................................
     def __init__(self, sweep_config, base_work_dir='.', pavs_only=False,
                  pedantic_mode=False):
@@ -104,7 +104,7 @@ class ParameterSweep:
                         occ_status = JobStatus.NOT_FOUND
                     else:
                         occ_status = JobStatus.COMPUTED
-                    #occ_shp_filename, occ_status = self._get_registry_output(
+                    # occ_shp_filename, occ_status = self._get_registry_output(
                     #    RegistryKey.OCCURRENCE, occ_set_id)
                     if occ_status < JobStatus.GENERAL_ERROR and \
                             occ_shp_filename:
@@ -176,7 +176,7 @@ class ParameterSweep:
                 occ_status = JobStatus.NOT_FOUND
             else:
                 occ_status = JobStatus.COMPUTED
-            #occ_shp_filename, occ_status = self._get_registry_output(
+            # occ_shp_filename, occ_status = self._get_registry_output(
             #    RegistryKey.OCCURRENCE, occ_set_id)
             # We can only compute if occurrence set was created successfully
             if occ_status >= JobStatus.GENERAL_ERROR:
@@ -425,7 +425,7 @@ class ParameterSweep:
             if status < JobStatus.GENERAL_ERROR:
                 self.pavs.append(
                     {
-                        #RegistryKey.PAV_FILENAME : pav_filename,
+                        # RegistryKey.PAV_FILENAME : pav_filename,
                         RegistryKey.COMPRESSED_PAV_DATA: compress(pav.data),
                         RegistryKey.IDENTIFIER : pav_id,
                         RegistryKey.PROJECTION_ID : projection_id
@@ -669,7 +669,7 @@ class ParameterSweep:
 
     # ........................................
     def _register_output_object(self, object_type, object_id, status,
-                                primary_output, secondary_outputs=None, 
+                                primary_output, secondary_outputs=None,
                                 process_type=None, metrics=None,
                                 snippets=None):
         """Adds an output object to the registry

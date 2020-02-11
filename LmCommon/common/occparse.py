@@ -229,7 +229,7 @@ class OccDataParser(LMObject):
             with open(metadata) as f:
                 meta = json.load(f)
         except IOError as e:
-            print(( 'Failed to open {} err: {}'.format(metadata, str(e))))
+            print(('Failed to open {} err: {}'.format(metadata, str(e))))
             raise
         except Exception as e:
             # or string/stream
@@ -261,7 +261,6 @@ class OccDataParser(LMObject):
 
         return meta, doMatchHeader
 
-
     # .........................................................................
     @staticmethod
     def readOldMetadata(metalines):
@@ -275,7 +274,7 @@ class OccDataParser(LMObject):
         @note: A full description of the input data is at 
                LmDbServer/boom/occurrence.meta.example
         """
-        fieldmeta = {} 
+        fieldmeta = {}
         try:
             for line in metalines:
                 if not line.startswith('#'):
@@ -293,21 +292,21 @@ class OccDataParser(LMObject):
                             print(('Skipping field {} without name or type'.format(key)))
                             fieldmeta[key] = None
                         else:
-                            # Required second value is fieldname, must 
+                            # Required second value is fieldname, must
                             # be 10 chars or less to write to a shapefile
                             # Required third value is string/real/integer or None to ignore
-                            fieldmeta[key] = {OccDataParser.FIELD_NAME_KEY: parts[1], 
+                            fieldmeta[key] = {OccDataParser.FIELD_NAME_KEY: parts[1],
                                               OccDataParser.FIELD_TYPE_KEY: parts[2]}
                             # Optional remaining values are role and/or allowable values
                             if len(parts) >= 4:
-                                # Convert to lowercase 
+                                # Convert to lowercase
                                 rest = []
                                 for val in parts[3:]:
                                     try:
                                         rest.append(val.lower())
                                     except:
                                         rest.append(val)
-                                # If there are 4+ values, fourth may be role of this field: 
+                                # If there are 4+ values, fourth may be role of this field:
                                 #   longitude, latitude, geopoint, groupby, taxaname, uniqueid
                                 # Convert to lowercase
                                 if rest[0] in OccDataParser.FIELD_ROLES:
@@ -364,14 +363,14 @@ class OccDataParser(LMObject):
                     fieldIndexMeta[i] = None
 
         for idx, vals in fieldIndexMeta.items():
-            # add placeholders in the fieldnames and fieldTypes lists for 
-            # columns we will not process 
+            # add placeholders in the fieldnames and fieldTypes lists for
+            # columns we will not process
             ogrtype = role = acceptedVals = None
             if vals is not None:
-                # Get required vals for columns to save  
+                # Get required vals for columns to save
                 name = fieldIndexMeta[idx][OccDataParser.FIELD_NAME_KEY]
                 ogrtype = fieldIndexMeta[idx][OccDataParser.FIELD_TYPE_KEY]
-                # Check for optional filter AcceptedValues.  
+                # Check for optional filter AcceptedValues.
                 try:
                     acceptedVals = fieldIndexMeta[idx]['acceptedVals']
                 except:
@@ -451,7 +450,7 @@ class OccDataParser(LMObject):
                 print(('Unsupported field type {} (requires None, int, string, real)'
                                .format(typestr)))
         return None
-    
+
     # ...............................................
     @staticmethod
     def getXY(line, xIdx, yIdx, geoIdx):
@@ -477,12 +476,12 @@ class OccDataParser(LMObject):
                         pass
                     else:
                         if lonidx >= 0:
-                            tmp = coord[lonidx+3:].strip()
+                            tmp = coord[lonidx + 3:].strip()
                             x = tmp.replace('"', '').replace(':', '').replace(',', '').strip()
                 # Latitude
                 else:
                     if latidx >= 0:
-                        tmp = coord[latidx+3:].strip()
+                        tmp = coord[latidx + 3:].strip()
                         y = tmp.replace('"', '').replace(':', '').replace(',', '').strip()
         return x, y
 
@@ -575,7 +574,7 @@ class OccDataParser(LMObject):
         @note: Reads up to, not including, targetnum line.
         """
         complete = False
-        while self.currLine is not None and self.currRecnum < targetnum-1:
+        while self.currLine is not None and self.currRecnum < targetnum - 1:
             line, goodEnough = self._getLine()
 
     # ...............................................
@@ -696,7 +695,7 @@ class OccDataParser(LMObject):
                         complete = True
 
             except Exception as e:
-                self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
+                self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s'
                           % (str(self.currRecnum), str(e)))
                 self.currLine = self.groupVal = None
         return chunk, chunkGroup, chunkName
@@ -732,7 +731,7 @@ class OccDataParser(LMObject):
                 else:
                     self.pullNextValidRec()
         except Exception as e:
-            self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
+            self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s'
                       % (str(self.currRecnum), str(e)))
             self.currLine = self.groupVal = None
         return chunk
@@ -768,7 +767,7 @@ if __name__ == '__main__':
 
     pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
     log = TestLogger('occparse_checkInput')
-    op = OccDataParser(log, pthAndBasename + LMFormat.CSV.ext, 
+    op = OccDataParser(log, pthAndBasename + LMFormat.CSV.ext,
                        pthAndBasename + LMFormat.METADATA.ext, pullChunks=True)
     op.readAllRecs()
     op.printStats()

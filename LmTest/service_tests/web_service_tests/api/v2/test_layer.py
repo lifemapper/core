@@ -51,6 +51,7 @@ class TestScribeLayerService(UserTestCase):
    """
    @summary: This is a test class for running scribe tests for the layer service
    """
+
    # ............................
    def setUp(self):
       """
@@ -58,14 +59,14 @@ class TestScribeLayerService(UserTestCase):
       """
       self.scribe = BorgScribe(ConsoleLogger())
       self.scribe.openConnections()
-      
+
    # ............................
    def tearDown(self):
       """
       @summary: Clean up after test
       """
       self.scribe.closeConnections()
-      
+
    # ............................
    def test_count(self):
       """
@@ -77,7 +78,7 @@ class TestScribeLayerService(UserTestCase):
          warnings.warn(
             'Count returned 0 layers for user: {}'.format(
                                                      self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
@@ -88,13 +89,13 @@ class TestScribeLayerService(UserTestCase):
       if len(lyrAtoms) == 0:
          self.fail('Cannot get a layer because listing found none')
       else:
-         lyr = self.scribe.getLayer(lyrId=lyrAtoms[0].id, 
+         lyr = self.scribe.getLayer(lyrId=lyrAtoms[0].id,
                                        userId=self._get_session_user())
          self.assertIsInstance(lyr, (Raster, Vector))
-         self.assertEqual(lyr.getUserId(), self._get_session_user(), 
+         self.assertEqual(lyr.getUserId(), self._get_session_user(),
                'User id on layer = {}, session user = {}'.format(
                   lyr.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_atoms(self):
       """
@@ -107,12 +108,12 @@ class TestScribeLayerService(UserTestCase):
          warnings.warn('List returned 0 layers for user: {}'.format(
                                                      self._get_session_user()))
       else:
-         lyr = self.scribe.getLayer(lyrId=lyrAtoms[0].id, 
+         lyr = self.scribe.getLayer(lyrId=lyrAtoms[0].id,
                                        userId=self._get_session_user())
-         self.assertEqual(lyr.getUserId(), self._get_session_user(), 
+         self.assertEqual(lyr.getUserId(), self._get_session_user(),
                'User id on layer = {}, session user = {}'.format(
                   lyr.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_objects(self):
       """
@@ -127,15 +128,17 @@ class TestScribeLayerService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(lyrObjs[0], (Raster, Vector))
-         self.assertEqual(lyrObjs[0].getUserId(), self._get_session_user(), 
+         self.assertEqual(lyrObjs[0].getUserId(), self._get_session_user(),
                'User id on layer = {}, session user = {}'.format(
                   lyrObjs[0].getUserId(), self._get_session_user()))
+
 
 # .............................................................................
 class TestWebLayerService(UserTestCase):
    """
    @summary: This is a test class for running web tests for the layer service
    """
+
    # ............................
    def setUp(self):
       """
@@ -145,7 +148,7 @@ class TestWebLayerService(UserTestCase):
       if self.userId is not None:
          # Log in
          self.cl.login(self.userId, self.passwd)
-      
+
    # ............................
    def tearDown(self):
       """
@@ -155,7 +158,7 @@ class TestWebLayerService(UserTestCase):
          # Log out
          self.cl.logout()
       self.cl = None
-      
+
    # ............................
    def test_count(self):
       """
@@ -164,12 +167,12 @@ class TestWebLayerService(UserTestCase):
       with contextlib.closing(self.cl.count_layers()) as x:
          ret = json.load(x)
       count = int(ret['count'])
-      
+
       self.assertGreaterEqual(count, 0)
       if count == 0:
          warnings.warn('Count returned 0 layers for user: {}'.format(
                self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
@@ -177,53 +180,52 @@ class TestWebLayerService(UserTestCase):
       """
       with contextlib.closing(self.cl.list_layers()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          self.fail('Cannot get a layer because listing found none')
       else:
          layerId = ret[0]['id']
-         
+
          with contextlib.closing(self.cl.get_layer(layerId)) as x:
             lyrMeta = json.load(x)
-            
+
          self.assertTrue('id' in lyrMeta)
-         self.assertEqual(lyrMeta['user'], self._get_session_user(), 
+         self.assertEqual(lyrMeta['user'], self._get_session_user(),
                'User id on layer = {}, session user = {}'.format(
                   lyrMeta['user'], self._get_session_user()))
-         
-         
+
          # Check formats
          # JSON
-         with contextlib.closing(self.cl.get_layer(layerId, 
+         with contextlib.closing(self.cl.get_layer(layerId,
                                                responseFormat=JSON_INTERFACE)):
             self.assertTrue(validate_json(x))
          # EML
-         with contextlib.closing(self.cl.get_layer(layerId, 
+         with contextlib.closing(self.cl.get_layer(layerId,
                                                 responseFormat=EML_INTERFACE)):
             self.assertTrue(validate_eml(x))
-            
+
          # File
          if 'spatialRaster' in lyrMeta:
             # Tiff
-            with contextlib.closing(self.cl.get_layer(layerId, 
+            with contextlib.closing(self.cl.get_layer(layerId,
                                             responseFormat=GEOTIFF_INTERFACE)):
                self.assertTrue(validate_tiff(x))
          else:
             # Shapefile
-            with contextlib.closing(self.cl.get_layer(layerId, 
+            with contextlib.closing(self.cl.get_layer(layerId,
                                           responseFormat=SHAPEFILE_INTERFACE)):
                self.assertTrue(validate_shapefile(x))
-               
+
             # GeoJSON
-            with contextlib.closing(self.cl.get_layer(layerId, 
+            with contextlib.closing(self.cl.get_layer(layerId,
                                            responseFormat=GEO_JSON_INTERFACE)):
                self.assertTrue(validate_geojson(x))
 
          # KML
-         with contextlib.closing(self.cl.get_layer(layerId, 
+         with contextlib.closing(self.cl.get_layer(layerId,
                                                 responseFormat=KML_INTERFACE)):
             self.assertTrue(validate_kml(x))
-   
+
    # ............................
    def test_list(self):
       """
@@ -231,11 +233,12 @@ class TestWebLayerService(UserTestCase):
       """
       with contextlib.closing(self.cl.list_layers()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          warnings.warn('Count returned 0 layers for user: {}'.format(
                self._get_session_user()))
-   
+
+
 # .............................................................................
 def get_test_classes():
    """
@@ -247,6 +250,7 @@ def get_test_classes():
       TestScribeLayerService,
       TestWebLayerService
    ]
+
 
 # .............................................................................
 def get_test_suite(userId=None, pwd=None):
@@ -261,20 +265,21 @@ def get_test_suite(userId=None, pwd=None):
    suite.addTest(UserTestCase.parameterize(TestWebLayerService))
 
    if userId is not None:
-      suite.addTest(UserTestCase.parameterize(TestScribeLayerService, 
+      suite.addTest(UserTestCase.parameterize(TestScribeLayerService,
                                               userId=userId, pwd=pwd))
-      suite.addTest(UserTestCase.parameterize(TestWebLayerService, 
+      suite.addTest(UserTestCase.parameterize(TestWebLayerService,
                                               userId=userId, pwd=pwd))
-      
+
    return suite
+
 
 # .............................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser(description='Run layer service tests')
-   parser.add_argument('-u', '--user', type=str, 
-                 help='If provided, run tests for this user (and anonymous)' )
+   parser.add_argument('-u', '--user', type=str,
+                 help='If provided, run tests for this user (and anonymous)')
    parser.add_argument('-p', '--pwd', type=str, help='Password for user')
-   
+
    args = parser.parse_args()
    suite = get_test_suite(userId=args.user, pwd=args.pwd)
    unittest.TextTestRunner(verbosity=2).run(suite)

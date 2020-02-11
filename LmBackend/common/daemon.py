@@ -26,6 +26,7 @@ class Daemon:
 
     Usage: subclass the Daemon class and override the run() method
     """
+
     # .............................
     def __init__(self, pidfile, log=None):
         self.pidfile = pidfile

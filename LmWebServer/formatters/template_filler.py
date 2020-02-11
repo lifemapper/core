@@ -6,6 +6,7 @@
 class TemplateFiller:
     """Class responsible for filling templated strings
     """
+
     # ..............................
     def __init__(self, indicator='##', **args):
         self.indicator = indicator

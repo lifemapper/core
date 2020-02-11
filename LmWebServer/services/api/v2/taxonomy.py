@@ -13,6 +13,7 @@ import cherrypy
 class TaxonomyHintService(LmService):
     """This class provides a method for querying available taxonomy.
     """
+
     # ................................
     @lm_formatter
     def GET(self, taxonKingdom=None, taxonPhylum=None, taxonClass=None,

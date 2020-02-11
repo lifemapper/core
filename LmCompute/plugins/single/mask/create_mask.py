@@ -9,7 +9,6 @@ from LmCommon.common.ready_file import ready_filename
 import numpy as np
 from osgeo import gdal, gdalconst, ogr, osr
 
-
 # TODO: Move to constants probably
 NUM_QUAD_SEGS = 30
 
@@ -82,7 +81,7 @@ def create_convex_hull_region_intersect_mask(
     # Mask the layer to only regions that points fall within
     for i in range(data.shape[0]):
         for j in range(data.shape[1]):
-            if data[i,j] in list_vals and con_hull_data[i,j] == 1:
+            if data[i, j] in list_vals and con_hull_data[i, j] == 1:
                 new_data[i, j] = 1
 
     if ascii_filename is not None:

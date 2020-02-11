@@ -17,6 +17,7 @@ import cherrypy
 class LayerService(LmService):
     """Class for layers service.
     """
+
     # ................................
     @lm_formatter
     def GET(self, pathLayerId=None, afterTime=None, altPredCode=None,

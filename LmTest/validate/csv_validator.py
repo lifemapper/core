@@ -32,6 +32,5 @@ def validate_csv_file(csv_filename, read_lines=False):
             msg = str(e)
     else:
         msg = 'File does not exist'
-    
+
     return valid, msg
-    

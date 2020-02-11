@@ -12,7 +12,6 @@ from LmServer.common.log import UnittestLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmTest.service_tests.tools.lm_client import LmWebClient
 
-
 # .............................................................................
 # .                                 Constants                                 .
 # .............................................................................
@@ -27,6 +26,7 @@ def public_client():
     """
     return LmWebClient(WEBSERVICES_ROOT)
 
+
 # .............................................................................
 @pytest.fixture(scope='session')
 def scribe():
@@ -38,6 +38,7 @@ def scribe():
     scribe = BorgScribe(UnittestLogger())
     scribe.openConnections()
     return scribe
+
 
 # .............................................................................
 @pytest.fixture(scope='session')

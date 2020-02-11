@@ -23,6 +23,7 @@ class TreeService(LmService):
     Note:
         * The dispatcher is responsible for calling the correct method.
     """
+
     # ................................
     def DELETE(self, pathTreeId):
         """Attempts to delete a tree

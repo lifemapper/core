@@ -36,7 +36,7 @@ def validate_tiff(obj_generator):
    with open(fn, 'w') as outF:
       for line in obj_generator:
          outF.write(line)
-   
+
    ret = Raster.testRaster(fn)
    os.remove(fn)
    return ret

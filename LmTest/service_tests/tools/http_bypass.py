@@ -26,20 +26,21 @@ def installHTTPBypass(cLib, remoteIP='127.0.0.1'):
     @param remoteIp: The IP address where the requests should appear to come from
     @note: This will only allow access to server code on the local machine
     """
+
     def makeBypassRequest(self, url, method='GET', parameters=[], body=None,
                                  headers={}, objectify=False):
         parameters = removeNonesFromTupleList(parameters)
         urlparams = urllib.parse.urlencode(parameters)
-        
+
         if body is None and len(parameters) > 0 and method.lower() == "post":
             body = urlparams
         else:
             url = "%s?%s" % (url, urlparams)
-            
+
         headers['User-Agent'] = self.UA_STRING + " (HTTP bypass)"
 
         # Add cookie headers
-        
+
         cookies = []
         for cookie in self.cookieJar:
             if cookie.domain == self.server.strip('http://'):
@@ -47,16 +48,16 @@ def installHTTPBypass(cLib, remoteIP='127.0.0.1'):
         if len(cookies) > 0:
             headers['Cookie'] = '; '.join(cookies)
 
-        ret, req = createRequest(url, method, headers=headers, body=body, 
+        ret, req = createRequest(url, method, headers=headers, body=body,
                                       remoteIp=remoteIP)
-        
+
         self.cookieJar.extract_cookies(ret, req)
-        
+
         resp = ''.join(ret.body)
         if objectify:
             return self.objectify(resp)
         else:
             return resp
-        
+
     cLib._cl.makeRequest = types.MethodType(makeBypassRequest, cLib._cl)
 

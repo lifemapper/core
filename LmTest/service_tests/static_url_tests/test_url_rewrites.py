@@ -4,7 +4,6 @@ import urllib.request, urllib.error, urllib.parse
 
 from LmCommon.common.lmconstants import HTTPStatus
 
-
 ORIG_URL_KEY = 'orig_url'  # The original URL that should be rewritten
 REWRITE_URL_KEY = 'rewrite_url'  # The desired rewritten URL
 TEST_STATUS_KEY = 'test_status'  # The HTTP status we expect for this rewrite
@@ -64,6 +63,7 @@ FORWARDED_URLS = [
     }
 ]
 
+
 # .............................................................................
 def get_absolute_url(url, local_server):
     """Gets the absolute URL from the provided URL
@@ -83,11 +83,13 @@ def get_absolute_url(url, local_server):
         return url
     else:
         return '{}{}'.format(local_server, url)
-        
-# .............................................................................    
+
+
+# .............................................................................
 class Test_url_writing(object):
     """Tests that URLs are properly rewritten
     """
+
     # .....................................
     def test_url_rewrites(self):
         """This test checks all URLs to be rewritten

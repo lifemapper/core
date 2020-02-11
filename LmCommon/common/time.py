@@ -13,7 +13,6 @@ Todo:
 import datetime
 import time
 
-
 MJD_EPOCH_TIME = datetime.datetime(1858, 11, 17, 0, 0, 0, 0)
 SECONDS_IN_DAY = 86400
 
@@ -22,6 +21,7 @@ SECONDS_IN_DAY = 86400
 class LmTime:
     """Subclass for time for Lifemapper purposes
     """
+
     # ...........................
     def __init__(self, dtime=None):
         """Constructor that takes an optional time.struct_time object.

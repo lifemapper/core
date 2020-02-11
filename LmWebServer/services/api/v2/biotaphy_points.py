@@ -21,6 +21,7 @@ import cherrypy
 class IDigBioOccurrenceService(LmService):
     """iDigBio occurrence data service
     """
+
     # ................................
     def _get_data_targets(self):
         """

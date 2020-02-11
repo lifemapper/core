@@ -10,7 +10,6 @@ from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
 import cherrypy
 
-
 # TODO: These need to go into a constants file
 ACCEPTED_NAME_KEY = 'accepted_name'
 SEARCH_NAME_KEY = 'search_name'
@@ -24,6 +23,7 @@ TAXON_ID_KEY = 'taxon_id'
 class GBIFNamesService(LmService):
     """Service to get GBIF accepted names
     """
+
     # ................................
     @lm_formatter
     def POST(self):

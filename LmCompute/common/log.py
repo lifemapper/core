@@ -18,6 +18,7 @@ class LmComputeLogger(LmLogger):
         addConsole: (optional) Should a console logger be added
         addFile: (optional) Should a file logger be added
     """
+
     def __init__(self, name, level=logging.DEBUG, add_console=False,
                  add_file=False, log_filename=None):
         # In case level was set to None

@@ -5,7 +5,6 @@ import os
 
 from LmCommon.common.singleton import singleton
 
-
 # Looks for a Lifemapper configuration file path environment variable.  If one
 #    cannot be found, raise an exception
 COMPUTE_CONFIG_FILENAME = os.getenv('LIFEMAPPER_COMPUTE_CONFIG_FILE')
@@ -18,6 +17,7 @@ SITE_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SITE_CONFIG_FILE')
 class Config:
     """Reads configuration from base config and site config files
     """
+
     # .....................................
     def __init__(self, fns=None, site_fn=SITE_CONFIG_FILENAME,
                  include_defaults=True):

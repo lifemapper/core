@@ -15,7 +15,6 @@ import argparse
 from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
 import numpy as np
 
-
 # Local constants for this module
 LEFT_SQUIDS_KEY = 'left_squids'
 RIGHT_SQUIDS_KEY = 'right_squids'
@@ -122,7 +121,7 @@ def build_ancestral_pam(pam, tree):
         # Build the column of quaternary values indicating which clade is
         #    present; a1 - a2 + 2*((a1+a2)/2)
         node_data[:, col] = left_side - right_side + 2 * (
-            (left_side + right_side)/2)
+            (left_side + right_side) / 2)
         col += 1
 
     node_mtx = Matrix(
@@ -158,6 +157,7 @@ def main():
 
     with open(args.out_fn, 'w') as out_f:
         anc_pam.save(out_f)
+
 
 # .............................................................................
 if __name__ == '__main__':

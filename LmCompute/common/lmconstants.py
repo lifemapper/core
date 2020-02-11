@@ -6,7 +6,6 @@ from LmCompute.common.localconstants import (
     CONVERT_JAVA_INIT_MEM_OPTION, CONVERT_JAVA_MAX_MEM_OPTION, JAVA_EXE,
     JAVA_INIT_MEM_OPTION, JAVA_MAX_MEM_OPTION, LM_DISK, LM_PATH, SCRATCH_PATH)
 
-
 # ============================================================================
 # =                             Paths/Directories                            =
 # ============================================================================

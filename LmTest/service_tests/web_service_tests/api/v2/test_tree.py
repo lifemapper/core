@@ -24,6 +24,7 @@ class TestScribeTreeService(UserTestCase):
     @summary: This is a test class for running scribe tests for the 
                      tree service
     """
+
     # ............................
     def setUp(self):
         """
@@ -31,14 +32,14 @@ class TestScribeTreeService(UserTestCase):
         """
         self.scribe = BorgScribe(ConsoleLogger())
         self.scribe.openConnections()
-        
+
     # ............................
     def tearDown(self):
         """
         @summary: Clean up after test
         """
         self.scribe.closeConnections()
-        
+
     # ............................
     def test_count(self):
         """
@@ -50,7 +51,7 @@ class TestScribeTreeService(UserTestCase):
         if count == 0:
             warnings.warn('Count returned 0 trees for user: {}'.format(
                     self._get_session_user()))
-    
+
     # ............................
     def test_get(self):
         """
@@ -62,10 +63,10 @@ class TestScribeTreeService(UserTestCase):
         else:
             tree = self.scribe.getTree(treeId=treeAtoms[0].id)
             self.assertIsInstance(tree, TreeWrapper)
-            self.assertEqual(tree.getUserId(), self._get_session_user(), 
+            self.assertEqual(tree.getUserId(), self._get_session_user(),
                                         'User id on tree = {}, session user = {}'.format(
                                               tree.getUserId(), self._get_session_user()))
-    
+
     # ............................
     def test_list_atoms(self):
         """
@@ -79,10 +80,10 @@ class TestScribeTreeService(UserTestCase):
                                                                       self._get_session_user()))
         else:
             tree = self.scribe.getTree(treeId=treeAtoms[0].id)
-            self.assertEqual(tree.getUserId(), self._get_session_user(), 
+            self.assertEqual(tree.getUserId(), self._get_session_user(),
                                         'User id on tree = {}, session user = {}'.format(
                                               tree.getUserId(), self._get_session_user()))
-    
+
     # ............................
     def test_list_objects(self):
         """
@@ -97,15 +98,17 @@ class TestScribeTreeService(UserTestCase):
                                                                       self._get_session_user()))
         else:
             self.assertIsInstance(treeObjs[0], TreeWrapper)
-            self.assertEqual(treeObjs[0].getUserId(), self._get_session_user(), 
+            self.assertEqual(treeObjs[0].getUserId(), self._get_session_user(),
                                         'User id on tree = {}, session user = {}'.format(
                                      treeObjs[0].getUserId(), self._get_session_user()))
+
 
 # .............................................................................
 class TestWebTreeService(UserTestCase):
     """
     @summary: This is a test class for running web tests for the tree service
     """
+
     # ............................
     def setUp(self):
         """
@@ -115,7 +118,7 @@ class TestWebTreeService(UserTestCase):
         if self.userId is not None:
             # Log in
             self.cl.login(self.userId, self.passwd)
-        
+
     # ............................
     def tearDown(self):
         """
@@ -125,7 +128,7 @@ class TestWebTreeService(UserTestCase):
             # Log out
             self.cl.logout()
         self.cl = None
-        
+
     # ............................
     def test_count(self):
         """
@@ -134,12 +137,12 @@ class TestWebTreeService(UserTestCase):
         with contextlib.closing(self.cl.count_trees()) as x:
             ret = json.load(x)
         count = int(ret['count'])
-        
+
         self.assertGreaterEqual(count, 0)
         if count == 0:
             warnings.warn('Count returned 0 trees for user: {}'.format(
                                                                       self._get_session_user()))
-    
+
     # ............................
     def test_get(self):
         """
@@ -147,37 +150,37 @@ class TestWebTreeService(UserTestCase):
         """
         with contextlib.closing(self.cl.list_trees()) as x:
             ret = json.load(x)
-        
+
         if len(ret) == 0:
             self.fail('Cannot get an tree because listing found none')
         else:
             treeId = ret[0]['id']
-            
+
             with contextlib.closing(self.cl.get_tree(treeId)) as x:
                 treeMeta = json.load(x)
-                
+
             self.assertTrue('ultrametric' in treeMeta)
-            self.assertEqual(treeMeta['user'], self._get_session_user(), 
+            self.assertEqual(treeMeta['user'], self._get_session_user(),
                                         'User id on tree = {}, session user = {}'.format(
                                             treeMeta['user'], self._get_session_user()))
-        
+
             # EML
-            with contextlib.closing(self.cl.get_tree(treeId, 
+            with contextlib.closing(self.cl.get_tree(treeId,
                                                          responseFormat=EML_INTERFACE)) as x:
                 self.assertTrue(validate_eml(x))
             # JSON
-            with contextlib.closing(self.cl.get_tree(treeId, 
+            with contextlib.closing(self.cl.get_tree(treeId,
                                                         responseFormat=JSON_INTERFACE)) as x:
                 self.assertTrue(validate_json(x))
             # Newick
-            with contextlib.closing(self.cl.get_tree(treeId, 
+            with contextlib.closing(self.cl.get_tree(treeId,
                                                      responseFormat=NEWICK_INTERFACE)) as x:
                 self.assertTrue(validate_newick(x))
             # Nexus
-            with contextlib.closing(self.cl.get_tree(treeId, 
+            with contextlib.closing(self.cl.get_tree(treeId,
                                                       responseFormat=NEXUS_INTERFACE)) as x:
                 self.assertTrue(validate_nexus(x))
-    
+
     # ............................
     def test_list(self):
         """
@@ -186,11 +189,12 @@ class TestWebTreeService(UserTestCase):
         """
         with contextlib.closing(self.cl.list_trees()) as x:
             ret = json.load(x)
-        
+
         if len(ret) == 0:
             warnings.warn('Count returned 0 trees for user: {}'.format(
                                                                       self._get_session_user()))
-    
+
+
 # .............................................................................
 def get_test_classes():
     """
@@ -202,6 +206,7 @@ def get_test_classes():
         TestScribeTreeService,
         TestWebTreeService
     ]
+
 
 # .............................................................................
 def get_test_suite(userId=None, pwd=None):
@@ -216,21 +221,22 @@ def get_test_suite(userId=None, pwd=None):
     suite.addTest(UserTestCase.parameterize(TestWebTreeService))
 
     if userId is not None:
-        suite.addTest(UserTestCase.parameterize(TestScribeTreeService, 
+        suite.addTest(UserTestCase.parameterize(TestScribeTreeService,
                                                              userId=userId, pwd=pwd))
-        suite.addTest(UserTestCase.parameterize(TestWebTreeService, 
+        suite.addTest(UserTestCase.parameterize(TestWebTreeService,
                                                              userId=userId, pwd=pwd))
-        
+
     return suite
+
 
 # .............................................................................
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
                                 description='Run tree service tests')
-    parser.add_argument('-u', '--user', type=str, 
-                      help='If provided, run tests for this user (and anonymous)' )
+    parser.add_argument('-u', '--user', type=str,
+                      help='If provided, run tests for this user (and anonymous)')
     parser.add_argument('-p', '--pwd', type=str, help='Password for user')
-    
+
     args = parser.parse_args()
     suite = get_test_suite(userId=args.user, pwd=args.pwd)
     unittest.TextTestRunner(verbosity=2).run(suite)

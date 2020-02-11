@@ -88,12 +88,12 @@ DEFAULT_MAXENT_PARAMETERS = {
         'default' : '1.0',
         'process' : lambda x: str(float(x))
     },
-    'biasfile': { # Specifies a file name of a grid of relative sampling effort
+    'biasfile': {  # Specifies a file name of a grid of relative sampling effort
                       #  We aren't ready for this
         'default' : '',
         'process' : str
     },
-    'cache': { # If true, create mxe files.  Experiment with this
+    'cache': {  # If true, create mxe files.  Experiment with this
         'default' : 'true',
         'process' : lambda x: str(bool(int(x))).lower()
     },
@@ -158,7 +158,7 @@ DEFAULT_MAXENT_PARAMETERS = {
         'default' : '',
         'process' : lambda x: str(int(x))
     },
-    'nodata': { # Set the no data value for samples in SWD format
+    'nodata': {  # Set the no data value for samples in SWD format
                                       #  We aren't prepared for this
         'default' : '-9999',
         'process' : lambda x: x
@@ -194,7 +194,7 @@ DEFAULT_MAXENT_PARAMETERS = {
         'default' : 'true',
         'process' : lambda x: str(bool(int(x))).lower()
     },
-    'prefixes': { # Used for samples / layers / layer types prefix
+    'prefixes': {  # Used for samples / layers / layer types prefix
         'default' : 'false',
         'process' : lambda x: str(bool(int(x))).lower()
     },
@@ -272,7 +272,7 @@ DEFAULT_MAXENT_PARAMETERS = {
         'default' : '',
         'process' : lambda x: x
     },
-    'tooltips': { # Used with GUI
+    'tooltips': {  # Used with GUI
         'default' : 'false',
         'process' : lambda x: str(bool(int(x))).lower()
     },

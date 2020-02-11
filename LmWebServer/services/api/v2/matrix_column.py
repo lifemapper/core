@@ -16,6 +16,7 @@ import cherrypy
 class MatrixColumnService(LmService):
     """Matrix column service class.
     """
+
     # ................................
     def DELETE(self, pathGridSetId, pathMatrixId, pathMatrixColumnId):
         """Attempts to delete a matrix column

@@ -1,4 +1,4 @@
-#!/bin/bash
+# !/bin/bash
 """This script modifies the headers of an ASCII file
 """
 import argparse
@@ -19,7 +19,7 @@ def _process_float_header(header_row, num_digits):
     header, value = re.split(r' +', header_row.replace('\t', ' '))
     # Truncate the value by finding the decimal (if it exists) and adding
     #    num_digits places
-    truncated_value = value[:value.find('.')+num_digits+1
+    truncated_value = value[:value.find('.') + num_digits + 1
                            ] if value.find('.') >= 0 else value
     return '{}      {}\n'.format(header, truncated_value)
 
@@ -72,7 +72,7 @@ def main():
                         pass
                     elif line.lower().startswith('nodata_value'):
                         asc_out.write(line)
-                    else: # Data line
+                    else:  # Data line
                         cont = False
                         asc_out.write(line)
                 else:

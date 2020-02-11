@@ -13,6 +13,7 @@ import cherrypy
 class SnippetService(LmService):
     """This class is responsible for the Lifemapper snippet services.
     """
+
     # ................................
     @lm_formatter
     def GET(self, ident1=None, provider=None, collection=None,

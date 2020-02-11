@@ -14,4 +14,5 @@ def singleton(cls):
         if name not in instances:
             instances[name] = cls(*args, **kwargs)
         return instances[name]
+
     return get_instance

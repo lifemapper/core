@@ -7,6 +7,7 @@ from LmBackend.common.lmobj import LMObject
 class MfRule(LMObject):
     """Class to create commands for a makeflow document
     """
+
 # .............................................................................
 # Constructor
 # .............................................................................

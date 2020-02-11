@@ -36,6 +36,7 @@ class ChainCommand(_LmCommand):
     is required before the next can start but these commands should be treated
     as one for organizational purposes
     """
+
     # ................................
     def __init__(self, cmd_list):
         """Constructor, combines the list of commands into a single command
@@ -184,6 +185,7 @@ class ModifyAsciiHeadersCommand(_LmCommand):
 class SystemCommand(_LmCommand):
     """This command will run a system command (not a Python script)
     """
+
     # ................................
     def __init__(self, script, args, inputs=None, outputs=None):
         """Construct the command object

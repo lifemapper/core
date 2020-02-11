@@ -13,6 +13,7 @@ import numpy as np
 class PamStats:
     """This class is used to calculate statistics for a PAM
     """
+
     # ...........................
     def __init__(self, pam, tree=None):
         """Constructor
@@ -205,7 +206,7 @@ class PamStats:
 
         self.legendre = Matrix(
             np.array([[self.omega.sum() - (
-                float((self.omega**2).sum()) / self.num_sites)]]),
+                float((self.omega ** 2).sum()) / self.num_sites)]]),
             headers={'0': ['value'], '1': [PamStatKeys.LEGENDRES_BETA]})
 
         temp = 0.0

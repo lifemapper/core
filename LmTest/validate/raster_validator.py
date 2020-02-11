@@ -23,7 +23,7 @@ def validate_raster_file(raster_filename, raster_format=None):
     msg = 'Valid'
     valid = False
     if os.path.exists(raster_filename):
-        # If a raster format was not provided, try to get it from the file 
+        # If a raster format was not provided, try to get it from the file
         #    extension
         if raster_format is None:
             _, ext = os.path.splitext(raster_filename)
@@ -47,5 +47,5 @@ def validate_raster_file(raster_filename, raster_format=None):
                 msg = str(e)
         else:
             msg = 'File does not exist'
-   
+
     return valid, msg

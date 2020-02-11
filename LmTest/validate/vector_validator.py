@@ -36,4 +36,4 @@ def validate_vector_file(vector_filename):
         msg = 'File does not exist'
 
     return valid, msg
-   
+

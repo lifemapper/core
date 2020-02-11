@@ -31,7 +31,7 @@ def main():
     parser.add_argument(
         'epsg', type=int, help='The EPSG code to use for this shapegrid')
     parser.add_argument(
-        'cell_sides', type=int, choices=[4,6],
+        'cell_sides', type=int, choices=[4, 6],
         help='The number of cides for each cell')
     parser.add_argument(
         '--cutout_wkt_fn', dest='cutout_fn', type=str,

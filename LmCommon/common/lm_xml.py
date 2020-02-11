@@ -8,7 +8,6 @@ from types import (BuiltinFunctionType, BuiltinMethodType, FunctionType,
 from LmCommon.common.attribute_object import LmAttList, LmAttObj
 import xml.etree.ElementTree as ET
 
-
 # Functions / Classes directly mapped to the Element Tree versions
 # ..............................................................................
 Comment = ET.Comment
@@ -36,7 +35,6 @@ register_namespace = ET.register_namespace
 sys = ET.sys
 warnings = ET.warnings
 
-
 # Functions / classes modified to serve Lifemapper purposes
 # global __DEFAULT_NAMESPACE__
 __DEFAULT_NAMESPACE__ = None
@@ -58,6 +56,7 @@ def set_default_namespace(def_namespace):
 class Element(ET.Element):
     """Wrapper around ElementTree Element class.
     """
+
     # .............................
     def __init__(self, tag, attrib=None, value=None, namespace=-1, **extra):
         """Element constructor.
@@ -132,6 +131,7 @@ def tostring(element, encoding=None, method=None):
     _pretty_format(element, level=0)
     return ET.tostring(element, encoding=encoding, method=method)
 
+
 # .............................................................................
 def tostringlist(element, encoding=None, method=None):
     """ElementTree.tostringlist wrapper that pretty prints a list of strings
@@ -202,12 +202,12 @@ def _pretty_format(elem, level=0):
     """
     tab = "    "
 
-    i = "\n" + level*tab
+    i = "\n" + level * tab
     if len(elem) > 0:
         if not elem.text or not elem.text.strip():
             elem.text = i + tab
         for e in elem:
-            _pretty_format(e, level+1)
+            _pretty_format(e, level + 1)
             if not e.tail or not e.tail.strip():
                 e.tail = i + tab
         if not e.tail or not e.tail.strip():

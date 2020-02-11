@@ -16,6 +16,7 @@ import cherrypy
 class ScenarioService(LmService):
     """Scenarios service class.
     """
+
     # ................................
     @lm_formatter
     def GET(self, pathScenarioId=None, afterTime=None,

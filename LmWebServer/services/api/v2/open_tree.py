@@ -28,6 +28,7 @@ import cherrypy
 class OpenTreeService(LmService):
     """Open Tree wrapper service for retrieving trees from GBIF Ids
     """
+
     # ................................
     @lm_formatter
     def POST(self):

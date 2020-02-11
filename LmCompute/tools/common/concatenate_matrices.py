@@ -1,4 +1,4 @@
-#!/bin/bash
+# !/bin/bash
 """This script concatenates two (or more) matrices along a specified axis
 """
 import argparse

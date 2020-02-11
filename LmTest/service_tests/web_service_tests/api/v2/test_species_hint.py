@@ -43,6 +43,7 @@ class TestWebSpeciesHintService(UserTestCase):
    @summary: This is a test class for running web tests for the species hint 
                 service
    """
+
    # ............................
    def setUp(self):
       """
@@ -52,7 +53,7 @@ class TestWebSpeciesHintService(UserTestCase):
       if self.userId is not None:
          # Log in
          self.cl.login(self.userId, self.passwd)
-      
+
    # ............................
    def tearDown(self):
       """
@@ -62,7 +63,7 @@ class TestWebSpeciesHintService(UserTestCase):
          # Log out
          self.cl.logout()
       self.cl = None
-      
+
    # ............................
    def test_list(self):
       """
@@ -73,20 +74,21 @@ class TestWebSpeciesHintService(UserTestCase):
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
       occAtoms = scribe.listOccurrenceSets(0, 10, atom=False,
-                                           userId=self._get_session_user(), 
-                                           minOccurrenceCount=30, 
-                                           afterStatus=JobStatus.COMPLETE-1, 
-                                           beforeStatus=JobStatus.COMPLETE+1)
+                                           userId=self._get_session_user(),
+                                           minOccurrenceCount=30,
+                                           afterStatus=JobStatus.COMPLETE - 1,
+                                           beforeStatus=JobStatus.COMPLETE + 1)
       displayName = occAtoms[0].displayName
       scribe.closeConnections()
-      
+
       with contextlib.closing(self.cl.list_species_hints(displayName[:4])) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          warnings.warn('Count returned 0 species hints for user: {}'.format(
                                                      self._get_session_user()))
-   
+
+
 # .............................................................................
 def get_test_classes():
    """
@@ -97,6 +99,7 @@ def get_test_classes():
    return [
       TestWebSpeciesHintService
    ]
+
 
 # .............................................................................
 def get_test_suite(userId=None, pwd=None):
@@ -110,19 +113,20 @@ def get_test_suite(userId=None, pwd=None):
    suite.addTest(UserTestCase.parameterize(TestWebSpeciesHintService))
 
    if userId is not None:
-      suite.addTest(UserTestCase.parameterize(TestWebSpeciesHintService, 
+      suite.addTest(UserTestCase.parameterize(TestWebSpeciesHintService,
                                               userId=userId, pwd=pwd))
-      
+
    return suite
+
 
 # .............................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser(
                         description='Run species hint service tests')
-   parser.add_argument('-u', '--user', type=str, 
-                 help='If provided, run tests for this user (and anonymous)' )
+   parser.add_argument('-u', '--user', type=str,
+                 help='If provided, run tests for this user (and anonymous)')
    parser.add_argument('-p', '--pwd', type=str, help='Password for user')
-   
+
    args = parser.parse_args()
    suite = get_test_suite(userId=args.user, pwd=args.pwd)
    unittest.TextTestRunner(verbosity=2).run(suite)

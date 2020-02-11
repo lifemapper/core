@@ -46,6 +46,7 @@ class TestScribeScenarioService(UserTestCase):
    @summary: This is a test class for running scribe tests for the 
                 scenario service
    """
+
    # ............................
    def setUp(self):
       """
@@ -53,14 +54,14 @@ class TestScribeScenarioService(UserTestCase):
       """
       self.scribe = BorgScribe(ConsoleLogger())
       self.scribe.openConnections()
-      
+
    # ............................
    def tearDown(self):
       """
       @summary: Clean up after test
       """
       self.scribe.closeConnections()
-      
+
    # ............................
    def test_count(self):
       """
@@ -72,33 +73,33 @@ class TestScribeScenarioService(UserTestCase):
          warnings.warn(
             'Count returned 0 scenarios for user: {}'.format(
                self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
       @summary: Basic test that tries to get an scenario object belonging to a 
                    user
       """
-      scnAtoms = self.scribe.listScenarios(0, 1, 
+      scnAtoms = self.scribe.listScenarios(0, 1,
                                               userId=self._get_session_user())
       if len(scnAtoms) == 0:
          self.fail(
             'Cannot get an scenario because listing found none')
       else:
-         scn = self.scribe.getScenario(scnAtoms[0].id, 
+         scn = self.scribe.getScenario(scnAtoms[0].id,
                                                userId=self._get_session_user())
          self.assertIsInstance(scn, Scenario)
-         self.assertEqual(scn.getUserId(), self._get_session_user(), 
+         self.assertEqual(scn.getUserId(), self._get_session_user(),
                'User id on scenario = {}, session user = {}'.format(
                                     scn.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_atoms(self):
       """
       @summary: Basic test that tries to get a list of scenario atoms from the 
                    scribe
       """
-      scnAtoms = self.scribe.listScenarios(0, 1, 
+      scnAtoms = self.scribe.listScenarios(0, 1,
                                               userId=self._get_session_user())
       self.assertGreaterEqual(len(scnAtoms), 0)
       if len(scnAtoms) == 0:
@@ -106,12 +107,12 @@ class TestScribeScenarioService(UserTestCase):
             'List returned 0 scenarios for user: {}'.format(
                self._get_session_user()))
       else:
-         scn = self.scribe.getScenario(scnAtoms[0].id, 
+         scn = self.scribe.getScenario(scnAtoms[0].id,
                                                userId=self._get_session_user())
-         self.assertEqual(scn.getUserId(), self._get_session_user(), 
+         self.assertEqual(scn.getUserId(), self._get_session_user(),
                'User id on scenario = {}, session user = {}'.format(
                                     scn.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_objects(self):
       """
@@ -127,9 +128,10 @@ class TestScribeScenarioService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(scnObjs[0], Scenario)
-         self.assertEqual(scnObjs[0].getUserId(), self._get_session_user(), 
+         self.assertEqual(scnObjs[0].getUserId(), self._get_session_user(),
                'User id on scenario = {}, session user = {}'.format(
                              scnObjs[0].getUserId(), self._get_session_user()))
+
 
 # .............................................................................
 class TestWebScenarioService(UserTestCase):
@@ -137,6 +139,7 @@ class TestWebScenarioService(UserTestCase):
    @summary: This is a test class for running web tests for the scenario  
                 service
    """
+
    # ............................
    def setUp(self):
       """
@@ -146,7 +149,7 @@ class TestWebScenarioService(UserTestCase):
       if self.userId is not None:
          # Log in
          self.cl.login(self.userId, self.passwd)
-      
+
    # ............................
    def tearDown(self):
       """
@@ -156,7 +159,7 @@ class TestWebScenarioService(UserTestCase):
          # Log out
          self.cl.logout()
       self.cl = None
-      
+
    # ............................
    def test_count(self):
       """
@@ -165,13 +168,13 @@ class TestWebScenarioService(UserTestCase):
       with contextlib.closing(self.cl.count_scenarios()) as x:
          ret = json.load(x)
       count = int(ret['count'])
-      
+
       self.assertGreaterEqual(count, 0)
       if count == 0:
          warnings.warn(
             'Count returned 0 scenarios for user: {}'.format(
                self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
@@ -180,23 +183,23 @@ class TestWebScenarioService(UserTestCase):
       """
       with contextlib.closing(self.cl.list_scenarios()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          self.fail(
             'Cannot get an scenario because listing found none')
       else:
          scnId = ret[0]['id']
-         
+
          with contextlib.closing(self.cl.get_scenario(scnId)) as x:
             scnMeta = json.load(x)
-            
+
          self.assertTrue('code' in scnMeta)
-         self.assertEqual(scnMeta['user'], self._get_session_user(), 
+         self.assertEqual(scnMeta['user'], self._get_session_user(),
                'User id on scenario = {}, session user = {}'.format(
                                     scnMeta['user'], self._get_session_user()))
-         
+
          # EML
-         with contextlib.closing(self.cl.get_scenario(scnId, 
+         with contextlib.closing(self.cl.get_scenario(scnId,
                                           responseFormat=EML_INTERFACE)) as x:
             self.assertTrue(validate_eml(x))
 
@@ -204,7 +207,7 @@ class TestWebScenarioService(UserTestCase):
          with contextlib.closing(self.cl.get_scenario(scnId,
                                           responseFormat=JSON_INTERFACE)) as x:
             self.assertTrue(validate_json(x))
-   
+
    # ............................
    def test_list(self):
       """
@@ -213,12 +216,13 @@ class TestWebScenarioService(UserTestCase):
       """
       with contextlib.closing(self.cl.list_scenarios()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          warnings.warn(
             'Count returned 0 scenarios for user: {}'.format(
                                                      self._get_session_user()))
-   
+
+
 # .............................................................................
 def get_test_classes():
    """
@@ -230,6 +234,7 @@ def get_test_classes():
       TestScribeScenarioService,
       TestWebScenarioService
    ]
+
 
 # .............................................................................
 def get_test_suite(userId=None, pwd=None):
@@ -244,21 +249,22 @@ def get_test_suite(userId=None, pwd=None):
    suite.addTest(UserTestCase.parameterize(TestWebScenarioService))
 
    if userId is not None:
-      suite.addTest(UserTestCase.parameterize(TestScribeScenarioService, 
+      suite.addTest(UserTestCase.parameterize(TestScribeScenarioService,
                                               userId=userId, pwd=pwd))
-      suite.addTest(UserTestCase.parameterize(TestWebScenarioService, 
+      suite.addTest(UserTestCase.parameterize(TestWebScenarioService,
                                               userId=userId, pwd=pwd))
-      
+
    return suite
+
 
 # .............................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser(
                         description='Run scenario service tests')
-   parser.add_argument('-u', '--user', type=str, 
-                 help='If provided, run tests for this user (and anonymous)' )
+   parser.add_argument('-u', '--user', type=str,
+                 help='If provided, run tests for this user (and anonymous)')
    parser.add_argument('-p', '--pwd', type=str, help='Password for user')
-   
+
    args = parser.parse_args()
    suite = get_test_suite(userId=args.user, pwd=args.pwd)
    unittest.TextTestRunner(verbosity=2).run(suite)

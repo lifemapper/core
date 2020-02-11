@@ -27,7 +27,6 @@ from LmWebServer.services.cp_tools.lm_format import lm_formatter
 import cherrypy
 from lmpy import TreeWrapper
 
-
 # TODO: Move to constants
 BIOGEO_UPLOAD = 'biogeo'
 CLIMATE_UPLOAD = 'climate'
@@ -43,6 +42,7 @@ class UserUploadService(LmService):
     Note:
         * This dispatcher is responsible for calling the correct method.
     """
+
     # ................................
     @lm_formatter
     def POST(self, fileName=None, uploadType=None, metadata=None, file=None,

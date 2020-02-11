@@ -42,16 +42,18 @@ class _SERVICE:
     TAXONOMY = 'taxonomy'
     TREE = 'tree'
     UPLOAD = 'upload'
-    
+
     # ............................
     @staticmethod
     def userServices():
         return [_SERVICE.LOGIN, _SERVICE.LOGOUT, _SERVICE.SIGNUP]
 
+
 # .............................................................................
 class LmWebClient(object):
     """A web client for accessing Lifemapper services
     """
+
     # ............................
     def __init__(self, server=PUBLIC_FQDN, urlBase='api', version='v2'):
         self.server = server
@@ -61,14 +63,14 @@ class LmWebClient(object):
             self.server = 'http://{}'.format(self.server)
         self.urlBase = urlBase
         self.version = version
-    
+
     # ............................
     def _build_base_url(self, service, object_id=None, parent_object_id=None,
                         response_format=None):
         """Builds the base URL for a service call
         """
         url = '{}/{}'.format(self.server, self.urlBase)
-        
+
         if service in _SERVICE.userServices():
             url = '{}/{}'.format(url, service)
         elif service == _SERVICE.MATRIX:
@@ -87,7 +89,7 @@ class LmWebClient(object):
             if response_format is not None:
                 url = '{}/{}'.format(url, response_format)
         return url
-    
+
     # ............................
     def _make_request(self, req_url, method=HTTPMethod.GET, body=None,
                       headers=None, **query_parameters):
@@ -106,18 +108,18 @@ class LmWebClient(object):
                 (k, v) for k, v in list(dict(
                     query_parameters).items()) if v is not None]
             url_params = urllib.parse.urlencode(q_params)
-    
+
             if body is None and len(
                     q_params) > 0 and method.upper() == HTTPMethod.POST:
                 body = url_params
             else:
                 req_url = '{}?{}'.format(req_url, url_params)
-            
+
             if headers is None:
                 headers = {}
             req = urllib.request.Request(req_url, data=body, headers=headers)
             req.get_method = lambda: method.upper()
-            
+
             return urllib.request.urlopen(req)
         except Exception as e:
             print(('The failed URL was: {}'.format(req_url)))
@@ -182,7 +184,7 @@ class LmWebClient(object):
             date_code=date_code, epsg_code=epsg_code, env_code=env_code,
             env_type_id=env_type_id, gcm_code=gcm_code,
             scenario_id=scenario_id, limit=limit, offset=offset)
-    
+
     # ............................
     def post_environmental_layer(self, layer_content, layer_type, epsg_code,
                                  layer_name, env_layer_type_id=None,
@@ -319,7 +321,7 @@ class LmWebClient(object):
             self._build_base_url(_SERVICE.GRIDSET, object_id=gridset_id,
                                  response_format=response_format),
             method=HTTPMethod.GET, headers=headers)
-    
+
     # ............................
     def get_gridset_biogeographic_hypotheses(self, gridset_id, headers=None,
                                              response_format=None):
@@ -327,7 +329,7 @@ class LmWebClient(object):
         """
         return self._make_request(
             self._build_base_url(_SERVICE.GRIDSET,
-                                 object_id='{}/biogeo'.format(gridset_id), 
+                                 object_id='{}/biogeo'.format(gridset_id),
                                  response_format=response_format),
             method=HTTPMethod.GET, headers=headers)
 
@@ -337,7 +339,7 @@ class LmWebClient(object):
         """
         return self._make_request(
             self._build_base_url(_SERVICE.GRIDSET,
-                                 object_id='{}/tree'.format(gridset_id), 
+                                 object_id='{}/tree'.format(gridset_id),
                                  response_format=response_format),
             method=HTTPMethod.GET, headers=headers)
 
@@ -353,7 +355,7 @@ class LmWebClient(object):
             method=HTTPMethod.GET, headers=headers, after_time=after_time,
             before_time=before_time, epsg_code=epsg_code, limit=limit,
             meta_string=meta_string, offset=offset, shapegrid_id=shapegrid_id)
-    
+
     # ............................
     def post_gridset(self, boom_post_json, headers=None, response_format=None):
         """Posts a new gridset
@@ -478,32 +480,32 @@ class LmWebClient(object):
                 _SERVICE.MATRIX, object_id=matrix_id,
                 parent_object_id=gridset_id, response_format=response_format),
             method=HTTPMethod.DELETE, headers=headers)
-    
+
     # ............................
-    def count_matrices(self, gridset_id, after_time=None, alt_pred_code=None, 
-                             before_time=None, date_code=None, epsg_code=None, 
-                             gcm_code=None, keyword=None, matrixType=None,  
+    def count_matrices(self, gridset_id, after_time=None, alt_pred_code=None,
+                             before_time=None, date_code=None, epsg_code=None,
+                             gcm_code=None, keyword=None, matrixType=None,
                              status=None, headers=None, response_format=None):
         """
         @summary: Send a request to the server to count matrices
         """
-        return self._make_request(self._build_base_url(_SERVICE.MATRIX, 
-                        object_id='count', parentobject_id=gridset_id, 
-                        response_format=response_format), 
-                        method=HTTPMethod.GET, headers=headers, after_time=after_time, 
-                        alt_pred_code=alt_pred_code, before_time=before_time, 
-                        date_code=date_code, epsg_code=epsg_code, 
-                        keyword=keyword, matrixType=matrixType, status=status, 
+        return self._make_request(self._build_base_url(_SERVICE.MATRIX,
+                        object_id='count', parentobject_id=gridset_id,
+                        response_format=response_format),
+                        method=HTTPMethod.GET, headers=headers, after_time=after_time,
+                        alt_pred_code=alt_pred_code, before_time=before_time,
+                        date_code=date_code, epsg_code=epsg_code,
+                        keyword=keyword, matrixType=matrixType, status=status,
                         gcm_code=gcm_code)
-    
+
     # ............................
     def get_matrix(self, gridset_id, matrixId, headers=None, response_format=None):
         """
         @summary: Send a request to the server to get a matrix
         """
-        return self._make_request(self._build_base_url(_SERVICE.MATRIX, 
-                            object_id=matrixId, parentobject_id=gridset_id, 
-                            response_format=response_format), method=HTTPMethod.GET, 
+        return self._make_request(self._build_base_url(_SERVICE.MATRIX,
+                            object_id=matrixId, parentobject_id=gridset_id,
+                            response_format=response_format), method=HTTPMethod.GET,
                                           headers=headers)
 
     # ............................
@@ -523,7 +525,7 @@ class LmWebClient(object):
             date_code=date_code, epsg_code=epsg_code, keyword=keyword,
             matrixType=matrixType, gcm_code=gcm_code, status=status,
             limit=limit, offset=offset)
-    
+
     # ===================
     # = Occurrence sets =
     # ===================
@@ -543,7 +545,7 @@ class LmWebClient(object):
             before_time=before_time, display_name=display_name,
             epsg_code=epsg_code, gridset_id=gridset_id, status=status,
             minimum_number_of_points=minimum_number_of_points)
-    
+
     # ............................
     def delete_occurrence_set(self, occ_id, headers=None,
                               response_format=None):
@@ -554,7 +556,7 @@ class LmWebClient(object):
                 _SERVICE.OCCURRENCE, object_id=occ_id,
                 response_format=response_format),
             method=HTTPMethod.DELETE, headers=headers)
-    
+
     # ............................
     def get_occurrence_set(self, occ_id, headers=None, response_format=None):
         """Gets an occurrence set
@@ -583,7 +585,7 @@ class LmWebClient(object):
             minimum_number_of_points=minimum_number_of_points, status=status,
             gridset_id=gridset_id, fillPoints=fillPoints, limit=limit,
             offset=offset)
-    
+
     # =======
     # = OGC =
     # =======
@@ -604,7 +606,7 @@ class LmWebClient(object):
             request=request, format=format, service=service, sld=sld,
             sld_body=sld_body, srs=srs, styles=styles, time=time,
             transparent=transparent, version=version, width=width)
-    
+
     # =============
     # = Open Tree =
     # =============
@@ -654,7 +656,7 @@ class LmWebClient(object):
                 _SERVICE.SCENARIO, object_id=scenario_id,
                 response_format=response_format),
             method=HTTPMethod.GET, headers=headers)
-    
+
     # ............................
     def list_scenarios(self, after_time=None, alt_pred_code=None,
                        before_time=None, date_code=None, epsg_code=None,
@@ -669,7 +671,7 @@ class LmWebClient(object):
             alt_pred_code=alt_pred_code, before_time=before_time,
             date_code=date_code, epsg_code=epsg_code, gcm_code=gcm_code,
             limit=limit, offset=offset)
-    
+
     # ............................
     def post_scenario(self, scenario_json, headers=None, response_format=None):
         """Posts a new scenario
@@ -705,7 +707,7 @@ class LmWebClient(object):
                 _SERVICE.SCENARIO_PACKAGE, object_id=scen_package_id,
                 response_format=response_format),
             method=HTTPMethod.GET, headers=headers)
-    
+
     # ............................
     def list_scenario_packages(self, after_time=None, before_time=None,
                                limit=100, offset=0, scenario_id=None,
@@ -716,9 +718,9 @@ class LmWebClient(object):
             self._build_base_url(
                 _SERVICE.SCENARIO_PACKAGE, response_format=response_format),
             method=HTTPMethod.GET, headers=headers, after_time=after_time,
-            scenario_id=scenario_id, before_time=before_time,  limit=limit,
+            scenario_id=scenario_id, before_time=before_time, limit=limit,
             offset=offset)
-    
+
     # ===================
     # = SDM Projections =
     # ===================
@@ -745,7 +747,7 @@ class LmWebClient(object):
             status=status, occurrence_set_id=occurrence_set_id,
             projection_scenario_code=projection_scenario_code,
             gridset_id=gridset_id)
-    
+
     # ............................
     def delete_sdm_projection(self, projection_id, headers=None,
                               response_format=None):
@@ -767,7 +769,7 @@ class LmWebClient(object):
                 _SERVICE.SDM_PROJECT, object_id=projection_id,
                 response_format=response_format),
             method=HTTPMethod.GET, headers=headers)
-    
+
     # ............................
     def list_sdm_projections(self, after_status=None, after_time=None,
                              algorithm_code=None, before_status=None,
@@ -791,7 +793,7 @@ class LmWebClient(object):
             occurrence_set_id=occurrence_set_id,
             projection_scenario_code=projection_scenario_code,
             gridset_id=gridset_id)
-    
+
     # ............................
     def post_sdm_projection(self, boom_post_json, headers=None,
                             response_format=None):
@@ -817,8 +819,8 @@ class LmWebClient(object):
                 response_format=response_format),
             method=HTTPMethod.GET, headers=headers, after_time=after_time,
             before_time=before_time, cell_sides=cell_sides,
-            cell_size=cell_size, epsg_code=epsg_code )
-    
+            cell_size=cell_size, epsg_code=epsg_code)
+
     # ............................
     def delete_shapegrid(self, shapegrid_id, headers=None,
                          response_format=None):
@@ -839,7 +841,7 @@ class LmWebClient(object):
                 _SERVICE.SHAPEGRID, object_id=shapegrid_id,
                 response_format=response_format),
             method=HTTPMethod.GET, headers=headers)
-    
+
     # ............................
     def list_shapegrids(self, after_time=None, before_time=None,
                         cell_sides=None, cell_size=None, epsg_code=None,
@@ -853,8 +855,8 @@ class LmWebClient(object):
             method=HTTPMethod.GET, headers=headers, after_time=after_time,
             before_time=before_time, cell_sides=cell_sides,
             cell_size=cell_size, limit=limit, offset=offset,
-            epsg_code=epsg_code )
-    
+            epsg_code=epsg_code)
+
     # ............................
     def post_shapegrid(self, name, epsg_code, cell_sides, cell_size, map_units,
                        bbox, cutout, headers=None, response_format=None):
@@ -886,7 +888,7 @@ class LmWebClient(object):
             catalog_number=catalog_number, operation=operation,
             after_time=after_time, before_time=before_time, ident2=ident2,
             url=url, who=who, agent=agent, why=why)
-    
+
     # =================
     # = Species Hints =
     # =================
@@ -900,7 +902,7 @@ class LmWebClient(object):
                 _SERVICE.HINT, object_id=search_string,
                 response_format=response_format),
             method=HTTPMethod.GET, headers=headers, limit=limit)
-    
+
     # ============
     # = Taxonomy =
     # ============
@@ -940,7 +942,7 @@ class LmWebClient(object):
             name=name, is_binary=is_binary, is_ultrametric=is_ultrametric,
             has_branch_lengths=has_branch_lengths, meta_string=meta_string,
             before_time=before_time)
-    
+
     # ............................
     def delete_tree(self, tree_id, headers=None, response_format=None):
         """Attempt to delete a tree
@@ -950,7 +952,7 @@ class LmWebClient(object):
                 _SERVICE.TREE, object_id=tree_id,
                 response_format=response_format),
             method=HTTPMethod.DELETE, headers=headers)
-        
+
     # ............................
     def get_tree(self, tree_id, headers=None, response_format=None):
         """Attempt to retrieve the specified tree
@@ -961,7 +963,7 @@ class LmWebClient(object):
                 _SERVICE.TREE, object_id=tree_id,
                 response_format=response_format),
             method=HTTPMethod.GET, headers=headers)
-    
+
     # ............................
     def list_trees(self, limit=None, offset=None, name=None, is_binary=None,
                    is_ultrametric=None, has_branch_lengths=None,
@@ -976,7 +978,7 @@ class LmWebClient(object):
             name=name, is_binary=is_binary, is_ultrametric=is_ultrametric,
             has_branch_lengths=has_branch_lengths, meta_string=meta_string,
             before_time=before_time, limit=limit, offset=offset)
-    
+
     # ............................
     def post_tree(self, tree_content, tree_schema, headers=None,
                   response_format=None):
@@ -1050,7 +1052,7 @@ class LmWebClient(object):
         opener = urllib.request.build_opener(
             urllib.request.HTTPCookieProcessor(self.cookieJar))
         urllib.request.install_opener(opener)
-        
+
         req = self._make_request(
             self._build_base_url(_SERVICE.LOGIN), userid=userId, pword=passwd,
             method=HTTPMethod.POST)

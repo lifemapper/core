@@ -40,6 +40,7 @@ class TestWebGlobalPamService(UserTestCase):
    @summary: This is a test class for running web tests for the global pam 
                 service
    """
+
    # ............................
    def setUp(self):
       """
@@ -49,7 +50,7 @@ class TestWebGlobalPamService(UserTestCase):
       if self.userId is not None:
          # Log in
          self.cl.login(self.userId, self.passwd)
-      
+
    # ............................
    def tearDown(self):
       """
@@ -59,7 +60,7 @@ class TestWebGlobalPamService(UserTestCase):
          # Log out
          self.cl.logout()
       self.cl = None
-      
+
    # ............................
    def test_list(self):
       """
@@ -68,11 +69,12 @@ class TestWebGlobalPamService(UserTestCase):
       """
       with contextlib.closing(self.cl.query_global_pam()) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          warnings.warn('Count returned 0 pavs for user: {}'.format(
                self._get_session_user()))
-   
+
+
 # .............................................................................
 def get_test_classes():
    """
@@ -83,6 +85,7 @@ def get_test_classes():
    return [
       TestWebGlobalPamService
    ]
+
 
 # .............................................................................
 def get_test_suite(userId=None, pwd=None):
@@ -96,19 +99,20 @@ def get_test_suite(userId=None, pwd=None):
    suite.addTest(UserTestCase.parameterize(TestWebGlobalPamService))
 
    if userId is not None:
-      suite.addTest(UserTestCase.parameterize(TestWebGlobalPamService, 
+      suite.addTest(UserTestCase.parameterize(TestWebGlobalPamService,
                                               userId=userId, pwd=pwd))
-      
+
    return suite
+
 
 # .............................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser(
                         description='Run global pam service tests')
-   parser.add_argument('-u', '--user', type=str, 
-                 help='If provided, run tests for this user (and anonymous)' )
+   parser.add_argument('-u', '--user', type=str,
+                 help='If provided, run tests for this user (and anonymous)')
    parser.add_argument('-p', '--pwd', type=str, help='Password for user')
-   
+
    args = parser.parse_args()
    suite = get_test_suite(userId=args.user, pwd=args.pwd)
    unittest.TextTestRunner(verbosity=2).run(suite)

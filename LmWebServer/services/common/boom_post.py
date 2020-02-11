@@ -42,6 +42,7 @@ class BoomPoster:
         * Pre / post processing (scaling)
         * Randomizations
     """
+
     # ................................
     def __init__(self, user_id, user_email, req_json, scribe):
         """Constructor
@@ -129,8 +130,8 @@ class BoomPoster:
                         archive_name, random.randint(0, 100000)),
                     APIPostKeys.CELL_SIDES: 4,
                     APIPostKeys.RESOLUTION: 0.5,
-                    APIPostKeys.MIN_X: -180.0,
-                    APIPostKeys.MIN_Y: -90.0,
+                    APIPostKeys.MIN_X:-180.0,
+                    APIPostKeys.MIN_Y:-90.0,
                     APIPostKeys.MAX_X: 180.0,
                     APIPostKeys.MAX_Y: 90.0
                 },

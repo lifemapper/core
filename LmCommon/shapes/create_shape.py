@@ -21,6 +21,7 @@ class ShapeShifter:
     Note:
         Puts all valid records from input csv file into a single shapefile.
     """
+
     # .......................
     def __init__(self, csv_f_name, metadata, logger=None, delimiter='\t',
                  is_gbif=False):
@@ -86,7 +87,6 @@ class ShapeShifter:
             self.id_field, self.link_field, self.provider_key_field,
             self.computed_provider_field)
 
-
 # .............................................................................
 # Private functions
 # .............................................................................
@@ -101,7 +101,6 @@ class ShapeShifter:
             # Create new feature, setting FID, in this layer
             lyr.CreateFeature(feat)
             feat.Destroy()
-
 
 # .............................................................................
 # Public functions
@@ -278,9 +277,9 @@ class ShapeShifter:
                         max_y):
         meta_dict = {
             'ogrformat': LMFormat.getDefaultOGR().driver,
-            'geomtype': geom_type, 'count': count,  'minx': min_x,
+            'geomtype': geom_type, 'count': count, 'minx': min_x,
             'miny': min_y, 'maxx': max_x, 'maxy': max_y}
-        with open(basename+'.meta', 'w') as out_file:
+        with open(basename + '.meta', 'w') as out_file:
             json.dump(meta_dict, out_file)
 
     # ...............................................

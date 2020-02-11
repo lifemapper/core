@@ -24,6 +24,7 @@ from lmpy import Matrix
 def create_header_lookup(headers, squids=False, scribe=None, userId=None):
     """Generate a header lookup to be included in the package metadata
     """
+
     def get_header_dict(header, idx):
         return {
             'header': header,

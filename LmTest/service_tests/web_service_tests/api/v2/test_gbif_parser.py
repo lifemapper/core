@@ -9,16 +9,17 @@ Todo:
 from copy import deepcopy
 from random import randint, shuffle
 
-
 # TODO: Get these from constants
 ACCEPTED_NAME_KEY = 'accepted_name'
 SEARCH_NAME_KEY = 'search_name'
 TAXON_ID_KEY = 'taxon_id'
 
+
 # .............................................................................
 class Test_gbif_parser_services(object):
     """Test the GBIF names service wrapper
     """
+
     # .....................................
     def test_gbif_bad_names(self, public_client, species_names):
         """Tests that "bad" names are not found

@@ -28,7 +28,6 @@ import cherrypy
 from lmpy import Matrix
 import mapscript
 
-
 # # ...........................................................................
 PACKAGE_VERSION = '1.0.2'
 
@@ -205,6 +204,7 @@ def create_stats_meta():
 def create_header_lookup(headers, squids=False, scribe=None, user_id=None):
     """Generate a header lookup to be included in the package metadata
     """
+
     def get_header_dict(header, idx):
         return {
             'header': header,

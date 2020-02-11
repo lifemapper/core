@@ -35,18 +35,17 @@ from LmServer.common.lmconstants import TEMP_PATH
 
 
 def validate_shapefile(obj_generator):
-   
-   outDir = os.path.join(TEMP_PATH, 'temp_dir_{}'.format(random.randint(10000)))
-   
-   os.makedirs(outDir)
 
+   outDir = os.path.join(TEMP_PATH, 'temp_dir_{}'.format(random.randint(10000)))
+
+   os.makedirs(outDir)
 
    with zipfile.ZipFile(obj_generator) as zf:
       zf.extractall(outDir)
 
    fn = glob.glob(os.path.join(outDir, '*.shp'))[0]
-   
+
    ret = Vector.testVector(fn)
-   
+
    shutil.rmtree(outDir)
    return ret

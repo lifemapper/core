@@ -17,6 +17,7 @@ import cherrypy
 class ShapeGridService(LmService):
     """Class for shapegrid service.
     """
+
     # ................................
     def DELETE(self, pathShapegridId):
         """Attempts to delete a shapegrid

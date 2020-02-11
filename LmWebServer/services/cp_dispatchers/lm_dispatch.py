@@ -18,6 +18,7 @@ from cherrypy._cpdispatch import MethodDispatcher
 class LmDispatcher(MethodDispatcher):
     """MethodDispatcher subclass that sets accept headers based on url
     """
+
     # ...........................
     def __call__(self, path_info):
 

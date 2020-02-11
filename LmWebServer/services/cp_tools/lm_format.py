@@ -27,6 +27,7 @@ def lm_formatter(f):
     Use this as a decorator for methods that return objects that should be sent
     through formatting before being returned
     """
+
     def wrapper(*args, **kwargs):
         """Wrapper function
         """

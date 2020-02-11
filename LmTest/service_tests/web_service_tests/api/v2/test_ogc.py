@@ -15,6 +15,7 @@ from LmCommon.common.lmconstants import JobStatus
 class Test_ogc_services_public(object):
     """Tests OGC services over HTTP with public data
     """
+
     # .....................................
     def test_occurrence_map(self, public_client):
         """Test that a map can be retrieved for a public occurrence set
@@ -42,7 +43,7 @@ class Test_ogc_services_public(object):
         height = 200
         width = 400
         epsg = occ['spatialVector']['epsg']
-        
+
         ogc_flo = public_client.get_ogc(
             map_name, bbox=bbox, color=color, height=height, layer=layer,
             request='GetMap', format='image/png', service='WMS',
@@ -74,7 +75,7 @@ class Test_ogc_services_public(object):
         bbox = ','.join([str(i) for i in prj['spatialRaster']['bbox']])
         layer = prj['layerName']
         epsg = prj['spatialRaster']['epsg']
-        
+
         ogc_flo = public_client.get_ogc(
             map_name, bbox=bbox, coverage=layer, request='GetCoverage',
             format='image/tiff', service='WCS', version='1.1.0',
@@ -109,7 +110,7 @@ class Test_ogc_services_public(object):
         height = 200
         width = 400
         epsg = prj['spatialRaster']['epsg']
-        
+
         ogc_flo = public_client.get_ogc(
             map_name, bbox=bbox, color=color, height=height, layer=layer,
             request='GetMap', format='image/png', service='WMS',

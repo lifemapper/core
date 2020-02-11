@@ -17,7 +17,6 @@ from LmCompute.common.lmconstants import (
     CONVERT_JAVA_CMD, CONVERT_TOOL, ME_CMD)
 from osgeo import gdal
 
-
 WAIT_SECONDS = 30
 
 
@@ -65,13 +64,14 @@ def convert_and_modify_ascii_to_tiff(asc_file_name, tiff_file_name, scale=None,
             if cell_value == in_nodata_value:
                 return nodata_value
 
-            return (scale_max - scale_min)*(
+            return (scale_max - scale_min) * (
                     (cell_value - lyr_min) / (lyr_max - lyr_min)) + scale_min
 
         data = numpy.vectorize(scale_func)(data)
 
     # If multiply
     elif multiplier is not None:
+
         def multiply_func(cell_value):
             """Function to multiply layer values.
             """

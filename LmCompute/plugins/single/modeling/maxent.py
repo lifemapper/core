@@ -25,7 +25,6 @@ from LmCompute.plugins.single.modeling.maxent_constants import (
 from LmTest.validate.raster_validator import validate_raster_file
 from LmTest.validate.text_validator import validate_text_file
 
-
 # TODO: Should these be in constants somewhere?
 ALGO_PARAMETERS_KEY = 'parameters'
 PARAM_DEFAULT_KEY = 'default'
@@ -69,7 +68,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
                 elif std_err.find('because it has 0 training samples') >= 0:
                     status = JobStatus.ME_POINTS_ERROR
                 elif std_err.find('Attempt to evaluate layer') >= 0:
-                    #1 at sample with no value
+                    # 1 at sample with no value
                     status = JobStatus.ME_CORRUPTED_LAYER
 
             self.logger.debug('Checking output')
@@ -146,7 +145,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
         return algo_param_options
 
     # ...................................
-    def create_model(self, points, layer_json, parameters_json, 
+    def create_model(self, points, layer_json, parameters_json,
                      mask_filename=None, crs_wkt=None):
         """Create a Maxent Model
 
@@ -239,7 +238,6 @@ class MaxentWrapper(ModelSoftwareWrapper):
                 self.metrics.add_metric(
                     LmMetricNames.STATUS, JobStatus.ME_EXEC_PROJECTION_ERROR)
                 self.logger.debug('Projection failed: {}'.format(prj_msg))
-
 
     # ...................................
     def create_projection(self, ruleset_filename, layer_json,

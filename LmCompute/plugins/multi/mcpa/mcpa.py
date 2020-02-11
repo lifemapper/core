@@ -12,7 +12,6 @@ import threading
 from lmpy import Matrix
 import numpy as np
 
-
 # Note: This lock is used when calculating beta to keep memory usage down
 lock = threading.Lock()
 
@@ -299,13 +298,13 @@ def _standardize_matrix(mtx, weights):
     # s1 = 1r.W.M
     s_1 = (ones * weights).dot(mtx)
     # s2 = 1r.W.(M*M)
-    s_2 = (ones * weights).dot(mtx*mtx)
+    s_2 = (ones * weights).dot(mtx * mtx)
 
     mean_weighted = s_1 / total_sum
-    std_dev_weighted = ((s_2 - (s_1**2.0 / total_sum)) / (total_sum))**0.5
+    std_dev_weighted = ((s_2 - (s_1 ** 2.0 / total_sum)) / (total_sum)) ** 0.5
 
     # Fixes any invalid values created previously
-    tmp = np.nan_to_num(ones.T.dot(std_dev_weighted)**-1.0)
+    tmp = np.nan_to_num(ones.T.dot(std_dev_weighted) ** -1.0)
     std_mtx = tmp * (mtx - ones.T.dot(mean_weighted))
 
     return std_mtx
@@ -427,7 +426,7 @@ def mcpa(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
         obs_results[i] = obs
         f_results[i] = f_vals
 
-    print(('Processed mcpa for {} of {} nodes'.format(i+1, num_nodes)))
+    print(('Processed mcpa for {} of {} nodes'.format(i + 1, num_nodes)))
 
     # Correct any nans and add depth
     obs_results = np.clip(

@@ -5,7 +5,6 @@ from LmCommon.common.lmconstants import (
       COMPUTE_CMDS_HEADING, COMPUTE_CONTACT_HEADING, COMPUTE_ENV_HEADING,
       COMPUTE_ME_PLUGIN_HEADING)
 
-
 _CFG = Config()
 
 # Environment variables

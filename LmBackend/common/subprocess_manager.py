@@ -9,7 +9,6 @@ from time import sleep
 
 from LmCommon.common.lm_xml import serialize, tostring
 
-
 CONCURRENT_PROCESSES = max(1, multiprocessing.cpu_count() - 2)
 WAIT_TIME = 10
 MAX_RUN_TIME = 60 * 60 * 24  # 24 hours
@@ -57,6 +56,7 @@ def pid_exists(pid):
 class VariableContainer:
     """Creates a container for variables to be passed to a subprocess
     """
+
     # .............................
     def __init__(self, values):
         self.values = values
@@ -77,6 +77,7 @@ class SubprocessManager:
     Todo:
         Determine if this is still used.
     """
+
     # .............................
     def __init__(self, command_list=None, max_concurrent=CONCURRENT_PROCESSES):
         """
@@ -144,6 +145,7 @@ class SubprocessManager:
 class SubprocessRunner:
     """This class manages a subprocess
     """
+
     # .............................
     def __init__(self, cmd, wait_seconds=WAIT_TIME, kill_time=MAX_RUN_TIME):
         """Constructor for single command runner

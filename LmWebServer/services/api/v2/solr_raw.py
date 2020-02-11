@@ -15,6 +15,7 @@ import cherrypy
 class RawSolrService(LmService):
     """This class provides a web interface to Solr
     """
+
     # ............................
     def POST(self, **params):
         """Send these raw parameters to solr

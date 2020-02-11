@@ -52,6 +52,7 @@ class TestScribeMatrixService(UserTestCase):
    @summary: This is a test class for running scribe tests for the matrix 
                 service
    """
+
    # ............................
    def setUp(self):
       """
@@ -59,14 +60,14 @@ class TestScribeMatrixService(UserTestCase):
       """
       self.scribe = BorgScribe(ConsoleLogger())
       self.scribe.openConnections()
-      
+
    # ............................
    def tearDown(self):
       """
       @summary: Clean up after test
       """
       self.scribe.closeConnections()
-      
+
    # ............................
    def test_count(self):
       """
@@ -77,44 +78,44 @@ class TestScribeMatrixService(UserTestCase):
       if count == 0:
          warnings.warn('Count returned 0 matrices for user: {}'.format(
                                                      self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
       @summary: Basic test that tries to get an matrix object belonging to a 
                    user
       """
-      mtxAtoms = self.scribe.listMatrices(0, 1, 
+      mtxAtoms = self.scribe.listMatrices(0, 1,
                                               userId=self._get_session_user())
       if len(mtxAtoms) == 0:
          self.fail('Cannot get an matrix because listing found none')
       else:
-         mtx = self.scribe.getMatrix(mtxId=mtxAtoms[0].id, 
+         mtx = self.scribe.getMatrix(mtxId=mtxAtoms[0].id,
                                                userId=self._get_session_user())
          self.assertIsInstance(mtx, Matrix)
-         self.assertEqual(mtx.getUserId(), self._get_session_user(), 
+         self.assertEqual(mtx.getUserId(), self._get_session_user(),
                'User id on matrix = {}, session user = {}'.format(
                                     mtx.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_atoms(self):
       """
       @summary: Basic test that tries to get a list of matrix atoms from the 
                    scribe
       """
-      mtxAtoms = self.scribe.listMatrices(0, 1, 
+      mtxAtoms = self.scribe.listMatrices(0, 1,
                                               userId=self._get_session_user())
       self.assertGreaterEqual(len(mtxAtoms), 0)
       if len(mtxAtoms) == 0:
          warnings.warn('List returned 0 matrices for user: {}'.format(
                                                      self._get_session_user()))
       else:
-         mtx = self.scribe.getMatrix(mtxId=mtxAtoms[0].id, 
+         mtx = self.scribe.getMatrix(mtxId=mtxAtoms[0].id,
                                                userId=self._get_session_user())
-         self.assertEqual(mtx.getUserId(), self._get_session_user(), 
+         self.assertEqual(mtx.getUserId(), self._get_session_user(),
                           'User id on matrix = {}, session user = {}'.format(
                                     mtx.getUserId(), self._get_session_user()))
-   
+
    # ............................
    def test_list_objects(self):
       """
@@ -129,15 +130,17 @@ class TestScribeMatrixService(UserTestCase):
                self._get_session_user()))
       else:
          self.assertIsInstance(mtxObjs[0], Matrix)
-         self.assertEqual(mtxObjs[0].getUserId(), self._get_session_user(), 
+         self.assertEqual(mtxObjs[0].getUserId(), self._get_session_user(),
                           'User id on matrix = {}, session user = {}'.format(
                              mtxObjs[0].getUserId(), self._get_session_user()))
+
 
 # .............................................................................
 class TestWebMatrixService(UserTestCase):
    """
    @summary: This is a test class for running web tests for the matrix service
    """
+
    # ............................
    def setUp(self):
       """
@@ -147,7 +150,7 @@ class TestWebMatrixService(UserTestCase):
       if self.userId is not None:
          # Log in
          self.cl.login(self.userId, self.passwd)
-      
+
    # ............................
    def tearDown(self):
       """
@@ -157,7 +160,7 @@ class TestWebMatrixService(UserTestCase):
          # Log out
          self.cl.logout()
       self.cl = None
-      
+
    # ............................
    def test_count(self):
       """
@@ -165,19 +168,19 @@ class TestWebMatrixService(UserTestCase):
       """
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
-      mtxAtoms = scribe.listMatrices(0, 1, userId=self._get_session_user(), 
+      mtxAtoms = scribe.listMatrices(0, 1, userId=self._get_session_user(),
                                      atom=False)
       scribe.closeConnections()
       with contextlib.closing(self.cl.count_matrices(
                                                 mtxAtoms[0].gridsetId)) as x:
          ret = json.load(x)
       count = int(ret['count'])
-      
+
       self.assertGreaterEqual(count, 0)
       if count == 0:
          warnings.warn('Count returned 0 matrices for user: {}'.format(
                                                    self._get_session_user()))
-   
+
    # ............................
    def test_get(self):
       """
@@ -186,7 +189,7 @@ class TestWebMatrixService(UserTestCase):
       """
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
-      mtxAtoms = scribe.listMatrices(0, 1, userId=self._get_session_user(), 
+      mtxAtoms = scribe.listMatrices(0, 1, userId=self._get_session_user(),
                                      atom=False)
       scribe.closeConnections()
       if len(mtxAtoms) == 0:
@@ -194,36 +197,36 @@ class TestWebMatrixService(UserTestCase):
       else:
          gridsetId = mtxAtoms[0].gridsetId
          mtxId = mtxAtoms[0].id
-      
+
          with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId)) as x:
             mtxMeta = json.load(x)
-            
+
          self.assertTrue('matrixType' in mtxMeta)
-         self.assertEqual(mtxMeta['user'], self._get_session_user(), 
+         self.assertEqual(mtxMeta['user'], self._get_session_user(),
                           'User id on matrix = {}, session user = {}'.format(
                              mtxMeta['user'], self._get_session_user()))
-         
+
          # CSV
-         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId, 
+         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId,
                                           responseFormat=CSV_INTERFACE)) as x:
             self.assertTrue(validate_csv(x))
          # EML
-         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId, 
+         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId,
                                           responseFormat=EML_INTERFACE)) as x:
             self.assertTrue(validate_eml(x))
          # GeoJSON (sometimes)
-         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId, 
+         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId,
                                     responseFormat=GEO_JSON_INTERFACE)) as x:
             self.assertTrue(validate_geojson(x))
          # JSON
-         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId, 
+         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId,
                                           responseFormat=JSON_INTERFACE)) as x:
             self.assertTrue(validate_json(x))
          # Shapefile?
-         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId, 
+         with contextlib.closing(self.cl.get_matrix(gridsetId, mtxId,
                                     responseFormat=SHAPEFILE_INTERFACE)) as x:
             self.assertTrue(validate_shapefile(x))
-   
+
    # ............................
    def test_list(self):
       """
@@ -232,16 +235,17 @@ class TestWebMatrixService(UserTestCase):
       """
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
-      mtxAtoms = scribe.listMatrices(0, 1, userId=self._get_session_user(), 
+      mtxAtoms = scribe.listMatrices(0, 1, userId=self._get_session_user(),
                                      atom=False)
       scribe.closeConnections()
       with contextlib.closing(self.cl.list_matrices(mtxAtoms[0].gridsetId)) as x:
          ret = json.load(x)
-      
+
       if len(ret) == 0:
          warnings.warn('Count returned 0 matrices for user: {}'.format(
                                                    self._get_session_user()))
-   
+
+
 # .............................................................................
 def get_test_classes():
    """
@@ -253,6 +257,7 @@ def get_test_classes():
       TestScribeMatrixService,
       TestWebMatrixService
    ]
+
 
 # .............................................................................
 def get_test_suite(userId=None, pwd=None):
@@ -267,21 +272,22 @@ def get_test_suite(userId=None, pwd=None):
    suite.addTest(UserTestCase.parameterize(TestWebMatrixService))
 
    if userId is not None:
-      suite.addTest(UserTestCase.parameterize(TestScribeMatrixService, 
+      suite.addTest(UserTestCase.parameterize(TestScribeMatrixService,
                                               userId=userId, pwd=pwd))
-      suite.addTest(UserTestCase.parameterize(TestWebMatrixService, 
+      suite.addTest(UserTestCase.parameterize(TestWebMatrixService,
                                               userId=userId, pwd=pwd))
-      
+
    return suite
+
 
 # .............................................................................
 if __name__ == '__main__':
    parser = argparse.ArgumentParser(
                         description='Run matrix service tests')
-   parser.add_argument('-u', '--user', type=str, 
-                 help='If provided, run tests for this user (and anonymous)' )
+   parser.add_argument('-u', '--user', type=str,
+                 help='If provided, run tests for this user (and anonymous)')
    parser.add_argument('-p', '--pwd', type=str, help='Password for user')
-   
+
    args = parser.parse_args()
    suite = get_test_suite(userId=args.user, pwd=args.pwd)
    unittest.TextTestRunner(verbosity=2).run(suite)

@@ -22,6 +22,7 @@ class PhyloEncoding:
     @summary: The PhyloEncoding class represents the encoding of a phylogenetic
                      tree to match a PAM
     """
+
     # ..............................
     def __init__(self, tree, pam):
         """Base constructor
@@ -127,7 +128,7 @@ class PhyloEncoding:
 
         if node.num_child_nodes() > 0:  # Assume this is two since binary
             clade_p_vals = {}
-            multipliers = [-1.0, 1.0]   # One positive, one negative
+            multipliers = [-1.0, 1.0]  # One positive, one negative
             shuffle(multipliers)
 
             for child in node.child_nodes():

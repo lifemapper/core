@@ -7,7 +7,6 @@ import signal
 from LmBackend.common.lmobj import LMObject
 from LmBackend.common.subprocessManager import SubprocessRunner
 
-
 # Need this to be module global for handling signals
 current_procs = set()
 shutdown = False

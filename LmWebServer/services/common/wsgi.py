@@ -5,7 +5,6 @@ import os
 from LmWebServer.services.common.svc_root import start_cherrypy_application
 import cherrypy
 
-
 LM_ENV_VARS = ['LIFEMAPPER_SERVER_CONFIG_FILE', 'LIFEMAPPER_SITE_CONFIG_FILE']
 
 

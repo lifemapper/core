@@ -10,9 +10,8 @@ import argparse
 import csv
 import os
 
-
-BASE_BUCKET_NUM = 10 # 10 possibilities for numeric characters
-DEF_CHAR = '0' # Default character
+BASE_BUCKET_NUM = 10  # 10 possibilities for numeric characters
+DEF_CHAR = '0'  # Default character
 
 
 # .............................................................................
@@ -39,7 +38,7 @@ def split_into_buckets(input_filenames, output_basename, group_pos, str_pos=0,
         if k not in buckets:
             buckets[k] = csv.writer(
                 open('{}{}.csv'.format(output_basename, k), 'w'))
-            #buckets[k] = csv.writer(
+            # buckets[k] = csv.writer(
             #    open('{}{}.csv'.format(outputBasename, k), 'w'))
 
     for filename in input_filenames:
@@ -53,7 +52,7 @@ def split_into_buckets(input_filenames, output_basename, group_pos, str_pos=0,
                     try:
                         g_str = row[group_pos]
                         try:
-                            bucket_str = g_str[str_pos:str_pos+num_cmp]
+                            bucket_str = g_str[str_pos:str_pos + num_cmp]
                         except Exception:
                             bucket_str = DEF_CHAR
                         bucket_str += DEF_CHAR * num_cmp

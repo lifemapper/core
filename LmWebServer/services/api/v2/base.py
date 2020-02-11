@@ -17,6 +17,7 @@ class LmService:
     from.  It is responsible for getting a database connection and logger that
     can be used for the service.
     """
+
     # ..........................
     def __init__(self):
         """Constructor

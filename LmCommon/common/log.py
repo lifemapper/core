@@ -13,6 +13,7 @@ from LmCommon.common.lmconstants import (
 class LmLogger(logging.Logger):
     """Logging.logger wrapper
     """
+
     # ...............................
     def __init__(self, logger_name, level):
         """LmLogger constructor
@@ -84,6 +85,7 @@ class LmLogger(logging.Logger):
 class DaemonLogger(LmLogger):
     """Fallback logger for deamon processes.
     """
+
     def __init__(self, pid, name=None, level=logging.DEBUG):
         if name:
             name = 'daemon.{}.{}'.format(name, pid)
@@ -98,6 +100,7 @@ class DaemonLogger(LmLogger):
 class TestLogger(LmLogger):
     """Logger for tests
     """
+
     def __init__(self, script_name, level=logging.DEBUG):
         LmLogger.__init__(self, script_name, level=level)
         self._add_console_handler()

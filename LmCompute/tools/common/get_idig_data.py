@@ -1,4 +1,4 @@
-#!/bin/bash
+# !/bin/bash
 """Get data from iDigBio
 """
 import argparse
@@ -33,6 +33,7 @@ def get_partner_species_data(taxon_id_file, point_output_file,
     idig_api.assemble_idigbio_data(
         taxon_ids, point_output_file, meta_output_file,
         missing_id_file=missing_id_file)
+
 
 # .............................................................................
 def main():

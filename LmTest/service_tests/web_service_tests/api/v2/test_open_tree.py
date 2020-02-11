@@ -12,17 +12,18 @@ from random import randint, shuffle
 
 import dendropy
 
-
 NONTREE_GBIF_IDS_KEY = 'nontree_ids'
 TREE_DATA_KEY = 'tree_data'
 TREE_FORMAT_KEY = 'tree_format'
 TREE_NAME_KEY = 'tree_name'
 UNMATCHED_GBIF_IDS_KEY = 'unmatched_ids'
 
+
 # .............................................................................
 class Test_open_tree_services(object):
     """Test the Open Tree service wrapper
     """
+
     # .....................................
     def test_open_tree_bad_taxon_ids(self, public_client, taxon_ids):
         """Tests that a tree can be retrieved from "bad" taxon ids
@@ -44,7 +45,7 @@ class Test_open_tree_services(object):
 
         # Check that no GBIF ids were found in open tree
         assert len(resp[NONTREE_GBIF_IDS_KEY]) == len(used_tax_ids)
-        
+
         # Check that none of the taxon ids were included in the tree
         assert len(resp[UNMATCHED_GBIF_IDS_KEY]) == len(used_tax_ids)
 
@@ -74,7 +75,7 @@ class Test_open_tree_services(object):
 
         # Check that all GBIF ids were found in open tree
         assert len(resp[NONTREE_GBIF_IDS_KEY]) == 0
-        
+
         # Check that all of the taxon ids were included in the tree
         assert len(resp[UNMATCHED_GBIF_IDS_KEY]) == 0
 
@@ -114,7 +115,7 @@ class Test_open_tree_services(object):
 
         # Check that non of the bad GBIF ids were found in open tree
         assert len(resp[NONTREE_GBIF_IDS_KEY]) == len(bad_used_tax_ids)
-        
+
         # Check that none of the bad taxon ids were included in the tree
         assert len(resp[UNMATCHED_GBIF_IDS_KEY]) == len(bad_used_tax_ids)
 

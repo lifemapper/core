@@ -20,6 +20,7 @@ class LmAttObj:
         obj.att1 = 'value1'
         obj.att2 = 'value2'
     """
+
     # ......................................
     def __init__(self, attrib=None, name='LmObj'):
         """Constructor
@@ -69,6 +70,7 @@ class LmAttObj:
     def __dir__(self):
         """Override dir() method to pick up attributes in _attrib
         """
+
         def get_attrs(obj):
             if not hasattr(obj, '__dict__'):
                 return []  # slots only
@@ -114,6 +116,7 @@ class LmAttList(list, LmAttObj):
         >>> print(obj) >> [1, 2, 3, 'apple']
         >>> print(obj.id) >> 'attList'
     """
+
     def __init__(self, items=None, attrib=None, name='LmList'):
         """Constructor.
 

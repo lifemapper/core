@@ -3,7 +3,6 @@
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (SERVER_ENV_HEADING)
 
-
 cfg = Config()
 
 # Relative Home of Results packaging code

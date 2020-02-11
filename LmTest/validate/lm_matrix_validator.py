@@ -26,5 +26,5 @@ def validate_lm_matrix_file(lmmatrix_filename):
             msg = str(e)
     else:
         msg = 'File does not exist'
-   
+
     return valid, msg

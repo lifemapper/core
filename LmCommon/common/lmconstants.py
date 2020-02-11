@@ -2,7 +2,6 @@
 """
 from enum import Enum
 
-
 try:
     from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
 except:
@@ -123,6 +122,7 @@ class FileFormat:
     @summary: This class contains file format meta information
     @todo: Add GDAL / OGR type as optional parameters
     """
+
     # ...........................
     def __init__(self, extension, mimeType, allExtensions=None, driver=None,
                  options=None, default=False):
@@ -235,11 +235,11 @@ class LMFormat:
 
     @staticmethod
     def getFormatByExtension(ext):
-        for ff in (LMFormat.ASCII, LMFormat.CSV, LMFormat.GEO_JSON, 
-                   LMFormat.GTIFF, LMFormat.HFA, LMFormat.JSON, LMFormat.KML, 
-                   LMFormat.LOG, LMFormat.MAKEFLOW, LMFormat.MAP, LMFormat.MXE, 
-                   LMFormat.NEWICK, LMFormat.NUMPY, LMFormat.PICKLE, 
-                   LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, LMFormat.TXT, 
+        for ff in (LMFormat.ASCII, LMFormat.CSV, LMFormat.GEO_JSON,
+                   LMFormat.GTIFF, LMFormat.HFA, LMFormat.JSON, LMFormat.KML,
+                   LMFormat.LOG, LMFormat.MAKEFLOW, LMFormat.MAP, LMFormat.MXE,
+                   LMFormat.NEWICK, LMFormat.NUMPY, LMFormat.PICKLE,
+                   LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, LMFormat.TXT,
                    LMFormat.XML, LMFormat.ZIP):
             if ext == ff.ext:
                 return ff
@@ -809,6 +809,7 @@ class JobStatus(Enum):
         else:
             return False
 
+
 # ............................................................................
 # Aka reqSoftware in LmJob table
 class ProcessType(Enum):
@@ -876,7 +877,7 @@ class ProcessType(Enum):
 
     @staticmethod
     def isSingle(ptype):
-        if ptype in [ProcessType.SMTP, 
+        if ptype in [ProcessType.SMTP,
                      ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT,
                      ProcessType.OM_MODEL, ProcessType.OM_PROJECT,
                      ProcessType.GBIF_TAXA_OCCURRENCE,
@@ -999,6 +1000,7 @@ class ProcessType(Enum):
             return True
         return False
 
+
 # .............................................................................
 # .                               RAD constants                               .
 # .............................................................................
@@ -1014,12 +1016,12 @@ class RandomizeMethods(Enum):
 # .............................................................................
 # .                              Time constants                               .
 # .............................................................................
-# Time constants in Modified Julian Day (MJD) units 
+# Time constants in Modified Julian Day (MJD) units
 ONE_MONTH = 1.0 * 30
 ONE_DAY = 1.0
-ONE_HOUR = 1.0/24.0
-ONE_MIN = 1.0/1440.0
-ONE_SEC = 1.0/86400.0
+ONE_HOUR = 1.0 / 24.0
+ONE_MIN = 1.0 / 1440.0
+ONE_SEC = 1.0 / 86400.0
 
 # Time formats
 ISO_8601_TIME_FORMAT_FULL = "%Y-%m-%dT%H:%M:%SZ"
@@ -1050,6 +1052,7 @@ DEFAULT_NODATA = -9999
 LM_CLIENT_VERSION_URL = "http://svc.lifemapper.org/clients/versions.xml"
 LM_INSTANCES_URL = "http://svc.lifemapper.org/clients/instances.xml"
 
+
 class Instances(Enum):
     """These are Lifemapper instances that we know how to work with externally
     """
@@ -1061,6 +1064,8 @@ class Instances(Enum):
 
 
 DWC_QUALIFIER = 'dwc:'
+
+
 class DWCNames(Enum):
     """Darwin core names enumeration
     """
@@ -1105,6 +1110,7 @@ class DWCNames(Enum):
 
 # ......................................................
 PROVIDER_FIELD_COMMON = 'provider'
+
 
 # ......................................................
 class GBIF(Enum):
@@ -1155,7 +1161,7 @@ class GBIF(Enum):
     RESPONSE_MATCH_KEY = 'matchType'
     RESPONSE_NOMATCH_VALUE = 'NONE'
 
-    # For writing files from GBIF DarwinCore download, 
+    # For writing files from GBIF DarwinCore download,
     # DWC translations in lmCompute/code/sdm/gbif/constants
     # We are adding the 2 fields: LM_WKT_FIELD and LINK_FIELD
     LINK_FIELD = 'gbifurl'
@@ -1248,7 +1254,7 @@ class BISON_QUERY(Enum):
     RECORD_KEYS = ['response', 'docs']
     COUNT_KEYS = ['response', 'numFound']
     TSN_FILTERS = {'facet': True,
-                   'facet.limit': -1,
+                   'facet.limit':-1,
                    'facet.mincount': BISON.MIN_POINT_COUNT,
                    'facet.field': BISON.TSN_KEY,
                    'rows': 0}
@@ -1327,6 +1333,7 @@ class ITIS(Enum):
     FAMILY_KEY = 'Family'
     GENUS_KEY = 'Genus'
     SPECIES_KEY = 'Species'
+
 
 # .............................................................................
 # .                           iDigBio constants                               .

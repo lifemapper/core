@@ -138,7 +138,6 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         ServiceObject.META_KEYWORDS: ['subset']
     }
 
-
     # TODO: This really needs to be by original matrix (PAM) id
     #    For now, we can get close if we group by scenario id and algorithm
     #    Another option would be to hash a set of the algorithm parameter

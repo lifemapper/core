@@ -16,6 +16,7 @@ import cherrypy
 class GBIFTaxonService(LmService):
     """
     """
+
     # ................................
     @lm_formatter
     def POST(self):

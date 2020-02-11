@@ -6,7 +6,6 @@ from LmCommon.common.lmconstants import LMFormat
 import numpy as np
 from osgeo import ogr, osr
 
-
 # Calculate this once and store as a constant instead of for every cell
 SQRT_3 = math.sqrt(3)
 

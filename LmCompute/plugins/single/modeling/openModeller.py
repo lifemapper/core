@@ -13,7 +13,6 @@ from LmCompute.plugins.single.modeling.openModeller_constants import (
 from LmTest.validate.raster_validator import validate_raster_file
 from LmTest.validate.xml_validator import validate_xml_file
 
-
 # TODO: Should these be in constants somewhere?
 ALGORITHM_CODE_KEY = 'algorithmCode'
 PARAM_NAME_KEY = 'name'
@@ -232,6 +231,7 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
 class OmRequest:
     """Base class for openModeller requests
     """
+
     # .................................
     def __init__(self):
         if self.__class__ == OmRequest:
@@ -269,9 +269,9 @@ class OmModelRequest(OmRequest):
         """
         self.options = [
             # Ignore duplicate points (same coordinates)
-            #('OccurrencesFilter', 'SpatiallyUnique'),
+            # ('OccurrencesFilter', 'SpatiallyUnique'),
             # Ignore duplicate points (same environment values)
-            #('OccurrencesFilter', 'EnvironmentallyUnique')
+            # ('OccurrencesFilter', 'EnvironmentallyUnique')
             ]
         self.stat_options = {
             'ConfusionMatrix' : {
@@ -319,7 +319,7 @@ class OmModelRequest(OmRequest):
         presence_element = SubElement(
             sampler_element, 'Presence', attrib={'Label' : self.points_label})
 
-        #SubElement(presence_element, 'CoordinateSystem', value=self.crs_wkt)
+        # SubElement(presence_element, 'CoordinateSystem', value=self.crs_wkt)
 
         for local_id, x_coord, y_coord in self.points:
             SubElement(

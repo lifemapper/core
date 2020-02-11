@@ -14,7 +14,6 @@ from LmWebServer.services.api.v2.base import LmService
 import cherrypy
 import mapscript
 
-
 PALETTES = (
     'gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia',
     'aqua', 'bluered', 'bluegreen', 'greenred')
@@ -25,6 +24,7 @@ PALETTES = (
 class MapService(LmService):
     """The base mapping service for OGC services.
     """
+
     # ................................
     def GET(self, map_name, bbox=None, bgcolor=None, color=None, coverage=None,
             crs=None, exceptions=None, height=None, layer=None, layers=None,
@@ -180,10 +180,10 @@ class MapService(LmService):
                     'STYLE COLOR {} {} {} END'.format(clr[0], clr[1], clr[2]))
             else:
                 palette_name = self._get_palette_name(color)
-                pal = colorPalette(n=maplyr.numclasses+1, ptype=palette_name)
+                pal = colorPalette(n=maplyr.numclasses + 1, ptype=palette_name)
                 for i in range(maplyr.numclasses):
                     stl = maplyr.getClass(i).getStyle(0)
-                    clr = pal[i+1]
+                    clr = pal[i + 1]
                     success = stl.updateFromString(
                         'STYLE COLOR %d %d %d END' % (clr[0], clr[1], clr[2]))
         else:
@@ -329,7 +329,7 @@ class MapService(LmService):
     def _get_palette_name(self, colorstring):
         if colorstring in PALETTES:
             return colorstring
-        (r,g,b) = self._html_color_to_rgb(colorstring)
+        (r, g, b) = self._html_color_to_rgb(colorstring)
         if (r > g and r > b):
             return 'red'
         elif (g > r and g > b):

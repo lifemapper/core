@@ -27,7 +27,7 @@ from LmCompute.common.log import LmComputeLogger
 class ModelSoftwareWrapper:
     """Base class for modeling software wrappers
     """
-    LOGGER_NAME = 'model_tool' # Subclasses should change this
+    LOGGER_NAME = 'model_tool'  # Subclasses should change this
     RETRY_STATUSES = []
 
     # ...................................
@@ -209,7 +209,7 @@ class ModelSoftwareWrapper:
                 destination_filename, 'w', compression=zipfile.ZIP_DEFLATED,
                 allowZip64=True) as z_f:
             for base, _, files in os.walk(self.work_dir):
-                if base.find('layers') == -1: # Skip layers directory
+                if base.find('layers') == -1:  # Skip layers directory
                     for file in files:
                         # Don't add zip files
                         if (file.find(LMFormat.ZIP.ext) == -1

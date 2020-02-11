@@ -23,7 +23,6 @@ from lmpy import Matrix
 import numpy as np
 from osgeo import gdal, ogr
 
-
 # DEFAULT_SCALE is the scale of the layer data array to the shapegrid cellsize
 #     The number of data array cells in a (square) shapegrid cell is::
 #         1.0 / DEFAULT_SCALE^2
@@ -57,6 +56,7 @@ def _get_presence_absence_method(min_presence, max_presence, min_coverage,
             np.logical_and(window >= min_presence, window <= max_presence),
             window != nodata)
         return np.sum(valid_cells) >= min_num
+
     return get_presence_absence
 
 
@@ -67,6 +67,7 @@ def _get_mean_value_method(nodata):
     Args:
         nodata: This value is assumed to be nodata in the array
     """
+
     # ...............................
     def get_mean(window):
         m = np.nanmean(window)
@@ -74,6 +75,7 @@ def _get_mean_value_method(nodata):
             return nodata
         else:
             return m
+
     return get_mean
 
 
@@ -115,6 +117,7 @@ def _get_largest_class_method(min_coverage, nodata):
                     and num > min_num:
                 largest_class = cl
         return largest_class
+
     return get_largest_class_1_8
 
 
@@ -197,6 +200,7 @@ def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
                 counts[val_map[v]['index']] = num
                 ret[val_map[v]['index']] = val_map[v]['val']
         return ret
+
     return encode_method_1_8
 
 
@@ -207,6 +211,7 @@ class LayerEncoder:
     Attributes:
         encoded_matrix: A Matrix object with encoded layers
     """
+
     # ...............................
     def __init__(self, shapegrid_filename):
         # Process shapegrid
@@ -328,7 +333,7 @@ class LayerEncoder:
         # ...............................
         def window_function(x, y):
             """Get the array window from the centroid coordinates"""
-            # Note: Again, 0 row corresponds to top of map, so bigger y 
+            # Note: Again, 0 row corresponds to top of map, so bigger y
             #     corresponds to lower row number
             uly, ulx = get_rc(x - x_size_2, y + y_size_2)  # Upper left corner
             lry, lrx = get_rc(x + x_size_2, y - y_size_2)  # Lower right corner
@@ -433,7 +438,7 @@ class LayerEncoder:
             y_cent = center.GetY()
             x1, y1 = boundary_points[1].split(' ')
             self.shapegrid_resolution = np.sqrt(
-                (x_cent - x1)**2 + (y_cent - y1)**2)
+                (x_cent - x1) ** 2 + (y_cent - y1) ** 2)
         self.shapegrid_sides = len(boundary_points) - 1
         # self.shapegrid_layer.ResetReading()
         self.shapegrid_layer = None

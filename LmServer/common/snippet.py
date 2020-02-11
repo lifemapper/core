@@ -14,6 +14,7 @@ from LmServer.common.solr import build_solr_document, post_solr_document
 class SnippetShooter(LMObject):
     """Creates snippets and "shoots" them to an awaiting snippet server
     """
+
     # ............................
     def __init__(self, snippet_server=SOLR_SERVER,
                  snippet_collection=SOLR_SNIPPET_COLLECTION):
@@ -106,7 +107,7 @@ class SnippetShooter(LMObject):
         delete_post_filename = False
         # Write to temp file
         if solr_post_filename is None:
-            #TODO: Fill in
+            # TODO: Fill in
             solr_post_filename = os.path.join(
                 UPLOAD_PATH, 'snippetPost-{}'.format(randint(0, 10000)))
             delete_post_filename = True

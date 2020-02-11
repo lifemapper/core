@@ -17,6 +17,7 @@ import cherrypy
 class UserLogin(LmService):
     """User login service.
     """
+
     # ................................
     def GET(self):
         """Present the user with a login page if not logged in.
@@ -75,6 +76,7 @@ class UserLogout(LmService):
     """
     @summary: Log the user out of the system
     """
+
     # ................................
     def GET(self):
         """Log out
@@ -97,6 +99,7 @@ class UserSignUp(LmService):
     """
     @summary: Service to create a new user
     """
+
     # ................................
     def GET(self):
         """

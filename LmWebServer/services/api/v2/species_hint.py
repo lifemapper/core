@@ -15,6 +15,7 @@ import cherrypy
 class SpeciesHintService(LmService):
     """This class is responsible for the species hint services
     """
+
     # ................................
     @lm_formatter
     def GET(self, searchString, limit=20, urlUser=None, **params):

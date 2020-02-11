@@ -19,8 +19,8 @@ from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmWebServer.services.common.svc import svc
 import cherrypy
 
-
 LOCAL_IP = '127.0.0.1'
+
 
 # .............................................................................
 @singleton
@@ -32,11 +32,13 @@ class AppWrapper(object):
         there were issues with sessions across instances and so that we don't
         keep resetting session options
     """
+
     # ..............................
     def __init__(self):
         cherrypy.config.update(CHERRYPY_CONFIG_FILE)
         self.app = cherrypy.Application(svc(), config=CHERRYPY_CONFIG_FILE)
-        
+
+
 # .............................................................................
 def getApp():
     """
@@ -45,6 +47,7 @@ def getApp():
     """
     wrapper = AppWrapper()
     return wrapper.app
+
 
 # .............................................................................
 def createRequest(url, method, headers={}, body=None, remoteIp='127.0.0.1'):
@@ -56,21 +59,22 @@ def createRequest(url, method, headers={}, body=None, remoteIp='127.0.0.1'):
     @param body: The body of the request
     @param remoteIp: The IP address that this request is sent from (spoofed)
     """
-    
+
     urlParts = urlparse(url)
     vpath = urlParts.path
     scheme = urlParts.scheme
     # Creates a dictionary of query parameters by splitting the query string
-    #    at the ampersands and then splitting up the param=value pairs at the 
+    #    at the ampersands and then splitting up the param=value pairs at the
     #    equal signs
-    # 'param1=val1&param2=val2' -> {'param1': 'val1', 'param2' : 'val2'} 
+    # 'param1=val1&param2=val2' -> {'param1': 'val1', 'param2' : 'val2'}
     if len(urlParts.query) > 1:
         qParams = dict([i.split('=') for i in urlParts.query.split('&')])
     else:
         qParams = {}
-    
+
     return executeRequest(vpath=vpath, method=method, scheme=scheme, data=body,
                                  headers=headers, remoteIp=remoteIp, **qParams)
+
 
 # .............................................................................
 def createRequestFromErrorPickle(pickleFn):
@@ -87,14 +91,15 @@ def createRequestFromErrorPickle(pickleFn):
             body = req["body"]
             headers = req["headers"]
             remoteIp = req["remote"].ip
-            
+
             qParams = dict([i.split('=') for i in req["URL"]["queryParams"].split('&')])
-            
+
             return executeRequest(vpath=vpath, method=method, scheme=scheme, data=body,
                                  headers=headers, remoteIp=remoteIp, **qParams)
     else:
         raise Exception("Pickle file %s, does not exist" % pickleFn)
-    
+
+
 # .............................................................................
 class MockedInfo(object):
     """
@@ -102,6 +107,7 @@ class MockedInfo(object):
     @note: Only provides getheaders method so the headers can be processed for
                  authentication
     """
+
     # .................................
     def __init__(self, response):
         self.response = response
@@ -113,10 +119,11 @@ class MockedInfo(object):
             if header == name:
                 ret.append(value)
         return ret
-    
+
+
 # .............................................................................
-def executeRequest(vpath='/', method='GET', scheme='http', 
-                         proto='HTTP/1.1', data=None, headers=None, 
+def executeRequest(vpath='/', method='GET', scheme='http',
+                         proto='HTTP/1.1', data=None, headers=None,
                          remoteIp="127.0.0.1", **kwargs):
     """
     @summary: Performs a request with the given parameters
@@ -134,10 +141,10 @@ def executeRequest(vpath='/', method='GET', scheme='http',
     """
     localAddress = cherrypy.lib.httputil.Host(LOCAL_IP, 50000, "")
     remoteAddress = cherrypy.lib.httputil.Host(remoteIp, 50001, "")
-    
+
     # This is a required header when running HTTP/1.1
     h = {"Host" : WEBSERVICES_ROOT}
-    
+
     if headers is not None:
         h.update(headers)
 
@@ -163,7 +170,7 @@ def executeRequest(vpath='/', method='GET', scheme='http',
         fd = StringIO(data)
 
     # Get our application and run the request against it
-    #app = cherrypy.Application(svc(), config=conf)
+    # app = cherrypy.Application(svc(), config=conf)
     app = getApp()
 
     # Let's fake the local and remote addresses
@@ -185,7 +192,7 @@ def executeRequest(vpath='/', method='GET', scheme='http',
 
     # Add functions to request needed for cookie processing
     request.get_full_url = lambda : WEBSERVICES_ROOT
-    request.is_unverifiable = lambda : False # This is just for testing so this is okay
+    request.is_unverifiable = lambda : False  # This is just for testing so this is okay
 
     # collapse the response into a bytestring
     response.collapse_body()
