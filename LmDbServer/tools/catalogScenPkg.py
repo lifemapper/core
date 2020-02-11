@@ -446,30 +446,3 @@ if __name__ == '__main__':
         else:
             print(('Failed, add scenario package returned None for {} and user {}'
                   .format(scen_package_meta, user_id)))
-
-"""
-import os
-
-from LmBackend.command.server import CatalogScenarioPackageCommand
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import JobStatus
-from LmServer.common.lmconstants import (Priority, ENV_DATA_PATH, 
-                                         DEFAULT_EMAIL_POSTFIX)
-from LmServer.common.lmuser import LMUser
-from LmServer.common.log import ScriptLogger
-from LmServer.base.layer2 import Vector, Raster
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.envlayer import EnvLayer
-from LmServer.legion.processchain import MFChain
-from LmServer.legion.scenario import Scenario, ScenPackage
-from LmDbServer.tools.catalogScenPkg import SPFiller
-
-scen_package_meta = '/share/lm/data/layers/taffy12_nsa_30sec.py'
-user_id = 'biotaphy'
-
-self = SPFiller(scen_package_meta, user_id)
-self.initializeMe()
-self.catalogScenPackages()
-
-"""

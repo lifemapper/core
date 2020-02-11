@@ -52,48 +52,6 @@ class _LmDbServerCommand(_LmServerCommand):
 
 
 # .............................................................................
-class AddBioGeoAndTreeCommand(_LmServerCommand):
-    """Command to add biogeographic hypotheses to a gridset
-    """
-    script_name = 'addBioGeoAndTree.py'
-
-    # ................................
-    def __init__(self, gridset_id, hypotheses_filenames, tree_file_name=None,
-                 tree_name=None, event_field=None):
-        """Construct the command object
-
-        Args:
-            gridset_id: The database id of the gridset to add to
-            hypotheses_filenames: A list of file locations of hypothesis
-                shapefiles
-            tree_file_name: The file location of the JSON tree to add to the
-                gridset
-            tree_name: If a tree is provided, this is the name of the tree
-            event_field: The name of the event field in the hypotheses
-                shapefiles
-        """
-        _LmServerCommand.__init__(self)
-
-        self.args = str(gridset_id)
-        if isinstance(hypotheses_filenames, list):
-            self.inputs.extend(hypotheses_filenames)
-            self.args += ' {}'.format(' '.join(hypotheses_filenames))
-        else:
-            self.inputs.append(hypotheses_filenames)
-            self.args += ' {}'.format(hypotheses_filenames)
-
-        if tree_file_name is not None:
-            self.opt_args += ' -t {}'.format(tree_file_name)
-            self.inputs.append(tree_file_name)
-
-        if tree_name is not None:
-            self.opt_args += ' -tn {}'.format(tree_name)
-
-        if event_field is not None:
-            self.opt_args += ' -e {}'.format(event_field)
-
-
-# .............................................................................
 class AssemblePamFromSolrQueryCommand(_LmServerCommand):
     """Command to assemble PAM data from a Solr query
     """
@@ -123,53 +81,6 @@ class AssemblePamFromSolrQueryCommand(_LmServerCommand):
                 self.inputs.extend(dependency_files)
             else:
                 self.inputs.append(dependency_files)
-
-
-# .............................................................................
-class CatalogScenarioPackageCommand(_LmDbServerCommand):
-    """This command will catalog a scenario package
-    """
-    script_name = 'catalogScenPkg.py'
-
-    # ................................
-    def __init__(self, package_metadata_filename, user_id, user_email=None):
-        """Construct the command object
-
-        Args:
-            package_metadata_filename: The file location of the metadata file
-                for the scenario package to be cataloged in the database
-            user_id: The user id to use for this package
-            user_email: The user email for this package
-        """
-        _LmDbServerCommand.__init__(self)
-
-        # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
-        if not os.path.exists(package_metadata_filename):
-            raise Exception(
-                'Missing Scenario Package metadata file {}'.format(
-                    package_metadata_filename))
-
-        species_basename, _ = os.path.splitext(
-            os.path.basename(package_metadata_filename))
-        # file ends up in LOG_PATH
-        secs = time.time()
-        timestamp = "{}".format(
-            time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-        logname = '{}.{}.{}.{}'.format(
-            self.script_basename, species_basename, user_id, timestamp)
-        # Logfile is created by script in LOG_DIR
-        logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
-
-        # Required args
-        self.args = '{} {}'.format(package_metadata_filename, user_id)
-        # Optional arg, we also want for output
-        self.opt_args += ' --logname={}'.format(logname)
-        # Optional arg, if user is not there, add with dummy email if not
-        #    provided
-        if user_email is not None:
-            self.opt_args += ' --user_email={}'.format(user_email)
-
-        self.outputs.append(logfilename)
 
 
 # .............................................................................
@@ -258,78 +169,6 @@ class EncodeBioGeoHypothesesCommand(_LmServerCommand):
         self.opt_args += ' --logname={}'.format(logname)
 
         self.outputs.append(success_file)
-#         # Logfile is created by script in LOG_DIR
-#         logfilename = '{}{}'.format(logname, LMFormat.LOG.ext)
-#         self.outputs.append(logfilename)
-
-
-# .............................................................................
-class CreateBlankMaskTiffCommand(_LmServerCommand):
-    """This command will create a mask Tiff file of all ones
-    """
-    script_name = 'create_blank_mask.py'
-
-    # ................................
-    def __init__(self, in_raster_file_name, out_raster_file_name):
-        """Construct the command object
-
-        Args:
-            in_raster_file_name: The input raster file to use
-            out_raster_file_name: The file location to write the output raster
-        """
-        _LmServerCommand.__init__(self)
-
-        self.args = '{} {}'.format(in_raster_file_name, out_raster_file_name)
-        self.outputs.append(out_raster_file_name)
-
-
-# .............................................................................
-class CreateConvexHullShapefileCommand(_LmServerCommand):
-    """Command to create a shapefile of the convex hull of the occurrence set
-    """
-    script_name = 'create_convex_hull_shapefile.py'
-
-    # ................................
-    def __init__(self, occ_id, out_file_name, buffer_distance=None):
-        """Construct the command object
-
-        Args:
-            occ_id: The database id of the occurrence set to use
-            out_file_name: The file location to write the shapefile
-            buffer_distance: A buffer, in map units, to include with the convex
-                hull
-        """
-        _LmServerCommand.__init__(self)
-        self.args = '{} {}'.format(occ_id, out_file_name)
-        if buffer_distance is not None:
-            self.opt_args += ' -b {}'.format(buffer_distance)
-
-
-# .............................................................................
-class CreateMaskTiffCommand(_LmServerCommand):
-    """This command will create a mask Tiff file
-
-    Todo:
-        Probably should rename this to be more specific
-    """
-    script_name = 'create_mask_tiff.py'
-
-    # ................................
-    def __init__(self, in_raster_file_name, pointsFilename,
-                 out_raster_file_name):
-        """Construct the command object
-
-        Args:
-            in_raster_file_name: The input raster file to use
-            pointsFilename: The path to the points shapefile to use
-            out_raster_file_name: The file location to write the output raster
-        """
-        _LmServerCommand.__init__(self)
-
-        self.args = '{} {} {}'.format(
-            in_raster_file_name, pointsFilename, out_raster_file_name)
-        # self.inputs.extend([in_raster_file_name, pointsFilename])
-        self.outputs.append(out_raster_file_name)
 
 
 # .............................................................................

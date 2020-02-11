@@ -13,17 +13,6 @@ from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.tree import Tree
 from osgeo import ogr
 
-# from LmBackend.command.common import (ChainCommand,
-#                                                   ConcatenateMatricesCommand,
-#                                                   SystemCommand)
-# from LmBackend.command.multi import (CalculateStatsCommand,
-#                                                  EncodePhylogenyCommand,
-#                                                  McpaCorrectPValuesCommand,
-#                                                  CreateAncestralPamCommand,
-#                                                  SyncPamAndTreeCommand, )
-# from LmBackend.command.server import (TouchFileCommand, SquidIncCommand,
-#                                                   StockpileCommand)
-#                                          JobStatus, ProcessType)
 # TODO: Move these to localconstants
 NUM_RAND_GROUPS = 30
 NUM_RAND_PER_GROUP = 2

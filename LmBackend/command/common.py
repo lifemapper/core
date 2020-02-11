@@ -89,29 +89,6 @@ class ConcatenateMatricesCommand(_LmCommand):
 
 
 # .............................................................................
-class ConvertLayerCommand(_LmCommand):
-    """This command will convert a tiff to ascii
-    """
-    relative_directory = BACKEND_SCRIPTS_DIR
-    script_name = 'convert_single_layer.py'
-
-    # ................................
-    def __init__(self, orig_asc_file_name, mod_asc_file_name):
-        """Construct the command object
-
-        Args:
-            orig_asc_file_name: The original ASCII file
-            mod_asc_file_name: The modified ASCII file
-        """
-        _LmCommand.__init__(self)
-
-        self.args = '{} {}'.format(orig_asc_file_name, mod_asc_file_name)
-
-        self.inputs.append(orig_asc_file_name)
-        self.outputs.append(mod_asc_file_name)
-
-
-# .............................................................................
 class CreateSignificanceMatrixCommand(_LmCommand):
     """This command will create a significance matrix
 
@@ -157,31 +134,6 @@ class CreateSignificanceMatrixCommand(_LmCommand):
 
 
 # .............................................................................
-class ModifyAsciiHeadersCommand(_LmCommand):
-    """This command will reduce the number of decimal digits in ASCII headers
-    """
-    relative_directory = COMMON_SCRIPTS_DIR
-    script_name = 'modify_ascii_headers.py'
-
-    # ................................
-    def __init__(self, orig_asc_file_name, mod_asc_file_name, digits=7):
-        """Construct the command object
-
-        Args:
-            orig_asc_file_name: The original ASCII file
-            mod_asc_file_name: The modified ASCII file
-            digits: The number of decimal digits to keep
-        """
-        _LmCommand.__init__(self)
-
-        self.args = '{} {}'.format(orig_asc_file_name, mod_asc_file_name)
-        self.opt_args = '-d {}'.format(digits)
-
-        self.inputs.append(orig_asc_file_name)
-        self.outputs.append(mod_asc_file_name)
-
-
-# .............................................................................
 class SystemCommand(_LmCommand):
     """This command will run a system command (not a Python script)
     """
@@ -212,10 +164,6 @@ class SystemCommand(_LmCommand):
 
         self.script = script
         self.args = args
-        # System commands won't be able to handle empty inputs automatically,
-        #     therefore, we tell the wrapper about them and it can skip the
-        #     command if these arguments are missing
-        self.required_inputs = inputs
 
     # ................................
     def get_command(self):

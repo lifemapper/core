@@ -5,78 +5,6 @@ from LmBackend.common.lmconstants import MULTI_SPECIES_SCRIPTS_DIR
 
 
 # .............................................................................
-class BuildShapegridCommand(_LmCommand):
-    """This command will build a shapegrid
-
-    Todo:
-        * Document arguments
-    """
-    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
-    script_name = 'build_shapegrid.py'
-
-    # ................................
-    def __init__(self, shapegrid_file_name, min_x, min_y, max_x, max_y,
-                 cell_size, epsg, num_sides, cutout_wkt_file_name=None):
-        """Construct the command object
-        """
-        _LmCommand.__init__(self)
-        self.outputs.append(shapegrid_file_name)
-
-        self.args = '{} {} {} {} {} {} {} {}'.format(
-            shapegrid_file_name, min_x, min_y, max_x, max_y, cell_size, epsg,
-            num_sides)
-
-        if cutout_wkt_file_name is not None:
-            self.inputs.append(cutout_wkt_file_name)
-            self.opt_args = ' --cutoutWktFn={}'.format(cutout_wkt_file_name)
-
-
-# .............................................................................
-class CalculateStatsCommand(_LmCommand):
-    """This command will calculate statistics for a PAM
-
-    Todo:
-        * Determine if we want to continue supporting this as a stand alone
-            command since MultiSpeciesRunCommand provides the same
-            functionality
-        * Document arguments
-    """
-    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
-    script_name = 'calculate_pam_stats.py'
-
-    # ................................
-    def __init__(self, pam_file_name, sites_file_name, species_file_name,
-                 diversity_file_name, tree_file_name=None, schluter=False,
-                 species_cov_file_name=None, sitess_cov_file_name=None):
-        """Construct the command object
-        """
-        _LmCommand.__init__(self)
-        self.inputs.append(pam_file_name)
-        self.outputs.extend(
-            [sites_file_name, species_file_name, diversity_file_name])
-
-        self.args = '{} {} {} {}'.format(
-            pam_file_name, sites_file_name, species_file_name,
-            diversity_file_name)
-
-        if tree_file_name is not None:
-            self.inputs.append(tree_file_name)
-            self.opt_args += ' -t {}'.format(tree_file_name)
-
-        if schluter:
-            self.opt_args += ' --schluter'
-
-        if species_cov_file_name is not None:
-            self.outputs.append(species_cov_file_name)
-            self.opt_args += ' --speciesCovFn={}'.format(
-                species_cov_file_name)
-
-        if sitess_cov_file_name is not None:
-            self.outputs.append(sitess_cov_file_name)
-            self.opt_args += ' --sitCovFn={}'.format(sitess_cov_file_name)
-
-
-# .............................................................................
 class CreateAncestralPamCommand(_LmCommand):
     """This command will create an ancestral PAM from a PAM and tree
     """
@@ -97,41 +25,6 @@ class CreateAncestralPamCommand(_LmCommand):
         self.outputs.append(output_file_name)
         self.args = '{} {} {}'.format(
             pam_file_name, tree_file_name, output_file_name)
-
-
-# .............................................................................
-class EncodeHypothesesCommand(_LmCommand):
-    """This command will encode biogeographic hypotheses with a shapegrid
-    """
-    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
-    script_name = 'encode_hypotheses.py'
-
-    # ................................
-    def __init__(self, shapegrid_file_name, layer_file_names, output_file_name,
-                 event_field=None):
-        """Construct the command object
-
-        Args:
-            shapegrid_file_name: The file location of the shapegrid to use for
-                encoding
-            layer_file_names: File location(s) of layers to encode
-            output_file_name: The file location to store the encoded matrix
-            event_field: Use this field in the layers to determine events
-        """
-        _LmCommand.__init__(self)
-
-        if not isinstance(layer_file_names, list):
-            layer_file_names = [layer_file_names]
-
-        self.args = '{} {} {}'.format(
-            shapegrid_file_name, output_file_name, ' '.join(layer_file_names))
-        if event_field is not None:
-            self.opt_args += ' -e {}'.format(event_field)
-
-        self.inputs.append(shapegrid_file_name)
-        self.inputs.extend(layer_file_names)
-
-        self.outputs.append(output_file_name)
 
 
 # .............................................................................

@@ -1,12 +1,9 @@
 """Module containing class and functions representing shapegrid objects
 """
 import os
-from types import IntType
 
-from LmBackend.command.common import SystemCommand, ChainCommand
-from LmBackend.command.multi import BuildShapegridCommand
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import (LMFormat, JobStatus, ProcessType)
+from LmCommon.common.lmconstants import (LMFormat, ProcessType)
 from LmCommon.common.time import gmt
 from LmCommon.shapes.build_shapegrid import build_shapegrid
 from LmServer.base.layer2 import _LayerParameters, Vector
@@ -130,7 +127,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 
 # ...............................................
     def _setCellMeasurements(self, size=None):
-        if size is not None and isinstance(size, IntType):
+        if size is not None and isinstance(size, int):
             self._size = size
         else:
             self._size = self._getFeatureCount()
