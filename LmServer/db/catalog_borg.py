@@ -26,170 +26,182 @@ from LmServer.legion.tree import Tree
 
 # .............................................................................
 class Borg(DbPostgresql):
+    """Class to control modifications to the Borg database.
     """
-    Class to control modifications to the Borg database.
-    """
+    # ................................
+    def __init__(self, logger, db_host, db_port, db_user, db_key):
+        """Constructor for Borg class
 
-# .............................................................................
-# Constructor
-# .............................................................................
-    def __init__(self, logger, dbHost, dbPort, dbUser, dbKey):
+        Args:
+            logger (LmLogger): Logger to use for Borg
+            db_host (str): hostname for database machine
+            db_port (int): Port number for database connection
+            db_user (str): Database user name for the connection
+            db_key (str): Password for database user
         """
-        @summary Constructor for Borg class
-        @param logger: LmLogger to use for Borg
-        @param dbHost: hostname for database machine
-        @param dbPort: port for database connection
-        """
-        DbPostgresql.__init__(self, logger, db=DB_STORE, user=dbUser,
-                                     password=dbKey, host=dbHost, port=dbPort,
-                                     schema=LM_SCHEMA_BORG)
+        DbPostgresql.__init__(
+            self, logger, db=DB_STORE, user=db_user, password=db_key,
+            host=db_host, port=db_port, schema=LM_SCHEMA_BORG)
 
-# ...............................................
-    def _createUser(self, row, idxs):
+    # ................................
+    @staticmethod
+    def _create_user(row, idxs):
+        """Create an LMUser object from a database row
+        """
         usr = None
         if row is not None:
-            usr = LMUser(row[idxs['userid']], row[idxs['email']],
-                             row[idxs['password']], isEncrypted=True,
-                             firstName=row[idxs['firstname']], lastName=row[idxs['lastname']],
-                             institution=row[idxs['institution']],
-                             addr1=row[idxs['address1']], addr2=row[idxs['address2']],
-                             addr3=row[idxs['address3']], phone=row[idxs['phone']],
-                             mod_time=row[idxs['modtime']])
+            usr = LMUser(
+                row[idxs['userid']], row[idxs['email']], row[idxs['password']],
+                is_encrypted=True, first_name=row[idxs['firstname']],
+                last_name=row[idxs['lastname']],
+                institution=row[idxs['institution']],
+                addr_1=row[idxs['address1']], addr_2=row[idxs['address2']],
+                addr_3=row[idxs['address3']], phone=row[idxs['phone']],
+                mod_time=row[idxs['modtime']])
         return usr
 
-# ...............................................
-    def _createScientificName(self, row, idxs):
+    # ................................
+    def _create_scientific_name(self, row, idxs):
+        """Create a ScientificName object from a database row.
+
+        Returns:
+            ScientificName
         """
-        @summary Returns an ScientificName object from:
-                     - an ScientificName row
-                     - an lm_fullScientificName
-        @param row: A row of ScientificName data
-        @param idxs: Indexes for the row of data
-        @return A ScientificName object generated from the information in the row
-        """
-        sciname = None
+        sci_name = None
         if row is not None:
-            scientificname = self._getColumnValue(row, idxs, ['sciname'])
+            scientific_name = self._get_column_value(row, idxs, ['sciname'])
 
-            if scientificname is not None:
-                taxonid = self._getColumnValue(row, idxs, ['taxonid'])
-                taxonomySourceId = self._getColumnValue(row, idxs, ['taxonomysourceid'])
-                usr = self._getColumnValue(row, idxs, ['userid'])
-                srckey = self._getColumnValue(row, idxs, ['taxonomykey'])
-                squid = self._getColumnValue(row, idxs, ['squid'])
-                kingdom = self._getColumnValue(row, idxs, ['kingdom'])
-                phylum = self._getColumnValue(row, idxs, ['phylum'])
-                txClass = self._getColumnValue(row, idxs, ['tx_class'])
-                txOrder = self._getColumnValue(row, idxs, ['tx_order'])
-                family = self._getColumnValue(row, idxs, ['family'])
-                genus = self._getColumnValue(row, idxs, ['genus'])
-                rank = self._getColumnValue(row, idxs, ['rank'])
-                canonical = self._getColumnValue(row, idxs, ['canonical'])
-                genkey = self._getColumnValue(row, idxs, ['genuskey'])
-                spkey = self._getColumnValue(row, idxs, ['specieskey'])
-                hier = self._getColumnValue(row, idxs, ['keyhierarchy'])
-                lcnt = self._getColumnValue(row, idxs, ['lastcount'])
-                mod_time = self._getColumnValue(row, idxs, ['taxmodtime', 'modtime'])
+            if scientific_name is not None:
+                taxon_id = self._get_column_value(row, idxs, ['taxonid'])
+                taxonomy_source_id = self._get_column_value(
+                    row, idxs, ['taxonomysourceid'])
+                user = self._get_column_value(row, idxs, ['userid'])
+                src_key = self._get_column_value(row, idxs, ['taxonomykey'])
+                squid = self._get_column_value(row, idxs, ['squid'])
+                kingdom = self._get_column_value(row, idxs, ['kingdom'])
+                phylum = self._get_column_value(row, idxs, ['phylum'])
+                class_ = self._get_column_value(row, idxs, ['tx_class'])
+                order_ = self._get_column_value(row, idxs, ['tx_order'])
+                family = self._get_column_value(row, idxs, ['family'])
+                genus = self._get_column_value(row, idxs, ['genus'])
+                rank = self._get_column_value(row, idxs, ['rank'])
+                canonical = self._get_column_value(row, idxs, ['canonical'])
+                gen_key = self._get_column_value(row, idxs, ['genuskey'])
+                sp_key = self._get_column_value(row, idxs, ['specieskey'])
+                hier = self._get_column_value(row, idxs, ['keyhierarchy'])
+                last_count = self._get_column_value(row, idxs, ['lastcount'])
+                mod_time = self._get_column_value(
+                    row, idxs, ['taxmodtime', 'modtime'])
 
-                sciname = ScientificName(scientificname,
-                                                 rank=rank, canonicalName=canonical,
-                                                 userId=usr, squid=squid,
-                                                 kingdom=kingdom, phylum=phylum,
-                                                 txClass=txClass, txOrder=txOrder,
-                                                 family=family, genus=genus,
-                                                 lastOccurrenceCount=lcnt,
-                                                 mod_time=mod_time,
-                                                 taxonomySourceId=taxonomySourceId,
-                                                 taxonomySourceKey=srckey,
-                                                 taxonomySourceGenusKey=genkey,
-                                                 taxonomySourceSpeciesKey=spkey,
-                                                 taxonomySourceKeyHierarchy=hier,
-                                                 scientificNameId=taxonid)
-        return sciname
+                sci_name = ScientificName(
+                    scientific_name, rank=rank, canonical_name=canonical,
+                    user_id=user, squid=squid, kingdom=kingdom, phylum=phylum,
+                    class_=class_, order_=order_, family=family, genus=genus,
+                    last_occurrence_count=last_count, mod_time=mod_time,
+                    taxonomy_source_id=taxonomy_source_id,
+                    taxonomy_source_key=src_key,
+                    taxonomy_source_genus_key=gen_key,
+                    taxonomy_source_species_key=sp_key,
+                    taxonomy_source_key_hierarchy=hier,
+                    scientific_name_id=taxon_id)
+        return sci_name
 
-# ...............................................
-    def _createAlgorithm(self, row, idxs):
+    # ................................
+    def _create_algorithm(self, row, idxs):
+        """Created only from a model, lm_fullModel, or lm_fullProjection
         """
-        Created only from a model, lm_fullModel, or lm_fullProjection 
-        """
-        code = self._getColumnValue(row, idxs, ['algorithmcode'])
-        params = self._getColumnValue(row, idxs, ['algparams'])
+        code = self._get_column_value(row, idxs, ['algorithmcode'])
+        params = self._get_column_value(row, idxs, ['algparams'])
         try:
             alg = Algorithm(code, parameters=params)
-        except:
+        except Exception:
             alg = None
+
         return alg
 
-# ...............................................
-    def _createMFChain(self, row, idxs):
-        mfchain = None
+    # ................................
+    def _create_mf_chain(self, row, idxs):
+        mf_chain = None
         if row is not None:
-            mfchain = MFChain(self._getColumnValue(row, idxs, ['userid']),
-                            dlocation=self._getColumnValue(row, idxs,
-                                                ['mfpdlocation', 'dlocation']),
-                            priority=self._getColumnValue(row, idxs,
-                                                ['priority']),
-                            metadata=self._getColumnValue(row, idxs,
-                                                ['mfpmetadata', 'metadata']),
-                            status=self._getColumnValue(row, idxs,
-                                                ['mfpstatus', 'status']),
-                            status_mod_time=self._getColumnValue(row, idxs,
-                                        ['mfpstatusmodtime', 'statusmodtime']),
-                            mfChainId=self._getColumnValue(row, idxs,
-                                                ['mfprocessid']))
-        return mfchain
+            mf_chain = MFChain(
+                self._get_column_value(row, idxs, ['userid']),
+                dlocation=self._get_column_value(
+                    row, idxs, ['mfpdlocation', 'dlocation']),
+                priority=self._get_column_value(row, idxs, ['priority']),
+                metadata=self._get_column_value(
+                    row, idxs, ['mfpmetadata', 'metadata']),
+                status=self._get_column_value(
+                    row, idxs, ['mfpstatus', 'status']),
+                status_mod_time=self._get_column_value(
+                    row, idxs, ['mfpstatusmodtime', 'statusmodtime']),
+                mf_chain_id=self._get_column_value(row, idxs, ['mfprocessid']))
+        return mf_chain
 
-# ...............................................
-    def _createScenario(self, row, idxs, isForModel=True):
-        """
-        @note: created only from Scenario table or lm_sdmproject view
+    # ................................
+    def _create_scenario(self, row, idxs, is_for_model=True):
+        """Create a scenario object
+
+        Note:
+            Created only from Scenario table or lm_sdmproject view
         """
         scen = None
-        if isForModel:
-            scenid = self._getColumnValue(row, idxs, ['mdlscenarioid', 'scenarioid'])
-            scencode = self._getColumnValue(row, idxs, ['mdlscenariocode',
-                                                                      'scenariocode'])
-            meta = self._getColumnValue(row, idxs, ['mdlscenmetadata',
-                                                                 'scenmetadata', 'metadata'])
-            gcmcode = self._getColumnValue(row, idxs, ['mdlscengcmcode', 'gcmcode'])
-            altpredcode = self._getColumnValue(row, idxs, ['mdlscenaltpredcode', 'altpredcode'])
-            datecode = self._getColumnValue(row, idxs, ['mdlscendatecode', 'datecode'])
+        if is_for_model:
+            scen_id = self._get_column_value(
+                row, idxs, ['mdlscenarioid', 'scenarioid'])
+            scen_code = self._get_column_value(
+                row, idxs, ['mdlscenariocode', 'scenariocode'])
+            meta = self._get_column_value(
+                row, idxs, ['mdlscenmetadata', 'scenmetadata', 'metadata'])
+            gcm_code = self._get_column_value(
+                row, idxs, ['mdlscengcmcode', 'gcmcode'])
+            alt_pred_code = self._get_column_value(
+                row, idxs, ['mdlscenaltpredcode', 'altpredcode'])
+            date_code = self._get_column_value(
+                row, idxs, ['mdlscendatecode', 'datecode'])
         else:
-            scenid = self._getColumnValue(row, idxs, ['prjscenarioid', 'scenarioid'])
-            scencode = self._getColumnValue(row, idxs, ['prjscenariocode', 'scenariocode'])
-            meta = self._getColumnValue(row, idxs, ['prjscenmetadata', 'metadata'])
-            gcmcode = self._getColumnValue(row, idxs, ['prjscengcmcode', 'gcmcode'])
-            altpredcode = self._getColumnValue(row, idxs, ['prjscenaltpredcode', 'altpredcode'])
-            datecode = self._getColumnValue(row, idxs, ['prjscendatecode', 'datecode'])
+            scen_id = self._get_column_value(
+                row, idxs, ['prjscenarioid', 'scenarioid'])
+            scen_code = self._get_column_value(
+                row, idxs, ['prjscenariocode', 'scenariocode'])
+            meta = self._get_column_value(
+                row, idxs, ['prjscenmetadata', 'metadata'])
+            gcm_code = self._get_column_value(
+                row, idxs, ['prjscengcmcode', 'gcmcode'])
+            alt_pred_code = self._get_column_value(
+                row, idxs, ['prjscenaltpredcode', 'altpredcode'])
+            date_code = self._get_column_value(
+                row, idxs, ['prjscendatecode', 'datecode'])
 
-        usr = self._getColumnValue(row, idxs, ['userid'])
-        meta = self._getColumnValue(row, idxs, ['metadata'])
-        units = self._getColumnValue(row, idxs, ['units'])
-        res = self._getColumnValue(row, idxs, ['resolution'])
-        epsg = self._getColumnValue(row, idxs, ['epsgcode'])
-        bbox = self._getColumnValue(row, idxs, ['bbox'])
-        mod_time = self._getColumnValue(row, idxs, ['scenmodtime', 'modtime'])
+        usr = self._get_column_value(row, idxs, ['userid'])
+        units = self._get_column_value(row, idxs, ['units'])
+        res = self._get_column_value(row, idxs, ['resolution'])
+        epsg = self._get_column_value(row, idxs, ['epsgcode'])
+        bbox = self._get_column_value(row, idxs, ['bbox'])
+        mod_time = self._get_column_value(
+            row, idxs, ['scenmodtime', 'modtime'])
 
         if row is not None:
-            scen = Scenario(scencode, usr, epsg, metadata=meta, units=units, res=res,
-                            gcmCode=gcmcode, altpredCode=altpredcode, dateCode=datecode,
-                            bbox=bbox, mod_time=mod_time, layers=None, scenarioid=scenid)
+            scen = Scenario(
+                scen_code, usr, epsg, metadata=meta, units=units, res=res,
+                gcm_code=gcm_code, alt_pred_code=alt_pred_code,
+                date_code=date_code, bbox=bbox, mod_time=mod_time, layers=None,
+                scenario_id=scen_id)
         return scen
 
-# ...............................................
+    # ................................
     def _createScenPackage(self, row, idxs):
         """
         @note: created only from Scenario table or lm_sdmproject view
         """
         scen = None
-        pkgid = self._getColumnValue(row, idxs, ['scenpackageid'])
-        usr = self._getColumnValue(row, idxs, ['userid'])
-        name = self._getColumnValue(row, idxs, ['pkgname', 'name'])
-        meta = self._getColumnValue(row, idxs, ['pkgmetadata', 'metadata'])
-        epsg = self._getColumnValue(row, idxs, ['pkgepsgcode', 'epsgcode'])
-        bbox = self._getColumnValue(row, idxs, ['pkgbbox', 'bbox'])
-        units = self._getColumnValue(row, idxs, ['pkgunits', 'units'])
-        mod_time = self._getColumnValue(row, idxs, ['pkgmodtime', 'modtime'])
+        pkgid = self._get_column_value(row, idxs, ['scenpackageid'])
+        usr = self._get_column_value(row, idxs, ['userid'])
+        name = self._get_column_value(row, idxs, ['pkgname', 'name'])
+        meta = self._get_column_value(row, idxs, ['pkgmetadata', 'metadata'])
+        epsg = self._get_column_value(row, idxs, ['pkgepsgcode', 'epsgcode'])
+        bbox = self._get_column_value(row, idxs, ['pkgbbox', 'bbox'])
+        units = self._get_column_value(row, idxs, ['pkgunits', 'units'])
+        mod_time = self._get_column_value(row, idxs, ['pkgmodtime', 'modtime'])
 
         if row is not None:
             scen = ScenPackage(name, usr, metadata=meta, epsgcode=epsg, bbox=bbox,
@@ -197,7 +209,7 @@ class Borg(DbPostgresql):
                                      scenPackageId=pkgid)
         return scen
 
-# ...............................................
+    # ................................
     def _createEnvType(self, row, idxs):
         """
         @summary: Create an _EnvironmentalType from a database EnvType record, or 
@@ -205,20 +217,20 @@ class Borg(DbPostgresql):
         """
         lyrType = None
         if row is not None:
-            envcode = self._getColumnValue(row, idxs, ['envcode'])
-            gcmcode = self._getColumnValue(row, idxs, ['gcmcode'])
-            altcode = self._getColumnValue(row, idxs, ['altpredcode'])
-            dtcode = self._getColumnValue(row, idxs, ['datecode'])
-            meta = self._getColumnValue(row, idxs, ['envmetadata', 'metadata'])
-            mod_time = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
-            usr = self._getColumnValue(row, idxs, ['envuserid', 'userid'])
-            ltid = self._getColumnValue(row, idxs, ['envtypeid'])
+            envcode = self._get_column_value(row, idxs, ['envcode'])
+            gcmcode = self._get_column_value(row, idxs, ['gcmcode'])
+            altcode = self._get_column_value(row, idxs, ['altpredcode'])
+            dtcode = self._get_column_value(row, idxs, ['datecode'])
+            meta = self._get_column_value(row, idxs, ['envmetadata', 'metadata'])
+            mod_time = self._get_column_value(row, idxs, ['envmodtime', 'modtime'])
+            usr = self._get_column_value(row, idxs, ['envuserid', 'userid'])
+            ltid = self._get_column_value(row, idxs, ['envtypeid'])
             lyrType = EnvType(envcode, usr, gcmCode=gcmcode, altpredCode=altcode,
                                     dateCode=dtcode, metadata=meta, mod_time=mod_time,
                                     envTypeId=ltid)
         return lyrType
 
-# ...............................................
+    # ................................
     def _createGridset(self, row, idxs):
         """
         @summary: Create a Gridset from a database Gridset record or lm_gridset view
@@ -229,21 +241,21 @@ class Borg(DbPostgresql):
             shp = self._createShapeGrid(row, idxs)
             # TODO: return lm_tree instead of lm_gridset (with just treeId)
             tree = self._createTree(row, idxs)
-            shpId = self._getColumnValue(row, idxs, ['layerid'])
-            grdid = self._getColumnValue(row, idxs, ['gridsetid'])
-            usr = self._getColumnValue(row, idxs, ['userid'])
-            name = self._getColumnValue(row, idxs, ['grdname', 'name'])
-            dloc = self._getColumnValue(row, idxs, ['grddlocation', 'dlocation'])
-            epsg = self._getColumnValue(row, idxs, ['grdepsgcode', 'epsgcode'])
-            meta = self._getColumnValue(row, idxs, ['grdmetadata', 'metadata'])
-            mtime = self._getColumnValue(row, idxs, ['grdmodtime', 'modtime'])
+            shpId = self._get_column_value(row, idxs, ['layerid'])
+            grdid = self._get_column_value(row, idxs, ['gridsetid'])
+            usr = self._get_column_value(row, idxs, ['userid'])
+            name = self._get_column_value(row, idxs, ['grdname', 'name'])
+            dloc = self._get_column_value(row, idxs, ['grddlocation', 'dlocation'])
+            epsg = self._get_column_value(row, idxs, ['grdepsgcode', 'epsgcode'])
+            meta = self._get_column_value(row, idxs, ['grdmetadata', 'metadata'])
+            mtime = self._get_column_value(row, idxs, ['grdmodtime', 'modtime'])
             grdset = Gridset(name=name, metadata=meta, shapeGrid=shp,
                                   shapeGridId=shpId, tree=tree,
                                   dlocation=dloc, epsgcode=epsg, userId=usr,
                                   gridsetId=grdid, mod_time=mtime)
         return grdset
 
-# ...............................................
+    # ................................
     def _createTree(self, row, idxs):
         """
         @summary: Create a Tree from a database Tree record
@@ -251,21 +263,21 @@ class Borg(DbPostgresql):
         """
         tree = None
         if row is not None:
-            treeid = self._getColumnValue(row, idxs, ['treeid'])
+            treeid = self._get_column_value(row, idxs, ['treeid'])
             if treeid is not None:
-                usr = self._getColumnValue(row, idxs, ['treeuserid', 'userid'])
-                name = self._getColumnValue(row, idxs, ['treename', 'name'])
-                dloc = self._getColumnValue(row, idxs, ['treedlocation', 'dlocation'])
-                isbin = self._getColumnValue(row, idxs, ['isbinary'])
-                isultra = self._getColumnValue(row, idxs, ['isultrametric'])
-                haslen = self._getColumnValue(row, idxs, ['hasbranchlengths'])
-                meta = self._getColumnValue(row, idxs, ['treemetadata', 'metadata'])
-                mod_time = self._getColumnValue(row, idxs, ['treemodtime', 'modtime'])
+                usr = self._get_column_value(row, idxs, ['treeuserid', 'userid'])
+                name = self._get_column_value(row, idxs, ['treename', 'name'])
+                dloc = self._get_column_value(row, idxs, ['treedlocation', 'dlocation'])
+                isbin = self._get_column_value(row, idxs, ['isbinary'])
+                isultra = self._get_column_value(row, idxs, ['isultrametric'])
+                haslen = self._get_column_value(row, idxs, ['hasbranchlengths'])
+                meta = self._get_column_value(row, idxs, ['treemetadata', 'metadata'])
+                mod_time = self._get_column_value(row, idxs, ['treemodtime', 'modtime'])
                 tree = Tree(name, metadata=meta, dlocation=dloc, userId=usr,
                                 treeId=treeid, mod_time=mod_time)
         return tree
 
-# ...............................................
+    # ................................
     def _createLMMatrix(self, row, idxs):
         """
         @summary: Create an LMMatrix from a database Matrix record, or lm_matrix,
@@ -274,19 +286,19 @@ class Borg(DbPostgresql):
         mtx = None
         if row is not None:
             grdset = self._createGridset(row, idxs)
-            mtxid = self._getColumnValue(row, idxs, ['matrixid'])
-            mtype = self._getColumnValue(row, idxs, ['matrixtype'])
-            scenid = self._getColumnValue(row, idxs, ['scenarioid'])
+            mtxid = self._get_column_value(row, idxs, ['matrixid'])
+            mtype = self._get_column_value(row, idxs, ['matrixtype'])
+            scenid = self._get_column_value(row, idxs, ['scenarioid'])
 #             TODO: replace 3 Codes with scenarioId
-            gcm = self._getColumnValue(row, idxs, ['gcmcode'])
-            rcp = self._getColumnValue(row, idxs, ['altpredcode'])
-            dt = self._getColumnValue(row, idxs, ['datecode'])
-            alg = self._getColumnValue(row, idxs, ['algorithmcode'])
-            dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
-            meta = self._getColumnValue(row, idxs, ['mtxmetadata', 'metadata'])
-            usr = self._getColumnValue(row, idxs, ['userid'])
-            stat = self._getColumnValue(row, idxs, ['mtxstatus', 'status'])
-            stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime',
+            gcm = self._get_column_value(row, idxs, ['gcmcode'])
+            rcp = self._get_column_value(row, idxs, ['altpredcode'])
+            dt = self._get_column_value(row, idxs, ['datecode'])
+            alg = self._get_column_value(row, idxs, ['algorithmcode'])
+            dloc = self._get_column_value(row, idxs, ['matrixiddlocation'])
+            meta = self._get_column_value(row, idxs, ['mtxmetadata', 'metadata'])
+            usr = self._get_column_value(row, idxs, ['userid'])
+            stat = self._get_column_value(row, idxs, ['mtxstatus', 'status'])
+            stattime = self._get_column_value(row, idxs, ['mtxstatusmodtime',
                                                         'statusmodtime'])
             mtx = LMMatrix(None, matrixType=mtype,
                            scenarioid=scenid,
@@ -297,7 +309,7 @@ class Borg(DbPostgresql):
                            status=stat, status_mod_time=stattime)
         return mtx
 
-    # ...............................................
+    # ................................
     def _createMatrixColumn(self, row, idxs):
         """
         @summary: Create an MatrixColumn from a lm_matrixcolumn view
@@ -307,18 +319,18 @@ class Borg(DbPostgresql):
             # Returned by only some functions
             inputLyr = self._createLayer(row, idxs)
             # Ids of joined input layers
-            lyrid = self._getColumnValue(row, idxs, ['layerid'])
-            shpgrdid = self._getColumnValue(row, idxs, ['shplayerid'])
-            mtxcolid = self._getColumnValue(row, idxs, ['matrixcolumnid'])
-            mtxid = self._getColumnValue(row, idxs, ['matrixid'])
-            mtxIndex = self._getColumnValue(row, idxs, ['matrixindex'])
-            squid = self._getColumnValue(row, idxs, ['mtxcolsquid', 'squid'])
-            ident = self._getColumnValue(row, idxs, ['mtxcolident', 'ident'])
-            mtxcolmeta = self._getColumnValue(row, idxs, ['mtxcolmetatadata'])
-            intparams = self._getColumnValue(row, idxs, ['intersectparams'])
-            mtxcolstat = self._getColumnValue(row, idxs, ['mtxcolstatus'])
-            mtxcolstattime = self._getColumnValue(row, idxs, ['mtxcolstatusmodtime'])
-            usr = self._getColumnValue(row, idxs, ['userid'])
+            lyrid = self._get_column_value(row, idxs, ['layerid'])
+            shpgrdid = self._get_column_value(row, idxs, ['shplayerid'])
+            mtxcolid = self._get_column_value(row, idxs, ['matrixcolumnid'])
+            mtxid = self._get_column_value(row, idxs, ['matrixid'])
+            mtxIndex = self._get_column_value(row, idxs, ['matrixindex'])
+            squid = self._get_column_value(row, idxs, ['mtxcolsquid', 'squid'])
+            ident = self._get_column_value(row, idxs, ['mtxcolident', 'ident'])
+            mtxcolmeta = self._get_column_value(row, idxs, ['mtxcolmetatadata'])
+            intparams = self._get_column_value(row, idxs, ['intersectparams'])
+            mtxcolstat = self._get_column_value(row, idxs, ['mtxcolstatus'])
+            mtxcolstattime = self._get_column_value(row, idxs, ['mtxcolstatusmodtime'])
+            usr = self._get_column_value(row, idxs, ['userid'])
 
             mtxcol = MatrixColumn(mtxIndex, mtxid, usr,
                                 layer=inputLyr, layerId=lyrid, shapeGridId=shpgrdid,
@@ -329,38 +341,38 @@ class Borg(DbPostgresql):
                                 status_mod_time=mtxcolstattime)
         return mtxcol
 
-# ...............................................
+    # ................................
     def _getLayerInputs(self, row, idxs):
         """
         @summary: Create Raster or Vector layer from a Layer or view in the Borg. 
         @note: OccurrenceSet and SDMProject objects do not use this function
         @note: used with Layer, lm_envlayer, lm_scenlayer, lm_sdmproject, lm_shapegrid
         """
-        dbid = self._getColumnValue(row, idxs, ['layerid'])
-        usr = self._getColumnValue(row, idxs, ['lyruserid', 'userid'])
-        verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
-        squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
-        name = self._getColumnValue(row, idxs, ['lyrname', 'name'])
-        dloc = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
-        meta = self._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
-        vtype = self._getColumnValue(row, idxs, ['ogrtype'])
-        rtype = self._getColumnValue(row, idxs, ['gdaltype'])
-        vunits = self._getColumnValue(row, idxs, ['valunits'])
-        vattr = self._getColumnValue(row, idxs, ['valattribute'])
-        nodata = self._getColumnValue(row, idxs, ['nodataval'])
-        minval = self._getColumnValue(row, idxs, ['minval'])
-        maxval = self._getColumnValue(row, idxs, ['maxval'])
-        fformat = self._getColumnValue(row, idxs, ['dataformat'])
-        epsg = self._getColumnValue(row, idxs, ['epsgcode'])
-        munits = self._getColumnValue(row, idxs, ['mapunits'])
-        res = self._getColumnValue(row, idxs, ['resolution'])
-        dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
-        bbox = self._getColumnValue(row, idxs, ['bbox'])
+        dbid = self._get_column_value(row, idxs, ['layerid'])
+        usr = self._get_column_value(row, idxs, ['lyruserid', 'userid'])
+        verify = self._get_column_value(row, idxs, ['lyrverify', 'verify'])
+        squid = self._get_column_value(row, idxs, ['lyrsquid', 'squid'])
+        name = self._get_column_value(row, idxs, ['lyrname', 'name'])
+        dloc = self._get_column_value(row, idxs, ['lyrdlocation', 'dlocation'])
+        meta = self._get_column_value(row, idxs, ['lyrmetadata', 'metadata'])
+        vtype = self._get_column_value(row, idxs, ['ogrtype'])
+        rtype = self._get_column_value(row, idxs, ['gdaltype'])
+        vunits = self._get_column_value(row, idxs, ['valunits'])
+        vattr = self._get_column_value(row, idxs, ['valattribute'])
+        nodata = self._get_column_value(row, idxs, ['nodataval'])
+        minval = self._get_column_value(row, idxs, ['minval'])
+        maxval = self._get_column_value(row, idxs, ['maxval'])
+        fformat = self._get_column_value(row, idxs, ['dataformat'])
+        epsg = self._get_column_value(row, idxs, ['epsgcode'])
+        munits = self._get_column_value(row, idxs, ['mapunits'])
+        res = self._get_column_value(row, idxs, ['resolution'])
+        dtmod = self._get_column_value(row, idxs, ['lyrmodtime', 'modtime'])
+        bbox = self._get_column_value(row, idxs, ['bbox'])
         return (dbid, usr, verify, squid, name, dloc, meta, vtype, rtype,
                   vunits, vattr, nodata, minval, maxval, fformat, epsg, munits, res,
                   dtmod, bbox)
 
-# ...............................................
+    # ................................
     def _createLayer(self, row, idxs):
         """
         @summary: Create Raster or Vector layer from a Layer or view in the Borg. 
@@ -369,28 +381,28 @@ class Borg(DbPostgresql):
         """
         lyr = None
         if row is not None:
-            dbid = self._getColumnValue(row, idxs, ['layerid'])
-            name = self._getColumnValue(row, idxs, ['lyrname', 'name'])
-            usr = self._getColumnValue(row, idxs, ['lyruserid', 'userid'])
-            epsg = self._getColumnValue(row, idxs, ['epsgcode'])
+            dbid = self._get_column_value(row, idxs, ['layerid'])
+            name = self._get_column_value(row, idxs, ['lyrname', 'name'])
+            usr = self._get_column_value(row, idxs, ['lyruserid', 'userid'])
+            epsg = self._get_column_value(row, idxs, ['epsgcode'])
             # Layer may be optional
             if (dbid is not None and name is not None and usr is not None and epsg is not None):
-                verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
-                squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
-                dloc = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
-                meta = self._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
-                vtype = self._getColumnValue(row, idxs, ['ogrtype'])
-                rtype = self._getColumnValue(row, idxs, ['gdaltype'])
-                vunits = self._getColumnValue(row, idxs, ['valunits'])
-                vattr = self._getColumnValue(row, idxs, ['valattribute'])
-                nodata = self._getColumnValue(row, idxs, ['nodataval'])
-                minval = self._getColumnValue(row, idxs, ['minval'])
-                maxval = self._getColumnValue(row, idxs, ['maxval'])
-                fformat = self._getColumnValue(row, idxs, ['dataformat'])
-                munits = self._getColumnValue(row, idxs, ['mapunits'])
-                res = self._getColumnValue(row, idxs, ['resolution'])
-                dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
-                bbox = self._getColumnValue(row, idxs, ['lyrbbox', 'bbox'])
+                verify = self._get_column_value(row, idxs, ['lyrverify', 'verify'])
+                squid = self._get_column_value(row, idxs, ['lyrsquid', 'squid'])
+                dloc = self._get_column_value(row, idxs, ['lyrdlocation', 'dlocation'])
+                meta = self._get_column_value(row, idxs, ['lyrmetadata', 'metadata'])
+                vtype = self._get_column_value(row, idxs, ['ogrtype'])
+                rtype = self._get_column_value(row, idxs, ['gdaltype'])
+                vunits = self._get_column_value(row, idxs, ['valunits'])
+                vattr = self._get_column_value(row, idxs, ['valattribute'])
+                nodata = self._get_column_value(row, idxs, ['nodataval'])
+                minval = self._get_column_value(row, idxs, ['minval'])
+                maxval = self._get_column_value(row, idxs, ['maxval'])
+                fformat = self._get_column_value(row, idxs, ['dataformat'])
+                munits = self._get_column_value(row, idxs, ['mapunits'])
+                res = self._get_column_value(row, idxs, ['resolution'])
+                dtmod = self._get_column_value(row, idxs, ['lyrmodtime', 'modtime'])
+                bbox = self._get_column_value(row, idxs, ['lyrbbox', 'bbox'])
 
                 if fformat in LMFormat.OGRDrivers():
                     lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify,
@@ -407,16 +419,16 @@ class Borg(DbPostgresql):
                                      resolution=res, bbox=bbox, mod_time=dtmod)
         return lyr
 
-# ...............................................
+    # ................................
     def _createEnvLayer(self, row, idxs):
         """
         Create an EnvLayer from a lm_envlayer or lm_scenlayer record in the Borg
         """
         envRst = None
-        envLayerId = self._getColumnValue(row, idxs, ['envlayerid'])
+        envLayerId = self._get_column_value(row, idxs, ['envlayerid'])
         if row is not None:
-            scenid = self._getColumnValue(row, idxs, ['scenarioid'])
-            scencode = self._getColumnValue(row, idxs, ['scenariocode'])
+            scenid = self._get_column_value(row, idxs, ['scenarioid'])
+            scencode = self._get_column_value(row, idxs, ['scenariocode'])
             rst = self._createLayer(row, idxs)
             if rst is not None:
                 etype = self._createEnvType(row, idxs)
@@ -424,7 +436,7 @@ class Borg(DbPostgresql):
                                                           scencode=scencode)
         return envRst
 
-# ...............................................
+    # ................................
     def _createShapeGrid(self, row, idxs):
         """
         @note: takes lm_shapegrid record
@@ -435,43 +447,43 @@ class Borg(DbPostgresql):
             # Shapegrid may be optional
             if lyr is not None:
                 shg = ShapeGrid.initFromParts(lyr,
-                            self._getColumnValue(row, idxs, ['cellsides']),
-                            self._getColumnValue(row, idxs, ['cellsize']),
-                            siteId=self._getColumnValue(row, idxs, ['idattribute']),
-                            siteX=self._getColumnValue(row, idxs, ['xattribute']),
-                            siteY=self._getColumnValue(row, idxs, ['yattribute']),
-                            size=self._getColumnValue(row, idxs, ['vsize']),
+                            self._get_column_value(row, idxs, ['cellsides']),
+                            self._get_column_value(row, idxs, ['cellsize']),
+                            siteId=self._get_column_value(row, idxs, ['idattribute']),
+                            siteX=self._get_column_value(row, idxs, ['xattribute']),
+                            siteY=self._get_column_value(row, idxs, ['yattribute']),
+                            size=self._get_column_value(row, idxs, ['vsize']),
                             # todo: will these ever be accessed without 'shpgrd' prefix?
-                            status=self._getColumnValue(row, idxs, ['shpgrdstatus', 'status']),
-                            status_mod_time=self._getColumnValue(row, idxs,
+                            status=self._get_column_value(row, idxs, ['shpgrdstatus', 'status']),
+                            status_mod_time=self._get_column_value(row, idxs,
                                                     ['shpgrdstatusmodtime', 'statusmodtime']))
         return shg
 
-# ...............................................
+    # ................................
     def _createOccurrenceLayer(self, row, idxs):
         """
         @note: takes OccurrenceSet, lm_occMatrixcolumn, or lm_sdmproject record
         """
         occ = None
         if row is not None:
-            name = self._getColumnValue(row, idxs, ['displayname'])
-            usr = self._getColumnValue(row, idxs, ['occuserid', 'userid'])
-            epsg = self._getColumnValue(row, idxs, ['occepsgcode', 'epsgcode'])
-            qcount = self._getColumnValue(row, idxs, ['querycount'])
+            name = self._get_column_value(row, idxs, ['displayname'])
+            usr = self._get_column_value(row, idxs, ['occuserid', 'userid'])
+            epsg = self._get_column_value(row, idxs, ['occepsgcode', 'epsgcode'])
+            qcount = self._get_column_value(row, idxs, ['querycount'])
             occ = OccurrenceLayer(name, usr, epsg, qcount,
-                    squid=self._getColumnValue(row, idxs, ['occsquid', 'squid']),
-                    verify=self._getColumnValue(row, idxs, ['occverify', 'verify']),
-                    dlocation=self._getColumnValue(row, idxs, ['occdlocation', 'dlocation']),
-                    rawDLocation=self._getColumnValue(row, idxs, ['rawdlocation']),
-                    bbox=self._getColumnValue(row, idxs, ['occbbox', 'bbox']),
-                    occurrenceSetId=self._getColumnValue(row, idxs, ['occurrencesetid']),
-                    occMetadata=self._getColumnValue(row, idxs, ['occmetadata', 'metadata']),
-                    status=self._getColumnValue(row, idxs, ['occstatus', 'status']),
-                    status_mod_time=self._getColumnValue(row, idxs, ['occstatusmodtime',
+                    squid=self._get_column_value(row, idxs, ['occsquid', 'squid']),
+                    verify=self._get_column_value(row, idxs, ['occverify', 'verify']),
+                    dlocation=self._get_column_value(row, idxs, ['occdlocation', 'dlocation']),
+                    rawDLocation=self._get_column_value(row, idxs, ['rawdlocation']),
+                    bbox=self._get_column_value(row, idxs, ['occbbox', 'bbox']),
+                    occurrenceSetId=self._get_column_value(row, idxs, ['occurrencesetid']),
+                    occMetadata=self._get_column_value(row, idxs, ['occmetadata', 'metadata']),
+                    status=self._get_column_value(row, idxs, ['occstatus', 'status']),
+                    status_mod_time=self._get_column_value(row, idxs, ['occstatusmodtime',
                                                                                 'statusmodtime']))
         return occ
 
-# ...............................................
+    # ................................
     def _createSDMProjection(self, row, idxs, layer=None):
         """
         @note: takes lm_sdmproject or lm_sdmMatrixcolumn record
@@ -486,16 +498,13 @@ class Borg(DbPostgresql):
             if layer is None:
                 layer = self._createLayer(row, idxs)
             prj = SDMProjection.initFromParts(occ, alg, mdlscen, prjscen, layer,
-                        projMetadata=self._getColumnValue(row, idxs, ['prjmetadata']),
-                        status=self._getColumnValue(row, idxs, ['prjstatus']),
-                        status_mod_time=self._getColumnValue(row, idxs, ['prjstatusmodtime']),
-                        sdmProjectionId=self._getColumnValue(row, idxs, ['sdmprojectid']))
+                        projMetadata=self._get_column_value(row, idxs, ['prjmetadata']),
+                        status=self._get_column_value(row, idxs, ['prjstatus']),
+                        status_mod_time=self._get_column_value(row, idxs, ['prjstatusmodtime']),
+                        sdmProjectionId=self._get_column_value(row, idxs, ['sdmprojectid']))
         return prj
 
-# .............................................................................
-# Public functions
-# .............................................................................
-# ...............................................
+    # ................................
     def findOrInsertAlgorithm(self, alg, mod_time):
         """
         @summary Inserts an Algorithm into the database
@@ -505,12 +514,12 @@ class Borg(DbPostgresql):
         if not mod_time:
             mod_time = gmt().mjd
         meta = alg.dumpAlgMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertAlgorithm',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertAlgorithm',
                                                               alg.code, meta, mod_time)
         algo = self._createAlgorithm(row, idxs)
         return algo
 
-# ...............................................
+    # ................................
     def findOrInsertTaxonSource(self, taxonSourceName, taxonSourceUrl):
         """
         @summary Finds or inserts a Taxonomy Source record into the database
@@ -519,14 +528,14 @@ class Borg(DbPostgresql):
         @return: record id for the new or existing Taxonomy Source 
         """
         taxSourceId = None
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTaxonSource',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertTaxonSource',
                                                               taxonSourceName, taxonSourceUrl,
                                                               gmt().mjd)
         if row is not None:
-            taxSourceId = self._getColumnValue(row, idxs, ['taxonomysourceid'])
+            taxSourceId = self._get_column_value(row, idxs, ['taxonomysourceid'])
         return taxSourceId
 
-# ...............................................
+    # ................................
     def getBaseLayer(self, lyrid, lyrverify, lyruser, lyrname, epsgcode):
         """
         @summary: Get and fill a Layer from its layer id, SHASUM hash or 
@@ -538,12 +547,12 @@ class Borg(DbPostgresql):
         @param lyrid: Layer EPSG code
         @return: LmServer.base.layer2._Layer object
         """
-        row, idxs = self.executeSelectOneFunction('lm_getLayer', lyrid, lyrverify,
+        row, idxs = self.execute_select_one_function('lm_getLayer', lyrid, lyrverify,
                                                                 lyruser, lyrname, epsgcode)
         lyr = self._createLayer(row, idxs)
         return lyr
 
-# .............................................................................
+    # ................................
     def countLayers(self, userId, squid, afterTime, beforeTime, epsg):
         """
         @summary: Count all Layers matching the filter conditions 
@@ -554,11 +563,11 @@ class Borg(DbPostgresql):
         @param epsg: filter by this EPSG code
         @return: a count of OccurrenceSets
         """
-        row, idxs = self.executeSelectOneFunction('lm_countLayers',
+        row, idxs = self.execute_select_one_function('lm_countLayers',
                                                 userId, squid, afterTime, beforeTime, epsg)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listLayers(self, firstRecNum, maxNum, userId, squid,
                         afterTime, beforeTime, epsg, atom):
         """
@@ -587,7 +596,7 @@ class Borg(DbPostgresql):
                 objs.append(self._createLayer(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def findOrInsertScenPackage(self, scenPkg):
         """
         @summary Inserts a ScenPackage into the database
@@ -601,7 +610,7 @@ class Borg(DbPostgresql):
         if scenPkg.epsgcode == DEFAULT_EPSG:
             wkt = scenPkg.getWkt()
         meta = scenPkg.dumpScenpkgMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenPackage',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertScenPackage',
                                     scenPkg.getUserId(), scenPkg.name, meta,
                                     scenPkg.mapUnits, scenPkg.epsgcode,
                                     scenPkg.getCSVExtentString(), wkt,
@@ -609,7 +618,7 @@ class Borg(DbPostgresql):
         newOrExistingScenPkg = self._createScenPackage(row, idxs)
         return newOrExistingScenPkg
 
-# .............................................................................
+    # ................................
     def countScenPackages(self, userId, afterTime, beforeTime, epsg, scenId):
         """
         @summary: Return the number of ScenarioPackages fitting the given filter 
@@ -621,12 +630,12 @@ class Borg(DbPostgresql):
         @param scenId: filter by a Scenario 
         @return: number of ScenarioPackages fitting the given filter conditions
         """
-        row, idxs = self.executeSelectOneFunction('lm_countScenPackages', userId,
+        row, idxs = self.execute_select_one_function('lm_countScenPackages', userId,
                                                                 afterTime, beforeTime, epsg,
                                                                 scenId)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listScenPackages(self, firstRecNum, maxNum, userId, afterTime, beforeTime,
                                 epsg, scenId, atom):
         """
@@ -659,7 +668,7 @@ class Borg(DbPostgresql):
                 # objs.append(self._createScenario(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def getScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName,
                              fillLayers):
         """
@@ -675,7 +684,7 @@ class Borg(DbPostgresql):
             scenPkgId = scenPkg.get_id()
             userId = scenPkg.getUserId()
             scenPkgName = scenPkg.name
-        row, idxs = self.executeSelectOneFunction('lm_getScenPackage',
+        row, idxs = self.execute_select_one_function('lm_getScenPackage',
                                                                   scenPkgId, userId, scenPkgName)
         foundScenPkg = self._createScenPackage(row, idxs)
         if foundScenPkg:
@@ -684,7 +693,7 @@ class Borg(DbPostgresql):
             foundScenPkg.setScenarios(scens)
         return foundScenPkg
 
-# ...............................................
+    # ................................
     def getScenPackagesForScenario(self, scen, scenId, userId, scenCode, fillLayers):
         """
         @summary Find all ScenPackages that contain the given Scenario
@@ -710,7 +719,7 @@ class Borg(DbPostgresql):
             scenPkgs.append(epkg)
         return scenPkgs
 
-# ...............................................
+    # ................................
     def getScenariosForScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName,
                                              fillLayers):
         """
@@ -738,7 +747,7 @@ class Borg(DbPostgresql):
 
         return scens
 
-# ...............................................
+    # ................................
     def findOrInsertScenario(self, scen, scenPkgId):
         """
         @summary Inserts a scenario and any layers present into the database
@@ -750,14 +759,14 @@ class Borg(DbPostgresql):
         if scen.epsgcode == DEFAULT_EPSG:
             wkt = scen.getWkt()
         meta = scen.dumpScenMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertScenario',
                                     scen.getUserId(), scen.code, meta,
                                     scen.gcmCode, scen.altpredCode, scen.dateCode,
                                     scen.mapUnits, scen.resolution, scen.epsgcode,
                                     scen.getCSVExtentString(), wkt, scen.mod_time)
         newOrExistingScen = self._createScenario(row, idxs)
         if scenPkgId is not None:
-            scenarioId = self._getColumnValue(row, idxs, ['scenarioid'])
+            scenarioId = self._get_column_value(row, idxs, ['scenarioid'])
             joinId = self.executeModifyReturnValue(
                             'lm_joinScenPackageScenario', scenPkgId, scenarioId)
             if joinId < 0:
@@ -765,7 +774,7 @@ class Borg(DbPostgresql):
                                   .format(scenPkgId, scenarioId))
         return newOrExistingScen
 
-# .............................................................................
+    # ................................
     def countScenarios(self, userId, afterTime, beforeTime, epsg,
                              gcmCode, altpredCode, dateCode, scenPackageId):
         """
@@ -780,13 +789,13 @@ class Borg(DbPostgresql):
         @param scenPackageId: filter by a ScenPackage 
         @return: number of scenarios fitting the given filter conditions
         """
-        row, idxs = self.executeSelectOneFunction('lm_countScenarios', userId,
+        row, idxs = self.execute_select_one_function('lm_countScenarios', userId,
                                                                 afterTime, beforeTime, epsg,
                                                                 gcmCode, altpredCode, dateCode,
                                                                 scenPackageId)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listScenarios(self, firstRecNum, maxNum, userId, afterTime, beforeTime,
                             epsg, gcmCode, altpredCode, dateCode, scenPackageId, atom):
         """
@@ -821,13 +830,13 @@ class Borg(DbPostgresql):
                 objs.append(self._createScenario(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def getEnvironmentalType(self, typeId, typecode, usrid):
         try:
             if typeId is not None:
-                row, idxs = self.executeSelectOneFunction('lm_getLayerType', typeId)
+                row, idxs = self.execute_select_one_function('lm_getLayerType', typeId)
             else:
-                row, idxs = self.executeSelectOneFunction('lm_getLayerType',
+                row, idxs = self.execute_select_one_function('lm_getLayerType',
                                                                         usrid, typecode)
         except:
             envType = None
@@ -835,7 +844,7 @@ class Borg(DbPostgresql):
             envType = self._createLayerType(row, idxs)
         return envType
 
-# ...............................................
+    # ................................
     def findOrInsertEnvType(self, envtype):
         """
         @summary: Insert or find EnvType values.
@@ -844,7 +853,7 @@ class Borg(DbPostgresql):
         """
         currtime = gmt().mjd
         meta = envtype.dumpParamMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvType',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertEnvType',
                                                                      envtype.getParamId(),
                                                                      envtype.getParamUserId(),
                                                                      envtype.typeCode,
@@ -856,7 +865,7 @@ class Borg(DbPostgresql):
         newOrExistingEnvType = self._createLayerType(row, idxs)
         return newOrExistingEnvType
 
-# ...............................................
+    # ................................
     def findOrInsertLayer(self, lyr):
         """
         @summary: Find or insert a Layer into the database
@@ -867,7 +876,7 @@ class Borg(DbPostgresql):
         if lyr.dataFormat in LMFormat.OGRDrivers() and lyr.epsgcode == DEFAULT_EPSG:
             wkt = lyr.getWkt()
         meta = lyr.dumpLyrMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertLayer',
                                     lyr.get_id(), lyr.getUserId(), lyr.squid, lyr.verify,
                                     lyr.name, lyr.getDLocation(), meta, lyr.dataFormat,
                                     lyr.gdalType, lyr.ogrType, lyr.valUnits,
@@ -877,7 +886,7 @@ class Borg(DbPostgresql):
         updatedLyr = self._createLayer(row, idxs)
         return updatedLyr
 
-# ...............................................
+    # ................................
     def findOrInsertShapeGrid(self, shpgrd, cutout):
         """
         @summary: Find or insert a ShapeGrid into the database
@@ -889,7 +898,7 @@ class Borg(DbPostgresql):
             wkt = shpgrd.getWkt()
         meta = shpgrd.dumpParamMetadata()
         gdaltype = valunits = nodataval = minval = maxval = None
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertShapeGrid',
                                     shpgrd.get_id(), shpgrd.getUserId(),
                                     shpgrd.squid, shpgrd.verify, shpgrd.name,
                                     shpgrd.getDLocation(), meta,
@@ -903,7 +912,7 @@ class Borg(DbPostgresql):
         updatedShpgrd = self._createShapeGrid(row, idxs)
         return updatedShpgrd
 
-# ...............................................
+    # ................................
     def findOrInsertGridset(self, grdset):
         """
         @summary: Find or insert a Gridset into the database
@@ -911,7 +920,7 @@ class Borg(DbPostgresql):
         @return: Updated new or existing Gridset.
         """
         meta = grdset.dumpGrdMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertGridset',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertGridset',
                                                                             grdset.get_id(),
                                                                             grdset.getUserId(),
                                                                             grdset.name,
@@ -927,7 +936,7 @@ class Borg(DbPostgresql):
             success = self.updateGridset(updatedGrdset)
         return updatedGrdset
 
-# ...............................................
+    # ................................
     def findUserGridsets(self, userid, obsolete_time=None):
         """
         @summary: Finds Gridset identifiers for user, optionally, filtered by cutoff date
@@ -944,7 +953,7 @@ class Borg(DbPostgresql):
 
         return grdids
 
-# ...............................................
+    # ................................
     def deleteGridsetReturnFilenames(self, gridsetId):
         """
         @summary: Deletes Gridset, Matrices, and Makeflows
@@ -961,7 +970,7 @@ class Borg(DbPostgresql):
 
         return filenames
 
-# ...............................................
+    # ................................
     def deleteGridsetReturnMtxcolids(self, gridsetId):
         """
         @summary: Deletes SDM MatrixColumns (PAVs) for a Gridset
@@ -980,7 +989,7 @@ class Borg(DbPostgresql):
 
         return mtxcolids
 
-# ...............................................
+    # ................................
     def getGridset(self, gridsetId, userId, name, fillMatrices):
         """
         @summary: Retrieve a Gridset from the database
@@ -991,7 +1000,7 @@ class Borg(DbPostgresql):
                  matrices associated with this Gridset
         @return: Existing LmServer.legion.gridset.Gridset
         """
-        row, idxs = self.executeSelectOneFunction('lm_getGridset', gridsetId,
+        row, idxs = self.execute_select_one_function('lm_getGridset', gridsetId,
                                                   userId, name)
         fullGset = self._createGridset(row, idxs)
         if fullGset is not None and fillMatrices:
@@ -1001,7 +1010,7 @@ class Borg(DbPostgresql):
                 fullGset.addMatrix(m)
         return fullGset
 
-# .............................................................................
+    # ................................
     def countGridsets(self, userId, shpgrdLyrid, metastring, afterTime, beforeTime, epsg):
         """
         @summary: Count Matrices matching filter conditions 
@@ -1016,11 +1025,11 @@ class Borg(DbPostgresql):
         metamatch = None
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
-        row, idxs = self.executeSelectOneFunction('lm_countGridsets', userId,
+        row, idxs = self.execute_select_one_function('lm_countGridsets', userId,
                                     shpgrdLyrid, metamatch, afterTime, beforeTime, epsg)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listGridsets(self, firstRecNum, maxNum, userId, shpgrdLyrid, metastring,
                           afterTime, beforeTime, epsg, atom):
         """
@@ -1053,7 +1062,7 @@ class Borg(DbPostgresql):
                 objs.append(self._createGridset(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def updateGridset(self, grdset):
         """
         @summary: Update a LmServer.legion.Gridset
@@ -1068,7 +1077,7 @@ class Borg(DbPostgresql):
                                              meta, grdset.mod_time)
         return success
 
-# ...............................................
+    # ................................
     def getMatrix(self, mtxId, gridsetId, gridsetName, userId, mtxType,
                       gcmCode, altpredCode, dateCode, algCode):
         """
@@ -1085,13 +1094,13 @@ class Borg(DbPostgresql):
         @param algCode: algorithm code of the LMMatrix
         @return: Existing LmServer.legion.lmmatrix.LMMatrix
         """
-        row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtxId,
+        row, idxs = self.execute_select_one_function('lm_getMatrix', mtxId,
                 mtxType, gridsetId, gcmCode, altpredCode, dateCode, algCode,
                 gridsetName, userId)
         fullMtx = self._createLMMatrix(row, idxs)
         return fullMtx
 
-# ...............................................
+    # ................................
     def updateShapeGrid(self, shpgrd):
         """
         @summary: Update Shapegrid attributes: 
@@ -1106,19 +1115,19 @@ class Borg(DbPostgresql):
                                 shpgrd.status, shpgrd.status_mod_time)
         return success
 
-# ...............................................
+    # ................................
     def getShapeGrid(self, lyrId, userId, lyrName, epsg):
         """
         @summary: Find or insert a ShapeGrid into the database
         @param shpgrdId: ShapeGrid database id
         @return: new or existing ShapeGrid.
         """
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_getShapeGrid',
+        row, idxs = self.execute_insert_and_select_one_function('lm_getShapeGrid',
                                                                     lyrId, userId, lyrName, epsg)
         shpgrid = self._createShapeGrid(row, idxs)
         return shpgrid
 
-# .............................................................................
+    # ................................
     def countShapeGrids(self, userId, cellsides, cellsize, afterTime, beforeTime, epsg):
         """
         @summary: Count all Layers matching the filter conditions 
@@ -1130,11 +1139,11 @@ class Borg(DbPostgresql):
         @param epsg: filter by this EPSG code
         @return: a count of OccurrenceSets
         """
-        row, idxs = self.executeSelectOneFunction('lm_countShapegrids', userId,
+        row, idxs = self.execute_select_one_function('lm_countShapegrids', userId,
                                         cellsides, cellsize, afterTime, beforeTime, epsg)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listShapeGrids(self, firstRecNum, maxNum, userId, cellsides, cellsize,
                              afterTime, beforeTime, epsg, atom):
         """
@@ -1164,7 +1173,7 @@ class Borg(DbPostgresql):
                 objs.append(self._createShapeGrid(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def findOrInsertEnvLayer(self, lyr, scenarioId):
         """
         @summary Insert or find a layer's metadata in the Borg. 
@@ -1177,7 +1186,7 @@ class Borg(DbPostgresql):
             wkt = lyr.getWkt()
         envmeta = lyr.dumpParamMetadata()
         lyrmeta = lyr.dumpLyrMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction(
+        row, idxs = self.execute_insert_and_select_one_function(
                                     'lm_findOrInsertEnvLayer', lyr.get_id(),
                                     lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
                                     lyr.getDLocation(),
@@ -1190,12 +1199,12 @@ class Borg(DbPostgresql):
                                     lyr.paramModTime)
         newOrExistingLyr = self._createEnvLayer(row, idxs)
         if scenarioId is not None:
-            jrow, jidxs = self.executeInsertAndSelectOneFunction(
+            jrow, jidxs = self.execute_insert_and_select_one_function(
                         'lm_joinScenarioLayer', scenarioId,
                         newOrExistingLyr.getLayerId(), newOrExistingLyr.getParamId())
         return newOrExistingLyr
 
-# ...............................................
+    # ................................
     def getEnvLayer(self, envlyrId, lyrid, lyrverify, lyruser, lyrname, epsgcode):
         """
         @summary: Get and fill a Layer from its layer id, SHASUM hash or 
@@ -1208,12 +1217,12 @@ class Borg(DbPostgresql):
         @param lyrid: Layer EPSG code
         @return: LmServer.base.layer2._Layer object
         """
-        row, idxs = self.executeSelectOneFunction('lm_getEnvLayer', envlyrId,
+        row, idxs = self.execute_select_one_function('lm_getEnvLayer', envlyrId,
                                             lyrid, lyrverify, lyruser, lyrname, epsgcode)
         lyr = self._createEnvLayer(row, idxs)
         return lyr
 
-# .............................................................................
+    # ................................
     def countEnvLayers(self, userId, envCode, gcmcode, altpredCode, dateCode,
                              afterTime, beforeTime, epsg, envTypeId, scenarioCode):
         """
@@ -1229,12 +1238,12 @@ class Borg(DbPostgresql):
         @param envTypeId: filter by the DB id of EnvironmentalType
         @return: a count of EnvLayers
         """
-        row, idxs = self.executeSelectOneFunction('lm_countEnvLayers',
+        row, idxs = self.execute_select_one_function('lm_countEnvLayers',
                                     userId, envCode, gcmcode, altpredCode, dateCode,
                                     afterTime, beforeTime, epsg, envTypeId, scenarioCode)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listEnvLayers(self, firstRecNum, maxNum, userId, envCode, gcmcode,
                             altpredCode, dateCode, afterTime, beforeTime, epsg,
                             envTypeId, scenCode, atom):
@@ -1273,19 +1282,7 @@ class Borg(DbPostgresql):
                 objs.append(self._createEnvLayer(r, idxs))
         return objs
 
-# # ...............................................
-#     def deleteScenarioLayer(self, envlyr, scenarioId):
-#         """
-#         @summary: Un-joins EnvLayer from scenario (if not None)
-#         @param envlyr: EnvLayer to remove from Scenario
-#         @param scenarioId: Id for scenario from which to remove EnvLayer
-#         @return: True/False for success of operation
-#         """
-#         success = self.executeModifyFunction('lm_deleteScenarioLayer',
-#                                                          envlyr.get_id(), scenarioId)
-#         return success
-
-# ...............................................
+    # ................................
     def deleteEnvLayer(self, envlyr):
         """
         @summary: Un-joins EnvLayer from scenario (if not None) and deletes Layer 
@@ -1299,7 +1296,7 @@ class Borg(DbPostgresql):
                                                          envlyr.get_id())
         return success
 
-# ...............................................
+    # ................................
     def findOrInsertUser(self, usr):
         """
         @summary: Insert a user of the Lifemapper system. 
@@ -1307,7 +1304,7 @@ class Borg(DbPostgresql):
         @return: new or existing LMUser
         """
         usr.mod_time = gmt().mjd
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertUser',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertUser',
                                         usr.userid, usr.firstName, usr.lastName,
                                         usr.institution, usr.address1, usr.address2,
                                         usr.address3, usr.phone, usr.email, usr.mod_time,
@@ -1318,7 +1315,7 @@ class Borg(DbPostgresql):
                               .format(usr.userid, newOrExistingUsr.userid))
         return newOrExistingUsr
 
-# ...............................................
+    # ................................
     def updateUser(self, usr):
         """
         @summary: Insert a user of the Lifemapper system. 
@@ -1333,7 +1330,7 @@ class Borg(DbPostgresql):
                                         usr.getPassword())
         return success
 
-# ...............................................
+    # ................................
     def findUserForObject(self, layerId, scenCode, occId, matrixId, gridsetId,
                                  mfprocessId):
         """
@@ -1346,12 +1343,12 @@ class Borg(DbPostgresql):
         @param mfprocessId: the database primary key for a MFProcess
         @return: a userId string
         """
-        row, idxs = self.executeSelectOneFunction('lm_findUserForObject',
+        row, idxs = self.execute_select_one_function('lm_findUserForObject',
                             layerId, scenCode, occId, matrixId, gridsetId, mfprocessId)
         userId = row[0]
         return userId
 
-    # ...............................................
+    # ................................
     def findUser(self, usrid, email):
         """
         @summary: find a user with either a matching userId or email address
@@ -1359,11 +1356,11 @@ class Borg(DbPostgresql):
         @param email: the email address of the LMUser in the Borg
         @return: a LMUser object
         """
-        row, idxs = self.executeSelectOneFunction('lm_findUser', usrid, email)
+        row, idxs = self.execute_select_one_function('lm_findUser', usrid, email)
         usr = self._createUser(row, idxs)
         return usr
 
-# ...............................................
+    # ................................
     def deleteComputedUserData(self, userId):
         """
         @summary: Deletes User OccurrenceSet and any dependent SDMProjects 
@@ -1381,7 +1378,7 @@ class Borg(DbPostgresql):
             success = True
         return success
 
-# ...............................................
+    # ................................
     def clearUser(self, userId):
         """
         @summary: Deletes all User data
@@ -1397,7 +1394,7 @@ class Borg(DbPostgresql):
             success = True
         return success
 
-# .............................................................................
+    # ................................
     def countJobChains(self, status, userId=None):
         """
         @summary: Return the number of jobchains fitting the given filter conditions
@@ -1405,11 +1402,11 @@ class Borg(DbPostgresql):
         @param userId: (optional) include only jobs with this userid
         @return: number of jobs fitting the given filter conditions
         """
-        row, idxs = self.executeSelectOneFunction('lm_countJobChains',
+        row, idxs = self.execute_select_one_function('lm_countJobChains',
                                                                 userId, status)
         return self._getCount(row)
 
-# ...............................................
+    # ................................
     def findTaxonSource(self, taxonSourceName):
         """
         @summary: Return the taxonomy source info given the name
@@ -1419,19 +1416,19 @@ class Borg(DbPostgresql):
         txSourceId = url = moddate = None
         if taxonSourceName is not None:
             try:
-                row, idxs = self.executeSelectOneFunction('lm_findTaxonSource',
+                row, idxs = self.execute_select_one_function('lm_findTaxonSource',
                                                                         taxonSourceName)
             except Exception as e:
                 if not isinstance(e, LMError):
                     e = LMError(e, line_num=self.get_line_num())
                 raise e
             if row is not None:
-                txSourceId = self._getColumnValue(row, idxs, ['taxonomysourceid'])
-                url = self._getColumnValue(row, idxs, ['url'])
-                moddate = self._getColumnValue(row, idxs, ['modtime'])
+                txSourceId = self._get_column_value(row, idxs, ['taxonomysourceid'])
+                url = self._get_column_value(row, idxs, ['url'])
+                moddate = self._get_column_value(row, idxs, ['modtime'])
         return txSourceId, url, moddate
 
-# ...............................................
+    # ................................
     def getTaxonSource(self, tsId, tsName, tsUrl):
         """
         @summary: Return the taxonomy source info given the id, name or url
@@ -1443,25 +1440,24 @@ class Borg(DbPostgresql):
         """
         ts = None
         try:
-            row, idxs = self.executeSelectOneFunction('lm_getTaxonSource',
+            row, idxs = self.execute_select_one_function('lm_getTaxonSource',
                                                                     tsId, tsName, tsUrl)
         except Exception as e:
             if not isinstance(e, LMError):
                 e = LMError(e, line_num=self.get_line_num())
             raise e
         if row is not None:
-            import collections
             fldnames = []
             for key, _ in sorted(iter(idxs.items()), key=lambda k_v: (k_v[1], k_v[0])):
                 fldnames.append(key)
-            TaxonSource = collections.namedtuple('TaxonSource', fldnames)
+            TaxonSource = namedtuple('TaxonSource', fldnames)
             ts = TaxonSource(*row)
         return ts
 
-# ...............................................
+    # ................................
     def findTaxon(self, taxonSourceId, taxonkey):
         try:
-            row, idxs = self.executeSelectOneFunction('lm_findOrInsertTaxon',
+            row, idxs = self.execute_select_one_function('lm_findOrInsertTaxon',
                                 taxonSourceId, taxonkey, None, None, None, None, None,
                                 None, None, None, None, None, None, None, None, None,
                                 None, None)
@@ -1470,7 +1466,7 @@ class Borg(DbPostgresql):
         sciname = self._createScientificName(row, idxs)
         return sciname
 
-# ...............................................
+    # ................................
     def findOrInsertTaxon(self, taxonSourceId, taxonKey, sciName):
         """
         @summary: Insert a taxon associated with a TaxonomySource into the 
@@ -1506,7 +1502,7 @@ class Borg(DbPostgresql):
         except:
             pass
         try:
-            row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTaxon',
+            row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertTaxon',
                                                                 taxonSourceId, taxonKey,
                                                                 usr, squid, kingdom, phylum,
                                                                 cls, ordr, family, genus, rank,
@@ -1520,7 +1516,7 @@ class Borg(DbPostgresql):
 
         return scientificname
 
-# ...............................................
+    # ................................
     def updateTaxon(self, sciName):
         """
         @summary: Update a taxon in the database.  
@@ -1546,7 +1542,7 @@ class Borg(DbPostgresql):
                                                          gmt().mjd)
         return success
 
-# ...............................................
+    # ................................
     def getTaxon(self, squid, taxonSourceId, taxonKey, userId, taxonName):
         """
         @summary: Find a taxon associated with a TaxonomySource from database.
@@ -1559,13 +1555,13 @@ class Borg(DbPostgresql):
         @param taxonName: name string for this taxon
         @return: existing ScientificName
         """
-        row, idxs = self.executeSelectOneFunction('lm_getTaxon', squid,
+        row, idxs = self.execute_select_one_function('lm_getTaxon', squid,
                                                 taxonSourceId, taxonKey, userId, taxonName)
         scientificname = self._createScientificName(row, idxs)
 
         return scientificname
 
-# .............................................................................
+    # ................................
     def getScenario(self, scenid=None, userId=None, code=None, fillLayers=False):
         """
         @summary: Get and fill a scenario from its user and code or database id.    
@@ -1577,7 +1573,7 @@ class Borg(DbPostgresql):
                  layers from to be fetched.
         @return: a LmServer.legion.scenario.Scenario object
         """
-        row, idxs = self.executeSelectOneFunction('lm_getScenario', scenid,
+        row, idxs = self.execute_select_one_function('lm_getScenario', scenid,
                                                                 userId, code)
         scen = self._createScenario(row, idxs)
         if scen is not None and fillLayers:
@@ -1585,7 +1581,7 @@ class Borg(DbPostgresql):
             scen.setLayers(lyrs)
         return scen
 
-# .............................................................................
+    # ................................
     def getScenarioLayers(self, scenid):
         """
         @summary: Return a scenario by its db id or code, filling its layers.  
@@ -1599,7 +1595,7 @@ class Borg(DbPostgresql):
             lyrs.append(lyr)
         return lyrs
 
-# .............................................................................
+    # ................................
     def getOccurrenceSet(self, occId, squid, userId, epsg):
         """
         @summary: get an occurrenceset for the given id or squid and User
@@ -1608,12 +1604,12 @@ class Borg(DbPostgresql):
         @param userId: the database primary key of the LMUser
         @param epsg: Spatial reference system code from EPSG
         """
-        row, idxs = self.executeSelectOneFunction('lm_getOccurrenceSet',
+        row, idxs = self.execute_select_one_function('lm_getOccurrenceSet',
                                                                   occId, userId, squid, epsg)
         occ = self._createOccurrenceLayer(row, idxs)
         return occ
 
-# ...............................................
+    # ................................
     def updateOccurrenceSet(self, occ):
         """
         @summary: Update OccurrenceLayer attributes: 
@@ -1653,17 +1649,17 @@ class Borg(DbPostgresql):
             raise e
         return success
 
-# ...............................................
+    # ................................
     def getSDMProject(self, layerid):
         """
         @summary: get a projection for the given id
         @param layerid: Database id for the SDMProject layer record
         """
-        row, idxs = self.executeSelectOneFunction('lm_getSDMProjectLayer', layerid)
+        row, idxs = self.execute_select_one_function('lm_getSDMProjectLayer', layerid)
         proj = self._createSDMProjection(row, idxs)
         return proj
 
-# ...............................................
+    # ................................
     def updateSDMProject(self, proj):
         """
         @summary Method to update an SDMProjection object in the database with 
@@ -1695,7 +1691,7 @@ class Borg(DbPostgresql):
             raise e
         return success
 
-# ...............................................
+    # ................................
     def findOrInsertOccurrenceSet(self, occ):
         """
         @summary: Find existing (from occsetid OR usr/squid/epsg) 
@@ -1710,7 +1706,7 @@ class Borg(DbPostgresql):
             polywkt = occ.getConvexHullWkt()
             pointswkt = occ.getWkt()
 
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceSet',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertOccurrenceSet',
                                         occ.get_id(), occ.getUserId(), occ.squid,
                                         occ.verify, occ.displayName,
                                         occ.getDLocation(), occ.getRawDLocation(),
@@ -1720,7 +1716,7 @@ class Borg(DbPostgresql):
         newOrExistingOcc = self._createOccurrenceLayer(row, idxs)
         return newOrExistingOcc
 
-# .............................................................................
+    # ................................
     def countOccurrenceSets(self, userId, squid, minOccurrenceCount, displayName,
                                 afterTime, beforeTime, epsg, afterStatus, beforeStatus,
                                 gridsetId):
@@ -1739,14 +1735,14 @@ class Borg(DbPostgresql):
         """
         if displayName is not None:
             displayName = displayName.strip() + '%'
-        row, idxs = self.executeSelectOneFunction('lm_countOccSets', userId, squid,
+        row, idxs = self.execute_select_one_function('lm_countOccSets', userId, squid,
                                                                 minOccurrenceCount, displayName,
                                                                 afterTime, beforeTime, epsg,
                                                                 afterStatus, beforeStatus,
                                                                 gridsetId)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listOccurrenceSets(self, firstRecNum, maxNum, userId, squid,
                                   minOccurrenceCount, displayName, afterTime, beforeTime,
                                   epsg, afterStatus, beforeStatus, gridsetId, atom):
@@ -1784,7 +1780,7 @@ class Borg(DbPostgresql):
                 objs.append(self._createOccurrenceLayer(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def summarizeOccurrenceSetsForGridset(self, gridsetid):
         """
         @summary: Count all OccurrenceSets for a gridset by status
@@ -1799,7 +1795,7 @@ class Borg(DbPostgresql):
             status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
         return status_total_pairs
 
-# ...............................................
+    # ................................
     def deleteOccurrenceSet(self, occ):
         """
         @summary: Deletes OccurrenceSet and any dependent SDMProjects (with Layer).  
@@ -1812,7 +1808,7 @@ class Borg(DbPostgresql):
         success = self.executeModifyFunction('lm_deleteOccurrenceSet', occ.get_id())
         return success
 
-# ...............................................
+    # ................................
     def deleteObsoleteSDMDataReturnIds(self, userid, beforetime, max_num):
         """
         @summary: Deletes OccurrenceSets, any dependent SDMProjects (with Layer)
@@ -1835,7 +1831,7 @@ class Borg(DbPostgresql):
         .format(len(rows), time_str, userid))
         return occids
 
-# ...............................................
+    # ................................
     def deleteObsoleteSDMMtxcolsReturnIds(self, userid, beforetime, max_num):
         """
         @summary: Deletes SDMProject-dependent MatrixColumns for obsolete occurrencesets
@@ -1857,36 +1853,7 @@ class Borg(DbPostgresql):
         .format(len(rows), time_str, userid, mtxcolids))
         return mtxcolids
 
-# # ...............................................
-#     def _deleteOccsetDependentMatrixCols(self, occId, usr):
-#         """
-#         @summary: Deletes dependent MatrixColumns IFF they belong to a ROLLING_PAM
-#                      for the OccurrenceSet specified by occId
-#         @param occId: OccurrenceSet for which to delete dependent MatrixCols
-#         @param usr: User (owner) of the OccurrenceSet for which to delete MatrixCols
-#         @return: Count of MatrixCols for success of operation
-#         """
-#         delcount = 0
-#         gpamMtxAtoms = self.listMatrices(0, 500, usr, MatrixType.ROLLING_PAM, None,
-#                                                     None, None, None, None, None, None, None,
-#                                                     None, None, True)
-#         self.log.info('{} ROLLING PAMs for User {}'.format(len(gpamMtxAtoms), usr))
-#         if len(gpamMtxAtoms) > 0:
-#             gpamIds = [gpam.get_id() for gpam in gpamMtxAtoms]
-#             # Database will trigger delete of dependent projections on Occset delete
-#             _, pavs = self._findOccsetDependents(occId, usr, returnProjs=False,
-#                                                              returnMtxCols=True)
-#             for pav in pavs:
-#                 if pav.parentId in gpamIds:
-#                     success = self.executeModifyFunction('lm_deleteMatrixColumn',
-#                                                                      pav.get_id())
-#                     if success:
-#                         delcount += 1
-#             self.log.info('Deleted {} PAVs from {} ROLLING PAMs'
-#                               .format(len(gpamIds), delcount))
-#         return delcount
-
-# ...............................................
+    # ................................
     def _findOccsetDependents(self, occId, usr, returnProjs=True, returnMtxCols=True):
         """
         @summary: Finds any dependent SDMProjects and MatrixColumns for the 
@@ -1911,7 +1878,7 @@ class Borg(DbPostgresql):
             prjs = []
         return prjs, pavs
 
-# ...............................................
+    # ................................
     def findOrInsertSDMProject(self, proj):
         """
         @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
@@ -1924,7 +1891,7 @@ class Borg(DbPostgresql):
         lyrmeta = proj.dumpLyrMetadata()
         prjmeta = proj.dumpParamMetadata()
         algparams = proj.dumpAlgorithmParametersAsString()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProjectLayer',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertSDMProjectLayer',
                             proj.getParamId(), proj.get_id(), proj.getUserId(),
                             proj.squid, proj.verify, proj.name, proj.getDLocation(),
                             lyrmeta, proj.dataFormat, proj.gdalType,
@@ -1938,7 +1905,7 @@ class Borg(DbPostgresql):
         newOrExistingProj = self._createSDMProjection(row, idxs)
         return newOrExistingProj
 
-# .............................................................................
+    # ................................
     def countSDMProjects(self, userId, squid, displayName,
                                 afterTime, beforeTime, epsg, afterStatus, beforeStatus,
                                 occsetId, algCode, mdlscenCode, prjscenCode, gridsetId):
@@ -1961,13 +1928,13 @@ class Borg(DbPostgresql):
         """
         if displayName is not None:
             displayName = displayName.strip() + '%'
-        row, idxs = self.executeSelectOneFunction('lm_countSDMProjects',
+        row, idxs = self.execute_select_one_function('lm_countSDMProjects',
                                     userId, squid, displayName, afterTime, beforeTime, epsg,
                                     afterStatus, beforeStatus, occsetId, algCode,
                                     mdlscenCode, prjscenCode, gridsetId)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listSDMProjects(self, firstRecNum, maxNum, userId, squid, displayName,
                               afterTime, beforeTime, epsg, afterStatus, beforeStatus,
                               occsetId, algCode, mdlscenCode, prjscenCode, gridsetId,
@@ -2010,7 +1977,7 @@ class Borg(DbPostgresql):
                 objs.append(self._createSDMProjection(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def findOrInsertMatrixColumn(self, mtxcol):
         """
         @summary: Find existing OR save a new MatrixColumn
@@ -2030,7 +1997,7 @@ class Borg(DbPostgresql):
 
         mcmeta = mtxcol.dumpParamMetadata()
         intparams = mtxcol.dumpIntersectParams()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertMatrixColumn',
                             mtxcol.getParamUserId(), mtxcol.getParamId(), mtxcol.parentId,
                             mtxcol.getMatrixIndex(), lyrid, mtxcol.squid, mtxcol.ident,
                             mcmeta, intparams,
@@ -2041,7 +2008,7 @@ class Borg(DbPostgresql):
         newOrExistingMtxCol.processType = mtxcol.processType
         return newOrExistingMtxCol
 
-# ...............................................
+    # ................................
     def updateMatrixColumn(self, mtxcol):
         """
         @summary: Update a MatrixColumn
@@ -2057,7 +2024,7 @@ class Borg(DbPostgresql):
                                                          mtxcol.status, mtxcol.status_mod_time)
         return success
 
-# ...............................................
+    # ................................
     def getMatrixColumn(self, mtxcol, mtxcolId):
         """
         @summary: Get an existing MatrixColumn
@@ -2070,19 +2037,19 @@ class Borg(DbPostgresql):
         row = None
         if mtxcol is not None:
             intparams = mtxcol.dumpIntersectParams()
-            row, idxs = self.executeSelectOneFunction('lm_getMatrixColumn',
+            row, idxs = self.execute_select_one_function('lm_getMatrixColumn',
                                                                     mtxcol.get_id(),
                                                                     mtxcol.parentId,
                                                                     mtxcol.getMatrixIndex(),
                                                                     mtxcol.getLayerId(),
                                                                     intparams)
         elif mtxcolId is not None:
-            row, idxs = self.executeSelectOneFunction('lm_getMatrixColumn',
+            row, idxs = self.execute_select_one_function('lm_getMatrixColumn',
                                                             mtxcolId, None, None, None, None)
         mtxColumn = self._createMatrixColumn(row, idxs)
         return mtxColumn
 
-# ...............................................
+    # ................................
     def getColumnsForMatrix(self, mtxId):
         """
         @summary: Get all existing MatrixColumns for a Matrix
@@ -2099,7 +2066,7 @@ class Borg(DbPostgresql):
                 mtxColumns.append(mtxcol)
         return mtxColumns
 
-# ...............................................
+    # ................................
     def getSDMColumnsForMatrix(self, mtxId, returnColumns, returnProjections):
         """
         @summary: Get all existing MatrixColumns and SDMProjections that have  
@@ -2126,7 +2093,7 @@ class Borg(DbPostgresql):
                 colPrjPairs.append((mtxcol, sdmprj))
         return colPrjPairs
 
-# ...............................................
+    # ................................
     def summarizeSDMProjectsForGridset(self, gridsetid):
         """
         @summary: Count all SDMProjections for a gridset by status
@@ -2141,7 +2108,7 @@ class Borg(DbPostgresql):
             status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
         return status_total_pairs
 
-# ...............................................
+    # ................................
     def summarizeMtxColumnsForGridset(self, gridsetid, mtx_type):
         """
         @summary: Count all MatrixColumns for a gridset by status
@@ -2156,7 +2123,7 @@ class Borg(DbPostgresql):
             status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
         return status_total_pairs
 
-# ...............................................
+    # ................................
     def summarizeMatricesForGridset(self, gridsetid, mtx_type):
         """
         @summary: Count all matrices for a gridset by status
@@ -2171,7 +2138,7 @@ class Borg(DbPostgresql):
             status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
         return status_total_pairs
 
-# ...............................................
+    # ................................
     def getOccLayersForMatrix(self, mtxId):
         """
         @summary: Get all existing OccurrenceLayer objects that are inputs to  
@@ -2188,7 +2155,7 @@ class Borg(DbPostgresql):
                 occsets.append(self._createOccurrenceLayer(r, idxs))
         return occsets
 
-# .............................................................................
+    # ................................
     def countMatrixColumns(self, userId, squid, ident, afterTime, beforeTime,
                                   epsg, afterStatus, beforeStatus,
                                   gridsetId, matrixId, layerId):
@@ -2208,13 +2175,13 @@ class Borg(DbPostgresql):
         @param layerId: filter by Layer input identifier
         @return: a count of MatrixColumns
         """
-        row, idxs = self.executeSelectOneFunction('lm_countMtxCols', userId,
+        row, idxs = self.execute_select_one_function('lm_countMtxCols', userId,
                                         squid, ident, afterTime, beforeTime, epsg,
                                         afterStatus, beforeStatus,
                                         gridsetId, matrixId, layerId)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listMatrixColumns(self, firstRecNum, maxNum, userId, squid, ident,
                                  afterTime, beforeTime, epsg, afterStatus, beforeStatus,
                                  gridsetId, matrixId, layerId, atom):
@@ -2251,7 +2218,7 @@ class Borg(DbPostgresql):
                 objs.append(self._createMatrixColumn(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def updateMatrix(self, mtx):
         """
         @summary: Update a LMMatrix
@@ -2265,7 +2232,7 @@ class Borg(DbPostgresql):
                                                          meta, mtx.status, mtx.status_mod_time)
         return success
 
-# .............................................................................
+    # ................................
     def countMatrices(self, userId, matrixType, gcmCode, altpredCode, dateCode,
                       algCode, metastring, gridsetId, afterTime, beforeTime,
                       epsg, afterStatus, beforeStatus):
@@ -2288,13 +2255,13 @@ class Borg(DbPostgresql):
         metamatch = None
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
-        row, idxs = self.executeSelectOneFunction('lm_countMatrices', userId,
+        row, idxs = self.execute_select_one_function('lm_countMatrices', userId,
                             matrixType, gcmCode, altpredCode, dateCode, algCode,
                             metamatch, gridsetId, afterTime, beforeTime, epsg,
                             afterStatus, beforeStatus)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listMatrices(self, firstRecNum, maxNum, userId, matrixType, gcmCode,
                      altpredCode, dateCode, algCode, metastring, gridsetId,
                      afterTime, beforeTime, epsg, afterStatus, beforeStatus,
@@ -2339,7 +2306,7 @@ class Borg(DbPostgresql):
                 objs.append(self._createLMMatrix(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def findOrInsertMatrix(self, mtx):
         """
         @summary: Find existing OR save a new Matrix
@@ -2347,7 +2314,7 @@ class Borg(DbPostgresql):
         @return new or existing Matrix
         """
         meta = mtx.dumpMtxMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrix',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertMatrix',
                             mtx.get_id(), mtx.matrixType, mtx.parentId,
                             mtx.gcmCode, mtx.altpredCode, mtx.dateCode,
                             mtx.algorithmCode,
@@ -2356,7 +2323,7 @@ class Borg(DbPostgresql):
         newOrExistingMtx = self._createLMMatrix(row, idxs)
         return newOrExistingMtx
 
-# .............................................................................
+    # ................................
     def countTrees(self, userId, name, isBinary, isUltrametric, hasBranchLengths,
                         metastring, afterTime, beforeTime):
         """
@@ -2374,12 +2341,12 @@ class Borg(DbPostgresql):
         metamatch = None
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
-        row, idxs = self.executeSelectOneFunction('lm_countTrees', userId,
+        row, idxs = self.execute_select_one_function('lm_countTrees', userId,
                                             afterTime, beforeTime, name, metamatch,
                                             isBinary, isUltrametric, hasBranchLengths)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listTrees(self, firstRecNum, maxNum, userId, afterTime, beforeTime,
                       name, metastring, isBinary, isUltrametric, hasBranchLengths,
                       atom):
@@ -2415,7 +2382,7 @@ class Borg(DbPostgresql):
                 objs.append(self._createTree(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def findOrInsertTree(self, tree):
         """
         @summary: Find existing OR save a new Tree
@@ -2423,14 +2390,14 @@ class Borg(DbPostgresql):
         @return new or existing Tree
         """
         meta = tree.dumpTreeMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTree',
+        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertTree',
                             tree.get_id(), tree.getUserId(), tree.name,
                             tree.getDLocation(), tree.isBinary(), tree.isUltrametric(),
                             tree.hasBranchLengths(), meta, tree.mod_time)
         newOrExistingTree = self._createTree(row, idxs)
         return newOrExistingTree
 
-# ...............................................
+    # ................................
     def getTree(self, tree, treeId):
         """
         @summary: Retrieve a Tree from the database
@@ -2440,23 +2407,23 @@ class Borg(DbPostgresql):
         """
         row = None
         if tree is not None:
-            row, idxs = self.executeSelectOneFunction('lm_getTree', tree.get_id(),
+            row, idxs = self.execute_select_one_function('lm_getTree', tree.get_id(),
                                                                     tree.getUserId(),
                                                                     tree.name)
         else:
-            row, idxs = self.executeSelectOneFunction('lm_getTree', treeId,
+            row, idxs = self.execute_select_one_function('lm_getTree', treeId,
                                                                     None, None)
         existingTree = self._createTree(row, idxs)
         return existingTree
 
-# ...............................................
+    # ................................
     def insertMFChain(self, mfchain, gridsetId):
         """
         @summary: Inserts a MFChain into database
         @return: updated MFChain object
         """
         meta = mfchain.dumpMfMetadata()
-        row, idxs = self.executeInsertAndSelectOneFunction('lm_insertMFChain',
+        row, idxs = self.execute_insert_and_select_one_function('lm_insertMFChain',
                                                             mfchain.getUserId(),
                                                             gridsetId,
                                                             mfchain.getDLocation(),
@@ -2466,7 +2433,7 @@ class Borg(DbPostgresql):
         mfchain = self._createMFChain(row, idxs)
         return mfchain
 
-# .............................................................................
+    # ................................
     def countMFChains(self, userId, gridsetId, metastring, afterStat, beforeStat,
                       afterTime, beforeTime):
         """
@@ -2483,13 +2450,13 @@ class Borg(DbPostgresql):
         metamatch = None
         if metastring is not None:
             metamatch = '%{}%'.format(metastring)
-        row, idxs = self.executeSelectOneFunction('lm_countMFProcess', userId,
+        row, idxs = self.execute_select_one_function('lm_countMFProcess', userId,
                                                   gridsetId, metamatch,
                                                   afterStat, beforeStat,
                                                   afterTime, beforeTime)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def countPriorityMFChains(self, gridsetId):
         """
         @summary: Return the number of MFChains to be run before those for the 
@@ -2498,11 +2465,11 @@ class Borg(DbPostgresql):
         @return: count of MFChains with higher priority or 
                  same priority and earlier timestamp
         """
-        row, idxs = self.executeSelectOneFunction('lm_countMFProcessAhead',
+        row, idxs = self.execute_select_one_function('lm_countMFProcessAhead',
                                                   gridsetId, JobStatus.COMPLETE)
         return self._getCount(row)
 
-# .............................................................................
+    # ................................
     def listMFChains(self, firstRecNum, maxNum, userId, gridsetId, metastring,
                      afterStat, beforeStat, afterTime, beforeTime, atom):
         """
@@ -2533,7 +2500,7 @@ class Borg(DbPostgresql):
                 objs.append(self._createMFChain(r, idxs))
         return objs
 
-# ...............................................
+    # ................................
     def summarizeMFChainsForGridset(self, gridsetid):
         """
         @summary: Count all mfprocesses for a gridset by status
@@ -2547,7 +2514,7 @@ class Borg(DbPostgresql):
             status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
         return status_total_pairs
 
-# ...............................................
+    # ................................
     def findMFChains(self, count, userId, oldStatus, newStatus):
         """
         @summary: Retrieves MFChains from database, optionally filtered by status 
@@ -2568,7 +2535,7 @@ class Borg(DbPostgresql):
             mfchainList.append(mfchain)
         return mfchainList
 
-# ...............................................
+    # ................................
     def deleteMFChainsReturnFilenames(self, gridsetid):
         """
         @summary: Deletes MFChains for a gridset, returns filenames 
@@ -2583,7 +2550,7 @@ class Borg(DbPostgresql):
             flist.append(fname)
         return flist
 
-# ...............................................
+    # ................................
     def getMFChain(self, mfprocessid):
         """
         @summary: Retrieves MFChain from database
@@ -2594,7 +2561,7 @@ class Borg(DbPostgresql):
         mfchain = self._createMFChain(row, idxs)
         return mfchain
 
-    # ...............................................
+    # ................................
     def updateObject(self, obj):
         """
         @summary: Updates object in database
@@ -2631,7 +2598,7 @@ class Borg(DbPostgresql):
             raise LMError('Unsupported update for object {}'.format(type(obj)))
         return success
 
-# ...............................................
+    # ................................
     def deleteObject(self, obj):
         """
         @summary: Deletes object from database
@@ -2669,7 +2636,7 @@ class Borg(DbPostgresql):
             raise LMError('Unsupported delete for object {}'.format(type(obj)))
         return success
 
-# ...............................................
+    # ................................
     def getMatricesForGridset(self, gridsetid, mtxType):
         """
         @summary Return all LmServer.legion.LMMatrix objects that are part of a 

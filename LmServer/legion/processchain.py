@@ -19,8 +19,9 @@ class MFChain(ProcessObject):
     META_SQUID = 'squid'
 
     # .............................................................................
-    def __init__(self, userId, dlocation=None, priority=None, metadata=None,
-                 status=None, statusModTime=None, headers=None, mfChainId=None):
+    def __init__(self, user_id, dlocation=None, priority=None, metadata=None,
+                 status=None, status_mod_time=None, headers=None,
+                 mf_chain_id=None):
         """
         @summary Class used to generate a Makeflow document with Lifemapper 
                  computational jobs

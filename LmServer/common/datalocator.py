@@ -299,7 +299,7 @@ class EarlJr(LMObject):
         return url
 
     # ...............................................
-    def constructLMMetadataUrl(self, serviceType, objectId,
+    def construct_lm_metadata_url(self, serviceType, objectId,
                                parentMetadataUrl=None):
         """
         @summary Return the REST service url for data in the Lifemapper Archive 

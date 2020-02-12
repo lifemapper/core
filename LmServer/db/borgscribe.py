@@ -4,13 +4,13 @@
 import socket
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import (ProcessType, LMFormat)
+from LmCommon.common.lmconstants import LMFormat, ProcessType
 from LmCommon.common.time import gmt
 from LmServer.base.layerset import MapLayerSet
 from LmServer.base.taxon import ScientificName
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (DbUser, MatrixType, JobStatus, FileFix,
-                                         NAME_SEPARATOR, LMFileType)
+from LmServer.common.lmconstants import (
+    DbUser, JobStatus, FileFix, LMFileType, MatrixType, NAME_SEPARATOR)
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
                                             PUBLIC_USER)
 from LmServer.db.catalog_borg import Borg
@@ -23,13 +23,9 @@ from osgeo.ogr import wkbPoint
 
 # .............................................................................
 class BorgScribe(LMObject):
+    """Class to peruse the Lifemapper catalog
     """
-    Class to peruse the Lifemapper catalog
-    """
-
-# .............................................................................
-# Constructor
-# .............................................................................
+    # ................................
     def __init__(self, logger, dbUser=DbUser.Pipeline):
         """
         @summary Peruser constructor
@@ -46,15 +42,13 @@ class BorgScribe(LMObject):
 
         self._borg = Borg(logger, dbHost, CONNECTION_PORT, dbUser, HL_NAME[dbUser])
 
-# ............................................................................
+    # ................................
     @property
     def isOpen(self):
         bOpen = self._borg.isOpen
         return bOpen
 
-# .............................................................................
-# Public functions
-# .............................................................................
+    # ................................
     def openConnections(self):
         try:
             self._borg.open()
@@ -65,11 +59,11 @@ class BorgScribe(LMObject):
             return False
         return True
 
-# ...............................................
+    # ................................
     def closeConnections(self):
         self._borg.close()
 
-# ...............................................
+    # ................................
     def findOrInsertAlgorithm(self, alg, mod_time=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertAlgorithm()
@@ -77,12 +71,12 @@ class BorgScribe(LMObject):
         algo = self._borg.findOrInsertAlgorithm(alg, mod_time)
         return algo
 
-# ...............................................
+    # ................................
     def getLayerTypeCode(self, typeCode=None, userId=None, typeId=None):
         etype = self._borg.getEnvironmentalType(typeId, typeCode, userId)
         return etype
 
-# ...............................................
+    # ................................
     def countJobChains(self, status, userIdLst=[None]):
         """
         @summary: Return a count of model and projection jobs at given status.
@@ -97,7 +91,7 @@ class BorgScribe(LMObject):
             total += self._borg.countJobChains(status, usr)
         return total
 
-# ...............................................
+    # ................................
     def findOrInsertEnvLayer(self, lyr, scenarioId=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertEnvLayer()
@@ -113,7 +107,7 @@ class BorgScribe(LMObject):
                                   line_num=self.get_line_num())
         return updatedLyr
 
-# ...............................................
+    # ................................
     def findOrInsertLayer(self, lyr):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertLayer()
@@ -121,7 +115,7 @@ class BorgScribe(LMObject):
         updatedLyr = self._borg.findOrInsertLayer(lyr)
         return updatedLyr
 
-# ...............................................
+    # ................................
     def getEnvLayer(self, envlyrId=None, lyrId=None, lyrVerify=None, userId=None,
                          lyrName=None, epsg=None):
         """
@@ -130,7 +124,7 @@ class BorgScribe(LMObject):
         lyr = self._borg.getEnvLayer(envlyrId, lyrId, lyrVerify, userId, lyrName, epsg)
         return lyr
 
-# ...............................................
+    # ................................
     def deleteScenarioLayer(self, envlyr, scenarioId):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteScenarioLayer()
@@ -139,7 +133,7 @@ class BorgScribe(LMObject):
         success = self._borg.deleteScenarioLayer(envlyr, scenarioId)
         return success
 
-# ...............................................
+    # ................................
     def deleteEnvLayer(self, envlyr, scenarioId=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteScenarioLayer()
@@ -150,7 +144,7 @@ class BorgScribe(LMObject):
         success = self._borg.deleteEnvLayer(envlyr)
         return success
 
-# .............................................................................
+    # ................................
     def countEnvLayers(self, userId=PUBLIC_USER,
                              envCode=None, gcmcode=None, altpredCode=None, dateCode=None,
                              afterTime=None, beforeTime=None, epsg=None,
@@ -163,7 +157,7 @@ class BorgScribe(LMObject):
                                                      envTypeId, scenarioCode)
         return count
 
-# .............................................................................
+    # ................................
     def listEnvLayers(self, firstRecNum, maxNum, userId=PUBLIC_USER,
                             envCode=None, gcmcode=None, altpredCode=None, dateCode=None,
                             afterTime=None, beforeTime=None, epsg=None,
@@ -177,7 +171,7 @@ class BorgScribe(LMObject):
                                                   atom)
         return objs
 
-# ...............................................
+    # ................................
     def findOrInsertEnvType(self, envType):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertEnvType()
@@ -188,7 +182,7 @@ class BorgScribe(LMObject):
             raise LMError('Invalid object for EnvType insertion')
         return newOrExistingET
 
-# .............................................................................
+    # ................................
     def countScenPackages(self, userId=PUBLIC_USER, afterTime=None,
                                  beforeTime=None, epsg=None, scenId=None):
         """
@@ -198,7 +192,7 @@ class BorgScribe(LMObject):
                                                          scenId)
         return count
 
-# .............................................................................
+    # ................................
     def listScenPackages(self, firstRecNum, maxNum, userId=PUBLIC_USER,
                                 afterTime=None, beforeTime=None, epsg=None, scenId=None,
                                 atom=True):
@@ -209,25 +203,16 @@ class BorgScribe(LMObject):
                                                       beforeTime, epsg, scenId, atom)
         return objs
 
-# ...............................................
+    # ................................
     def findOrInsertScenPackage(self, scenPkg):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertScenPackage()
         @note: This returns the updated ScenPackage **without** Scenarios and Layers
         """
         updatedScenPkg = self._borg.findOrInsertScenPackage(scenPkg)
-#         # if existing, pull existing scenarios
-#         if updatedScenPkg.mod_time == scenPkg.mod_time:
-#             existingScens = self.getScenariosForScenPackage(
-#                                                     scenPkgId=updatedScenPkg.get_id())
-#             updatedScenPkg.setScenarios(existingScens)
-#         else:
-#             for code, scen in scenPkg.scenarios.iteritems():
-#                 updatedScen = self.findOrInsertScenario(scen, updatedScenPkg.get_id())
-#                 updatedScenPkg.addScenario(updatedScen)
         return updatedScenPkg
 
-# ...............................................
+    # ................................
     def getScenPackagesForScenario(self, scen=None, scenId=None,
                                             userId=None, scenCode=None, fillLayers=False):
         """
@@ -237,7 +222,7 @@ class BorgScribe(LMObject):
                                                                          scenCode, fillLayers)
         return scenPkgs
 
-# ...............................................
+    # ................................
     def getScenariosForScenPackage(self, scenPkg=None, scenPkgId=None,
                                             userId=None, scenPkgName=None):
         """
@@ -247,7 +232,7 @@ class BorgScribe(LMObject):
                                                                      scenPkgName)
         return scens
 
-# ...............................................
+    # ................................
     def getScenPackagesForUserCodes(self, usr, scenCodeList, fillLayers=False):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getScenPackagesForScenario()
@@ -272,7 +257,7 @@ class BorgScribe(LMObject):
                     scenPkgs.append(pkg)
         return scenPkgs
 
-# ...............................................
+    # ................................
     def getScenPackage(self, scenPkg=None, scenPkgId=None,
                              userId=None, scenPkgName=None, fillLayers=False):
         """
@@ -282,7 +267,7 @@ class BorgScribe(LMObject):
                                                               scenPkgName, fillLayers)
         return foundScenPkg
 
-# ...............................................
+    # ................................
     def findOrInsertScenario(self, scen, scenPkgId=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertScenario()
@@ -295,7 +280,7 @@ class BorgScribe(LMObject):
             updatedScen.addLayer(updatedLyr)
         return updatedScen
 
-# ...............................................
+    # ................................
     def deleteComputedUserData(self, userId):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteComputedUserData
@@ -303,7 +288,7 @@ class BorgScribe(LMObject):
         success = self._borg.deleteComputedUserData(userId)
         return success
 
-# ...............................................
+    # ................................
     def clearUser(self, userId):
         """
         @copydoc LmServer.db.catalog_borg.Borg::clearUser
@@ -317,7 +302,7 @@ class BorgScribe(LMObject):
         success = self._borg.clearUser(userId)
         return success, allmtxcolids
 
-# ...............................................
+    # ................................
     def findOrInsertUser(self, usr):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertUser()
@@ -325,7 +310,7 @@ class BorgScribe(LMObject):
         borgUser = self._borg.findOrInsertUser(usr)
         return borgUser
 
-# ...............................................
+    # ................................
     def updateUser(self, usr):
         """
         @copydoc LmServer.db.catalog_borg.Borg::updateUser()
@@ -333,7 +318,7 @@ class BorgScribe(LMObject):
         success = self._borg.updateUser(usr)
         return success
 
-# ...............................................
+    # ................................
     def findUser(self, userId=None, email=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findUser()
@@ -341,35 +326,35 @@ class BorgScribe(LMObject):
         borgUser = self._borg.findUser(userId, email)
         return borgUser
 
-# ...............................................
+    # ................................
     def findUserForObject(self, layerId=None, scenCode=None, occId=None,
                                  matrixId=None, gridsetId=None, mfprocessId=None):
         userId = self._borg.findUserForObject(layerId, scenCode, occId, matrixId,
                                                           gridsetId, mfprocessId)
         return userId
 
-# ...............................................
+    # ................................
     def findOrInsertTaxonSource(self, taxSourceName, taxSourceUrl):
         taxSource = self._borg.findOrInsertTaxonSource(taxSourceName,
                                                                       taxSourceUrl)
         return taxSource
 
-# ...............................................
+    # ................................
     def findOrInsertShapeGrid(self, shpgrd, cutout=None):
         updatedShpgrd = self._borg.findOrInsertShapeGrid(shpgrd, cutout)
         return updatedShpgrd
 
-# ...............................................
+    # ................................
     def findOrInsertGridset(self, grdset):
         updatedGrdset = self._borg.findOrInsertGridset(grdset)
         return updatedGrdset
 
-# ...............................................
+    # ................................
     def findOrInsertMatrix(self, mtx):
         updatedMtx = self._borg.findOrInsertMatrix(mtx)
         return updatedMtx
 
-# ...............................................
+    # ................................
     def getShapeGrid(self, lyrId=None, userId=None, lyrName=None, epsg=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getShapeGrid()
@@ -377,7 +362,7 @@ class BorgScribe(LMObject):
         shpgrid = self._borg.getShapeGrid(lyrId, userId, lyrName, epsg)
         return shpgrid
 
-# .............................................................................
+    # ................................
     def countShapeGrids(self, userId=PUBLIC_USER, cellsides=None, cellsize=None,
                               afterTime=None, beforeTime=None, epsg=None):
         """
@@ -387,7 +372,7 @@ class BorgScribe(LMObject):
                                                       beforeTime, epsg)
         return count
 
-# .............................................................................
+    # ................................
     def listShapeGrids(self, firstRecNum, maxNum, userId=PUBLIC_USER,
                              cellsides=None, cellsize=None,
                              afterTime=None, beforeTime=None, epsg=None, atom=True):
@@ -398,7 +383,7 @@ class BorgScribe(LMObject):
                                 cellsides, cellsize, afterTime, beforeTime, epsg, atom)
         return objs
 
-# ...............................................
+    # ................................
     def getLayer(self, lyrId=None, lyrVerify=None, userId=None, lyrName=None,
                      epsg=None):
         """
@@ -407,7 +392,7 @@ class BorgScribe(LMObject):
         lyr = self._borg.getBaseLayer(lyrId, lyrVerify, userId, lyrName, epsg)
         return lyr
 
-# .............................................................................
+    # ................................
     def countLayers(self, userId=PUBLIC_USER, squid=None, afterTime=None, beforeTime=None,
                          epsg=None):
         """
@@ -416,7 +401,7 @@ class BorgScribe(LMObject):
         count = self._borg.countLayers(userId, squid, afterTime, beforeTime, epsg)
         return count
 
-# .............................................................................
+    # ................................
     def listLayers(self, firstRecNum, maxNum, userId=PUBLIC_USER, squid=None,
                         afterTime=None, beforeTime=None, epsg=None, atom=True):
         """
@@ -426,7 +411,7 @@ class BorgScribe(LMObject):
                                 afterTime, beforeTime, epsg, atom)
         return objs
 
-# ...............................................
+    # ................................
     def getMatrixColumn(self, mtxcol=None, mtxcolId=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getMatrixColumn()
@@ -434,7 +419,7 @@ class BorgScribe(LMObject):
         mtxColumn = self._borg.getMatrixColumn(mtxcol, mtxcolId)
         return mtxColumn
 
-# ...............................................
+    # ................................
     def getColumnsForMatrix(self, mtxId):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getColumnsForMatrix()
@@ -442,7 +427,7 @@ class BorgScribe(LMObject):
         mtxColumns = self._borg.getColumnsForMatrix(mtxId)
         return mtxColumns
 
-# ...............................................
+    # ................................
     def getSDMColumnsForMatrix(self, mtxId, returnColumns=True,
                                returnProjections=True):
         """
@@ -452,7 +437,7 @@ class BorgScribe(LMObject):
                                                         returnProjections)
         return colPrjPairs
 
-# ...............................................
+    # ................................
     def getOccLayersForMatrix(self, mtxId):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getOccLayersForMatrix
@@ -460,7 +445,7 @@ class BorgScribe(LMObject):
         occsets = self._borg.getOccLayersForMatrix(mtxId)
         return occsets
 
-# .............................................................................
+    # ................................
     def countMatrixColumns(self, userId=None, squid=None, ident=None,
                            afterTime=None, beforeTime=None, epsg=None,
                            afterStatus=None, beforeStatus=None,
@@ -473,7 +458,7 @@ class BorgScribe(LMObject):
                         gridsetId, matrixId, layerId)
         return count
 
-# .............................................................................
+    # ................................
     def listMatrixColumns(self, firstRecNum, maxNum, userId=None,
                           squid=None, ident=None, afterTime=None, beforeTime=None,
                           epsg=None, afterStatus=None, beforeStatus=None,
@@ -487,7 +472,7 @@ class BorgScribe(LMObject):
                                             gridsetId, matrixId, layerId, atom)
         return objs
 
-# ...............................................
+    # ................................
     def getMatrix(self, mtx=None, mtxId=None, gridsetId=None, gridsetName=None,
                   userId=None, mtxType=None, gcmCode=None, altpredCode=None,
                   dateCode=None, algCode=None):
@@ -509,7 +494,7 @@ class BorgScribe(LMObject):
                             mtxType, gcmCode, altpredCode, dateCode, algCode)
         return fullMtx
 
-# .............................................................................
+    # ................................
     def countMatrices(self, userId=None, matrixType=None,
                       gcmCode=None, altpredCode=None, dateCode=None,
                       algCode=None, keyword=None, gridsetId=None,
@@ -524,7 +509,7 @@ class BorgScribe(LMObject):
                                 afterStatus, beforeStatus)
         return count
 
-# .............................................................................
+    # ................................
     def listMatrices(self, firstRecNum, maxNum, userId=None,
                      matrixType=None, gcmCode=None, altpredCode=None,
                      dateCode=None, algCode=None, keyword=None, gridsetId=None,
@@ -538,7 +523,7 @@ class BorgScribe(LMObject):
                 afterTime, beforeTime, epsg, afterStatus, beforeStatus, atom)
         return objs
 
-# ...............................................
+    # ................................
     def findOrInsertTree(self, tree):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertTree()
@@ -546,7 +531,7 @@ class BorgScribe(LMObject):
         newTree = self._borg.findOrInsertTree(tree)
         return newTree
 
-# ...............................................
+    # ................................
     def getTree(self, tree=None, treeId=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getTree()
@@ -557,7 +542,7 @@ class BorgScribe(LMObject):
             existingTree.setDLocation()
         return existingTree
 
-# .............................................................................
+    # ................................
     def countTrees(self, userId=PUBLIC_USER, name=None,
                         isBinary=None, isUltrametric=None, hasBranchLengths=None,
                         metastring=None, afterTime=None, beforeTime=None):
@@ -568,7 +553,7 @@ class BorgScribe(LMObject):
                                     hasBranchLengths, metastring, afterTime, beforeTime)
         return count
 
-# .............................................................................
+    # ................................
     def listTrees(self, firstRecNum, maxNum, userId=PUBLIC_USER, name=None,
                       isBinary=None, isUltrametric=None, hasBranchLengths=None,
                       metastring=None, afterTime=None, beforeTime=None, atom=True):
@@ -580,7 +565,7 @@ class BorgScribe(LMObject):
                                         isBinary, isUltrametric, hasBranchLengths, atom)
         return objs
 
-# ...............................................
+    # ................................
     def getGridset(self, gridset=None, gridsetId=None, userId=None, name=None,
                         fillMatrices=False):
         """
@@ -597,7 +582,7 @@ class BorgScribe(LMObject):
                                                              fillMatrices)
         return existingGridset
 
-# .............................................................................
+    # ................................
     def countGridsets(self, userId, shpgrdLyrid=None, metastring=None,
                             afterTime=None, beforeTime=None, epsg=None):
         """
@@ -607,7 +592,7 @@ class BorgScribe(LMObject):
                                                     afterTime, beforeTime, epsg)
         return count
 
-# .............................................................................
+    # ................................
     def listGridsets(self, firstRecNum, maxNum, userId=PUBLIC_USER,
                           shpgrdLyrid=None, metastring=None,
                           afterTime=None, beforeTime=None, epsg=None, atom=True):
@@ -618,7 +603,7 @@ class BorgScribe(LMObject):
                                             metastring, afterTime, beforeTime, epsg, atom)
         return objs
 
-# ...............................................
+    # ................................
     def findTaxonSource(self, taxonSourceName):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findTaxonSource()
@@ -626,7 +611,7 @@ class BorgScribe(LMObject):
         txSourceId, url, moddate = self._borg.findTaxonSource(taxonSourceName)
         return txSourceId, url, moddate
 
-# ...............................................
+    # ................................
     def getTaxonSource(self, tsId=None, tsName=None, tsUrl=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getTaxonSource()
@@ -634,7 +619,7 @@ class BorgScribe(LMObject):
         ts = self._borg.getTaxonSource(tsId, tsName, tsUrl)
         return ts
 
-# ...............................................
+    # ................................
     def findOrInsertTaxon(self, taxonSourceId=None, taxonKey=None, sciName=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertTaxon()
@@ -642,7 +627,7 @@ class BorgScribe(LMObject):
         sciname = self._borg.findOrInsertTaxon(taxonSourceId, taxonKey, sciName)
         return sciname
 
-# ...............................................
+    # ................................
     def getTaxon(self, squid=None, taxonSourceId=None, taxonKey=None,
                      userId=None, taxonName=None):
         """
@@ -652,7 +637,7 @@ class BorgScribe(LMObject):
                                                 taxonName)
         return sciname
 
-# ...............................................
+    # ................................
     def getScenario(self, idOrCode, userId=None, fillLayers=False):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getScenario()
@@ -666,7 +651,7 @@ class BorgScribe(LMObject):
                                                      fillLayers=fillLayers)
         return scenario
 
-# .............................................................................
+    # ................................
     def countScenarios(self, userId=PUBLIC_USER, afterTime=None, beforeTime=None,
                              epsg=None, gcmCode=None, altpredCode=None, dateCode=None,
                              scenPackageId=None):
@@ -678,7 +663,7 @@ class BorgScribe(LMObject):
                                                           scenPackageId)
         return count
 
-# .............................................................................
+    # ................................
     def listScenarios(self, firstRecNum, maxNum, userId=PUBLIC_USER,
                             afterTime=None, beforeTime=None, epsg=None, gcmCode=None,
                             altpredCode=None, dateCode=None, scenPackageId=None,
@@ -692,7 +677,7 @@ class BorgScribe(LMObject):
                                                     atom)
         return count
 
-# ...............................................
+    # ................................
     def getOccurrenceSet(self, occId=None, squid=None, userId=None, epsg=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getOccurrenceSet()
@@ -700,7 +685,7 @@ class BorgScribe(LMObject):
         occset = self._borg.getOccurrenceSet(occId, squid, userId, epsg)
         return occset
 
-# ...............................................
+    # ................................
     def getOccurrenceSetsForName(self, scinameStr, userId):
         """
         @summary: get a list of occurrencesets for the given squid and User
@@ -713,7 +698,7 @@ class BorgScribe(LMObject):
         occsets = self._borg.getOccurrenceSetsForSquid(updatedSciName.squid, userId)
         return occsets
 
-# ...............................................
+    # ................................
     def findOrInsertOccurrenceSet(self, occ):
         """
         @summary: Save a new occurrence set    
@@ -724,7 +709,7 @@ class BorgScribe(LMObject):
         newOcc = self._borg.findOrInsertOccurrenceSet(occ)
         return newOcc
 
-# .............................................................................
+    # ................................
     def countOccurrenceSets(self, userId=None, squid=None, minOccurrenceCount=None,
                     displayName=None, afterTime=None, beforeTime=None, epsg=None,
                     afterStatus=None, beforeStatus=None, gridsetId=None):
@@ -736,7 +721,7 @@ class BorgScribe(LMObject):
                 gridsetId)
         return count
 
-# .............................................................................
+    # ................................
     def listOccurrenceSets(self, firstRecNum, maxNum, userId=None,
                            squid=None, minOccurrenceCount=None, displayName=None,
                            afterTime=None, beforeTime=None, epsg=None,
@@ -752,7 +737,7 @@ class BorgScribe(LMObject):
                                              gridsetId, atom)
         return objs
 
-# ...............................................
+    # ................................
     def summarizeOccurrenceSetsForGridset(self, gridsetid):
         """
         @copydoc LmServer.db.catalog_borg.Borg::listOccurrenceSets()
@@ -760,7 +745,7 @@ class BorgScribe(LMObject):
         status_total_pairs = self._borg.summarizeOccurrenceSetsForGridset(gridsetid)
         return status_total_pairs
 
-# ...............................................
+    # ................................
     def getSDMProject(self, layerid):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getSDMProject()
@@ -768,7 +753,7 @@ class BorgScribe(LMObject):
         proj = self._borg.getSDMProject(layerid)
         return proj
 
-# ...............................................
+    # ................................
     def findOrInsertSDMProject(self, proj):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findOrInsertSDMProject()
@@ -776,7 +761,7 @@ class BorgScribe(LMObject):
         newOrExistingProj = self._borg.findOrInsertSDMProject(proj)
         return newOrExistingProj
 
-# .............................................................................
+    # ................................
     def countSDMProjects(self, userId=None, squid=None, displayName=None,
                                 afterTime=None, beforeTime=None, epsg=None,
                                 afterStatus=None, beforeStatus=None, occsetId=None,
@@ -792,7 +777,7 @@ class BorgScribe(LMObject):
                               occsetId, algCode, mdlscenCode, prjscenCode, gridsetId)
         return count
 
-# ...............................................
+    # ................................
     def summarizeSDMProjectsForGridset(self, gridsetid):
         """
         @copydoc LmServer.db.catalog_borg.Borg::summarizeSDMProjectsForGridset()
@@ -800,7 +785,7 @@ class BorgScribe(LMObject):
         status_total_pairs = self._borg.summarizeSDMProjectsForGridset(gridsetid)
         return status_total_pairs
 
-# ...............................................
+    # ................................
     def summarizeMatricesForGridset(self, gridsetid, mtx_type=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::summarizeMatricesForGridset()
@@ -808,7 +793,7 @@ class BorgScribe(LMObject):
         status_total_pairs = self._borg.summarizeMatricesForGridset(gridsetid, mtx_type)
         return status_total_pairs
 
-# ...............................................
+    # ................................
     def summarizeMtxColumnsForGridset(self, gridsetid, mtx_type=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::summarizeMtxColumnsForGridset()
@@ -817,7 +802,7 @@ class BorgScribe(LMObject):
                                                                       mtx_type)
         return status_total_pairs
 
-# .............................................................................
+    # ................................
     def listSDMProjects(self, firstRecNum, maxNum, userId=None, squid=None,
                         displayName=None, afterTime=None, beforeTime=None,
                         epsg=None, afterStatus=None, beforeStatus=None,
@@ -834,7 +819,7 @@ class BorgScribe(LMObject):
                               atom)
         return objs
 
-# ...............................................
+    # ................................
     def findOrInsertMatrixColumn(self, mtxcol):
         """
         @summary: Find existing OR save a new MatrixColumn
@@ -844,7 +829,7 @@ class BorgScribe(LMObject):
         mtxcol = self._borg.findOrInsertMatrixColumn(mtxcol)
         return mtxcol
 
-# ...............................................
+    # ................................
     def initOrRollbackIntersect(self, lyr, mtx, intersectParams, mod_time):
         """
         @summary: Initialize model, projections for inputs/algorithm.
@@ -874,7 +859,7 @@ class BorgScribe(LMObject):
                 success = self.updateMatrixColumn(newOrExistingMtxcol)
         return newOrExistingMtxcol
 
-# ...............................................
+    # ................................
     def initOrRollbackSDMProjects(self, occ, mdlScen, projScenList, alg,
                                   mod_time=gmt().mjd, email=None):
         """
@@ -907,7 +892,7 @@ class BorgScribe(LMObject):
             prjs.append(newOrExistingPrj)
         return prjs
 
-# ...............................................
+    # ................................
     def initOrRollbackSDMChain(self, occ, algList, mdlScen, prjScenList,
                           gridset=None, intersectParams=None, minPointCount=None):
         """
@@ -942,7 +927,7 @@ class BorgScribe(LMObject):
                     objs.extend(mtxcols)
         return objs
 
-# ...............................................
+    # ................................
     def insertMFChain(self, mfchain, gridsetId):
         """
         @copydoc LmServer.db.catalog_borg.Borg::insertMFChain()
@@ -950,7 +935,7 @@ class BorgScribe(LMObject):
         mfchain = self._borg.insertMFChain(mfchain, gridsetId)
         return mfchain
 
-# ...............................................
+    # ................................
     def getMFChain(self, mfprocessid):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getMFChain()
@@ -958,7 +943,7 @@ class BorgScribe(LMObject):
         mfchain = self._borg.getMFChain(mfprocessid)
         return mfchain
 
-# ...............................................
+    # ................................
     def findMFChains(self, count, userId=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::findMFChains()
@@ -967,7 +952,7 @@ class BorgScribe(LMObject):
                                             JobStatus.INITIALIZE, JobStatus.PULL_REQUESTED)
         return mfchainList
 
-# ...............................................
+    # ................................
     def deleteMFChainsReturnFilenames(self, gridsetid):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteMFChainsReturnFilenames()
@@ -975,7 +960,7 @@ class BorgScribe(LMObject):
         flist = self._borg.deleteMFChainsReturnFilenames(gridsetid)
         return flist
 
-# .............................................................................
+    # ................................
     def countPriorityMFChains(self, gridsetId):
         """
         @copydoc LmServer.db.catalog_borg.Borg::countPriorityMFChains()
@@ -983,7 +968,7 @@ class BorgScribe(LMObject):
         count = self._borg.countPriorityMFChains(gridsetId)
         return count
 
-# .............................................................................
+    # ................................
     def countMFChains(self, userId=None, gridsetId=None, metastring=None,
                       afterStat=None, beforeStat=None,
                       afterTime=None, beforeTime=None):
@@ -994,7 +979,7 @@ class BorgScribe(LMObject):
                                 afterStat, beforeStat, afterTime, beforeTime)
         return count
 
-# .............................................................................
+    # ................................
     def listMFChains(self, firstRecNum, maxNum,
                      userId=None, gridsetId=None, metastring=None,
                      afterStat=None, beforeStat=None,
@@ -1006,7 +991,7 @@ class BorgScribe(LMObject):
                 metastring, afterStat, beforeStat, afterTime, beforeTime, atom)
         return objs
 
-# ...............................................
+    # ................................
     def summarizeMFChainsForGridset(self, gridsetid):
         """
         @copydoc LmServer.db.catalog_borg.Borg::summarizeMFChainsForGridset()
@@ -1014,7 +999,7 @@ class BorgScribe(LMObject):
         status_total_pairs = self._borg.summarizeMFChainsForGridset(gridsetid)
         return status_total_pairs
 
-# ...............................................
+    # ................................
     def updateObject(self, obj):
         """
         @copydoc LmServer.db.catalog_borg.Borg::updateObject()
@@ -1022,7 +1007,7 @@ class BorgScribe(LMObject):
         success = self._borg.updateObject(obj)
         return success
 
-# ...............................................
+    # ................................
     def deleteObject(self, obj):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteObject()
@@ -1030,7 +1015,7 @@ class BorgScribe(LMObject):
         success = self._borg.deleteObject(obj)
         return success
 
-# ...............................................
+    # ................................
     def deleteGridsetReturnFilenamesMtxcolids(self, gridsetId):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteGridsetReturnFilenames()
@@ -1040,7 +1025,7 @@ class BorgScribe(LMObject):
 
         return fnames, mtxcolids
 
-# ...............................................
+    # ................................
     def deleteObsoleteUserGridsetsReturnFilenamesMtxcolids(self, userid, obsolete_time):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteGridsetReturnFilenames()
@@ -1054,7 +1039,7 @@ class BorgScribe(LMObject):
             allmtxcolids.extend(mtxcolids)
         return allfilenames, allmtxcolids
 
-    # ...............................................
+    # ................................
     def deleteObsoleteSDMDataReturnIds(self, userid, beforetime, max_num=100):
         """
         @copydoc LmServer.db.catalog_borg.Borg::deleteObsoleteSDMDataReturnIds()
@@ -1065,7 +1050,7 @@ class BorgScribe(LMObject):
                                                            beforetime, max_num)
         return occids, mtxcolids
 
-# ...............................................
+    # ................................
     def getMapServiceForSDMOccurrence(self, occLyrOrId):
         """
         @param mapFilename: absolute path of mapfile
@@ -1088,7 +1073,7 @@ class BorgScribe(LMObject):
                             mapType=LMFileType.SDM_MAP)
         return mapsvc
 
-# ...............................................
+    # ................................
     def getMapServiceFromMapFilename(self, mapFilename):
         """
         @param mapFilename: absolute path of mapfile
@@ -1110,7 +1095,7 @@ class BorgScribe(LMObject):
             self.log.error('Mapping is available for SDM_MAP, SCENARIO_MAP, RAD_MAP')
         return mapsvc
 
-# ...............................................
+    # ................................
     def getOccLayersForGridset(self, gridsetid):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getOccLayersForGridset()
@@ -1120,7 +1105,7 @@ class BorgScribe(LMObject):
             occs = self._borg.getOccLayersForMatrix(pam.get_id())
         return occs
 
-# ...............................................
+    # ................................
     def getSDMColumnsForGridset(self, gridsetid, returnColumns=True,
                                 returnProjections=True):
         """
@@ -1144,41 +1129,10 @@ class BorgScribe(LMObject):
 
         return allPairs
 
-# ...............................................
+    # ................................
     def getMatricesForGridset(self, gridsetid, mtxType=None):
         """
         @copydoc LmServer.db.catalog_borg.Borg::getMatricesForGridset()
         """
         mtxs = self._borg.getMatricesForGridset(gridsetid, mtxType)
         return mtxs
-
-"""
-from LmServer.common.log import ConsoleLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
-                                                          PUBLIC_USER)
-
-scribe = BorgScribe(ConsoleLogger())
-scribe.openConnections()
-
-usr = scribe.findUser(userId='cshl')
-usr.setPassword('jetsons', False)
-scribe.updateUser(usr)
-
-usr = scribe.findUser(userId='radicchio')
-usr.setPassword('jetsons', False)
-scribe.updateUser(usr)
-
-usr = scribe.findUser(userId='madadam')
-usr.setPassword('jetsons', False)
-scribe.updateUser(usr)
-
-gset = scribe.getGridset(gridsetId=268)
-x = scribe.countMFChains(gridsetId=268, afterStat=299, beforeStat=301)
-
-mtx = scribe.getMatrix(mtxId=1410)
-mcs = scribe.listMatrixColumns(0,100, userId='x', matrixId=1410)
-
-scribe.closeConnections()
-"""

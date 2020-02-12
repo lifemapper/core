@@ -9,9 +9,10 @@ from LmServer.common.lmconstants import SALT
 # .............................................................................
 class LMUser(LMObject):
 
-    def __init__(self, userid, email, password, isEncrypted=False,
-                     firstName=None, lastName=None, institution=None,
-                     addr1=None, addr2=None, addr3=None, phone=None, mod_time=None):
+    # ................................
+    def __init__(self, user_id, email, password, is_encrypted=False,
+                     first_name=None, last_name=None, institution=None,
+                     addr_1=None, addr_2=None, addr_3=None, phone=None, mod_time=None):
         """
         @summary Layer superclass constructor
         @param userid: user chosen unique id
@@ -38,42 +39,43 @@ class LMUser(LMObject):
         self.phone = phone
         self.mod_time = mod_time
 
-# ...............................................
+    # ................................
     def getUserId(self):
         """
         @note: Function exists for consistency with ServiceObjects
         """
         return self.userid
 
+    # ................................
     def setUserId(self, id):
         """
         @note: Function exists for consistency with ServiceObjects
         """
         self.userid = id
 
-# ...............................................
+    # ................................
     def checkPassword(self, passwd):
         return self._password == self._encryptPassword(passwd)
 
-# ...............................................
+    # ................................
     def setPassword(self, passwd, isEncrypted):
         if isEncrypted:
             self._password = passwd
         else:
             self._password = self._encryptPassword(passwd)
 
-# ...............................................
+    # ................................
     def getPassword(self):
         return self._password
 
-    # ...............................................
+    # ................................
     def _encryptPassword(self, passwd):
         h1 = hashlib.md5(passwd)
         h2 = hashlib.md5(SALT)
         h3 = hashlib.md5(''.join((h1.hexdigest(), h2.hexdigest())))
         return h3.hexdigest()
 
-    # ...............................................
+    # ................................
     def equals(self, other):
         result = (isinstance(other, LMUser) and
                      self.userid == other.userid)
@@ -83,6 +85,7 @@ class LMUser(LMObject):
 # .............................................................................
 class DbUser:
 
+    # ................................
     def __init__(self, user, password):
         username = user
         password = password
