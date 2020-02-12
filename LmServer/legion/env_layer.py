@@ -35,7 +35,7 @@ class EnvType(_LayerParameters):
                 metadata={}, mod_time=None, envTypeId=None):
       """
       @summary Initialize the EnvType  class instance
-      @copydoc LmServer.base.layer2._LayerParameters::__init__()
+      @copydoc LmServer.base.layer._LayerParameters::__init__()
       @param envCode: Code for the environmental type (i.e. temp, elevation, bio7)
       @param gcmCode: Code for the Global Climate Model used to create these data
       @param altpredCode: Code for the alternate prediction (i.e. IPCC scenario 
@@ -70,7 +70,7 @@ class EnvLayer(EnvType, Raster):
                 envCode=None, gcmCode=None, altpredCode=None, dateCode=None,
                 envMetadata={}, envModTime=None, envTypeId=None):
       """
-      @copydoc LmServer.base.layer2.Raster::__init__()
+      @copydoc LmServer.base.layer.Raster::__init__()
       @copydoc LmServer.base.legion.EnvType::__init__()
       """
       if name is None:

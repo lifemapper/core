@@ -30,9 +30,9 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                  featureAttributes={}, features={}, fidAttribute=None,
                  status=None, statusModTime=None):
         """
-        @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
-        @copydoc LmServer.base.layer2._LayerParameters::__init__()
-        @copydoc LmServer.base.layer2.Vector::__init__()
+        @copydoc LmServer.base.service_object.ProcessObject::__init__()
+        @copydoc LmServer.base.layer._LayerParameters::__init__()
+        @copydoc LmServer.base.layer.Vector::__init__()
         @param cellsides: Number of sides in each cell of a site (i.e. square =4,
                           hexagon = 6).
         @param cellsize: Size in mapunits of each cell.  For cellSides = 6 
@@ -98,9 +98,9 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
     def updateStatus(self, status, matrixIndex=None, metadata=None,
                      mod_time=gmt().mjd):
         """
-        @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
-        @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
-        @copydoc LmServer.base.layer2._LayerParameters::updateParams()
+        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
+        @copydoc LmServer.base.service_object.ServiceObject::updateModtime()
+        @copydoc LmServer.base.layer._LayerParameters::updateParams()
         """
         ProcessObject.updateStatus(self, status, mod_time)
         ServiceObject.updateModtime(self, mod_time)

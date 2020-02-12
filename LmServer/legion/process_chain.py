@@ -25,7 +25,7 @@ class MFChain(ProcessObject):
         """
         @summary Class used to generate a Makeflow document with Lifemapper 
                  computational jobs
-        @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
+        @copydoc LmServer.base.service_object.ProcessObject::__init__()
         @param userId: Id for the owner of this process
         @param dlocation: location for Makeflow file
         @param priority: relative priority for jobs contained within
@@ -277,6 +277,6 @@ class MFChain(ProcessObject):
     # ...............................................
     def updateStatus(self, status, mod_time=gmt().mjd):
         """
-        @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
+        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
         """
         ProcessObject.updateStatus(self, status, mod_time)

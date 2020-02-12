@@ -379,14 +379,14 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import JobStatus, LM_USER
 
 from LmServer.base.utilities import is_lm_user
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (
     DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
     PUBLIC_ARCHIVE_NAME) 
 from LmServer.common.localconstants import PUBLIC_USER 
 from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.processchain import MFChain
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.process_chain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 from LmDbServer.boom.boom_collate import BoomCollate
 
@@ -433,7 +433,7 @@ from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.occ_layer import OccurrenceLayer
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 

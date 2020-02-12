@@ -196,7 +196,7 @@ import logging
 logger = ScriptLogger(logname, level=logging.INFO)
 
 ########################
-from LmServer.db.borgscribe import *
+from LmServer.db.borg_scribe import *
 
 ########################
 

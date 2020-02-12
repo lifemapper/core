@@ -47,8 +47,8 @@ class _ProjectionType(_LayerParameters, ProcessObject):
                 owned bythe boom user. 
 
         See:
-            * LmServer.base.layer2._LayerParameters::__init__()
-            * LmServer.base.serviceobject2.ProcessObject::__init__()
+            * LmServer.base.layer._LayerParameters::__init__()
+            * LmServer.base.service_object.ProcessObject::__init__()
 
         Todo:
             * projMask and mdlMask should be dictionaries with masking method,
@@ -194,7 +194,7 @@ class SDMProjection(_ProjectionType, Raster):
         """
         @summary Constructor for the SDMProjection class
         @copydoc LmServer.legion.sdmproj._ProjectionType::__init__()
-        @copydoc LmServer.base.layer2._Layer::__init__()
+        @copydoc LmServer.base.layer._Layer::__init__()
         """
         (userId, name, squid, processType, bbox, epsg, mapunits, resolution,
          isDiscreteData, dataFormat, title) = self._getDefaultsFromInputs(
@@ -374,9 +374,9 @@ class SDMProjection(_ProjectionType, Raster):
         """
         @summary Update status, metadata, mod_time attributes on the
             SDMProjection. 
-        @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
-        @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
-        @copydoc LmServer.base.layer2._LayerParameters::updateParams()
+        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
+        @copydoc LmServer.base.service_object.ServiceObject::updateModtime()
+        @copydoc LmServer.base.layer._LayerParameters::updateParams()
         """
         ProcessObject.updateStatus(self, status, mod_time)
         ServiceObject.updateModtime(self, mod_time)

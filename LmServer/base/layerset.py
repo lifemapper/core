@@ -275,7 +275,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         """
         @summary Constructor for the LayerSet class
         @copydoc LmServer.base.layerset._LayerSet::__init__()
-        @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
+        @copydoc LmServer.base.service_object.ServiceObject::__init__()
         @param mapname: mapname or code for this layerset
         @param layers: list of layers 
         @param dbid: database id of the object, occsetId for SDM_MAP layersets, 

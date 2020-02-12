@@ -1481,8 +1481,8 @@ from LmCommon.common.ready_file import ready_filename
 from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME, 
                                               GBIF_TAXONOMY_FILENAME)
-from LmDbServer.tools.catalogScenPkg import SPFiller
-from LmServer.common.datalocator import EarlJr
+from LmDbServer.tools.catalog_scen_package import SPFiller
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
                            GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
                            PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX,
@@ -1490,15 +1490,15 @@ from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.base.layer2 import Vector
-from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.layer import Vector
+from LmServer.base.service_object import ServiceObject
 from LmServer.base.utilities import is_lm_user
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix  
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.processchain import MFChain
+from LmServer.legion.lm_matrix import LMMatrix  
+from LmServer.legion.mtx_column import MatrixColumn          
+from LmServer.legion.process_chain import MFChain
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 from LmBackend.command.single import GrimRasterCommand

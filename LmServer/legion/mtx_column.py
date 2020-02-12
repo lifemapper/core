@@ -48,9 +48,9 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                      status=None, statusModTime=None):
         """
         @summary MatrixColumn constructor
-        @copydoc LmServer.base.layer2._LayerParameters::__init__()
-        @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
-        @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
+        @copydoc LmServer.base.layer._LayerParameters::__init__()
+        @copydoc LmServer.base.service_object.ServiceObject::__init__()
+        @copydoc LmServer.base.service_object.ProcessObject::__init__()
         @param matrixIndex: index for column within a matrix.  For the Global 
                  PAM, assembled dynamically, this will be None.
         @param matrixId: 
@@ -132,8 +132,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
         """
         @summary Update status, matrixIndex, metadata, mod_time attributes on the 
                     Matrix layer. 
-        @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
-        @copydoc LmServer.base.layer2._LayerParameters::updateParams()
+        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
+        @copydoc LmServer.base.layer._LayerParameters::updateParams()
         """
         ProcessObject.updateStatus(self, status, mod_time)
         _LayerParameters.updateParams(self, mod_time, matrixIndex=matrixIndex,
@@ -144,7 +144,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
         """
         @summary: Return temporary filename for output.
         @todo: Replace with consistent file construction from 
-               LmServer.common.datalocator.EarlJr.createBasename!
+               LmServer.common.data_locator.EarlJr.createBasename!
         """
         relFname = 'mtxcol_{}{}'.format(self.get_id(), LMFormat.MATRIX.ext)
         return relFname

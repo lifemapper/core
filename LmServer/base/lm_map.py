@@ -691,11 +691,11 @@ from osgeo import gdal, gdalconst, ogr
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT, DEFAULT_EPSG)
-from LmServer.base.layer2 import Raster, Vector
+from LmServer.base.layer import Raster, Vector
 from LmServer.base.lmobj import LMSpatialObject
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.colorpalette import colorPalette
-from LmServer.common.datalocator import EarlJr
+from LmServer.base.service_object import ServiceObject
+from LmServer.common.color_palette import colorPalette
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE, 
          LMFileType, IMAGE_PATH, BLUE_MARBLE_IMAGE, POINT_SYMBOL, 
          POINT_SIZE, LINE_SYMBOL, LINE_SIZE, POLYGON_SYMBOL, POLYGON_SIZE, 
@@ -704,7 +704,7 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          DEFAULT_ENVIRONMENTAL_PALETTE, PROJ_LIB, SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM)
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX)
-from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.occ_layer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.base.lmmap import *
 

@@ -5,7 +5,7 @@ import argparse
 import os
 
 from LmBackend.command.multi import (OccurrenceBucketeerCommand,
-                                 OccurrenceSorterCommand)  # , OccurrenceSplitterCommand)
+                                 OccurrenceSorterCommand)
 from LmBackend.command.server import TouchFileCommand
 from LmServer.legion.processchain import MFChain
 

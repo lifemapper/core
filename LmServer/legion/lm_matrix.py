@@ -92,8 +92,8 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         @summary: Updates matrixIndex, paramMetadata, and mod_time.
         @param metadata: Dictionary of Matrix metadata keys/values; key constants  
                               are ServiceObject class attributes.
-        @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
-        @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
+        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
+        @copydoc LmServer.base.service_object.ServiceObject::updateModtime()
         @note: Missing keyword parameters are ignored.
         """
         if metadata is not None:

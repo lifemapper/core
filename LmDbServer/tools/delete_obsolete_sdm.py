@@ -112,10 +112,10 @@ import shutil
 
 from LmCommon.common.lmconstants import ONE_DAY, DEFAULT_POST_USER
 
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import LMFileType
 from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 from LmServer.notifications.email import EmailNotifier
 
 from LmDbServer.tools.deleteObsoleteSDM import *

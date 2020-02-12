@@ -31,8 +31,8 @@ class OccurrenceType(_LayerParameters, ProcessObject):
                      status=None, statusModTime=None):
         """
         @summary Initialize the _Occurrences class instance
-        @copydoc LmServer.base.layer2._LayerParameters::__init__()
-        @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
+        @copydoc LmServer.base.layer._LayerParameters::__init__()
+        @copydoc LmServer.base.service_object.ProcessObject::__init__()
         @param displayName: Name to be displayed for this dataset
         @param queryCount: Count reported by last update to shapefile.  
                                  Used if there are no features attached to this
@@ -112,7 +112,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         """
         @todo: calculate bbox from points upon population, update as appropriate
         @summary Initialize the OccurrenceSet class instance
-        @copydoc LmServer.base.layer2.Vector::__init__()
+        @copydoc LmServer.base.layer.Vector::__init__()
         @copydoc LmServer.legion.occlayer.OccurrenceType::__init__()
         @todo: Remove count?
         @note: Vector.name is constructed in OccurrenceLayer.setId()

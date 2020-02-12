@@ -29,7 +29,7 @@ class _SpeciesWeaponOfChoice(LMObject):
     def __init__(self, scribe, user, archiveName, epsg, expDate, inputFname,
                      metaFname=None, taxonSourceName=None, logger=None):
         """
-        @param scribe: An open LmServer.db.borgscribe.BorgScribe object
+        @param scribe: An open LmServer.db.borg_scribe.BorgScribe object
         @param user: Userid
         @param archiveName: Name of gridset to be created for these data
         @param epsg: EPSG code for map projection
@@ -918,10 +918,10 @@ from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.occ_layer import OccurrenceLayer
 from LmServer.tools.occwoc import *
 from LmServer.tools.cwalken import *
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 

@@ -519,7 +519,7 @@ from LmCommon.common.occparse import OccDataParser
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 
 from LmServer.base.taxon import ScientificName
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 from LmServer.common.log import ScriptLogger
 from LmServer.legion.tree import Tree
 from LmCommon.common.api_query import IdigbioAPI

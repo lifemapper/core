@@ -51,7 +51,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
                      scenPackageId=None):
         """
         @summary Constructor for the ScenPackage class 
-        @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
+        @copydoc LmServer.base.service_object.ServiceObject::__init__()
         @param name: The name for this set of scenarios
         @param scenarios: list of Scenario objects
         """

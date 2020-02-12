@@ -35,7 +35,7 @@ class Gridset(ServiceObject):  # LMMap
                      userId=None, gridsetId=None, metadataUrl=None, mod_time=None):
         """
         @summary Constructor for the Gridset class
-        @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
+        @copydoc LmServer.base.service_object.ServiceObject::__init__()
         @param gridsetId: dbId  for ServiceObject
         @param name: Short identifier for this gridset, unique for userid.
         @param shapeGrid: Vector layer with polygons representing geographic sites.
@@ -449,7 +449,7 @@ class Gridset(ServiceObject):  # LMMap
 #     # ...............................................
 #     def updateModtime(self, mod_time=gmt().mjd):
 #         """
-#         @copydoc LmServer.base.serviceobject2.ProcessObject::updateModtime()
+#         @copydoc LmServer.base.service_object.ProcessObject::updateModtime()
 #         """
 #         ServiceObject.updateModtime(self, mod_time)
 

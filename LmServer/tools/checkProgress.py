@@ -119,7 +119,7 @@ from LmCommon.common.lmconstants import (DEFAULT_POST_USER,
                                 ONE_MONTH, ONE_DAY, ONE_HOUR, JobStatus)
 from LmServer.common.localconstants import PUBLIC_USER, TROUBLESHOOTERS
 from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 from LmServer.common.lmconstants import ReferenceType
 from LmServer.tools.checkProgress import *
 

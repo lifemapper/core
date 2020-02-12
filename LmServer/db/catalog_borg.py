@@ -545,7 +545,7 @@ class Borg(DbPostgresql):
         @param lyruser: Layer user id
         @param lyrname: Layer name
         @param lyrid: Layer EPSG code
-        @return: LmServer.base.layer2._Layer object
+        @return: LmServer.base.layer._Layer object
         """
         row, idxs = self.execute_select_one_function('lm_getLayer', lyrid, lyrverify,
                                                                 lyruser, lyrname, epsgcode)
@@ -1092,7 +1092,7 @@ class Borg(DbPostgresql):
         @param altpredCode: alternate prediction code of the LMMatrix
         @param dateCode: date code of the LMMatrix
         @param algCode: algorithm code of the LMMatrix
-        @return: Existing LmServer.legion.lmmatrix.LMMatrix
+        @return: Existing LmServer.legion.lm_matrix.LMMatrix
         """
         row, idxs = self.execute_select_one_function('lm_getMatrix', mtxId,
                 mtxType, gridsetId, gcmCode, altpredCode, dateCode, algCode,
@@ -1215,7 +1215,7 @@ class Borg(DbPostgresql):
         @param lyruser: Layer user id
         @param lyrname: Layer name
         @param lyrid: Layer EPSG code
-        @return: LmServer.base.layer2._Layer object
+        @return: LmServer.base.layer._Layer object
         """
         row, idxs = self.execute_select_one_function('lm_getEnvLayer', envlyrId,
                                             lyrid, lyrverify, lyruser, lyrname, epsgcode)
@@ -2555,7 +2555,7 @@ class Borg(DbPostgresql):
         """
         @summary: Retrieves MFChain from database
         @param mfprocessid: Database ID of MFChain to pull
-        @return: LmServer.legion.processchain.MFChains
+        @return: LmServer.legion.process_chain.MFChains
         """
         row, idxs = self.executeSelectManyFunction('lm_getMFChain', mfprocessid)
         mfchain = self._createMFChain(row, idxs)
