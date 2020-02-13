@@ -1,5 +1,6 @@
 """Module containing functions for API Queries
 """
+from copy import copy
 import csv
 import json
 import os
@@ -295,12 +296,12 @@ class BisonAPI(APIQuery):
         """
         if headers is None:
             headers = {'Content-Type': 'application/json'}
-        all_q_filters = BISON_QUERY.QFILTERS.copy()
+        all_q_filters = copy(BISON_QUERY.QFILTERS)
         if q_filters:
             all_q_filters.update(q_filters)
 
         # Add/replace other filters to defaults for this instance
-        all_other_filters = BISON_QUERY.FILTERS.copy()
+        all_other_filters = copy(BISON_QUERY.FILTERS)
         if other_filters:
             all_other_filters.update(other_filters)
 
@@ -770,8 +771,8 @@ class GbifAPI(APIQuery):
         """
         if os.path.exists(filename):
             names = []
-            with open(filename, 'r', encoding='utf-8') as f:
-                for line in f:
+            with open(filename, 'r', encoding='utf-8') as in_file:
+                for line in in_file:
                     names.append(line.strip())
 
         clean_names = {}
@@ -838,12 +839,12 @@ class IdigbioAPI(APIQuery):
             IDIGBIO.OCCURRENCE_POSTFIX))
 
         # Add/replace Q filters to defaults for this instance
-        all_q_filters = IDIGBIO_QUERY.QFILTERS.copy()
+        all_q_filters = copy(IDIGBIO_QUERY.QFILTERS)
         if q_filters:
             all_q_filters.update(q_filters)
 
         # Add/replace other filters to defaults for this instance
-        all_other_filters = IDIGBIO_QUERY.FILTERS.copy()
+        all_other_filters = copy(IDIGBIO_QUERY.FILTERS)
         if other_filters:
             all_other_filters.update(other_filters)
 
@@ -1262,7 +1263,7 @@ from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
                                          IDIGBIO, IDIGBIO_QUERY,
                                          URL_ESCAPES, HTTPStatus, DWCNames)
 from LmCommon.common.lm_xml import fromstring, deserialize
-from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import ready_filename, get_unicodecsv_reader
 from LmCommon.common.api_query import IdigbioAPI, GbifAPI
 

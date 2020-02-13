@@ -194,11 +194,11 @@ def _get_element_qname(namespace, tag):
 
 # .............................................................................
 def _pretty_format(elem, level=0):
-    """
-    @summary: Formats ElementTree element so that it prints pretty (recursive)
-    @param elem: ElementTree element to be pretty formatted
-    @param level: How many levels deep to indent for
-    @todo: May need to add an encoding parameter
+    """Formats ElementTree element so that it prints pretty (recursive)
+
+    Args:
+        elem: ElementTree element to be pretty formatted
+        level: How many levels deep to indent for
     """
     tab = "    "
 
@@ -276,9 +276,9 @@ def deserialize(element, remove_namespace=True):
         except AttributeError:
             return None
     else:
-        attribs = dict(
-            [(process_tag(key), element.attrib[key]
-              ) for key in list(element.attrib.keys())])
+        attribs = {
+            process_tag(key): element.attrib[key]
+            for key in element.attrib.keys()}
         obj = LmAttObj(attrib=attribs, name=process_tag(element.tag))
 
         try:

@@ -910,7 +910,7 @@ import sys
 from time import sleep
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.api_query import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
                                                 ProcessType, JobStatus, ONE_HOUR, LMFormat, IDIG_DUMP) 

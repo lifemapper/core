@@ -514,7 +514,7 @@ import urllib2
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.api_query import GbifAPI
 from LmCommon.common.lmconstants import PhyloTreeKeys, GBIF
-from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.occ_parse import OccDataParser
 
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 

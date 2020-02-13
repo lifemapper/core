@@ -61,7 +61,6 @@ def hexagon_wkt_generator(min_x, min_y, max_x, max_y, x_res, y_res):
 
 
 # .............................................................................
-# .............................................................................
 def square_wkt_generator(min_x, min_y, max_x, max_y, x_res, y_res):
     """Generator producing square WKT for cells of the shapegrid
 
@@ -121,7 +120,7 @@ def build_shapegrid(shapegrid_file_name, min_x, min_y, max_x, max_y, cell_size,
     target_srs = osr.SpatialReference()
     target_srs.ImportFromEPSG(epsg_code)
 
-    drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+    drv = ogr.GetDriverByName(LMFormat.get_defautl_ogr().driver)
     data_set = drv.CreateDataSource(shapegrid_file_name)
 
     layer = data_set.CreateLayer(

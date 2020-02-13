@@ -4,7 +4,7 @@ from enum import Enum
 
 try:
     from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
-except:
+except ImportError:
     OFTInteger = 0
     OFTReal = 2
     OFTString = 4
@@ -122,23 +122,23 @@ class FileFormat:
     """
 
     # ...........................
-    def __init__(self, extension, mimeType, allExtensions=None, driver=None,
+    def __init__(self, extension, mime_type, all_extensions=None, driver=None,
                  options=None, default=False):
         """Constructor
 
         Args:
             extension: This is the primary extension if a format has multiple
                 files
-            mimeType: The MIME-Type for this format
-            allExtensions: List of all possible extensions for this format
+            mime_type: The MIME-Type for this format
+            all_extensions: List of all possible extensions for this format
             driver: GDAL or OGR driver to use when reading this format
         """
-        self._mimeType = mimeType
+        self._mime_type = mime_type
         self.ext = extension
         self.driver = driver
         self.options = options
-        self.isDefault = default
-        self._extensions = allExtensions
+        self.is_default = default
+        self._extensions = all_extensions
         if self._extensions is None:
             self._extensions = []
         # Add the default extension to the extensions list if not present
@@ -146,25 +146,27 @@ class FileFormat:
             self._extensions.append(self.ext)
 
     # ..........................
-    def getExtensions(self):
+    def get_extensions(self):
+        """Get valid file extension for this file type
+        """
         return self._extensions
 
     # ...........................
-    def getMimeType(self):
-        return self._mimeType
+    def get_mime_type(self):
+        """Get the mime type for this file type
+        """
+        return self._mime_type
 
 
 # .............................................................................
 class LMFormat:
+    """Class containing known formats to Lifemapper
     """
-    @summary: Class containing known formats to Lifemapper
-    """
-    ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'],
-                       driver='AAIGrid',
-                       options={'DECIMAL_PRECISION': 6,
-                                'FORCE_CELLSIZE': 'YES'})
-    CSV = FileFormat('.csv', 'text/csv',
-                     driver='CSV')
+    ASCII = FileFormat(
+        '.asc', 'text/plain', all_extensions=['.asc', '.prj'],
+        driver='AAIGrid', options={
+            'DECIMAL_PRECISION': 6, 'FORCE_CELLSIZE': 'YES'})
+    CSV = FileFormat('.csv', 'text/csv', driver='CSV')
     CONFIG = FileFormat('.ini', 'text/plain')
     EML = FileFormat('.eml', 'application/xml+eml')
     GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff', default=True)
@@ -178,21 +180,19 @@ class LMFormat:
     MATRIX = FileFormat('.lmm', 'application/octet-stream')
     METADATA = FileFormat('.meta', 'text/plain')
     MXE = FileFormat('.mxe', 'application/octet-stream')
-    NEXUS = FileFormat('.nex', 'text/plain', allExtensions=['.nex', '.nxs'])
-    NEWICK = FileFormat('.tre', 'text/plain', allExtensions=['.tre', '.nhx'])
+    NEXUS = FileFormat('.nex', 'text/plain', all_extensions=['.nex', '.nxs'])
+    NEWICK = FileFormat('.tre', 'text/plain', all_extensions=['.tre', '.nhx'])
     NUMPY = FileFormat('.npy', 'application/octet-stream')
     PARAMS = FileFormat('.params', 'text/plain')
     PICKLE = FileFormat('.pkl', 'application/octet-stream')
     PROGRESS = FileFormat('.progress', 'application/progress+json')
     PYTHON = FileFormat('.py', 'text/plain')
-    SHAPE = FileFormat('.shp', 'application/x-gzip',
-                       allExtensions=[".shp", ".shx", ".dbf", ".prj", ".sbn",
-                                      ".sbx", ".fbn", ".fbx", ".ain", ".aih",
-                                      ".ixs", ".mxs", ".atx", ".shp.xml",
-                                      ".cpg", ".qix"],
-                       driver='ESRI Shapefile',
-                       default=True,
-                       options={'MAX_STRLEN': 255})
+    SHAPE = FileFormat(
+        '.shp', 'application/x-gzip',
+        all_extensions=['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.fbn',
+                        '.fbx', '.ain', '.aih', '.ixs', '.mxs', '.atx',
+                        '.shp.xml', '.cpg', '.qix'],
+        driver='ESRI Shapefile', default=True, options={'MAX_STRLEN': 255})
     TAR_GZ = FileFormat('.tar.gz', 'application/x-gzip')
     TMP = FileFormat('.tmp', 'application/octet-stream')
     TXT = FileFormat('.txt', 'text/plain')
@@ -200,106 +200,139 @@ class LMFormat:
     ZIP = FileFormat('.zip', 'application/zip')
 
     @staticmethod
-    def GDALFormats():
+    def gdal_formats():
+        """Returns a list of GDAL raster formats
+        """
         return [LMFormat.ASCII, LMFormat.GTIFF, LMFormat.HFA]
 
     @staticmethod
-    def getDefaultGDAL():
-        for ff in LMFormat.GDALFormats():
-            if ff.isDefault:
-                return ff
+    def get_default_gdal():
+        """Get the default gdal format
+        """
+        for frmt in LMFormat.gdal_formats():
+            if frmt.is_default:
+                return frmt
         return None
 
     @staticmethod
-    def OGRFormats():
+    def ogr_formats():
+        """Returns a list of OGR vector formats
+        """
         return [LMFormat.SHAPE, LMFormat.CSV, LMFormat.GEO_JSON]
 
     @staticmethod
-    def getDefaultOGR():
-        for ff in LMFormat.OGRFormats():
-            if ff.isDefault:
-                return ff
+    def get_defautl_ogr():
+        """Return the default OGR vector format
+        """
+        for frmt in LMFormat.ogr_formats():
+            if frmt.is_default:
+                return frmt
         return None
 
     @staticmethod
-    def getStrlenForDefaultOGR():
-        return LMFormat.getDefaultOGR().options['MAX_STRLEN']
+    def get_str_len_for_default_ogr():
+        """Get the maximum string length for the default OGR vector format
+        """
+        return LMFormat.get_defautl_ogr().options['MAX_STRLEN']
 
     @staticmethod
-    def SpatialFormats():
-        spFormats = [ff for ff in LMFormat.GDALFormats()]
-        spFormats.extend(LMFormat.OGRFormats())
-        return spFormats
+    def spatial_formats():
+        """Returns a list of spatial file formats
+        """
+        sp_formats = LMFormat.gdal_formats()
+        sp_formats.extend(LMFormat.ogr_formats())
+        return sp_formats
 
     @staticmethod
-    def getFormatByExtension(ext):
-        for ff in (LMFormat.ASCII, LMFormat.CSV, LMFormat.GEO_JSON,
-                   LMFormat.GTIFF, LMFormat.HFA, LMFormat.JSON, LMFormat.KML,
-                   LMFormat.LOG, LMFormat.MAKEFLOW, LMFormat.MAP, LMFormat.MXE,
-                   LMFormat.NEWICK, LMFormat.NUMPY, LMFormat.PICKLE,
-                   LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, LMFormat.TXT,
-                   LMFormat.XML, LMFormat.ZIP):
-            if ext == ff.ext:
-                return ff
+    def get_format_by_extension(ext):
+        """Get a FileFormat object for the specified file extension
+        """
+        for frmt in (
+                LMFormat.ASCII, LMFormat.CSV, LMFormat.GEO_JSON,
+                LMFormat.GTIFF, LMFormat.HFA, LMFormat.JSON, LMFormat.KML,
+                LMFormat.LOG, LMFormat.MAKEFLOW, LMFormat.MAP, LMFormat.MXE,
+                LMFormat.NEWICK, LMFormat.NUMPY, LMFormat.PICKLE,
+                LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, LMFormat.TXT,
+                LMFormat.XML, LMFormat.ZIP):
+            if ext == frmt.ext:
+                return frmt
         return None
 
     @staticmethod
-    def getFormatByDriver(driver):
-        for ff in LMFormat.SpatialFormats():
-            if driver == ff.driver:
-                return ff
+    def get_format_by_driver(driver):
+        """Get a FileFormat object that matches the specified driver
+        """
+        for frmt in LMFormat.spatial_formats():
+            if driver == frmt.driver:
+                return frmt
         return None
 
     @staticmethod
-    def getExtensionByDriver(driver):
-        ff = LMFormat.getFormatByDriver(driver)
-        if ff is not None:
-            return ff.ext
+    def get_extension_by_driver(driver):
+        """Get the appropriate file extension for the specified driver
+        """
+        frmt = LMFormat.get_format_by_driver(driver)
+        if frmt is not None:
+            return frmt.ext
         return None
 
     @staticmethod
-    def isGeo(ext=None, driver=None):
-        for ff in LMFormat.SpatialFormats():
-            if ext is not None and ext == ff.ext:
+    def is_geo(ext=None, driver=None):
+        """Return boolean indicating if format is spatial
+        """
+        for format_ in LMFormat.spatial_formats():
+            if ext is not None and ext == format_.ext:
                 return True
-            elif driver is not None and driver == ff.driver:
+            if driver is not None and driver == format_.driver:
                 return True
         return False
 
     @staticmethod
-    def isOGR(ext=None, driver=None):
-        for ff in LMFormat.OGRFormats():
-            if ext is not None and ext == ff.ext:
+    def is_ogr(ext=None, driver=None):
+        """Return boolean indicating if format is OGR vector
+        """
+        for format_ in LMFormat.ogr_formats():
+            if ext is not None and ext == format_.ext:
                 return True
-            elif driver is not None and driver == ff.driver:
-                return True
-        return False
-
-    @staticmethod
-    def OGRDrivers():
-        return [ff.driver for ff in LMFormat.OGRFormats()]
-
-    @staticmethod
-    def isGDAL(ext=None, driver=None):
-        for ff in LMFormat.GDALFormats():
-            if ext is not None and ext == ff.ext:
-                return True
-            elif driver is not None and driver == ff.driver:
+            if driver is not None and driver == format_.driver:
                 return True
         return False
 
     @staticmethod
-    def GDALDrivers():
-        return [ff.driver for ff in LMFormat.GDALFormats()]
+    def ogr_drivers():
+        """Returns a list of OGR vector format drivers
+        """
+        return [format_.driver for format_ in LMFormat.ogr_formats()]
 
     @staticmethod
-    def isJSON(ext):
+    def is_gdal(ext=None, driver=None):
+        """Returns a boolean indication if the format is GDAL raster
+        """
+        for format_ in LMFormat.gdal_formats():
+            if ext is not None and ext == format_.ext:
+                return True
+            if driver is not None and driver == format_.driver:
+                return True
+        return False
+
+    @staticmethod
+    def gdal_drivers():
+        """Return a list of GDAL raster drivers
+        """
+        return [format_.driver for format_ in LMFormat.gdal_formats()]
+
+    @staticmethod
+    def is_json(ext):
+        """Return a boolean indicating if the format is JSON
+        """
         if ext in (LMFormat.GEO_JSON.ext, LMFormat.JSON.ext):
             return True
         return False
 
     @staticmethod
-    def isTestable(ext):
+    def is_testable(ext):
+        """Return a boolean indicating if the format is testable
+        """
         if ext in (LMFormat.ASCII.ext, LMFormat.GTIFF.ext,
                    LMFormat.SHAPE.ext, LMFormat.JSON.ext):
             return True
@@ -534,31 +567,27 @@ class JobStatus(Enum):
     # ............................................
     @staticmethod
     def waiting(stat):
-        if stat == JobStatus.GENERAL or stat == JobStatus.INITIALIZE:
-            return True
-        else:
-            return False
+        """Return boolean indicating if status is a waiting status
+        """
+        return stat in (JobStatus.GENERAL, JobStatus.INITIALIZE)
 
     @staticmethod
     def incomplete(stat):
-        if stat < JobStatus.COMPLETE:
-            return True
-        else:
-            return False
+        """Return boolean indicating if the status is a non-terminal status
+        """
+        return stat < JobStatus.COMPLETE
 
     @staticmethod
     def finished(stat):
-        if stat >= JobStatus.COMPLETE:
-            return True
-        else:
-            return False
+        """Return a boolean indicating if the status is a "finished" status
+        """
+        return stat >= JobStatus.COMPLETE
 
     @staticmethod
     def failed(stat):
-        if stat == JobStatus.NOT_FOUND or stat >= JobStatus.GENERAL_ERROR:
-            return True
-        else:
-            return False
+        """Return boolean indication if the status is a failed status
+        """
+        return stat == JobStatus.NOT_FOUND or stat >= JobStatus.GENERAL_ERROR
 
 
 # ............................................................................
@@ -620,54 +649,55 @@ class ProcessType(Enum):
     RAD_INTERSECT = 310
 
     @staticmethod
-    def isOccurrence(ptype):
-        if ptype in [ProcessType.GBIF_TAXA_OCCURRENCE,
-                     # ProcessType.BISON_TAXA_OCCURRENCE,
-                     # ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                     ProcessType.USER_TAXA_OCCURRENCE]:
-            return True
-        return False
+    def is_occurrence(ptype):
+        """Return boolean indicating if the process type is for occurrences
+        """
+        return ptype in (
+                ProcessType.GBIF_TAXA_OCCURRENCE,
+                # ProcessType.BISON_TAXA_OCCURRENCE,
+                # ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                ProcessType.USER_TAXA_OCCURRENCE)
 
     @staticmethod
-    def isProject(ptype):
-        if ptype in [ProcessType.ATT_PROJECT, ProcessType.OM_PROJECT]:
-            return True
-        return False
+    def is_project(ptype):
+        """Return boolean indicating if the process type is for projections
+        """
+        return ptype in (ProcessType.ATT_PROJECT, ProcessType.OM_PROJECT)
 
     @staticmethod
-    def isIntersect(ptype):
-        if ptype in [
-                ProcessType.INTERSECT_RASTER, ProcessType.INTERSECT_VECTOR,
-                ProcessType.INTERSECT_RASTER_GRIM]:
-            return True
-        return False
+    def is_intersect(ptype):
+        """Return boolean indicating if the process type is for intersects
+        """
+        return ptype in (
+            ProcessType.INTERSECT_RASTER, ProcessType.INTERSECT_VECTOR,
+            ProcessType.INTERSECT_RASTER_GRIM)
 
     @staticmethod
-    def isRAD(ptype):
-        if ptype in [ProcessType.SMTP, ProcessType.RAD_BUILDGRID,
-                     ProcessType.RAD_INTERSECT,
-                     ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH,
-                     ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY,
-                     ProcessType.MCPA_CORRECT_PVALUES,
-                     ProcessType.MCPA_OBSERVED, ProcessType.MCPA_RANDOM,
-                     ProcessType.ENCODE_HYPOTHESES,
-                     ProcessType.ENCODE_PHYLOGENY, ProcessType.MCPA_ASSEMBLE,
-                     ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER,
-                     ProcessType.OCC_SPLITTER, ProcessType.BUILD_ANC_PAM]:
-            return True
-        return False
+    def is_rad(ptype):
+        """Return boolean indicating if process type is for RAD process
+        """
+        return ptype in (
+            ProcessType.SMTP, ProcessType.RAD_BUILDGRID,
+            ProcessType.RAD_INTERSECT, ProcessType.RAD_SWAP,
+            ProcessType.RAD_SPLOTCH, ProcessType.RAD_CALCULATE,
+            ProcessType.RAD_GRADY, ProcessType.MCPA_CORRECT_PVALUES,
+            ProcessType.MCPA_OBSERVED, ProcessType.MCPA_RANDOM,
+            ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY,
+            ProcessType.MCPA_ASSEMBLE, ProcessType.OCC_BUCKETEER,
+            ProcessType.OCC_SORTER, ProcessType.OCC_SPLITTER,
+            ProcessType.BUILD_ANC_PAM)
 
     @staticmethod
-    def isMatrix(ptype):
-        if ptype in [
-                ProcessType.CONCATENATE_MATRICES, ProcessType.RAD_CALCULATE,
-                ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY,
-                ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH,
-                ProcessType.RAD_GRADY, ProcessType.MCPA_ASSEMBLE,
-                ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
-                ProcessType.MCPA_RANDOM, ProcessType.BUILD_ANC_PAM]:
-            return True
-        return False
+    def is_matrix(ptype):
+        """Return boolean indicating if the process type generates a matrix
+        """
+        return ptype in (
+            ProcessType.CONCATENATE_MATRICES, ProcessType.RAD_CALCULATE,
+            ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY,
+            ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH,
+            ProcessType.RAD_GRADY, ProcessType.MCPA_ASSEMBLE,
+            ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
+            ProcessType.MCPA_RANDOM, ProcessType.BUILD_ANC_PAM)
 
 
 # .............................................................................
@@ -704,7 +734,7 @@ DEFAULT_NODATA = -9999
 DWC_QUALIFIER = 'dwc:'
 
 
-class DWCNames(Enum):
+class DwcNames(Enum):
     """Darwin core names enumeration
     """
     OCCURRENCE_ID = {'FULL': 'occurrenceID', 'SHORT': 'occurid'}
@@ -726,15 +756,16 @@ class DWCNames(Enum):
     STATE_PROVINCE = {'FULL': 'stateProvince', 'SHORT': 'stprov'}
 
     @staticmethod
-    def _definedNames():
-        return [DWCNames.OCCURRENCE_ID, DWCNames.INSTITUTION_CODE,
-                DWCNames.INSTITUTION_ID, DWCNames.COLLECTION_CODE,
-                DWCNames.COLLECTION_ID, DWCNames.CONTINENT,
-                DWCNames.CATALOG_NUMBER, DWCNames.BASIS_OF_RECORD,
-                DWCNames.DECIMAL_LATITUDE, DWCNames.DECIMAL_LONGITUDE,
-                DWCNames.SCIENTIFIC_NAME, DWCNames.DAY,
-                DWCNames.MONTH, DWCNames.YEAR, DWCNames.RECORDED_BY,
-                DWCNames.COUNTRY_CODE, DWCNames.STATE_PROVINCE]
+    def _defined_names():
+        return [
+            DwcNames.OCCURRENCE_ID, DwcNames.INSTITUTION_CODE,
+            DwcNames.INSTITUTION_ID, DwcNames.COLLECTION_CODE,
+            DwcNames.COLLECTION_ID, DwcNames.CONTINENT,
+            DwcNames.CATALOG_NUMBER, DwcNames.BASIS_OF_RECORD,
+            DwcNames.DECIMAL_LATITUDE, DwcNames.DECIMAL_LONGITUDE,
+            DwcNames.SCIENTIFIC_NAME, DwcNames.DAY, DwcNames.MONTH,
+            DwcNames.YEAR, DwcNames.RECORDED_BY, DwcNames.COUNTRY_CODE,
+            DwcNames.STATE_PROVINCE]
 
 
 # ......................................................
@@ -747,7 +778,7 @@ class GBIF(Enum):
     """
     DATA_DUMP_DELIMITER = '\t'
     TAXON_KEY = 'specieskey'
-    TAXON_NAME = DWCNames.SCIENTIFIC_NAME['SHORT']
+    TAXON_NAME = DwcNames.SCIENTIFIC_NAME['SHORT']
     PROVIDER = 'puborgkey'
     GBIFID = 'gbifid'
     WAIT_TIME = 3 * ONE_MIN
@@ -762,7 +793,7 @@ class GBIF(Enum):
     ORGANIZATION_SERVICE = 'organization'
 
     TAXONKEY_FIELD = 'specieskey'
-    TAXONNAME_FIELD = DWCNames.SCIENTIFIC_NAME['SHORT']
+    TAXONNAME_FIELD = DwcNames.SCIENTIFIC_NAME['SHORT']
     PROVIDER_FIELD = 'puborgkey'
     ID_FIELD = 'gbifid'
 
@@ -798,7 +829,7 @@ class GBIF(Enum):
     LINK_PREFIX = 'http://www.gbif.org/occurrence/'
 
 
-class GBIF_QUERY(Enum):
+class GbifQuery(Enum):
     """GBIF query constants
     """
     TAXON_FIELDS = {0: ('taxonkey', OFTString),
@@ -808,16 +839,16 @@ class GBIF_QUERY(Enum):
                     4: ('order', OFTString),
                     5: ('family', OFTString),
                     6: ('genus', OFTString),
-                    7: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+                    7: (DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
                     8: ('genuskey', OFTInteger),
                     9: (GBIF.TAXONKEY_FIELD, OFTInteger),
                     10: ('count', OFTInteger)}
     EXPORT_FIELDS = {0: (GBIF.ID_FIELD, OFTInteger),
-                     1: (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
+                     1: (DwcNames.OCCURRENCE_ID['SHORT'], OFTInteger),
                      2: ('taxonkey', OFTInteger),
                      3: ('datasetkey', OFTString),
                      4: (GBIF.PROVIDER_FIELD, OFTString),
-                     5: (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
+                     5: (DwcNames.BASIS_OF_RECORD['SHORT'], OFTString),
                      6: ('kingdomkey', OFTInteger),
                      7: ('phylumkey', OFTInteger),
                      8: ('classkey', OFTInteger),
@@ -825,16 +856,16 @@ class GBIF_QUERY(Enum):
                      10: ('familykey', OFTInteger),
                      11: ('genuskey', OFTInteger),
                      12: (GBIF.TAXONKEY_FIELD, OFTInteger),
-                     13: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-                     14: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                     15: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-                     16: (DWCNames.DAY['SHORT'], OFTInteger),
-                     17: (DWCNames.MONTH['SHORT'], OFTInteger),
-                     18: (DWCNames.YEAR['SHORT'], OFTInteger),
-                     19: (DWCNames.RECORDED_BY['SHORT'], OFTString),
-                     20: (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
-                     21: (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
-                     22: (DWCNames.CATALOG_NUMBER['SHORT'], OFTString)}
+                     13: (DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+                     14: (DwcNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+                     15: (DwcNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+                     16: (DwcNames.DAY['SHORT'], OFTInteger),
+                     17: (DwcNames.MONTH['SHORT'], OFTInteger),
+                     18: (DwcNames.YEAR['SHORT'], OFTInteger),
+                     19: (DwcNames.RECORDED_BY['SHORT'], OFTString),
+                     20: (DwcNames.INSTITUTION_CODE['SHORT'], OFTString),
+                     21: (DwcNames.COLLECTION_CODE['SHORT'], OFTString),
+                     22: (DwcNames.CATALOG_NUMBER['SHORT'], OFTString)}
     PARAMS = {GBIF.SPECIES_SERVICE: {'status': 'ACCEPTED',
                                      GBIF.REQUEST_RANK_KEY: None,
                                      GBIF.REQUEST_DATASET_KEY: None,
@@ -859,7 +890,8 @@ class BISON(Enum):
     """
     OCCURRENCE_URL = 'https://bison.usgs.gov/solr/occurrences/select'
     # Ends in : to allow appending unique id
-    LINK_PREFIX = 'https://bison.usgs.gov/solr/occurrences/select/?q=occurrenceID:'
+    LINK_PREFIX = ('https://bison.usgs.gov/solr/occurrences/select/' +
+                   '?q=occurrenceID:')
     LINK_FIELD = 'bisonurl'
     # For TSN query filtering on Binomial
     NAME_KEY = 'ITISscientificName'
@@ -875,7 +907,7 @@ class BISON(Enum):
 
 
 # .............................................................................
-class BISON_QUERY(Enum):
+class BisonQuery(Enum):
     """BISON query constants enumeration
     """
     # Expected Response Dictionary Keys
@@ -883,7 +915,7 @@ class BISON_QUERY(Enum):
     RECORD_KEYS = ['response', 'docs']
     COUNT_KEYS = ['response', 'numFound']
     TSN_FILTERS = {'facet': True,
-                   'facet.limit':-1,
+                   'facet.limit': -1,
                    'facet.mincount': BISON.MIN_POINT_COUNT,
                    'facet.field': BISON.TSN_KEY,
                    'rows': 0}
@@ -897,25 +929,25 @@ class BISON_QUERY(Enum):
                'json.nl': 'arrarr'}
     RESPONSE_FIELDS = {
         'ITIScommonName': ('comname', OFTString),
-        BISON.NAME_KEY: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+        BISON.NAME_KEY: (DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
         'ITIStsn': ('itistsn', OFTInteger),
         BISON.TSN_KEY: None,
         'ambiguous': None,
-        DWCNames.BASIS_OF_RECORD['FULL']: (
-            DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
+        DwcNames.BASIS_OF_RECORD['FULL']: (
+            DwcNames.BASIS_OF_RECORD['SHORT'], OFTString),
         'calculatedCounty': ('county', OFTString),
         'calculatedState': ('state', OFTString),
-        DWCNames.CATALOG_NUMBER['FULL']: (
-            DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
+        DwcNames.CATALOG_NUMBER['FULL']: (
+            DwcNames.CATALOG_NUMBER['SHORT'], OFTString),
         'collectionID': ('coll_id', OFTString),
         'computedCountyFips': None,
         'computedStateFips': None,
-        DWCNames.COUNTRY_CODE['FULL']: (
-            DWCNames.COUNTRY_CODE['SHORT'], OFTString),
-        DWCNames.DECIMAL_LATITUDE['FULL']: (
-            DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-        DWCNames.DECIMAL_LONGITUDE['FULL']: (
-            DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+        DwcNames.COUNTRY_CODE['FULL']: (
+            DwcNames.COUNTRY_CODE['SHORT'], OFTString),
+        DwcNames.DECIMAL_LATITUDE['FULL']: (
+            DwcNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+        DwcNames.DECIMAL_LONGITUDE['FULL']: (
+            DwcNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
         'eventDate': ('date', OFTString),
         # Space delimited, same as latlon
         'geo': None,
@@ -924,32 +956,33 @@ class BISON_QUERY(Enum):
         BISON.KINGDOM_KEY: ('kingdom', OFTString),
         # Comma delimited, same as geo
         'latlon': ('latlon', OFTString),
-        DWCNames.OCCURRENCE_ID['FULL']: (
-            DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
+        DwcNames.OCCURRENCE_ID['FULL']: (
+            DwcNames.OCCURRENCE_ID['SHORT'], OFTInteger),
         'ownerInstitutionCollectionCode': (PROVIDER_FIELD_COMMON, OFTString),
         'pointPath': None,
         'providedCounty': None,
         'providedScientificName': None,
         'providerID': None,
-        DWCNames.RECORDED_BY['FULL']: (
-            DWCNames.RECORDED_BY['SHORT'], OFTString),
+        DwcNames.RECORDED_BY['FULL']: (
+            DwcNames.RECORDED_BY['SHORT'], OFTString),
         'resourceID': None,
         # Use ITIS Scientific Name
         'scientificName': None,
         'stateProvince': ('stprov', OFTString),
-        DWCNames.YEAR['SHORT']: (DWCNames.YEAR['SHORT'], OFTInteger),
+        DwcNames.YEAR['SHORT']: (DwcNames.YEAR['SHORT'], OFTInteger),
         # Very long integer
         '_version_': None
     }
 
 
 # .............................................................................
-class ITIS(Enum):
+class Itis(Enum):
     """ITIS constants enumeration
     """
     DATA_NAMESPACE = 'http://data.itis_service.itis.usgs.gov/xsd'
     # Basic Web Services
-    TAXONOMY_HIERARCHY_URL = 'http://www.itis.gov/ITISWebService/services/ITISService/getFullHierarchyFromTSN'
+    TAXONOMY_HIERARCHY_URL = ('http://www.itis.gov/ITISWebService/services/' +
+                              'ITISService/getFullHierarchyFromTSN')
     # JSON Web Services
     TAXONOMY_KEY = 'tsn'
     HIERARCHY_TAG = 'hierarchyList'
@@ -967,7 +1000,7 @@ class ITIS(Enum):
 # .............................................................................
 # .                           iDigBio constants                               .
 # .............................................................................
-class IDIGBIO(Enum):
+class Idigbio(Enum):
     """iDigBio constants enumeration
     """
     LINK_PREFIX = 'https://www.idigbio.org/portal/records/'
@@ -988,7 +1021,7 @@ class IDIGBIO(Enum):
 
 
 # .............................................................................
-class IDIG_DUMP(Enum):
+class IdigbioDump(Enum):
     """iDigBio dump constants enumeration
     """
     EXPORT_FIELDS = {0: ('coreid', None),
@@ -1076,21 +1109,21 @@ class IDIG_DUMP(Enum):
         0: {'name': 'coreid', 'type': OFTString},
         1: None,
         2: None,
-        3: {'name': DWCNames.BASIS_OF_RECORD['SHORT'], 'type': OFTString},
+        3: {'name': DwcNames.BASIS_OF_RECORD['SHORT'], 'type': OFTString},
         4: None,
         5: {'name': 'canonical', 'type': OFTString, 'role': 'taxaname'},
-        6: {'name': DWCNames.CATALOG_NUMBER['SHORT'], 'type': OFTString},
+        6: {'name': DwcNames.CATALOG_NUMBER['SHORT'], 'type': OFTString},
         7: None,
-        8: {'name': DWCNames.COLLECTION_CODE['SHORT'], 'type': OFTString},
-        9: {'name': DWCNames.COLLECTION_ID['SHORT'], 'type': OFTString},
+        8: {'name': DwcNames.COLLECTION_CODE['SHORT'], 'type': OFTString},
+        9: {'name': DwcNames.COLLECTION_ID['SHORT'], 'type': OFTString},
         10: None,
-        11: {'name': DWCNames.RECORDED_BY['SHORT'], 'type': OFTString},
+        11: {'name': DwcNames.RECORDED_BY['SHORT'], 'type': OFTString},
         12: None,
         13: None,
         14: None,
         15: None,
         16: None,
-        17: {'name': DWCNames.COUNTRY_CODE['SHORT'], 'type': OFTString},
+        17: {'name': DwcNames.COUNTRY_CODE['SHORT'], 'type': OFTString},
         18: None,
         19: None,
         20: None,
@@ -1116,8 +1149,8 @@ class IDIG_DUMP(Enum):
         40: None,
         41: None,
         42: None,
-        43: {'name': DWCNames.INSTITUTION_CODE['SHORT'], 'type': OFTString},
-        44: {'name': DWCNames.INSTITUTION_ID['SHORT'], 'type': OFTString},
+        43: {'name': DwcNames.INSTITUTION_CODE['SHORT'], 'type': OFTString},
+        44: {'name': DwcNames.INSTITUTION_ID['SHORT'], 'type': OFTString},
         45: None,
         46: None,
         47: None,
@@ -1135,16 +1168,16 @@ class IDIG_DUMP(Enum):
         59: None,
         60: None,
         61: None,
-        62: {'name': DWCNames.OCCURRENCE_ID['SHORT'], 'type': OFTString},
+        62: {'name': DwcNames.OCCURRENCE_ID['SHORT'], 'type': OFTString},
         63: None,
         64: None,
         65: None,
         66: None,
         67: {'name': 'recordset', 'type': OFTString},
-        68: {'name': DWCNames.SCIENTIFIC_NAME['SHORT'], 'type': OFTString},
+        68: {'name': DwcNames.SCIENTIFIC_NAME['SHORT'], 'type': OFTString},
         69: None,
         70: None,
-        71: {'name': DWCNames.STATE_PROVINCE['SHORT'], 'type': OFTString},
+        71: {'name': DwcNames.STATE_PROVINCE['SHORT'], 'type': OFTString},
         72: {'name': 'taxonID', 'type': OFTInteger, 'role': 'GroupBy'},
         73: None,
         74: {'name': 'rank', 'type': OFTString},
@@ -1158,61 +1191,61 @@ class IDIG_DUMP(Enum):
 
 
 # .............................................................................
-class IDIGBIO_QUERY(Enum):
+class IdigbioQuery(Enum):
     """iDigBio query constants enumeration
     """
-    EXPORT_FIELDS = {0: (IDIGBIO.ID_FIELD, OFTString),
-                     1: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                     2: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-                     3: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+    EXPORT_FIELDS = {0: (Idigbio.ID_FIELD, OFTString),
+                     1: (DwcNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+                     2: (DwcNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+                     3: (DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
                      4: (PROVIDER_FIELD_COMMON, OFTString)}
     # Geopoint.lat and Geopoint.lon are modified on return to short names
     # Response record fields: https://search.idigbio.org/v2/meta/fields/records
     RETURN_FIELDS = {
-       IDIGBIO.QUALIFIER + IDIGBIO.ID_FIELD: (IDIGBIO.ID_FIELD, OFTString),
-       IDIGBIO.GBIFID_FIELD: ('taxonid', OFTString),
-       DWC_QUALIFIER + DWCNames.SCIENTIFIC_NAME['FULL']: (
-           DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.BASIS_OF_RECORD['FULL']: (
-           DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.CATALOG_NUMBER['FULL']: (
-           DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.COLLECTION_ID['FULL']: (
-           DWCNames.COLLECTION_ID['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.COLLECTION_CODE['FULL']: (
-           DWCNames.COLLECTION_CODE['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.RECORDED_BY['FULL']: (
-           DWCNames.RECORDED_BY['SHORT'], OFTString),
+       Idigbio.QUALIFIER + Idigbio.ID_FIELD: (Idigbio.ID_FIELD, OFTString),
+       Idigbio.GBIFID_FIELD: ('taxonid', OFTString),
+       DWC_QUALIFIER + DwcNames.SCIENTIFIC_NAME['FULL']: (
+           DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.BASIS_OF_RECORD['FULL']: (
+           DwcNames.BASIS_OF_RECORD['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.CATALOG_NUMBER['FULL']: (
+           DwcNames.CATALOG_NUMBER['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.COLLECTION_ID['FULL']: (
+           DwcNames.COLLECTION_ID['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.COLLECTION_CODE['FULL']: (
+           DwcNames.COLLECTION_CODE['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.RECORDED_BY['FULL']: (
+           DwcNames.RECORDED_BY['SHORT'], OFTString),
        'commonname': ('comname', OFTString),
-       DWC_QUALIFIER + DWCNames.CONTINENT['FULL']: (
-           DWCNames.CONTINENT['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.COUNTRY_CODE['FULL']: (
-           DWCNames.COUNTRY_CODE['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.DAY['FULL']: (
-           DWCNames.DAY['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.MONTH['FULL']: (
-           DWCNames.MONTH['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.YEAR['FULL']: (
-           DWCNames.YEAR['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.INSTITUTION_CODE['FULL']: (
-           DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.INSTITUTION_ID['FULL']: (
-           DWCNames.INSTITUTION_ID['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.OCCURRENCE_ID['FULL']: (
-           DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
-       DWC_QUALIFIER + DWCNames.STATE_PROVINCE['FULL']: (
-           DWCNames.STATE_PROVINCE['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.DECIMAL_LATITUDE['FULL']: (
-           DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-       DWC_QUALIFIER + DWCNames.DECIMAL_LONGITUDE['FULL']: (
-           DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+       DWC_QUALIFIER + DwcNames.CONTINENT['FULL']: (
+           DwcNames.CONTINENT['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.COUNTRY_CODE['FULL']: (
+           DwcNames.COUNTRY_CODE['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.DAY['FULL']: (
+           DwcNames.DAY['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.MONTH['FULL']: (
+           DwcNames.MONTH['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.YEAR['FULL']: (
+           DwcNames.YEAR['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.INSTITUTION_CODE['FULL']: (
+           DwcNames.INSTITUTION_CODE['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.INSTITUTION_ID['FULL']: (
+           DwcNames.INSTITUTION_ID['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.OCCURRENCE_ID['FULL']: (
+           DwcNames.OCCURRENCE_ID['SHORT'], OFTInteger),
+       DWC_QUALIFIER + DwcNames.STATE_PROVINCE['FULL']: (
+           DwcNames.STATE_PROVINCE['SHORT'], OFTString),
+       DWC_QUALIFIER + DwcNames.DECIMAL_LATITUDE['FULL']: (
+           DwcNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+       DWC_QUALIFIER + DwcNames.DECIMAL_LONGITUDE['FULL']: (
+           DwcNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
        }
     QFILTERS = {'basisofrecord': 'preservedspecimen'}
     #    queryFlds = IDIGBIO_RETURN_FIELDS.keys()
     #    queryFlds.append('geopoint')
 
     FILTERS = {  # 'fields': queryFlds,
-        'limit': IDIGBIO.SEARCH_LIMIT,
+        'limit': Idigbio.SEARCH_LIMIT,
         'offset': 0,
         'no_attribution': False}
 
@@ -1225,7 +1258,8 @@ LM_WKT_FIELD = 'geomwkt'
 # .............................................................................
 # .                              Other constants                              .
 # .............................................................................
-LegalMapUnits = ['feet', 'inches', 'kilometers', 'meters', 'miles', 'dd', 'ds']
+LEGAL_MAP_UNITS = [
+    'feet', 'inches', 'kilometers', 'meters', 'miles', 'dd', 'ds']
 
 URL_ESCAPES = [[" ", "%20"], [",", "%2C"]]
 
@@ -1284,7 +1318,6 @@ class HTTPStatus(Enum):
     SERVICE_UNAVAILABLE = 503
     GATEWAY_TIMEOUT = 504
     HTTP_VERSION_NOT_SUPPORTED = 505
-
 
 
 # .............................................................................

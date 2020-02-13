@@ -426,7 +426,7 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.api_query import GbifAPI
 from LmCommon.common.lmconstants import (GBIF, ProcessType, 
                                          JobStatus, ONE_HOUR, LMFormat) 
-from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import (ready_filename)
 
 from LmServer.base.taxon import ScientificName

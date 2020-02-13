@@ -77,7 +77,7 @@ class LmLogger(logging.Logger):
             try:
                 fname = hdlr.baseFilename
                 return fname
-            except:
+            except Exception:
                 pass
 
 

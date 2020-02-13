@@ -373,7 +373,7 @@ import os
 import sys
 
 from LmCommon.common.lmconstants import LMFormat
-from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import *
 
 from LmServer.common.log import ScriptLogger
