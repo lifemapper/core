@@ -12,6 +12,7 @@ from LmCompute.plugins.single.modeling.openModeller_constants import (
     OM_VERSION)
 from LmTest.validate.raster_validator import validate_raster_file
 from LmTest.validate.xml_validator import validate_xml_file
+from LmBackend.common.lmobj import LMError
 
 # TODO: Should these be in constants somewhere?
 ALGORITHM_CODE_KEY = 'algorithmCode'
@@ -55,23 +56,25 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
             if log_content.find('[Error] No presence points available') >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_MISSING_ERROR
             elif log_content.find(
-                 '[Error] Cannot use zero presence points for sampling') >= 0:
+                    '[Error] Cannot use zero presence points for sampling'
+                    ) >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_MISSING_ERROR
             elif log_content.find(
-                '[Error] Algorithm could not be initialized') >= 0:
+                    '[Error] Algorithm could not be initialized') >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_OUT_OF_RANGE_ERROR
             elif log_content.find(
-                '[Error] Cannot create model without any presence or absence'
-                ) >= 0:
+                    '[Error] Cannot create model without any presence'
+                    ) >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_OUT_OF_RANGE_ERROR
             elif log_content.find(
-                '[Error] XML Parser fatal error: not well-formed') >= 0:
+                    '[Error] XML Parser fatal error: not well-formed') >= 0:
                 status = JobStatus.OM_MOD_REQ_ERROR
             elif log_content.find('[Error] Unable to open file') >= 0:
                 status = JobStatus.OM_MOD_REQ_LAYER_ERROR
             elif log_content.find('[Error] Algorithm') >= 0:
                 if log_content.find(
-                    'not found', log_content.find('[Error] Algorithm')) >= 0:
+                        'not found',
+                        log_content.find('[Error] Algorithm')) >= 0:
                     status = JobStatus.OM_MOD_REQ_ALGO_INVALID_ERROR
             elif log_content.find('[Error] Parameter') >= 0:
                 if log_content.find(
@@ -89,7 +92,7 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         Args:
             points : A list of (local_id, x, y) point tuples.
             layer_json : Climate layer information in a JSON document.
-            mask_filename : If provided, use this layer as a mask for the model.
+            mask_filename : If provided, use this layer as a mask for the model
             crs_wkt : Well-Known text describing the map projection of the
                 points.
 
@@ -242,7 +245,7 @@ class OmRequest:
     def generate():
         """Base method to generate a request
         """
-        raise Exception('generate method must be overridden by a subclass')
+        raise LMError('generate method must be overridden by a subclass')
 
 
 # .............................................................................
@@ -267,6 +270,7 @@ class OmModelRequest(OmRequest):
             * Take options and statistic options as inputs
             * Constants
         """
+        super().__init__(self)
         self.options = [
             # Ignore duplicate points (same coordinates)
             # ('OccurrencesFilter', 'SpatiallyUnique'),
@@ -274,13 +278,13 @@ class OmModelRequest(OmRequest):
             # ('OccurrencesFilter', 'EnvironmentallyUnique')
             ]
         self.stat_options = {
-            'ConfusionMatrix' : {
-                'Threshold' : '0.5'
+            'ConfusionMatrix': {
+                'Threshold': '0.5'
             },
-            'RocCurve' : {
-                'Resolution' : '15',
-                'BackgroundPoints' : '10000',
-                'MaxOmission' : '1.0'
+            'RocCurve': {
+                'Resolution': '15',
+                'BackgroundPoints': '10000',
+                'MaxOmission': '1.0'
             }
         }
 
@@ -306,18 +310,18 @@ class OmModelRequest(OmRequest):
         sampler_element = SubElement(request_element, 'Sampler')
         environment_element = SubElement(
             sampler_element, 'Environment', attrib={
-                'NumLayers' : str(len(self.layer_filenames))})
+                'NumLayers': str(len(self.layer_filenames))})
 
         for lyr_filename in self.layer_filenames:
             SubElement(
                 environment_element, 'Map',
-                attrib={'Id' : lyr_filename, 'IsCategorical' : '0'})
+                attrib={'Id': lyr_filename, 'IsCategorical': '0'})
         if self.mask_filename is not None:
             SubElement(
                 environment_element, 'Mask', attrib={'Id': self.mask_filename})
 
         presence_element = SubElement(
-            sampler_element, 'Presence', attrib={'Label' : self.points_label})
+            sampler_element, 'Presence', attrib={'Label': self.points_label})
 
         # SubElement(presence_element, 'CoordinateSystem', value=self.crs_wkt)
 
@@ -375,6 +379,7 @@ class OmProjectionRequest(OmRequest):
             layer_filenames : A list of layers to project the ruleset on to.
             mask_filename : An optional mask layer for the projection.
         """
+        super().__init__(self)
         self.layer_filenames = layer_filenames
         self.mask_filename = mask_filename
 

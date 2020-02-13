@@ -3,11 +3,12 @@
 import math
 import os
 
-from LmCommon.common.lmconstants import DEFAULT_NODATA, LMFormat, DEFAULT_EPSG, \
-    ENCODING
-from LmCommon.common.ready_file import ready_filename
 import numpy as np
 from osgeo import gdal, gdalconst, ogr, osr
+
+from LmCommon.common.lmconstants import (
+    DEFAULT_EPSG, DEFAULT_NODATA, ENCODING, LMFormat)
+from LmCommon.common.ready_file import ready_filename
 
 # TODO: Move to constants probably
 NUM_QUAD_SEGS = 30
@@ -163,18 +164,6 @@ def create_convex_hull_array(base_path, convex_hull, bbox, cell_size, epsg,
     rst_ds = gdal.Open(tmp_raster_filename)
     band = rst_ds.GetRasterBand(1)
     data = np.array(band.ReadAsArray())
-
-    # Remove temp files
-    # try:
-    #    os.remove(tmp_raster_filename)
-    # except Exception, e:
-    #    print str(e)
-
-    # try:
-    #    # TODO: Remove all files if we are removing any
-    #    os.remove(tmp_shp_filename)
-    # except Exception, e:
-    #    print str(e)
 
     return data
 

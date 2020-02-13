@@ -11,9 +11,10 @@ Todo:
 import argparse
 import json
 
+import numpy as np
+
 from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA
 from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
-import numpy as np
 
 
 # .............................................................................
@@ -44,7 +45,7 @@ def prune_pam_and_tree(pam, tree):
     good_pam_squids = []
 
     for i, squid in enumerate(pam_squids):
-        if not squid in tree_squids:
+        if squid not in tree_squids:
             del_cols.append(i)
             pruned_pam_squids.append(squid)
         else:
@@ -67,7 +68,7 @@ def prune_pam_and_tree(pam, tree):
     # Add pruned tree squids to metadata
     pruned_tree_squids = []
     for squid in tree_squids:
-        if not squid in pam_squids:
+        if squid not in pam_squids:
             pruned_tree_squids.append(squid)
     if len(pruned_tree_squids) > 0:
         metadata['pruned_Tree_squids'] = pruned_tree_squids

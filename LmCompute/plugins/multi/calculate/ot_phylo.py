@@ -106,13 +106,13 @@ def pearson_correlation(pam, phylo_dist_mtx):
                         pam[:, i].dot(pam[:, j]))
             # X : Pair distance
             # Y : Pair sites shared
-            x = np.array(pair_dist)
-            y = np.array(pair_sites_shared)
-            sum_xy = np.sum(x * y)
-            sum_x = np.sum(x)
-            sum_y = np.sum(y)
-            sum_x_sq = np.sum(x ** 2)
-            sum_y_sq = np.sum(y ** 2)
+            x_val = np.array(pair_dist)
+            y_val = np.array(pair_sites_shared)
+            sum_xy = np.sum(x_val * y_val)
+            sum_x = np.sum(x_val)
+            sum_y = np.sum(y_val)
+            sum_x_sq = np.sum(x_val ** 2)
+            sum_y_sq = np.sum(y_val ** 2)
 
             # Pearson
             p_num = sum_xy - sum_x * sum_y / num_pairs

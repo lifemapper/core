@@ -3,10 +3,11 @@
 Todo:
     Convert to use Matrix instead of numpy matrices
 """
+import numpy as np
+
 from LmCommon.common.lmconstants import PamStatKeys, PhyloTreeKeys
 from LmCompute.plugins.multi.calculate import ot_phylo
 from lmpy import Matrix
-import numpy as np
 
 
 # .............................................................................
@@ -30,6 +31,22 @@ class PamStats:
             self.pam = Matrix(pam)
 
         self.tree = tree
+        self.alpha = None
+        self.alpha_prop = None
+        self.c_score = None
+        self.lande = None
+        self.legendre = None
+        self.num_sites = None
+        self.num_species = None
+        self.omega = None
+        self.omega_prop = None
+        self.phi = None
+        self.phi_avg_prop = None
+        self.psi = None
+        self.psi_avg_prop = None
+        self.sigma_sites = None
+        self.sigma_species = None
+        self.whittaker = None
 
         self._calculate_core_stats()
         self._calculate_diversity_statistics()

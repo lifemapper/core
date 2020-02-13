@@ -60,10 +60,10 @@ class MaxentWrapper(ModelSoftwareWrapper):
                 if std_err.find('Couldn\'t get file lock.') >= 0:
                     status = JobStatus.ME_FILE_LOCK_ERROR
                 elif std_err.find(
-                    'Could not reserve enough space for object heap') >= 0:
+                        'Could not reserve enough space for object heap') >= 0:
                     status = JobStatus.ME_HEAP_SPACE_ERROR
                 elif std_err.find(
-                    'Too small initial heap for new size specified') >= 0:
+                        'Too small initial heap for new size specified') >= 0:
                     status = JobStatus.ME_HEAP_SPACE_ERROR
                 elif std_err.find('because it has 0 training samples') >= 0:
                     status = JobStatus.ME_POINTS_ERROR
@@ -87,16 +87,18 @@ class MaxentWrapper(ModelSoftwareWrapper):
                     status = JobStatus.ME_MISMATCHED_LAYER_DIMENSIONS
                 elif log_content.find('NumberFormatException') >= 0:
                     status = JobStatus.ME_CORRUPTED_LAYER
-                elif log_content.find('because it has 0 training samples') >= 0:
+                elif log_content.find(
+                        'because it has 0 training samples') >= 0:
                     status = JobStatus.ME_POINTS_ERROR
                 elif log_content.find('is missing from') >= 0:
-                    # ex: Layer vap6190_ann is missing from layers/projectionScn
+                    # ex: Layer vap6190 is missing from layers/projectionScn
                     status = JobStatus.ME_LAYER_MISSING
                 elif log_content.find(
-                    'No background points with data in all layers') >= 0:
+                        'No background points with data in all layers') >= 0:
                     status = JobStatus.ME_POINTS_ERROR
                 elif log_content.find(
-                    'No features available: select more feature types') >= 0:
+                        'No features available: select more feature types'
+                        ) >= 0:
                     status = JobStatus.ME_NO_FEATURES_CLASSES_AVAILABLE
         else:
             # Computed but process terminated with status 1, seems to be fine
@@ -104,7 +106,8 @@ class MaxentWrapper(ModelSoftwareWrapper):
         return status
 
     # ...................................
-    def _process_mask(self, layer_dir, mask_filename):
+    @staticmethod
+    def _process_mask(layer_dir, mask_filename):
         """Process an incoming mask file
 
         Args:
@@ -122,7 +125,8 @@ class MaxentWrapper(ModelSoftwareWrapper):
         return 'togglelayertype=mask'
 
     # ...................................
-    def _process_parameters(self, parameter_json):
+    @staticmethod
+    def _process_parameters(parameter_json):
         """Process provided algorithm parameters JSON and return a list
 
         Args:
@@ -136,12 +140,12 @@ class MaxentWrapper(ModelSoftwareWrapper):
             param_value = param[PARAM_VALUE_KEY]
             default_param = DEFAULT_MAXENT_PARAMETERS[param_name]
             if param_value is not None and param_value != 'None':
-                v = default_param[PARAM_PROCESS_KEY](param_value)
+                val = default_param[PARAM_PROCESS_KEY](param_value)
                 # Check for options
                 if PARAM_OPTIONS_KEY in default_param:
-                    v = default_param[PARAM_OPTIONS_KEY][v]
-                if v != default_param[PARAM_DEFAULT_KEY]:
-                    algo_param_options.append('{}={}'.format(param_name, v))
+                    val = default_param[PARAM_OPTIONS_KEY][val]
+                if val != default_param[PARAM_DEFAULT_KEY]:
+                    algo_param_options.append('{}={}'.format(param_name, val))
         return algo_param_options
 
     # ...................................
@@ -208,7 +212,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
             #    This may be necessary for files on shared disks
             waited = 0
             while not os.path.exists(self.get_ruleset_filename()) and \
-                        waited < 10:
+                    waited < 10:
                 sleep(1)
                 waited += 1
 
@@ -228,7 +232,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
             #    This may be necessary for files on shared disks
             waited = 0
             while not os.path.exists(self.get_projection_filename()) and \
-                        waited < 10:
+                    waited < 10:
                 sleep(1)
                 waited += 1
 
@@ -312,4 +316,5 @@ class MaxentWrapper(ModelSoftwareWrapper):
         """Override method in base class
         """
         return os.path.join(
-            self.work_dir, '{}{}'.format(self.species_name, LMFormat.ASCII.ext))
+            self.work_dir, '{}{}'.format(
+                self.species_name, LMFormat.ASCII.ext))

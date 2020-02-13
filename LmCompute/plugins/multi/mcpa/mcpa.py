@@ -9,8 +9,9 @@ from concurrent.futures import ThreadPoolExecutor as ExecutorClass
 from functools import partial
 import threading
 
-from lmpy import Matrix
 import numpy as np
+
+from lmpy import Matrix
 
 # Note: This lock is used when calculating beta to keep memory usage down
 lock = threading.Lock()

@@ -18,6 +18,8 @@ import json
 import os
 from time import sleep
 
+from osgeo import ogr
+
 import LmBackend.common.layer_tools as layer_tools
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
@@ -28,8 +30,8 @@ from LmCompute.common.log import LmComputeLogger
 import LmCompute.plugins.single.mask.create_mask as create_mask
 from LmCompute.plugins.single.modeling.maxent import MaxentWrapper
 from LmCompute.plugins.single.modeling.openModeller import OpenModellerWrapper
-from LmCompute.plugins.single.occurrences.csv_occ import createShapefileFromCSV
-from osgeo import ogr
+from LmCompute.plugins.single.occurrences.csv_occ import (
+    create_shapefile_from_csv)
 
 WAIT_THRESHOLD = 60
 
@@ -248,7 +250,7 @@ class ParameterSweep:
                                     package_path, overwrite=True)
                             except ZeroDivisionError as zde:
                                 msg = ('Could not get projection for model. '
-                                        'Projection was blank')
+                                       'Projection was blank')
                                 self._process_error(zde, msg=msg)
                                 status = JobStatus.BLANK_PROJECTION_ERROR
                         # Use same secondary outputs as model and register
@@ -296,10 +298,12 @@ class ParameterSweep:
                             if status < JobStatus.GENERAL_ERROR:
                                 # Append log
                                 with open(wrapper.get_log_filename()) as log_f:
-                                    self.log.debug('-----------------------------')
+                                    self.log.debug(
+                                        '-----------------------------')
                                     self.log.debug('Projection log')
                                     self.log.debug(wrapper.get_log_filename())
-                                    self.log.debug('-----------------------------')
+                                    self.log.debug(
+                                        '-----------------------------')
                                     self.log.debug(log_f.read())
                                 # Move raster
                                 wrapper.copy_projection(
@@ -309,7 +313,8 @@ class ParameterSweep:
                                     package_path, overwrite=True)
                                 prj_metrics = wrapper.get_metrics()
                                 prj_snippets = None
-                                # Use same secondary outputs as model and register
+                                # Use same secondary outputs as model and
+                                #    register
                                 self._register_output_object(
                                     RegistryKey.PROJECTION, projection_id,
                                     status, projection_path,
@@ -353,13 +358,14 @@ class ParameterSweep:
                                 ProcessType.GBIF_TAXA_OCCURRENCE):
                 if process_type == ProcessType.GBIF_TAXA_OCCURRENCE:
                     is_gbif = True
-                status = createShapefileFromCSV(
+                status = create_shapefile_from_csv(
                     url_fn_or_key, metadata, out_file, big_out_file,
                     max_points, is_gbif=is_gbif, log=self.log,
                     delimiter=str(delimiter))
                 if status == JobStatus.COMPUTED:
                     waited = 0
-                    while waited < WAIT_THRESHOLD and not os.path.exists(out_file):
+                    while waited < WAIT_THRESHOLD and not os.path.exists(
+                            out_file):
                         waited += 1
                         sleep(1)
 
@@ -426,8 +432,8 @@ class ParameterSweep:
                 self.pavs.append(
                     {
                         RegistryKey.COMPRESSED_PAV_DATA: compress(pav.data),
-                        RegistryKey.IDENTIFIER : pav_id,
-                        RegistryKey.PROJECTION_ID : projection_id
+                        RegistryKey.IDENTIFIER: pav_id,
+                        RegistryKey.PROJECTION_ID: projection_id
                     })
             else:
                 # Only do this on error so we catch failures that look like
@@ -472,7 +478,8 @@ class ParameterSweep:
                 else:
                     mask_filename_base = None
 
-                # We can only continue if mask (if needed) was created successfully
+                # We can only continue if mask (if needed) was created
+                #    successfully
                 if mask_cont:
                     # Get points
                     work_dir = os.path.join(self.work_dir, 'prj_{}'.format(
@@ -510,7 +517,8 @@ class ParameterSweep:
                                     # Convert layer and scale layer
                                     layer_tools.convert_and_modify_ascii_to_tiff(
                                         raw_prj_filename, projection_path,
-                                        scale=scale_params, multiplier=multiplier)
+                                        scale=scale_params,
+                                        multiplier=multiplier)
 
                                     # Append log
                                     if os.path.exists(
@@ -534,7 +542,7 @@ class ParameterSweep:
 
                         # If openModeller
                         elif process_type in [
-                            ProcessType.OM_MODEL, ProcessType.OM_PROJECT]:
+                                ProcessType.OM_MODEL, ProcessType.OM_PROJECT]:
                             if mask_filename_base is not None:
                                 mask_filename = '{}{}'.format(
                                     mask_filename_base, LMFormat.GTIFF.ext)
@@ -579,7 +587,8 @@ class ParameterSweep:
                     metrics=prj_metrics, snippets=prj_snippets)
 
     # ........................................
-    def _get_model_points(self, occ_shp_filename):
+    @staticmethod
+    def _get_model_points(occ_shp_filename):
         """Get minimal point csv to be used for modeling.
 
         Args:
@@ -692,13 +701,13 @@ class ParameterSweep:
         if metrics is not None:
             metrics = metrics.get_metrics_dictionary()
         self.registry[object_type][object_id] = {
-            RegistryKey.IDENTIFIER : object_id,
-            RegistryKey.METRICS : metrics,
-            RegistryKey.PRIMARY_OUTPUT : primary_output,
-            RegistryKey.PROCESS_TYPE : process_type,
-            RegistryKey.SECONDARY_OUTPUTS : secondary_outputs,
-            RegistryKey.SNIPPETS : snippets,
-            RegistryKey.STATUS : status
+            RegistryKey.IDENTIFIER: object_id,
+            RegistryKey.METRICS: metrics,
+            RegistryKey.PRIMARY_OUTPUT: primary_output,
+            RegistryKey.PROCESS_TYPE: process_type,
+            RegistryKey.SECONDARY_OUTPUTS: secondary_outputs,
+            RegistryKey.SNIPPETS: snippets,
+            RegistryKey.STATUS: status
         }
 
     # ........................................
@@ -768,29 +777,28 @@ class ParameterSweep:
         self._create_pavs()
 
         # Write metrics
-        with open(
-            os.path.join(
-                self.base_work_dir,
-                self.sweep_config.metrics_filename), 'w') as out_metrics:
+        with open(os.path.join(
+                    self.base_work_dir,
+                    self.sweep_config.metrics_filename), 'w') as out_metrics:
             json.dump(self.get_metrics(), out_metrics)
 
         # Write snippets
-        with open(
-            os.path.join(
-                self.base_work_dir,
-                self.sweep_config.snippets_filename), 'w') as out_snippets:
+        with open(os.path.join(
+                    self.base_work_dir,
+                    self.sweep_config.snippets_filename), 'w') as out_snippets:
             json.dump(self.get_snippets(), out_snippets)
 
         # Write stockpile information
         with open(
-            os.path.join(
-                self.base_work_dir,
-                self.sweep_config.stockpile_filename), 'w') as out_stockpile:
+                os.path.join(
+                    self.base_work_dir,
+                    self.sweep_config.stockpile_filename),
+                'w') as out_stockpile:
             json.dump(self.get_stockpile_info(), out_stockpile)
 
         # Write PAV information
         with open(
-            os.path.join(
-                self.base_work_dir,
-                self.sweep_config.pavs_filename), 'w') as out_pavs:
+                os.path.join(
+                    self.base_work_dir,
+                    self.sweep_config.pavs_filename), 'w') as out_pavs:
             json.dump(self.get_pav_info(), out_pavs)

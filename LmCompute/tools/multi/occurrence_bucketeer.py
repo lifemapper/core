@@ -57,8 +57,8 @@ def split_into_buckets(input_filenames, output_basename, group_pos, str_pos=0,
                             bucket_str = DEF_CHAR
                         bucket_str += DEF_CHAR * num_cmp
                         buckets[bucket_str[0:num_cmp]].writerow(row)
-                    except Exception as e:
-                        print(str(e))
+                    except Exception as err:
+                        print(str(err))
 
     # Close bucket files
     for k in list(buckets.keys()):

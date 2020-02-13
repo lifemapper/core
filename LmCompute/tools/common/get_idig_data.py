@@ -6,6 +6,7 @@ import os
 
 from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.ready_file import ready_filename
+from LmBackend.common.lmobj import LMError
 
 
 # ...............................................
@@ -15,10 +16,10 @@ def _get_user_input(filename):
         try:
             for line in open(filename):
                 items.append(line.strip())
-        except:
-            raise Exception('Failed to read file {}'.format(filename))
+        except Exception:
+            raise LMError('Failed to read file {}'.format(filename))
     else:
-        raise Exception('File {} does not exist'.format(filename))
+        raise LMError('File {} does not exist'.format(filename))
     return items
 
 

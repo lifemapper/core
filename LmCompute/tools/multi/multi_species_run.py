@@ -14,6 +14,7 @@ from LmCompute.plugins.multi.calculate.calculate import PamStats
 from LmCompute.plugins.multi.mcpa.mcpa import mcpa, mcpa_parallel
 from lmpy import Matrix, TreeWrapper
 from lmpy.randomize.grady import grady_randomize
+from LmBackend.common.lmobj import LMError
 
 
 # .............................................................................
@@ -193,11 +194,12 @@ def main():
             biogeo = Matrix.load_flo(args.biogeo)
             grim = Matrix.load_flo(args.grim)
             tree_mtx = Matrix.load_flo(args.tree_matrix)
-        except Exception as e:
-            print((str(e)))
-            print(('Cannot perform MCPA without PAM, Grim, Biogeo,'
-                   ' and Tree matrix'))
-            raise e
+        except Exception as err:
+            print((str(err)))
+            msg = ('Cannot perform MCPA without PAM, Grim, Biogeo, '
+                   'and Tree matrix')
+            print(msg)
+            raise LMError(msg, err)
 
     (diversity_stats, site_cov_stats, site_stats, species_cov_stats,
         species_stats, mcpa_outs, mcpa_fs) = do_runs(

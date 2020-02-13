@@ -80,12 +80,17 @@ class ModelSoftwareWrapper:
 
     # ...................................
     @staticmethod
+    def _find_error(std_err):
+        raise LMError('_find_error must be implemented in subclasses')
+
+    # ...................................
+    @staticmethod
     def _process_layers(layer_json, layer_dir=None):
         """Read the layer JSON and process the layers accordingly
 
         Args:
-            layer_json : JSON string with layer information.
-            layer_dir : If present, create sym links in the directory to the
+            layer_json: JSON string with layer information.
+            layer_dir: If present, create sym links in the directory to the
                 layers.
         """
         lyrs = process_layers_json(layer_json, sym_dir=layer_dir)

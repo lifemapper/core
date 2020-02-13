@@ -91,14 +91,14 @@ def create_shapefile_from_csv(csv_fname, metadata, out_fname, big_fname,
         # TODO: Find a better way to delete (existing function maybe?)
         if os.path.exists(out_fname):
             out_base = os.path.splitext(out_fname)[0]
-            for ext in LMFormat.SHAPE.getExtensions():
+            for ext in LMFormat.SHAPE.get_extensions():
                 file_name = '{}{}'.format(out_base, ext)
                 if os.path.exists(file_name):
                     os.remove(file_name)
 
         if os.path.exists(big_fname):
             big_base = os.path.splitext(big_fname)[0]
-            for ext in LMFormat.SHAPE.getExtensions():
+            for ext in LMFormat.SHAPE.get_extensions():
                 file_name = '{}{}'.format(big_base, ext)
                 if os.path.exists(file_name):
                     os.remove(file_name)
