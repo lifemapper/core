@@ -212,9 +212,9 @@ class Daemon:
                 msg = 'Status: Process {} is running at PID {}'.format(
                     self.__class__.__name__, pid)
             else:
-                msg = ('Process {} is not running at PID {},'
-                       'but lock file {} exists').format(
-                           self.__class__.__name__, pid)
+                msg = (
+                    'Process {} is not running at PID {}, but {}'.format(
+                        self.__class__.__name__, pid, 'lock file exists'))
         else:
             msg = 'Process {} is not running'.format(self.__class__.__name__)
 

@@ -553,8 +553,9 @@ class OccDataParser(LMObject):
             self.log.info(
                 'Line has only one element - is delimiter set correctly?')
         if len(line) < len(list(self.column_meta.keys())):
-            raise LMError('Line has {} elements; expecting {} fields'.format(
-              len(line), len(list(self.column_meta.keys()))))
+            raise LMError(
+                'Line has {} elements; expecting {} fields'.format(
+                    len(line), len(list(self.column_meta.keys()))))
         self.rec_total += 1
 
         # Field filters

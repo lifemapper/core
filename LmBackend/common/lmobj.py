@@ -93,25 +93,25 @@ class LMObject:
                     try:
                         for simfname in similar_file_names:
                             _, simext = os.path.splitext(simfname)
-                            if simext in LMFormat.SHAPE.getExtensions():
+                            if simext in LMFormat.SHAPE.get_extensions():
                                 os.remove(simfname)
-                    except Exception as e:
+                    except Exception as err:
                         success = False
                         msg = 'Failed to remove {}, {}'.format(
-                            simfname, str(e))
+                            simfname, str(err))
                 else:
                     try:
                         os.remove(file_name)
-                    except Exception as e:
+                    except Exception as err:
                         success = False
                         msg = 'Failed to remove {}, {}'.format(
-                            file_name, str(e))
+                            file_name, str(err))
                 if delete_dir and len(os.listdir(pth)) == 0:
                     try:
                         os.removedirs(pth)
-                    except Exception as e:
+                    except Exception as err:
                         success = False
-                        msg = 'Failed to remove {}, {}'.format(pth, str(e))
+                        msg = 'Failed to remove {}, {}'.format(pth, str(err))
         return success, msg
 
     # ..........................
@@ -160,7 +160,7 @@ class LMObject:
             else:
                 try:
                     obj_metadata = json.loads(new_metadata)
-                except Exception as e:
+                except Exception:
                     print(
                         'Failed to load JSON from type {} object {}'.format(
                             type(new_metadata), new_metadata))

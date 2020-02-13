@@ -1202,44 +1202,44 @@ class IdigbioQuery(Enum):
     # Geopoint.lat and Geopoint.lon are modified on return to short names
     # Response record fields: https://search.idigbio.org/v2/meta/fields/records
     RETURN_FIELDS = {
-       Idigbio.QUALIFIER + Idigbio.ID_FIELD: (Idigbio.ID_FIELD, OFTString),
-       Idigbio.GBIFID_FIELD: ('taxonid', OFTString),
-       DWC_QUALIFIER + DwcNames.SCIENTIFIC_NAME['FULL']: (
-           DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.BASIS_OF_RECORD['FULL']: (
-           DwcNames.BASIS_OF_RECORD['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.CATALOG_NUMBER['FULL']: (
-           DwcNames.CATALOG_NUMBER['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.COLLECTION_ID['FULL']: (
-           DwcNames.COLLECTION_ID['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.COLLECTION_CODE['FULL']: (
-           DwcNames.COLLECTION_CODE['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.RECORDED_BY['FULL']: (
-           DwcNames.RECORDED_BY['SHORT'], OFTString),
-       'commonname': ('comname', OFTString),
-       DWC_QUALIFIER + DwcNames.CONTINENT['FULL']: (
-           DwcNames.CONTINENT['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.COUNTRY_CODE['FULL']: (
-           DwcNames.COUNTRY_CODE['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.DAY['FULL']: (
-           DwcNames.DAY['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.MONTH['FULL']: (
-           DwcNames.MONTH['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.YEAR['FULL']: (
-           DwcNames.YEAR['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.INSTITUTION_CODE['FULL']: (
-           DwcNames.INSTITUTION_CODE['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.INSTITUTION_ID['FULL']: (
-           DwcNames.INSTITUTION_ID['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.OCCURRENCE_ID['FULL']: (
-           DwcNames.OCCURRENCE_ID['SHORT'], OFTInteger),
-       DWC_QUALIFIER + DwcNames.STATE_PROVINCE['FULL']: (
-           DwcNames.STATE_PROVINCE['SHORT'], OFTString),
-       DWC_QUALIFIER + DwcNames.DECIMAL_LATITUDE['FULL']: (
-           DwcNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-       DWC_QUALIFIER + DwcNames.DECIMAL_LONGITUDE['FULL']: (
-           DwcNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-       }
+        Idigbio.QUALIFIER + Idigbio.ID_FIELD: (Idigbio.ID_FIELD, OFTString),
+        Idigbio.GBIFID_FIELD: ('taxonid', OFTString),
+        DWC_QUALIFIER + DwcNames.SCIENTIFIC_NAME['FULL']: (
+            DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.BASIS_OF_RECORD['FULL']: (
+            DwcNames.BASIS_OF_RECORD['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.CATALOG_NUMBER['FULL']: (
+            DwcNames.CATALOG_NUMBER['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.COLLECTION_ID['FULL']: (
+            DwcNames.COLLECTION_ID['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.COLLECTION_CODE['FULL']: (
+            DwcNames.COLLECTION_CODE['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.RECORDED_BY['FULL']: (
+            DwcNames.RECORDED_BY['SHORT'], OFTString),
+        'commonname': ('comname', OFTString),
+        DWC_QUALIFIER + DwcNames.CONTINENT['FULL']: (
+            DwcNames.CONTINENT['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.COUNTRY_CODE['FULL']: (
+            DwcNames.COUNTRY_CODE['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.DAY['FULL']: (
+            DwcNames.DAY['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.MONTH['FULL']: (
+            DwcNames.MONTH['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.YEAR['FULL']: (
+            DwcNames.YEAR['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.INSTITUTION_CODE['FULL']: (
+            DwcNames.INSTITUTION_CODE['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.INSTITUTION_ID['FULL']: (
+            DwcNames.INSTITUTION_ID['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.OCCURRENCE_ID['FULL']: (
+            DwcNames.OCCURRENCE_ID['SHORT'], OFTInteger),
+        DWC_QUALIFIER + DwcNames.STATE_PROVINCE['FULL']: (
+            DwcNames.STATE_PROVINCE['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.DECIMAL_LATITUDE['FULL']: (
+            DwcNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+        DWC_QUALIFIER + DwcNames.DECIMAL_LONGITUDE['FULL']: (
+            DwcNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+        }
     QFILTERS = {'basisofrecord': 'preservedspecimen'}
     #    queryFlds = IDIGBIO_RETURN_FIELDS.keys()
     #    queryFlds.append('geopoint')

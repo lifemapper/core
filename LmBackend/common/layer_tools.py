@@ -65,7 +65,7 @@ def convert_and_modify_ascii_to_tiff(asc_file_name, tiff_file_name, scale=None,
                 return nodata_value
 
             return (scale_max - scale_min) * (
-                    (cell_value - lyr_min) / (lyr_max - lyr_min)) + scale_min
+                (cell_value - lyr_min) / (lyr_max - lyr_min)) + scale_min
 
         data = numpy.vectorize(scale_func)(data)
 
@@ -105,8 +105,8 @@ def convert_ascii_to_mxe(lyr_dir):
     lyr_dir: A directory containing ASCII grids that should be converted.
     """
     # Run Maxent converter
-    me_convert_cmd = '{} {} {} -t {} asc {} mxe'.format(
-        CONVERT_JAVA_CMD, ME_CMD, CONVERT_TOOL, lyr_dir, lyr_dir)
+    me_convert_cmd = '{0} {1} {2} -t {3} asc {3} mxe'.format(
+        CONVERT_JAVA_CMD, ME_CMD, CONVERT_TOOL, lyr_dir)
     convert_proc = subprocess.Popen(me_convert_cmd, shell=True)
 
     while convert_proc.poll() is None:
@@ -195,16 +195,11 @@ def convert_tiff_to_ascii(tiff_file_name, asc_file_name, header_precision=6):
     past_header = False
     with open(asc_file_name, 'r') as asc_in:
         for line in asc_in:
-            lowline = line.lower()
-            if (not past_header and (
-                 lowline.startswith('ncols') or
-                 lowline.startswith('nrows') or
-                 lowline.startswith('xllcorner') or
-                 lowline.startswith('yllcorner') or
-                 lowline.startswith('cellsize') or
-                 lowline.startswith('dx') or
-                 lowline.startswith('dy') or
-                 lowline.startswith('nodata_value'))):
+            low_line = line.lower()
+            if not past_header and any([
+                    low_line.startswith(test_str) for test_str in [
+                        'ncols', 'nrows', 'xllcorner', 'yllcorner', 'cellsize',
+                        'dx', 'dy', 'nodata_value']]):
                 pass
             else:
                 past_header = True
