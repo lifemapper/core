@@ -27,49 +27,49 @@ class LMUser(LMObject):
         @param mod_time: Last modification time of this object (optional)
         """
         LMObject.__init__(self)
-        self.userid = userid
+        self.user_id = user_id
         self.email = email
-        self.setPassword(password, isEncrypted)
-        self.firstName = firstName
-        self.lastName = lastName
+        self.set_password(password, is_encrypted)
+        self.first_name = first_name
+        self.last_name = last_name
         self.institution = institution
-        self.address1 = addr1
-        self.address2 = addr2
-        self.address3 = addr3
+        self.address_1 = addr_1
+        self.address_2 = addr_2
+        self.address_3 = addr_3
         self.phone = phone
         self.mod_time = mod_time
 
     # ................................
-    def getUserId(self):
+    def get_user_id(self):
         """
         @note: Function exists for consistency with ServiceObjects
         """
-        return self.userid
+        return self.user_id
 
     # ................................
-    def setUserId(self, id):
+    def set_user_id(self, id):
         """
         @note: Function exists for consistency with ServiceObjects
         """
-        self.userid = id
+        self.user_id = id
 
     # ................................
-    def checkPassword(self, passwd):
-        return self._password == self._encryptPassword(passwd)
+    def check_password(self, passwd):
+        return self._password == self._encrypt_password(passwd)
 
     # ................................
-    def setPassword(self, passwd, isEncrypted):
-        if isEncrypted:
+    def set_password(self, passwd, is_encrypted):
+        if is_encrypted:
             self._password = passwd
         else:
-            self._password = self._encryptPassword(passwd)
+            self._password = self._encrypt_password(passwd)
 
     # ................................
-    def getPassword(self):
+    def get_password(self):
         return self._password
 
     # ................................
-    def _encryptPassword(self, passwd):
+    def _encrypt_password(self, passwd):
         h1 = hashlib.md5(passwd)
         h2 = hashlib.md5(SALT)
         h3 = hashlib.md5(''.join((h1.hexdigest(), h2.hexdigest())))
