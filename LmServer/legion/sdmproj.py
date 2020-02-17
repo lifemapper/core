@@ -15,11 +15,10 @@ from LmServer.common.lmconstants import (
 
 # .........................................................................
 class _ProjectionType(_LayerParameters, ProcessObject):
-# .............................................................................
     """
     """
 
-# .............................................................................
+    # .........................................
     def __init__(self, occurrenceSet, algorithm, modelScenario, modelMask,
                      projScenario, projMask, processType, projMetadata,
                      status, statusModTime, userId, projectId):
@@ -351,17 +350,14 @@ class SDMProjection(_ProjectionType, Raster):
             resolution = projScenario.resolution
         if processType is None:
             if Algorithms.isATT(algorithm.code):
-#             if algorithm.code == 'ATT_MAXENT':
                 processType = ProcessType.ATT_PROJECT
             else:
                 processType = ProcessType.OM_PROJECT
-#         isDiscreteData = ALGORITHM_DATA[algorithm.code]['isDiscreteOutput']
         isDiscreteData = Algorithms.returnsDiscreteOutput(algorithm.code)
         title = occurrenceSet._earlJr.createSDMProjectTitle(
             occurrenceSet._userId, occurrenceSet.displayName, algorithm.code,
             modelScenario.code, projScenario.code)
         if gdalFormat is None:
-#             gdalFormat = ALGORITHM_DATA[algorithm.code]['outputFormat']
             gdalFormat = Algorithms.get(algorithm.code).outputFormat
         return (userId, name, squid, processType, bbox, epsgcode, mapunits,
                 resolution, isDiscreteData, gdalFormat, title)

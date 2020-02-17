@@ -129,17 +129,17 @@ class ServiceObject(LMObject):
         return murl
 
 # ...............................................
-    def getURL(self, format=None):
+    def getURL(self, format_=None):
         """
         @summary Return a GET query for the Lifemapper WCS GetCoverage request
-        @param format: optional string indicating the URL response format desired;
+        @param format_: optional string indicating the URL response format desired;
                             Supported formats are GDAL Raster Format Codes, available 
                             at http://www.gdal.org/formats_list.html, and driver values 
                             in LmServer.common.lmconstants LMFormat GDAL formats.
         """
         dataurl = self.metadataUrl
-        if format is not None:
-            dataurl = '%s/%s' % (self.metadataUrl, format)
+        if format_ is not None:
+            dataurl = '%s/%s' % (self.metadataUrl, format_)
         return dataurl
 
     # ...............................................

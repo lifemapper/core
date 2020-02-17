@@ -6,8 +6,8 @@ Created on Apr 17, 2018
 
 
 def validate_newick(obj_generator):
-   return True
+    return True
 
 
 def validate_nexus(obj_generator):
-   return True
+    return True

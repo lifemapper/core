@@ -437,12 +437,11 @@ class MapLayerSet(_LayerSet, ServiceObject):
     def _getBaseMap(self, fname):
         # TODO: in python 2.6, use 'with open(fname, 'r'):'
         try:
-            f = open(fname, 'r')
-            map = f.read()
-            f.close()
+            with open(fname, 'r') as in_file:
+                base_map = in_file.read()
         except Exception as e:
             raise LMError('Failed to read {}; {}'.format(fname, e))
-        return map
+        return base_map
 
 # ...............................................
     def _addMapBaseAttributes(self, mapstr, onlineUrl):
@@ -944,16 +943,14 @@ class MapLayerSet(_LayerSet, ServiceObject):
 
     # ...............................................
     def _createClassBin(self, expr, name, clr):
-        rgbstr = '{} {} {}'.format(clr[0], clr[1], clr[2])
-        parts = ['      CLASS',
-                 '         NAME \"{}\"'.format(name),
-                 '         EXPRESSION {}'.format(expr),
-                 '         STYLE',
-                 '            COLOR {}'.format(rgbstr),
-                 '         END',
-                 '      END']
-        bin = '\n'.join(parts)
-        return bin
+        rgb_str = '{} {} {}'.format(clr[0], clr[1], clr[2])
+        return """        CLASS
+            NAME \"{}\"
+            EXPRESSION {}
+            STYLE
+                COLOR {}
+            END
+        END""".format(name, expr, rgb_str)
 
     # ...............................................
     def _getRasterInfo(self, srcpath, getHisto=False):
