@@ -464,7 +464,7 @@ class DbPostgresql(LMAbstractObject):
             except Exception as err:
                 raise LMError(
                     'Exception on command {}'.format(
-                    self.last_commands), err, do_trace=True)
+                        self.last_commands), err, do_trace=True)
 
             cursor.close()
             return rows, idxs
