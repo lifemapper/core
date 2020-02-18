@@ -705,7 +705,7 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
    SCALE_PROJECTION_MAXIMUM)
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX)
 from LmServer.legion.occ_layer import OccurrenceLayer
-from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.sdm_proj import SDMProjection
 from LmServer.base.lmmap import *
 
 map = LMMap(mapname, title, url, epsgcode, bbox, mapunits, 
