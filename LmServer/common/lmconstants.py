@@ -320,7 +320,7 @@ class LMFileType(Enum):
 
     # ..............................
     @staticmethod
-    def isSDM(rtype):
+    def is_sdm(rtype):
         if rtype in [
                 LMFileType.MODEL_ATT_RESULT, LMFileType.MODEL_REQUEST,
                 LMFileType.MODEL_RESULT, LMFileType.MODEL_STATS,
@@ -333,7 +333,7 @@ class LMFileType(Enum):
         return False
 
     @staticmethod
-    def isRAD(rtype):
+    def is_rad(rtype):
         if rtype in [
                 LMFileType.ANC_PAM, LMFileType.ATTR_MATRIX, LMFileType.CALCS,
                 LMFileType.BIOGEO_HYPOTHESES, LMFileType.DIVERSITY_OBSERVED,
@@ -351,7 +351,7 @@ class LMFileType(Enum):
         return False
 
     @staticmethod
-    def isUserSpace(rtype):
+    def is_user_space(rtype):
         if rtype in [
                 LMFileType.BOOM_CONFIG, LMFileType.TMP_JSON, LMFileType.TREE,
                 LMFileType.USER_ATTRIBUTE_MATRIX, LMFileType.USER_TREE]:
@@ -359,26 +359,26 @@ class LMFileType(Enum):
         return False
 
     @staticmethod
-    def isUserLayer(rtype):
+    def is_user_layer(rtype):
         if rtype in [LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SHAPEGRID,
                      LMFileType.USER_LAYER, LMFileType.USER_SHAPEGRID]:
             return True
         return False
 
     @staticmethod
-    def mapTypes():
+    def map_types():
         return [
             LMFileType.ANCILLARY_MAP, LMFileType.OTHER_MAP, LMFileType.RAD_MAP,
             LMFileType.SCENARIO_MAP, LMFileType.SDM_MAP]
 
     @staticmethod
-    def isMap(rtype):
+    def is_map(rtype):
         if rtype in LMFileType.mapTypes():
             return True
         return False
 
     @staticmethod
-    def isMatrix(rtype):
+    def is_matrix(rtype):
         if rtype in [
                 LMFileType.ANC_PAM, LMFileType.BIOGEO_HYPOTHESES,
                 LMFileType.CALCS, LMFileType.DIVERSITY_OBSERVED,
@@ -394,7 +394,7 @@ class LMFileType(Enum):
         return False
 
     @staticmethod
-    def getMatrixFiletype(mtype):
+    def get_matrix_filetype(mtype):
         if mtype in (MatrixType.PAM, MatrixType.ROLLING_PAM):
             return LMFileType.PAM
         elif mtype == MatrixType.ANC_PAM:
