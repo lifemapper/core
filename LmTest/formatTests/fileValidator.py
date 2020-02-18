@@ -1,9 +1,7 @@
-'''
-Created on Apr 17, 2018
-
-@author: cjgrady
-'''
+"""Module for file validation
+"""
 
 
+# .............................................................................
 def validate_file(obj_generator):
-   return True
+    return True
