@@ -1,4 +1,4 @@
-"""
+"""Module containing geo tools
 
 Note:
      From http://perrygeo.googlecode.com/svn/trunk/gis-bin/flip_raster.py
@@ -7,532 +7,593 @@ import os
 
 import numpy
 
+from osgeo import gdal, gdalconst
+
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import DEFAULT_NODATA
-from osgeo import gdal, gdalconst
-from osgeo import gdalconst
 
 
 # ............................................................................
 class GeoFileInfo(LMObject):
-    """
-    @summary: Class for getting information from a raster dataset readable
-                 by GDAL.
+    """Class for getting information from a raster dataset readable by GDAL.
     """
 
-    def __init__(self, dlocation, varpattern=None, updateable=False):
-        """
-        @param dlocation: dataset location, interpretable by GDAL
-        @param varpattern: string to match for the final portion of a subdataset
-                 name, for those datasets where the data of interest is one of 
-                 multiple subdatasets.
-        @param updateable: False if open in Read-Only mode, True if writeable. 
+    # ................................
+    def __init__(self, dlocation, var_pattern=None, updateable=False):
+        """Constructor
+
+        Args:
+            dlocation: dataset location, interpretable by GDAL
+            var_pattern: string to match for the final portion of a subdataset
+                name, for those datasets where the data of interest is one of
+                multiple subdatasets.
+            updateable: False if open in Read-Only mode, True if writeable.
         """
         # Used for geotools (checking point values)
-        self.scalef = 1.0
-        self._cscanline = None
+        self.scale_f = 1.0
+        self._c_scan_line = None
+        self._scan_line = None
         self._band = None
         self._dataset = None
         self._min = None
         self._max = None
         self._mean = None
-        self._stddev = None
+        self._std_dev = None
+        self.description = None
+        self.units = None
 
         # General dataset info
         self.dlocation = dlocation
         fname = os.path.basename(self.dlocation)
-        basename, ext = os.path.splitext(fname)
+        basename, _ = os.path.splitext(fname)
         self.name = basename
         self.variable = basename
         # filled in when dataset is opened below
-        self.gdalFormat = None
+        self.gdal_format = None
 
         try:
-            self.openDataSet(varpattern, updateable)
-        except LMError as e:
-            raise e
-        except Exception as e:
-            raise LMError(['Unable to open raster file %s' % self.dlocation, str(e)])
+            self.open_dataset(var_pattern, updateable)
+        except LMError as err:
+            raise err
+        except Exception as err:
+            raise LMError('Unable to open file at {}'.format(dlocation), err)
         else:
             if self._dataset is None:
-                raise LMError(['No dataset for file %s' % self.dlocation, str(e)])
+                raise LMError('No dataset for file {}'.format(dlocation))
             self._band = self._dataset.GetRasterBand(1)
             self.srs = self._dataset.GetProjection()
             self.bands = self._dataset.RasterCount
-            self.xsize = self._dataset.RasterXSize
-            self.ysize = self._dataset.RasterYSize
-            self.geoTransform = self._dataset.GetGeoTransform()
+            self.x_size = self._dataset.RasterXSize
+            self.y_size = self._dataset.RasterYSize
+            self.geo_transform = self._dataset.GetGeoTransform()
 
             # GDAL data type
-            self.gdalBandType = self._band.DataType
+            self.gdal_band_type = self._band.DataType
             self.nodata = self._band.GetNoDataValue()
 
-            self.ulx = self.geoTransform[0]
-            self.xPixelSize = self.geoTransform[1]
-            self.uly = self.geoTransform[3]
-            self.yPixelSize = self.geoTransform[5]
+            self.ul_x = self.geo_transform[0]
+            self.x_pixel_size = self.geo_transform[1]
+            self.ul_y = self.geo_transform[3]
+            self.y_pixel_size = self.geo_transform[5]
 
-            self.lrx = self.ulx + self.xPixelSize * self.xsize
-            self.lry = self.uly + self.yPixelSize * self.ysize
+            self.lr_x = self.ul_x + self.x_pixel_size * self.x_size
+            self.lr_y = self.ul_y + self.y_pixel_size * self.y_size
 
-# ...............................................
-    def openDataSet(self, varpattern=None, updateable=False):
-        """
-        @summary: Open (or re-open) the dataset.
-        @param varpattern: string to match for the final portion of a subdataset
-                 name, for those datasets where the data of interest is one of 
-                 multiple subdatasets.
-        @param updateable: False if open in Read-Only mode, True if writeable. 
+    # ................................
+    def open_dataset(self, var_pattern=None, updateable=False):
+        """Open (or re-open) the dataset.
+
+        Args:
+            var_pattern: String to match for the final portion of a subdataset
+                name, for those datasets where the data of interest is one of
+                multiple subdatasets.
+            updateable: False if open in Read-Only mode, True if writeable.
         """
         try:
             if updateable:
                 self._dataset = None
                 self._band = None
-                self._dataset = gdal.Open(str(self.dlocation), gdalconst.GA_Update)
+                self._dataset = gdal.Open(
+                    str(self.dlocation), gdalconst.GA_Update)
             elif self._dataset is None:
-                self._dataset = gdal.Open(str(self.dlocation), gdalconst.GA_ReadOnly)
-        except Exception as e:
-            print(('Exception raised trying to open layer=%s\n%s'
-                    % (self.dlocation, str(e))))
-            raise LMError(['Unable to open %s' % self.dlocation])
+                self._dataset = gdal.Open(
+                    str(self.dlocation), gdalconst.GA_ReadOnly)
+        except Exception as err:
+            raise LMError('Unable to open {}'.format(self.dlocation), err)
         else:
             if self._dataset is None:
-                raise LMError(['Unable to open %s' % self.dlocation])
+                raise LMError('Unable to open {}'.format(self.dlocation))
 
             drv = self._dataset.GetDriver()
-            self.gdalFormat = drv.GetDescription()
+            self.gdal_format = drv.GetDescription()
 
         self.units = self._dataset.GetMetadataItem('UNITS')
         # Subdatasets for NIES IPCC AR4 netcdf data
         # Resets dlocation, _dataset, variable, units, description
-        self._checkSubDatasets(varpattern)
+        self._check_sub_datasets(var_pattern)
 
-# .............................................
-    def writeWktSRS(self, srs):
-        """
-        @summary: Write a new SRS to the dataset
-        @param srs: spatial reference system in well-known-text (wkt) 
-                        to write to the dataset. 
+    # ................................
+    def write_wkt_srs(self, srs):
+        """Write a new SRS to the dataset
+
+        Args:
+            srs: spatial reference system in well-known-text (wkt) to write to
+            the dataset.
         """
         try:
-            self.openDataSet(updateable=True)
+            self.open_dataset(updateable=True)
             self._dataset.SetProjection(srs)
             self._dataset.FlushCache()
             self._dataset = None
             self.srs = srs
-        except Exception as e:
-            raise LMError(['Unable to write SRS info to file', srs,
-                                self.dlocation, str(e)])
+        except Exception as err:
+            raise LMError(
+                'Unable to write SRS info to file', err, srs=srs,
+                d_location=self.dlocation)
 
-# .............................................
-    def copySRS(self, fname):
-        """
-        @summary: Write a new SRS, copied from another dataset, to this dataset.
-        @param fname: Filename for dataset from which to copy spatial reference 
-                     system. 
-        """
-        newsrs = GeoFileInfo.getSRSAsWkt(fname)
-        self.writeWktProjection(newsrs)
+    # ................................
+    def copy_srs(self, fname):
+        """Write a new SRS, copied from another dataset, to this dataset.
 
-# .............................................
-    def copyWithoutProjection(self, outfname, format='GTiff'):
+        Args:
+            fname: Filename for dataset from which to copy spatial reference
+                system.
         """
-        @summary: Copy this dataset with no projection information.
-        @param outfname: Filename to write this dataset to.
-        @param format: GDAL-writeable raster format to use for new dataset. 
-                            http://www.gdal.org/formats_list.html
-        """
-        self.openDataSet()
-        driver = gdal.GetDriverByName(format)
+        new_srs = GeoFileInfo.get_srs_as_wkt(fname)
+        self.write_wkt_srs(new_srs)
 
-        outds = driver.Create(outfname, self.xsize, self.ysize, 1, self.gdalBandType)
-        if outds is None:
-            print('Creation failed for %s from band %d of %s' % (outfname, 1,
-                                                                                  self.dlocation))
+    # ................................
+    def copy_without_projection(self, out_f_name, format_='GTiff'):
+        """Copy this dataset with no projection information.
+
+        Args:
+            out_f_name: Filename to write this dataset to.
+            format_: GDAL-writeable raster format to use for new dataset.
+                http://www.gdal.org/formats_list.html
+        """
+        self.open_dataset()
+        driver = gdal.GetDriverByName(format_)
+
+        out_ds = driver.Create(
+            out_f_name, self.x_size, self.y_size, 1, self.gdal_band_type)
+        if out_ds is None:
+            print(
+                'Creation failed for {} from band {} of {}'.format(
+                    out_f_name, 1, self.dlocation))
             return 0
 
-        outds.SetGeoTransform(self.geoTransform)
-        outband = outds.GetRasterBand(1)
-        outband.SetNoDataValue(self.nodata)
-        outds.SetProjection('')
-        rstArray = self._dataset.ReadAsArray()
-        outband.WriteArray(rstArray)
+        out_ds.SetGeoTransform(self.geo_transform)
+        out_band = out_ds.GetRasterBand(1)
+        out_band.SetNoDataValue(self.nodata)
+        out_ds.SetProjection('')
+        rst_array = self._dataset.ReadAsArray()
+        out_band.WriteArray(rst_array)
 
         # Close new dataset to flush to disk
-        outds.FlushCache()
-        outds = None
+        out_ds.FlushCache()
+        out_ds = None
 
-# .............................................
-    def _checkSubDatasets(self, varpattern):
+    # ................................
+    def _check_sub_datasets(self, var_pattern):
         try:
-            subdatasets = self._dataset.GetSubDatasets()
-        except:
+            sub_datasets = self._dataset.GetSubDatasets()
+        except Exception:
             pass
         else:
             found = False
-            for subname, subdesc in subdatasets:
-                if (varpattern is None and not (subname.endswith('bounds'))
-                     or
-                     (varpattern is not None and subname.endswith(varpattern))):
+            for sub_name, sub_desc in sub_datasets:
+                if (not var_pattern and not sub_name.endswith('bounds')) or\
+                        var_pattern and sub_name.endswith(var_pattern):
                     # Replace enclosing dataset values
-                    self.variable = subname.split(':')[2]
-                    self.dlocation = subname
-                    self.description = subdesc
+                    self.variable = sub_name.split(':')[2]
+                    self.dlocation = sub_name
+                    self.description = sub_desc
                     found = True
                     break
 
             if found:
                 # Replace enclosing dataset with subdataset
                 self._dataset = None
-                self._dataset = gdal.Open(self.dlocation, gdalconst.GA_ReadOnly)
+                self._dataset = gdal.Open(
+                    self.dlocation, gdalconst.GA_ReadOnly)
                 # Replace units of subdataset
-                self.units = self._dataset.GetMetadataItem(self.variable + '#units')
+                self.units = self._dataset.GetMetadataItem(
+                    self.variable + '#units')
 
-# .............................................
-    def _cycleRow(self, scanline, arrtype, left, center, right):
+    # ................................
+    def _cycle_row(self, scan_line, arr_type, left, center, right):
+        """Shift the values in a row
+
+        Shift the values in a row to the right, so that the first column in the
+        row is shifted to the center.  Used for data in which a row begins with
+        0 degree longitude and ends with 360 degrees longitude (instead of -180
+        to +180)
+
+        Args:
+            scan_line: Original row to shift.
+            arr_type: Numpy datatype for scanline values
+            left: Leftmost column index
+            center: Center column index
+            right: Rightmost column index
         """
-        @summary: Shift the values in a row to the right, so that the first 
-                     column in the row is shifted to the center.  Used for data in
-                     which a row begins with 0 degree longitude and ends with 360 
-                     degrees longitude (instead of -180 to +180) 
-        @param scanline: Original row to shift.
-        @param arrtype: Numpy datatype for scanline values
-        @param left: Leftmost column index
-        @param center: Center column index
-        @param right: Rightmost column index
-        """
-        newline = numpy.empty((self.xsize), dtype=arrtype)
-        c = 0
+        new_line = numpy.empty((self.x_size), dtype=arr_type)
+        col_i = 0
         for col in range(center, right):
-            newline[c] = scanline[col]
-            c += 1
+            new_line[col_i] = scan_line[col]
+            col_i += 1
         for col in range(left, center):
-            newline[c] = scanline[col]
-            c += 1
-        return newline
+            new_line[col_i] = scan_line[col]
+            col_i += 1
+        return new_line
 
-    # ............................................................................
-    def _getNumpyType(self, othertype):
-        if othertype == gdalconst.GDT_Float32:
-            arrtype = numpy.float32
-        return arrtype
+    # ................................
+    @staticmethod
+    def _get_numpy_type(other_type):
+        arr_type = None
+        if other_type == gdalconst.GDT_Float32:
+            arr_type = numpy.float32
+        return arr_type
 
-# .............................................
-    def getArray(self, bandnum, doFlip=False, doShift=False):
-        """
-        @summary: Read the dataset into numpy array  
-        @param bandnum: The band number to read.
-        @param doFlip: True if data begins at the southern edge of the region
-        @param doShift: True if the leftmost edge of the data should be shifted 
-                 to the center (and right half shifted around to the beginning) 
+    # ................................
+    def get_array(self, band_num, do_flip=False, do_shift=False):
+        """Read the dataset into numpy array
+
+        Args:
+            band_num: The band number to read.
+            do_flip: True if data begins at the southern edge of the region
+            do_shift: True if the leftmost edge of the data should be shifted
+                to the center (and right half shifted around to the beginning)
         """
         if 'numpy' in dir():
-            inds = gdal.Open(self.dlocation, gdalconst.GA_ReadOnly)
-            inband = inds.GetRasterBand(bandnum)
-            arrtype = self._getNumpyType(self.gdalBandType)
-            outArr = numpy.empty([self.ysize, self.xsize], dtype=arrtype)
+            in_ds = gdal.Open(self.dlocation, gdalconst.GA_ReadOnly)
+            in_band = in_ds.GetRasterBand(band_num)
+            arr_type = self._get_numpy_type(self.gdal_band_type)
+            out_arr = numpy.empty((self.y_size, self.x_size), dtype=arr_type)
 
-            for row in range(self.ysize):
-                scanline = inband.ReadAsArray(0, row, self.xsize, 1, self.xsize, 1)
+            for row in range(self.y_size):
+                scan_line = in_band.ReadAsArray(
+                    0, row, self.x_size, 1, self.x_size, 1)
 
-                if doShift:
-                    scanline = self._cycleRow(scanline, arrtype, 0, self.xsize / 2,
-                                                      self.xsize)
-                if doFlip:
-                    newrow = self.ysize - row - 1
+                if do_shift:
+                    scan_line = self._cycle_row(
+                        scan_line, arr_type, 0, self.x_size / 2, self.x_size)
+                if do_flip:
+                    new_row = self.y_size - row - 1
                 else:
-                    newrow = row
+                    new_row = row
 
-                outArr[newrow] = scanline
+                out_arr[new_row] = scan_line
 
-            inds = None
-            return outArr
-        else:
-            raise LMError('numpy missing - unable to getArray')
+            in_ds = None
+            return out_arr
 
-# .............................................
-    def copyDataset(self, bandnum, outfname, format='GTiff', kwargs={}):
+        raise LMError('numpy missing - unable to getArray')
+
+    # ................................
+    def copy_dataset(self, band_num, out_f_name, format_='GTiff',
+                     kw_args=None):
+        """Copy the dataset into a new file.
+
+        Args:
+            band_num: The band number to read.
+            out_f_name: Filename to write this dataset to.
+            format_: GDAL-writeable raster format to use for new dataset.
+                http://www.gdal.org/formats_list.html
         """
-        @summary: Copy the dataset into a new file.  
-        @param bandnum: The band number to read.
-        @param outfname: Filename to write this dataset to.
-        @param format: GDAL-writeable raster format to use for new dataset. 
-                            http://www.gdal.org/formats_list.html
-        @param doFlip: True if data begins at the southern edge of the region
-        @param doShift: True if the leftmost edge of the data should be shifted 
-                 to the center (and right half shifted around to the beginning) 
-        @param nodata: Value used to indicate nodata in the new file.
-        @param srs: Spatial reference system to use for the data. This is only 
-                        necessary if the dataset does not have an SRS present.  This
-                        will NOT project the dataset into a different projection.
-        """
-        driver = gdal.GetDriverByName(format)
+        if kw_args is None:
+            kw_args = {}
+        driver = gdal.GetDriverByName(format_)
         metadata = driver.GetMetadata()
-        if not (gdal.DCAP_CREATECOPY in metadata
-                     and metadata[gdal.DCAP_CREATECOPY] == 'YES'):
-            raise LMError('Driver %s does not support CreateCopy() method.'
-                              % format)
-        inds = gdal.Open(self.dlocation)
+        if gdal.DCAP_CREATECOPY not in metadata.keys() and \
+                metadata[gdal.DCAP_CREATECOPY] != 'YES':
+            raise LMError(
+                'Driver {} does not support CreateCopy() method.'.format(
+                    format_))
+        in_ds = gdal.Open(self.dlocation)
         try:
-            outds = driver.CreateCopy(outfname, inds, 0, **kwargs)
-        except Exception as e:
-            raise LMError('Creation failed for %s from band %d of %s (%s)'
-                                          % (outfname, bandnum, self.dlocation, str(e)))
-        if outds is None:
-            raise LMError('Creation failed for %s from band %d of %s)'
-                                          % (outfname, bandnum, self.dlocation))
+            out_ds = driver.CreateCopy(out_f_name, in_ds, 0, **kw_args)
+        except Exception as err:
+            raise LMError(
+                'Creation failed for {} from band {} of {} ({})'.format(
+                    out_f_name, band_num, self.dlocation, err))
+        if out_ds is None:
+            raise LMError(
+                'Creation failed for {} from band {} of {}'.format(
+                    out_f_name, band_num, self.dlocation))
 
         # Close new dataset to flush to disk
-        outds = None
-        inds = None
+        out_ds = None
+        in_ds = None
 
-# ...............................................
-# .............................................
-    def writeBand(self, bandnum, outfname, format='GTiff', doFlip=False,
-                     doShift=False, nodata=None, srs=None):
+    # ................................
+    def write_band(self, band_num, out_f_name, format_='GTiff', do_flip=False,
+                   do_shift=False, nodata=None, srs=None):
+        """Write the dataset into a new file, line by line.
+
+        Args:
+            band_num: The band number to read.
+            out_f_name: Filename to write this dataset to.
+            format_: GDAL-writeable raster format to use for new dataset.
+                http://www.gdal.org/formats_list.html
+            do_flip: True if data begins at the southern edge of the region
+            do_shift: True if the leftmost edge of the data should be shifted
+                to the center (and right half shifted around to the beginning)
+            nodata: Value used to indicate nodata in the new file.
+            srs: Spatial reference system to use for the data. This is only
+                necessary if the dataset does not have an SRS present.  This
+                will NOT project the dataset into a different projection.
         """
-        @summary: Write the dataset into a new file, line by line.  
-        @param bandnum: The band number to read.
-        @param outfname: Filename to write this dataset to.
-        @param format: GDAL-writeable raster format to use for new dataset. 
-                            http://www.gdal.org/formats_list.html
-        @param doFlip: True if data begins at the southern edge of the region
-        @param doShift: True if the leftmost edge of the data should be shifted 
-                 to the center (and right half shifted around to the beginning) 
-        @param nodata: Value used to indicate nodata in the new file.
-        @param srs: Spatial reference system to use for the data. This is only 
-                        necessary if the dataset does not have an SRS present.  This
-                        will NOT project the dataset into a different projection.
-        """
-        driver = gdal.GetDriverByName(format)
+        driver = gdal.GetDriverByName(format_)
         metadata = driver.GetMetadata()
-        if not (gdal.DCAP_CREATE in metadata
-                  and metadata[gdal.DCAP_CREATE] == 'YES'):
-            raise LMError('Driver %s does not support Create() method.'
-                                          % format)
+        if gdal.DCAP_CREATE not in metadata and \
+                metadata[gdal.DCAP_CREATE] != 'YES':
+            raise LMError(
+                'Driver {} does not support Create() method'.format(format_))
 
-        outds = driver.Create(outfname, self.xsize, self.ysize, 1, self.gdalBandType)
-        if outds is None:
-            raise LMError('Creation failed for %s from band %d of %s'
-                                % (outfname, bandnum, self.dlocation))
+        out_ds = driver.Create(
+            out_f_name, self.x_size, self.y_size, 1, self.gdal_band_type)
+        if out_ds is None:
+            raise LMError(
+                'Creation failed for {} from band {} of {}'.format(
+                    out_f_name, band_num, self.dlocation))
 
-        outds.SetGeoTransform(self.geoTransform)
+        out_ds.SetGeoTransform(self.geo_transform)
 
-        inds = gdal.Open(self.dlocation, gdalconst.GA_ReadOnly)
-        inband = inds.GetRasterBand(bandnum)
-        outband = outds.GetRasterBand(1)
+        in_ds = gdal.Open(self.dlocation, gdalconst.GA_ReadOnly)
+        in_band = in_ds.GetRasterBand(band_num)
+        out_band = out_ds.GetRasterBand(1)
 
         if nodata is None:
-            nodata = inband.GetNoDataValue()
+            nodata = in_band.GetNoDataValue()
         if nodata is not None:
-            outband.SetNoDataValue(nodata)
+            out_band.SetNoDataValue(nodata)
         if srs is None:
             srs = self.srs
-        outds.SetProjection(srs)
+        out_ds.SetProjection(srs)
 
-        for row in range(self.ysize):
-            scanline = inband.ReadAsArray(0, row, self.xsize, 1, self.xsize, 1)
+        for row in range(self.y_size):
+            scan_line = in_band.ReadAsArray(
+                0, row, self.x_size, 1, self.x_size, 1)
 
-            if doShift:
-                arrType = self._getNumpyType(self.gdalBandType)
-                scanline = self._cycleRow(scanline, arrType, 0, self.xsize / 2,
-                                                  self.xsize)
+            if do_shift:
+                arr_type = self._get_numpy_type(self.gdal_band_type)
+                scan_line = self._cycle_row(
+                    scan_line, arr_type, 0, self.x_size / 2, self.x_size)
 
-            if doFlip:
-                outband.WriteArray(scanline, 0, self.ysize - row - 1)
+            if do_flip:
+                out_band.WriteArray(scan_line, 0, self.y_size - row - 1)
             else:
-                outband.WriteArray(scanline, 0, row)
+                out_band.WriteArray(scan_line, 0, row)
         # Close new dataset to flush to disk
-        outds = None
-        inds = None
+        out_ds = None
+        in_ds = None
 
-# ...............................................
+    # ................................
     def __unicode__(self):
         return '%s (%s)' % (self.name, self.dlocation)
 
-# ...............................................
-    def loadBand(self, bandnum=1):
-        """
-        @summary: Open the dataset and save the band to a member attribute for 
-                     further examination.  
-        @param bandnum: The band number to read.
+    # ................................
+    def load_band(self, band_num=1):
+        """Open the dataset and save the band to a member attribute
+
+        Args:
+            band_num: The band number to read.
         """
         if self._band is None:
             if self._dataset is None:
-                self.openDataSet(None)
-            self._band = self._dataset.GetRasterBand(bandnum)
+                self.open_dataset(None)
+            self._band = self._dataset.GetRasterBand(band_num)
 
-# ...............................................
-    def _getStats(self, bandnum=1):
-        if (self._min is None or self._max is None
-             or self._mean is None or self._stddev is None):
-            self.loadBand(bandnum)
+    # ................................
+    def _get_stats(self, band_num=1):
+        if not all(self._min, self._max, self._mean, self._std_dev):
+            self.load_band(band_num=band_num)
             try:
-                min, max, mean, stddev = self._band.GetStatistics(False, True)
-#                min, max, mean, stddev = self._band.ComputeBandStats(False)
-            except Exception as e:
-                print(('Exception in GeoFileInfo._getStats: band.GetStatistics %s' % str(e)))
-                min, max, mean, stddev = None, None, None, None
-            self._min = min
-            self._max = max
+                min_, max_, mean, stddev = self._band.GetStatistics(
+                    False, True)
+            except Exception as err:
+                print(
+                    ('Exception in _get_stats: band.GetStatistics {}'.format(
+                        err)))
+                min_, max_, mean, stddev = None, None, None, None
+            self._min = min_
+            self._max = max_
             self._mean = mean
-            self._stddev = stddev
+            self._std_dev = stddev
         return min, max, mean, stddev
 
-# ...............................................
-    def getHistogram(self, bandnum=1):
-        """
-        @summary: Get the data values histogram, for coloring in a map.  
-        @param bandnum: The band number to read.
-        @return: a list of data values present in the dataset
-        @note: this returns only a list, not a true histogram.  
-        @note: this only works on 8-bit data.
+    # ................................
+    def get_histogram(self, band_num=1):
+        """Get the data values histogram, for coloring in a map.
+
+        Args:
+            band_num: The band number to read.
+
+        Returns:
+            A list of data values present in the dataset
+
+        Note:
+            - This returns only a list, not a true histogram.
+            - This only works on 8-bit data.
         """
         vals = []
         # Get histogram only for 8bit data (projections)
-        if self.gdalBandType == gdalconst.GDT_Byte:
-            self.loadBand(bandnum)
+        if self.gdal_band_type == gdalconst.GDT_Byte:
+            self.load_band(band_num)
             hist = self._band.GetHistogram()
-            for i in range(len(hist)):
-                if i > 0 and i != self.nodata and hist[i] > 0:
+            for i, hist_val in enumerate(hist):
+                if i > 0 and i != self.nodata and hist_val > 0:
                     vals.append(i)
         else:
             print('Histogram calculated only for 8-bit data')
         return vals
 
-# ...............................................
-    def _getMin(self):
+    # ................................
+    def _get_min(self):
         if self._min is None:
-            self._getStats()
+            self._get_stats()
         return self._min
 
-    min = property(_getMin)
+    min = property(_get_min)
 
-# ...............................................
-    def _getMax(self):
+    # ................................
+    def _get_max(self):
         if self._max is None:
-            self._getStats()
+            self._get_stats()
         return self._max
 
-    max = property(_getMax)
+    max = property(_get_max)
 
-# ...............................................
-    def _getMean(self):
+    # ................................
+    def _get_mean(self):
         if self._mean is None:
-            self._getStats()
+            self._get_stats()
         return self._mean
 
-    mean = property(_getMean)
+    mean = property(_get_mean)
 
-# ...............................................
-    def _getStddev(self):
-        if self._stddev is None:
-            self._getStats()
-        return self._stddev
+    # ................................
+    def _get_std_dev(self):
+        if self._std_dev is None:
+            self._get_stats()
+        return self._std_dev
 
-    stddev = property(_getStddev)
+    std_dev = property(_get_std_dev)
 
-# ...............................................
-    def pointInside(self, point):
-        '''
-        @summary: Returns true if point (x,y) is within extents
-        @param point: a tuple representing a point to query for.
-        '''
-        ext = self.getExtents()
-        if (point[0] >= ext[0] and point[0] <= ext[2]):
-            if (point[1] >= ext[1] and point[1] <= ext[3]):
-                return True
-        return False
+    # ................................
+    def point_inside(self, point):
+        """Returns boolean indicating if point is within extent.
 
-# ...............................................
-    def getZvalues(self, points, missingv=DEFAULT_NODATA):
-        '''
-        @summary: Given a set of [[x,y], ...], returns [[x,y,z], ... ]
-        @param points: A sequence of points (tuples of x and y)
-        @param missingv: Value to return if the point is at a nodata cell
-        '''
+        Args:
+            point: A tuple representing a point.
+        """
+        ext = self.get_extents()
+        return ext[0] <= point[0] <= ext[2] and ext[1] <= point[1] <= ext[3]
 
-        #-------------------
-        def pointsortfunc(p1, p2):
-            '''
-            Used to sort in increasing y value
-            '''
-            if p1[1] < p2[1]:
+    # ................................
+    def get_z_values(self, points, missing_v=DEFAULT_NODATA):
+        """Return z values for (x,y) pairs
+
+        Args:
+            points: A list of (x, y) points
+            missing_v: Value to return if the point is at a nodata cell
+        """
+        # ................................
+        def point_sort_func(pt_1, pt_2):
+            """Used to sort in increasing y value
+            """
+            if pt_1[1] < pt_2[1]:
                 return -1
-            if p1[1] > p2[1]:
+            if pt_1[1] > pt_2[1]:
                 return 1
             return 0
-        #-------------------
 
-        ppos = 0
-        self.loadBand()
+        self.load_band()
         if len(points) > 1:
-            points.sort(pointsortfunc)
+            points.sort(point_sort_func)
         res = []
         for point in points:
-            rpoint = [point[0], point[1]]
-            if self.pointInside(rpoint):
-                cxy = gxy2xy(rpoint, self.geoTransform)
-                if cxy[1] != self._cscanline:
-                    self._cscanline = cxy[1]
+            r_point = [point[0], point[1]]
+            if self.point_inside(r_point):
+                c_xy = geo_coord_to_pixel_coord(r_point, self.geo_transform)
+                if c_xy[1] != self._c_scan_line:
+                    self._c_scan_line = c_xy[1]
                     try:
-                        self._scanline = self._band.ReadAsArray(0, self._cscanline, self.xsize, 1)
-                    except:
+                        self._scan_line = self._band.ReadAsArray(
+                            0, self._c_scan_line, self.x_size, 1)
+                    except Exception:
                         # could not create buffer
                         pass
                 try:
-                    z = self._scanline[0, cxy[0]]
-                except Exception as e:
-                    z = self.nodata
-                if z == self.nodata:
-                    rpoint.append(missingv)
+                    z_val = self._scan_line[0, c_xy[0]]
+                except Exception:
+                    z_val = self.nodata
+                if z_val == self.nodata:
+                    r_point.append(missing_v)
                 else:
                     # return the real value, this changes from float
-#                    newz = z * self.scalef
-                    rpoint.append(z)
+                    # newz = z * self.scalef
+                    r_point.append(z_val)
             else:
-                rpoint.append(missingv)
-            res.append(rpoint)
+                r_point.append(missing_v)
+            res.append(r_point)
         return res
 
-# ...............................................
-    def getBounds(self):
-        '''
-        @summary: Return a list of [minx, miny, maxx, maxy] which is the same 
-                     order as expected by W*S services and openlayers
-        '''
-        bounds = [self.ulx, self.lry, self.lrx, self.uly]
-        return bounds
-
-# ...............................................
-    @staticmethod
-    def rasterSize(datasrc):
-        '''
-        @summary: Return [width, height] in pixels
-        '''
-        datasrc = gdal.Open(str(datasrc))
-        return [datasrc.RasterXSize, datasrc.RasterYSize]
-
-# ...............................................
-    @staticmethod
-    def getSRSAsWkt(filename):
+    # ................................
+    def get_bounds(self):
+        """Return list of bounds for the layer (min_x, min_y, max_x, max_y)
         """
-        @summary: Reads spatial reference system information from provided file 
-        @param filename: The raster file from which to read srs information.
-        @return: Projection information from GDAL
-        @raise LMError: on failure to open dataset
+        return [self.ul_x, self.lr_y, self.lr_x, self.ul_y]
+
+    # ................................
+    @staticmethod
+    def raster_size(data_src):
+        """Return [width, height] in pixels
+        """
+        open_ds = gdal.Open(str(data_src))
+        return [open_ds.RasterXSize, open_ds.RasterYSize]
+
+    # ................................
+    @staticmethod
+    def get_srs_as_wkt(filename):
+        """Reads spatial reference system information from provided file
+
+        Args:
+            filename: The raster file from which to read srs information.
+
+        Returns:
+            Projection information from GDAL
+
+        Raises:
+            LMError: on failure to open dataset
         """
         if (filename is not None and os.path.exists(filename)):
-            geoFI = GeoFileInfo(filename)
-            srs = geoFI.srs
-            geoFI = None
+            geo_fi = GeoFileInfo(filename)
+            srs = geo_fi.srs
+            geo_fi = None
             return srs
-        else:
-            raise LMError(['Unable to read file %s' % filename])
 
-'''
-Implements some tools for visualizing points
-'''
+        raise LMError('Unable to read file {}'.format(filename))
 
-DEFAULT_PROJ = 'GEOGCS["WGS84", DATUM["WGS84", SPHEROID["WGS84", 6378137.0, 298.257223563]], PRIMEM["Greenwich", 0.0], UNIT["degree", 0.017453292519943295], AXIS["Longitude",EAST], AXIS["Latitude",NORTH]]'
 
+# .............................................................................
+DEFAULT_PROJ = (
+    'GEOGCS["WGS84", DATUM["WGS84", SPHEROID["WGS84", 6378137.0, '
+    '298.257223563]], PRIMEM["Greenwich", 0.0], UNIT["degree", '
+    '0.017453292519943295], AXIS["Longitude",EAST], AXIS["Latitude",NORTH]]')
+
+
+# ...............................................
+def geo_coord_to_pixel_coord(geo_xy, geo_transform):
+    """Convert geographic coordinates to pixel coordinats.
+
+    Given a geographic coordinate (in the form of a two element, one
+    dimensional array, [0] = x, [1] = y), and an affine transform, this
+    function returns the inverse of the transform, that is, the pixel
+    coordinates corresponding to the geographic coordinates.
+
+    Args:
+        geo_xy: Sequence of two elements (x, y)
+        geo_transform: The affine transformationa ssociated with a dataset
+
+    Return:
+        List of (x, y) or None if the transform is invalid
+    """
+    g_x, g_y = geo_xy
+
+    # Determinant of affine transformation
+    det = (geo_transform[1] * geo_transform[5]) - (
+        geo_transform[4] * geo_transform[2])
+
+    # If the transformation is not invertable return None
+    if det == 0.0:
+        return None
+
+    transform_1 = (g_x * geo_transform[5]) - (
+        geo_transform[0] * geo_transform[5]) - (geo_transform[2] * g_y) + (
+            geo_transform[2] * geo_transform[3])
+
+    transform_2 = (g_y * geo_transform[1]) - (
+        geo_transform[1] * geo_transform[3]) - (g_x * geo_transform[4]) + (
+            geo_transform[4] * geo_transform[0])
+    return (int(transform_1 // det), int(transform_2 // det))
