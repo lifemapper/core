@@ -19,7 +19,7 @@ from LmServer.legion.mtx_column import MatrixColumn
 from LmServer.legion.occ_layer import OccurrenceLayer
 from LmServer.legion.process_chain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
-from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.sdm_proj import SDMProjection
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.tree import Tree
 
@@ -218,8 +218,10 @@ class Borg(DbPostgresql):
             gcm_code = self._get_column_value(row, idxs, ['gcmcode'])
             alt_code = self._get_column_value(row, idxs, ['altpredcode'])
             dt_code = self._get_column_value(row, idxs, ['datecode'])
-            meta = self._get_column_value(row, idxs, ['envmetadata', 'metadata'])
-            mod_time = self._get_column_value(row, idxs, ['envmodtime', 'modtime'])
+            meta = self._get_column_value(
+                row, idxs, ['envmetadata', 'metadata'])
+            mod_time = self._get_column_value(
+                row, idxs, ['envmodtime', 'modtime'])
             usr = self._get_column_value(row, idxs, ['envuserid', 'userid'])
             lt_id = self._get_column_value(row, idxs, ['env_typeid'])
             lyr_type = EnvType(
@@ -663,8 +665,8 @@ class Borg(DbPostgresql):
             wkt = scen_pkg.get_wkt()
         meta = scen_pkg.dump_scenpkg_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
-            'lm_findOrInsertScenPackage', scen_pkg.get_user_id(), scen_pkg.name,
-            meta, scen_pkg.map_units, scen_pkg.epsgcode,
+            'lm_findOrInsertScenPackage', scen_pkg.get_user_id(),
+            scen_pkg.name, meta, scen_pkg.map_units, scen_pkg.epsgcode,
             scen_pkg.get_csv_extent_string(), wkt, scen_pkg.mod_time)
         new_or_existing_scen_pkg = self._create_scen_package(row, idxs)
         return new_or_existing_scen_pkg
@@ -852,7 +854,7 @@ class Borg(DbPostgresql):
         """Return the number of scenarios fitting the given filter conditions
 
         Args:
-            user_id: filter by LMUser 
+            user_id: filter by LMUser
             after_time: filter by modified at or after this time
             before_time: filter by modified at or before this time
             epsg: filter by the EPSG spatial reference system code
@@ -1291,7 +1293,7 @@ class Borg(DbPostgresql):
 
         Args:
             lyr: layer to insert
-        
+
         Returns:
             New or existing EnvironmentalLayer
         """
@@ -1349,7 +1351,8 @@ class Borg(DbPostgresql):
             user_id: User (owner) for which to return occurrencesets.
             env_code: filter by the environmental code (i.e. bio13)
             gcm_code: filter by the Global Climate Model code
-            alt_pred_code: filter by the alternate predictor code (i.e. IPCC RCP)
+            alt_pred_code: filter by the alternate predictor code (i.e. IPCC
+                RCP)
             date_code: filter by the date code
             after_time: filter by modified at or after this time
             before_time: filter by modified at or before this time
@@ -1374,10 +1377,11 @@ class Borg(DbPostgresql):
         Args:
             first_rec_num: The first record to return, 0 is the first record
             max_num: Maximum number of records to return
-            user_id: User (owner) for which to return occurrencesets.  
+            user_id: User (owner) for which to return occurrencesets.
             env_code: filter by the environmental code (i.e. bio13)
             gcm_code: filter by the Global Climate Model code
-            alt_pred_code: filter by the alternate predictor code (i.e. IPCC RCP)
+            alt_pred_code: filter by the alternate predictor code (i.e. IPCC
+                RCP)
             date_code: filter by the date code
             after_time: filter by modified at or after this time
             before_time: filter by modified at or before this time
@@ -1602,7 +1606,7 @@ class Borg(DbPostgresql):
             Named tuple with database id, name, url, and modification time of
                 this source
         """
-        ts = None
+        tax_src = None
         try:
             row, idxs = self.execute_select_one_function(
                 'lm_getTaxonSource', tax_src_id, tax_src_name, tax_src_url)
@@ -1634,373 +1638,369 @@ class Borg(DbPostgresql):
         return sciname
 
     # ................................
-    def find_or_insert_taxon(self, taxonSourceId, taxonKey, sciName):
+    def find_or_insert_taxon(self, taxon_source_id, taxon_key, sci_name):
+        """Insert a taxon associated with a TaxonomySource into the database
+
+        Args:
+            taxon_source_id: Lifemapper database ID of the TaxonomySource
+            taxon_key: unique identifier of the taxon in the (external)
+                TaxonomySource
+            sci_name: ScientificName object with taxonomy information for this
+                taxon
+
+        Returns:
+            New or existing ScientificName
         """
-        : Insert a taxon associated with a TaxonomySource into the 
-                     database.  
-             taxonSourceId: Lifemapper database ID of the TaxonomySource
-             taxonKey: unique identifier of the taxon in the (external) 
-                 TaxonomySource 
-             sciName: ScientificName object with taxonomy information for this taxon
-        Returns:new or existing ScientificName
-        """
-        scientificname = None
-        currtime = gmt().mjd
-        usr = squid = kingdom = phylum = cls = ordr = family = genus = None
-        rank = canname = sciname = genkey = spkey = keyhierarchy = lastcount = None
+        scientific_name = None
+        curr_time = gmt().mjd
+        usr = squid = kingdom = phylum = class_ = order_ = family = None
+        genus = rank = can_name = sci_name = gen_key = sp_key = None
+        key_hierarchy = last_count = None
         try:
-            taxonSourceId = sciName.taxonomySourceId
-            taxonKey = sciName.sourceTaxonKey
-            usr = sciName.user_id
-            squid = sciName.squid
-            kingdom = sciName.kingdom
-            phylum = sciName.phylum
-            cls = sciName.txClass
-            ordr = sciName.txOrder
-            family = sciName.family
-            genus = sciName.genus
-            rank = sciName.rank
-            canname = sciName.canonicalName
-            sciname = sciName.scientificName
-            genkey = sciName.sourceGenusKey
-            spkey = sciName.sourceSpeciesKey
-            keyhierarchy = sciName.sourceKeyHierarchy
-            lastcount = sciName.lastOccurrenceCount
-        except:
+            taxon_source_id = sci_name.taxonomy_source_id
+            taxon_key = sci_name.sourceTaxonKey
+            usr = sci_name.user_id
+            squid = sci_name.squid
+            kingdom = sci_name.kingdom
+            phylum = sci_name.phylum
+            class_ = sci_name.txClass
+            order_ = sci_name.txOrder
+            family = sci_name.family
+            genus = sci_name.genus
+            rank = sci_name.rank
+            can_name = sci_name.canonicalName
+            sci_name = sci_name.scientificName
+            gen_key = sci_name.sourceGenusKey
+            sp_key = sci_name.sourceSpeciesKey
+            key_hierarchy = sci_name.sourceKeyHierarchy
+            last_count = sci_name.lastOccurrenceCount
+        except Exception:
             pass
         try:
-            row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertTaxon',
-                                                                taxonSourceId, taxonKey,
-                                                                usr, squid, kingdom, phylum,
-                                                                cls, ordr, family, genus, rank,
-                                                                canname, sciname, genkey, spkey,
-                                                                keyhierarchy, lastcount,
-                                                                currtime)
+            row, idxs = self.execute_insert_and_select_one_function(
+                'lm_findOrInsertTaxon', taxon_source_id, taxon_key, usr, squid,
+                kingdom, phylum, class_, order_, family, genus, rank, can_name,
+                sci_name, gen_key, sp_key, key_hierarchy, last_count,
+                curr_time)
         except Exception as e:
             raise e
         else:
-            scientificname = self._createScientificName(row, idxs)
+            scientific_name = self._create_scientific_name(row, idxs)
 
-        return scientificname
+        return scientific_name
 
     # ................................
-    def update_taxon(self, sciName):
+    def update_taxon(self, sci_name):
+        """Update a taxon in the database.
+
+        Args:
+            sci_name: ScientificName object with taxonomy information for this
+                taxon
+
+        Returns:
+            Updated ScientificName
+
+        Note:
+            Does not modify any foreign key (squid), or unique-constraint
+                values, (taxonomySource, taxonKey, user_id, sciname).
         """
-        : Update a taxon in the database.  
-             sciName: ScientificName object with taxonomy information for this taxon
-        Returns:updated ScientificName
-        Note: Does not modify any foreign key (squid), or unique-constraint  
-                 values, (taxonomySource, taxonKey, user_id, sciname).
-        """
-        success = self.execute_modify_function('lm_updateTaxon',
-                                                         sciName.get_id(),
-                                                         sciName.kingdom,
-                                                         sciName.phylum,
-                                                         sciName.txClass,
-                                                         sciName.txOrder,
-                                                         sciName.family,
-                                                         sciName.genus,
-                                                         sciName.rank,
-                                                         sciName.canonicalName,
-                                                         sciName.sourceGenusKey,
-                                                         sciName.sourceSpeciesKey,
-                                                         sciName.sourceKeyHierarchy,
-                                                         sciName.lastOccurrenceCount,
-                                                         gmt().mjd)
+        success = self.execute_modify_function(
+            'lm_updateTaxon', sci_name.get_id(), sci_name.kingdom,
+            sci_name.phylum, sci_name.class_, sci_name.order_, sci_name.family,
+            sci_name.genus, sci_name.rank, sci_name.canonical_name,
+            sci_name.source_genus_key, sci_name.source_species_key,
+            sci_name.source_key_hierarchy, sci_name.last_occurrence_count,
+            gmt().mjd)
         return success
 
     # ................................
-    def get_taxon(self, squid, taxonSourceId, taxonKey, user_id, taxonName):
-        """
-        : Find a taxon associated with a TaxonomySource from database.
-             squid: Hash value of either taxonSourceId+taxonKey 
-                          or user_id+taxonName
-             taxonSourceId: Lifemapper database ID of the TaxonomySource
-             taxonKey: unique identifier of the taxon in the (external) 
-                 TaxonomySource 
-             user_id: User id for the scenario to be fetched.
-             taxonName: name string for this taxon
-        Returns:existing ScientificName
-        """
-        row, idxs = self.execute_select_one_function('lm_getTaxon', squid,
-                                                taxonSourceId, taxonKey, user_id, taxonName)
-        scientificname = self._createScientificName(row, idxs)
+    def get_taxon(self, squid, taxon_source_id, taxon_key, user_id,
+                  taxon_name):
+        """Find a taxon associated with a TaxonomySource from database.
 
-        return scientificname
+        Args:
+            squid: Hash value of either taxonSourceId+taxonKey or
+                user_id+taxonName
+            taxonSourceId: Lifemapper database ID of the TaxonomySource
+            taxonKey: unique identifier of the taxon in the (external)
+                TaxonomySource
+            user_id: User id for the scenario to be fetched.
+            taxon_ame: name string for this taxon
+
+        Returns:
+            Existing ScientificName
+        """
+        row, idxs = self.execute_select_one_function(
+            'lm_getTaxon', squid, taxon_source_id, taxon_key, user_id,
+            taxon_name)
+        scientific_name = self._create_scientific_name(row, idxs)
+
+        return scientific_name
 
     # ................................
-    def get_scenario(self, scenid=None, user_id=None, code=None, fillLayers=False):
+    def get_scenario(self, scen_id=None, user_id=None, code=None,
+                     fill_layers=False):
+        """Get and fill a scenario from its user and code or database id.
+
+        Args:
+            scen_id: ScenarioId for the scenario to be fetched.
+            code: Code for the scenario to be fetched.
+            user_id: User id for the scenario to be fetched.
+            fillLayers: Boolean indicating whether to retrieve and populate
+                layers from to be fetched.
+        Returns:
+            A LmServer.legion.scenario.Scenario object
+
+        Note:
+            If  fill_layers is true, populate the layers in the object.
         """
-        : Get and fill a scenario from its user and code or database id.    
-                     If  fillLayers is true, populate the layers in the objecgt.
-             scenid: ScenarioId for the scenario to be fetched.
-             code: Code for the scenario to be fetched.
-             user_id: User id for the scenario to be fetched.
-             fillLayers: Boolean indicating whether to retrieve and populate 
-                 layers from to be fetched.
-        Returns:a LmServer.legion.scenario.Scenario object
-        """
-        row, idxs = self.execute_select_one_function('lm_getScenario', scenid,
-                                                                user_id, code)
-        scen = self._createScenario(row, idxs)
-        if scen is not None and fillLayers:
-            lyrs = self.getScenarioLayers(scen.get_id())
-            scen.setLayers(lyrs)
+        row, idxs = self.execute_select_one_function(
+            'lm_getScenario', scen_id, user_id, code)
+        scen = self._create_scenario(row, idxs)
+        if scen is not None and fill_layers:
+            lyrs = self.get_scenario_layers(scen.get_id())
+            scen.set_layers(lyrs)
         return scen
 
     # ................................
-    def get_scenario_layers(self, scenid):
-        """
-        : Return a scenario by its db id or code, filling its layers.  
-             code: Code for the scenario to be fetched.
-             scenid: ScenarioId for the scenario to be fetched.
+    def get_scenario_layers(self, scen_id):
+        """Return a scenario by its db id or code, filling its layers.
+
+        Args:
+            code: Code for the scenario to be fetched.
+            scen_id: ScenarioId for the scenario to be fetched.
         """
         lyrs = []
-        rows, idxs = self.execute_select_many_function('lm_getEnvLayersForScenario', scenid)
-        for r in rows:
-            lyr = self._createEnvLayer(r, idxs)
+        rows, idxs = self.execute_select_many_function(
+            'lm_getEnvLayersForScenario', scen_id)
+        for row in rows:
+            lyr = self._create_env_layer(row, idxs)
             lyrs.append(lyr)
         return lyrs
 
     # ................................
     def get_occurrence_set(self, occ_id, squid, user_id, epsg):
+        """Get an occurrenceset for the given id or squid and User
+
+        Args:
+            occ_id: the database primary key of the Occurrence record
+            squid: a species identifier, tied to a ScientificName
+            user_id: the database primary key of the LMUser
+            epsg: Spatial reference system code from EPSG
         """
-        : get an occurrenceset for the given id or squid and User
-             occ_id: the database primary key of the Occurrence record
-             squid: a species identifier, tied to a ScientificName
-             user_id: the database primary key of the LMUser
-             epsg: Spatial reference system code from EPSG
-        """
-        row, idxs = self.execute_select_one_function('lm_getOccurrenceSet',
-                                                                  occ_id, user_id, squid, epsg)
-        occ = self._createOccurrenceLayer(row, idxs)
+        row, idxs = self.execute_select_one_function(
+            'lm_getOccurrenceSet', occ_id, user_id, squid, epsg)
+        occ = self._create_occurrence_layer(row, idxs)
         return occ
 
     # ................................
     def update_occurrence_set(self, occ):
-        """
-        : Update OccurrenceLayer attributes: 
-                     verify, display_name, dlocation, rawDlocation, queryCount, 
-                     bbox, metadata, status, status_mod_time, geometries if valid
-        Note: Does not update the userid, squid, and epsgcode (unique constraint) 
-             occ: OccurrenceLayer to be updated.  
-        Returns:True/False for successful update.
+        """Update OccurrenceLayer attributes
+
+        Args:
+            occ: OccurrenceLayer to be updated.  
+
+        Note:
+            Does not update the userid, squid, and epsgcode (unique constraint)
+
+        Returns:
+            True/False for successful update.
         """
         success = False
-        polyWkt = pointsWkt = None
+        poly_wkt = points_wkt = None
         metadata = occ.dump_lyr_metadata()
         try:
-            polyWkt = occ.getConvexHullWkt()
-        except:
+            poly_wkt = occ.get_convex_hull_wkt()
+        except Exception:
             pass
         try:
-            pointsWkt = occ.get_wkt()
-        except:
+            points_wkt = occ.get_wkt()
+        except Exception:
             pass
         try:
-            success = self.execute_modify_function('lm_updateOccurrenceSet',
-                                                             occ.get_id(),
-                                                             occ.verify,
-                                                             occ.display_name,
-                                                             occ.get_dlocation(),
-                                                             occ.getRawDLocation(),
-                                                             occ.queryCount,
-                                                             occ.get_csv_extent_string(),
-                                                             occ.epsgcode,
-                                                             metadata,
-                                                             occ.status,
-                                                             occ.status_mod_time,
-                                                             polyWkt,
-                                                             pointsWkt)
-        except Exception as e:
-            raise e
+            success = self.execute_modify_function(
+                'lm_updateOccurrenceSet', occ.get_id(), occ.verify,
+                occ.display_name, occ.get_dlocation(), occ.get_raw_dlocation(),
+                occ.query_count, occ.get_csv_extent_string(), occ.epsgcode,
+                metadata, occ.status, occ.status_mod_time, poly_wkt,
+                points_wkt)
+        except Exception as err:
+            raise LMError('Failed to update occurrence set', err)
         return success
 
     # ................................
-    def get_sdm_project(self, layerid):
+    def get_sdm_project(self, layer_id):
+        """Get a projection for the given id
+
+        Args:
+            layer_id: Database id for the SDMProject layer record
         """
-        : get a projection for the given id
-             layerid: Database id for the SDMProject layer record
-        """
-        row, idxs = self.execute_select_one_function('lm_getSDMProjectLayer', layerid)
-        proj = self._createSDMProjection(row, idxs)
+        row, idxs = self.execute_select_one_function(
+            'lm_getSDMProjectLayer', layer_id)
+        proj = self._create_sdm_projection(row, idxs)
         return proj
 
     # ................................
     def update_sdm_project(self, proj):
-        """
-         Method to update an SDMProjection object in the database with 
-                    the verify hash, metadata, data extent and values, status/status_mod_time.
-             proj the SDMProjection object to update
+        """Method to update an SDMProjection object in the database
+
+        Args:
+            proj: The SDMProjection object to update
         """
         success = False
-        lyrmeta = proj.dump_lyr_metadata()
-        prjmeta = proj.dump_param_metadata()
+        lyr_meta = proj.dump_lyr_metadata()
+        prj_meta = proj.dump_param_metadata()
         try:
-            success = self.execute_modify_function('lm_updateSDMProjectLayer',
-                                                             proj.get_param_id(),
-                                                             proj.get_id(),
-                                                             proj.verify,
-                                                             proj.get_dlocation(),
-                                                             lyrmeta,
-                                                             proj.val_units,
-                                                             proj.nodata_val,
-                                                             proj.min_val,
-                                                             proj.max_val,
-                                                             proj.epsgcode,
-                                                             proj.get_csv_extent_string(),
-                                                             proj.get_wkt(),
-                                                             proj.mod_time,
-                                                             prjmeta,
-                                                             proj.status,
-                                                             proj.status_mod_time)
-        except Exception as e:
-            raise e
+            success = self.execute_modify_function(
+                'lm_updateSDMProjectLayer', proj.get_param_id(), proj.get_id(),
+                proj.verify, proj.get_dlocation(), lyr_meta, proj.val_units,
+                proj.nodata_val, proj.min_val, proj.max_val, proj.epsgcode,
+                proj.get_csv_extent_string(), proj.get_wkt(), proj.mod_time,
+                prj_meta, proj.status, proj.status_mod_time)
+        except Exception as err:
+            raise LMError('Failed to update SDM projection', err)
         return success
 
     # ................................
     def find_or_insert_occurrence_set(self, occ):
-        """
-        : Find existing (from occsetid OR usr/squid/epsg) 
-                     OR save a new OccurrenceLayer  
-             occ: New OccurrenceSet to save 
-        @return new or existing OccurrenceLayer 
-        """
-        polywkt = pointswkt = None
-        pointtotal = occ.queryCount
-        if occ.getFeatures():
-            pointtotal = occ.featureCount
-            polywkt = occ.getConvexHullWkt()
-            pointswkt = occ.get_wkt()
+        """Find or insert an occurrence set
 
-        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertOccurrenceSet',
-                                        occ.get_id(), occ.get_user_id(), occ.squid,
-                                        occ.verify, occ.display_name,
-                                        occ.get_dlocation(), occ.getRawDLocation(),
-                                        pointtotal, occ.get_csv_extent_string(), occ.epsgcode,
-                                        occ.dump_lyr_metadata(),
-                                        occ.status, occ.status_mod_time, polywkt, pointswkt)
-        newOrExistingOcc = self._createOccurrenceLayer(row, idxs)
-        return newOrExistingOcc
+        Args:
+            occ: New OccurrenceSet to save
+
+        Returns:
+            New or existing OccurrenceLayer
+        """
+        poly_wkt = points_wkt = None
+        point_total = occ.query_count
+        if occ.get_features():
+            point_total = occ.feature_count
+            poly_wkt = occ.get_convex_hull_wkt()
+            points_wkt = occ.get_wkt()
+
+        row, idxs = self.execute_insert_and_select_one_function(
+            'lm_findOrInsertOccurrenceSet', occ.get_id(), occ.get_user_id(),
+            occ.squid, occ.verify, occ.display_name, occ.get_dlocation(),
+            occ.get_raw_dlocation(), point_total, occ.get_csv_extent_string(),
+            occ.epsgcode, occ.dump_lyr_metadata(), occ.status,
+            occ.status_mod_time, poly_wkt, points_wkt)
+        new_or_existing_occ = self._create_occurrence_layer(row, idxs)
+        return new_or_existing_occ
 
     # ................................
     def count_occurrence_sets(self, user_id, squid, min_occurrence_count,
                               display_name, after_time, before_time, epsg,
                               after_status, before_status, gridset_id):
-        """
-        : Count all OccurrenceSets matching the filter conditions 
-             user_id: User (owner) for which to return occurrencesets.  
-             minOccurrenceCount: filter by minimum number of points in set.
-             display_name: filter by display name *starting with* this string
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-             epsg: filter by this EPSG code
-             after_status: filter by status >= value
-             before_status: filter by status <= value
-             gridset_id: filter by occurrenceset used by this gridset
-        Returns:a list of OccurrenceSet atoms or full objects
+        """Count all OccurrenceSets matching the filter conditions
+
+        Args:
+            user_id: User (owner) for which to return occurrencesets.
+            min_occurrence_count: filter by minimum number of points in set.
+            display_name: filter by display name *starting with* this string
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+            epsg: filter by this EPSG code
+            after_status: filter by status >= value
+            before_status: filter by status <= value
+            gridset_id: filter by occurrenceset used by this gridset
+
+        Returns:
+            A list of OccurrenceSet atoms or full objects
         """
         if display_name is not None:
             display_name = display_name.strip() + '%'
-        row, idxs = self.execute_select_one_function('lm_countOccSets', user_id, squid,
-                                                                minOccurrenceCount, display_name,
-                                                                after_time, before_time, epsg,
-                                                                after_status, before_status,
-                                                                gridset_id)
+        row, _ = self.execute_select_one_function(
+            'lm_countOccSets', user_id, squid, min_occurrence_count,
+            display_name, after_time, before_time, epsg, after_status,
+            before_status, gridset_id)
         return self._get_count(row)
 
     # ................................
     def list_occurrence_sets(self, first_rec_num, max_num, user_id, squid,
-                                  minOccurrenceCount, display_name, after_time, before_time,
-                                  epsg, after_status, before_status, gridset_id, atom):
-        """
-        : Return OccurrenceSet Objects or Atoms matching filter conditions 
-             first_rec_num: The first record to return, 0 is the first record
-             max_num: Maximum number of records to return
-             user_id: User (owner) for which to return occurrencesets.  
-             minOccurrenceCount: filter by minimum number of points in set.
-             display_name: filter by display name
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-             epsg: filter by this EPSG code
-             after_status: filter by status >= value
-             before_status: filter by status <= value
-             gridset_id: filter by occurrenceset used by this gridset
-             atom: True if return objects will be Atoms, False if full objects
-        Returns:a list of OccurrenceSet atoms or full objects
+                             min_occurrence_count, display_name, after_time,
+                             before_time, epsg, after_status, before_status,
+                             gridset_id, atom):
+        """Return OccurrenceSet Objects or Atoms matching filter conditions
+
+        Args:
+            first_rec_num: The first record to return, 0 is the first record
+            max_num: Maximum number of records to return
+            user_id: User (owner) for which to return occurrencesets.
+            min_occurrence_count: filter by minimum number of points in set.
+            display_name: filter by display name
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+            epsg: filter by this EPSG code
+            after_status: filter by status >= value
+            before_status: filter by status <= value
+            gridset_id: filter by occurrenceset used by this gridset
+            atom: True if return objects will be Atoms, False if full objects
+
+        Returns:
+            A list of OccurrenceSet atoms or full objects
         """
         if display_name is not None:
             display_name = display_name.strip() + '%'
         if atom:
-            rows, idxs = self.execute_select_many_function('lm_listOccSetAtoms',
-                                        first_rec_num, max_num, user_id, squid, minOccurrenceCount,
-                                        display_name, after_time, before_time, epsg,
-                                        after_status, before_status, gridset_id)
+            rows, idxs = self.execute_select_many_function(
+                'lm_listOccSetAtoms', first_rec_num, max_num, user_id, squid,
+                min_occurrence_count, display_name, after_time, before_time,
+                epsg, after_status, before_status, gridset_id)
             objs = self._get_atoms(rows, idxs, LMServiceType.OCCURRENCES)
         else:
             objs = []
-            rows, idxs = self.execute_select_many_function('lm_listOccSetObjects',
-                                        first_rec_num, max_num, user_id, squid, minOccurrenceCount,
-                                        display_name, after_time, before_time, epsg,
-                                        after_status, before_status, gridset_id)
-            for r in rows:
-                objs.append(self._createOccurrenceLayer(r, idxs))
+            rows, idxs = self.execute_select_many_function(
+                'lm_listOccSetObjects', first_rec_num, max_num, user_id, squid,
+                min_occurrence_count, display_name, after_time, before_time,
+                epsg, after_status, before_status, gridset_id)
+            for row in rows:
+                objs.append(self._create_occurrence_layer(row, idxs))
         return objs
 
     # ................................
     def summarize_occurrence_sets_for_gridset(self, gridset_id):
-        """
-        : Count all OccurrenceSets for a gridset by status
-             gridset_id: a database ID for the LmServer.legion.Gridset
-        Returns:a list of tuples containing count, status
+        """Count all OccurrenceSets for a gridset by status
+
+        Args:
+            gridset_id: a database ID for the LmServer.legion.Gridset
+
+        Returns:
+            A list of tuples containing count, status
         """
         status_total_pairs = []
-        rows, idxs = self.execute_select_many_function('lm_summarizeOccSetsForGridset',
-                                                    gridset_id, MatrixType.PAM,
-                                                    MatrixType.ROLLING_PAM)
-        for r in rows:
-            status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
+        rows, idxs = self.execute_select_many_function(
+            'lm_summarizeOccSetsForGridset', gridset_id, MatrixType.PAM,
+            MatrixType.ROLLING_PAM)
+        for row in rows:
+            status_total_pairs.append(
+                (row[idxs['status']], row[idxs['total']]))
         return status_total_pairs
 
     # ................................
     def delete_occurrence_set(self, occ):
+        """Deletes OccurrenceSet and any dependent SDMProjects (with Layer).
+
+        Args:
+            occ: OccurrenceSet to delete
+
+        Returns:
+            True/False for success of operation
+
+        Note:
+            If dependent SDMProject is input to a MatrixColumn of a Rolling
+                (Global) PAM, the MatrixColumn will also be deleted.
         """
-        : Deletes OccurrenceSet and any dependent SDMProjects (with Layer).  
-             occ: OccurrenceSet to delete
-        Returns:True/False for success of operation
-        Note: If dependent SDMProject is input to a MatrixColumn of a 
-                 Rolling (Global) PAM, the MatrixColumn will also be deleted.
-        """
-        pavDelcount = self._deleteOccsetDependentMatrixCols(occ.get_id(), occ.get_user_id())
-        success = self.execute_modify_function('lm_deleteOccurrenceSet', occ.get_id())
+        # TODO: Does this called function exist?
+        pav_del_count = self._delete_occset_dependent_matrix_cols(
+            occ.get_id(), occ.get_user_id())
+        success = self.execute_modify_function(
+            'lm_deleteOccurrenceSet', occ.get_id())
         return success
 
     # ................................
-    def delete_obsolete_sdm_data_return_ids(self, userid, before_time, max_num):
-        """
-        : Deletes OccurrenceSets, any dependent SDMProjects (with Layer)
-                  and SDMProject-dependent MatrixColumns.  
-             userid: User for whom to delete SDM data
-             before_time: delete SDM data modified before or at this time
-             max_num: limit on number of occsets to process
-        Returns:list of occurrenceset ids for deleted data.
-        """
-        occids = []
-        time_str = LmTime.from_mjd(before_time).strftime()
-        rows, idxs = self.execute_select_and_modify_many_function(
-            'lm_clearSomeObsoleteSpeciesDataForUser2', userid, before_time, max_num)
-        for r in rows:
-            if r[0] is not None and r[0] != '':
-                occids.append(r[0])
-
-        self.log.info('''Deleted {} Occurrencesets older than {} and dependent 
-        objects for User {}; returning occurrencesetids'''
-        .format(len(rows), time_str, userid))
-        return occids
-
-    # ................................
-    def delete_obsolete_sdm_mtx_cols_return_ids(self, userid, before_time, max_num):
-        """Deletes SDMProject-dependent MatrixColumns for obsolete occurrencesets
+    def delete_obsolete_sdm_data_return_ids(self, user_id, before_time,
+                                            max_num):
+        """Deletes obsolete SDM data and return ids
 
         Args:
             userid: User for whom to delete SDM data
@@ -2010,174 +2010,216 @@ class Borg(DbPostgresql):
         Returns:
             List of occurrenceset ids for deleted data.
         """
-        mtxcolids = []
+        occ_ids = []
         time_str = LmTime.from_mjd(before_time).strftime()
-        rows, idxs = self.execute_select_and_modify_many_function(
-            'lm_clearSomeObsoleteMtxcolsForUser', userid, before_time, max_num)
-        for r in rows:
-            if r[0] is not None and r[0] != '':
-                mtxcolids.append(r[0])
+        rows, _ = self.execute_select_and_modify_many_function(
+            'lm_clearSomeObsoleteSpeciesDataForUser2', user_id, before_time,
+            max_num)
+        for row in rows:
+            if row[0] is not None and row[0] != '':
+                occ_ids.append(row[0])
 
-        self.log.info('''Deleted {} MatrixColumns for Occurrencesets older 
-        than {}, returning matrixColumnIds'''
-        .format(len(rows), time_str, userid, mtxcolids))
-        return mtxcolids
+        self.log.info(
+            'Deleted {} occ older than {} and depencies for {}'.format(
+                len(rows), time_str, user_id))
+        return occ_ids
 
     # ................................
-    def _find_occset_dependents(self, occ_id, usr, returnProjs=True, returnMtxCols=True):
+    def delete_obsolete_sdm_mtx_cols_return_ids(self, user_id, before_time,
+                                                max_num):
+        """Deletes SDMProject-dependent MatrixColumns for obsolete occ
+
+        Args:
+            user_id: User for whom to delete SDM data
+            before_time: delete SDM data modified before or at this time
+            max_num: limit on number of occsets to process
+
+        Returns:
+            List of occurrenceset ids for deleted data.
         """
-        : Finds any dependent SDMProjects and MatrixColumns for the 
-                     OccurrenceSet specified by occ_id
-             occ_id: OccurrenceSet for which to find dependents
-             usr: User (owner) of the OccurrenceSet for which to find dependents.
-             returnProjs: flag indicating whether to return projection objects
-                 (True) or empty list (False)
-             returnMtxCols: flag indicating whether to return MatrixColumn 
-                 objects (True) or empty list (False)
-        Returns:list of projection atoms/objects, list of MatrixColumns
+        mtx_col_ids = []
+        time_str = LmTime.from_mjd(before_time).strftime()
+        rows, _ = self.execute_select_and_modify_many_function(
+            'lm_clearSomeObsoleteMtxcolsForUser', user_id, before_time,
+            max_num)
+        for row in rows:
+            if row[0] is not None and row[0] != '':
+                mtx_col_ids.append(row[0])
+
+        self.log.info(
+            'Deleted {} matrix columns for occ older than {}'.format(
+                len(rows), time_str))
+        return mtx_col_ids
+
+    # ................................
+    def _find_occset_dependents(self, occ_id, usr, return_projs=True,
+                                return_mtx_cols=True):
+        """Finds any dependent SDMProjects and MatrixColumns for the occ
+
+        Args:
+            occ_id: OccurrenceSet for which to find dependents
+            usr: User (owner) of the OccurrenceSet for which to find dependents
+            return_projs: flag indicating whether to return projection objects
+                (True) or empty list (False)
+            return_mtx_cols: flag indicating whether to return MatrixColumn
+                objects (True) or empty list (False)
+
+        Returns:
+            List of projection atoms/objects, list of MatrixColumns
         """
         pavs = []
-        prjs = self.listSDMProjects(0, 500, usr, None, None, None, None, None,
-                                             None, None, occ_id, None, None, None, not(returnProjs))
-        if returnMtxCols:
+        prjs = self.list_sdm_projects(
+            0, 500, usr, None, None, None, None, None, None, None, occ_id,
+            None, None, None, not return_projs)
+        if return_mtx_cols:
             for prj in prjs:
-                layerid = prj.get_id()
-                pavs = self.listMatrixColumns(0, 500, usr, None, None, None, None,
-                                                        None, None, None, None, layerid, False)
-        if not returnProjs:
+                layer_id = prj.get_id()
+                pavs = self.list_matrix_columns(
+                    0, 500, usr, None, None, None, None, None, None, None,
+                    None, layer_id, False)
+        if not return_projs:
             prjs = []
         return prjs, pavs
 
     # ................................
     def find_or_insert_sdm_project(self, proj):
+        """Find or insert an SDM Projection
+
+        Args:
+            proj: the SDMProjection object to update
+
+        Returns:
+            New or existing SDMProjection
+
+        Note:
+            Assumes that pre- or post-processing layer inputs have already been
+                inserted
         """
-        : Find existing (from projectID, layerid, OR usr/layername/epsg) 
-                     OR save a new SDMProjection
-             proj: the SDMProjection object to update
-        @return new or existing SDMProjection 
-        Note: assumes that pre- or post-processing layer inputs have already been 
-                 inserted
-        """
-        lyrmeta = proj.dump_lyr_metadata()
-        prjmeta = proj.dump_param_metadata()
-        algparams = proj.dumpAlgorithmParametersAsString()
-        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertSDMProjectLayer',
-                            proj.get_param_id(), proj.get_id(), proj.get_user_id(),
-                            proj.squid, proj.verify, proj.name, proj.get_dlocation(),
-                            lyrmeta, proj.data_format, proj.gdal_type,
-                            proj.ogr_type, proj.val_units, proj.nodata_val, proj.min_val,
-                            proj.max_val, proj.epsgcode, proj.map_units, proj.resolution,
-                            proj.get_csv_extent_string(), proj.get_wkt(), proj.mod_time,
-                            proj.get_occurrence_set_id(), proj.algorithm_code, algparams,
-                            proj.getModelScenarioId(),
-                            proj.getProjScenarioId(), prjmeta,
-                            proj.processType, proj.status, proj.status_mod_time)
-        newOrExistingProj = self._createSDMProjection(row, idxs)
-        return newOrExistingProj
+        lyr_meta = proj.dump_lyr_metadata()
+        prj_meta = proj.dump_param_metadata()
+        alg_params = proj.dump_algorithm_parameters_as_string()
+        row, idxs = self.execute_insert_and_select_one_function(
+            'lm_findOrInsertSDMProjectLayer', proj.get_param_id(),
+            proj.get_id(), proj.get_user_id(), proj.squid, proj.verify,
+            proj.name, proj.get_dlocation(), lyr_meta, proj.data_format,
+            proj.gdal_type, proj.ogr_type, proj.val_units, proj.nodata_val,
+            proj.min_val, proj.max_val, proj.epsgcode, proj.map_units,
+            proj.resolution, proj.get_csv_extent_string(), proj.get_wkt(),
+            proj.mod_time, proj.get_occurrence_set_id(), proj.algorithm_code,
+            alg_params, proj.get_model_scenario_id(),
+            proj.get_proj_scenario_id(), prj_meta, proj.process_type,
+            proj.status, proj.status_mod_time)
+        new_or_existing_proj = self._create_sdm_projection(row, idxs)
+        return new_or_existing_proj
 
     # ................................
     def count_sdm_projects(self, user_id, squid, display_name, after_time,
                            before_time, epsg, after_status, before_status,
                            occset_id, alg_code, mdl_scen_code, prj_scen_code,
                            gridset_id):
-        """
-        : Count all SDMProjects matching the filter conditions 
-             user_id: User (owner) for which to return occurrencesets.  
-             squid: a species identifier, tied to a ScientificName
-             display_name: filter by display name *starting with* this string
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-             epsg: filter by this EPSG code
-             after_status: filter by status >= value
-             before_status: filter by status <= value
-             occsetId: filter by occurrenceSet identifier
-             alg_code: filter by algorithm code
-             mdl_scen_code: filter by model scenario code
-             prj_scen_code: filter by projection scenario code
-             gridset_id: filter by projection included in this gridset
-        Returns:a count of SDMProjects 
+        """Count all SDMProjects matching the filter conditions
+
+        Args:
+            user_id: User (owner) for which to return occurrencesets.
+            squid: a species identifier, tied to a ScientificName
+            display_name: filter by display name *starting with* this string
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+            epsg: filter by this EPSG code
+            after_status: filter by status >= value
+            before_status: filter by status <= value
+            occsetId: filter by occurrenceSet identifier
+            alg_code: filter by algorithm code
+            mdl_scen_code: filter by model scenario code
+            prj_scen_code: filter by projection scenario code
+            gridset_id: filter by projection included in this gridset
+
+        Returns:
+            A count of SDMProjects
         """
         if display_name is not None:
             display_name = display_name.strip() + '%'
-        row, idxs = self.execute_select_one_function('lm_countSDMProjects',
-                                    user_id, squid, display_name, after_time, before_time, epsg,
-                                    after_status, before_status, occsetId, alg_code,
-                                    mdl_scen_code, prj_scen_code, gridset_id)
+        row, _ = self.execute_select_one_function(
+            'lm_countSDMProjects', user_id, squid, display_name, after_time,
+            before_time, epsg, after_status, before_status, occset_id,
+            alg_code, mdl_scen_code, prj_scen_code, gridset_id)
         return self._get_count(row)
 
     # ................................
-    def list_sdm_projects(self, first_rec_num, max_num, user_id, squid, display_name,
-                              after_time, before_time, epsg, after_status, before_status,
-                              occsetId, alg_code, mdl_scen_code, prj_scen_code, gridset_id,
-                              atom):
-        """
-        : Return SDMProjects Objects or Atoms matching filter conditions 
-             first_rec_num: The first record to return, 0 is the first record
-             max_num: Maximum number of records to return
-             user_id: User (owner) for which to return occurrencesets.  
-             squid: a species identifier, tied to a ScientificName
-             display_name: filter by display name
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-             epsg: filter by this EPSG code
-             after_status: filter by status >= value
-             before_status: filter by status <= value
-             occsetId: filter by occurrenceSet identifier
-             alg_code: filter by algorithm code
-             mdl_scen_code: filter by model scenario code
-             prj_scen_code: filter by projection scenario code
-             gridset_id: filter by projection included in this gridset
-             atom: True if return objects will be Atoms, False if full objects
-        Returns:a list of SDMProjects atoms or full objects
+    def list_sdm_projects(self, first_rec_num, max_num, user_id, squid,
+                          display_name, after_time, before_time, epsg,
+                          after_status, before_status, occset_id, alg_code,
+                          mdl_scen_code, prj_scen_code, gridset_id, atom):
+        """Return SDMProjects Objects or Atoms matching filter conditions
+
+        Args:
+            first_rec_num: The first record to return, 0 is the first record
+            max_num: Maximum number of records to return
+            user_id: User (owner) for which to return occurrencesets.
+            squid: a species identifier, tied to a ScientificName
+            display_name: filter by display name
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+            epsg: filter by this EPSG code
+            after_status: filter by status >= value
+            before_status: filter by status <= value
+            occsetId: filter by occurrenceSet identifier
+            alg_code: filter by algorithm code
+            mdl_scen_code: filter by model scenario code
+            prj_scen_code: filter by projection scenario code
+            gridset_id: filter by projection included in this gridset
+            atom: True if return objects will be Atoms, False if full objects
+
+        Returns:
+            A list of SDMProjects atoms or full objects
         """
         if display_name is not None:
             display_name = display_name.strip() + '%'
         if atom:
-            rows, idxs = self.execute_select_many_function('lm_listSDMProjectAtoms',
-                                    first_rec_num, max_num, user_id, squid, display_name, after_time,
-                                    before_time, epsg, after_status, before_status, occsetId,
-                                    alg_code, mdl_scen_code, prj_scen_code, gridset_id)
+            rows, idxs = self.execute_select_many_function(
+                'lm_listSDMProjectAtoms', first_rec_num, max_num, user_id,
+                squid, display_name, after_time, before_time, epsg,
+                after_status, before_status, occset_id, alg_code,
+                mdl_scen_code, prj_scen_code, gridset_id)
             objs = self._get_atoms(rows, idxs, LMServiceType.PROJECTIONS)
         else:
             objs = []
-            rows, idxs = self.execute_select_many_function('lm_listSDMProjectObjects',
-                                    first_rec_num, max_num, user_id, squid, display_name, after_time,
-                                    before_time, epsg, after_status, before_status, occsetId,
-                                    alg_code, mdl_scen_code, prj_scen_code, gridset_id)
-            for r in rows:
-                objs.append(self._createSDMProjection(r, idxs))
+            rows, idxs = self.execute_select_many_function(
+                'lm_listSDMProjectObjects', first_rec_num, max_num, user_id,
+                squid, display_name, after_time, before_time, epsg,
+                after_status, before_status, occset_id, alg_code,
+                mdl_scen_code, prj_scen_code, gridset_id)
+            for row in rows:
+                objs.append(self._create_sdm_projection(row, idxs))
         return objs
 
     # ................................
-    def find_or_insert_matrix_column(self, mtxcol):
+    def find_or_insert_matrix_column(self, mtx_col):
+        """Find or insert a matrix column
+
+        Returns:
+            New or existing MatrixColumn object
         """
-        : Find existing OR save a new MatrixColumn
-             mtxcol: the LmServer.legion.MatrixColumn object to get or insert
-        @return new or existing MatrixColumn object
-        """
-        lyrid = None
-        if mtxcol.layer is not None:
+        lyr_id = None
+        if mtx_col.layer is not None:
             # Check for existing id before pulling from db
-            lyrid = mtxcol.layer.getLayerId()
-            if lyrid is None:
-                newOrExistingLyr = self.find_or_insert_layer(mtxcol.layer)
-                lyrid = newOrExistingLyr.getLayerId()
+            lyr_id = mtx_col.layer.get_layer_id()
+            if lyr_id is None:
+                new_or_existing_lyr = self.find_or_insert_layer(mtx_col.layer)
+                lyr_id = new_or_existing_lyr.get_layer_id()
 
-                # Shapegrid is already in db
-                shpid = mtxcol.shapegrid.get_id()
-
-        mcmeta = mtxcol.dump_param_metadata()
-        int_params = mtxcol.dump_intersect_params()
+        mc_meta = mtx_col.dump_param_metadata()
+        int_params = mtx_col.dump_intersect_params()
         row, idxs = self.execute_insert_and_select_one_function(
-            'lm_findOrInsertMatrixColumn', mtxcol.get_param_user_id(),
-            mtxcol.get_param_id(), mtxcol.parent_id, mtxcol.get_matrix_index(),
-            lyrid, mtxcol.squid, mtxcol.ident, mcmeta, int_params,
-            mtxcol.status, mtxcol.status_mod_time)
-        newOrExistingMtxCol = self._createMatrixColumn(row, idxs)
+            'lm_findOrInsertMatrixColumn', mtx_col.get_param_user_id(),
+            mtx_col.get_param_id(), mtx_col.parent_id,
+            mtx_col.get_matrix_index(), lyr_id, mtx_col.squid, mtx_col.ident,
+            mc_meta, int_params, mtx_col.status, mtx_col.status_mod_time)
+        new_or_existing_mtx_col = self._create_matrix_column(row, idxs)
         # Put shapegrid into updated matrixColumn
-        newOrExistingMtxCol.shapegrid = mtxcol.shapegrid
-        newOrExistingMtxCol.processType = mtxcol.processType
-        return newOrExistingMtxCol
+        new_or_existing_mtx_col.shapegrid = mtx_col.shapegrid
+        new_or_existing_mtx_col.processType = mtx_col.processType
+        return new_or_existing_mtx_col
 
     # ................................
     def update_matrix_column(self, mtxcol):
@@ -2195,72 +2237,77 @@ class Borg(DbPostgresql):
         return success
 
     # ................................
-    def get_matrix_column(self, mtxcol, mtxcolId):
-        """
-        : Get an existing MatrixColumn
-             mtxcol: a MatrixColumn object with unique parameters matching the 
-                            existing MatrixColumn to return 
-             mtxcolId: a database ID for the LmServer.legion.MatrixColumn 
-                            object to return 
-        Returns:a LmServer.legion.MatrixColumn object
+    def get_matrix_column(self, mtx_col, mtx_col_id):
+        """Get an existing MatrixColumn
+
+        Args:
+            mtx_col: a MatrixColumn object with unique parameters matching the
+                existing MatrixColumn to return
+            mtx_col_id: a database ID for the LmServer.legion.MatrixColumn
+                object to return
+
+        Returns:
+            A LmServer.legion.MatrixColumn object
         """
         row = None
-        if mtxcol is not None:
-            int_params = mtxcol.dump_intersect_params()
+        if mtx_col is not None:
+            int_params = mtx_col.dump_intersect_params()
             row, idxs = self.execute_select_one_function(
-                'lm_getMatrixColumn', mtxcol.get_id(), mtxcol.parent_id,
-                                                                    mtxcol.get_matrix_index(),
-                                                                    mtxcol.getLayerId(),
-                                                                    int_params)
-        elif mtxcolId is not None:
-            row, idxs = self.execute_select_one_function('lm_getMatrixColumn',
-                                                            mtxcolId, None, None, None, None)
-        mtxColumn = self._createMatrixColumn(row, idxs)
-        return mtxColumn
+                'lm_getMatrixColumn', mtx_col.get_id(), mtx_col.parent_id,
+                mtx_col.get_matrix_index(), mtx_col.get_layer_id(), int_params)
+        elif mtx_col_id is not None:
+            row, idxs = self.execute_select_one_function(
+                'lm_getMatrixColumn', mtx_col_id, None, None, None, None)
+        mtx_column = self._create_matrix_column(row, idxs)
+        return mtx_column
 
     # ................................
     def get_columns_for_matrix(self, mtx_id):
+        """Get all existing MatrixColumns for a Matrix
+
+        Args:
+            mtx_id: a database ID for the LmServer.legion.LMMatrix object to
+                return columns for
+
+        Returns:
+            A list of LmServer.legion.MatrixColumn objects
         """
-        : Get all existing MatrixColumns for a Matrix
-             mtx_id: a database ID for the LmServer.legion.LMMatrix 
-                            object to return columns for
-        Returns:a list of LmServer.legion.MatrixColumn objects
-        """
-        mtxColumns = []
+        mtx_columns = []
         if mtx_id is not None:
-            rows, idxs = self.execute_select_many_function('lm_getColumnsForMatrix',
-                                                                      mtx_id)
-            for r in rows:
-                mtxcol = self._createMatrixColumn(r, idxs)
-                mtxColumns.append(mtxcol)
-        return mtxColumns
+            rows, idxs = self.execute_select_many_function(
+                'lm_getColumnsForMatrix', mtx_id)
+            for row in rows:
+                mtx_col = self._create_matrix_column(row, idxs)
+                mtx_columns.append(mtx_col)
+        return mtx_columns
 
     # ................................
-    def get_sdm_columns_for_matrix(self, mtx_id, returnColumns, returnProjections):
+    def get_sdm_columns_for_matrix(self, mtx_id, return_columns,
+                                   return_projections):
+        """Get all existing MatrixColumns built from that have SDMProjections
+
+        Args:
+            mtx_id: a database ID for the LMMatrix object to return columns for
+            return_Columns: option to return MatrixColumn objects
+            return_Projections: option to return SDMProjection objects
+
+        Returns:
+            A list of tuples containing MatrixColumn and SDMProjection objects.
         """
-        : Get all existing MatrixColumns and SDMProjections that have  
-                     SDMProjections as input layers for a Matrix
-             mtx_id: a database ID for the LmServer.legion.LMMatrix 
-                            object to return columns for
-             returnColumns: option to return MatrixColumn objects
-             returnProjections: option to return SDMProjection objects
-        Returns:a list of tuples containing LmServer.legion.MatrixColumn
-                    and LmServer.legion.SDMProjection objects.  Either may be None
-                    if the option is False  
-        """
-        colPrjPairs = []
+        col_prj_pairs = []
         if mtx_id is not None:
-            rows, idxs = self.execute_select_many_function('lm_getSDMColumnsForMatrix',
-                                                                      mtx_id)
-            for r in rows:
-                mtxcol = sdmprj = layer = None
-                if returnColumns:
-                    mtxcol = self._createMatrixColumn(r, idxs)
-                    layer = mtxcol.layer
-                if returnProjections:
-                    sdmprj = self._createSDMProjection(r, idxs, layer=layer)
-                colPrjPairs.append((mtxcol, sdmprj))
-        return colPrjPairs
+            rows, idxs = self.execute_select_many_function(
+                'lm_getSDMColumnsForMatrix', mtx_id)
+            for row in rows:
+                mtx_col = sdm_prj = layer = None
+                if return_columns:
+                    mtx_col = self._create_matrix_column(row, idxs)
+                    layer = mtx_col.layer
+                if return_projections:
+                    sdm_prj = self._create_sdm_projection(
+                        row, idxs, layer=layer)
+                col_prj_pairs.append((mtx_col, sdm_prj))
+        return col_prj_pairs
 
     # ................................
     def summarize_sdm_projects_for_gridset(self, gridset_id):

@@ -1,9 +1,7 @@
-'''
-Created on Apr 17, 2018
-
-@author: cjgrady
-'''
+"""Module for validating CSV data
+"""
 
 
+# .............................................................................
 def validate_csv(obj_generator):
-   return True
+    return True

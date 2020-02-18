@@ -1,44 +1,23 @@
-#!/opt/python/bin/python2.7
+#!/bin/python
+"""Sort a csv file
 """
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
-"""
+import csv
 import os
 import sys
 
 from LmCommon.common.lmconstants import LMFormat
-from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import get_unicodecsv_reader, get_unicodecsv_writer
+from LmCommon.common.occ_parse import OccDataParser
 from LmServer.common.log import ScriptLogger
 
 OUT_DELIMITER = '\t'
 
 
 # ...............................................
-def _getOPFilename(datapath, prefix, base, run=None):
-    basename = '%s_%s' % (prefix, base)
+def _get_op_filename(data_path, prefix, base, run=None):
+    base_name = '{}_{}'.format(prefix, base)
     if run is not None:
-        basename = '%s_%d' % (basename, run)
-    return os.path.join(datapath, '%s.csv' % (basename))
+        base_name = '{}_{}'.format(basename, run)
+    return os.path.join(data_path, '{}.csv'.format(base_name))
 
 
 # ...............................................

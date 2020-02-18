@@ -8,23 +8,28 @@ from LmServer.common.lmconstants import SALT
 
 # .............................................................................
 class LMUser(LMObject):
+    """Class representing user objects
+    """
 
     # ................................
     def __init__(self, user_id, email, password, is_encrypted=False,
-                     first_name=None, last_name=None, institution=None,
-                     addr_1=None, addr_2=None, addr_3=None, phone=None, mod_time=None):
-        """
-        @summary Layer superclass constructor
-        @param userid: user chosen unique id
-        @param email:  EMail address of user
-        @param password: user chosen password
-        @param fullname: full name of user (optional)
-        @param institution: institution of user (optional)
-        @param addr1: Address, line 1, of user (optional)
-        @param addr2: Address, line 1, of user (optional)
-        @param addr3: Address, line 1, of user (optional)
-        @param phone: Phone number of user (optional)
-        @param mod_time: Last modification time of this object (optional)
+                 first_name=None, last_name=None, institution=None,
+                 addr_1=None, addr_2=None, addr_3=None, phone=None,
+                 mod_time=None):
+        """Constructor
+
+        Args:
+            user_id: user chosen unique id
+            email:  EMail address of user
+            password: user chosen password
+            first_name: The first name of this user
+            last_name: The last name of this user
+            institution: institution of user (optional)
+            addr_1: Address, line 1, of user (optional)
+            addr_2: Address, line 2, of user (optional)
+            addr_3: Address, line 3, of user (optional)
+            phone: Phone number of user (optional)
+            mod_time: Last modification time of this object (optional)
         """
         LMObject.__init__(self)
         self.user_id = user_id
@@ -41,24 +46,26 @@ class LMUser(LMObject):
 
     # ................................
     def get_user_id(self):
-        """
-        @note: Function exists for consistency with ServiceObjects
+        """Get the user id for this object.
         """
         return self.user_id
 
     # ................................
-    def set_user_id(self, id):
+    def set_user_id(self, user_id):
+        """Set the user id for this object
         """
-        @note: Function exists for consistency with ServiceObjects
-        """
-        self.user_id = id
+        self.user_id = user_id
 
     # ................................
     def check_password(self, passwd):
+        """Check that the provided password is the same
+        """
         return self._password == self._encrypt_password(passwd)
 
     # ................................
     def set_password(self, passwd, is_encrypted):
+        """Set the password for this user object
+        """
         if is_encrypted:
             self._password = passwd
         else:
@@ -66,26 +73,20 @@ class LMUser(LMObject):
 
     # ................................
     def get_password(self):
+        """Get the password of this uer object
+        """
         return self._password
 
     # ................................
-    def _encrypt_password(self, passwd):
-        h1 = hashlib.md5(passwd)
-        h2 = hashlib.md5(SALT)
-        h3 = hashlib.md5(''.join((h1.hexdigest(), h2.hexdigest())))
-        return h3.hexdigest()
+    @staticmethod
+    def _encrypt_password(passwd):
+        hash_1 = hashlib.md5(passwd)
+        hash_2 = hashlib.md5(SALT)
+        hash_3 = hashlib.md5(''.join((hash_1.hexdigest(), hash_2.hexdigest())))
+        return hash_3.hexdigest()
 
     # ................................
     def equals(self, other):
-        result = (isinstance(other, LMUser) and
-                     self.userid == other.userid)
-        return result
-
-
-# .............................................................................
-class DbUser:
-
-    # ................................
-    def __init__(self, user, password):
-        username = user
-        password = password
+        """Checks that this user is the same as another
+        """
+        return isinstance(other, LMUser) and self.user_id == other.user_id

@@ -563,7 +563,10 @@ class Raster(_Layer):
             if self._dataFormat is None:
                 ext = LMFormat.TMP.ext
             else:
+# # <<<<<<< HEAD
 #                 ext = GDALFormatCodes[self._dataFormat]['FILE_EXT']
+# # =======
+# # >>>>>>> 7f8eb6fc698453a9ed763cd145ce65001df3cd29
                 ext = LMFormat.get_extension_by_driver(self._dataFormat)
                 if ext is None:
                     raise LMError('Failed to find dataFormat/driver {}'
@@ -797,9 +800,9 @@ class Raster(_Layer):
             raise LMError(['Must setDLocation before writing file'])
 
     # .............................
-    def _copyGDALData(self, bandnum, infname, outfname, format='GTiff', kwargs={}):
+    def _copyGDALData(self, bandnum, infname, outfname, format_='GTiff', kwargs={}):
         """
-        @summary: Copy the dataset into a new file.  
+        @summary: Copy the dataset into a new file.
         @param bandnum: The band number to read.
         @param outfname: Filename to write this dataset to.
         @param format: GDAL-writeable raster format to use for new dataset. 
@@ -813,16 +816,16 @@ class Raster(_Layer):
                         will NOT project the dataset into a different projection.
         """
         options = []
-        if format == 'AAIGrid':
+        if format_ == 'AAIGrid':
             options = ['FORCE_CELLSIZE=True']
             # kwargs['FORCE_CELLSIZE'] = True
             # kwargs['DECIMAL_PRECISION'] = 4
-        driver = gdal.GetDriverByName(format)
+        driver = gdal.GetDriverByName(format_)
         metadata = driver.GetMetadata()
         if not (gdal.DCAP_CREATECOPY in metadata
                      and metadata[gdal.DCAP_CREATECOPY] == 'YES'):
             raise LMError('Driver %s does not support CreateCopy() method.'
-                              % format)
+                              % format_)
         inds = gdal.Open(infname)
         try:
             outds = driver.CreateCopy(outfname, inds, 0, options)
@@ -838,9 +841,10 @@ class Raster(_Layer):
 
     # .............................
     def copyData(self, sourceDataLocation, targetDataLocation=None,
-                     format='GTiff'):
-        if not format in LMFormat.gdal_drivers():
-            raise LMError('Unsupported raster format %s' % format)
+                 format_='GTiff'):
+        
+        if not format_ in LMFormat.gdal_drivers():
+            raise LMError('Unsupported raster format {}'.format(format_))
         if sourceDataLocation is not None and os.path.exists(sourceDataLocation):
             if targetDataLocation is not None:
                 dlocation = targetDataLocation
@@ -851,14 +855,14 @@ class Raster(_Layer):
         else:
             raise LMError('Source location %s is invalid' % str(sourceDataLocation))
 
-        correctExt = LMFormat.get_extension_by_driver(format)
+        correctExt = LMFormat.get_extension_by_driver(format_)
         if not dlocation.endswith(correctExt):
             dlocation += correctExt
 
         self.ready_filename(dlocation)
 
         try:
-            self._copyGDALData(1, sourceDataLocation, dlocation, format=format)
+            self._copyGDALData(1, sourceDataLocation, dlocation, format_=format_)
         except Exception as e:
             raise LMError('Failed to copy data source from %s to %s (%s)'
                               % (sourceDataLocation, dlocation, str(e)))
@@ -1761,10 +1765,10 @@ class Vector(_Layer):
                      temporary filename in dlocation.  
         @raise LMError: on failure to write data or read temporary files.
         """
-        if uploadedType == 'shapefile':
         # Writes zipped stream to temp file and sets dlocation on layer
+        if uploadedType == 'shapefile':
             self.writeFromZippedShapefile(data, isTemp=True, overwrite=overwrite)
-            self._dataFormat = LMFormat.getDefaultOGR().driver
+            self._dataFormat = DEFAULT_OGR.driver
             try:
                 # read to make sure it's valid (and populate stats)
                 self.readData()
@@ -1860,7 +1864,7 @@ class Vector(_Layer):
             for zname in z.namelist():
                 tmp, ext = os.path.splitext(zname)
                 # Check file extension and only unzip valid files
-                if ext in LMFormat.SHAPE.getExtensions():
+                if ext in LMFormat.SHAPE.get_extensions():
                     newname = newfnamewoext + ext
                     success, msg = self.deleteFile(newname)
                     z.extract(zname, pth)
@@ -1999,7 +2003,7 @@ class Vector(_Layer):
 
     # .............................
     def copyData(self, sourceDataLocation, targetDataLocation=None,
-                     format=LMFormat.getDefaultOGR().driver):
+                     format_= DEFAULT_GDAL.driver):
         """
         Copy sourceDataLocation dataset to targetDataLocation or this layer's 
         dlocation.
@@ -2014,7 +2018,7 @@ class Vector(_Layer):
             raise LMError('Source location %s is invalid' % str(sourceDataLocation))
 
         ogr.RegisterAll()
-        drv = ogr.GetDriverByName(format)
+        drv = ogr.GetDriverByName(format_)
         try:
             ds = drv.Open(sourceDataLocation)
         except Exception as e:
@@ -2064,7 +2068,7 @@ class Vector(_Layer):
 
     # .............................
     @staticmethod
-    def testVector(dlocation, driver=LMFormat.getDefaultOGR().driver):
+    def testVector(dlocation, driver=DEFAULT_OGR.driver):
         goodData = False
         featCount = 0
         if dlocation is not None and os.path.exists(dlocation):
@@ -2332,7 +2336,7 @@ class Vector(_Layer):
         if dataFormat is None:
             dataFormat = self._dataFormat
         if dlocation is not None and os.path.exists(dlocation):
-            if dataFormat == LMFormat.getDefaultOGR().driver:
+            if dataFormat == DEFAULT_OGR.driver:
                 (thisBBox, localIdIdx, geomIdx, features, featureAttributes,
                  featureCount) = self.readWithOGR(dlocation, dataFormat,
                                                              featureLimit=featureLimit,
@@ -2372,7 +2376,6 @@ class Vector(_Layer):
 
     # .............................
     def _getOGRFieldTypeName(self, ogrOFTType):
-#        return ogr.GetFieldTypeName(ogrOFTType)
         if ogrOFTType == ogr.OFTBinary:
             return 'ogr.OFTBinary'
         elif ogrOFTType == ogr.OFTDate:

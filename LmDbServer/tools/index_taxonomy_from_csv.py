@@ -1,9 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 """This script processes an exported CSV from the db and indexes the taxonomy
-It processes the output of 
-   set client_encoding = 'UTF8'
-   \copy taxon to '/state/partition1/taxonomy.export.csv' csv header
+
+Note:
+    It processes the output of:
+       set client_encoding = 'UTF8'
+       \copy taxon to '/state/partition1/taxonomy.export.csv' csv header
 """
 import argparse
 import csv
@@ -12,6 +14,7 @@ import time
 
 from LmServer.common.lmconstants import NUM_DOCS_PER_POST
 import LmServer.common.solr as lm_solr
+from LmBackend.common.lmobj import LMError
 
 
 # .............................................................................
@@ -34,7 +37,9 @@ def index_taxonomy_csv_flo(taxonomy_flo, num_per_post=NUM_DOCS_PER_POST):
 
 
 # .............................................................................
-if __name__ == '__main__':
+def main():
+    """Main method of script
+    """
     parser = argparse.ArgumentParser(
         description='Reindex taxonomy from a CSV file')
     parser.add_argument('-n', '--number_per_post', type=int,
@@ -45,7 +50,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not os.path.exists(args.csv_filename):
-        raise Exception('CSV path: {} does not exist'.format(args.csv_filename))
-    else:
-        with open(args.csv_filename) as in_csv:
-            index_taxonomy_csv_flo(in_csv, num_per_post=args.number_per_post)
+        raise LMError('CSV path: {} does not exist'.format(args.csv_filename))
+
+    with open(args.csv_filename) as in_csv:
+        index_taxonomy_csv_flo(in_csv, num_per_post=args.number_per_post)
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()
