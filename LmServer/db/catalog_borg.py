@@ -1798,7 +1798,7 @@ class Borg(DbPostgresql):
         """Update OccurrenceLayer attributes
 
         Args:
-            occ: OccurrenceLayer to be updated.  
+            occ: OccurrenceLayer to be updated.
 
         Note:
             Does not update the userid, squid, and epsgcode (unique constraint)
@@ -2223,18 +2223,20 @@ class Borg(DbPostgresql):
 
     # ................................
     def update_matrix_column(self, mtxcol):
-        """
-        : Update a MatrixColumn
-             mtxcol: the LmServer.legion.MatrixColumn object to update
-        Returns:Boolean success/failure
+        """Update a MatrixColumn
+
+        Args:
+            mtxcol: the LmServer.legion.MatrixColumn object to update
+
+        Returns:
+            Boolean success/failure
         """
         meta = mtxcol.dump_param_metadata()
         int_params = mtxcol.dump_intersect_params()
-        success = self.execute_modify_function(
+        return self.execute_modify_function(
             'lm_updateMatrixColumn', mtxcol.get_id(),
             mtxcol.get_matrix_index(), meta, int_params, mtxcol.status,
             mtxcol.status_mod_time)
-        return success
 
     # ................................
     def get_matrix_column(self, mtx_col, mtx_col_id):
@@ -2311,141 +2313,165 @@ class Borg(DbPostgresql):
 
     # ................................
     def summarize_sdm_projects_for_gridset(self, gridset_id):
-        """
-        : Count all SDMProjections for a gridset by status
-             gridset_id: a database ID for the LmServer.legion.Gridset
-        Returns:a list of tuples containing count, status
+        """Count all SDMProjections for a gridset by status
+
+        Args:
+            gridset_id: a database ID for the LmServer.legion.Gridset
+
+        Returns:
+            A list of tuples containing count, status
         """
         status_total_pairs = []
-        rows, idxs = self.execute_select_many_function('lm_summarizeSDMColumnsForGridset',
-                                                    gridset_id, MatrixType.PAM,
-                                                    MatrixType.ROLLING_PAM)
-        for r in rows:
-            status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
+        rows, idxs = self.execute_select_many_function(
+            'lm_summarizeSDMColumnsForGridset', gridset_id, MatrixType.PAM,
+            MatrixType.ROLLING_PAM)
+        for row in rows:
+            status_total_pairs.append(
+                (row[idxs['status']], row[idxs['total']]))
         return status_total_pairs
 
     # ................................
     def summarize_mtx_columns_for_gridset(self, gridset_id, mtx_type):
-        """
-        : Count all MatrixColumns for a gridset by status
-             gridset_id: a database ID for the LmServer.legion.Gridset
-             mtx_type: optional filter for type of matrix to count
-        Returns:a list of tuples containing count, status
+        """Count all MatrixColumns for a gridset by status
+
+        Args:
+            gridset_id: a database ID for the LmServer.legion.Gridset
+            mtx_type: optional filter for type of matrix to count
+
+        Returns:
+            A list of tuples containing count, status
         """
         status_total_pairs = []
-        rows, idxs = self.execute_select_many_function('lm_summarizeMtxColsForGridset',
-                                                    gridset_id, mtx_type)
-        for r in rows:
-            status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
+        rows, idxs = self.execute_select_many_function(
+            'lm_summarizeMtxColsForGridset', gridset_id, mtx_type)
+        for row in rows:
+            status_total_pairs.append(
+                (row[idxs['status']], row[idxs['total']]))
         return status_total_pairs
 
     # ................................
     def summarize_matrices_for_gridset(self, gridset_id, mtx_type):
-        """
-        : Count all matrices for a gridset by status
-             gridset_id: a database ID for the LmServer.legion.Gridset
-             mtx_type: optional filter for type of matrix to count
-        Returns:a list of tuples containing count, status
+        """Count all matrices for a gridset by status
+
+        Args:
+            gridset_id: a database ID for the LmServer.legion.Gridset
+            mtx_type: optional filter for type of matrix to count
+
+        Returns:
+            A list of tuples containing count, status
         """
         status_total_pairs = []
-        rows, idxs = self.execute_select_many_function('lm_summarizeMatricesForGridset',
-                                                    gridset_id, mtx_type)
-        for r in rows:
-            status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
+        rows, idxs = self.execute_select_many_function(
+            'lm_summarizeMatricesForGridset', gridset_id, mtx_type)
+        for row in rows:
+            status_total_pairs.append(
+                (row[idxs['status']], row[idxs['total']]))
         return status_total_pairs
 
     # ................................
     def get_occ_layers_for_matrix(self, mtx_id):
+        """Get all occurrence layer objects for a matrix
+
+        Args:
+            mtx_id: A database ID for the LMMatrix object to return columns for
+
+        Returns:
+            A list of LmServer.legion.OccurrenceLayer objects
         """
-        : Get all existing OccurrenceLayer objects that are inputs to  
-                     SDMProjections used as input layers for a Matrix
-             mtx_id: a database ID for the LmServer.legion.LMMatrix 
-                            object to return columns for
-        Returns:a list of LmServer.legion.OccurrenceLayer objects
-        """
-        occsets = []
+        occ_sets = []
         if mtx_id is not None:
-            rows, idxs = self.execute_select_many_function('lm_getOccLayersForMatrix',
-                                                                      mtx_id)
-            for r in rows:
-                occsets.append(self._createOccurrenceLayer(r, idxs))
-        return occsets
+            rows, idxs = self.execute_select_many_function(
+                'lm_getOccLayersForMatrix', mtx_id)
+            for row in rows:
+                occ_sets.append(self._create_occurrence_layer(row, idxs))
+        return occ_sets
 
     # ................................
     def count_matrix_columns(self, user_id, squid, ident, after_time,
                              before_time, epsg, after_status, before_status,
                              gridset_id, matrix_id, layer_id):
+        """Return count of MatrixColumns matching filter conditions
+
+        Args:
+            first_rec_num: The first record to return, 0 is the first record
+            max_num: Maximum number of records to return
+            user_id: User (owner) for which to return MatrixColumns.
+            squid: a species identifier, tied to a ScientificName
+            ident: a layer identifier for non-species data
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+            epsg: filter by this EPSG code
+            after_status: filter by status >= value
+            before_status: filter by status <= value
+            matrix_id: filter by Matrix identifier
+            layer_id: filter by Layer input identifier
+
+        Returns:
+            A count of MatrixColumns
         """
-        : Return count of MatrixColumns matching filter conditions 
-             first_rec_num: The first record to return, 0 is the first record
-             max_num: Maximum number of records to return
-             user_id: User (owner) for which to return MatrixColumns.  
-             squid: a species identifier, tied to a ScientificName
-             ident: a layer identifier for non-species data
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-             epsg: filter by this EPSG code
-             after_status: filter by status >= value
-             before_status: filter by status <= value
-             matrix_id: filter by Matrix identifier
-             layer_id: filter by Layer input identifier
-        Returns:a count of MatrixColumns
-        """
-        row, idxs = self.execute_select_one_function('lm_countMtxCols', user_id,
-                                        squid, ident, after_time, before_time, epsg,
-                                        after_status, before_status,
-                                        gridset_id, matrix_id, layer_id)
+        row, _ = self.execute_select_one_function(
+            'lm_countMtxCols', user_id, squid, ident, after_time, before_time,
+            epsg, after_status, before_status, gridset_id, matrix_id, layer_id)
         return self._get_count(row)
 
     # ................................
-    def list_matrix_columns(self, first_rec_num, max_num, user_id, squid, ident,
-                                 after_time, before_time, epsg, after_status, before_status,
-                                 gridset_id, matrix_id, layer_id, atom):
-        """
-        : Return MatrixColumn Objects or Atoms matching filter conditions 
-             first_rec_num: The first record to return, 0 is the first record
-             max_num: Maximum number of records to return
-             user_id: User (owner) for which to return MatrixColumns.  
-             squid: a species identifier, tied to a ScientificName
-             ident: a layer identifier for non-species data
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-             epsg: filter by this EPSG code
-             after_status: filter by status >= value
-             before_status: filter by status <= value
-             matrix_id: filter by Matrix identifier
-             layer_id: filter by Layer input identifier
-             atom: True if return objects will be Atoms, False if full objects
-        Returns:a list of MatrixColumn atoms or full objects
+    def list_matrix_columns(self, first_rec_num, max_num, user_id, squid,
+                            ident, after_time, before_time, epsg, after_status,
+                            before_status, gridset_id, matrix_id, layer_id,
+                            atom):
+        """Return MatrixColumn Objects or Atoms matching filter conditions
+
+        Args:
+            first_rec_num: The first record to return, 0 is the first record
+            max_num: Maximum number of records to return
+            user_id: User (owner) for which to return MatrixColumns.
+            squid: a species identifier, tied to a ScientificName
+            ident: a layer identifier for non-species data
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+            epsg: filter by this EPSG code
+            after_status: filter by status >= value
+            before_status: filter by status <= value
+            matrix_id: filter by Matrix identifier
+            layer_id: filter by Layer input identifier
+            atom: True if return objects will be Atoms, False if full objects
+
+        Returns:
+            A list of MatrixColumn atoms or full objects
         """
         if atom:
-            rows, idxs = self.execute_select_many_function('lm_listMtxColAtoms',
-                            first_rec_num, max_num, user_id, squid, ident,
-                            after_time, before_time, epsg, after_status, before_status,
-                            gridset_id, matrix_id, layer_id)
+            rows, idxs = self.execute_select_many_function(
+                'lm_listMtxColAtoms', first_rec_num, max_num, user_id, squid,
+                ident, after_time, before_time, epsg, after_status,
+                before_status, gridset_id, matrix_id, layer_id)
             objs = self._get_atoms(rows, idxs, LMServiceType.MATRIX_COLUMNS)
         else:
             objs = []
-            rows, idxs = self.execute_select_many_function('lm_listMtxColObjects',
-                                first_rec_num, max_num, user_id, squid, ident,
-                                after_time, before_time, epsg, after_status, before_status,
-                                gridset_id, matrix_id, layer_id)
-            for r in rows:
-                objs.append(self._createMatrixColumn(r, idxs))
+            rows, idxs = self.execute_select_many_function(
+                'lm_listMtxColObjects', first_rec_num, max_num, user_id, squid,
+                ident, after_time, before_time, epsg, after_status,
+                before_status, gridset_id, matrix_id, layer_id)
+            for row in rows:
+                objs.append(self._create_matrix_column(row, idxs))
         return objs
 
     # ................................
     def update_matrix(self, mtx):
-        """
-        : Update a LMMatrix
-             mtxcol: the LmServer.legion.LMMatrix object to update
-        Returns:Boolean success/failure
-        @TODO: allow update of MatrixType, gcm_code, alt_pred_code, date_code?
+        """Update a LMMatrix
+
+        Args:
+            mtx: The LMMatrix object to update
+
+        Returns:
+            Boolean success/failure
+
+        Todo:
+            Allow update of MatrixType, gcm_code, alt_pred_code, date_code?
         """
         meta = mtx.dump_mtx_metadata()
-        success = self.execute_modify_function('lm_updateMatrix',
-                                                         mtx.get_id(), mtx.get_dlocation(),
-                                                         meta, mtx.status, mtx.status_mod_time)
+        success = self.execute_modify_function(
+            'lm_updateMatrix', mtx.get_id(), mtx.get_dlocation(), meta,
+            mtx.status, mtx.status_mod_time)
         return success
 
     # ................................
@@ -2453,74 +2479,82 @@ class Borg(DbPostgresql):
                        date_code, alg_code, meta_string, gridset_id,
                        after_time, before_time, epsg, after_status,
                        before_status):
-        """
-        : Count Matrices matching filter conditions 
-             user_id: User (owner) for which to return MatrixColumns.  
-             matrix_type: filter by LmCommon.common.lmconstants.MatrixType
-             gcm_code: filter by the Global Climate Model code
-             alt_pred_code: filter by the alternate predictor code (i.e. IPCC RCP)
-             date_code: filter by the date code
-             meta_string: find matrices containing this word in the metadata
-             gridset_id: find matrices in the Gridset with this identifier
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-             epsg: filter by this EPSG code
-             after_status: filter by status >= value
-             before_status: filter by status <= value
-        Returns:a count of Matrices
+        """Count Matrices matching filter conditions
+
+        Args:
+            user_id: User (owner) for which to return MatrixColumns.
+            matrix_type: filter by LmCommon.common.lmconstants.MatrixType
+            gcm_code: filter by the Global Climate Model code
+            alt_pred_code: filter by the alternate predictor code (i.e. IPCC
+                RCP)
+            date_code: filter by the date code
+            meta_string: find matrices containing this word in the metadata
+            gridset_id: find matrices in the Gridset with this identifier
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+            epsg: filter by this EPSG code
+            after_status: filter by status >= value
+            before_status: filter by status <= value
+
+        Returns:
+            A count of Matrices
         """
         metamatch = None
         if meta_string is not None:
             metamatch = '%{}%'.format(meta_string)
-        row, idxs = self.execute_select_one_function('lm_countMatrices', user_id,
-                            matrix_type, gcm_code, alt_pred_code, date_code, alg_code,
-                            metamatch, gridset_id, after_time, before_time, epsg,
-                            after_status, before_status)
+        row, _ = self.execute_select_one_function(
+            'lm_countMatrices', user_id, matrix_type, gcm_code, alt_pred_code,
+            date_code, alg_code, metamatch, gridset_id, after_time,
+            before_time, epsg, after_status, before_status)
         return self._get_count(row)
 
     # ................................
-    def list_matrices(self, first_rec_num, max_num, user_id, matrix_type, gcm_code,
-                     alt_pred_code, date_code, alg_code, meta_string, gridset_id,
-                     after_time, before_time, epsg, after_status, before_status,
-                     atom):
-        """
-        : Return Matrix Objects or Atoms matching filter conditions 
-             first_rec_num: The first record to return, 0 is the first record
-             max_num: Maximum number of records to return
-             user_id: User (owner) for which to return MatrixColumns.  
-             matrix_type: filter by LmCommon.common.lmconstants.MatrixType
-             gcm_code: filter by the Global Climate Model code
-             alt_pred_code: filter by the alternate predictor code (i.e. IPCC RCP)
-             date_code: filter by the date code
-             meta_string: find matrices containing this word in the metadata
-             gridset_id: find matrices in the Gridset with this identifier
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-             epsg: filter by this EPSG code
-             after_status: filter by status >= value
-             before_status: filter by status <= value
-             atom: True if return objects will be Atoms, False if full objects
-        Returns:a list of Matrix atoms or full objects
+    def list_matrices(self, first_rec_num, max_num, user_id, matrix_type,
+                      gcm_code, alt_pred_code, date_code, alg_code,
+                      meta_string, gridset_id, after_time, before_time, epsg,
+                      after_status, before_status, atom):
+        """Return Matrix Objects or Atoms matching filter conditions
+
+        Args:
+            first_rec_num: The first record to return, 0 is the first record
+            max_num: Maximum number of records to return
+            user_id: User (owner) for which to return MatrixColumns.
+            matrix_type: filter by LmCommon.common.lmconstants.MatrixType
+            gcm_code: filter by the Global Climate Model code
+            alt_pred_code: filter by the alternate predictor code (i.e. IPCC
+                RCP)
+            date_code: filter by the date code
+            meta_string: find matrices containing this word in the metadata
+            gridset_id: find matrices in the Gridset with this identifier
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+            epsg: filter by this EPSG code
+            after_status: filter by status >= value
+            before_status: filter by status <= value
+            atom: True if return objects will be Atoms, False if full objects
+
+        Returns:
+            A list of Matrix atoms or full objects
         """
         metamatch = None
         if meta_string is not None:
             metamatch = '%{}%'.format(meta_string)
         if atom:
-            rows, idxs = self.execute_select_many_function('lm_listMatrixAtoms',
-                                first_rec_num, max_num, user_id, matrix_type,
-                                gcm_code, alt_pred_code, date_code, alg_code,
-                                metamatch, gridset_id, after_time, before_time,
-                                epsg, after_status, before_status)
+            rows, idxs = self.execute_select_many_function(
+                'lm_listMatrixAtoms', first_rec_num, max_num, user_id,
+                matrix_type, gcm_code, alt_pred_code, date_code, alg_code,
+                metamatch, gridset_id, after_time, before_time, epsg,
+                after_status, before_status)
             objs = self._get_atoms(rows, idxs, LMServiceType.MATRICES)
         else:
             objs = []
-            rows, idxs = self.execute_select_many_function('lm_listMatrixObjects',
-                                first_rec_num, max_num, user_id, matrix_type,
-                                gcm_code, alt_pred_code, date_code, alg_code,
-                                metamatch, gridset_id, after_time, before_time,
-                                epsg, after_status, before_status)
-            for r in rows:
-                objs.append(self._createLMMatrix(r, idxs))
+            rows, idxs = self.execute_select_many_function(
+                'lm_listMatrixObjects', first_rec_num, max_num, user_id,
+                matrix_type, gcm_code, alt_pred_code, date_code, alg_code,
+                metamatch, gridset_id, after_time, before_time, epsg,
+                after_status, before_status)
+            for row in rows:
+                objs.append(self._create_lm_matrix(row, idxs))
         return objs
 
     # ................................
@@ -2543,137 +2577,147 @@ class Borg(DbPostgresql):
         return new_or_existing_mtx
 
     # ................................
-    def count_trees(self, user_id, name, isBinary, isUltrametric, hasBranchLengths,
-                        meta_string, after_time, before_time):
+    def count_trees(self, user_id, name, is_binary, is_ultrametric,
+                    has_branch_lengths, meta_string, after_time, before_time):
         """Count Trees matching filter conditions
 
         Args:
-             user_id: User (owner) for which to return Trees.  
-             name: filter by name
-             isBinary: filter by boolean binary attribute
-             isUltrametric: filter by boolean ultrametric attribute
-             hasBranchLengths: filter by boolean hasBranchLengths attribute
-             meta_string: find trees containing this word in the metadata
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-        Returns:a count of Tree
+            user_id: User (owner) for which to return Trees.
+            name: filter by name
+            is_binary: filter by boolean binary attribute
+            is_ultrametric: filter by boolean ultrametric attribute
+            has_branch_lengths: filter by boolean has_branch_lengths attribute
+            meta_string: find trees containing this word in the metadata
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+
+        Returns:
+            A count of Tree
         """
         metamatch = None
         if meta_string is not None:
             metamatch = '%{}%'.format(meta_string)
-        row, idxs = self.execute_select_one_function('lm_countTrees', user_id,
-                                            after_time, before_time, name, metamatch,
-                                            isBinary, isUltrametric, hasBranchLengths)
+        row, _ = self.execute_select_one_function(
+            'lm_countTrees', user_id, after_time, before_time, name, metamatch,
+            is_binary, is_ultrametric, has_branch_lengths)
         return self._get_count(row)
 
     # ................................
-    def list_trees(self, first_rec_num, max_num, user_id, after_time, before_time,
-                      name, meta_string, isBinary, isUltrametric, hasBranchLengths,
-                      atom):
-        """
-        : Return Tree Objects or Atoms matching filter conditions 
-             first_rec_num: The first record to return, 0 is the first record
-             max_num: Maximum number of records to return
-             user_id: User (owner) for which to return Trees.  
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-             isBinary: filter by boolean binary attribute
-             isUltrametric: filter by boolean ultrametric attribute
-             hasBranchLengths: filter by boolean hasBranchLengths attribute
-             name: filter by name
-             meta_string: find trees containing this word in the metadata
-             atom: True if return objects will be Atoms, False if full objects
-        Returns:a list of Tree atoms or full objects
+    def list_trees(self, first_rec_num, max_num, user_id, after_time,
+                   before_time, name, meta_string, is_binary, is_ultrametric,
+                   has_branch_lengths, atom):
+        """Return Tree Objects or Atoms matching filter conditions
+
+        Args:
+            first_rec_num: The first record to return, 0 is the first record
+            max_num: Maximum number of records to return
+            user_id: User (owner) for which to return Trees.
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+            is_binary: filter by boolean binary attribute
+            is_ultrametric: filter by boolean ultrametric attribute
+            has_branch_lengths: filter by boolean has_branch_lengths attribute
+            name: filter by name
+            meta_string: find trees containing this word in the metadata
+            atom: True if return objects will be Atoms, False if full objects
+
+        Returns:
+            A list of Tree atoms or full objects
         """
         metamatch = None
         if meta_string is not None:
             metamatch = '%{}%'.format(meta_string)
         if atom:
-            rows, idxs = self.execute_select_many_function('lm_listTreeAtoms',
-                            first_rec_num, max_num, user_id, after_time, before_time,
-                            name, metamatch, isBinary, isUltrametric, hasBranchLengths)
+            rows, idxs = self.execute_select_many_function(
+                'lm_listTreeAtoms', first_rec_num, max_num, user_id,
+                after_time, before_time, name, metamatch, is_binary,
+                is_ultrametric, has_branch_lengths)
             objs = self._get_atoms(rows, idxs, LMServiceType.TREES)
         else:
             objs = []
-            rows, idxs = self.execute_select_many_function('lm_listTreeObjects',
-                            first_rec_num, max_num, user_id, after_time, before_time,
-                            name, metamatch, isBinary, isUltrametric, hasBranchLengths)
-            for r in rows:
-                objs.append(self._createTree(r, idxs))
+            rows, idxs = self.execute_select_many_function(
+                'lm_listTreeObjects', first_rec_num, max_num, user_id,
+                after_time, before_time, name, metamatch, is_binary,
+                is_ultrametric, has_branch_lengths)
+            for row in rows:
+                objs.append(self._create_tree(row, idxs))
         return objs
 
     # ................................
     def find_or_insert_tree(self, tree):
+        """Find existing OR save a new Tree
+
+        Args:
+            tree: the Tree object to insert
+
+        Return:
+            New or existing Tree
         """
-        : Find existing OR save a new Tree
-             tree: the Tree object to insert
-        @return new or existing Tree
-        """
-        meta = tree.dumpTreeMetadata()
-        row, idxs = self.execute_insert_and_select_one_function('lm_findOrInsertTree',
-                            tree.get_id(), tree.get_user_id(), tree.name,
-                            tree.get_dlocation(), tree.isBinary(), tree.isUltrametric(),
-                            tree.hasBranchLengths(), meta, tree.mod_time)
-        newOrExistingTree = self._createTree(row, idxs)
-        return newOrExistingTree
+        meta = tree.dump_tree_metadata()
+        row, idxs = self.execute_insert_and_select_one_function(
+            'lm_findOrInsertTree', tree.get_id(), tree.get_user_id(),
+            tree.name, tree.get_dlocation(), tree.is_binary(),
+            tree.is_ultrametric(), tree.has_branch_lengths(), meta,
+            tree.mod_time)
+        return self._create_tree(row, idxs)
 
     # ................................
     def get_tree(self, tree, tree_id):
-        """
-        : Retrieve a Tree from the database
-             tree: Tree to retrieve
-             tree_id: Database ID of Tree to retrieve
-        Returns:Existing Tree
+        """Retrieve a Tree from the database
+
+        Args:
+            tree: Tree to retrieve
+            tree_id: Database ID of Tree to retrieve
+
+        Returns:
+            Existing Tree
         """
         row = None
         if tree is not None:
-            row, idxs = self.execute_select_one_function('lm_getTree', tree.get_id(),
-                                                                    tree.get_user_id(),
-                                                                    tree.name)
+            row, idxs = self.execute_select_one_function(
+                'lm_getTree', tree.get_id(), tree.get_user_id(), tree.name)
         else:
-            row, idxs = self.execute_select_one_function('lm_getTree', tree_id,
-                                                                    None, None)
-        existingTree = self._createTree(row, idxs)
-        return existingTree
+            row, idxs = self.execute_select_one_function(
+                'lm_getTree', tree_id, None, None)
+        return self._create_tree(row, idxs)
 
     # ................................
-    def insert_mf_chain(self, mfchain, gridset_id):
+    def insert_mf_chain(self, mf_chain, gridset_id):
+        """Inserts a MFChain into database
+
+        Returns:
+            Updated MFChain object
         """
-        : Inserts a MFChain into database
-        Returns:updated MFChain object
-        """
-        meta = mfchain.dumpMfMetadata()
-        row, idxs = self.execute_insert_and_select_one_function('lm_insertMFChain',
-                                                            mfchain.get_user_id(),
-                                                            gridset_id,
-                                                            mfchain.get_dlocation(),
-                                                            mfchain.priority,
-                                                            meta, mfchain.status,
-                                                            mfchain.status_mod_time)
-        mfchain = self._createMFChain(row, idxs)
-        return mfchain
+        meta = mf_chain.dump_mf_metadata()
+        row, idxs = self.execute_insert_and_select_one_function(
+            'lm_insertMFChain', mf_chain.get_user_id(), gridset_id,
+            mf_chain.get_dlocation(), mf_chain.priority, meta, mf_chain.status,
+            mf_chain.status_mod_time)
+        return self._create_mf_chain(row, idxs)
 
     # ................................
     def count_mf_chains(self, user_id, gridset_id, meta_string, after_stat,
                         before_stat, after_time, before_time):
-        """
-        : Return the number of MFChains fitting the given filter conditions
-             user_id: filter by LMUser 
-             gridset_id: filter by a Gridset
-             meta_string: find gridsets containing this word in the metadata
-             after_stat: filter by status >= to this value
-             before_stat: filter by status <= to this value
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-        Returns:count of MFChains fitting the given filter conditions
+        """Return the number of MFChains fitting the given filter conditions
+
+        Args:
+            user_id: filter by LMUser
+            gridset_id: filter by a Gridset
+            meta_string: find gridsets containing this word in the metadata
+            after_stat: filter by status >= to this value
+            before_stat: filter by status <= to this value
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+
+        Returns:
+            Count of MFChains fitting the given filter conditions
         """
         metamatch = None
         if meta_string is not None:
             metamatch = '%{}%'.format(meta_string)
-        row, idxs = self.execute_select_one_function('lm_countMFProcess', user_id,
-                                                  gridset_id, metamatch,
-                                                  after_stat, before_stat,
-                                                  after_time, before_time)
+        row, _ = self.execute_select_one_function(
+            'lm_countMFProcess', user_id, gridset_id, metamatch, after_stat,
+            before_stat, after_time, before_time)
         return self._get_count(row)
 
     # ................................
@@ -2695,75 +2739,89 @@ class Borg(DbPostgresql):
     def list_mf_chains(self, first_rec_num, max_num, user_id, gridset_id,
                        meta_string, after_stat, before_stat, after_time,
                        before_time, atom):
-        """
-        : Return MFChain Objects or Atoms matching filter conditions 
-             first_rec_num: The first record to return, 0 is the first record
-             max_num: Maximum number of records to return
-             user_id: User (owner) for which to return shapegrids.  
-             gridset_id: filter by a Gridset
-             meta_string: find gridsets containing this word in the metadata
-             after_stat: filter by status >= to this value
-             before_stat: filter by status <= to this value
-             after_time: filter by modified at or after this time
-             before_time: filter by modified at or before this time
-             atom: True if return objects will be Atoms, False if full objects
-        Returns:a list of MFProcess/Gridset atoms or full objects
+        """Return MFChain Objects or Atoms matching filter conditions
+
+        Args:
+            first_rec_num: The first record to return, 0 is the first record
+            max_num: Maximum number of records to return
+            user_id: User (owner) for which to return shapegrids.
+            gridset_id: filter by a Gridset
+            meta_string: find gridsets containing this word in the metadata
+            after_stat: filter by status >= to this value
+            before_stat: filter by status <= to this value
+            after_time: filter by modified at or after this time
+            before_time: filter by modified at or before this time
+            atom: True if return objects will be Atoms, False if full objects
+
+        Returns:
+            A list of MFProcess/Gridset atoms or full objects
         """
         if atom:
-            rows, idxs = self.execute_select_many_function('lm_listMFProcessAtoms',
-                            first_rec_num, max_num, user_id, gridset_id, meta_string,
-                            after_stat, before_stat, after_time, before_time)
+            rows, idxs = self.execute_select_many_function(
+                'lm_listMFProcessAtoms', first_rec_num, max_num, user_id,
+                gridset_id, meta_string, after_stat, before_stat, after_time,
+                before_time)
             objs = self._get_atoms(rows, idxs, None)
         else:
             objs = []
-            rows, idxs = self.execute_select_many_function('lm_listMFProcessObjects',
-                            first_rec_num, max_num, user_id, gridset_id, meta_string,
-                            after_stat, before_stat, after_time, before_time)
-            for r in rows:
-                objs.append(self._createMFChain(r, idxs))
+            rows, idxs = self.execute_select_many_function(
+                'lm_listMFProcessObjects', first_rec_num, max_num, user_id,
+                gridset_id, meta_string, after_stat, before_stat, after_time,
+                before_time)
+            for row in rows:
+                objs.append(self._create_mf_chain(row, idxs))
         return objs
 
     # ................................
     def summarize_mf_chains_for_gridset(self, gridset_id):
-        """
-        : Count all mfprocesses for a gridset by status
-             gridset_id: a database ID for the LmServer.legion.Gridset
-        Returns:a list of tuples containing count, status
+        """Count all mfprocesses for a gridset by status
+
+        Args:
+            gridset_id: a database ID for the LmServer.legion.Gridset
+
+        Returns:
+            A list of tuples containing count, status
         """
         status_total_pairs = []
-        rows, idxs = self.execute_select_many_function('lm_summarizeMFProcessForGridset',
-                                                    gridset_id)
-        for r in rows:
-            status_total_pairs.append((r[idxs['status']], r[idxs['total']]))
+        rows, idxs = self.execute_select_many_function(
+            'lm_summarizeMFProcessForGridset', gridset_id)
+        for row in rows:
+            status_total_pairs.append(
+                (row[idxs['status']], row[idxs['total']]))
         return status_total_pairs
 
     # ................................
-    def find_mf_chains(self, count, user_id, oldStatus, newStatus):
+    def find_mf_chains(self, count, user_id, old_status, new_status):
+        """Retrieves MFChains from database
+
+        Args:
+            count: Number of MFChains to pull
+            user_id: If not None, filter by this user
+            old_status: Pull only MFChains at this status
+            new_status: Update MFChains to this status
+
+        Returns:
+            List of MFChains
         """
-        : Retrieves MFChains from database, optionally filtered by status 
-                     and/or user, updates their status
-             count: Number of MFChains to pull
-             user_id: If not None, filter by this user 
-             oldStatus: Pull only MFChains at this status
-             newStatus: Update MFChains to this status
-        Returns:list of MFChains
-        """
-        mfchainList = []
+        mf_chains = []
         mod_time = gmt().mjd
-        rows, idxs = self.execute_select_many_function('lm_findMFChains', count,
-                                                    user_id, oldStatus, newStatus,
-                                                    mod_time)
-        for r in rows:
-            mfchain = self._createMFChain(r, idxs)
-            mfchainList.append(mfchain)
-        return mfchainList
+        rows, idxs = self.execute_select_many_function(
+            'lm_findMFChains', count, user_id, old_status, new_status,
+            mod_time)
+        for row in rows:
+            mf_chain = self._create_mf_chain(row, idxs)
+            mf_chains.append(mf_chain)
+        return mf_chains
 
     # ................................
     def delete_mf_chains_return_filenames(self, gridset_id):
-        """
-        : Deletes MFChains for a gridset, returns filenames 
-             gridset_id: Pull only MFChains for this gridset
-        Returns:list of MFChains filenames
+        """Deletes MFChains for a gridset, returns filenames
+
+        Args:
+            gridset_id: Pull only MFChains for this gridset
+
+        Returns:
+            List of MFChains filenames
         """
         flist = []
         rows, _ = self.execute_select_and_modify_many_function(
@@ -2774,49 +2832,51 @@ class Borg(DbPostgresql):
         return flist
 
     # ................................
-    def get_mf_chain(self, mfprocessid):
+    def get_mf_chain(self, mf_process_id):
+        """Retrieves MFChain from database
+
+        Args:
+            mf_process_id: Database ID of MFChain to pull
+
+        Returns:
+            LmServer.legion.process_chain.MFChains
         """
-        : Retrieves MFChain from database
-             mfprocessid: Database ID of MFChain to pull
-        Returns:LmServer.legion.process_chain.MFChains
-        """
-        row, idxs = self.execute_select_many_function('lm_getMFChain', mfprocessid)
-        mfchain = self._createMFChain(row, idxs)
-        return mfchain
+        row, idxs = self.execute_select_many_function(
+            'lm_getMFChain', mf_process_id)
+        return self._create_mf_chain(row, idxs)
 
     # ................................
     def update_object(self, obj):
-        """
-        : Updates object in database
-        Returns:True/False for success of operation
+        """Updates object in database
+
+        Returns:
+            True/False for success of operation
         """
         if isinstance(obj, OccurrenceLayer):
-            success = self.updateOccurrenceSet(obj)
+            success = self.update_occurrence_set(obj)
         elif isinstance(obj, SDMProjection):
-            success = self.updateSDMProject(obj)
+            success = self.update_sdm_project(obj)
         elif isinstance(obj, ShapeGrid):
-            success = self.updateShapeGrid(obj)
+            success = self.update_shapegrid(obj)
         # TODO: Handle if MatrixColumn changes to inherit from LMMatrix
         elif isinstance(obj, MatrixColumn):
-            success = self.updateMatrixColumn(obj)
+            success = self.update_matrix_column(obj)
         elif isinstance(obj, LMMatrix):
-            success = self.updateMatrix(obj)
+            success = self.update_matrix(obj)
         elif isinstance(obj, ScientificName):
-            success = self.updateTaxon(obj)
+            success = self.update_taxon(obj)
         elif isinstance(obj, Tree):
-            meta = obj.dumpTreeMetadata()
-            success = self.execute_modify_function('lm_updateTree', obj.get_id(),
-                                                             obj.get_dlocation(),
-                                                             obj.isBinary(),
-                                                             obj.isUltrametric(),
-                                                             obj.hasBranchLengths(),
-                                                             meta, obj.mod_time)
+            meta = obj.dump_tree_metadata()
+            success = self.execute_modify_function(
+                'lm_updateTree', obj.get_id(), obj.get_dlocation(),
+                obj.is_binary(), obj.is_ultrametric(),
+                obj.has_branch_lengths(), meta, obj.mod_time)
         elif isinstance(obj, MFChain):
-            success = self.execute_modify_function('lm_updateMFChain', obj.obj_id,
-                                                             obj.get_dlocation(),
-                                                             obj.status, obj.status_mod_time)
+            success = self.execute_modify_function(
+                'lm_updateMFChain', obj.obj_id, obj.get_dlocation(),
+                obj.status, obj.status_mod_time)
         elif isinstance(obj, Gridset):
-            success = self.updateGridset(obj)
+            success = self.update_gridset(obj)
         else:
             raise LMError('Unsupported update for object {}'.format(type(obj)))
         return success
@@ -2831,16 +2891,16 @@ class Borg(DbPostgresql):
         Note:
             - OccurrenceSet delete cascades to SDMProject but not MatrixColumn
             - MatrixColumns for Global PAM should be deleted or reset on
-                OccurrenceSet delete or recalc 
+                OccurrenceSet delete or recalc
         """
         try:
             obj_id = obj.get_id()
-        except:
+        except AttributeError:
             try:
                 obj = obj.obj_id
-            except:
-                raise LMError('Failed getting ID for {} object'.format(
-                    type(obj)))
+            except AttributeError:
+                raise LMError(
+                    'Failed getting ID for {} object'.format(type(obj)))
         if isinstance(obj, MFChain):
             success = self.execute_modify_function('lm_deleteMFChain', obj_id)
         elif isinstance(obj, OccurrenceLayer):
@@ -2849,9 +2909,11 @@ class Borg(DbPostgresql):
             success = self.execute_modify_function(
                 'lm_deleteSDMProjectLayer', obj_id)
         elif isinstance(obj, ShapeGrid):
-            success = self.execute_modify_function('lm_deleteShapeGrid', obj_id)
+            success = self.execute_modify_function(
+                'lm_deleteShapeGrid', obj_id)
         elif isinstance(obj, Scenario):
-            # Deletes ScenarioLayer join; only deletes layers if they are orphaned
+            # Deletes ScenarioLayer join; only deletes layers if they are
+            #    orphaned
             for lyr in obj.layers:
                 success = self.execute_modify_function(
                     'lm_deleteScenarioLayer', lyr.get_id(), obj_id)
