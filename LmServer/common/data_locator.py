@@ -1,557 +1,566 @@
-"""
+"""Module containing tool for locating data
 """
 import os
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import LMFormat, DEFAULT_GLOBAL_EXTENT
 from LmServer.base.lmobj import LMSpatialObject
-from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR, LOG_PATH,
-   LMFileType, FileFix, GENERIC_LAYER_NAME_PREFIX,
-   OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT,
-   DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, ARCHIVE_PATH, USER_LAYER_DIR,
-   MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, WMS_LAYER_KEY, WCS_LAYER_KEY,
-   RAD_EXPERIMENT_DIR_PREFIX, USER_MAKEFLOW_DIR, USER_TEMP_DIR,
-   API_URL, OGC_SERVICE_URL)
+from LmServer.common.lmconstants import (
+    API_URL, ARCHIVE_PATH, DEFAULT_SRS, DEFAULT_WCS_FORMAT, DEFAULT_WMS_FORMAT,
+    FileFix, GENERIC_LAYER_NAME_PREFIX, LMFileType, LOG_PATH, MAP_DIR, MAP_KEY,
+    MAP_TEMPLATE, MapPrefix, MODEL_DEPTH, NAME_SEPARATOR, OCC_NAME_PREFIX,
+    OGC_SERVICE_URL, PRJ_PREFIX, RAD_EXPERIMENT_DIR_PREFIX, USER_LAYER_DIR,
+    USER_MAKEFLOW_DIR, USER_TEMP_DIR, WCS_LAYER_KEY, WEB_DIR, WMS_LAYER_KEY)
 from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
-
+from LmServer.common.log import ConsoleLogger
+from LmServer.db.borg_scribe import BorgScribe
 
 # .............................................................................
 class EarlJr(LMObject):
-    """
-    @summary: Object to construct and parse filenames and URLs.
+    """Object to construct and parse filenames and URLs.
     """
 
-    # .............................................................................
-    # Constructor
-    # .............................................................................
+    # ................................
     def __init__(self, scribe=None):
-        """
-        @summary: Constructor for the Earl object.  
+        """Constructor
         """
         LMObject.__init__(self)
-        self.ogcUrl = OGC_SERVICE_URL
+        self.ogc_url = OGC_SERVICE_URL
         self._scribe = scribe
 
-    # ...............................................
-    def createStartWalkenFilename(self, user, archiveName):
-        name = '{}_{}'.format(user, archiveName)
+    # ................................
+    @staticmethod
+    def create_start_walken_filename(user, archive_name):
+        """Create the start walken filename
+        """
+        name = '{}_{}'.format(user, archive_name)
         fname = os.path.join(LOG_PATH, 'start.{}.txt'.format(name))
         return fname
 
-    # ...............................................
-    def createLayername(self, occsetId=None, projId=None, lyrId=None):
+    # ................................
+    @staticmethod
+    def create_layer_name(occ_set_id=None, proj_id=None, lyr_id=None):
+        """Return the base filename of an Archive data layer
+
+        Args:
+            occ_set_id: Id of the OccurrenceSet data.
+            proj_id: Id of the Projection layer.
+
+        Note:
+            Check proj_id first, because occ_set_id may be sent in either case
         """
-        @summary: Return the base filename of an Archive data layer
-        @param occsetId: Id of the OccurrenceSet data.
-        @param projId: Id of the Projection layer.
-        @note: Check prjId first, because occsetId may be sent in either case
-        """
-        if projId is not None:
-            basename = NAME_SEPARATOR.join([PRJ_PREFIX, str(projId)])
-        elif occsetId is not None:
-            basename = NAME_SEPARATOR.join([OCC_NAME_PREFIX, str(occsetId)])
-        elif lyrId is not None:
-            basename = NAME_SEPARATOR.join([GENERIC_LAYER_NAME_PREFIX, str(lyrId)])
+        if proj_id is not None:
+            base_name = NAME_SEPARATOR.join([PRJ_PREFIX, str(proj_id)])
+        elif occ_set_id is not None:
+            base_name = NAME_SEPARATOR.join([OCC_NAME_PREFIX, str(occ_set_id)])
+        elif lyr_id is not None:
+            base_name = NAME_SEPARATOR.join(
+                [GENERIC_LAYER_NAME_PREFIX, str(lyr_id)])
         else:
             raise LMError('Must supply OccsetId or ProjId for layer name')
-        return basename
+        return base_name
 
-    # ...............................................
-    def createSDMProjectTitle(self, userId, taxaname, algCode, mdlscenCode,
-                             prjscenCode):
-        name = '{} modeled with {} projected onto {}'.format(
-              taxaname, algCode, prjscenCode)
-        return name
+    # ................................
+    @staticmethod
+    def create_sdm_project_title(user_id, taxa_name, alg_code, mdl_scen_code,
+                                 prj_scen_code):
+        """Create a title for an SDM projection
+        """
+        return '{} modeled with {} projected onto {}'.format(
+            taxa_name, alg_code, prj_scen_code)
 
-    # ...............................................
-    def _parseSDMId(self, idstr, parts):
+    # ................................
+    @staticmethod
+    def _parse_sdm_id(id_str, group_size=3):
+        """Return a list of 3-digit strings from a multi-digit string.
         """
-        Recursive method to return a list of 3 digit strings from a multi-digit
-        string.
-        @note: replaces _parseSpeciesId
-        """
-        if len(idstr) > 1:
-            self._parseSDMId(idstr[:-3], parts)
+        num_zeros = group_size - len(id_str) % group_size
+        if num_zeros >= group_size:
+            num_zeros -= group_size
+        id_str = (num_zeros * '0') + id_str
+        return [
+            id_str[i:i+group_size] for i in range(0, len(id_str), group_size)]
 
-        if len(idstr) > 0:
-            lastpart = idstr[-3:]
-            for i in range(3 - len(lastpart)):
-                lastpart = ''.join(['0', lastpart])
-            parts.append(lastpart)
-        return parts
+    # ................................
+    def create_data_path(self, usr, file_type, occ_set_id=None, epsg=None,
+                         gridset_id=None):
+        """Create a data path for the provided inputs
 
-    # ...............................................
-    def createDataPath(self, usr, filetype, occsetId=None, epsg=None,
-                       gridsetId=None):
+        Note:
+            - Returns path without trailing /
+            - /ARCHIVE_PATH/userId
+                contains config files, trees, attributes ...
+              /ARCHIVE_PATH/userId/makeflow
+                contains MF docs
+              /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
+                contains experiment data common to occurrenceId xxxxxxxxxxxx
+              /ARCHIVE_PATH/userId/MAP_DIR
+                contains maps
+              /ARCHIVE_PATH/userId/<epsg>/USER_LAYER_DIR
+                contains user layers common to epsg
+
+        Todo:
+            - Add gridset-related directory
+                /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>
+                    contains computed data for gridset xxx
         """
-        @note: returns path without trailing /
-        @note: /ARCHIVE_PATH/userId
-                   contains config files, trees, attributes ...
-               /ARCHIVE_PATH/userId/makeflow
-                   contains MF docs
-               /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
-                   contains experiment data common to occurrenceId xxxxxxxxxxxx
-               /ARCHIVE_PATH/userId/MAP_DIR
-                   contains maps
-               /ARCHIVE_PATH/userId/<epsg>/USER_LAYER_DIR
-                   contains user layers common to epsg 
-        @todo: Add gridset-related directory 
-               /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>
-                   contains computed data for gridset xxx
-        """
-        if usr is None :
+        if usr is None:
             raise LMError('createDataPath requires userId')
         pth = os.path.join(ARCHIVE_PATH, usr)
 
         # General user documents go directly in user directory
-        if LMFileType.isUserSpace(filetype):
+        if LMFileType.is_user_space(file_type):
             pass
 
-        elif filetype == LMFileType.TEMP_USER_DATA:
+        elif file_type == LMFileType.TEMP_USER_DATA:
             pth = os.path.join(pth, USER_TEMP_DIR)
 
-        elif filetype == LMFileType.MF_DOCUMENT:
+        elif file_type == LMFileType.MF_DOCUMENT:
             pth = os.path.join(pth, USER_MAKEFLOW_DIR)
 
         # OccurrenceSet path overrides general map path for SDM maps
-        elif LMFileType.isSDM(filetype):
-            if occsetId is not None:
-                dirparts = self._parseSDMId(str(occsetId), [])
-                for i in range(MODEL_DEPTH - len(dirparts)):
-                    dirparts.insert(0, '000')
-                pth = os.path.join(pth, *dirparts)
+        elif LMFileType.is_sdm(file_type):
+            if occ_set_id is not None:
+                dir_parts = self._parse_sdm_id(str(occ_set_id))
+                for _ in range(MODEL_DEPTH - len(dir_parts)):
+                    dir_parts.insert(0, '000')
+                pth = os.path.join(pth, *dir_parts)
             else:
                 raise LMError('Missing occurrenceSetId for SDM filepath')
 
         # All non-SDM Maps go under user map dir
-        elif LMFileType.isMap(filetype):
+        elif LMFileType.is_map(file_type):
             pth = os.path.join(pth, MAP_DIR)
 
         else:
-            if not (LMFileType.isUserLayer(filetype) or LMFileType.isRAD(filetype)):
-                raise LMError('Unknown filetype {}'.format(filetype))
+            if not (LMFileType.is_user_layer(file_type) or
+                    LMFileType.is_rad(file_type)):
+                raise LMError('Unknown filetype {}'.format(file_type))
 
             # Rest, User Layer and RAD data, are separated by epsg
             if epsg is not None:
-                pthparts = [pth, str(epsg)]
+                pth_parts = [pth, str(epsg)]
                 # multi-purpose layers
-                if LMFileType.isUserLayer(filetype):
-                    pthparts.append(USER_LAYER_DIR)
+                if LMFileType.is_user_layer(file_type):
+                    pth_parts.append(USER_LAYER_DIR)
                 # RAD gridsets
-                elif LMFileType.isRAD(filetype):
-                    if gridsetId is not None:
-                        pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(gridsetId))
+                elif LMFileType.is_rad(file_type):
+                    if gridset_id is not None:
+                        pth_parts.append(
+                            RAD_EXPERIMENT_DIR_PREFIX + str(gridset_id))
                     else:
-                        raise LMError('Missing gridsetId {}'.format(filetype))
-                pth = os.path.join(*pthparts)
+                        raise LMError('Missing gridsetId {}'.format(file_type))
+                pth = os.path.join(*pth_parts)
 
         return pth
 
-    # ...............................................
-    def getTopLevelUserSDMPaths(self, usr):
+    # ................................
+    @staticmethod
+    def get_top_level_user_sdm_paths(usr):
+        """Get the top level user sdm path
+
+        Note:
+            - /ARCHIVE_PATH/userId/
+                contains config files, trees, attributes ...
+              /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
+                contains experiment data common to occurrenceId xxxxxxxxxxxx
         """
-        @note: /ARCHIVE_PATH/userId/
-                   contains config files, trees, attributes ...
-               /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
-                   contains experiment data common to occurrenceId xxxxxxxxxxxx
-        """
-        sdmPaths = []
-        if usr is None :
+        sdm_paths = []
+        if usr is None:
             raise LMError('getTopLevelUserSDMPaths requires userId')
         pth = os.path.join(ARCHIVE_PATH, usr)
 
         contents = os.listdir(pth)
         for name in contents:
-            fulldir = os.path.join(pth, name)
+            full_dir = os.path.join(pth, name)
             # SDM dirs are 3-digit integers, EPSG codes are a 4-digit integer
-            if len(name) == 3 and os.path.isdir(fulldir):
+            if len(name) == 3 and os.path.isdir(full_dir):
                 try:
                     int(name)
-                except:
+                except ValueError:
                     pass
                 else:
-                    sdmPaths.append(fulldir)
-        return sdmPaths
+                    sdm_paths.append(full_dir)
+        return sdm_paths
 
-    # ...............................................
-    def createOtherLayerFilename(self, usr, epsg, lyrName, ext):
-        """
-        @summary: Return the base filename of a Non-SDM-experiment Layer file 
-        @param usr: Id of the User.
-        @param epsg: EPSG code of the layer file
-        @param occsetId: OccurrenceSet Id if this is for an OccurrenceSet layer.
-        @param lyrName: Name of the layer.
-        @param ext: File extentsion of this layer.
-        """
-        pth = self.createDataPath(usr, LMFileType.USER_LAYER, epsg=epsg)
-        lyrName = lyrName + ext
-        return os.path.join(pth, lyrName)
+    # ................................
+    def create_other_layer_filename(self, usr, epsg, lyr_name, ext):
+        """Return the base filename of a Non-SDM-experiment Layer file
 
-    # ...............................................
-    def createBasename(self, ftype, objCode=None,
-                       lyrname=None, usr=None, epsg=None):
+        Args:
+            usr: Id of the User.
+            epsg: EPSG code of the layer file
+            occ_set_id: OccurrenceSet Id if this is for an OccurrenceSet layer.
+            lyr_name: Name of the layer.
+            ext: File extentsion of this layer.
         """
-        @summary: Return the base filename for given filetype and parameters 
-        @param ftype: LmServer.common.lmconstants.LMFileType
-        @param objCode: Object database Id or unique code for non-db items, 
-                        For maps: 
-                          SDM_MAP occurrencesetId
-                          RAD_MAP gridsetId
-                          SCENARIO_MAP scenarioCode
-        @param lyrname: Layer name 
-        @param usr: User database Id
-        @param epsg: File or object EPSG code
-        """
-        basename = None
+        pth = self.create_data_path(usr, LMFileType.USER_LAYER, epsg=epsg)
+        return os.path.join(pth, lyr_name + ext)
 
-        nameparts = []
+    # ................................
+    @staticmethod
+    def create_basename(f_type, obj_code=None, lyr_name=None, usr=None,
+                        epsg=None):
+        """Return the base filename for given filetype and parameters
+
+        Args:
+            f_type: LmServer.common.lmconstants.LMFileType
+            obj_code: Object database Id or unique code for non-db items, for
+                maps:
+                    - SDM_MAP occurrencesetId
+                    - RAD_MAP gridsetId
+                    - SCENARIO_MAP scenarioCode
+            lyr_name: Layer name
+            usr: User database Id
+            epsg: File or object EPSG code
+        """
+        base_name = None
+
+        name_parts = []
         # Prefix
-        if FileFix.PREFIX[ftype] is not None:
-            nameparts.append(FileFix.PREFIX[ftype])
+        if FileFix.PREFIX[f_type] is not None:
+            name_parts.append(FileFix.PREFIX[f_type])
 
         # MAPs
-        if ftype in (LMFileType.SCENARIO_MAP, LMFileType.RAD_MAP):
-            nameparts.append(usr)
+        if f_type in (LMFileType.SCENARIO_MAP, LMFileType.RAD_MAP):
+            name_parts.append(usr)
         # User Maps for unconnected user layers (not SCENARIO_MAP or SDM_MAP)
-        elif ftype == LMFileType.OTHER_MAP:
-            nameparts.extend([usr, epsg])
+        elif f_type == LMFileType.OTHER_MAP:
+            name_parts.extend([usr, epsg])
 
         # User layers
-        if LMFileType.isUserLayer(ftype):
-            nameparts.append(lyrname)
+        if LMFileType.is_user_layer(f_type):
+            name_parts.append(lyr_name)
         # All non-UserLayer files add objCode
-        elif objCode:
-            nameparts.append(objCode)
+        elif obj_code:
+            name_parts.append(obj_code)
 
         else:
             return None
 
-        fileparts = [str(p) for p in nameparts if p is not None ]
+        file_parts = [str(p) for p in name_parts if p is not None]
         try:
-            basename = NAME_SEPARATOR.join(fileparts)
-        except Exception as e:
-            raise LMError('Bad type %s or parameters; (%s)' % (str(ftype), str(e)))
-        return basename
+            base_name = NAME_SEPARATOR.join(file_parts)
+        except Exception as err:
+            raise LMError(
+                'Bad type {} or parameters; ({})'.format(
+                    str(f_type), str(err)))
+        return base_name
 
-    # ...............................................
-    def createFilename(self, ftype,
-                       occsetId=None, gridsetId=None, objCode=None,
-                       lyrname=None, usr=None, epsg=None, pth=None):
+    # ................................
+    def create_filename(self, f_type, occ_set_id=None, gridset_id=None,
+                        obj_code=None, lyr_name=None, usr=None, epsg=None,
+                        pth=None):
+        """Return the absolute filename for given filetype and parameters
+
+        Args:
+            f_type:
+            occ_set_id: SDM OccurrenceLayer database Id, used for path
+            gridset_id: RAD Gridset database Id, used for path
+            obj_code: ScenarioCode or database Id for primary object contained
+                or organizing the file contents
+            pth: File storage path, overrides calculated path
         """
-        @summary: Return the absolute filename for given filetype and parameters 
-        @copydoc LmServer.common.datalocator.EarlJr::createBasename()
-        @param occsetId: SDM OccurrenceLayer database Id, used for path
-        @param gridsetId: RAD Gridset database Id, used for path
-        @param objCode: ScenarioCode or database Id for primary object contained
-               or organizing the file contents
-        @param pth: File storage path, overrides calculated path
-        """
-        if occsetId is not None and objCode is None:
-            objCode = occsetId
-        basename = self.createBasename(ftype, objCode=objCode, lyrname=lyrname,
-                                       usr=usr, epsg=epsg)
-        if basename is None:
+        if occ_set_id is not None and obj_code is None:
+            obj_code = occ_set_id
+        base_name = self.create_basename(
+            f_type, obj_code=obj_code, lyr_name=lyr_name, usr=usr, epsg=epsg)
+        if base_name is None:
             filename = None
         else:
             if pth is None:
-                pth = self.createDataPath(usr, ftype, gridsetId=gridsetId,
-                                          epsg=epsg, occsetId=occsetId)
-                filename = os.path.join(pth, basename + FileFix.EXTENSION[ftype])
+                pth = self.create_data_path(
+                    usr, f_type, gridset_id=gridset_id, epsg=epsg,
+                    occ_set_id=occ_set_id)
+                filename = os.path.join(
+                    pth, base_name + FileFix.EXTENSION[f_type])
         return filename
 
-    # ...............................................
-    def getMapFilenameFromMapname(self, mapname):
-        pth = self._createStaticMapPath()
-        if mapname == MAP_TEMPLATE:
+    # ................................
+    def get_map_filename_from_map_name(self, map_name):
+        """Get the map filename from the map name
+        """
+        pth = self._create_static_map_path()
+        if map_name == MAP_TEMPLATE:
             usr = None
         else:
-            (fileType, scencode, occsetId, gridsetId, usr, ancillary,
-             epsg) = self._parseMapname(mapname)
+            (file_type, _, occ_set_id, gridset_id, usr, ancillary, _
+             ) = self._parse_map_name(map_name)
 
             if usr is None:
-                usr = self._findUserForObject(occId=occsetId)
+                usr = self._find_user_for_object(occ_id=occ_set_id)
 
             if not ancillary:
-                pth = self.createDataPath(usr, fileType,
-                             occsetId=occsetId, gridsetId=gridsetId)
+                pth = self.create_data_path(
+                    usr, file_type, occ_set_id=occ_set_id,
+                    gridset_id=gridset_id)
 
-        if not mapname.endswith(LMFormat.MAP.ext):
-            mapname = mapname + LMFormat.MAP.ext
-        mapfname = os.path.join(pth, mapname)
-        return mapfname
+        if not map_name.endswith(LMFormat.MAP.ext):
+            map_name = map_name + LMFormat.MAP.ext
+        return os.path.join(pth, map_name)
 
-    # ...............................................
-    def constructLMDataUrl(self, serviceType, objectId, interface, parentMetadataUrl=None):
+    # ................................
+    def construct_lm_data_url(self, service_type, object_id, interface,
+                              parent_metadata_url=None):
+        """Return the REST service url for data in the Lifemapper archive
+
+        Args:
+            service_type: LM service for this service, i.e. 'bucket' or 'model'
+            object_id: The unique database id for requested object
+            parent_metadata_url: The nested structure of this object's parent
+                objects.  The nested structure will begin with a '/', and take
+                a form like: /{parent_class}/{parent id}/{class}/{id}
         """
-        @summary Return the REST service url for data in the Lifemapper Archive 
-                 or UserData for the given user and service.
-        @param serviceType: LM service for this service, i.e. 'bucket' or 'model'
-        @param objectId: The unique database id for requested object
-        @param format: The data format in which to return the results, 
-        @param parentMetadataUrl: The nested structure of this object's parent objects.
-                 The nested structure will begin with a '/', and take a form like: 
-                    /grandParentClassType/grandParentId/parentClassType/parentId
-        """
-        postfix = self._createWebServicePostfix(serviceType, objectId,
-                                               parentMetadataUrl=parentMetadataUrl,
-                                               interface=interface)
+        postfix = self._create_web_service_postfix(
+            service_type, object_id, parent_metadata_url=parent_metadata_url,
+            interface=interface)
         url = '/'.join((API_URL, postfix))
         return url
 
-    # ...............................................
-    def construct_lm_metadata_url(self, serviceType, objectId,
-                               parentMetadataUrl=None):
+    # ................................
+    def construct_lm_metadata_url(self, service_type, object_id,
+                                  parent_metadata_url=None):
+        """Return the REST service url for data in the Lifemapper archive
+
+        Args:
+            service_type: LM service for this service, i.e. 'bucket' or 'model'
+            object_id: The unique database id for requested object
+            parent_metadata_url: The nested structure of this object's parent
+                objects.  The nested structure will begin with a '/', and take
+                a form like: /{parent_class}/{parent id}/{class}/{id}
         """
-        @summary Return the REST service url for data in the Lifemapper Archive 
-                 or UserData for the given user and service.
-        @param serviceType: LM service for this service, i.e. 'bucket' or 'model'
-        @param objectId: The unique database id for requested object
-        @param parentMetadataUrl: The nested structure of this object's parent objects.
-                 The nested structure will begin with a '/', and take a form like: 
-                    /grandParentClassType/grandParentId/parentClassType/parentId
-        @param interface: The format in which to return the results, 
-        """
-        postfix = self._createWebServicePostfix(serviceType, objectId,
-                                               parentMetadataUrl=parentMetadataUrl)
+        postfix = self._create_web_service_postfix(
+            service_type, object_id, parent_metadata_url=parent_metadata_url)
         url = '/'.join((API_URL, postfix))
         return url
 
-    # ...............................................
-    def _createWebServicePostfix(self, serviceType, objectId,
-                                parentMetadataUrl=None, interface=None):
+    # ................................
+    def _create_web_service_postfix(self, service_type, object_id,
+                                    parent_metadata_url=None, interface=None):
+        """Return the relative REST service url without leading ROOT
+
+        Args:
+            service_type: The Lifemapper service type
+            object_id: The unique database identifier for the requested object.
+            parent_metadata_url: The nested structure of this object's parent
+                objects.
         """
-        @summary Return the relative REST service url for data in the 
-                 Lifemapper Archive for the given object and service (with 
-                 or without leading '/').
-        @param serviceType: LM service for this service, i.e. 'bucket' or 'model'
-        @param objectId: The unique database id for requested object
-        @param parentMetadataUrl: The nested structure of this object's parent objects.
-                 The nested structure will begin with a '/', and take a form like: 
-                    /grandParentClassType/grandParentId/parentClassType/parentId
-        @param dataformat: The data format in which to return the results, 
-        """
-        parts = [serviceType, str(objectId)]
-        if parentMetadataUrl is not None:
-            if not parentMetadataUrl.startswith(API_URL):
-                raise LMError('Parent URL {} does not start with local prefix {}'
-                             .format(parentMetadataUrl, API_URL))
-            else:
-                relativeprefix = parentMetadataUrl[len(API_URL):]
-                parts.insert(0, relativeprefix)
+        parts = [service_type, str(object_id)]
+        if parent_metadata_url is not None:
+            if not parent_metadata_url.startswith(API_URL):
+                raise LMError(
+                    'Parent URL {} does not start with local prefix {}'.format(
+                        parent_metadata_url, API_URL))
+
+            relative_prefix = parent_metadata_url[len(API_URL):]
+            parts.insert(0, relative_prefix)
         if interface is not None:
             parts.append(interface)
-        urlpath = '/'.join(parts)
-        return urlpath
+        return '/'.join(parts)
 
-    # ...............................................
-    def _getOWSParams(self, mapprefix, owsLayerKey, bbox):
+    # ................................
+    @staticmethod
+    def _get_ows_params(map_prefix, ows_layer_key, bbox):
         params = []
         if not bbox:
             bbox = DEFAULT_GLOBAL_EXTENT
-        bbstr = LMSpatialObject.getExtentAsString(bbox, separator=',')
+        bbstr = LMSpatialObject.get_extent_as_string(bbox, separator=',')
         params.append(('bbox', bbstr))
-        mapname = lyrname = None
-        svcurl_rest = mapprefix.split('?')
-        svcurl = svcurl_rest[0]
-        if len(svcurl_rest) == 2:
-            pairs = svcurl_rest[1].split('&')
-            for kv in pairs:
-                k, v = kv.split('=')
+        map_name = lyr_name = None
+        svc_url_rest = map_prefix.split('?')
+        svc_url = svc_url_rest[0]
+        if len(svc_url_rest) == 2:
+            pairs = svc_url_rest[1].split('&')
+            for key_val in pairs:
+                k, val = key_val.split('=')
                 k = k.lower()
                 if k == MAP_KEY:
-                    mapname = v
+                    map_name = val
                 elif k == WMS_LAYER_KEY:
-                    lyrname = v
+                    lyr_name = val
                 elif k == WCS_LAYER_KEY:
-                    lyrname = v
-            if mapname is not None:
-                params.append(('map', mapname))
-            if lyrname is not None:
-                params.append((owsLayerKey, lyrname))
-        return svcurl, params
+                    lyr_name = val
+            if map_name is not None:
+                params.append(('map', map_name))
+            if lyr_name is not None:
+                params.append((ows_layer_key, lyr_name))
+        return svc_url, params
 
-    # ...............................................
-    def _getGETQuery(self, urlprefix, paramTpls):
+    # ................................
+    @staticmethod
+    def _get_GET_query(url_prefix, param_tpls):
+        """Method to construct an HTTP GET query
+
+        Method to construct a GET query from a URL endpoint and a list of
+        of key-value tuples. URL endpoint concludes in either a '?' or a
+        key/value pair (i.e. id=25)
+
+        Note:
+            Using list of tuples to ensure that the order of the parameters
+                is always the same so we can string compare GET Queries
         """
-        Method to construct a GET query from a URL endpoint and a list of  
-        of key-value tuples. URL endpoint concludes in either a '?' or a key/value 
-        pair (i.e. id=25)
-        @note: using list of tuples to ensure that the order of the parameters
-               is always the same so we can string compare GET Queries
-        """
-        kvSep = '&'
-        paramsSep = '?'
+        kv_sep = '&'
+        params_sep = '?'
 
         pairs = []
-        for key, val in paramTpls:
+        for key, val in param_tpls:
             if isinstance(val, str):
                 val = val.replace(' ', '%20')
-            pairs.append('%s=%s' % (key, val))
+            pairs.append('{}={}'.format(key, val))
 
         # Don't end in key/value pair separator
-        if urlprefix.endswith(paramsSep) or urlprefix.endswith('&amp;') :
-            raise LMError(['Improperly formatted URL prefix %s' % urlprefix])
+        if url_prefix.endswith(params_sep) or url_prefix.endswith('&amp;'):
+            raise LMError(
+                'Improperly formatted URL prefix {}'.format(url_prefix))
         # If url/key-value-pair separator isn't present, append it
-        elif urlprefix.find(paramsSep) == -1:
-            urlprefix = urlprefix + '?'
-        # > one key/value pair on the urlprefix, add separator before more pairs
-        elif not urlprefix.endswith('?') and pairs:
-            urlprefix = urlprefix + kvSep
+        if url_prefix.find(params_sep) == -1:
+            url_prefix = url_prefix + '?'
+        # > one key/value pair on the urlprefix, add separator before more
+        #    pairs
+        elif not url_prefix.endswith('?') and pairs:
+            url_prefix = url_prefix + kv_sep
 
-        return urlprefix + kvSep.join(pairs)
+        return url_prefix + kv_sep.join(pairs)
 
-    # ...............................................
-    def constructLMMapRequest(self, mapprefix, width, height, bbox, color=None,
-                         srs=DEFAULT_SRS, format=DEFAULT_WMS_FORMAT):
+    # ................................
+    def construct_lm_map_request(self, map_prefix, width, height, bbox,
+                                 color=None, srs=DEFAULT_SRS,
+                                 format_=DEFAULT_WMS_FORMAT):
+        """Return a GET query for the Lifemapper WMS GetMap request
+
+        Args:
+            map_prefix: Lifemapper layer metadataUrl with 'ogc' format
+            width: requested width for resulting image
+            height: requested height for resulting image
+            bbox: tuple in the form (minx, miny, maxx, maxy) delineating the
+                geographic limits of the query.
+            color: (optional) color in hex format RRGGBB or predefined palette
+                name. Color is applied only to Occurrences or Projection. Valid
+                palette names: 'gray', 'red', 'green', 'blue', 'bluered',
+               'bluegreen', 'greenred'.
+            srs: (optional) string indicating Spatial Reference System, default
+                is 'epsg:4326'
+            format_: (optional) image file format, default is 'image/png'
         """
-        @summary Return a GET query for the Lifemapper WMS GetMap request
-        @param mapprefix: Lifemapper layer metadataUrl with 'ogc' format
-        @param width: requested width for resulting image 
-        @param height: requested height for resulting image 
-        @param bbox: tuple in the form (minx, miny, maxx, maxy) delineating the 
-                     geographic limits of the query.
-        @param color: (optional) color in hex format RRGGBB or predefined palette 
-               name. Color is applied only to Occurrences or Projection. Valid 
-               palette names: 'gray', 'red', 'green', 'blue', 'bluered', 
-               'bluegreen', 'greenred'. 
-        @param srs: (optional) string indicating Spatial Reference System, 
-               default is 'epsg:4326'
-        @param format: (optional) image file format, default is 'image/png'
-        """
-        params = [('request', 'GetMap'),
-                  ('service', 'WMS'),
-                  ('version', '1.1.0'),
-                  ('srs', srs),
-                  ('format', format),
-                  ('width', width),
-                  ('height', height),
-                  ('styles', '')]
-        url, moreparams = self._getOWSParams(mapprefix, 'layers', bbox)
-        params.extend(moreparams)
+        params = [
+            ('request', 'GetMap'), ('service', 'WMS'), ('version', '1.1.0'),
+            ('srs', srs), ('format', format_), ('width', width),
+            ('height', height), ('styles', '')]
+        url, more_params = self._get_ows_params(map_prefix, 'layers', bbox)
+        params.extend(more_params)
         if color is not None:
             params.append(('color', color))
-        wmsUrl = self._getGETQuery(url, params)
-        return wmsUrl
+        return self._get_GET_query(url, params)
 
-    # ...............................................
-    def constructLMRasterRequest(self, mapprefix, bbox, resolution=1,
-                                 format=DEFAULT_WCS_FORMAT, crs=DEFAULT_SRS):
-        """
-        @summary Return a GET query for the Lifemapper WCS GetCoverage request
-        @param mapprefix: Lifemapper layer metadataUrl with 'ogc' format
-        @param bbox: tuple delineating the geographic limits of the query.
-        @param resolution: (optional) spatial resolution along the x and y axes of 
-                           the Coordinate Reference System (CRS). The values are  
-                           given in the units appropriate to each axis of the CRS.
-                           Default is 1.
-        @param format: raster format for query output, default=image/tiff
-        @param crs: (optional) string indicating Coordinate Reference System, 
-               default is 'epsg:4326'
-        """
-        params = [('request', 'GetCoverage'),
-                  ('service', 'WCS'),
-                  ('version', '1.0.0'),
-                  ('crs', crs),
-                  ('format', format),
-                  ('resx', resolution),
-                  ('resy', resolution)]
-        url, moreparams = self._getOWSParams(mapprefix, 'coverage', bbox)
-        params.extend(moreparams)
+    # ................................
+    def construct_lm_raster_request(self, map_prefix, bbox, resolution=1,
+                                    format_=DEFAULT_WCS_FORMAT,
+                                    crs=DEFAULT_SRS):
+        """Return a GET query for the Lifemapper WCS GetCoverage request
 
-        wcsUrl = self._getGETQuery(url, params)
-        return wcsUrl
+        Args:
+            map_prefix: Lifemapper layer metadataUrl with 'ogc' format
+            bbox: tuple delineating the geographic limits of the query.
+            resolution: (optional) spatial resolution along the x and y axes of
+                the Coordinate Reference System (CRS). The values are given in
+                the units appropriate to each axis of the CRS.  Default is 1.
+            format_: raster format for query output, default=image/tiff
+            crs: (optional) string indicating Coordinate Reference System,
+                default is 'epsg:4326'
+        """
+        params = [
+            ('request', 'GetCoverage'), ('service', 'WCS'),
+            ('version', '1.0.0'), ('crs', crs), ('format', format_),
+            ('resx', resolution), ('resy', resolution)]
+        url, more_params = self._get_ows_params(map_prefix, 'coverage', bbox)
+        params.extend(more_params)
 
-    # ...............................................
-    def constructMapPrefixNew(self, urlprefix=None, mapname=None, ftype=None,
-                              objCode=None, lyrname=None, usr=None, epsg=None):
+        return self._get_GET_query(url, params)
+
+    # ................................
+    def construct_map_prefix_new(self, url_prefix=None, map_name=None,
+                                 f_type=None, obj_code=None, lyr_name=None,
+                                 usr=None, epsg=None):
+        """Construct a Lifemapper URL prefix
+
+        Args:
+            url_prefix: optional urlprefix
+            map_name: optional mapname
+            f_type: LmServer.common.lmconstants.LMFileType
+            occ_set_id: SDM OccurrenceLayer database Id, used for path/filename
+            obj_code: Object database Id or unique code for non-db items
+            lyr_name: Layer name
+            usr: User database Id
+
+        Note:
+            - Ignoring shapegrid maps for now
+            - Optional layer name must be provided fully formed
         """
-        @summary: Construct a Lifemapper URL (prefix) for a map or map layer, 
-                  including 'ogc' format, '?', map=<mapname> key/value pair, and
-                  optional layers=<layername> pair.
-        @param urlprefix: optional urlprefix
-        @param mapname: optional mapname
-        @param ftype: LmServer.common.lmconstants.LMFileType
-        @param occsetId: SDM OccurrenceLayer database Id, used for path/filename
-        @param objCode: Object database Id or unique code for non-db items
-        @param lyrname: Layer name 
-        @param usr: User database Id
-        @note: ignoring shapegrid maps for now
-        @note: optional layer name must be provided fully formed
-        """
-        if mapname is not None:
-            if mapname.endswith(LMFormat.MAP.ext):
-                mapname = mapname[:-1 * len(LMFormat.MAP.ext)]
+        if map_name is not None:
+            if map_name.endswith(LMFormat.MAP.ext):
+                map_name = map_name[:-1 * len(LMFormat.MAP.ext)]
         else:
-            if LMFileType.isMap(ftype):
-                mapname = self.createBasename(ftype, objCode=objCode, usr=usr,
-                                            epsg=epsg)
+            if LMFileType.is_map(f_type):
+                map_name = self.create_basename(
+                    f_type, obj_code=obj_code, usr=usr, epsg=epsg)
             else:
-                raise LMError('Invalid LMFileType %s' % ftype)
+                raise LMError('Invalid LMFileType {}'.format(f_type))
 
-        if urlprefix is None:
-            urlprefix = self.ogcUrl
-        fullprefix = '?map={}'.format(mapname)
+        if url_prefix is None:
+            url_prefix = self.ogc_url
+        full_prefix = '?map={}'.format(map_name)
 
-        if lyrname is not None:
-            fullprefix += '&layers={}'.format(lyrname)
+        if lyr_name is not None:
+            full_prefix += '&layers={}'.format(lyr_name)
 
-        return fullprefix
+        return full_prefix
 
-    # ...............................................
-    def _createStaticMapPath(self):
+    # ................................
+    @staticmethod
+    def _create_static_map_path():
         pth = os.path.join(APP_PATH, WEB_DIR, MAP_DIR)
         return pth
 
-    # ...............................................
-    def _parseDataPathParts(self, parts):
-        occsetId = epsg = gridsetId = None
-        isLayers = nonSDMMap = False
+    # ................................
+    @staticmethod
+    def _parse_data_path_parts(parts):
+        occ_set_id = epsg = gridset_id = None
+        is_layers = non_sdm_map = False
         usr = parts[0]
         rem = parts[1:]
         if len(rem) == 4:
             try:
-                occsetId = int(''.join(parts))
-            except:
+                occ_set_id = int(''.join(parts))
+            except ValueError:
                 pass
         elif len(rem) == 1 and rem[0] == MAP_DIR:
-            nonSDMMap = True
+            non_sdm_map = True
         else:
             # Everything else begins with epsgcode (returned as string)
             epsg = rem[0]
             rem = rem[1:]
             if len(rem) >= 1:
                 if rem[0] == USER_LAYER_DIR:
-                    isLayers = True
+                    is_layers = True
                 elif rem[0].startswith(RAD_EXPERIMENT_DIR_PREFIX):
-                    dirname = rem[0]
+                    dir_name = rem[0]
                     try:
-                        gridsetId = int(dirname[len(RAD_EXPERIMENT_DIR_PREFIX):])
-                    except:
-                        raise LMError('Invalid RAD gridset id %s' % dirname)
-        return usr, occsetId, epsg, gridsetId, isLayers, nonSDMMap
+                        gridset_id = int(
+                            dir_name[len(RAD_EXPERIMENT_DIR_PREFIX):])
+                    except ValueError:
+                        raise LMError(
+                            'Invalid RAD gridset id {}'.format(dir_name))
+        return usr, occ_set_id, epsg, gridset_id, is_layers, non_sdm_map
 
-    # ...............................................
-    def _parseNewDataPath(self, fullpath):
-        """
-        @todo: UNFINISHED?
-        @summary Return the relevant information from an absolute path to 
-                 LM-stored input/output data
-        @note: /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
-                   contains experiment data common to occurrenceId xxxxxxxxxxxx
-               /ARCHIVE_PATH/userId/maps/
-                   contains all non-SDM mapfiles 
-               /ARCHIVE_PATH/userId/epsg/Layers/
-                   contains layers sharing epsg code
-               /ARCHIVE_PATH/userId/epsg/RADxxx 
-                   contains gridset level data
-        """
-        usr = occsetId = epsg = gridsetId = None
-        ancPth = self._createStaticMapPath()
+    # ................................
+    def _parse_new_data_path(self, full_path):
+        usr = occ_set_id = epsg = gridset_id = None
+        anc_pth = self._create_static_map_path()
 
-        if fullpath.startswith(ancPth):
+        if full_path.startswith(anc_pth):
             pass
-        elif fullpath.startswith(ARCHIVE_PATH):
-            pth = fullpath[len(ARCHIVE_PATH):]
+        elif full_path.startswith(ARCHIVE_PATH):
+            pth = full_path[len(ARCHIVE_PATH):]
             parts = pth.split(os.path.sep)
             # Remove empty string from leading path separator
             if '' in parts:
@@ -561,95 +570,95 @@ class EarlJr(LMObject):
             if last == '':
                 parts = parts[:-1]
 
-            (usr, occsetId, epsg, gridsetId,
-             isLayers, nonSDMMap) = self._parseDataPathParts(parts)
+            (usr, occ_set_id, epsg, gridset_id, is_layers, non_sdm_map
+             ) = self._parse_data_path_parts(parts)
 
-        return usr, occsetId, epsg, gridsetId, isLayers, nonSDMMap
+        return usr, occ_set_id, epsg, gridset_id, is_layers, non_sdm_map
 
-    # ...............................................
-    def parseMapFilename(self, mapfname):
-        fullpath, fname = os.path.split(mapfname)
-        mapname, ext = os.path.splitext(fname)
+    # ................................
+    def parse_map_filename(self, map_f_name):
+        """Parse a map filename
+        """
+        full_path, fname = os.path.split(map_f_name)
+        map_name, _ = os.path.splitext(fname)
         # Get path info
-        (usr, occsetId, epsg, gridsetId, isLayers,
-         nonSDMMap) = self._parseNewDataPath(fullpath)
+        (usr, _, epsg, _, _, _) = self._parse_new_data_path(full_path)
         # Get filename info
-        (fileType, scencode, occsetId, gridsetId, usr2, ancillary,
-         epsg2) = self._parseMapname(mapname)
+        (_, scen_code, occ_set_id, gridset_id, usr2, ancillary,
+         epsg2) = self._parse_map_name(map_name)
 
-        if usr is None: usr = usr2
-        if epsg is None: epsg = epsg2
+        usr = usr2 if usr is None else None
+        epsg = epsg2 if epsg is None else None
 
-        return (mapname, ancillary, usr, epsg, occsetId, gridsetId, scencode)
+        return (
+            map_name, ancillary, usr, epsg, occ_set_id, gridset_id, scen_code)
 
-    # ...............................................
-    def _findUserForObject(self, layerId=None, occId=None,
-                           matrixId=None, gridsetId=None, mfprocessId=None):
-        if self._scribe is not None:
-            usr = self._scribe.findUserForObject(layerId=layerId, occId=occId,
-                                                matrixId=matrixId,
-                                                gridsetId=gridsetId,
-                                                mfprocessId=mfprocessId)
-        else:
-            from LmServer.common.log import ConsoleLogger
-            from LmServer.db.borgscribe import BorgScribe
+    # ................................
+    def _find_user_for_object(self, layer_id=None, occ_id=None,
+                              matrix_id=None, gridset_id=None,
+                              mf_process_id=None):
+        if self._scribe is None:
             scribe = BorgScribe(ConsoleLogger())
-            scribe.openConnections()
-            usr = scribe.findUserForObject(layerId=layerId, occId=occId,
-                                           matrixId=matrixId, gridsetId=gridsetId,
-                                           mfprocessId=mfprocessId)
-            scribe.closeConnections()
+            scribe.open_connections()
+
+        usr = self._scribe.find_user_for_object(
+            layer_id=layer_id, occ_id=occ_id, matrix_id=matrix_id,
+            gridset_id=gridset_id, mf_process_id=mf_process_id)
         return usr
 
-    # ...............................................
-    def _parseMapname(self, mapname):
-        scencode = occsetId = usr = epsg = gridsetId = None
+    # ................................
+    @staticmethod
+    def _parse_map_name(map_name):
+        scen_code = occ_set_id = usr = epsg = gridset_id = None
         ancillary = False
         # Remove extension
-        if mapname.endswith(LMFormat.MAP.ext):
-            mapname = mapname[:-1 * len(LMFormat.MAP.ext)]
+        if map_name.endswith(LMFormat.MAP.ext):
+            map_name = map_name[:-1 * len(LMFormat.MAP.ext)]
 
-        parts = mapname.split(NAME_SEPARATOR)
+        parts = map_name.split(NAME_SEPARATOR)
 
-        fileType = FileFix.getMaptypeFromName(prefix=parts[0])
+        file_type = FileFix.get_map_type_from_name(prefix=parts[0])
 
         # SCENARIO_MAP mapname = scen_<user>_<scencode>
         if parts[0] == MapPrefix.SCEN:
             usr = parts[1]
-            scencode = parts[2]
+            scen_code = parts[2]
 
         elif parts[0] == MapPrefix.SDM:
-            occsetIdStr = parts[1]
+            occ_set_id_str = parts[1]
             try:
-               occsetId = int(occsetIdStr)
-            except:
-                msg = 'Improper Archive Data mapname %s ; ' % mapname
-                msg += 'Should be %s + OccurrenceSetId' % MapPrefix.SDM
-                raise LMError(msg, do_trace=True)
+                occ_set_id = int(occ_set_id_str)
+            except ValueError:
+                raise LMError(
+                    'Improper archive data map name {}; {}'.format(
+                        map_name, 'Should be {} + occrrence set id'.format(
+                            MapPrefix.SDM)), do_trace=True)
         # RAD_MAP mapname = rad_<gridsetId>
         elif parts[0] == MapPrefix.RAD:
             try:
-                gridsetId = int(parts[1])
-            except:
-                msg = 'Improper RAD mapname %s ; ' % mapname
-                msg += 'Should be %s + gridsetId' % MapPrefix.RAD
-                raise LMError(msg, do_trace=True)
+                gridset_id = int(parts[1])
+            except (TypeError, ValueError) as err:
+                raise LMError(
+                    'Improper map name {}; should be {} + gridset id'.format(
+                        map_name, MapPrefix.RAD), err, do_trace=True)
 
         # User maps are usr_<usr>_<epsg>
         elif parts[0] == MapPrefix.USER:
             usr = parts[1]
             try:
                 epsg = int(parts[2])
-            except:
+            except (TypeError, ValueError):
                 pass
 
-        elif mapname.startswith(MapPrefix.ANC):
+        elif map_name.startswith(MapPrefix.ANC):
             ancillary = True
             usr = PUBLIC_USER
 
         else:
-            msg = 'Improper mapname %s - ' % mapname
-            msg += '  requires prefix %s, %s, %s, or %s' % (MapPrefix.SCEN,
-                                 MapPrefix.SDM, MapPrefix.USER, MapPrefix.ANC)
-            raise LMError(msg, do_trace=True)
-        return fileType, scencode, occsetId, gridsetId, usr, ancillary, epsg
+            raise LMError(
+                'Improper map name {} - {}'.format(
+                    map_name, 'requires prefix {}, {}, {}, or {}'.format(
+                        MapPrefix.SCEN, MapPrefix.SDM, MapPrefix.USER,
+                        MapPrefix.ANC)), do_trace=True)
+        return (
+            file_type, scen_code, occ_set_id, gridset_id, usr, ancillary, epsg)
