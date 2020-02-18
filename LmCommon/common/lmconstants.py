@@ -221,7 +221,7 @@ class LMFormat:
         return [LMFormat.SHAPE, LMFormat.CSV, LMFormat.GEO_JSON]
 
     @staticmethod
-    def get_defautl_ogr():
+    def get_default_ogr():
         """Return the default OGR vector format
         """
         for frmt in LMFormat.ogr_formats():
@@ -233,7 +233,7 @@ class LMFormat:
     def get_str_len_for_default_ogr():
         """Get the maximum string length for the default OGR vector format
         """
-        return LMFormat.get_defautl_ogr().options['MAX_STRLEN']
+        return LMFormat.get_default_ogr().options['MAX_STRLEN']
 
     @staticmethod
     def spatial_formats():

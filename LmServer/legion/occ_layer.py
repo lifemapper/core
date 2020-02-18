@@ -101,7 +101,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
     def __init__(self, displayName, userId, epsgcode, queryCount, lyrId=None,
                  squid=None, verify=None, dlocation=None, rawDLocation=None,
                  rawMetaDLocation=None, lyrMetadata={},
-                 dataFormat=LMFormat.getDefaultOGR().driver, valUnits=None,
+                 dataFormat=LMFormat.SHAPE.driver, valUnits=None,
                  valAttribute=None, nodataVal=None, minVal=None, maxVal=None,
                  mapunits=None, resolution=None, bbox=None,
                  occurrenceSetId=None, serviceType=LMServiceType.OCCURRENCES,

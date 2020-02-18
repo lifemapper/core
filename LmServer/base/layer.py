@@ -13,14 +13,15 @@ from LmCommon.common.lmconstants import (
 from LmCommon.common.time import gmt
 from LmCommon.common.verify import compute_hash, verify_hash
 from LmServer.base.lmobj import LMSpatialObject
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.geotools import GeoFileInfo
-from LmServer.common.lmconstants import (
-    GDALDataTypes, OGRDataTypes, LMFormat, LMServiceType, OccurrenceFieldNames,
-    UPLOAD_PATH)
+from LmServer.base.service_object import ServiceObject
+from LmServer.common.geo_tools import GeoFileInfo
+from LmServer.common.lmconstants import (GDALDataTypes, OGRDataTypes, 
+    LMFormat, LMServiceType, OccurrenceFieldNames, UPLOAD_PATH)
 from LmServer.common.localconstants import APP_PATH, DEFAULT_EPSG
 from osgeo import gdal, gdalconst, ogr, osr
 
+DEFAULT_OGR = LMFormat.SHAPE
+DEFAULT_GDAL = LMFormat.GTIFF
 
 # .............................................................................
 class _Layer(LMSpatialObject, ServiceObject):
@@ -498,7 +499,7 @@ class Raster(_Layer):
     # .............................
     def __init__(self, name, userId, epsgcode, lyrId=None,
                      squid=None, ident=None, verify=None, dlocation=None,
-                     metadata={}, dataFormat=LMFormat.getDefaultGDAL().driver,
+                     metadata={}, dataFormat=DEFAULT_GDAL.driver,
                      gdalType=None,
                      valUnits=None, nodataVal=None, minVal=None, maxVal=None,
                      mapunits=None, resolution=None, bbox=None,
@@ -563,7 +564,7 @@ class Raster(_Layer):
                 ext = LMFormat.TMP.ext
             else:
 #                 ext = GDALFormatCodes[self._dataFormat]['FILE_EXT']
-                ext = LMFormat.getExtensionByDriver(self._dataFormat)
+                ext = LMFormat.get_extension_by_driver(self._dataFormat)
                 if ext is None:
                     raise LMError('Failed to find dataFormat/driver {}'
                                       .format(self._dataFormat))
@@ -601,7 +602,7 @@ class Raster(_Layer):
                  either gdalFormat or gdalType is not legal for a Lifemapper Raster.  
         """
         # GDAL DataFormat is required (may be a placeholder and changed later)
-        if gdalFormat not in LMFormat.GDALDrivers():
+        if gdalFormat not in LMFormat.gdal_drivers():
             raise LMError(['Unsupported Raster GDAL dataFormat', gdalFormat])
         if gdalType is not None and gdalType not in GDALDataTypes:
             raise LMError(['Unsupported Raster GDAL type', gdalType])
@@ -697,7 +698,7 @@ class Raster(_Layer):
             dataFormat = gdalFormat
         # Rename with correct extension if incorrect
         head, ext = os.path.splitext(dlocation)
-        correctExt = LMFormat.getExtensionByDriver(dataFormat)
+        correctExt = LMFormat.get_extension_by_driver(dataFormat)
         if correctExt is None:
             raise LMError('Failed to find dataFormat/driver {}'
                               .format(dataFormat))
@@ -738,7 +739,7 @@ class Raster(_Layer):
 
     # .............................
     def readFromUploadedData(self, datacontent, overwrite=False,
-                                     extension=LMFormat.GTIFF.ext):
+                                     extension=DEFAULT_GDAL.ext):
         """
         @summary: Read from uploaded data by writing to temporary file, saving 
                      temporary filename in dlocation.  
@@ -838,7 +839,7 @@ class Raster(_Layer):
     # .............................
     def copyData(self, sourceDataLocation, targetDataLocation=None,
                      format='GTiff'):
-        if not format in LMFormat.GDALDrivers():
+        if not format in LMFormat.gdal_drivers():
             raise LMError('Unsupported raster format %s' % format)
         if sourceDataLocation is not None and os.path.exists(sourceDataLocation):
             if targetDataLocation is not None:
@@ -850,7 +851,7 @@ class Raster(_Layer):
         else:
             raise LMError('Source location %s is invalid' % str(sourceDataLocation))
 
-        correctExt = LMFormat.getExtensionByDriver(format)
+        correctExt = LMFormat.get_extension_by_driver(format)
         if not dlocation.endswith(correctExt):
             dlocation += correctExt
 
@@ -908,7 +909,7 @@ class Raster(_Layer):
         @postcondition: The raster file is updated with new srs information.
         @raise LMError: on failure to open dataset or write srs
         """
-        from LmServer.common.geotools import GeoFileInfo
+        from LmServer.common.geo_tools import GeoFileInfo
 
         if (fname is not None and os.path.exists(fname)):
             srs = GeoFileInfo.getSRSAsWkt(fname)
@@ -971,7 +972,7 @@ class Vector(_Layer):
     # .............................
     def __init__(self, name, userId, epsgcode, lyrId=None, squid=None,
                  ident=None, verify=None, dlocation=None, metadata={},
-                 dataFormat=LMFormat.getDefaultOGR().driver, ogrType=None,
+                 dataFormat=DEFAULT_OGR.driver, ogrType=None,
                  valUnits=None, valAttribute=None, nodataVal=None, minVal=None,
                  maxVal=None, mapunits=None, resolution=None, bbox=None,
                  svcObjId=None, serviceType=LMServiceType.LAYERS,
@@ -1044,7 +1045,7 @@ class Vector(_Layer):
                  either ogrFormat or ogrType is not legal for a Lifemapper Vector.  
         """
         # OGR dataFormat is required (may be a placeholder and changed later)
-        if ogrFormat not in LMFormat.OGRDrivers():
+        if ogrFormat not in LMFormat.ogr_drivers():
             raise LMError('Unsupported Vector OGR dataFormat', ogrFormat)
         if ogrType is not None and ogrType not in OGRDataTypes:
             raise LMError('Unsupported Vector ogrType', ogrType)
@@ -1246,7 +1247,7 @@ class Vector(_Layer):
         return self._localIdIdx
 
     # .............................
-    def createLocalDLocation(self, ext=LMFormat.SHAPE.ext):
+    def createLocalDLocation(self, ext=DEFAULT_OGR.ext):
         """
         @summary: Create local filename for this layer.  
         @param ext: File extension for filename
@@ -1271,7 +1272,7 @@ class Vector(_Layer):
             fnames = glob.glob(base + '.*')
             for fname in fnames:
                 base, ext = os.path.splitext(fname)
-                if ext in LMFormat.SHAPE.getExtensions():
+                if ext in DEFAULT_OGR.get_extensions():
                     shpnames.append(fname)
         return shpnames
 
@@ -1383,7 +1384,7 @@ class Vector(_Layer):
                  rasterIntersect.
         """
         ogr.RegisterAll()
-        drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+        drv = ogr.GetDriverByName(DEFAULT_OGR.driver)
         ds = drv.Open(shapefileFilename)
         lyr = ds.GetLayer(0)
 
@@ -1589,7 +1590,7 @@ class Vector(_Layer):
         successfulWrites = []
 
         ogr.RegisterAll()
-        drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+        drv = ogr.GetDriverByName(DEFAULT_OGR.driver)
         spRef = Vector._getSpatialRef(srsEPSGOrWkt)
 
         f = open(dlocation, 'rb')
@@ -1701,7 +1702,7 @@ class Vector(_Layer):
             # Create the file object, a layer, and attributes
             tSRS = osr.SpatialReference()
             tSRS.ImportFromEPSG(self.epsgcode)
-            drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+            drv = ogr.GetDriverByName(DEFAULT_OGR.driver)
 
             ds = drv.CreateDataSource(self._dlocation)
             if ds is None:
@@ -1718,7 +1719,7 @@ class Vector(_Layer):
                     fldDefn = ogr.FieldDefn(fldname, fldtype)
                     # Special case to handle long Canonical, Provider, Resource names
                     if (fldname.endswith('name') and fldtype == ogr.OFTString):
-                        fldDefn.SetWidth(LMFormat.getStrlenForDefaultOGR())
+                        fldDefn.SetWidth(DEFAULT_OGR.options['MAX_STRLEN'])
                     returnVal = lyr.CreateField(fldDefn)
                     if returnVal != 0:
                         raise LMError('CreateField failed for %s in %s'
