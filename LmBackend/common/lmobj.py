@@ -37,7 +37,7 @@ class LMObject:
         """Prepare a file location for writing by creating needed parent dirs.
 
         Args:
-            fullfilename (str): The file location to prepare.
+            full_filename (str): The file location to prepare.
             overwrite (bool): If true, deletes existing file.  If false,
                 returns False.
         """
