@@ -65,7 +65,7 @@ class _LayerSet(LMSpatialObject):
 
     # ...............................................
     def getSRS(self):
-        srs = self.createSRSFromEPSG()
+        srs = self.create_srs_from_epsg()
         return srs
 
 # # .............................................................................
