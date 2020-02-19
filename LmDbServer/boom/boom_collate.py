@@ -165,7 +165,7 @@ class BoomCollate(LMObject):
         rand_pam_stats_filenames = []
         rand_mcpa_stats_filenames = []
         for i, v in enumerate(
-            range(0, self.num_permutations, self.random_group_size)):
+                range(0, self.num_permutations, self.random_group_size)):
 
             (pam_stats_filenames, mcpa_filenames, rand_rules
              ) = self._get_multispecies_run_rules_for_pam(
