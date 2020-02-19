@@ -4,15 +4,16 @@ from io import StringIO
 import os
 import zipfile
 
-from LmCommon.common.lmconstants import LMFormat
-from LmServer.base.layer2 import Raster, Vector
-from LmServer.legion.lmmatrix import LMMatrix
 import cherrypy
 from lmpy import Matrix
 
+from LmCommon.common.lmconstants import LMFormat
+from LmServer.base.layer import Raster, Vector
+from LmServer.legion.lm_matrix import LMMatrix
+
 
 # .............................................................................
-def file_formatter(filename, readMode='r', stream=False, contentType=None):
+def file_formatter(filename, mode='r', stream=False, content_type=None):
     """Returns the contents of the file(s) either as a string or generator
 
     Args:
@@ -35,14 +36,14 @@ def file_formatter(filename, readMode='r', stream=False, contentType=None):
             os.path.splitext(os.path.basename(filename[0]))[0])
         content_flo.seek(0)
     else:
-        content_flo = open(filename, mode=readMode)
+        content_flo = open(filename, mode=mode)
         ret_file_name = os.path.basename(filename)
 
     cherrypy.response.headers[
         'Content-Disposition'] = 'attachment; filename="{}"'.format(
             ret_file_name)
-    if contentType is not None:
-        cherrypy.response.headers['Content-Type'] = contentType
+    if content_type is not None:
+        cherrypy.response.headers['Content-Type'] = content_type
 
     # If we should stream the output, use the CherryPy file generator
     if stream:
@@ -62,7 +63,7 @@ def csv_object_formatter(obj):
         cherrypy.response.headers[
             'Content-Disposition'] = 'attachment; filename="mtx{}.csv"'.format(
                 obj.get_id())
-        mtx = Matrix.load_flo(obj.getDLocation())
+        mtx = Matrix.load_flo(obj.get_dlocation())
         out_stream = StringIO()
         mtx.write_csv(out_stream)
         out_stream.seek(0)
@@ -79,8 +80,8 @@ def gtiff_object_formatter(obj):
     """
     if isinstance(obj, Raster):
         return file_formatter(
-            obj.getDLocation(), readMode='rb',
-            contentType=LMFormat.GTIFF.getMimeType())
+            obj.get_dlocation(), mode='rb',
+            content_type=LMFormat.GTIFF.get_mime_type())
 
     raise Exception("Only raster files have GeoTiff interface")
 
@@ -91,6 +92,6 @@ def shapefile_object_formatter(obj):
     """
     if isinstance(obj, Vector):
         return file_formatter(
-            obj.getShapefiles(), contentType=LMFormat.SHAPE.getMimeType())
+            obj.get_shapefiles(), content_type=LMFormat.SHAPE.get_mime_type())
 
     raise Exception("Only vector files have Shapefile interface")

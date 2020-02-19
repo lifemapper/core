@@ -13,7 +13,7 @@ from osgeo import ogr, osr
 
 
 # .............................................................................
-class ShapeGrid(_LayerParameters, Vector, ProcessObject):
+class Shapegrid(_LayerParameters, Vector, ProcessObject):
 # .............................................................................
     """
     shape grid class inherits from Vector

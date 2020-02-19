@@ -12,9 +12,10 @@ Note:
           and we could use a tool, but this will limit the overall number of
           connections.
 """
-from LmServer.common.log import WebLogger
-from LmServer.db.borgscribe import BorgScribe
 import cherrypy
+
+from LmServer.common.log import WebLogger
+from LmServer.db.borg_scribe import BorgScribe
 
 
 # .............................................................................
@@ -30,7 +31,7 @@ class _ScribeRetriever:
     def __init__(self):
         log = WebLogger()
         self.scribe = BorgScribe(log)
-        self.scribe.openConnections()
+        self.scribe.open_connections()
 
     # ..........................
     def get_scribe(self):

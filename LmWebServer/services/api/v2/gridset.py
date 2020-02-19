@@ -6,7 +6,10 @@ import json
 import os
 import zipfile
 
+import cherrypy
 import dendropy
+
+from lmpy import Matrix
 
 from LmCommon.common.lmconstants import (
     DEFAULT_TREE_SCHEMA, HTTPStatus, JobStatus, LMFormat, MatrixType,
@@ -15,11 +18,11 @@ from LmCommon.common.time import gmt
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmDbServer.boom.boom_collate import BoomCollate
 from LmServer.base.atom import Atom
-from LmServer.base.layer2 import Vector
-from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.layer import Vector
+from LmServer.base.service_object import ServiceObject
 from LmServer.common.lmconstants import ARCHIVE_PATH
-from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.mtxcolumn import MatrixColumn
+from LmServer.legion.lm_matrix import LMMatrix
+from LmServer.legion.mtx_column import MatrixColumn
 from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
@@ -27,8 +30,6 @@ from LmWebServer.services.api.v2.matrix import MatrixService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.common.boom_post import BoomPoster
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
-import cherrypy
-from lmpy import Matrix
 
 BG_REF_ID_KEY = 'identifier'
 BG_REF_KEY = 'hypothesis_package_reference'
@@ -81,25 +82,25 @@ class GridsetAnalysisService(LmService):
 
     # ................................
     @lm_formatter
-    def POST(self, pathGridSetId, doMcpa=False, numPermutations=500,
-             doCalc=False, **params):
+    def POST(self, path_gridset_id, do_mcpa=False, num_permutations=500,
+             do_calc=False, **params):
         """Adds a set of biogeographic hypotheses to the gridset
         """
         # Get gridset
-        gridset = self._get_gridset(pathGridSetId)
+        gridset = self._get_gridset(path_gridset_id)
 
         # Check status of all matrices
         if not all(
                 [mtx.status == JobStatus.COMPLETE
-                 for mtx in gridset.getMatrices()]):
+                 for mtx in gridset.get_matrices()]):
             raise cherrypy.HTTPError(
                 HTTPStatus.CONFLICT,
                 ('The gridset is not ready for analysis.  '
                  'All matrices must be complete'))
 
-        if doMcpa:
+        if do_mcpa:
             mcpa_possible = len(
-                gridset.getBiogeographicHypotheses()
+                gridset.get_biogeographic_hypotheses()
                 ) > 0 and gridset.tree is not None
         if not mcpa_possible:
             raise cherrypy.HTTPError(
@@ -108,10 +109,10 @@ class GridsetAnalysisService(LmService):
                  'hypotheses to perform MCPA'))
 
         # If everything is ready and we have analyses to run, do so
-        if doMcpa or doCalc:
+        if do_mcpa or do_calc:
             boom_col = BoomCollate(
-                gridset, do_pam_stats=doCalc, do_mcpa=doMcpa,
-                num_permutations=numPermutations)
+                gridset, do_pam_stats=do_calc, do_mcpa=do_mcpa,
+                num_permutations=num_permutations)
             boom_col.create_workflow()
             boom_col.close()
 
@@ -126,18 +127,18 @@ class GridsetAnalysisService(LmService):
     def _get_gridset(self, path_gridset_id):
         """Attempt to get a GridSet
         """
-        gridset = self.scribe.getGridset(
-            gridsetId=path_gridset_id, fillMatrices=True)
+        gridset = self.scribe.get_gridset(
+            gridset_id=path_gridset_id, fill_matrices=True)
         if gridset is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
-                'GridSet {} was not found'.format(path_gridset_id))
+                'Gridset {} was not found'.format(path_gridset_id))
         if check_user_permission(self.get_user_id(), gridset, HTTPMethod.GET):
             return gridset
 
         raise cherrypy.HTTPError(
             HTTPStatus.FORBIDDEN,
-            'User {} does not have permission to access GridSet {}'.format(
+            'User {} does not have permission to access Gridset {}'.format(
                 self.get_user_id(), path_gridset_id))
 
     # ................................
@@ -154,41 +155,41 @@ class GridsetAnalysisService(LmService):
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('pathBioGeoId')
+@cherrypy.popargs('path_biogeo_id')
 class GridsetBioGeoService(LmService):
     """Service class for gridset biogeographic hypotheses
     """
 
     # ................................
     @lm_formatter
-    def GET(self, pathGridSetId, pathBioGeoId=None, **params):
+    def GET(self, path_gridset_id, path_biogeo_id=None, **params):
         """There is not a true service for limiting the biogeographic
                hypothesis matrices in a gridset, but return all when listing
         """
-        gridset = self._get_gridset(pathGridSetId)
+        gridset = self._get_gridset(path_gridset_id)
 
-        bg_hyps = gridset.getBiogeographicHypotheses()
+        bg_hyps = gridset.get_biogeographic_hypotheses()
 
-        if pathBioGeoId is None:
+        if path_biogeo_id is None:
             return bg_hyps
 
         for hyp in bg_hyps:
-            if hyp.get_id() == pathBioGeoId:
+            if hyp.get_id() == path_biogeo_id:
                 return hyp
 
         # If not found 404...
         raise cherrypy.HTTPError(
             HTTPStatus.NOT_FOUND,
             'Biogeographic hypothesis mtx {} not found for gridset {}'.format(
-                pathBioGeoId, pathGridSetId))
+                path_biogeo_id, path_gridset_id))
 
     # ................................
     @lm_formatter
-    def POST(self, pathGridSetId, **params):
+    def POST(self, path_gridset_id, **params):
         """Adds a set of biogeographic hypotheses to the gridset
         """
         # Get gridset
-        gridset = self._get_gridset(pathGridSetId)
+        gridset = self._get_gridset(path_gridset_id)
 
         # Process JSON
         hypothesis_json = json.loads(cherrypy.request.body.read())
@@ -211,31 +212,32 @@ class GridsetBioGeoService(LmService):
 
             # Get hypotheses from other gridset
             ret = []
-            for bg_hyp in ref_gridset.getBiogeographicHypotheses():
+            for bg_hyp in ref_gridset.get_biogeographic_hypotheses():
                 new_bg_mtx = LMMatrix(
-                    None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
-                    processType=ProcessType.ENCODE_HYPOTHESES,
-                    gcmCode=bg_hyp.gcmCode, altpredCode=bg_hyp.altpredCode,
-                    dateCode=bg_hyp.dateCode, metadata=bg_hyp.mtxMetadata,
-                    userId=gridset.getUserId(), gridset=gridset,
+                    None, matrix_type=MatrixType.BIOGEO_HYPOTHESES,
+                    process_type=ProcessType.ENCODE_HYPOTHESES,
+                    gcm_code=bg_hyp.gcm_code,
+                    alt_pred_code=bg_hyp.alt_pred_code,
+                    date_code=bg_hyp.date_code, metadata=bg_hyp.mtx_metadata,
+                    user_id=gridset.get_user_id(), gridset=gridset,
                     status=JobStatus.INITIALIZE)
-                inserted_bg = self.scribe.findOrInsertMatrix(new_bg_mtx)
-                inserted_bg.updateStatus(JobStatus.COMPLETE)
-                self.scribe.updateObject(inserted_bg)
+                inserted_bg = self.scribe.find_or_insert_matrix(new_bg_mtx)
+                inserted_bg.update_status(JobStatus.COMPLETE)
+                self.scribe.update_object(inserted_bg)
                 # Save the original grim data into the new location
-                bg_mtx = Matrix.load_flo(bg_hyp.getDLocation())
-                with open(inserted_bg.getDLocation(), 'w') as out_f:
+                bg_mtx = Matrix.load_flo(bg_hyp.get_dlocation())
+                with open(inserted_bg.get_dlocation(), 'w') as out_f:
                     bg_mtx.save(out_f)
                 ret.append(inserted_bg)
         elif ref_obj[BG_REF_TYPE_KEY].lower() == 'upload':
-            currtime = gmt().mjd
+            curr_time = gmt().mjd
             # Check for uploaded biogeo package
             package_name = ref_obj[BG_REF_ID_KEY]
             package_filename = os.path.join(
                 self._get_user_dir(), '{}{}'.format(
                     package_name, LMFormat.ZIP.ext))
 
-            encoder = LayerEncoder(gridset.getShapegrid().getDLocation())
+            encoder = LayerEncoder(gridset.get_shapegrid().get_dlocation())
             # TODO(CJ): Pull this from config somewhere
             min_coverage = 0.25
 
@@ -287,21 +289,22 @@ class GridsetBioGeoService(LmService):
                                         ].extend(hyp_lyr[KEYWORD_KEY])
 
                                 lyr = Vector(
-                                    hyp_name, gridset.getUserId(),
+                                    hyp_name, gridset.get_user_id(),
                                     gridset.epsg, dlocation=None,
                                     metadata=lyr_meta,
-                                    dataFormat=LMFormat.SHAPE.driver,
-                                    valAttribute=event_field, mod_time=currtime)
-                                updated_lyr = self.scribe.findOrInsertLayer(
+                                    data_format=LMFormat.SHAPE.driver,
+                                    val_attribute=event_field,
+                                    mod_time=curr_time)
+                                updated_lyr = self.scribe.find_or_insert_layer(
                                     lyr)
 
                                 # Get dlocation
                                 # Loop through files to write all matching
                                 #    (ext) to out location
                                 base_out = os.path.splitext(
-                                    updated_lyr.getDLocation())[0]
+                                    updated_lyr.get_dlocation())[0]
 
-                                for ext in LMFormat.SHAPE.getExtensions():
+                                for ext in LMFormat.SHAPE.get_extensions():
                                     z_fn = '{}{}'.format(hyp_filename, ext)
                                     out_fn = '{}{}'.format(base_out, ext)
                                     if z_fn in avail_files:
@@ -309,7 +312,7 @@ class GridsetBioGeoService(LmService):
 
                                 # Add it to the list of files to be encoded
                                 encoder.encode_biogeographic_hypothesis(
-                                    updated_lyr.getDLocation(), column_name,
+                                    updated_lyr.get_dlocation(), column_name,
                                     min_coverage, event_field=event_field)
                             else:
                                 raise cherrypy.HTTPError(
@@ -331,10 +334,10 @@ class GridsetBioGeoService(LmService):
 
                 tmp_mtx = LMMatrix(
                     None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
-                    processType=ProcessType.ENCODE_HYPOTHESES,
-                    userId=self.get_user_id(), gridset=gridset, metadata=meta,
-                    status=JobStatus.INITIALIZE, statusModTime=currtime)
-                bg_mtx = self.scribe.findOrInsertMatrix(tmp_mtx)
+                    process_type=ProcessType.ENCODE_HYPOTHESES,
+                    user_id=self.get_user_id(), gridset=gridset, metadata=meta,
+                    status=JobStatus.INITIALIZE, status_mod_time=curr_time)
+                bg_mtx = self.scribe.find_or_insert_matrix(tmp_mtx)
 
                 # Encode the hypotheses
                 enc_mtx = encoder.get_encoded_matrix()
@@ -361,8 +364,8 @@ class GridsetBioGeoService(LmService):
     def _get_gridset(self, path_gridset_id):
         """Attempts to get a GridSet
         """
-        gridset = self.scribe.getGridset(
-            gridsetId=path_gridset_id, fillMatrices=True)
+        gridset = self.scribe.get_gridset(
+            gridset_id=path_gridset_id, fill_matrices=True)
         if gridset is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
@@ -395,35 +398,35 @@ class GridsetProgressService(LmService):
 
     # ................................
     @lm_formatter
-    def GET(self, pathGridSetId, detail=False, **params):
+    def GET(self, path_gridset_id, detail=False, **params):
         """Get progress for a gridset
         """
-        return ('gridset', pathGridSetId, detail)
+        return ('gridset', path_gridset_id, detail)
 
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('pathTreeId')
+@cherrypy.popargs('path_tree_id')
 class GridsetTreeService(LmService):
     """Service for the tree of a gridset
     """
 
     # ................................
-    def DELETE(self, pathTreeId):
+    def DELETE(self, path_tree_id):
         """Attempts to delete a tree
 
         Args:
-            pathTreeId: The id of the tree to delete
+            path_tree_id: The id of the tree to delete
         """
-        tree = self.scribe.getTree(treeId=pathTreeId)
+        tree = self.scribe.get_tree(tree_id=path_tree_id)
 
         if tree is None:
             raise cherrypy.HTTPError(
-                HTTPStatus.NOT_FOUND, 'Tree {} not found'.format(pathTreeId))
+                HTTPStatus.NOT_FOUND, 'Tree {} not found'.format(path_tree_id))
 
         # If allowed to, delete
         if check_user_permission(self.get_user_id(), tree, HTTPMethod.DELETE):
-            success = self.scribe.deleteObject(tree)
+            success = self.scribe.delete_object(tree)
             if success:
                 cherrypy.response.status = HTTPStatus.NO_CONTENT
                 return
@@ -440,25 +443,25 @@ class GridsetTreeService(LmService):
 
     # ................................
     @lm_formatter
-    def GET(self, pathGridSetId, pathTreeId=None, includeCSV=None,
-            includeSDMs=None, **params):
+    def GET(self, path_gridset_id, path_tree_id=None, include_csv=None,
+            include_sdms=None, **params):
         """Just return the gridset tree, no listing at this time
         """
-        gridset = self._get_gridset(pathGridSetId)
+        gridset = self._get_gridset(path_gridset_id)
         return gridset.tree
 
     # ................................
     @lm_formatter
-    def POST(self, pathGridSetId, pathTreeId=None, name=None,
-             treeSchema=DEFAULT_TREE_SCHEMA, **params):
+    def POST(self, path_gridset_id, path_tree_id=None, name=None,
+             tree_schema=DEFAULT_TREE_SCHEMA, **params):
         """Posts a new tree and adds it to the gridset
         """
-        if pathTreeId is not None:
-            tree = self.scribe.getTree(treeId=pathTreeId)
+        if path_tree_id is not None:
+            tree = self.scribe.get_tree(tree_id=path_tree_id)
             if tree is None:
                 raise cherrypy.HTTPError(
                     HTTPStatus.NOT_FOUND,
-                    'Tree {} was not found'.format(pathTreeId))
+                    'Tree {} was not found'.format(path_tree_id))
             if check_user_permission(self.get_user_id(), tree, HTTPMethod.GET):
                 pass
             else:
@@ -466,25 +469,25 @@ class GridsetTreeService(LmService):
                 raise cherrypy.HTTPError(
                     HTTPStatus.FORBIDDEN,
                     'User {} cannot access tree {}'.format(
-                        self.get_user_id(), pathTreeId))
+                        self.get_user_id(), path_tree_id))
         else:
             if name is None:
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST,
                     'Must provide name for tree')
             tree = dendropy.Tree.get(
-                file=cherrypy.request.body, schema=treeSchema)
-            new_tree = Tree(name, userId=self.get_user_id())
-            updated_tree = self.scribe.findOrInsertTree(new_tree)
-            updated_tree.setTree(tree)
-            updated_tree.writeTree()
+                file=cherrypy.request.body, schema=tree_schema)
+            new_tree = Tree(name, user_id=self.get_user_id())
+            updated_tree = self.scribe.find_or_insert_tree(new_tree)
+            updated_tree.set_tree(tree)
+            updated_tree.write_tree()
             updated_tree.mod_time = gmt().mjd
-            self.scribe.updateObject(updated_tree)
+            self.scribe.update_object(updated_tree)
 
-        gridset = self._get_gridset(pathGridSetId)
-        gridset.addTree(tree)
-        gridset.updateModtime(gmt().mjd)
-        self.scribe.updateObject(gridset)
+        gridset = self._get_gridset(path_gridset_id)
+        gridset.add_tree(tree)
+        gridset.update_mod_time(gmt().mjd)
+        self.scribe.update_object(gridset)
 
         return updated_tree
 
@@ -492,8 +495,8 @@ class GridsetTreeService(LmService):
     def _get_gridset(self, path_gridset_id):
         """Attempt to get a Gridset
         """
-        gridset = self.scribe.getGridset(
-            gridsetId=path_gridset_id, fillMatrices=True)
+        gridset = self.scribe.get_gridset(
+            gridset_id=path_gridset_id, fill_matrices=True)
         if gridset is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
@@ -509,7 +512,7 @@ class GridsetTreeService(LmService):
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('pathGridSetId')
+@cherrypy.popargs('path_gridset_id')
 class GridsetService(LmService):
     """Class for gridset services
     """
@@ -520,13 +523,13 @@ class GridsetService(LmService):
     tree = GridsetTreeService()
 
     # ................................
-    def DELETE(self, pathGridSetId):
+    def DELETE(self, path_gridset_id):
         """Attempts to delete a grid set
 
         Args:
-            pathGridSetId: The id of the grid set to delete
+            path_gridset_id: The id of the grid set to delete
         """
-        gridset = self.scribe.getGridset(gridsetId=pathGridSetId)
+        gridset = self.scribe.get_gridset(gridset_id=path_gridset_id)
 
         if gridset is None:
             raise cherrypy.HTTPError(
@@ -535,7 +538,7 @@ class GridsetService(LmService):
         # If allowed to, delete
         if check_user_permission(
                 self.get_user_id(), gridset, HTTPMethod.DELETE):
-            success = self.scribe.deleteObject(gridset)
+            success = self.scribe.delete_object(gridset)
             if success:
                 cherrypy.response.status = HTTPStatus.NO_CONTENT
                 return
@@ -552,31 +555,32 @@ class GridsetService(LmService):
 
     # ................................
     @lm_formatter
-    def GET(self, pathGridSetId=None, afterTime=None, beforeTime=None,
-            epsgCode=None, limit=100, metaString=None, offset=0, urlUser=None,
-            shapegridId=None, **params):
+    def GET(self, path_gridset_id=None, after_time=None, before_time=None,
+            epsg_code=None, limit=100, meta_string=None, offset=0,
+            url_user=None, shapegrid_id=None, **params):
         """Perform a GET request, either return gridset, list, or count.
         """
-        if pathGridSetId is None:
+        if path_gridset_id is None:
             return self._list_gridsets(
-                self.get_user_id(urlUser=urlUser), after_time=afterTime,
-                before_time=beforeTime, epsg=epsgCode, limit=limit,
-                meta_string=metaString, offset=offset,
-                shapegrid_id=shapegridId)
-        if pathGridSetId.lower() == 'count':
-            return self._countGridSets(
-                self.get_user_id(urlUser=urlUser), after_time=afterTime,
-                before_time=beforeTime, epsg=epsgCode,
-                meta_string=metaString, shapegrid_id=shapegridId)
+                self.get_user_id(url_user=url_user), after_time=after_time,
+                before_time=before_time, epsg=epsg_code, limit=limit,
+                meta_string=meta_string, offset=offset,
+                shapegrid_id=shapegrid_id)
+        if path_gridset_id.lower() == 'count':
+            return self._count_gridsets(
+                self.get_user_id(url_user=url_user), after_time=after_time,
+                before_time=before_time, epsg=epsg_code,
+                meta_string=meta_string, shapegrid_id=shapegrid_id)
 
-        return self._get_gridset(pathGridSetId)
+        return self._get_gridset(path_gridset_id)
 
     # ................................
-    def HEAD(self, pathGridSetId=None):
+    def HEAD(self, path_gridset_id=None):
         """Perform a HTTP HEAD request to get general status
         """
-        if pathGridSetId is not None:
-            mf_summary = self.scribe.summarizeMFChainsForGridset(pathGridSetId)
+        if path_gridset_id is not None:
+            mf_summary = self.scribe.summarize_mf_chains_for_gridset(
+                path_gridset_id)
             (waiting_mfs, running_mfs, _, _, _) = summarize_object_statuses(
                 mf_summary)
             if waiting_mfs + running_mfs == 0:
@@ -592,7 +596,7 @@ class GridsetService(LmService):
         """
         gridset_data = json.loads(cherrypy.request.body.read())
 
-        usr = self.scribe.findUser(self.get_user_id())
+        usr = self.scribe.find_user(self.get_user_id())
 
         boom_post = BoomPoster(
             usr.userid, usr.email, gridset_data, self.scribe)
@@ -618,9 +622,10 @@ class GridsetService(LmService):
                 (Modified Julian Day)
             epsg: (optional) Return GridSets with this EPSG code
         """
-        gridset_count = self.scribe.countGridsets(
-            userId=user_id, shpgrdLyrid=shapegrid_id, metastring=meta_string,
-            afterTime=after_time, beforeTime=before_time, epsg=epsg)
+        gridset_count = self.scribe.count_gridsets(
+            user_id=user_id, shapegrid_layer_id=shapegrid_id,
+            meta_string=meta_string, after_time=after_time,
+            before_time=before_time, epsg=epsg)
         # Format return
         # Set headers
         return {'count': gridset_count}
@@ -629,8 +634,8 @@ class GridsetService(LmService):
     def _get_gridset(self, gridset_id):
         """Attempt to get a GridSet
         """
-        gridset = self.scribe.getGridset(
-            gridsetId=gridset_id, fillMatrices=True)
+        gridset = self.scribe.get_gridset(
+            gridset_id=gridset_id, fill_matrices=True)
         if gridset is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
@@ -660,9 +665,9 @@ class GridsetService(LmService):
             limit: (optional) Return this number of GridSets, at most
             offset: (optional) Offset the returned GridSets by this number
         """
-        gridset_atoms = self.scribe.listGridsets(
-            offset, limit, userId=user_id, shpgrdLyrid=shapegrid_id,
-            metastring=meta_string, afterTime=after_time,
-            beforeTime=before_time, epsg=epsg)
+        gridset_atoms = self.scribe.list_gridsets(
+            offset, limit, user_id=user_id, shpgrdLyrid=shapegrid_id,
+            meta_string=meta_string, after_time=after_time,
+            before_time=before_time, epsg=epsg)
 
         return gridset_atoms

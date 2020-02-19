@@ -10,18 +10,19 @@ import json
 import os
 import zipfile
 
+from lmpy import Matrix
+
 from LmCommon.common.lm_xml import tostring
 from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmServer.common.lmconstants import TEMP_PATH
 from LmServer.common.log import ConsoleLogger
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 from LmWebServer.formatters.eml_formatter import make_eml
 from LmWebServer.formatters.geo_json_formatter import geo_jsonify_flo
-from lmpy import Matrix
 
 
 # .............................................................................
-def create_header_lookup(headers, squids=False, scribe=None, userId=None):
+def create_header_lookup(headers, squids=False, scribe=None, user_id=None):
     """Generate a header lookup to be included in the package metadata
     """
 
@@ -32,7 +33,7 @@ def create_header_lookup(headers, squids=False, scribe=None, userId=None):
         }
 
     def get_squid_header_dict(header, idx, scribe, user_id):
-        taxon = scribe.getTaxon(squid=header, userId=user_id)
+        taxon = scribe.get_taxon(squid=header, user_id=user_id)
         ret = get_header_dict(header, idx)
 
         for attrib, key in [
@@ -50,10 +51,10 @@ def create_header_lookup(headers, squids=False, scribe=None, userId=None):
                 ret[key] = val
         return ret
 
-    if squids and scribe and userId:
+    if squids and scribe and user_id:
         return [
             get_squid_header_dict(
-                headers[i], i, scribe, userId) for i in range(len(headers))]
+                headers[i], i, scribe, user_id) for i in range(len(headers))]
 
     return [get_header_dict(headers[i], i) for i in range(len(headers))]
 
@@ -83,8 +84,8 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
         out_zip.writestr('gridset_{}.eml'.format(gridset.get_id()), gs_eml)
         print('Write tree')
         out_zip.write(
-            gridset.tree.getDLocation(),
-            os.path.basename(gridset.tree.getDLocation()))
+            gridset.tree.get_dlocation(),
+            os.path.basename(gridset.tree.get_dlocation()))
         print('Getting shapegrid')
         shapegrid = gridset.getShapegrid()
         matrices = gridset.getMatrices()
@@ -93,9 +94,9 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
         for mtx in matrices:
             i += 1
             print(('Matrix: ({} of {}) {}'.format(
-                i, len(matrices), mtx.getDLocation())))
+                i, len(matrices), mtx.get_dlocation())))
             print(' - Loading matrix')
-            mtx_obj = Matrix.load_flo(mtx.getDLocation())
+            mtx_obj = Matrix.load_flo(mtx.get_dlocation())
             print(' - Loaded')
 
             # Need to get geojson where we can
@@ -103,7 +104,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
                 mtx_file_name = '{}{}'.format(
                     os.path.splitext(
                         os.path.basename(
-                            mtx.getDLocation()))[0], LMFormat.GEO_JSON.ext)
+                            mtx.get_dlocation()))[0], LMFormat.GEO_JSON.ext)
 
                 print(' - Creating SQUID lookup')
                 hlfn = 'squidLookup.json'
@@ -111,7 +112,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
                     hlfn, json.dumps(
                         create_header_lookup(
                             mtx_obj.get_column_headers(), squids=True,
-                            scribe=scribe, userId=user_id), indent=4))
+                            scribe=scribe, user_id=user_id), indent=4))
 
                 # Make a temporary file
                 temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
@@ -119,7 +120,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
                 with open(temp_file_name, 'w') as temp_f:
                     print(' - Getting GeoJSON')
                     geo_jsonify_flo(
-                        temp_f, shapegrid.getDLocation(), matrix=mtx_obj,
+                        temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
                         mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn,
                         transform=mung)
 
@@ -127,7 +128,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
                 mtx_file_name = '{}{}'.format(
                     os.path.splitext(
                         os.path.basename(
-                            mtx.getDLocation()))[0], LMFormat.GEO_JSON.ext)
+                            mtx.get_dlocation()))[0], LMFormat.GEO_JSON.ext)
 
                 print(' - Creating node lookup')
                 hlfn = 'nodeLookup.json'
@@ -142,7 +143,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
                 with open(temp_file_name, 'w') as temp_f:
                     print(' - Getting GeoJSON')
                     geo_jsonify_flo(
-                        temp_f, shapegrid.getDLocation(), matrix=mtx_obj,
+                        temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
                         mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn,
                         transform=mung)
 
@@ -152,7 +153,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
                 mtx_file_name = '{}{}'.format(
                     os.path.splitext(
                         os.path.basename(
-                            mtx.getDLocation()))[0], LMFormat.GEO_JSON.ext)
+                            mtx.get_dlocation()))[0], LMFormat.GEO_JSON.ext)
 
                 # Make a temporary file
                 temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
@@ -160,14 +161,14 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
                 with open(temp_file_name, 'w') as temp_f:
                     print(' - Getting GeoJSON')
                     geo_jsonify_flo(
-                        temp_f, shapegrid.getDLocation(), matrix=mtx_obj,
+                        temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
                         mtxJoinAttrib=0, ident=0)
             else:
                 print(' - Write non Geo-JSON matrix')
                 mtx_file_name = '{}{}'.format(
                     os.path.splitext(
                         os.path.basename(
-                            mtx.getDLocation()))[0], LMFormat.CSV.ext)
+                            mtx.get_dlocation()))[0], LMFormat.CSV.ext)
                 # Make a temporary file
                 temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
                 print((' - Temporary file name: {}'.format(temp_file_name)))
@@ -197,14 +198,15 @@ def main():
     args = parser.parse_args()
 
     scribe = BorgScribe(ConsoleLogger())
-    scribe.openConnections()
+    scribe.open_connections()
 
-    gridset = scribe.getGridset(gridsetId=args.gridset_id, fillMatrices=True)
+    gridset = scribe.get_gridset(
+        gridset_id=args.gridset_id, fill_matrices=True)
 
     assemble_package_for_gridset(
-        gridset, args.out_file, scribe, gridset.getUserId())
+        gridset, args.out_file, scribe, gridset.get_user_id())
 
-    scribe.closeConnections()
+    scribe.close_connections()
 
 
 # ..........................................................................

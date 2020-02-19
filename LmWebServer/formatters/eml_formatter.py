@@ -2,14 +2,15 @@
 """
 import os
 
-from LmCommon.common.lm_xml import Element, SubElement, tostring
-from LmCommon.common.lmconstants import LMFormat, MatrixType
-from LmServer.base.layer2 import Raster, Vector
-from LmServer.legion.envlayer import EnvLayer
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.sdmproj import SDMProjection
 import cherrypy
 from lmpy import Matrix
+
+from LmCommon.common.lm_xml import Element, SubElement, tostring
+from LmCommon.common.lmconstants import LMFormat, MatrixType
+from LmServer.base.layer import Raster, Vector
+from LmServer.legion.env_layer import EnvLayer
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.sdm_proj import SDMProjection
 
 
 # .............................................................................
@@ -32,7 +33,7 @@ def _create_data_table_section(data_table):
         'formatName', value='Lifemapper Matrix Json')
 
     att_list_el = SubElement(dt_el, 'attributeList')
-    mtx = Matrix.load_flo(data_table.getDLocation())
+    mtx = Matrix.load_flo(data_table.get_dlocation())
     for col_header in mtx.get_column_headers():
         SubElement(att_list_el, 'attribute', value=col_header)
     return dt_el
@@ -101,12 +102,12 @@ def _create_spatial_vector(spatial_vector):
 
     attrib_list_element = SubElement(sv_element, 'attributeList')
     if isinstance(spatial_vector, Matrix):
-        mtx = Matrix.load_flo(spatial_vector.getDLocation())
+        mtx = Matrix.load_flo(spatial_vector.get_dlocation())
         for col_header in mtx.get_column_headers():
             SubElement(attrib_list_element, 'attribute', value=col_header)
         SubElement(sv_element, 'geometry', value='polygon')
     else:
-        for _, val in list(spatial_vector.featureAttributes.items()):
+        for _, val in list(spatial_vector.feature_attributes.items()):
             SubElement(attrib_list_element, 'attribute', value=val[0])
         SubElement(sv_element, 'geometry', value='polygon')
 
@@ -136,19 +137,19 @@ def make_eml(my_obj):
 
         try:
             ds_name = my_obj.name
-        except:
+        except AttributeError:
             ds_name = 'Gridset {}'.format(my_obj.get_id())
 
         SubElement(ds_el, 'name', value=ds_name)
 
-        for mtx in my_obj.getMatrices():
-            if os.path.exists(mtx.getDLocation()):
+        for mtx in my_obj.get_matrices():
+            if os.path.exists(mtx.get_dlocation()):
                 # TODO: Enable GRIMs
-                if mtx.matrixType in [
+                if mtx.matrix_type in [
                         MatrixType.ANC_PAM,  # MatrixType.GRIM,
                         MatrixType.PAM, MatrixType.SITES_OBSERVED]:
                     ds_el.append(_create_spatial_vector(mtx))
-                elif mtx.matrixType in [
+                elif mtx.matrix_type in [
                         MatrixType.ANC_STATE, MatrixType.DIVERSITY_OBSERVED,
                         MatrixType.MCPA_OUTPUTS, MatrixType.SPECIES_OBSERVED]:
                     ds_el.append(_create_data_table_section(mtx))
@@ -231,7 +232,7 @@ def eml_object_formatter(obj):
 def _format_object(obj):
     """Helper method to format an individual object based on its type
     """
-    cherrypy.response.headers['Content-Type'] = LMFormat.EML.getMimeType()
+    cherrypy.response.headers['Content-Type'] = LMFormat.EML.get_mime_type()
 
     if isinstance(obj, (EnvLayer, Gridset, SDMProjection, Raster, Vector)):
         cherrypy.response.headers[

@@ -1,5 +1,7 @@
 """This is the Lifemapper services root for CherryPy
 """
+import cherrypy
+
 from LmServer.common.lmconstants import CHERRYPY_CONFIG_FILE
 from LmWebServer.services.api.v2.v2_root import ApiRootV2
 from LmWebServer.services.common.user_services import (
@@ -8,7 +10,6 @@ from LmWebServer.services.cp_dispatchers.lm_dispatch import LmDispatcher
 from LmWebServer.services.cp_tools.basic_auth import get_user_name
 from LmWebServer.services.cp_tools.cors import CORS
 from LmWebServer.services.cp_tools.param_caster import cast_parameters
-import cherrypy
 
 
 # .............................................................................

@@ -17,7 +17,7 @@ from LmWebServer.services.api.v2.open_tree import OpenTreeService
 from LmWebServer.services.api.v2.scenario import ScenarioService
 from LmWebServer.services.api.v2.scenario_package import ScenarioPackageService
 from LmWebServer.services.api.v2.sdm_project import SdmProjectService
-from LmWebServer.services.api.v2.shapegrid import ShapeGridService
+from LmWebServer.services.api.v2.shapegrid import ShapegridService
 from LmWebServer.services.api.v2.snippet import SnippetService
 from LmWebServer.services.api.v2.solr_raw import RawSolrService
 from LmWebServer.services.api.v2.species_hint import SpeciesHintService
@@ -46,7 +46,7 @@ class ApiRootV2(object):
     scenario = ScenarioService()
     scenpackage = ScenarioPackageService()
     sdmproject = SdmProjectService()
-    shapegrid = ShapeGridService()
+    shapegrid = ShapegridService()
     snippet = SnippetService()
     rawsolr = RawSolrService()
     taxonomy = TaxonomyHintService()

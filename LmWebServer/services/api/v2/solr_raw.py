@@ -4,9 +4,10 @@
 """
 import json
 
+import cherrypy
+
 from LmServer.common.solr import raw_query
 from LmWebServer.services.api.v2.base import LmService
-import cherrypy
 
 
 # from LmServer.common.lmconstants import SOLR_TAXONOMY_COLLECTION

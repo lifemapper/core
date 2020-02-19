@@ -4,11 +4,12 @@
 """
 import json
 
+import cherrypy
+
 from LmCommon.common.api_query import GbifAPI
 from LmCommon.common.lmconstants import HTTPStatus
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
-import cherrypy
 
 # TODO: These need to go into a constants file
 ACCEPTED_NAME_KEY = 'accepted_name'
@@ -39,7 +40,7 @@ class GBIFNamesService(LmService):
         ret = []
         for name in names_obj:
             try:
-                gbif_resp = GbifAPI.getAcceptedNames(name)[0]
+                gbif_resp = GbifAPI.get_accepted_names(name)[0]
                 ret.append({
                     SEARCH_NAME_KEY: name,
                     ACCEPTED_NAME_KEY: gbif_resp[SPECIES_NAME_KEY],

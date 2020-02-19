@@ -3,13 +3,15 @@
 This module provides a tool for formatting outputs of service calls based on
 the accept headers of the request
 """
+import cherrypy
+
 from LmCommon.common.lmconstants import (
     CSV_INTERFACE, HTTPStatus, JSON_INTERFACE, LMFormat, SHAPEFILE_INTERFACE)
 from LmServer.common.lmconstants import SnippetOperations
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.snippet import SnippetShooter
 from LmWebServer.formatters.eml_formatter import eml_object_formatter
-from LmWebServer.formatters.fileFormatter import (
+from LmWebServer.formatters.file_formatter import (
     csv_object_formatter, file_formatter, gtiff_object_formatter,
     shapefile_object_formatter)
 from LmWebServer.formatters.geo_json_formatter import geo_json_object_formatter
@@ -17,7 +19,6 @@ from LmWebServer.formatters.json_formatter import json_object_formatter
 from LmWebServer.formatters.kml_formatter import kml_object_formatter
 from LmWebServer.formatters.package_formatter import gridset_package_formatter
 from LmWebServer.formatters.progress_formatter import progress_object_formatter
-import cherrypy
 
 
 # .............................................................................
@@ -48,7 +49,7 @@ def lm_formatter(f):
                     valued_accepts.append(
                         (mime.strip(), float(val.strip('q='))))
                 else:
-                    valued_accepts.append((h.strip(), 1.0))
+                    valued_accepts.append((hdr.strip(), 1.0))
         except Exception:
             valued_accepts = [('*/*', 1.0)]
 
@@ -57,44 +58,44 @@ def lm_formatter(f):
 
         for accept_hdr, _ in sorted_accepts:
             try:
-                if accept_hdr == LMFormat.GEO_JSON.getMimeType():
+                if accept_hdr == LMFormat.GEO_JSON.get_mime_type():
                     return geo_json_object_formatter(handler_result)
                 # If JSON or default
-                if accept_hdr in [LMFormat.JSON.getMimeType(), '*/*']:
+                if accept_hdr in [LMFormat.JSON.get_mime_type(), '*/*']:
                     shoot_snippets(
                         handler_result, SnippetOperations.VIEWED,
                         JSON_INTERFACE)
                     return json_object_formatter(handler_result)
-                if accept_hdr == LMFormat.EML.getMimeType():
+                if accept_hdr == LMFormat.EML.get_mime_type():
                     return eml_object_formatter(handler_result)
-                if accept_hdr == LMFormat.KML.getMimeType():
+                if accept_hdr == LMFormat.KML.get_mime_type():
                     return kml_object_formatter(handler_result)
-                if accept_hdr == LMFormat.GTIFF.getMimeType():
+                if accept_hdr == LMFormat.GTIFF.get_mime_type():
                     return gtiff_object_formatter(handler_result)
-                if accept_hdr == LMFormat.SHAPE.getMimeType():
+                if accept_hdr == LMFormat.SHAPE.get_mime_type():
                     shoot_snippets(
                         handler_result, SnippetOperations.DOWNLOADED,
                         SHAPEFILE_INTERFACE)
                     return shapefile_object_formatter(handler_result)
-                if accept_hdr == LMFormat.CSV.getMimeType():
+                if accept_hdr == LMFormat.CSV.get_mime_type():
                     shoot_snippets(
                         handler_result, SnippetOperations.DOWNLOADED,
                         CSV_INTERFACE)
                     return csv_object_formatter(handler_result)
-                if accept_hdr == LMFormat.NEWICK.getMimeType():
+                if accept_hdr == LMFormat.NEWICK.get_mime_type():
                     raise cherrypy.HTTPError(
                         HTTPStatus.BAD_REQUEST,
                         'Newick response not enabled yet')
                     # TODO: Use dendropy to convert nexus to newick
                     # return file_formatter(handler_result.getDLocation())
-                if accept_hdr == LMFormat.NEXUS.getMimeType():
+                if accept_hdr == LMFormat.NEXUS.get_mime_type():
                     return file_formatter(handler_result.getDLocation())
-                if accept_hdr == LMFormat.ZIP.getMimeType():
+                if accept_hdr == LMFormat.ZIP.get_mime_type():
                     csvs = True
                     sdms = True
                     return gridset_package_formatter(
-                        handler_result, includeCSV=csvs, includeSDM=sdms)
-                if accept_hdr == LMFormat.PROGRESS.getMimeType():
+                        handler_result, include_csv=csvs, include_sdm=sdms)
+                if accept_hdr == LMFormat.PROGRESS.get_mime_type():
                     obj_type, obj_id, detail = handler_result
                     return progress_object_formatter(
                         obj_type, obj_id, detail=detail)
@@ -120,11 +121,11 @@ def shoot_snippets(obj, operation, format_string):
     try:
         if obj.getUserId() == PUBLIC_USER:
             shooter = SnippetShooter()
-            shooter.addSnippets(
+            shooter.add_snippets(
                 obj, operation, url='{}/{}'.format(
                     obj.metadataUrl, format_string),
                 who='user', agent='webService', why='request')
-            shooter.shootSnippets()
+            shooter.shoot_snippets()
     except Exception:
         # TODO: Log exceptions for snippets
         pass

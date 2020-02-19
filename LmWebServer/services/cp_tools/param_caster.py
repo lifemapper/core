@@ -4,10 +4,10 @@ This dispatcher casts query parameters appropriately so that they can be used
     directly by functions down the line.  We handle them all here to prevent
     code redundancy.
 """
+import cherrypy
 
 from LmWebServer.common.lmconstants import (
     QP_NAME_KEY, QP_PROCESS_KEY, QUERY_PARAMETERS)
-import cherrypy
 
 
 # .............................................................................

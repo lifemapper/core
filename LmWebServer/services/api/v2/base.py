@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 """The module provides a base Lifemapper service class
 """
+import cherrypy
+
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import WebLogger
-from LmServer.db.borgscribe import BorgScribe
-import cherrypy
+from LmServer.db.borg_scribe import BorgScribe
 
 
 # .............................................................................
@@ -30,12 +31,13 @@ class LmService:
         log = WebLogger()
         # self.scribe = cherrypy.thread_data.scribeRetriever.get_scribe()
         self.scribe = BorgScribe(log)
-        self.scribe.openConnections()
+        self.scribe.open_connections()
         # self.log = cherrypy.session.log
         self.log = log
 
     # ..........................
-    def get_user_id(self, urlUser=None):
+    @staticmethod
+    def get_user_id(url_user=None):
         """Gets the user id for the service call.
 
         Gets the user id for the service call.  If urlUser is provided, try
@@ -43,10 +45,10 @@ class LmService:
         PUBLIC_USER
         """
         # Check to see if we should use url user
-        if urlUser is not None:
-            if urlUser.lower() == 'public'.lower():
+        if url_user is not None:
+            if url_user.lower() == 'public'.lower():
                 return PUBLIC_USER
-            if urlUser.lower() == DEFAULT_POST_USER.lower():
+            if url_user.lower() == DEFAULT_POST_USER.lower():
                 return DEFAULT_POST_USER
         # Try to get the user from the session
         try:
@@ -56,7 +58,8 @@ class LmService:
             return PUBLIC_USER
 
     # ..........................
-    def OPTIONS(self):
+    @staticmethod
+    def OPTIONS():
         """Common options request for all services (needed for CORS)
         """
         return

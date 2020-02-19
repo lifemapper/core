@@ -2,14 +2,15 @@
 """
 import json
 
-from LmCommon.common.lmconstants import LMFormat, MatrixType
-from LmServer.base.layer2 import Vector
-from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.occlayer import OccurrenceLayer
-from LmServer.legion.shapegrid import ShapeGrid
 import cherrypy
 from lmpy import Matrix
 import ogr
+
+from LmCommon.common.lmconstants import LMFormat, MatrixType
+from LmServer.base.layer import Vector
+from LmServer.legion.lm_matrix import LMMatrix
+from LmServer.legion.occ_layer import OccurrenceLayer
+from LmServer.legion.shapegrid import Shapegrid
 
 
 # .............................................................................
@@ -36,8 +37,8 @@ def right_hand_rule(coordinates):
 
 
 # .............................................................................
-def geo_jsonify_flo(flo, shp_file_name, matrix=None, mtxJoinAttrib=None,
-                    ident=4, headerLookupFilename=None,
+def geo_jsonify_flo(flo, shp_file_name, matrix=None, mtx_join_attrib=None,
+                    ident=4, header_lookup_filename=None,
                     transform=identity_func):
     """
     @summary: A string generator for matrix GeoJSON
@@ -47,9 +48,9 @@ def geo_jsonify_flo(flo, shp_file_name, matrix=None, mtxJoinAttrib=None,
 
     flo.write('{\n')
     flo.write('{}"type" : "FeatureCollection",\n'.format(ident))
-    if headerLookupFilename:
+    if header_lookup_filename:
         flo.write('{}"propertyLookupFilename" : "{}",\n'.format(
-            ident, headerLookupFilename))
+            ident, header_lookup_filename))
     flo.write('{}"features" : [\n'.format(ident))
 
     row_lookup = {}
@@ -60,7 +61,7 @@ def geo_jsonify_flo(flo, shp_file_name, matrix=None, mtxJoinAttrib=None,
         row_headers = matrix.get_row_headers()
 
         for i, row_hdr in enumerate(row_headers):
-            row_lookup[row_hdr[mtxJoinAttrib]] = i
+            row_lookup[row_hdr[mtx_join_attrib]] = i
 
         # Define cast function, necessary if matrix if full of booleans
         if matrix.dtype == bool:
@@ -69,7 +70,7 @@ def geo_jsonify_flo(flo, shp_file_name, matrix=None, mtxJoinAttrib=None,
             cast_func = identity_func
 
     # Build features list
-    drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+    drv = ogr.GetDriverByName(LMFormat.get_default_ogr().driver)
     dataset = drv.Open(shp_file_name, 0)
     lyr = dataset.GetLayer()
 
@@ -91,7 +92,7 @@ def geo_jsonify_flo(flo, shp_file_name, matrix=None, mtxJoinAttrib=None,
             i = row_lookup[join_attrib]
 
             # Set data or individuals
-            if headerLookupFilename:
+            if header_lookup_filename:
                 feat_json['properties'] = {
                     'data': transform(
                         [cast_func(j.item()) for j in matrix[i]])
@@ -112,7 +113,7 @@ def geo_jsonify_flo(flo, shp_file_name, matrix=None, mtxJoinAttrib=None,
 
 
 # .............................................................................
-def geo_jsonify(shp_file_name, matrix=None, mtxJoinAttrib=None):
+def geo_jsonify(shp_file_name, matrix=None, mtx_join_attrib=None):
     """Creates GeoJSON for the features in a shapefile.
     """
     att_lookup = {}
@@ -130,19 +131,19 @@ def geo_jsonify(shp_file_name, matrix=None, mtxJoinAttrib=None):
             cast_func = identity_func
 
         for i, row_hdr in enumerate(row_headers):
-            join_att = row_hdr[mtxJoinAttrib]
+            join_att = row_hdr[mtx_join_attrib]
             att_lookup[join_att] = {}
 
             for j, col_hdr in enumerate(col_headers):
                 try:
                     att_lookup[join_att][col_hdr] = cast_func(
                         matrix[i, j].item())
-                except:
+                except Exception:
                     pass
 
     # Build features list
     features = []
-    drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+    drv = ogr.GetDriverByName(LMFormat.get_default_ogr().driver)
     dataset = drv.Open(shp_file_name, 0)
     lyr = dataset.GetLayer()
     for feat in lyr:
@@ -184,27 +185,30 @@ def geo_json_object_formatter(obj):
 def _format_object(obj):
     """Helper method to format an individual object based on its type
     """
-    cherrypy.response.headers['Content-Type'] = LMFormat.GEO_JSON.getMimeType()
-    if isinstance(obj, (OccurrenceLayer, ShapeGrid, Vector)):
+    cherrypy.response.headers['Content-Type'
+                              ] = LMFormat.GEO_JSON.get_mime_type()
+    if isinstance(obj, (OccurrenceLayer, Shapegrid, Vector)):
         cherrypy.response.headers[
             'Content-Disposition'
             ] = 'attachment; filename="{}.geojson"'.format(obj.name)
-        return geo_jsonify(obj.getDLocation())
+        return geo_jsonify(obj.get_dlocation())
 
     if isinstance(obj, LMMatrix):
-        if obj.matrixType in (
+        if obj.matrix_type in (
                 MatrixType.PAM, MatrixType.ROLLING_PAM, MatrixType.ANC_PAM,
                 MatrixType.SITES_COV_OBSERVED, MatrixType.SITES_COV_RANDOM,
                 MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM):
 
-            shapegrid = obj.getGridset().getShapegrid()
-            mtx = Matrix.load_flo(obj.getDLocation())
+            shapegrid = obj.get_gridset().get_shapegrid()
+            mtx = Matrix.load_flo(obj.get_dlocation())
             cherrypy.response.headers[
                 'Content-Disposition'
-                ] = 'attachment; filename="mtx_{}.geojson"'.format(obj.get_id())
+                ] = 'attachment; filename="mtx_{}.geojson"'.format(
+                    obj.get_id())
             return geo_jsonify(
-                shapegrid.getDLocation(), matrix=mtx, mtxJoinAttrib=0)
+                shapegrid.get_dlocation(), matrix=mtx, mtx_join_attrib=0)
 
-        raise TypeError('Cannot format matrix type: {}'.format(obj.matrixType))
+        raise TypeError(
+            'Cannot format matrix type: {}'.format(obj.matrix_type))
 
     raise TypeError('Cannot format object of type: {}'.format(type(obj)))

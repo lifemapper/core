@@ -12,11 +12,14 @@ import json
 import os
 import zipfile
 
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, HTTPStatus,
-                                         LMFormat, PhyloTreeKeys,
-                                         DEFAULT_TREE_SCHEMA)
+import cherrypy
+from lmpy import TreeWrapper
+
+from LmCommon.common.lmconstants import (
+    DEFAULT_POST_USER, DEFAULT_TREE_SCHEMA, HTTPStatus, LMFormat,
+    PhyloTreeKeys)
 from LmCommon.common.ready_file import ready_filename
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import ENV_DATA_PATH, LMFileType
 from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.common.lmconstants import HTTPMethod
@@ -24,8 +27,6 @@ from LmWebServer.common.localconstants import MAX_ANON_UPLOAD_SIZE
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
-import cherrypy
-from lmpy import TreeWrapper
 
 # TODO: Move to constants
 BIOGEO_UPLOAD = 'biogeo'
@@ -45,27 +46,27 @@ class UserUploadService(LmService):
 
     # ................................
     @lm_formatter
-    def POST(self, fileName=None, uploadType=None, metadata=None, file=None,
+    def POST(self, file_name=None, upload_type=None, metadata=None, file=None,
              **params):
         """Posts the new file to the user's space
         """
         if check_user_permission(self.get_user_id(), self, HTTPMethod.POST):
 
-            if uploadType is None:
+            if upload_type is None:
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST, 'Must provide upload type')
-            if uploadType.lower() == TREE_UPLOAD:
-                return self._upload_tree(fileName, file)
-            if uploadType.lower() == BIOGEO_UPLOAD:
-                return self._upload_biogeo(fileName, file)
-            if uploadType.lower() == OCCURRENCE_UPLOAD:
-                return self._upload_occurrence_data(fileName, metadata, file)
-            if uploadType.lower() == CLIMATE_UPLOAD:
-                return self._upload_climate_data(fileName)
+            if upload_type.lower() == TREE_UPLOAD:
+                return self._upload_tree(file_name, file)
+            if upload_type.lower() == BIOGEO_UPLOAD:
+                return self._upload_biogeo(file_name, file)
+            if upload_type.lower() == OCCURRENCE_UPLOAD:
+                return self._upload_occurrence_data(file_name, metadata, file)
+            if upload_type.lower() == CLIMATE_UPLOAD:
+                return self._upload_climate_data(file_name)
 
             raise cherrypy.HTTPError(
                 HTTPStatus.BAD_REQUEST,
-                'Unknown upload type: {}'.format(uploadType))
+                'Unknown upload type: {}'.format(upload_type))
 
         raise cherrypy.HTTPError(
             HTTPStatus.FORBIDDEN, 'Only logged in users can upload here')
@@ -82,7 +83,7 @@ class UserUploadService(LmService):
         user_id = self.get_user_id()
         if user_id == PUBLIC_USER:
             user_id = DEFAULT_POST_USER
-        pth = earl.createDataPath(user_id, LMFileType.TMP_JSON)
+        pth = earl.create_data_path(user_id, LMFileType.TMP_JSON)
         if not os.path.exists(pth):
             os.makedirs(pth)
         return pth
@@ -114,7 +115,7 @@ class UserUploadService(LmService):
         instr.seek(0)
 
         valid_extensions = [LMFormat.JSON.ext]
-        valid_extensions.extend(LMFormat.SHAPE.getExtensions())
+        valid_extensions.extend(LMFormat.SHAPE.get_extensions())
 
         # Unzip files and name provided name
         with zipfile.ZipFile(instr, allowZip64=True) as zip_f:
@@ -380,9 +381,9 @@ class UserUploadService(LmService):
 
                     if user_id == PUBLIC_USER:
                         user_id = DEFAULT_POST_USER
-                    for label in tree.getLabels():
-                        sno = self.scribe.getTaxon(
-                            userId=user_id, taxonName=label)
+                    for label in tree.get_labels():
+                        sno = self.scribe.get_taxon(
+                            user_id=user_id, taxon_name=label)
                         if sno is not None:
                             squid_dict[label] = sno.squid
                     tree.annotate_tree_tips(PhyloTreeKeys.SQUID, squid_dict)

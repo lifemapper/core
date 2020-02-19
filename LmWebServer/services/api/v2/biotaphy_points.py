@@ -6,14 +6,15 @@ import json
 import os
 import random
 
+import cherrypy
+
 from LmCommon.common.api_query import IdigbioAPI, GbifAPI
 from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_POST_USER
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import LMFileType, FileFix
 from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
-import cherrypy
 
 
 # .............................................................................
@@ -31,7 +32,7 @@ class IDigBioOccurrenceService(LmService):
         if user_id == PUBLIC_USER:
             user_id = DEFAULT_POST_USER
         # All results are temp files
-        out_dir = earl.createDataPath(user_id, LMFileType.TMP_JSON)
+        out_dir = earl.create_data_path(user_id, LMFileType.TMP_JSON)
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         basename = earl.createBasename(
@@ -61,11 +62,11 @@ class IDigBioOccurrenceService(LmService):
         idig_api = IdigbioAPI()
         try:
             # queryIdigbioData gets and returns counts
-            summary = idig_api.queryIdigbioData(taxon_ids)
-        except Exception as e:
+            summary = idig_api.query_idigbio_data(taxon_ids)
+        except Exception as err:
             self.log.error(
                 'Could not get iDigBio points for GBIF taxon IDs: {}'.format(
-                    str(e)))
+                    str(err)), err)
         else:
             for key, val in summary.items():
                 if key != GbifAPI.GBIF_MISSING_KEY:

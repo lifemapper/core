@@ -7,10 +7,11 @@ Note:
 """
 import os
 
+import cherrypy
+
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import WebLogger, UserLogger
 from LmWebServer.common.lmconstants import SESSION_KEY, SESSION_PATH
-import cherrypy
 
 
 # .............................................................................

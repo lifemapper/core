@@ -10,13 +10,17 @@ import json
 import os
 import zipfile
 
+import cherrypy
+from lmpy import Matrix
+import mapscript
+
 from LmCommon.common.lm_xml import tostring
 from LmCommon.common.lmconstants import (
     HTTPStatus, JobStatus, LMFormat, MatrixType, PamStatKeys)
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import MAP_TEMPLATE
 from LmServer.common.log import WebLogger
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 from LmServer.legion.gridset import Gridset
 from LmWebServer.common.lmconstants import (
     DYN_PACKAGE_DIR, GRIDSET_DIR, MATRIX_DIR, MAX_PROJECTIONS, SDM_PRJ_DIR,
@@ -24,9 +28,6 @@ from LmWebServer.common.lmconstants import (
 from LmWebServer.formatters.eml_formatter import make_eml
 from LmWebServer.formatters.geo_json_formatter import geo_jsonify_flo
 from LmWebServer.formatters.template_filler import TemplateFiller
-import cherrypy
-from lmpy import Matrix
-import mapscript
 
 # # ...........................................................................
 PACKAGE_VERSION = '1.0.2'
@@ -38,20 +39,20 @@ def get_map_content_for_proj(prj, scribe):
     """
     ows_req = mapscript.OWSRequest()
     earl_jr = EarlJr(scribe=scribe)
-    map_filename = earl_jr.getMapFilenameFromMapname(prj.mapName)
+    map_filename = earl_jr.get_map_filename_from_map_name(prj.mapName)
     if not os.path.exists(map_filename):
-        map_svc = scribe.getMapServiceFromMapFilename(map_filename)
+        map_svc = scribe.get_map_service_from_map_filename(map_filename)
         if map_svc is not None and map_svc.count > 0:
-            map_svc.writeMap(MAP_TEMPLATE)
+            map_svc.write_map(MAP_TEMPLATE)
     map_params = [
-        ('map', prj.mapName),
+        ('map', prj.map_name),
         ('bbox', str(prj.bbox).strip('(').strip(')')),
         ('height', '500'),
-        ('layers', 'bmng,{}'.format(prj.mapLayername)),
+        ('layers', 'bmng,{}'.format(prj.map_layer_name)),
         ('request', 'GetMap'),
         ('format', 'image/png'),
         ('service', 'WMS'),
-        ('srs', 'EPSG:{}'.format(prj.epsgcode)),
+        ('srs', 'EPSG:{}'.format(prj.epsg_code)),
         ('styles', ''),
         ('version', '1.1.0'),
         ('width', '1000')
@@ -212,7 +213,7 @@ def create_header_lookup(headers, squids=False, scribe=None, user_id=None):
         }
 
     def get_squid_header_dict(header, idx, scribe, user_id):
-        taxon = scribe.getTaxon(squid=header, userId=user_id)
+        taxon = scribe.getTaxon(squid=header, user_id=user_id)
         ret = get_header_dict(header, idx)
 
         for attrib, key in [
@@ -389,11 +390,11 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
         # Add SDMs if we should
         # ---------------------
         if include_sdm:
-            projections = scribe.listSDMProjects(
-                0, MAX_PROJECTIONS, userId=user_id,
-                afterStatus=JobStatus.COMPLETE - 1,
-                beforeStatus=JobStatus.COMPLETE + 1,
-                gridsetId=gridset.get_id(), atom=False)
+            projections = scribe.list_sdm_projects(
+                0, MAX_PROJECTIONS, user_id=user_id,
+                after_status=JobStatus.COMPLETE - 1,
+                before_status=JobStatus.COMPLETE + 1,
+                gridset_id=gridset.get_id(), atom=False)
             occ_info, prj_info = _add_sdms_to_package(
                 zip_f, projections, scribe)
 
@@ -420,7 +421,8 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 elif mtx.matrixType == MatrixType.SITES_OBSERVED:
                     sites_obs = Matrix.load_flo(mtx.getDLocation())
                     csv_mtx_fn = os.path.join(
-                        MATRIX_DIR, 'sitesObserved_{}.csv'.format(mtx.get_id()))
+                        MATRIX_DIR, 'sitesObserved_{}.csv'.format(
+                            mtx.get_id()))
                     do_pam_stats = True
                 elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
                     mcpa_mtx = Matrix.load_flo(mtx.getDLocation())
@@ -449,7 +451,8 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
         gs_eml = tostring(make_eml(gridset))
         zip_f.writestr(
             os.path.join(
-                GRIDSET_DIR, 'gridset_{}.eml'.format(gridset.get_id())), gs_eml)
+                GRIDSET_DIR, 'gridset_{}.eml'.format(
+                    gridset.get_id())), gs_eml)
 
         # Tree
         if gridset.tree is not None and \
@@ -607,10 +610,10 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     mtx_2d = Matrix(
                         sites_obs[:, :, 0],
                         headers={
-                            '0': sites_obs.getRowHeaders(),
-                            '1': sites_obs.getColumnHeaders()})
+                            '0': sites_obs.get_row_headers(),
+                            '1': sites_obs.get_column_headers()})
                     geo_jsonify_flo(
-                        mtx_str, shapegrid.getDLocation(), mtx_2d,
+                        mtx_str, shapegrid.get_dlocation(), mtx_2d,
                         mtxJoinAttrib=0, ident=0)
                     mtx_str.seek(0)
                     temp_filler = TemplateFiller(
@@ -664,20 +667,20 @@ def gridset_package_formatter(gridset, include_csv=True, include_sdm=True,
             HTTPStatus.BAD_REQUEST,
             'Only gridsets can be formatted as a package')
 
-    package_filename = gridset.getPackageLocation()
+    package_filename = gridset.get_package_location()
 
     # Check to see if the package does not exist
     if not os.path.exists(package_filename):
 
         # Look for makeflows
         scribe = BorgScribe(WebLogger())
-        scribe.openConnections()
+        scribe.open_connections()
 
         # Check progress counts
         gridset_id = gridset.get_id()
         # prj_summary = scribe.summarizeSDMProjectsForGridset(gridset_id)
         # mtx_summary = scribe.summarizeMatricesForGridset(gridset_id)
-        mf_summary = scribe.summarizeMFChainsForGridset(gridset_id)
+        mf_summary = scribe.summarize_mf_chains_for_gridset(gridset_id)
         # mc_summary = scribe.summarizeMtxColumnsForGridset(gridset_id)
         # occ_summary = scribe.summarizeOccurrenceSetsForGridset(gridset_id)
 
@@ -691,7 +694,7 @@ def gridset_package_formatter(gridset, include_csv=True, include_sdm=True,
         # ) = summarize_object_statuses(occ_summary)
         # (waiting_mcs, running_mcs, complete_mcs, error_mcs, total_mcs
         # ) = summarize_object_statuses(mc_summary)
-        scribe.closeConnections()
+        scribe.close_connections()
 
         cnt = waiting_mfs + running_mfs
 
@@ -723,7 +726,7 @@ def gridset_package_formatter(gridset, include_csv=True, include_sdm=True,
     cherrypy.response.headers[
         'Content-Disposition'] = 'attachment; filename="{}"'.format(
             out_package_name)
-    cherrypy.response.headers['Content-Type'] = LMFormat.ZIP.getMimeType()
+    cherrypy.response.headers['Content-Type'] = LMFormat.ZIP.get_mime_type()
 
     if stream:
         cherrypy.lib.file_generator(open(package_filename, 'r'))

@@ -1,7 +1,12 @@
 """Module containing KML formatter clas
-@note: This needs to be cleaned up a lot.  This is a patch to get us through
-             until we can spend some time on this
+
+Note:
+    This needs to be cleaned up a lot.  This is a patch to get us through
+        until we can spend some time on this
 """
+import cherrypy
+from osgeo import ogr
+
 from LmCommon.common.lm_xml import (
     CDATA, Element, register_namespace, set_default_namespace, SubElement,
     tostring)
@@ -9,10 +14,8 @@ from LmCommon.common.lmconstants import LMFormat
 from LmServer.base.utilities import format_time_human
 from LmServer.common.lmconstants import OccurrenceFieldNames
 from LmServer.common.localconstants import WEBSERVICES_ROOT
-from LmServer.legion.occlayer import OccurrenceLayer
-from LmServer.legion.sdmproj import SDMProjection
-import cherrypy
-from osgeo import ogr
+from LmServer.legion.occ_layer import OccurrenceLayer
+from LmServer.legion.sdm_proj import SDMProjection
 
 KML_NS = "http://www.opengis.net/kml/2.2"
 
@@ -34,8 +37,8 @@ def add_occurrence_set(parent, occ):
             occ.displayName, occ.get_id()))
 
     # TODO: Look at feature attributes and decide what to read
-    for pt in occ.features:
-        add_point(parent, pt)
+    for point in occ.features:
+        add_point(parent, point)
 
 
 # .............................................................................
@@ -92,8 +95,8 @@ def add_projection(parent, prj, visibility, indent=0):
     # Icon
     icon_el = SubElement(ground_overlay_el, 'Icon')
 
-    map_url = prj._earlJr.constructLMMapRequest(
-        '{}/{}{}'.format(WEBSERVICES_ROOT, 'api/v2/ogc', prj._mapPrefix),
+    map_url = prj._earl_jr.construct_lm_map_request(
+        '{}/{}{}'.format(WEBSERVICES_ROOT, 'api/v2/ogc', prj._map_prefix),
         400, 200, prj.bbox, color='ff0000')
     SubElement(icon_el, 'href', value=map_url)
 
@@ -114,7 +117,7 @@ def add_projection(parent, prj, visibility, indent=0):
     scn_title_el = SubElement(
         ext_data, 'Data', attrib={'name': 'scenarioTitle'})
     # TODO: Get the title for this scenario
-    SubElement(scn_title_el, 'value', value=prj._projScenario.code)
+    SubElement(scn_title_el, 'value', value=prj._proj_scenario.code)
 
 
 # .............................................................................
@@ -358,7 +361,7 @@ def kml_object_formatter(obj):
     """Looks at object and converts to KML based on its type
     """
     # cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
-    cherrypy.response.headers['Content-Type'] = LMFormat.KML.getMimeType()
+    cherrypy.response.headers['Content-Type'] = LMFormat.KML.get_mime_type()
     cherrypy.response.headers[
         'Content-Disposition'] = 'attachment; filename="{}.kml"'.format(
             obj.name)
@@ -377,17 +380,17 @@ def get_name_for_point(point):
 
     try:
         return point.sciname
-    except:
+    except AttributeError:
         try:
             return point.occurid
-        except:
+        except AttributeError:
             pass
 
     for att in OccurrenceFieldNames.DATANAME:
         try:
             name = point.__getattribute__(att)
             return name
-        except:
+        except Exception:
             pass
 
     # If no data name fields were available
@@ -395,7 +398,7 @@ def get_name_for_point(point):
         try:
             name = point.__getattribute__(att)
             return name
-        except:
+        except Exception:
             pass
 
     # Return unknown if we can't find a name
@@ -418,7 +421,7 @@ def get_lat_lon_for_point(point):
         try:
             wkt = point._attrib[att]
             break
-        except:
+        except Exception:
             pass
 
     if wkt is not None:
@@ -431,7 +434,7 @@ def get_lat_lon_for_point(point):
             try:
                 lat = point._attrib[att]
                 break
-            except:
+            except Exception:
                 pass
 
         lon = None
@@ -439,7 +442,7 @@ def get_lat_lon_for_point(point):
             try:
                 lon = point._attrib[att]
                 break
-            except:
+            except Exception:
                 pass
 
         if lat is not None and lon is not None:
@@ -463,7 +466,7 @@ def get_local_id_for_point(point):
         try:
             local_id = point.__getattribute__(att)
             return local_id
-        except:
+        except Exception:
             pass
 
     # Return unknown if we can't find a name

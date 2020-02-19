@@ -12,20 +12,21 @@ import os
 import random
 import time
 
+import cherrypy
+
 from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.lmconstants import (
     BoomKeys, HTTPStatus, LMFormat, SERVER_BOOM_HEADING,
     SERVER_SDM_MASK_HEADING_PREFIX, SERVER_SDM_ALGORITHM_HEADING_PREFIX)
 from LmCommon.common.time import gmt
-from LmDbServer.boom.initWorkflow import BOOMFiller
+from LmDbServer.boom.init_workflow import BOOMFiller
 from LmDbServer.common.lmconstants import SpeciesDatasource
-from LmDbServer.tools.catalogScenPkg import SPFiller
+from LmDbServer.tools.catalog_scen_package import SPFiller
 from LmServer.base.lmobj import LmHTTPError
 from LmServer.common.lmconstants import (
     ARCHIVE_PATH, ECOREGION_MASK_METHOD, ENV_DATA_PATH, Priority, TEMP_PATH)
 from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.common.lmconstants import APIPostKeys
-import cherrypy
 
 
 # .............................................................................
@@ -130,8 +131,8 @@ class BoomPoster:
                         archive_name, random.randint(0, 100000)),
                     APIPostKeys.CELL_SIDES: 4,
                     APIPostKeys.RESOLUTION: 0.5,
-                    APIPostKeys.MIN_X:-180.0,
-                    APIPostKeys.MIN_Y:-90.0,
+                    APIPostKeys.MIN_X: -180.0,
+                    APIPostKeys.MIN_Y: -90.0,
                     APIPostKeys.MAX_X: 180.0,
                     APIPostKeys.MAX_Y: 90.0
                 },
@@ -257,7 +258,7 @@ class BoomPoster:
         # Try to add SDM mask via ecoregion layer if available
         region_layer_name = 'ecoreg_10min_global'
         # ecoreg_layer = self.scribe.getLayer(
-        #    userId=self.userId, lyrName=region_layer_name)
+        #    user_id=self.user_id, lyrName=region_layer_name)
         # if ecoreg_layer is not None:
         # TODO: CJG - Get ecoregion layer from defaults or db if possible
         self.config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
@@ -421,11 +422,11 @@ class BoomPoster:
             if APIPostKeys.PACKAGE_NAME in list(scenario_json.keys()):
                 scenario_package_name = scenario_json[APIPostKeys.PACKAGE_NAME]
             else:
-                possible_packages = self.scribe.getScenPackagesForScenario(
-                    userId=self.user_id, scenCode=model_scenario_code)
+                possible_packages = self.scribe.get_scen_packages_for_scenario(
+                    user_id=self.user_id, scen_code=model_scenario_code)
                 possible_packages.extend(
-                    self.scribe.getScenPackagesForScenario(
-                        userId=PUBLIC_USER, scenCode=model_scenario_code))
+                    self.scribe.get_scen_packages_for_scenario(
+                        user_id=PUBLIC_USER, scen_code=model_scenario_code))
 
                 scenario_package = None
                 # Find first scenario package that has scenarios matching the
@@ -449,13 +450,13 @@ class BoomPoster:
                         raise LmHTTPError(
                             HTTPStatus.BAD_REQUEST,
                             'Scenario package metadata could not be found')
-                    user = self.scribe.findUser(userId=self.user_id)
+                    user = self.scribe.find_user(user_id=self.user_id)
                     user_email = user.email
 
                     filler = SPFiller(
                         scen_package_meta, self.user_id, email=user_email)
-                    filler.initializeMe()
-                    filler.catalogScenPackages()
+                    filler.initialize_me()
+                    filler.catalog_scen_packages()
 
                 if scenario_package is None:
                     raise LmHTTPError(
@@ -558,6 +559,6 @@ class BoomPoster:
         logname = '{}.{}'.format(scriptname, timestamp)
 
         filler = BOOMFiller(filename, logname=logname)
-        gridset = filler.initBoom()
+        gridset = filler.init_boom()
 
         return gridset

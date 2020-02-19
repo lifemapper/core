@@ -22,19 +22,24 @@ STATIC_PACKAGE_PATH = os.path.join(APP_PATH, PACKAGING_DIR)
 MAX_PROJECTIONS = 1000
 
 
-# HTTP Methods
+# .............................................................................
 class HTTPMethod(Enum):
+    """Constant class for HTTP methods
+    """
     DELETE = 'DELETE'
     GET = 'GET'
     POST = 'POST'
     PUT = 'PUT'
 
 
-def sci_name_prep(x):
+# .............................................................................
+def sci_name_prep(name):
+    """Prepare scientific name
+    """
     strip_chars = [' ', '+', '%20', ',', '%2C']
-    for c in strip_chars:
-        x = x.replace(c, '')
-    return x[:20]
+    for strip_chr in strip_chars:
+        name = name.replace(strip_chr, '')
+    return name[:20]
 
 
 # This constant is used for processing query parameters.  If no 'processIn'
@@ -48,31 +53,31 @@ QP_PROCESS_KEY = 'process_in'
 
 QUERY_PARAMETERS = {
     'afterstatus': {
-        QP_NAME_KEY: 'afterStatus',
+        QP_NAME_KEY: 'after_status',
         QP_PROCESS_KEY: int
     },
     'aftertime': {
-        QP_NAME_KEY: 'afterTime',
+        QP_NAME_KEY: 'after_time',
         QP_PROCESS_KEY: get_mjd_time_from_iso_8601
     },
     'agent': {
         QP_NAME_KEY: 'agent'
     },
     'algorithmcode': {
-        QP_NAME_KEY: 'algorithmCode',
+        QP_NAME_KEY: 'algorithm_code',
     },
     'altpredcode': {
-        QP_NAME_KEY: 'altPredCode'
+        QP_NAME_KEY: 'alt_pred_code'
     },
     'archivename': {
-        QP_NAME_KEY: 'archiveName'
+        QP_NAME_KEY: 'archive_name'
     },
     'beforestatus': {
-        QP_NAME_KEY: 'beforeStatus',
+        QP_NAME_KEY: 'before_status',
         QP_PROCESS_KEY: int
     },
     'beforetime': {
-        QP_NAME_KEY: 'beforeTime',
+        QP_NAME_KEY: 'before_time',
         QP_PROCESS_KEY: get_mjd_time_from_iso_8601
     },
     'bbox': {
@@ -84,17 +89,17 @@ QUERY_PARAMETERS = {
         QP_NAME_KEY: 'bgcolor',
     },
     'canonicalname': {
-        QP_NAME_KEY: 'canonicalName'
+        QP_NAME_KEY: 'canonical_name'
     },
     'catalognumber': {
-        QP_NAME_KEY: 'catalogNumber'
+        QP_NAME_KEY: 'catalog_number'
     },
     'cellsides': {
-        QP_NAME_KEY: 'cellSides',
+        QP_NAME_KEY: 'cell_sides',
         QP_PROCESS_KEY: int
     },
     'cellsize': {
-        QP_NAME_KEY: 'cellSize',
+        QP_NAME_KEY: 'cell_size',
         QP_PROCESS_KEY: float
     },
     'collection': {
@@ -111,57 +116,57 @@ QUERY_PARAMETERS = {
         QP_NAME_KEY: 'crs'
     },
     'datecode': {
-        QP_NAME_KEY: 'dateCode'
+        QP_NAME_KEY: 'date_code'
     },
     'detail': {
         QP_NAME_KEY: 'detail',
         QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
     },
     'displayname': {
-        QP_NAME_KEY: 'displayName'
+        QP_NAME_KEY: 'display_name'
     },
     'docalc': {
-        QP_NAME_KEY: 'doCalc',
+        QP_NAME_KEY: 'do_calc',
         QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
     },
     'domcpa': {
-        QP_NAME_KEY: 'doMcpa',
+        QP_NAME_KEY: 'do_mcpa',
         QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
     },
     'envcode': {
-        QP_NAME_KEY: 'envCode'
+        QP_NAME_KEY: 'env_code'
     },
     'envtypeid': {
-        QP_NAME_KEY: 'envTypeId',
+        QP_NAME_KEY: 'env_type_id',
         QP_PROCESS_KEY: int
     },
     'epsgcode': {
-        QP_NAME_KEY: 'epsgCode',
+        QP_NAME_KEY: 'epsg_code',
         QP_PROCESS_KEY: int
     },
     'exceptions': {
         QP_NAME_KEY: 'exceptions'
     },
     'filename': {
-        QP_NAME_KEY: 'fileName'
+        QP_NAME_KEY: 'file_name'
     },
     'fillpoints': {
-        QP_NAME_KEY: 'fillPoints',
+        QP_NAME_KEY: 'fill_points',
         QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
     },
     'format': {
         # TODO: Forward to respFormat since format is reserved
-        QP_NAME_KEY: 'respFormat',
+        QP_NAME_KEY: 'format_',
     },
     'gcmcode': {
-        QP_NAME_KEY: 'gcmCode',
+        QP_NAME_KEY: 'gcm_code',
     },
     'gridsetid': {
-        QP_NAME_KEY: 'gridSetId',
+        QP_NAME_KEY: 'gridset_id',
         QP_PROCESS_KEY: int
     },
     'hasbranchlengths': {
-        QP_NAME_KEY: 'hasBranchLengths',
+        QP_NAME_KEY: 'has_branch_lengths',
         QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
     },
     'height': {
@@ -175,19 +180,19 @@ QUERY_PARAMETERS = {
         QP_NAME_KEY: 'ident2'
     },
     'includecsvs': {
-        QP_NAME_KEY: 'includeCSVs',
+        QP_NAME_KEY: 'include_csvs',
         QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
     },
     'includesdms': {
-        QP_NAME_KEY: 'includeSDMs',
+        QP_NAME_KEY: 'include_sdms',
         QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
     },
     'isbinary': {
-        QP_NAME_KEY: 'isBinary',
+        QP_NAME_KEY: 'is_binary',
         QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
     },
     'isultrametric': {
-        QP_NAME_KEY: 'isUltrametric',
+        QP_NAME_KEY: 'is_ultrametric',
         QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
     },
     'keyword': {
@@ -202,7 +207,7 @@ QUERY_PARAMETERS = {
         # QP_PROCESS_KEY: lambda x: [i for i in x.split(',')]
     },
     'layertype': {
-        QP_NAME_KEY: 'layerType',
+        QP_NAME_KEY: 'layer_type',
         QP_PROCESS_KEY: int
     },
     'limit': {
@@ -210,34 +215,34 @@ QUERY_PARAMETERS = {
         QP_PROCESS_KEY: lambda x: max(1, int(x))  # Integer, minimum is one
     },
     'map': {
-        QP_NAME_KEY: 'mapName'
+        QP_NAME_KEY: 'map_name'
     },
     'mapname': {
-        QP_NAME_KEY: 'mapName'
+        QP_NAME_KEY: 'map_name'
     },
     'matrixtype': {
-        QP_NAME_KEY: 'matrixType',
+        QP_NAME_KEY: 'matrix_type',
         QP_PROCESS_KEY: int
     },
     'metadata': {
         QP_NAME_KEY: 'metadata'
     },
     'metastring': {
-        QP_NAME_KEY: 'metaString'
+        QP_NAME_KEY: 'meta_string'
     },
     'modelscenariocode': {
-        QP_NAME_KEY: 'modelScenarioCode'
+        QP_NAME_KEY: 'model_scenario_code'
     },
     'minimumnumberofpoints': {
-        QP_NAME_KEY: 'minimumNumberOfPoints',
+        QP_NAME_KEY: 'minimum_number_of_points',
         QP_PROCESS_KEY: lambda x: max(1, int(x))  # Integer, minimum is one
     },
     'numpermutations': {
-        QP_NAME_KEY: 'numPermutations',
+        QP_NAME_KEY: 'num_permutations',
         QP_PROCESS_KEY: int
     },
     'occurrencesetid': {
-        QP_NAME_KEY: 'occurrenceSetId',
+        QP_NAME_KEY: 'occurrence_set_id',
         QP_PROCESS_KEY: int
     },
     'operation': {
@@ -248,45 +253,45 @@ QUERY_PARAMETERS = {
         QP_PROCESS_KEY: lambda x: max(0, int(x))  # Integer, minimum is zero
     },
     'pathbiogeoid': {
-        QP_NAME_KEY: 'pathBioGeoId'
+        QP_NAME_KEY: 'path_biogeo_id'
     },
     'pathgridsetid': {
-        QP_NAME_KEY: 'pathGridSetId'
+        QP_NAME_KEY: 'path_gridset_id'
     },
     'pathlayerid': {
-        QP_NAME_KEY: 'pathLayerId'
+        QP_NAME_KEY: 'path_layer_id'
     },
     'pathmatrixid': {
-        QP_NAME_KEY: 'pathMatrixId'
+        QP_NAME_KEY: 'path_matrix_id'
     },
     'pathoccsetid': {
-        QP_NAME_KEY: 'pathOccSetId'
+        QP_NAME_KEY: 'path_occset_id'
     },
     'pathprojectionid': {
-        QP_NAME_KEY: 'pathProjectionId'
+        QP_NAME_KEY: 'path_projection_id'
     },
     'pathscenarioid': {
-        QP_NAME_KEY: 'pathScenarioId'
+        QP_NAME_KEY: 'path_scenario_id'
     },
     'pathscenariopackageid': {
-        QP_NAME_KEY: 'pathScenarioPackageId'
+        QP_NAME_KEY: 'path_scenario_package_id'
     },
     'pathshapegridid': {
-        QP_NAME_KEY: 'pathShapegridId'
+        QP_NAME_KEY: 'path_shapegrid_id'
     },
     'pathtreeid': {
-        QP_NAME_KEY: 'pathTreeId'
+        QP_NAME_KEY: 'path_tree_id'
     },
     'pointmax': {
-        QP_NAME_KEY: 'pointMax',
+        QP_NAME_KEY: 'point_max',
         QP_PROCESS_KEY: int
     },
     'pointmin': {
-        QP_NAME_KEY: 'pointMin',
+        QP_NAME_KEY: 'point_min',
         QP_PROCESS_KEY: int
     },
     'projectionscenariocode': {
-        QP_NAME_KEY: 'projectionScenarioCode'
+        QP_NAME_KEY: 'projection_scenario_code'
     },
     'provider': {
         QP_NAME_KEY: 'provider'
@@ -298,24 +303,24 @@ QUERY_PARAMETERS = {
         QP_NAME_KEY: 'resolution'
     },
     'scenariocode': {
-        QP_NAME_KEY: 'scenarioCode'
+        QP_NAME_KEY: 'scenario_code'
     },
     'scenarioid': {
-        QP_NAME_KEY: 'scenarioId',
+        QP_NAME_KEY: 'scenario_id',
         QP_PROCESS_KEY: int
     },
     'scientificname': {
-        QP_NAME_KEY: 'scientificName',
+        QP_NAME_KEY: 'scientific_name',
         QP_PROCESS_KEY: sci_name_prep
     },
     'searchstring': {
-        QP_NAME_KEY: 'searchString'
+        QP_NAME_KEY: 'search_string'
     },
     'service': {
         QP_NAME_KEY: 'service'
     },
     'shapegridid': {
-        QP_NAME_KEY: 'shapegridId'
+        QP_NAME_KEY: 'shapegrid_id'
     },
     'sld': {
         QP_NAME_KEY: 'sld'
@@ -341,25 +346,25 @@ QUERY_PARAMETERS = {
         # QP_PROCESS_KEY: lambda x: [i for i in x.split(',')]
     },
     'taxonclass': {
-        QP_NAME_KEY: 'taxonClass'
+        QP_NAME_KEY: 'class_'
     },
     'taxonfamily': {
-        QP_NAME_KEY: 'taxonFamily'
+        QP_NAME_KEY: 'family'
     },
     'taxongenus': {
-        QP_NAME_KEY: 'taxonGenus'
+        QP_NAME_KEY: 'genus'
     },
     'taxonkingdom': {
-        QP_NAME_KEY: 'taxonKingdom'
+        QP_NAME_KEY: 'kingdom'
     },
     'taxonorder': {
-        QP_NAME_KEY: 'taxonOrder'
+        QP_NAME_KEY: 'order_'
     },
     'taxonphylum': {
-        QP_NAME_KEY: 'taxonPhylum'
+        QP_NAME_KEY: 'phylum'
     },
     'taxonspecies': {
-        QP_NAME_KEY: 'taxonSpecies'
+        QP_NAME_KEY: 'species'
     },
     'time': {
         QP_NAME_KEY: 'time'
@@ -372,19 +377,19 @@ QUERY_PARAMETERS = {
         QP_NAME_KEY: 'name'  # Map to 'name' for processing
     },
     'treeschema': {
-        QP_NAME_KEY: 'treeSchema'
+        QP_NAME_KEY: 'tree_schema'
     },
     'file': {
         QP_NAME_KEY: 'file'
     },
     'uploadtype': {
-        QP_NAME_KEY: 'uploadType'
+        QP_NAME_KEY: 'upload_type'
     },
     'url': {
         QP_NAME_KEY: 'url'
     },
     'user': {
-        QP_NAME_KEY: 'urlUser',
+        QP_NAME_KEY: 'url_user',
         QP_PROCESS_KEY: lambda x: x
     },
     'version': {
@@ -417,13 +422,13 @@ QUERY_PARAMETERS = {
         QP_NAME_KEY: 'email'
     },
     'firstname': {
-        QP_NAME_KEY: 'firstName'
+        QP_NAME_KEY: 'first_name'
     },
     'institution': {
         QP_NAME_KEY: 'institution'
     },
     'lastname': {
-        QP_NAME_KEY: 'lastName'
+        QP_NAME_KEY: 'last_name'
     },
     'pword': {
         QP_NAME_KEY: 'pword'
@@ -432,7 +437,7 @@ QUERY_PARAMETERS = {
         QP_NAME_KEY: 'pword1'
     },
     'userid': {
-        QP_NAME_KEY: 'userId'
+        QP_NAME_KEY: 'user_id'
     },
 }
 
@@ -441,7 +446,7 @@ KML_NAMESPACE = "http://earth.google.com/kml/2.2"
 KML_NS_PREFIX = None
 
 
-# API
+# .............................................................................
 class APIPostKeys(Enum):
     """This class contains constants for API JSON POST keys
     """

@@ -2,31 +2,31 @@
 # -*- coding: utf-8 -*-
 """This module provides REST services for shapegrids
 """
+import cherrypy
+
 from LmCommon.common.lmconstants import HTTPStatus
-from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.legion.shapegrid import Shapegrid
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
-import cherrypy
 
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('pathShapegridId')
-class ShapeGridService(LmService):
+@cherrypy.popargs('path_shapegrid_id')
+class ShapegridService(LmService):
     """Class for shapegrid service.
     """
 
     # ................................
-    def DELETE(self, pathShapegridId):
+    def DELETE(self, path_shapegrid_id):
         """Attempts to delete a shapegrid
 
         Args:
-            pathShapegridId: The id of the shapegrid to delete
+            path_shapegrid_id: The id of the shapegrid to delete
         """
-        shapegrid = self.scribe.getShapeGrid(lyrId=pathShapegridId)
-
+        shapegrid = self.scribe.get_shapegrid(lyr_id=path_shapegrid_id)
         if shapegrid is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND, 'Shapegrid not found')
@@ -34,7 +34,7 @@ class ShapeGridService(LmService):
         # If allowed to, delete
         if check_user_permission(
                 self.get_user_id(), shapegrid, HTTPMethod.DELETE):
-            success = self.scribe.deleteObject(shapegrid)
+            success = self.scribe.delete_object(shapegrid)
             if success:
                 cherrypy.response.status = HTTPStatus.NO_CONTENT
                 return
@@ -51,68 +51,69 @@ class ShapeGridService(LmService):
 
     # ................................
     @lm_formatter
-    def GET(self, pathShapegridId=None, afterTime=None, beforeTime=None,
-            cellSides=None, cellSize=None, epsgCode=None, limit=100, offset=0,
-            urlUser=None, **params):
+    def GET(self, path_shapegrid_id=None, after_time=None, before_time=None,
+            cell_sides=None, cell_size=None, epsg_code=None, limit=100,
+            offset=0, url_user=None, **params):
         """Perform a GET request, either list, count, or return individual.
         """
-        if pathShapegridId is None:
+        if path_shapegrid_id is None:
             return self._list_shapegrids(
-                self.get_user_id(urlUser=urlUser), afterTime=afterTime,
-                beforeTime=beforeTime, cellSides=cellSides, cellSize=cellSize,
-                epsgCode=epsgCode, limit=limit, offset=offset)
-        if pathShapegridId.lower() == 'count':
+                self.get_user_id(url_user=url_user), after_time=after_time,
+                before_time=before_time, cell_sides=cell_sides,
+                cell_size=cell_size, epsg_code=epsg_code, limit=limit,
+                offset=offset)
+        if path_shapegrid_id.lower() == 'count':
             return self._count_shapegrids(
-                self.get_user_id(urlUser=urlUser), afterTime=afterTime,
-                beforeTime=beforeTime, cellSides=cellSides, cellSize=cellSize,
-                epsgCode=epsgCode)
+                self.get_user_id(url_user=url_user), after_time=after_time,
+                before_time=before_time, cell_sides=cell_sides,
+                cell_size=cell_size, epsg_code=epsg_code)
 
         # Fallback to return individual
-        return self._get_shapegrid(pathShapegridId)
+        return self._get_shapegrid(path_shapegrid_id)
 
     # ................................
     @lm_formatter
-    def POST(self, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout,
-             **params):
+    def POST(self, name, epsg_code, cell_sides, cell_size, map_units, bbox,
+             cutout, **params):
         """Posts a new shapegrid
         """
-        shapegrid = ShapeGrid(
-            name, self.get_user_id(), epsgCode, cellSides, cellSize, mapUnits,
-            bbox)
-        updated_shapegrid = self.scribe.findOrInsertShapeGrid(
+        shapegrid = Shapegrid(
+            name, self.get_user_id(), epsg_code, cell_sides, cell_size,
+            map_units, bbox)
+        updated_shapegrid = self.scribe.find_or_insert_shapegrid(
             shapegrid, cutout=cutout)
         return updated_shapegrid
 
     # ................................
-    def _count_shapegrids(self, userId, afterTime=None, beforeTime=None,
-                          cellSides=None, cellSize=None, epsgCode=None):
+    def _count_shapegrids(self, user_id, after_time=None, before_time=None,
+                          cell_sides=None, cell_size=None, epsg_code=None):
         """Count shapegrid objects matching the specified criteria
 
         Args:
-            userId (str): The user to count shapegrids for.  Note that this may
-                not be the same user logged into the system
-            afterTime: Return shapegrids modified after this time (Modified
+            user_id (str): The user to count shapegrids for.  Note that this
+                may not be the same user logged into the system
+            after_time: Return shapegrids modified after this time (Modified
                 Julian Day)
-            beforeTime: Return shapegrids modified before this time (Modified
+            before_time: Return shapegrids modified before this time (Modified
                 Julian Day)
-            epsgCode: Return shapegrids with this EPSG code
+            epsg_code: Return shapegrids with this EPSG code
         """
-        shapegrid_count = self.scribe.countShapeGrids(
-            userId=userId, cellsides=cellSides, cellsize=cellSize,
-            afterTime=afterTime, beforeTime=beforeTime, epsg=epsgCode)
+        shapegrid_count = self.scribe.count_shapegrids(
+            user_id=user_id, cell_sides=cell_sides, cell_size=cell_size,
+            after_time=after_time, before_time=before_time, epsg=epsg_code)
         # Format return
         # Set headers
         return {'count': shapegrid_count}
 
     # ................................
-    def _get_shapegrid(self, pathShapegridId):
+    def _get_shapegrid(self, path_shapegrid_id):
         """Attempt to get a shapegrid
         """
-        shapegrid = self.scribe.getShapeGrid(lyrId=pathShapegridId)
+        shapegrid = self.scribe.get_shapegrid(lyr_id=path_shapegrid_id)
         if shapegrid is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
-                'Shapegrid {} was not found'.format(pathShapegridId))
+                'Shapegrid {} was not found'.format(path_shapegrid_id))
         if check_user_permission(
                 self.get_user_id(), shapegrid, HTTPMethod.GET):
             return shapegrid
@@ -121,29 +122,29 @@ class ShapeGridService(LmService):
         raise cherrypy.HTTPError(
             HTTPStatus.FORBIDDEN,
             'User {} does not have permission to access shapegrid {}'.format(
-                self.get_user_id(), pathShapegridId))
+                self.get_user_id(), path_shapegrid_id))
 
     # ................................
-    def _list_shapegrids(self, userId, afterTime=None, beforeTime=None,
-                         cellSides=None, cellSize=None, epsgCode=None,
+    def _list_shapegrids(self, user_id, after_time=None, before_time=None,
+                         cell_sides=None, cell_size=None, epsg_code=None,
                          limit=100, offset=0):
         """Count shapegrid objects matching the specified criteria
 
         Args:
-            userId: The user to count shapegrids for.  Note that this may not
+            user_id: The user to count shapegrids for.  Note that this may not
                 be the same user logged into the system
-            afterTime: Return shapegrids modified after this time (Modified
+            after_time: Return shapegrids modified after this time (Modified
                 Julian Day)
-            beforeTime: Return shapegrids modified before this time (Modified
+            before_time: Return shapegrids modified before this time (Modified
                 Julian Day)
-            epsgCode: Return shapegrids with this EPSG code
+            epsg_code: Return shapegrids with this EPSG code
             limit: Return this number of shapegrids, at most
             offset: Offset the returned shapegrids by this number
         """
-        shapegrid_atoms = self.scribe.listShapeGrids(
-            offset, limit, userId=userId, cellsides=cellSides,
-            cellsize=cellSize, afterTime=afterTime, beforeTime=beforeTime,
-            epsg=epsgCode)
+        shapegrid_atoms = self.scribe.list_shapegrids(
+            offset, limit, user_id=user_id, cell_sides=cell_sides,
+            cell_size=cell_size, after_time=after_time,
+            before_time=before_time, epsg=epsg_code)
         # Format return
         # Set headers
         return shapegrid_atoms

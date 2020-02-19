@@ -2,10 +2,11 @@
 """
 import json
 
+import cherrypy
+
 from LmCommon.common.lmconstants import JobStatus, LMFormat
 from LmServer.common.log import WebLogger
-from LmServer.db.borgscribe import BorgScribe
-import cherrypy
+from LmServer.db.borg_scribe import BorgScribe
 
 
 # .............................................................................
@@ -42,18 +43,18 @@ def format_gridset(gridset_id, detail=False):
         gridset_id (:obj:`int`): The gridset id to get progress for
     """
     scribe = BorgScribe(WebLogger())
-    scribe.openConnections()
+    scribe.open_connections()
 
     message = ''
-    mf_summary = scribe.summarizeMFChainsForGridset(gridset_id)
+    mf_summary = scribe.summarize_mf_chains_for_gridset(gridset_id)
     (waiting_mfs, running_mfs, complete_mfs, error_mfs, total_mfs
      ) = summarize_object_statuses(mf_summary)
 
     if detail:
-        prj_summary = scribe.summarizeSDMProjectsForGridset(gridset_id)
-        mtx_summary = scribe.summarizeMatricesForGridset(gridset_id)
-        mc_summary = scribe.summarizeMtxColumnsForGridset(gridset_id)
-        occ_summary = scribe.summarizeOccurrenceSetsForGridset(gridset_id)
+        prj_summary = scribe.summarize_sdm_projects_for_gridset(gridset_id)
+        mtx_summary = scribe.summarize_matrices_for_gridset(gridset_id)
+        mc_summary = scribe.summarize_mtx_columns_for_gridset(gridset_id)
+        occ_summary = scribe.summarize_occurrence_sets_for_gridset(gridset_id)
 
         (waiting_prjs, running_prjs, complete_prjs, error_prjs, total_prjs
          ) = summarize_object_statuses(prj_summary)
@@ -75,7 +76,7 @@ def format_gridset(gridset_id, detail=False):
             message = 'All workflows have completed'
         elif waiting_mfs == total_mfs:
             progress = 0.0
-            line_pos = scribe.countPriorityMFChains(gridset_id)
+            line_pos = scribe.count_priority_mf_chains(gridset_id)
             base_msg = 'Your project is {} in the processing queue'
             if line_pos == 0:
                 message = base_msg.format('running or next')
@@ -129,7 +130,7 @@ def format_gridset(gridset_id, detail=False):
             message = 'All workflows have completed'
         elif waiting_mfs == total_mfs:
             progress = 0.0
-            line_pos = scribe.countPriorityMFChains(gridset_id)
+            line_pos = scribe.count_priority_mf_chains(gridset_id)
             base_msg = 'Your project is {} in the processing queue'
             if line_pos == 0:
                 message = base_msg.format('running or next')
@@ -145,7 +146,7 @@ def format_gridset(gridset_id, detail=False):
         progress_dict = {
             'progress': progress
         }
-    scribe.closeConnections()
+    scribe.close_connections()
     return progress_dict
 
 
@@ -171,7 +172,7 @@ def _format_object(obj_type, obj_id, detail=False):
     """
     # Progress is JSON format, PROGRESS format is work around for accept
     #    headers
-    cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
+    cherrypy.response.headers['Content-Type'] = LMFormat.JSON.get_mime_type()
     if obj_type.lower() == 'gridset':
         return format_gridset(obj_id, detail=detail)
     raise TypeError(

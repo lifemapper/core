@@ -7,21 +7,22 @@ Todo:
 from hashlib import md5
 import json
 
+import cherrypy
+
 from LmCommon.common.lmconstants import LMFormat
 from LmServer.base.atom import Atom
-from LmServer.base.layer2 import Raster, Vector
+from LmServer.base.layer import Raster, Vector
 from LmServer.base.utilities import format_time_human
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import OGC_SERVICE_URL, LMFileType
-from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.env_layer import EnvLayer
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.lm_matrix import LMMatrix
+from LmServer.legion.occ_layer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario, ScenPackage
-from LmServer.legion.sdmproj import SDMProjection
-from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.legion.sdm_proj import SDMProjection
+from LmServer.legion.shapegrid import Shapegrid
 from LmServer.legion.tree import Tree
-import cherrypy
 
 
 # Format object method looks at object type and calls formatters appropriately
@@ -31,7 +32,7 @@ def format_atom(obj):
     """Format an Atom object into a dictionary
     """
     return {
-        'epsg': obj.epsgcode,
+        'epsg': obj.epsg_code,
         'id': obj.get_id(),
         'modificationTime': format_time_human(obj.mod_time),
         'name': obj.name,
@@ -50,21 +51,21 @@ def format_env_layer(lyr):
         * Value units
     """
     layer_dict = _get_lifemapper_metadata(
-        'environmental layer', lyr.get_id(), lyr.metadataUrl, lyr.getUserId(),
-        metadata=lyr.lyrMetadata)
-    data_url = lyr.getDataUrl()
-    min_val = lyr.minVal
-    max_val = lyr.maxVal
-    val_units = lyr.valUnits
-    data_type = type(lyr.minVal).__name__
+        'environmental layer', lyr.get_id(), lyr.metadata_url,
+        lyr.get_user_id(), metadata=lyr.lyr_metadata)
+    data_url = lyr.get_data_url()
+    min_val = lyr.min_val
+    max_val = lyr.max_val
+    val_units = lyr.val_units
+    data_type = type(lyr.min_val).__name__
     layer_dict['spatialRaster'] = _get_spatial_raster_metadata(
-        lyr.epsgcode, lyr.bbox, lyr.mapUnits, data_url, lyr.verify,
-        lyr.gdalType, lyr.dataFormat, min_val, max_val, val_units, data_type,
+        lyr.epsg_code, lyr.bbox, lyr.map_units, data_url, lyr.verify,
+        lyr.gdal_type, lyr.data_format, min_val, max_val, val_units, data_type,
         resolution=lyr.resolution)
-    layer_dict['envCode'] = lyr.envCode
-    layer_dict['gcmCode'] = lyr.gcmCode
-    layer_dict['altPredCode'] = lyr.altpredCode
-    layer_dict['dateCode'] = lyr.dateCode
+    layer_dict['env_code'] = lyr.env_code
+    layer_dict['gcm_code'] = lyr.gcm_code
+    layer_dict['alt_pred_code'] = lyr.alt_pred_code
+    layer_dict['date_code'] = lyr.date_code
 
     return layer_dict
 
@@ -74,9 +75,9 @@ def format_gridset(gridset):
     """Convert a grid set to a dictionary
     """
     gridset_dict = _get_lifemapper_metadata(
-        'gridset', gridset.get_id(), gridset.metadataUrl, gridset.getUserId(),
-        metadata=gridset.grdMetadata)
-    gridset_dict['epsg'] = gridset.epsgcode
+        'gridset', gridset.get_id(), gridset.metadata_url,
+        gridset.get_user_id(), metadata=gridset.grd_metadata)
+    gridset_dict['epsg'] = gridset.epsg_code
 
     gridset_dict['bioGeoHypotheses'] = []
     gridset_dict['grims'] = []
@@ -84,29 +85,29 @@ def format_gridset(gridset):
     gridset_dict['matrices'] = []
 
     # Bio geo hypotheses
-    for mtx in gridset.getBiogeographicHypotheses():
-        gridset_dict['bioGeoHypotheses'].append(
+    for mtx in gridset.get_biogeographic_hypotheses():
+        gridset_dict['bio_geo_hypotheses'].append(
             {
                 'id': mtx.get_id(),
-                'url': mtx.metadataUrl
+                'url': mtx.metadata_url
             }
         )
 
     # PAMs
-    for mtx in gridset.getAllPAMs():
+    for mtx in gridset.get_all_pams():
         gridset_dict['pams'].append(
             {
                 'id': mtx.get_id(),
-                'url': mtx.metadataUrl
+                'url': mtx.metadata_url
             }
         )
 
     # GRIMs
-    for mtx in gridset.getGRIMs():
+    for mtx in gridset.get_grims():
         gridset_dict['grims'].append(
             {
                 'id': mtx.get_id(),
-                'url': mtx.metadataUrl
+                'url': mtx.metadata_url
             }
         )
 
@@ -115,12 +116,12 @@ def format_gridset(gridset):
         gridset_dict['matrices'].append(format_matrix(mtx))
 
     # Shapegrid
-    gridset_dict['shapegridUrl'] = gridset.getShapegrid().metadataUrl
-    gridset_dict['shapegridId'] = gridset.shapeGridId
+    gridset_dict['shapegrid_url'] = gridset.get_shapegrid().metadata_url
+    gridset_dict['shapegrid_id'] = gridset.shapegrid_id
 
     # Tree
     if gridset.tree is not None:
-        gridset_dict['tree'] = gridset.tree.metadataUrl
+        gridset_dict['tree'] = gridset.tree.metadata_url
 
     gridset_dict['name'] = gridset.name
     gridset_dict['mod_time'] = gridset.mod_time
@@ -132,18 +133,18 @@ def format_matrix(mtx):
     """Convert a matrix object into a dictionary
     """
     matrix_dict = _get_lifemapper_metadata(
-        'matrix', mtx.get_id(), mtx.metadataUrl, mtx.getUserId(),
-        status=mtx.status, statusModTime=mtx.statusModTime,
-        metadata=mtx.mtxMetadata)
-    matrix_dict['altPredCode'] = mtx.altpredCode
-    matrix_dict['dateCode'] = mtx.dateCode
-    matrix_dict['gcmCode'] = mtx.gcmCode
-    matrix_dict['dataUrl'] = mtx.getDataUrl()
-    matrix_dict['matrixType'] = mtx.matrixType
-    matrix_dict['parentMetadataUrl'] = mtx.parentMetadataUrl
-    matrix_dict['gridsetId'] = mtx.gridsetId
-    matrix_dict['gridsetUrl'] = mtx.gridsetUrl
-    matrix_dict['gridsetName'] = mtx.gridsetName
+        'matrix', mtx.get_id(), mtx.metadata_url, mtx.get_user_id(),
+        status=mtx.status, status_mod_time=mtx.status_mod_time,
+        metadata=mtx.mtx_metadata)
+    matrix_dict['alt_pred_code'] = mtx.alt_pred_code
+    matrix_dict['date_code'] = mtx.date_code
+    matrix_dict['gcm_code'] = mtx.gcm_code
+    matrix_dict['data_url'] = mtx.get_data_url()
+    matrix_dict['matrix_type'] = mtx.matrix_type
+    matrix_dict['parent_metadata_url'] = mtx.parent_metadata_url
+    matrix_dict['gridset_id'] = mtx.gridset_id
+    matrix_dict['gridset_url'] = mtx.gridset_url
+    matrix_dict['gridset_name'] = mtx.gridset_name
 
     return matrix_dict
 
@@ -157,18 +158,19 @@ def format_occurrence_set(occ):
         * Taxon id
     """
     occ_dict = _get_lifemapper_metadata(
-        'occurrence set', occ.get_id(), occ.metadataUrl, occ.getUserId(),
-        status=occ.status, statusModTime=occ.statusModTime,
-        metadata=occ.lyrMetadata)
-    map_name = EarlJr().createBasename(
-        LMFileType.SDM_MAP, objCode=occ.get_id(), usr=occ.getUserId(),
-        epsg=occ.epsgcode)
+        'occurrence set', occ.get_id(), occ.metadata_url, occ.get_user_id(),
+        status=occ.status, status_mod_time=occ.status_mod_time,
+        metadata=occ.lyr_metadata)
+    map_name = EarlJr().create_basename(
+        LMFileType.SDM_MAP, obj_code=occ.get_id(), usr=occ.get_user_id(),
+        epsg=occ.epsg_code)
     occ_dict['map'] = _get_map_metadata(OGC_SERVICE_URL, map_name, occ.name)
-    data_url = occ.getDataUrl()
+    data_url = occ.get_data_url()
     occ_dict['spatialVector'] = _get_spatial_vector_metadata(
-        occ.epsgcode, occ.bbox, occ.mapUnits, data_url, occ.verify,
-        occ.ogrType, occ.dataFormat, occ.queryCount, resolution=occ.resolution)
-    occ_dict['speciesName'] = occ.displayName
+        occ.epsg_code, occ.bbox, occ.map_units, data_url, occ.verify,
+        occ.ogr_type, occ.data_format, occ.query_count,
+        resolution=occ.resolution)
+    occ_dict['speciesName'] = occ.display_name
     occ_dict['squid'] = occ.squid
     if len(occ.features) > 0:
         occ_dict['features'] = [f.getAttributes() for f in occ.features]
@@ -192,45 +194,45 @@ def format_projection(prj):
         * Occurrence set metadata url
     """
     prj_dict = _get_lifemapper_metadata(
-        'projection', prj.get_id(), prj.metadataUrl, prj.getUserId(),
-        status=prj.status, statusModTime=prj.statusModTime,
-        metadata=prj.lyrMetadata)
-    occ = prj._occurrenceSet
-    map_name = EarlJr().createBasename(
-        LMFileType.SDM_MAP, objCode=occ.get_id(), usr=occ.getUserId(),
-        epsg=occ.epsgcode)
+        'projection', prj.get_id(), prj.metadata_url, prj.get_user_id(),
+        status=prj.status, status_mod_time=prj.status_mod_time,
+        metadata=prj.lyr_metadata)
+    occ = prj._occurrence_set
+    map_name = EarlJr().create_basename(
+        LMFileType.SDM_MAP, obj_code=occ.get_id(), usr=occ.get_user_id(),
+        epsg=occ.epsg_code)
     prj_dict['map'] = _get_map_metadata(OGC_SERVICE_URL, map_name, prj.name)
-    data_url = prj.getDataUrl()
+    data_url = prj.get_data_url()
     min_val = 0
     max_val = 1
     val_units = 'prediction'
     prj_dict['spatialRaster'] = _get_spatial_raster_metadata(
-        prj.epsgcode, prj.bbox, prj.mapUnits, data_url, prj.verify,
-        prj.gdalType, prj.dataFormat, min_val, max_val, val_units,
-        prj.gdalType, prj.resolution)
+        prj.epsg_code, prj.bbox, prj.map_units, data_url, prj.verify,
+        prj.gdal_type, prj.data_format, min_val, max_val, val_units,
+        prj.gdal_type, prj.resolution)
 
     prj_dict['algorithm'] = {
-        'code': prj.algorithmCode,
+        'code': prj.algorithm_code,
         'parameters': prj._algorithm._parameters
     }
 
-    prj_dict['modelScenario'] = {
-        'code': prj.modelScenario.code,
-        'id': prj.modelScenario.get_id(),
-        'metadataUrl': prj.modelScenario.metadataUrl
+    prj_dict['model_scenario'] = {
+        'code': prj.model_scenario.code,
+        'id': prj.model_scenario.get_id(),
+        'metadata_url': prj.model_scenario.metadata_url
     }
 
-    prj_dict['projectionScenario'] = {
-        'code': prj.projScenario.code,
-        'id': prj.projScenario.get_id(),
-        'metadataUrl': prj.projScenario.metadataUrl
+    prj_dict['projection_scenario'] = {
+        'code': prj.proj_scenario.code,
+        'id': prj.proj_scenario.get_id(),
+        'metadata_url': prj.proj_scenario.metadata_url
     }
 
-    prj_dict['speciesName'] = prj.speciesName
+    prj_dict['species_name'] = prj.species_name
     prj_dict['squid'] = prj.squid
-    prj_dict['occurrenceSet'] = {
-        'id': prj.getOccurrenceSetId(),
-        'metadataUrl': prj._occurrenceSet.metadataUrl
+    prj_dict['occurrence_set'] = {
+        'id': prj.get_occurrence_set_id(),
+        'metadata_url': prj._occurrence_set.metadata_url
     }
 
     return prj_dict
@@ -247,16 +249,16 @@ def format_raster_layer(lyr):
         * Value units
     """
     layer_dict = _get_lifemapper_metadata(
-        'raster layer', lyr.get_id(), lyr.metadataUrl, lyr.getUserId(),
-        metadata=lyr.lyrMetadata)
-    data_url = lyr.getDataUrl()
-    min_val = lyr.minVal
-    max_val = lyr.maxVal
-    val_units = lyr.valUnits
-    data_type = type(lyr.minVal).__name__
-    layer_dict['spatialRaster'] = _get_spatial_raster_metadata(
-        lyr.epsgcode, lyr.bbox, lyr.mapUnits, data_url, lyr.verify,
-        lyr.gdalType, lyr.dataFormat, min_val, max_val, val_units, data_type,
+        'raster layer', lyr.get_id(), lyr.metadata_url, lyr.get_user_id(),
+        metadata=lyr.lyr_metadata)
+    data_url = lyr.get_data_url()
+    min_val = lyr.min_val
+    max_val = lyr.max_val
+    val_units = lyr.val_units
+    data_type = type(lyr.min_val).__name__
+    layer_dict['spatial_raster'] = _get_spatial_raster_metadata(
+        lyr.epsg_code, lyr.bbox, lyr.map_units, data_url, lyr.verify,
+        lyr.gdal_type, lyr.data_format, min_val, max_val, val_units, data_type,
         resolution=lyr.resolution)
 
     return layer_dict
@@ -271,19 +273,19 @@ def format_scenario(scn):
         * GCM / alt pred code / etc
     """
     scenario_dict = _get_lifemapper_metadata(
-        'scenario', scn.get_id(), scn.metadataUrl, scn.getUserId(),
-        metadata=scn.scenMetadata)
-    map_name = EarlJr().createBasename(
-        LMFileType.SCENARIO_MAP, objCode=scn.code, usr=scn.getUserId(),
-        epsg=scn.epsgcode)
+        'scenario', scn.get_id(), scn.metadata_url, scn.get_user_id(),
+        metadata=scn.scen_metadata)
+    map_name = EarlJr().create_basename(
+        LMFileType.SCENARIO_MAP, obj_code=scn.code, usr=scn.get_user_id(),
+        epsg=scn.epsg_code)
     scenario_dict['map'] = _get_map_metadata(
         OGC_SERVICE_URL, map_name, scn.layers)
     scenario_dict['spatial'] = _get_spatial_metadata(
-        scn.epsgcode, scn.bbox, scn.mapUnits, scn.resolution)
+        scn.epsg_code, scn.bbox, scn.map_units, scn.resolution)
 
     scn_layers = []
     for lyr in scn.layers:
-        scn_layers.append(lyr.metadataUrl)
+        scn_layers.append(lyr.metadata_url)
     scenario_dict['layers'] = scn_layers
     scenario_dict['code'] = scn.code
 
@@ -295,8 +297,8 @@ def format_scenario_package(scen_package):
     """Converts a scenario package object into a dictionary
     """
     scen_package_dict = _get_lifemapper_metadata(
-        'scenario package', scen_package.get_id(), scen_package.metadataUrl,
-        scen_package.getUserId(), metadata=scen_package.scenpkgMetadata)
+        'scenario package', scen_package.get_id(), scen_package.metadata_url,
+        scen_package.get_user_id(), metadata=scen_package.scen_pkg_metadata)
     scen_package_dict['name'] = scen_package.name
     scen_package_dict['scenarios'] = [
         format_scenario(scn) for (_, scn) in scen_package.scenarios.items()]
@@ -308,16 +310,17 @@ def format_shapegrid(shapegrid):
     """Convert a shapegrid into a dictionary
     """
     shapegrid_dict = _get_lifemapper_metadata(
-        'shapegrid', shapegrid.get_id(), shapegrid.metadataUrl,
-        shapegrid.getUserId(), status=shapegrid.status,
-        statusModTime=shapegrid.statusModTime, metadata=shapegrid.lyrMetadata)
+        'shapegrid', shapegrid.get_id(), shapegrid.metadata_url,
+        shapegrid.get_user_id(), status=shapegrid.status,
+        status_mod_time=shapegrid.status_mod_time,
+        metadata=shapegrid.lyr_metadata)
     shapegrid_dict['spatialVector'] = _get_spatial_vector_metadata(
-        shapegrid.epsgcode, shapegrid.bbox, shapegrid.mapUnits,
-        shapegrid.getDataUrl(), shapegrid.verify, shapegrid.ogrType,
-        shapegrid.dataFormat, shapegrid.featureCount,
+        shapegrid.epsg_code, shapegrid.bbox, shapegrid.map_units,
+        shapegrid.get_data_url(), shapegrid.verify, shapegrid.ogr_type,
+        shapegrid.data_format, shapegrid.feature_count,
         resolution=shapegrid.resolution)
-    shapegrid_dict['cellSides'] = shapegrid.cellsides
-    shapegrid_dict['cellSize'] = shapegrid.cellsize
+    shapegrid_dict['cell_sides'] = shapegrid.cell_sides
+    shapegrid_dict['cell_size'] = shapegrid.cell_size
 
     return shapegrid_dict
 
@@ -330,10 +333,10 @@ def format_tree(tree):
         * CJG - Add more tree metadata.  Check notes from Ryan conversation
     """
     tree_dict = _get_lifemapper_metadata(
-        'tree', tree.get_id(), tree.metadataUrl, tree.getUserId(),
-        metadata=tree.treeMetadata)
-    tree_dict['ultrametric'] = tree.isUltrametric()
-    tree_dict['binary'] = tree.isBinary()
+        'tree', tree.get_id(), tree.metadata_url, tree.get_user_id(),
+        metadata=tree.tree_metadata)
+    tree_dict['ultrametric'] = tree.is_ultrametric()
+    tree_dict['binary'] = tree.is_binary()
     return tree_dict
 
 
@@ -342,12 +345,13 @@ def format_vector(vector_layer):
     """Convert a vector into a dictionary
     """
     vector_dict = _get_lifemapper_metadata(
-        'Vector Layer', vector_layer.get_id(), vector_layer.metadataUrl,
-        vector_layer.getUserId(), metadata=vector_layer.lyrMetadata)
+        'Vector Layer', vector_layer.get_id(), vector_layer.metadata_url,
+        vector_layer.get_user_id(), metadata=vector_layer.lyr_metadata)
     vector_dict['spatialVector'] = _get_spatial_vector_metadata(
-        vector_layer.epsgcode, vector_layer.bbox, vector_layer.mapUnits,
-        vector_layer.getDataUrl(), vector_layer.verify, vector_layer.ogrType,
-        vector_layer.dataFormat, vector_layer.featureCount)
+        vector_layer.epsg_code, vector_layer.bbox, vector_layer.map_units,
+        vector_layer.get_data_url(), vector_layer.verify,
+        vector_layer.ogr_type, vector_layer.data_format,
+        vector_layer.feature_count)
 
     return vector_dict
 
@@ -370,7 +374,7 @@ def json_object_formatter(obj):
 def _format_object(obj):
     """Helper method to format an individual object based on its type
     """
-    cherrypy.response.headers['Content-Type'] = LMFormat.JSON.getMimeType()
+    cherrypy.response.headers['Content-Type'] = LMFormat.JSON.get_mime_type()
     if isinstance(obj, dict):
         return obj
     if isinstance(obj, Atom):
@@ -391,7 +395,7 @@ def _format_object(obj):
         return format_gridset(obj)
     if isinstance(obj, LMMatrix):
         return format_matrix(obj)
-    if isinstance(obj, ShapeGrid):
+    if isinstance(obj, Shapegrid):
         return format_shapegrid(obj)
     if isinstance(obj, Tree):
         return format_tree(obj)
@@ -417,7 +421,7 @@ def _get_lifemapper_metadata(object_type, lm_id, url, user_id, status=None,
     if status is not None:
         lm_dict['status'] = status
     if status_mod_time is not None:
-        lm_dict['statusModTime'] = format_time_human(status_mod_time)
+        lm_dict['status_mod_time'] = format_time_human(status_mod_time)
         lm_dict['etag'] = md5('{}-{}'.format(url, status_mod_time)).hexdigest()
     if metadata is not None:
         lm_dict['metadata'] = metadata
@@ -441,7 +445,7 @@ def _get_map_metadata(base_url, map_name, layers):
         lyrs = []
         for lyr in layers:
             lyrs.append({
-                'metadataUrl': lyr.metadataUrl,
+                'metadata_url': lyr.metadata_url,
                 'layerName': lyr.name
             })
         map_dict['layers'] = lyrs
@@ -462,7 +466,7 @@ def _get_spatial_metadata(epsg, bbox, map_units, resolution=None):
     spatial_dict = {
         'epsg': epsg,
         'bbox': bbox,
-        'mapUnits': map_units
+        'map_units': map_units
     }
     if resolution is not None:
         spatial_dict['resolution'] = resolution
@@ -480,14 +484,14 @@ def _get_spatial_raster_metadata(epsg, bbox, map_units, data_url, sha256_val,
     """
     spatial_raster_dict = _get_spatial_metadata(
         epsg, bbox, map_units, resolution=resolution)
-    spatial_raster_dict['dataUrl'] = data_url
+    spatial_raster_dict['data_url'] = data_url
     spatial_raster_dict['sha256'] = sha256_val
-    spatial_raster_dict['gdalType'] = gdal_type
-    spatial_raster_dict['dataFormat'] = data_format
-    spatial_raster_dict['minVal'] = min_val
-    spatial_raster_dict['maxVal'] = max_val
-    spatial_raster_dict['valueUnits'] = val_units
-    spatial_raster_dict['dataType'] = data_type
+    spatial_raster_dict['gdal_type'] = gdal_type
+    spatial_raster_dict['data_format'] = data_format
+    spatial_raster_dict['min_val'] = min_val
+    spatial_raster_dict['max_val'] = max_val
+    spatial_raster_dict['value_units'] = val_units
+    spatial_raster_dict['data_type'] = data_type
 
     return spatial_raster_dict
 
@@ -504,10 +508,10 @@ def _get_spatial_vector_metadata(epsg, bbox, map_units, data_url, sha256_val,
     """
     spatial_vector_dict = _get_spatial_metadata(
         epsg, bbox, map_units, resolution=resolution)
-    spatial_vector_dict['dataUrl'] = data_url
+    spatial_vector_dict['data_url'] = data_url
     spatial_vector_dict['sha256'] = sha256_val
-    spatial_vector_dict['ogrType'] = ogr_type
-    spatial_vector_dict['dataFormat'] = data_format
-    spatial_vector_dict['numFeatures'] = num_features
+    spatial_vector_dict['ogr_type'] = ogr_type
+    spatial_vector_dict['data_format'] = data_format
+    spatial_vector_dict['num_features'] = num_features
 
     return spatial_vector_dict

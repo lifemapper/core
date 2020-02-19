@@ -4,15 +4,16 @@
 """
 import os
 
+import cherrypy
+import mapscript
+
 from LmCommon.common.lmconstants import HTTPStatus
-from LmServer.common.colorpalette import colorPalette
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.color_palette import ColorPalette
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (
     LINE_SIZE, LINE_SYMBOL, MAP_TEMPLATE, MapPrefix, OCC_NAME_PREFIX,
     POINT_SIZE, POINT_SYMBOL, POLYGON_SIZE, PRJ_PREFIX)
 from LmWebServer.services.api.v2.base import LmService
-import cherrypy
-import mapscript
 
 PALETTES = (
     'gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia',
@@ -28,7 +29,7 @@ class MapService(LmService):
     # ................................
     def GET(self, map_name, bbox=None, bgcolor=None, color=None, coverage=None,
             crs=None, exceptions=None, height=None, layer=None, layers=None,
-            point=None, request=None, respFormat=None, service=None,
+            point=None, request=None, format_=None, service=None,
             sld=None, sld_body=None, srs=None, styles=None, time=None,
             transparent=None, version=None, width=None, **params):
         """GET method for all OGC services
@@ -43,7 +44,7 @@ class MapService(LmService):
             height: The height (in pixels) of the returned map
             layers: A list of layer names
             request: The request operation name to perform
-            respFormat: The desired response format, query parameter is
+            format_: The desired response format, query parameter is
                 'format'
             service: The OGC service to use (W*S)
             sld: A URL referencing a StyledLayerDescriptor XML file which
@@ -61,10 +62,11 @@ class MapService(LmService):
         """
         self.map_name = map_name
         earl_jr = EarlJr(scribe=self.scribe)
-        map_file_name = earl_jr.getMapFilenameFromMapname(map_name)
+        map_file_name = earl_jr.get_map_filename_from_map_name(map_name)
 
         if not os.path.exists(map_file_name):
-            map_svc = self.scribe.getMapServiceFromMapFilename(map_file_name)
+            map_svc = self.scribe.get_map_service_from_map_filename(
+                map_file_name)
 
             if map_svc is not None and map_svc.count > 0:
                 map_svc.writeMap(MAP_TEMPLATE)
@@ -82,7 +84,7 @@ class MapService(LmService):
             ('layers', layers),
             ('point', point),
             ('request', request),
-            ('format', respFormat),
+            ('format', format_),
             ('service', service),
             ('sld', sld),
             ('sld_body', sld_body),
@@ -180,7 +182,7 @@ class MapService(LmService):
                     'STYLE COLOR {} {} {} END'.format(clr[0], clr[1], clr[2]))
             else:
                 palette_name = self._get_palette_name(color)
-                pal = colorPalette(n=maplyr.numclasses + 1, ptype=palette_name)
+                pal = ColorPalette(n=maplyr.numclasses + 1, ptype=palette_name)
                 for i in range(maplyr.numclasses):
                     stl = maplyr.getClass(i).getStyle(0)
                     clr = pal[i + 1]
@@ -283,18 +285,18 @@ class MapService(LmService):
     # ................................
     def _get_rgb(self, colorstring):
         if colorstring in PALETTES:
-            pal = colorPalette(n=2, ptype=colorstring)
+            pal = ColorPalette(n=2, ptype=colorstring)
             return pal[1]
 
         return self._html_color_to_rgb(colorstring)
 
     # ................................
-    def _html_color_to_rgb(self, colorstring):
+    def _html_color_to_rgb(self, color_string):
         """ convert #RRGGBB to an (R, G, B) tuple (integers) """
-        colorstring = self._check_html_color(colorstring)
-        if colorstring is None:
-            colorstring = '#777777'
-        r, g, b = colorstring[1:3], colorstring[3:5], colorstring[5:]
+        color_string = self._check_html_color(color_string)
+        if color_string is None:
+            color_string = '#777777'
+        r, g, b = color_string[1:3], color_string[3:5], color_string[5:]
         r, g, b = [int(n, 16) for n in (r, g, b)]
         return (r, g, b)
 
@@ -326,10 +328,10 @@ class MapService(LmService):
         return color_string
 
     # ................................
-    def _get_palette_name(self, colorstring):
-        if colorstring in PALETTES:
-            return colorstring
-        (r, g, b) = self._html_color_to_rgb(colorstring)
+    def _get_palette_name(self, color_string):
+        if color_string in PALETTES:
+            return color_string
+        (r, g, b) = self._html_color_to_rgb(color_string)
         if (r > g and r > b):
             return 'red'
         elif (g > r and g > b):
