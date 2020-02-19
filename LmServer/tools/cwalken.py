@@ -437,7 +437,7 @@ class ChristopherWalken(LMObject):
                 raise LMError('Failed to retrieve layer {} for user {}'
                               .format(mask_layer_name, userId))
             model_mask_base = {
-                RegistryKey.REGION_LAYER_PATH : mask_layer.getDLocation(),
+                RegistryKey.REGION_LAYER_PATH : mask_layer.get_dlocation(),
                 RegistryKey.BUFFER : proc_params[PRE_PROCESS_KEY][MASK_KEY][
                     BUFFER_KEY],
                 RegistryKey.METHOD : MaskMethod.HULL_REGION_INTERSECT}
@@ -650,7 +650,7 @@ class ChristopherWalken(LMObject):
             if num_comps > 0:
                 # Write the sweep config file
                 species_config_filename = os.path.join(
-                    os.path.dirname(occ.getDLocation()),
+                    os.path.dirname(occ.get_dlocation()),
                     'species_config_{}{}'.format(
                         occ.get_id(), LMFormat.JSON.ext))
                 sweep_config.save_config(species_config_filename)
@@ -689,7 +689,7 @@ class ChristopherWalken(LMObject):
     # ...............................
     def _doComputeSDM(self, occ, prjs, mtxcols):
 #         doSDM = self._doResetOcc(occ.status, occ.statusModTime, 
-#                                  occ.getDLocation(), occ.getRawDLocation())
+#                                  occ.get_dlocation(), occ.getRawDLocation())
         # occ is initalized by occwoc if ready for reset, check only status here
         doSDM = (occ.status == JobStatus.INITIALIZE)
         if not doSDM:
@@ -717,7 +717,7 @@ class ChristopherWalken(LMObject):
             # TODO: replace metadata filename with metadata dict in self.columnMeta?
             sweep_config.add_occurrence_set(
                 occ.processType, occ.get_id(), occ.getRawDLocation(),
-                occ.getDLocation(), occ.getDLocation(largeFile=True),
+                occ.get_dlocation(), occ.get_dlocation(largeFile=True),
                 POINT_COUNT_MAX, metadata=rawmeta_dloc,
                 delimiter=self.occ_delimiter)
 #                 POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
@@ -727,11 +727,11 @@ class ChristopherWalken(LMObject):
                 model_mask = self.model_mask_base.copy()
                 model_mask[
                     RegistryKey.OCCURRENCE_SET_PATH
-                    ] = prj.occurrenceSet.getDLocation()
+                    ] = prj.occurrenceSet.get_dlocation()
                 projection_mask = {
                     RegistryKey.METHOD : MaskMethod.BLANK_MASK,
                     RegistryKey.TEMPLATE_LAYER_PATH : prj.projScenario.layers[
-                        0].getDLocation()
+                        0].get_dlocation()
                 }
             else:
                 model_mask = None
@@ -746,9 +746,9 @@ class ChristopherWalken(LMObject):
 
             sweep_config.add_projection(
                 prj.processType, prj.get_id(), prj.getOccurrenceSetId(),
-                prj.occurrenceSet.getDLocation(),
+                prj.occurrenceSet.get_dlocation(),
                 alg, prj.modelScenario, prj.projScenario,
-                prj.getDLocation(), prj.getProjPackageFilename(),
+                prj.get_dlocation(), prj.getProjPackageFilename(),
                 model_mask=model_mask,
                 projection_mask=projection_mask,
                 scale_parameters=scale_parameters,
@@ -758,7 +758,7 @@ class ChristopherWalken(LMObject):
             pav_filename = os.path.join(
                 'pavs', 'pav_{}{}'.format(mtxcol.get_id(), LMFormat.MATRIX.ext))
             sweep_config.add_pav_intersect(
-                 mtxcol.shapegrid.getDLocation(),
+                 mtxcol.shapegrid.get_dlocation(),
                  mtxcol.get_id(), prj.get_id(), pav_filename,
                  prj.squid,
                  mtxcol.intersectParams[

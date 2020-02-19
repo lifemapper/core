@@ -167,7 +167,7 @@ class MattDaemon(Daemon):
         mfs = []
         for mf_obj in raw_mfs:
             # New filename
-            orig_loc = mf_obj.getDLocation()
+            orig_loc = mf_obj.get_dlocation()
             new_loc = os.path.join(self.workspace, os.path.basename(orig_loc))
 
             # Attempt to move the file to the workspace if needed
@@ -416,7 +416,7 @@ class MattDaemon(Daemon):
 
         # Delete makeflow
         if delete_makeflow:
-            orig_mf = mf_obj.getDLocation()
+            orig_mf = mf_obj.get_dlocation()
             self.scribe.deleteObject(mf_obj)
             # Remove original makeflow file
             try:

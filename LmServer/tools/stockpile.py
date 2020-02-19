@@ -124,7 +124,7 @@ class Stockpile(LMObject):
             if (ProcessType.isOccurrence(ptype) and
                     os.path.getsize(file_names[0]) > 0):
                 # Move data file
-                base_out_dir = os.path.dirname(obj.getDLocation())
+                base_out_dir = os.path.dirname(obj.get_dlocation())
                 for filename in glob.glob(
                         '{}.*'.format(os.path.splitext(file_names[0])[0])):
                     shutil.copy(filename, base_out_dir)
@@ -134,19 +134,19 @@ class Stockpile(LMObject):
                     shutil.copy(big_f_name, obj.getDlocation(largeFile=True))
             elif ProcessType.isProject(ptype) and \
                     os.path.getsize(file_names[0]) > 0:
-                shutil.copy(file_names[0], obj.getDLocation())
+                shutil.copy(file_names[0], obj.get_dlocation())
                 shutil.copy(file_names[1], obj.getProjPackageFilename())
             elif ProcessType.isMatrix(ptype) and \
                     os.path.getsize(file_names[0]) > 0:
                 if metadata is not None:
                     obj.addMtxMetadata(metadata)
-                if os.path.exists(obj.getDLocation()):
-                    os.remove(obj.getDLocation())
-                shutil.copy(file_names[0], obj.getDLocation())
+                if os.path.exists(obj.get_dlocation()):
+                    os.remove(obj.get_dlocation())
+                shutil.copy(file_names[0], obj.get_dlocation())
         except Exception as err:
             raise LMError(
                 'Exception copying primary {} or an output, ({})'.format(
-                    obj.getDLocation(), str(err)), err)
+                    obj.get_dlocation(), str(err)), err)
 
     # ..................................
     @classmethod
@@ -155,7 +155,7 @@ class Stockpile(LMObject):
         """
         # Update verify hash and modtime for layers
         try:
-            obj.updateLayer()
+            obj.update_layer()
         except Exception:
             pass
 

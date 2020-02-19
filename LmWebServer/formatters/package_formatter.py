@@ -272,11 +272,11 @@ def _add_sdms_to_package(zip_f, projections, scribe):
         occ = prj.occurrenceSet
         prj_dir = os.path.join(SDM_PRJ_DIR, occ.displayName)
         # Make sure projection output file exists, then add to package
-        if os.path.exists(prj.getDLocation()):
+        if os.path.exists(prj.get_dlocation()):
             arc_prj_path = os.path.join(
-                prj_dir, os.path.basename(prj.getDLocation()))
+                prj_dir, os.path.basename(prj.get_dlocation()))
             arc_prj_img_path = arc_prj_path.replace(LMFormat.GTIFF.ext, '.png')
-            zip_f.write(prj.getDLocation(), arc_prj_path)
+            zip_f.write(prj.get_dlocation(), arc_prj_path)
             zip_f.writestr(
                 arc_prj_img_path, get_map_content_for_proj(prj, scribe))
             scn = prj.projScenario
@@ -302,7 +302,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
             arc_occ_path = os.path.join(
                 prj_dir, '{}.csv'.format(occ.displayName))
             sys_occ_path = '{}{}'.format(
-                os.path.splitext(occ.getDLocation())[0], LMFormat.CSV.ext)
+                os.path.splitext(occ.get_dlocation())[0], LMFormat.CSV.ext)
 
             # string io object
             occ_string_io = StringIO()
@@ -406,26 +406,26 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
             if mtx.status == JobStatus.COMPLETE and mtx.dateCode == 'Curr':
                 # Handle each matrix type
                 if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
-                    pam = Matrix.load_flo(mtx.getDLocation())
+                    pam = Matrix.load_flo(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'pam_{}.csv'.format(mtx.get_id()))
                 elif mtx.matrixType == MatrixType.ANC_PAM:
-                    anc_pam = Matrix.load_flo(mtx.getDLocation())
+                    anc_pam = Matrix.load_flo(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'anc_pam_{}.csv'.format(mtx.get_id()))
                 elif mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
-                    sites_cov_obs = Matrix.load_flo(mtx.getDLocation())
+                    sites_cov_obs = Matrix.load_flo(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'sitesCovarianceObserved_{}.csv'.format(
                             mtx.get_id()))
                 elif mtx.matrixType == MatrixType.SITES_OBSERVED:
-                    sites_obs = Matrix.load_flo(mtx.getDLocation())
+                    sites_obs = Matrix.load_flo(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'sitesObserved_{}.csv'.format(
                             mtx.get_id()))
                     do_pam_stats = True
                 elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
-                    mcpa_mtx = Matrix.load_flo(mtx.getDLocation())
+                    mcpa_mtx = Matrix.load_flo(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'mcpa_{}.csv'.format(mtx.get_id()))
                     do_mcpa = True
@@ -433,11 +433,11 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, '{}.csv'.format(
                             os.path.splitext(
-                                os.path.basename(mtx.getDLocation()))[0]))
+                                os.path.basename(mtx.get_dlocation()))[0]))
 
                 # If we should write the CSV file, and the matrix exists, do it
-                if include_csv and os.path.exists(mtx.getDLocation()):
-                    mtx_obj = Matrix.load_flo(mtx.getDLocation())
+                if include_csv and os.path.exists(mtx.get_dlocation()):
+                    mtx_obj = Matrix.load_flo(mtx.get_dlocation())
                     csv_mtx_str = StringIO()
                     mtx_obj.writeCSV(csv_mtx_str)
                     csv_mtx_str.seek(0)
@@ -456,10 +456,10 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
 
         # Tree
         if gridset.tree is not None and \
-                gridset.tree.getDLocation() is not None:
+                gridset.tree.get_dlocation() is not None:
             tree = gridset.tree
             zip_f.write(
-                tree.getDLocation(), os.path.join(GRIDSET_DIR, 'tree.nex'))
+                tree.get_dlocation(), os.path.join(GRIDSET_DIR, 'tree.nex'))
 
         # Known package files
         # -------------------
@@ -521,7 +521,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     write_template = False
             elif r_path.endswith('tree.js'):
                 if tree is not None:
-                    with open(tree.getDLocation()) as tree_file:
+                    with open(tree.get_dlocation()) as tree_file:
                         # Fill in tree string value this way so there are no
                         #    additional references to it and it will be cleaned
                         #    up at next loop iteration
@@ -538,7 +538,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                         DYN_PACKAGE_DIR, 'squidLookup.json')
                     pam_str = StringIO()
                     geo_jsonify_flo(
-                        pam_str, shapegrid.getDLocation(), matrix=pam,
+                        pam_str, shapegrid.get_dlocation(), matrix=pam,
                         mtxJoinAttrib=0, ident=0,
                         headerLookupFilename=header_lookup_fn, transform=mung)
                     pam_str.seek(0)
@@ -569,7 +569,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                         DYN_PACKAGE_DIR, 'nodeLookup.json')
                     anc_pam_str = StringIO()
                     geo_jsonify_flo(
-                        anc_pam_str, shapegrid.getDLocation(), matrix=anc_pam,
+                        anc_pam_str, shapegrid.get_dlocation(), matrix=anc_pam,
                         mtxJoinAttrib=0, ident=0,
                         headerLookupFilename=header_lookup_fn, transform=mung)
                     anc_pam_str.seek(0)
@@ -596,7 +596,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                             '0': sites_cov_obs.getRowHeaders(),
                             '1': sites_cov_obs.getColumnHeaders()})
                     geo_jsonify_flo(
-                        mtx_str, shapegrid.getDLocation(), mtx_2d,
+                        mtx_str, shapegrid.get_dlocation(), mtx_2d,
                         mtxJoinAttrib=0, ident=0)
                     mtx_str.seek(0)
                     temp_filler = TemplateFiller(

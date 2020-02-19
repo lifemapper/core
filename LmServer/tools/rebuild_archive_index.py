@@ -61,7 +61,7 @@ def rebuild_index_for_gridset(gridset_id):
             for mc in mcs:
                 # Get layer
                 lyr = scribe.getLayer(lyrId=mc.getLayerId())
-                if os.path.exists(lyr.getDLocation()):
+                if os.path.exists(lyr.get_dlocation()):
                     if lyr.minVal == lyr.maxVal and lyr.minVal == 0.0:
                         print(('No prediction for layer {}, skipping'.format(
                             lyr.get_id())))
@@ -84,7 +84,7 @@ def rebuild_index_for_gridset(gridset_id):
                             touch_cmd.get_makeflow_rule(local=True))
 
                         prj_name = os.path.basename(
-                             os.path.splitext(lyr.getDLocation())[0])
+                             os.path.splitext(lyr.get_dlocation())[0])
 
                         prj_status_filename = os.path.join(
                             prj_target_dir, '{}.status'.format(prj_name))

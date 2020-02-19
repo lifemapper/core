@@ -72,7 +72,7 @@ def getMakeflowDocument(scribe, mfId, log):
     else:
         mfObj = scribe.getMFChain(int(mfId))
         if mfObj is not None:
-            mfDag = mfObj.getDLocation()
+            mfDag = mfObj.get_dlocation()
             ws = mfObj.getRelativeDirectory()
         else:
             raise Exception('Could not find Makeflow process id: {}'.format(mfId))

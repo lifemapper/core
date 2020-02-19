@@ -364,7 +364,7 @@ class EarlJr(LMObject):
         params = []
         if not bbox:
             bbox = DEFAULT_GLOBAL_EXTENT
-        bbstr = LMSpatialObject.get_extent_as_string(bbox, separator=',')
+        bbstr = LMSpatialObject.get_extent_string(bbox, separator=',')
         params.append(('bbox', bbstr))
         map_name = lyr_name = None
         svc_url_rest = map_prefix.split('?')

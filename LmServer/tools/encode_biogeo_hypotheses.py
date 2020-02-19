@@ -89,7 +89,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
     # Find or create the matrix
     bgMtx = _getBioGeoMatrix(scribe, usr, gridset, layers)
     shapegrid = gridset.getShapegrid()
-    encoder = LayerEncoder(shapegrid.getDLocation())
+    encoder = LayerEncoder(shapegrid.get_dlocation())
 
     # TODO(CJ): Minimum coverage should be pulled from config or database
     min_coverage = 0.25
@@ -105,10 +105,10 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, successFname, layers=None):
             valAttribute = None
             column_name = lyr.name
         new_cols = encoder.encode_biogeographic_hypothesis(
-             lyr.getDLocation(), column_name, min_coverage,
+             lyr.get_dlocation(), column_name, min_coverage,
              event_field=valAttribute)
         scribe.log.info(' Encoded layer {} for eventField={}, dloc={}'
-                .format(lyr.name, valAttribute, lyr.getDLocation()))
+                .format(lyr.name, valAttribute, lyr.get_dlocation()))
 
         # Add matrix columns for the newly encoded layers
         for col_name in new_cols:

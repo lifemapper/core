@@ -249,7 +249,7 @@ class _SpeciesWeaponOfChoice(LMObject):
 
             # Do reset existing or new Occ?
             willCompute = self._willCompute(occ.status, occ.statusModTime,
-                                            occ.getDLocation(), occ.getRawDLocation())
+                                            occ.get_dlocation(), occ.getRawDLocation())
             if willCompute:
                 self.log.info('    Init new or existing OccLayer status, count')
                 occ.updateStatus(JobStatus.INITIALIZE, mod_time=currtime,
@@ -552,7 +552,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
 
 # ...............................................
     def _writeRawData(self, occ, data=None, metadata=None):
-        rdloc = occ.createLocalDLocation(raw=True)
+        rdloc = occ.create_local_dlocation(raw=True)
         writer, f = get_unicodecsv_writer(rdloc, delimiter=self._delimiter,
                                           doAppend=False)
         try:
@@ -753,7 +753,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
     def _writeRawData(self, occ, data=None, metadata=None):
         if data is None:
             raise LMError('Missing data file for occurrenceSet')
-        rdloc = occ.createLocalDLocation(raw=True)
+        rdloc = occ.create_local_dlocation(raw=True)
         occ.ready_filename(rdloc, overwrite=True)
         shutil.copyfile(data, rdloc)
 
@@ -877,18 +877,18 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                 sciName = self._scribe.getTaxon(squid=occ.squid)
                 if sciName is not None:
                     tmpOcc.setScientificName(sciName)
-                tmpOcc.readData(dlocation=occ.getDLocation(),
+                tmpOcc.readData(dlocation=occ.get_dlocation(),
                                       dataFormat=occ.dataFormat)
                 userOcc = self._scribe.findOrInsertOccurrenceSet(tmpOcc)
                 # Read the data from the original occurrence set
-                userOcc.readData(dlocation=occ.getDLocation(),
+                userOcc.readData(dlocation=occ.get_dlocation(),
                                       dataFormat=occ.dataFormat, doReadData=True)
                 userOcc.writeLayer()
 
                 # Copy metadata file
-                shutil.copyfile('{}{}'.format(os.path.splitext(occ.getDLocation())[0],
+                shutil.copyfile('{}{}'.format(os.path.splitext(occ.get_dlocation())[0],
                                                         LMFormat.METADATA.ext),
-                                     '{}{}'.format(os.path.splitext(userOcc.getDLocation())[0],
+                                     '{}{}'.format(os.path.splitext(userOcc.get_dlocation())[0],
                                                         LMFormat.METADATA.ext))
 
                 self._scribe.updateObject(userOcc)

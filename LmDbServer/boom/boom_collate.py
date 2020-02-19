@@ -316,7 +316,7 @@ class BoomCollate(LMObject):
         pam_id = pam.get_id()
 
         # Initialize variables
-        pruned_pam_filename = pam.getDLocation()
+        pruned_pam_filename = pam.get_dlocation()
         pruned_tree_filename = self.squid_tree_filename
         encoded_tree_filename = None
         grim_filename = None
@@ -333,7 +333,7 @@ class BoomCollate(LMObject):
             pruned_metadata_filename = self._create_filename(
                 pam_id, 'pruned_metadata{}'.format(LMFormat.JSON.ext))
             sync_command = SyncPamAndTreeCommand(
-                pam.getDLocation(), pruned_pam_filename,
+                pam.get_dlocation(), pruned_pam_filename,
                 self.squid_tree_filename, pruned_tree_filename,
                 pruned_metadata_filename)
             sync_command.inputs.append(pam_success_filename)
@@ -344,7 +344,7 @@ class BoomCollate(LMObject):
             #    know that the tree has squids
             (anc_pam_filename, anc_pam_rules
              ) = self._get_ancestral_pam_rules_for_pam(
-                 pam.get_id(), pam.getDLocation(), self.squid_tree_filename,
+                 pam.get_id(), pam.get_dlocation(), self.squid_tree_filename,
                  pruned_tree_filename,
                  pam_success_filename=pam_success_filename)
             pam_rules.extend(anc_pam_rules)
@@ -369,9 +369,9 @@ class BoomCollate(LMObject):
                 pam.gcmCode, pam.altpredCode, pam.dateCode)
             grim = self.gridset.getGRIMForCodes(
                 pam.gcmCode, pam.altpredCode, pam.dateCode)
-            grim_filename = grim.getDLocation()
+            grim_filename = grim.get_dlocation()
             biogeo = self.gridset.getBiogeographicHypotheses()[0]
-            biogeo_filename = biogeo.getDLocation()
+            biogeo_filename = biogeo.get_dlocation()
 
         # If PAM stats, initialize matrices
         if self.do_pam_stats:
@@ -444,12 +444,12 @@ class BoomCollate(LMObject):
         pam_assembly_success_filename = self._create_filename(
             pam_id, 'pam_{}_assembly.success'.format(pam.get_id()))
         assembly_rules.append(AssemblePamFromSolrQueryCommand(
-            pam_id, pam.getDLocation(), pam_assembly_success_filename,
+            pam_id, pam.get_dlocation(), pam_assembly_success_filename,
             dependency_files=self.dependencies).get_makeflow_rule())
         self.log.debug(
             'Adding {} assembly rules for pam {}'.format(
                 len(assembly_rules), pam_id))
-        # return pam.getDLocation(), assembly_rules
+        # return pam.get_dlocation(), assembly_rules
         return pam_assembly_success_filename, assembly_rules
 
     # ................................
@@ -484,7 +484,7 @@ class BoomCollate(LMObject):
         # Update DB
         mf_chain.updateStatus(JobStatus.INITIALIZE)
         self._scribe.updateObject(mf_chain)
-        self.log.debug('Wrote Makeflow: {}'.format(mf_chain.getDLocation()))
+        self.log.debug('Wrote Makeflow: {}'.format(mf_chain.get_dlocation()))
 
     # ................................
     def get_collate_rules(self):
@@ -500,7 +500,7 @@ class BoomCollate(LMObject):
                  '  Do they need to be filled by the scribe?'))
         if self.gridset.tree is not None:
             # If tree exists, squid it
-            self.squid_tree_filename = self.gridset.tree.getDLocation()
+            self.squid_tree_filename = self.gridset.tree.get_dlocation()
             tree_success_filename = os.path.join(
                 self.workspace_dir, 'tree_squid.success')
             tree_cmd = SquidAndLabelTreeCommand(

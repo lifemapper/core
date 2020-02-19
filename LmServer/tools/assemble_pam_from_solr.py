@@ -72,7 +72,7 @@ def assemble_pam(pam_id):
     shapegrid = pam.getShapegrid()
     rows = shapegrid.featureCount
 
-    row_headers = _get_row_headers_from_shapegrid(shapegrid.getDLocation())
+    row_headers = _get_row_headers_from_shapegrid(shapegrid.get_dlocation())
 
     pam_data = np.zeros((rows, len(filtered_matches)), dtype=np.int)
 
@@ -88,7 +88,7 @@ def assemble_pam(pam_id):
 
     pam.updateStatus(JobStatus.COMPLETE)
     scribe.updateObject(pam)
-    with open(pam.getDLocation(), 'w') as out_f:
+    with open(pam.get_dlocation(), 'w') as out_f:
         pam.save(out_f)
     scribe.closeConnections()
     return pam

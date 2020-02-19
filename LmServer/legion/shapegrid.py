@@ -84,7 +84,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             vector.name, vector.getUserId(), vector.epsgcode, cellsides,
             cellsize, vector.mapUnits, vector.bbox, siteId=siteId, siteX=siteX,
             siteY=siteY, size=size, lyrId=vector.getLayerId(),
-            verify=vector.verify, dlocation=vector.getDLocation(),
+            verify=vector.verify, dlocation=vector.get_dlocation(),
             metadata=vector.lyrMetadata, resolution=vector.resolution,
             metadataUrl=vector.metadataUrl,
             parentMetadataUrl=vector.parentMetadataUrl, mod_time=vector.mod_time,
@@ -142,7 +142,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         @TODO: make sure to add this to base object
         """
         siteIndices = {}
-        if not(self._features) and self.getDLocation() is not None:
+        if not(self._features) and self.get_dlocation() is not None:
             self.readData()
         if self._features:
             for siteidx in list(self._features.keys()):
@@ -153,7 +153,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         return siteIndices
 
 # ...............................................
-    def createLocalDLocation(self):
+    def create_local_dlocation(self):
         """
         @summary: Calculates and returns the local _dlocation.
         """
@@ -238,7 +238,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
 
 # ...................................................
     def buildShape(self, cutout=None, overwrite=False):
-        # After build, setDLocation, write shapefile
+        # After build, set_dlocation, write shapefile
         if os.path.exists(self._dlocation) and not overwrite:
             print((
                 'Shapegrid file already exists at: {}'.format(self._dlocation)))
@@ -260,7 +260,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         targetFiles = []
         targetDir = os.path.join(
             workDir, os.path.splitext(self.getRelativeDLocation())[0])
-        baseName = os.path.splitext(os.path.basename(self.getDLocation()))[0]
+        baseName = os.path.splitext(os.path.basename(self.get_dlocation()))[0]
 
         for ext in ['.shp', '.dbf', '.prj', '.shx']:
             targetFiles.append(

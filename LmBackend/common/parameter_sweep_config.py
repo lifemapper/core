@@ -148,7 +148,7 @@ class ParameterSweepConfiguration:
                 {
                     RegistryKey.IDENTIFIER: 'layer-{}'.format(lyr.get_id()),
                     RegistryKey.PATH: '{}{}'.format(os.path.splitext(
-                        lyr.getDLocation())[0], ext)})
+                        lyr.get_dlocation())[0], ext)})
         return identifier, layer_obj
 
     # ........................................

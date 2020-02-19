@@ -87,9 +87,9 @@ def lm_formatter(f):
                         HTTPStatus.BAD_REQUEST,
                         'Newick response not enabled yet')
                     # TODO: Use dendropy to convert nexus to newick
-                    # return file_formatter(handler_result.getDLocation())
+                    # return file_formatter(handler_result.get_dlocation())
                 if accept_hdr == LMFormat.NEXUS.get_mime_type():
-                    return file_formatter(handler_result.getDLocation())
+                    return file_formatter(handler_result.get_dlocation())
                 if accept_hdr == LMFormat.ZIP.get_mime_type():
                     csvs = True
                     sdms = True

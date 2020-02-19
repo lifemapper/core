@@ -103,7 +103,7 @@ class _Layer(LMSpatialObject, ServiceObject):
         self.max_val = max_val
         self.resolution = resolution
         self._dlocation = None
-        self.setDLocation(dlocation)
+        self.set_dlocation(dlocation)
         self._verify = None
 #         self.set_verify(verify=verify)
         self._mapFilename = None
@@ -135,22 +135,22 @@ class _Layer(LMSpatialObject, ServiceObject):
         """
         return self._layer_id
 
-    # .............................
-    def setLayerUserId(self, lyruserid):
-        """
-        @summary: Sets the User id of the Layer record, which can be used by
-                     by multiple Parameterized Layer objects
-        @param lyruserid: The user id for the layer
-        """
-        self._layer_user_id = lyruserid
-
-    # .............................
-    def getLayerUserId(self):
-        """
-        @summary: Returns the User id of the Layer record, which can be used by
-                     by multiple Parameterized Layer objects
-        """
-        return self._layer_user_id
+#     # .............................
+#     def set_layer_user_id(self, lyruserid):
+#         """
+#         @summary: Sets the User id of the Layer record, which can be used by
+#                      by multiple Parameterized Layer objects
+#         @param lyruserid: The user id for the layer
+#         """
+#         self._layer_user_id = lyruserid
+# 
+#     # .............................
+#     def get_layer_user_id(self):
+#         """
+#         @summary: Returns the User id of the Layer record, which can be used by
+#                      by multiple Parameterized Layer objects
+#         """
+#         return self._layer_user_id
 
     # .............................
     @property
@@ -230,7 +230,7 @@ class _Layer(LMSpatialObject, ServiceObject):
             self._verify = value
 
     # .............................
-    def clearVerify(self):
+    def clear_verify(self):
         self._verify = None
 
     # .............................
@@ -251,9 +251,9 @@ class _Layer(LMSpatialObject, ServiceObject):
                  used by a single workflow/Makeflow
         """
         basename = None
-        self.setDLocation()
+        self.set_dlocation()
         if self._dlocation is not None:
-            pth, basename = os.path.split(self._dlocation)
+            _, basename = os.path.split(self._dlocation)
         return basename
 
     # .............................
@@ -288,7 +288,7 @@ class _Layer(LMSpatialObject, ServiceObject):
         """
         @summary: Set the Layer._dlocation attribute if it is None.  Use dlocation
                      if provided, otherwise calculate it.
-        @note: Does NOT override existing dlocation, use clearDLocation for that
+        @note: Does NOT override existing dlocation, use clear_dlocation for that
         """
         # Only set DLocation if it is currently None
         if self._dlocation is None:
@@ -307,7 +307,7 @@ class _Layer(LMSpatialObject, ServiceObject):
         raise LMError('Method must be implemented in subclass')
 
     # .............................
-    def copyData(self):
+    def copy_data(self):
         raise LMError('Method must be implemented in subclass')
 
     # .............................
@@ -339,7 +339,7 @@ class _Layer(LMSpatialObject, ServiceObject):
                 new_metadata_dict, existing_metadata_dict=self.lyr_metadata)
 
     # .............................
-    def updateLayer(self, mod_time, metadata=None):
+    def update_layer(self, mod_time, metadata=None):
         """
         @summary: Updates mod_time, data verification hash, metadata.
         @param mod_time: time/date last modified
@@ -650,7 +650,7 @@ class Raster(_Layer):
         @note: this only works on 8-bit data.
         """
         vals = []
-        dataset, band = self._openWithGDAL(bandnum=bandnum)
+        _, band = self._openWithGDAL(bandnum=bandnum)
 
         # Get histogram only for 8bit data (projections)
         if band.DataType == gdalconst.GDT_Byte:
@@ -673,7 +673,7 @@ class Raster(_Layer):
         @return: A tuple of size 2, where the first number is the number of 
                     columns and the second number is the number of rows.
         """
-        dataset, band = self._openWithGDAL(bandnum=bandnum)
+        dataset, _ = self._openWithGDAL(bandnum=bandnum)
         size = (dataset.RasterXSize, dataset.RasterYSize)
         return size
 
@@ -689,8 +689,8 @@ class Raster(_Layer):
         msgs = []
 #         msgs.append('File does not exist: {}'.format(dlocation))
         dataset, band = self._openWithGDAL(dlocation=dlocation, bandnum=bandnum)
-        srs = dataset.GetProjection()
-        size = (dataset.RasterXSize, dataset.RasterYSize)
+#         srs = dataset.GetProjection()
+#         size = (dataset.RasterXSize, dataset.RasterYSize)
         geoTransform = dataset.GetGeoTransform()
         ulx = geoTransform[0]
         xPixelSize = geoTransform[1]
@@ -733,7 +733,7 @@ class Raster(_Layer):
             msgs.append('Incorrect datatype {}, changing to {} for layer {}'
                             .format(gdal_type, band.DataType, dlocation))
             gdal_type = band.DataType
-        bmin, bmax, bmean, bstddev = band.GetStatistics(False, True)
+        bmin, bmax, _, _ = band.GetStatistics(False, True)
         if min_val is None:
             min_val = bmin
         if max_val is None:
@@ -755,11 +755,11 @@ class Raster(_Layer):
                      temporary filename in dlocation.  
         @raise LMError: on failure to write data or read temporary files.
         """
-        self.clearDLocation()
+        self.clear_dlocation()
         # Create temp location and write layer to it
         outLocation = os.path.join(UPLOAD_PATH, self.name + extension)
         self.writeLayer(srcData=datacontent, outFile=outLocation, overwrite=True)
-        self.setDLocation(dlocation=outLocation)
+        self.set_dlocation(dlocation=outLocation)
 
     # .............................
     def writeLayer(self, srcData=None, srcFile=None, outFile=None, overwrite=False):
@@ -774,13 +774,13 @@ class Raster(_Layer):
                                  3) _dlocation is None  
         """
         if outFile is None:
-            outFile = self.getDLocation()
+            outFile = self.get_dlocation()
         if outFile is not None:
             self.ready_filename(outFile, overwrite=overwrite)
 
             # Copy from input file using GDAL (no test necessary later)
             if srcFile is not None:
-                self.copyData(srcFile, targetDataLocation=outFile)
+                self.copy_data(srcFile, target_dlocation=outFile)
 
             # Copy from input stream
             elif srcData is not None:
@@ -792,7 +792,7 @@ class Raster(_Layer):
                     raise LMError('Error writing data to raster %s (%s)'
                                       % (outFile, str(e)))
                 else:
-                    self.setDLocation(dlocation=outFile)
+                    self.set_dlocation(dlocation=outFile)
                 # Test input with GDAL
                 try:
                     self.populateStats()
@@ -804,7 +804,7 @@ class Raster(_Layer):
                 raise LMError('Source data or source filename required for write to %s'
                                   % self._dlocation)
         else:
-            raise LMError(['Must setDLocation before writing file'])
+            raise LMError(['Must set_dlocation before writing file'])
 
     # .............................
     def _copyGDALData(self, bandnum, infname, outfname, format_='GTiff', kwargs={}):
@@ -847,20 +847,20 @@ class Raster(_Layer):
         inds = None
 
     # .............................
-    def copyData(self, sourceDataLocation, targetDataLocation=None,
+    def copy_data(self, source_dlocation, target_dlocation=None,
                  format_='GTiff'):
         
         if not format_ in LMFormat.gdal_drivers():
             raise LMError('Unsupported raster format {}'.format(format_))
-        if sourceDataLocation is not None and os.path.exists(sourceDataLocation):
-            if targetDataLocation is not None:
-                dlocation = targetDataLocation
+        if source_dlocation is not None and os.path.exists(source_dlocation):
+            if target_dlocation is not None:
+                dlocation = target_dlocation
             elif self._dlocation is not None:
                 dlocation = self._dlocation
             else:
                 raise LMError('Target location is None')
         else:
-            raise LMError('Source location %s is invalid' % str(sourceDataLocation))
+            raise LMError('Source location %s is invalid' % str(source_dlocation))
 
         correctExt = LMFormat.get_extension_by_driver(format_)
         if not dlocation.endswith(correctExt):
@@ -869,10 +869,10 @@ class Raster(_Layer):
         self.ready_filename(dlocation)
 
         try:
-            self._copyGDALData(1, sourceDataLocation, dlocation, format_=format_)
+            self._copyGDALData(1, source_dlocation, dlocation, format_=format_)
         except Exception as e:
             raise LMError('Failed to copy data source from %s to %s (%s)'
-                              % (sourceDataLocation, dlocation, str(e)))
+                              % (source_dlocation, dlocation, str(e)))
 
     # .............................
     def get_srs(self):
@@ -920,10 +920,8 @@ class Raster(_Layer):
         @postcondition: The raster file is updated with new srs information.
         @raise LMError: on failure to open dataset or write srs
         """
-        from LmServer.common.geo_tools import GeoFileInfo
-
         if (fname is not None and os.path.exists(fname)):
-            srs = GeoFileInfo.getSRSAsWkt(fname)
+            srs = GeoFileInfo.get_srs_as_wkt(fname)
             self.writeSRS(srs)
         else:
             raise LMError(['Unable to read file %s' % fname])
@@ -938,13 +936,13 @@ class Raster(_Layer):
         if (self._dlocation is not None and os.path.exists(self._dlocation)):
             try:
                 self._dataset = gdal.Open(self._dlocation, gdalconst.GA_ReadOnly)
-            except Exception as e:
+            except Exception:
                 valid = False
 
         return valid
 
     # .............................
-    def deleteData(self, dlocation=None, isTemp=False):
+    def delete_data(self, dlocation=None, isTemp=False):
         """
         @summary: Deletes the local data file(s) on disk
         @note: Does NOT clear the dlocation attribute
@@ -958,7 +956,7 @@ class Raster(_Layer):
             if result == 0:
                 success = True
         if not isTemp:
-            pth, fname = os.path.split(dlocation)
+            pth, _ = os.path.split(dlocation)
             if os.path.isdir(pth) and len(os.listdir(pth)) == 0:
                 try:
                     os.rmdir(pth)
@@ -967,11 +965,11 @@ class Raster(_Layer):
         return success
 
     # .............................
-    def getWCSRequest(self, bbox=None, resolution=None):
+    def get_WCS_request(self, bbox=None, resolution=None):
         """
         @note: All implemented _Rasters will also be a Subclass of ServiceObject 
         """
-        raise LMError('getWCSRequest must be implemented in Subclasses also inheriting from ServiceObject')
+        raise LMError('get_WCS_request must be implemented in Subclasses also inheriting from ServiceObject')
 
 
 # .............................................................................
@@ -1177,7 +1175,7 @@ class Vector(_Layer):
         self.setFeatures(None, None)
 
     # .............................
-    def addFeatures(self, features):
+    def add_features(self, features):
         """
         @summary: Adds to Vector._features and updates Vector.featureCount
         @param features: a dictionary of features, with key the featureid (FID) or
@@ -1191,11 +1189,11 @@ class Vector(_Layer):
             self._featureCount = len(self._features)
 
     # .............................
-    def getFeatureAttributes(self):
+    def get_feature_attributes(self):
         return self._feature_attributes
 
     # .............................
-    def setValAttribute(self, val_attribute):
+    def set_val_attribute(self, val_attribute):
         """
         @summary: Sets Vector._val_attribute.  If the featureAttributes are 
                      present, check to make sure val_attribute exists in the dataset.
@@ -1205,7 +1203,7 @@ class Vector(_Layer):
         if self._feature_attributes:
             if val_attribute:
                 for idx in list(self._feature_attributes.keys()):
-                    fldname, fldtype = self._feature_attributes[idx]
+                    fldname, _ = self._feature_attributes[idx]
                     if fldname == val_attribute:
                         self._val_attribute = val_attribute
                         break
@@ -1232,7 +1230,7 @@ class Vector(_Layer):
     # .............................
     def _set_geometry_index(self):
         if self._geom_idx is None and self._feature_attributes:
-            for idx, (colname, coltype) in self._feature_attributes.items():
+            for idx, (colname, _) in self._feature_attributes.items():
                 if colname == self._geom_field_name:
                     self._geom_idx = idx
                     break
@@ -1246,7 +1244,7 @@ class Vector(_Layer):
     # .............................
     def _set_local_id_index(self):
         if self._local_id_idx is None and self._feature_attributes:
-            for idx, (colname, coltype) in self._feature_attributes.items():
+            for idx, (colname, _) in self._feature_attributes.items():
                 if colname in OccurrenceFieldNames.LOCAL_ID:
                     self._local_id_idx = idx
                     break
@@ -1343,14 +1341,14 @@ class Vector(_Layer):
             try:
                 ds = ogr.Open(dlocation)
                 ds.GetLayer(0)
-            except Exception as e:
+            except Exception:
                 pass
             else:
                 valid = True
         return valid
 
     # .............................
-    def deleteData(self, dlocation=None, isTemp=False):
+    def delete_data(self, dlocation=None, isTemp=False):
         """
         @summary: Deletes the local data file(s) on disk
         @note: Does NOT clear the dlocation attribute
@@ -1426,7 +1424,7 @@ class Vector(_Layer):
         if srcFile is not None:
             self.read_data(dlocation=srcFile)
         if outFile is None:
-            outFile = self.getDLocation()
+            outFile = self.get_dlocation()
         if self.features is not None:
             self.writeShapefile(dlocation=outFile, overwrite=overwrite)
         # No file, no features, srcData is iterable, write as CSV
@@ -1438,7 +1436,7 @@ class Vector(_Layer):
                     self.writeCSV(dlocation=outFile, overwrite=overwrite)
             else:
                 raise LMError('Writing vector is currently supported only for file or iterable input data')
-        self.setDLocation(dlocation=outFile)
+        self.set_dlocation(dlocation=outFile)
 
     # .............................
     @staticmethod
@@ -1504,7 +1502,7 @@ class Vector(_Layer):
 
     # .............................
     @staticmethod
-    def _finishShapefile(newDs):
+    def _finish_shapefile(newDs):
         wrote = None
         dloc = newDs.GetName()
         try:
@@ -1555,7 +1553,7 @@ class Vector(_Layer):
 
     # .............................
     @staticmethod
-    def createPointFeature(oDict, xCol, yCol, lyrDef, newNames):
+    def create_point_feature(oDict, xCol, yCol, lyrDef, newNames):
         ptFeat = None
         try:
             ptgeom = ogr.Geometry(ogr.wkbPoint)
@@ -1577,22 +1575,26 @@ class Vector(_Layer):
 
     # .............................
     @staticmethod
-    def splitCSVPointsToShapefiles(outpath, dlocation, groupByField, comboLayerName,
-                                            srsEPSGOrWkt=DEFAULT_EPSG,
-                                            delimiter=';', quotechar='\"',
-                                            idCol='id', xCol='lon', yCol='lat',
-                                            overwrite=False):
-        """
-        @summary: Read OGR-accessible data and write to a single shapefile and 
-                     individual shapefiles defined by the value of <fieldname>
-        @param outpath: Directory for output datasets.
-        @param dlocation: Location of original combined dataset.
-        @param groupByField: Field containing attribute to group on.
-        @param comboLayerName: Write the original combined data using this name.
-        @param srsEPSGOrWkt: Spatial reference as an integer EPSG code or 
-                                    Well-Known-Text
-        @param overwrite: Overwrite or fail if data already exists.
-        @raise LMError: on failure to read data.
+    def split_csv_points_to_shapefiles(outpath, dlocation, group_field, 
+                                       comboLayerName,
+                                       srsEPSGOrWkt=DEFAULT_EPSG,
+                                       delimiter=';', quotechar='\"',
+                                       idCol='id', xCol='lon', yCol='lat',
+                                       overwrite=False):
+        """Read OGR-accessible data and write to a single shapefile and 
+                     individual shapefiles defined by the value of <group_field>
+                     
+        Args:
+            outpath: Directory for output datasets.
+            dlocation: Full path location of the data
+            group_field: Field containing attribute to group on.
+            comboLayerName: Write the original combined data using this name.
+            srsEPSGOrWkt: Spatial reference as an integer EPSG code or 
+                Well-Known-Text
+            overwrite: Overwrite or fail if data already exists.
+            
+        Raises:
+            LMError: on failure to read data.
         """
         ogr.UseExceptions()
         import csv
@@ -1606,42 +1608,41 @@ class Vector(_Layer):
 
         f = open(dlocation, 'rb')
         ptreader = csv.DictReader(f, delimiter=delimiter, quotechar=quotechar)
-        ((idName, idPos), (xName, xPos),
-         (yName, yPos)) = Vector._getIdXYNamePos(ptreader.fieldnames, idName=idCol,
-                                                              xName=xCol, yName=yCol)
-        comboDs, comboLyr, nameChanges = Vector._createPointShapefile(drv, outpath,
-                                                             spRef, comboLayerName,
-                                                             fldnames=ptreader.fieldnames,
-                                                             idCol=idName, xCol=xName, yCol=yName,
-                                                             overwrite=overwrite)
+        ((idName, _), (xName, _), (yName, _)
+         ) = Vector._getIdXYNamePos(ptreader.fieldnames, idName=idCol,
+                                    xName=xCol, yName=yCol)
+        comboDs, comboLyr, nameChanges = Vector._createPointShapefile(
+            drv, outpath, spRef, comboLayerName, fldnames=ptreader.fieldnames,
+            idCol=idName, xCol=xName, yCol=yName, overwrite=overwrite)
         lyrDef = comboLyr.GetLayerDefn()
         # Iterate through records
         for oDict in ptreader:
             # Create and add feature to combo layer
-            ptFeat1 = Vector.createPointFeature(oDict, xCol, yCol, lyrDef, nameChanges)
+            ptFeat1 = Vector.create_point_feature(oDict, xCol, yCol, lyrDef, 
+                                                nameChanges)
             if ptFeat1 is not None:
                 comboLyr.CreateFeature(ptFeat1)
                 ptFeat1.Destroy()
                 # Create and save point for individual species layer
-                ptFeat2 = Vector.createPointFeature(oDict, xCol, yCol, lyrDef, nameChanges)
-                thisGroup = oDict[groupByField]
+                ptFeat2 = Vector.create_point_feature(oDict, xCol, yCol, lyrDef, 
+                                                    nameChanges)
+                thisGroup = oDict[group_field]
                 if thisGroup not in list(data.keys()):
                     data[thisGroup] = [ptFeat2]
                 else:
                     data[thisGroup].append(ptFeat2)
 
-        dloc = Vector._finishShapefile(comboDs)
+        dloc = Vector._finish_shapefile(comboDs)
         successfulWrites.append(dloc)
         f.close()
 
         for group, pointFeatures in data.items():
-            indDs, indLyr, nameChanges = Vector._createPointShapefile(drv, outpath,
-                                                             spRef, group, lyrDef=lyrDef,
-                                                             overwrite=overwrite)
+            indDs, indLyr, nameChanges = Vector._createPointShapefile(
+                drv, outpath, spRef, group, lyrDef=lyrDef, overwrite=overwrite)
             for pt in pointFeatures:
                 indLyr.CreateFeature(pt)
                 pt.Destroy()
-            dloc = Vector._finishShapefile(indDs)
+            dloc = Vector._finish_shapefile(indDs)
             successfulWrites.append(dloc)
 
         ogr.DontUseExceptions()
@@ -1701,12 +1702,12 @@ class Vector(_Layer):
             return success
 
         if overwrite:
-            self.deleteData(dlocation=dlocation)
+            self.delete_data(dlocation=dlocation)
         elif os.path.isfile(dlocation):
             print(('Dataset exists: %s' % dlocation))
             return success
 
-        self.setDLocation(dlocation)
+        self.set_dlocation(dlocation)
         self.ready_filename(self._dlocation)
 
         try:
@@ -1857,10 +1858,10 @@ class Vector(_Layer):
                 raise Exception('Invalid shapefile, zipped data does not contain .shp')
         else:
             if self._dlocation is None:
-                self.setDLocation()
+                self.set_dlocation()
             outfname = self._dlocation
             if outfname is None:
-                raise LMError('Must setDLocation prior to writing shapefile')
+                raise LMError('Must set_dlocation prior to writing shapefile')
             pth, basefilename = os.path.split(outfname)
             basename, dext = os.path.splitext(basefilename)
             newfnamewoext = os.path.join(pth, basename)
@@ -1879,8 +1880,8 @@ class Vector(_Layer):
                         oldname = os.path.join(pth, zname)
                         os.rename(oldname, newname)
             # Reset dlocation on successful write
-            self.clearDLocation()
-            self.setDLocation(outfname)
+            self.clear_dlocation()
+            self.set_dlocation(outfname)
         else:
             raise LMError('{} exists, overwrite = False'.format(outfname))
 
@@ -1909,8 +1910,8 @@ class Vector(_Layer):
         finally:
             f1.close()
             f2.close()
-        self.clearDLocation()
-        self.setDLocation(dlocation=tmpname)
+        self.clear_dlocation()
+        self.set_dlocation(dlocation=tmpname)
 
     # .............................
     def _setGeometry(self, convexHullBuffer=None):
@@ -2009,30 +2010,30 @@ class Vector(_Layer):
         return geomtype
 
     # .............................
-    def copyData(self, sourceDataLocation, targetDataLocation=None,
+    def copy_data(self, source_dlocation, target_dlocation=None,
                      format_= DEFAULT_GDAL.driver):
         """
-        Copy sourceDataLocation dataset to targetDataLocation or this layer's 
+        Copy source_dlocation dataset to target_dlocation or this layer's 
         dlocation.
         """
-        if sourceDataLocation is not None and os.path.exists(sourceDataLocation):
-            if targetDataLocation is None:
+        if source_dlocation is not None and os.path.exists(source_dlocation):
+            if target_dlocation is None:
                 if self._dlocation is not None:
-                    targetDataLocation = self._dlocation
+                    target_dlocation = self._dlocation
                 else:
                     raise LMError('Target location is None')
         else:
-            raise LMError('Source location %s is invalid' % str(sourceDataLocation))
+            raise LMError('Source location %s is invalid' % str(source_dlocation))
 
         ogr.RegisterAll()
         drv = ogr.GetDriverByName(format_)
         try:
-            ds = drv.Open(sourceDataLocation)
+            ds = drv.Open(source_dlocation)
         except Exception as e:
-            raise LMError('Invalid datasource' % sourceDataLocation, str(e))
+            raise LMError('Invalid datasource' % source_dlocation, str(e))
 
         try:
-            newds = drv.CopyDataSource(ds, targetDataLocation)
+            newds = drv.CopyDataSource(ds, target_dlocation)
             newds.Destroy()
         except Exception as e:
             raise LMError('Failed to copy data source')
@@ -2110,16 +2111,18 @@ class Vector(_Layer):
     # .............................
     def read_csv_points_with_ids(self, dlocation=None, feature_limit=None,
                                      do_read_data=False):
-        """
-        @summary: Read data and set features and featureAttributes
+        """Read data and set features and featureAttributes
+        
+        Args:
+            dlocation: 
         @return: localId position, featAttrs, featureCount, 
                     and features and BBox (if read data)
         @note: We are saving only latitude, longitude and localid if it exists.  
                  If localid does not exist, we create one.
         @note: If column headers are not present, assume 
                  columns 0 = id, 1 = longitude, 2 = latitude
-        @todo: Save the rest of the fields using Vector.splitCSVPointsToShapefiles
-        @todo: remove feature_limit, read subsetDLocation if there is a limit 
+        @todo: Save the rest of the fields using Vector.split_csv_points_to_shapefiles
+        @todo: remove feature_limit, read subset_dlocation if there is a limit 
         """
         import csv
         this_bbox = None
@@ -2200,17 +2203,18 @@ class Vector(_Layer):
         return (this_bbox, idPos, feats, featAttrs, featureCount)
 
     # .............................
-    def read_with_OGR(self, dlocation, ogr_format, feature_limit=None, do_read_data=False):
+    def read_with_OGR(self, dlocation, ogr_format, feature_limit=None, 
+                      do_read_data=False):
         """
         @summary: Read OGR-accessible data and set the features and 
                      featureAttributes on the Vector object
-        @param dlocation: Location of the data
+        @param dlocation: Full path location of the data
         @param ogr_format: OGR-supported data format code, available at
                              http://www.gdal.org/ogr/ogr_formats.html
         @return: boolean for success/failure 
         @raise LMError: on failure to read data.
         @note: populateStats calls this
-        @todo: remove feature_limit, read subsetDLocation if there is a limit 
+        @todo: remove feature_limit, read subset_dlocation if there is a limit 
         """
         this_bbox = local_id_idx = geom_idx = feats = featAttrs = None
         if dlocation is not None and os.path.exists(dlocation):
@@ -2325,16 +2329,20 @@ class Vector(_Layer):
     # .............................
     def read_data(self, dlocation=None, data_format=None, feature_limit=None,
                      do_read_data=False):
-        """Reads the file at dlocation and fill the featureCount and 
-                     featureAttributes dictionary.  If do_read_data is True, read and 
-                     fill features dictionary.
-        @param dlocation: file location, overrides local attribute
-        @param data_format: OGR format driver name, overrides local attribute
-        @param feature_limit: limits number of features to be read into self._features
-        @param do_read_data: True to read all features; False to read only the 
+        """Reads the file at dlocation and fills the related attributes.
+        
+        Reading data fills the featureCount value and featureAttributes 
+        dictionary.  If do_read_data is True, reads and fills features dictionary.
+        
+        Args:
+            dlocation: file location, overrides object attribute
+            data_format: OGR format driver name, overrides object attribute
+            feature_limit: limits number of features to be read into _features
+            do_read_data (boolean): flag indicating whether to read features
+                into ; False to read only the 
                  featureAttributes and feature count. 
         @return: new bbox string, indices of the localId int and geometry fields
-        @todo: remove feature_limit, read subsetDLocation if there is a limit 
+        @todo: remove feature_limit, read subset_dlocation if there is a limit 
         """
         new_bbox = local_id_idx = geom_idx = None
         if dlocation is None:

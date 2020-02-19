@@ -369,12 +369,12 @@ class SPFiller(LMObject):
                 if masklyr is not None:
                     self.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
                     updatedMask = self.addMaskLayer(masklyr)
-                    if updatedMask.getDLocation() != masklyr.getDLocation():
+                    if updatedMask.get_dlocation() != masklyr.get_dlocation():
                         raise LMError('''Returned existing layer name {} for user {} with 
                                         filename {}, not expected filename {}'''
                                         .format(masklyr.name, self.userId,
-                                                updatedMask.getDLocation(),
-                                                masklyr.getDLocation()))
+                                                updatedMask.get_dlocation(),
+                                                masklyr.get_dlocation()))
                 updatedScenPkg = self.addPackageScenariosLayers(scenPkg)
                 if (updatedScenPkg is not None
                     and updatedScenPkg.get_id() is not None

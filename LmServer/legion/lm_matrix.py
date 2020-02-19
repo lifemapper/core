@@ -78,7 +78,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                             status=None, statusModTime=None):
         mtxobj = LMMatrix(None, matrixType=baseMtx.matrixType,
                                 processType=processType, metadata=baseMtx.mtxMetadata,
-                                dlocation=baseMtx.getDLocation(),
+                                dlocation=baseMtx.get_dlocation(),
                                 columnIndices=baseMtx.getColumnIndices(),
                                 columnIndicesFilename=baseMtx.getColumnIndicesFilename(),
                                 metadataUrl=metadataUrl, userId=userId, gridset=gridset,
@@ -140,12 +140,12 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                  used by a single workflow/Makeflow 
         """
         basename = None
-        self.setDLocation()
+        self.set_dlocation()
         if self._dlocation is not None:
             pth, basename = os.path.split(self._dlocation)
         return basename
 
-    def createLocalDLocation(self):
+    def create_local_dlocation(self):
         """
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
@@ -158,14 +158,14 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                                                      usr=self.getUserId())
         return dloc
 
-    def getDLocation(self):
+    def get_dlocation(self):
         """
         @summary: Return the _dlocation attribute; create and set it if empty
         """
-        self.setDLocation()
+        self.set_dlocation()
         return self._dlocation
 
-    def setDLocation(self, dlocation=None):
+    def set_dlocation(self, dlocation=None):
         """
         @summary: Set the _dlocation attribute if it is None.  Use dlocation
                      if provided, otherwise calculate it.
@@ -173,7 +173,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         """
         if self._dlocation is None:
             if dlocation is None:
-                dlocation = self.createLocalDLocation()
+                dlocation = self.create_local_dlocation()
             self._dlocation = dlocation
 
     def clearDLocation(self):
@@ -206,7 +206,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         @summary: Writes this matrix to the file system
         """
         if dlocation is None:
-            dlocation = self.getDLocation()
+            dlocation = self.get_dlocation()
         self.ready_filename(dlocation, overwrite=overwrite)
 
         with open(dlocation, 'w') as outF:
