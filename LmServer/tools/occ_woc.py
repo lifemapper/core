@@ -1,6 +1,10 @@
 """Occurrence data weapon-of-choice
+
+Todo:
+    - Consider using generators
 """
 import csv
+import datetime
 import json
 import os
 import shutil
@@ -8,620 +12,682 @@ import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.api_query import GbifAPI
-from LmCommon.common.lmconstants import (GBIF, ProcessType,
-                                         JobStatus, ONE_HOUR, LMFormat)
-from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.ready_file import (ready_filename, get_unicodecsv_writer)
+from LmCommon.common.lmconstants import (
+    GBIF, JobStatus, LMFormat, ONE_HOUR, ProcessType)
+from LmCommon.common.occ_parse import OccDataParser
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt, LmTime
 from LmServer.base.taxon import ScientificName
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.occ_layer import OccurrenceLayer
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
 
 # .............................................................................
 class _SpeciesWeaponOfChoice(LMObject):
+    """Base class for getting species data one species at a time
+    """
+    # ................................
+    def __init__(self, scribe, user, archive_name, epsg, exp_date, input_fname,
+                 meta_fname=None, taxon_source_name=None, logger=None):
+        """Constructor
 
-    # .............................
-    def __init__(self, scribe, user, archiveName, epsg, expDate, inputFname,
-                     metaFname=None, taxonSourceName=None, logger=None):
-        """
-        @param scribe: An open LmServer.db.borg_scribe.BorgScribe object
-        @param user: Userid
-        @param archiveName: Name of gridset to be created for these data
-        @param epsg: EPSG code for map projection
-        @param expDate: Expiration date in Modified Julian Day format
-        @param inputFname: Input species data filename or directory containing 
-                 multiple files of CSV data
-        @param metaFname: Input species metadata filename or dictionary
-        @param taxonSourceName: Unique name of entity providing taxonomy data
-        @param logger: a logger from LmServer.common.log
+        Args:
+            scribe: An open BorgScribe object
+            user: A user id
+            archive_name: Name of gridset to be created for these data
+            epsg: EPSG code for map projection
+            exp_date: Expiration date in Modified Julian Day format
+            input_fname: Input species data filename or directory containing
+                multiple files of CSV data
+            meta_fname: Input species metadata filename or dictionary
+            taxon_source_name: Unique name of entity providing taxonomy data
+            logger: a logger from LmServer.common.log
         """
         super(_SpeciesWeaponOfChoice, self).__init__()
-        self.finishedInput = False
+        self.finished_input = False
         # Set name for this WoC
-        self.name = '{}_{}'.format(user, archiveName)
+        self.name = '{}_{}'.format(user, archive_name)
         # Optionally use parent process logger
         if logger is None:
             logger = ScriptLogger(self.name)
         self.log = logger
         self._scribe = scribe
-        self.userId = user
+        self.user_id = user
         self.epsg = epsg
-        self._obsoleteTime = expDate
+        self._obsolete_time = exp_date
         # either a file or directory
-        self.inputFilename = inputFname
+        self.input_filename = input_fname
         # Common metadata description for csv points
-        # May be installed with species data in location unavailable to Makeflow
-        self.metaFilename = metaFname
+        # May be installed with species data in location unavailable to
+        #    Makeflow
+        self.meta_filename = meta_fname
         # Taxon Source for known taxonomy
-        self._taxonSourceId = None
-        if taxonSourceName is not None:
-            txSourceId, _, _ = self._scribe.findTaxonSource(taxonSourceName)
-            self._taxonSourceId = txSourceId
+        self._taxon_source_id = None
+        if taxon_source_name is not None:
+            tax_source_id, _, _ = self._scribe.find_taxon_source(
+                taxon_source_name)
+            self._taxon_source_id = tax_source_id
         # Beginning of iteration
         earl = EarlJr()
-        self.startFile = earl.createStartWalkenFilename(user, archiveName)
-        self._linenum = 0
+        self.start_file = earl.create_start_walken_filename(user, archive_name)
+        self._line_num = 0
 
-    # .............................
-    def initializeMe(self):
+    # ................................
+    @staticmethod
+    def initialize_me():
+        """Base class initialize me
+        """
         pass
 
-# ...............................................
+    # ................................
     @property
-    def expirationDate(self):
-        return self._obsoleteTime
+    def expiration_date(self):
+        """Get the expiration date to be used
+        """
+        return self._obsolete_time
 
-# ...............................................
+    # ................................
     def reset_expiration_date(self, new_date_mjd):
-        currtime = gmt().mjd
-        if new_date_mjd < currtime:
-            self._obsoleteTime = new_date_mjd
+        """Change the expiration date to the provided value
+        """
+        curr_time = gmt().mjd
+        if new_date_mjd < curr_time:
+            self._obsolete_time = new_date_mjd
         else:
             raise LMError('New expiration date {} is in the future (now {})')
 
-    # ...............................................
+    # ................................
     @property
     def occ_delimiter(self):
+        """Get the delimiter to use for occurrence data
+        """
         try:
             return self._delimiter
-        except:
+        except AttributeError:
             return None
 
-# ...............................................
-    def _findStart(self):
-        linenum = 0
+    # ................................
+    def _find_start(self):
+        line_num = 0
         complete = False
-        if os.path.exists(self.startFile):
-            f = open(self.startFile, 'r')
-            for line in f:
-                if not complete:
-                    self.log.info('Start on line {}, read from {}'
-                                  .format(line, self.startFile))
-                    try:
-                        linenum = int(line)
-                        complete = True
-                    except Exception as e:
-                        # Ignore comment lines
-                        pass
-            os.remove(self.startFile)
-        return linenum
+        if os.path.exists(self.start_file):
+            with open(self.start_file, 'r') as in_file:
+                for line in in_file:
+                    if not complete:
+                        self.log.info(
+                            'Start on line {}, read from {}'.format(
+                                line, self.start_file))
+                        try:
+                            line_num = int(line)
+                            complete = True
+                        except ValueError:
+                            # Ignore comment lines
+                            pass
+            os.remove(self.start_file)
+        return line_num
 
-# ...............................................
-    def _getNextLine(self, infile, csvreader=None):
+    # ................................
+    def _get_next_line(self, in_file, csv_reader=None):
         success = False
         line = None
-        while not infile.closed and not success:
+        while not in_file.closed and not success:
             try:
-                if csvreader is not None:
-                    line = next(csvreader)
+                if csv_reader is not None:
+                    line = next(csv_reader)
                 else:
-                    line = next(infile)
-            except StopIteration as e:
-                self.finishedInput = True
-                self.log.debug('Finished file {} on line {}'
-                                    .format(infile.name, self._linenum))
-                infile.close()
-                self._linenum = -9999
+                    line = next(in_file)
+            except StopIteration:
+                self.finished_input = True
+                self.log.debug(
+                    'Finished file {} on line {}'.format(
+                        in_file.name, self._line_num))
+                in_file.close()
+                self._line_num = -9999
                 success = True
-            except OverflowError as e:
-                self._linenum += 1
-                self.log.debug('OverflowError on {} ({}), moving on'
-                                     .format(self._linenum, e))
-            except Exception as e:
-                self._linenum += 1
-                self.log.debug('Exception reading line {} ({}), moving on'
-                                    .format(self._linenum, e))
+            except OverflowError as overflow_e:
+                self._line_num += 1
+                self.log.debug(
+                    'OverflowError on {} ({}), moving on'.format(
+                        self._line_num, overflow_e))
+            except Exception as err:
+                self._line_num += 1
+                self.log.debug(
+                    'Exception reading line {} ({}), moving on'.format(
+                        self._line_num, err))
             else:
-                self._linenum += 1
+                self._line_num += 1
                 success = True
                 if line == '':
                     line = None
         return line
 
-# ...............................................
-    def saveNextStart(self, fail=False):
+    # ................................
+    def save_next_start(self, fail=False):
+        """Save the starting position for the next run
+        """
         if fail:
-            lineNum = self.thisStart
+            line_num = self.this_start
         else:
-            lineNum = self.nextStart
-        if lineNum is not None:
+            line_num = self.next_start
+        if line_num is not None:
             try:
-                f = open(self.startFile, 'w')
-                f.write('# Next start line for {} using species data {}\n'
-                          .format(self.name, self.inputFilename))
-                f.write('{}\n'.format(lineNum))
-                f.close()
-            except:
-                self.log.error('Failed to write next starting line {} to file {}'
-                                    .format(lineNum, self.startFile))
+                with open(self.start_file, 'w') as out_f:
+                    out_f.write(
+                        ('# Next start line for {} '
+                         'using species data {}\n{}\n').format(
+                             self.name, self.input_filename, line_num))
+            except Exception:
+                self.log.error(
+                    'Failed to write next starting line {} to file {}'.format(
+                        line_num, self.start_file))
 
-# ...............................................
-    def _readProviderKeys(self, providerKeyFile, providerKeyColname):
+    # ................................
+    def _read_provider_keys(self, provider_key_file, provider_key_col_name):
         providers = {}
-        provKeyCol = None
-        for colidx, desc in self.occParser.columnMeta.items():
-            if desc['name'] == providerKeyColname:
-                provKeyCol = colidx
+        prov_key_col = None
+        for col_idx, desc in self.occ_parser.column_meta.items():
+            if desc['name'] == provider_key_col_name:
+                prov_key_col = col_idx
                 break
-        if provKeyCol is None:
-            self.log.error('Unable to find {} in fieldnames'
-                                .format(providerKeyColname))
-#         try:
-#             provKeyCol = self._fieldNames.index(providerKeyColname)
-#         except:
-#             self.log.error('Unable to find {} in fieldnames'
-#                                 .format(providerKeyColname))
-#             provKeyCol = None
+        if prov_key_col is None:
+            self.log.error(
+                'Unable to find {} in fieldnames'.format(
+                    provider_key_col_name))
 
-        if providerKeyFile is not None and providerKeyColname is not None:
-            if not os.path.exists(providerKeyFile):
-                self.log.error('Missing provider file {}'.format(providerKeyFile))
+        if provider_key_file is not None and provider_key_col_name is not None:
+            if not os.path.exists(provider_key_file):
+                self.log.error(
+                    'Missing provider file {}'.format(provider_key_file))
             else:
-                dumpfile = open(providerKeyFile, 'r')
-                csv.field_size_limit(sys.maxsize)
-                csvreader = csv.reader(dumpfile, delimiter=';')
-                for line in csvreader:
-                    try:
-                        key, name = line
-                        if key != 'key':
-                            providers[key] = name
-                    except:
-                        pass
-                dumpfile.close()
-        return providers, provKeyCol
+                with open(provider_key_file, 'r') as dump_file:
+                    csv.field_size_limit(sys.maxsize)
+                    csv_reader = csv.reader(dump_file, delimiter=';')
+                    for line in csv_reader:
+                        try:
+                            key, name = line
+                            if key != 'key':
+                                providers[key] = name
+                        except Exception:
+                            pass
+        return providers, prov_key_col
 
-# ...............................................
-    def _willCompute(self, status, statusModTime, dlocation, rawDataLocation):
-        willCompute = False
-        noRawData = (rawDataLocation is None) or not (os.path.exists(rawDataLocation))
-        noCompleteData = (dlocation is None) or not (os.path.exists(dlocation))
-        obsoleteData = (statusModTime > 0) and (statusModTime < self._obsoleteTime)
-        if (obsoleteData or
-            noCompleteData or
-            JobStatus.incomplete(status) or
-            JobStatus.failed(status) or
-            # waiting with missing data
-            (JobStatus.waiting(status) and noRawData)):
-            willCompute = True
-        return willCompute
+    # ................................
+    def _will_compute(self, status, status_mod_time, dlocation, raw_dlocation):
+        no_raw_data = not any([raw_dlocation, os.path.exists(raw_dlocation)])
+        no_complete_data = not any([dlocation, os.path.exists(dlocation)])
+        obsolete_data = 0 < status_mod_time < self._obsolete_time
 
-# ...............................................
-    def _findOrInsertOccurrenceset(self, sciName, dataCount, data=None,
-                                   metadata={}):
+        return any([
+            obsolete_data, no_complete_data, JobStatus.incomplete(status),
+            JobStatus.failed(status),
+            (JobStatus.waiting(status) and no_raw_data)])
+
+    # ................................
+    def _find_or_insert_occurrence_set(self, sci_name, data_count, data=None,
+                                       metadata=None):
+        """Find or insert an occurrence set
         """
-        @param sciName: ScientificName object
-        @param dataCount: reported number of points for taxon in input dataset
-        @param data: raw point data, stream or filename
-        """
-        currtime = gmt().mjd
+        if metadata is None:
+            metadata = {}
+        curr_time = gmt().mjd
         occ = None
         # Find existing
-        # TODO: CJ, change this if we want canonical name displayed for GBIF data instead of scientificName
-#         tmpocc = OccurrenceLayer(sciName.canonicalName, self.userId, self.epsg,
-        tmpocc = OccurrenceLayer(sciName.scientificName, self.userId, self.epsg,
-                dataCount, squid=sciName.squid,
-                processType=self.processType, status=JobStatus.INITIALIZE,
-                statusModTime=currtime, sciName=sciName,
-                rawMetaDLocation=self.metaFilename)
+        # TODO: CJ, change this if we want canonical name displayed for GBIF
+        #    data instead of scientific_name
+        tmp_occ = OccurrenceLayer(
+            sci_name.scientific_name, self.user_id, self.epsg, data_count,
+            squid=sci_name.squid, process_type=self.process_type,
+            status=JobStatus.INITIALIZE, status_mod_time=curr_time,
+            sci_name=sci_name, raw_meta_dlocation=self.meta_filename)
         try:
-            occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
-            self.log.info('    Found/inserted OccLayer {}'.format(occ.get_id()))
-        except Exception as e:
-            if not isinstance(e, LMError):
-                e = LMError(e, line_num=self.get_line_num())
-            raise e
+            occ = self._scribe.find_or_insert_occurrence_set(tmp_occ)
+            self.log.info(
+                '    Found/inserted OccLayer {}'.format(occ.get_id()))
+        except LMError as lme:
+            raise lme
+        except Exception as err:
+            raise LMError(err, line_num=self.get_line_num())
 
         if occ is not None:
             # Write raw data regardless
-            rdloc, rawmeta_dloc = self._writeRawData(occ, data=data,
-                                                     metadata=metadata)
-            if not rdloc:
+            raw_dloc, _ = self._write_raw_data(
+                occ, data=data, metadata=metadata)
+            if not raw_dloc:
                 raise LMError('    Failed to find raw data location')
-            occ.setRawDLocation(rdloc, currtime)
-            # Set processType and metadata location (from config, not saved in DB)
-            occ.processType = self.processType
-            occ.rawMetaDLocation = self.metaFilename
+            occ.set_raw_dlocation(raw_dloc, curr_time)
+            # Set process_type and metadata location (from config, not saved
+            #    in DB)
+            occ.process_type = self.process_type
+            occ.raw_meta_dlocation = self.meta_filename
 
             # Do reset existing or new Occ?
-            willCompute = self._willCompute(occ.status, occ.statusModTime,
-                                            occ.getDLocation(), occ.getRawDLocation())
-            if willCompute:
-                self.log.info('    Init new or existing OccLayer status, count')
-                occ.updateStatus(JobStatus.INITIALIZE, mod_time=currtime,
-                     queryCount=dataCount)
-                _ = self._scribe.updateObject(occ)
+            will_compute = self._will_compute(
+                occ.status, occ.status_mod_time, occ.get_dlocation(),
+                occ.get_raw_dlocation())
+            if will_compute:
+                self.log.info(
+                    '    Init new or existing OccLayer status, count')
+                occ.update_status(
+                    JobStatus.INITIALIZE, mod_time=curr_time,
+                    query_count=data_count)
+                _ = self._scribe.update_object(occ)
             else:
                 # Return existing, completed, unchanged
                 self.log.info('    Returning up-to-date OccLayer')
         return occ
 
-# ...............................................
-    def _getInsertSciNameForGBIFSpeciesKey(self, taxonKey, taxonCount):
+    # ................................
+    def _get_insert_sci_name_for_gbif_species_key(self, taxon_key,
+                                                  taxon_count):
+        """Returns an existing or newly inserted ScientificName
         """
-        Returns an existing or newly inserted ScientificName
-        """
-        sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId,
-                                                              taxonKey=taxonKey)
-        if sciName is not None:
-            self.log.info('Found sciName for taxonKey {}, {}, with {} points'
-                              .format(taxonKey, sciName.scientificName, taxonCount))
+        sci_name = self._scribe.find_or_insert_taxon(
+            taxon_source_id=self._taxon_source_id, taxon_key=taxon_key)
+        if sci_name is not None:
+            self.log.info(
+                'Found sci_name for taxon_key {}, {}, with {} points'.format(
+                    taxon_key, sci_name.scientific_name, taxon_count))
         else:
             # Use API to get and insert species name
             try:
-                (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr,
-                 nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr,
-                 familyStr, genusStr, speciesStr, genusKey, speciesKey,
-                 loglines) = GbifAPI.getTaxonomy(taxonKey)
-            except Exception as e:
-                self.log.info('Failed lookup for key {}, ({})'.format(
-                                                                    taxonKey, e))
+                (rank_str, sciname_str, canonical_str, accepted_key,
+                 accepted_str, nub_key, tax_status, kingdom_str, phylum_str,
+                 class_str, order_str, family_str, genus_str, species_str,
+                 genus_key, species_key, log_lines
+                 ) = GbifAPI.get_taxonomy(taxon_key)
+            except Exception as err:
+                self.log.info(
+                    'Failed lookup for key {}, ({})'.format(taxon_key, err))
             else:
                 # if no species key, this is not a species
-                if rankStr in ('SPECIES', 'GENUS'):
-                    if taxStatus != 'ACCEPTED':
-                        if acceptedKey is not None:
+                if rank_str in ('SPECIES', 'GENUS'):
+                    if tax_status != 'ACCEPTED':
+                        if accepted_key is not None:
                             # Update to accepted values
-                            taxonKey = acceptedKey
-                            scinameStr = acceptedStr
+                            taxon_key = accepted_key
+                            sciname_str = accepted_str
                         else:
-                            self.log.warning('No accepted key for taxonKey {}'.format(taxonKey))
+                            self.log.warning(
+                                'No accepted key for taxon_key {}'.format(
+                                    taxon_key))
                             return None
 
-                    currtime = gmt().mjd
+                    curr_time = gmt().mjd
                     # Do not tie GBIF taxonomy to one userid
-                    sname = ScientificName(scinameStr,
-                                         rank=rankStr,
-                                         canonicalName=canonicalStr, squid=None,
-                                         lastOccurrenceCount=taxonCount,
-                                         kingdom=kingdomStr, phylum=phylumStr,
-                                         txClass=classStr, txOrder=orderStr,
-                                         family=familyStr, genus=genusStr,
-                                         mod_time=currtime,
-                                         taxonomySourceId=self._taxonSourceId,
-                                         taxonomySourceKey=taxonKey,
-                                         taxonomySourceGenusKey=genusKey,
-                                         taxonomySourceSpeciesKey=speciesKey)
+                    s_name = ScientificName(
+                        sciname_str, rank=rank_str,
+                        canonical_name=canonical_str, squid=None,
+                        last_occurrence_count=taxon_count, kingdom=kingdom_str,
+                        phylum=phylum_str, class_=class_str, order_=order_str,
+                        family=family_str, genus=genus_str, mod_time=curr_time,
+                        taxonomy_source_id=self._taxon_source_id,
+                        taxonomy_source_key=taxon_key,
+                        taxonomy_source_genus_key=genus_key,
+                        taxonomy_source_species_key=species_key)
                     try:
-                        sciName = self._scribe.findOrInsertTaxon(sciName=sname)
-                        self.log.info('Inserted sciName for taxonKey {}, {}'
-                                          .format(taxonKey, sciName.scientificName))
-                    except Exception as e:
-                        if not isinstance(e, LMError):
-                            e = LMError('Failed on taxonKey {}, linenum {}'
-                                                        .format(taxonKey, self._linenum),
-                                            e, line_num=self.get_line_num())
-                        raise e
+                        sci_name = self._scribe.find_or_insert_taxon(
+                            sci_name=s_name)
+                        self.log.info(
+                            'Inserted sci_name for taxon_key {}, {}'.format(
+                                taxon_key, sci_name.scientific_name))
+                    except LMError as lme:
+                        raise lme
+                    except Exception as err:
+                        raise LMError(
+                            'Failed on taxon_key {}, linenum {}'.format(
+                                taxon_key, self._line_num),
+                            err, line_num=self.get_line_num())
                 else:
-                    self.log.info('taxonKey {} is not an accepted genus or species'
-                                      .format(taxonKey))
-        return sciName
+                    self.log.info(
+                        'Taxon key ({}) is not accepted'.format(taxon_key))
+        return sci_name
 
-# ...............................................
-    def _raiseSubclassError(self):
+    # ................................
+    @staticmethod
+    def _raise_subclass_error():
         raise LMError('Function must be implemented in subclass')
 
-# ...............................................
-    def _writeRawData(self, occ, data=None, metadata=None):
-        self._raiseSubclassError()
+    # ................................
+    def _write_raw_data(self, occ, data=None, metadata=None):
+        self._raise_subclass_error()
 
-# ...............................................
+    # ................................
     def close(self):
-        self._raiseSubclassError()
+        """Must be implemented in subclass
+        """
+        self._raise_subclass_error()
 
-# ...............................................
+    # ................................
     @property
     def complete(self):
-        self._raiseSubclassError()
+        """Must be implemented in subclass
+        """
+        self._raise_subclass_error()
 
-# ...............................................
+    # ................................
     @property
-    def nextStart(self):
-        self._raiseSubclassError()
+    def next_start(self):
+        """Must be implemented in subclass
+        """
+        self._raise_subclass_error()
 
-# ...............................................
+    # ................................
     @property
-    def thisStart(self):
-        self._raiseSubclassError()
+    def this_start(self):
+        """Must be implemented in subclass
+        """
+        self._raise_subclass_error()
 
-# ...............................................
-    def moveToStart(self):
-        self._raiseSubclassError()
+    # ................................
+    def move_to_start(self):
+        """Must be implemented in subclass
+        """
+        self._raise_subclass_error()
 
-# ...............................................
+    # ................................
     @property
-    def currRecnum(self):
+    def curr_rec_num(self):
+        """Get the current record number
+        """
         if self.complete:
             return 0
-        else:
-            return self._linenum
+
+        return self._line_num
 
 
 # ..............................................................................
 class UserWoC(_SpeciesWeaponOfChoice):
-    """
-    @summary: Parses a CSV file (with headers) of Occurrences using a metadata 
-                 file.  A template for the metadata, with instructions, is at 
-                 LmDbServer/tools/occurrence.meta.example.  
-                 The parser writes each new text chunk to a file, inserts or updates  
-                 the Occurrence record and inserts any dependent objects.
-    @note: If useGBIFTaxonomy is true, the 'GroupBy' field in the metadata
-                 should name the field containing the GBIF TaxonID for the accepted 
-                 Taxon of each record in the group. 
+    """User weapon of choice.
+
+    Parses a CSV file (with headers) of Occurrences using a metadata file.  A
+    template for the metadata, with instructions, is at
+    LmDbServer/tools/occurrence.meta.example.  The parser writes each new text
+    chunk to a file, inserts or updates the Occurrence record and inserts any
+    dependent objects.
+
+    Note:
+        If use_gbif_taxonomy is true, the 'GroupBy' field in the metadata
+            should name the field containing the GBIF TaxonID for the accepted
+            Taxon of each record in the group.
     """
 
-    def __init__(self, scribe, user, archiveName, epsg, expDate,
-                     userOccCSV, userOccMeta, userOccDelimiter,
-                     logger=None, processType=ProcessType.USER_TAXA_OCCURRENCE,
-                     providerFname=None, useGBIFTaxonomy=False,
-                     taxonSourceName=None):
-        super(UserWoC, self).__init__(scribe, user, archiveName, epsg, expDate,
-                                                userOccCSV, metaFname=userOccMeta,
-                                                taxonSourceName=taxonSourceName,
-                                                logger=logger)
+    # ................................
+    def __init__(self, scribe, user, archive_name, epsg, exp_date,
+                 user_occ_csv, user_occ_meta, user_occ_delimiter,
+                 logger=None, process_type=ProcessType.USER_TAXA_OCCURRENCE,
+                 provider_fname=None, use_gbif_taxonomy=False,
+                 taxon_source_name=None):
+        super(UserWoC, self).__init__(
+            scribe, user, archive_name, epsg, exp_date, user_occ_csv,
+            meta_fname=user_occ_meta, taxon_source_name=taxon_source_name,
+            logger=logger)
         # Save known GBIF provider/IDs for lookup if available
         self._providers = []
-        self._provCol = None
-        if providerFname is not None and os.path.exists(providerFname):
+        self._prov_col = None
+        if provider_fname is not None and os.path.exists(provider_fname):
             try:
-                self._providers, self._provCol = self._readProviderKeys(
-                    providerFname, GBIF.PROVIDER_FIELD)
-            except:
+                self._providers, self._prov_col = self._read_provider_keys(
+                    provider_fname, GBIF.PROVIDER_FIELD)
+            except Exception:
                 pass
         # User-specific attributes
-        self.processType = ProcessType.USER_TAXA_OCCURRENCE
-        self.useGBIFTaxonomy = useGBIFTaxonomy
-        self._userOccCSV = userOccCSV
-        self._userOccMeta = userOccMeta
-        self._delimiter = userOccDelimiter
-        self.occParser = None
+        self.process_type = ProcessType.USER_TAXA_OCCURRENCE
+        self.use_gbif_taxonomy = use_gbif_taxonomy
+        self._user_occ_csv = user_occ_csv
+        self._user_occ_meta = user_occ_meta
+        self._delimiter = user_occ_delimiter
+        self.occ_parser = None
+        self._field_names = None
 
-    # .............................
-    def initializeMe(self):
-        """
-        @summary: Creates objects (ChristopherWalken for walking the species
-                     and MFChain objects for workflow computation requests.
+    # ................................
+    def initialize_me(self):
+        """Creates objects for walking species and computation requests.
         """
         try:
-            self.occParser = OccDataParser(self.log, self._userOccCSV,
-                                                     self._userOccMeta,
-                                                     delimiter=self._delimiter,
-                                                     pullChunks=True)
+            self.occ_parser = OccDataParser(
+                self.log, self._user_occ_csv, self._user_occ_meta,
+                delimiter=self._delimiter, pull_chunks=True)
         except Exception as e:
             raise LMError('Failed to construct OccDataParser, {}'.format(e))
 
-        self._fieldNames = self.occParser.header
-        self.occParser.initializeMe()
+        self._field_names = self.occ_parser.header
+        self.occ_parser.initialize_me()
 
-# ...............................................
+    # ................................
     def close(self):
+        """Close the WoC
+        """
         try:
-            self.occParser.close()
-        except:
+            self.occ_parser.close()
+        except Exception:
             try:
-                dataname = self.occParser.dataFname
-            except:
-                dataname = None
-            self.log.error('Unable to close OccDataParser with file/data {}'
-                                .format(dataname))
+                data_name = self.occ_parser.data_fname
+            except Exception:
+                data_name = None
+            self.log.error(
+                'Unable to close OccDataParser with file/data {}'.format(
+                    data_name))
 
-# ...............................................
+    # ................................
     @property
     def complete(self):
+        """Return boolean indication if the WoC is complete
+        """
         try:
-            return self.occParser.closed
-        except:
+            return self.occ_parser.closed
+        except Exception:
             return True
 
-# ...............................................
+    # ................................
     @property
-    def thisStart(self):
+    def this_start(self):
+        """Get this start line
+        """
         if self.complete:
             return 0
-        else:
-            try:
-                return self.occParser.keyFirstRec
-            except:
-                return 0
 
-# ...............................................
+        try:
+            return self.occ_parser.key_first_rec
+        except Exception:
+            return 0
+
+    # ................................
     @property
-    def nextStart(self):
+    def next_start(self):
+        """Get the next start line
+        """
         if self.complete:
             return 0
-        else:
-            try:
-                return self.occParser.currRecnum
-            except:
-                return 0
 
-# ...............................................
+        try:
+            return self.occ_parser.curr_rec_num
+        except Exception:
+            return 0
+
+    # ................................
     @property
-    def currRecnum(self):
+    def curr_rec_num(self):
+        """Get the current record number
+        """
         if self.complete:
             return 0
-        else:
-            try:
-                return self.occParser.currRecnum
-            except:
-                return 0
 
-# ...............................................
-    def moveToStart(self):
-        startline = self._findStart()
+        try:
+            return self.occ_parser.curr_rec_num
+        except Exception:
+            return 0
+
+    # ................................
+    def move_to_start(self):
+        """Move to the starting line
+        """
+        start_line = self._find_start()
         # Assumes first line is header
-        if startline > 2:
-            self.occParser.skipToRecord(startline)
-        elif startline < 0:
-            self._currRec = None
+        if start_line > 2:
+            self.occ_parser.skip_to_record(start_line)
+        elif start_line < 0:
+            self._curr_rec = None
 
-# ...............................................
-    def _replaceLookupKeys(self, dataChunk):
+    # ................................
+    def _replace_lookup_keys(self, data_chunk):
         chunk = []
-        for line in dataChunk:
+        for line in data_chunk:
             try:
-                provkey = line[self._provCol]
-            except:
-                self.log.debug('Failed to find providerKey on record {} ({})'
-                        .format(self._linenum, line))
+                prov_key = line[self._prov_col]
+            except KeyError:
+                self.log.debug(
+                    'Failed to find providerKey on record {} ({})'.format(
+                        self._line_num, line))
             else:
-                provname = provkey
+                prov_name = prov_key
                 try:
-                    provname = self._providers[provkey]
-                except:
+                    prov_name = self._providers[prov_key]
+                except KeyError:
                     try:
-                        provname = GbifAPI.getPublishingOrg(provkey)
-                        self._providers[provkey] = provname
-                    except:
-                        self.log.debug('Failed to find providerKey {} in providers or GBIF API'
-                                      .format(provkey))
+                        prov_name = GbifAPI.get_publishing_org(prov_key)
+                        self._providers[prov_key] = prov_name
+                    except Exception:
+                        self.log.debug(
+                            'Failed to find provider key {}'.format(prov_key))
 
-                line[self._provCol] = provname
+                line[self._prov_col] = prov_name
                 chunk.append(line)
         return chunk
 
-# ...............................................
-    def getOne(self):
-        """
-        @summary: Create and return an OccurrenceLayer from a chunk of CSV 
-                  records grouped by a GroupBy value indicating species,  
-                  possibly a GBIF `taxonKey`
-        @note: If useGBIFTaxonomy is true, 
-                 - the `taxonKey` will contain the GBIF TaxonID for the accepted 
-                    Taxon of each record in the chunk, and a taxon record will be 
-                    retrieved (if already present) or queried from GBIF and inserted
-                 - the OccurrenceLayer.displayname will use the resolved GBIF 
+    # ................................
+    def get_one(self):
+        """Get one occurrence layer
+
+        Create and return an OccurrenceLayer from a chunk of CSV records
+        grouped by a GroupBy value indicating species, possibly a GBIF
+        `taxon_key`
+
+        Note:
+            - If use_gbif_taxonomy is true:
+                - the `taxon_key` will contain the GBIF TaxonID for the
+                    accepted Taxon of each record in the chunk, and a taxon
+                    record will be retrieved (if already present) or queried
+                    from GBIF and inserted
+                - the OccurrenceLayer.displayname will use the resolved GBIF
                     canonical name
-        @note: If taxonName is missing, and useGBIFTaxonomy is False, 
-                 the OccurrenceLayer.displayname will use the GroupBy value
+            - If taxon_name is missing, and use_gbif_taxonomy is False,
+                the OccurrenceLayer.displayname will use the GroupBy value
         """
         occ = None
-        dataChunk, taxonKey, taxonName = self.occParser.pullCurrentChunk()
-        if dataChunk:
+        (data_chunk, taxon_key, taxon_name
+         ) = self.occ_parser.pull_current_chunk()
+        if data_chunk:
             # If data is from GBIF, replace Provider key with name
-            if self._provCol is not None:
-                dataChunk = self._replaceLookupKeys(dataChunk)
+            if self._prov_col is not None:
+                data_chunk = self._replace_lookup_keys(data_chunk)
 
             # Get or insert ScientificName (squid)
-            if self.useGBIFTaxonomy:
-                # returns None if GBIF API does NOT return this or another key as ACCEPTED
-                sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey,
-                                                                  len(dataChunk))
-#                 if sciName:
-#                     updatedTaxonKey = sciName.sourceTaxonKey
-#                     # Override the given taxonName with the resolved GBIF canonical name
-#                     taxonName = sciName.scientificName
+            if self.use_gbif_taxonomy:
+                # returns None if GBIF API does NOT return this or another key
+                #    as ACCEPTED
+                sci_name = self._get_insert_sci_name_for_gbif_species_key(
+                    taxon_key, len(data_chunk))
             else:
-                if not taxonName:
-                    taxonName = taxonKey
-                bbsciName = ScientificName(taxonName, userId=self.userId)
-                sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
+                if not taxon_name:
+                    taxon_name = taxon_key
+                bbsci_name = ScientificName(taxon_name, user_id=self.user_id)
+                sci_name = self._scribe.find_or_insert_taxon(
+                    sci_name=bbsci_name)
 
-            if sciName is not None:
-                occ = self._findOrInsertOccurrenceset(sciName, len(dataChunk),
-                                data=dataChunk, metadata=self.occParser.columnMeta)
+            if sci_name is not None:
+                occ = self._find_or_insert_occurrence_set(
+                    sci_name, len(data_chunk), data=data_chunk,
+                    metadata=self.occ_parser.column_meta)
                 if occ is not None:
-                    self.log.info('WOC processed occset {}, name {}, with {} records; next start {}'
-                                  .format(occ.get_id(), sciName.scientificName,
-                                          len(dataChunk), self.nextStart))
+                    self.log.info(
+                        'WoC processed occ set {}, {}; next start {}'.format(
+                            occ.get_id(),
+                            'name: {}, num records: {}'.format(
+                                sci_name.scientific_name, len(data_chunk)),
+                            self.next_start))
         return occ
 
-# ...............................................
-    def _writeRawData(self, occ, data=None, metadata=None):
-        rdloc = occ.createLocalDLocation(raw=True)
-        writer, f = get_unicodecsv_writer(rdloc, delimiter=self._delimiter,
-                                          doAppend=False)
-        try:
-            for rec in data:
-                writer.writerow(rec)
-            f.close()
-        except Exception as e:
-            rdloc = None
-            self.log.debug('Unable to write CSV file {} ({})'.format(rdloc, e))
-        else:
-            # Write interpreted metadata along with raw CSV
-            rawmeta_dloc = rdloc + LMFormat.JSON.ext
-            ready_filename(rawmeta_dloc, overwrite=True)
-            with open(rawmeta_dloc, 'w') as f:
-                json.dump(metadata, f)
-        return rdloc, rawmeta_dloc
+    # ................................
+    def _write_raw_data(self, occ, data=None, metadata=None):
+        raw_dloc = occ.create_local_dlocation(raw=True)
+
+        with open(raw_dloc, 'w') as out_file:
+            writer = csv.writer(out_file, delimiter=self._delimiter)
+
+            try:
+                for rec in data:
+                    writer.writerow(rec)
+            except Exception as err:
+                raw_dloc = None
+                self.log.debug(
+                    'Unable to write CSV file {} ({})'.format(raw_dloc, err))
+            else:
+                # Write interpreted metadata along with raw CSV
+                raw_meta_dloc = raw_dloc + LMFormat.JSON.ext
+                ready_filename(raw_meta_dloc, overwrite=True)
+                with open(raw_meta_dloc, 'w') as meta_f:
+                    json.dump(metadata, meta_f)
+        return raw_dloc, raw_meta_dloc
 
 
 # ..............................................................................
 class TinyBubblesWoC(_SpeciesWeaponOfChoice):
-    """
-    @summary: Moves multiple csv occurrence files (pre-parsed by taxa, with or  
-              without headers).  A template for the metadata, with instructions,  
-              is at LmDbServer/tools/occurrence.meta.example.  
-              The WOC renames and moves each csv file to the correct location,  
-              inserts or updates the Occurrence record and inserts any dependent 
-              objects.
-    @note: If useGBIFTaxonomy is true, the 'GroupBy' field in the metadata
-           should name the field containing the GBIF TaxonID for the accepted 
-           Taxon of each record in the group. 
+    """Moves multipe csv files
+
+    Moves multiple csv occurrence files (pre-parsed by taxa, with or without
+    headers).  A template for the metadata, with instructions, is at
+    LmDbServer/tools/occurrence.meta.example.  The WOC renames and moves each
+    csv file to the correct location, inserts or updates the Occurrence record
+    and inserts any dependent objects.
+
+    Note:
+        If use_gbif_taxonomy is true, the 'GroupBy' field in the metadata
+            should name the field containing the GBIF TaxonID for the accepted
+            Taxon of each record in the group.
     """
 
-    def __init__(self, scribe, user, archiveName, epsg, expDate,
-                     occCSVDir, occMeta, occDelimiter, dirContentsFname,
-                     logger=None, processType=ProcessType.USER_TAXA_OCCURRENCE,
-                     useGBIFTaxonomy=False, taxonSourceName=None):
-        super(TinyBubblesWoC, self).__init__(scribe, user, archiveName, epsg, expDate,
-                                             occCSVDir, metaFname=occMeta,
-                                             taxonSourceName=taxonSourceName,
-                                             logger=logger)
+    # ................................
+    def __init__(self, scribe, user, archive_name, epsg, exp_date, occ_csv_dir,
+                 occ_meta, occ_delimiter, dir_contents_fname, logger=None,
+                 process_type=ProcessType.USER_TAXA_OCCURRENCE,
+                 use_gbif_taxonomy=False, taxon_source_name=None):
+        """Constructor
+        """
+        super(TinyBubblesWoC, self).__init__(
+            scribe, user, archive_name, epsg, exp_date, occ_csv_dir,
+            meta_fname=occ_meta, taxon_source_name=taxon_source_name,
+            logger=logger)
         # specific attributes
-        self.processType = ProcessType.USER_TAXA_OCCURRENCE
-        self._occCSVDir = occCSVDir
-        self._occMeta = occMeta
-        self._delimiter = occDelimiter
-        self._dirContentsFile = None
-        self._updateFile(dirContentsFname, expDate)
+        self.process_type = ProcessType.USER_TAXA_OCCURRENCE
+        self._occ_csv_dir = occ_csv_dir
+        self._occ_meta = occ_meta
+        self._delimiter = occ_delimiter
+        self._dir_contents_file = None
+        self._update_file(dir_contents_fname, exp_date)
         try:
-            self._dirContentsFile = open(dirContentsFname, 'r')
-        except:
-            raise LMError('Unable to open {}'.format(dirContentsFname))
-        self.useGBIFTaxonomy = useGBIFTaxonomy
+            self._dir_contents_file = open(dir_contents_fname, 'r')
+        except IOError:
+            raise LMError('Unable to open {}'.format(dir_contents_fname))
+        self.use_gbif_taxonomy = use_gbif_taxonomy
 
-# ...............................................
-    def  _parseBubble(self, bubbleFname):
+    # ................................
+    def _parse_bubble(self, bubble_fname):
+        """Parse a bubble
+
+        Todo:
+            This method should either get OpenTree ID from filename or some
+                taxon ID (GBIF) from record/s.
+
+        Returns:
+            (specie_name, open_tree_id, record_count)
         """
-        @todo: This method should either get OpenTree ID from filename or 
-               some taxon ID (GBIF) from record/s.
-        @return species_name: If it can be parsed from the filename, 
-                Binomial, genus + species, otherwise it is simply the filename
-        @return openTreeId: If it can be parsed from the filename, an integer 
-                key indicating the Open Tree of Life unique identifier for the 
-                phylogenetic record represented by these data. 
-        @return recordCount: number of records in the file (lines not including 
-                the header).
-        """
-        binomial = opentreeId = None
-        if bubbleFname is not None:
-            _, fname = os.path.split(bubbleFname)
+        binomial = open_tree_id = None
+        if bubble_fname is not None:
+            _, fname = os.path.split(bubble_fname)
             basename, _ = os.path.splitext(fname)
             parts = basename.split('_')
             if len(parts) >= 2:
@@ -629,393 +695,326 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                 species = parts[1]
                 try:
                     idstr = parts[2]
-                    opentreeId = int(idstr)
-                except:
-                    self.log.error('Unable to extract integer openTreeId from filename {}'
-                                        .format(basename))
+                    open_tree_id = int(idstr)
+                except (ValueError, IndexError):
+                    self.log.error(
+                        'Unable to get int open tree id from file {}'.format(
+                            basename))
                 binomial = ' '.join((genus, species))
             else:
-                self.log.error('Unable to parse filename {} into binomial and opentreeId'
-                                    .format(basename))
+                self.log.error(
+                    'Unable to parse {} into binomial and ottid'.format(
+                        basename))
 
-        with open(bubbleFname) as f:
-            for idx, line in enumerate(f):
+        idx = 0
+        with open(bubble_fname) as in_file:
+            for idx, _ in enumerate(in_file):
                 pass
-        recordCount = idx
+        record_count = idx
 
-        return binomial, opentreeId, recordCount
+        return binomial, open_tree_id, record_count
 
-# ...............................................
-    def  _getInsertSciNameForTinyBubble(self, binomial, opentreeId, recordCount):
+    # ................................
+    def  _get_insert_sci_name_for_tiny_bubble(self, binomial, open_tree_id,
+                                              record_count):
         if binomial is not None:
-            if opentreeId is not None:
-                sciName = ScientificName(binomial,
-                                         lastOccurrenceCount=recordCount,
-                                         taxonomySourceId=self._taxonSourceId,
-                                         taxonomySourceKey=opentreeId,
-                                         taxonomySourceSpeciesKey=opentreeId)
+            if open_tree_id is not None:
+                sci_name = ScientificName(
+                    binomial, last_occurrence_count=record_count,
+                    taxonomy_source_id=self._taxon_source_id,
+                    taxonomy_source_key=open_tree_id,
+                    taxonomy_source_species_key=open_tree_id)
             else:
-                sciName = ScientificName(binomial, userId=self.userId,
-                                         lastOccurrenceCount=recordCount)
-            self._scribe.findOrInsertTaxon(sciName=sciName)
-            self.log.info('Inserted sciName for OpenTree UID {}, {}'
-                                  .format(opentreeId, binomial))
+                sci_name = ScientificName(
+                    binomial, user_id=self.user_id,
+                    last_occurrence_count=record_count)
+            self._scribe.findOrInsertTaxon(sci_name=sci_name)
+            self.log.info(
+                'Inserted sci_name for OpenTree UID {}, {}'.format(
+                    open_tree_id, binomial))
 
-        return sciName
+        return sci_name
 
-# ...............................................
+    # ................................
     def close(self):
+        """Close the WoC
+        """
         try:
-            self._dirContentsFile.close()
-        except:
-            self.log.error('Unable to close dirContentsFile {}'.format(self._dirContentsFile))
+            self._dir_contents_file.close()
+        except Exception:
+            self.log.error(
+                'Unable to close dirContentsFile {}'.format(
+                    self._dir_contents_file))
 
-# ...............................................
+    # ................................
     @property
-    def nextStart(self):
+    def next_start(self):
+        """Get the next starting location
+        """
         if self.complete:
             return 0
-        else:
-            return self._linenum + 1
 
-# ...............................................
+        return self._line_num + 1
+
+    # ................................
     @property
-    def thisStart(self):
+    def this_start(self):
+        """Get this starting location
+        """
         if self.complete:
             return 0
-        else:
-            return self._linenum
 
-# ...............................................
+        return self._line_num
+
+    # ................................
     @property
     def complete(self):
+        """Return indication if WoC is complete
+        """
         try:
-            return self._dirContentsFile.closed
-        except:
+            return self._dir_contents_file.closed
+        except Exception:
             return True
 
-# ...............................................
-    def _updateFile(self, filename, expDate):
-        """
-        If file does not exist or is older than expDate, create a new file. 
+    # ................................
+    def _updateFile(self, filename, exp_date):
+        """If file does not exist or is older than exp_date, create a new file.
         """
         if filename is None or not os.path.exists(filename):
-            self._recreateFile(filename)
-        elif expDate is not None:
+            self._recreate_file(filename)
+        elif exp_date is not None:
             ticktime = os.path.getmtime(filename)
             mod_time = LmTime(
                 dtime=datetime.datetime.fromtimestamp(ticktime)).mjd
-            if mod_time < expDate:
-                self._recreateFile(filename)
+            if mod_time < exp_date:
+                self._recreate_file(filename)
 
-# ...............................................
-    def _recreateFile(self, dirContentsFname):
+    # ................................
+    def _recreate_file(self, dir_contents_fname):
+        """Create a new file from BISON query for matches with > 20 points.
         """
-        Create a new file from BISON TSN query for binomials with > 20 points. 
-        """
-        self.ready_filename(dirContentsFname, overwrite=True)
-        with open(dirContentsFname, 'w') as f:
-            for root, dirs, files in os.walk(self._occCSVDir):
+        self.ready_filename(dir_contents_fname, overwrite=True)
+        with open(dir_contents_fname, 'w') as out_f:
+            for root, _, files in os.walk(self._occ_csv_dir):
                 for fname in files:
                     if fname.endswith(LMFormat.CSV.ext):
-                        fullFname = os.path.join(root, fname)
-                        f.write('{}\n'.format(fullFname))
+                        full_fname = os.path.join(root, fname)
+                        out_f.write('{}\n'.format(full_fname))
 
-# ...............................................
-    def _getNextFilename(self):
-        fullOccFname = None
-        line = self._getNextLine(self._dirContentsFile)
+    # ................................
+    def _get_next_filename(self):
+        full_occ_fname = None
+        line = self._get_next_line(self._dir_contents_file)
         if line is not None:
             try:
-                fullOccFname = line.strip()
+                full_occ_fname = line.strip()
             except Exception as e:
-                self.log.debug('Exception reading line {} ({})'
-                                    .format(self._linenum, e))
-        return fullOccFname
+                self.log.debug(
+                    'Exception reading line {} ({})'.format(
+                        self._line_num, e))
+        return full_occ_fname
 
-# ...............................................
-    def getOne(self):
+    # ................................
+    def get_one(self):
+        """Get one occurrence set
+        """
         occ = None
-        bubbleFname = self._getNextFilename()
-        binomial, opentreeId, recordCount = self._parseBubble(bubbleFname)
-        if binomial is not None and opentreeId is not None:
-            sciName = self._getInsertSciNameForTinyBubble(binomial, opentreeId,
-                                                          recordCount)
-            if sciName is not None:
-                occ = self._findOrInsertOccurrenceset(sciName, recordCount,
-                                                      data=bubbleFname)
+        bubble_fname = self._get_next_filename()
+        binomial, open_tree_id, record_count = self._parse_bubble(bubble_fname)
+        if binomial is not None and open_tree_id is not None:
+            sci_name = self._get_insert_sci_name_for_tiny_bubble(
+                binomial, open_tree_id, record_count)
+            if sci_name is not None:
+                occ = self._find_or_insert_occurrence_set(
+                    sci_name, record_count, data=bubble_fname)
             if occ:
-                self.log.info('WOC processed occset {}, opentreeId {}, with {} points; next start {}'
-                                  .format(occ.get_id(), opentreeId, recordCount, self.nextStart))
+                self.log.info(
+                    'WoC processed occ set {}, open tree id {}; {}'.format(
+                        occ.get_id(), open_tree_id,
+                        'with {} points, next start {}'.format(
+                            record_count, self.next_start)
+                        ))
         return occ
 
-# ...............................................
-    def _writeRawData(self, occ, data=None, metadata=None):
+    # ................................
+    def _write_raw_data(self, occ, data=None, metadata=None):
         if data is None:
             raise LMError('Missing data file for occurrenceSet')
-        rdloc = occ.createLocalDLocation(raw=True)
-        occ.ready_filename(rdloc, overwrite=True)
-        shutil.copyfile(data, rdloc)
+        raw_dloc = occ.create_local_dlocation(raw=True)
+        occ.ready_filename(raw_dloc, overwrite=True)
+        shutil.copyfile(data, raw_dloc)
 
         if metadata is not None:
-            rawmeta_dloc = rdloc + LMFormat.JSON.ext
+            rawmeta_dloc = raw_dloc + LMFormat.JSON.ext
             ready_filename(rawmeta_dloc, overwrite=True)
-            with open(rawmeta_dloc, 'w') as f:
-                json.dump(metadata, f)
-        return rdloc, rawmeta_dloc
+            with open(rawmeta_dloc, 'w') as out_f:
+                json.dump(metadata, out_f)
+        return raw_dloc, rawmeta_dloc
 
-# ...............................................
-    def moveToStart(self):
-        startline = self._findStart()
-        if startline < 1:
-            self._linenum = 0
-            self._currRec = None
+    # ................................
+    def move_to_start(self):
+        """Move to the starting line
+        """
+        start_line = self._find_start()
+        if start_line < 1:
+            self._line_num = 0
+            self._curr_rec = None
         else:
-            fullOccFname = self._getNextFilename()
-            while fullOccFname is not None and self._linenum < startline - 1:
-                fullOccFname = self._getNextFilename()
+            full_occ_fname = self._get_next_filename()
+            while full_occ_fname is not None and \
+                    self._line_num < start_line - 1:
+                full_occ_fname = self._get_next_filename()
 
 
 # ..............................................................................
 class ExistingWoC(_SpeciesWeaponOfChoice):
-    """
-    @summary: Parses a GBIF download of Occurrences by GBIF Taxon ID, writes the 
-                 text chunk to a file, then creates an OccurrenceJob for it and 
-                 updates the Occurrence record and inserts a job.
+    """Parse GBIF download for occurrence data
+
+    Parses a GBIF download of Occurrences by GBIF Taxon ID, writes the text
+    chunk to a file, then creates an OccurrenceJob for it and updates the
+    Occurrence record and inserts a job.
     """
 
-    def __init__(self, scribe, user, archiveName, epsg, expDate, occIdFname,
-                     logger=None):
-        super(ExistingWoC, self).__init__(scribe, user, archiveName, epsg, expDate,
-                                                  occIdFname, logger=logger)
+    # ................................
+    def __init__(self, scribe, user, archive_name, epsg, exp_date,
+                 occ_id_fname, logger=None):
+        super(ExistingWoC, self).__init__(
+            scribe, user, archive_name, epsg, exp_date, occ_id_fname,
+            logger=logger)
         # Copy the occurrencesets
-        self.processType = None
+        self.process_type = None
         try:
-            self._idfile = open(occIdFname, 'r')
-        except:
-            raise LMError('Failed to open {}'.format(occIdFname))
+            self._id_file = open(occ_id_fname, 'r')
+        except IOError:
+            raise LMError('Failed to open {}'.format(occ_id_fname))
 
-# ...............................................
+    # ................................
     def close(self):
+        """Close the WoC
+        """
         try:
-            self._idfile.close()
-        except:
-            self.log.error('Unable to close {}'.format(self._dumpfile))
+            self._id_file.close()
+        except Exception:
+            self.log.error('Unable to close id file')
 
-# ...............................................
+    # ................................
     @property
     def complete(self):
+        """Return indication if WoC is complete
+        """
         try:
-            return self._idfile.closed
-        except:
+            return self._id_file.closed
+        except Exception:
             return True
 
-# ...............................................
+    # ................................
     @property
-    def nextStart(self):
+    def next_start(self):
+        """Get the next start position
+        """
         if self.complete:
             return 0
-        else:
-            return self._linenum
 
-# ...............................................
+        return self._line_num
+
+    # ................................
     @property
-    def thisStart(self):
+    def this_start(self):
+        """Get this start location
+        """
         if self.complete:
             return 0
-        else:
-            return self._currKeyFirstRecnum
 
-# ...............................................
-    def moveToStart(self):
-        startline = self._findStart()
-        if startline > 1:
-            while self._linenum < startline - 1:
-                _ = self._getNextLine(self._idfile)
+        return self._curr_key_first_rec_num
 
-# ...............................................
-    def _getOcc(self):
+    # ................................
+    def move_to_start(self):
+        """Move to the starting location
+        """
+        start_line = self._find_start()
+        if start_line > 1:
+            while self._line_num < start_line - 1:
+                _ = self._get_next_line(self._id_file)
+
+    # ................................
+    def _get_occ(self):
         occ = None
-        line = self._getNextLine(self._idfile)
+        line = self._get_next_line(self._id_file)
         while line is not None and not self.complete:
             try:
                 tmp = line.strip()
             except Exception as e:
-                self._scribe.log.info('Error reading line {} ({}), skipping'
-                                     .format(self._linenum, str(e)))
+                self._scribe.log.info(
+                    'Error reading line {} ({}), skipping'.format(
+                        self._line_num, str(e)))
             else:
                 try:
-                    occid = int(tmp)
-                except Exception as e:
-                    self._scribe.log.info('Unable to get Id from data {} on line {}'
-                                         .format(tmp, self._linenum))
+                    occ_id = int(tmp)
+                except Exception:
+                    self._scribe.log.info(
+                        'Unable to get Id from data {} on line {}'.format(
+                            tmp, self._line_num))
                 else:
-                    occ = self._scribe.getOccurrenceSet(occId=occid)
+                    occ = self._scribe.get_occurrence_set(occ_id=occ_id)
                     if occ is None:
-                        self._scribe.log.info('Unable to get Occset for Id {} on line {}'
-                                                    .format(tmp, self._linenum))
+                        self._scribe.log.info(
+                            'Unable to get Occset for Id {} on line {}'.format(
+                                tmp, self._line_num))
                     else:
                         if occ.status != JobStatus.COMPLETE:
-                            self._scribe.log.info('Incomplete or failed occSet for id {} on line {}'
-                                                        .format(occid, self._linenum))
+                            self._scribe.log.info(
+                                'Incomplete or failure for occ {}; {}'.format(
+                                    occ_id, 'on line {}'.format(
+                                        self._line_num)))
             line = None
             if occ is None and not self.complete:
-                line = self._getNextLine(self._idfile)
+                line = self._get_next_line(self._id_file)
         return occ
 
-# ...............................................
-    def getOne(self):
-        userOcc = None
-        occ = self._getOcc()
+    # ................................
+    def get_one(self):
+        """Get data for one species
+        """
+        user_occ = None
+        occ = self._get_occ()
         if occ is not None:
-            if occ.getUserId() == self.userId:
-                userOcc = occ
-                self.log.info('Found user occset {}, with {} points; next start {}'
-                                  .format(occ.get_id(), occ.queryCount, self.nextStart))
-            elif occ.getUserId() == PUBLIC_USER:
-                tmpOcc = occ.copyForUser(self.userId)
-                sciName = self._scribe.getTaxon(squid=occ.squid)
-                if sciName is not None:
-                    tmpOcc.setScientificName(sciName)
-                tmpOcc.readData(dlocation=occ.getDLocation(),
-                                      dataFormat=occ.dataFormat)
-                userOcc = self._scribe.findOrInsertOccurrenceSet(tmpOcc)
+            if occ.get_user_id() == self.user_id:
+                user_occ = occ
+                self.log.info(
+                    'Found user occset {}, with {} points; {}'.format(
+                        occ.get_id(), occ.query_count,
+                        'next start {}'.format(self.next_start)))
+            elif occ.get_user_id() == PUBLIC_USER:
+                tmp_occ = occ.copy_for_user(self.user_id)
+                sci_name = self._scribe.get_taxon(squid=occ.squid)
+                if sci_name is not None:
+                    tmp_occ.set_scientific_name(sci_name)
+                tmp_occ.read_data(
+                    dlocation=occ.get_dlocation(), data_format=occ.data_format)
+                user_occ = self._scribe.find_or_insert_occurrence_set(tmp_occ)
                 # Read the data from the original occurrence set
-                userOcc.readData(dlocation=occ.getDLocation(),
-                                      dataFormat=occ.dataFormat, doReadData=True)
-                userOcc.writeLayer()
+                user_occ.read_data(
+                    dlocation=occ.get_dlocation(), data_format=occ.data_format,
+                    do_read_data=True)
+                user_occ.write_layer()
 
                 # Copy metadata file
-                shutil.copyfile('{}{}'.format(os.path.splitext(occ.getDLocation())[0],
-                                                        LMFormat.METADATA.ext),
-                                     '{}{}'.format(os.path.splitext(userOcc.getDLocation())[0],
-                                                        LMFormat.METADATA.ext))
+                shutil.copyfile(
+                    '{}{}'.format(
+                        os.path.splitext(occ.get_dlocation())[0],
+                        LMFormat.METADATA.ext),
+                    '{}{}'.format(
+                        os.path.splitext(
+                            user_occ.get_dlocation())[0],
+                        LMFormat.METADATA.ext))
 
-                self._scribe.updateObject(userOcc)
-                self.log.info('Copy/insert occset {} to {}, with {} points; next start {}'
-                                  .format(occ.get_id(), userOcc.get_id(),
-                                             userOcc.queryCount, self.nextStart))
+                self._scribe.update_object(user_occ)
+                self.log.info(
+                    'Copy/insert occset {} to {}, with {} points; {}'.format(
+                        occ.get_id(), user_occ.get_id(), user_occ.query_count,
+                        'next start {}'.format(self.next_start)))
             else:
-                self._scribe.log.info('Unauthorized user {} for ID {}'
-                                            .format(occ.getUserId(), occ.get_id()))
-        return userOcc
-
-"""
-import shutil
-
-import csv
-import glob
-import os
-import sys
-from time import sleep
-
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.occ_parse import OccDataParser
-from LmCommon.common.api_query import BisonAPI, GbifAPI
-from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
-                                                ProcessType, JobStatus, ONE_HOUR, LMFormat, IDIG_DUMP) 
-from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import LOG_PATH
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.log import ScriptLogger
-from LmServer.legion.occ_layer import OccurrenceLayer
-from LmServer.tools.occwoc import *
-from LmServer.tools.cwalken import *
-from LmServer.db.borg_scribe import BorgScribe
-
-TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
-
-useGBIFTaxonIds = True
-occDelimiter = '\t' 
-occData = '/state/partition1/lmserver/data/species/idig'
-occMeta = IDIG_DUMP.METADATA
-
-scriptname = 'wocTesting'
-logger = ScriptLogger(scriptname)
-scribe = BorgScribe(logger)
-scribe.openConnections()
-userId = PUBLIC_USER
-expDate = dt.DateTime(2017,9,20).mjd
-
-if os.path.isfile(occData):
-    occCSV = occData
-else:
-    fnames = glob.glob(os.path.join(occData, 
-                             '*{}'.format(LMFormat.CSV.ext)))
-
-if len(fnames) > 0:
-    occCSV = fnames[0]
-    if len(fnames) > 1:
-        moreDataToProcess = True
-else:
-    occCSV = None
-    
-occMeta = IDIG_DUMP.METADATA
-
-woc = UserWoC(scribe, userId, 'someArchiveName', 
-                             4326, expDate, occCSV, occMeta, 
-                             occDelimiter, logger=logger, 
-                             useGBIFTaxonomy=useGBIFTaxonIds)
-op = woc.occParser            
-
-
-op = OccDataParser(logger, occCSV, occMeta, pullChunks=True)
-
-
-f = open(occCSV, 'r')
-cr = csv.reader(f, delimiter='\t')
-fieldmeta, doMatchHeader = OccDataParser.readMetadata(occMeta)
-                    
-(fieldNames,
- fieldTypes,
- filters,
- idIdx,
- xIdx,
- yIdx,
- geoIdx,
- groupByIdx, 
- nameIdx) = OccDataParser.getCheckIndexedMetadata(fieldmeta, None)
- 
-line = cr.next()
-goodEnough = True
-groupVals = set()
-
-for filterIdx, acceptedVals in filters.iteritems():
-    val = line[filterIdx]
-    try:
-        val = val.lower()
-    except:
-        pass
-    if acceptedVals is not None and val not in acceptedVals:
-        goodEnough = False
-
-try:
-    gval = line[groupByIdx]
-except Exception, e:
-    goodEnough = False
-else:
-    groupVals.add(gval)
-    
-if idIdx is not None:
-    try:
-        int(line[idIdx])
-    except Exception, e:
-        if line[idIdx] == '':
-            goodEnough = False
-    
-x, y = OccDataParser.getXY(line, xIdx, yIdx, geoIdx)
-try:
-    float(x)
-    float(y)
-except Exception, e:
-    goodEnough = False
-else:
-    if x == 0 and y == 0:
-        goodEnough = False
-            
-# Dataset name value
-if line[nameIdx] == '':
-    goodEnough = False
-    
-value = int(line[groupByIdx])
-"""
+                self._scribe.log.info(
+                    'Unauthorized user {} for ID {}'.format(
+                        occ.get_user_id(), occ.get_id()))
+        return user_occ

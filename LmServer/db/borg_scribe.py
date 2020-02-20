@@ -19,7 +19,7 @@ from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
 from LmServer.legion.env_layer import EnvLayer, EnvType
 from LmServer.legion.mtx_column import MatrixColumn
-from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.sdm_proj import SDMProjection
 
 
 # .............................................................................

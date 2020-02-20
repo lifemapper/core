@@ -1,5 +1,6 @@
 """This script runs several monitoring tests on a Lifemapper front end.
 """
+from enum import Enum
 import subprocess
 
 from LmServer.common.localconstants import WEBSERVICES_ROOT, TROUBLESHOOTERS
@@ -7,7 +8,7 @@ from LmServer.notifications.email import EmailNotifier
 
 
 # .............................................................................
-class ProcKeys(object):
+class ProcKeys(Enum):
     """Constants class for process dictionary keys
     """
     USER = 'user'
@@ -78,7 +79,7 @@ def _get_matching_processes(search_string):
             proc = _get_proc_info(proc_line)
             if proc[ProcKeys.COMMAND].lower().find(search_string.lower()) >= 0:
                 matching_procs.append(proc)
-        except:
+        except Exception:
             pass
     return matching_procs
 
@@ -116,13 +117,15 @@ def get_number_of_running_workers():
         ['qstat'], stdout=subprocess.PIPE).communicate(0)[0].split('\n')
     count = 0
     for line in qstat_lines:
-        if line.find('makeflow') >= 0 and line.find('qw') < 0:
+        if line.find('makeflow') and not line.find('qw'):
             count += 1
     return count
 
 
 # .............................................................................
-if __name__ == '__main__':
+def main():
+    """Main method for script
+    """
     msgs = []
     is_okay = True
     # If Matt Daemon has been running for longer than 1 second, will be true
@@ -155,3 +158,8 @@ if __name__ == '__main__':
         subject = '!!There are problems on {}!!'.format(WEBSERVICES_ROOT)
 
     notifier.sendMessage(TROUBLESHOOTERS, subject, '<br /><br />'.join(msgs))
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

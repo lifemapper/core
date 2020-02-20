@@ -8,7 +8,7 @@ import argparse
 from LmServer.common.lmconstants import SnippetOperations
 from LmServer.common.log import ConsoleLogger
 from LmServer.common.snippet import SnippetShooter
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 
 
 # .............................................................................
@@ -50,11 +50,11 @@ def main():
     shooter = SnippetShooter()
 
     scribe = BorgScribe(ConsoleLogger())
-    scribe.openConnections()
+    scribe.open_connections()
 
-    occ = scribe.getOccurrenceSet(args.occurrenceId)
-    occ.readData(doReadData=True)
-    scribe.closeConnections()
+    occ = scribe.get_occurrence_set(args.occurrence_id)
+    occ.read_data(do_read_data=True)
+    scribe.close_connections()
 
     # If we provide a second object identifer, only use the url argument
     # If we don't have a second object, fallback to the occ url if no url
@@ -66,7 +66,7 @@ def main():
     else:
         mod_time = occ.mod_time
         if url is None:
-            url = occ.metadataUrl
+            url = occ.metadata_url
 
     # Add snippets to shooter
     shooter.add_snippets(

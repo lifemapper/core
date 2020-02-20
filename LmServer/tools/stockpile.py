@@ -9,9 +9,9 @@ import shutil
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import ProcessType, LMFormat, JobStatus
-from LmServer.base.layer2 import Vector, Raster
+from LmServer.base.layer import Raster, Vector
 from LmServer.common.log import ConsoleLogger
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 
 
 # .............................................................................
@@ -60,7 +60,7 @@ class Stockpile(LMObject):
 
         # Update database
         scribe = BorgScribe(ConsoleLogger())
-        scribe.openConnections()
+        scribe.open_connections()
         try:
             obj = cls._get_object(scribe, ptype, obj_id)
             cls._copy_object(ptype, obj, output_f_name_list, meta_filename)
@@ -73,7 +73,7 @@ class Stockpile(LMObject):
             success = False
             raise LMError(msg, err)
         finally:
-            scribe.closeConnections()
+            scribe.close_connections()
 
         return success
 
@@ -85,16 +85,16 @@ class Stockpile(LMObject):
         # Get object
         obj = None
         try:
-            if ProcessType.isOccurrence(ptype):
-                obj = scribe.getOccurrenceSet(occId=obj_id)
-            elif ProcessType.isProject(ptype):
-                obj = scribe.getSDMProject(obj_id)
+            if ProcessType.is_occurrence(ptype):
+                obj = scribe.get_occurrence_set(occ_id=obj_id)
+            elif ProcessType.is_project(ptype):
+                obj = scribe.get_sdm_project(obj_id)
             elif ptype == ProcessType.RAD_BUILDGRID:
-                obj = scribe.getShapeGrid(lyrId=obj_id)
-            elif ProcessType.isMatrix(ptype):
-                obj = scribe.getMatrix(mtxId=obj_id)
-            elif ProcessType.isIntersect(ptype):
-                obj = scribe.getMatrixColumn(mtxcolId=obj_id)
+                obj = scribe.get_shapegrid(lyrId=obj_id)
+            elif ProcessType.is_matrix(ptype):
+                obj = scribe.get_matrix(mtx_id=obj_id)
+            elif ProcessType.is_intersect(ptype):
+                obj = scribe.get_matrix_column(mtx_col_id=obj_id)
             else:
                 raise LMError(
                     'Unsupported ProcessType {} for object {}'.format(
@@ -121,32 +121,33 @@ class Stockpile(LMObject):
             pass
         # Copy data
         try:
-            if (ProcessType.isOccurrence(ptype) and
+            if (ProcessType.is_occurrence(ptype) and
                     os.path.getsize(file_names[0]) > 0):
                 # Move data file
-                base_out_dir = os.path.dirname(obj.getDLocation())
+                base_out_dir = os.path.dirname(obj.get_dlocation())
                 for filename in glob.glob(
                         '{}.*'.format(os.path.splitext(file_names[0])[0])):
                     shutil.copy(filename, base_out_dir)
                 # Try big data file
                 big_f_name = file_names[0].replace('/pt', '/bigpt')
                 if cls.test_file(big_f_name)[0]:
-                    shutil.copy(big_f_name, obj.getDlocation(largeFile=True))
-            elif ProcessType.isProject(ptype) and \
+                    shutil.copy(big_f_name, obj.get_dlocation(large_file=True))
+            elif ProcessType.is_project(ptype) and \
                     os.path.getsize(file_names[0]) > 0:
-                shutil.copy(file_names[0], obj.getDLocation())
-                shutil.copy(file_names[1], obj.getProjPackageFilename())
-            elif ProcessType.isMatrix(ptype) and \
+                shutil.copy(file_names[0], obj.get_dlocation())
+                shutil.copy(
+                    file_names[1], obj.get_projection_package_filename())
+            elif ProcessType.is_matrix(ptype) and \
                     os.path.getsize(file_names[0]) > 0:
                 if metadata is not None:
-                    obj.addMtxMetadata(metadata)
-                if os.path.exists(obj.getDLocation()):
-                    os.remove(obj.getDLocation())
-                shutil.copy(file_names[0], obj.getDLocation())
+                    obj.add_matrix_metadata(metadata)
+                if os.path.exists(obj.get_dlocation()):
+                    os.remove(obj.get_dlocation())
+                shutil.copy(file_names[0], obj.get_dlocation())
         except Exception as err:
             raise LMError(
                 'Exception copying primary {} or an output, ({})'.format(
-                    obj.getDLocation(), str(err)), err)
+                    obj.get_dlocation(), str(err)), err)
 
     # ..................................
     @classmethod
@@ -155,15 +156,15 @@ class Stockpile(LMObject):
         """
         # Update verify hash and modtime for layers
         try:
-            obj.updateLayer()
+            obj.update_layer()
         except Exception:
             pass
 
-        obj.updateStatus(status)
+        obj.update_status(status)
 
         # Update database
         try:
-            scribe.updateObject(obj)
+            scribe.update_object(obj)
         except Exception as err:
             raise LMError(
                 'Exception updating object {} ({})'.format(
@@ -180,11 +181,11 @@ class Stockpile(LMObject):
         if not os.path.exists(output_f_name):
             msgs.append('File {} does not exist'.format(output_f_name))
             success = False
-        elif LMFormat.isTestable(ext):
-            if LMFormat.isGeo(ext):
-                file_format = LMFormat.getFormatByExtension(ext)
-                if LMFormat.isOGR(ext=ext):
-                    success, feat_count = Vector.testVector(
+        elif LMFormat.is_testable(ext):
+            if LMFormat.is_geo(ext):
+                file_format = LMFormat.get_format_by_extension(ext)
+                if LMFormat.is_ogr(ext=ext):
+                    success, feat_count = Vector.test_vector(
                         output_f_name, driver=file_format.driver)
                     if not success:
                         try:
@@ -200,8 +201,8 @@ class Stockpile(LMObject):
                         msgs.append(
                             'Vector {} has no features'.format(output_f_name))
 
-                elif LMFormat.isGDAL(ext=ext):
-                    success = Raster.testRaster(output_f_name)
+                elif LMFormat.is_gdal(ext=ext):
+                    success = Raster.test_raster(output_f_name)
                     if not success:
                         msgs.append(
                             'File {} is not a valid GDAL file'.format(
@@ -209,7 +210,7 @@ class Stockpile(LMObject):
             else:
                 with open(output_f_name, 'r') as in_f:
                     data = in_f.read()
-                if LMFormat.isJSON(ext):
+                if LMFormat.is_json(ext):
                     try:
                         json.loads(data)
                     except Exception:

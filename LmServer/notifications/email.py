@@ -2,43 +2,42 @@
 """
 import smtplib
 
-from LmServer.common.localconstants import SMTP_SERVER, SMTP_SENDER
+from LmBackend.common.lmobj import LMError
+from LmServer.common.localconstants import SMTP_SENDER, SMTP_SERVER
 
 
 # .............................................................................
-class EmailNotifier(object):
-    """
-    @summary: Class used to connect to an SMTP server and send emails
+class EmailNotifier:
+    """Class used to connect to an SMTP server and send emails
     """
 
     # ....................................
-    def __init__(self, server=SMTP_SERVER,
-                             fromAddr=SMTP_SENDER):
+    def __init__(self, server=SMTP_SERVER, from_addr=SMTP_SENDER):
+        """Constructor
+
+        Args:
+            server: (optional) SMTP server to send email from
+            from_addr: (optional) The email address to send emails from
         """
-        @summary: Constructor
-        @param server: (optional) SMTP server to send email from
-        @param fromAddr: (optional) The email address to send emails from
-        """
-        self.fromAddr = fromAddr
+        self.from_addr = from_addr
         self.server = smtplib.SMTP(server)
 
     # ....................................
-    def sendMessage(self, toAddrs, subject, msg):
-        """
-        @summary: Sends an email using the EmailNotifier's SMTP server to the 
-                         specified recipients
-        @param toAddrs: List of recipients
-        @param subject: The subject of the email
-        @param msg: The content of the email
-        """
-        if not isinstance(toAddrs, list):
-            toAddrs = [toAddrs]
+    def send_message(self, to_addrs, subject, msg):
+        """Sends an email to the specified recipients
 
-        mailMsg = ("From: {}\r\nTo: {}\r\nSubject: {}\r\n\r\n{}".format(
-                                        self.fromAddr, ", ".join(toAddrs), subject, msg))
+        Args:
+            to_addrs: List of recipients
+            subject: The subject of the email
+            msg: The content of the email
+        """
+        if not isinstance(to_addrs, list):
+            to_addrs = [to_addrs]
+
+        mail_msg = (
+            'From: {}\r\nTo: {}\r\nSubject: {}\r\n\r\n{}'.format(
+                self.from_addr, ', '.join(to_addrs), subject, msg))
         try:
-            self.server.sendmail(self.fromAddr, toAddrs, mailMsg)
-        except Exception as e:
-            # raise LMError(e.args)
-            # This had to be changed because we don't want to put LMError on LmBackend
-            raise e
+            self.server.sendmail(self.from_addr, to_addrs, mail_msg)
+        except Exception as err:
+            raise LMError('Failed to send email', err)
