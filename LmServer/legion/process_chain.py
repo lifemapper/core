@@ -68,7 +68,7 @@ class MFChain(ProcessObject):
         @param mfid: The database id for the object
         """
         self.objId = mfid
-        self.setDLocation()
+        self.set_dlocation()
 
     # ...............................................
     def get_id(self):
@@ -95,13 +95,13 @@ class MFChain(ProcessObject):
             Makeflow completes.
         """
         basename = None
-        self.setDLocation()
+        self.set_dlocation()
         if self._dlocation is not None:
             _, basename = os.path.split(self._dlocation)
             reldir, _ = os.path.splitext(basename)
         return reldir
 
-    def createLocalDLocation(self):
+    def create_local_dlocation(self):
         """
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
@@ -114,17 +114,17 @@ class MFChain(ProcessObject):
                                               usr=self._userId)
         return dloc
 
-    def getDLocation(self):
-        self.setDLocation()
+    def get_dlocation(self):
+        self.set_dlocation()
         return self._dlocation
 
-    def setDLocation(self, dlocation=None):
+    def set_dlocation(self, dlocation=None):
         """
         @note: Does NOT override existing dlocation, use clearDLocation for that
         """
         if self._dlocation is None:
             if dlocation is None:
-                dlocation = self.createLocalDLocation()
+                dlocation = self.create_local_dlocation()
             self._dlocation = dlocation
 
     def clearDLocation(self):
@@ -265,7 +265,7 @@ class MFChain(ProcessObject):
         if not self.jobs:
             raise ValueError("No jobs to be computed, fail for empty document")
         if filename is None:
-            filename = self.getDLocation()
+            filename = self.get_dlocation()
         self.ready_filename(filename, overwrite=True)
         with open(filename, 'w') as outF:
             for header, value in self.headers:

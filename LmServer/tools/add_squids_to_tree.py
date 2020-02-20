@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # Write tree
     tree.clearDLocation()
-    tree.setDLocation()
+    tree.set_dlocation()
     tree.writeTree()
 
     # Update metadata

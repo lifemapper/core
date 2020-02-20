@@ -38,7 +38,7 @@ class Tree(TreeWrapper, ServiceObject):
 
         # Read tree if available
         if dlocation is None:
-            dlocation = self.getDLocation()
+            dlocation = self.get_dlocation()
 
         # TODO (CJG): Make sure that this will load the tree appropriately
         if data is not None:
@@ -50,10 +50,10 @@ class Tree(TreeWrapper, ServiceObject):
     # ..............................
     def read(self, dlocation=None, schema=DEFAULT_TREE_SCHEMA):
         """
-        @summary: Reads tree data, either from the dlocation or getDLocation
+        @summary: Reads tree data, either from the dlocation or get_dlocation
         """
         if dlocation is None:
-            dlocation = self.getDLocation()
+            dlocation = self.get_dlocation()
         self.get(path=dlocation, schema=schema)
 
     # ..............................
@@ -71,7 +71,7 @@ class Tree(TreeWrapper, ServiceObject):
         """
         @summary: Writes the tree JSON to disk
         """
-        dloc = self.getDLocation()
+        dloc = self.get_dlocation()
         self.write(path=dloc, schema=DEFAULT_TREE_SCHEMA)
 
     # ...............................................
@@ -83,12 +83,12 @@ class Tree(TreeWrapper, ServiceObject):
                used by a single workflow/Makeflow 
         """
         basename = None
-        self.setDLocation()
+        self.set_dlocation()
         if self._dlocation is not None:
             pth, basename = os.path.split(self._dlocation)
         return basename
 
-    def createLocalDLocation(self):
+    def create_local_dlocation(self):
         """
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
@@ -97,11 +97,11 @@ class Tree(TreeWrapper, ServiceObject):
                                            usr=self.getUserId())
         return dloc
 
-    def getDLocation(self):
-        self.setDLocation()
+    def get_dlocation(self):
+        self.set_dlocation()
         return self._dlocation
 
-    def setDLocation(self, dlocation=None):
+    def set_dlocation(self, dlocation=None):
         """
         @summary: Set the _dlocation attribute if it is None.  Use dlocation
                   if provided, otherwise calculate it.
@@ -109,7 +109,7 @@ class Tree(TreeWrapper, ServiceObject):
         """
         if self._dlocation is None:
             if dlocation is None:
-                dlocation = self.createLocalDLocation()
+                dlocation = self.create_local_dlocation()
             self._dlocation = dlocation
 
     def clearDLocation(self):

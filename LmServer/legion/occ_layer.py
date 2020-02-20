@@ -227,24 +227,24 @@ class OccurrenceLayer(OccurrenceType, Vector):
         if occid is not None:
             if self.name is None:
                 self.name = self._earlJr.createLayername(occsetId=self.get_id())
-            self.setDLocation()
+            self.set_dlocation()
             self.resetMetadataUrl()
             self.setLocalMapFilename()
             self._setMapPrefix()
 
 # ...............................................
     def getAbsolutePath(self):
-        self.setDLocation()
+        self.set_dlocation()
         return Vector.getAbsolutePath(self)
 
 # ...............................................
     @property
     def makeflowFilename(self):
-        dloc = self.createLocalDLocation(makeflow=True)
+        dloc = self.create_local_dlocation(makeflow=True)
         return dloc
 
 # ...............................................
-    def createLocalDLocation(self, raw=False, largeFile=False, makeflow=False):
+    def create_local_dlocation(self, raw=False, largeFile=False, makeflow=False):
         """
         @summary: Create filename for this layer.
         @param raw: If true, this indicates a raw dump of occurrences (CSV for
@@ -269,15 +269,15 @@ class OccurrenceLayer(OccurrenceType, Vector):
         return dloc
 
 # ...............................................
-    # Overrides layer.getDLocation, allowing optional keyword
-    def getDLocation(self, largeFile=False):
+    # Overrides layer.get_dlocation, allowing optional keyword
+    def get_dlocation(self, largeFile=False):
         if largeFile:
             if self._bigDLocation is None:
-                self._bigDLocation = self.createLocalDLocation(
+                self._bigDLocation = self.create_local_dlocation(
                     largeFile=largeFile)
             return self._bigDLocation
         else:
-            self.setDLocation()
+            self.set_dlocation()
         return self._dlocation
 
 # ...............................................
@@ -288,7 +288,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             first.
         @return: True if dlocation is a valid occurrenceset; False if not
         """
-        dlocation = self.getDLocation(largeFile=largeFile)
+        dlocation = self.get_dlocation(largeFile=largeFile)
         valid = Vector.isValidDataset(self, dlocation=dlocation)
         return valid
 
@@ -383,7 +383,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
 # ...............................................
     def clearOutputFiles(self):
-        self.deleteData()
+        self.delete_data()
         self.clearDLocation()
 
 # ...............................................
@@ -450,5 +450,5 @@ class OccurrenceLayer(OccurrenceType, Vector):
         """
         self.clearFeatures()
         if dlocation is None:
-            dlocation = self.getDLocation(largeFile=largeFile)
+            dlocation = self.get_dlocation(largeFile=largeFile)
         Vector.readData(self, dlocation=dlocation, doReadData=True)

@@ -81,7 +81,7 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
     # Find or create the matrix
     bgMtx = _getBioGeoMatrix(scribe, usr, gridset, layers)
     shapegrid = gridset.getShapegrid()
-    encoder = LayerEncoder(shapegrid.getDLocation())
+    encoder = LayerEncoder(shapegrid.get_dlocation())
 
     # TODO(CJ): Minimum coverage should be pulled from config or database
     min_coverage = 0.25
@@ -94,10 +94,10 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
             valAttribute = None
             column_name = lyr.name
         new_cols = encoder.encode_biogeographic_hypothesis(
-             lyr.getDLocation(), column_name, min_coverage,
+             lyr.get_dlocation(), column_name, min_coverage,
              event_field=valAttribute)
         print(('layer name={}, eventField={}, dloc={}'
-                .format(lyr.name, valAttribute, lyr.getDLocation())))
+                .format(lyr.name, valAttribute, lyr.get_dlocation())))
 
         # Add matrix columns for the newly encoded layers
         for col_name in new_cols:
@@ -163,7 +163,7 @@ def squidifyTree(scribe, usr, tree):
 
     # Update tree properties
     tree.clearDLocation()
-    tree.setDLocation()
+    tree.set_dlocation()
     print("Write tree to final location")
     tree.writeTree()
     tree.updateModtime(gmt().mjd)
@@ -277,7 +277,7 @@ mtxCols = []
 bgMtx = _getBioGeoMatrix(scribe, usr, gridset, layers)
 shapegrid = gridset.getShapegrid()
 
-encoder = LayerEncoder(shapegrid.getDLocation())
+encoder = LayerEncoder(shapegrid.get_dlocation())
 
 # TODO(CJ): Minimum coverage should be pulled from config or database
 min_coverage = 0.25
@@ -289,10 +289,10 @@ for lyr in layers:
         valAttribute = None
         column_name = lyr.name
     new_cols = encoder.encode_biogeographic_hypothesis(
-         lyr.getDLocation(), column_name, min_coverage, 
+         lyr.get_dlocation(), column_name, min_coverage, 
          event_field=valAttribute)
     print('layer name={}, eventField={}, dloc={}'
-            .format(lyr.name, valAttribute, lyr.getDLocation()))
+            .format(lyr.name, valAttribute, lyr.get_dlocation()))
     
     # Add matrix columns for the newly encoded layers
     for col_name in new_cols:

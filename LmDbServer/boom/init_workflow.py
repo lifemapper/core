@@ -26,10 +26,10 @@ from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME,
                                               GBIF_TAXONOMY_FILENAME)
 from LmDbServer.tools.catalogScenPkg import SPFiller
-from LmServer.base.layer2 import Vector, Raster
+from LmServer.base.layer import Vector, Raster
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import is_lm_user
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
                            GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
                            DEFAULT_EMAIL_POSTFIX,
@@ -777,11 +777,11 @@ class BOOMFiller(LMObject):
         validData = False
         if newshp:
             # check existence
-            validData, _ = ShapeGrid.testVector(newshp.getDLocation())
+            validData, _ = ShapeGrid.testVector(newshp.get_dlocation())
             if not validData:
                 try:
                     # Write new shapegrid
-                    dloc = newshp.getDLocation()
+                    dloc = newshp.get_dlocation()
                     newshp.buildShape(overwrite=True)
                     validData, _ = ShapeGrid.testVector(dloc)
                     self._fixPermissions(files=newshp.getShapefiles())
@@ -917,7 +917,7 @@ class BOOMFiller(LMObject):
 
         if lyr is not None:
             # TODO: Save processType into the DB??
-            if LMFormat.isGDAL(driver=lyr.dataFormat):
+            if LMFormat.is_gdal(driver=lyr.dataFormat):
                 ptype = ProcessType.INTERSECT_RASTER_GRIM
             else:
                 self.scribe.log.debug('Vector intersect not yet implemented for GRIM column {}'
@@ -948,7 +948,7 @@ class BOOMFiller(LMObject):
         """
         @summary Initialize configured and stored inputs for ArchiveFiller class.
         """
-        if LMFormat.isOGR(driver=mtxColumn.layer.dataFormat):
+        if LMFormat.is_ogr(driver=mtxColumn.layer.dataFormat):
             if mtxType == MatrixType.PAM:
                 ptype = ProcessType.INTERSECT_VECTOR
             elif mtxType == MatrixType.GRIM:
@@ -979,13 +979,13 @@ class BOOMFiller(LMObject):
 
         if tree is not None:
             # Update tree properties and write file
-            tree.clearDLocation()
-            tree.setDLocation()
+            tree.clear_dlocation()
+            tree.set_dlocation()
             tree.writeTree()
             tree.update_mod_time(gmt().mjd)
             # Update database
             success = self.scribe.updateObject(tree)
-            self._fixPermissions(files=[tree.getDLocation()])
+            self._fixPermissions(files=[tree.get_dlocation()])
 
             # Save tree link to gridset
             print("Add tree to grid set")
@@ -1058,7 +1058,7 @@ class BOOMFiller(LMObject):
             elif fname.endswith(LMFormat.GTIFF.ext):
                 lyr = Raster(lyrname, self.userId, self.scenPkg.epsgcode,
                              dlocation=fname,
-                             dataFormat=LMFormat.getDefaultGDAL().driver,
+                             dataFormat=LMFormat.GTIFF.driver,
                              mod_time=self.woof_time_mjd)
             if lyr is not None:
                 updatedLyr = self.scribe.findOrInsertLayer(lyr)
@@ -1123,7 +1123,7 @@ class BOOMFiller(LMObject):
         rules = []
 
         # Get shapegrid rules / files
-        shapegrid_filename = self.shapegrid.getDLocation()
+        shapegrid_filename = self.shapegrid.get_dlocation()
 
         for code, grim in defaultGrims.items():
             mtxcols = self.scribe.getColumnsForMatrix(grim.get_id())
@@ -1138,7 +1138,7 @@ class BOOMFiller(LMObject):
                 mtxcol.shapegrid = self.shapegrid
 
                 relDir, _ = os.path.splitext(
-                    mtxcol.layer.getRelativeDLocation())
+                    mtxcol.layer.get_relative_dlocation())
                 col_filename = os.path.join(
                     target_dir, relDir, mtxcol.getTargetFilename())
                 try:
@@ -1147,7 +1147,7 @@ class BOOMFiller(LMObject):
                 except:
                     min_percent = None
                 intersect_cmd = GrimRasterCommand(
-                    shapegrid_filename, mtxcol.layer.getDLocation(),
+                    shapegrid_filename, mtxcol.layer.get_dlocation(),
                     col_filename, minPercent=min_percent, ident=mtxcol.ident)
                 rules.append(intersect_cmd.get_makeflow_rule())
 
@@ -1258,7 +1258,7 @@ class BOOMFiller(LMObject):
     def _write_update_MF(self, mfchain):
         mfchain.write()
         # Give lmwriter rw access (this script may be run as root)
-        self._fixPermissions(files=[mfchain.getDLocation()])
+        self._fixPermissions(files=[mfchain.get_dlocation()])
         # Set as ready to go
         mfchain.updateStatus(JobStatus.INITIALIZE)
         self.scribe.updateObject(mfchain)
@@ -1310,7 +1310,7 @@ class BOOMFiller(LMObject):
 
     # .............................................................................
     def _fixDirectoryPermissions(self, boomGridset):
-        lyrdir = os.path.dirname(boomGridset.getShapegrid().getDLocation())
+        lyrdir = os.path.dirname(boomGridset.getShapegrid().get_dlocation())
         self._fixPermissions(dirs=[lyrdir])
         earl = EarlJr()
         mfdir = earl.createDataPath(self.userId, LMFileType.MF_DOCUMENT)

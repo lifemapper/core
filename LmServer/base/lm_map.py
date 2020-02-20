@@ -223,7 +223,7 @@ class LMMap(LMSpatialObject):
 # ...............................................
     def _createMatrixJoin(self, sgLyr, matrix):
         jlyrs = ''
-        shpDlocation = sgLyr.getDLocation()
+        shpDlocation = sgLyr.get_dlocation()
         mtxDlocation = matrix.getCSVDLocation()
         if shpDlocation is not None and os.path.exists(shpDlocation):
             jlyrsNames = matrix.getColumnHeaders()
@@ -405,11 +405,11 @@ class LMMap(LMSpatialObject):
         if (isinstance(sdlLyr, OccurrenceLayer) and
              sdlLyr.getUserId() == PUBLIC_USER and
              sdlLyr.queryCount > POINT_COUNT_MAX):
-            dlocation = sdlLyr.getDLocation(largeFile=False)
+            dlocation = sdlLyr.get_dlocation(largeFile=False)
             if not os.path.exists(dlocation):
-                dlocation = sdlLyr.getDLocation()
+                dlocation = sdlLyr.get_dlocation()
         else:
-            dlocation = sdlLyr.getDLocation()
+            dlocation = sdlLyr.get_dlocation()
 
         if dlocation is not None and os.path.exists(dlocation):
             dataspecs = '        CONNECTIONTYPE  OGR'
@@ -422,7 +422,7 @@ class LMMap(LMSpatialObject):
 # ...............................................
     def _getRasterDataSpecs(self, sdlLyr, paletteName):
         dataspecs = None
-        dlocation = sdlLyr.getDLocation()
+        dlocation = sdlLyr.get_dlocation()
         if dlocation is not None and os.path.exists(dlocation):
             dataspecs = '        DATA  \"%s\"' % dlocation
             if sdlLyr.mapUnits is not None:

@@ -64,7 +64,7 @@ def rebuild_index_for_gridset(gridset_id):
                 # Get layer
                 lyr = scribe.get_layer(lyr_id=mtx_col.get_layer_id())
                 if os.path.exists(lyr.get_dlocation()):
-                    if lyr.minVal == lyr.max_val and lyr.min_val == 0.0:
+                    if lyr.min_val == lyr.max_val and lyr.min_val == 0.0:
                         print(('No prediction for layer {}, skipping'.format(
                             lyr.get_id())))
                     else:

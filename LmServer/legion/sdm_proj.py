@@ -259,12 +259,12 @@ class SDMProjection(_ProjectionType, Raster):
         if lyrid is not None:
             self.name = self._earlJr.createLayername(projId=lyrid)
             self.clearDLocation()
-            self.setDLocation()
+            self.set_dlocation()
             self.title = '%s Projection %s' % (self.speciesName, str(lyrid))
             self._setMapPrefix()
 
 # ...............................................
-    def createLocalDLocation(self):
+    def create_local_dlocation(self):
         """
         @summary: Create data location
         """
@@ -277,12 +277,12 @@ class SDMProjection(_ProjectionType, Raster):
         return dloc
 
 # ...............................................
-    def getDLocation(self):
-        self.setDLocation()
+    def get_dlocation(self):
+        self.set_dlocation()
         return self._dlocation
 
 # ...............................................
-    def setDLocation(self, dlocation=None):
+    def set_dlocation(self, dlocation=None):
         """
         @summary: Set the Layer._dlocation attribute if it is None.  Use
             dlocation if provided, otherwise calculate it.
@@ -291,7 +291,7 @@ class SDMProjection(_ProjectionType, Raster):
         # Only set DLocation if it is currently None
         if self._dlocation is None:
             if dlocation is None:
-                dlocation = self.createLocalDLocation()
+                dlocation = self.create_local_dlocation()
             self._dlocation = dlocation
 
 # ...............................................

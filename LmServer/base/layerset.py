@@ -712,11 +712,11 @@ class MapLayerSet(_LayerSet, ServiceObject):
         if (isinstance(sdlLyr, OccurrenceLayer) and
             sdlLyr.getUserId() == PUBLIC_USER and
             sdlLyr.queryCount > POINT_COUNT_MAX):
-            dlocation = sdlLyr.getDLocation(largeFile=False)
+            dlocation = sdlLyr.get_dlocation(largeFile=False)
             if not os.path.exists(dlocation):
-                dlocation = sdlLyr.getDLocation()
+                dlocation = sdlLyr.get_dlocation()
         else:
-            dlocation = sdlLyr.getDLocation()
+            dlocation = sdlLyr.get_dlocation()
 
         if dlocation is not None and os.path.exists(dlocation):
             relpath = os.path.relpath(dlocation, self.mapAbsolutePath)
@@ -731,7 +731,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # ...............................................
     def _getRasterDataSpecs(self, sdlLyr, paletteName):
         dataspecs = None
-        dlocation = sdlLyr.getDLocation()
+        dlocation = sdlLyr.get_dlocation()
         if dlocation is not None and os.path.exists(dlocation):
             relpath = os.path.relpath(dlocation, self.mapAbsolutePath)
             parts = ['      DATA  \"{}\"'.format(relpath)]

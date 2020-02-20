@@ -75,7 +75,7 @@ class Gridset(ServiceObject):  # LMMap
         self._shapeGridId = shapeGridId
         self._dlocation = None
         if dlocation is not None:
-            self.setDLocation(dlocation=dlocation)
+            self.set_dlocation(dlocation=dlocation)
         self._setEPSG(epsgcode)
         self._matrices = []
         self.setMatrices(matrices, doRead=False)
@@ -217,7 +217,7 @@ class Gridset(ServiceObject):  # LMMap
         return self._path
 
 # ...............................................
-    def createLocalDLocation(self):
+    def create_local_dlocation(self):
         """
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
@@ -228,25 +228,25 @@ class Gridset(ServiceObject):  # LMMap
                                                       usr=self.getUserId())
         return dloc
 
-    def getDLocation(self):
+    def get_dlocation(self):
         """
         @summary: Return the _dlocation attribute; create and set it if empty
         """
-        self.setDLocation()
+        self.set_dlocation()
         return self._dlocation
 
-    def setDLocation(self, dlocation=None):
+    def set_dlocation(self, dlocation=None):
         """
         @summary: Set the _dlocation attribute if it is None.  Use dlocation
                      if provided, otherwise calculate it.
-        @note: Does NOT override existing dlocation, use clearDLocation for that
+        @note: Does NOT override existing dlocation, use clear_dlocation for that
         """
         if self._dlocation is None:
             if dlocation is None:
-                dlocation = self.createLocalDLocation()
+                dlocation = self.create_local_dlocation()
             self._dlocation = dlocation
 
-    def clearDLocation(self):
+    def clear_dlocation(self):
         self._dlocation = None
 
     # .............................
@@ -256,7 +256,7 @@ class Gridset(ServiceObject):  # LMMap
         @todo: Aimee, please change this as you see fit.  If you change the 
                      function name, modify the package formatter.
         """
-        return os.path.join(os.path.dirname(self.getDLocation()),
+        return os.path.join(os.path.dirname(self.get_dlocation()),
                             'gs_{}_package{}'.format(self.get_id(), LMFormat.ZIP.ext))
 
 # ...............................................
@@ -381,8 +381,8 @@ class Gridset(ServiceObject):  # LMMap
         if matrix is None or self._shapeGrid is None:
             return False
         else:
-            self._shapeGrid.copyData(self._shapeGrid.getDLocation(),
-                                            targetDataLocation=shpfilename,
+            self._shapeGrid.copy_data(self._shapeGrid.get_dlocation(),
+                                            target_dlocation=shpfilename,
                                             format=self._shapeGrid.dataFormat)
             ogr.RegisterAll()
             drv = ogr.GetDriverByName(self._shapeGrid.dataFormat)

@@ -119,7 +119,7 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
 
     # Process presence centroids
     # See if we can get features from shapegrid
-    shapegrid_dataset = ogr.Open(shapegrid.getDLocation())
+    shapegrid_dataset = ogr.Open(shapegrid.get_dlocation())
     shapegrid_layer = shapegrid_dataset.GetLayer()
     uncompressed_pav = decompress(compressed_pav)
     i = 0

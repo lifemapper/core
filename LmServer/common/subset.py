@@ -74,7 +74,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 25
     }
 
-    orig_row_headers = get_row_headers(orig_shp.getDLocation())
+    orig_row_headers = get_row_headers(orig_shp.get_dlocation())
 
     # If bounding box, resolution, or user is different, create a new shapegrid
     if bbox != orig_shp.bbox or cell_size != orig_shp.cellsize or \
@@ -101,7 +101,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
             # Write shapefile
             my_shp.buildShape()
-            my_shp.writeShapefile(my_shp.getDLocation())
+            my_shp.writeShapefile(my_shp.get_dlocation())
 
         # Else, if the bounding box is different, we need to spatially subset
         elif bbox != orig_shp.bbox:
@@ -109,10 +109,10 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             bbox_wkt = \
                 'POLYGON(({0} {1},{0} {3},{2} {3},{2} {1},{0} {1}))'.format(
                     *bbox)
-            orig_shp.cutout(bbox_wkt, dloc=my_shp.getDLocation())
+            orig_shp.cutout(bbox_wkt, dloc=my_shp.get_dlocation())
 
-            row_headers = get_row_headers(my_shp.getDLocation())
-            orig_row_headers = get_row_headers(orig_shp.getDLocation())
+            row_headers = get_row_headers(my_shp.get_dlocation())
+            orig_row_headers = get_row_headers(orig_shp.get_dlocation())
 
             keep_sites = []
             for i, hdr in enumerate(orig_row_headers):
@@ -123,10 +123,10 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         else:
             method = SubsetMethod.COLUMN
 
-            row_headers = getRowHeaders(orig_shp.getDLocation())
+            row_headers = getRowHeaders(orig_shp.get_dlocation())
 
             # Copy original shapegrid to new location
-            orig_shp.writeShapefile(my_shp.getDLocation())
+            orig_shp.writeShapefile(my_shp.get_dlocation())
 
     else:
         # We can use the original shapegrid
@@ -257,8 +257,8 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 scribe.updateObject(updated_pam_mtx)
                 log.debug(
                     'Dlocation for updated pam: {}'.format(
-                        updated_pam_mtx.getDLocation()))
-                with open(updated_pam_mtx.getDLocation(), 'w') as out_file:
+                        updated_pam_mtx.get_dlocation()))
+                with open(updated_pam_mtx.get_dlocation(), 'w') as out_file:
                     pam_mtx.save(out_file)
 
         # GRIMs
@@ -284,13 +284,13 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             scribe.updateObject(inserted_grim)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
-            grim_mtx = Matrix.load_flo(grim.getDLocation())
+            grim_mtx = Matrix.load_flo(grim.get_dlocation())
 
             # If we need to spatially subset, slice the matrix
             if method == SubsetMethod.SPATIAL:
                 grim_mtx = grim_mtx.slice(keep_sites)
 
-            with open(inserted_grim.getDLocation(), 'w') as out_file:
+            with open(inserted_grim.get_dlocation(), 'w') as out_file:
                 grim_mtx.save(out_file)
 
         # BioGeo
@@ -308,13 +308,13 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             scribe.updateObject(inserted_bg)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
-            bg_mtx = Matrix.load_flo(orig_bg.getDLocation())
+            bg_mtx = Matrix.load_flo(orig_bg.get_dlocation())
 
             # If we need to spatially subset, slice the matrix
             if method == SubsetMethod.SPATIAL:
                 bg_mtx = bg_mtx.slice(keep_sites)
 
-            with open(inserted_bg.getDLocation(), 'w') as out_file:
+            with open(inserted_bg.get_dlocation(), 'w') as out_file:
                 bg_mtx.save(out_file)
 
     else:
@@ -339,7 +339,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         # TODO: Make this asynchronous
         # Add shapegrid to workflow
         my_shp.buildShape()
-        my_shp.writeShapefile(my_shp.getDLocation())
+        my_shp.writeShapefile(my_shp.get_dlocation())
         my_shp.updateStatus(JobStatus.COMPLETE)
         scribe.updateObject(my_shp)
 
@@ -420,7 +420,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                             MatrixColumn.INTERSECT_PARAM_MIN_PERCENT]
 
                         intersect_cmd = IntersectRasterCommand(
-                            my_shp.getDLocation(), prj.getDLocation(),
+                            my_shp.get_dlocation(), prj.get_dlocation(),
                             pav_fname, min_presence, max_presence, min_percent,
                             squid=prj.squid)
                         index_cmd = IndexPAVCommand(
@@ -482,7 +482,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 min_percent = mtx_col.intersectParams[
                     MatrixColumn.INTERSECT_PARAM_MIN_PERCENT]
                 intersect_cmd = GrimRasterCommand(
-                    my_shp.getDLocation(), old_col.layer.getDLocation(),
+                    my_shp.get_dlocation(), old_col.layer.get_dlocation(),
                     grim_col_fname, minPercent=min_percent,
                     ident=mtx_col.ident)
                 stockpile_cmd = StockpileCommand(
@@ -509,7 +509,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             mtx_cols = []
             old_cols = scribe.getColumnsForMatrix(orig_bg.get_id())
 
-            encoder = LayerEncoder(my_shp.getDLocation())
+            encoder = LayerEncoder(my_shp.get_dlocation())
             # TODO(CJ): This should be pulled from a default config or the
             #     database or somewhere
             min_coverage = .25
@@ -525,7 +525,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                     val_attribute = None
 
                 new_cols = encoder.encode_biogeographic_hypothesis(
-                     lyr.getDLocation(), lyr.name, min_coverage,
+                     lyr.get_dlocation(), lyr.name, min_coverage,
                      event_field=val_attribute)
 
                 for col in new_cols:
