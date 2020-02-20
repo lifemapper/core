@@ -226,7 +226,7 @@ class ChristopherWalken(LMObject):
             dtime=datetime.datetime(
                 self._getBoomOrDefault(BoomKeys.OCC_EXP_YEAR), 
                 self._getBoomOrDefault(BoomKeys.OCC_EXP_MONTH), 
-                self._getBoomOrDefault(BoomKeys.OCC_EXP_DAY)).mjd
+                self._getBoomOrDefault(BoomKeys.OCC_EXP_DAY))).mjd
 
         # Copy public data to user space
         # TODO: Handle taxonomy, useGBIFTaxonomy=??
@@ -234,7 +234,7 @@ class ChristopherWalken(LMObject):
             occIdFname = self._getBoomOrDefault(BoomKeys.OCC_ID_FILENAME)
             weaponOfChoice = ExistingWoC(self._scribe, userId, archiveName, epsg,
                                          expDate, occIdFname, logger=self.log)
-           
+
         else:
             occname = self._getBoomOrDefault(BoomKeys.OCC_DATA_NAME)
             occdir = self._getBoomOrDefault(BoomKeys.OCC_DATA_DIR)
@@ -707,10 +707,6 @@ class ChristopherWalken(LMObject):
       
     # ...............................
     def _fill_sweep_config(self, sweep_config, alg, occ, prjs, mtxcols):
-    #def _getSweepConfig(self, workdir, alg, occ, prjs, mtxcols):
-        #occ_work_dir = os.path.join(workdir, 'occ_{}'.format(occ.get_id()))
-        #sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
-        
         # Add occurrence set if status = 1 and there is a process to perform
         if occ.status == JobStatus.INITIALIZE and occ.processType is not None:
             rawmeta_dloc = occ.getRawDLocation() + LMFormat.JSON.ext

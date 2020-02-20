@@ -114,9 +114,10 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
                 intParams = None
             metadata = {
                 ServiceObject.META_DESCRIPTION.lower() :
-            'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
+                    ('Encoded Helmert contrasts using the Lifemapper '
+                     'bioGeoContrasts module'),
                 ServiceObject.META_TITLE.lower() :
-            'Biogeographic hypothesis column ({})'.format(col_name)}
+                    'Biogeographic hypothesis column ({})'.format(col_name)}
             mc = MatrixColumn(len(mtxCols), bgMtx.get_id(), usr, layer=lyr,
                                     shapegrid=shapegrid, intersectParams=intParams,
                                     metadata=metadata, postToSolr=False,

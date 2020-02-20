@@ -13,18 +13,13 @@ from osgeo import ogr
 
 
 # .............................................................................
-# .............................................................................
 class OccurrenceType(_LayerParameters, ProcessObject):
-# .............................................................................
     """
     @todo: Update string formatting when python 2.5 is gone
     The point data class interfaces with the GBIF Cache and 
     creates a point data file that can be read by openModeller.
     """
 
-# .............................................................................
-# Constructor
-# .............................................................................
     def __init__(self, displayName, queryCount, mod_time, userId,
                      occurrenceSetId, metadata={}, sciName=None,
                      rawDLocation=None, processType=None,
@@ -94,10 +89,6 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 
 class OccurrenceLayer(OccurrenceType, Vector):
 
-# .............................................................................
-# .............................................................................
-# Constructor
-# .............................................................................
     def __init__(self, displayName, userId, epsgcode, queryCount, lyrId=None,
                  squid=None, verify=None, dlocation=None, rawDLocation=None,
                  rawMetaDLocation=None, lyrMetadata={},

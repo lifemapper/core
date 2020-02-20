@@ -251,7 +251,7 @@ class Boomer(LMObject):
                 MFChain.META_DESCRIPTION: 'Bushel for User {}, Archive {}'
                     .format(self.christopher.userId, self.christopher.archiveName),
                 MFChain.META_GRIDSET: self.gridsetId
-        }
+                }
         newMFC = MFChain(self.christopher.userId, priority=self.priority,
                          metadata=meta, status=JobStatus.GENERAL,
                          statusModTime=lt.gmt().mjd)

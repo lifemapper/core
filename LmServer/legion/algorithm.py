@@ -108,8 +108,9 @@ class Algorithm(LMObject):
                 try:
                     newParams = json.loads(params)
                 except Exception as e:
-                    print(('Failed to load JSON object from type {} object {}'
-                            .format(type(params), params)))
+                    print((
+                        'Failed to load JSON object type {} object {}'.format(
+                            type(params), params)))
 
         if type(newParams) is dict:
             try:
@@ -140,8 +141,9 @@ class Algorithm(LMObject):
                 try:
                     newInputs = json.loads(inputs)
                 except Exception as e:
-                    print(('Failed to load JSON object from type {} object {}'
-                            .format(type(inputs), inputs)))
+                    print((
+                        'Failed to load JSON object type {} object {}'.format(
+                            type(inputs), inputs)))
             self._inputData = newInputs
 
     # ...............................................
@@ -247,35 +249,39 @@ class Algorithm(LMObject):
                         except:
                             pass
                         else:
-                            if not(val in valOptions):
-                                raise InvalidValueError(['Invalid value {}; Valid options are {}'
-                                                                 .format(val, str(valOptions))])
+                            if val not in valOptions:
+                                raise InvalidValueError(
+                                    'Invalid value {}; valid options {}'.format(
+                                        val, valOptions))
                     else :
-                        raise WrongTypeError(['Expected str, Received %s - type %s' %
-                                                     (str(val), str(type(val))) ])
+                        raise WrongTypeError(
+                            'Expected str, Received {} - type {}'.format(
+                                val, type(val)))
 
                 # Check valid float value
                 elif constraints['type'] == float:
                     if isinstance(val, (float, int)):
                         self._checkNumericValue(val, constraints)
                     else :
-                        raise WrongTypeError(['Expected float, Received %s - type %s' %
-                                                     (str(val), str(type(val))) ])
+                        raise WrongTypeError(
+                            'Expected float, Received {} - type {}'.format(
+                                val, type(val)))
 
                 # Check valid int value
                 elif constraints['type'] == int:
                     if (isinstance(val, (float, int)) and (val % 1 == 0)):
                         self._checkNumericValue(val, constraints)
                     else :
-                        raise WrongTypeError(['Expected int, Received %s - type %s' %
-                                                     (str(val), str(type(val))) ])
+                        raise WrongTypeError(
+                            'Expected int, Received {} - type {}'.format(
+                                val, type(val)))
                 # Successfully ran the gauntlet
                 self._parameters[paramName] = val
             else:
                 # If didn't find name and return
-                raise InvalidParameterError(['Invalid parameter %s' % str(name)])
+                raise InvalidParameterError('Invalid parameter {}'.format(name))
         else:
-            raise LMError(currargs='Error: parameterConstraints not initialized')
+            raise LMError('Error: parameterConstraints not initialized')
 
     # ...............................................
     def _checkNumericValue(self, val, constraints):
@@ -284,12 +290,14 @@ class Algorithm(LMObject):
         '''
         if constraints['min'] is not None:
             if val < constraints['min']:
-                raise OutOfRangeError(["Value %s must be greater than %s" %
-                                              (str(val), str(constraints['min']))])
+                raise OutOfRangeError(
+                    'Value {} must be greater than {}'.format(
+                        val, constraints['min']))
         if constraints['max'] is not None:
             if val > constraints['max']:
-                raise OutOfRangeError(["Value %s must be less than %s" %
-                                              (str(val), str(constraints['max']))])
+                raise OutOfRangeError(
+                    'Value {} must be less than {}'.format(
+                        val, constraints['max']))
 
     # ...............................................
     def getParameterValue(self, name):

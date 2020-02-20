@@ -317,11 +317,12 @@ class BOOMFiller(LMObject):
                     val = config.getfloat(algHeading, pname)
                 else:
                     val = config.get(algHeading, pname)
-                    # Some algorithms(mask) may have a parameter indicating a layer,
-                    # if so, add name to parameters and object to inputs
+                    # Some algorithms(mask) may have a parameter indicating a
+                    # layer if so, add name to parameters and object to inputs
                     if acode == 'hull_region_intersect' and pname == 'region':
-                    # TODO: re-enable this later.
-                    #       Now, always use layer in SDM_MASK_META in scenario meta
+                        # TODO: re-enable this later.
+                        #    Now, always use layer in SDM_MASK_META in
+                        #    scenario meta
                         pass
 #                         if val.endswith(LMFormat.GTIFF.ext):
 #                             val = val[:-len(LMFormat.GTIFF.ext)]
@@ -371,7 +372,7 @@ class BOOMFiller(LMObject):
 
     # ...............................................
     def _find_scenpkg_base_and_mask(self, scenpkgName):
-#         pkgMeta, mask_lyrname = self._findScenPkgMeta(scenpkgName)
+        # pkgMeta, mask_lyrname = self._findScenPkgMeta(scenpkgName)
         public_scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkgName + '.py')
         user_scenpkg_meta_file = os.path.join(self.userIdPath, scenpkgName + '.py')
         if os.path.exists(public_scenpkg_meta_file):
