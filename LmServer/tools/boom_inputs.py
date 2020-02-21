@@ -12,75 +12,78 @@ from LmCommon.common.lmconstants import (LM_USER, JobStatus, PhyloTreeKeys,
                                          SERVER_BOOM_HEADING, BoomKeys)
 from LmCommon.common.time import gmt
 from LmCommon.encoding.layer_encoder import LayerEncoder
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isLMUser
-from LmServer.common.datalocator import EarlJr
+from LmServer.base.service_object import ServiceObject
+from LmServer.base.utilities import is_lm_user
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import LMFileType
 from LmServer.common.localconstants import DEFAULT_EPSG
 from LmServer.common.log import ConsoleLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.mtxcolumn import MatrixColumn
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.lm_matrix import LMMatrix
+from LmServer.legion.mtx_column import MatrixColumn
 from LmServer.legion.tree import Tree
 
 
 # .................................
-def _getBioGeoMatrix(scribe, usr, gridset, layers=[]):
+def _get_biogeo_matrix(scribe, usr, gridset, layers=None):
+    """Get a biogeographic hypotheses matrix
     """
-    @summary: Example code for encoding hypotheses to a BioGeo matrix
-    @param bgMtx: The bio geographic hypotheses matrix you created
-    @param layers: A list of (layer object, event field) tuples.  Event field
-                            may be None
-    """
+    if layers is None:
+        layers = []
     # Create the encoding data
-    bgMtx = None
+    bg_mtx = None
     try:
-        bgMtxList = gridset.getBiogeographicHypotheses()
-    except:
+        bg_mtx_list = gridset.get_biogeographic_hypotheses()
+    except Exception:
         print ('No gridset for hypotheses')
     # TODO: There should be only one?!?
-    if len(bgMtxList) > 0:
-        bgMtx = bgMtxList[0]
+    if len(bg_mtx_list) > 0:
+        bg_mtx = bg_mtx_list[0]
     else:
-        mtxKeywords = ['biogeographic hypotheses']
+        mtx_keywords = ['biogeographic hypotheses']
         for lyr in layers:
             kwds = []
             try:
                 kwds = lyr.metadata[ServiceObject.META_KEYWORDS]
-            except:
+            except Exception:
                 kwds = []
-            mtxKeywords.extend(kwds)
+            mtx_keywords.extend(kwds)
         # Add the matrix to contain biogeo hypotheses layer intersections
-        meta = {ServiceObject.META_DESCRIPTION.lower():
+        meta = {
+            ServiceObject.META_DESCRIPTION.lower():
                 'Biogeographic Hypotheses for archive {}'.format(gridset.name),
-                ServiceObject.META_KEYWORDS.lower(): mtxKeywords}
-        tmpMtx = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
-                                processType=ProcessType.ENCODE_HYPOTHESES,
-                                userId=usr, gridset=gridset, metadata=meta,
-                                status=JobStatus.INITIALIZE,
-                                statusModTime=gmt().mjd)
-        bgMtx = scribe.findOrInsertMatrix(tmpMtx)
-        if bgMtx is None:
+            ServiceObject.META_KEYWORDS.lower(): mtx_keywords}
+        tmp_mtx = LMMatrix(
+            None, matrix_type=MatrixType.BIOGEO_HYPOTHESES,
+            process_type=ProcessType.ENCODE_HYPOTHESES, user_id=usr,
+            gridset=gridset, metadata=meta, status=JobStatus.INITIALIZE,
+            status_mod_time=gmt().mjd)
+        bg_mtx = scribe.find_or_insert_matrix(tmp_mtx)
+        if bg_mtx is None:
             scribe.log.info('  Failed to add biogeo hypotheses matrix')
-    return bgMtx
+    return bg_mtx
 
 
 # .................................
-def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
+def encode_hypotheses_to_matrix(scribe, usr, gridset, layers=None):
+    """Encoding hypotheses to a BioGeo matrix
+
+    Args:
+        scribe: An open BorgScribe object connected to the database
+        usr: Userid for these data
+        gridset: Gridset object for this tree data
+        layers: A list of (layer object, event field) tuples.  Event field
+            may be None
+
+    Note:
+        This adds to existing encoded hypotheses
     """
-    @summary: Encoding hypotheses to a BioGeo matrix
-    @note: This adds to existing encoded hypotheses
-    @param scribe: An open BorgScribe object connected to the database
-    @param usr: Userid for these data
-    @param gridset: Gridset object for this tree data 
-    @param layers: A list of (layer object, event field) tuples.  Event field
-                            may be None
-    """
-#     allEncodings = None
-    mtxCols = []
+    if layers is None:
+        layers = []
+    mtx_cols = []
     # Find or create the matrix
-    bgMtx = _getBioGeoMatrix(scribe, usr, gridset, layers)
-    shapegrid = gridset.getShapegrid()
+    bg_mtx = _get_biogeo_matrix(scribe, usr, gridset, layers)
+    shapegrid = gridset.get_shapegrid()
     encoder = LayerEncoder(shapegrid.get_dlocation())
 
     # TODO(CJ): Minimum coverage should be pulled from config or database
@@ -88,254 +91,170 @@ def encodeHypothesesToMatrix(scribe, usr, gridset, layers=[]):
 
     for lyr in layers:
         try:
-            valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
-            column_name = valAttribute
+            val_attribute = lyr.layer_metadata[
+                MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
+            column_name = val_attribute
         except KeyError:
-            valAttribute = None
+            val_attribute = None
             column_name = lyr.name
         new_cols = encoder.encode_biogeographic_hypothesis(
              lyr.get_dlocation(), column_name, min_coverage,
-             event_field=valAttribute)
-        print(('layer name={}, eventField={}, dloc={}'
-                .format(lyr.name, valAttribute, lyr.get_dlocation())))
+             event_field=val_attribute)
+        print((
+            'layer name={}, eventField={}, dloc={}'.format(
+                lyr.name, val_attribute, lyr.get_dlocation())))
 
         # Add matrix columns for the newly encoded layers
         for col_name in new_cols:
             # TODO: Fill in params and metadata
             try:
-                efValue = col_name.split(' - ')[1]
-            except:
-                efValue = col_name
+                ef_value = col_name.split(' - ')[1]
+            except Exception:
+                ef_value = col_name
 
-            if valAttribute is not None:
-                intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
-                                 MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue}
+            if val_attribute is not None:
+                int_params = {
+                    MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower():
+                        val_attribute,
+                    MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower():
+                        ef_value
+                    }
             else:
-                intParams = None
+                int_params = None
             metadata = {
-                ServiceObject.META_DESCRIPTION.lower() :
+                ServiceObject.META_DESCRIPTION.lower():
                     ('Encoded Helmert contrasts using the Lifemapper '
                      'bioGeoContrasts module'),
-                ServiceObject.META_TITLE.lower() :
+                ServiceObject.META_TITLE.lower():
                     'Biogeographic hypothesis column ({})'.format(col_name)}
-            mc = MatrixColumn(len(mtxCols), bgMtx.get_id(), usr, layer=lyr,
-                                    shapegrid=shapegrid, intersectParams=intParams,
-                                    metadata=metadata, postToSolr=False,
-                                    status=JobStatus.COMPLETE,
-                                    statusModTime=gmt().mjd)
-            updatedMC = scribe.findOrInsertMatrixColumn(mc)
-            mtxCols.append(updatedMC)
+            mtx_col = MatrixColumn(
+                len(mtx_cols), bg_mtx.get_id(), usr, layer=lyr,
+                shapegrid=shapegrid, intersect_params=int_params,
+                metadata=metadata, post_to_solr=False,
+                status=JobStatus.COMPLETE, status_mod_time=gmt().mjd)
+            updated_mc = scribe.find_or_insert_matrix_column(mtx_col)
+            mtx_cols.append(updated_mc)
 
         enc_mtx = encoder.get_encoded_matrix()
 
-        bgMtx.data = enc_mtx.data
-        bgMtx.setHeaders(enc_mtx.getHeaders())
+        bg_mtx.data = enc_mtx.data
+        bg_mtx.setHeaders(enc_mtx.getHeaders())
 
     # Save matrix and update record
-    bgMtx.write(overwrite=True)
-    bgMtx.updateStatus(JobStatus.COMPLETE, mod_time=gmt().mjd)
-    success = scribe.updateObject(bgMtx)
-    return bgMtx
+    bg_mtx.write(overwrite=True)
+    bg_mtx.update_status(JobStatus.COMPLETE, mod_time=gmt().mjd)
+    _ = scribe.update_object(bg_mtx)
+    return bg_mtx
 
 
 # .................................
-def squidifyTree(scribe, usr, tree):
-    """
-    @summary: Annotate a tree with squids and node ids, then write to disk
-    @note: Matching species must be present in the taxon table of the database
-    @param scribe: An open BorgScribe object connected to the database
-    @param usr: Userid for these data
-    @param tree: Tree object 
-    """
-    squidDict = {}
-    for label in tree.getLabels():
-        # TODO: Do we always need to do this?
-        taxLabel = label.replace(' ', '_')
-        sno = scribe.getTaxon(userId=usr, taxonName=taxLabel)
-        if sno is not None:
-            squidDict[label] = sno.squid
+def squidify_tree(scribe, usr, tree):
+    """Annotate a tree with squids and node ids, then write to disk
 
-    tree.annotateTree(PhyloTreeKeys.SQUID, squidDict)
+    Args:
+        scribe: An open BorgScribe object connected to the database
+        usr: The user that owns this data
+        tree: Tree object
+
+    Note:
+        Matching species must be present in the taxon table of the database
+    """
+    squid_dict = {}
+    for label in tree.get_labels():
+        # TODO: Do we always need to do this?
+        tax_label = label.replace(' ', '_')
+        sno = scribe.get_taxon(user_id=usr, taxon_name=tax_label)
+        if sno is not None:
+            squid_dict[label] = sno.squid
+
+    tree.annotate_tree(PhyloTreeKeys.SQUID, squid_dict)
 
     print("Adding interior node labels to tree")
     # Add node labels
-    tree.addNodeLabels()
+    tree.add_node_labels()
 
     # Update tree properties
-    tree.clearDLocation()
+    tree.clear_dlocation()
     tree.set_dlocation()
     print("Write tree to final location")
-    tree.writeTree()
-    tree.updateModtime(gmt().mjd)
-    success = scribe.updateObject(tree)
+    tree.write_tree()
+    tree.update_mod_time(gmt().mjd)
+    _ = scribe.update_object(tree)
     return tree
 
 
 # .................................
-def _getBoomBioGeoParams(scribe, gridname, usr):
+def _get_boom_biogeo_params(scribe, grid_name, usr):
     epsg = DEFAULT_EPSG
     layers = []
     earl = EarlJr()
-    configFname = earl.createFilename(LMFileType.BOOM_CONFIG,
-                                                 objCode=gridname, usr=usr)
-    if configFname is not None and os.path.exists(configFname):
-        cfg = Config(site_fn=configFname)
+    config_fname = earl.create_filename(
+        LMFileType.BOOM_CONFIG, obj_code=grid_name, usr=usr)
+    if config_fname is not None and os.path.exists(config_fname):
+        cfg = Config(site_fn=config_fname)
     else:
-        raise Exception('Missing config file {}'.format(configFname))
+        raise Exception('Missing config file {}'.format(config_fname))
 
     try:
         epsg = cfg.get(SERVER_BOOM_HEADING, BoomKeys.EPSG)
-    except:
+    except Exception:
         pass
 
     try:
         var = cfg.get(SERVER_BOOM_HEADING, BoomKeys.BIOGEO_HYPOTHESES_LAYERS)
-    except:
+    except Exception:
         raise Exception('No configured Biogeographic Hypotheses layers')
     else:
         # May be one or more
-        lyrnameList = [v.strip() for v in var.split(',')]
-        for lname in lyrnameList:
-            layers.append(scribe.getLayer(userId=usr, lyrName=lname, epsg=epsg))
+        lyr_name_list = [v.strip() for v in var.split(',')]
+        for lname in lyr_name_list:
+            layers.append(
+                scribe.get_layer(user_id=usr, lyr_name=lname, epsg=epsg))
     return layers
 
 
 # .............................................................................
-if __name__ == '__main__':
-    if not isLMUser():
+def main():
+    """Main method for script
+    """
+    if not is_lm_user():
         print(("Run this script as '{}'".format(LM_USER)))
         sys.exit(2)
 
     parser = argparse.ArgumentParser(
         description="Annotate a tree with squids and node ids")
 
-    parser.add_argument('-u', '--user', type=str,
-                              help="User name")
-    parser.add_argument('-g', '--gridset_name', type=str,
-                              help="Gridset name for encoding Biogeographic Hypotheses")
-    parser.add_argument('-t', '--tree_name', type=str,
-                              help="Tree name for squid, node annotation")
+    parser.add_argument(
+        '-u', '--user', type=str, help="User name")
+    parser.add_argument(
+        '-g', '--gridset_name', type=str,
+        help="Gridset name for encoding Biogeographic Hypotheses")
+    parser.add_argument(
+        '-t', '--tree_name', type=str,
+        help="Tree name for squid, node annotation")
 
     args = parser.parse_args()
     usr = args.user
-    treename = args.tree_name
-    gridname = args.gridset_name
 
     scribe = BorgScribe(ConsoleLogger())
-    scribe.openConnections()
-    if gridname is not None:
-        layers = _getBoomBioGeoParams(scribe, gridname, usr)
-        gridset = scribe.getGridset(userId=usr, name=gridname, fillMatrices=True)
+    scribe.open_connections()
+    if args.gridset_name is not None:
+        layers = _get_boom_biogeo_params(scribe, args.gridset_name, usr)
+        gridset = scribe.get_gridset(
+            user_id=usr, name=args.gridset_name, fill_matrices=True)
         if gridset and layers:
-            encodeHypothesesToMatrix(scribe, usr, gridset, layers=layers)
+            encode_hypotheses_to_matrix(scribe, usr, gridset, layers=layers)
         else:
             print ('No gridset or layers to encode as hypotheses')
 
-    if treename is not None:
-        baretree = Tree(treename, userId=args.user)
-        tree = scribe.getTree(tree=baretree)
-        decoratedtree = squidifyTree(scribe, usr, tree)
+    if args.tree_name:
+        bare_tree = Tree(args.tree_name, user_id=args.user)
+        tree = scribe.get_tree(tree=bare_tree)
+        _ = squidify_tree(scribe, usr, tree)
 
-    scribe.closeConnections()
+    scribe.close_connections()
 
-"""
-import argparse
-import os
-import sys
 
-from LmServer.tools.boomInputs import (_getBoomBioGeoParams, _getBioGeoMatrix, 
-      encodeHypothesesToMatrix, squidifyTree)
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (JobStatus, PhyloTreeKeys, MatrixType, 
-                                                      ProcessType, SERVER_BOOM_HEADING)
-from lmpy import Matrix
-from LmServer.base.utilities import isLMUser
-from LmServer.common.data_locator import EarlJr
-from LmServer.common.lmconstants import LMFileType
-from LmServer.common.log import ConsoleLogger
-from LmServer.db.borg_scribe import BorgScribe
-from LmServer.legion.lm_matrix import LMMatrix
-from LmServer.legion.mtx_column import MatrixColumn
-from LmServer.legion.tree import Tree
-from LmServer.base.service_object import ServiceObject
-from LmServer.common.localconstants import DEFAULT_EPSG
-
-usr = 'biotaphy'
-treename = None
-gridname = 'biotaphy_heuchera_global'
-
-scribe = BorgScribe(ConsoleLogger())
-scribe.openConnections()
-# Biogeo
-layers = _getBoomBioGeoParams(scribe, gridname, usr)
-gridset = scribe.getGridset(userId=usr, name=gridname, fillMatrices=True)
-if not (gridset and layers):
-    print ('No gridset or layers to encode as hypotheses')
-    
-# encodeHypothesesToMatrix(scribe, usr, gridset, layers=layers)
-mtxCols = []
-bgMtx = _getBioGeoMatrix(scribe, usr, gridset, layers)
-shapegrid = gridset.getShapegrid()
-
-encoder = LayerEncoder(shapegrid.get_dlocation())
-
-# TODO(CJ): Minimum coverage should be pulled from config or database
-min_coverage = 0.25
-for lyr in layers:
-    try:
-        valAttribute = lyr.lyrMetadata[MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
-        column_name = valAttribute
-    except KeyError:
-        valAttribute = None
-        column_name = lyr.name
-    new_cols = encoder.encode_biogeographic_hypothesis(
-         lyr.get_dlocation(), column_name, min_coverage, 
-         event_field=valAttribute)
-    print('layer name={}, eventField={}, dloc={}'
-            .format(lyr.name, valAttribute, lyr.get_dlocation()))
-    
-    # Add matrix columns for the newly encoded layers
-    for col_name in new_cols:
-        # TODO: Fill in params and metadata
-        try:
-            efValue = col_name.split(' - ')[1]
-        except:
-            efValue = col_name
-
-        if valAttribute is not None:
-            intParams = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): valAttribute,
-                             MatrixColumn.INTERSECT_PARAM_VAL_VALUE.lower(): efValue}
-        else:
-            intParams = None
-        metadata = {
-            ServiceObject.META_DESCRIPTION.lower() : 
-        'Encoded Helmert contrasts using the Lifemapper bioGeoContrasts module',
-            ServiceObject.META_TITLE.lower() : 
-        'Biogeographic hypothesis column ({})'.format(col_name)}
-        mc = MatrixColumn(len(mtxCols), bgMtx.get_id(), usr, layer=lyr,
-                                shapegrid=shapegrid, intersectParams=intParams, 
-                                metadata=metadata, postToSolr=False,
-                                status=JobStatus.COMPLETE, 
-                                statusModTime=gmt().mjd)
-        updatedMC = scribe.findOrInsertMatrixColumn(mc)
-        mtxCols.append(updatedMC)
-    
-    enc_mtx = encoder.get_encoded_matrix()
-
-    bgMtx.data = enc_mtx.data
-    bgMtx.setHeaders(enc_mtx.getHeaders())
-    
-# Save matrix and update record
-bgMtx.write(overwrite=True)
-bgMtx.updateStatus(JobStatus.COMPLETE, mod_time=gmt().mjd)
-success = scribe.updateObject(bgMtx)
-return bgMtx
-
-# Tree
-baretree = Tree(treename, userId=args.user)
-tree = scribe.getTree(tree=baretree)
-decoratedtree = squidifyTree(scribe, usr, tree)
-
-scribe.closeConnections()
-"""
-
+# .............................................................................
+if __name__ == '__main__':
+    main()

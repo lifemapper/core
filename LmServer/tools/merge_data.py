@@ -1,3 +1,5 @@
+"""Merge data
+"""
 import argparse
 import logging
 import os
@@ -10,26 +12,25 @@ from LmServer.common.log import ScriptLogger
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
+
 # .............................................................................
-if __name__ == "__main__":
-    # if not isLMUser():
-    #     print("Run this script as `{}`".format(LM_USER))
-    #     sys.exit(2)
+def main():
+    """Main method for script
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'base_point_data',
+        help='Path and basename of base CSV data and JSON metadata to merge')
+    parser.add_argument(
+        '--base_point_delimiter', default='\t',
+        help='Delimter for base CSV point data')
 
-    parser = argparse.ArgumentParser(
-             description=("""
-             """))
-    parser.add_argument('base_point_data',
-             help=("""Path and basename of base CSV point data and JSON metadata 
-             files to merge into"""))
-    parser.add_argument('--base_point_delimiter', default='\t',
-             help=("""Delimter for base CSV point data"""))
-
-    parser.add_argument('--merge_point_data', default=None,
-             help=("""Path and basename of additional CSV point data and JSON 
-             metadata files to merge into base data"""))
-    parser.add_argument('--merge_point_delimiter', default='\t',
-             help=("""Delimiter for additional CSV point data"""))
+    parser.add_argument(
+        '--merge_point_data', default=None,
+        help='Path and basename of additional files to merge')
+    parser.add_argument(
+        '--merge_point_delimiter', default='\t',
+        help='Delimiter for additional CSV point data')
 
     args = parser.parse_args()
     base_csv_fname = args.base_point_data + '.csv'
@@ -38,11 +39,12 @@ if __name__ == "__main__":
     if base_delimiter not in ('\t', ','):
         base_delimiter = '\t'
     if not os.path.exists(base_csv_fname) and os.path.exists(base_meta_fname):
-        raise Exception('Base point data {} does not exist'.format(args.base_point_data))
+        raise LMError(
+            'Base point data {} does not exist'.format(args.base_point_data))
 
     merge_csv_fname = None
     merge_meta_fname = None
-    if args.merge_point_data is not  None:
+    if args.merge_point_data is not None:
         merge_csv_fname = args.merge_point_data + '.csv'
         merge_meta_fname = args.merge_point_data + '.json'
         merge_delimiter = args.merge_point_delimiter
@@ -56,22 +58,29 @@ if __name__ == "__main__":
     logger = ScriptLogger(logname, level=logging.INFO)
 
     try:
-        occParser = OccDataParser(logger, base_csv_fname, base_meta_fname,
-                                  delimiter=base_delimiter,
-                                  pullChunks=True)
+        occ_parser = OccDataParser(
+            logger, base_csv_fname, base_meta_fname, delimiter=base_delimiter,
+            pull_chunks=True)
     except Exception as e:
         raise LMError('Failed to construct OccDataParser, {}'.format(e))
 
-    if merge_csv_fname is not None:
-        if not os.path.exists(base_csv_fname) and os.path.exists(base_meta_fname):
-            raise Exception('Base point data {} does not exist'.format(args.base_point_data))
+    if all([
+            merge_csv_fname, os.path.exists(base_csv_fname),
+            os.path.exists(base_meta_fname)]):
+        raise LMError(
+            'Base point data {} does not exist'.format(args.base_point_data))
 
     try:
-        occParser = OccDataParser(logger, base_csv_fname, base_meta_fname,
-                                  delimiter=base_delimiter,
-                                  pullChunks=True)
+        occ_parser = OccDataParser(
+            logger, base_csv_fname, base_meta_fname, delimiter=base_delimiter,
+            pull_chunks=True)
     except Exception as e:
         raise LMError('Failed to construct OccDataParser, {}'.format(e))
 
-    _fieldNames = occParser.header
-    occParser.initializeMe()
+    _field_names = occ_parser.header
+    occ_parser.initialize_me()
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

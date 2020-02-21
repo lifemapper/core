@@ -136,47 +136,47 @@ class ReferenceType(Enum):
         return None
 
     @staticmethod
-    def sdmTypes():
+    def sdm_types():
         return [ReferenceType.OccurrenceSet, ReferenceType.SDMProjection]
 
     @staticmethod
-    def isSDM(rtype):
+    def is_sdm(rtype):
         if rtype in ReferenceType.sdmTypes():
             return True
         return False
 
     @staticmethod
-    def radTypes():
+    def rad_types():
         return [
             ReferenceType.ShapeGrid, ReferenceType.MatrixColumn,
             ReferenceType.Matrix, ReferenceType.Gridset]
 
     @staticmethod
-    def isRAD(rtype):
+    def is_rad(rtype):
         if rtype in ReferenceType.radTypes():
             return True
         return False
 
     @staticmethod
-    def boomTypes():
+    def boom_types():
         allTypes = ReferenceType.sdmTypes()
         allTypes.extend(ReferenceType.radTypes())
         return allTypes
 
     @staticmethod
-    def isBOOM(rtype):
+    def is_boom(rtype):
         if rtype in ReferenceType.boomTypes():
             return True
         return False
 
     @staticmethod
-    def progressTypes():
+    def progress_types():
         return [
             ReferenceType.OccurrenceSet, ReferenceType.SDMProjection,
             ReferenceType.MatrixColumn, ReferenceType.Matrix]
 
     @staticmethod
-    def statusTypes():
+    def status_types():
         tps = ReferenceType.progressTypes()
         tps.append(ReferenceType.ShapeGrid)
         return tps

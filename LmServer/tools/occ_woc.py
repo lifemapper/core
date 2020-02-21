@@ -777,7 +777,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
             return True
 
     # ................................
-    def _updateFile(self, filename, exp_date):
+    def _update_file(self, filename, exp_date):
         """If file does not exist or is older than exp_date, create a new file.
         """
         if filename is None or not os.path.exists(filename):

@@ -6,13 +6,17 @@ from LmCommon.common.lmconstants import PhyloTreeKeys
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
 from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
+
 
 # .............................................................................
-if __name__ == "__main__":
+def main():
+    """Main method for script
+    """
     # Set up the argument parser
     parser = argparse.ArgumentParser(
-      description='This script adds SQUIDs to the tips of a tree and labels nodes')
+        description=(
+            'This script adds SQUIDs to the tips of a tree and labels nodes'))
 
     parser.add_argument('tree_id', type=int, help='The id of this tree')
     parser.add_argument(
@@ -27,30 +31,35 @@ if __name__ == "__main__":
 
     # Do stuff
     scribe = BorgScribe(ScriptLogger('squid_tree'))
-    scribe.openConnections()
+    scribe.open_connections()
 
-    tree = scribe.getTree(treeId=args.tree_id)
+    tree = scribe.get_tree(tree_id=args.tree_id)
 
     squid_dict = {}
 
-    for label in tree.getLabels():
-        sno = scribe.getTaxon(userId=user_id, taxonName=label)
+    for label in tree.get_labels():
+        sno = scribe.get_taxon(user_id=user_id, taxon_name=label)
         if sno is not None:
             squid_dict[label] = sno.squid
 
-    tree.annotateTree(PhyloTreeKeys.SQUID, squid_dict)
+    tree.annotate_tree(PhyloTreeKeys.SQUID, squid_dict)
 
     # Write tree
-    tree.clearDLocation()
+    tree.clear_dlocation()
     tree.set_dlocation()
-    tree.writeTree()
+    tree.write_tree()
 
     # Update metadata
-    tree.updateModtime(gmt().mjd)
-    success = scribe.updateObject(tree)
+    tree.update_mod_time(gmt().mjd)
+    _ = scribe.update_object(tree)
 
-    scribe.closeConnections()
+    scribe.close_connections()
 
     ready_filename(args.success_filename, overwrite=True)
     with open(args.success_filename, 'w') as out_f:
         out_f.write('1\n')
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

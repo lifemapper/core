@@ -4,14 +4,15 @@ import argparse
 import json
 import os
 
+from osgeo import ogr
+
 from LmBackend.common.lmconstants import RegistryKey
 from LmCommon.common.time import LmTime
 from LmCommon.compression.binary_list import decompress
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS)
 from LmServer.common.log import ConsoleLogger
 from LmServer.common.solr import build_solr_document, post_solr_document
-from LmServer.db.borgscribe import BorgScribe
-from osgeo import ogr
+from LmServer.db.borg_scribe import BorgScribe
 
 
 # TODO: Different logger
@@ -30,12 +31,12 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
     Returns:
         A list of (field name, field value) tuples for the PAV for posting
     """
-    shapegrid = pam.getShapegrid()
-    mdl_scn = prj.modelScenario
-    prj_scn = prj.projScenario
+    shapegrid = pam.get_shapegrid()
+    mdl_scn = prj.model_scenario
+    prj_scn = prj.proj_scenario
 
     try:
-        species = sci_name.scientificName.split(' ')[1]
+        species = sci_name.scientific_name.split(' ')[1]
     except Exception:
         species = None
 
@@ -61,8 +62,8 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
     try:
         tax_kingdom = sci_name.kingdom
         tax_phylum = sci_name.phylum
-        tax_class = sci_name.txClass
-        tax_order = sci_name.txOrder
+        tax_class = sci_name.class_
+        tax_order = sci_name.order_
         tax_family = sci_name.family
         tax_genus = sci_name.genus
     except Exception:
@@ -70,8 +71,8 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
 
     fields = [
         (SOLR_FIELDS.ID, pav.get_id()),
-        (SOLR_FIELDS.USER_ID, pav.getUserId()),
-        (SOLR_FIELDS.DISPLAY_NAME, occ.displayName),
+        (SOLR_FIELDS.USER_ID, pav.get_user_id()),
+        (SOLR_FIELDS.DISPLAY_NAME, occ.display_name),
         (SOLR_FIELDS.SQUID, pav.squid),
         (SOLR_FIELDS.TAXON_KINGDOM, tax_kingdom),
         (SOLR_FIELDS.TAXON_PHYLUM, tax_phylum),
@@ -80,39 +81,39 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
         (SOLR_FIELDS.TAXON_FAMILY, tax_family),
         (SOLR_FIELDS.TAXON_GENUS, tax_genus),
         (SOLR_FIELDS.TAXON_SPECIES, species),
-        (SOLR_FIELDS.ALGORITHM_CODE, prj.algorithmCode),
+        (SOLR_FIELDS.ALGORITHM_CODE, prj.algorithm_code),
         (SOLR_FIELDS.ALGORITHM_PARAMETERS,
-         prj.dumpAlgorithmParametersAsString()),
-        (SOLR_FIELDS.POINT_COUNT, occ.queryCount),
+         prj.dump_algorithm_parameters_as_string()),
+        (SOLR_FIELDS.POINT_COUNT, occ.query_count),
         (SOLR_FIELDS.OCCURRENCE_ID, occ.get_id()),
-        (SOLR_FIELDS.OCCURRENCE_DATA_URL, occ.getDataUrl()),
-        (SOLR_FIELDS.OCCURRENCE_META_URL, occ.metadataUrl),
+        (SOLR_FIELDS.OCCURRENCE_DATA_URL, occ.get_data_url()),
+        (SOLR_FIELDS.OCCURRENCE_META_URL, occ.metadata_url),
         (SOLR_FIELDS.OCCURRENCE_MOD_TIME, occ_mod_time),
         (SOLR_FIELDS.MODEL_SCENARIO_CODE, mdl_scn.code),
         (SOLR_FIELDS.MODEL_SCENARIO_ID, mdl_scn.get_id()),
-        (SOLR_FIELDS.MODEL_SCENARIO_URL, mdl_scn.metadataUrl),
-        (SOLR_FIELDS.MODEL_SCENARIO_GCM, mdl_scn.gcmCode),
-        (SOLR_FIELDS.MODEL_SCENARIO_DATE_CODE, mdl_scn.dateCode),
-        (SOLR_FIELDS.MODEL_SCENARIO_ALT_PRED_CODE, mdl_scn.altpredCode),
+        (SOLR_FIELDS.MODEL_SCENARIO_URL, mdl_scn.metadata_url),
+        (SOLR_FIELDS.MODEL_SCENARIO_GCM, mdl_scn.gcm_code),
+        (SOLR_FIELDS.MODEL_SCENARIO_DATE_CODE, mdl_scn.date_code),
+        (SOLR_FIELDS.MODEL_SCENARIO_ALT_PRED_CODE, mdl_scn.alt_pred_code),
         (SOLR_FIELDS.PAM_ID, pam.get_id()),
         (SOLR_FIELDS.PROJ_SCENARIO_CODE, prj_scn.code),
         (SOLR_FIELDS.PROJ_SCENARIO_ID, prj_scn.get_id()),
-        (SOLR_FIELDS.PROJ_SCENARIO_URL, prj_scn.metadataUrl),
-        (SOLR_FIELDS.PROJ_SCENARIO_GCM, prj_scn.gcmCode),
-        (SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE, prj_scn.dateCode),
-        (SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE, prj_scn.altpredCode),
+        (SOLR_FIELDS.PROJ_SCENARIO_URL, prj_scn.metadata_url),
+        (SOLR_FIELDS.PROJ_SCENARIO_GCM, prj_scn.gcm_code),
+        (SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE, prj_scn.date_code),
+        (SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE, prj_scn.alt_pred_code),
         (SOLR_FIELDS.PROJ_ID, prj.get_id()),
-        (SOLR_FIELDS.PROJ_META_URL, prj.metadataUrl),
-        (SOLR_FIELDS.PROJ_DATA_URL, prj.getDataUrl()),
+        (SOLR_FIELDS.PROJ_META_URL, prj.metadata_url),
+        (SOLR_FIELDS.PROJ_DATA_URL, prj.get_data_url()),
         (SOLR_FIELDS.PROJ_MOD_TIME, prj_mod_time),
-        (SOLR_FIELDS.PAV_META_URL, pav.metadataUrl),
-        # (SOLR_FIELDS.PAV_DATA_URL, pav.getDataUrl()),
-        (SOLR_FIELDS.EPSG_CODE, prj.epsgcode),
-        (SOLR_FIELDS.GRIDSET_META_URL, pam.gridsetUrl),
-        (SOLR_FIELDS.GRIDSET_ID, pam.gridsetId),
+        (SOLR_FIELDS.PAV_META_URL, pav.metadata_url),
+        # (SOLR_FIELDS.PAV_DATA_URL, pav.get_data_url()),
+        (SOLR_FIELDS.EPSG_CODE, prj.epsg_code),
+        (SOLR_FIELDS.GRIDSET_META_URL, pam.gridset_url),
+        (SOLR_FIELDS.GRIDSET_ID, pam.gridset_id),
         (SOLR_FIELDS.SHAPEGRID_ID, shapegrid.get_id()),
-        (SOLR_FIELDS.SHAPEGRID_META_URL, shapegrid.metadataUrl),
-        (SOLR_FIELDS.SHAPEGRID_DATA_URL, shapegrid.getDataUrl()),
+        (SOLR_FIELDS.SHAPEGRID_META_URL, shapegrid.metadata_url),
+        (SOLR_FIELDS.SHAPEGRID_DATA_URL, shapegrid.get_data_url()),
         # Compress the PAV and store the string
         (SOLR_FIELDS.COMPRESSED_PAV, compressed_pav)
     ]
@@ -156,18 +157,18 @@ def main():
         pav_config = json.load(in_file)
 
     scribe = BorgScribe(ConsoleLogger())
-    scribe.openConnections()
+    scribe.open_connections()
     doc_pairs = []
     for pav_info in pav_config:
         compressed_pav = pav_info[RegistryKey.COMPRESSED_PAV_DATA]
         pav_id = pav_info[RegistryKey.IDENTIFIER]
         proj_id = pav_info[RegistryKey.PROJECTION_ID]
 
-        pav = scribe.getMatrixColumn(mtxcolId=pav_id)
-        prj = scribe.getSDMProject(proj_id)
-        occ = prj.occurrenceSet
-        pam = scribe.getMatrix(mtxId=pav.parentId)
-        sci_name = scribe.getTaxon(squid=pav.squid)
+        pav = scribe.get_matrix_column(mtx_col_id=pav_id)
+        prj = scribe.get_sdm_project(proj_id)
+        occ = prj.occurrence_set
+        pam = scribe.get_matrix(mtx_id=pav.parent_id)
+        sci_name = scribe.get_taxon(squid=pav.squid)
 
         val_pairs = get_post_pairs(
             pav, prj, occ, pam, sci_name, compressed_pav)
@@ -188,7 +189,7 @@ def main():
         with open(args.post_index_filename, 'a'):
             os.utime(args.post_index_filename, None)
 
-    scribe.closeConnections()
+    scribe.close_connections()
 
 
 # .............................................................................
