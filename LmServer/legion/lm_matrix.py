@@ -2,212 +2,249 @@
 """
 import os
 
+import lmpy
+
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import CSV_INTERFACE, MatrixType
 from LmCommon.common.time import gmt
-from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
+from LmServer.base.service_object import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMServiceType, LMFileType)
-from lmpy import Matrix
 
 
 # .............................................................................
 class LMMatrix(Matrix, ServiceObject, ProcessObject):
+    """The Matrix class contains a 2-dimensional numeric matrix.
     """
-    The Matrix class contains a 2-dimensional numeric matrix.
-    """
+    # ....................................
+    def __init__(self, matrix, headers=None, matrix_type=MatrixType.PAM,
+                 process_type=None, scenario_id=None, gcm_code=None,
+                 alt_pred_code=None, date_code=None, alg_code=None,
+                 metadata=None, dlocation=None, metadata_url=None,
+                 user_id=None, gridset=None, matrix_id=None, status=None,
+                 status_mod_time=None):
+        """Constructor
 
-# .............................................................................
-# Constructor
-# .............................................................................
-    def __init__(self, matrix, headers=None,
-                     matrixType=MatrixType.PAM,
-                     processType=None,
-                     # TODO: replace 3 codes with scenarioId
-                     scenarioid=None,
-                     gcmCode=None, altpredCode=None, dateCode=None,
-                     algCode=None,
-                     metadata={},
-                     dlocation=None,
-                     metadataUrl=None,
-                     userId=None,
-                     gridset=None,
-                     matrixId=None,
-                     status=None, statusModTime=None):
+        Args:
+            matrix (numpy.ndarray): Numpy data array for Matrix base object.
+            matrix_type (int): Constant from MatrixType.
+            gcm_code: Code for the Global Climate Model used to create these
+                data.
+            alt_pred_code: Code for the alternate prediction (i.e. IPCC
+                scenario or Representative Concentration Pathways/RCPs) used to
+                create these data
+            date_code: Code for the time period for which these data are
+                predicted.
+            metadata: dictionary of metadata using Keys defined in superclasses
+            dlocation: file location of the array
+            gridset: parent gridset of this Matrixupdate_mod_time
+            matrix_id: Database identifier for the matrix object.
+
+        Todo:
+            Replace 3 codes with scenario id
         """
-        @param matrix: data (numpy) array for Matrix base object
-        @param matrixType: Constant from LmCommon.common.lmconstants.MatrixType
-        @param gcmCode: Code for the Global Climate Model used to create these data
-        @param altpredCode: Code for the alternate prediction (i.e. IPCC scenario 
-                 or Representative Concentration Pathways/RCPs) used to create 
-                 these data
-        @param dateCode: Code for the time period for which these data are predicted.
-        @param metadata: dictionary of metadata using Keys defined in superclasses
-        @param dlocation: file location of the array
-        @param gridset: parent gridset of this MatrixupdateModtime
-        @param matrixId: dbId  for ServiceObject
-        """
-        self.matrixType = matrixType
+        self.matrix_type = matrix_type
         self._dlocation = dlocation
-        # TODO: replace 3 codes with scenarioId
-        self.scenarioId = scenarioid
-        self.gcmCode = gcmCode
-        self.altpredCode = altpredCode
-        self.dateCode = dateCode
-        self.algorithmCode = algCode
-        self.mtxMetadata = {}
-        self.loadMtxMetadata(metadata)
+        # TODO: replace 3 codes with scenario_id
+        self.scenario_id = scenario_id
+        self.gcm_code = gcm_code
+        self.alt_pred_code = alt_pred_code
+        self.date_code = date_code
+        self.algorithm_code = alg_code
+        self.matrix_metadata = {}
+        self.load_matrix_metadata(metadata)
         self._gridset = gridset
         # parent values
-        gridsetUrl = gridsetId = None
+        gridset_url = gridset_id = None
         if gridset is not None:
-            gridsetUrl = gridset.metadataUrl
-            gridsetId = gridset.get_id()
-        Matrix.__init__(self, matrix, headers=headers)
-        ServiceObject.__init__(self, userId, matrixId, LMServiceType.MATRICES,
-                                      metadataUrl=metadataUrl,
-                                      parentMetadataUrl=gridsetUrl,
-                                      parentId=gridsetId,
-                                      mod_time=statusModTime)
-        ProcessObject.__init__(self, objId=matrixId, processType=processType,
-                                      status=status, statusModTime=statusModTime)
+            gridset_url = gridset.metadata_url
+            gridset_id = gridset.get_id()
+        lmpy.Matrix.__init__(self, matrix, headers=headers)
+        ServiceObject.__init__(
+            self, user_id, matrix_id, LMServiceType.MATRICES,
+            metadata_url=metadata_url, parent_metadata_url=gridset_url,
+            parent_id=gridset_id, mod_time=status_mod_time)
+        ProcessObject.__init__(
+            self, obj_id=matrix_id, process_type=process_type, status=status,
+            status_mod_time=status_mod_time)
 
-# ...............................................
+    # ....................................
     @classmethod
-    def initFromParts(cls, baseMtx, gridset=None,
-                            processType=None, metadataUrl=None, userId=None,
-                            status=None, statusModTime=None):
-        mtxobj = LMMatrix(None, matrixType=baseMtx.matrixType,
-                                processType=processType, metadata=baseMtx.mtxMetadata,
-                                dlocation=baseMtx.get_dlocation(),
-                                columnIndices=baseMtx.getColumnIndices(),
-                                columnIndicesFilename=baseMtx.getColumnIndicesFilename(),
-                                metadataUrl=metadataUrl, userId=userId, gridset=gridset,
-                                matrixId=baseMtx.getMatrixId(), status=baseMtx.status,
-                                statusModTime=baseMtx.statusModTime)
-        return mtxobj
-
-    # ...............................................
-    def updateStatus(self, status, metadata=None, mod_time=gmt().mjd):
+    def init_from_parts(cls, base_matrix, gridset=None, process_type=None,
+                        metadata_url=None, user_id=None, status=None,
+                        status_mod_time=None):
+        """Initialize a matrix from its parts
         """
-        @summary: Updates matrixIndex, paramMetadata, and mod_time.
-        @param metadata: Dictionary of Matrix metadata keys/values; key constants  
-                              are ServiceObject class attributes.
-        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
-        @copydoc LmServer.base.service_object.ServiceObject::updateModtime()
-        @note: Missing keyword parameters are ignored.
+        return LMMatrix(
+            None, matrix_type=base_matrix.matrix_type,
+            process_type=process_type, metadata=base_matrix.matrix_metadata,
+            dlocation=base_matrix.get_dlocation(),
+            metadata_url=metadata_url, user_id=user_id, gridset=gridset,
+            matrix_id=base_matrix.get_matrix_id(), status=base_matrix.status,
+            status_mod_time=base_matrix.status_mod_time)
+
+    # ....................................
+    def update_status(self, status, metadata=None, mod_time=gmt().mjd):
+        """Update status and metadata.
+
+        Args:
+            metadata: Dictionary of Matrix metadata keys/values; key constants
+                are ServiceObject class attributes.
+
+        Note:
+            Missing keyword parameters are ignored.
         """
         if metadata is not None:
-            self.loadMtxMetadata(metadata)
-        ProcessObject.updateStatus(self, status, mod_time)
-        ServiceObject.updateModtime(self, mod_time)
+            self.load_matrix_metadata(metadata)
+        ProcessObject.update_status(self, status, mod_time)
+        ServiceObject.update_mod_time(self, mod_time)
 
-# ...............................................
+    # ....................................
     @property
-    def gridsetName(self):
+    def gridset_name(self):
+        """Get the name of the gridset
+        """
         name = None
         if self._gridset is not None:
             name = self._gridset.name
         return name
 
-# ...............................................
+    # ....................................
     @property
-    def gridsetId(self):
+    def gridset_id(self):
+        """Get the gridset database identifier
+        """
         gid = None
         if self._gridset is not None:
             gid = self._gridset.get_id()
         return gid
 
-# ...............................................
+    # ....................................
     @property
-    def gridsetUrl(self):
+    def gridset_url(self):
+        """Get the gridset metadata url
+        """
         url = None
         if self._gridset is not None:
-            url = self._gridset.metadataUrl
+            url = self._gridset.metadata_url
         return url
 
-# ...............................................
-    def getDataUrl(self, interface=CSV_INTERFACE):
-        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.get_id(),
-                                                            interface)
-        return durl
-
-# ...............................................
-    def getRelativeDLocation(self):
+    # ....................................
+    def get_data_url(self, interface=CSV_INTERFACE):
+        """Get a data url for this matrix object
         """
-        @summary: Return the relative filepath from object attributes
-        @note: If the object does not have an ID, this returns None
-        @note: This is to be pre-pended with a relative directory name for data  
-                 used by a single workflow/Makeflow 
+        return self._earlJr.construct_lm_data_url(
+            self.service_type, self.get_id(), interface)
+
+    # ....................................
+    def get_relative_dlocation(self):
+        """Return the relative filepath from object attributes
+
+        Note:
+            - If the object does not have an ID, this returns None
+            - This is to be pre-pended with a relative directory name for data
+                used by a single workflow/Makeflow
         """
         basename = None
         self.set_dlocation()
         if self._dlocation is not None:
-            pth, basename = os.path.split(self._dlocation)
+            _, basename = os.path.split(self._dlocation)
         return basename
 
+    # ....................................
     def create_local_dlocation(self):
-        """
-        @summary: Create an absolute filepath from object attributes
-        @note: If the object does not have an ID, this returns None
-        """
-        ftype = LMFileType.getMatrixFiletype(self.matrixType)
-        if self.parentId is None:
-            raise LMError('Must have parent gridset ID for filepath')
-        dloc = self._earlJr.createFilename(ftype, gridsetId=self.parentId,
-                                                     objCode=self.get_id(),
-                                                     usr=self.getUserId())
-        return dloc
+        """Create an absolute filepath from object attributes
 
-    def get_dlocation(self):
+        Note:
+            If the object does not have an ID, this returns None
         """
-        @summary: Return the _dlocation attribute; create and set it if empty
+        ftype = LMFileType.get_matrix_filetype(self.matrix_type)
+        if self.parent_id is None:
+            raise LMError('Must have parent gridset ID for filepath')
+        return self._earlJr.create_filename(
+            ftype, gridset_id=self.parent_id, obj_code=self.get_id(),
+            usr=self.get_user_id())
+
+    # ....................................
+    def get_dlocation(self):
+        """Return the _dlocation attribute; create and set it if empty
         """
         self.set_dlocation()
         return self._dlocation
 
+    # ....................................
     def set_dlocation(self, dlocation=None):
-        """
-        @summary: Set the _dlocation attribute if it is None.  Use dlocation
-                     if provided, otherwise calculate it.
-        @note: Does NOT override existing dlocation, use clearDLocation for that
+        """Set the dlocation of the matrix.
+
+        Set the _dlocation attribute if it is None.  Use dlocation if provided,
+        otherwise calculate it.
+
+        Note:
+            Does NOT override existing dlocation, use clear_dlocation for that
         """
         if self._dlocation is None:
             if dlocation is None:
                 dlocation = self.create_local_dlocation()
             self._dlocation = dlocation
 
-    def clearDLocation(self):
+    # ....................................
+    def clear_dlocation(self):
+        """Clear the dlocation for the matrix object
+        """
         self._dlocation = None
 
-# ...............................................
-    def getGridset(self):
+    # ....................................
+    def get_gridset(self):
+        """Get the gridset that this matrix belongs to
+        """
         return self._gridset
 
-# ...............................................
-    def getShapegrid(self):
-        return self._gridset.getShapegrid()
-
-# ...............................................
-    def dumpMtxMetadata(self):
-        return super(LMMatrix, self)._dump_metadata(self.mtxMetadata)
-
-# ...............................................
-    def addMtxMetadata(self, newMetadataDict):
-        self.mtxMetadata = super(LMMatrix, self)._add_metadata(newMetadataDict,
-                                             existingMetadataDict=self.mtxMetadata)
-
-# ...............................................
-    def loadMtxMetadata(self, newMetadata):
-        self.mtxMetadata = super(LMMatrix, self)._load_metadata(newMetadata)
-
-    # .............................
-    def write(self, dlocation=None, overwrite=False):
+    # ....................................
+    def get_shapegrid(self):
+        """Get the shapegrid for the gridset that this matrix belongs to
         """
-        @summary: Writes this matrix to the file system
+        return self._gridset.get_shapegrid()
+
+    # ....................................
+    def dump_matrix_metadata(self):
+        """Dump the matrix metadata
+        """
+        return super(LMMatrix, self)._dump_metadata(self.matrix_metadata)
+
+    # ....................................
+    def add_matrix_metadata(self, new_metadata_dict):
+        """Add matrix metadata
+        """
+        self.matrix_metadata = super(LMMatrix, self)._add_metadata(
+            new_metadata_dict, existing_metadata_dict=self.matrix_metadata)
+
+    # ....................................
+    def load_matrix_metadata(self, new_metadata):
+        """Load the metadata for this matrix
+        """
+        self.matrix_metadata = super(LMMatrix, self)._load_metadata(
+            new_metadata)
+
+    # ....................................
+    def write(self, dlocation=None, overwrite=False):
+        """Writes this matrix to the file system
         """
         if dlocation is None:
             dlocation = self.get_dlocation()
         self.ready_filename(dlocation, overwrite=overwrite)
 
-        with open(dlocation, 'w') as outF:
-            self.save(outF)
+        with open(dlocation, 'w') as out_file:
+            self.save(out_file)
+
+    # ....................................
+    def set_data(self, new_data, headers=None):
+        """Set the data value for the matrix
+
+        Note:
+            This may not work as we expect, when the underlying Matrix class
+                became a direct subclass of numpy.ndarray it may have broken
+                code that relied on the .data attribute for the raw array data.
+                Modify this function as necessary and potentially restore the
+                .data attribute for this class if that is the best way to
+                proceed.
+        """
+        lmpy.Matrix.__init__(self, new_data, headers=headers)

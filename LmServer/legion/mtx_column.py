@@ -1,15 +1,14 @@
+"""Module containing MatrixColumn class
 """
-"""
-from LmCommon.common.lmconstants import LMFormat, BoomKeys
-from LmCommon.common.time import gmt
-from LmServer.base.layer2 import _LayerParameters
-from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import LMServiceType
 from lmpy import Matrix
 
+from LmCommon.common.lmconstants import LMFormat
+from LmCommon.common.time import gmt
+from LmServer.base.layer import _LayerParameters
+from LmServer.base.service_object import ProcessObject, ServiceObject
+from LmServer.common.lmconstants import LMServiceType
 
-# .............................................................................
-# .............................................................................
+
 # .............................................................................
 class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
     # BoomKeys uses these strings, prefixed by 'INTERSECT_'
@@ -23,128 +22,131 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
     INTERSECT_PARAM_VAL_UNITS = 'val_units'
     # Minimum spatial coverage for gridcell intersect computation
     INTERSECT_PARAM_MIN_PERCENT = 'min_percent'
-    # Minimum percentage of acceptable value for PAM gridcell intersect computation
+    # Minimum percentage of acceptable value for PAM gridcell intersect
+    #    computation
     INTERSECT_PARAM_MIN_PRESENCE = 'min_presence'
-    # Maximum percentage of acceptable value for PAM gridcell intersect computation
+    # Maximum percentage of acceptable value for PAM gridcell intersect
+    #    computation
     INTERSECT_PARAM_MAX_PRESENCE = 'max_presence'
 
     # Types of GRIM gridcell intersect computation
     INTERSECT_PARAM_WEIGHTED_MEAN = 'weighted_mean'
     INTERSECT_PARAM_LARGEST_CLASS = 'largest_class'
 
-# .............................................................................
-# Constructor
-# .............................................................................
-    def __init__(self, matrixIndex, matrixId, userId,
+    # ....................................
+    def __init__(self, matrix_index, matrix_id, user_id,
                      # inputs if this is connected to a layer and shapegrid
-                     layer=None, layerId=None,
-                     shapegrid=None, shapeGridId=None,
-                     intersectParams={},
-                     squid=None, ident=None,
-                     processType=None,
-                     metadata={},
-                     matrixColumnId=None,
-                     postToSolr=True,
-                     status=None, statusModTime=None):
+                 layer=None, layer_id=None, shapegrid=None, shapegrid_id=None,
+                 intersect_params=None, squid=None, ident=None,
+                 process_type=None, metadata=None, matrix_column_id=None,
+                 post_to_solr=True, status=None, status_mod_time=None):
+        """Constructor
+
+        Args:
+            matrix_index: index for column within a matrix.  For the Global
+                PAM, assembled dynamically, this will be None.
+            layer: layer input to intersect
+            shapegrid: grid input to intersect
+            intersect_params: parameters input to intersect
+            squid: species unique identifier for column
+            ident: (non-species) unique identifier for column
         """
-        @summary MatrixColumn constructor
-        @copydoc LmServer.base.layer._LayerParameters::__init__()
-        @copydoc LmServer.base.service_object.ServiceObject::__init__()
-        @copydoc LmServer.base.service_object.ProcessObject::__init__()
-        @param matrixIndex: index for column within a matrix.  For the Global 
-                 PAM, assembled dynamically, this will be None.
-        @param matrixId: 
-        @param layer: layer input to intersect
-        @param shapegrid: grid input to intersect 
-        @param intersectParams: parameters input to intersect
-        @param squid: species unique identifier for column
-        @param ident: (non-species) unique identifier for column
-        """
-        _LayerParameters.__init__(self, userId, paramId=matrixColumnId,
-                                          matrixIndex=matrixIndex, metadata=metadata,
-                                          mod_time=statusModTime)
-        ServiceObject.__init__(self, userId, matrixColumnId,
-                                      LMServiceType.MATRIX_COLUMNS, parentId=matrixId,
-                                      mod_time=statusModTime)
-        ProcessObject.__init__(self, objId=matrixColumnId, processType=processType,
-                                      status=status, statusModTime=statusModTime)
+        _LayerParameters.__init__(
+            self, user_id, param_id=matrix_column_id,
+            matrix_index=matrix_index, metadata=metadata,
+            mod_time=status_mod_time)
+        ServiceObject.__init__(
+            self, user_id, matrix_column_id, LMServiceType.MATRIX_COLUMNS,
+            parent_id=matrix_id, mod_time=status_mod_time)
+        ProcessObject.__init__(
+            self, obj_id=matrix_column_id, process_type=process_type,
+            status=status, status_mod_time=status_mod_time)
         self.layer = layer
-        self._layerId = layerId
+        self._layer_id = layer_id
         self.shapegrid = shapegrid
-        self.intersectParams = {}
-        self.loadIntersectParams(intersectParams)
+        self.intersect_params = {}
+        self.load_intersect_params(intersect_params)
         self.squid = squid
         self.ident = ident
-        self.postToSolr = postToSolr
+        self.post_to_solr = post_to_solr
 
-# ...............................................
-    def set_id(self, mtxcolId):
-        """
-        @summary: Sets the database id on the object, and sets the 
-                     dlocation of the file if it is None.
-        @param mtxcolId: The database id for the object
-        """
-        self.objId = mtxcolId
+    # ....................................
+    def set_id(self, mtx_col_id):
+        """Set the database identifier on the object
 
-# ...............................................
+        Args:
+            mtx_col_id: The database id for the object
+        """
+        self.obj_id = mtx_col_id
+
+    # ....................................
     def get_id(self):
-        """
-        @summary Returns the database id from the object table
-        @return integer database id of the object
-        """
-        return self.objId
+        """Returns the database id from the object table
 
-# ...............................................
-    def getLayerId(self):
+        Returns:
+            int - The database id of the object
+        """
+        return self.obj_id
+
+    # ....................................
+    def get_layer_id(self):
+        """Get the layer identifier for the matrix column
+        """
         if self.layer is not None:
             return self.layer.get_id()
-        elif self._layerId is not None:
-            return self._layerId
+        if self._layer_id is not None:
+            return self._layer_id
         return None
 
-# ...............................................
+    # ....................................
     @property
-    def displayName(self):
+    def display_name(self):
+        """Get the display name for the matrix column
+        """
         try:
-            dname = self.layer.displayName
-        except:
+            return self.layer.display_name
+        except AttributeError:
             try:
-                dname = self.layer.name
-            except:
-                dname = self.squid
-        return dname
+                return self.layer.name
+            except AttributeError:
+                return self.squid
+        return None
 
-# ...............................................
-    def dumpIntersectParams(self):
-        return super(MatrixColumn, self)._dump_metadata(self.intersectParams)
-
-# ...............................................
-    def loadIntersectParams(self, newIntersectParams):
-        self.intersectParams = super(MatrixColumn, self)._load_metadata(newIntersectParams)
-
-# ...............................................
-    def addIntersectParams(self, newIntersectParams):
-        self.intersectParams = super(MatrixColumn, self)._add_metadata(newIntersectParams,
-                                             existingMetadataDict=self.intersectParams)
-
-# ...............................................
-    def updateStatus(self, status, matrixIndex=None, metadata=None, mod_time=gmt().mjd):
+    # ....................................
+    def dump_intersect_params(self):
+        """Dump intersect parameters to a string
         """
-        @summary Update status, matrixIndex, metadata, mod_time attributes on the 
-                    Matrix layer. 
-        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
-        @copydoc LmServer.base.layer._LayerParameters::updateParams()
-        """
-        ProcessObject.updateStatus(self, status, mod_time)
-        _LayerParameters.updateParams(self, mod_time, matrixIndex=matrixIndex,
-                                                metadata=metadata)
+        return super(MatrixColumn, self)._dump_metadata(self.intersect_params)
 
-# ...............................................
-    def getTargetFilename(self):
+    # ....................................
+    def load_intersect_params(self, new_intersect_params):
+        """Load intersect parameters
         """
-        @summary: Return temporary filename for output.
-        @todo: Replace with consistent file construction from 
-               LmServer.common.data_locator.EarlJr.createBasename!
+        self.intersect_params = super(MatrixColumn, self)._load_metadata(
+            new_intersect_params)
+
+    # ....................................
+    def add_intersect_params(self, new_intersect_params):
+        """Add intersect parameters for the matrix column
         """
-        relFname = 'mtxcol_{}{}'.format(self.get_id(), LMFormat.MATRIX.ext)
-        return relFname
+        self.intersect_params = super(MatrixColumn, self)._add_metadata(
+            new_intersect_params, existing_metadata_dict=self.intersect_params)
+
+    # ....................................
+    def update_status(self, status, matrix_index=None, metadata=None,
+                      mod_time=gmt().mjd):
+        """Update status of matrix column and update metadata.
+        """
+        ProcessObject.update_status(self, status, mod_time)
+        _LayerParameters.update_params(
+            self, mod_time, matrix_index=matrix_index, metadata=metadata)
+
+    # ....................................
+    def get_target_filename(self):
+        """Return temporary filename for output.
+
+        Todo:
+            Replace with consistent file construction from
+                EarlJr.create_basename.
+        """
+        return 'mtxcol_{}{}'.format(self.get_id(), LMFormat.MATRIX.ext)

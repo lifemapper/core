@@ -9,7 +9,7 @@ import psycopg2
 from LmBackend.common.lmobj import LMError
 from LmServer.base.atom import Atom
 from LmServer.base.lmobj import LMAbstractObject
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import LM_SCHEMA
 
 
