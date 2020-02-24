@@ -1,15 +1,16 @@
 """Module containing base service object classes
 """
 from LmBackend.common.lmobj import LMObject
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import ID_PLACEHOLDER
 
 
 # .............................................................................
 class ServiceObject(LMObject):
-    """
+    """Class for service objects
+
     The ServiceObject class contains all of the information for subclasses
-    to be exposed in a webservice. 
+    to be exposed in a webservice.
     """
     META_TITLE = 'title'
     META_AUTHOR = 'author'
@@ -18,181 +19,196 @@ class ServiceObject(LMObject):
     META_CITATION = 'citation'
     META_PARAMS = 'parameters'
 
-# .............................................................................
-# Constructor
-# .............................................................................
-    def __init__(self, userId, dbId, serviceType, metadataUrl=None,
-                     parentMetadataUrl=None, parentId=None, mod_time=None):
-        """
-        @summary Constructor for the abstract ServiceObject class
-        @param userId: id for the owner of these data
-        @param dbId: database id of the object 
-        @param serviceType: constant from LmServer.common.lmconstants.LMServiceType
-        @param metadataUrl: URL for retrieving the metadata
-        @param parentMetadataUrl: URL for retrieving the metadata of a
-                                            parent container object
-        @param parentId: Id of container, if any, associated with one instance of 
-                              this parameterized object
-        @param mod_time: Last modification Time/Date, in MJD format
+    # ....................................
+    def __init__(self, user_id, db_id, service_type, metadata_url=None,
+                 parent_metadata_url=None, parent_id=None, mod_time=None):
+        """Constructor for the abstract ServiceObject class
+
+        Args:
+            user_id: id for the owner of these data
+            db_id: database id of the object
+            service_type: constant from LMServiceType
+            metadata_url: URL for retrieving the metadata
+            parent_metadata_url: URL for retrieving the metadata of a parent
+                container object
+            parent_id: Id of container, if any, associated with one instance of
+                this parameterized object
+            mod_time: Last modification Time/Date, in MJD format
         """
         LMObject.__init__(self)
-        self._earlJr = EarlJr()
+        self._earl_jr = EarlJr()
 
-        self._userId = userId
-        self._dbId = dbId
-        self.serviceType = serviceType
-        self._metadataUrl = metadataUrl
+        self._user_id = user_id
+        self._db_id = db_id
+        self.service_type = service_type
+        self._metadata_url = metadata_url
         # Moved from ProcessObject
-        self.parentId = parentId
-        self._parentMetadataUrl = parentMetadataUrl
+        self.parent_id = parent_id
+        self._parent_metadata_url = parent_metadata_url
         self.mod_time = mod_time
-        if serviceType is None:
-            raise Exception('Object %s does not have serviceType' % str(type(self)))
+        if service_type is None:
+            raise Exception(
+                'Object {} does not have service_type'.format(type(self)))
 
-# .............................................................................
-# Public methods
-# .............................................................................
+    # ....................................
     def get_id(self):
-        """
-        @summary Returns the database id from the object table
-        @return integer database id of the object
-        """
-        return self._dbId
+        """Returns the database id from the object table
 
-    def set_id(self, dbid):
+        Returns:
+            int - Database id of the object
         """
-        @summary: Sets the database id on the object
-        @param dbid: The database id for the object
-        """
-        self._dbId = dbid
+        return self._db_id
 
-# ...............................................
-    def getUserId(self):
-        """
-        @summary Gets the User id
-        @return The User id
-        """
-        return self._userId
+    # ....................................
+    def set_id(self, db_id):
+        """Sets the database id on the object
 
-    def setUserId(self, usr):
+        Args:
+            db_id: The database id for the object
         """
-        @summary: Sets the user id on the object
-        @param usr: The user id for the object
-        """
-        self._userId = usr
+        self._db_id = db_id
 
-# .............................................................................
-# Private methods
-# .............................................................................
+    # ....................................
+    def get_user_id(self):
+        """Gets the User id
+        """
+        return self._user_id
+
+    # ....................................
+    def set_user_id(self, usr):
+        """Sets the user id on the object
+        """
+        self._user_id = usr
+
+    # ....................................
     @property
-    def metadataUrl(self):
+    def metadata_url(self):
+        """Return the metadata url for the object.
+
+        Return the SGUID (Somewhat Globally Unique IDentifier), aka
+        metadata_url, for this object
+
+        Returns:
+            URL string representing a webservice request for this object
         """
-        @summary Return the SGUID (Somewhat Globally Unique IDentifier), 
-                    aka metadataUrl, for this object
-        @return URL string representing a webservice request for this object
-        """
-        if self._metadataUrl is None:
+        if self._metadata_url is None:
             try:
-                self._metadataUrl = self.constructMetadataUrl()
+                self._metadata_url = self.construct_metadata_url()
             except Exception as e:
                 print(str(e))
                 pass
-        return self._metadataUrl
+        return self._metadata_url
 
-    def setParentMetadataUrl(self, url):
-        self._parentMetadataUrl = url
+    # ....................................
+    def set_parent_metadata_url(self, url):
+        """Set the parent metdata url
+        """
+        self._parent_metadata_url = url
 
+    # ....................................
     @property
-    def parentMetadataUrl(self):
-        return self._parentMetadataUrl
+    def parent_metadata_url(self):
+        """Get the metadata url of the parent object
+        """
+        return self._parent_metadata_url
 
-# ...............................................
-    def resetMetadataUrl(self):
-        """
-        @summary Gets the REST service URL for this object
-        @return URL string representing a webservice request for metadata of this object
-        """
-        self._metadataUrl = self.constructMetadataUrl()
-        return self._metadataUrl
+    # ....................................
+    def reset_metadata_url(self):
+        """Gets the REST service URL for this object
 
-# ...............................................
-    def constructMetadataUrl(self):
+        Returns:
+            URL string representing a webservice request for metadata of this
+                object
         """
-        @summary Gets the REST service URL for this object
-        @return URL string representing a webservice request for metadata of this object
-        """
-        objId = self.get_id()
-        if objId is None:
-            objId = ID_PLACEHOLDER
-        murl = self._earlJr.constructLMMetadataUrl(self.serviceType,
-                                    objId, parentMetadataUrl=self._parentMetadataUrl)
-        return murl
+        self._metadata_url = self.construct_metadata_url()
+        return self._metadata_url
 
-# ...............................................
-    def getURL(self, format_=None):
+    # ....................................
+    def construct_metadata_url(self):
+        """Gets the REST service URL for this object
+
+        Returns:
+            str - URL string representing a webservice request for metadata of
+                this object
         """
-        @summary Return a GET query for the Lifemapper WCS GetCoverage request
-        @param format_: optional string indicating the URL response format desired;
-                            Supported formats are GDAL Raster Format Codes, available 
-                            at http://www.gdal.org/formats_list.html, and driver values 
-                            in LmServer.common.lmconstants LMFormat GDAL formats.
+        obj_id = self.get_id()
+        if obj_id is None:
+            obj_id = ID_PLACEHOLDER
+        return self._earl_jr.construct_lm_metadata_url(
+            self.service_type, obj_id,
+            parent_metadata_url=self._parent_metadata_url)
+
+    # ....................................
+    def get_url(self, format_=None):
+        """Return a GET query for the Lifemapper WCS GetCoverage request
+
+        Args:
+            format_: optional string indicating the URL response format
+                desired; Supported formats are GDAL Raster Format Codes,
+                available at http://www.gdal.org/formats_list.html, and driver
+                values in LmServer.common.lmconstants LMFormat GDAL formats.
         """
-        dataurl = self.metadataUrl
+        data_url = self.metadata_url
         if format_ is not None:
-            dataurl = '%s/%s' % (self.metadataUrl, format_)
-        return dataurl
+            data_url = '{}/{}'.format(self.metadata_url, format_)
+        return data_url
 
-    # ...............................................
-    def updatemod_time(self, mod_time):
+    # ....................................
+    def update_mod_time(self, mod_time):
+        """Update the modification time of the object
+        """
         self.mod_time = mod_time
 
-# .............................................................................
-# Read-0nly Properties
-# .............................................................................
-
+    # ....................................
     # The database id of the object
     id = property(get_id)
 
     # The user id of the object
-    user = property(getUserId)
+    user = property(get_user_id)
 
 
 # .............................................................................
 class ProcessObject(LMObject):
+    """Class to hold information about a parameterized object for processing.
     """
-    Class to hold information about a parameterized object for processing. 
-    """
+    # ....................................
+    def __init__(self, obj_id=None, process_type=None, status=None,
+                 status_mod_time=None):
+        """Constructor
 
-# .............................................................................
-# Constructor
-# .............................................................................
-    def __init__(self, objId=None, processType=None,
-                     status=None, statusmod_time=None):
+        Args:
+            obj_id: Unique identifier for this parameterized object
+            process_type: Integer code LmCommon.common.lmconstants.ProcessType
+            status: status of processing
+            status_mod_time: last status modification time in MJD format
+
+        Note:
+            The object with obj_id can be instantiated for each container, all
+                use the same base object, but will be subject to different
+                processes (for example PALayers intersected for every bucket)
         """
-        @param objId: Unique identifier for this parameterized object
-        @param processType: Integer code LmCommon.common.lmconstants.ProcessType
-        @param status: status of processing
-        @param statusmod_time: last status modification time in MJD format 
-        @note: The object with objId can be instantiated for each container, 
-                 all use the same base object, but will be subject to different 
-                 processes (for example PALayers intersected for every bucket)
-        """
-        self.objId = objId
-        self.processType = processType
+        self.obj_id = obj_id
+        self.process_type = process_type
         self._status = status
-        self._statusmod_time = statusmod_time
+        self._status_mod_time = status_mod_time
 
-    # ...............................................
+    # ....................................
     @property
     def status(self):
+        """Get the status of this object
+        """
         return self._status
 
+    # ....................................
     @property
-    def statusmod_time(self):
-        return self._statusmod_time
+    def status_mod_time(self):
+        """Return the status modification time for the object
+        """
+        return self._status_mod_time
 
-    # ...............................................
-    def updateStatus(self, status, mod_time):
+    # ....................................
+    def update_status(self, status, mod_time):
+        """Update the status of this object
+        """
         self._status = status
-        self._statusmod_time = mod_time
-
+        self._status_mod_time = mod_time
