@@ -12,8 +12,9 @@ Note:
 """
 import argparse
 
-from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
 import numpy as np
+
+from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
 
 # Local constants for this module
 LEFT_SQUIDS_KEY = 'left_squids'
