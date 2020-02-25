@@ -152,7 +152,7 @@ class LMSpatialObject(LMObject):
             self._mapunits = DEFAULT_MAPUNITS
         return self._mapunits
 
-    mapUnits = property(_get_units, _set_units)
+    map_units = property(_get_units, _set_units)
 
 # ..............................................................................
     def get_dimensions_by_bbox(self, bbox=None, limitWidth=1000):

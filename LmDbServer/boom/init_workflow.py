@@ -784,7 +784,7 @@ class BOOMFiller(LMObject):
                     dloc = newshp.get_dlocation()
                     newshp.buildShape(overwrite=True)
                     validData, _ = ShapeGrid.testVector(dloc)
-                    self._fixPermissions(files=newshp.getShapefiles())
+                    self._fixPermissions(files=newshp.get_shapefiles())
                 except Exception as e:
                     self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
                 if not validData:

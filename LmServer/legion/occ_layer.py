@@ -5,8 +5,8 @@ import os
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.time import gmt
-from LmServer.base.layer2 import Vector, _LayerParameters
-from LmServer.base.serviceobject2 import ProcessObject
+from LmServer.base.layer import Vector, _LayerParameters
+from LmServer.base.service_object import ProcessObject
 from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType,
                                          LMServiceType, OccurrenceFieldNames)
 from osgeo import ogr
@@ -37,7 +37,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
                  information about the name associated with these data
         @param rawDLocation: URL or file location of raw data to be processed
         """
-        _LayerParameters.__init__(self, userId, paramId=occurrenceSetId,
+        _LayerParameters.__init__(self, userId, param_id=occurrenceSetId,
                                           matrixIndex=-1, metadata=metadata,
                                           mod_time=mod_time)
         ProcessObject.__init__(
@@ -78,7 +78,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         """
         @note: Overrides ProcessObject.updateStatus
         """
-        ProcessObject.updateStatus(self, status, mod_time)
+        ProcessObject.update_status(self, status, mod_time)
         if queryCount is not None:
             self.queryCount = queryCount
             self.paramModTime = self.statusModTime
@@ -97,7 +97,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                  mapunits=None, resolution=None, bbox=None,
                  occurrenceSetId=None, serviceType=LMServiceType.OCCURRENCES,
                  metadataUrl=None, parentMetadataUrl=None, featureCount=0,
-                 featureAttributes={}, features={}, fidAttribute=None,
+                 feature_attributes={}, features={}, fidAttribute=None,
                  occMetadata={}, sciName=None, objId=None, processType=None,
                  status=None, statusModTime=None):
         """
@@ -122,7 +122,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             svcObjId=occurrenceSetId, serviceType=serviceType,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
             mod_time=statusModTime, featureCount=featureCount,
-            featureAttributes=featureAttributes, features=features,
+            feature_attributes=feature_attributes, features=features,
             fidAttribute=fidAttribute)
         self.rawMetaDLocation = rawMetaDLocation
         self.setId(occurrenceSetId)
@@ -134,13 +134,13 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # ...............................................
     @staticmethod
     def getUserPointFeatureAttributes():
-        featureAttributes = {
-            0 : (Vector._localIdFieldName, Vector._localIdFieldType),
+        feature_attributes = {
+            0 : (Vector._local_id_field_name, Vector._local_id_field_type),
             1 : (OccurrenceFieldNames.LONGITUDE[0], ogr.OFTReal),
             2 : (OccurrenceFieldNames.LATITUDE[0], ogr.OFTReal),
-            3 : (Vector._geomFieldName, Vector._geomFieldType)
+            3 : (Vector._geom_field_name, Vector._geom_field_type)
             }
-        return featureAttributes
+        return feature_attributes
 
 # ...............................................
     @staticmethod
@@ -226,16 +226,16 @@ class OccurrenceLayer(OccurrenceType, Vector):
         super(OccurrenceLayer, self).setId(occid)
         if occid is not None:
             if self.name is None:
-                self.name = self._earlJr.createLayername(occsetId=self.get_id())
+                self.name = self._earl_jr.createLayername(occsetId=self.get_id())
             self.set_dlocation()
             self.resetMetadataUrl()
-            self.setLocalMapFilename()
+            self.set_local_map_filename()
             self._setMapPrefix()
 
 # ...............................................
     def getAbsolutePath(self):
         self.set_dlocation()
-        return Vector.getAbsolutePath(self)
+        return Vector.get_absolute_path(self)
 
 # ...............................................
     @property
@@ -264,7 +264,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             else:
                 ftype = LMFileType.OCCURRENCE_FILE
             occid = self.get_id()
-            dloc = self._earlJr.createFilename(
+            dloc = self._earl_jr.createFilename(
                 ftype, occsetId=occid, objCode=occid, usr=self._userId)
         return dloc
 
@@ -281,7 +281,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         return self._dlocation
 
 # ...............................................
-    def isValidDataset(self, largeFile=False):
+    def is_valid_dataset(self, largeFile=False):
         """
         @summary: Check to see if the dataset at self.dlocations is a valid 
             occurrenceset readable by OGR.  If dlocation is None, fill it in
@@ -289,7 +289,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         @return: True if dlocation is a valid occurrenceset; False if not
         """
         dlocation = self.get_dlocation(largeFile=largeFile)
-        valid = Vector.isValidDataset(self, dlocation=dlocation)
+        valid = Vector.is_valid_dataset(self, dlocation=dlocation)
         return valid
 
 # ...............................................
@@ -306,10 +306,10 @@ class OccurrenceLayer(OccurrenceType, Vector):
         occid = self.get_id()
         if occid is None:
             occid = ID_PLACEHOLDER
-        lyrname = self._earlJr.createBasename(
+        lyrname = self._earl_jr.createBasename(
             LMFileType.OCCURRENCE_FILE, objCode=occid, usr=self._userId,
             epsg=self.epsgcode)
-        mapprefix = self._earlJr.constructMapPrefixNew(
+        mapprefix = self._earl_jr.constructMapPrefixNew(
             urlprefix=self.metadataUrl, ftype=LMFileType.SDM_MAP,
             mapname=self.mapName, lyrname=lyrname, usr=self._userId)
         return mapprefix
@@ -327,7 +327,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
     def mapLayername(self):
         lyrname = None
         if self._dbId is not None:
-            lyrname = self._earlJr.createLayername(occsetId=self._dbId)
+            lyrname = self._earl_jr.createLayername(occsetId=self._dbId)
         return lyrname
 
 # ...............................................
@@ -336,50 +336,50 @@ class OccurrenceLayer(OccurrenceType, Vector):
         @summary: Find mapfile containing this layer.  
         """
         occid = self.get_id()
-        mapfilename = self._earlJr.createFilename(
+        mapfilename = self._earl_jr.createFilename(
             LMFileType.SDM_MAP, occsetId=occid, objCode=occid, usr=self._userId)
         return mapfilename
 
 # ...............................................
-    def setLocalMapFilename(self, mapfname=None):
+    def set_local_map_filename(self, mapfname=None):
         """
-        @note: Overrides existing _mapFilename
+        @note: Overrides existing _map_filename
         @summary: Find mapfile containing layers for this model's occurrenceSet.
         @param mapfname: Previously constructed mapfilename
         """
-        if self._mapFilename is None:
+        if self._map_filename is None:
             mapfname = self.createLocalMapFilename()
-        self._mapFilename = mapfname
+        self._map_filename = mapfname
 
 # ...............................................
     @property
     def mapFilename(self):
-        self.setLocalMapFilename()
-        return self._mapFilename
+        self.set_local_map_filename()
+        return self._map_filename
 
 # ...............................................
     @property
     def mapName(self):
-        if self._mapFilename is None:
-            self.setLocalMapFilename()
-        pth, fname = os.path.split(self._mapFilename)
-        mapname, ext = os.path.splitext(fname)
+        if self._map_filename is None:
+            self.set_local_map_filename()
+        _, fname = os.path.split(self._map_filename)
+        mapname, _ = os.path.splitext(fname)
         return mapname
 
 # ...............................................
     @property
     def layerName(self):
-        return self._earlJr.createLayername(occsetId=self.get_id())
+        return self._earl_jr.createLayername(occsetId=self.get_id())
 
 # ...............................................
     def clearLocalMapfile(self):
         """
         @summary: Delete the mapfile containing this layer
         """
-        if self._mapFilename is None:
-            self.setLocalMapFilename()
+        if self._map_filename is None:
+            self.set_local_map_filename()
         self.deleteLocalMapfile()
-        self._mapFilename = None
+        self._map_filename = None
 
 # ...............................................
     def clearOutputFiles(self):
@@ -391,7 +391,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         """
         @summary: Delete the mapfile containing this layer
         """
-        success, msg = self.deleteFile(self._mapFilename, deleteDir=True)
+        success, _ = self.deleteFile(self._map_filename, deleteDir=True)
 # .............................................................................
 # Public methods
 # .............................................................................
@@ -429,7 +429,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # ..............................................................................
     def getWkt(self):
         wkt = None
-        if self._features and self._featureAttributes:
+        if self._features and self._feature_attributes:
             pttxtlst = []
             self._setGeometryIndex()
             for pt in list(self._features.values()):
@@ -451,4 +451,4 @@ class OccurrenceLayer(OccurrenceType, Vector):
         self.clearFeatures()
         if dlocation is None:
             dlocation = self.get_dlocation(largeFile=largeFile)
-        Vector.readData(self, dlocation=dlocation, doReadData=True)
+        Vector.read_data(self, dlocation=dlocation, doReadData=True)

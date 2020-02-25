@@ -2,14 +2,13 @@
 """
 import os
 import subprocess
-from types import StringType
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (LMFormat, MatrixType)
-from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.service_object import ServiceObject
 from LmServer.common.lmconstants import (ID_PLACEHOLDER, LMFileType,
                                                       LMServiceType)
-from LmServer.legion.lmmatrix import LMMatrix
+from LmServer.legion.lm_matrix import LMMatrix
 from LmServer.legion.tree import Tree
 from osgeo import ogr
 
@@ -56,17 +55,12 @@ class Gridset(ServiceObject):  # LMMap
             elif epsgcode != shapeGrid.epsgcode:
                 raise LMError('Gridset EPSG {} does not match Shapegrid EPSG {}'
                                   .format(self._epsg, shapeGrid.epsgcode))
-            bbox = shapeGrid.bbox
-            mapunits = shapeGrid.mapUnits
 
         ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS,
                                       metadataUrl=metadataUrl, mod_time=mod_time)
-        title = 'Matrix map for Gridset {}'.format(name)
-        # LMMap.__init__(self, name, title, self._mapPrefix,
-        #                    epsgcode, bbox, mapunits, mapType=LMFileType.OTHER_MAP)
         # TODO: Aimee, do you want to move this somewhere else?
         self._dlocation = None
-        self._mapFilename = None
+        self._map_filename = None
         self._setMapPrefix()
         self.name = name
         self.grdMetadata = {}
@@ -78,7 +72,7 @@ class Gridset(ServiceObject):  # LMMap
             self.set_dlocation(dlocation=dlocation)
         self._setEPSG(epsgcode)
         self._matrices = []
-        self.setMatrices(matrices, doRead=False)
+        self.setMatrices(matrices, do_read=False)
         self._tree = tree
 
 # ...............................................
@@ -115,17 +109,17 @@ class Gridset(ServiceObject):  # LMMap
         return self._tree
 
 # ...............................................
-    def setLocalMapFilename(self, mapfname=None):
+    def set_local_map_filename(self, mapfname=None):
         """
-        @note: Overrides existing _mapFilename
+        @note: Overrides existing _map_filename
         @summary: Set absolute mapfilename containing all computed layers for this 
                      Gridset. 
         """
         if mapfname is None:
-            mapfname = self._earlJr.createFilename(LMFileType.RAD_MAP,
+            mapfname = self._earl_jr.createFilename(LMFileType.RAD_MAP,
                                                             gridsetId=self.get_id(),
                                                             usr=self._userId)
-        self._mapFilename = mapfname
+        self._map_filename = mapfname
 
 # ...............................................
     def clearLocalMapfile(self):
@@ -133,8 +127,8 @@ class Gridset(ServiceObject):  # LMMap
         @summary: Delete the mapfile containing this layer
         """
         if self.mapfilename is None:
-            self.setLocalMapFilename()
-        success, msg = self.deleteFile(self.mapfilename)
+            self.set_local_map_filename()
+        success, _ = self.deleteFile(self.mapfilename)
 
 # ...............................................
     def _createMapPrefix(self):
@@ -149,7 +143,7 @@ class Gridset(ServiceObject):  # LMMap
         grdid = self.get_id()
         if grdid is None:
             grdid = ID_PLACEHOLDER
-        mapprefix = self._earlJr.constructMapPrefixNew(urlprefix=self.metadataUrl,
+        mapprefix = self._earl_jr.constructMapPrefixNew(urlprefix=self.metadataUrl,
                                         ftype=LMFileType.RAD_MAP, mapname=self.mapName,
                                         usr=self._userId)
         return mapprefix
@@ -165,17 +159,17 @@ class Gridset(ServiceObject):  # LMMap
 # ...............................................
     @property
     def mapFilename(self):
-        if self._mapFilename is None:
-            self.setLocalMapFilename()
-        return self._mapFilename
+        if self._map_filename is None:
+            self.set_local_map_filename()
+        return self._map_filename
 
 # ...............................................
     @property
     def mapName(self):
         mapname = None
-        if self._mapFilename is not None:
-            pth, mapfname = os.path.split(self._mapFilename)
-            mapname, ext = os.path.splitext(mapfname)
+        if self._map_filename is not None:
+            _, mapfname = os.path.split(self._map_filename)
+            mapname, _ = os.path.splitext(mapfname)
         return mapname
 
 # .............................................................................
@@ -195,7 +189,7 @@ class Gridset(ServiceObject):  # LMMap
         Overrides ServiceObject.setId.  
         @note: ExperimentId should always be set before this is called.
         """
-        ServiceObject.setId(self, expid)
+        ServiceObject.set_id(self, expid)
         self.setPath()
 
 # ...............................................
@@ -204,7 +198,7 @@ class Gridset(ServiceObject):  # LMMap
             if (self._userId is not None and
                  self.get_id() and
                  self._getEPSG() is not None):
-                self._path = self._earlJr.createDataPath(self._userId,
+                self._path = self._earl_jr.createDataPath(self._userId,
                                          LMFileType.UNSPECIFIED_RAD,
                                          epsg=self._epsg, gridsetId=self.get_id())
             else:
@@ -222,7 +216,7 @@ class Gridset(ServiceObject):  # LMMap
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
         """
-        dloc = self._earlJr.createFilename(LMFileType.GRIDSET_PACKAGE,
+        dloc = self._earl_jr.createFilename(LMFileType.GRIDSET_PACKAGE,
                                                       objCode=self.get_id(),
                                                       gridsetId=self.get_id(),
                                                       usr=self.getUserId())
@@ -260,7 +254,7 @@ class Gridset(ServiceObject):  # LMMap
                             'gs_{}_package{}'.format(self.get_id(), LMFormat.ZIP.ext))
 
 # ...............................................
-    def setMatrices(self, matrices, doRead=False):
+    def setMatrices(self, matrices, do_read=False):
         """
         @summary Fill a Matrix object from Matrix or existing file
         """
@@ -269,10 +263,10 @@ class Gridset(ServiceObject):  # LMMap
                 try:
                     self.addMatrix(mtx)
                 except Exception as e:
-                    raise LMError('Failed to add matrix {}'.format(mtx))
+                    raise LMError('Failed to add matrix {}, ({})'.format(mtx, e))
 
 # ...............................................
-    def addTree(self, tree, doRead=False):
+    def addTree(self, tree, do_read=False):
         """
         @summary Fill the Tree object, updating the tree dlocation
         """
@@ -285,16 +279,16 @@ class Gridset(ServiceObject):  # LMMap
             self._tree = tree
 
 # ...............................................
-    def addMatrix(self, mtxFileOrObj, doRead=False):
+    def addMatrix(self, mtxFileOrObj, do_read=False):
         """
         @summary Fill a Matrix object from Matrix or existing file
         """
         mtx = None
         if mtxFileOrObj is not None:
             usr = self.getUserId()
-            if isinstance(mtxFileOrObj, StringType) and os.path.exists(mtxFileOrObj):
+            if isinstance(mtxFileOrObj, str) and os.path.exists(mtxFileOrObj):
                 mtx = LMMatrix(dlocation=mtxFileOrObj, userId=usr)
-                if doRead:
+                if do_read:
                     mtx.readData()
             elif isinstance(mtxFileOrObj, LMMatrix):
                 mtx = mtxFileOrObj

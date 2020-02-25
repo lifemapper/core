@@ -22,7 +22,7 @@
              02110-1301, USA.
 """
 from LmBackend.common.lmobj import LMError
-from LmServer.base.layer2 import Raster, _LayerParameters
+from LmServer.base.layer import Raster, _LayerParameters
 from LmServer.common.lmconstants import LMServiceType, LMFileType
 
 
@@ -43,7 +43,7 @@ class EnvType(_LayerParameters):
                  these data
         @param dateCode: Code for the time period for which these data are predicted.
         """
-        _LayerParameters.__init__(self, userId, paramId=envTypeId,
+        _LayerParameters.__init__(self, userId, param_id=envTypeId,
                                           metadata=metadata, mod_time=mod_time)
         self.envCode = envCode
         self.gcmCode = gcmCode
@@ -131,7 +131,7 @@ class EnvLayer(EnvType, Raster):
         """
         if scencode is None:
             scencode = self._scenCode
-        mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.SCENARIO_MAP,
+        mapprefix = self._earl_jr.constructMapPrefixNew(ftype=LMFileType.SCENARIO_MAP,
                                                                       objCode=scencode,
                                                                       lyrname=self.name,
                                                                       usr=self._userId,
@@ -169,15 +169,15 @@ class EnvLayer(EnvType, Raster):
         """
         if scencode is None:
             scencode = self._scenCode
-        mapfname = self._earlJr.createFilename(LMFileType.SCENARIO_MAP,
+        mapfname = self._earl_jr.createFilename(LMFileType.SCENARIO_MAP,
                                                             objCode=scencode,
                                                             usr=self._userId, epsg=self._epsg)
         return mapfname
 
 # ...............................................
-    def setLocalMapFilename(self, mapfname=None, scencode=None):
+    def set_local_map_filename(self, mapfname=None, scencode=None):
         """
-        @note: Overrides existing _mapFilename
+        @note: Overrides existing _map_filename
         @summary: Find mapfile containing layers for this model's occurrenceSet.
         @param mapfname: Previously constructed mapfilename
         @param scencode: override scenario associated with this layer
@@ -186,7 +186,7 @@ class EnvLayer(EnvType, Raster):
             scencode = self._scenCode
         if mapfname is None:
             mapfname = self.createLocalMapFilename(scencode=scencode)
-        self._mapFilename = mapfname
+        self._map_filename = mapfname
 
 # ...............................................
     def setLayerParam(self, envType):

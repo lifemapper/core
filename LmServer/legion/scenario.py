@@ -24,9 +24,9 @@
 from LmBackend.common.lmobj import LMError
 from LmServer.base.layerset import MapLayerSet
 from LmServer.base.lmobj import LMSpatialObject
-from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.service_object import ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType
-from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.env_layer import EnvLayer
 
 
 # .........................................................................
@@ -72,7 +72,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
     def resetBBox(self):
         bboxList = [scen.bbox for scen in list(self._scenarios.values())]
         minBbox = self.intersectBoundingBoxes(bboxList)
-        self._setBBox(minBbox)
+        self._set_bbox(minBbox)
 
 # .............................................................................
     def addScenario(self, scen):
@@ -197,15 +197,15 @@ class Scenario(MapLayerSet):
         self._setLayers(layers)
         self._setRes(res)
         self.setMapPrefix()
-        self.setLocalMapFilename()
+        self.set_local_map_filename()
 
     # ...............................................
-    def setId(self, scenid):
+    def set_id(self, scenid):
         """
         @summary: Sets the database id on the object
         @param scenid: The database id for the object
         """
-        MapLayerSet.setId(self, scenid)
+        MapLayerSet.set_id(self, scenid)
 
 # ...............................................
     def dumpScenMetadata(self):
@@ -235,7 +235,7 @@ class Scenario(MapLayerSet):
         if lyrs:
             for lyr in lyrs:
                 self.addLayer(lyr)
-            self._bbox = MapLayerSet._getIntersectBounds(self)
+            self._bbox = MapLayerSet.intersect_bboxes(self)
 
 #     # ...............................................
 #     def _setUnits(self, units):
@@ -288,13 +288,13 @@ class Scenario(MapLayerSet):
             if lyr.get_id() is None or self.getLayer(lyr.metadataUrl) is None:
                 if isinstance(lyr, EnvLayer):
                     self._layers.append(lyr)
-                    self._bbox = MapLayerSet._getIntersectBounds(self)
+                    self._bbox = MapLayerSet.intersect_bboxes(self)
                     # Set mapPrefix only if does not exist. Could be in multiple
                     # mapfiles, but all should use same url/mapPrefix.
                     if lyr.mapPrefix is None:
                         lyr._setMapPrefix(scencode=self.code)
                     mapfname = self.createLocalMapFilename()
-                    lyr.setLocalMapFilename(mapfname=mapfname)
+                    lyr.set_local_map_filename(mapfname=mapfname)
                 else:
                     raise LMError(['Attempt to add non-EnvLayer'])
 
@@ -309,7 +309,7 @@ class Scenario(MapLayerSet):
             if not isinstance(lyr, EnvLayer):
                 raise LMError('Incompatible Layer type {}'.format(type(lyr)))
         self._layers = lyrs
-        self._bbox = MapLayerSet._getIntersectBounds(self)
+        self._bbox = MapLayerSet.intersect_bboxes(self)
 
 # ...............................................
     def createMapPrefix(self, lyrname=None):
@@ -317,7 +317,7 @@ class Scenario(MapLayerSet):
         @summary Gets the OGC service URL prefix for this object
         @return URL string representing a webservice request for maps of this object
         """
-        mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.SCENARIO_MAP,
+        mapprefix = self._earl_jr.constructMapPrefixNew(ftype=LMFileType.SCENARIO_MAP,
                                                         objCode=self.code, lyrname=lyrname,
                                                         usr=self._userId, epsg=self._epsg)
         return mapprefix
@@ -336,7 +336,7 @@ class Scenario(MapLayerSet):
         """
         @summary: Find mapfile containing this layer.  
         """
-        mapfname = self._earlJr.createFilename(self._mapType,
+        mapfname = self._earl_jr.createFilename(self._mapType,
                                                             objCode=self.code,
                                                             usr=self._userId,
                                                             epsg=self._epsg)

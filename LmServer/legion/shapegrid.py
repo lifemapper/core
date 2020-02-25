@@ -27,7 +27,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
                  size=None, lyrId=None, verify=None, dlocation=None,
                  metadata={}, resolution=None, metadataUrl=None,
                  parentMetadataUrl=None, mod_time=None, featureCount=0,
-                 featureAttributes={}, features={}, fidAttribute=None,
+                 feature_attributes={}, features={}, fidAttribute=None,
                  status=None, statusModTime=None):
         """
         @copydoc LmServer.base.service_object.ProcessObject::__init__()
@@ -62,7 +62,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             svcObjId=lyrId, serviceType=LMServiceType.SHAPEGRIDS,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
             mod_time=mod_time, featureCount=featureCount,
-            featureAttributes=featureAttributes, features=features,
+            feature_attributes=feature_attributes, features=features,
             fidAttribute=fidAttribute)
         ProcessObject.__init__(
             self, objId=lyrId, processType=ProcessType.RAD_BUILDGRID,
@@ -80,7 +80,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
                       siteX='centerX', siteY='centerY', size=None,
                       siteIndicesFilename=None, status=None,
                       statusModTime=None):
-        shpGrid = ShapeGrid(
+        shpGrid = Shapegrid(
             vector.name, vector.getUserId(), vector.epsgcode, cellsides,
             cellsize, vector.mapUnits, vector.bbox, siteId=siteId, siteX=siteX,
             siteY=siteY, size=size, lyrId=vector.getLayerId(),
@@ -89,7 +89,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             metadataUrl=vector.metadataUrl,
             parentMetadataUrl=vector.parentMetadataUrl, mod_time=vector.mod_time,
             featureCount=vector.featureCount,
-            featureAttributes=vector.featureAttributes,
+            feature_attributes=vector.feature_attributes,
             features=vector.features, fidAttribute=vector.fidAttribute,
             status=status, statusModTime=statusModTime)
         return shpGrid
@@ -157,7 +157,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         """
         @summary: Calculates and returns the local _dlocation.
         """
-        dloc = self._earlJr.createFilename(
+        dloc = self._earl_jr.createFilename(
             LMFileType.SHAPEGRID, lyrname=self.name, usr=self._userId,
             epsg=self._epsg)
         return dloc

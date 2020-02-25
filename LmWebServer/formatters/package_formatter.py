@@ -439,7 +439,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if include_csv and os.path.exists(mtx.get_dlocation()):
                     mtx_obj = Matrix.load_flo(mtx.get_dlocation())
                     csv_mtx_str = StringIO()
-                    mtx_obj.writeCSV(csv_mtx_str)
+                    mtx_obj.write_csv(csv_mtx_str)
                     csv_mtx_str.seek(0)
                     zip_f.writestr(csv_mtx_fn, csv_mtx_str.getvalue())
                     csv_mtx_str = None
@@ -581,7 +581,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
             elif r_path.endswith('mcpaMatrix.js'):
                 if mcpa_mtx is not None:
                     mtx_str = StringIO()
-                    mcpa_mtx.writeCSV(mtx_str)
+                    mcpa_mtx.write_csv(mtx_str)
                     mtx_str.seek(0)
                     temp_filler = TemplateFiller(mcpa_csv=mtx_str.getvalue())
                     mtx_str = None

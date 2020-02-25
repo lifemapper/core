@@ -101,7 +101,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
             # Write shapefile
             my_shp.buildShape()
-            my_shp.writeShapefile(my_shp.get_dlocation())
+            my_shp.write_shapefile(my_shp.get_dlocation())
 
         # Else, if the bounding box is different, we need to spatially subset
         elif bbox != orig_shp.bbox:
@@ -123,10 +123,10 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         else:
             method = SubsetMethod.COLUMN
 
-            row_headers = getRowHeaders(orig_shp.get_dlocation())
+            row_headers = get_row_headers(orig_shp.get_dlocation())
 
             # Copy original shapegrid to new location
-            orig_shp.writeShapefile(my_shp.get_dlocation())
+            orig_shp.write_shapefile(my_shp.get_dlocation())
 
     else:
         # We can use the original shapegrid
@@ -339,7 +339,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         # TODO: Make this asynchronous
         # Add shapegrid to workflow
         my_shp.buildShape()
-        my_shp.writeShapefile(my_shp.get_dlocation())
+        my_shp.write_shapefile(my_shp.get_dlocation())
         my_shp.updateStatus(JobStatus.COMPLETE)
         scribe.updateObject(my_shp)
 

@@ -6,9 +6,9 @@ from random import shuffle
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (
-    DEFAULT_EPSG, DWCNames, GBIF, JobStatus, LM_WKT_FIELD, LMFormat,
+    DEFAULT_EPSG, DwcNames, GBIF, JobStatus, LM_WKT_FIELD, LMFormat,
     PROVIDER_FIELD_COMMON)
-from LmCommon.common.occparse import OccDataParser
+from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import ready_filename
 from LmCompute.common.log import LmComputeLogger
 from osgeo import ogr, osr
@@ -76,11 +76,11 @@ class ShapeShifter:
         if self.occ_parser.xFieldName is not None:
             self.x_field = self.occ_parser.xFieldName
         else:
-            self.x_field = DWCNames.DECIMAL_LONGITUDE['SHORT']
+            self.x_field = DwcNames.DECIMAL_LONGITUDE['SHORT']
         if self.occ_parser.yFieldName is not None:
             self.y_field = self.occ_parser.yFieldName
         else:
-            self.y_field = DWCNames.DECIMAL_LATITUDE['SHORT']
+            self.y_field = DwcNames.DECIMAL_LATITUDE['SHORT']
         self.pt_field = self.occ_parser.ptFieldName
 
         self.special_fields = (
@@ -118,15 +118,15 @@ class ShapeShifter:
         feat_count = 0
         if dlocation is not None and os.path.exists(dlocation):
             ogr.RegisterAll()
-            drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+            drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
             try:
                 data_set = drv.Open(dlocation)
-            except Exception as e:
+            except Exception:
                 good_data = False
             else:
                 try:
                     s_lyr = data_set.GetLayer(0)
-                except Exception as e:
+                except Exception:
                     good_data = False
                 else:
                     feat_count = s_lyr.GetFeatureCount()
@@ -217,7 +217,7 @@ class ShapeShifter:
     # .............................................................................
     @staticmethod
     def _create_dataset(f_name):
-        drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+        drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
         new_dataset = drv.CreateDataSource(f_name)
         if new_dataset is None:
             raise LMError(
@@ -276,7 +276,7 @@ class ShapeShifter:
     def _write_metadata(basename, geom_type, count, min_x, min_y, max_x,
                         max_y):
         meta_dict = {
-            'ogrformat': LMFormat.getDefaultOGR().driver,
+            'ogrformat': LMFormat.SHAPE.driver,
             'geomtype': geom_type, 'count': count, 'minx': min_x,
             'miny': min_y, 'maxx': max_x, 'maxy': max_y}
         with open(basename + '.meta', 'w') as out_file:
@@ -288,7 +288,7 @@ class ShapeShifter:
             try:
                 val = self.lookup_fields[name]
                 return val
-            except Exception as e:
+            except Exception:
                 return None
         else:
             return name
@@ -305,7 +305,7 @@ class ShapeShifter:
                 self.occ_parser.pullNextValidRec()
                 this_rec = self.occ_parser.currLine
                 if this_rec is not None:
-                    x, y = OccDataParser.getXY(
+                    x, y = OccDataParser.get_xy(
                         this_rec, self.occ_parser.xIdx, self.occ_parser.yIdx,
                         self.occ_parser.ptIdx)
                     # Unique identifier field is not required, default to FID
@@ -342,7 +342,7 @@ class ShapeShifter:
     def _add_user_field_def(self, new_dataset):
         sp_ref = osr.SpatialReference()
         sp_ref.ImportFromEPSG(DEFAULT_EPSG)
-        max_str_len = LMFormat.getStrlenForDefaultOGR()
+        max_str_len = LMFormat.get_str_len_for_default_ogr()
 
         new_lyr = new_dataset.CreateLayer(
             'points', geom_type=ogr.wkbPoint, srs=sp_ref)

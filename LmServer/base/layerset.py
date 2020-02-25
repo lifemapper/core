@@ -5,10 +5,10 @@ import os
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT, DEFAULT_EPSG)
-from LmServer.base.layer2 import _Layer, Raster, Vector
+from LmServer.base.layer import _Layer, Raster, Vector
 from LmServer.base.lmobj import LMSpatialObject
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.colorpalette import colorPalette
+from LmServer.base.service_object import ServiceObject
+from LmServer.common.color_palette import ColorPalette
 from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          MapPrefix, LMFileType, IMAGE_PATH, BLUE_MARBLE_IMAGE, POINT_SYMBOL,
          POINT_SIZE, LINE_SYMBOL, LINE_SIZE, POLYGON_SYMBOL, POLYGON_SIZE,
@@ -17,8 +17,8 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          DEFAULT_ENVIRONMENTAL_PALETTE, PROJ_LIB, SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM)
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX)
-from LmServer.legion.occlayer import OccurrenceLayer
-from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.occ_layer import OccurrenceLayer
+from LmServer.legion.sdm_proj import SDMProjection
 from osgeo import gdal, gdalconst, ogr
 
 
@@ -170,7 +170,8 @@ class _LayerSet(LMSpatialObject):
             self._keywords = set()
 
     # .............................................................................
-    def _intersectLayerKeywords(self):
+    @property
+    def intersect_keywords(self):
         """
         @summary Gets keywords common to all layers in the scenario
         @return Set of keywords
@@ -183,7 +184,8 @@ class _LayerSet(LMSpatialObject):
                 s = s.intersection(self._layers[i].keywords)
         return s
 
-    def _unionLayerKeywords(self):
+    @property
+    def union_keywords(self):
         """
         @summary Gets all keywords that occur in layers in the scenario
         @return Set of keywords
@@ -192,24 +194,6 @@ class _LayerSet(LMSpatialObject):
         for i in range(len(self._layers)):
             s = s.union(self._layers[i].keywords)
         return s
-
-    # .............................................................................
-    def _getUnionBounds(self):
-        """
-        @summary Gets the union of all bounding boxes in the layers of the 
-                 LayerSet
-        @return tuple of (minx, miny, maxx, maxy) 
-        """
-        lyrBoxes = [lyr.bbox for lyr in self._layers]
-        return self.unionBoundingBoxes(lyrBoxes)
-
-    def _getIntersectBounds(self):
-        """
-        @summary Gets the intersection of all associated bounding boxes
-        @return tuple of (minx, miny, maxx, maxy) 
-        """
-        lyrBoxes = [lyr.bbox for lyr in self._layers]
-        return self.intersectBoundingBoxes(lyrBoxes)
 
     # .............................................................................
     def _getLayers(self):
@@ -221,10 +205,9 @@ class _LayerSet(LMSpatialObject):
                 self.addLayer(lyr)
         else:
             self._layers = []
-        # # Using Intersection, could be Union, both
-        # # intersectBounds, unionBounds available as properties
-        bbox = self._getUnionBounds()
-        self._setBBox(bbox)
+        bboxes = [lyr.bbox for lyr in self._layers]
+        bbox = self.union_bboxes(bboxes)
+        self._set_bbox(bbox)
 
     def _getLayerCount(self):
         count = 0
@@ -240,17 +223,16 @@ class _LayerSet(LMSpatialObject):
     # property counting the actual layer objects present
     count = property (_getLayerCount)
 
-    # Read-only properties
-    # union/intersection of the keywords/Boundaries of all
-    # layers of the LayerSet
-
-    # Return set of keywords
-    unionKeywords = property(_unionLayerKeywords)
-    intersectKeywords = property(_intersectLayerKeywords)
-
     # Return tuple of (minx, miny, maxx, maxy)
-    unionBounds = property(_getUnionBounds)
-    intersectBounds = property(_getIntersectBounds)
+    @property
+    def union_bboxes(self):
+        bboxes = [lyr.bbox for lyr in self._layers]
+        return self.union_bboxes(bboxes)
+        
+    @property
+    def intersect_bboxes(self):
+        bboxes = [lyr.bbox for lyr in self._layers]
+        return self.intersect_bboxes(bboxes)
 
 
 # .............................................................................
@@ -288,7 +270,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
                            bbox=bbox, mapunits=mapunits)
         ServiceObject.__init__(self, userId, dbId, serviceType, metadataUrl=url,
                                mod_time=mod_time)
-        self._mapFilename = dlocation
+        self._map_filename = dlocation
         self._mapType = mapType
         self._mapPrefix = None
 
@@ -301,7 +283,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
 
     def setMapPrefix(self, mapprefix=None):
         if mapprefix is None:
-            mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.OTHER_MAP,
+            mapprefix = self._earl_jr.constructMapPrefixNew(ftype=LMFileType.OTHER_MAP,
                                       objCode=self.get_id(), mapname=self.mapName,
                                       usr=self._userId, epsg=self.epsgcode)
         self._mapPrefix = mapprefix
@@ -314,17 +296,17 @@ class MapLayerSet(_LayerSet, ServiceObject):
         """
         fname = None
         if self._mapType == LMFileType.SDM_MAP:
-            fname = self._earlJr.createFilename(self._mapType,
+            fname = self._earl_jr.createFilename(self._mapType,
                                                occsetId=self.get_id(),
                                                usr=self._userId)
         # This will not occur here? only in
         # LmServer.base.legion.gridset.Gridset
         elif self._mapType == LMFileType.RAD_MAP:
-            fname = self._earlJr.createFilename(self._mapType,
+            fname = self._earl_jr.createFilename(self._mapType,
                                                gridsetId=self.get_id(),
                                                usr=self._userId)
         elif self._mapType == LMFileType.OTHER_MAP:
-            fname = self._earlJr.createFilename(self._mapType,
+            fname = self._earl_jr.createFilename(self._mapType,
                                                usr=self._userId,
                                                epsg=self._epsg)
         else:
@@ -332,45 +314,45 @@ class MapLayerSet(_LayerSet, ServiceObject):
         return fname
 
     # ...............................................
-    def setLocalMapFilename(self, mapfname=None):
+    def set_local_map_filename(self, mapfname=None):
         """
-        @note: Overrides existing _mapFilename
+        @note: Overrides existing _map_filename
         @summary: Set absolute mapfilename containing all layers for this User/EPSG. 
         """
         if mapfname is None:
             mapfname = self.createLocalMapFilename()
-        self._mapFilename = mapfname
+        self._map_filename = mapfname
 
     # ...............................................
     def clearLocalMapfile(self):
         """
         @summary: Delete the mapfile containing this layer
         """
-        if self._mapFilename is None:
-            self.setLocalMapFilename()
-        success, msg = self.deleteFile(self._mapFilename)
+        if self._map_filename is None:
+            self.set_local_map_filename()
+        success, msg = self.deleteFile(self._map_filename)
 
     # ...............................................
     @property
     def mapFilename(self):
-        if self._mapFilename is None:
-            self.setLocalMapFilename()
-        return self._mapFilename
+        if self._map_filename is None:
+            self.set_local_map_filename()
+        return self._map_filename
 
     # ...............................................
     @property
     def mapAbsolutePath(self):
         pth = None
-        if self._mapFilename is not None:
-            pth, mapfname = os.path.split(self._mapFilename)
+        if self._map_filename is not None:
+            pth, mapfname = os.path.split(self._map_filename)
         return pth
 
     # ...............................................
     @property
     def mapName(self):
         mapname = None
-        if self._mapFilename is not None:
-            pth, mapfname = os.path.split(self._mapFilename)
+        if self._map_filename is not None:
+            pth, mapfname = os.path.split(self._map_filename)
             mapname, ext = os.path.splitext(mapfname)
         return mapname
 
@@ -380,7 +362,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         @note: This method is overridden in Scenario  
         """
         url = None
-        self.setLocalMapFilename()
+        self.set_local_map_filename()
         if self._mapType == LMFileType.SDM_MAP:
             for lyr in self.layers:
                 if isinstance(lyr, OccurrenceLayer):
@@ -402,12 +384,12 @@ class MapLayerSet(_LayerSet, ServiceObject):
         @param template: Template mapfile 
         @return a string representing a mapfile 
         """
-        self.setLocalMapFilename()
+        self.set_local_map_filename()
         # if mapfile does not exist, create service from database, then write file
-        if not(os.path.exists(self._mapFilename)):
+        if not(os.path.exists(self._map_filename)):
             try:
                 layers = self._createLayers()
-                mapTemplate = self._earlJr.getMapFilenameFromMapname(template)
+                mapTemplate = self._earl_jr.getMapFilenameFromMapname(template)
                 mapstr = self._getBaseMap(mapTemplate)
                 onlineUrl = self._getMapsetUrl()
                 mapstr = self._addMapBaseAttributes(mapstr, onlineUrl)
@@ -418,20 +400,20 @@ class MapLayerSet(_LayerSet, ServiceObject):
             try:
                 self._writeBaseMap(mapstr)
             except Exception as e:
-                raise LMError('Failed to write {}; {}'.format(self._mapFilename, e))
+                raise LMError('Failed to write {}; {}'.format(self._map_filename, e))
 
     # ...............................................
     def _writeBaseMap(self, mapstr):
-        self.ready_filename(self._mapFilename, overwrite=True)
+        self.ready_filename(self._map_filename, overwrite=True)
 
         try:
-            f = open(self._mapFilename, 'w')
+            f = open(self._map_filename, 'w')
             # make sure that group is set correctly
             f.write(mapstr)
             f.close()
-            print(('Wrote {}'.format((self._mapFilename))))
+            print(('Wrote {}'.format((self._map_filename))))
         except Exception as e:
-            raise LMError('Failed to write {}; {}'.format(self._mapFilename, e))
+            raise LMError('Failed to write {}; {}'.format(self._map_filename, e))
 
     # ...............................................
     def _getBaseMap(self, fname):
@@ -453,7 +435,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
             mbbox = DEFAULT_GLOBAL_EXTENT
         else:
             mbbox = self.unionBounds
-        boundstr = LMSpatialObject.getExtentAsString(mbbox, separator='  ')
+        boundstr = LMSpatialObject.get_extent_string(mbbox, separator='  ')
         mapprj = self._createProjectionInfo(self.epsgcode)
         parts = ['  NAME        {}'.format(self.mapName),
                  # All raster/vector filepaths will be relative to mapfile path
@@ -600,7 +582,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # ...............................................
     def _createBlueMarbleLayer(self):
         fname = os.path.join(IMAGE_PATH, BLUE_MARBLE_IMAGE)
-        boundstr = LMSpatialObject.getExtentAsString(DEFAULT_GLOBAL_EXTENT,
+        boundstr = LMSpatialObject.get_extent_string(DEFAULT_GLOBAL_EXTENT,
                                                      separator='  ')
         parts = ['   LAYER',
                  '      NAME  bmng',
@@ -870,7 +852,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
     def _createDiscreteBins(self, vals, paletteName='gray'):
         bins = []
         numBins = len(vals) + 1
-        palette = colorPalette(n=numBins, ptype=paletteName)
+        palette = ColorPalette(n=numBins, ptype=paletteName)
         for i in range(len(vals)):
             expr = '([pixel] = {:g})'.format(vals[i])
             name = 'Value = {:g}'.format(vals[i])

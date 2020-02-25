@@ -132,7 +132,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
     def get_data_url(self, interface=CSV_INTERFACE):
         """Get a data url for this matrix object
         """
-        return self._earlJr.construct_lm_data_url(
+        return self._earl_jr.construct_lm_data_url(
             self.service_type, self.get_id(), interface)
 
     # ....................................
@@ -160,7 +160,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         ftype = LMFileType.get_matrix_filetype(self.matrix_type)
         if self.parent_id is None:
             raise LMError('Must have parent gridset ID for filepath')
-        return self._earlJr.create_filename(
+        return self._earl_jr.create_filename(
             ftype, gridset_id=self.parent_id, obj_code=self.get_id(),
             usr=self.get_user_id())
 

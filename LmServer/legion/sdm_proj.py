@@ -219,7 +219,7 @@ class SDMProjection(_ProjectionType, Raster):
         # TODO: clean this up.  Do not allow layer to calculate dlocation,
         #         subclass SDMProjection must override
         self.setId(lyrId)
-        self.setLocalMapFilename()
+        self.set_local_map_filename()
         self._setMapPrefix()
 
 # .............................................................................
@@ -257,7 +257,7 @@ class SDMProjection(_ProjectionType, Raster):
         """
         super(SDMProjection, self).setId(lyrid)
         if lyrid is not None:
-            self.name = self._earlJr.createLayername(projId=lyrid)
+            self.name = self._earl_jr.createLayername(projId=lyrid)
             self.clearDLocation()
             self.set_dlocation()
             self.title = '%s Projection %s' % (self.speciesName, str(lyrid))
@@ -270,7 +270,7 @@ class SDMProjection(_ProjectionType, Raster):
         """
         dloc = None
         if self.get_id() is not None:
-            dloc = self._earlJr.createFilename(
+            dloc = self._earl_jr.createFilename(
                 LMFileType.PROJECTION_LAYER, objCode=self.get_id(),
                 occsetId=self._occurrenceSet.get_id(), usr=self._userId,
                 epsg=self._epsg)
@@ -337,7 +337,7 @@ class SDMProjection(_ProjectionType, Raster):
         if name is None:
             if lyrId is None:
                 lyrId = ID_PLACEHOLDER
-            name = occurrenceSet._earlJr.createLayername(projId=lyrId)
+            name = occurrenceSet._earl_jr.createLayername(projId=lyrId)
         if squid is None:
             squid = occurrenceSet.squid
         if bbox is None:
@@ -354,7 +354,7 @@ class SDMProjection(_ProjectionType, Raster):
             else:
                 processType = ProcessType.OM_PROJECT
         isDiscreteData = Algorithms.returnsDiscreteOutput(algorithm.code)
-        title = occurrenceSet._earlJr.createSDMProjectTitle(
+        title = occurrenceSet._earl_jr.createSDMProjectTitle(
             occurrenceSet._userId, occurrenceSet.displayName, algorithm.code,
             modelScenario.code, projScenario.code)
         if gdalFormat is None:
@@ -422,7 +422,7 @@ class SDMProjection(_ProjectionType, Raster):
 
 # ...............................................
     def getProjPackageFilename(self):
-        fname = self._earlJr.createFilename(
+        fname = self._earl_jr.createFilename(
             LMFileType.PROJECTION_PACKAGE, objCode=self.get_id(),
             occsetId=self._occurrenceSet.get_id(), usr=self._userId,
             epsg=self._epsg)
@@ -455,7 +455,7 @@ class SDMProjection(_ProjectionType, Raster):
         paramsHash = md5(str(paramsSet)).hexdigest()
 
         # TODO: Determine if we should copy this to the workspace or something?
-        paramsFname = self._earlJr.createFilename(
+        paramsFname = self._earl_jr.createFilename(
             LMFileType.TMP_JSON, objCode=paramsHash[:16], usr=self.getUserId())
 
         # Write if it does not exist
@@ -473,12 +473,12 @@ class SDMProjection(_ProjectionType, Raster):
         return self._occurrenceSet.clearLocalMapfile()
 
 # ...............................................
-    def setLocalMapFilename(self):
+    def set_local_map_filename(self):
         """
         @summary: Find mapfile containing layers for this projection's
             occurrenceSet.
         """
-        self._occurrenceSet.setLocalMapFilename()
+        self._occurrenceSet.set_local_map_filename()
 
 # ...............................................
     @property
@@ -503,10 +503,10 @@ class SDMProjection(_ProjectionType, Raster):
         projid = self.get_id()
         if projid is None:
             projid = ID_PLACEHOLDER
-        lyrname = self._earlJr.createBasename(
+        lyrname = self._earl_jr.createBasename(
             LMFileType.PROJECTION_LAYER, objCode=projid, usr=self._userId,
             epsg=self.epsgcode)
-        mapprefix = self._earlJr.constructMapPrefixNew(
+        mapprefix = self._earl_jr.constructMapPrefixNew(
             ftype=LMFileType.SDM_MAP, mapname=self._occurrenceSet.mapName,
             lyrname=lyrname, usr=self._userId)
         return mapprefix
@@ -527,5 +527,5 @@ class SDMProjection(_ProjectionType, Raster):
     def mapLayername(self):
         lyrname = None
         if self._dbId is not None:
-            lyrname = self._earlJr.createLayername(projId=self._dbId)
+            lyrname = self._earl_jr.createLayername(projId=self._dbId)
         return lyrname
