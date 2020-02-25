@@ -8,13 +8,14 @@ import urllib
 
 import requests
 
+import idigbio
+
 from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.lmconstants import (
-    BISON, BISON_QUERY, DWCNames, GBIF, HTTPStatus, IDIGBIO, IDIGBIO_QUERY,
-    ITIS, URL_ESCAPES)
-from LmCommon.common.occparse import OccDataParser
+    BISON, BisonQuery, DwcNames, GBIF, HTTPStatus, Idigbio, IdigbioQuery,
+    Itis, URL_ESCAPES)
+from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import ready_filename
-import idigbio
 
 
 # .............................................................................
@@ -296,12 +297,12 @@ class BisonAPI(APIQuery):
         """
         if headers is None:
             headers = {'Content-Type': 'application/json'}
-        all_q_filters = copy(BISON_QUERY.QFILTERS)
+        all_q_filters = copy(BisonQuery.QFILTERS)
         if q_filters:
             all_q_filters.update(q_filters)
 
         # Add/replace other filters to defaults for this instance
-        all_other_filters = copy(BISON_QUERY.FILTERS)
+        all_other_filters = copy(BisonQuery.FILTERS)
         if other_filters:
             all_other_filters.update(other_filters)
 
@@ -352,7 +353,7 @@ class BisonAPI(APIQuery):
         """
         bison_qry = BisonAPI(
             q_filters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX},
-            other_filters=BISON_QUERY.TSN_FILTERS)
+            other_filters=BisonQuery.TSN_FILTERS)
         tsn_list = bison_qry._get_binomial_tsns()
         return tsn_list
 
@@ -361,8 +362,8 @@ class BisonAPI(APIQuery):
         data_list = None
         self.query()
         if self.output is not None:
-            data_count = self._burrow(BISON_QUERY.COUNT_KEYS)
-            data_list = self._burrow(BISON_QUERY.TSN_LIST_KEYS)
+            data_count = self._burrow(BisonQuery.COUNT_KEYS)
+            data_list = self._burrow(BisonQuery.TSN_LIST_KEYS)
             print('Reported count = {}, actual count = {}'.format(
                 data_count, len(data_list)))
         return data_list
@@ -370,7 +371,7 @@ class BisonAPI(APIQuery):
     # ...............................................
     @staticmethod
     def get_itis_tsn_values(itis_tsn):
-        """Return ITISScientificName, kingdom, and TSN info for occ record
+        """Return ItisScientificName, kingdom, and TSN info for occ record
         """
         itis_name = king = tsn_hier = None
         try:
@@ -393,7 +394,7 @@ class BisonAPI(APIQuery):
         if self.output is None:
             self.query()
         if self.output is not None:
-            data_list = self._burrow(BISON_QUERY.RECORD_KEYS)
+            data_list = self._burrow(BisonQuery.RECORD_KEYS)
         return data_list
 
     # ...............................................
@@ -422,21 +423,21 @@ class ItisAPI(APIQuery):
         """Constructor for ItisAPI class
         """
         APIQuery.__init__(
-            self, ITIS.TAXONOMY_HIERARCHY_URL, other_filters=other_filters)
+            self, Itis.TAXONOMY_HIERARCHY_URL, other_filters=other_filters)
 
     # ...............................................
     @staticmethod
     def _find_taxon_by_rank(root, rank_key):
         for tax in root.iter(
-                '{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.HIERARCHY_TAG)):
+                '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.HIERARCHY_TAG)):
             rank = tax.find(
-                '{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.RANK_TAG)).text
+                '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.RANK_TAG)).text
             if rank == rank_key:
                 name = tax.find(
-                    '{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.TAXON_TAG)).text
+                    '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXON_TAG)).text
                 tsn = tax.find(
                     '{{}}{}'.format(
-                        ITIS.DATA_NAMESPACE, ITIS.TAXONOMY_KEY)).text
+                        Itis.DATA_NAMESPACE, Itis.TAXONOMY_KEY)).text
                 return (tsn, name)
         return None
 
@@ -450,15 +451,23 @@ class ItisAPI(APIQuery):
 
     # ...............................................
     def _return_hierarchy(self):
+        """
+        Todo:
+            Look at formatted strings, I don't know if this is working
+        """
         tax_path = []
         for tax in self.output.iter(
-                '{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.HIERARCHY_TAG)):
+                # '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.HIERARCHY_TAG)):
+                '{}{}'.format(Itis.DATA_NAMESPACE, Itis.HIERARCHY_TAG)):
             rank = tax.find(
-                '{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.RANK_TAG)).text
+                # '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.RANK_TAG)).text
+                '{}{}'.format(Itis.DATA_NAMESPACE, Itis.RANK_TAG)).text
             name = tax.find(
-                '{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.TAXON_TAG)).text
+                # '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXON_TAG)).text
+                '{}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXON_TAG)).text
             tsn = tax.find(
-                '{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.TAXONOMY_KEY)).text
+                # '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXONOMY_KEY)).text
+                '{}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXONOMY_KEY)).text
             tax_path.append((rank, tsn, name))
         return tax_path
 
@@ -471,9 +480,9 @@ class ItisAPI(APIQuery):
         tax_path = self._return_hierarchy()
         hierarchy = {}
         for rank in (
-                ITIS.KINGDOM_KEY, ITIS.PHYLUM_DIVISION_KEY, ITIS.CLASS_KEY,
-                ITIS.ORDER_KEY, ITIS.FAMILY_KEY, ITIS.GENUS_KEY,
-                ITIS.SPECIES_KEY):
+                Itis.KINGDOM_KEY, Itis.PHYLUM_DIVISION_KEY, Itis.CLASS_KEY,
+                Itis.ORDER_KEY, Itis.FAMILY_KEY, Itis.GENUS_KEY,
+                Itis.SPECIES_KEY):
             hierarchy[rank] = self._get_rank_from_path(tax_path, rank)
         return hierarchy
 
@@ -835,16 +844,16 @@ class IdigbioAPI(APIQuery):
         """Constructor for IdigbioAPI class
         """
         idig_search_url = '/'.join((
-            IDIGBIO.SEARCH_PREFIX, IDIGBIO.SEARCH_POSTFIX,
-            IDIGBIO.OCCURRENCE_POSTFIX))
+            Idigbio.SEARCH_PREFIX, Idigbio.SEARCH_POSTFIX,
+            Idigbio.OCCURRENCE_POSTFIX))
 
         # Add/replace Q filters to defaults for this instance
-        all_q_filters = copy(IDIGBIO_QUERY.QFILTERS)
+        all_q_filters = copy(IdigbioQuery.QFILTERS)
         if q_filters:
             all_q_filters.update(q_filters)
 
         # Add/replace other filters to defaults for this instance
-        all_other_filters = copy(IDIGBIO_QUERY.FILTERS)
+        all_other_filters = copy(IdigbioQuery.FILTERS)
         if other_filters:
             all_other_filters.update(other_filters)
 
@@ -859,12 +868,12 @@ class IdigbioAPI(APIQuery):
         """Initialize from url
         """
         base, filters = url.split('?')
-        if base.strip().startswith(IDIGBIO.SEARCH_PREFIX):
+        if base.strip().startswith(Idigbio.SEARCH_PREFIX):
             qry = IdigbioAPI(filter_string=filters, headers=headers)
         else:
             raise Exception(
                 'iDigBio occurrence API must start with {}' .format(
-                    IDIGBIO.SEARCH_PREFIX))
+                    Idigbio.SEARCH_PREFIX))
         return qry
 
     # ...............................................
@@ -882,19 +891,19 @@ class IdigbioAPI(APIQuery):
     def query_by_gbif_taxon_id(self, taxon_key):
         """Return a list of occurrence record dictionaries.
         """
-        self._q_filters[IDIGBIO.GBIFID_FIELD] = taxon_key
+        self._q_filters[Idigbio.GBIFID_FIELD] = taxon_key
         self.query()
         specimen_list = []
         if self.output is not None:
             # full_count = self.output['itemCount']
-            for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
-                new_item = item[IDIGBIO.RECORD_CONTENT_KEY].copy()
+            for item in self.output[Idigbio.OCCURRENCE_ITEMS_KEY]:
+                new_item = item[Idigbio.RECORD_CONTENT_KEY].copy()
 
-                for idx_fld, idx_val in item[IDIGBIO.RECORD_INDEX_KEY].items():
+                for idx_fld, idx_val in item[Idigbio.RECORD_INDEX_KEY].items():
                     if idx_fld == 'geopoint':
-                        new_item[DWCNames.DECIMAL_LONGITUDE['SHORT']
+                        new_item[DwcNames.DECIMAL_LONGITUDE['SHORT']
                                  ] = idx_val['lon']
-                        new_item[DWCNames.DECIMAL_LATITUDE['SHORT']
+                        new_item[DwcNames.DECIMAL_LATITUDE['SHORT']
                                  ] = idx_val['lat']
                     else:
                         new_item[idx_fld] = idx_val
@@ -1111,7 +1120,7 @@ def test_bison():
 
         new_q = {BISON.HIERARCHY_KEY: '*-{}-*'.format(tsn)}
         occ_api = BisonAPI(
-            q_filters=new_q, other_filters=BISON_QUERY.OCC_FILTERS)
+            q_filters=new_q, other_filters=BisonQuery.OCC_FILTERS)
         this_url = occ_api.url
         occ_list = occ_api.get_tsn_occurrences()
         count = None if not occ_list else len(occ_list)
@@ -1154,7 +1163,7 @@ def test_idigbio_taxon_ids():
     idig_list = []
     with open(in_f_name, 'r') as in_f:
         #          with line in file:
-        for i in range(test_count):
+        for _ in range(test_count):
             line = in_f.readline()
             vals = []
             if line is not None:
@@ -1174,13 +1183,10 @@ def test_idigbio_taxon_ids():
                     temp_vals = temp_vals[1:]
                     curr_name = ' '.join(temp_vals)
 
-                (rank_str, sciname_str, canonical_str, accepted_key,
-                 accepted_str, nub_key, tax_status, kingdom_str, phylum_str,
-                 class_str, order_str, family_str, genus_str, species_str,
-                 genus_key, species_key, log_lines) = GbifAPI.get_taxonomy(
-                     curr_gbif_taxon_id)
+                (_, _, _, _, _, _, tax_status, _, _, _, _, _, _, _, _, _, _
+                 ) = GbifAPI.get_taxonomy(curr_gbif_taxon_id)
 
-                if taxStatus == 'ACCEPTED':
+                if tax_status == 'ACCEPTED':
                     idig_list.append(
                         [curr_gbif_taxon_id, curr_reported_count, curr_name])
                     out_f.write(line)
@@ -1259,9 +1265,9 @@ import sys
 import unicodecsv
 import urllib
 
-from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS,
-                                         IDIGBIO, IDIGBIO_QUERY,
-                                         URL_ESCAPES, HTTPStatus, DWCNames)
+from LmCommon.common.lmconstants import (BISON, BisonQuery, GBIF, Itis,
+                                         Idigbio, IdigbioQuery,
+                                         URL_ESCAPES, HTTPStatus, DwcNames)
 from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import ready_filename, get_unicodecsv_reader

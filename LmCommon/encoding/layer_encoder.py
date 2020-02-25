@@ -18,10 +18,12 @@ import json
 import os
 from random import shuffle
 
-from LmCommon.common.lmconstants import DEFAULT_NODATA, LMFormat
-from lmpy import Matrix
 import numpy as np
 from osgeo import gdal, ogr
+
+from lmpy import Matrix
+
+from LmCommon.common.lmconstants import DEFAULT_NODATA, LMFormat
 
 # DEFAULT_SCALE is the scale of the layer data array to the shapegrid cellsize
 #     The number of data array cells in a (square) shapegrid cell is::
@@ -70,11 +72,11 @@ def _get_mean_value_method(nodata):
 
     # ...............................
     def get_mean(window):
-        m = np.nanmean(window)
-        if np.isnan(m):
+        window_mean = np.nanmean(window)
+        if np.isnan(window_mean):
             return nodata
-        else:
-            return m
+
+        return window_mean
 
     return get_mean
 
@@ -93,14 +95,16 @@ def _get_largest_class_method(min_coverage, nodata):
 
     # ...............................
     def get_largest_class(window):
+        """Get largest class for numpy > 1.8
+        """
         min_num = min_coverage * window.size
         largest_count = 0
         largest_class = nodata
         unique_values = np.column_stack(np.unique(window, return_counts=True))
-        for cl, num in unique_values:
-            if not np.isclose(cl, nodata) and num > largest_count \
+        for class_, num in unique_values:
+            if not np.isclose(class_, nodata) and num > largest_count \
                     and num > min_num:
-                largest_class = cl
+                largest_class = class_
         return largest_class
 
     # ...............................
@@ -111,11 +115,11 @@ def _get_largest_class_method(min_coverage, nodata):
         largest_count = 0
         largest_class = nodata
         unique_values = np.unique(window)
-        for cl in unique_values:
-            num = np.where(window == cl)[0].size
-            if not np.isclose(cl, nodata) and num > largest_count \
+        for class_ in unique_values:
+            num = np.where(window == class_)[0].size
+            if not np.isclose(class_, nodata) and num > largest_count \
                     and num > min_num:
-                largest_class = cl
+                largest_class = class_
         return largest_class
 
     return get_largest_class_1_8
@@ -135,22 +139,22 @@ def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
     # Build the map
     val_map = {}
     i = 0
-    for v in hypothesis_values:
+    for val in hypothesis_values:
         contrast_values = [-1, 1]
         shuffle(contrast_values)
         try:
             # Pair of values
-            val_map[v[0]] = {
+            val_map[val[0]] = {
                 'val': contrast_values[0],
                 'index': i
             }
-            val_map[v[1]] = {
+            val_map[val[1]] = {
                 'val': contrast_values[1],
                 'index': i
             }
-        except:
+        except Exception:
             # Single value
-            val_map[v] = {
+            val_map[val] = {
                 'val': contrast_values[0],
                 'index': i
             }
@@ -162,6 +166,8 @@ def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
 
     # ...............................
     def encode_method(window):
+        """Encode method for numpy > 1.8
+        """
         min_vals = int(min_coverage * window.size)
         # Set default min count to min_vals
         # Note: This will cause last one to win if they are equal, change to
@@ -172,11 +178,11 @@ def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
         unique_values = np.column_stack(np.unique(window, return_counts=True))
 
         # Check unique values in window
-        for v, num in unique_values:
-            if not np.isclose(v, nodata) and v in list(val_map.keys()) and \
-                    num >= counts[val_map[v]['index']]:
-                counts[val_map[v]['index']] = num
-                ret[val_map[v]['index']] = val_map[v]['val']
+        for val, num in unique_values:
+            if not np.isclose(val, nodata) and val in list(val_map.keys()) and\
+                    num >= counts[val_map[val]['index']]:
+                counts[val_map[val]['index']] = num
+                ret[val_map[val]['index']] = val_map[val]['val']
         return ret
 
     # ...............................
@@ -193,12 +199,12 @@ def _get_encode_hypothesis_method(hypothesis_values, min_coverage, nodata):
         unique_values = np.unique(window)
 
         # Check unique values in window
-        for v in unique_values:
-            num = np.where(window == v)[0].size
-            if not np.isclose(v, nodata) and v in list(val_map.keys()) and \
-                    num >= counts[val_map[v]['index']]:
-                counts[val_map[v]['index']] = num
-                ret[val_map[v]['index']] = val_map[v]['val']
+        for val in unique_values:
+            num = np.where(window == val)[0].size
+            if not np.isclose(val, nodata) and val in list(val_map.keys()) and\
+                    num >= counts[val_map[val]['index']]:
+                counts[val_map[val]['index']] = num
+                ret[val_map[val]['index']] = val_map[val]['val']
         return ret
 
     return encode_method_1_8
@@ -257,11 +263,11 @@ class LayerEncoder:
         while feat is not None:
             geom = feat.GetGeometryRef()
             cent = geom.Centroid()
-            x = cent.GetX()
-            y = cent.GetY()
-            v = encode_func(window_func(x, y))
-            encoded_column[i] = v
-            row_headers.append((feat.GetFID(), x, y))
+            x_coord = cent.GetX()
+            y_coord = cent.GetY()
+            val = encode_func(window_func(x_coord, y_coord))
+            encoded_column[i] = val
+            row_headers.append((feat.GetFID(), x_coord, y_coord))
             i += 1
             feat = shapegrid_layer.GetNextFeature()
 
@@ -322,21 +328,23 @@ class LayerEncoder:
             x_size_2 = y_size_2 = cell_size / 2.0
 
         # ...............................
-        def get_rc(x, y):
-            x_prop = (1.0 * x - min_x) / x_range
-            y_prop = (1.0 * y - min_y) / y_range
+        def get_rc(x_coord, y_coord):
+            x_prop = (1.0 * x_coord - min_x) / x_range
+            y_prop = (1.0 * y_coord - min_y) / y_range
 
             col = int(x_size * x_prop)
             row = y_size - int(y_size * y_prop)
             return row, col
 
         # ...............................
-        def window_function(x, y):
+        def window_function(x_coord, y_coord):
             """Get the array window from the centroid coordinates"""
             # Note: Again, 0 row corresponds to top of map, so bigger y
             #     corresponds to lower row number
-            uly, ulx = get_rc(x - x_size_2, y + y_size_2)  # Upper left corner
-            lry, lrx = get_rc(x + x_size_2, y - y_size_2)  # Lower right corner
+            # Upper left coorner
+            uly, ulx = get_rc(x_coord - x_size_2, y_coord + y_size_2)
+            # Lower right corner
+            lry, lrx = get_rc(x_coord + x_size_2, y_coord - y_size_2)
 
             return data[max(0, uly):min(y_size, lry),
                         max(0, ulx):min(x_size, lrx)]
@@ -390,13 +398,13 @@ class LayerEncoder:
             numpy array generated by the layer and the NODATA value to use with
             this layer.
         """
-        ds = gdal.Open(raster_filename)
-        band = ds.GetRasterBand(1)
+        dataset = gdal.Open(raster_filename)
+        band = dataset.GetRasterBand(1)
         layer_array = band.ReadAsArray()
         nodata = band.GetNoDataValue()
 
         num_y, num_x = layer_array.shape
-        min_x, x_res, _, max_y, _, y_res = ds.GetGeoTransform()
+        min_x, x_res, _, max_y, _, y_res = dataset.GetGeoTransform()
         max_x = min_x + (num_x * x_res)
         min_y = max_y + (y_res * num_y)
         layer_bbox = (min_x, min_y, max_x, max_y)
@@ -436,9 +444,9 @@ class LayerEncoder:
             center = geom.Centroid()
             x_cent = center.GetX()
             y_cent = center.GetY()
-            x1, y1 = boundary_points[1].split(' ')
+            x_1, y_1 = boundary_points[1].split(' ')
             self.shapegrid_resolution = np.sqrt(
-                (x_cent - x1) ** 2 + (y_cent - y1) ** 2)
+                (x_cent - x_1) ** 2 + (y_cent - y_1) ** 2)
         self.shapegrid_sides = len(boundary_points) - 1
         # self.shapegrid_layer.ResetReading()
         self.shapegrid_layer = None
@@ -669,7 +677,7 @@ class LayerEncoder:
         }
         features = []
 
-        column_headers = self.encoded_matrix.getColumnHeaders()
+        column_headers = self.encoded_matrix.get_column_headers()
 
         column_enum = [(j, str(k)) for j, k in enumerate(column_headers)]
 
@@ -683,9 +691,8 @@ class LayerEncoder:
             # right_hand_rule(ft_json['geometry']['coordinates'])
             # TODO(CJ): Remove this if updated library adds first id correctly
             ft_json['id'] = feat.GetFID()
-            ft_json['properties'] = dict(
-                [(k, self.encoded_matrix[i, j].item()
-                  ) for j, k in column_enum])
+            ft_json['properties'] = {
+                k: self.encoded_matrix[i, j].item() for j, k in column_enum}
             features.append(ft_json)
             i += 1
             feat = shapegrid_layer.GetNextFeature()

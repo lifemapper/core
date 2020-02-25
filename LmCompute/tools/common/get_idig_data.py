@@ -4,9 +4,9 @@
 import argparse
 import os
 
+from LmBackend.common.lmobj import LMError
 from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.ready_file import ready_filename
-from LmBackend.common.lmobj import LMError
 
 
 # ...............................................

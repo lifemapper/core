@@ -45,7 +45,7 @@ class ShapeShifter:
                 'Failed to get metadata')
         if logger is None:
             logname, _ = os.path.splitext(os.path.basename(__file__))
-            logger = LmComputeLogger(logname, addConsole=True)
+            logger = LmComputeLogger(logname, add_console=True)
 
         self._reader = None
         # If necessary, map provider dictionary keys to our field names
@@ -217,7 +217,11 @@ class ShapeShifter:
     # .............................................................................
     @staticmethod
     def _create_dataset(f_name):
+<<<<<<< HEAD
         drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
+=======
+        drv = ogr.GetDriverByName(LMFormat.get_default_ogr().driver)
+>>>>>>> 7cbd02482e10b47d5c36dd2c76d71460066132a2
         new_dataset = drv.CreateDataSource(f_name)
         if new_dataset is None:
             raise LMError(
@@ -276,7 +280,11 @@ class ShapeShifter:
     def _write_metadata(basename, geom_type, count, min_x, min_y, max_x,
                         max_y):
         meta_dict = {
+<<<<<<< HEAD
             'ogrformat': LMFormat.SHAPE.driver,
+=======
+            'ogrformat': LMFormat.get_default_ogr().driver,
+>>>>>>> 7cbd02482e10b47d5c36dd2c76d71460066132a2
             'geomtype': geom_type, 'count': count, 'minx': min_x,
             'miny': min_y, 'maxx': max_x, 'maxy': max_y}
         with open(basename + '.meta', 'w') as out_file:
@@ -305,14 +313,18 @@ class ShapeShifter:
                 self.occ_parser.pullNextValidRec()
                 this_rec = self.occ_parser.currLine
                 if this_rec is not None:
+<<<<<<< HEAD
                     x, y = OccDataParser.get_xy(
+=======
+                    x_coord, y_coord = OccDataParser.get_xy(
+>>>>>>> 7cbd02482e10b47d5c36dd2c76d71460066132a2
                         this_rec, self.occ_parser.xIdx, self.occ_parser.yIdx,
                         self.occ_parser.ptIdx)
                     # Unique identifier field is not required, default to FID
                     # ignore records without valid lat/long; all occ jobs
                     #    contain these fields
-                    tmp_dict[self.x_field] = float(x)
-                    tmp_dict[self.y_field] = float(y)
+                    tmp_dict[self.x_field] = float(x_coord)
+                    tmp_dict[self.y_field] = float(y_coord)
                     success = True
             except StopIteration:
                 success = True

@@ -2,8 +2,9 @@
 """
 from copy import deepcopy
 
-from lmpy import Matrix
 import numpy as np
+
+from lmpy import Matrix
 
 
 # .............................................................................

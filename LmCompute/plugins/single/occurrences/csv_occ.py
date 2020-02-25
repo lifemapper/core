@@ -72,7 +72,7 @@ def create_shapefile_from_csv(csv_fname, metadata, out_fname, big_fname,
 
         # Test generated shapefiles, throws exceptions if bad
         status = JobStatus.COMPUTED
-        good_data, feat_count = ShapeShifter.test_shapefile(out_fname)
+        good_data, _ = ShapeShifter.test_shapefile(out_fname)
         if not good_data:
             raise JobError(
                 JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
