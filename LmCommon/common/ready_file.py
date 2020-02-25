@@ -58,7 +58,7 @@ def delete_file(file_name, delete_dir=False):
                 try:
                     for sim_file_name in similar_file_names:
                         _, sim_ext = os.path.splitext(sim_file_name)
-                        if sim_ext in LMFormat.SHAPE.getExtensions():
+                        if sim_ext in LMFormat.SHAPE.get_extensions():
                             os.remove(sim_file_name)
                 except Exception as e:
                     success = False

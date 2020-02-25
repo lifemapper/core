@@ -2,9 +2,10 @@
 """
 import math
 
-from LmCommon.common.lmconstants import LMFormat
 import numpy as np
 from osgeo import ogr, osr
+
+from LmCommon.common.lmconstants import LMFormat
 
 # Calculate this once and store as a constant instead of for every cell
 SQRT_3 = math.sqrt(3)
@@ -120,7 +121,7 @@ def build_shapegrid(shapegrid_file_name, min_x, min_y, max_x, max_y, cell_size,
     target_srs = osr.SpatialReference()
     target_srs.ImportFromEPSG(epsg_code)
 
-    drv = ogr.GetDriverByName(LMFormat.get_defautl_ogr().driver)
+    drv = ogr.GetDriverByName(LMFormat.get_default_ogr().driver)
     data_set = drv.CreateDataSource(shapegrid_file_name)
 
     layer = data_set.CreateLayer(

@@ -9,6 +9,17 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import (
     LMFormat, OFTInteger, OFTReal, OFTString)
 
+from LmCommon.common.log import TestLogger
+
+# TODO: Move these to a testing module
+try:
+    from LmServer.common.localconstants import APP_PATH
+except:
+    try:
+        from LmCompute.common.localconstants import LM_PATH as APP_PATH
+    except:
+        raise Exception('Testing must be done on a Lifemapper instance')
+
 
 # .............................................................................
 class OccDataParser(LMObject):
@@ -827,16 +838,10 @@ class OccDataParser(LMObject):
 # .............................................................................
 def test_run():
     """Test the module
-    """
-    from LmCommon.common.log import TestLogger
 
-    try:
-        from LmServer.common.localconstants import APP_PATH
-    except:
-        try:
-            from LmCompute.common.localconstants import LM_PATH as APP_PATH
-        except:
-            raise Exception('Testing must be done on a Lifemapper instance')
+    Todo:
+        Move this to a testing module
+    """
     relpath = 'LmTest/data/sdm'
 
     #    dataname = 'gbif_borneo_simple'
@@ -844,12 +849,12 @@ def test_run():
 
     pth_and_basename = os.path.join(APP_PATH, relpath, dataname)
     log = TestLogger('occparse_checkInput')
-    op = OccDataParser(
+    occ_parser = OccDataParser(
         log, pth_and_basename + LMFormat.CSV.ext,
         pth_and_basename + LMFormat.METADATA.ext, pull_chunks=True)
-    op.readAllRecs()
-    op.printStats()
-    op.close()
+    occ_parser.read_all_recs()
+    occ_parser.print_stats()
+    occ_parser.close()
 
 
 # .............................................................................

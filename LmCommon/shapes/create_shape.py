@@ -45,7 +45,7 @@ class ShapeShifter:
                 'Failed to get metadata')
         if logger is None:
             logname, _ = os.path.splitext(os.path.basename(__file__))
-            logger = LmComputeLogger(logname, addConsole=True)
+            logger = LmComputeLogger(logname, add_console=True)
 
         self._reader = None
         # If necessary, map provider dictionary keys to our field names
@@ -118,7 +118,7 @@ class ShapeShifter:
         feat_count = 0
         if dlocation is not None and os.path.exists(dlocation):
             ogr.RegisterAll()
-            drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+            drv = ogr.GetDriverByName(LMFormat.get_default_ogr().driver)
             try:
                 data_set = drv.Open(dlocation)
             except Exception as e:
@@ -217,7 +217,7 @@ class ShapeShifter:
     # .............................................................................
     @staticmethod
     def _create_dataset(f_name):
-        drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+        drv = ogr.GetDriverByName(LMFormat.get_default_ogr().driver)
         new_dataset = drv.CreateDataSource(f_name)
         if new_dataset is None:
             raise LMError(
@@ -276,7 +276,7 @@ class ShapeShifter:
     def _write_metadata(basename, geom_type, count, min_x, min_y, max_x,
                         max_y):
         meta_dict = {
-            'ogrformat': LMFormat.getDefaultOGR().driver,
+            'ogrformat': LMFormat.get_default_ogr().driver,
             'geomtype': geom_type, 'count': count, 'minx': min_x,
             'miny': min_y, 'maxx': max_x, 'maxy': max_y}
         with open(basename + '.meta', 'w') as out_file:
@@ -288,7 +288,7 @@ class ShapeShifter:
             try:
                 val = self.lookup_fields[name]
                 return val
-            except Exception as e:
+            except Exception:
                 return None
         else:
             return name
@@ -305,14 +305,14 @@ class ShapeShifter:
                 self.occ_parser.pullNextValidRec()
                 this_rec = self.occ_parser.currLine
                 if this_rec is not None:
-                    x, y = OccDataParser.getXY(
+                    x_coord, y_coord = OccDataParser.get_xy(
                         this_rec, self.occ_parser.xIdx, self.occ_parser.yIdx,
                         self.occ_parser.ptIdx)
                     # Unique identifier field is not required, default to FID
                     # ignore records without valid lat/long; all occ jobs
                     #    contain these fields
-                    tmp_dict[self.x_field] = float(x)
-                    tmp_dict[self.y_field] = float(y)
+                    tmp_dict[self.x_field] = float(x_coord)
+                    tmp_dict[self.y_field] = float(y_coord)
                     success = True
             except StopIteration:
                 success = True
@@ -342,7 +342,7 @@ class ShapeShifter:
     def _add_user_field_def(self, new_dataset):
         sp_ref = osr.SpatialReference()
         sp_ref.ImportFromEPSG(DEFAULT_EPSG)
-        max_str_len = LMFormat.getStrlenForDefaultOGR()
+        max_str_len = LMFormat.get_str_len_for_default_ogr()
 
         new_lyr = new_dataset.CreateLayer(
             'points', geom_type=ogr.wkbPoint, srs=sp_ref)

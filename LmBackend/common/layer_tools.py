@@ -12,10 +12,11 @@ from time import sleep
 
 import numpy
 
+from osgeo import gdal
+
 from LmCommon.common.lmconstants import (LMFormat, DEFAULT_NODATA)
 from LmCompute.common.lmconstants import (
     CONVERT_JAVA_CMD, CONVERT_TOOL, ME_CMD)
-from osgeo import gdal
 
 WAIT_SECONDS = 30
 
