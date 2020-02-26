@@ -23,17 +23,17 @@ SDM_USER_DEPENDENCIES = [
 #     ('{}.lmjob'.format(LM_SCHEMA),
 #      'SELECT j.* FROM {}.lmjob j, {}.occurrenceset o'.format(LM_SCHEMA)+
 #      ' WHERE (j.referencetype = 104 AND j.referenceid = o.occurrencesetid  '+
-#      '          AND o.userId IN ({}))'.format(USER_REPLACE_STR)),
+#      '          AND o.user_id IN ({}))'.format(USER_REPLACE_STR)),
 #
 #     ('{}.lmjob'.format(LM_SCHEMA),
 #      'SELECT j.* FROM {}.lmjob j, {}.model m '.format(LM_SCHEMA)+
 #      ' WHERE (j.referencetype = 101 AND j.referenceid = m.modelid  '+
-#      '          AND m.userId IN ({}))'.format(USER_REPLACE_STR)),
+#      '          AND m.user_id IN ({}))'.format(USER_REPLACE_STR)),
 #
 #     ('{}.lmjob'.format(LM_SCHEMA),
 #      'SELECT j.* FROM {}.lmjob j, {}.lm_fullprojection p '.format(LM_SCHEMA)+
 #      ' WHERE (j.referencetype = 102 AND j.referenceid = p.projectionid  '+
-#      '          AND p.mdluserId IN ({}))'.format(USER_REPLACE_STR)),
+#      '          AND p.mdl_user_id IN ({}))'.format(USER_REPLACE_STR)),
 
     ('{}.experiment'.format(LM_SCHEMA),
      'SELECT * FROM {}.experiment WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),

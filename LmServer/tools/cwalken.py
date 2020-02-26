@@ -742,7 +742,7 @@ class ChristopherWalken(LMObject):
                 occ.get_dlocation(), occ.get_dlocation(large_file=True),
                 POINT_COUNT_MAX, metadata=raw_meta_dloc,
                 delimiter=self.occ_delimiter)
-#                 POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
+#                 POINT_COUNT_MAX, metadata=occ.raw_meta_dlocation)
 
         for prj in prjs:
             if self.model_mask_base is not None:

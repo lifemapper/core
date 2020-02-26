@@ -70,7 +70,7 @@ def rebuild_index_for_gridset(gridset_id):
                     else:
                         mtx_col.layer = lyr
                         mtx_col.shapegrid = shapegrid
-                        mtx_col.processType = ProcessType.INTERSECT_RASTER
+                        mtx_col.process_type = ProcessType.INTERSECT_RASTER
 
                         mtx_col.update_status(JobStatus.INITIALIZE)
                         scribe.update_object(mtx_col)

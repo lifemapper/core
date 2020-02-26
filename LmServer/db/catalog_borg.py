@@ -20,7 +20,7 @@ from LmServer.legion.occ_layer import OccurrenceLayer
 from LmServer.legion.process_chain import MFChain
 from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.sdm_proj import SDMProjection
-from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.legion.shapegrid import Shapegrid
 from LmServer.legion.tree import Tree
 
 
@@ -276,10 +276,10 @@ class Borg(DbPostgresql):
                 name = self._get_column_value(row, idxs, ['treename', 'name'])
                 dloc = self._get_column_value(
                     row, idxs, ['treedlocation', 'dlocation'])
-                is_bin = self._get_column_value(row, idxs, ['isbinary'])
-                is_ultra = self._get_column_value(row, idxs, ['isultrametric'])
-                has_len = self._get_column_value(
-                    row, idxs, ['hasbranchlengths'])
+#                 is_bin = self._get_column_value(row, idxs, ['isbinary'])
+#                 is_ultra = self._get_column_value(row, idxs, ['isultrametric'])
+#                 has_len = self._get_column_value(
+#                     row, idxs, ['hasbranchlengths'])
                 meta = self._get_column_value(
                     row, idxs, ['treemetadata', 'metadata'])
                 mod_time = self._get_column_value(
@@ -449,7 +449,7 @@ class Borg(DbPostgresql):
         env_rst = None
         env_layer_id = self._get_column_value(row, idxs, ['envlayerid'])
         if row is not None:
-            scen_id = self._get_column_value(row, idxs, ['scenarioid'])
+#             scen_id = self._get_column_value(row, idxs, ['scenarioid'])
             scen_code = self._get_column_value(row, idxs, ['scenariocode'])
             rst = self._create_layer(row, idxs)
             if rst is not None:
@@ -468,7 +468,7 @@ class Borg(DbPostgresql):
             lyr = self._create_layer(row, idxs)
             # Shapegrid may be optional
             if lyr is not None:
-                shg = ShapeGrid.init_from_parts(
+                shg = Shapegrid.init_from_parts(
                     lyr, self._get_column_value(row, idxs, ['cellsides']),
                     self._get_column_value(row, idxs, ['cellsize']),
                     site_id=self._get_column_value(row, idxs, ['idattribute']),
@@ -1013,7 +1013,7 @@ class Borg(DbPostgresql):
         # Populate dlocation in obj then db if this is a new Gridset
         if updated_gridset._dlocation is None:
             updated_gridset.get_dlocation()
-            success = self.update_gridset(updated_gridset)
+            _ = self.update_gridset(updated_gridset)
         return updated_gridset
 
     # ................................
@@ -1028,7 +1028,7 @@ class Borg(DbPostgresql):
             List of gridset ids for user
         """
         grid_ids = []
-        rows, idxs = self.execute_select_many_function(
+        rows, _ = self.execute_select_many_function(
             'lm_findUserGridsets', userid, obsolete_time)
         for row in rows:
             if row[0] is not None:
@@ -1991,7 +1991,7 @@ class Borg(DbPostgresql):
                 (Global) PAM, the MatrixColumn will also be deleted.
         """
         # TODO: Does this called function exist?
-        pav_del_count = self._delete_occset_dependent_matrix_cols(
+        _ = self._delete_occset_dependent_matrix_cols(
             occ.get_id(), occ.get_user_id())
         success = self.execute_modify_function(
             'lm_deleteOccurrenceSet', occ.get_id())
@@ -2218,7 +2218,7 @@ class Borg(DbPostgresql):
         new_or_existing_mtx_col = self._create_matrix_column(row, idxs)
         # Put shapegrid into updated matrixColumn
         new_or_existing_mtx_col.shapegrid = mtx_col.shapegrid
-        new_or_existing_mtx_col.processType = mtx_col.processType
+        new_or_existing_mtx_col.process_type = mtx_col.process_type
         return new_or_existing_mtx_col
 
     # ................................
@@ -2856,7 +2856,7 @@ class Borg(DbPostgresql):
             success = self.update_occurrence_set(obj)
         elif isinstance(obj, SDMProjection):
             success = self.update_sdm_project(obj)
-        elif isinstance(obj, ShapeGrid):
+        elif isinstance(obj, Shapegrid):
             success = self.update_shapegrid(obj)
         # TODO: Handle if MatrixColumn changes to inherit from LMMatrix
         elif isinstance(obj, MatrixColumn):
@@ -2908,7 +2908,7 @@ class Borg(DbPostgresql):
         elif isinstance(obj, SDMProjection):
             success = self.execute_modify_function(
                 'lm_deleteSDMProjectLayer', obj_id)
-        elif isinstance(obj, ShapeGrid):
+        elif isinstance(obj, Shapegrid):
             success = self.execute_modify_function(
                 'lm_deleteShapeGrid', obj_id)
         elif isinstance(obj, Scenario):

@@ -247,13 +247,12 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # .............................................................................
     # Constructor
     # .............................................................................
-    def __init__(self, mapname, title=None,
-              url=None, dlocation=None, keywords=None, epsgcode=None, layers=None,
-              userId=None, dbId=None, mod_time=None,
-              bbox=None, mapunits=None,
-              # This must be specified
-              serviceType=LMServiceType.LAYERSETS,
-              mapType=LMFileType.OTHER_MAP):
+    def __init__(self, mapname, title=None, url=None, dlocation=None, 
+                 keywords=None, epsgcode=None, layers=None, user_id=None, 
+                 db_id=None, mod_time=None, bbox=None, mapunits=None,
+                 # This must be specified
+                 serviceType=LMServiceType.LAYERSETS,
+                 mapType=LMFileType.OTHER_MAP):
         """
         @summary Constructor for the LayerSet class
         @copydoc LmServer.base.layerset._LayerSet::__init__()
@@ -266,9 +265,9 @@ class MapLayerSet(_LayerSet, ServiceObject):
         if serviceType is None:
             raise LMError('Failed to specify serviceType for MapLayerSet superclass')
         _LayerSet.__init__(self, mapname, title=title, keywords=keywords,
-                           epsgcode=epsgcode, layers=layers,
-                           bbox=bbox, mapunits=mapunits)
-        ServiceObject.__init__(self, userId, dbId, serviceType, metadataUrl=url,
+                           epsgcode=epsgcode, layers=layers, bbox=bbox, 
+                           mapunits=mapunits)
+        ServiceObject.__init__(self, user_id, db_id, serviceType, metadataUrl=url,
                                mod_time=mod_time)
         self._map_filename = dlocation
         self._mapType = mapType
@@ -283,9 +282,9 @@ class MapLayerSet(_LayerSet, ServiceObject):
 
     def set_map_prefix(self, mapprefix=None):
         if mapprefix is None:
-            mapprefix = self._earl_jr.constructMapPrefixNew(ftype=LMFileType.OTHER_MAP,
-                                      objCode=self.get_id(), mapname=self.map_name,
-                                      usr=self._userId, epsg=self.epsgcode)
+            mapprefix = self._earl_jr.constructMapPrefixNew(
+                ftype=LMFileType.OTHER_MAP, objCode=self.get_id(), 
+                mapname=self.map_name, usr=self._user_id, epsg=self.epsgcode)
         self._map_prefix = mapprefix
 
     # ...............................................
@@ -298,16 +297,16 @@ class MapLayerSet(_LayerSet, ServiceObject):
         if self._mapType == LMFileType.SDM_MAP:
             fname = self._earl_jr.create_filename(self._mapType,
                                                occsetId=self.get_id(),
-                                               usr=self._userId)
+                                               usr=self._user_id)
         # This will not occur here? only in
         # LmServer.base.legion.gridset.Gridset
         elif self._mapType == LMFileType.RAD_MAP:
             fname = self._earl_jr.create_filename(self._mapType,
                                                gridsetId=self.get_id(),
-                                               usr=self._userId)
+                                               usr=self._user_id)
         elif self._mapType == LMFileType.OTHER_MAP:
             fname = self._earl_jr.create_filename(self._mapType,
-                                               usr=self._userId,
+                                               usr=self._user_id,
                                                epsg=self._epsg)
         else:
             print(('Unsupported mapType {}'.format(self._mapType)))
@@ -674,7 +673,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
                           '         gml_include_items \"all\"'])
         parts.append('         ows_name  \"{}\"'.format(sdlLyr.name))
         try:
-            ltitle = sdlLyr.lyrMetadata[ServiceObject.META_TITLE]
+            ltitle = sdlLyr.lyr_metadata[ServiceObject.META_TITLE]
             parts.append('         ows_title  \"{}\"'.format(ltitle))
         except:
             pass
@@ -693,7 +692,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         # limit to 1000 features for archive point data
         if (isinstance(sdlLyr, OccurrenceLayer) and
             sdlLyr.getUserId() == PUBLIC_USER and
-            sdlLyr.queryCount > POINT_COUNT_MAX):
+            sdlLyr.query_count > POINT_COUNT_MAX):
             dlocation = sdlLyr.get_dlocation(largeFile=False)
             if not os.path.exists(dlocation):
                 dlocation = sdlLyr.get_dlocation()

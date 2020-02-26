@@ -14,7 +14,7 @@ def check_user_permission(session_user, obj, method):
         obj: The object to check permission for
         method: The HTTP method used
     """
-    # For now, the HTTP method requires the userId for the object to match:
+    # For now, the HTTP method requires the user_id for the object to match:
     #        GET - session user, public, or anonymous
     #        PUT - session user - can't update public or anonymous
     #        DELETE - session user - can't delete public or anonymous

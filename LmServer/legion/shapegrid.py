@@ -22,9 +22,9 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, name, userId, epsgcode, cellsides, cellsize, mapunits,
+    def __init__(self, name, user_id, epsgcode, cellsides, cellsize, mapunits,
                  bbox, siteId='siteid', siteX='centerX', siteY='centerY',
-                 size=None, lyrId=None, verify=None, dlocation=None,
+                 size=None, lyr_id=None, verify=None, dlocation=None,
                  metadata={}, resolution=None, metadataUrl=None,
                  parentMetadataUrl=None, mod_time=None, featureCount=0,
                  feature_attributes={}, features={}, fidAttribute=None,
@@ -53,19 +53,19 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         # field with latitude of the centroid of a site
         self.siteY = siteY
 
-        _LayerParameters.__init__(self, userId, paramId=lyrId, mod_time=mod_time)
+        _LayerParameters.__init__(self, user_id, paramId=lyr_id, mod_time=mod_time)
         Vector.__init__(
-            self, name, userId, epsgcode, lyrId=lyrId, verify=verify,
+            self, name, user_id, epsgcode, lyr_id=lyr_id, verify=verify,
             dlocation=dlocation, metadata=metadata,
             dataFormat=LMFormat.SHAPE.driver, ogrType=ogr.wkbPolygon,
             mapunits=mapunits, resolution=resolution, bbox=bbox,
-            svcObjId=lyrId, serviceType=LMServiceType.SHAPEGRIDS,
+            svcObjId=lyr_id, serviceType=LMServiceType.SHAPEGRIDS,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
             mod_time=mod_time, featureCount=featureCount,
             feature_attributes=feature_attributes, features=features,
             fidAttribute=fidAttribute)
         ProcessObject.__init__(
-            self, objId=lyrId, processType=ProcessType.RAD_BUILDGRID,
+            self, obj_id=lyr_id, process_type=ProcessType.RAD_BUILDGRID,
             status=status, status_mod_time=status_mod_time)
         # Don't necessarily need centroids (requires reading shapegrid)
 #         self._set_map_prefix()
@@ -83,7 +83,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         shpGrid = Shapegrid(
             vector.name, vector.getUserId(), vector.epsgcode, cellsides,
             cellsize, vector.mapUnits, vector.bbox, siteId=siteId, siteX=siteX,
-            siteY=siteY, size=size, lyrId=vector.getLayerId(),
+            siteY=siteY, size=size, lyr_id=vector.getLayerId(),
             verify=vector.verify, dlocation=vector.get_dlocation(),
             metadata=vector.lyrMetadata, resolution=vector.resolution,
             metadataUrl=vector.metadataUrl,
@@ -158,7 +158,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         @summary: Calculates and returns the local _dlocation.
         """
         dloc = self._earl_jr.create_filename(
-            LMFileType.SHAPEGRID, lyrname=self.name, usr=self._userId,
+            LMFileType.SHAPEGRID, lyrname=self.name, usr=self._user_id,
             epsg=self._epsg)
         return dloc
 

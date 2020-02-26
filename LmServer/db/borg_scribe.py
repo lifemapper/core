@@ -3,8 +3,6 @@
 """
 import socket
 
-from osgeo.ogr import wkbPoint
-
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import LMFormat, ProcessType
 from LmCommon.common.time import gmt
@@ -34,7 +32,7 @@ class BorgScribe(LMObject):
             logger (LmLogger): A logger object for info and error reporting
             db_user (str): Database user for connection
         """
-        LMObject.__init__(self)
+#         LMObject.__init__(self)
         self.log = logger
         self.hostname = socket.gethostname().lower()
         db_host = DB_HOSTNAME
@@ -801,7 +799,7 @@ class BorgScribe(LMObject):
                 status_mod_time=mod_time)
             new_or_existing_mtx_col = self._borg.find_or_insert_matrix_column(
                 mtx_col)
-            # Reset processType (not in db)
+            # Reset process_type (not in db)
             new_or_existing_mtx_col.process_type = p_type
 
             if JobStatus.finished(new_or_existing_mtx_col.status):

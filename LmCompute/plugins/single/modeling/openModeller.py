@@ -16,7 +16,7 @@ from LmTest.validate.xml_validator import validate_xml_file
 
 
 # TODO: Should these be in constants somewhere?
-ALGORITHM_CODE_KEY = 'algorithmCode'
+# ALGORITHM_CODE_KEY = 'algorithm_code'
 PARAM_NAME_KEY = 'name'
 PARAM_VALUE_KEY = 'value'
 

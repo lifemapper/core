@@ -26,7 +26,7 @@ class MFChain(ProcessObject):
         @summary Class used to generate a Makeflow document with Lifemapper 
                  computational jobs
         @copydoc LmServer.base.service_object.ProcessObject::__init__()
-        @param userId: Id for the owner of this process
+        @param user_id: Id for the owner of this process
         @param dlocation: location for Makeflow file
         @param priority: relative priority for jobs contained within
         @param metadata: Dictionary of metadata key/values; uses class or 
@@ -40,11 +40,11 @@ class MFChain(ProcessObject):
         if headers is not None:
             self.addHeaders(headers)
         self._dlocation = dlocation
-        self._userId = user_id
+        self._user_id = user_id
         self.priority = priority
         self.mfMetadata = {}
         self.loadMfMetadata(metadata)
-        ProcessObject.__init__(self, objId=mf_chain_id, processType=None,
+        ProcessObject.__init__(self, obj_id=mf_chain_id, process_type=None,
                                status=status, status_mod_time=status_mod_time)
 
     # ...............................................
@@ -111,7 +111,7 @@ class MFChain(ProcessObject):
             earlJr = EarlJr()
             dloc = earlJr.create_filename(LMFileType.MF_DOCUMENT,
                                               objCode=self.objId,
-                                              usr=self._userId)
+                                              usr=self._user_id)
         return dloc
 
     def get_dlocation(self):
@@ -120,14 +120,14 @@ class MFChain(ProcessObject):
 
     def set_dlocation(self, dlocation=None):
         """
-        @note: Does NOT override existing dlocation, use clearDLocation for that
+        @note: Does NOT override existing dlocation, use clear_dlocation for that
         """
         if self._dlocation is None:
             if dlocation is None:
                 dlocation = self.create_local_dlocation()
             self._dlocation = dlocation
 
-    def clearDLocation(self):
+    def clear_dlocation(self):
         self._dlocation = None
 
     # ...............................................
@@ -139,7 +139,7 @@ class MFChain(ProcessObject):
         """
         # TODO: Update with something more specific
         # earlJr = EarlJr()
-        # pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT)
+        # pth = earlJr.createDataPath(self._user_id, LMFileType.MF_DOCUMENT)
         # fname = os.path.join(pth, '{}_{}.arf'.format(prefix, self.objId))
         if arfDir is None:
             arfDir = self.getRelativeDirectory()
@@ -160,7 +160,7 @@ class MFChain(ProcessObject):
         else:
             # TODO: Update
             earlJr = EarlJr()
-            pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT)
+            pth = earlJr.createDataPath(self._user_id, LMFileType.MF_DOCUMENT)
             fname = os.path.join(pth, '{}_{}{}'.format
                               (prefix, self.objId, LMFormat.TXT.ext))
         return fname
@@ -174,7 +174,7 @@ class MFChain(ProcessObject):
         """
         # TODO: Update
         # earlJr = EarlJr()
-        # pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT)
+        # pth = earlJr.createDataPath(self._user_id, LMFileType.MF_DOCUMENT)
         # fname = os.path.join(pth, '{}_{}{}'.format
         #                     (prefix, self.objId, LMFormat.TXT.ext))
         fname = os.path.join(prefix, '{}_{}{}'.format(prefix, self.objId, LMFormat.TXT.ext))
@@ -186,14 +186,14 @@ class MFChain(ProcessObject):
         @summary Gets the User id
         @return The User id
         """
-        return self._userId
+        return self._user_id
 
     def setUserId(self, usr):
         """
         @summary: Sets the user id on the object
         @param usr: The user id for the object
         """
-        self._userId = usr
+        self._user_id = usr
 
     # ...........................
     def _addJobCommand(self, outputs, cmd, dependencies=[], comment=''):

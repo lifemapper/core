@@ -88,24 +88,24 @@ class EarlJr(LMObject):
 
         Note:
             - Returns path without trailing /
-            - /ARCHIVE_PATH/userId
+            - /ARCHIVE_PATH/user_id
                 contains config files, trees, attributes ...
-              /ARCHIVE_PATH/userId/makeflow
+              /ARCHIVE_PATH/user_id/makeflow
                 contains MF docs
-              /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
+              /ARCHIVE_PATH/user_id/xxx/xxx/xxx/xxx
                 contains experiment data common to occurrenceId xxxxxxxxxxxx
-              /ARCHIVE_PATH/userId/MAP_DIR
+              /ARCHIVE_PATH/user_id/MAP_DIR
                 contains maps
-              /ARCHIVE_PATH/userId/<epsg>/USER_LAYER_DIR
+              /ARCHIVE_PATH/user_id/<epsg>/USER_LAYER_DIR
                 contains user layers common to epsg
 
         Todo:
             - Add gridset-related directory
-                /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>
+                /ARCHIVE_PATH/user_id/<epsg>/RAD_<xxx>
                     contains computed data for gridset xxx
         """
         if usr is None:
-            raise LMError('createDataPath requires userId')
+            raise LMError('createDataPath requires user_id')
         pth = os.path.join(ARCHIVE_PATH, usr)
 
         # General user documents go directly in user directory
@@ -126,7 +126,7 @@ class EarlJr(LMObject):
                     dir_parts.insert(0, '000')
                 pth = os.path.join(pth, *dir_parts)
             else:
-                raise LMError('Missing occurrenceSetId for SDM filepath')
+                raise LMError('Missing occ_layer_id for SDM filepath')
 
         # All non-SDM Maps go under user map dir
         elif LMFileType.is_map(file_type):
@@ -160,14 +160,14 @@ class EarlJr(LMObject):
         """Get the top level user sdm path
 
         Note:
-            - /ARCHIVE_PATH/userId/
+            - /ARCHIVE_PATH/user_id/
                 contains config files, trees, attributes ...
-              /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
+              /ARCHIVE_PATH/user_id/xxx/xxx/xxx/xxx
                 contains experiment data common to occurrenceId xxxxxxxxxxxx
         """
         sdm_paths = []
         if usr is None:
-            raise LMError('getTopLevelUserSDMPaths requires userId')
+            raise LMError('getTopLevelUserSDMPaths requires user_id')
         pth = os.path.join(ARCHIVE_PATH, usr)
 
         contents = os.listdir(pth)

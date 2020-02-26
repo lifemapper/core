@@ -19,16 +19,16 @@ class Tree(TreeWrapper, ServiceObject):
     # .............................................................................
     def __init__(self, name, metadata={}, dlocation=None, data=None,
                  schema=DEFAULT_TREE_SCHEMA,
-                 metadataUrl=None, userId=None, gridsetId=None, treeId=None,
+                 metadataUrl=None, user_id=None, gridsetId=None, treeId=None,
                  mod_time=None):
         """Constructor for the tree class.
 
         Args:
             name: The user-provided name of this tree
             dlocation: file of data for TreeWrapper base object
-            treeId: dbId  for ServiceObject
+            treeId: db_id  for ServiceObject
         """
-        ServiceObject.__init__(self, userId, treeId, LMServiceType.TREES,
+        ServiceObject.__init__(self, user_id, treeId, LMServiceType.TREES,
                                metadataUrl=metadataUrl, parentId=gridsetId,
                                mod_time=mod_time)
         self.name = name
@@ -105,14 +105,14 @@ class Tree(TreeWrapper, ServiceObject):
         """
         @summary: Set the _dlocation attribute if it is None.  Use dlocation
                   if provided, otherwise calculate it.
-        @note: Does NOT override existing dlocation, use clearDLocation for that
+        @note: Does NOT override existing dlocation, use clear_dlocation for that
         """
         if self._dlocation is None:
             if dlocation is None:
                 dlocation = self.create_local_dlocation()
             self._dlocation = dlocation
 
-    def clearDLocation(self):
+    def clear_dlocation(self):
         self._dlocation = None
 
     # ...............................................

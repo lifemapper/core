@@ -31,11 +31,11 @@ class Gridset(ServiceObject):  # LMMap
                      shapeGrid=None, shapeGridId=None, tree=None, treeId=None,
                      siteIndicesFilename=None,
                      dlocation=None, epsgcode=None, matrices=None,
-                     userId=None, gridsetId=None, metadataUrl=None, mod_time=None):
+                     user_id=None, gridsetId=None, metadataUrl=None, mod_time=None):
         """
         @summary Constructor for the Gridset class
         @copydoc LmServer.base.service_object.ServiceObject::__init__()
-        @param gridsetId: dbId  for ServiceObject
+        @param gridsetId: db_id  for ServiceObject
         @param name: Short identifier for this gridset, unique for userid.
         @param shapeGrid: Vector layer with polygons representing geographic sites.
         @param siteIndices: A filename containing a dictionary with keys the 
@@ -46,8 +46,8 @@ class Gridset(ServiceObject):  # LMMap
         @param tree: A Tree with taxa matching those in the PAM 
         """
         if shapeGrid is not None:
-            if userId is None:
-                userId = shapeGrid.getUserId()
+            if user_id is None:
+                user_id = shapeGrid.getUserId()
             if shapeGridId is None:
                 shapeGridId = shapeGrid.get_id()
             if epsgcode is None:
@@ -56,7 +56,7 @@ class Gridset(ServiceObject):  # LMMap
                 raise LMError('Gridset EPSG {} does not match Shapegrid EPSG {}'
                                   .format(self._epsg, shapeGrid.epsgcode))
 
-        ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS,
+        ServiceObject.__init__(self, user_id, gridsetId, LMServiceType.GRIDSETS,
                                       metadataUrl=metadataUrl, mod_time=mod_time)
         # TODO: Aimee, do you want to move this somewhere else?
         self._dlocation = None
@@ -118,7 +118,7 @@ class Gridset(ServiceObject):  # LMMap
         if mapfname is None:
             mapfname = self._earl_jr.create_filename(LMFileType.RAD_MAP,
                                                             gridsetId=self.get_id(),
-                                                            usr=self._userId)
+                                                            usr=self._user_id)
         self._map_filename = mapfname
 
 # ...............................................
@@ -145,7 +145,7 @@ class Gridset(ServiceObject):  # LMMap
             grdid = ID_PLACEHOLDER
         mapprefix = self._earl_jr.constructMapPrefixNew(urlprefix=self.metadataUrl,
                                         ftype=LMFileType.RAD_MAP, mapname=self.map_name,
-                                        usr=self._userId)
+                                        usr=self._user_id)
         return mapprefix
 
     def _set_map_prefix(self):
@@ -195,10 +195,10 @@ class Gridset(ServiceObject):  # LMMap
 # ...............................................
     def setPath(self):
         if self._path is None:
-            if (self._userId is not None and
+            if (self._user_id is not None and
                  self.get_id() and
                  self._getEPSG() is not None):
-                self._path = self._earl_jr.createDataPath(self._userId,
+                self._path = self._earl_jr.createDataPath(self._user_id,
                                          LMFileType.UNSPECIFIED_RAD,
                                          epsg=self._epsg, gridsetId=self.get_id())
             else:
@@ -287,7 +287,7 @@ class Gridset(ServiceObject):  # LMMap
         if mtxFileOrObj is not None:
             usr = self.getUserId()
             if isinstance(mtxFileOrObj, str) and os.path.exists(mtxFileOrObj):
-                mtx = LMMatrix(dlocation=mtxFileOrObj, userId=usr)
+                mtx = LMMatrix(dlocation=mtxFileOrObj, user_id=usr)
                 if do_read:
                     mtx.readData()
             elif isinstance(mtxFileOrObj, LMMatrix):
@@ -340,16 +340,16 @@ class Gridset(ServiceObject):  # LMMap
                 return grim
         return None
 
-    def getPAMForCodes(self, gcmCode, altpredCode, dateCode, algorithmCode):
+    def getPAMForCodes(self, gcmCode, altpredCode, dateCode, algorithm_code):
         for pam in self.getAllPAMs():
             if (pam.gcmCode == gcmCode and
                  pam.altpredCode == altpredCode and
                  pam.dateCode == dateCode and
-                 pam.algorithmCode == algorithmCode):
+                 pam.algorithm_code == algorithm_code):
                 return pam
         return None
 
-    def setMatrixProcessType(self, processType, matrixTypes=[], matrixId=None):
+    def setMatrixProcessType(self, process_type, matrixTypes=[], matrixId=None):
         if type(matrixTypes) is int:
             matrixTypes = [matrixTypes]
         matching = []
@@ -361,7 +361,7 @@ class Gridset(ServiceObject):  # LMMap
                 matching.append(mtx)
                 break
         for mtx in matching:
-            mtx.processType = processType
+            mtx.process_type = process_type
 
 # ................................................
     def createLayerShapefileFromMatrix(self, shpfilename, isPresenceAbsence=True):
@@ -377,9 +377,9 @@ class Gridset(ServiceObject):  # LMMap
         else:
             self._shapeGrid.copy_data(self._shapeGrid.get_dlocation(),
                                             target_dlocation=shpfilename,
-                                            format=self._shapeGrid.dataFormat)
+                                            format=self._shapeGrid.data_format)
             ogr.RegisterAll()
-            drv = ogr.GetDriverByName(self._shapeGrid.dataFormat)
+            drv = ogr.GetDriverByName(self._shapeGrid.data_format)
             try:
                 shpDs = drv.Open(shpfilename, True)
             except Exception as e:

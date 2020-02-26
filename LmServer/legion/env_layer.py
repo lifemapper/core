@@ -58,10 +58,10 @@ class EnvLayer(EnvType, Raster):
     """
 
 # .............................................................................
-    def __init__(self, name, userId, epsgcode, scencode=None, lyrId=None,
+    def __init__(self, name, userId, epsgcode, scencode=None, lyr_id=None,
                      squid=None, ident=None, verify=None, dlocation=None,
-                     lyrMetadata={}, dataFormat=None, gdalType=None,
-                     valUnits=None, valAttribute=None,
+                     lyrMetadata={}, data_format=None, gdalType=None,
+                     valUnits=None, val_attribute=None,
                      nodataVal=None, minVal=None, maxVal=None,
                      mapunits=None, resolution=None,
                      bbox=None, envLayerId=None, metadataUrl=None,
@@ -81,9 +81,9 @@ class EnvLayer(EnvType, Raster):
         self._map_prefix = None
         # Raster metadataUrl and serviceType override those of EnvType
         # if it is a full EnvLayer
-        Raster.__init__(self, name, userId, epsgcode, lyrId=lyrId,
+        Raster.__init__(self, name, userId, epsgcode, lyr_id=lyr_id,
                      squid=squid, ident=ident, verify=verify, dlocation=dlocation,
-                     metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType,
+                     metadata=lyrMetadata, data_format=data_format, gdalType=gdalType,
                      valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, maxVal=maxVal,
                      mapunits=mapunits, resolution=resolution,
                      bbox=bbox, svcObjId=envLayerId,
@@ -97,9 +97,9 @@ class EnvLayer(EnvType, Raster):
     @classmethod
     def init_from_parts(cls, raster, envType, envLayerId=None, scencode=None):
         envLyr = EnvLayer(raster.name, raster.getUserId(), raster.epsgcode,
-                        scencode=scencode, lyrId=raster.get_id(), squid=raster.squid,
+                        scencode=scencode, lyr_id=raster.get_id(), squid=raster.squid,
                         ident=raster.ident, verify=raster.verify, dlocation=raster.get_dlocation(),
-                        lyrMetadata=raster.lyrMetadata, dataFormat=raster.dataFormat,
+                        lyrMetadata=raster.lyrMetadata, data_format=raster.data_format,
                         gdalType=raster.gdalType, valUnits=raster.valUnits,
                         nodataVal=raster.nodataVal, minVal=raster.minVal,
                         maxVal=raster.maxVal, mapunits=raster.mapUnits,

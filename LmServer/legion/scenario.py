@@ -40,7 +40,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
 # Constructor
 # .............................................................................
     # ...............................................
-    def __init__(self, name, userId,
+    def __init__(self, name, user_id,
                      metadata={},
                      metadataUrl=None,
                      epsgcode=None,
@@ -55,7 +55,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
         @param name: The name for this set of scenarios
         @param scenarios: list of Scenario objects
         """
-        ServiceObject.__init__(self, userId, scenPackageId,
+        ServiceObject.__init__(self, user_id, scenPackageId,
                                       LMServiceType.SCEN_PACKAGES,
                                       metadataUrl=metadataUrl,
                                       mod_time=mod_time)
@@ -97,10 +97,10 @@ class ScenPackage(ServiceObject, LMSpatialObject):
         """
         @summary Gets a scenario from the ScenPackage with the specified metadataUrl
         @param metadataUrl: metadataUrl for which to find matching scenario
-        @param userId: user for which to find matching scenario with code
-        @param code: code for which to find matching scenario with userId
+        @param user_id: user for which to find matching scenario with code
+        @param code: code for which to find matching scenario with user_id
         @return the LmServer.legion.Scenario object with the given metadataUrl, 
-                 or userId/code combination. None if not found.
+                 or user_id/code combination. None if not found.
         """
         for scen in self._scenarios:
             if code is not None:
@@ -157,7 +157,7 @@ class Scenario(MapLayerSet):
 # Constructor
 # .............................................................................
     # ...............................................
-    def __init__(self, code, userId, epsgcode, metadata={},
+    def __init__(self, code, user_id, epsgcode, metadata={},
                      metadataUrl=None,
                      units=None, res=None,
                      gcmCode=None, altpredCode=None, dateCode=None,
@@ -178,12 +178,11 @@ class Scenario(MapLayerSet):
         self._layers = []
         # layers are set not set in LayerSet or Layerset - done here to check
         # that each layer is an EnvLayer
-        MapLayerSet.__init__(self, code,
-                                    url=metadataUrl,
-                                    epsgcode=epsgcode, userId=userId, dbId=scenarioid,
-                                    bbox=bbox, mapunits=units, mod_time=mod_time,
-                                    serviceType=LMServiceType.SCENARIOS,
-                                    mapType=LMFileType.SCENARIO_MAP)
+        MapLayerSet.__init__(self, code, url=metadataUrl, epsgcode=epsgcode, 
+                             user_id=user_id, db_id=scenarioid, bbox=bbox, 
+                             mapunits=units, mod_time=mod_time,
+                             serviceType=LMServiceType.SCENARIOS,
+                             mapType=LMFileType.SCENARIO_MAP)
         # aka MapLayerSet.name
         self.code = code
 
@@ -319,7 +318,7 @@ class Scenario(MapLayerSet):
         """
         mapprefix = self._earl_jr.constructMapPrefixNew(ftype=LMFileType.SCENARIO_MAP,
                                                         objCode=self.code, lyrname=lyrname,
-                                                        usr=self._userId, epsg=self._epsg)
+                                                        usr=self._user_id, epsg=self._epsg)
         return mapprefix
 
     def _set_map_prefix(self, mapprefix=None):
@@ -338,7 +337,7 @@ class Scenario(MapLayerSet):
         """
         mapfname = self._earl_jr.create_filename(self._mapType,
                                                             objCode=self.code,
-                                                            usr=self._userId,
+                                                            usr=self._user_id,
                                                             epsg=self._epsg)
         return mapfname
 
