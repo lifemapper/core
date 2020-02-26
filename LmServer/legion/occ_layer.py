@@ -47,36 +47,36 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         self.queryCount = queryCount
         self._rawDLocation = rawDLocation
         self._bigDLocation = None
-        self._scientificName = sciName
+        self._scientific_name = sciName
 
 # ...............................................
-    def getScientificNameId(self):
-        if self._scientificName is not None:
-            return self._scientificName.get_id()
+    def get_scientific_name_id(self):
+        if self._scientific_name is not None:
+            return self._scientific_name.get_id()
         else:
             return None
 
 # ...............................................
-    def getScientificName(self):
-        return self._scientificName
+    def get_scientific_name(self):
+        return self._scientific_name
 
 # ...............................................
-    def setScientificName(self, sciName):
-        self._scientificName = sciName
+    def set_scientific_name(self, sciName):
+        self._scientific_name = sciName
 
 # ...............................................
-    def getRawDLocation(self):
+    def get_raw_dlocation(self):
         return self._rawDLocation
 
-    def setRawDLocation(self, rawDLocation, mod_time):
+    def set_raw_dlocation(self, rawDLocation, mod_time):
         self._rawDLocation = rawDLocation
         self.paramModTime = mod_time
 
     # ...............................................
-    def updateStatus(self, status, mod_time=gmt().mjd,
+    def update_status(self, status, mod_time=gmt().mjd,
                      queryCount=None):
         """
-        @note: Overrides ProcessObject.updateStatus
+        @note: Overrides ProcessObject.update_status
         """
         ProcessObject.update_status(self, status, mod_time)
         if queryCount is not None:
@@ -404,7 +404,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             valAttribute=self.getValAttribute(), nodataVal=self.nodataVal,
             minVal=self.minVal, maxVal=self.maxVal, mapunits=self.mapUnits,
             resolution=self.resolution, bbox=self.bbox,
-            occMetadata=self.paramMetadata, sciName=self._scientificName,
+            occMetadata=self.paramMetadata, sciName=self._scientific_name,
             status=self.status, statusModTime=self.statusModTime)
         return newOcc
 

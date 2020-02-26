@@ -44,7 +44,7 @@ def checkMergedFile(log, mergefname, metafname):
     chunkCount = recCount = failSortCount = failChunkCount = 0
     bigSortedData = OccDataParser(log, mergefname, metafname,
                                   delimiter=OUT_DELIMITER, pullChunks=True)
-    bigSortedData.initializeMe()
+    bigSortedData.initialize_me()
     prevKey = bigSortedData.groupVal
 
     chunk, chunkGroup, chunkName = bigSortedData.pullCurrentChunk()
@@ -204,7 +204,7 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
         try:
             op = OccDataParser(log, srtFname, metafname, delimiter=OUT_DELIMITER,
                                pullChunks=True)
-            op.initializeMe()
+            op.initialize_me()
         except IOError as e:
             log.warning('Enough already, IOError! Final file {}. Using only indices {} - {}, err {}'
                         .format(srtFname, inIdx, currIdx, str(e)))
@@ -321,7 +321,7 @@ if __name__ == "__main__":
         # Split into smaller unsorted files
         occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter,
                                   pullChunks=True)
-        occparser.initializeMe()
+        occparser.initialize_me()
         groupByIdx = occparser.groupByIdx
         print('groupByIdx = ', groupByIdx)
 
@@ -382,7 +382,7 @@ log = ScriptLogger(logname)
 
 occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter,
                           pullChunks=True)
-occparser.initializeMe()
+occparser.initialize_me()
 groupByIdx = occparser.groupByIdx
 print 'groupByIdx = ', groupByIdx
 
