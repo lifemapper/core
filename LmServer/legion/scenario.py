@@ -196,7 +196,7 @@ class Scenario(MapLayerSet):
         self._scenarioId = scenarioid
         self._setLayers(layers)
         self._setRes(res)
-        self.setMapPrefix()
+        self.set_map_prefix()
         self.set_local_map_filename()
 
     # ...............................................
@@ -293,7 +293,7 @@ class Scenario(MapLayerSet):
                     # mapfiles, but all should use same url/map_prefix.
                     if lyr.map_prefix is None:
                         lyr._set_map_prefix(scencode=self.code)
-                    mapfname = self.createLocalMapFilename()
+                    mapfname = self.create_local_map_filename()
                     lyr.set_local_map_filename(mapfname=mapfname)
                 else:
                     raise LMError(['Attempt to add non-EnvLayer'])
@@ -332,11 +332,11 @@ class Scenario(MapLayerSet):
         return self._map_prefix
 
 # ...............................................
-    def createLocalMapFilename(self):
+    def create_local_map_filename(self):
         """
         @summary: Find mapfile containing this layer.  
         """
-        mapfname = self._earl_jr.createFilename(self._mapType,
+        mapfname = self._earl_jr.create_filename(self._mapType,
                                                             objCode=self.code,
                                                             usr=self._userId,
                                                             epsg=self._epsg)

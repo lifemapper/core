@@ -4,7 +4,7 @@ import os
 
 from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import JSON_INTERFACE, DEFAULT_TREE_SCHEMA
-from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.service_object import ServiceObject
 from LmServer.common.lmconstants import LMServiceType, LMFileType
 from lmpy import TreeWrapper
 
@@ -93,7 +93,7 @@ class Tree(TreeWrapper, ServiceObject):
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
         """
-        dloc = self._earl_jr.createFilename(LMFileType.TREE, objCode=self.get_id(),
+        dloc = self._earl_jr.create_filename(LMFileType.TREE, objCode=self.get_id(),
                                            usr=self.getUserId())
         return dloc
 

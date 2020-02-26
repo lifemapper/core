@@ -1411,7 +1411,7 @@ class Vector(_Layer):
             dlocation = self._dlocation
         deleteDir = False
         if not isTemp:
-            self.clearLocalMapfile()
+            self.clear_local_mapfile()
             deleteDir = True
         self.deleteFile(dlocation, deleteDir=deleteDir)
 

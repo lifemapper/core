@@ -116,13 +116,13 @@ class Gridset(ServiceObject):  # LMMap
                      Gridset. 
         """
         if mapfname is None:
-            mapfname = self._earl_jr.createFilename(LMFileType.RAD_MAP,
+            mapfname = self._earl_jr.create_filename(LMFileType.RAD_MAP,
                                                             gridsetId=self.get_id(),
                                                             usr=self._userId)
         self._map_filename = mapfname
 
 # ...............................................
-    def clearLocalMapfile(self):
+    def clear_local_mapfile(self):
         """
         @summary: Delete the mapfile containing this layer
         """
@@ -144,7 +144,7 @@ class Gridset(ServiceObject):  # LMMap
         if grdid is None:
             grdid = ID_PLACEHOLDER
         mapprefix = self._earl_jr.constructMapPrefixNew(urlprefix=self.metadataUrl,
-                                        ftype=LMFileType.RAD_MAP, mapname=self.mapName,
+                                        ftype=LMFileType.RAD_MAP, mapname=self.map_name,
                                         usr=self._userId)
         return mapprefix
 
@@ -158,14 +158,14 @@ class Gridset(ServiceObject):  # LMMap
 
 # ...............................................
     @property
-    def mapFilename(self):
+    def map_filename(self):
         if self._map_filename is None:
             self.set_local_map_filename()
         return self._map_filename
 
 # ...............................................
     @property
-    def mapName(self):
+    def map_name(self):
         mapname = None
         if self._map_filename is not None:
             _, mapfname = os.path.split(self._map_filename)
@@ -216,7 +216,7 @@ class Gridset(ServiceObject):  # LMMap
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
         """
-        dloc = self._earl_jr.createFilename(LMFileType.GRIDSET_PACKAGE,
+        dloc = self._earl_jr.create_filename(LMFileType.GRIDSET_PACKAGE,
                                                       objCode=self.get_id(),
                                                       gridsetId=self.get_id(),
                                                       usr=self.getUserId())

@@ -109,7 +109,7 @@ class MFChain(ProcessObject):
         dloc = None
         if self.objId is not None:
             earlJr = EarlJr()
-            dloc = earlJr.createFilename(LMFileType.MF_DOCUMENT,
+            dloc = earlJr.create_filename(LMFileType.MF_DOCUMENT,
                                               objCode=self.objId,
                                               usr=self._userId)
         return dloc

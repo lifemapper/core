@@ -27,7 +27,7 @@ from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME,
                                               GBIF_TAXONOMY_FILENAME)
 from LmDbServer.tools.catalog_scen_package import SPFiller
 from LmServer.base.layer import Vector, Raster
-from LmServer.base.serviceobject import ServiceObject
+from LmServer.base.service_object import ServiceObject
 from LmServer.base.utilities import is_lm_user
 from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
@@ -130,7 +130,7 @@ class BOOMFiller(LMObject):
          self.other_lyr_names) = self.readParamVals()
         self.woof_time_mjd = gmt().mjd
         earl = EarlJr()
-        self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG,
+        self.outConfigFilename = earl.create_filename(LMFileType.BOOM_CONFIG,
                                                      objCode=self.archiveName,
                                                      usr=self.userId)
 
@@ -275,7 +275,8 @@ class BOOMFiller(LMObject):
                             os.chown(fd, -1, gid)
                             os.chmod(fd, 0o664)
                         except Exception as e:
-                            print(('Failed to fix permissions on {}'.format(fd)))
+                            print(('Failed to fix permissions on {} ({})'.format(
+                                fd, e)))
             if dirs is not None:
                 if not (isinstance(dirs, list) or
                         isinstance(dirs, tuple)):
@@ -777,13 +778,13 @@ class BOOMFiller(LMObject):
         validData = False
         if newshp:
             # check existence
-            validData, _ = Shapegrid.testVector(newshp.get_dlocation())
+            validData, _ = Shapegrid.test_vector(newshp.get_dlocation())
             if not validData:
                 try:
                     # Write new shapegrid
                     dloc = newshp.get_dlocation()
                     newshp.buildShape(overwrite=True)
-                    validData, _ = Shapegrid.testVector(dloc)
+                    validData, _ = Shapegrid.test_vector(dloc)
                     self._fixPermissions(files=newshp.get_shapefiles())
                 except Exception as e:
                     self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))

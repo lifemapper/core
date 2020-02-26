@@ -270,7 +270,7 @@ class SDMProjection(_ProjectionType, Raster):
         """
         dloc = None
         if self.get_id() is not None:
-            dloc = self._earl_jr.createFilename(
+            dloc = self._earl_jr.create_filename(
                 LMFileType.PROJECTION_LAYER, objCode=self.get_id(),
                 occsetId=self._occurrenceSet.get_id(), usr=self._userId,
                 epsg=self._epsg)
@@ -382,32 +382,32 @@ class SDMProjection(_ProjectionType, Raster):
         #     clear the map file so that it can be regenerated
         try:
             if status == JobStatus.COMPLETE:
-                self.clearLocalMapfile()
+                self.clear_local_mapfile()
         except:
             pass
 
 # ...............................................
     def clearProjectionFiles(self):
         reqfname = self.getProjRequestFilename()
-        success, msg = self.deleteFile(reqfname)
+        success, _ = self.deleteFile(reqfname)
         pkgfname = self.getProjPackageFilename()
-        success, msg = self.deleteFile(pkgfname)
+        success, _ = self.deleteFile(pkgfname)
         # metadata files
         prjfnames = glob.glob(self._dlocation + '*')
         for fname in prjfnames:
-            success, msg = self.deleteFile(fname)
+            success, _ = self.deleteFile(fname)
         self.clearDLocation()
 
 # ...............................................
     def clearOutputFiles(self):
         reqfname = self.getProjRequestFilename()
-        success, msg = self.deleteFile(reqfname)
+        success, _ = self.deleteFile(reqfname)
         pkgfname = self.getProjPackageFilename()
-        success, msg = self.deleteFile(pkgfname)
+        success, _ = self.deleteFile(pkgfname)
         # metadata files
         prjfnames = glob.glob(self._dlocation + '*')
         for fname in prjfnames:
-            success, msg = self.deleteFile(fname)
+            success, _ = self.deleteFile(fname)
         self.clearDLocation()
 
 # ...............................................
@@ -418,11 +418,11 @@ class SDMProjection(_ProjectionType, Raster):
         """
         self.update_status(status)
         self.clearOutputFiles()
-        self.clearLocalMapfile()
+        self.clear_local_mapfile()
 
 # ...............................................
     def getProjPackageFilename(self):
-        fname = self._earl_jr.createFilename(
+        fname = self._earl_jr.create_filename(
             LMFileType.PROJECTION_PACKAGE, objCode=self.get_id(),
             occsetId=self._occurrenceSet.get_id(), usr=self._userId,
             epsg=self._epsg)
@@ -455,7 +455,7 @@ class SDMProjection(_ProjectionType, Raster):
         paramsHash = md5(str(paramsSet)).hexdigest()
 
         # TODO: Determine if we should copy this to the workspace or something?
-        paramsFname = self._earl_jr.createFilename(
+        paramsFname = self._earl_jr.create_filename(
             LMFileType.TMP_JSON, objCode=paramsHash[:16], usr=self.getUserId())
 
         # Write if it does not exist
@@ -466,11 +466,11 @@ class SDMProjection(_ProjectionType, Raster):
         return paramsFname
 
 # ...............................................
-    def clearLocalMapfile(self, scencode=None):
+    def clear_local_mapfile(self, scencode=None):
         """
         @summary: Delete the mapfile containing this layer
         """
-        return self._occurrenceSet.clearLocalMapfile()
+        return self._occurrenceSet.clear_local_mapfile()
 
 # ...............................................
     def set_local_map_filename(self):
@@ -486,8 +486,8 @@ class SDMProjection(_ProjectionType, Raster):
         return self._occurrenceSet.mapFilename
 
     @property
-    def mapName(self):
-        return self._occurrenceSet.mapName
+    def map_name(self):
+        return self._occurrenceSet.map_name
 
 # ...............................................
     def _create_map_prefix(self):
@@ -507,7 +507,7 @@ class SDMProjection(_ProjectionType, Raster):
             LMFileType.PROJECTION_LAYER, objCode=projid, usr=self._userId,
             epsg=self.epsgcode)
         mapprefix = self._earl_jr.constructMapPrefixNew(
-            ftype=LMFileType.SDM_MAP, mapname=self._occurrenceSet.mapName,
+            ftype=LMFileType.SDM_MAP, mapname=self._occurrenceSet.map_name,
             lyrname=lyrname, usr=self._userId)
         return mapprefix
 

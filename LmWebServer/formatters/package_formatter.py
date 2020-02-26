@@ -40,7 +40,7 @@ def get_map_content_for_proj(prj, scribe):
     """
     ows_req = mapscript.OWSRequest()
     earl_jr = EarlJr(scribe=scribe)
-    map_filename = earl_jr.get_map_filename_from_map_name(prj.mapName)
+    map_filename = earl_jr.get_map_filename_from_map_name(prj.map_name)
     if not os.path.exists(map_filename):
         map_svc = scribe.get_map_service_from_map_filename(map_filename)
         if map_svc is not None and map_svc.count > 0:

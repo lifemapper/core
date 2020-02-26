@@ -35,7 +35,7 @@ class MapService(LmService):
         """GET method for all OGC services
 
         Args:
-            mapName: The map name to use for the request
+            map_name: The map name to use for the request
             bbox: A (min x, min y, max x, max y) tuple of bounding parameters
             bgcolor: A background color to use for a map
             color: The color (or color ramp) to use for the map

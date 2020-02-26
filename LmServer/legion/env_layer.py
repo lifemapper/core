@@ -162,14 +162,14 @@ class EnvLayer(EnvType, Raster):
         self._scenCode = scencode
 
 # ...............................................
-    def createLocalMapFilename(self, scencode=None):
+    def create_local_map_filename(self, scencode=None):
         """
         @summary: Find mapfile containing this layer.
         @param scencode: override scenario associated with this layer
         """
         if scencode is None:
             scencode = self._scenCode
-        mapfname = self._earl_jr.createFilename(LMFileType.SCENARIO_MAP,
+        mapfname = self._earl_jr.create_filename(LMFileType.SCENARIO_MAP,
                                                             objCode=scencode,
                                                             usr=self._userId, epsg=self._epsg)
         return mapfname
@@ -185,11 +185,11 @@ class EnvLayer(EnvType, Raster):
         if scencode is None:
             scencode = self._scenCode
         if mapfname is None:
-            mapfname = self.createLocalMapFilename(scencode=scencode)
+            mapfname = self.create_local_map_filename(scencode=scencode)
         self._map_filename = mapfname
 
 # ...............................................
-    def setLayerParam(self, envType):
+    def set_layer_param(self, envType):
         """ 
         @param envType: an LmServer.legion.EnvironmentalType object
         """

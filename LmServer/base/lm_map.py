@@ -46,7 +46,7 @@ class LMMap(LMSpatialObject):
                              can be joined to the shapegrid for map 
         """
         LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
-        self.mapName = mapname
+        self.map_name = mapname
         self.url = url
         self.title = title
         self.layers = layers
@@ -128,7 +128,7 @@ class LMMap(LMSpatialObject):
             label = 'Lifemapper Data Service'
 
         # changed this from self.name (which left 'scen_' prefix off scenarios)
-        mapstr = mapstr.replace('##_MAPNAME_##', self.mapName)
+        mapstr = mapstr.replace('##_MAPNAME_##', self.map_name)
         boundstr = LMSpatialObject.get_extent_string(self.bbox, separator='  ')
         mapstr = mapstr.replace('##_EXTENT_##', boundstr)
         mapstr = mapstr.replace('##_UNITS_##', self.mapUnits)

@@ -157,7 +157,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         """
         @summary: Calculates and returns the local _dlocation.
         """
-        dloc = self._earl_jr.createFilename(
+        dloc = self._earl_jr.create_filename(
             LMFileType.SHAPEGRID, lyrname=self.name, usr=self._userId,
             epsg=self._epsg)
         return dloc

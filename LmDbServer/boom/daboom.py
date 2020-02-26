@@ -81,7 +81,7 @@ if __name__ == "__main__":
         print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
     earl = EarlJr()
-    defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG,
+    defaultConfigFile = earl.create_filename(LMFileType.BOOM_CONFIG,
                                                          objCode=PUBLIC_ARCHIVE_NAME,
                                                          usr=PUBLIC_USER)
 #     pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)

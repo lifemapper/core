@@ -264,7 +264,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             else:
                 ftype = LMFileType.OCCURRENCE_FILE
             occid = self.get_id()
-            dloc = self._earl_jr.createFilename(
+            dloc = self._earl_jr.create_filename(
                 ftype, occsetId=occid, objCode=occid, usr=self._userId)
         return dloc
 
@@ -311,7 +311,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             epsg=self.epsgcode)
         mapprefix = self._earl_jr.constructMapPrefixNew(
             urlprefix=self.metadataUrl, ftype=LMFileType.SDM_MAP,
-            mapname=self.mapName, lyrname=lyrname, usr=self._userId)
+            mapname=self.map_name, lyrname=lyrname, usr=self._userId)
         return mapprefix
 
     def _set_map_prefix(self):
@@ -331,12 +331,12 @@ class OccurrenceLayer(OccurrenceType, Vector):
         return lyrname
 
 # ...............................................
-    def createLocalMapFilename(self):
+    def create_local_map_filename(self):
         """
         @summary: Find mapfile containing this layer.  
         """
         occid = self.get_id()
-        mapfilename = self._earl_jr.createFilename(
+        mapfilename = self._earl_jr.create_filename(
             LMFileType.SDM_MAP, occsetId=occid, objCode=occid, usr=self._userId)
         return mapfilename
 
@@ -348,18 +348,18 @@ class OccurrenceLayer(OccurrenceType, Vector):
         @param mapfname: Previously constructed mapfilename
         """
         if self._map_filename is None:
-            mapfname = self.createLocalMapFilename()
+            mapfname = self.create_local_map_filename()
         self._map_filename = mapfname
 
 # ...............................................
     @property
-    def mapFilename(self):
+    def map_filename(self):
         self.set_local_map_filename()
         return self._map_filename
 
 # ...............................................
     @property
-    def mapName(self):
+    def map_name(self):
         if self._map_filename is None:
             self.set_local_map_filename()
         _, fname = os.path.split(self._map_filename)
@@ -372,7 +372,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         return self._earl_jr.createLayername(occsetId=self.get_id())
 
 # ...............................................
-    def clearLocalMapfile(self):
+    def clear_local_mapfile(self):
         """
         @summary: Delete the mapfile containing this layer
         """

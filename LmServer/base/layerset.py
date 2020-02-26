@@ -278,35 +278,35 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # TODO: remove this property
     @property
     def mapPrefix(self):
-        self.setMapPrefix()
+        self.set_map_prefix()
         return self._map_prefix
 
-    def setMapPrefix(self, mapprefix=None):
+    def set_map_prefix(self, mapprefix=None):
         if mapprefix is None:
             mapprefix = self._earl_jr.constructMapPrefixNew(ftype=LMFileType.OTHER_MAP,
-                                      objCode=self.get_id(), mapname=self.mapName,
+                                      objCode=self.get_id(), mapname=self.map_name,
                                       usr=self._userId, epsg=self.epsgcode)
         self._map_prefix = mapprefix
 
     # ...............................................
-    def createLocalMapFilename(self):
+    def create_local_map_filename(self):
         """
         @summary: Full mapfile with path, containing this layer.
         @note: This method is overridden in Scenario  
         """
         fname = None
         if self._mapType == LMFileType.SDM_MAP:
-            fname = self._earl_jr.createFilename(self._mapType,
+            fname = self._earl_jr.create_filename(self._mapType,
                                                occsetId=self.get_id(),
                                                usr=self._userId)
         # This will not occur here? only in
         # LmServer.base.legion.gridset.Gridset
         elif self._mapType == LMFileType.RAD_MAP:
-            fname = self._earl_jr.createFilename(self._mapType,
+            fname = self._earl_jr.create_filename(self._mapType,
                                                gridsetId=self.get_id(),
                                                usr=self._userId)
         elif self._mapType == LMFileType.OTHER_MAP:
-            fname = self._earl_jr.createFilename(self._mapType,
+            fname = self._earl_jr.create_filename(self._mapType,
                                                usr=self._userId,
                                                epsg=self._epsg)
         else:
@@ -320,11 +320,11 @@ class MapLayerSet(_LayerSet, ServiceObject):
         @summary: Set absolute mapfilename containing all layers for this User/EPSG. 
         """
         if mapfname is None:
-            mapfname = self.createLocalMapFilename()
+            mapfname = self.create_local_map_filename()
         self._map_filename = mapfname
 
     # ...............................................
-    def clearLocalMapfile(self):
+    def clear_local_mapfile(self):
         """
         @summary: Delete the mapfile containing this layer
         """
@@ -349,7 +349,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
 
     # ...............................................
     @property
-    def mapName(self):
+    def map_name(self):
         mapname = None
         if self._map_filename is not None:
             _, mapfname = os.path.split(self._map_filename)
@@ -437,7 +437,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
             mbbox = self.unionBounds
         boundstr = LMSpatialObject.get_extent_string(mbbox, separator='  ')
         mapprj = self._createProjectionInfo(self.epsgcode)
-        parts = ['  NAME        {}'.format(self.mapName),
+        parts = ['  NAME        {}'.format(self.map_name),
                  # All raster/vector filepaths will be relative to mapfile path
                  '  SHAPEPATH \"{}\"'.format(self.mapAbsolutePath),
                  '  EXTENT      {}'.format(boundstr),
