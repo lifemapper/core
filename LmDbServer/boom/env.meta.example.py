@@ -11,7 +11,8 @@ dictionary, and should be their relative path and filename (under <topdir>).
 
 @note: LAYERTYPE_DATA
 Each entry should have a title, description, value units, keywords, and files
-title: The title of this layer type.  Examples: Elevation, Annual Mean Temperature
+title: The title of this layer type.  Examples: Elevation, Annual Mean
+    Temperature
 description: A description of what this layer type is
 valunits: What are the units for the values in these layers.  Examples:
           meters for elevation, and mm for precipitation

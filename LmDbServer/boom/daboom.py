@@ -1,4 +1,4 @@
-"""
+"""Daemon for boom process
 """
 import argparse
 import logging
@@ -12,8 +12,7 @@ from LmDbServer.boom.boomer import Boomer
 from LmServer.base.utilities import is_lm_user
 from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
-from LmServer.common.localconstants import BOOM_PID_FILE
-from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.localconstants import BOOM_PID_FILE, PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 
 
@@ -24,42 +23,47 @@ class DaBoom(Daemon):
     """
 
     # .............................
-    def __init__(self, pidfile, configFname, priority=None):
+    def __init__(self, pidfile, config_fname, priority=None):
         # Logfile
         secs = time.time()
-        timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+        timestamp = "{}".format(
+            time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(self.__class__.__name__.lower(), timestamp)
         log = ScriptLogger(logname, level=logging.INFO)
 
         Daemon.__init__(self, pidfile, log=log)
-        self.boomer = Boomer(configFname, log=log)
+        self.boomer = Boomer(config_fname, log=log)
 
     # .............................
     def initialize(self):
+        """Initialize the Daemon
+        """
         self.boomer.initialize_me()
 
     # .............................
     def run(self):
-        print(('Running daBoom with configFname = {}'.format(self.boomer.configFname)))
+        """Run the daemon
+        """
+        print(
+            'Running daBoom with config_fname = {}'.format(
+                self.boomer.config_fname))
         try:
-            while self.boomer.keepWalken:
-                self.boomer.processSpud()
+            while self.boomer.keep_walken:
+                self.boomer.process_spud()
         except Exception as e:
             self.log.debug('Exception {} on potato'.format(str(e)))
-            tb = traceback.format_exc()
+            trace_back = traceback.format_exc()
             self.log.error("An error occurred")
             self.log.error(str(e))
-            self.log.error(tb)
+            self.log.error(trace_back)
         finally:
             self.log.debug('Daboom finally stopping')
-            self.onShutdown()
+            self.on_shutdown()
 
     # .............................
-    def onUpdate(self):
-        self.log.info('Update signal caught!')
-
-    # .............................
-    def onShutdown(self):
+    def on_shutdown(self):
+        """Shutdown the daemon
+        """
         self.log.info('Shutdown!')
         # Stop walken the archive and saveNextStart
         self.boomer.close()
@@ -67,46 +71,49 @@ class DaBoom(Daemon):
 
     # ...............................................
     @property
-    def logFilename(self):
+    def log_filename(self):
+        """Get the log file name
+        """
         try:
             fname = self.log.baseFilename
-        except:
+        except AttributeError:
             fname = None
         return fname
 
 
 # .............................................................................
-if __name__ == "__main__":
+def main():
+    """Main method for script
+    """
     if not is_lm_user():
         print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
     earl = EarlJr()
-    defaultConfigFile = earl.create_filename(LMFileType.BOOM_CONFIG,
-                                                         objCode=PUBLIC_ARCHIVE_NAME,
-                                                         usr=PUBLIC_USER)
-#     pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
-#     defaultConfigFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME,
-#                                                                          LMFormat.CONFIG.ext))
+    default_config_file = earl.create_filename(
+        LMFileType.BOOM_CONFIG, obj_code=PUBLIC_ARCHIVE_NAME, usr=PUBLIC_USER)
     parser = argparse.ArgumentParser(
-                description=('Populate a Lifemapper archive with metadata ' +
-                                 'for single- or multi-species computations ' +
-                                 'specific to the configured input data or the ' +
-                                 'data package named.'))
-    parser.add_argument('-', '--config_file', default=defaultConfigFile,
-                help=('Configuration file for the archive, gridset, and grid ' +
-                        'to be created from these data.'))
-    parser.add_argument('cmd', choices=['start', 'stop', 'restart'],
-                  help="The action that should be performed by the Boom daemon")
+        description=(
+            'Populate a Lifemapper archive with metadata for single- or '
+            'multi-species computations specific to the configured input '
+            'data or the data package named'))
+    parser.add_argument(
+        '-', '--config_file', default=default_config_file,
+        help=('Configuration file for the archive, gridset, and grid to be '
+              'created from these data'))
+    parser.add_argument(
+        'cmd', choices=['start', 'stop', 'restart'],
+        help="The action that should be performed by the Boom daemon")
 
     args = parser.parse_args()
-    configFname = args.config_file
+    config_fname = args.config_file
     cmd = args.cmd.lower()
 
     print('')
-    print(('Running daboom with configFilename={} and command={}'
-            .format(configFname, cmd)))
+    print(
+        'Running daboom with configFilename={} and command={}'.format(
+            config_fname, cmd))
     print('')
-    boomer = DaBoom(BOOM_PID_FILE, configFname)
+    boomer = DaBoom(BOOM_PID_FILE, config_fname)
 
     if cmd == 'start':
         boomer.start()
@@ -120,5 +127,7 @@ if __name__ == "__main__":
         print(("Unknown command: {}".format(cmd)))
         sys.exit(2)
 
-"""
-"""
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

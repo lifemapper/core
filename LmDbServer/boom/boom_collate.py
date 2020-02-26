@@ -8,7 +8,8 @@ from LmBackend.command.multi import (
     CreateAncestralPamCommand, EncodePhylogenyCommand, MultiSpeciesRunCommand,
     SyncPamAndTreeCommand)
 from LmBackend.command.server import (
-    AssemblePamFromSolrQueryCommand, StockpileCommand, SquidAndLabelTreeCommand)
+    AssemblePamFromSolrQueryCommand, StockpileCommand,
+    SquidAndLabelTreeCommand)
 from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import (
     JobStatus, LMFormat, MatrixType, ProcessType)
@@ -94,14 +95,14 @@ class BoomCollate(LMObject):
         aggregation_rules = []
         sig_pam_stats_filenames = []
         sig_mcpa_stats_filenames = []
-        for i in range(len(obs_pam_stats_filenames)):
+        for i, obs_ps_fn in enumerate(obs_pam_stats_filenames):
             # TODO: Need a better way to name this file
-            out_mtx_filename = obs_pam_stats_filenames[i].replace(
+            out_mtx_filename = obs_ps_fn.replace(
                 LMFormat.MATRIX.ext, '_sig{}'.format(LMFormat.MATRIX.ext))
             rand_fns = [fn[i] for fn in rand_pam_stats_filenames]
             aggregation_rules.append(
                 CreateSignificanceMatrixCommand(
-                    obs_pam_stats_filenames[i], out_mtx_filename, rand_fns,
+                    obs_ps_fn, out_mtx_filename, rand_fns,
                     use_abs=True, fdr=self.fdr).get_makeflow_rule())
             sig_pam_stats_filenames.append(out_mtx_filename)
 
@@ -155,7 +156,8 @@ class BoomCollate(LMObject):
          ) = self._get_multispecies_run_rules_for_pam(
              pam_id, 'obs', pam_filename, 0, grim_filename=grim_filename,
              biogeo_filename=biogeo_filename, phylo_filename=phylo_filename,
-             tree_filename=tree_filename, pam_success_filename=pam_success_filename)
+             tree_filename=tree_filename,
+             pam_success_filename=pam_success_filename)
         self.log.debug(
             'Created {} observed rules for pam {}'.format(
                 len(obs_rules), pam_id))
@@ -164,13 +166,13 @@ class BoomCollate(LMObject):
         # Randomized
         rand_pam_stats_filenames = []
         rand_mcpa_stats_filenames = []
-        for i, v in enumerate(
+        for i, val in enumerate(
                 range(0, self.num_permutations, self.random_group_size)):
 
             (pam_stats_filenames, mcpa_filenames, rand_rules
              ) = self._get_multispecies_run_rules_for_pam(
                  pam_id, 'rand{}'.format(i), pam_filename,
-                 min(self.random_group_size, self.num_permutations - v),
+                 min(self.random_group_size, self.num_permutations - val),
                  grim_filename=grim_filename, biogeo_filename=biogeo_filename,
                  phylo_filename=phylo_filename, tree_filename=tree_filename,
                  pam_success_filename=pam_success_filename)
@@ -180,8 +182,8 @@ class BoomCollate(LMObject):
 
         # Aggregates
         (sig_pam_stats_filenames, sig_mcpa_filenames, agg_rules
-         ) = self._get_aggregation_rules_for_pam(pam_id,
-             obs_pam_stats_filenames, obs_mcpa_filenames,
+         ) = self._get_aggregation_rules_for_pam(
+             pam_id, obs_pam_stats_filenames, obs_mcpa_filenames,
              rand_pam_stats_filenames, rand_mcpa_stats_filenames)
         # Add aggregation rules
         pam_analysis_rules.extend(agg_rules)
@@ -281,22 +283,22 @@ class BoomCollate(LMObject):
 
     # ................................
     def _get_or_insert_matrix(self, mtx_type, process_type, gcm_code,
-                              altpred_code, date_code):
+                              alt_pred_code, date_code):
         """Attempt to find a matching matrix or create a new one
 
         Args:
             mtx_type (:obj: `int`): A MatrixType constant
             process_type (:obj: `int`): A ProcessType constant
             gcm_code (:obj: `str`): A GCM code for this LMMatrix
-            altpred_code (:obj: `str`): An alternate prediction code to use for
-                this LMMatrix
+            alt_pred_code (:obj: `str`): An alternate prediction code to use
+                for this LMMatrix
             date_code (:obj: `str`): A date code to use for this LMMatrix
         """
         new_mtx = LMMatrix(
-            None, matrixType=mtx_type, processType=process_type,
-            gcmCode=gcm_code, altpredCode=altpred_code, dateCode=date_code,
-            userId=self.user_id, gridset=self.gridset)
-        mtx = self._scribe.findOrInsertMatrix(new_mtx)
+            None, matrix_type=mtx_type, process_type=process_type,
+            gcm_code=gcm_code, alt_pred_code=alt_pred_code,
+            date_code=date_code, user_id=self.user_id, gridset=self.gridset)
+        mtx = self._scribe.find_or_insert_matrix(new_mtx)
         mtx.update_status(JobStatus.INITIALIZE)
         self.log.debug('Inserted or found matrix {}'.format(mtx.get_id()))
         return mtx
@@ -349,8 +351,8 @@ class BoomCollate(LMObject):
                  pam_success_filename=pam_success_filename)
             pam_rules.extend(anc_pam_rules)
             anc_pam_mtx = self._get_or_insert_matrix(
-                MatrixType.ANC_PAM, ProcessType.RAD_CALCULATE, pam.gcmCode,
-                pam.altpredCode, pam.dateCode)
+                MatrixType.ANC_PAM, ProcessType.RAD_CALCULATE, pam.gcm_code,
+                pam.alt_pred_code, pam.date_code)
             pam_rules.append(
                 StockpileCommand(
                     ProcessType.RAD_CALCULATE, anc_pam_mtx.get_id(),
@@ -366,24 +368,24 @@ class BoomCollate(LMObject):
             # Initialize MCPA output matrix
             mcpa_out_mtx = self._get_or_insert_matrix(
                 MatrixType.MCPA_OUTPUTS, ProcessType.MCPA_ASSEMBLE,
-                pam.gcmCode, pam.altpredCode, pam.dateCode)
-            grim = self.gridset.getGRIMForCodes(
-                pam.gcmCode, pam.altpredCode, pam.dateCode)
+                pam.gcm_code, pam.alt_pred_code, pam.date_code)
+            grim = self.gridset.get_grim_for_codes(
+                pam.gcm_code, pam.alt_pred_code, pam.date_code)
             grim_filename = grim.get_dlocation()
-            biogeo = self.gridset.getBiogeographicHypotheses()[0]
+            biogeo = self.gridset.get_biogeographic_hypotheses()[0]
             biogeo_filename = biogeo.get_dlocation()
 
         # If PAM stats, initialize matrices
         if self.do_pam_stats:
             sites_obs_mtx = self._get_or_insert_matrix(
                 MatrixType.SITES_OBSERVED, ProcessType.RAD_CALCULATE,
-                pam.gcmCode, pam.altpredCode, pam.dateCode)
+                pam.gcm_code, pam.alt_pred_code, pam.date_code)
             species_obs_mtx = self._get_or_insert_matrix(
                 MatrixType.SPECIES_OBSERVED, ProcessType.RAD_CALCULATE,
-                pam.gcmCode, pam.altpredCode, pam.dateCode)
+                pam.gcm_code, pam.alt_pred_code, pam.date_code)
             diversity_obs_mtx = self._get_or_insert_matrix(
                 MatrixType.DIVERSITY_OBSERVED, ProcessType.RAD_CALCULATE,
-                pam.gcmCode, pam.altpredCode, pam.dateCode)
+                pam.gcm_code, pam.alt_pred_code, pam.date_code)
 
         # Analysis rules
         (pam_stats_filenames, mcpa_filenames, analysis_rules
@@ -457,8 +459,8 @@ class BoomCollate(LMObject):
         """Close scribe connections
         """
         try:
-            self._scribe.closeConnections()
-        except:
+            self._scribe.close_connections()
+        except Exception:
             pass
 
     # ................................
@@ -467,23 +469,23 @@ class BoomCollate(LMObject):
         """
         meta = {
             MFChain.META_CREATED_BY: os.path.basename(__file__),
-            MFChain.META_DESCRIPTION : 'Makeflow for multispecies analyses'
+            MFChain.META_DESCRIPTION: 'Makeflow for multispecies analyses'
         }
         new_makeflow = MFChain(
             self.user_id, metadata=meta, status=JobStatus.GENERAL,
             status_mod_time=gmt().mjd)
-        mf_chain = self._scribe.insertMFChain(
+        mf_chain = self._scribe.insert_mf_chain(
             new_makeflow, self.gridset.get_id())
-        self._scribe.updateObject(mf_chain)
+        self._scribe.update_object(mf_chain)
 
         # Get rules
         rules = self.get_collate_rules()
-        mf_chain.addCommands(rules)
+        mf_chain.add_commands(rules)
         # Write makeflow
         mf_chain.write()
         # Update DB
         mf_chain.update_status(JobStatus.INITIALIZE)
-        self._scribe.updateObject(mf_chain)
+        self._scribe.update_object(mf_chain)
         self.log.debug('Wrote Makeflow: {}'.format(mf_chain.get_dlocation()))
 
     # ................................
@@ -494,7 +496,7 @@ class BoomCollate(LMObject):
             A list of MfRules
         """
         rules = []
-        if len(self.gridset.getAllPAMs()) == 0:
+        if len(self.gridset.get_all_pams()) == 0:
             raise Exception(
                 ('There are no PAMs for this gridset.'
                  '  Do they need to be filled by the scribe?'))
@@ -515,7 +517,7 @@ class BoomCollate(LMObject):
         else:
             self.squid_tree_filename = None
 
-        for pam in self.gridset.getAllPAMs():
+        for pam in self.gridset.get_all_pams():
             self.log.debug('Adding rules for PAM {}'.format(pam.get_id()))
             rules.extend(self._get_rules_for_pam(pam))
 
@@ -523,13 +525,16 @@ class BoomCollate(LMObject):
 
 
 # .............................................................................
-if __name__ == '__main__':
+def main():
+    """Main method for script
+    """
     parser = argparse.ArgumentParser(
         description='Create a multi-species workflow for a gridset')
     parser.add_argument(
         'gridset_id', type=int, help='The identifier for a gridset to use')
     parser.add_argument(
-        'num_permutations', type=int, help='The number of permutations to perform')
+        'num_permutations', type=int,
+        help='The number of permutations to perform')
     parser.add_argument(
         '-p', action='store_true', dest='do_pam_stats',
         help='Should PAM stats be computed')
@@ -544,13 +549,19 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     scribe = BorgScribe(ConsoleLogger())
-    scribe.openConnections()
-    gridset = scribe.getGridset(gridsetId=args.gridset_id, fillMatrices=True)
-    scribe.closeConnections()
+    scribe.open_connections()
+    gridset = scribe.get_gridset(
+        gridset_id=args.gridset_id, fill_matrices=True)
+    scribe.close_connections()
     collator = BoomCollate(
         gridset, do_pam_stats=args.do_pam_stats, do_mcpa=args.do_mcpa,
         num_permutations=args.num_permutations, random_group_size=args.g,
         work_dir=args.w)
     collator.create_workflow()
     collator.close()
-    scribe.closeConnections()
+    scribe.close_connections()
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

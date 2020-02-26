@@ -220,6 +220,8 @@ class PartnerQuery:
 
     # .................................
     def read_gbif_taxon_ids(self, gbif_id_f_name):
+        """Read GBIF ids
+        """
         taxon_ids = []
         name_to_gbif_ids = {}
         try:

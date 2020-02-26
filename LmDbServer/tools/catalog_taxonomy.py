@@ -1,11 +1,16 @@
+"""This script catalogs accepted GBIF taxonomy in the database
+"""
+import argparse
 import csv
 import os
+import time
 
 from LmBackend.command.server import CatalogTaxonomyCommand
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import GBIF, JobStatus, LMFormat
+from LmCommon.common.lmconstants import GBIF, JobStatus
 from LmCommon.common.time import gmt
-from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
+from LmDbServer.common.lmconstants import (
+    GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE)
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import NUM_DOCS_PER_POST, Priority
 from LmServer.common.localconstants import PUBLIC_USER
@@ -17,255 +22,279 @@ from LmServer.legion.process_chain import MFChain
 
 # .............................................................................
 class TaxonFiller(LMObject):
-    """
+    """Populates the database with accepted taxonomy.
+
     Class to populates a Lifemapper database with taxonomy for accepted names
     in the GBIF Backbone Taxonomy as read from a text file provided by GBIF.
-    @todo: extend this script to add taxonomy for users
+
+    Todo:
+        Extend this script to add taxonomy for users
     """
 
-# .............................................................................
-# Constructor
-# .............................................................................
-    def __init__(self, taxSrcName, taxonomyFname, taxSuccessFname,
-                     taxSrcUrl=None, delimiter='\t', logname=None):
-        """
-        @summary Constructor for ArchiveFiller class.
-        @todo: allow taxSrcName to be a userId, and user taxonomy is allowed
-        @todo: define data format for user-provided taxonomy 
+    # ...............................................
+    def __init__(self, tax_src_name, taxonomy_fname, tax_success_fname,
+                 tax_src_url=None, delimiter='\t', log_name=None):
+        """Constructor for TaxonFiller class.
+
+        Todo:
+            - Allow tax_src_name to be a userId, and user taxonomy is allowed
+            - Define data format for user-provided taxonomy
         """
         super(TaxonFiller, self).__init__()
-        scriptname, _ = os.path.splitext(os.path.basename(__file__))
-        self.name = scriptname
+        script_name, _ = os.path.splitext(os.path.basename(__file__))
+        self.name = script_name
         try:
-            self.scribe = self._getDb(logname)
-        except:
-            raise
-        self.taxonomyFname = taxonomyFname
-        self._successFname = taxSuccessFname
-        self._taxonomySourceName = taxSrcName
-        self._taxonomySourceUrl = taxSrcUrl
+            self.scribe = self._get_db(log_name)
+        except Exception as err:
+            raise LMError('Failed to get a scribe object', err)
+        self.taxonomy_fname = taxonomy_fname
+        self._success_fname = tax_success_fname
+        self._taxonomy_source_name = tax_src_name
+        self._taxonomy_source_url = tax_src_url
         self._delimiter = delimiter
-        self._taxonomySourceId = None
-        self._taxonFile = None
-        self._csvreader = None
+        self._taxonomy_source_id = None
+        self._taxon_file = None
+        self._csv_reader = None
 
     # ...............................................
     def open(self):
-        success = self.scribe.openConnections()
+        """Open database connection
+        """
+        success = self.scribe.open_connections()
         if not success:
             raise LMError('Failed to open database')
 
-        # ...............................................
+    # ...............................................
     def close(self):
-        self._taxonFile.close()
-        self.scribe.closeConnections()
+        """Close the object and connections
+        """
+        self._taxon_file.close()
+        self.scribe.close_connections()
 
     # ...............................................
     def initialize_me(self):
-        self._taxonomySourceId = self.scribe.findOrInsertTaxonSource(
-                                                                        self._taxonomySourceName,
-                                                                        self._taxonomySourceUrl)
-        self._taxonFile = open(self.taxonomyFname, 'r')
-        self._csvreader = csv.reader(self._taxonFile, delimiter=delimiter)
+        """Initialize the object
+        """
+        self._taxonomy_source_id = self.scribe.find_or_insert_taxon_source(
+            self._taxonomy_source_name, self._taxonomy_source_url)
+        self._taxon_file = open(self.taxonomy_fname, 'r')
+        self._csv_reader = csv.reader(
+            self._taxon_file, delimiter=self._delimiter)
 
     # ...............................................
     @property
-    def logFilename(self):
+    def log_filename(self):
+        """Get the log filename
+        """
         try:
-            fname = self.scribe.log.baseFilename
-        except:
+            fname = self.scribe.log.base_filename
+        except AttributeError:
             fname = None
         return fname
 
     # ...............................................
-    def _getDb(self, logname):
-        logger = ScriptLogger(logname)
+    @staticmethod
+    def _get_db(log_name):
+        logger = ScriptLogger(log_name)
         scribe = BorgScribe(logger)
         return scribe
 
     # ...............................................
-    def _convertString(self, valStr, isInteger=True):
+    @staticmethod
+    def _convert_string(val_str, is_integer=True):
         val = None
-        if isInteger:
+        if is_integer:
             try:
-                val = int(valStr)
-            except Exception:
+                val = int(val_str)
+            except ValueError:
                 pass
         else:
             try:
-                val = float(valStr)
-            except Exception:
+                val = float(val_str)
+            except ValueError:
                 pass
         return val
 
     # ...............................................
-    def _getTaxonValues(self, line):
+    @staticmethod
+    def _get_taxon_values(line):
         # aka LmCommon.common.lmconstants GBIF_TAXON_FIELDS
-        (taxonkey, kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
-         scinameStr, genuskey, specieskey, count) = line
+        (taxon_key, kingdom_str, phylum_str, class_str, order_str, family_str,
+         genus_str, sci_name_str, genus_key, species_key, count) = line
         try:
-            txkey = int(taxonkey)
-            occcount = int(count)
-        except:
-            print('Invalid taxonkey {} or count {} for {}'.format(taxonkey, count,
-                                                                                    scinameStr))
+            tx_key = int(taxon_key)
+            occ_count = int(count)
+        except ValueError:
+            print('Invalid taxon_key {} or count {} for {}'.format(
+                taxon_key, count, sci_name_str))
         try:
-            genkey = int(genuskey)
-        except:
+            genkey = int(genus_key)
+        except ValueError:
             genkey = None
         try:
-            spkey = int(specieskey)
-        except:
+            spkey = int(species_key)
+        except ValueError:
             spkey = None
-        return (txkey, kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
-         scinameStr, genkey, spkey, occcount)
+        return (tx_key, kingdom_str, phylum_str, class_str, order_str,
+                family_str, genus_str, sci_name_str, genkey, spkey, occ_count)
 
     # ...............................................
     def write_success_file(self, message):
-        self.ready_filename(self._successFname, overwrite=True)
+        """Write the success file
+        """
+        self.ready_filename(self._success_fname, overwrite=True)
         try:
-            f = open(self._successFname, 'w')
-            f.write(message)
-        except:
-            raise
-        finally:
-            f.close()
+            with open(self._success_fname, 'w') as out_file:
+                out_file.write(message)
+        except IOError as io_err:
+            raise LMError('Failed to write success file', io_err)
 
     # ...............................................
-    def readAndInsertTaxonomy(self):
-        totalIn = totalOut = totalWrongRank = 0
+    def read_and_insert_taxonomy(self):
+        """Read taxonomy and insert into the database
+        """
+        total_in = total_out = total_wrong_rank = 0
 
         sciname_objs = []
 
-        for line in self._csvreader:
-            (taxonkey, kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
-             scinameStr, genuskey, specieskey, _) = self._getTaxonValues(line)
+        for line in self._csv_reader:
+            (taxon_key, kingdom_str, phylum_str, class_str, order_str,
+             family_str, genus_str, sci_name_str, genus_key, species_key,
+             count) = self._get_taxon_values(line)
 
-            if taxonkey not in (specieskey, genuskey):
-                totalWrongRank += 1
+            if taxon_key not in (species_key, genus_key):
+                total_wrong_rank += 1
             else:
-                if taxonkey == specieskey:
+                if taxon_key == species_key:
                     rank = GBIF.RESPONSE_SPECIES_KEY
-                elif taxonkey == genuskey:
+                elif taxon_key == genus_key:
                     rank = GBIF.RESPONSE_GENUS_KEY
-                sciName = ScientificName(scinameStr, rank=rank, canonicalName=None,
-                         kingdom=kingdomStr, phylum=phylumStr, txClass=classStr,
-                         txOrder=orderStr, family=familyStr, genus=genusStr,
-                         taxonomySourceId=self._taxonomySourceId, taxonomySourceKey=taxonkey,
-                         taxonomySourceGenusKey=genuskey,
-                         taxonomySourceSpeciesKey=specieskey)
-                upSciName = self.scribe._borg.findOrInsertTaxon(
-                                                taxonSourceId=self._taxonomySourceId,
-                                                taxonKey=taxonkey, sciName=sciName)
-                if upSciName:
-                    totalIn += 1
-                    self.scribe.log.info('Found or inserted {}'.format(scinameStr))
+                sci_name = ScientificName(
+                    sci_name_str, rank=rank, canonical_name=None,
+                    kingdom=kingdom_str, phylum=phylum_str, class_=class_str,
+                    order_=order_str, family=family_str, genus=genus_str,
+                    taxonomy_source_id=self._taxonomy_source_id,
+                    taxonomy_source_key=taxon_key,
+                    taxonomy_source_genus_key=genus_key,
+                    taxonomy_source_species_key=species_key)
+                up_sci_name = self.scribe.find_or_insert_taxon(
+                    taxon_source_id=self._taxonomy_source_id,
+                    taxon_key=taxon_key, sci_name=sci_name)
+                if up_sci_name:
+                    total_in += 1
+                    self.scribe.log.info(
+                        'Found or inserted {}'.format(sci_name_str))
                     # Add object to list, post to solr if we reach threshold
-                    sciname_objs.append(upSciName)
+                    sciname_objs.append(up_sci_name)
                     if len(sciname_objs) >= NUM_DOCS_PER_POST:
                         lm_solr.add_taxa_to_taxonomy_index(sciname_objs)
                         sciname_objs = []
                 else:
-                    totalOut += 1
-                    self.scribe.log.info('Failed to insert or find {}'.format(scinameStr))
+                    total_out += 1
+                    self.scribe.log.info(
+                        'Failed to insert or find {}'.format(sci_name_str))
         # Add any leftover taxonomy
         lm_solr.add_taxa_to_taxonomy_index(sciname_objs)
 
-        msg = 'Found or inserted {}; failed {}; wrongRank {}'.format(totalIn,
-                                                                totalOut, totalWrongRank)
+        msg = 'Found or inserted {}; failed {}; wrongRank {}'.format(
+            total_in, total_out, total_wrong_rank)
         self.write_success_file(msg)
         self.scribe.log.info(msg)
 
     # ...............................................
-    def createCatalogTaxonomyMF(self):
+    def create_catalog_taxonomy_mf(self):
+        """Create a makeflow to initiate boomer with assembled inputs
+
+        Note:
+            Not currently used, MF is created in initWorkflow
         """
-        @note: Not currently used, MF is created in initWorkflow
-        @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-                     and configFile written by BOOMFiller.initBoom.
-        """
-        scriptname, _ = os.path.splitext(os.path.basename(__file__))
-        meta = {MFChain.META_CREATED_BY: scriptname,
-                  MFChain.META_DESCRIPTION: 'Catalog Taxonomy task for source {}'
-        .format(PUBLIC_USER, self._taxonomySourceName)}
-        newMFC = MFChain(PUBLIC_USER, priority=Priority.HIGH,
-                              metadata=meta, status=JobStatus.GENERAL,
-                              status_mod_time=gmt().mjd)
-        mfChain = self.scribe.insertMFChain(newMFC, None)
+        script_name, _ = os.path.splitext(os.path.basename(__file__))
+        meta = {
+            MFChain.META_CREATED_BY: script_name,
+            MFChain.META_DESCRIPTION:
+                'Catalog Taxonomy task for source {}'.format(
+                    PUBLIC_USER, self._taxonomy_source_name)}
+        new_mfc = MFChain(
+            PUBLIC_USER, priority=Priority.HIGH, metadata=meta,
+            status=JobStatus.GENERAL, status_mod_time=gmt().mjd)
+        mf_chain = self.scribe.insert_mf_chain(new_mfc, None)
 
         # Create a rule from the MF and Arf file creation
-        cattaxCmd = CatalogTaxonomyCommand(self._taxonomySourceName,
-                                                      self.taxonomyFname,
-                                                      source_url=self._taxonomySourceUrl,
-                                                      delimiter=self._delimiter)
-        mfChain.addCommands([cattaxCmd.get_makeflow_rule(local=True)])
-        mfChain.write()
-        mfChain.update_status(JobStatus.INITIALIZE)
-        self.scribe.updateObject(mfChain)
+        cattax_cmd = CatalogTaxonomyCommand(
+            self._taxonomy_source_name, self.taxonomy_fname,
+            self._success_fname, source_url=self._taxonomy_source_url,
+            delimiter=self._delimiter)
+        mf_chain.add_commands([cattax_cmd.get_makeflow_rule(local=True)])
+        mf_chain.write()
+        mf_chain.update_status(JobStatus.INITIALIZE)
+        self.scribe.update_object(mf_chain)
 
 
-# ...............................................
-# MAIN
-# ...............................................
-if __name__ == '__main__':
-    import argparse
+# .............................................................................
+def main():
+    """Main method for script
+    """
     parser = argparse.ArgumentParser(
-                description=(""""Populate a Lifemapper archive with taxonomic 
-                                      data for one or more species, from a CSV file """))
-    parser.add_argument('--taxon_source_name', type=str,
-                              default=TAXONOMIC_SOURCE['GBIF']['name'],
-                              help=("""Identifier of taxonomy source to populate.  
-                                          This must either already exist in the database, 
-                                          or it will be added to the database with the 
-                                          (now required) optional parameter 
-                                          `taxon_source_url`."""))
-    parser.add_argument('--taxon_data_filename', type=str,
-                              default=None,
-                              help=('Filename of CSV taxonomy data.'))
-    parser.add_argument('--success_filename', type=str,
-                              default=None,
-                              help=('Filename to be written on successful completion of script.'))
-    parser.add_argument('--taxon_source_url', type=str, default=None,
-                              help=("""Optional URL of taxonomy source, required 
-                                          for a new source"""))
-    parser.add_argument('--delimiter', type=str, default='\t',
-                              help=("""Delimiter in CSV taxon_data_filename. Defaults
-                                          to tab."""))
-    parser.add_argument('--logname', type=str, default=None,
-                              help=('Base name of logfile '))
-    # Taxonomy ingest Makeflows will generally be written as part of a BOOM job,
-    # calling this script, so new species boom data may be connected to taxonomy
+        description=('Populate a Lifemapper archive with taxonomic data for '
+                     'one or more species, from a CSV file'))
+    parser.add_argument(
+        '--taxon_source_name', type=str,
+        default=TAXONOMIC_SOURCE['GBIF']['name'],
+        help=('Identifier of taxonomy source to populate.  This must either '
+              'already exist in the database, or it will be added to the '
+              'database with the (now required) optional parameter '
+              '`taxon_source_url`.'))
+    parser.add_argument(
+        '--taxon_data_filename', type=str, default=None,
+        help='Filename of CSV taxonomy data.')
+    parser.add_argument(
+        '--success_filename', type=str, default=None,
+        help='Filename to be written on successful completion of script.')
+    parser.add_argument(
+        '--taxon_source_url', type=str, default=None,
+        help="Optional URL of taxonomy source, requiredfor a new source")
+    parser.add_argument(
+        '--delimiter', type=str, default='\t',
+        help=("""Delimiter in CSV taxon_data_filename. Defaults to tab."""))
+    parser.add_argument(
+        '--log_name', type=str, default=None, help=('Base name of logfile '))
+    # Taxonomy ingest Makeflows will generally be written as part of a BOOM
+    #    job calling this script, so new species boom data may be connected to
+    #    taxonomy
     args = parser.parse_args()
-    sourceName = args.taxon_source_name
-    taxonFname = args.taxon_data_filename
-    successFname = args.success_filename
-    logname = args.logname
-    sourceUrl = args.taxon_source_url
+    source_name = args.taxon_source_name
+    taxon_fname = args.taxon_data_filename
+    success_fname = args.success_filename
+    log_name = args.log_name
+    source_url = args.taxon_source_url
     delimiter = args.delimiter
 
-    if sourceName == TAXONOMIC_SOURCE['GBIF']['name']:
-        if taxonFname is None:
-            taxonFname = GBIF_TAXONOMY_DUMP_FILE
-        if successFname is None:
-            taxbasename, _ = os.path.splitext(taxonFname)
-            taxonSuccessFname = taxbasename + '.success'
+    if source_name == TAXONOMIC_SOURCE['GBIF']['name']:
+        if taxon_fname is None:
+            taxon_fname = GBIF_TAXONOMY_DUMP_FILE
+        if success_fname is None:
+            taxbasename, _ = os.path.splitext(taxon_fname)
+            taxon_success_fname = taxbasename + '.success'
 
-    if logname is None:
-        import time
+    if log_name is None:
         scriptname, _ = os.path.splitext(os.path.basename(__file__))
-        dataname, _ = os.path.splitext(taxonFname)
+        dataname, _ = os.path.splitext(taxon_fname)
         secs = time.time()
-        timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-        logname = '{}.{}.{}'.format(scriptname, dataname, timestamp)
+        timestamp = "{}".format(
+            time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+        log_name = '{}.{}.{}'.format(scriptname, dataname, timestamp)
 
-    filler = TaxonFiller(sourceName, taxonFname, successFname,
-                                taxSrcUrl=sourceUrl,
-                                delimiter=delimiter,
-                                logname=logname)
+    filler = TaxonFiller(
+        source_name, taxon_fname, success_fname, tax_src_url=source_url,
+        delimiter=delimiter, log_name=log_name)
     filler.open()
 
     filler.initialize_me()
-    filler.readAndInsertTaxonomy()
+    filler.read_and_insert_taxonomy()
 
     filler.close()
 
-# Total Inserted 744020; updated 3762, Grand total = 747782
+
+# .............................................................................
+if __name__ == '__main__':
+    main()
