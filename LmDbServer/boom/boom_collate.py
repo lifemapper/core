@@ -16,9 +16,9 @@ from LmCommon.common.time import gmt
 from LmServer.common.lmconstants import (
     DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE)
 from LmServer.common.log import ConsoleLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.processchain import MFChain
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.lm_matrix import LMMatrix
+from LmServer.legion.process_chain import MFChain
 
 
 # .............................................................................
@@ -471,7 +471,7 @@ class BoomCollate(LMObject):
         }
         new_makeflow = MFChain(
             self.user_id, metadata=meta, status=JobStatus.GENERAL,
-            statusModTime=gmt().mjd)
+            status_mod_time=gmt().mjd)
         mf_chain = self._scribe.insertMFChain(
             new_makeflow, self.gridset.get_id())
         self._scribe.updateObject(mf_chain)

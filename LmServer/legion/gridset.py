@@ -61,7 +61,7 @@ class Gridset(ServiceObject):  # LMMap
         # TODO: Aimee, do you want to move this somewhere else?
         self._dlocation = None
         self._map_filename = None
-        self._setMapPrefix()
+        self._set_map_prefix()
         self.name = name
         self.grdMetadata = {}
         self.loadGrdMetadata(metadata)
@@ -131,7 +131,7 @@ class Gridset(ServiceObject):  # LMMap
         success, _ = self.deleteFile(self.mapfilename)
 
 # ...............................................
-    def _createMapPrefix(self):
+    def _create_map_prefix(self):
         """
         @summary: Construct the endpoint of a Lifemapper WMS URL for 
                      this object.
@@ -148,13 +148,13 @@ class Gridset(ServiceObject):  # LMMap
                                         usr=self._userId)
         return mapprefix
 
-    def _setMapPrefix(self):
-        mapprefix = self._createMapPrefix()
-        self._mapPrefix = mapprefix
+    def _set_map_prefix(self):
+        mapprefix = self._create_map_prefix()
+        self._map_prefix = mapprefix
 
     @property
-    def mapPrefix(self):
-        return self._mapPrefix
+    def map_prefix(self):
+        return self._map_prefix
 
 # ...............................................
     @property
@@ -184,9 +184,9 @@ class Gridset(ServiceObject):  # LMMap
         return self._shapeGrid
 
 # ...............................................
-    def setId(self, expid):
+    def set_id(self, expid):
         """
-        Overrides ServiceObject.setId.  
+        Overrides ServiceObject.set_id.  
         @note: ExperimentId should always be set before this is called.
         """
         ServiceObject.set_id(self, expid)

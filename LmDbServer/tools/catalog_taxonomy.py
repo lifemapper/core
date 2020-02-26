@@ -189,7 +189,7 @@ class TaxonFiller(LMObject):
         .format(PUBLIC_USER, self._taxonomySourceName)}
         newMFC = MFChain(PUBLIC_USER, priority=Priority.HIGH,
                               metadata=meta, status=JobStatus.GENERAL,
-                              statusModTime=gmt().mjd)
+                              status_mod_time=gmt().mjd)
         mfChain = self.scribe.insertMFChain(newMFC, None)
 
         # Create a rule from the MF and Arf file creation

@@ -255,7 +255,7 @@ class Boomer(LMObject):
                 }
         newMFC = MFChain(self.christopher.userId, priority=self.priority,
                          metadata=meta, status=JobStatus.GENERAL,
-                         statusModTime=lt.gmt().mjd)
+                         status_mod_time=lt.gmt().mjd)
         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
         return mfChain
 
@@ -268,7 +268,7 @@ class Boomer(LMObject):
 #         }
 #         newMFC = MFChain(self.christopher.userId, priority=self.priority,
 #                          metadata=meta, status=JobStatus.GENERAL,
-#                          statusModTime=lt.gmt().mjd)
+#                          status_mod_time=lt.gmt().mjd)
 #         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
 #         return mfChain
 

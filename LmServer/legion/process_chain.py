@@ -5,8 +5,8 @@ import os
 from LmBackend.common.cmd import MfRule
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.time import gmt
-from LmServer.base.serviceobject2 import ProcessObject
-from LmServer.common.datalocator import EarlJr
+from LmServer.base.service_object import ProcessObject
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import LMFileType
 
 
@@ -40,12 +40,12 @@ class MFChain(ProcessObject):
         if headers is not None:
             self.addHeaders(headers)
         self._dlocation = dlocation
-        self._userId = userId
+        self._userId = user_id
         self.priority = priority
         self.mfMetadata = {}
         self.loadMfMetadata(metadata)
-        ProcessObject.__init__(self, objId=mfChainId, processType=None,
-                               status=status, statusModTime=statusModTime)
+        ProcessObject.__init__(self, objId=mf_chain_id, processType=None,
+                               status=status, status_mod_time=status_mod_time)
 
     # ...............................................
     def dumpMfMetadata(self):
@@ -275,8 +275,8 @@ class MFChain(ProcessObject):
                 outF.write(job)
 
     # ...............................................
-    def updateStatus(self, status, mod_time=gmt().mjd):
+    def update_status(self, status, mod_time=gmt().mjd):
         """
-        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
+        @copydoc LmServer.base.service_object.ProcessObject::update_status()
         """
-        ProcessObject.updateStatus(self, status, mod_time)
+        ProcessObject.update_status(self, status, mod_time)

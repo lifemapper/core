@@ -289,10 +289,10 @@ class Scenario(MapLayerSet):
                 if isinstance(lyr, EnvLayer):
                     self._layers.append(lyr)
                     self._bbox = MapLayerSet.intersect_bboxes(self)
-                    # Set mapPrefix only if does not exist. Could be in multiple
-                    # mapfiles, but all should use same url/mapPrefix.
-                    if lyr.mapPrefix is None:
-                        lyr._setMapPrefix(scencode=self.code)
+                    # Set map_prefix only if does not exist. Could be in multiple
+                    # mapfiles, but all should use same url/map_prefix.
+                    if lyr.map_prefix is None:
+                        lyr._set_map_prefix(scencode=self.code)
                     mapfname = self.createLocalMapFilename()
                     lyr.set_local_map_filename(mapfname=mapfname)
                 else:
@@ -322,14 +322,14 @@ class Scenario(MapLayerSet):
                                                         usr=self._userId, epsg=self._epsg)
         return mapprefix
 
-    def _setMapPrefix(self, mapprefix=None):
+    def _set_map_prefix(self, mapprefix=None):
         if mapprefix is None:
             mapprefix = self.createMapPrefix()
-        self._mapPrefix = mapprefix
+        self._map_prefix = mapprefix
 
     @property
-    def mapPrefix(self):
-        return self._mapPrefix
+    def map_prefix(self):
+        return self._map_prefix
 
 # ...............................................
     def createLocalMapFilename(self):

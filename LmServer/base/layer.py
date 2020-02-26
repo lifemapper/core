@@ -2180,7 +2180,7 @@ class Vector(_Layer):
         import csv
         this_bbox = None
         feats = {}
-        featAttrs = self.getUserPointFeatureAttributes()
+        featAttrs = self.get_user_point_feature_attributes()
         localid = None
         if dlocation is None:
             dlocation = self._dlocation
@@ -2228,7 +2228,7 @@ class Vector(_Layer):
                     y = float(row[yPos])
                     Xs.append(x)
                     Ys.append(y)
-                    feats[thisid] = self.getUserPointFeature(thisid, x, y)
+                    feats[thisid] = self.get_user_point_feature(thisid, x, y)
                     if feature_limit is not None and len(feats) >= feature_limit:
                         break
                 except Exception as e:

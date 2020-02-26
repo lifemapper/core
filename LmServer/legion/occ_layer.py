@@ -23,7 +23,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
     def __init__(self, displayName, queryCount, mod_time, userId,
                      occurrenceSetId, metadata={}, sciName=None,
                      rawDLocation=None, processType=None,
-                     status=None, statusModTime=None):
+                     status=None, status_mod_time=None):
         """
         @summary Initialize the _Occurrences class instance
         @copydoc LmServer.base.layer._LayerParameters::__init__()
@@ -42,7 +42,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
                                           mod_time=mod_time)
         ProcessObject.__init__(
             self, objId=occurrenceSetId, processType=processType,
-            status=status, statusModTime=statusModTime)
+            status=status, status_mod_time=status_mod_time)
         self.displayName = displayName
         self.queryCount = queryCount
         self._rawDLocation = rawDLocation
@@ -81,7 +81,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         ProcessObject.update_status(self, status, mod_time)
         if queryCount is not None:
             self.queryCount = queryCount
-            self.paramModTime = self.statusModTime
+            self.paramModTime = self.status_mod_time
 
 # .............................................................................
 # .............................................................................
@@ -99,20 +99,20 @@ class OccurrenceLayer(OccurrenceType, Vector):
                  metadataUrl=None, parentMetadataUrl=None, featureCount=0,
                  feature_attributes={}, features={}, fidAttribute=None,
                  occMetadata={}, sciName=None, objId=None, processType=None,
-                 status=None, statusModTime=None):
+                 status=None, status_mod_time=None):
         """
         @todo: calculate bbox from points upon population, update as appropriate
         @summary Initialize the OccurrenceSet class instance
         @copydoc LmServer.base.layer.Vector::__init__()
         @copydoc LmServer.legion.occlayer.OccurrenceType::__init__()
         @todo: Remove count?
-        @note: Vector.name is constructed in OccurrenceLayer.setId()
+        @note: Vector.name is constructed in OccurrenceLayer.set_id()
         """
         OccurrenceType.__init__(
-            self, displayName, queryCount, statusModTime, userId,
+            self, displayName, queryCount, status_mod_time, userId,
             occurrenceSetId, metadata=occMetadata, sciName=sciName,
             rawDLocation=rawDLocation, processType=processType, status=status,
-            statusModTime=statusModTime)
+            status_mod_time=status_mod_time)
         Vector.__init__(
             self, None, userId, epsgcode, lyrId=occurrenceSetId, squid=squid,
             verify=verify, dlocation=dlocation, metadata=lyrMetadata,
@@ -121,11 +121,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
             maxVal=maxVal, mapunits=mapunits, resolution=resolution, bbox=bbox,
             svcObjId=occurrenceSetId, serviceType=serviceType,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
-            mod_time=statusModTime, featureCount=featureCount,
+            mod_time=status_mod_time, featureCount=featureCount,
             feature_attributes=feature_attributes, features=features,
             fidAttribute=fidAttribute)
         self.rawMetaDLocation = rawMetaDLocation
-        self.setId(occurrenceSetId)
+        self.set_id(occurrenceSetId)
 
 # .............................................................................
 # Class and Static methods
@@ -133,7 +133,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
 # ...............................................
     @staticmethod
-    def getUserPointFeatureAttributes():
+    def get_user_point_feature_attributes():
         feature_attributes = {
             0 : (Vector._local_id_field_name, Vector._local_id_field_type),
             1 : (OccurrenceFieldNames.LONGITUDE[0], ogr.OFTReal),
@@ -144,19 +144,19 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
 # ...............................................
     @staticmethod
-    def getUserPointFeature(id, x, y):
-        geomwkt = OccurrenceLayer.getPointWkt(x, y)
+    def get_user_point_feature(id, x, y):
+        geomwkt = OccurrenceLayer.get_point_wkt(x, y)
         vals = [id, x, y, geomwkt]
         return vals
 
 # ...............................................
     @staticmethod
-    def equalPoints(wkt1, wkt2):
+    def equal_points(wkt1, wkt2):
         if wkt1 == wkt2:
             return True
         else:
-            pt1 = OccurrenceLayer.getPointFromWkt(wkt1)
-            pt2 = OccurrenceLayer.getPointFromWkt(wkt2)
+            pt1 = OccurrenceLayer.get_point_from_wkt(wkt1)
+            pt2 = OccurrenceLayer.get_point_from_wkt(wkt2)
             if abs(pt1[0] - pt2[0]) > 1e-6:
                 return False
             elif abs(pt1[1] - pt2[1]) > 1e-6:
@@ -166,7 +166,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
 # ...............................................
     @staticmethod
-    def getPointFromWkt(wkt):
+    def get_point_from_wkt(wkt):
         if wkt is None:
             raise LMError('Missing wkt')
         start = wkt.find('(')
@@ -182,7 +182,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 return (x, y)
 
     @staticmethod
-    def getPointWkt(x, y):
+    def get_point_wkt(x, y):
         """
         @summary: Creates a well-known-text string representing the point
         @note: Rounds the float to 4 decimal points 
@@ -214,34 +214,34 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # .............................................................................
 # Superclass methods overridden
 # # .............................................................................
-    def setId(self, occid):
+    def set_id(self, occid):
         """
         @summary: Sets the database id on the object, and sets the 
                      OccurrenceSet._dlocation of the shapefile if it is None.
         @param occid: The database id for the object
-        @note: Also sets OccurrenceSet._dlocation, _Layer.mapPrefix, and
+        @note: Also sets OccurrenceSet._dlocation, _Layer.map_prefix, and
             Vector.name.  ServiceObject.metadataUrl is constructed using the id
             on first access.
         """
-        super(OccurrenceLayer, self).setId(occid)
+        super(OccurrenceLayer, self).set_id(occid)
         if occid is not None:
             if self.name is None:
                 self.name = self._earl_jr.createLayername(occsetId=self.get_id())
             self.set_dlocation()
             self.resetMetadataUrl()
             self.set_local_map_filename()
-            self._setMapPrefix()
+            self._set_map_prefix()
 
 # ...............................................
-    def getAbsolutePath(self):
+    def get_absolute_path(self):
         self.set_dlocation()
         return Vector.get_absolute_path(self)
 
-# ...............................................
-    @property
-    def makeflowFilename(self):
-        dloc = self.create_local_dlocation(makeflow=True)
-        return dloc
+# # ...............................................
+#     @property
+#     def makeflowFilename(self):
+#         dloc = self.create_local_dlocation(makeflow=True)
+#         return dloc
 
 # ...............................................
     def create_local_dlocation(self, raw=False, largeFile=False, makeflow=False):
@@ -294,7 +294,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
 # ...............................................
 # ...............................................
-    def _createMapPrefix(self):
+    def _create_map_prefix(self):
         """
         @summary: Construct the endpoint of a Lifemapper WMS URL for 
                      this object.
@@ -314,17 +314,17 @@ class OccurrenceLayer(OccurrenceType, Vector):
             mapname=self.mapName, lyrname=lyrname, usr=self._userId)
         return mapprefix
 
-    def _setMapPrefix(self):
-        mapprefix = self._createMapPrefix()
-        self._mapPrefix = mapprefix
+    def _set_map_prefix(self):
+        mapprefix = self._create_map_prefix()
+        self._map_prefix = mapprefix
 
     @property
-    def mapPrefix(self):
-        return self._mapPrefix
+    def map_prefix(self):
+        return self._map_prefix
 
 # ...............................................
     @property
-    def mapLayername(self):
+    def map_layername(self):
         lyrname = None
         if self._dbId is not None:
             lyrname = self._earl_jr.createLayername(occsetId=self._dbId)
@@ -392,6 +392,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
         @summary: Delete the mapfile containing this layer
         """
         success, _ = self.deleteFile(self._map_filename, deleteDir=True)
+        return success
+    
 # .............................................................................
 # Public methods
 # .............................................................................
@@ -405,7 +407,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             minVal=self.minVal, maxVal=self.maxVal, mapunits=self.mapUnits,
             resolution=self.resolution, bbox=self.bbox,
             occMetadata=self.paramMetadata, sciName=self._scientific_name,
-            status=self.status, statusModTime=self.statusModTime)
+            status=self.status, status_mod_time=self.status_mod_time)
         return newOcc
 
 # # ...............................................
@@ -421,7 +423,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         for featureFID in list(self._features.keys()):
             fid = self.getFeatureValByFieldIndex(self._localIdIdx, featureFID)
             wkt = self.getFeatureValByFieldIndex(geomIdx, featureFID)
-            x, y = self.getPointFromWkt(wkt)
+            x, y = self.get_point_from_wkt(wkt)
             # returns values id, longitude(x), latitude(y)
             microVals.append((fid, x, y))
         return microVals

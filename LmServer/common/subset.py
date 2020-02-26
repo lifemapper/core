@@ -253,7 +253,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
                 # Insert it into db
                 updated_pam_mtx = scribe.findOrInsertMatrix(pam_mtx)
-                updated_pam_mtx.updateStatus(JobStatus.COMPLETE)
+                updated_pam_mtx.update_status(JobStatus.COMPLETE)
                 scribe.updateObject(updated_pam_mtx)
                 log.debug(
                     'Dlocation for updated pam: {}'.format(
@@ -279,7 +279,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             if 'keywords' in grim.mtxMetadata:
                 grim_metadata['keywords'].extend(grim.mtxMetadata['keywords'])
 
-            inserted_grim.updateStatus(
+            inserted_grim.update_status(
                 JobStatus.COMPLETE, metadata=grim_metadata)
             scribe.updateObject(inserted_grim)
             # Save the original grim data into the new location
@@ -304,7 +304,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 userId=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
             inserted_bg = scribe.findOrInsertMatrix(new_bg)
-            inserted_bg.updateStatus(JobStatus.COMPLETE)
+            inserted_bg.update_status(JobStatus.COMPLETE)
             scribe.updateObject(inserted_bg)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
@@ -340,7 +340,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         # Add shapegrid to workflow
         my_shp.buildShape()
         my_shp.write_shapefile(my_shp.get_dlocation())
-        my_shp.updateStatus(JobStatus.COMPLETE)
+        my_shp.update_status(JobStatus.COMPLETE)
         scribe.updateObject(my_shp)
 
         # PAMs
@@ -436,7 +436,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                             stockpile_cmd.get_makeflow_rule(local=True))
 
                 # Initialize PAM after matrix columns inserted
-                pam.updateStatus(JobStatus.INITIALIZE)
+                pam.update_status(JobStatus.INITIALIZE)
                 scribe.updateObject(pam)
 
         # GRIMs
@@ -492,7 +492,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 rules.append(intersect_cmd.get_makeflow_rule())
                 rules.append(stockpile_cmd.get_makeflow_rule(local=True))
 
-            inserted_grim.updateStatus(JobStatus.INITIALIZE)
+            inserted_grim.update_status(JobStatus.INITIALIZE)
             scribe.updateObject(inserted_grim)
 
         # BioGeo
@@ -566,13 +566,13 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             inserted_bg = enc_mtx
             inserted_bg.setHeaders(enc_mtx.getHeaders())
             inserted_bg.write(overwrite=True)
-            inserted_bg.updateStatus(JobStatus.COMPLETE, mod_time=gmt().mjd)
+            inserted_bg.update_status(JobStatus.COMPLETE, mod_time=gmt().mjd)
             scribe.updateObject(inserted_bg)
 
         # Write workflow and update db object
         my_wf.addCommands(rules)
         my_wf.write()
-        my_wf.updateStatus(JobStatus.INITIALIZE)
+        my_wf.update_status(JobStatus.INITIALIZE)
         scribe.updateObject(my_wf)
 
     return updated_gs

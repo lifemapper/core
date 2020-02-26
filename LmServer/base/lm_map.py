@@ -18,7 +18,7 @@ from LmServer.common.lmconstants import (
     SCALE_PROJECTION_MAXIMUM)
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX)
 from LmServer.legion.occ_layer import OccurrenceLayer
-from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.sdm_proj import SDMProjection
 from osgeo import gdal, gdalconst, ogr
 
 
@@ -52,7 +52,7 @@ class LMMap(LMSpatialObject):
         self.layers = layers
         self._gridset = gridset
         self._mapType = mapType
-        self._mapPrefix = None
+        self._map_prefix = None
 
 # .............................................................................
     def writeMap(self, mapfilename, layers=[], shpGrid=None, matrices=None,
@@ -129,7 +129,7 @@ class LMMap(LMSpatialObject):
 
         # changed this from self.name (which left 'scen_' prefix off scenarios)
         mapstr = mapstr.replace('##_MAPNAME_##', self.mapName)
-        boundstr = LMSpatialObject.getExtentAsString(self.bbox, separator='  ')
+        boundstr = LMSpatialObject.get_extent_string(self.bbox, separator='  ')
         mapstr = mapstr.replace('##_EXTENT_##', boundstr)
         mapstr = mapstr.replace('##_UNITS_##', self.mapUnits)
         mapstr = mapstr.replace('##_SYMBOLSET_##', SYMBOL_FILENAME)
@@ -300,8 +300,8 @@ class LMMap(LMSpatialObject):
 # ...............................................
     def _createBlueMarbleLayer(self):
         fname = os.path.join(IMAGE_PATH, BLUE_MARBLE_IMAGE)
-        boundstr = LMSpatialObject.getExtentAsString(DEFAULT_GLOBAL_EXTENT,
-                                                                    separator='  ')
+        boundstr = LMSpatialObject.get_extent_string(DEFAULT_GLOBAL_EXTENT,
+                                                     separator='  ')
         lyr = ''
         lyr = '\n'.join([lyr, '    LAYER'])
         lyr = '\n'.join([lyr, '        NAME  bmng'])

@@ -28,7 +28,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
                  metadata={}, resolution=None, metadataUrl=None,
                  parentMetadataUrl=None, mod_time=None, featureCount=0,
                  feature_attributes={}, features={}, fidAttribute=None,
-                 status=None, statusModTime=None):
+                 status=None, status_mod_time=None):
         """
         @copydoc LmServer.base.service_object.ProcessObject::__init__()
         @copydoc LmServer.base.layer._LayerParameters::__init__()
@@ -66,9 +66,9 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             fidAttribute=fidAttribute)
         ProcessObject.__init__(
             self, objId=lyrId, processType=ProcessType.RAD_BUILDGRID,
-            status=status, statusModTime=statusModTime)
+            status=status, status_mod_time=status_mod_time)
         # Don't necessarily need centroids (requires reading shapegrid)
-#         self._setMapPrefix()
+#         self._set_map_prefix()
         self._setCellsides(cellsides)
         self.cellsize = cellsize
         self._size = None
@@ -76,10 +76,10 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
 
 # ...............................................
     @classmethod
-    def initFromParts(cls, vector, cellsides, cellsize, siteId='siteid',
+    def init_from_parts(cls, vector, cellsides, cellsize, siteId='siteid',
                       siteX='centerX', siteY='centerY', size=None,
                       siteIndicesFilename=None, status=None,
-                      statusModTime=None):
+                      status_mod_time=None):
         shpGrid = Shapegrid(
             vector.name, vector.getUserId(), vector.epsgcode, cellsides,
             cellsize, vector.mapUnits, vector.bbox, siteId=siteId, siteX=siteX,
@@ -91,15 +91,15 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             featureCount=vector.featureCount,
             feature_attributes=vector.feature_attributes,
             features=vector.features, fidAttribute=vector.fidAttribute,
-            status=status, statusModTime=statusModTime)
+            status=status, status_mod_time=status_mod_time)
         return shpGrid
 
     # ...............................................
-    def updateStatus(self, status, matrixIndex=None, metadata=None,
+    def update_status(self, status, matrixIndex=None, metadata=None,
                      mod_time=gmt().mjd):
         """
-        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
-        @copydoc LmServer.base.service_object.ServiceObject::updateModtime()
+        @copydoc LmServer.base.service_object.ProcessObject::update_status()
+        @copydoc LmServer.base.service_object.ServiceObject::update_mod_time()
         @copydoc LmServer.base.layer._LayerParameters::updateParams()
         """
         ProcessObject.update_status(self, status, mod_time)
