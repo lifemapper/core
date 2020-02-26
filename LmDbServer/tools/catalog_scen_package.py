@@ -76,7 +76,7 @@ class SPFiller(LMObject):
         self.scribe = scribe
 
     # ...............................................
-    def initializeMe(self):
+    def initialize_me(self):
         if not (self.scribe and self.scribe.isOpen):
             # Get database
             try:
@@ -356,7 +356,7 @@ class SPFiller(LMObject):
         """
         updatedScenPkg = None
         try:
-            self.initializeMe()
+            self.initialize_me()
             # If exists, found by unique Id or Email, update values
             userId = self.addUser()
 
@@ -433,7 +433,7 @@ if __name__ == '__main__':
 
         filler = SPFiller(scen_package_meta, user_id, email=user_email,
                           logname=logname)
-        filler.initializeMe()
+        filler.initialize_me()
         updatedScenPkg = filler.catalogScenPackages()
         if updatedScenPkg is not None:
             pkgid = updatedScenPkg.get_id()

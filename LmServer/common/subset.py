@@ -15,15 +15,15 @@ from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
 from LmCommon.common.time import gmt
 from LmCommon.compression.binary_list import decompress
 from LmCommon.encoding.layer_encoder import LayerEncoder
-from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.service_object import ServiceObject
 from LmServer.common.lmconstants import SOLR_FIELDS, SubsetMethod, Priority
 from LmServer.common.log import WebLogger
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.mtxcolumn import MatrixColumn
-from LmServer.legion.processchain import MFChain
-from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.legion.lm_matrix import LMMatrix
+from LmServer.legion.mtx_column import MatrixColumn
+from LmServer.legion.process_chain import MFChain
+from LmServer.legion.shapegrid import Shapegrid
 from LmServer.legion.tree import Tree
 from lmpy import Matrix
 import numpy as np
@@ -82,7 +82,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
         my_sg_name = 'Shapegrid_{}_{}'.format(
             str(bbox).replace(' ', '_'), cell_size)
-        new_shp = ShapeGrid(
+        new_shp = Shapegrid(
             my_sg_name, user_id, orig_gs.epsgcode, orig_shp.cellsides,
             cell_size, orig_shp.mapUnits, bbox, status=JobStatus.INITIALIZE,
             status_mod_time=gmt().mjd)
@@ -587,7 +587,7 @@ def get_row_headers(shapefile_filename):
             rough copy of what is now used for rasterIntersect
     """
     ogr.RegisterAll()
-    drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+    drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
     dataset = drv.Open(shapefile_filename)
     lyr = dataset.GetLayer(0)
 

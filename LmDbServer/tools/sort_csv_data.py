@@ -353,3 +353,92 @@ def main():
 # .............................................................................
 if __name__ == '__main__':
     main()
+
+"""
+OUT_DELIMITER = '\t'
+
+from LmDbServer.tools.sortCSVData import *
+from LmDbServer.tools.sortCSVData import _getOPFilename, _popChunkAndWrite
+
+cmd = 'split'
+
+OUT_DELIMITER = '\t'
+unsortedPrefix = 'chunk'
+sortedPrefix = 'smsort'
+mergedPrefix = 'sorted'
+
+datafname = '/tank/zdata/occ/gbif/aimee_export2019.csv'
+inDelimiter = '\t'
+basepath, ext = os.path.splitext(datafname)
+pth, basename = os.path.split(basepath)
+logname = 'sortCSVData_{}_{}'.format(basename, cmd)
+metafname = basepath + '.json'
+mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename, 
+                                                LMFormat.CSV.ext))
+   
+log = ScriptLogger(logname)
+
+occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter,
+                          pullChunks=True)
+occparser.initialize_me()
+groupByIdx = occparser.groupByIdx
+print 'groupByIdx = ', groupByIdx
+
+(datapath, prefix, maxFileSize) = (pth, unsortedPrefix, 5000000)
+ 
+######################### SPLIT
+# splitIntoFiles(log, occparser, pth, unsortedPrefix, basename, 5000000)   
+# occparser.close()
+
+
+######################### SORT 
+groupByIdx = 2
+# sortFiles(log, groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
+(datapath, inprefix, outprefix)=(pth, unsortedPrefix, sortedPrefix)
+idx = 0
+infname = _getOPFilename(datapath, inprefix, basename, run=idx)
+
+######################### 
+######################### loop
+######################### 
+
+outfname = _getOPFilename(datapath, outprefix, basename, run=idx)
+log.debug('Write from {} to {}'.format(infname, outfname))
+
+unsRows = []
+occreader, infile = get_unicodecsv_reader(infname, OUT_DELIMITER)
+occwriter, outfile = get_unicodecsv_writer(outfname, OUT_DELIMITER, 
+                                           doAppend=False)
+
+while True:
+    try: 
+        unsRows.append(occreader.next())
+    except StopIteration:
+        break
+    except Exception, e:
+        print('Error file %s, line %d: %s' % 
+             (infname, occreader.line_num, e))
+        break
+
+infile.close()
+
+srtRows = sortRecs(unsRows, groupByIdx)
+
+for rec in srtRows:
+    occwriter.writerow(rec)
+
+outfile.close()
+idx += 1
+infname = _getOPFilename(datapath, inprefix, basename, run=idx)
+
+
+######################### 
+######################### end loop
+######################### 
+
+######################### MERGE
+mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, metafname)
+
+checkMergedFile(log, mergefname, metafname)
+
+"""

@@ -297,7 +297,7 @@ class BoomCollate(LMObject):
             gcmCode=gcm_code, altpredCode=altpred_code, dateCode=date_code,
             userId=self.user_id, gridset=self.gridset)
         mtx = self._scribe.findOrInsertMatrix(new_mtx)
-        mtx.updateStatus(JobStatus.INITIALIZE)
+        mtx.update_status(JobStatus.INITIALIZE)
         self.log.debug('Inserted or found matrix {}'.format(mtx.get_id()))
         return mtx
 
@@ -482,7 +482,7 @@ class BoomCollate(LMObject):
         # Write makeflow
         mf_chain.write()
         # Update DB
-        mf_chain.updateStatus(JobStatus.INITIALIZE)
+        mf_chain.update_status(JobStatus.INITIALIZE)
         self._scribe.updateObject(mf_chain)
         self.log.debug('Wrote Makeflow: {}'.format(mf_chain.get_dlocation()))
 

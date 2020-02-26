@@ -6,8 +6,8 @@ from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (LMFormat, ProcessType)
 from LmCommon.common.time import gmt
 from LmCommon.shapes.build_shapegrid import build_shapegrid
-from LmServer.base.layer2 import _LayerParameters, Vector
-from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
+from LmServer.base.layer import _LayerParameters, Vector
+from LmServer.base.service_object import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, LMServiceType)
 from osgeo import ogr, osr
 
@@ -57,7 +57,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         Vector.__init__(
             self, name, userId, epsgcode, lyrId=lyrId, verify=verify,
             dlocation=dlocation, metadata=metadata,
-            dataFormat=LMFormat.getDefaultOGR().driver, ogrType=ogr.wkbPolygon,
+            dataFormat=LMFormat.SHAPE.driver, ogrType=ogr.wkbPolygon,
             mapunits=mapunits, resolution=resolution, bbox=bbox,
             svcObjId=lyrId, serviceType=LMServiceType.SHAPEGRIDS,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
@@ -102,9 +102,9 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         @copydoc LmServer.base.service_object.ServiceObject::updateModtime()
         @copydoc LmServer.base.layer._LayerParameters::updateParams()
         """
-        ProcessObject.updateStatus(self, status, mod_time)
-        ServiceObject.updateModtime(self, mod_time)
-        _LayerParameters.updateParams(
+        ProcessObject.update_status(self, status, mod_time)
+        ServiceObject.update_mod_time(self, mod_time)
+        _LayerParameters.update_params(
             self, mod_time, matrixIndex=matrixIndex, metadata=metadata)
 
 # ...............................................
@@ -198,8 +198,8 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             raise LMError("Could not open Layer at: %s" % self._dlocation)
         if removeOrig:
             newdLoc = self._dlocation
-            for ext in LMFormat.SHAPE.getExtensions():
-                success, msg = self.deleteFile(
+            for ext in LMFormat.SHAPE.get_extensions():
+                success, _ = self.deleteFile(
                     self._dlocation.replace('.shp', ext))
         else:
             newdLoc = dloc
@@ -210,7 +210,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
 
         t_srs = osr.SpatialReference()
         t_srs.ImportFromEPSG(self.epsgcode)
-        drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+        drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
         ds = drv.CreateDataSource(newdLoc)
         newlayer = ds.CreateLayer(
             ds.GetName(), geom_type=ogr.wkbPolygon, srs=t_srs)
@@ -223,7 +223,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         selectedpoly = ogr.CreateGeometryFromWkt(cutoutWKT)
         minx, maxx, miny, maxy = selectedpoly.GetEnvelope()
         origFeature = origLayer.GetNextFeature()
-        siteIdIdx = origFeature.GetFieldIndex(self.siteId)
+#         siteIdIdx = origFeature.GetFieldIndex(self.siteId)
         newSiteId = 0
         while origFeature is not None:
             clone = origFeature.Clone()

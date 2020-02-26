@@ -11,8 +11,8 @@ from LmServer.common.lmconstants import NUM_DOCS_PER_POST, Priority
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 import LmServer.common.solr as lm_solr
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.processchain import MFChain
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.process_chain import MFChain
 
 
 # .............................................................................
@@ -61,7 +61,7 @@ class TaxonFiller(LMObject):
         self.scribe.closeConnections()
 
     # ...............................................
-    def initializeMe(self):
+    def initialize_me(self):
         self._taxonomySourceId = self.scribe.findOrInsertTaxonSource(
                                                                         self._taxonomySourceName,
                                                                         self._taxonomySourceUrl)
@@ -89,12 +89,12 @@ class TaxonFiller(LMObject):
         if isInteger:
             try:
                 val = int(valStr)
-            except Exception as e:
+            except Exception:
                 pass
         else:
             try:
                 val = float(valStr)
-            except Exception as e:
+            except Exception:
                 pass
         return val
 
@@ -121,7 +121,7 @@ class TaxonFiller(LMObject):
          scinameStr, genkey, spkey, occcount)
 
     # ...............................................
-    def writeSuccessFile(self, message):
+    def write_success_file(self, message):
         self.ready_filename(self._successFname, overwrite=True)
         try:
             f = open(self._successFname, 'w')
@@ -139,7 +139,7 @@ class TaxonFiller(LMObject):
 
         for line in self._csvreader:
             (taxonkey, kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
-             scinameStr, genuskey, specieskey, count) = self._getTaxonValues(line)
+             scinameStr, genuskey, specieskey, _) = self._getTaxonValues(line)
 
             if taxonkey not in (specieskey, genuskey):
                 totalWrongRank += 1
@@ -173,7 +173,7 @@ class TaxonFiller(LMObject):
 
         msg = 'Found or inserted {}; failed {}; wrongRank {}'.format(totalIn,
                                                                 totalOut, totalWrongRank)
-        self.writeSuccessFile(msg)
+        self.write_success_file(msg)
         self.scribe.log.info(msg)
 
     # ...............................................
@@ -199,7 +199,7 @@ class TaxonFiller(LMObject):
                                                       delimiter=self._delimiter)
         mfChain.addCommands([cattaxCmd.get_makeflow_rule(local=True)])
         mfChain.write()
-        mfChain.updateStatus(JobStatus.INITIALIZE)
+        mfChain.update_status(JobStatus.INITIALIZE)
         self.scribe.updateObject(mfChain)
 
 
@@ -263,7 +263,7 @@ if __name__ == '__main__':
                                 logname=logname)
     filler.open()
 
-    filler.initializeMe()
+    filler.initialize_me()
     filler.readAndInsertTaxonomy()
 
     filler.close()

@@ -50,7 +50,7 @@ class SnippetShooter(LMObject):
         """
 #         if not isinstance(obj1, OccurrenceLayer):
         try:
-            obj1.getScientificName()
+            obj1.get_scientific_name()
         except Exception as err:
             raise LMError(
                 'Do no know how to create snippets for: {}'.format(

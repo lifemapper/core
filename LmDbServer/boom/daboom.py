@@ -10,7 +10,7 @@ from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import LM_USER
 from LmDbServer.boom.boomer import Boomer
 from LmServer.base.utilities import is_lm_user
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
 from LmServer.common.localconstants import BOOM_PID_FILE
 from LmServer.common.localconstants import PUBLIC_USER
@@ -36,7 +36,7 @@ class DaBoom(Daemon):
 
     # .............................
     def initialize(self):
-        self.boomer.initializeMe()
+        self.boomer.initialize_me()
 
     # .............................
     def run(self):
@@ -63,7 +63,7 @@ class DaBoom(Daemon):
         self.log.info('Shutdown!')
         # Stop walken the archive and saveNextStart
         self.boomer.close()
-        Daemon.onShutdown(self)
+        Daemon.on_shutdown(self)
 
     # ...............................................
     @property
