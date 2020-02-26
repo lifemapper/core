@@ -35,7 +35,7 @@ class IDigBioOccurrenceService(LmService):
         out_dir = earl.create_data_path(user_id, LMFileType.TMP_JSON)
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        basename = earl.createBasename(
+        basename = earl.create_basename(
             LMFileType.OCCURRENCE_RAW_FILE, objCode=random.randint(0, 100000))
 
         point_output_file = os.path.join(

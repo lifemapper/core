@@ -11,8 +11,9 @@ import os
 import zipfile
 
 import cherrypy
-from lmpy import Matrix
 import mapscript
+
+from lmpy import Matrix
 
 from LmCommon.common.lm_xml import tostring
 from LmCommon.common.lmconstants import (
@@ -539,8 +540,9 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     pam_str = StringIO()
                     geo_jsonify_flo(
                         pam_str, shapegrid.get_dlocation(), matrix=pam,
-                        mtxJoinAttrib=0, ident=0,
-                        headerLookupFilename=header_lookup_fn, transform=mung)
+                        mtx_join_attrib=0, ident=0,
+                        header_lookup_filename=header_lookup_fn,
+                        transform=mung)
                     pam_str.seek(0)
                     temp_filler = TemplateFiller(pam_json=pam_str.getvalue())
                     pam_str = None
@@ -570,8 +572,9 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     anc_pam_str = StringIO()
                     geo_jsonify_flo(
                         anc_pam_str, shapegrid.get_dlocation(), matrix=anc_pam,
-                        mtxJoinAttrib=0, ident=0,
-                        headerLookupFilename=header_lookup_fn, transform=mung)
+                        mtx_join_attrib=0, ident=0,
+                        header_lookup_filename=header_lookup_fn,
+                        transform=mung)
                     anc_pam_str.seek(0)
                     temp_filler = TemplateFiller(
                         anc_pam_json=anc_pam_str.getvalue())
@@ -597,7 +600,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                             '1': sites_cov_obs.getColumnHeaders()})
                     geo_jsonify_flo(
                         mtx_str, shapegrid.get_dlocation(), mtx_2d,
-                        mtxJoinAttrib=0, ident=0)
+                        mtx_join_attrib=0, ident=0)
                     mtx_str.seek(0)
                     temp_filler = TemplateFiller(
                         sites_cov_obs_json=mtx_str.getvalue())
@@ -614,7 +617,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                             '1': sites_obs.get_column_headers()})
                     geo_jsonify_flo(
                         mtx_str, shapegrid.get_dlocation(), mtx_2d,
-                        mtxJoinAttrib=0, ident=0)
+                        mtx_join_attrib=0, ident=0)
                     mtx_str.seek(0)
                     temp_filler = TemplateFiller(
                         sites_obs_json=mtx_str.getvalue())

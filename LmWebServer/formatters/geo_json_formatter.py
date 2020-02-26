@@ -3,8 +3,9 @@
 import json
 
 import cherrypy
-from lmpy import Matrix
 import ogr
+
+from lmpy import Matrix
 
 from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmServer.base.layer import Vector

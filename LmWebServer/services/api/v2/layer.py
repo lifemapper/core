@@ -59,7 +59,7 @@ class LayerService(LmService):
                 alt_pred_code=alt_pred_code, before_time=before_time,
                 date_code=date_code, env_code=env_code,
                 env_type_id=env_type_id, epsg_code=epsg_code,
-                gcm_code=gcm_code, scenario_id=scenario_id)
+                gcm_code=gcm_code, scenario_code=scenario_id)
 
         return self._get_layer(path_layer_id, env_layer=True)
 
@@ -147,7 +147,7 @@ class LayerService(LmService):
     def _list_env_layers(self, user_id, after_time=None, alt_pred_code=None,
                          before_time=None, date_code=None, env_code=None,
                          env_type_id=None, epsg_code=None, gcm_code=None,
-                         limit=100, offset=0, scenario_code=None):
+                         limit=100, offset=0, scenario_id=None):
         """List environmental layer objects matching the specified criteria
 
         Args:
