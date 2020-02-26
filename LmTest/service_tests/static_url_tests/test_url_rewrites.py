@@ -1,6 +1,6 @@
 """This module contains tests for Lifemapper URLs that should be forwarded
 """
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
 
 from LmCommon.common.lmconstants import HTTPStatus
 
@@ -17,7 +17,7 @@ FORWARDED_URLS = [
     },
     {
         ORIG_URL_KEY: 'http://svc.lifemapper.org/species/Acer',
-        REWRITE_URL_KEY: \
+        REWRITE_URL_KEY:
             'http://svc.lifemapper.org/?page_id=863&amp;speciesname=Acer',
         TEST_STATUS_KEY: HTTPStatus.OK
     },
@@ -81,17 +81,18 @@ def get_absolute_url(url, local_server):
     """
     if url.startswith('http'):
         return url
-    else:
-        return '{}{}'.format(local_server, url)
+
+    return '{}{}'.format(local_server, url)
 
 
 # .............................................................................
-class Test_url_writing(object):
+class Test_url_writing:
     """Tests that URLs are properly rewritten
     """
 
     # .....................................
-    def test_url_rewrites(self):
+    @staticmethod
+    def test_url_rewrites():
         """This test checks all URLs to be rewritten
         """
         for url_rewrite_info in FORWARDED_URLS:

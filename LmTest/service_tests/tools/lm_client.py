@@ -7,8 +7,8 @@ Todo:
 import http.cookiejar
 import json
 from urllib.parse import urlparse
-import urllib.request, urllib.error, urllib.parse
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
 
 from LmServer.common.localconstants import PUBLIC_FQDN
 from LmWebServer.common.lmconstants import HTTPMethod
@@ -45,23 +45,24 @@ class _SERVICE:
 
     # ............................
     @staticmethod
-    def userServices():
+    def user_services():
+        """Get list of user services
+        """
         return [_SERVICE.LOGIN, _SERVICE.LOGOUT, _SERVICE.SIGNUP]
 
 
 # .............................................................................
-class LmWebClient(object):
+class LmWebClient:
     """A web client for accessing Lifemapper services
     """
-
     # ............................
-    def __init__(self, server=PUBLIC_FQDN, urlBase='api', version='v2'):
+    def __init__(self, server=PUBLIC_FQDN, url_base='api', version='v2'):
         self.server = server
         # TODO: Enable secure connection when available
         if not (self.server.lower().startswith('http://') or \
                 self.server.lower().startswith('https://')):
             self.server = 'http://{}'.format(self.server)
-        self.urlBase = urlBase
+        self.url_base = url_base
         self.version = version
 
     # ............................
@@ -69,9 +70,9 @@ class LmWebClient(object):
                         response_format=None):
         """Builds the base URL for a service call
         """
-        url = '{}/{}'.format(self.server, self.urlBase)
+        url = '{}/{}'.format(self.server, self.url_base)
 
-        if service in _SERVICE.userServices():
+        if service in _SERVICE.user_services():
             url = '{}/{}'.format(url, service)
         elif service == _SERVICE.MATRIX:
             if object_id is not None:
@@ -225,8 +226,9 @@ class LmWebClient(object):
                                       response_format=None):
         """Gets the gridsets available and their counts in the Global PAM
         """
-        url = self._build_base_url(_SERVICE.GLOBAL_PAM, object_id='gridset',
-                                   response_format=response_format),
+        url = self._build_base_url(
+            _SERVICE.GLOBAL_PAM, object_id='gridset',
+            response_format=response_format)
         return self._make_request(url, method=HTTPMethod.GET, headers=headers)
 
     # ............................
@@ -483,47 +485,47 @@ class LmWebClient(object):
 
     # ............................
     def count_matrices(self, gridset_id, after_time=None, alt_pred_code=None,
-                             before_time=None, date_code=None, epsg_code=None,
-                             gcm_code=None, keyword=None, matrixType=None,
-                             status=None, headers=None, response_format=None):
+                       before_time=None, date_code=None, epsg_code=None,
+                       gcm_code=None, keyword=None, matrix_type=None,
+                       status=None, headers=None, response_format=None):
+        """Send a request to the server to count matrices
         """
-        @summary: Send a request to the server to count matrices
-        """
-        return self._make_request(self._build_base_url(_SERVICE.MATRIX,
-                        object_id='count', parentobject_id=gridset_id,
-                        response_format=response_format),
-                        method=HTTPMethod.GET, headers=headers, after_time=after_time,
-                        alt_pred_code=alt_pred_code, before_time=before_time,
-                        date_code=date_code, epsg_code=epsg_code,
-                        keyword=keyword, matrixType=matrixType, status=status,
-                        gcm_code=gcm_code)
+        return self._make_request(
+            self._build_base_url(
+                _SERVICE.MATRIX, object_id='count',
+                parent_object_id=gridset_id, response_format=response_format),
+            method=HTTPMethod.GET, headers=headers, after_time=after_time,
+            alt_pred_code=alt_pred_code, before_time=before_time,
+            date_code=date_code, epsg_code=epsg_code, keyword=keyword,
+            matrix_type=matrix_type, status=status, gcm_code=gcm_code)
 
     # ............................
-    def get_matrix(self, gridset_id, matrixId, headers=None, response_format=None):
+    def get_matrix(self, gridset_id, matrix_id, headers=None,
+                   response_format=None):
+        """Send a request to the server to get a matrix
         """
-        @summary: Send a request to the server to get a matrix
-        """
-        return self._make_request(self._build_base_url(_SERVICE.MATRIX,
-                            object_id=matrixId, parentobject_id=gridset_id,
-                            response_format=response_format), method=HTTPMethod.GET,
-                                          headers=headers)
+        return self._make_request(
+            self._build_base_url(
+                _SERVICE.MATRIX, object_id=matrix_id,
+                parent_object_id=gridset_id, response_format=response_format),
+            method=HTTPMethod.GET, headers=headers)
 
     # ............................
     def list_matrices(self, gridset_id, after_time=None, alt_pred_code=None,
                       before_time=None, date_code=None, epsg_code=None,
-                      gcm_code=None, keyword=None, limit=None, matrixType=None,
-                      offset=None, status=None, headers=None,
+                      gcm_code=None, keyword=None, limit=None,
+                      matrix_type=None, offset=None, status=None, headers=None,
                       response_format=None):
         """Gets a list of matrices
         """
         return self._make_request(
             self._build_base_url(
-                _SERVICE.MATRIX, parentobject_id=gridset_id,
+                _SERVICE.MATRIX, parent_object_id=gridset_id,
                 response_format=response_format),
             method=HTTPMethod.GET, headers=headers, after_time=after_time,
             alt_pred_code=alt_pred_code, before_time=before_time,
             date_code=date_code, epsg_code=epsg_code, keyword=keyword,
-            matrixType=matrixType, gcm_code=gcm_code, status=status,
+            matrix_type=matrix_type, gcm_code=gcm_code, status=status,
             limit=limit, offset=offset)
 
     # ===================
@@ -592,10 +594,10 @@ class LmWebClient(object):
     # ............................
     def get_ogc(self, map_name, bbox=None, bgcolor=None, color=None,
                 coverage=None, crs=None, exceptions=None, height=None,
-                layer=None, layers=None, point=None, request=None, format_=None,
-                service=None, sld=None, sld_body=None, srs=None, styles=None,
-                time=None, transparent=None, version=None, width=None,
-                headers=None):
+                layer=None, layers=None, point=None, request=None,
+                format_=None, service=None, sld=None, sld_body=None, srs=None,
+                styles=None, time=None, transparent=None, version=None,
+                width=None, headers=None):
         """Send an OGC request to the server
         """
         return self._make_request(
@@ -956,7 +958,6 @@ class LmWebClient(object):
     # ............................
     def get_tree(self, tree_id, headers=None, response_format=None):
         """Attempt to retrieve the specified tree
-        @summary: Send a request to the server to get a phylogenetic tree
         """
         return self._make_request(
             self._build_base_url(
@@ -1042,20 +1043,20 @@ class LmWebClient(object):
     # = User Services =
     # =================
     # ............................
-    def login(self, userId, passwd):
+    def login(self, user_id, passwd):
         """Logs in to the server
         """
-        policyServer = urlparse(self.server).netloc
+        policy_server = urlparse(self.server).netloc
         policy = http.cookiejar.DefaultCookiePolicy(
-            allowed_domains=(policyServer,))
-        self.cookieJar = http.cookiejar.LWPCookieJar(policy=policy)
+            allowed_domains=(policy_server,))
+        self.cookie_jar = http.cookiejar.LWPCookieJar(policy=policy)
         opener = urllib.request.build_opener(
-            urllib.request.HTTPCookieProcessor(self.cookieJar))
+            urllib.request.HTTPCookieProcessor(self.cookie_jar))
         urllib.request.install_opener(opener)
 
         req = self._make_request(
-            self._build_base_url(_SERVICE.LOGIN), userid=userId, pword=passwd,
-            method=HTTPMethod.POST)
+            self._build_base_url(_SERVICE.LOGIN), user_id=user_id,
+            pword=passwd, method=HTTPMethod.POST)
         resp = req.read()
         req.close()
         return resp
@@ -1073,7 +1074,8 @@ class LmWebClient(object):
     # = Processing =
     # ==============
     # ............................
-    def deserialize(self, response_object):
+    @staticmethod
+    def deserialize(response_object):
         """Deserializes a JSON file-like object
         """
         return json.load(response_object)

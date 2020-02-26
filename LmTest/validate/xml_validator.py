@@ -23,7 +23,7 @@ def validate_xml_file(xml_filename):
         try:
             with open(xml_filename) as in_xml:
                 xml_str = in_xml.read()
-            xml_obj = deserialize(fromstring(xml_str))
+            _ = deserialize(fromstring(xml_str))
             valid = True
         except Exception as e:
             msg = str(e)

@@ -6,8 +6,9 @@ Todo:
 """
 import os
 
-from LmCommon.common.lmconstants import LMFormat
 from osgeo import gdal
+
+from LmCommon.common.lmconstants import LMFormat
 
 
 # .............................................................................
@@ -32,16 +33,16 @@ def validate_raster_file(raster_filename, raster_format=None):
             elif ext == LMFormat.GTIFF.ext:
                 raster_format = LMFormat.GTIFF
             else:
-                msg = 'Extension {} did not map to a known raster format'.format(
-                                                                           ext)
+                msg = ('Extension {} did not map to a known raster format'
+                       ).format(ext)
 
         if raster_format is not None:
             try:
-                ds = gdal.Open(raster_filename)
-                if ds is None:
+                dataset = gdal.Open(raster_filename)
+                if dataset is None:
                     msg = 'Could not open {}'.format(raster_filename)
                 else:
-                    lyr = ds.GetRasterBand(1)
+                    lyr = dataset.GetRasterBand(1)
                     valid = True
             except Exception as e:
                 msg = str(e)
