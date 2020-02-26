@@ -1,8 +1,5 @@
-'''
-Created on Apr 17, 2018
-
-@author: cjgrady
-'''
+"""Validator for trees
+"""
 
 
 def validate_newick(obj_generator):

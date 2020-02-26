@@ -1,4 +1,4 @@
-"""Contains functions for validating shapefiles 
+"""Contains functions for validating shapefiles
 """
 import glob
 import os
@@ -24,7 +24,7 @@ def validate_shapefile(obj_generator):
 
     filename = glob.glob(os.path.join(out_dir, '*.shp'))[0]
 
-    ret = Vector.testVector(filename)
+    ret = Vector.test_vector(filename)
 
     shutil.rmtree(out_dir)
     return ret

@@ -9,7 +9,7 @@ import pytest
 
 from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.common.log import UnittestLogger
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
 from LmTest.service_tests.tools.lm_client import LmWebClient
 
 # .............................................................................
@@ -35,9 +35,9 @@ def scribe():
     Note:
         * Tests that take 'scribe' as an argument will get this fixture
     """
-    scribe = BorgScribe(UnittestLogger())
-    scribe.openConnections()
-    return scribe
+    _scribe = BorgScribe(UnittestLogger())
+    _scribe.open_connections()
+    return _scribe
 
 
 # .............................................................................
@@ -46,4 +46,3 @@ def webservices_root():
     """Gets the local web server
     """
     return WEBSERVICES_ROOT
-

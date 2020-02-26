@@ -6,8 +6,8 @@ from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (LMFormat, ProcessType)
 from LmCommon.common.time import gmt
 from LmCommon.shapes.build_shapegrid import build_shapegrid
-from LmServer.base.layer2 import _LayerParameters, Vector
-from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
+from LmServer.base.layer import _LayerParameters, Vector
+from LmServer.base.service_object import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, LMServiceType)
 from osgeo import ogr, osr
 
@@ -28,7 +28,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
                  metadata={}, resolution=None, metadataUrl=None,
                  parentMetadataUrl=None, mod_time=None, featureCount=0,
                  feature_attributes={}, features={}, fidAttribute=None,
-                 status=None, statusModTime=None):
+                 status=None, status_mod_time=None):
         """
         @copydoc LmServer.base.service_object.ProcessObject::__init__()
         @copydoc LmServer.base.layer._LayerParameters::__init__()
@@ -57,7 +57,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         Vector.__init__(
             self, name, userId, epsgcode, lyrId=lyrId, verify=verify,
             dlocation=dlocation, metadata=metadata,
-            dataFormat=LMFormat.getDefaultOGR().driver, ogrType=ogr.wkbPolygon,
+            dataFormat=LMFormat.SHAPE.driver, ogrType=ogr.wkbPolygon,
             mapunits=mapunits, resolution=resolution, bbox=bbox,
             svcObjId=lyrId, serviceType=LMServiceType.SHAPEGRIDS,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
@@ -66,9 +66,9 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             fidAttribute=fidAttribute)
         ProcessObject.__init__(
             self, objId=lyrId, processType=ProcessType.RAD_BUILDGRID,
-            status=status, statusModTime=statusModTime)
+            status=status, status_mod_time=status_mod_time)
         # Don't necessarily need centroids (requires reading shapegrid)
-#         self._setMapPrefix()
+#         self._set_map_prefix()
         self._setCellsides(cellsides)
         self.cellsize = cellsize
         self._size = None
@@ -76,10 +76,10 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
 
 # ...............................................
     @classmethod
-    def initFromParts(cls, vector, cellsides, cellsize, siteId='siteid',
+    def init_from_parts(cls, vector, cellsides, cellsize, siteId='siteid',
                       siteX='centerX', siteY='centerY', size=None,
                       siteIndicesFilename=None, status=None,
-                      statusModTime=None):
+                      status_mod_time=None):
         shpGrid = Shapegrid(
             vector.name, vector.getUserId(), vector.epsgcode, cellsides,
             cellsize, vector.mapUnits, vector.bbox, siteId=siteId, siteX=siteX,
@@ -91,20 +91,20 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             featureCount=vector.featureCount,
             feature_attributes=vector.feature_attributes,
             features=vector.features, fidAttribute=vector.fidAttribute,
-            status=status, statusModTime=statusModTime)
+            status=status, status_mod_time=status_mod_time)
         return shpGrid
 
     # ...............................................
-    def updateStatus(self, status, matrixIndex=None, metadata=None,
+    def update_status(self, status, matrixIndex=None, metadata=None,
                      mod_time=gmt().mjd):
         """
-        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
-        @copydoc LmServer.base.service_object.ServiceObject::updateModtime()
+        @copydoc LmServer.base.service_object.ProcessObject::update_status()
+        @copydoc LmServer.base.service_object.ServiceObject::update_mod_time()
         @copydoc LmServer.base.layer._LayerParameters::updateParams()
         """
-        ProcessObject.updateStatus(self, status, mod_time)
-        ServiceObject.updateModtime(self, mod_time)
-        _LayerParameters.updateParams(
+        ProcessObject.update_status(self, status, mod_time)
+        ServiceObject.update_mod_time(self, mod_time)
+        _LayerParameters.update_params(
             self, mod_time, matrixIndex=matrixIndex, metadata=metadata)
 
 # ...............................................
@@ -198,8 +198,8 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             raise LMError("Could not open Layer at: %s" % self._dlocation)
         if removeOrig:
             newdLoc = self._dlocation
-            for ext in LMFormat.SHAPE.getExtensions():
-                success, msg = self.deleteFile(
+            for ext in LMFormat.SHAPE.get_extensions():
+                success, _ = self.deleteFile(
                     self._dlocation.replace('.shp', ext))
         else:
             newdLoc = dloc
@@ -210,7 +210,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
 
         t_srs = osr.SpatialReference()
         t_srs.ImportFromEPSG(self.epsgcode)
-        drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+        drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
         ds = drv.CreateDataSource(newdLoc)
         newlayer = ds.CreateLayer(
             ds.GetName(), geom_type=ogr.wkbPolygon, srs=t_srs)
@@ -223,7 +223,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         selectedpoly = ogr.CreateGeometryFromWkt(cutoutWKT)
         minx, maxx, miny, maxy = selectedpoly.GetEnvelope()
         origFeature = origLayer.GetNextFeature()
-        siteIdIdx = origFeature.GetFieldIndex(self.siteId)
+#         siteIdIdx = origFeature.GetFieldIndex(self.siteId)
         newSiteId = 0
         while origFeature is not None:
             clone = origFeature.Clone()

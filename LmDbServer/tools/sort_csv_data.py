@@ -1,6 +1,7 @@
 #!/bin/python
 """Sort a csv file
 """
+import argparse
 import csv
 import os
 import sys
@@ -12,39 +13,37 @@ from LmServer.common.log import ScriptLogger
 OUT_DELIMITER = '\t'
 
 
-# ...............................................
+# .............................................................................
 def _get_op_filename(data_path, prefix, base, run=None):
     base_name = '{}_{}'.format(prefix, base)
     if run is not None:
-        base_name = '{}_{}'.format(basename, run)
+        base_name = '{}_{}'.format(base_name, run)
     return os.path.join(data_path, '{}.csv'.format(base_name))
 
 
-# ...............................................
-def _getSmallestKeyAndPosition(sortedFiles):
+# .............................................................................
+def _get_smallest_key_and_position(sorted_files):
+    """Get the smallest group data key and index of file containing it
     """
-    Get smallest groupVal (grouping data key) and index of file containing 
-    that record
-    """
-    idxOfSmallest = 0
-    smallest = sortedFiles[idxOfSmallest].groupVal
-    for idx in range(len(sortedFiles)):
-        if sortedFiles[idx].groupVal is not None:
-            if smallest is None or sortedFiles[idx].groupVal < smallest:
-                smallest = sortedFiles[idx].groupVal
-                idxOfSmallest = idx
+    idx_of_smallest = 0
+    smallest = sorted_files[idx_of_smallest].group_val
+    for idx, sorted_file in enumerate(sorted_files):
+        if sorted_file.group_val is not None:
+            if smallest is None or sorted_file.group_val < smallest:
+                smallest = sorted_file.group_val
+                idx_of_smallest = idx
     if smallest is None:
         return None, None
-    else:
-        return smallest, idxOfSmallest
+
+    return smallest, idx_of_smallest
 
 
-# ...............................................
-def checkMergedFile(log, mergefname, metafname):
+# .............................................................................
+def check_merged_file(log, merge_fname, meta_fname):
     chunkCount = recCount = failSortCount = failChunkCount = 0
-    bigSortedData = OccDataParser(log, mergefname, metafname,
-                                  delimiter=OUT_DELIMITER, pullChunks=True)
-    bigSortedData.initializeMe()
+    bigSortedData = OccDataParser(log, merge_fname, meta_fname,
+                                  delimiter=OUT_DELIMITER, pull_chunks=True)
+    bigSortedData.initialize_me()
     prevKey = bigSortedData.groupVal
 
     chunk, chunkGroup, chunkName = bigSortedData.pullCurrentChunk()
@@ -74,7 +73,7 @@ def checkMergedFile(log, mergefname, metafname):
                   chunkCount {} 
                   failSortCount {} 
                   failChunkCount{}  
-                  currRecnum {}""".format(mergefname, recCount, chunkCount,
+                  currRecnum {}""".format(merge_fname, recCount, chunkCount,
                                           failSortCount, failChunkCount,
                                           bigSortedData.currRecnum)
     log.debug(msg)
@@ -103,14 +102,14 @@ def sortRecs(array, idx):
 
 
 # .............................................................................
-def splitIntoFiles(log, occparser, datapath, prefix, basename, maxFileSize):
+def split_into_files(log, occ_parser, data_path, prefix, basename, max_file_size):
     idx = 0
-    while not occparser.closed:
-        chunk = occparser.getSizeChunk(maxFileSize)
-        fname = _getOPFilename(datapath, prefix, basename, run=idx)
+    while not occ_parser.closed:
+        chunk = occ_parser.getSizeChunk(max_file_size)
+        fname = _get_op_filename(data_path, prefix, basename, run=idx)
         csvwriter, f = get_unicodecsv_writer(fname, OUT_DELIMITER, doAppend=False)
         # Skip header, rely on metadata with column indices
-        #       csvwriter.writerow(occparser.header)
+        #       csvwriter.writerow(occ_parser.header)
         for rec in chunk:
             csvwriter.writerow(rec)
         f.close()
@@ -121,12 +120,12 @@ def splitIntoFiles(log, occparser, datapath, prefix, basename, maxFileSize):
 
 
 # .............................................................................
-def sortFiles(log, groupByIdx, datapath, inprefix, outprefix, basename):
+def sort_files(log, group_by_idx, data_path, inprefix, outprefix, basename):
     idx = 0
 
-    infname = _getOPFilename(datapath, inprefix, basename, run=idx)
+    infname = _get_op_filename(data_path, inprefix, basename, run=idx)
     while os.path.exists(infname):
-        outfname = _getOPFilename(datapath, outprefix, basename, run=idx)
+        outfname = _get_op_filename(data_path, outprefix, basename, run=idx)
         log.debug('Write from {} to {}'.format(infname, outfname))
         # Read rows
         unsRows = []
@@ -147,29 +146,29 @@ def sortFiles(log, groupByIdx, datapath, inprefix, outprefix, basename):
         infile.close()
 
         # Sort records into new array, then write to file, no header
-        srtRows = sortRecs(unsRows, groupByIdx)
+        srtRows = sortRecs(unsRows, group_by_idx)
         for rec in srtRows:
             occwriter.writerow(rec)
         outfile.close()
 
         # Move to next file
         idx += 1
-        infname = _getOPFilename(datapath, inprefix, basename, run=idx)
+        infname = _get_op_filename(data_path, inprefix, basename, run=idx)
     return idx
 
 
-# ...............................................
-def _switchFiles(openFile, datapath, prefix, basename, run=None):
+# .............................................................................
+def _switchFiles(openFile, data_path, prefix, basename, run=None):
     openFile.close()
     # Open next output sorted file
-    fname = _getOPFilename(datapath, prefix, basename, run=run)
+    fname = _get_op_filename(data_path, prefix, basename, run=run)
     csvwriter, outfile = get_unicodecsv_writer(fname, OUT_DELIMITER,
                                                doAppend=False)
     return outfile, csvwriter
 
 
-# ...............................................
-def _popChunkAndWrite(csvwriter, occPrsr):
+# .............................................................................
+def _pop_chunk_and_write(csvwriter, occPrsr):
     # first get chunk
     thiskey = occPrsr.groupVal
     chunk, chunkGroup, chunkName = occPrsr.pullCurrentChunk()
@@ -178,77 +177,72 @@ def _popChunkAndWrite(csvwriter, occPrsr):
     return thiskey
 
 
-# ...............................................
-def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
-                     metafname, inIdx=0, maxFileSize=None):
+# .............................................................................
+def merge_sorted_files(log, merge_fname, data_path, input_prefix, basename,
+                     meta_fname, in_idx=0, max_file_size=None):
     """
     @summary: Merge multiple files of csv records sorted on keyCol, with the 
               same keyCol values in one or more files, into a single file, 
               sorted on keyCol, placing records containing the same keyCol value
               together.
-    @param mergefname: Output filename
-    @param datapath: Path for input files
-    @param inputPrefix: Filename prefix for input sorted files
+    @param merge_fname: Output filename
+    @param data_path: Path for input files
+    @param input_prefix: Filename prefix for input sorted files
     @param basename: original base filename
-    @param metafname: Metadata filename for these data
-    @param maxFileSize: (optional) maximum number of bytes for output files; 
+    @param meta_fname: Metadata filename for these data
+    @param max_file_size: (optional) maximum number of bytes for output files; 
                         this results in multiple, numbered, sorted output files,  
                         with no keys in more than one file
     """
     # Open all input split files
-    sortedFiles = []
-    srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
-    currIdx = inIdx
-    enoughAlready = False
-    while not enoughAlready and os.path.exists(srtFname):
+    sorted_files = []
+    srt_fname = _get_op_filename(data_path, input_prefix, basename, run=in_idx)
+    curr_idx = in_idx
+    enough_already = False
+    while not enough_already and os.path.exists(srt_fname):
         try:
-            op = OccDataParser(log, srtFname, metafname, delimiter=OUT_DELIMITER,
-                               pullChunks=True)
-            op.initializeMe()
+            op = OccDataParser(log, srt_fname, meta_fname, delimiter=OUT_DELIMITER,
+                               pull_chunks=True)
+            op.initialize_me()
         except IOError as e:
             log.warning('Enough already, IOError! Final file {}. Using only indices {} - {}, err {}'
-                        .format(srtFname, inIdx, currIdx, str(e)))
-            enoughAlready = True
+                        .format(srt_fname, in_idx, curr_idx, str(e)))
+            enough_already = True
         except Exception as e:
-            log.warning('Enough already, Unknown error! Final file {}. Using only indices {} - {}, err {}'
-                        .format(srtFname, inIdx, currIdx, str(e)))
-            enoughAlready = True
+            log.warning(
+                'Enough already! Final file {}. {}'.format(
+                    srt_fname, 'Using only indices {} - {}, err {}'.format(
+                        in_idx, curr_idx, e)))
+            enough_already = True
         else:
-            sortedFiles.append(op)
-            currIdx += 1
-            srtFname = _getOPFilename(datapath, inputPrefix, basename, run=currIdx)
+            sorted_files.append(op)
+            curr_idx += 1
+            srt_fname = _get_op_filename(
+                data_path, input_prefix, basename, run=curr_idx)
 
     try:
-        outIdx = 0
         # Open output sorted file
-        csvwriter, outfile = get_unicodecsv_writer(mergefname, OUT_DELIMITER,
-                                                   doAppend=False)
-        # Skip header (no longer written to files)
-        # find file with record containing smallest key
-        smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
-        while pos is not None:
-            # Output records in this file with smallKey
-            _popChunkAndWrite(csvwriter, sortedFiles[pos])
+        with open(merge_fname, 'w') as out_file:
+            csv_writer = csv.writer(out_file, delimiter=OUT_DELIMITER)
+            # Skip header (no longer written to files)
+            # find file with record containing smallest key
+            _, pos = _get_smallest_key_and_position(sorted_files)
+            while pos is not None:
+                # Output records in this file with small_key
+                _pop_chunk_and_write(csv_writer, sorted_files[pos])
 
-#             # If size limit is reached, switch to new file
-#             if (maxFileSize and os.fstat(outfile.fileno()).st_size >= maxFileSize):
-#                 outIdx += 1
-#                 outfile, csvwriter = _switchFiles(outfile, csvwriter, datapath,
-#                                                inputPrefix, basename, run=outIdx)
-            # Find smallest again
-            smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
+                # Find smallest again
+                _, pos = _get_smallest_key_and_position(sorted_files)
 
     except Exception as e:
         raise
     finally:
-        outfile.close()
-        csvwriter = None
-        for op in sortedFiles:
-            log.debug('Closing file {}'.format(op.dataFname))
+        for op in sorted_files:
+            log.debug('Closing file {}'.format(op.data_fname))
             op.close()
 
 
-# ...............................................
+# .............................................................................
 def usage():
     output = """
     Usage:
@@ -258,8 +252,9 @@ def usage():
 
 
 # .............................................................................
-if __name__ == "__main__":
-    import argparse
+def main():
+    """Main method of the script
+    """
     if len(sys.argv) in (3, 4):
         if len(sys.argv) == 3:
             cmd = 'all'
@@ -273,90 +268,93 @@ if __name__ == "__main__":
                           'for single- or multi-species computations ' +
                           'specific to the configured input data or the ' +
                           'data package named.'))
-    parser.add_argument('dump_filename',
-             help=('Filename for unsorted database dump.'))
-    parser.add_argument('--delimiter', default='\t',
-             help=('Field delimiter for these data.'))
-    parser.add_argument('--command', default='all',
-             help=("""Process to be excecuted: 
-             split: split large unsorted input into smaller files
-             sort: sort smaller files individually
-             merge: merge smaller sorted files into large sorted file
-             check: test large sorted file for errors
-             all: perform all (split, sort, merge) functions"""))
-    parser.add_argument('--start_idx', default=0,
-             help=(""""For merging, start at this file number (limit on number
-             of open files may require doing this in 2 or more steps)."""))
+    parser.add_argument(
+        'dump_filename', help=('Filename for unsorted database dump.'))
+    parser.add_argument(
+        '--delimiter', default='\t', help=('Field delimiter for these data.'))
+    # TODO: Use options or choices parameter to limit inputs
+    parser.add_argument(
+        '--command', default='all',
+        help=('Process to be executed:\n'
+              '    split: split large unsorted input into smaller files\n'
+              '    sort: sort smaller files individually\n'
+              '    merge: Merge smaller sorted files into large sorted file\n'
+              '    check: Test large sorted file for errors\n'
+              '    all: performa ll (split, sort, merge) functions'))
+    parser.add_argument(
+        '--start_idx', default=0,
+        help=('For merging, start at this file number (limit on number of '
+              'open files, may require doing this in 2 or more steps'))
 
     args = parser.parse_args()
-    inDelimiter = args.delimiter
-    datafname = args.dump_filename
+    in_delimiter = args.delimiter
+    data_fname = args.dump_filename
     cmd = args.command
     start_idx = args.start_idx
 
     # Only 2 options
-    if inDelimiter == ',':
+    if in_delimiter == ',':
         print('delimiter is comma')
     else:
-        inDelimiter = '\t'
+        in_delimiter = '\t'
     if cmd not in ('split', 'sort', 'merge', 'check', 'all'):
         usage()
 
-    unsortedPrefix = 'chunk'
-    sortedPrefix = 'smsort'
-    mergedPrefix = 'sorted'
+    unsorted_prefix = 'chunk'
+    sorted_prefix = 'smsort'
+    merged_prefix = 'sorted'
 
-    basepath, ext = os.path.splitext(datafname)
+    basepath, _ = os.path.splitext(data_fname)
     pth, basename = os.path.split(basepath)
-    logname = 'sortCSVData_{}_{}'.format(basename, cmd)
-    metafname = basepath + LMFormat.JSON.ext
-    mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename,
-                                                    LMFormat.CSV.ext))
-    if not os.path.exists(datafname) or not os.path.exists(metafname):
-        print(('Files {} and {} must exist'.format(datafname, metafname)))
-        exit()
+    log_name = 'sortCSVData_{}_{}'.format(basename, cmd)
+    meta_fname = basepath + LMFormat.JSON.ext
+    merge_fname = os.path.join(pth, '{}_{}{}'.format(
+        merged_prefix, basename, LMFormat.CSV.ext))
+    if not os.path.exists(data_fname) or not os.path.exists(meta_fname):
+        print(('Files {} and {} must exist'.format(data_fname, meta_fname)))
+        sys.exit()
 
-    log = ScriptLogger(logname)
+    log = ScriptLogger(log_name)
     if cmd in ('split', 'sort', 'all'):
         # Split into smaller unsorted files
-        occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter,
-                                  pullChunks=True)
-        occparser.initializeMe()
-        groupByIdx = occparser.groupByIdx
-        print('groupByIdx = ', groupByIdx)
+        occ_parser = OccDataParser(
+            log, data_fname, meta_fname, delimiter=in_delimiter,
+            pull_chunks=True)
+        occ_parser.initialize_me()
+        group_by_idx = occ_parser.group_by_idx
+        print('group_by_idx = ', group_by_idx)
 
         if cmd in ('split', 'all'):
             # Split into smaller unsorted files
             print('Split huge data file into smaller files')
-            splitIntoFiles(log, occparser, pth, unsortedPrefix, basename, 500000)
-            occparser.close()
+            split_into_files(
+                log, occ_parser, pth, unsorted_prefix, basename, 500000)
+            occ_parser.close()
 
         if cmd in ('sort', 'all'):
             # Sort smaller files
             print('Sort smaller files')
-            sortFiles(log, groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
+            sort_files(
+                log, group_by_idx, pth, unsorted_prefix, sorted_prefix,
+                basename)
 
     if cmd in ('merge', 'all'):
         # Merge all data for production system into multiple subset files
         print('Merge smaller sorted files into huge sorted file')
-        mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename,
-                         metafname, inIdx=start_idx, maxFileSize=None)
+        merge_sorted_files(
+            log, merge_fname, pth, sorted_prefix, basename, meta_fname,
+            in_idx=start_idx, max_file_size=None)
 
     if cmd == 'check':
         # Check final output (only for single file now)
-        checkMergedFile(log, mergefname, metafname)
+        check_merged_file(log, merge_fname, meta_fname)
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()
 
 """
-import csv
-import os
-import sys
-
-from LmCommon.common.lmconstants import LMFormat
-from LmCommon.common.occ_parse import OccDataParser
-from LmCommon.common.ready_file import *
-
-from LmServer.common.log import ScriptLogger
-
 OUT_DELIMITER = '\t'
 
 from LmDbServer.tools.sortCSVData import *
@@ -382,7 +380,7 @@ log = ScriptLogger(logname)
 
 occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter,
                           pullChunks=True)
-occparser.initializeMe()
+occparser.initialize_me()
 groupByIdx = occparser.groupByIdx
 print 'groupByIdx = ', groupByIdx
 

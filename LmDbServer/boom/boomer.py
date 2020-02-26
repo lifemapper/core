@@ -18,13 +18,13 @@ from LmCommon.common.lmconstants import JobStatus, LM_USER
 import LmCommon.common.time as lt
 from LmDbServer.boom.boom_collate import BoomCollate
 from LmServer.base.utilities import is_lm_user
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
                                          PUBLIC_ARCHIVE_NAME)
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.processchain import MFChain
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.process_chain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 
 # Only relevant for "archive" public data, all user workflows will put all
@@ -97,7 +97,7 @@ class Boomer(LMObject):
             self.log.error(message)
 
     # .............................
-    def initializeMe(self):
+    def initialize_me(self):
         """
         @summary: Creates objects (ChristopherWalken for walking the species
                   and MFChain objects for workflow computation requests.
@@ -116,7 +116,7 @@ class Boomer(LMObject):
         try:
             self.christopher = ChristopherWalken(self.configFname,
                                                  scribe=self._scribe)
-            self.christopher.initializeMe()
+            self.christopher.initialize_me()
         except Exception as e:
             raise LMError(
                 'Failed to initialize Chris with config {} ({})'.format(
@@ -198,7 +198,7 @@ class Boomer(LMObject):
                     self.potatoBushel.addCommands(collate_rules)
 
                 self.potatoBushel.write()
-                self.potatoBushel.updateStatus(JobStatus.INITIALIZE)
+                self.potatoBushel.update_status(JobStatus.INITIALIZE)
                 self._scribe.updateObject(self.potatoBushel)
                 self.log.info('   Wrote potatoBushel {} ({} spuds)'
                               .format(self.potatoBushel.objId, len(self.squidNames)))
@@ -241,9 +241,10 @@ class Boomer(LMObject):
             try:
                 os.rename(oldfname, newfname)
             except Exception as e:
-                self.log.error('Failed to rename {} to {}'.format(oldfname, newfname))
+                self.log.error('Failed to rename {} to {} ({})'.format(
+                    oldfname, newfname, e))
             # Restart with next file
-            self.initializeMe()
+            self.initialize_me()
 
     # ...............................................
     def _createBushelMakeflow(self):
@@ -254,7 +255,7 @@ class Boomer(LMObject):
                 }
         newMFC = MFChain(self.christopher.userId, priority=self.priority,
                          metadata=meta, status=JobStatus.GENERAL,
-                         statusModTime=lt.gmt().mjd)
+                         status_mod_time=lt.gmt().mjd)
         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
         return mfChain
 
@@ -267,7 +268,7 @@ class Boomer(LMObject):
 #         }
 #         newMFC = MFChain(self.christopher.userId, priority=self.priority,
 #                          metadata=meta, status=JobStatus.GENERAL,
-#                          statusModTime=lt.gmt().mjd)
+#                          status_mod_time=lt.gmt().mjd)
 #         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
 #         return mfChain
 
@@ -305,7 +306,7 @@ class Boomer(LMObject):
         return rules
 
     # ...............................................
-    def writeSuccessFile(self, message):
+    def write_success_file(self, message):
         self.ready_filename(self._successFname, overwrite=True)
         try:
             f = open(self._successFname, 'w')
@@ -324,7 +325,7 @@ class Boomer(LMObject):
             count += 1
         if not self.keepWalken:
             self.close()
-        self.writeSuccessFile('Boomer finished walken {} species'.format(count))
+        self.write_success_file('Boomer finished walken {} species'.format(count))
 
 
 # .............................................................................
@@ -363,7 +364,7 @@ if __name__ == "__main__":
     logname = '{}.{}'.format(scriptname, timestamp)
     logger = ScriptLogger(logname, level=logging.INFO)
     boomer = Boomer(configFname, successFname, log=logger)
-    boomer.initializeMe()
+    boomer.initialize_me()
     boomer.processAllSpecies()
 
 """
@@ -402,7 +403,7 @@ scriptname = 'testing.boomer'
 logname = '{}.{}'.format(scriptname, timestamp)
 logger = ScriptLogger(logname, level=logging.INFO)
 boomer = Boomer(configFname, successFname, log=logger)
-boomer.initializeMe()
+boomer.initialize_me()
 
 
 # squid, spudRules, idx_success_filename = boomer.christopher.startWalken(

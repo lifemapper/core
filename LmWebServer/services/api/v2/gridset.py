@@ -333,7 +333,7 @@ class GridsetBioGeoService(LmService):
                 }
 
                 tmp_mtx = LMMatrix(
-                    None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
+                    None, matrix_type=MatrixType.BIOGEO_HYPOTHESES,
                     process_type=ProcessType.ENCODE_HYPOTHESES,
                     user_id=self.get_user_id(), gridset=gridset, metadata=meta,
                     status=JobStatus.INITIALIZE, status_mod_time=curr_time)
@@ -666,7 +666,7 @@ class GridsetService(LmService):
             offset: (optional) Offset the returned GridSets by this number
         """
         gridset_atoms = self.scribe.list_gridsets(
-            offset, limit, user_id=user_id, shpgrdLyrid=shapegrid_id,
+            offset, limit, user_id=user_id, shapegrid_layer_id=shapegrid_id,
             meta_string=meta_string, after_time=after_time,
             before_time=before_time, epsg=epsg)
 

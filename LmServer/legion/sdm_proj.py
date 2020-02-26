@@ -7,8 +7,8 @@ import os
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCommon.common.time import gmt
-from LmServer.base.layer2 import Raster, _LayerParameters
-from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
+from LmServer.base.layer import Raster, _LayerParameters
+from LmServer.base.service_object import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (
     Algorithms, ID_PLACEHOLDER, LMFileType, LMServiceType)
 
@@ -21,7 +21,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
     # .........................................
     def __init__(self, occurrenceSet, algorithm, modelScenario, modelMask,
                      projScenario, projMask, processType, projMetadata,
-                     status, statusModTime, userId, projectId):
+                     status, status_mod_time, userId, projectId):
         """Constructor for the _ProjectionType class
 
         Args:
@@ -53,15 +53,15 @@ class _ProjectionType(_LayerParameters, ProcessObject):
             * projMask and mdlMask should be dictionaries with masking method,
                 input data and parameters
         """
-        if status is not None and statusModTime is None:
-            statusModTime = gmt().mjd
+        if status is not None and status_mod_time is None:
+            status_mod_time = gmt().mjd
 
         _LayerParameters.__init__(
             self, userId, paramId=projectId, matrixIndex=-1,
-            metadata=projMetadata, mod_time=statusModTime)
+            metadata=projMetadata, mod_time=status_mod_time)
         ProcessObject.__init__(
             self, objId=projectId, processType=processType, status=status,
-            statusModTime=statusModTime)
+            status_mod_time=status_mod_time)
         self._occurrenceSet = occurrenceSet
         self._algorithm = algorithm
         self._modelMask = modelMask
@@ -131,7 +131,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
         return self._status
 
     @property
-    def statusModTime(self):
+    def status_mod_time(self):
         return self._statusmodtime
 
     @property
@@ -184,7 +184,7 @@ class SDMProjection(_ProjectionType, Raster):
 # .............................................................................
     def __init__(self, occurrenceSet, algorithm, modelScenario, projScenario,
                  processType=None, modelMask=None, projMask=None,
-                 projMetadata={}, status=None, statusModTime=None,
+                 projMetadata={}, status=None, status_mod_time=None,
                  sdmProjectionId=None, name=None, epsgcode=None, lyrId=None,
                  squid=None, verify=None, dlocation=None, lyrMetadata={},
                  dataFormat=None, gdalType=None, valUnits=None, nodataVal=None,
@@ -203,7 +203,7 @@ class SDMProjection(_ProjectionType, Raster):
         _ProjectionType.__init__(
             self, occurrenceSet, algorithm, modelScenario, modelMask,
             projScenario, projMask, processType, projMetadata, status,
-            statusModTime, userId, sdmProjectionId)
+            status_mod_time, userId, sdmProjectionId)
         if not lyrMetadata:
             lyrMetadata = self._createMetadata(
                 projScenario, occurrenceSet.displayName, algorithm.code,
@@ -215,26 +215,26 @@ class SDMProjection(_ProjectionType, Raster):
             minVal=minVal, maxVal=maxVal, mapunits=mapunits,
             resolution=resolution, bbox=bbox, svcObjId=lyrId,
             serviceType=LMServiceType.PROJECTIONS, metadataUrl=metadataUrl,
-            parentMetadataUrl=parentMetadataUrl, mod_time=statusModTime)
+            parentMetadataUrl=parentMetadataUrl, mod_time=status_mod_time)
         # TODO: clean this up.  Do not allow layer to calculate dlocation,
         #         subclass SDMProjection must override
-        self.setId(lyrId)
+        self.set_id(lyrId)
         self.set_local_map_filename()
-        self._setMapPrefix()
+        self._set_map_prefix()
 
 # .............................................................................
 # another Constructor
 # # .............................................................................
     @classmethod
-    def initFromParts(cls, occurrenceSet, algorithm, modelScenario,
+    def init_from_parts(cls, occurrenceSet, algorithm, modelScenario,
                       projScenario, layer, processType=None, modelMask=None,
                       projMask=None, projMetadata={}, status=None,
-                      statusModTime=None, sdmProjectionId=None):
+                      status_mod_time=None, sdmProjectionId=None):
         prj = SDMProjection(
             occurrenceSet, algorithm, modelScenario, projScenario,
             processType=processType, modelMask=modelMask, projMask=projMask,
             projMetadata=projMetadata, status=status,
-            statusModTime=statusModTime, sdmProjectionId=sdmProjectionId,
+            status_mod_time=status_mod_time, sdmProjectionId=sdmProjectionId,
             name=layer.name, epsgcode=layer.epsgcode, lyrId=layer.get_id(),
             squid=layer.squid, verify=layer.verify, dlocation=layer._dlocation,
             lyrMetadata=layer.lyrMetadata, dataFormat=layer.dataFormat,
@@ -249,19 +249,19 @@ class SDMProjection(_ProjectionType, Raster):
 # .............................................................................
 # Superclass methods overridden
 # # .............................................................................
-    def setId(self, lyrid):
+    def set_id(self, lyrid):
         """
         @summary: Sets the database id on the object, and sets the 
-                     SDMProjection.mapPrefix of the file if it is None.
+                     SDMProjection.map_prefix of the file if it is None.
         @param id: The database id for the object
         """
-        super(SDMProjection, self).setId(lyrid)
+        super(SDMProjection, self).set_id(lyrid)
         if lyrid is not None:
             self.name = self._earl_jr.createLayername(projId=lyrid)
             self.clearDLocation()
             self.set_dlocation()
             self.title = '%s Projection %s' % (self.speciesName, str(lyrid))
-            self._setMapPrefix()
+            self._set_map_prefix()
 
 # ...............................................
     def create_local_dlocation(self):
@@ -295,12 +295,12 @@ class SDMProjection(_ProjectionType, Raster):
             self._dlocation = dlocation
 
 # ...............................................
-    def getAbsolutePath(self):
+    def get_absolute_path(self):
         """
         @summary Gets the absolute path to the species data
         @return Path to species points
         """
-        return self._occurrenceSet.getAbsolutePath()
+        return self._occurrenceSet.get_absolute_path()
 
 # ...............................................
     def _createMetadata(self, prjScenario, speciesName, algorithmCode,
@@ -365,18 +365,18 @@ class SDMProjection(_ProjectionType, Raster):
 # .............................................................................
 # Public methods
 # .............................................................................
-    def updateStatus(self, status, metadata=None,
+    def update_status(self, status, metadata=None,
                      mod_time=gmt().mjd):
         """
         @summary Update status, metadata, mod_time attributes on the
             SDMProjection. 
-        @copydoc LmServer.base.service_object.ProcessObject::updateStatus()
-        @copydoc LmServer.base.service_object.ServiceObject::updateModtime()
+        @copydoc LmServer.base.service_object.ProcessObject::update_status()
+        @copydoc LmServer.base.service_object.ServiceObject::update_mod_time()
         @copydoc LmServer.base.layer._LayerParameters::updateParams()
         """
-        ProcessObject.updateStatus(self, status, mod_time)
-        ServiceObject.updateModtime(self, mod_time)
-        _LayerParameters.updateParams(self, mod_time, metadata=metadata)
+        ProcessObject.update_status(self, status, mod_time)
+        ServiceObject.update_mod_time(self, mod_time)
+        _LayerParameters.update_params(self, mod_time, metadata=metadata)
 
         # If projection will be updated with a successful complete status,
         #     clear the map file so that it can be regenerated
@@ -416,7 +416,7 @@ class SDMProjection(_ProjectionType, Raster):
         @summary: Rollback processing
         @todo: remove currtime parameter
         """
-        self.updateStatus(status)
+        self.update_status(status)
         self.clearOutputFiles()
         self.clearLocalMapfile()
 
@@ -490,7 +490,7 @@ class SDMProjection(_ProjectionType, Raster):
         return self._occurrenceSet.mapName
 
 # ...............................................
-    def _createMapPrefix(self):
+    def _create_map_prefix(self):
         """
         @summary: Construct the endpoint of a Lifemapper WMS URL for 
                      this object.
@@ -512,15 +512,15 @@ class SDMProjection(_ProjectionType, Raster):
         return mapprefix
 
 # ...............................................
-    def _setMapPrefix(self):
-        mapprefix = self._createMapPrefix()
-        self._mapPrefix = mapprefix
+    def _set_map_prefix(self):
+        mapprefix = self._create_map_prefix()
+        self._map_prefix = mapprefix
 
 # ...............................................
     @property
-    def mapPrefix(self):
-        self._setMapPrefix()
-        return self._mapPrefix
+    def map_prefix(self):
+        self._set_map_prefix()
+        return self._map_prefix
 
 # ...............................................
     @property

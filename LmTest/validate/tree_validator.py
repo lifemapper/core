@@ -7,8 +7,9 @@ Todo:
 """
 import os
 
-from LmCommon.common.lmconstants import LMFormat
 from lmpy import TreeWrapper
+
+from LmCommon.common.lmconstants import LMFormat
 
 
 # .............................................................................
@@ -35,7 +36,7 @@ def validate_tree_file(tree_filename, schema=None):
                     ext)
 
         if schema is not None:
-            t = TreeWrapper.get(path=tree_filename, schema=schema)
+            _ = TreeWrapper.get(path=tree_filename, schema=schema)
             valid = True
     else:
         msg = 'File does not exist'

@@ -112,7 +112,7 @@ def format_gridset(gridset):
         )
 
     # All matrices
-    for mtx in gridset._matrices:
+    for mtx in gridset.get_matrices():
         gridset_dict['matrices'].append(format_matrix(mtx))
 
     # Shapegrid

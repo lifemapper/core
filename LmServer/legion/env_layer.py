@@ -78,7 +78,7 @@ class EnvLayer(EnvType, Raster):
         EnvType.__init__(self, envCode, userId,
                      gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode,
                      metadata=envMetadata, mod_time=envModTime, envTypeId=envTypeId)
-        self._mapPrefix = None
+        self._map_prefix = None
         # Raster metadataUrl and serviceType override those of EnvType
         # if it is a full EnvLayer
         Raster.__init__(self, name, userId, epsgcode, lyrId=lyrId,
@@ -91,11 +91,11 @@ class EnvLayer(EnvType, Raster):
                      metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
                      mod_time=mod_time)
         self._scenCode = scencode
-        self._setMapPrefix(scencode=scencode)
+        self._set_map_prefix(scencode=scencode)
 
 # ...............................................
     @classmethod
-    def initFromParts(cls, raster, envType, envLayerId=None, scencode=None):
+    def init_from_parts(cls, raster, envType, envLayerId=None, scencode=None):
         envLyr = EnvLayer(raster.name, raster.getUserId(), raster.epsgcode,
                         scencode=scencode, lyrId=raster.get_id(), squid=raster.squid,
                         ident=raster.ident, verify=raster.verify, dlocation=raster.get_dlocation(),
@@ -119,7 +119,7 @@ class EnvLayer(EnvType, Raster):
 # ...............................................
 # other methods
 # ...............................................
-    def _createMapPrefix(self, scencode=None):
+    def _create_map_prefix(self, scencode=None):
         """
         @summary: Construct the endpoint of a Lifemapper WMS URL for 
                      this object.
@@ -140,18 +140,18 @@ class EnvLayer(EnvType, Raster):
 
 # ...............................................
     @property
-    def mapLayername(self):
+    def map_layername(self):
         return self.name
 
 # ...............................................
     @property
-    def mapPrefix(self):
-        return self._mapPrefix
+    def map_prefix(self):
+        return self._map_prefix
 
-    def _setMapPrefix(self, mapprefix=None, scencode=None):
+    def _set_map_prefix(self, mapprefix=None, scencode=None):
         if mapprefix is None:
-            mapprefix = self._createMapPrefix(scencode=self._scenCode)
-        self._mapPrefix = mapprefix
+            mapprefix = self._create_map_prefix(scencode=self._scenCode)
+        self._map_prefix = mapprefix
 
 # ...............................................
     @property

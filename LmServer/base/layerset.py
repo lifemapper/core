@@ -272,21 +272,21 @@ class MapLayerSet(_LayerSet, ServiceObject):
                                mod_time=mod_time)
         self._map_filename = dlocation
         self._mapType = mapType
-        self._mapPrefix = None
+        self._map_prefix = None
 
     # ...............................................
     # TODO: remove this property
     @property
     def mapPrefix(self):
         self.setMapPrefix()
-        return self._mapPrefix
+        return self._map_prefix
 
     def setMapPrefix(self, mapprefix=None):
         if mapprefix is None:
             mapprefix = self._earl_jr.constructMapPrefixNew(ftype=LMFileType.OTHER_MAP,
                                       objCode=self.get_id(), mapname=self.mapName,
                                       usr=self._userId, epsg=self.epsgcode)
-        self._mapPrefix = mapprefix
+        self._map_prefix = mapprefix
 
     # ...............................................
     def createLocalMapFilename(self):
@@ -330,7 +330,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         """
         if self._map_filename is None:
             self.set_local_map_filename()
-        success, msg = self.deleteFile(self._map_filename)
+        success, _ = self.deleteFile(self._map_filename)
 
     # ...............................................
     @property
@@ -344,7 +344,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
     def mapAbsolutePath(self):
         pth = None
         if self._map_filename is not None:
-            pth, mapfname = os.path.split(self._map_filename)
+            pth, _ = os.path.split(self._map_filename)
         return pth
 
     # ...............................................
@@ -352,8 +352,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
     def mapName(self):
         mapname = None
         if self._map_filename is not None:
-            pth, mapfname = os.path.split(self._map_filename)
-            mapname, ext = os.path.splitext(mapfname)
+            _, mapfname = os.path.split(self._map_filename)
+            mapname, _ = os.path.splitext(mapfname)
         return mapname
 
     # .............................................................................

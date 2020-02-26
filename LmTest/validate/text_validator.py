@@ -23,7 +23,7 @@ def validate_text_file(text_filename, read_lines=False):
             with open(text_filename) as in_text:
                 if read_lines:
                     for line in in_text:
-                        line_text = str(line)
+                        _ = str(line)
             valid = True
         except Exception as e:
             msg = str(e)

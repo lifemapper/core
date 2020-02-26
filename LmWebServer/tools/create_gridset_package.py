@@ -71,14 +71,14 @@ def mung(data):
 
 
 # .............................................................................
-def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
+def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
     """Creates an output zip file from the gridset
     """
-    print(('Assembling package: {}'.format(outfile)))
+    print(('Assembling package: {}'.format(out_file)))
     print('Creating EML')
     gs_eml = tostring(make_eml(gridset))
     with zipfile.ZipFile(
-            outfile, mode='w', compression=zipfile.ZIP_DEFLATED,
+            out_file, mode='w', compression=zipfile.ZIP_DEFLATED,
             allowZip64=True) as out_zip:
         print('Write out EML')
         out_zip.writestr('gridset_{}.eml'.format(gridset.get_id()), gs_eml)
@@ -121,8 +121,8 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
                     print(' - Getting GeoJSON')
                     geo_jsonify_flo(
                         temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
-                        mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn,
-                        transform=mung)
+                        mtx_join_attrib=0, ident=0,
+                        header_lookup_filename=hlfn, transform=mung)
 
             elif mtx.matrixType == MatrixType.ANC_PAM:
                 mtx_file_name = '{}{}'.format(
@@ -144,8 +144,8 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
                     print(' - Getting GeoJSON')
                     geo_jsonify_flo(
                         temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
-                        mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn,
-                        transform=mung)
+                        mtx_join_attrib=0, ident=0,
+                        header_lookup_filename=hlfn, transform=mung)
 
             elif mtx.matrixType in [
                     MatrixType.SITES_COV_OBSERVED, MatrixType.SITES_COV_RANDOM,
@@ -162,7 +162,7 @@ def assemble_package_for_gridset(gridset, outfile, scribe, user_id):
                     print(' - Getting GeoJSON')
                     geo_jsonify_flo(
                         temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
-                        mtxJoinAttrib=0, ident=0)
+                        mtx_join_attrib=0, ident=0)
             else:
                 print(' - Write non Geo-JSON matrix')
                 mtx_file_name = '{}{}'.format(

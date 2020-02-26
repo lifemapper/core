@@ -771,7 +771,7 @@ class BOOMFiller(LMObject):
                 if not validData:
                     raise LMError('Failed to write Shapegrid {}'.format(dloc))
             if validData and newshp.status != JobStatus.COMPLETE:
-                newshp.updateStatus(JobStatus.COMPLETE)
+                newshp.update_status(JobStatus.COMPLETE)
                 success = self.scribe.updateObject(newshp)
                 if success is False:
                     self.scribe.log.warning('Failed to update Shapegrid record')
@@ -1244,7 +1244,7 @@ class BOOMFiller(LMObject):
         # Give lmwriter rw access (this script may be run as root)
         self._fix_permissions(files=[mfchain.get_dlocation()])
         # Set as ready to go
-        mfchain.updateStatus(JobStatus.INITIALIZE)
+        mfchain.update_status(JobStatus.INITIALIZE)
         self.scribe.updateObject(mfchain)
         try:
             self.scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'

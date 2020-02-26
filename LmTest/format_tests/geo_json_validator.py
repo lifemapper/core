@@ -1,4 +1,4 @@
-"""Contains functions for validating GeoJSON 
+"""Contains functions for validating GeoJSON
 """
 import json
 
