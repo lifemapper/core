@@ -1,16 +1,22 @@
 """Catalog a scenario package for a user
 """
+import argparse
+from copy import copy
+import imp
+import logging
 import os
+import sys
+import time
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.time import gmt
-from LmServer.base.layer2 import Vector, Raster
-from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.layer import Vector, Raster
+from LmServer.base.service_object import ServiceObject
 from LmServer.common.lmconstants import (ENV_DATA_PATH, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.envlayer import EnvLayer
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.env_layer import EnvLayer
 from LmServer.legion.scenario import Scenario, ScenPackage
 
 CURRDATE = (gmt().year, gmt().month, gmt().day)
@@ -18,86 +24,93 @@ CURRDATE = (gmt().year, gmt().month, gmt().day)
 
 # .............................................................................
 class SPFiller(LMObject):
-    """
-    @summary Class to: populate a Lifemapper database with scenario metadata for 
-             a BOOM archive
-    @version: 2.0 
-    @note: This code can only parse scenario metadata marked as version 2.0 
+    """Populates database with scenario metadata for a BOOM archive
     """
     version = '2.0'
 
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, spMetaFname, userId, email=None, logname=None, scribe=None):
-        """
-        @summary Constructor for BOOMFiller class.
+    def __init__(self, sp_meta_fname, user_id, email=None, logname=None,
+                 scribe=None):
+        """Constructor for SPFiller class.
         """
         super(SPFiller, self).__init__()
         self.name = self.__class__.__name__.lower()
-        if not os.path.exists(spMetaFname):
+        if not os.path.exists(sp_meta_fname):
             raise LMError(
-                'Climate metadata {} does not exist'.format(spMetaFname))
-        layer_base_path, fname = os.path.split(spMetaFname)
-        spBasename, _ = os.path.splitext(fname)
+                'Climate metadata {} does not exist'.format(sp_meta_fname))
+        layer_base_path, fname = os.path.split(sp_meta_fname)
+        sp_basename, _ = os.path.splitext(fname)
         self.layer_base_path = layer_base_path
 
         # TODO: change to importlib on python 2.7 --> 3.3+
         try:
-            import imp
-            self.spMeta = imp.load_source('currentmetadata', spMetaFname)
+            self.sp_meta = imp.load_source('currentmetadata', sp_meta_fname)
         except Exception as e:
             raise LMError(
                 'Climate metadata {} cannot be imported; ({})'.format(
-                    spMetaFname, e))
+                    sp_meta_fname, e))
 
-        spkgNames = ','.join(list(self.spMeta.CLIMATE_PACKAGES.keys()))
+        scen_package_names = ','.join(
+            list(self.sp_meta.CLIMATE_PACKAGES.keys()))
 
         # version is a string
         try:
-            if self.spMeta.VERSION != self.version:
-                raise LMError('SPFiller version {} cannot parse {} metadata version {}'
-                              .format(self.version, spkgNames, self.spMeta.VERSION))
-        except:
+            if self.sp_meta.VERSION != self.version:
+                raise LMError(
+                    ('SPFiller version {} cannot parse {} metadata '
+                     'version {}').format(
+                         self.version, scen_package_names,
+                         self.sp_meta.VERSION))
+        except Exception:
             raise LMError('SPFiller version {} cannot parse {} non-versioned metadata'
-                          .format(spkgNames, self.version))
+                          .format(scen_package_names, self.version))
 
-        self.spMetaFname = spMetaFname
-        self.userId = userId
-        self.userEmail = email
-        if self.userEmail is None:
-            self.userEmail = '{}{}'.format(self.userId, DEFAULT_EMAIL_POSTFIX)
+        self.sp_meta_fname = sp_meta_fname
+        self.user_id = user_id
+        self.user_email = email
+        if self.user_email is None:
+            self.user_email = '{}{}'.format(self.user_id, DEFAULT_EMAIL_POSTFIX)
 
         # Logfile
         if logname is None:
-            logname = '{}.{}.{}'.format(self.name, spBasename, userId)
+            logname = '{}.{}.{}'.format(self.name, sp_basename, user_id)
         self.logname = logname
 
         self.scribe = scribe
 
     # ...............................................
-    def initializeMe(self):
-        if not (self.scribe and self.scribe.isOpen):
+    def initialize_me(self):
+        """Initialize the object
+        """
+        if not (self.scribe and self.scribe.is_open):
             # Get database
             try:
-                self.scribe = self._getDb(self.logname)
-            except:
+                self.scribe = self._get_db(self.logname)
+            except Exception:
                 raise
             self.open()
 
     # ...............................................
     def open(self):
-        success = self.scribe.openConnections()
+        """Open database connections
+        """
+        success = self.scribe.open_connections()
         if not success:
             raise LMError('Failed to open database')
 
     # ...............................................
     def close(self):
-        self.scribe.closeConnections()
+        """Close database connection
+        """
+        self.scribe.close_connections()
 
     # ...............................................
     @property
-    def logFilename(self):
+    def log_filename(self):
+        """Get the log file name
+        """
         try:
             fname = self.scribe.log.baseFilename
         except:
@@ -105,307 +118,333 @@ class SPFiller(LMObject):
         return fname
 
     # ...............................................
-    def _getDb(self, logname):
-        import logging
+    @staticmethod
+    def _get_db(logname):
         logger = ScriptLogger(logname, level=logging.INFO)
         # DB connection
         scribe = BorgScribe(logger)
         return scribe
 
     # ...............................................
-    def _createMaskLayer(self, pkgMeta, maskMeta):
+    def _create_mask_layer(self, package_meta, mask_meta):
+        """Create a mask layer for the package
+
+        Assembles layer metadata for input to optional pre-processing SDM Mask
+        step identified in scenario package metadata.
+
+        Note:
+            Only the 'hull_region_intersect' method is currently available.
         """
-        @summary Assembles layer metadata for input to optional 
-                 pre-processing SDM Mask step identified in scenario package 
-                 metadata. 
-        @note: Only the 'hull_region_intersect' method is currently available.
-        """
-        # Required keys in SDM_MASK_INPUT: name, bbox, gdaltype, gdalformat, file
-        lyrmeta = {
-           Vector.META_IS_CATEGORICAL: self._getOptionalMetadata(maskMeta, 'iscategorical'),
-           ServiceObject.META_TITLE: self._getOptionalMetadata(maskMeta, 'title'),
-           ServiceObject.META_AUTHOR: self._getOptionalMetadata(maskMeta, 'author'),
-           ServiceObject.META_DESCRIPTION: self._getOptionalMetadata(maskMeta, 'description'),
-           ServiceObject.META_KEYWORDS: self._getOptionalMetadata(maskMeta, 'keywords'),
-           ServiceObject.META_CITATION: self._getOptionalMetadata(maskMeta, 'citation')}
+        # Required keys in SDM_MASK_INPUT: name, bbox, gdaltype, gdalformat,
+        #    file
+        lyr_meta = {
+           Vector.META_IS_CATEGORICAL: self._get_optional_metadata(
+               mask_meta, 'iscategorical'),
+           ServiceObject.META_TITLE: self._get_optional_metadata(
+               mask_meta, 'title'),
+           ServiceObject.META_AUTHOR: self._get_optional_metadata(
+               mask_meta, 'author'),
+           ServiceObject.META_DESCRIPTION: self._get_optional_metadata(
+               mask_meta, 'description'),
+           ServiceObject.META_KEYWORDS: self._get_optional_metadata(
+               mask_meta, 'keywords'),
+           ServiceObject.META_CITATION: self._get_optional_metadata(
+               mask_meta, 'citation')}
         # required
         try:
-            dloc = os.path.join(self.layer_base_path, maskMeta['file'])
+            dloc = os.path.join(self.layer_base_path, mask_meta['file'])
         except KeyError:
             raise LMError(
-                'Missing `file` key in SDM_MASK_META in scenPkg metadata')
+                'Missing `file` key in SDM_MASK_META in scen_pkg metadata')
         else:
             if not os.path.exists(dloc):
                 raise LMError('Missing local data {}'.format(dloc))
 
         try:
-            masklyr = Raster(maskMeta['name'], self.userId,
-                            pkgMeta['epsg'],
-                            mapunits=pkgMeta['mapunits'],
-                            resolution=maskMeta['res'][1],
-                            dlocation=dloc, metadata=lyrmeta,
-                            dataFormat=maskMeta['gdalformat'],
-                            gdalType=maskMeta['gdaltype'],
-                            bbox=maskMeta['region'],
-                            mod_time=gmt().mjd)
+            mask_lyr = Raster(
+                mask_meta['name'], self.user_id, package_meta['epsg'],
+                map_units=package_meta['mapunits'],
+                resolution=mask_meta['res'][1], dlocation=dloc,
+                metadata=lyr_meta, data_format=mask_meta['gdalformat'],
+                gdal_type=mask_meta['gdaltype'], bbox=mask_meta['region'],
+                mod_time=gmt().mjd)
         except KeyError:
-            raise LMError('Missing one of: name, res, region, gdaltype, ' +
-                         'gdalformat in SDM_MASK_META in scenPkg metadata')
+            raise LMError(
+                ('Missing one of: name, res, region, gdal type, gdal format '
+                 'in SDM_MASK_META in scen package metadata'))
 
-        return masklyr
+        return mask_lyr
 
     # ...............................................
-    def addUser(self):
+    def add_user(self):
+        """Adds a user to the database.
+
+        Adds or finds PUBLIC_USER, DEFAULT_POST_USER and USER arguments in the
+        database
         """
-        @summary Adds or finds PUBLIC_USER, DEFAULT_POST_USER and USER arguments 
-                 in the database
-        """
-        currtime = gmt().mjd
+        curr_time = gmt().mjd
         # Nothing changes if these are already present
-        user = LMUser(self.userId, self.userEmail, self.userEmail, mod_time=currtime)
-        self.scribe.log.info('  Find or insert user {} ...'.format(self.userId))
-        thisUser = self.scribe.findOrInsertUser(user)
+        user = LMUser(
+            self.user_id, self.user_email, self.user_email, mod_time=curr_time)
+        self.scribe.log.info(
+            '  Find or insert user {} ...'.format(self.user_id))
+        this_user = self.scribe.find_or_insert_user(user)
         # If exists, found by unique Id or Email, update values
-        return thisUser.userid
+        return this_user.user_id
 
     # ...............................................
-    def createScenPackage(self, spName):
-        pkgMeta = self.spMeta.CLIMATE_PACKAGES[spName]
-        lyrMeta = self.spMeta.LAYERTYPE_META
+    def create_scen_package(self, sp_name):
+        """Create a scenario package object
+        """
+        package_meta = self.sp_meta.CLIMATE_PACKAGES[sp_name]
+        layer_meta = self.sp_meta.LAYERTYPE_META
         # TODO: Put optional masklayer into every Scenario
         try:
-            maskMeta = self.spMeta.SDM_MASK_META
-        except:
-            masklyr = None
+            mask_meta = self.sp_meta.SDM_MASK_META
+        except AttributeError:
+            mask_lyr = None
         else:
-            masklyr = self._createMaskLayer(pkgMeta, maskMeta)
+            mask_lyr = self._create_mask_layer(package_meta, mask_meta)
 
-        self.scribe.log.info('  Read ScenPackage {} metadata ...'.format(spName))
-        scenPkg = ScenPackage(spName, self.userId,
-                              epsgcode=pkgMeta['epsg'],
-                              mapunits=pkgMeta['mapunits'],
-                              mod_time=gmt().mjd)
+        self.scribe.log.info(
+            '  Read ScenPackage {} metadata ...'.format(sp_name))
+        scen_pkg = ScenPackage(
+            sp_name, self.user_id, epsg_code=package_meta['epsg'],
+            map_units=package_meta['mapunits'], mod_time=gmt().mjd)
 
         # Current
-        baseCode = pkgMeta['baseline']
-        baseMeta = self.spMeta.SCENARIO_META[baseCode]
-        bscen = self._createScenario(pkgMeta, baseCode, baseMeta, lyrMeta)
-        self.scribe.log.info('     Assembled base scenario {}'.format(baseCode))
-        allScens = {baseCode: bscen}
+        base_code = package_meta['baseline']
+        base_meta = self.sp_meta.SCENARIO_META[base_code]
+        bscen = self._create_scenario(
+            package_meta, base_code, base_meta, layer_meta)
+        self.scribe.log.info(
+            '     Assembled base scenario {}'.format(base_code))
+        all_scens = {base_code: bscen}
 
         # Predicted Past and Future
-        for predCode in pkgMeta['predicted']:
-            scenMeta = self.spMeta.SCENARIO_META[predCode]
-            pscen = self._createScenario(pkgMeta, predCode, scenMeta, lyrMeta)
-            allScens[predCode] = pscen
+        for pred_code in package_meta['predicted']:
+            scenario_meta = self.sp_meta.SCENARIO_META[pred_code]
+            pscen = self._create_scenario(
+                package_meta, pred_code, scenario_meta, layer_meta)
+            all_scens[pred_code] = pscen
 
-        self.scribe.log.info('     Assembled predicted scenarios {}'.format(list(allScens.keys())))
-        for scen in list(allScens.values()):
-            scenPkg.addScenario(scen)
-        scenPkg.resetBBox()
+        self.scribe.log.info(
+            '     Assembled predicted scenarios {}'.format(
+                list(all_scens.keys())))
+        for scen in list(all_scens.values()):
+            scen_pkg.add_scenario(scen)
+        scen_pkg.reset_bbox()
 
-        return (scenPkg, masklyr)
+        return (scen_pkg, mask_lyr)
 
     # ...............................................
-    def _getbioName(self, code, res, gcm=None, tm=None, altpred=None,
-                    lyrtype=None, suffix=None, isTitle=False):
+    @staticmethod
+    def _get_bio_name(code, res, gcm=None, tm=None, alt_pred=None,
+                      lyr_type=None, suffix=None, is_title=False):
         sep = '-'
-        if isTitle:
+        if is_title:
             sep = ', '
         name = code
-        if lyrtype is not None:
-            name = sep.join((lyrtype, name))
-        for descriptor in (gcm, altpred, tm, res, suffix):
+        if lyr_type is not None:
+            name = sep.join((lyr_type, name))
+        for descriptor in (gcm, alt_pred, tm, res, suffix):
             if descriptor is not None:
                 name = sep.join((name, descriptor))
         return name
 
     # ...............................................
-    def _getOptionalMetadata(self, metaDict, key):
-        """
-        @summary Assembles layer metadata for mask
+    @staticmethod
+    def _get_optional_metadata(meta_dict, key):
+        """Assembles layer metadata for mask
         """
         val = None
         try:
-            val = metaDict[key]
-        except:
+            val = meta_dict[key]
+        except KeyError:
             pass
         return val
 
     # ...............................................
-    def _getScenLayers(self, pkgMeta, scenCode, scenMeta, lyrMeta):
+    def _get_scen_layers(self, package_meta, scen_code, scenario_meta,
+                         layer_meta):
+        """Assembles layer metadata for a single layerset
         """
-        @summary Assembles layer metadata for a single layerset
-        """
-        currtime = gmt().mjd
+        curr_time = gmt().mjd
         layers = []
         try:
-            dateCode = scenMeta['date']
-        except:
-            dateCode = None
+            date_code = scenario_meta['date']
+        except KeyError:
+            date_code = None
         try:
-            altpredCode = scenMeta['altpred']
-        except:
-            altpredCode = None
+            alt_pred_code = scenario_meta['altpred']
+        except KeyError:
+            alt_pred_code = None
         try:
-            gcmCode = scenMeta['gcm']
-        except:
-            gcmCode = None
-        res_val = scenMeta['res'][1]
-        scenKeywords = [k for k in scenMeta['keywords']]
-        region = scenMeta['region']
+            gcm_code = scenario_meta['gcm']
+        except KeyError:
+            gcm_code = None
+        res_val = scenario_meta['res'][1]
+        scen_keywords = copy(scenario_meta['keywords'])
+        region = scenario_meta['region']
 
-        for envcode in pkgMeta['layertypes']:
-            ltmeta = lyrMeta[envcode]
-            lyrKeywords = [k for k in ltmeta['keywords']]
-            lyrKeywords.extend(scenKeywords)
-            relfname = ltmeta['files'][scenCode]
-            lyrname = '{}_{}'.format(envcode, scenCode)
-            lyrmeta = {'title': ' '.join((ltmeta['title'], scenCode)),
-                       'description': ' '.join((scenCode, ltmeta['description']))}
-            envmeta = {'title': ltmeta['title'],
-                       'description': ltmeta['description'],
-                       'keywords': lyrKeywords}
-            dloc = os.path.join(self.layer_base_path, relfname)
+        for env_code in package_meta['layertypes']:
+            lt_meta = layer_meta[env_code]
+            layer_keywords = copy(lt_meta['keywords'])
+            layer_keywords.extend(scen_keywords)
+            relative_fname = lt_meta['files'][scen_code]
+            lyr_name = '{}_{}'.format(env_code, scen_code)
+            lyr_meta = {
+                'title': ' '.join((lt_meta['title'], scen_code)),
+                'description': ' '.join((scen_code, lt_meta['description']))}
+            env_meta = {
+                'title': lt_meta['title'],
+                'description': lt_meta['description'],
+                'keywords': layer_keywords}
+            dloc = os.path.join(self.layer_base_path, relative_fname)
             if not os.path.exists(dloc):
                 raise LMError('Missing local data {}'.format(dloc))
-            envlyr = EnvLayer(lyrname, self.userId, pkgMeta['epsg'],
-                              dlocation=dloc,
-                              lyrMetadata=lyrmeta,
-                              dataFormat=pkgMeta['gdalformat'],
-                              gdalType=pkgMeta['gdaltype'],
-                              valUnits=ltmeta['valunits'],
-                              mapunits=pkgMeta['mapunits'],
-                              resolution=res_val,
-                              bbox=region,
-                              mod_time=currtime,
-                              envCode=envcode,
-                              gcmCode=gcmCode,
-                              altpredCode=altpredCode,
-                              dateCode=dateCode,
-                              envMetadata=envmeta,
-                              env_mod_time=currtime)
-            layers.append(envlyr)
+            env_lyr = EnvLayer(
+                lyr_name, self.user_id, package_meta['epsg'], dlocation=dloc,
+                layer_metadata=lyr_meta,
+                data_format=package_meta['gdalformat'],
+                gdal_type=package_meta['gdaltype'],
+                val_units=lt_meta['valunits'],
+                map_units=package_meta['mapunits'],
+                resolution=res_val, bbox=region, mod_time=curr_time,
+                env_code=env_code, gcm_code=gcm_code,
+                alt_pred_code=alt_pred_code, date_code=date_code,
+                env_metadata=env_meta, env_mod_time=curr_time)
+            layers.append(env_lyr)
         return layers
 
     # ...............................................
-    def _createScenario(self, pkgMeta, scenCode, scenMeta, lyrMeta):
+    def _create_scenario(self, package_meta, scen_code, scenario_meta,
+                         layer_meta):
+        """Assemble Worldclim/bioclim scenario
         """
-        @summary Assemble Worldclim/bioclim scenario
-        """
-        res_val = scenMeta['res'][1]
-        lyrs = self._getScenLayers(pkgMeta, scenCode, scenMeta, lyrMeta)
+        res_val = scenario_meta['res'][1]
+        lyrs = self._get_scen_layers(
+            package_meta, scen_code, scenario_meta, layer_meta)
         try:
-            dateCode = scenMeta['date']
-        except:
-            dateCode = None
+            date_code = scenario_meta['date']
+        except KeyError:
+            date_code = None
         try:
-            altpredCode = scenMeta['altpred']
-        except:
-            altpredCode = None
+            alt_pred_code = scenario_meta['altpred']
+        except KeyError:
+            alt_pred_code = None
         try:
-            gcmCode = scenMeta['gcm']
-        except:
-            gcmCode = None
+            gcm_code = scenario_meta['gcm']
+        except KeyError:
+            gcm_code = None
 
-        scenmeta = {ServiceObject.META_TITLE: scenMeta['name'],
-                    ServiceObject.META_AUTHOR: scenMeta['author'],
-                    ServiceObject.META_DESCRIPTION: scenMeta['description'],
-                    ServiceObject.META_KEYWORDS: scenMeta['keywords']}
-        scen = Scenario(scenCode, self.userId, pkgMeta['epsg'],
-                        metadata=scenmeta,
-                        units=pkgMeta['mapunits'],
-                        res=res_val,
-                        gcmCode=gcmCode,
-                        altpredCode=altpredCode,
-                        dateCode=dateCode,
-                        bbox=scenMeta['region'],
-                        mod_time=gmt().mjd,
-                        layers=lyrs)
+        scen_meta = {
+            ServiceObject.META_TITLE: scenario_meta['name'],
+            ServiceObject.META_AUTHOR: scenario_meta['author'],
+            ServiceObject.META_DESCRIPTION: scenario_meta['description'],
+            ServiceObject.META_KEYWORDS: scenario_meta['keywords']}
+        scen = Scenario(
+            scen_code, self.user_id, package_meta['epsg'], metadata=scen_meta,
+            units=package_meta['mapunits'], res=res_val, gcm_code=gcm_code,
+            alt_pred_code=alt_pred_code, date_code=date_code,
+            bbox=scenario_meta['region'], mod_time=gmt().mjd, layers=lyrs)
         return scen
 
     # ...............................................
-    def addPackageScenariosLayers(self, scenPkg):
-        """
-        @summary Add scenPackage, scenario and layer metadata to database, and 
-                 update the scenPkg attribute with newly inserted objects
+    def add_package_scenarios_layers(self, scen_pkg):
+        """Add scenario package layers to the database.
+
+        Add scenPackage, scenario and layer metadata to database, and update
+        the scen_pkg attribute with newly inserted objects
         """
         # Insert empty ScenPackage
-        updatedScenPkg = self.scribe.findOrInsertScenPackage(scenPkg)
-        updatedScens = []
-        for scode, scen in scenPkg.scenarios.items():
+        updated_scen_pkg = self.scribe.find_or_insert_scen_package(scen_pkg)
+        updated_scens = []
+        for scode, scen in scen_pkg.scenarios.items():
             self.scribe.log.info('Insert scenario {}'.format(scode))
             # Insert Scenario and its Layers
-            newscen = self.scribe.findOrInsertScenario(scen,
-                                            scenPkgId=updatedScenPkg.get_id())
-            updatedScens.append(newscen)
-        updatedScenPkg.setScenarios(updatedScens)
-        return updatedScenPkg
+            new_scen = self.scribe.find_or_insert_scenario(
+                scen, scen_package_id=updated_scen_pkg.get_id())
+            updated_scens.append(new_scen)
+        updated_scen_pkg.set_scenarios(updated_scens)
+        return updated_scen_pkg
 
     # ...............................................
-    def addMaskLayer(self, masklyr):
-        updatedMask = None
-        if masklyr is not None:
-            updatedMask = self.scribe.findOrInsertLayer(masklyr)
-        return updatedMask
+    def add_mask_layer(self, mask_lyr):
+        """Add a mask layer
+        """
+        updated_mask = None
+        if mask_lyr is not None:
+            updated_mask = self.scribe.find_or_insert_layer(mask_lyr)
+        return updated_mask
 
     # ...............................................
-    def catalogScenPackages(self):
+    def catalog_scen_packages(self):
+        """Initialize an empty Lifemapper database and archive
         """
-        @summary: Initialize an empty Lifemapper database and archive
-        """
-        updatedScenPkg = None
+        updated_scen_pkg = None
         try:
-            self.initializeMe()
+            self.initialize_me()
             # If exists, found by unique Id or Email, update values
-            userId = self.addUser()
+            user_id = self.add_user()
 
-            masklyr = None
-            for spName in list(self.spMeta.CLIMATE_PACKAGES.keys()):
-                self.scribe.log.info('Creating scenario package {}'.format(spName))
-                scenPkg, masklyr = self.createScenPackage(spName)
+            mask_lyr = None
+            for sp_name in list(self.sp_meta.CLIMATE_PACKAGES.keys()):
+                self.scribe.log.info(
+                    'Creating scenario package {}'.format(sp_name))
+                scen_pkg, mask_lyr = self.create_scen_package(sp_name)
 
                 # Only one Mask is included per scenario package
-                if masklyr is not None:
-                    self.scribe.log.info('Adding mask layer {}'.format(masklyr.name))
-                    updatedMask = self.addMaskLayer(masklyr)
-                    if updatedMask.get_dlocation() != masklyr.get_dlocation():
-                        raise LMError('''Returned existing layer name {} for user {} with 
-                                        filename {}, not expected filename {}'''
-                                        .format(masklyr.name, self.userId,
-                                                updatedMask.get_dlocation(),
-                                                masklyr.get_dlocation()))
-                updatedScenPkg = self.addPackageScenariosLayers(scenPkg)
-                if (updatedScenPkg is not None
-                    and updatedScenPkg.get_id() is not None
-                    and updatedScenPkg.name == spName
-                    and updatedScenPkg.getUserId() == self.userId):
-                    self.scribe.log.info('Successfully added scenario package {} for user {}'
-                                          .format(spName, self.userId))
+                if mask_lyr is not None:
+                    self.scribe.log.info(
+                        'Adding mask layer {}'.format(mask_lyr.name))
+                    updated_mask = self.add_mask_layer(mask_lyr)
+                    if updated_mask.get_dlocation(
+                            ) != mask_lyr.get_dlocation():
+                        raise LMError(
+                            ('Returned existing layer name {} for user {} '
+                             'with filename {}, not expected filename {}'
+                             ).format(
+                                 mask_lyr.name, self.user_id,
+                                 updated_mask.get_dlocation(),
+                                mask_lyr.get_dlocation()))
+                updated_scen_pkg = self.add_package_scenarios_layers(scen_pkg)
+                if all([
+                        updated_scen_pkg is not None,
+                        updated_scen_pkg.get_id() is not None,
+                        updated_scen_pkg.name == sp_name,
+                        updated_scen_pkg.get_user_id() == self.user_id]):
+                    self.scribe.log.info(
+                        ('Successfully added scenario package {} for '
+                         'user {}').format(sp_name, self.user_id))
         finally:
             self.close()
 
-        return updatedScenPkg
+        return updated_scen_pkg
 
 
 # ...............................................
-if __name__ == '__main__':
-    import argparse
+def main():
+    """Main method for script
+    """
+
     parser = argparse.ArgumentParser(
-             description=('Populate a Lifemapper archive with metadata ' +
-                          'for single- or multi-species computations ' +
-                          'specific to the configured input data or the ' +
-                          'data package named.'))
+        description=('Populate a Lifemapper archive with metadata for single- '
+                     'or multi-species computations specific to the '
+                     'configured input data or the data package named.'))
     # Required
-    parser.add_argument('user_id', type=str,
-             help=('User authorized for the scenario package'))
-    parser.add_argument('scen_package_meta', type=str,
-             help=('Metadata file for Scenario package to be cataloged in the database.'))
+    parser.add_argument(
+        'user_id', type=str, help='User authorized for the scenario package')
+    parser.add_argument(
+        'scen_package_meta', type=str,
+        help=('Metadata file for Scenario package to be cataloged in '
+              'the database.'))
     # Optional
-    parser.add_argument('--user_email', type=str, default=None,
-             help=('User email'))
-    parser.add_argument('--logname', type=str, default=None,
-             help=('Basename of the logfile, without extension'))
+    parser.add_argument(
+        '--user_email', type=str, default=None, help='User email')
+    parser.add_argument(
+        '--logname', type=str, default=None,
+        help='Basename of the logfile, without extension')
 
     args = parser.parse_args()
     user_id = args.user_id
@@ -414,35 +453,47 @@ if __name__ == '__main__':
     user_email = args.user_email
 
     if logname is None:
-        import time
         scriptname, _ = os.path.splitext(os.path.basename(__file__))
         secs = time.time()
-        timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+        timestamp = "{}".format(
+            time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(scriptname, timestamp)
 
     # scen_package_meta may be full pathname or in ENV_DATA_PATH dir
     if not os.path.exists(scen_package_meta):
         # if using package name, look in default location)
-        scen_package_meta = os.path.join(ENV_DATA_PATH, scen_package_meta + '.py')
+        scen_package_meta = os.path.join(
+            ENV_DATA_PATH, scen_package_meta + '.py')
     if not os.path.exists(scen_package_meta):
-        print(('Missing Scenario Package metadata file {}'.format(scen_package_meta)))
-        exit(-1)
+        print(('Missing Scenario Package metadata file {}'.format(
+            scen_package_meta)))
+        sys.exit(-1)
     else:
-        print(('Running script with scen_package_meta: {}, userid: {}, email: {}, logbasename: {}'
-             .format(scen_package_meta, user_id, user_email, logname)))
+        print((
+            'Running script with scen_package_meta: {}, user id: {}, email: {}'
+            ', log base name: {}').format(
+                scen_package_meta, user_id, user_email, logname))
 
-        filler = SPFiller(scen_package_meta, user_id, email=user_email,
-                          logname=logname)
-        filler.initializeMe()
-        updatedScenPkg = filler.catalogScenPackages()
-        if updatedScenPkg is not None:
-            pkgid = updatedScenPkg.get_id()
-            if (pkgid is not None and updatedScenPkg.getUserId() == user_id):
-                print(('Successfully added scenario package {} for user {}'
-                      .format(pkgid, user_id)))
+        filler = SPFiller(
+            scen_package_meta, user_id, email=user_email, logname=logname)
+        filler.initialize_me()
+        updated_scen_pkg = filler.catalog_scen_packages()
+        if updated_scen_pkg is not None:
+            pkg_id = updated_scen_pkg.get_id()
+            if pkg_id is not None and \
+                    updated_scen_pkg.get_user_id() == user_id:
+                print(
+                    'Successfully added scen package {} for user {}'.format(
+                        pkg_id, user_id))
             else:
-                print(('Failed adding scenario package {} for user {}'
-                      .format(pkgid, user_id)))
+                print('Failed to add scenario package {} for user {}'.format(
+                    pkg_id, user_id))
         else:
-            print(('Failed, add scenario package returned None for {} and user {}'
-                  .format(scen_package_meta, user_id)))
+            print(
+                ('Failed to add scenario package.  Returned None for package '
+                 '{}, user {}').format(scen_package_meta, user_id))
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

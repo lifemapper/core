@@ -63,17 +63,17 @@ class MultiSpeciesRunCommand(_LmCommand):
     script_name = 'multi_species_run.py'
 
     # ................................
-    def __init__(self, pam_file_name, num_permutations, do_pam_stats, do_mcpa,
-                 parallel=False, grim_file_name=None, biogeo_file_name=None,
-                 phylo_file_name=None, tree_file_name=None,
-                 diversity_stats_file_name=None, site_stats_file_name=None,
-                 species_stats_file_name=None, site_covariance_file_name=None,
-                 species_covariance_file_name=None, mcpa_output_file_name=None,
-                 mcpa_f_matrix_file_name=None, pam_success_file_name=None):
+    def __init__(self, pam_filename, num_permutations, do_pam_stats, do_mcpa,
+                 parallel=False, grim_filename=None, biogeo_filename=None,
+                 phylo_filename=None, tree_filename=None,
+                 diversity_stats_filename=None, site_stats_filename=None,
+                 species_stats_filename=None, site_covariance_filename=None,
+                 species_covariance_filename=None, mcpa_output_filename=None,
+                 mcpa_f_matrix_filename=None, pam_success_filename=None):
         """Constructor for command object
 
         Args:
-            pam_file_name (:obj: `str`): The file location of the PAM or
+            pam_filename (:obj: `str`): The file location of the PAM or
                 incidence matrix to be used for these computations
             num_permutations (:obj: `int`): The number of permutations to
                 perform in this run.  Setting this to zero will perform an
@@ -84,81 +84,81 @@ class MultiSpeciesRunCommand(_LmCommand):
                 be performed
             parallel (:obj: `bool`, optional): A boolean value indicating if
                 the parallel version of MCPA should be used
-            grim_file_name (:obj: `str`, optional): The file location of the
+            grim_filename (:obj: `str`, optional): The file location of the
                 GRIM or environment matrix for MCPA
-            biogeo_file_name (:obj: `str`, optional): The file location of the
+            biogeo_filename (:obj: `str`, optional): The file location of the
                 biogeographic hypotheses matrix for MCPA
-            phylo_file_name (:obj: `str`, optional): The file location of the
+            phylo_filename (:obj: `str`, optional): The file location of the
                 encoded phylogenetic tree matrix to be used in MCPA
-            tree_file_name (:obj: `str`, optional): The file location of the
+            tree_filename (:obj: `str`, optional): The file location of the
                 tree to be used for PAM stats
-            diversity_stats_file_name (:obj: `str`, optional): The file
+            diversity_stats_filename (:obj: `str`, optional): The file
                 location to store PAM diversity statistics
-            site_stats_file_name (:obj: `str`, optional): The file location to
+            site_stats_filename (:obj: `str`, optional): The file location to
                 store PAM site statistics
-            species_stats_file_name (:obj: `str`, optional): The file location
+            species_stats_filename (:obj: `str`, optional): The file location
                 to store PAM species statistics
-            site_covariance_file_name (:obj: `str`, optional): The file
+            site_covariance_filename (:obj: `str`, optional): The file
                 location to store PAM site covariance matrix
-            species_covariance_file_name (:obj: `str`, optional): The file
+            species_covariance_filename (:obj: `str`, optional): The file
                 location to store PAM species covariance matrix
-            mcpa_output_file_name (:obj: `str`, optional): The file location to
+            mcpa_output_filename (:obj: `str`, optional): The file location to
                 store MCPA observed outputs
-            mcpa_f_matrix_file_name (:obj: `str`, optional): The file location
+            mcpa_f_matrix_filename (:obj: `str`, optional): The file location
                 to store MCPA F-values
         """
         _LmCommand.__init__(self)
         self.opt_args = ''
         self.args = '{} {} {} {}'.format(
-            pam_file_name, num_permutations, int(do_pam_stats), int(do_mcpa))
-        self.inputs.append(pam_file_name)
+            pam_filename, num_permutations, int(do_pam_stats), int(do_mcpa))
+        self.inputs.append(pam_filename)
         if parallel:
             self.opt_args += ' -p'
         # Inputs
-        if grim_file_name is not None:
-            self.inputs.append(grim_file_name)
-            self.opt_args += ' -g {}'.format(grim_file_name)
-        if biogeo_file_name is not None:
-            self.inputs.append(biogeo_file_name)
-            self.opt_args += ' -b {}'.format(biogeo_file_name)
-        if phylo_file_name is not None:
-            self.inputs.append(phylo_file_name)
-            self.opt_args += ' -tm {}'.format(phylo_file_name)
-        if tree_file_name is not None:
-            self.inputs.append(tree_file_name)
-            self.opt_args += ' -t {}'.format(tree_file_name)
-        if pam_success_file_name is not None:
-            self.inputs.append(pam_success_file_name)
+        if grim_filename is not None:
+            self.inputs.append(grim_filename)
+            self.opt_args += ' -g {}'.format(grim_filename)
+        if biogeo_filename is not None:
+            self.inputs.append(biogeo_filename)
+            self.opt_args += ' -b {}'.format(biogeo_filename)
+        if phylo_filename is not None:
+            self.inputs.append(phylo_filename)
+            self.opt_args += ' -tm {}'.format(phylo_filename)
+        if tree_filename is not None:
+            self.inputs.append(tree_filename)
+            self.opt_args += ' -t {}'.format(tree_filename)
+        if pam_success_filename is not None:
+            self.inputs.append(pam_success_filename)
 
         # Outputs
-        if diversity_stats_file_name is not None:
-            self.outputs.append(diversity_stats_file_name)
-            self.opt_args += ' --diversity_stats_file_name={}'.format(
-                diversity_stats_file_name)
-        if site_stats_file_name is not None:
-            self.outputs.append(site_stats_file_name)
-            self.opt_args += ' --site_stats_file_name={}'.format(
-                site_stats_file_name)
-        if species_stats_file_name is not None:
-            self.outputs.append(species_stats_file_name)
-            self.opt_args += ' --species_stats_file_name={}'.format(
-                species_stats_file_name)
-        if site_covariance_file_name is not None:
-            self.outputs.append(site_covariance_file_name)
-            self.opt_args += ' --site_covariance_file_name={}'.format(
-                site_covariance_file_name)
-        if species_covariance_file_name is not None:
-            self.outputs.append(species_covariance_file_name)
-            self.opt_args += ' --species_covariance_file_name={}'.format(
-                species_covariance_file_name)
-        if mcpa_output_file_name is not None:
-            self.outputs.append(mcpa_output_file_name)
-            self.opt_args += ' --mcpa_output_matrix_file_name={}'.format(
-                mcpa_output_file_name)
-        if mcpa_f_matrix_file_name is not None:
-            self.outputs.append(mcpa_f_matrix_file_name)
-            self.opt_args += ' --mcpa_f_matrix_file_name={}'.format(
-                mcpa_f_matrix_file_name)
+        if diversity_stats_filename is not None:
+            self.outputs.append(diversity_stats_filename)
+            self.opt_args += ' --diversity_stats_filename={}'.format(
+                diversity_stats_filename)
+        if site_stats_filename is not None:
+            self.outputs.append(site_stats_filename)
+            self.opt_args += ' --site_stats_filename={}'.format(
+                site_stats_filename)
+        if species_stats_filename is not None:
+            self.outputs.append(species_stats_filename)
+            self.opt_args += ' --species_stats_filename={}'.format(
+                species_stats_filename)
+        if site_covariance_filename is not None:
+            self.outputs.append(site_covariance_filename)
+            self.opt_args += ' --site_covariance_filename={}'.format(
+                site_covariance_filename)
+        if species_covariance_filename is not None:
+            self.outputs.append(species_covariance_filename)
+            self.opt_args += ' --species_covariance_filename={}'.format(
+                species_covariance_filename)
+        if mcpa_output_filename is not None:
+            self.outputs.append(mcpa_output_filename)
+            self.opt_args += ' --mcpa_output_matrix_filename={}'.format(
+                mcpa_output_filename)
+        if mcpa_f_matrix_filename is not None:
+            self.outputs.append(mcpa_f_matrix_filename)
+            self.opt_args += ' --mcpa_f_matrix_filename={}'.format(
+                mcpa_f_matrix_filename)
 
 
 # .............................................................................

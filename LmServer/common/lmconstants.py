@@ -652,6 +652,7 @@ OGRFormats = {
     'CSV': '.csv',
     'ESRI Shapefile': '.shp'
 }
+
 OGRDataTypes = (
     wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString,
     wkbMultiPolygon)
@@ -731,7 +732,7 @@ CSMBS_PARAMS = {
         'max': 1000
     },
     'StandardDeviations': {
-        'type': float, 'min':-10.0, 'default': 2.0, 'max': 10.0},
+        'type': float, 'min': -10.0, 'default': 2.0, 'max': 10.0},
     'MinComponents': {
         'type': int, 'min': 1, 'default': 1, 'max': 20},
     'VerboseDebugging': {
@@ -852,11 +853,11 @@ ATT_MAXENT_PARAMS = {
     'l2lqthreshold': {'type': int, 'min': 0, 'max': None, 'default': 10},
     'hingethreshold': {'type': int, 'min': 0, 'max': None, 'default': 15},
     'beta_threshold': {
-        'type': float, 'min': None, 'max': None, 'default':-1.0},
+        'type': float, 'min': None, 'max': None, 'default': -1.0},
     'beta_categorical': {
-        'type': float, 'min': None, 'max': None, 'default':-1.0},
-    'beta_lqp': {'type': float, 'min': None, 'max': None, 'default':-1.0},
-    'beta_hinge': {'type': float, 'min': None, 'max': None, 'default':-1.0},
+        'type': float, 'min': None, 'max': None, 'default': -1.0},
+    'beta_lqp': {'type': float, 'min': None, 'max': None, 'default': -1.0},
+    'beta_hinge': {'type': float, 'min': None, 'max': None, 'default': -1.0},
     'defaultprevalence': {
         'type': float, 'min': 0.0, 'max': 1.0, 'default': 0.5},
     'addallsamplestobackground': {
@@ -923,7 +924,7 @@ ANN_PARAMS = {
     'MinimunError': {'type': float, 'min': 0.0, 'default': 0.01, 'max': 0.05}}
 
 AQUAMAPS_PARAMS = {
-    'UseSurfaceLayers': {'type': int, 'min':-1, 'default':-1, 'max': 1},
+    'UseSurfaceLayers': {'type': int, 'min':-1, 'default': -1, 'max': 1},
     'UseDepthRange': {'type': int, 'min': 0, 'default': 1, 'max': 1},
     'UseIceConcentration': {'type': int, 'min': 0, 'default': 1, 'max': 1},
     'UseDistanceToLand': {'type': int, 'min': 0, 'default': 1, 'max': 1},
@@ -938,16 +939,18 @@ class AlgQualities:
     """
 
     # ...........................
-    def __init__(self, code, name, isDiscreteOutput=False,
-                 outputFormat=LMFormat.getDefaultGDAL().driver,
-                 acceptsCategoricalMaps=False, parameters={}):
+    def __init__(self, code, name, is_discrete_output=False,
+                 output_format=LMFormat.get_default_gdal().driver,
+                 accepts_categorical_maps=False, parameters=None):
         """Constructor.
         """
+        if parameters is None:
+            parameters = {}
         self.code = code
         self.name = name
-        self.isDiscreteOutput = isDiscreteOutput
-        self.outputFormat = outputFormat
-        self.acceptsCategoricalMaps = acceptsCategoricalMaps
+        self.is_discrete_output = is_discrete_output
+        self.output_format = output_format
+        self.accepts_categorical_maps = accepts_categorical_maps
         self.parameters = parameters
 
 
@@ -958,7 +961,7 @@ class Algorithms(Enum):
     BIOCLIM = AlgQualities(
         'BIOCLIM', 'Bioclimatic Envelope Algorithm',
         # output is 0, 0.5, 1.0
-        isDiscreteOutput=True, parameters=BIOCLIM_PARAMS)
+        is_discrete_output=True, parameters=BIOCLIM_PARAMS)
     CSMBS = AlgQualities(
         'CSMBS', 'Climate Space Model - Broken-Stick Implementation',
         parameters=CSMBS_PARAMS)
@@ -967,10 +970,10 @@ class Algorithms(Enum):
     ENVSCORE = AlgQualities('ENVSCORE', 'Envelope Score')
     GARP = AlgQualities(
         'GARP', 'GARP (single run) - new openModeller implementation',
-        isDiscreteOutput=True, parameters=GARP_PARAMS)
+        is_discrete_output=True, parameters=GARP_PARAMS)
     DG_GARP = AlgQualities(
         'DG_GARP', 'GARP (single run) - DesktopGARP implementation',
-        isDiscreteOutput=True, parameters=GARP_PARAMS)
+        is_discrete_output=True, parameters=GARP_PARAMS)
     GARP_BS = AlgQualities(
         'GARP_BS', 'GARP with Best Subsets - new openModeller implementation ',
         parameters=GARP_BS_PARAMS)
@@ -982,7 +985,7 @@ class Algorithms(Enum):
         parameters=OM_MAXENT_PARAMS)
     ATT_MAXENT = AlgQualities(
         'ATT_MAXENT', 'Maximum Entropy (ATT Implementation)',
-        acceptsCategoricalMaps=True, parameters=ATT_MAXENT_PARAMS)
+        accepts_categorical_maps=True, parameters=ATT_MAXENT_PARAMS)
     SVM = AlgQualities(
         'SVM', 'SVM (Support Vector Machines)', parameters=SVM_PARAMS)
     ANN = AlgQualities(
@@ -996,7 +999,7 @@ class Algorithms(Enum):
     # Masking algorithm
     HULL_INTERSECT = AlgQualities(
         'hull_region_intersect', 'Convex Hull Region Intersect',
-        isDiscreteOutput=True, parameters={
+        is_discrete_output=True, parameters={
             'buffer': {'type': float, 'min': 0, 'default': 0.5, 'max': 2},
             # Region MUST be supplied by user
             'region': {'type': str, 'default': None}})
@@ -1018,7 +1021,7 @@ class Algorithms(Enum):
         return [alg.code for alg in Algorithms.implemented()]
 
     @staticmethod
-    def isOpenModeller(code):
+    def is_openModeller(code):
         """Returns a boolean if the provided algorithm code is in openModeller.
         """
         atype = Algorithms.get(code)
@@ -1027,7 +1030,7 @@ class Algorithms(Enum):
         return True
 
     @staticmethod
-    def isATT(code):
+    def is_att(code):
         """Returns a boolean if the provided algorithm code is in ATT Maxent.
         """
         atype = Algorithms.get(code)
@@ -1044,11 +1047,11 @@ class Algorithms(Enum):
                 return alg
 
     @staticmethod
-    def returnsDiscreteOutput(code):
+    def returns_discrete_output(code):
         """Returns boolean if algorithm provides discrete output
         """
         atype = Algorithms.get(code)
-        return atype.isDiscreteOutput
+        return atype.is_discrete_output
 
 
 # .............................................................................
@@ -1057,7 +1060,7 @@ class SdmMasks(Enum):
     """
     HULL_INTERSECT = AlgQualities(
         'hull_region_intersect', 'Convex Hull Region Intersect',
-        isDiscreteOutput=True,
+        is_discrete_output=True,
         parameters={
             'buffer': {'type': float, 'min': 0, 'default': 0.5, 'max': 2},
             # Region MUST be supplied by user
