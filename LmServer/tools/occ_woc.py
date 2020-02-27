@@ -81,7 +81,6 @@ class _SpeciesWeaponOfChoice(LMObject):
     def initialize_me():
         """Base class initialize me
         """
-        pass
 
     # ................................
     @property

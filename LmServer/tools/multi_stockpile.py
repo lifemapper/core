@@ -136,7 +136,7 @@ def test_spatial(spatial_filename):
                 success, feat_count = Vector.test_vector(
                     spatial_filename, driver=file_format.driver)
             elif LMFormat.is_gdal(ext=ext):
-                success = Raster.testRaster(spatial_filename)
+                success = Raster.test_raster(spatial_filename)
             else:
                 raise LMError(
                     'File is not a valid spatial file: {}'.format(

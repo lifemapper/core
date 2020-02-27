@@ -157,7 +157,7 @@ def main():
     else:
         subject = '!!There are problems on {}!!'.format(WEBSERVICES_ROOT)
 
-    notifier.sendMessage(TROUBLESHOOTERS, subject, '<br /><br />'.join(msgs))
+    notifier.send_message(TROUBLESHOOTERS, subject, '<br /><br />'.join(msgs))
 
 
 # .............................................................................
