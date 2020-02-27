@@ -165,7 +165,8 @@ class ChristopherWalken(LMObject):
         return self.weapon_of_choice.occ_delimiter
 
     # ....................................
-    def _get_var_value(self, var):
+    @staticmethod
+    def _get_var_value(var):
         try:
             var = int(var)
         except TypeError:
@@ -211,9 +212,9 @@ class ChristopherWalken(LMObject):
                     var = []
                 except Exception:
                     raise LMError('Failed to split variables on \',\'')
-                for v in tmp_list:
-                    v = self._get_var_value(v)
-                    var.append(v)
+                for temp_v in tmp_list:
+                    temp_v = self._get_var_value(temp_v)
+                    var.append(temp_v)
         return var
 
     # ....................................
@@ -597,7 +598,6 @@ class ChristopherWalken(LMObject):
         ScenPkg: mdlscen
         [prjscens]
         """
-        pass
 
     # ....................................
     def start_walken(self, work_dir):

@@ -239,7 +239,7 @@ def main():
             user_id=usr, name=grid_name, fill_matrices=True)
         if gridset and layers:
             encode_hypotheses_to_matrix(
-                scribe, usr, gridset, success_file, layers=layers)
+                scribe, usr, gridset, layers=layers)
         else:
             scribe.log.info('No gridset or layers to encode as hypotheses')
     finally:
