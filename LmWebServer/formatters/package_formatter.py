@@ -270,7 +270,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
     sniffer = csv.Sniffer()
 
     for prj in projections:
-        occ = prj.occurrenceSet
+        occ = prj.occ_layer
         prj_dir = os.path.join(SDM_PRJ_DIR, occ.display_name)
         # Make sure projection output file exists, then add to package
         if os.path.exists(prj.get_dlocation()):

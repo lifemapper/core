@@ -19,15 +19,15 @@ class _ProjectionType(_LayerParameters, ProcessObject):
     """
 
     # .........................................
-    def __init__(self, occurrenceSet, algorithm, modelScenario, modelMask,
+    def __init__(self, occ_layer, algorithm, model_scenario, modelMask,
                      projScenario, projMask, process_type, projMetadata,
                      status, status_mod_time, user_id, projectId):
         """Constructor for the _ProjectionType class
 
         Args:
-            * occurrenceSet: OccurrenceLayer object for SDM model process
+            * occ_layer: OccurrenceLayer object for SDM model process
             * algorithm: Algorithm object for SDM model process
-            * modelScenario: : Scenario (environmental layer inputs) for SDM
+            * model_scenario: : Scenario (environmental layer inputs) for SDM
                 model process
             * modelMask: Mask for SDM model process
             * projScenario: Scenario (environmental layer inputs) for SDM
@@ -62,10 +62,10 @@ class _ProjectionType(_LayerParameters, ProcessObject):
         ProcessObject.__init__(
             self, obj_id=projectId, process_type=process_type, status=status,
             status_mod_time=status_mod_time)
-        self._occurrenceSet = occurrenceSet
+        self._occ_layer = occ_layer
         self._algorithm = algorithm
         self._modelMask = modelMask
-        self._modelScenario = modelScenario
+        self._model_scenario = model_scenario
         self._projMask = projMask
         self._projScenario = projScenario
 
@@ -74,7 +74,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 # OccurrenceSet, Algorithm, ModelMask, ModelScenario, ProjMask, ProjScenario
 # ...............................................
     def getOccurrenceSetId(self):
-        return self._occurrenceSet.get_id()
+        return self._occ_layer.get_id()
 
     def dumpAlgorithmParametersAsString(self):
         return self._algorithm.dumpAlgParameters()
@@ -86,7 +86,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
             return None
 
     def getModelScenarioId(self):
-        return self._modelScenario.get_id()
+        return self._model_scenario.get_id()
 
     def getProjMaskId(self):
         try:
@@ -105,7 +105,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
     @property
     def display_name(self):
-        return self._occurrenceSet.display_name
+        return self._occ_layer.display_name
 
     @property
     def projScenario(self):
@@ -123,8 +123,8 @@ class _ProjectionType(_LayerParameters, ProcessObject):
         self._projMask = lyr
 
     @property
-    def occurrenceSet(self):
-        return self._occurrenceSet
+    def occ_layer(self):
+        return self._occ_layer
 
     @property
     def status(self):
@@ -136,19 +136,19 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
     @property
     def speciesName(self):
-        return self._occurrenceSet.display_name
+        return self._occ_layer.display_name
 
     @property
     def algorithm_code(self):
         return self._algorithm.code
 
     @property
-    def modelScenario(self):
-        return self._modelScenario
+    def model_scenario(self):
+        return self._model_scenario
 
     @property
     def modelScenarioCode(self):
-        return self._modelScenario.code
+        return self._model_scenario.code
 
     @property
     def modelMask(self):
@@ -182,13 +182,13 @@ class SDMProjection(_ProjectionType, Raster):
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, occurrenceSet, algorithm, modelScenario, projScenario,
+    def __init__(self, occ_layer, algorithm, model_scenario, projScenario,
                  process_type=None, modelMask=None, projMask=None,
                  projMetadata={}, status=None, status_mod_time=None,
                  sdmProjectionId=None, name=None, epsgcode=None, lyr_id=None,
                  squid=None, verify=None, dlocation=None, lyrMetadata={},
-                 data_format=None, gdalType=None, valUnits=None, nodataVal=None,
-                 minVal=None, maxVal=None, mapunits=None, resolution=None,
+                 data_format=None, gdalType=None, valUnits=None, nodata_val=None,
+                 min_val=None, max_val=None, mapunits=None, resolution=None,
                  bbox=None, metadataUrl=None, parentMetadataUrl=None):
         """
         @summary Constructor for the SDMProjection class
@@ -197,22 +197,22 @@ class SDMProjection(_ProjectionType, Raster):
         """
         (user_id, name, squid, process_type, bbox, epsg, mapunits, resolution,
          isDiscreteData, data_format, title) = self._get_defaults_from_inputs(
-             lyr_id, occurrenceSet, algorithm, modelScenario, projScenario,
+             lyr_id, occ_layer, algorithm, model_scenario, projScenario,
              name, squid, process_type, bbox, epsgcode, mapunits, resolution,
              data_format)
         _ProjectionType.__init__(
-            self, occurrenceSet, algorithm, modelScenario, modelMask,
+            self, occ_layer, algorithm, model_scenario, modelMask,
             projScenario, projMask, process_type, projMetadata, status,
             status_mod_time, user_id, sdmProjectionId)
         if not lyrMetadata:
             lyrMetadata = self._create_metadata(
-                projScenario, occurrenceSet.display_name, algorithm.code,
+                projScenario, occ_layer.display_name, algorithm.code,
                 title=title, isDiscreteData=isDiscreteData)
         Raster.__init__(
             self, name, user_id, epsg, lyr_id=lyr_id, squid=squid, verify=verify,
             dlocation=dlocation, metadata=lyrMetadata, data_format=data_format,
-            gdalType=gdalType, valUnits=valUnits, nodataVal=nodataVal,
-            minVal=minVal, maxVal=maxVal, mapunits=mapunits,
+            gdalType=gdalType, valUnits=valUnits, nodata_val=nodata_val,
+            min_val=min_val, max_val=max_val, mapunits=mapunits,
             resolution=resolution, bbox=bbox, svcObjId=lyr_id,
             serviceType=LMServiceType.PROJECTIONS, metadataUrl=metadataUrl,
             parentMetadataUrl=parentMetadataUrl, mod_time=status_mod_time)
@@ -226,12 +226,12 @@ class SDMProjection(_ProjectionType, Raster):
 # another Constructor
 # # .............................................................................
     @classmethod
-    def init_from_parts(cls, occurrenceSet, algorithm, modelScenario,
+    def init_from_parts(cls, occ_layer, algorithm, model_scenario,
                       projScenario, layer, process_type=None, modelMask=None,
                       projMask=None, projMetadata={}, status=None,
                       status_mod_time=None, sdmProjectionId=None):
         prj = SDMProjection(
-            occurrenceSet, algorithm, modelScenario, projScenario,
+            occ_layer, algorithm, model_scenario, projScenario,
             process_type=process_type, modelMask=modelMask, projMask=projMask,
             projMetadata=projMetadata, status=status,
             status_mod_time=status_mod_time, sdmProjectionId=sdmProjectionId,
@@ -239,8 +239,8 @@ class SDMProjection(_ProjectionType, Raster):
             squid=layer.squid, verify=layer.verify, dlocation=layer._dlocation,
             lyrMetadata=layer.lyrMetadata, data_format=layer.data_format,
             gdalType=layer.gdalType, valUnits=layer.valUnits,
-            nodataVal=layer.nodataVal, minVal=layer.minVal,
-            maxVal=layer.maxVal, mapunits=layer.mapUnits,
+            nodata_val=layer.nodata_val, min_val=layer.min_val,
+            max_val=layer.max_val, mapunits=layer.mapUnits,
             resolution=layer.resolution, bbox=layer.bbox,
             metadataUrl=layer.metadataUrl,
             parentMetadataUrl=layer.parentMetadataUrl)
@@ -272,7 +272,7 @@ class SDMProjection(_ProjectionType, Raster):
         if self.get_id() is not None:
             dloc = self._earl_jr.create_filename(
                 LMFileType.PROJECTION_LAYER, objCode=self.get_id(),
-                occsetId=self._occurrenceSet.get_id(), usr=self._user_id,
+                occsetId=self._occ_layer.get_id(), usr=self._user_id,
                 epsg=self._epsg)
         return dloc
 
@@ -300,7 +300,7 @@ class SDMProjection(_ProjectionType, Raster):
         @summary Gets the absolute path to the species data
         @return Path to species points
         """
-        return self._occurrenceSet.get_absolute_path()
+        return self._occ_layer.get_absolute_path()
 
 # ...............................................
     def _create_metadata(self, prjScenario, speciesName, algorithm_code,
@@ -325,21 +325,21 @@ class SDMProjection(_ProjectionType, Raster):
         return metadata
 
 # ...............................................
-    def _get_defaults_from_inputs(self, lyr_id, occurrenceSet, algorithm,
-                               modelScenario, projScenario, name, squid,
+    def _get_defaults_from_inputs(self, lyr_id, occ_layer, algorithm,
+                               model_scenario, projScenario, name, squid,
                                process_type, bbox, epsgcode, mapunits,
                                resolution, gdalFormat):
         """
         @summary: Assemble SDMProjection attributes from process inputs the
             first time it is created.
         """
-        user_id = occurrenceSet.getUserId()
+        user_id = occ_layer.getUserId()
         if name is None:
             if lyr_id is None:
                 lyr_id = ID_PLACEHOLDER
-            name = occurrenceSet._earl_jr.createLayername(projId=lyr_id)
+            name = occ_layer._earl_jr.createLayername(projId=lyr_id)
         if squid is None:
-            squid = occurrenceSet.squid
+            squid = occ_layer.squid
         if bbox is None:
             bbox = projScenario.bbox
         if epsgcode is None:
@@ -354,9 +354,9 @@ class SDMProjection(_ProjectionType, Raster):
             else:
                 process_type = ProcessType.OM_PROJECT
         isDiscreteData = Algorithms.returns_discrete_output(algorithm.code)
-        title = occurrenceSet._earl_jr.createSDMProjectTitle(
-            occurrenceSet._user_id, occurrenceSet.display_name, algorithm.code,
-            modelScenario.code, projScenario.code)
+        title = occ_layer._earl_jr.createSDMProjectTitle(
+            occ_layer._user_id, occ_layer.display_name, algorithm.code,
+            model_scenario.code, projScenario.code)
         if gdalFormat is None:
             gdalFormat = Algorithms.get(algorithm.code).outputFormat
         return (user_id, name, squid, process_type, bbox, epsgcode, mapunits,
@@ -424,7 +424,7 @@ class SDMProjection(_ProjectionType, Raster):
     def get_proj_package_filename(self):
         fname = self._earl_jr.create_filename(
             LMFileType.PROJECTION_PACKAGE, objCode=self.get_id(),
-            occsetId=self._occurrenceSet.get_id(), usr=self._user_id,
+            occsetId=self._occ_layer.get_id(), usr=self._user_id,
             epsg=self._epsg)
         return fname
 
@@ -470,24 +470,24 @@ class SDMProjection(_ProjectionType, Raster):
         """
         @summary: Delete the mapfile containing this layer
         """
-        return self._occurrenceSet.clear_local_mapfile()
+        return self._occ_layer.clear_local_mapfile()
 
 # ...............................................
     def set_local_map_filename(self):
         """
         @summary: Find mapfile containing layers for this projection's
-            occurrenceSet.
+            occ_layer.
         """
-        self._occurrenceSet.set_local_map_filename()
+        self._occ_layer.set_local_map_filename()
 
 # ...............................................
     @property
     def mapFilename(self):
-        return self._occurrenceSet.mapFilename
+        return self._occ_layer.mapFilename
 
     @property
     def map_name(self):
-        return self._occurrenceSet.map_name
+        return self._occ_layer.map_name
 
 # ...............................................
     def _create_map_prefix(self):
@@ -507,7 +507,7 @@ class SDMProjection(_ProjectionType, Raster):
             LMFileType.PROJECTION_LAYER, objCode=projid, usr=self._user_id,
             epsg=self.epsgcode)
         mapprefix = self._earl_jr.constructMapPrefixNew(
-            ftype=LMFileType.SDM_MAP, mapname=self._occurrenceSet.map_name,
+            ftype=LMFileType.SDM_MAP, mapname=self._occ_layer.map_name,
             lyrname=lyrname, usr=self._user_id)
         return mapprefix
 

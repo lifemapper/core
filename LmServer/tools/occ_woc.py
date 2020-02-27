@@ -839,7 +839,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
     # ................................
     def _write_raw_data(self, occ, data=None, metadata=None):
         if data is None:
-            raise LMError('Missing data file for occurrenceSet')
+            raise LMError('Missing data file for occ_layer')
         raw_dloc = occ.create_local_dlocation(raw=True)
         occ.ready_filename(raw_dloc, overwrite=True)
         shutil.copyfile(data, raw_dloc)
