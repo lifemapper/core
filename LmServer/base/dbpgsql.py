@@ -15,8 +15,7 @@ from LmServer.common.lmconstants import LM_SCHEMA
 
 # ............................................................................
 class DbPostgresql(LMAbstractObject):
-    """Class for interacting with PostgreSQL.
-    """
+    """Class for interacting with PostgreSQL."""
     RETRY_COUNT = 4
 
     # ................................
@@ -145,16 +144,14 @@ class DbPostgresql(LMAbstractObject):
 
     # ................................
     def close(self):
-        """Close database connection
-        """
+        """Close database connection"""
         if self.pconn is not None:
             self.pconn.close()
         self.pconn = None
 
     # ................................
     def reopen(self):
-        """Close database connection and reopen
-        """
+        """Close database connection and reopen"""
         self.close()
         self.open()
 

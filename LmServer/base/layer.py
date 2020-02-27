@@ -122,17 +122,16 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def set_layer_id(self, lyr_id):
-        """
-        @summary: Sets the database id of the Layer record, which can be used
-                     by multiple Parameterized Layer objects
-        @param lyr_id: The record id for the database
+        """Sets the database id of the Layer record.
+        
+        Args:
+            lyr_id: The record id for the database
         """
         self._layer_id = lyr_id
 
     # .............................
     def get_layer_id(self):
-        """Returns the database id of the layer record.
-        """
+        """Returns the database id of the layer record."""
         return self._layer_id
 
 #     # .............................
@@ -174,22 +173,34 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def read_data(self, dlocation, driver_type):
-        """
-        @summary: Read OGR- or GDAL data and save the on the _Layer object
-        @param dlocation: Location of the data
-        @param ogr_type: GDAL or OGR-supported data format type code, available at
-                             http://www.gdal.org/formats_list.html and
-                             http://www.gdal.org/ogr/ogr_formats.html
-        @return: boolean for success/failure
-        @raise LMError: on failure to read data.
+        """Reads OGR- or GDAL data.
+        
+        Saves vector features on the _Layer object
+        
+        Args:
+            dlocation: file location of the data
+            ogr_type: GDAL or OGR-supported data format type code, available at
+                http://www.gdal.org/formats_list.html and
+                http://www.gdal.org/ogr/ogr_formats.html
+                
+        Returns:
+            boolean for success/failure
+            
+        Raises: 
+            LMError on call on superclass or failure to read data.
         """
         raise LMError('read_data must be implemented in Subclass')
 
     # .............................
     def compute_hash(self, dlocation=None, content=None):
-        """
-        @summary: Compute the sha256sum of the file at dlocation.
-        @return: hash string for data file
+        """Computes the sha256sum of the file at dlocation.
+        
+        Args:
+            dlocation: file location of the data
+            content: data stream of the data
+            
+        Returns:
+            a hash string for data file
         """
         if content is not None:
             value = compute_hash(content=content)
@@ -202,9 +213,15 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def verify_hash(self, hashval, dlocation=None, content=None):
-        """
-        @summary: Compute the sha256sum of the file at dlocation.
-        @param hash: hash string to compare with data
+        """Compares the sha256sum of the file at dlocation with provided hashval
+        
+        Args:
+            hashval: hash string to compare with data
+            dlocation: file location of the data
+            content: data stream of the data
+            
+        Returns:
+            boolean for equal or not equal hashvals
         """
         if content is not None:
             verified = verify_hash(hashval, content=content)
@@ -216,6 +233,13 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def set_verify(self, verify=None, dlocation=None, content=None):
+        """Sets the sha256sum of the file 
+        
+        Args:
+            verify: hash string to set for the data
+            dlocation: file location of the data
+            content: data stream of the data
+        """
         value = None
         if verify is not None:
             self._verify = verify
@@ -231,6 +255,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def clear_verify(self):
+        """Clears the sha256sum of the file"""
         self._verify = None
 
     # .............................
@@ -240,15 +265,15 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def get_meta_location(self):
+        """Returns the location of metadata file"""
         return self._metalocation
 
     # .............................
     def get_relative_dlocation(self):
-        """
-        @summary: Return the relative filepath for object data
-        @note: If the object does not have an ID, this returns None
-        @note: This is to be pre-pended with a relative directory name for data
-                 used by a single workflow/Makeflow
+        """Returns the relative filepath for object data
+        
+        Note:
+            If the object does not have an ID, this returns None
         """
         basename = None
         self.set_dlocation()
@@ -258,9 +283,13 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def create_local_dlocation(self, extension):
-        """
-        @summary: Create an absolute filepath from object attributes
-        @note: If the object does not have an ID, this returns None
+        """Creates an absolute filepath from object attributes
+        
+        Args:
+            extension: extension for the filename
+            
+        Note:
+            If the object does not have an ID, this returns None
         """
         dloc = self._earl_jr.create_other_layer_filename(
             self._layer_user_id, self._epsg, self.name, ext=extension)
@@ -276,19 +305,21 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def clear_dlocation(self):
-        """
-        @summary: Clear the _dlocation attribute
-        """
+        """Clears the _dlocation attribute"""
         self._dlocation = None
         self._absolute_path = None
         self._base_filename = None
 
     # .............................
     def set_dlocation(self, dlocation=None):
-        """
-        @summary: Set the Layer._dlocation attribute if it is None.  Use dlocation
-                     if provided, otherwise calculate it.
-        @note: Does NOT override existing dlocation, use clear_dlocation for that
+        """Set the Layer._dlocation attribute if it is None.  
+        
+        Args:
+            dlocation: optional file location of the data
+            
+        Note:
+            If argument is None, compute dlocation based on object attributes
+            Does NOT override existing dlocation, use clear_dlocation for that
         """
         # Only set DLocation if it is currently None
         if self._dlocation is None:
@@ -312,6 +343,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def get_absolute_path(self):
+        """Returns the absolute path, without filename, of the object"""
         if self._absolute_path is None and self._dlocation is not None:
             self._absolute_path, self._base_filename = os.path.split(
                 self._dlocation)
@@ -319,6 +351,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def get_base_filename(self):
+        """Returns the base filename, without path, of the object"""
         if self._base_filename is None and self._dlocation is not None:
             self._absolute_path, self._base_filename = os.path.split(
                 self._dlocation)
@@ -326,26 +359,24 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def dump_lyr_metadata(self):
+        """Returns a string of the dictionary of metadata for this object"""
         return super(_Layer, self)._dump_metadata(self.lyr_metadata)
 
     # .............................
     def load_lyr_metadata(self, new_metadata):
+        """Loads a dictionary or JSON object of metadata into this object"""
         self.lyr_metadata = super(_Layer, self)._load_metadata(new_metadata)
 
     # .............................
     def add_lyr_metadata(self, new_metadata_dict):
+        """Adds dictionary of metadata to the existing metadata for this object"""
         self.lyr_metadata = super(
             _Layer, self)._add_metadata(
                 new_metadata_dict, existing_metadata_dict=self.lyr_metadata)
 
     # .............................
     def update_layer(self, mod_time, metadata=None):
-        """
-        @summary: Updates mod_time, data verification hash, metadata.
-        @param mod_time: time/date last modified
-        @param metadata: Dictionary of metadata keys/values; key constants are
-                              class attributes.
-        """
+        """Updates mod_time, data verification hash, metadata of the object"""
         self.update_mod_time(mod_time)
         if metadata is not None:
             self.load_lyr_metadata(metadata)
@@ -372,11 +403,11 @@ class _LayerParameters(LMObject):
             param_id: database Id for the parameter values
                 if these parameters are not held in a separate db table, this 
                 value is the same as _Layer._layer_id.  
-            matrix_index: Index of the position in PAM or other matrix.  If this 
-                             Parameterized Layer is not a Matrix input, value is -1.
-        @param metadata: Dictionary of metadata keys/values; key constants are 
-                              class attributes.
-        @param mod_time: time/date last modified
+            matrix_index: index of the position in PAM or other matrix.  If this 
+                Parameterized Layer is not a Matrix input, value is -1.
+            metadata: dictionary of metadata keys/values; key constants are 
+                class attributes.
+            mod_time: time/date last modified in MJD
         """
         self._param_user_id = user_id
         self._param_id = param_id
@@ -387,26 +418,35 @@ class _LayerParameters(LMObject):
 
     # .............................
     def dump_param_metadata(self):
+        """Returns a string of the metadata for this object"""
         return super(_LayerParameters, self)._dump_metadata(self.param_metadata)
 
     # .............................
     def load_param_metadata(self, new_metadata):
+        """Loads metadata into a dictionary for this object 
+        
+        Args:
+            new_metadata: dictionary or JSON object of metadata            
+        """
         self.param_metadata = super(
             _LayerParameters, self)._load_metadata(new_metadata)
 
     # .............................
     def add_param_metadata(self, new_metadata_dict):
+        """Adds metadata to the dictionary for this object 
+        
+        Args:
+            new_metadata_dict: dictionary of metadata            
+        """
         self.param_metadata = super(
             _LayerParameters, self)._add_metadata(
                 new_metadata_dict, existing_metadata_dict=self.param_metadata)
 
     # .............................
     def set_param_id(self, param_id):
-        """
-        @summary: Sets the database id of the Layer Parameters (either
-                     PresenceAbsence or AncillaryValues) record, which can be
-                     used by multiple Parameterized Layer objects
-        @param param_id: The record id for the database
+        """Sets the database id of the Layer Parameters record
+        
+        Args: param_id: The db record id 
         """
         self._param_id = param_id
 
@@ -421,56 +461,57 @@ class _LayerParameters(LMObject):
 
     # .............................
     def set_param_user_id(self, usr):
-        """
-        @summary: Sets the User id of the Layer Parameters (either
-                     PresenceAbsence or AncillaryValues) record, which can be
-                     used by multiple Parameterized Layer objects
-        @param usr: The user id for the parameters
+        """Sets the User id of the Layer Parameters 
+        
+        Args:
+            usr: user id for the parameters
         """
         self._param_user_id = usr
 
     # .............................
     def get_param_user_id(self):
-        """
-        @summary: Returns the User id of the Layer Parameters (either 
-                     PresenceAbsence or AncillaryValues) record, which can be used by 
-                     multiple Parameterized Layer objects
-        """
+        """Returns the User id of the Layer Parameters"""
         return self._param_user_id
 
     # .............................
     def set_matrix_index(self, matrix_idx):
-        """
-        @summary: Sets the _matrix_index on the object.  This identifies 
-                     the position of the parameterized layer object in the 
-                     appropriate MatrixLayerset (PAM or GRIM)
-        @param matrix_index: The matrix_index
+        """Sets the _matrix_index on the object 
+        
+        Args:
+            matrix_index: position of a layer in a MatrixLayerset
+            
+        Note:
+            Not relevant for layers not in a MatrixLayerset
         """
         self._matrix_index = matrix_idx
 
     # .............................
     def get_matrix_index(self):
-        """
-        @summary: Returns _matrix_index on the layer.  This identifies 
-                     the position of the parameterized layer object in a 
-                     MatrixLayerset (and the PAM or GRIM)
+        """Returns _matrix_index on the layer.
+        
+        Note:
+            Not relevant for layers not in a MatrixLayerset
         """
         return self._matrix_index
 
     # .............................
     def set_tree_index(self, tree_idx):
-        """
-        @summary: Sets the _treeIndex on the layer.  This identifies 
-                     the position of the layer in a tree
-        @param treeIdx: The treeIndex
+        """Sets the _tree_index on the object 
+        
+        Args:
+            tree_index: position of a layer in a Tree
+            
+        Note:
+            Not relevant for layers not in a Tree
         """
         self._tree_index = tree_idx
 
     # .............................
     def get_tree_index(self):
-        """
-        @summary: Returns _tree_index on the object.  This identifies 
-                     the position of the layer in a tree
+        """Returns the _tree_index on the object 
+        
+        Note:
+            Not relevant for layers not in a Tree
         """
         return self._tree_index
 
@@ -1011,8 +1052,8 @@ class Vector(_Layer):
                  max_val=None, resolution=None, bbox=None, mapunits=None,
                  svc_obj_id=None, service_type=LMServiceType.LAYERS,
                  metadata_url=None, parent_metadata_url=None, mod_time=None,
-                 featureCount=0, feature_attributes={}, features={},
-                 fidAttribute=None):
+                 feature_count=0, feature_attributes={}, features={},
+                 fid_attribute=None):
         """Vector superclass constructor, inherits from _Layer
 
         Args:
@@ -1050,13 +1091,13 @@ class Vector(_Layer):
             metadata_url: REST URL for API returning this object
             parent_metadata_url: REST URL for API returning this parent object
             mod_time: time of last modification, in MJD
-            featureCount: number of features in this layer
+            feature_count: number of features in this layer
             feature_attributes: dictionary of feature attributes for this layer
             features: dictionary of features in this layer
                 key is the featureid (FID) or localid of the feature
                 value is a list of values for the feature.  Values are ordered 
                 in the same order as in feature_attributes.
-            fidAttribute: field name of the attribute holding the featureID
+            fid_attribute: field name of the attribute holding the featureID
         """
         self._geom_idx = None
         self._geom_field_name = OccurrenceFieldNames.GEOMETRY_WKT[0]
@@ -1066,27 +1107,29 @@ class Vector(_Layer):
         self._local_id_idx = None
         self._local_id_field_name = OccurrenceFieldNames.LOCAL_ID[0]
         self._local_id_field_type = OFTInteger
-        self._fidAttribute = fidAttribute
+        self._fid_attribute = fid_attribute
         self._feature_attributes = {}
         self._features = {}
-        self._featureCount = 0
+        self._feature_count = 0
 
         _Layer.__init__(self, name, user_id, epsgcode, lyr_id=lyr_id,
-                     squid=squid, ident=ident, verify=verify, dlocation=dlocation,
-                     metadata=metadata, data_format=data_format, ogr_type=ogr_type,
-                     val_units=val_units, val_attribute=val_attribute,
-                     nodata_val=nodata_val, min_val=min_val, max_val=max_val,
-                     mapunits=mapunits, resolution=resolution, bbox=bbox,
-                     svc_obj_id=svc_obj_id, service_type=service_type,
-                     metadata_url=metadata_url, parent_metadata_url=parent_metadata_url,
-                     mod_time=mod_time)
+                        squid=squid, ident=ident, verify=verify, 
+                        dlocation=dlocation, metadata=metadata, 
+                        data_format=data_format, ogr_type=ogr_type,
+                        val_units=val_units, val_attribute=val_attribute,
+                        nodata_val=nodata_val, min_val=min_val, max_val=max_val,
+                        mapunits=mapunits, resolution=resolution, bbox=bbox,
+                        svc_obj_id=svc_obj_id, service_type=service_type,
+                        metadata_url=metadata_url, 
+                        parent_metadata_url=parent_metadata_url,
+                        mod_time=mod_time)
         self.verify_data_description(ogr_type, data_format)
         # The following may be reset by set_features:
-        # features, feature_attributes, featureCount, geom_idx, local_id_idx, geom, convexHull
-        self.set_features(features, feature_attributes, featureCount=featureCount)
+        # features, feature_attributes, feature_count, geom_idx, local_id_idx, geom, convexHull
+        self.set_features(features, feature_attributes, feature_count=feature_count)
         # If data exists, check description
         if dlocation is not None and os.path.exists(dlocation):
-            # sets features, feature_attributes, and featureCount (if do_read_data)
+            # sets features, feature_attributes, and feature_count (if do_read_data)
             (new_bbox, local_id_idx, geom_idx) = self.read_data(dlocation=dlocation,
                                                      data_format=data_format, do_read_data=False)
         # Reset some attributes based on data
@@ -1136,50 +1179,50 @@ class Vector(_Layer):
 
     # .............................
     @property
-    def fidAttribute(self):
-        return self._fidAttribute
+    def fid_attribute(self):
+        return self._fid_attribute
+
+#     # .............................
+#     def getFormatLongName(self):
+#         return self._data_format
 
     # .............................
-    def getFormatLongName(self):
-        return self._data_format
-
-    # .............................
-    def _getFeatureCount(self):
-        if self._featureCount is None:
+    def _get_feature_count(self):
+        if self._feature_count is None:
             if self._features:
-                self._featureCount = len(self._features)
-        return self._featureCount
+                self._feature_count = len(self._features)
+        return self._feature_count
 
     # .............................
-    def _setFeatureCount(self, count):
+    def _set_feature_count(self, count):
         """
         If Vector._features are present, the length of that list takes precedent 
         over the count parameter.
         """
         if self._features:
-            self._featureCount = len(self._features)
+            self._feature_count = len(self._features)
         else:
-            self._featureCount = count
+            self._feature_count = count
 
-    featureCount = property(_getFeatureCount, _setFeatureCount)
+    feature_count = property(_get_feature_count, _set_feature_count)
+
+#     # .............................
+#     def isFilled(self):
+#         """
+#         Has the layer been populated with its features.  An empty dataset is 
+#         considered 'filled' if feature_attributes are present, even if no features 
+#         exist.  
+#         """
+#         if self._feature_attributes:
+#             return True
+#         else:
+#             return False
 
     # .............................
-    def isFilled(self):
-        """
-        Has the layer been populated with its features.  An empty dataset is 
-        considered 'filled' if feature_attributes are present, even if no features 
-        exist.  
-        """
-        if self._feature_attributes:
-            return True
-        else:
-            return False
-
-    # .............................
-    def set_features(self, features, feature_attributes, featureCount=0):
+    def set_features(self, features, feature_attributes, feature_count=0):
         """
         @summary: Sets Vector attributes: 
-                         _features, _feature_attributes and featureCount.  
+                         _features, _feature_attributes and feature_count.  
                      Also sets one or more of:
                          _geom_idx, _local_id_idx, _geometry, _convexHull
         @param features: a dictionary of features, with key the featureid (FID) or
@@ -1189,7 +1232,7 @@ class Vector(_Layer):
         @param feature_attributes: a dictionary of feature_attributes, with key the 
                      index of this attribute in each feature, and value a tuple of
                      (field name, field type (OGR))
-        @param featureCount: the number of features in these data
+        @param feature_count: the number of features in these data
         """
         if feature_attributes:
             self._feature_attributes = feature_attributes
@@ -1203,12 +1246,12 @@ class Vector(_Layer):
         if features:
             self._features = features
             self._set_geometry()
-            self._featureCount = len(features)
+            self._feature_count = len(features)
         else:
             self._features = {}
             self._geometry = None
             self._convex_hull = None
-            self._featureCount = featureCount
+            self._feature_count = feature_count
 
     # .............................
     def get_features(self):
@@ -1219,10 +1262,10 @@ class Vector(_Layer):
         return self._features
 
     # .............................
-    def clearFeatures(self):
+    def clear_features(self):
         """
         @summary: Clears Vector._features, Vector._feature_attributes, and 
-                     Vector.featureCount        
+                     Vector.feature_count        
         """
         del self._feature_attributes
         del self._features
@@ -1231,7 +1274,7 @@ class Vector(_Layer):
     # .............................
     def add_features(self, features):
         """
-        @summary: Adds to Vector._features and updates Vector.featureCount
+        @summary: Adds to Vector._features and updates Vector.feature_count
         @param features: a dictionary of features, with key the featureid (FID) or
                      localid of the feature, and value a list of values for the 
                      feature.  Values are ordered in the same order as 
@@ -1240,7 +1283,7 @@ class Vector(_Layer):
         if features:
             for fid, vals in features.items():
                 self._features[fid] = vals
-            self._featureCount = len(self._features)
+            self._feature_count = len(self._features)
 
     # .............................
     def get_feature_attributes(self):
@@ -2092,41 +2135,41 @@ class Vector(_Layer):
         except Exception as e:
             raise LMError('Failed to copy data source')
 
-    # .............................
-    def verifyField(self, dlocation, ogr_format, attrname):
-        """
-        @summary: Read OGR-accessible data and save the features and 
-                     feature_attributes on the Vector object
-        @param dlocation: Location of the data
-        @param ogr_format: OGR-supported data format code, available at
-                             http://www.gdal.org/ogr/ogr_formats.html
-        @return: boolean for success/failure 
-        @raise LMError: on failure to read data.
-        @note: populateStats calls this
-        """
-        if attrname is None:
-            fieldOk = True
-        else:
-            fieldOk = False
-            if dlocation is not None and os.path.exists(dlocation):
-                ogr.RegisterAll()
-                drv = ogr.GetDriverByName(ogr_format)
-                try:
-                    ds = drv.Open(dlocation)
-                except Exception as e:
-                    raise LMError('Invalid datasource' % dlocation, str(e))
-
-                lyrDef = ds.GetLayer(0).GetLayerDefn()
-                # Make sure given field exists and is the correct type
-                for i in range(lyrDef.GetFieldCount()):
-                    fld = lyrDef.GetFieldDefn(i)
-                    fldname = fld.GetNameRef()
-                    if attrname == fldname:
-                        fldtype = fld.GetType()
-                        if fldtype in (ogr.OFTInteger, ogr.OFTReal, ogr.OFTBinary):
-                            fieldOk = True
-                        break
-        return fieldOk
+#     # .............................
+#     def verifyField(self, dlocation, ogr_format, attrname):
+#         """
+#         @summary: Read OGR-accessible data and save the features and 
+#                      feature_attributes on the Vector object
+#         @param dlocation: Location of the data
+#         @param ogr_format: OGR-supported data format code, available at
+#                              http://www.gdal.org/ogr/ogr_formats.html
+#         @return: boolean for success/failure 
+#         @raise LMError: on failure to read data.
+#         @note: populateStats calls this
+#         """
+#         if attrname is None:
+#             fieldOk = True
+#         else:
+#             fieldOk = False
+#             if dlocation is not None and os.path.exists(dlocation):
+#                 ogr.RegisterAll()
+#                 drv = ogr.GetDriverByName(ogr_format)
+#                 try:
+#                     ds = drv.Open(dlocation)
+#                 except Exception as e:
+#                     raise LMError('Invalid datasource' % dlocation, str(e))
+# 
+#                 lyrDef = ds.GetLayer(0).GetLayerDefn()
+#                 # Make sure given field exists and is the correct type
+#                 for i in range(lyrDef.GetFieldCount()):
+#                     fld = lyrDef.GetFieldDefn(i)
+#                     fldname = fld.GetNameRef()
+#                     if attrname == fldname:
+#                         fldtype = fld.GetType()
+#                         if fldtype in (ogr.OFTInteger, ogr.OFTReal, ogr.OFTBinary):
+#                             fieldOk = True
+#                         break
+#         return fieldOk
 
     # .............................
     @staticmethod
@@ -2169,7 +2212,7 @@ class Vector(_Layer):
         
         Args:
             dlocation: 
-        @return: localId position, featAttrs, featureCount, 
+        @return: localId position, featAttrs, feature_count, 
                     and features and BBox (if read data)
         @note: We are saving only latitude, longitude and localid if it exists.  
                  If localid does not exist, we create one.
@@ -2185,7 +2228,7 @@ class Vector(_Layer):
         localid = None
         if dlocation is None:
             dlocation = self._dlocation
-        self.clearFeatures()
+        self.clear_features()
         infile = open(dlocation, 'rU')
         reader = csv.reader(infile)
 
@@ -2207,9 +2250,9 @@ class Vector(_Layer):
             raise LMError('Must supply longitude and latitude')
 
         if not do_read_data:
-            featureCount = sum(1 for row in reader)
+            feature_count = sum(1 for row in reader)
             if not hasHeader:
-                featureCount += 1
+                feature_count += 1
         else:
             eof = False
             try:
@@ -2241,8 +2284,8 @@ class Vector(_Layer):
                 except StopIteration as e:
                     eof = True
 
-            featureCount = len(feats)
-            if featureCount == 0:
+            feature_count = len(feats)
+            if feature_count == 0:
                 raise LMError('Unable to read points from CSV')
             try:
                 minX = min(Xs)
@@ -2254,7 +2297,7 @@ class Vector(_Layer):
                 raise LMError('Failed to get valid coordinates ({})'.format(str(e)))
 
         infile.close()
-        return (this_bbox, idPos, feats, featAttrs, featureCount)
+        return (this_bbox, idPos, feats, featAttrs, feature_count)
 
     # .............................
     def read_with_OGR(self, dlocation, ogr_format, feature_limit=None, 
@@ -2279,7 +2322,7 @@ class Vector(_Layer):
             except Exception as e:
                 raise LMError('Invalid datasource' % dlocation, str(e))
 
-            self.clearFeatures()
+            self.clear_features()
             try:
                 slyr = ds.GetLayer(0)
             except Exception as e:
@@ -2302,7 +2345,7 @@ class Vector(_Layer):
                 fld = lyrDef.GetFieldDefn(i)
                 fldname = fld.GetNameRef()
                 # Provided attribute name takes precedence
-                if fldname == self._fidAttribute:
+                if fldname == self._fid_attribute:
                     local_id_idx = i
                     foundLocalId = True
                 # Don't reset if already found
@@ -2351,7 +2394,7 @@ class Vector(_Layer):
                     raise LMError('Failed to read features from %s (%s)'
                                       % (dlocation, str(e)), do_trace=True)
 
-#             self.set_features(features, featAttrs, featureCount=featCount)
+#             self.set_features(features, featAttrs, feature_count=featCount)
         else:
             raise LMError('dlocation %s does not exist' % str(dlocation))
         return this_bbox, local_id_idx, geom_idx, feats, featAttrs, featCount
@@ -2385,7 +2428,7 @@ class Vector(_Layer):
                      do_read_data=False):
         """Reads the file at dlocation and fills the related attributes.
         
-        Reading data fills the featureCount value and feature_attributes 
+        Reading data fills the feature_count value and feature_attributes 
         dictionary.  If do_read_data is True, reads and fills features dictionary.
         
         Args:
@@ -2406,17 +2449,17 @@ class Vector(_Layer):
         if dlocation is not None and os.path.exists(dlocation):
             if data_format == DEFAULT_OGR.driver:
                 (this_bbox, local_id_idx, geom_idx, features, feature_attributes,
-                 featureCount) = self.read_with_OGR(dlocation, data_format,
+                 feature_count) = self.read_with_OGR(dlocation, data_format,
                                                     feature_limit=feature_limit,
                                                     do_read_data=do_read_data)
             # only for Point data
             elif data_format == 'CSV':
                 (this_bbox, local_id_idx, features, feature_attributes,
-                    featureCount) = self.read_csv_points_with_ids(
+                    feature_count) = self.read_csv_points_with_ids(
                         dlocation=dlocation, feature_limit=feature_limit,
                         do_read_data=do_read_data)
             self.set_features(features, feature_attributes, 
-                             featureCount=featureCount)
+                             feature_count=feature_count)
             new_bbox = self._transform_bbox(orig_bbox=this_bbox)
         return (new_bbox, local_id_idx, geom_idx)
 

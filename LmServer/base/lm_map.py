@@ -67,7 +67,7 @@ class LMMap(LMSpatialObject):
         if not(os.path.exists(mapfilename)):
             allLayers = []
             if layers:
-                lyrs = self._createLayers()
+                lyrs = self._create_layers()
                 allLayers.append(lyrs)
             if shpGrid is not None and matrices is not None:
                 for matrix in matrices:
@@ -151,7 +151,7 @@ class LMMap(LMSpatialObject):
         return mapstr
 
 # ...............................................
-    def _createLayers(self):
+    def _create_layers(self):
         joinLyrStr = ''
         topLyrStr = ''
         midLyrStr = ''

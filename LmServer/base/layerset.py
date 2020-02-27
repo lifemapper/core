@@ -51,7 +51,7 @@ class _LayerSet(LMSpatialObject):
         # # List of Raster or Vector objects for this LayerSet'
         # # Also sets epsg and bbox
         # # If no layers, initializes to empty list
-        self._setLayers(layers)
+        self._set_layers(layers)
 
     # ...............................................
     def _get_units(self):
@@ -196,10 +196,10 @@ class _LayerSet(LMSpatialObject):
         return s
 
     # .............................................................................
-    def _getLayers(self):
+    def _get_layers(self):
         return self._layers
 
-    def _setLayers(self, lyrs):
+    def _set_layers(self, lyrs):
         if lyrs is not None:
             for lyr in lyrs:
                 self.add_layer(lyr)
@@ -219,7 +219,7 @@ class _LayerSet(LMSpatialObject):
 
     # # Set of words describing layerset as a whole
     keywords = property(_get_keyword, _set_keyword)
-    layers = property(_getLayers, _setLayers)
+    layers = property(_get_layers, _set_layers)
     # property counting the actual layer objects present
     count = property (_get_layer_count)
 
