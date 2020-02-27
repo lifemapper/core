@@ -131,7 +131,7 @@ class BOOMFiller(LMObject):
          self.other_lyr_names) = self.read_param_vals()
         self.woof_time_mjd = gmt().mjd
         earl = EarlJr()
-        self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG,
+        self.outConfigFilename = earl.create_filename(LMFileType.BOOM_CONFIG,
                                                      objCode=self.archiveName,
                                                      usr=self.user_id)
 
@@ -276,7 +276,8 @@ class BOOMFiller(LMObject):
                             os.chown(fd, -1, gid)
                             os.chmod(fd, 0o664)
                         except Exception as e:
-                            print(('Failed to fix permissions on {}'.format(fd)))
+                            print(('Failed to fix permissions on {} ({})'.format(
+                                fd, e)))
             if dirs is not None:
                 if not (isinstance(dirs, list) or
                         isinstance(dirs, tuple)):
@@ -758,14 +759,14 @@ class BOOMFiller(LMObject):
         validData = False
         if newshp:
             # check existence
-            validData, _ = Shapegrid.testVector(newshp.get_dlocation())
+            validData, _ = Shapegrid.test_vector(newshp.get_dlocation())
             if not validData:
                 try:
                     # Write new shapegrid
                     dloc = newshp.get_dlocation()
                     newshp.buildShape(overwrite=True)
-                    validData, _ = Shapegrid.testVector(dloc)
-                    self._fix_permissions(files=newshp.get_shapefiles())
+                    validData, _ = Shapegrid.test_vector(dloc)
+                    self._fixPermissions(files=newshp.get_shapefiles())
                 except Exception as e:
                     self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
                 if not validData:
@@ -1081,7 +1082,7 @@ class BOOMFiller(LMObject):
                     lyr = Vector(name, self.user_id, self.scenPkg.epsgcode,
                                  dlocation=bgFname, metadata=lyrMeta,
                                  dataFormat=LMFormat.SHAPE.driver,
-                                 valAttribute=valAttr, mod_time=self.woof_time_mjd)
+                                 val_attribute=valAttr, mod_time=self.woof_time_mjd)
                     updatedLyr = self.scribe.findOrInsertLayer(lyr)
                     biogeo_layer_names.append(updatedLyr.name)
                     self.scribe.log.info('  Added {} layers for biogeo hypotheses matrix'

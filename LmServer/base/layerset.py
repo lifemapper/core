@@ -114,7 +114,7 @@ class _LayerSet(LMSpatialObject):
         return None
 
     # .............................................................................
-    def addLayer(self, lyr):
+    def add_layer(self, lyr):
         """
         @note: metadataUrl is used for identification - ensuring that a layer is 
                not duplicated in the layerset.  MetadataUrl should be (relatively)
@@ -202,7 +202,7 @@ class _LayerSet(LMSpatialObject):
     def _setLayers(self, lyrs):
         if lyrs is not None:
             for lyr in lyrs:
-                self.addLayer(lyr)
+                self.add_layer(lyr)
         else:
             self._layers = []
         bboxes = [lyr.bbox for lyr in self._layers]
@@ -247,13 +247,12 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # .............................................................................
     # Constructor
     # .............................................................................
-    def __init__(self, mapname, title=None,
-              url=None, dlocation=None, keywords=None, epsgcode=None, layers=None,
-              userId=None, dbId=None, mod_time=None,
-              bbox=None, mapunits=None,
-              # This must be specified
-              serviceType=LMServiceType.LAYERSETS,
-              mapType=LMFileType.OTHER_MAP):
+    def __init__(self, mapname, title=None, url=None, dlocation=None, 
+                 keywords=None, epsgcode=None, layers=None, user_id=None, 
+                 db_id=None, mod_time=None, bbox=None, mapunits=None,
+                 # This must be specified
+                 serviceType=LMServiceType.LAYERSETS,
+                 mapType=LMFileType.OTHER_MAP):
         """
         @summary Constructor for the LayerSet class
         @copydoc LmServer.base.layerset._LayerSet::__init__()
@@ -266,9 +265,9 @@ class MapLayerSet(_LayerSet, ServiceObject):
         if serviceType is None:
             raise LMError('Failed to specify serviceType for MapLayerSet superclass')
         _LayerSet.__init__(self, mapname, title=title, keywords=keywords,
-                           epsgcode=epsgcode, layers=layers,
-                           bbox=bbox, mapunits=mapunits)
-        ServiceObject.__init__(self, userId, dbId, serviceType, metadataUrl=url,
+                           epsgcode=epsgcode, layers=layers, bbox=bbox, 
+                           mapunits=mapunits)
+        ServiceObject.__init__(self, user_id, db_id, serviceType, metadataUrl=url,
                                mod_time=mod_time)
         self._map_filename = dlocation
         self._mapType = mapType
@@ -278,36 +277,36 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # TODO: remove this property
     @property
     def mapPrefix(self):
-        self.setMapPrefix()
+        self.set_map_prefix()
         return self._map_prefix
 
-    def setMapPrefix(self, mapprefix=None):
+    def set_map_prefix(self, mapprefix=None):
         if mapprefix is None:
-            mapprefix = self._earl_jr.constructMapPrefixNew(ftype=LMFileType.OTHER_MAP,
-                                      objCode=self.get_id(), mapname=self.mapName,
-                                      usr=self._userId, epsg=self.epsgcode)
+            mapprefix = self._earl_jr.constructMapPrefixNew(
+                ftype=LMFileType.OTHER_MAP, objCode=self.get_id(), 
+                mapname=self.map_name, usr=self._user_id, epsg=self.epsgcode)
         self._map_prefix = mapprefix
 
     # ...............................................
-    def createLocalMapFilename(self):
+    def create_local_map_filename(self):
         """
         @summary: Full mapfile with path, containing this layer.
         @note: This method is overridden in Scenario  
         """
         fname = None
         if self._mapType == LMFileType.SDM_MAP:
-            fname = self._earl_jr.createFilename(self._mapType,
+            fname = self._earl_jr.create_filename(self._mapType,
                                                occsetId=self.get_id(),
-                                               usr=self._userId)
+                                               usr=self._user_id)
         # This will not occur here? only in
         # LmServer.base.legion.gridset.Gridset
         elif self._mapType == LMFileType.RAD_MAP:
-            fname = self._earl_jr.createFilename(self._mapType,
+            fname = self._earl_jr.create_filename(self._mapType,
                                                gridsetId=self.get_id(),
-                                               usr=self._userId)
+                                               usr=self._user_id)
         elif self._mapType == LMFileType.OTHER_MAP:
-            fname = self._earl_jr.createFilename(self._mapType,
-                                               usr=self._userId,
+            fname = self._earl_jr.create_filename(self._mapType,
+                                               usr=self._user_id,
                                                epsg=self._epsg)
         else:
             print(('Unsupported mapType {}'.format(self._mapType)))
@@ -320,11 +319,11 @@ class MapLayerSet(_LayerSet, ServiceObject):
         @summary: Set absolute mapfilename containing all layers for this User/EPSG. 
         """
         if mapfname is None:
-            mapfname = self.createLocalMapFilename()
+            mapfname = self.create_local_map_filename()
         self._map_filename = mapfname
 
     # ...............................................
-    def clearLocalMapfile(self):
+    def clear_local_mapfile(self):
         """
         @summary: Delete the mapfile containing this layer
         """
@@ -349,7 +348,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
 
     # ...............................................
     @property
-    def mapName(self):
+    def map_name(self):
         mapname = None
         if self._map_filename is not None:
             _, mapfname = os.path.split(self._map_filename)
@@ -357,7 +356,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         return mapname
 
     # .............................................................................
-    def _getMapsetUrl(self):
+    def _get_mapset_url(self):
         """
         @note: This method is overridden in Scenario  
         """
@@ -391,7 +390,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 layers = self._createLayers()
                 mapTemplate = self._earl_jr.getMapFilenameFromMapname(template)
                 mapstr = self._getBaseMap(mapTemplate)
-                onlineUrl = self._getMapsetUrl()
+                onlineUrl = self._get_mapset_url()
                 mapstr = self._addMapBaseAttributes(mapstr, onlineUrl)
                 mapstr = mapstr.replace('##_LAYERS_##', layers)
             except Exception as e:
@@ -437,7 +436,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
             mbbox = self.unionBounds
         boundstr = LMSpatialObject.get_extent_string(mbbox, separator='  ')
         mapprj = self._createProjectionInfo(self.epsgcode)
-        parts = ['  NAME        {}'.format(self.mapName),
+        parts = ['  NAME        {}'.format(self.map_name),
                  # All raster/vector filepaths will be relative to mapfile path
                  '  SHAPEPATH \"{}\"'.format(self.mapAbsolutePath),
                  '  EXTENT      {}'.format(boundstr),
@@ -674,7 +673,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
                           '         gml_include_items \"all\"'])
         parts.append('         ows_name  \"{}\"'.format(sdlLyr.name))
         try:
-            ltitle = sdlLyr.lyrMetadata[ServiceObject.META_TITLE]
+            ltitle = sdlLyr.lyr_metadata[ServiceObject.META_TITLE]
             parts.append('         ows_title  \"{}\"'.format(ltitle))
         except:
             pass
@@ -693,7 +692,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         # limit to 1000 features for archive point data
         if (isinstance(sdlLyr, OccurrenceLayer) and
             sdlLyr.getUserId() == PUBLIC_USER and
-            sdlLyr.queryCount > POINT_COUNT_MAX):
+            sdlLyr.query_count > POINT_COUNT_MAX):
             dlocation = sdlLyr.get_dlocation(largeFile=False)
             if not os.path.exists(dlocation):
                 dlocation = sdlLyr.get_dlocation()

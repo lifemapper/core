@@ -20,34 +20,33 @@ class OccurrenceType(_LayerParameters, ProcessObject):
     creates a point data file that can be read by openModeller.
     """
 
-    def __init__(self, displayName, queryCount, mod_time, userId,
-                     occurrenceSetId, metadata={}, sciName=None,
-                     rawDLocation=None, processType=None,
-                     status=None, status_mod_time=None):
+    def __init__(self, display_name, query_count, mod_time, user_id, occ_layer_id, 
+                 metadata={}, sci_name=None, raw_dlocation=None, 
+                 process_type=None, status=None, status_mod_time=None):
         """
         @summary Initialize the _Occurrences class instance
         @copydoc LmServer.base.layer._LayerParameters::__init__()
         @copydoc LmServer.base.service_object.ProcessObject::__init__()
-        @param displayName: Name to be displayed for this dataset
-        @param queryCount: Count reported by last update to shapefile.  
+        @param display_name: Name to be displayed for this dataset
+        @param query_count: Count reported by last update to shapefile.  
                                  Used if there are no features attached to this
                                  OccurrenceSet.
-        @param occurrenceSetId: The occurrenceSet id for the database
-        @param sciName: ScientificName object containing further 
+        @param occ_layer_id: The occ_layer id for the database
+        @param sci_name: ScientificName object containing further 
                  information about the name associated with these data
-        @param rawDLocation: URL or file location of raw data to be processed
+        @param raw_dlocation: URL or file location of raw data to be processed
         """
-        _LayerParameters.__init__(self, userId, param_id=occurrenceSetId,
+        _LayerParameters.__init__(self, user_id, param_id=occ_layer_id,
                                           matrixIndex=-1, metadata=metadata,
                                           mod_time=mod_time)
         ProcessObject.__init__(
-            self, objId=occurrenceSetId, processType=processType,
+            self, obj_id=occ_layer_id, process_type=process_type,
             status=status, status_mod_time=status_mod_time)
-        self.displayName = displayName
-        self.queryCount = queryCount
-        self._rawDLocation = rawDLocation
-        self._bigDLocation = None
-        self._scientific_name = sciName
+        self.display_name = display_name
+        self.query_count = query_count
+        self._raw_dlocation = raw_dlocation
+        self._big_dlocation = None
+        self._scientific_name = sci_name
 
 # ...............................................
     def get_scientific_name_id(self):
@@ -61,26 +60,26 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         return self._scientific_name
 
 # ...............................................
-    def set_scientific_name(self, sciName):
-        self._scientific_name = sciName
+    def set_scientific_name(self, sci_name):
+        self._scientific_name = sci_name
 
 # ...............................................
     def get_raw_dlocation(self):
-        return self._rawDLocation
+        return self._raw_dlocation
 
-    def set_raw_dlocation(self, rawDLocation, mod_time):
-        self._rawDLocation = rawDLocation
+    def set_raw_dlocation(self, raw_dlocation, mod_time):
+        self._raw_dlocation = raw_dlocation
         self.paramModTime = mod_time
 
     # ...............................................
     def update_status(self, status, mod_time=gmt().mjd,
-                     queryCount=None):
+                     query_count=None):
         """
         @note: Overrides ProcessObject.update_status
         """
         ProcessObject.update_status(self, status, mod_time)
-        if queryCount is not None:
-            self.queryCount = queryCount
+        if query_count is not None:
+            self.query_count = query_count
             self.paramModTime = self.status_mod_time
 
 # .............................................................................
@@ -89,16 +88,16 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 
 class OccurrenceLayer(OccurrenceType, Vector):
 
-    def __init__(self, displayName, userId, epsgcode, queryCount, lyrId=None,
-                 squid=None, verify=None, dlocation=None, rawDLocation=None,
-                 rawMetaDLocation=None, lyrMetadata={},
-                 dataFormat=LMFormat.SHAPE.driver, valUnits=None,
-                 valAttribute=None, nodataVal=None, minVal=None, maxVal=None,
+    def __init__(self, display_name, user_id, epsgcode, query_count, lyr_id=None,
+                 squid=None, verify=None, dlocation=None, raw_dlocation=None,
+                 raw_meta_dlocation=None, lyr_metadata={},
+                 data_format=LMFormat.SHAPE.driver, valUnits=None,
+                 val_attribute=None, nodata_val=None, min_val=None, max_val=None,
                  mapunits=None, resolution=None, bbox=None,
-                 occurrenceSetId=None, serviceType=LMServiceType.OCCURRENCES,
+                 occ_layer_id=None, serviceType=LMServiceType.OCCURRENCES,
                  metadataUrl=None, parentMetadataUrl=None, featureCount=0,
                  feature_attributes={}, features={}, fidAttribute=None,
-                 occMetadata={}, sciName=None, objId=None, processType=None,
+                 occMetadata={}, sci_name=None, objId=None, process_type=None,
                  status=None, status_mod_time=None):
         """
         @todo: calculate bbox from points upon population, update as appropriate
@@ -109,23 +108,23 @@ class OccurrenceLayer(OccurrenceType, Vector):
         @note: Vector.name is constructed in OccurrenceLayer.set_id()
         """
         OccurrenceType.__init__(
-            self, displayName, queryCount, status_mod_time, userId,
-            occurrenceSetId, metadata=occMetadata, sciName=sciName,
-            rawDLocation=rawDLocation, processType=processType, status=status,
+            self, display_name, query_count, status_mod_time, user_id,
+            occ_layer_id, metadata=occMetadata, sci_name=sci_name,
+            raw_dlocation=raw_dlocation, process_type=process_type, status=status,
             status_mod_time=status_mod_time)
         Vector.__init__(
-            self, None, userId, epsgcode, lyrId=occurrenceSetId, squid=squid,
-            verify=verify, dlocation=dlocation, metadata=lyrMetadata,
-            dataFormat=dataFormat, ogrType=ogr.wkbPoint, valUnits=valUnits,
-            valAttribute=valAttribute, nodataVal=nodataVal, minVal=minVal,
-            maxVal=maxVal, mapunits=mapunits, resolution=resolution, bbox=bbox,
-            svcObjId=occurrenceSetId, serviceType=serviceType,
+            self, None, user_id, epsgcode, lyr_id=occ_layer_id, squid=squid,
+            verify=verify, dlocation=dlocation, metadata=lyr_metadata,
+            data_format=data_format, ogrType=ogr.wkbPoint, valUnits=valUnits,
+            val_attribute=val_attribute, nodata_val=nodata_val, min_val=min_val,
+            max_val=max_val, mapunits=mapunits, resolution=resolution, bbox=bbox,
+            svcObjId=occ_layer_id, serviceType=serviceType,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
             mod_time=status_mod_time, featureCount=featureCount,
             feature_attributes=feature_attributes, features=features,
             fidAttribute=fidAttribute)
-        self.rawMetaDLocation = rawMetaDLocation
-        self.set_id(occurrenceSetId)
+        self.raw_meta_dlocation = raw_meta_dlocation
+        self.set_id(occ_layer_id)
 
 # .............................................................................
 # Class and Static methods
@@ -201,7 +200,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # .............................................................................
 # Properties, getters, setters
 # .............................................................................
-    def _getCount(self):
+    def _get_count(self):
         """
         @summary Returns the number of new-style points (generic vector feature 
                     objects)
@@ -209,7 +208,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         """
         return self._getFeatureCount()
 
-    count = property(_getCount)
+    count = property(_get_count)
 
 # .............................................................................
 # Superclass methods overridden
@@ -264,18 +263,18 @@ class OccurrenceLayer(OccurrenceType, Vector):
             else:
                 ftype = LMFileType.OCCURRENCE_FILE
             occid = self.get_id()
-            dloc = self._earl_jr.createFilename(
-                ftype, occsetId=occid, objCode=occid, usr=self._userId)
+            dloc = self._earl_jr.create_filename(
+                ftype, occsetId=occid, objCode=occid, usr=self._user_id)
         return dloc
 
 # ...............................................
     # Overrides layer.get_dlocation, allowing optional keyword
     def get_dlocation(self, largeFile=False):
         if largeFile:
-            if self._bigDLocation is None:
-                self._bigDLocation = self.create_local_dlocation(
+            if self._big_dlocation is None:
+                self._big_dlocation = self.create_local_dlocation(
                     largeFile=largeFile)
-            return self._bigDLocation
+            return self._big_dlocation
         else:
             self.set_dlocation()
         return self._dlocation
@@ -307,11 +306,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
         if occid is None:
             occid = ID_PLACEHOLDER
         lyrname = self._earl_jr.createBasename(
-            LMFileType.OCCURRENCE_FILE, objCode=occid, usr=self._userId,
+            LMFileType.OCCURRENCE_FILE, objCode=occid, usr=self._user_id,
             epsg=self.epsgcode)
         mapprefix = self._earl_jr.constructMapPrefixNew(
             urlprefix=self.metadataUrl, ftype=LMFileType.SDM_MAP,
-            mapname=self.mapName, lyrname=lyrname, usr=self._userId)
+            mapname=self.map_name, lyrname=lyrname, usr=self._user_id)
         return mapprefix
 
     def _set_map_prefix(self):
@@ -326,40 +325,40 @@ class OccurrenceLayer(OccurrenceType, Vector):
     @property
     def map_layername(self):
         lyrname = None
-        if self._dbId is not None:
-            lyrname = self._earl_jr.createLayername(occsetId=self._dbId)
+        if self._db_id is not None:
+            lyrname = self._earl_jr.createLayername(occsetId=self._db_id)
         return lyrname
 
 # ...............................................
-    def createLocalMapFilename(self):
+    def create_local_map_filename(self):
         """
         @summary: Find mapfile containing this layer.  
         """
         occid = self.get_id()
-        mapfilename = self._earl_jr.createFilename(
-            LMFileType.SDM_MAP, occsetId=occid, objCode=occid, usr=self._userId)
+        mapfilename = self._earl_jr.create_filename(
+            LMFileType.SDM_MAP, occsetId=occid, objCode=occid, usr=self._user_id)
         return mapfilename
 
 # ...............................................
     def set_local_map_filename(self, mapfname=None):
         """
         @note: Overrides existing _map_filename
-        @summary: Find mapfile containing layers for this model's occurrenceSet.
+        @summary: Find mapfile containing layers for this model's occ_layer.
         @param mapfname: Previously constructed mapfilename
         """
         if self._map_filename is None:
-            mapfname = self.createLocalMapFilename()
+            mapfname = self.create_local_map_filename()
         self._map_filename = mapfname
 
 # ...............................................
     @property
-    def mapFilename(self):
+    def map_filename(self):
         self.set_local_map_filename()
         return self._map_filename
 
 # ...............................................
     @property
-    def mapName(self):
+    def map_name(self):
         if self._map_filename is None:
             self.set_local_map_filename()
         _, fname = os.path.split(self._map_filename)
@@ -368,26 +367,26 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
 # ...............................................
     @property
-    def layerName(self):
+    def layer_name(self):
         return self._earl_jr.createLayername(occsetId=self.get_id())
 
 # ...............................................
-    def clearLocalMapfile(self):
+    def clear_local_mapfile(self):
         """
         @summary: Delete the mapfile containing this layer
         """
         if self._map_filename is None:
             self.set_local_map_filename()
-        self.deleteLocalMapfile()
+        self.delete_local_mapfile()
         self._map_filename = None
 
 # ...............................................
-    def clearOutputFiles(self):
+    def clear_output_files(self):
         self.delete_data()
         self.clearDLocation()
 
 # ...............................................
-    def deleteLocalMapfile(self):
+    def delete_local_mapfile(self):
         """
         @summary: Delete the mapfile containing this layer
         """
@@ -399,50 +398,50 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # .............................................................................
 
 # ...............................................
-    def copyForUser(self, userId):
-        newOcc = OccurrenceLayer(
-            self.displayName, userId, self.epsgcode, self.queryCount,
-            squid=self.squid, verify=self.verify, valUnits=self.valUnits,
-            valAttribute=self.getValAttribute(), nodataVal=self.nodataVal,
-            minVal=self.minVal, maxVal=self.maxVal, mapunits=self.mapUnits,
-            resolution=self.resolution, bbox=self.bbox,
-            occMetadata=self.paramMetadata, sciName=self._scientific_name,
-            status=self.status, status_mod_time=self.status_mod_time)
-        return newOcc
-
-# # ...............................................
-    def getFeaturesIdLongLat(self):
-        """
-        @summary: Returns a list of feature/point tuples - (FID, x, y)
-        """
-        microVals = []
-        if self._localIdIdx is None:
-            self.getLocalIdIndex()
-
-        geomIdx = self.getFieldIndex(self._geomFieldName)
-        for featureFID in list(self._features.keys()):
-            fid = self.getFeatureValByFieldIndex(self._localIdIdx, featureFID)
-            wkt = self.getFeatureValByFieldIndex(geomIdx, featureFID)
-            x, y = self.get_point_from_wkt(wkt)
-            # returns values id, longitude(x), latitude(y)
-            microVals.append((fid, x, y))
-        return microVals
-
-# ..............................................................................
-    def getWkt(self):
-        wkt = None
-        if self._features and self._feature_attributes:
-            pttxtlst = []
-            self._setGeometryIndex()
-            for pt in list(self._features.values()):
-                wkt = pt[self._geomIdx]
-                pttxtlst.append(wkt.strip('POINT'))
-            multipointstr = ', '.join(pttxtlst)
-            wkt = 'MULTIPOINT( {} )'.format(multipointstr)
-        return wkt
+#     def copyForUser(self, user_id):
+#         newOcc = OccurrenceLayer(
+#             self.display_name, user_id, self.epsgcode, self.query_count,
+#             squid=self.squid, verify=self.verify, valUnits=self.valUnits,
+#             val_attribute=self.getValAttribute(), nodata_val=self.nodata_val,
+#             min_val=self.min_val, max_val=self.max_val, mapunits=self.mapUnits,
+#             resolution=self.resolution, bbox=self.bbox,
+#             occMetadata=self.paramMetadata, sci_name=self._scientific_name,
+#             status=self.status, status_mod_time=self.status_mod_time)
+#         return newOcc
+# 
+# # # ...............................................
+#     def getFeaturesIdLongLat(self):
+#         """
+#         @summary: Returns a list of feature/point tuples - (FID, x, y)
+#         """
+#         microVals = []
+#         if self._localIdIdx is None:
+#             self.getLocalIdIndex()
+# 
+#         geomIdx = self.getFieldIndex(self._geomFieldName)
+#         for featureFID in list(self._features.keys()):
+#             fid = self.getFeatureValByFieldIndex(self._localIdIdx, featureFID)
+#             wkt = self.getFeatureValByFieldIndex(geomIdx, featureFID)
+#             x, y = self.get_point_from_wkt(wkt)
+#             # returns values id, longitude(x), latitude(y)
+#             microVals.append((fid, x, y))
+#         return microVals
+# 
+# # ..............................................................................
+#     def getWkt(self):
+#         wkt = None
+#         if self._features and self._feature_attributes:
+#             pttxtlst = []
+#             self._setGeometryIndex()
+#             for pt in list(self._features.values()):
+#                 wkt = pt[self._geomIdx]
+#                 pttxtlst.append(wkt.strip('POINT'))
+#             multipointstr = ', '.join(pttxtlst)
+#             wkt = 'MULTIPOINT( {} )'.format(multipointstr)
+#         return wkt
 
 # ...............................................
-    def readShapefile(self, largeFile=False, dlocation=None):
+    def read_shapefile(self, largeFile=False, dlocation=None):
         """
         @note: calls Vector.readData to create points from features. This
                  will be removed when we switch to only using features

@@ -247,7 +247,8 @@ class Boomer(LMObject):
             # Rename old file
             oldfname = self.christopher.weapon_of_choice.occParser.dataFname
             ts = lt.localtime().tuple()
-            timestamp = '{}{:02d}{:02d}-{:02d}{:02d}'.format(ts[0], ts[1], ts[2], ts[3], ts[4])
+            timestamp = '{}{:02d}{:02d}-{:02d}{:02d}'.format(
+                ts[0], ts[1], ts[2], ts[3], ts[4])
             newfname = oldfname + '.' + timestamp
             try:
                 os.rename(oldfname, newfname)

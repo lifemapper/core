@@ -37,7 +37,7 @@ class TaxonFiller(LMObject):
         """Constructor for TaxonFiller class.
 
         Todo:
-            - Allow tax_src_name to be a userId, and user taxonomy is allowed
+            - Allow tax_src_name to be a user_id, and user taxonomy is allowed
             - Define data format for user-provided taxonomy
         """
         super(TaxonFiller, self).__init__()

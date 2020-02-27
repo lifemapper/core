@@ -160,7 +160,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
     # Create grid set
     gridset = Gridset(
         name=archive_name, metadata=gs_meta, shapeGrid=my_shp, epsgcode=epsg,
-        userId=user_id, mod_time=gmt().mjd)
+        user_id=user_id, mod_time=gmt().mjd)
     updated_gs = scribe.findOrInsertGridset(gridset)
 
     # Copy the tree if available.  It may be subsetted according to the data in
@@ -188,7 +188,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             tree_name = otree.get_id()
         new_tree = Tree(
             'Copy of {} tree at {}'.format(tree_name, gmt().mjd), metadata={},
-            userId=user_id, gridsetId=updated_gs.get_id(), mod_time=gmt().mjd)
+            user_id=user_id, gridsetId=updated_gs.get_id(), mod_time=gmt().mjd)
         new_tree.setTree(tree_data)
         inserted_tree = scribe.findOrInsertTree(new_tree)
         new_tree.tree = tree_data
@@ -243,7 +243,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 pam_mtx = LMMatrix(
                     pam_data, matrixType=MatrixType.PAM, gcmCode=gcm_code,
                     altpredCode=alt_pred_code, dateCode=date_code,
-                    metadata=scn_meta, userId=user_id, gridset=updated_gs,
+                    metadata=scn_meta, user_id=user_id, gridset=updated_gs,
                     status=JobStatus.GENERAL, status_mod_time=gmt().mjd,
                     headers={'0': orig_row_headers, '1': squids})
 
@@ -266,9 +266,9 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         for grim in orig_gs.getGRIMs():
             new_grim = LMMatrix(
                 None, matrixType=MatrixType.GRIM,
-                processType=ProcessType.RAD_INTERSECT, gcmCode=grim.gcmCode,
+                process_type=ProcessType.RAD_INTERSECT, gcmCode=grim.gcmCode,
                 altpredCode=grim.altpredCode, dateCode=grim.dateCode,
-                metadata=grim.mtxMetadata, userId=user_id, gridset=updated_gs,
+                metadata=grim.mtxMetadata, user_id=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
             inserted_grim = scribe.findOrInsertMatrix(new_grim)
             grim_metadata = grim.mtxMetadata
@@ -298,10 +298,10 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         for orig_bg in orig_gs.getBiogeographicHypotheses():
             new_bg = LMMatrix(
                 None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
-                processType=ProcessType.ENCODE_HYPOTHESES,
+                process_type=ProcessType.ENCODE_HYPOTHESES,
                 gcmCode=orig_bg.gcmCode, altpredCode=orig_bg.altpredCode,
                 dateCode=orig_bg.dateCode, metadata=orig_bg.mtxMetadata,
-                userId=user_id, gridset=updated_gs,
+                user_id=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
             inserted_bg = scribe.findOrInsertMatrix(new_bg)
             inserted_bg.update_status(JobStatus.COMPLETE)
@@ -373,7 +373,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 pam_mtx = LMMatrix(
                     None, matrixType=MatrixType.PAM, gcmCode=gcm_code,
                     altpredCode=alt_pred_code, dateCode=date_code,
-                    metadata=scnMeta, userId=user_id, gridset=updated_gs,
+                    metadata=scnMeta, user_id=user_id, gridset=updated_gs,
                     status=JobStatus.GENERAL, status_mod_time=gmt().mjd)
                 pam = scribe.findOrInsertMatrix(pam_mtx)
 
@@ -395,7 +395,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                             None, pam.get_id(), user_id, layer=prj,
                             shapegrid=my_shp, intersectParams=intersect_params,
                             squid=prj.squid, ident=prj.ident,
-                            processType=ProcessType.INTERSECT_RASTER,
+                            process_type=ProcessType.INTERSECT_RASTER,
                             metadata=prj_meta, matrixColumnId=None,
                             postToSolr=True, status=JobStatus.GENERAL,
                             status_mod_time=gmt().mjd)
@@ -444,9 +444,9 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         for grim in orig_gs.getGRIMs():
             new_grim = LMMatrix(
                 None, matrixType=MatrixType.GRIM,
-                processType=ProcessType.RAD_INTERSECT, gcmCode=grim.gcmCode,
+                process_type=ProcessType.RAD_INTERSECT, gcmCode=grim.gcmCode,
                 altpredCode=grim.altpredCode, dateCode=grim.dateCode,
-                metadata=grim.mtxMetadata, userId=user_id, gridset=updated_gs,
+                metadata=grim.mtxMetadata, user_id=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
             inserted_grim = scribe.findOrInsertMatrix(new_grim)
             grim_metadata = grim.mtxMetadata
@@ -468,7 +468,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                     None, inserted_grim.get_id(), user_id, layer=old_col.layer,
                     shapegrid=my_shp, intersectParams=old_col.intersectParams,
                     squid=old_col.squid, ident=old_col.ident,
-                    processType=ProcessType.INTERSECT_RASTER_GRIM,
+                    process_type=ProcessType.INTERSECT_RASTER_GRIM,
                     metadata=grim_lyr_meta, matrixColumnId=None,
                     postToSolr=False, status=JobStatus.GENERAL,
                     status_mod_time=gmt().mjd)
@@ -500,10 +500,10 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         for orig_bg in orig_gs.getBiogeographicHypotheses():
             new_bg = LMMatrix(
                 None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
-                processType=ProcessType.ENCODE_HYPOTHESES,
+                process_type=ProcessType.ENCODE_HYPOTHESES,
                 gcmCode=orig_bg.gcmCode, altpredCode=orig_bg.altpredCode,
                 dateCode=orig_bg.dateCode, metadata=orig_bg.mtxMetadata,
-                userId=user_id, gridset=updated_gs,
+                user_id=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
             inserted_bg = scribe.findOrInsertMatrix(new_bg)
             mtx_cols = []
@@ -519,7 +519,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 lyr = old_col.layer
 
                 try:
-                    val_attribute = old_col.layer.lyrMetadata[
+                    val_attribute = old_col.layer.lyr_metadata[
                         MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
                 except KeyError:
                     val_attribute = None

@@ -98,7 +98,7 @@ class PartnerQuery:
                     try:
                         sci_name = scribe.findOrInsertTaxon(sci_name=sname)
                         self.log.info(
-                            'Inserted sciName for taxonKey {}, {}'.format(
+                            'Inserted sci_name for taxonKey {}, {}'.format(
                                 taxon_key, sci_name.scientific_name))
                     except LMError as lm_err:
                         raise lm_err

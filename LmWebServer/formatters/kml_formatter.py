@@ -30,11 +30,11 @@ def add_occurrence_set(parent, occ):
     """
     SubElement(
         parent, 'name', value='{} points (Occ Id: {})'.format(
-            occ.displayName, occ.get_id()))
+            occ.display_name, occ.get_id()))
     SubElement(parent, 'open', value='1')
     SubElement(
         parent, 'description', value='{} points (Occ Id: {})'.format(
-            occ.displayName, occ.get_id()))
+            occ.display_name, occ.get_id()))
 
     # TODO: Look at feature attributes and decide what to read
     for point in occ.features:
@@ -347,7 +347,7 @@ def get_kml(my_obj):
     if isinstance(my_obj, SDMProjection):
         add_projection(doc, my_obj, 1)
     elif isinstance(my_obj, OccurrenceLayer):
-        my_obj.readShapefile()
+        my_obj.read_shapefile()
         add_occurrence_set(doc, my_obj)
 
     temp = tostring(root)

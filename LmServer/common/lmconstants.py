@@ -557,7 +557,7 @@ class FileFix:
     }
 
     @staticmethod
-    def getMaptypeFromName(prefix=None, ext=None):
+    def get_map_type_from_name(prefix=None, ext=None):
         if prefix is not None:
             for ftype in LMFileType.mapTypes():
                 if FileFix.PREFIX[ftype] == prefix:

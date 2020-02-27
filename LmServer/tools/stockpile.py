@@ -90,7 +90,7 @@ class Stockpile(LMObject):
             elif ProcessType.is_project(ptype):
                 obj = scribe.get_sdm_project(obj_id)
             elif ptype == ProcessType.RAD_BUILDGRID:
-                obj = scribe.get_shapegrid(lyrId=obj_id)
+                obj = scribe.get_shapegrid(lyr_id=obj_id)
             elif ProcessType.is_matrix(ptype):
                 obj = scribe.get_matrix(mtx_id=obj_id)
             elif ProcessType.is_intersect(ptype):

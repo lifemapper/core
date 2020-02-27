@@ -165,7 +165,8 @@ class ChristopherWalken(LMObject):
         return self.weapon_of_choice.occ_delimiter
 
     # ....................................
-    def _get_var_value(self, var):
+    @staticmethod
+    def _get_var_value(var):
         try:
             var = int(var)
         except TypeError:
@@ -211,9 +212,9 @@ class ChristopherWalken(LMObject):
                     var = []
                 except Exception:
                     raise LMError('Failed to split variables on \',\'')
-                for v in tmp_list:
-                    v = self._get_var_value(v)
-                    var.append(v)
+                for temp_v in tmp_list:
+                    temp_v = self._get_var_value(temp_v)
+                    var.append(temp_v)
         return var
 
     # ....................................
@@ -408,7 +409,7 @@ class ChristopherWalken(LMObject):
             scen_pkg = scen_pkgs[0]
             mdl_scen = scen_pkg.get_scenario(code=mdl_scen_code)
             for pcode in prj_scen_codes:
-                prj_scens.append(scen_pkg.getScenario(code=pcode))
+                prj_scens.append(scen_pkg.get_scenario(code=pcode))
         else:
             raise LMError('Failed to retrieve ScenPackage for scenarios {}'
                           .format(prj_scen_codes))
@@ -597,7 +598,6 @@ class ChristopherWalken(LMObject):
         ScenPkg: mdlscen
         [prjscens]
         """
-        pass
 
     # ....................................
     def start_walken(self, work_dir):
@@ -742,7 +742,7 @@ class ChristopherWalken(LMObject):
                 occ.get_dlocation(), occ.get_dlocation(large_file=True),
                 POINT_COUNT_MAX, metadata=raw_meta_dloc,
                 delimiter=self.occ_delimiter)
-#                 POINT_COUNT_MAX, metadata=occ.rawMetaDLocation)
+#                 POINT_COUNT_MAX, metadata=occ.raw_meta_dlocation)
 
         for prj in prjs:
             if self.model_mask_base is not None:

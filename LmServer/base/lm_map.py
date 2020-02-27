@@ -46,7 +46,7 @@ class LMMap(LMSpatialObject):
                              can be joined to the shapegrid for map 
         """
         LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
-        self.mapName = mapname
+        self.map_name = mapname
         self.url = url
         self.title = title
         self.layers = layers
@@ -75,8 +75,8 @@ class LMMap(LMSpatialObject):
                     allLayers.append(mtxLyrs)
             lyrstr = '\n'.join(allLayers)
             try:
-                earlJr = EarlJr()
-                mapTemplate = earlJr.getMapFilenameFromMapname(template)
+                earl_jr = EarlJr()
+                mapTemplate = earl_jr.get_map_filename_from_map_name(template)
                 mapstr = self._getBaseMap(mapTemplate)
                 mapstr = self._addMapBaseAttributes(mapstr)
                 mapstr = mapstr.replace('##_LAYERS_##', lyrstr)
@@ -107,7 +107,7 @@ class LMMap(LMSpatialObject):
             with open(fname, 'r') as in_file:
                 base_map = in_file.read()
         except Exception as e:
-            raise LMError('Failed to read %s' % fname)
+            raise LMError('Failed to read {}: {}'.format(fname, e))
         return base_map
 
 # ...............................................
@@ -128,7 +128,7 @@ class LMMap(LMSpatialObject):
             label = 'Lifemapper Data Service'
 
         # changed this from self.name (which left 'scen_' prefix off scenarios)
-        mapstr = mapstr.replace('##_MAPNAME_##', self.mapName)
+        mapstr = mapstr.replace('##_MAPNAME_##', self.map_name)
         boundstr = LMSpatialObject.get_extent_string(self.bbox, separator='  ')
         mapstr = mapstr.replace('##_EXTENT_##', boundstr)
         mapstr = mapstr.replace('##_UNITS_##', self.mapUnits)
@@ -199,7 +199,6 @@ class LMMap(LMSpatialObject):
         dataspecs = self._getVectorDataSpecs(sdlLyr)
         if dataspecs:
             proj = self._createProjectionInfo(sdlLyr.epsgcode)
-            subsetFname = None
             meta = self._getLayerMetadata(sdlLyr, metalines=attMeta,
                                                     isVector=True)
 
@@ -265,9 +264,9 @@ class LMMap(LMSpatialObject):
                                 'wcs_rangeset_name  \"%s\"' % sdlLyr.name,
                                 'wcs_rangeset_label \"%s\"' % sdlLyr.name]
         # TODO: Where/how is this set??
-#         if sdlLyr.nodataVal is not None:
+#         if sdlLyr.nodata_val is not None:
 #             rasterMetadata.append('rangeset_nullvalue  %s'
-#                                          % str(sdlLyr.nodataVal))
+#                                          % str(sdlLyr.nodata_val))
 
         meta = self._getLayerMetadata(sdlLyr, metalines=rasterMetadata)
 
@@ -381,7 +380,7 @@ class LMMap(LMSpatialObject):
         meta = ''
         meta = '\n'.join([meta, '        METADATA'])
         try:
-            lyrTitle = sdlLyr.lyrMetadata[ServiceObject.META_TITLE]
+            lyrTitle = sdlLyr.lyr_metadata[ServiceObject.META_TITLE]
         except:
             lyrTitle = None
         # DUMP True deprecated in Mapserver 6.0, replaced by
@@ -404,7 +403,7 @@ class LMMap(LMSpatialObject):
         # limit to 1000 features for archive point data
         if (isinstance(sdlLyr, OccurrenceLayer) and
              sdlLyr.getUserId() == PUBLIC_USER and
-             sdlLyr.queryCount > POINT_COUNT_MAX):
+             sdlLyr.query_count > POINT_COUNT_MAX):
             dlocation = sdlLyr.get_dlocation(largeFile=False)
             if not os.path.exists(dlocation):
                 dlocation = sdlLyr.get_dlocation()
@@ -430,10 +429,11 @@ class LMMap(LMSpatialObject):
                                               sdlLyr.mapUnits.upper()])
             dataspecs = '\n'.join([dataspecs, '        OFFSITE  0  0  0'])
 
-            if sdlLyr.nodataVal is None:
+            if sdlLyr.nodata_val is None:
                 sdlLyr.populateStats()
-            dataspecs = '\n'.join([dataspecs, '        PROCESSING \"NODATA=%s\"'
-                                          % str(sdlLyr.nodataVal)])
+            dataspecs = '\n'.join(
+                [dataspecs, '        PROCESSING \"NODATA={}\"'.format(
+                    sdlLyr.nodata_val)])
             # SDM projections are always scaled b/w 0 and 100
             if isinstance(sdlLyr, SDMProjection):
                 vmin = SCALE_PROJECTION_MINIMUM + 1
@@ -526,7 +526,7 @@ class LMMap(LMSpatialObject):
                 endColor = '#00FF00'
         elif palettename == 'greenred':
             startColor = '#00FF00'
-            endColor == '#FF0000'
+            endColor = '#FF0000'
 
         r, g, b = startColor[1:3], startColor[3:5], startColor[5:]
         r1, g1, b1 = [int(n, 16) for n in (r, g, b)]

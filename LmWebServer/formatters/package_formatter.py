@@ -40,7 +40,7 @@ def get_map_content_for_proj(prj, scribe):
     """
     ows_req = mapscript.OWSRequest()
     earl_jr = EarlJr(scribe=scribe)
-    map_filename = earl_jr.get_map_filename_from_map_name(prj.mapName)
+    map_filename = earl_jr.get_map_filename_from_map_name(prj.map_name)
     if not os.path.exists(map_filename):
         map_svc = scribe.get_map_service_from_map_filename(map_filename)
         if map_svc is not None and map_svc.count > 0:
@@ -270,8 +270,8 @@ def _add_sdms_to_package(zip_f, projections, scribe):
     sniffer = csv.Sniffer()
 
     for prj in projections:
-        occ = prj.occurrenceSet
-        prj_dir = os.path.join(SDM_PRJ_DIR, occ.displayName)
+        occ = prj.occ_layer
+        prj_dir = os.path.join(SDM_PRJ_DIR, occ.display_name)
         # Make sure projection output file exists, then add to package
         if os.path.exists(prj.get_dlocation()):
             arc_prj_path = os.path.join(
@@ -288,20 +288,20 @@ def _add_sdms_to_package(zip_f, projections, scribe):
                     'image_path': arc_prj_img_path,
                     'scenario_code': prj.projScenarioCode,
                     'species_name': prj.speciesName,
-                    'algorithm_code': prj.algorithmCode,
+                    'algorithm_code': prj.algorithm_code,
                     'gcm_code': scn.gcmCode,
                     'alt_pred_code': scn.altpredCode,
                     'date_code': scn.dateCode,
                     'epsg': prj.epsgcode,
                     'label': '{} {} {} {}'.format(
-                        prj.displayName, prj.algorithmCode,
+                        prj.display_name, prj.algorithm_code,
                         prj.projScenarioCode, arc_prj_path)
                 })
 
         # Add occurrence set
         if occ.get_id() not in added_occ_ids:
             arc_occ_path = os.path.join(
-                prj_dir, '{}.csv'.format(occ.displayName))
+                prj_dir, '{}.csv'.format(occ.display_name))
             sys_occ_path = '{}{}'.format(
                 os.path.splitext(occ.get_dlocation())[0], LMFormat.CSV.ext)
 
@@ -329,8 +329,8 @@ def _add_sdms_to_package(zip_f, projections, scribe):
             occ_info.append(
                 {
                     'occ_id': occ.get_id(),
-                    'species_name': occ.displayName,
-                    'num_points': occ.queryCount,
+                    'species_name': occ.display_name,
+                    'num_points': occ.query_count,
                     'file_path': arc_occ_path
                 })
 
