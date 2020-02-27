@@ -55,7 +55,7 @@ class LMMap(LMSpatialObject):
         self._map_prefix = None
 
 # .............................................................................
-    def writeMap(self, mapfilename, layers=[], shpGrid=None, matrices=None,
+    def _write_map(self, mapfilename, layers=[], shpGrid=None, matrices=None,
                      template=MAP_TEMPLATE):
         """
         @summary Create a mapfile by replacing strings in a template mapfile 
@@ -71,25 +71,25 @@ class LMMap(LMSpatialObject):
                 allLayers.append(lyrs)
             if shpGrid is not None and matrices is not None:
                 for matrix in matrices:
-                    mtxLyrs = self._createMatrixJoin(shpGrid, matrix)
+                    mtxLyrs = self._create_matrix_join(shpGrid, matrix)
                     allLayers.append(mtxLyrs)
             lyrstr = '\n'.join(allLayers)
             try:
                 earl_jr = EarlJr()
                 mapTemplate = earl_jr.get_map_filename_from_map_name(template)
-                mapstr = self._getBaseMap(mapTemplate)
-                mapstr = self._addMapBaseAttributes(mapstr)
+                mapstr = self._get_base_map(mapTemplate)
+                mapstr = self._add_map_base_attributes(mapstr)
                 mapstr = mapstr.replace('##_LAYERS_##', lyrstr)
             except Exception as e:
                 raise
 
             try:
-                self._writeBaseMap(mapstr)
+                self._write_base_map(mapstr)
             except Exception as e:
                 raise LMError('Failed to write {}: {}'.format(mapfilename, str(e)))
 
 # ...............................................
-    def _writeBaseMap(self, mapstr, mapfilename):
+    def _write_base_map(self, mapstr, mapfilename):
         self.ready_filename(mapfilename, overwrite=True)
         try:
             f = open(mapfilename, 'w')
@@ -101,7 +101,7 @@ class LMMap(LMSpatialObject):
             raise LMError('Failed to write {}: {}'.format(mapfilename, str(e)))
 
 # ...............................................
-    def _getBaseMap(self, fname):
+    def _get_base_map(self, fname):
         # TODO: in python 2.6, use 'with open(fname, 'r'):'
         try:
             with open(fname, 'r') as in_file:
@@ -111,7 +111,7 @@ class LMMap(LMSpatialObject):
         return base_map
 
 # ...............................................
-    def _addMapBaseAttributes(self, mapstr):
+    def _add_map_base_attributes(self, mapstr):
         """
         @summary Set map attributes on the map from the LayerSet
         @param mapstr: string for a mapserver mapfile to modify
@@ -134,7 +134,7 @@ class LMMap(LMSpatialObject):
         mapstr = mapstr.replace('##_UNITS_##', self.mapUnits)
         mapstr = mapstr.replace('##_SYMBOLSET_##', SYMBOL_FILENAME)
         mapstr = mapstr.replace('##_PROJLIB_##', PROJ_LIB)
-        mapprj = self._createProjectionInfo(self.epsgcode)
+        mapprj = self._create_projection_info(self.epsgcode)
         mapstr = mapstr.replace('##_PROJECTION_##', mapprj)
 
         # Mapserver 5.6 & 6.0
@@ -160,67 +160,67 @@ class LMMap(LMSpatialObject):
         if self._gridset is not None:
             sgLyr = self._gridset.getShapegrid()
             for matrix in self._gridset.getMatrices():
-                joinLyrStr = self._createMatrixJoin(sgLyr, matrix)
+                joinLyrStr = self._create_matrix_join(sgLyr, matrix)
 
         # Vector layers are described first, so drawn on top
         if self.layers:
             for lyr in self.layers:
                 if isinstance(lyr, Vector):
-                    lyrstr = self._createVectorLayer(lyr)
+                    lyrstr = self._create_vector_layer(lyr)
                     topLyrStr = '\n'.join([topLyrStr, lyrstr])
 
                 elif isinstance(lyr, Raster):
                     # projections are below vector layers and above the base layer
                     if isinstance(lyr, SDMProjection):
                         palette = DEFAULT_PROJECTION_PALETTE
-                        lyrstr = self._createRasterLayer(lyr, palette)
+                        lyrstr = self._create_raster_layer(lyr, palette)
                         midLyrStr = '\n'.join([midLyrStr, lyrstr])
                     else:
                         palette = DEFAULT_ENVIRONMENTAL_PALETTE
-                        lyrstr = self._createRasterLayer(lyr, palette)
+                        lyrstr = self._create_raster_layer(lyr, palette)
                         baseLyrStr = '\n'.join([baseLyrStr, lyrstr])
 
         maplayers = '\n'.join([joinLyrStr, topLyrStr, midLyrStr, baseLyrStr])
 
         # Add bluemarble image to Data/Occurrence Map Services
         if self.epsgcode == DEFAULT_EPSG:
-            backlyr = self._createBlueMarbleLayer()
+            backlyr = self._create_blue_marble_layer()
             maplayers = '\n'.join([maplayers, backlyr])
 
         return maplayers
 
 # ...............................................
-    def _createVectorLayer(self, sdl_lyr):
+    def _create_vector_layer(self, sdl_lyr):
         attMeta = []
         proj = None
         meta = None
         cls = None
 
-        dataspecs = self._getVectorDataSpecs(sdl_lyr)
+        dataspecs = self._get_vector_data_specs(sdl_lyr)
         if dataspecs:
-            proj = self._createProjectionInfo(sdl_lyr.epsgcode)
-            meta = self._getLayerMetadata(sdl_lyr, metalines=attMeta,
+            proj = self._create_projection_info(sdl_lyr.epsgcode)
+            meta = self._get_layer_metadata(sdl_lyr, metalines=attMeta,
                                                     isVector=True)
 
-        if (sdl_lyr.ogrType == ogr.wkbPoint
-             or sdl_lyr.ogrType == ogr.wkbMultiPoint):
-            style = self._createStyle(POINT_SYMBOL, POINT_SIZE,
+        if (sdl_lyr.ogr_type == ogr.wkbPoint
+             or sdl_lyr.ogr_type == ogr.wkbMultiPoint):
+            style = self._create_style(POINT_SYMBOL, POINT_SIZE,
                                               colorstr=DEFAULT_POINT_COLOR)
-        elif (sdl_lyr.ogrType == ogr.wkbLineString
-                or sdl_lyr.ogrType == ogr.wkbMultiLineString):
-            style = self._createStyle(LINE_SYMBOL, LINE_SIZE,
+        elif (sdl_lyr.ogr_type == ogr.wkbLineString
+                or sdl_lyr.ogr_type == ogr.wkbMultiLineString):
+            style = self._create_style(LINE_SYMBOL, LINE_SIZE,
                                               colorstr=DEFAULT_LINE_COLOR)
-        elif (sdl_lyr.ogrType == ogr.wkbPolygon
-                or sdl_lyr.ogrType == ogr.wkbMultiPolygon):
-            style = self._createStyle(POLYGON_SYMBOL, POLYGON_SIZE,
+        elif (sdl_lyr.ogr_type == ogr.wkbPolygon
+                or sdl_lyr.ogr_type == ogr.wkbMultiPolygon):
+            style = self._create_style(POLYGON_SYMBOL, POLYGON_SIZE,
                                               outlinecolorstr=DEFAULT_LINE_COLOR)
-        cls = self._createClass(sdl_lyr.name, [style])
+        cls = self._create_class(sdl_lyr.name, [style])
 
-        lyr = self._createLayer(sdl_lyr, dataspecs, proj, meta, cls=cls)
+        lyr = self._create_layer(sdl_lyr, dataspecs, proj, meta, cls=cls)
         return lyr
 
 # ...............................................
-    def _createMatrixJoin(self, sgLyr, matrix):
+    def _create_matrix_join(self, sgLyr, matrix):
         jlyrs = ''
         shpDlocation = sgLyr.get_dlocation()
         mtxDlocation = matrix.getCSVDLocation()
@@ -256,9 +256,9 @@ class LMMap(LMSpatialObject):
         return jlyrs
 
 # ...............................................
-    def _createRasterLayer(self, sdl_lyr, paletteName):
-        dataspecs = self._getRasterDataSpecs(sdl_lyr, paletteName)
-        proj = self._createProjectionInfo(sdl_lyr.epsgcode)
+    def _create_raster_layer(self, sdl_lyr, paletteName):
+        dataspecs = self._get_raster_data_specs(sdl_lyr, paletteName)
+        proj = self._create_projection_info(sdl_lyr.epsgcode)
         rasterMetadata = [  # following 3 required in MS 6.0+
                                 'wcs_label  \"%s\"' % sdl_lyr.name,
                                 'wcs_rangeset_name  \"%s\"' % sdl_lyr.name,
@@ -268,18 +268,18 @@ class LMMap(LMSpatialObject):
 #             rasterMetadata.append('rangeset_nullvalue  %s'
 #                                          % str(sdl_lyr.nodata_val))
 
-        meta = self._getLayerMetadata(sdl_lyr, metalines=rasterMetadata)
+        meta = self._get_layer_metadata(sdl_lyr, metalines=rasterMetadata)
 
-        lyr = self._createLayer(sdl_lyr, dataspecs, proj, meta)
+        lyr = self._create_layer(sdl_lyr, dataspecs, proj, meta)
         return lyr
 
 # ...............................................
-    def _createLayer(self, sdl_lyr, dataspecs, proj, meta, cls=None):
+    def _create_layer(self, sdl_lyr, dataspecs, proj, meta, cls=None):
         lyr = ''
         if dataspecs:
             lyr = '\n'.join([lyr, '    LAYER'])
             lyr = '\n'.join([lyr, '        NAME  \"%s\"' % sdl_lyr.name])
-            lyr = '\n'.join([lyr, '        TYPE  %s' % self._getMSText(sdl_lyr)])
+            lyr = '\n'.join([lyr, '        TYPE  %s' % self._get_ms_text(sdl_lyr)])
             lyr = '\n'.join([lyr, '        STATUS  ON'])
             lyr = '\n'.join([lyr, '        OPACITY 100'])
 #             lyr = '\n'.join([lyr, '        DUMP  TRUE'])
@@ -297,7 +297,7 @@ class LMMap(LMSpatialObject):
         return lyr
 
 # ...............................................
-    def _createBlueMarbleLayer(self):
+    def _create_blue_marble_layer(self):
         fname = os.path.join(IMAGE_PATH, BLUE_MARBLE_IMAGE)
         boundstr = LMSpatialObject.get_extent_string(DEFAULT_GLOBAL_EXTENT,
                                                      separator='  ')
@@ -318,7 +318,7 @@ class LMMap(LMSpatialObject):
         return lyr
 
 # ...............................................
-    def _createClass(self, name=None, styles=[], useCTClassGroups=False):
+    def _create_class(self, name=None, styles=[], useCTClassGroups=False):
         cls = ''
         cls = '\n'.join([cls, '        CLASS'])
         if name is not None:
@@ -331,7 +331,7 @@ class LMMap(LMSpatialObject):
         return cls
 
 # ...............................................
-    def _createStyle(self, symbol, size, colorstr=None, outlinecolorstr=None):
+    def _create_style(self, symbol, size, colorstr=None, outlinecolorstr=None):
         style = ''
         style = '\n'.join([style, '            STYLE' ])
         # if NOT polygon
@@ -342,17 +342,17 @@ class LMMap(LMSpatialObject):
             style = '\n'.join([style, '                WIDTH    %d' % size])
 
         if colorstr is not None:
-            (r, g, b) = self._HTMLColorToRGB(colorstr)
+            (r, g, b) = self._html_color_to_rgb(colorstr)
             style = '\n'.join([style, '                COLOR    %d  %d  %d' % (r, g, b) ])
 
         if outlinecolorstr is not None:
-            (r, g, b) = self._HTMLColorToRGB(outlinecolorstr)
+            (r, g, b) = self._html_color_to_rgb(outlinecolorstr)
             style = '\n'.join([style, '                OUTLINECOLOR    %d  %d  %d' % (r, g, b) ])
         style = '\n'.join([style, '            END' ])
         return style
 
 # ...............................................
-    def _createStyleClasses(self, name, styles):
+    def _create_style_classes(self, name, styles):
         classes = ''
         for clsgroup, style in styles.items():
             # first class is default
@@ -368,7 +368,7 @@ class LMMap(LMSpatialObject):
         return classes
 
 # ...............................................
-    def _createProjectionInfo(self, epsgcode):
+    def _create_projection_info(self, epsgcode):
         prj = ''
         prj = '\n'.join([prj, '        PROJECTION'])
         prj = '\n'.join([prj, '            \"init=epsg:%s\"' % epsgcode])
@@ -376,7 +376,7 @@ class LMMap(LMSpatialObject):
         return prj
 
 # ...............................................
-    def _getLayerMetadata(self, sdl_lyr, metalines=[], isVector=False):
+    def _get_layer_metadata(self, sdl_lyr, metalines=[], isVector=False):
         meta = ''
         meta = '\n'.join([meta, '        METADATA'])
         try:
@@ -398,11 +398,11 @@ class LMMap(LMSpatialObject):
         return meta
 
 # ...............................................
-    def _getVectorDataSpecs(self, sdl_lyr):
+    def _get_vector_data_specs(self, sdl_lyr):
         dataspecs = None
         # limit to 1000 features for archive point data
         if (isinstance(sdl_lyr, OccurrenceLayer) and
-             sdl_lyr.getUserId() == PUBLIC_USER and
+             sdl_lyr.get_user_id() == PUBLIC_USER and
              sdl_lyr.query_count > POINT_COUNT_MAX):
             dlocation = sdl_lyr.get_dlocation(largeFile=False)
             if not os.path.exists(dlocation):
@@ -419,7 +419,7 @@ class LMMap(LMSpatialObject):
         return dataspecs
 
 # ...............................................
-    def _getRasterDataSpecs(self, sdl_lyr, paletteName):
+    def _get_raster_data_specs(self, sdl_lyr, paletteName):
         dataspecs = None
         dlocation = sdl_lyr.get_dlocation()
         if dlocation is not None and os.path.exists(dlocation):
@@ -441,26 +441,26 @@ class LMMap(LMSpatialObject):
             else:
                 vmin = sdl_lyr.min_val
                 vmax = sdl_lyr.max_val
-            rampClass = self._createColorRamp(vmin, vmax, paletteName)
+            rampClass = self._create_color_ramp(vmin, vmax, paletteName)
             dataspecs = '\n'.join([dataspecs, rampClass])
 
 #             # Continuous data
 #             if not(sdl_lyr.getIsDiscreteData()):
-#                 rampClass = self._createColorRamp(vmin, vmax, paletteName)
+#                 rampClass = self._create_color_ramp(vmin, vmax, paletteName)
 #                 dataspecs = '\n'.join([dataspecs, rampClass])
 #             # Classified data (8-bit projections)
 #             else:
 #                 vals = sdl_lyr.getHistogram()
-#                 classdata = self._getDiscreteClasses(vals, paletteName)
+#                 classdata = self._get_discrete_classes(vals, paletteName)
 #                 if classdata is not None:
 #                     dataspecs = '\n'.join([dataspecs, classdata])
 
         return dataspecs
 
 # ...............................................
-    def _getDiscreteClasses(self, vals, paletteName):
+    def _get_discrete_classes(self, vals, paletteName):
         if vals is not None:
-            bins = self._createDiscreteBins(vals, paletteName)
+            bins = self._create_discrete_bins(vals, paletteName)
             classdata = ''
             for b in bins:
                 classdata = '\n'.join([classdata, b])
@@ -469,26 +469,26 @@ class LMMap(LMSpatialObject):
             return None
 
 # ...............................................
-    def _getMSText(self, sdl_lyr):
+    def _get_ms_text(self, sdl_lyr):
         if isinstance(sdl_lyr, Raster):
             return 'RASTER'
         elif isinstance(sdl_lyr, Vector):
-            if (sdl_lyr.ogrType == ogr.wkbPoint or
-                 sdl_lyr.ogrType == ogr.wkbMultiPoint):
+            if (sdl_lyr.ogr_type == ogr.wkbPoint or
+                 sdl_lyr.ogr_type == ogr.wkbMultiPoint):
                 return 'POINT'
-            elif (sdl_lyr.ogrType == ogr.wkbLineString or
-                    sdl_lyr.ogrType == ogr.wkbMultiLineString):
+            elif (sdl_lyr.ogr_type == ogr.wkbLineString or
+                    sdl_lyr.ogr_type == ogr.wkbMultiLineString):
                 return 'LINE'
-            elif (sdl_lyr.ogrType == ogr.wkbPolygon or
-                    sdl_lyr.ogrType == ogr.wkbMultiPolygon):
+            elif (sdl_lyr.ogr_type == ogr.wkbPolygon or
+                    sdl_lyr.ogr_type == ogr.wkbMultiPolygon):
                 return 'POLYGON'
         else:
             raise Exception('Unknown _Layer type')
 
 # ...............................................
-    def _HTMLColorToRGB(self, colorstring):
+    def _html_color_to_rgb(self, colorstring):
         """ convert #RRGGBB to an (R, G, B) tuple """
-        colorstring = self._checkHTMLColor(colorstring)
+        colorstring = self._check_html_color(colorstring)
         if colorstring is None:
             colorstring = '#777777'
         r, g, b = colorstring[1:3], colorstring[3:5], colorstring[5:]
@@ -496,7 +496,7 @@ class LMMap(LMSpatialObject):
         return (r, g, b)
 
 # ...............................................
-    def _paletteToRGBStartEnd(self, palettename):
+    def _palette_to_rgb_start_end(self, palettename):
         """ 
         @summary: convert named palettes to a start/end (R, G, B, R, G, B) tuple 
         @note: possible palette names are gray, red, green, blue, yellow, fuschia, 
@@ -537,7 +537,7 @@ class LMMap(LMSpatialObject):
         return (r1, g1, b1, r2, g2, b2)
 
 # ...............................................
-    def _checkHTMLColor(self, colorstring):
+    def _check_html_color(self, colorstring):
         """ ensure #RRGGBB format """
         validChars = ['a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F']
         colorstring = colorstring.strip()
@@ -559,7 +559,7 @@ class LMMap(LMSpatialObject):
         return colorstring
 
 # ...............................................
-    def _createDiscreteBins(self, vals, paletteName='gray'):
+    def _create_discrete_bins(self, vals, paletteName='gray'):
         bins = []
         numBins = len(vals) + 1
         palette = ColorPalette(n=numBins, ptype=paletteName)
@@ -567,12 +567,12 @@ class LMMap(LMSpatialObject):
             expr = '([pixel] = %g)' % (vals[i])
             name = 'Value = %g' % (vals[i])
             # skip the first color, so that first class is not black
-            bins.append(self._createClassBin(expr, name, palette[i + 1]))
+            bins.append(self._create_class_bin(expr, name, palette[i + 1]))
         return bins
 
 # ...............................................
-    def _createColorRamp(self, vmin, vmax, paletteName='gray'):
-        rgbs = self._paletteToRGBStartEnd(paletteName)
+    def _create_color_ramp(self, vmin, vmax, paletteName='gray'):
+        rgbs = self._palette_to_rgb_start_end(paletteName)
         colorstr = '%s %s %s %s %s %s' % (rgbs[0], rgbs[1], rgbs[2], rgbs[3], rgbs[4], rgbs[5])
         ramp = ''
         ramp = '\n'.join([ramp, '        CLASS'])
@@ -587,7 +587,7 @@ class LMMap(LMSpatialObject):
         return ramp
 
 # ...............................................
-    def _getRangeExpr(self, lo, hi, vmin, vmax):
+    def _get_range_expr(self, lo, hi, vmin, vmax):
         if lo is None:
             lo = vmin
 
@@ -601,7 +601,7 @@ class LMMap(LMSpatialObject):
         return expr, name
 
 # ...............................................
-    def _createClassBin(self, expr, name, clr):
+    def _create_class_bin(self, expr, name, clr):
         rgb_str = '{} {} {}'.format(clr[0], clr[1], clr[2])
         return """        CLASS
             NAME \"{}\"
@@ -612,7 +612,7 @@ class LMMap(LMSpatialObject):
         END""".format(name, expr, rgb_str)
 
 # ...............................................
-    def _getRasterInfo(self, srcpath, getHisto=False):
+    def _get_raster_info(self, srcpath, getHisto=False):
         """
         @summary: Uses GDAL to retrieve the minimum and maximum values from a 
                      RASTER data source.  Note that for some types of data source 

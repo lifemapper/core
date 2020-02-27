@@ -282,7 +282,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
 
     def set_map_prefix(self, mapprefix=None):
         if mapprefix is None:
-            mapprefix = self._earl_jr.constructMapPrefixNew(
+            mapprefix = self._earl_jr.construct_map_prefix_new(
                 ftype=LMFileType.OTHER_MAP, objCode=self.get_id(), 
                 mapname=self.map_name, usr=self._user_id, epsg=self.epsgcode)
         self._map_prefix = mapprefix
@@ -375,7 +375,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         return url
 
     # .............................................................................
-    def writeMap(self, template=MAP_TEMPLATE):
+    def _write_map(self, template=MAP_TEMPLATE):
         """
         @summary Create a mapfile by replacing strings in a template mapfile 
                  with text created for the layer set.
@@ -388,21 +388,22 @@ class MapLayerSet(_LayerSet, ServiceObject):
         if not(os.path.exists(self._map_filename)):
             try:
                 layers = self._createLayers()
-                mapTemplate = self._earl_jr.getMapFilenameFromMapname(template)
-                mapstr = self._getBaseMap(mapTemplate)
+                mapTemplate = self._earl_jr.get_map_filename_from_map_name(
+                    template)
+                mapstr = self._get_base_map(mapTemplate)
                 onlineUrl = self._get_mapset_url()
-                mapstr = self._addMapBaseAttributes(mapstr, onlineUrl)
+                mapstr = self._add_map_base_attributes(mapstr, onlineUrl)
                 mapstr = mapstr.replace('##_LAYERS_##', layers)
             except Exception as e:
                 raise
 
             try:
-                self._writeBaseMap(mapstr)
+                self._write_base_map(mapstr)
             except Exception as e:
                 raise LMError('Failed to write {}; {}'.format(self._map_filename, e))
 
     # ...............................................
-    def _writeBaseMap(self, mapstr):
+    def _write_base_map(self, mapstr):
         self.ready_filename(self._map_filename, overwrite=True)
 
         try:
@@ -415,7 +416,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
             raise LMError('Failed to write {}; {}'.format(self._map_filename, e))
 
     # ...............................................
-    def _getBaseMap(self, fname):
+    def _get_base_map(self, fname):
         # TODO: in python 2.6, use 'with open(fname, 'r'):'
         try:
             with open(fname, 'r') as in_file:
@@ -425,7 +426,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         return base_map
 
 # ...............................................
-    def _addMapBaseAttributes(self, mapstr, onlineUrl):
+    def _add_map_base_attributes(self, mapstr, onlineUrl):
         """
         @summary Set map attributes on the map from the LayerSet
         @param mapstr: string for a mapserver mapfile to modify
@@ -520,16 +521,16 @@ class MapLayerSet(_LayerSet, ServiceObject):
 
             meta = self._getLayerMetadata(sdlLyr, metalines=attMeta,
                                           isVector=True)
-            if (sdlLyr.ogrType == ogr.wkbPoint
-                or sdlLyr.ogrType == ogr.wkbMultiPoint):
+            if (sdlLyr.ogr_type == ogr.wkbPoint
+                or sdlLyr.ogr_type == ogr.wkbMultiPoint):
                 style = self._createStyle(POINT_SYMBOL, POINT_SIZE,
                                           colorstr=DEFAULT_POINT_COLOR)
-            elif (sdlLyr.ogrType == ogr.wkbLineString
-                  or sdlLyr.ogrType == ogr.wkbMultiLineString):
+            elif (sdlLyr.ogr_type == ogr.wkbLineString
+                  or sdlLyr.ogr_type == ogr.wkbMultiLineString):
                 style = self._createStyle(LINE_SYMBOL, LINE_SIZE,
                                           colorstr=DEFAULT_LINE_COLOR)
-            elif (sdlLyr.ogrType == ogr.wkbPolygon
-                  or sdlLyr.ogrType == ogr.wkbMultiPolygon):
+            elif (sdlLyr.ogr_type == ogr.wkbPolygon
+                  or sdlLyr.ogr_type == ogr.wkbMultiPolygon):
                 style = self._createStyle(POLYGON_SYMBOL, POLYGON_SIZE,
                                           outlinecolorstr=DEFAULT_LINE_COLOR)
             cls = self._createClass(sdlLyr.name, [style])
@@ -691,7 +692,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         dataspecs = None
         # limit to 1000 features for archive point data
         if (isinstance(sdlLyr, OccurrenceLayer) and
-            sdlLyr.getUserId() == PUBLIC_USER and
+            sdlLyr.get_user_id() == PUBLIC_USER and
             sdlLyr.query_count > POINT_COUNT_MAX):
             dlocation = sdlLyr.get_dlocation(largeFile=False)
             if not os.path.exists(dlocation):
@@ -729,8 +730,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 vmin = SCALE_PROJECTION_MINIMUM + 1
                 vmax = SCALE_PROJECTION_MAXIMUM
             else:
-                vmin = sdlLyr.minVal
-                vmax = sdlLyr.maxVal
+                vmin = sdlLyr.min_val
+                vmax = sdlLyr.max_val
             rampClass = self._createColorRamp(vmin, vmax, paletteName)
             parts.append(rampClass)
             dataspecs = '\n'.join(parts)
@@ -762,14 +763,14 @@ class MapLayerSet(_LayerSet, ServiceObject):
         if isinstance(sdllyr, Raster):
             return 'RASTER'
         elif isinstance(sdllyr, Vector):
-            if (sdllyr.ogrType == ogr.wkbPoint or
-                sdllyr.ogrType == ogr.wkbMultiPoint):
+            if (sdllyr.ogr_type == ogr.wkbPoint or
+                sdllyr.ogr_type == ogr.wkbMultiPoint):
                 return 'POINT'
-            elif (sdllyr.ogrType == ogr.wkbLineString or
-                  sdllyr.ogrType == ogr.wkbMultiLineString):
+            elif (sdllyr.ogr_type == ogr.wkbLineString or
+                  sdllyr.ogr_type == ogr.wkbMultiLineString):
                 return 'LINE'
-            elif (sdllyr.ogrType == ogr.wkbPolygon or
-                  sdllyr.ogrType == ogr.wkbMultiPolygon):
+            elif (sdllyr.ogr_type == ogr.wkbPolygon or
+                  sdllyr.ogr_type == ogr.wkbMultiPolygon):
                 return 'POLYGON'
         else:
             raise Exception('Unknown _Layer type')

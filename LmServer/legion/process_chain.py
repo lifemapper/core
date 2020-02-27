@@ -181,7 +181,7 @@ class MFChain(ProcessObject):
         return fname
 
     # ...............................................
-    def getUserId(self):
+    def get_user_id(self):
         """
         @summary Gets the User id
         @return The User id

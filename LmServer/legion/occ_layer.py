@@ -37,8 +37,8 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         @param raw_dlocation: URL or file location of raw data to be processed
         """
         _LayerParameters.__init__(self, user_id, param_id=occ_layer_id,
-                                          matrixIndex=-1, metadata=metadata,
-                                          mod_time=mod_time)
+                                  matrix_index=-1, metadata=metadata,
+                                  mod_time=mod_time)
         ProcessObject.__init__(
             self, obj_id=occ_layer_id, process_type=process_type,
             status=status, status_mod_time=status_mod_time)
@@ -115,7 +115,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         Vector.__init__(
             self, None, user_id, epsgcode, lyr_id=occ_layer_id, squid=squid,
             verify=verify, dlocation=dlocation, metadata=lyr_metadata,
-            data_format=data_format, ogrType=ogr.wkbPoint, valUnits=valUnits,
+            data_format=data_format, ogr_type=ogr.wkbPoint, valUnits=valUnits,
             val_attribute=val_attribute, nodata_val=nodata_val, min_val=min_val,
             max_val=max_val, mapunits=mapunits, resolution=resolution, bbox=bbox,
             svc_obj_id=occ_layer_id, service_type=service_type,
@@ -225,7 +225,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
         super(OccurrenceLayer, self).set_id(occid)
         if occid is not None:
             if self.name is None:
-                self.name = self._earl_jr.createLayername(occsetId=self.get_id())
+                self.name = self._earl_jr.create_layername(occsetId=self.get_id())
             self.set_dlocation()
             self.resetMetadataUrl()
             self.set_local_map_filename()
@@ -368,7 +368,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # ...............................................
     @property
     def layer_name(self):
-        return self._earl_jr.createLayername(occsetId=self.get_id())
+        return self._earl_jr.create_layername(occsetId=self.get_id())
 
 # ...............................................
     def clear_local_mapfile(self):
@@ -405,7 +405,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 #             val_attribute=self.getValAttribute(), nodata_val=self.nodata_val,
 #             min_val=self.min_val, max_val=self.max_val, mapunits=self.mapUnits,
 #             resolution=self.resolution, bbox=self.bbox,
-#             occMetadata=self.paramMetadata, sci_name=self._scientific_name,
+#             occMetadata=self.param_metadata, sci_name=self._scientific_name,
 #             status=self.status, status_mod_time=self.status_mod_time)
 #         return newOcc
 # 

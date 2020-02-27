@@ -82,13 +82,13 @@ class ScenPackage(ServiceObject, LMSpatialObject):
                  to ensure that a scenario is not duplicated in the ScenPackage.  
         """
         if isinstance(scen, Scenario):
-            if scen.getUserId() == self.getUserId():
+            if scen.get_user_id() == self.get_user_id():
                 if self.get_scenario(code=scen.code,
                                           metadata_url=scen.metadata_url) is None:
                     self._scenarios[scen.code] = scen
             else:
                 raise LMError(['Cannot add user {} Scenario to user {} ScenPackage'
-                                    .format(scen.getUserId(), self.getUserId())])
+                                    .format(scen.get_user_id(), self.get_user_id())])
         else:
             raise LMError(['Cannot add {} as a Scenario'.format(type(scen))])
 
@@ -291,7 +291,7 @@ class Scenario(MapLayerSet):
                     # Set map_prefix only if does not exist. Could be in multiple
                     # mapfiles, but all should use same url/map_prefix.
                     if lyr.map_prefix is None:
-                        lyr._set_map_prefix(scencode=self.code)
+                        lyr._set_map_prefix(scen_code=self.code)
                     mapfname = self.create_local_map_filename()
                     lyr.set_local_map_filename(mapfname=mapfname)
                 else:

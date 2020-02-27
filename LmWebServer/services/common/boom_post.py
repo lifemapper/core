@@ -441,7 +441,7 @@ class BoomPoster:
                         break
 
                 # If public user, copy into user space
-                if scenario_package.getUserId() == PUBLIC_USER:
+                if scenario_package.get_user_id() == PUBLIC_USER:
                     # Need to copy the scenario package
                     scen_package_meta = os.path.join(
                         ENV_DATA_PATH, '{}{}'.format(

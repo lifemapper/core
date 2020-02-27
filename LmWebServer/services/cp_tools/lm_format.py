@@ -119,7 +119,7 @@ def shoot_snippets(obj, operation, format_string):
     """
     # Only shoot public data snippets
     try:
-        if obj.getUserId() == PUBLIC_USER:
+        if obj.get_user_id() == PUBLIC_USER:
             shooter = SnippetShooter()
             shooter.add_snippets(
                 obj, operation, url='{}/{}'.format(

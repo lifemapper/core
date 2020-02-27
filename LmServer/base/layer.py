@@ -262,7 +262,7 @@ class _Layer(LMSpatialObject, ServiceObject):
         @summary: Create an absolute filepath from object attributes
         @note: If the object does not have an ID, this returns None
         """
-        dloc = self._earl_jr.createOtherLayerFilename(
+        dloc = self._earl_jr.create_other_layer_filename(
             self._layer_user_id, self._epsg, self.name, ext=extension)
         return dloc
 
@@ -361,7 +361,8 @@ class _LayerParameters(LMObject):
     PARAM_VAL_UNITS = 'valUnits'
 
     # .............................
-    def __init__(self, user_id, param_id=None, matrixIndex=-1, metadata={}, mod_time=None):
+    def __init__(self, user_id, param_id=None, matrix_index=-1, metadata={}, 
+                 mod_time=None):
         """Constructor for _LayerParameters decorator class
         
         Args:
@@ -371,7 +372,7 @@ class _LayerParameters(LMObject):
             param_id: database Id for the parameter values
                 if these parameters are not held in a separate db table, this 
                 value is the same as _Layer._layer_id.  
-            matrixIndex: Index of the position in PAM or other matrix.  If this 
+            matrix_index: Index of the position in PAM or other matrix.  If this 
                              Parameterized Layer is not a Matrix input, value is -1.
         @param metadata: Dictionary of metadata keys/values; key constants are 
                               class attributes.
@@ -381,7 +382,7 @@ class _LayerParameters(LMObject):
         self._param_id = param_id
         self.param_metadata = {}
         self.load_param_metadata(metadata)
-        self._matrixIndex = matrixIndex
+        self._matrix_index = matrix_index
         self.param_mod_time = mod_time
 
     # .............................
@@ -662,8 +663,8 @@ class Raster(_Layer):
         @note: the ServiceObject._dbId may contain a join id or _layer_id depending 
                  on the type of Layer being requested
         """
-        durl = self._earl_jr.constructLMDataUrl(self.service_type, self.get_id(),
-                                                            interface)
+        durl = self._earl_jr.construct_lm_data_url(self.service_type, 
+                                                   self.get_id(), interface)
         return durl
 
     # .............................
@@ -1276,8 +1277,8 @@ class Vector(_Layer):
         @note: the ServiceObject._dbId may contain a join id or _layer_id depending 
                  on the type of Layer being requested
         """
-        durl = self._earl_jr.constructLMDataUrl(self.service_type, self.get_id(),
-                                                            interface)
+        durl = self._earl_jr.construct_lm_data_url(self.service_type, 
+                                                   self.get_id(), interface)
         return durl
 
     # .............................

@@ -47,7 +47,7 @@ class Gridset(ServiceObject):  # LMMap
         """
         if shapeGrid is not None:
             if user_id is None:
-                user_id = shapeGrid.getUserId()
+                user_id = shapeGrid.get_user_id()
             if shapeGridId is None:
                 shapeGridId = shapeGrid.get_id()
             if epsgcode is None:
@@ -143,9 +143,9 @@ class Gridset(ServiceObject):  # LMMap
         grdid = self.get_id()
         if grdid is None:
             grdid = ID_PLACEHOLDER
-        mapprefix = self._earl_jr.constructMapPrefixNew(urlprefix=self.metadata_url,
-                                        ftype=LMFileType.RAD_MAP, mapname=self.map_name,
-                                        usr=self._user_id)
+        mapprefix = self._earl_jr.construct_map_prefix_new(
+            urlprefix=self.metadata_url, ftype=LMFileType.RAD_MAP, 
+            mapname=self.map_name, usr=self._user_id)
         return mapprefix
 
     def _set_map_prefix(self):
@@ -195,12 +195,12 @@ class Gridset(ServiceObject):  # LMMap
 # ...............................................
     def setPath(self):
         if self._path is None:
-            if (self._user_id is not None and
-                 self.get_id() and
-                 self._getEPSG() is not None):
-                self._path = self._earl_jr.createDataPath(self._user_id,
-                                         LMFileType.UNSPECIFIED_RAD,
-                                         epsg=self._epsg, gridsetId=self.get_id())
+            if (self._user_id is not None 
+                    and self.get_id() 
+                    and self._getEPSG() is not None):
+                self._path = self._earl_jr.create_data_path(
+                    self._user_id, LMFileType.UNSPECIFIED_RAD, epsg=self._epsg, 
+                    gridsetId=self.get_id())
             else:
                 raise LMError()
 
@@ -217,9 +217,9 @@ class Gridset(ServiceObject):  # LMMap
         @note: If the object does not have an ID, this returns None
         """
         dloc = self._earl_jr.create_filename(LMFileType.GRIDSET_PACKAGE,
-                                                      objCode=self.get_id(),
-                                                      gridsetId=self.get_id(),
-                                                      usr=self.getUserId())
+                                             objCode=self.get_id(),
+                                             gridsetId=self.get_id(),
+                                             usr=self.get_user_id())
         return dloc
 
     def get_dlocation(self):
@@ -271,7 +271,7 @@ class Gridset(ServiceObject):  # LMMap
         @summary Fill the Tree object, updating the tree dlocation
         """
         if isinstance(tree, Tree):
-            tree.setUserId(self.getUserId())
+            tree.setUserId(self.get_user_id())
             # Make sure to set the parent Id and URL
             if self.get_id() is not None:
                 tree.parentId = self.get_id()
@@ -285,7 +285,7 @@ class Gridset(ServiceObject):  # LMMap
         """
         mtx = None
         if mtxFileOrObj is not None:
-            usr = self.getUserId()
+            usr = self.get_user_id()
             if isinstance(mtxFileOrObj, str) and os.path.exists(mtxFileOrObj):
                 mtx = LMMatrix(dlocation=mtxFileOrObj, user_id=usr)
                 if do_read:
@@ -332,18 +332,18 @@ class Gridset(ServiceObject):  # LMMap
     def getBiogeographicHypotheses(self):
         return self._getMatrixTypes(MatrixType.BIOGEO_HYPOTHESES)
 
-    def getGRIMForCodes(self, gcmCode, altpredCode, dateCode):
+    def getGRIMForCodes(self, gcm_code, altpred_code, dateCode):
         for grim in self.getGRIMs():
-            if (grim.gcmCode == gcmCode and
-                grim.altpredCode == altpredCode and
+            if (grim.gcm_code == gcm_code and
+                grim.altpred_code == altpred_code and
                 grim.dateCode == dateCode):
                 return grim
         return None
 
-    def getPAMForCodes(self, gcmCode, altpredCode, dateCode, algorithm_code):
+    def getPAMForCodes(self, gcm_code, altpred_code, dateCode, algorithm_code):
         for pam in self.getAllPAMs():
-            if (pam.gcmCode == gcmCode and
-                 pam.altpredCode == altpredCode and
+            if (pam.gcm_code == gcm_code and
+                 pam.altpred_code == altpred_code and
                  pam.dateCode == dateCode and
                  pam.algorithm_code == algorithm_code):
                 return pam
@@ -435,9 +435,9 @@ class Gridset(ServiceObject):  # LMMap
         return success
 
     # ...............................................
-    def writeMap(self, mapfilename):
+    def _write_map(self, mapfilename):
         pass
-        # LMMap.writeMap(self, mapfilename, shpGrid=self._shapeGrid,
+        # LMMap._write_map(self, mapfilename, shpGrid=self._shapeGrid,
         #                    matrices=self._matrices)
 
 #     # ...............................................
