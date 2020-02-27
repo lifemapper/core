@@ -114,7 +114,7 @@ class _LayerSet(LMSpatialObject):
         return None
 
     # .............................................................................
-    def addLayer(self, lyr):
+    def add_layer(self, lyr):
         """
         @note: metadataUrl is used for identification - ensuring that a layer is 
                not duplicated in the layerset.  MetadataUrl should be (relatively)
@@ -202,7 +202,7 @@ class _LayerSet(LMSpatialObject):
     def _setLayers(self, lyrs):
         if lyrs is not None:
             for lyr in lyrs:
-                self.addLayer(lyr)
+                self.add_layer(lyr)
         else:
             self._layers = []
         bboxes = [lyr.bbox for lyr in self._layers]
@@ -356,7 +356,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         return mapname
 
     # .............................................................................
-    def _getMapsetUrl(self):
+    def _get_mapset_url(self):
         """
         @note: This method is overridden in Scenario  
         """
@@ -390,7 +390,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 layers = self._createLayers()
                 mapTemplate = self._earl_jr.getMapFilenameFromMapname(template)
                 mapstr = self._getBaseMap(mapTemplate)
-                onlineUrl = self._getMapsetUrl()
+                onlineUrl = self._get_mapset_url()
                 mapstr = self._addMapBaseAttributes(mapstr, onlineUrl)
                 mapstr = mapstr.replace('##_LAYERS_##', layers)
             except Exception as e:

@@ -84,10 +84,10 @@ class UserLogger(WebLogger):
     """The user logger logs information about a specific user's activities
     """
 
-    def __init__(self, userId, level=logging.DEBUG):
+    def __init__(self, user_id, level=logging.DEBUG):
         WebLogger.__init__(self, level=level)
 
-        name = "user.%s" % userId
+        name = "user.%s" % user_id
         # Add user log file
         filename = os.path.join(
             USER_LOG_PATH, '{}{}'.format(name, LMFormat.LOG.ext))

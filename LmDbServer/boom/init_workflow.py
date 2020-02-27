@@ -1082,7 +1082,7 @@ class BOOMFiller(LMObject):
                     lyr = Vector(name, self.user_id, self.scenPkg.epsgcode,
                                  dlocation=bgFname, metadata=lyrMeta,
                                  dataFormat=LMFormat.SHAPE.driver,
-                                 valAttribute=valAttr, mod_time=self.woof_time_mjd)
+                                 val_attribute=valAttr, mod_time=self.woof_time_mjd)
                     updatedLyr = self.scribe.findOrInsertLayer(lyr)
                     biogeo_layer_names.append(updatedLyr.name)
                     self.scribe.log.info('  Added {} layers for biogeo hypotheses matrix'
