@@ -81,8 +81,11 @@ class Boomer(LMObject):
         # iterator tool for species
         self.christopher = None
 
-#         # Dictionary of {scenCode: (potatoChain, triagePotatoFile)}
-#         self.potatoes = None
+        self.gridset = None
+        self.gridset_id = None
+        self.priority = None
+        self.pav_index_filenames = []
+        self.master_potato_head = None
 
         # MFChain for lots of spuds
         self.potato_bushel = None
@@ -112,56 +115,58 @@ class Boomer(LMObject):
         """
         # Send Database connection
         try:
-            success = self._scribe.openConnections()
+            success = self._scribe.open_connections()
         except Exception as e:
             raise LMError('Exception opening database', e)
-        else:
-            if not success:
-                raise LMError('Failed to open database')
-            else:
-                self.log.info('{} opened databases'.format(self.name))
+        if not success:
+            raise LMError('Failed to open database')
+        self.log.info('{} opened databases'.format(self.name))
 
         try:
-            self.christopher = ChristopherWalken(self.config_fname,
-                                                 scribe=self._scribe)
+            self.christopher = ChristopherWalken(
+                self.config_fname, scribe=self._scribe)
             self.christopher.initialize_me()
         except Exception as e:
             raise LMError(
                 'Failed to initialize Chris with config {} ({})'.format(
                     self.config_fname, e))
         try:
-            self.gridset = self.christopher.boomGridset
-            self.gridset_id = self.christopher.boomGridset.get_id()
-        except:
-            self.log.warning('Exception getting christopher.boomGridset id!!')
+            self.gridset = self.christopher.boom_gridset
+            self.gridset_id = self.christopher.boom_gridset.get_id()
+        except Exception:
+            self.log.warning('Exception getting christopher.boom_gridset id!!')
         if self.gridset_id is None:
-            self.log.warning('Missing christopher.boomGridset id!!')
+            self.log.warning('Missing christopher.boom_gridset id!!')
 
         self.do_pam_stats = self.christopher.compute_pam_stats
         self.do_mcpa = self.christopher.compute_mcpa
         self.priority = self.christopher.priority
 
         # Start where we left off
-        self.christopher.moveToStart()
-        self.log.debug('Starting Chris at location {} ... '
-                       .format(self.christopher.currRecnum))
+        self.christopher.move_to_start()
+        self.log.debug(
+            'Starting Chris at location {} ... '.format(
+                self.christopher.curr_rec_num))
         self.keep_walken = True
 
         self.pav_index_filenames = []
         # master MF chain
-        self.masterPotatoHead = None
+        self.master_potato_head = None
         self.log.info('Create first potato')
         self.potato_bushel = self._create_bushel_makeflow()
         self.squid_names = []
 
     # .............................
     def process_one_species(self):
+        """Process one species occurrence set
+        """
         try:
             self.log.info('Next species ...')
-            # Get Spud rules (single-species SDM) and dict of {scencode: pavFilename}
+            # Get Spud rules (single-species SDM) and dict of
+            #    {scencode: pavFilename}
             workdir = self.potato_bushel.get_relative_directory()
-            squid, spudRules, idx_success_filename = self.christopher.startWalken(
-                workdir)
+            (squid, spud_rules, idx_success_filename
+             ) = self.christopher.start_walken(workdir)
             if idx_success_filename is not None:
                 self.pav_index_filenames.append(idx_success_filename)
 
@@ -171,18 +176,12 @@ class Boomer(LMObject):
 
             self.keep_walken = not self.christopher.complete
             # TODO: Master process for occurrence only? SDM only?
-            if spudRules:
+            if spud_rules:
                 self.log.debug('Processing spud for potatoes')
-                self.potato_bushel.addCommands(spudRules)
+                self.potato_bushel.addCommands(spud_rules)
                 # TODO: Don't write triage file, but don't delete code
-                # if potatoInputs:
-                #   for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
-                #      pavFname = potatoInputs[scencode]
-                #      triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
-                #   self.log.info('Wrote spud squid to {} triage files'
-                #                 .format(len(potatoInputs)))
-                # if len(self.spudArfFnames) >= SPUD_LIMIT:
-                if not self.do_pam_stats and len(self.squid_names) >= SPUD_LIMIT:
+                if not self.do_pam_stats and len(
+                        self.squid_names) >= SPUD_LIMIT:
                     self.rotate_potatoes()
             self.log.info('-----------------')
         except Exception as e:
@@ -191,9 +190,7 @@ class Boomer(LMObject):
             raise e
 
     # .............................
-    def _writeBushel(self):
-        """
-        """
+    def _write_bushel(self):
         # Write all spud commands in existing bushel MFChain
         if self.potato_bushel:
             if self.potato_bushel.jobs:
@@ -207,21 +204,23 @@ class Boomer(LMObject):
 
                 self.potato_bushel.write()
                 self.potato_bushel.update_status(JobStatus.INITIALIZE)
-                self._scribe.updateObject(self.potato_bushel)
-                self.log.info('   Wrote potato_bushel {} ({} spuds)'
-                              .format(self.potato_bushel.objId, len(self.squid_names)))
+                self._scribe.update_object(self.potato_bushel)
+                self.log.info(
+                    '   Wrote potato_bushel {} ({} spuds)'.format(
+                        self.potato_bushel.obj_id, len(self.squid_names)))
             else:
-                self.log.info('   No commands in potato_bushel {}'.format(
-                    self.potato_bushel.objId))
+                self.log.info(
+                    '   No commands in potato_bushel {}'.format(
+                        self.potato_bushel.obj_id))
         else:
             self.log.info('   No existing potato_bushel')
 
     # .............................
     def rotate_potatoes(self):
-        """
+        """Rotate potatoes to start on next set of species
         """
         if self.potato_bushel:
-            self._writeBushel()
+            self._write_bushel()
 
         # Create new bushel IFF do_pam_stats is False, i.e. Rolling PAM,
         #   and there are more species to process
@@ -241,11 +240,11 @@ class Boomer(LMObject):
         self.rotate_potatoes()
 
     # .............................
-    def restartWalken(self):
+    def restart_walken(self):
         if self.christopher.complete() and\
                 self.christopher.more_data_to_process():
             # Rename old file
-            oldfname = self.christopher.weapon_of_choice.occParser.dataFname
+            oldfname = self.christopher.weapon_of_choice.occ_parser.data_fname
             ts = lt.localtime().tuple()
             timestamp = '{}{:02d}{:02d}-{:02d}{:02d}'.format(
                 ts[0], ts[1], ts[2], ts[3], ts[4])
@@ -295,13 +294,13 @@ class Boomer(LMObject):
             A list of compute rules for the gridset
         """
         work_dir = self.potato_bushel.get_relative_directory()
-        bc = BoomCollate(
+        collator = BoomCollate(
             self.gridset, dependencies=self.pav_index_filenames,
             do_pam_stats=self.do_pam_stats, do_mcpa=self.do_mcpa,
             num_permutations=self.christopher.num_permutations,
             random_group_size=DEFAULT_RANDOM_GROUP_SIZE,
             work_dir=work_dir, log=self.log)
-        rules = bc.get_collate_rules()
+        rules = collator.get_collate_rules()
 
         return rules
 
@@ -313,8 +312,8 @@ class Boomer(LMObject):
         try:
             with open(self._success_fname, 'w') as out_file:
                 out_file.write(message)
-        except IOError:
-            raise
+        except IOError as io_err:
+            raise LMError('Failed to write success file', io_err)
 
     # .............................
     def process_all_species(self):
@@ -416,7 +415,7 @@ boomer = Boomer(config_fname, success_fname, log=logger)
 boomer.initialize_me()
 
 
-# squid, spudRules, idx_success_filename = boomer.christopher.startWalken(
+# squid, spud_rules, idx_success_filename = boomer.christopher.start_walken(
 #     workdir)
 # boomer.process_all_species()
 # ##########################################################################
@@ -452,7 +451,7 @@ workdir = boomer.potato_bushel.get_relative_directory()
 self = boomer.christopher
 
 # ##########################################################################
-# in cwalken.startWalken
+# in cwalken.start_walken
 
 occ = self.weapon_of_choice.getOne()
 
