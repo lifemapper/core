@@ -517,16 +517,16 @@ class _LayerParameters(LMObject):
 
     # .............................
     def update_params(self, mod_time, matrix_index=None, metadata=None):
-        """
-        @summary: Updates matrix_index, param_metadata, and mod_time.
-        @param mod_time: time/date last modified
-        @param matrix_index: Index of the position in PAM or other matrix.  If this 
-                             Parameterized Layer is not a Matrix input, or part of 
-                             a Global PAM, created dynamically upon query of existing
-                             matrix columns, value is -1.
-        @param metadata: Dictionary of metadata keys/values; key constants are 
-                              class attributes.
-        @note: Missing keyword parameters are ignored.
+        """Updates matrix_index, param_metadata, and mod_time on the object.
+
+        Args:
+            mod_time: time/date last modified
+            matrix_index: position of a layer in a MatrixLayerset; if not in
+                a MatrixLayerset, value is -1.
+            metadata: dictionary of metadata keys/values; key constants are 
+                class attributes.
+                
+        Note: Missing metadata keyword parameters are ignored.
         """
         self.param_mod_time = mod_time
         if metadata is not None:
