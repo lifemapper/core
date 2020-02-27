@@ -31,7 +31,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
         @param query_count: Count reported by last update to shapefile.  
                                  Used if there are no features attached to this
                                  OccurrenceSet.
-        @param occ_layer_id: The occurrenceSet id for the database
+        @param occ_layer_id: The occ_layer id for the database
         @param sci_name: ScientificName object containing further 
                  information about the name associated with these data
         @param raw_dlocation: URL or file location of raw data to be processed
@@ -92,7 +92,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                  squid=None, verify=None, dlocation=None, raw_dlocation=None,
                  raw_meta_dlocation=None, lyr_metadata={},
                  data_format=LMFormat.SHAPE.driver, valUnits=None,
-                 val_attribute=None, nodataVal=None, minVal=None, maxVal=None,
+                 val_attribute=None, nodata_val=None, min_val=None, max_val=None,
                  mapunits=None, resolution=None, bbox=None,
                  occ_layer_id=None, serviceType=LMServiceType.OCCURRENCES,
                  metadataUrl=None, parentMetadataUrl=None, featureCount=0,
@@ -116,8 +116,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
             self, None, user_id, epsgcode, lyr_id=occ_layer_id, squid=squid,
             verify=verify, dlocation=dlocation, metadata=lyr_metadata,
             data_format=data_format, ogrType=ogr.wkbPoint, valUnits=valUnits,
-            val_attribute=val_attribute, nodataVal=nodataVal, minVal=minVal,
-            maxVal=maxVal, mapunits=mapunits, resolution=resolution, bbox=bbox,
+            val_attribute=val_attribute, nodata_val=nodata_val, min_val=min_val,
+            max_val=max_val, mapunits=mapunits, resolution=resolution, bbox=bbox,
             svcObjId=occ_layer_id, serviceType=serviceType,
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
             mod_time=status_mod_time, featureCount=featureCount,
@@ -343,7 +343,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
     def set_local_map_filename(self, mapfname=None):
         """
         @note: Overrides existing _map_filename
-        @summary: Find mapfile containing layers for this model's occurrenceSet.
+        @summary: Find mapfile containing layers for this model's occ_layer.
         @param mapfname: Previously constructed mapfilename
         """
         if self._map_filename is None:
@@ -402,8 +402,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
 #         newOcc = OccurrenceLayer(
 #             self.display_name, user_id, self.epsgcode, self.query_count,
 #             squid=self.squid, verify=self.verify, valUnits=self.valUnits,
-#             val_attribute=self.getValAttribute(), nodataVal=self.nodataVal,
-#             minVal=self.minVal, maxVal=self.maxVal, mapunits=self.mapUnits,
+#             val_attribute=self.getValAttribute(), nodata_val=self.nodata_val,
+#             min_val=self.min_val, max_val=self.max_val, mapunits=self.mapUnits,
 #             resolution=self.resolution, bbox=self.bbox,
 #             occMetadata=self.paramMetadata, sci_name=self._scientific_name,
 #             status=self.status, status_mod_time=self.status_mod_time)

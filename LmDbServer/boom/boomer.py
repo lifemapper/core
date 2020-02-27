@@ -250,10 +250,10 @@ class Boomer(LMObject):
     def _createBushelMakeflow(self):
         meta = {MFChain.META_CREATED_BY: self.name,
                 MFChain.META_DESCRIPTION: 'Bushel for User {}, Archive {}'
-                    .format(self.christopher.userId, self.christopher.archiveName),
+                    .format(self.christopher.user_id, self.christopher.archiveName),
                 MFChain.META_GRIDSET: self.gridsetId
                 }
-        newMFC = MFChain(self.christopher.userId, priority=self.priority,
+        newMFC = MFChain(self.christopher.user_id, priority=self.priority,
                          metadata=meta, status=JobStatus.GENERAL,
                          status_mod_time=lt.gmt().mjd)
         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
@@ -263,10 +263,10 @@ class Boomer(LMObject):
 #     def _createMasterPotatoHeadMakeflow(self):
 #         meta = {MFChain.META_CREATED_BY: self.name,
 #                 MFChain.META_DESCRIPTION: 'MasterPotatoHead for User {}, Archive {}'
-#                     .format(self.christopher.userId, self.christopher.archiveName),
+#                     .format(self.christopher.user_id, self.christopher.archiveName),
 #                 MFChain.META_GRIDSET: self.gridsetId
 #         }
-#         newMFC = MFChain(self.christopher.userId, priority=self.priority,
+#         newMFC = MFChain(self.christopher.user_id, priority=self.priority,
 #                          metadata=meta, status=JobStatus.GENERAL,
 #                          status_mod_time=lt.gmt().mjd)
 #         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)

@@ -408,7 +408,7 @@ class ChristopherWalken(LMObject):
             scen_pkg = scen_pkgs[0]
             mdl_scen = scen_pkg.get_scenario(code=mdl_scen_code)
             for pcode in prj_scen_codes:
-                prj_scens.append(scen_pkg.getScenario(code=pcode))
+                prj_scens.append(scen_pkg.get_scenario(code=pcode))
         else:
             raise LMError('Failed to retrieve ScenPackage for scenarios {}'
                           .format(prj_scen_codes))

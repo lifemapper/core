@@ -108,8 +108,8 @@ class MFChain(ProcessObject):
         """
         dloc = None
         if self.objId is not None:
-            earlJr = EarlJr()
-            dloc = earlJr.create_filename(LMFileType.MF_DOCUMENT,
+            earl_jr = EarlJr()
+            dloc = earl_jr.create_filename(LMFileType.MF_DOCUMENT,
                                               objCode=self.objId,
                                               usr=self._user_id)
         return dloc
@@ -138,8 +138,8 @@ class MFChain(ProcessObject):
         @param arfDir: A directory to put the arf file. Else use relative dir
         """
         # TODO: Update with something more specific
-        # earlJr = EarlJr()
-        # pth = earlJr.createDataPath(self._user_id, LMFileType.MF_DOCUMENT)
+        # earl_jr = EarlJr()
+        # pth = earl_jr.create_data_path(self._user_id, LMFileType.MF_DOCUMENT)
         # fname = os.path.join(pth, '{}_{}.arf'.format(prefix, self.objId))
         if arfDir is None:
             arfDir = self.getRelativeDirectory()
@@ -159,8 +159,8 @@ class MFChain(ProcessObject):
             fname = os.path.join(prefix, '{}_{}{}'.format(prefix, self.objId, LMFormat.TXT.ext))
         else:
             # TODO: Update
-            earlJr = EarlJr()
-            pth = earlJr.createDataPath(self._user_id, LMFileType.MF_DOCUMENT)
+            earl_jr = EarlJr()
+            pth = earl_jr.create_data_path(self._user_id, LMFileType.MF_DOCUMENT)
             fname = os.path.join(pth, '{}_{}{}'.format
                               (prefix, self.objId, LMFormat.TXT.ext))
         return fname
@@ -173,8 +173,8 @@ class MFChain(ProcessObject):
                   from inputs to another MF.
         """
         # TODO: Update
-        # earlJr = EarlJr()
-        # pth = earlJr.createDataPath(self._user_id, LMFileType.MF_DOCUMENT)
+        # earl_jr = EarlJr()
+        # pth = earl_jr.create_data_path(self._user_id, LMFileType.MF_DOCUMENT)
         # fname = os.path.join(pth, '{}_{}{}'.format
         #                     (prefix, self.objId, LMFormat.TXT.ext))
         fname = os.path.join(prefix, '{}_{}{}'.format(prefix, self.objId, LMFormat.TXT.ext))

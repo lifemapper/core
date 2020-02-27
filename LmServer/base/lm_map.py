@@ -75,8 +75,8 @@ class LMMap(LMSpatialObject):
                     allLayers.append(mtxLyrs)
             lyrstr = '\n'.join(allLayers)
             try:
-                earlJr = EarlJr()
-                mapTemplate = earlJr.getMapFilenameFromMapname(template)
+                earl_jr = EarlJr()
+                mapTemplate = earl_jr.get_map_filename_from_map_name(template)
                 mapstr = self._getBaseMap(mapTemplate)
                 mapstr = self._addMapBaseAttributes(mapstr)
                 mapstr = mapstr.replace('##_LAYERS_##', lyrstr)
@@ -264,9 +264,9 @@ class LMMap(LMSpatialObject):
                                 'wcs_rangeset_name  \"%s\"' % sdlLyr.name,
                                 'wcs_rangeset_label \"%s\"' % sdlLyr.name]
         # TODO: Where/how is this set??
-#         if sdlLyr.nodataVal is not None:
+#         if sdlLyr.nodata_val is not None:
 #             rasterMetadata.append('rangeset_nullvalue  %s'
-#                                          % str(sdlLyr.nodataVal))
+#                                          % str(sdlLyr.nodata_val))
 
         meta = self._getLayerMetadata(sdlLyr, metalines=rasterMetadata)
 
@@ -429,10 +429,11 @@ class LMMap(LMSpatialObject):
                                               sdlLyr.mapUnits.upper()])
             dataspecs = '\n'.join([dataspecs, '        OFFSITE  0  0  0'])
 
-            if sdlLyr.nodataVal is None:
+            if sdlLyr.nodata_val is None:
                 sdlLyr.populateStats()
-            dataspecs = '\n'.join([dataspecs, '        PROCESSING \"NODATA=%s\"'
-                                          % str(sdlLyr.nodataVal)])
+            dataspecs = '\n'.join(
+                [dataspecs, '        PROCESSING \"NODATA={}\"'.format(
+                    sdlLyr.nodata_val)])
             # SDM projections are always scaled b/w 0 and 100
             if isinstance(sdlLyr, SDMProjection):
                 vmin = SCALE_PROJECTION_MINIMUM + 1
