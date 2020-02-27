@@ -62,10 +62,10 @@ class EnvLayer(EnvType, Raster):
                      squid=None, ident=None, verify=None, dlocation=None,
                      lyrMetadata={}, data_format=None, gdalType=None,
                      valUnits=None, val_attribute=None,
-                     nodataVal=None, minVal=None, maxVal=None,
+                     nodata_val=None, minVal=None, maxVal=None,
                      mapunits=None, resolution=None,
-                     bbox=None, envLayerId=None, metadataUrl=None,
-                     parentMetadataUrl=None, mod_time=None,
+                     bbox=None, env_layer_id=None, metadata_url=None,
+                     parent_metadata_url=None, mod_time=None,
                      # EnvType
                      envCode=None, gcmCode=None, altpredCode=None, dateCode=None,
                      envMetadata={}, envModTime=None, envTypeId=None):
@@ -79,35 +79,35 @@ class EnvLayer(EnvType, Raster):
                      gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode,
                      metadata=envMetadata, mod_time=envModTime, envTypeId=envTypeId)
         self._map_prefix = None
-        # Raster metadataUrl and serviceType override those of EnvType
+        # Raster metadata_url and service_type override those of EnvType
         # if it is a full EnvLayer
         Raster.__init__(self, name, user_id, epsgcode, lyr_id=lyr_id,
                      squid=squid, ident=ident, verify=verify, dlocation=dlocation,
                      metadata=lyrMetadata, data_format=data_format, gdalType=gdalType,
-                     valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, maxVal=maxVal,
+                     valUnits=valUnits, nodata_val=nodata_val, minVal=minVal, maxVal=maxVal,
                      mapunits=mapunits, resolution=resolution,
-                     bbox=bbox, svcObjId=envLayerId,
-                     serviceType=LMServiceType.ENVIRONMENTAL_LAYERS,
-                     metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
+                     bbox=bbox, svc_obj_id=env_layer_id,
+                     service_type=LMServiceType.ENVIRONMENTAL_LAYERS,
+                     metadata_url=metadata_url, parent_metadata_url=parent_metadata_url,
                      mod_time=mod_time)
-        self._scenCode = scencode
+        self._scen_code = scencode
         self._set_map_prefix(scencode=scencode)
 
 # ...............................................
     @classmethod
-    def init_from_parts(cls, raster, envType, envLayerId=None, scencode=None):
+    def init_from_parts(cls, raster, envType, env_layer_id=None, scencode=None):
         envLyr = EnvLayer(raster.name, raster.getUserId(), raster.epsgcode,
                         scencode=scencode, lyr_id=raster.get_id(), squid=raster.squid,
                         ident=raster.ident, verify=raster.verify, dlocation=raster.get_dlocation(),
                         lyrMetadata=raster.lyrMetadata, data_format=raster.data_format,
                         gdalType=raster.gdalType, valUnits=raster.valUnits,
-                        nodataVal=raster.nodataVal, minVal=raster.minVal,
+                        nodata_val=raster.nodata_val, minVal=raster.minVal,
                         maxVal=raster.maxVal, mapunits=raster.mapUnits,
                         resolution=raster.resolution, bbox=raster.bbox,
                         # Join table for EnvironmentalLayer ServiceObject unique id
-                        envLayerId=envLayerId,
-                        metadataUrl=raster.metadataUrl,
-                        parentMetadataUrl=raster.parentMetadataUrl,
+                        env_layer_id=env_layer_id,
+                        metadata_url=raster.metadata_url,
+                        parent_metadata_url=raster.parent_metadata_url,
                         mod_time=raster.mod_time,
                         # EnvType
                         envCode=envType.envCode, gcmCode=envType.gcmCode,
@@ -130,7 +130,7 @@ class EnvLayer(EnvType, Raster):
                  placeholder is used until replacement after database insertion.
         """
         if scencode is None:
-            scencode = self._scenCode
+            scencode = self._scen_code
         mapprefix = self._earl_jr.constructMapPrefixNew(ftype=LMFileType.SCENARIO_MAP,
                                                                       objCode=scencode,
                                                                       lyrname=self.name,
@@ -150,16 +150,16 @@ class EnvLayer(EnvType, Raster):
 
     def _set_map_prefix(self, mapprefix=None, scencode=None):
         if mapprefix is None:
-            mapprefix = self._create_map_prefix(scencode=self._scenCode)
+            mapprefix = self._create_map_prefix(scencode=self._scen_code)
         self._map_prefix = mapprefix
 
 # ...............................................
     @property
-    def scenCode(self):
-        return self._scenCode
+    def scen_code(self):
+        return self._scen_code
 
-    def setScenCode(self, scencode=None):
-        self._scenCode = scencode
+    def set_scen_code(self, scencode=None):
+        self._scen_code = scencode
 
 # ...............................................
     def create_local_map_filename(self, scencode=None):
@@ -168,7 +168,7 @@ class EnvLayer(EnvType, Raster):
         @param scencode: override scenario associated with this layer
         """
         if scencode is None:
-            scencode = self._scenCode
+            scencode = self._scen_code
         mapfname = self._earl_jr.create_filename(LMFileType.SCENARIO_MAP,
                                                             objCode=scencode,
                                                             usr=self._user_id, epsg=self._epsg)
@@ -178,12 +178,12 @@ class EnvLayer(EnvType, Raster):
     def set_local_map_filename(self, mapfname=None, scencode=None):
         """
         @note: Overrides existing _map_filename
-        @summary: Find mapfile containing layers for this model's occurrenceSet.
+        @summary: Find mapfile containing layers for this model's occ_layer.
         @param mapfname: Previously constructed mapfilename
         @param scencode: override scenario associated with this layer
         """
         if scencode is None:
-            scencode = self._scenCode
+            scencode = self._scen_code
         if mapfname is None:
             mapfname = self.create_local_map_filename(scencode=scencode)
         self._map_filename = mapfname

@@ -2128,7 +2128,7 @@ class Borg(DbPostgresql):
             epsg: filter by this EPSG code
             after_status: filter by status >= value
             before_status: filter by status <= value
-            occsetId: filter by occurrenceSet identifier
+            occsetId: filter by occ_layer identifier
             alg_code: filter by algorithm code
             mdl_scen_code: filter by model scenario code
             prj_scen_code: filter by projection scenario code
@@ -2163,7 +2163,7 @@ class Borg(DbPostgresql):
             epsg: filter by this EPSG code
             after_status: filter by status >= value
             before_status: filter by status <= value
-            occsetId: filter by occurrenceSet identifier
+            occsetId: filter by occ_layer identifier
             alg_code: filter by algorithm code
             mdl_scen_code: filter by model scenario code
             prj_scen_code: filter by projection scenario code

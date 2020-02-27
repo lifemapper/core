@@ -24,7 +24,6 @@ class EarlJr(LMObject):
     def __init__(self, scribe=None):
         """Constructor
         """
-        LMObject.__init__(self)
         self.ogc_url = OGC_SERVICE_URL
         self._scribe = scribe
 
@@ -429,7 +428,7 @@ class EarlJr(LMObject):
         """Return a GET query for the Lifemapper WMS GetMap request
 
         Args:
-            map_prefix: Lifemapper layer metadataUrl with 'ogc' format
+            map_prefix: Lifemapper layer metadata_url with 'ogc' format
             width: requested width for resulting image
             height: requested height for resulting image
             bbox: tuple in the form (minx, miny, maxx, maxy) delineating the
@@ -459,7 +458,7 @@ class EarlJr(LMObject):
         """Return a GET query for the Lifemapper WCS GetCoverage request
 
         Args:
-            map_prefix: Lifemapper layer metadataUrl with 'ogc' format
+            map_prefix: Lifemapper layer metadata_url with 'ogc' format
             bbox: tuple delineating the geographic limits of the query.
             resolution: (optional) spatial resolution along the x and y axes of
                 the Coordinate Reference System (CRS). The values are given in

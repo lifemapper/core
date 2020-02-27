@@ -35,7 +35,6 @@ class ServiceObject(LMObject):
                 this parameterized object
             mod_time: Last modification Time/Date, in MJD format
         """
-        LMObject.__init__(self)
         self._earl_jr = EarlJr()
 
         self._user_id = user_id

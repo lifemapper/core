@@ -19,8 +19,8 @@ class _ProjectionType(_LayerParameters, ProcessObject):
     """
 
     # .........................................
-    def __init__(self, occ_layer, algorithm, model_scenario, modelMask,
-                     projScenario, projMask, process_type, projMetadata,
+    def __init__(self, occ_layer, algorithm, model_scenario, model_mask,
+                     proj_scenario, proj_mask, process_type, proj_metadata,
                      status, status_mod_time, user_id, projectId):
         """Constructor for the _ProjectionType class
 
@@ -29,16 +29,16 @@ class _ProjectionType(_LayerParameters, ProcessObject):
             * algorithm: Algorithm object for SDM model process
             * model_scenario: : Scenario (environmental layer inputs) for SDM
                 model process
-            * modelMask: Mask for SDM model process
-            * projScenario: Scenario (environmental layer inputs) for SDM
+            * model_mask: Mask for SDM model process
+            * proj_scenario: Scenario (environmental layer inputs) for SDM
                 project process
-            * projMask: Mask for SDM project process
+            * proj_mask: Mask for SDM project process
             * process_type: LmCommon.common.lmconstants.ProcessType for
                 computation
-            * projMetadata: Metadata for this projection 
+            * proj_metadata: Metadata for this projection 
 
         Note:
-            * projMask and mdlMask are currently input data layer for the only
+            * proj_mask and mdlMask are currently input data layer for the only
                 mask method.  This is set in the boom configuration file in the 
                 `PREPROCESSING SDM_MASK` section, with `CODE` set to 
                 `hull_region_intersect`, `buffer` to some value in the mapunits
@@ -50,7 +50,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
             * LmServer.base.service_object.ProcessObject::__init__()
 
         Todo:
-            * projMask and mdlMask should be dictionaries with masking method,
+            * proj_mask and mdlMask should be dictionaries with masking method,
                 input data and parameters
         """
         if status is not None and status_mod_time is None:
@@ -58,16 +58,16 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
         _LayerParameters.__init__(
             self, user_id, paramId=projectId, matrixIndex=-1,
-            metadata=projMetadata, mod_time=status_mod_time)
+            metadata=proj_metadata, mod_time=status_mod_time)
         ProcessObject.__init__(
             self, obj_id=projectId, process_type=process_type, status=status,
             status_mod_time=status_mod_time)
         self._occ_layer = occ_layer
         self._algorithm = algorithm
-        self._modelMask = modelMask
+        self._model_mask = model_mask
         self._model_scenario = model_scenario
-        self._projMask = projMask
-        self._projScenario = projScenario
+        self._projMask = proj_mask
+        self._projScenario = proj_scenario
 
 # ...............................................
 # Projection Input Data Object attributes:
@@ -81,7 +81,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
     def getModelMaskId(self):
         try:
-            return self._modelMask.get_id()
+            return self._model_mask.get_id()
         except:
             return None
 
@@ -108,7 +108,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
         return self._occ_layer.display_name
 
     @property
-    def projScenario(self):
+    def proj_scenario(self):
         return self._projScenario
 
     @property
@@ -116,7 +116,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
         return self._projScenario.code
 
     @property
-    def projMask(self):
+    def proj_mask(self):
         return self._projMask
 
     def setProjMask(self, lyr):
@@ -147,15 +147,15 @@ class _ProjectionType(_LayerParameters, ProcessObject):
         return self._model_scenario
 
     @property
-    def modelScenarioCode(self):
+    def model_scenario_code(self):
         return self._model_scenario.code
 
     @property
-    def modelMask(self):
-        return self._modelMask
+    def model_mask(self):
+        return self._model_mask
 
-    def setModelMask(self, lyr):
-        self._modelMask = lyr
+    def set_model_mask(self, lyr):
+        self._model_mask = lyr
 
     @property
     def projInputLayers(self):
@@ -182,40 +182,40 @@ class SDMProjection(_ProjectionType, Raster):
 # .............................................................................
 # Constructor
 # .............................................................................
-    def __init__(self, occ_layer, algorithm, model_scenario, projScenario,
-                 process_type=None, modelMask=None, projMask=None,
-                 projMetadata={}, status=None, status_mod_time=None,
+    def __init__(self, occ_layer, algorithm, model_scenario, proj_scenario,
+                 process_type=None, model_mask=None, proj_mask=None,
+                 proj_metadata={}, status=None, status_mod_time=None,
                  sdmProjectionId=None, name=None, epsgcode=None, lyr_id=None,
                  squid=None, verify=None, dlocation=None, lyrMetadata={},
                  data_format=None, gdalType=None, valUnits=None, nodata_val=None,
                  min_val=None, max_val=None, mapunits=None, resolution=None,
-                 bbox=None, metadataUrl=None, parentMetadataUrl=None):
+                 bbox=None, metadata_url=None, parent_metadata_url=None):
         """
         @summary Constructor for the SDMProjection class
         @copydoc LmServer.legion.sdmproj._ProjectionType::__init__()
         @copydoc LmServer.base.layer._Layer::__init__()
         """
         (user_id, name, squid, process_type, bbox, epsg, mapunits, resolution,
-         isDiscreteData, data_format, title) = self._get_defaults_from_inputs(
-             lyr_id, occ_layer, algorithm, model_scenario, projScenario,
+         is_discrete_data, data_format, title) = self._get_defaults_from_inputs(
+             lyr_id, occ_layer, algorithm, model_scenario, proj_scenario,
              name, squid, process_type, bbox, epsgcode, mapunits, resolution,
              data_format)
         _ProjectionType.__init__(
-            self, occ_layer, algorithm, model_scenario, modelMask,
-            projScenario, projMask, process_type, projMetadata, status,
+            self, occ_layer, algorithm, model_scenario, model_mask,
+            proj_scenario, proj_mask, process_type, proj_metadata, status,
             status_mod_time, user_id, sdmProjectionId)
         if not lyrMetadata:
             lyrMetadata = self._create_metadata(
-                projScenario, occ_layer.display_name, algorithm.code,
-                title=title, isDiscreteData=isDiscreteData)
+                proj_scenario, occ_layer.display_name, algorithm.code,
+                title=title, is_discrete_data=is_discrete_data)
         Raster.__init__(
             self, name, user_id, epsg, lyr_id=lyr_id, squid=squid, verify=verify,
             dlocation=dlocation, metadata=lyrMetadata, data_format=data_format,
             gdalType=gdalType, valUnits=valUnits, nodata_val=nodata_val,
             min_val=min_val, max_val=max_val, mapunits=mapunits,
-            resolution=resolution, bbox=bbox, svcObjId=lyr_id,
-            serviceType=LMServiceType.PROJECTIONS, metadataUrl=metadataUrl,
-            parentMetadataUrl=parentMetadataUrl, mod_time=status_mod_time)
+            resolution=resolution, bbox=bbox, svc_obj_id=lyr_id,
+            service_type=LMServiceType.PROJECTIONS, metadata_url=metadata_url,
+            parent_metadata_url=parent_metadata_url, mod_time=status_mod_time)
         # TODO: clean this up.  Do not allow layer to calculate dlocation,
         #         subclass SDMProjection must override
         self.set_id(lyr_id)
@@ -227,13 +227,13 @@ class SDMProjection(_ProjectionType, Raster):
 # # .............................................................................
     @classmethod
     def init_from_parts(cls, occ_layer, algorithm, model_scenario,
-                      projScenario, layer, process_type=None, modelMask=None,
-                      projMask=None, projMetadata={}, status=None,
+                      proj_scenario, layer, process_type=None, model_mask=None,
+                      proj_mask=None, proj_metadata={}, status=None,
                       status_mod_time=None, sdmProjectionId=None):
         prj = SDMProjection(
-            occ_layer, algorithm, model_scenario, projScenario,
-            process_type=process_type, modelMask=modelMask, projMask=projMask,
-            projMetadata=projMetadata, status=status,
+            occ_layer, algorithm, model_scenario, proj_scenario,
+            process_type=process_type, model_mask=model_mask, proj_mask=proj_mask,
+            proj_metadata=proj_metadata, status=status,
             status_mod_time=status_mod_time, sdmProjectionId=sdmProjectionId,
             name=layer.name, epsgcode=layer.epsgcode, lyr_id=layer.get_id(),
             squid=layer.squid, verify=layer.verify, dlocation=layer._dlocation,
@@ -242,8 +242,8 @@ class SDMProjection(_ProjectionType, Raster):
             nodata_val=layer.nodata_val, min_val=layer.min_val,
             max_val=layer.max_val, mapunits=layer.mapUnits,
             resolution=layer.resolution, bbox=layer.bbox,
-            metadataUrl=layer.metadataUrl,
-            parentMetadataUrl=layer.parentMetadataUrl)
+            metadata_url=layer.metadata_url,
+            parent_metadata_url=layer.parent_metadata_url)
         return prj
 
 # .............................................................................
@@ -304,7 +304,7 @@ class SDMProjection(_ProjectionType, Raster):
 
 # ...............................................
     def _create_metadata(self, prjScenario, speciesName, algorithm_code,
-                              title=None, isDiscreteData=False):
+                              title=None, is_discrete_data=False):
         """
         @summary: Assemble SDMProjection metadata the first time it is created.
         """
@@ -319,16 +319,16 @@ class SDMProjection(_ProjectionType, Raster):
         metadata[ServiceObject.META_DESCRIPTION] = (
             'Modeled habitat for {} projected onto {} datalayers'.format(
                 speciesName, prjScenario.name))
-        metadata[Raster.META_IS_DISCRETE] = isDiscreteData
+        metadata[Raster.META_IS_DISCRETE] = is_discrete_data
         if title is not None:
             metadata[Raster.META_TITLE] = title
         return metadata
 
 # ...............................................
     def _get_defaults_from_inputs(self, lyr_id, occ_layer, algorithm,
-                               model_scenario, projScenario, name, squid,
+                               model_scenario, proj_scenario, name, squid,
                                process_type, bbox, epsgcode, mapunits,
-                               resolution, gdalFormat):
+                               resolution, gdal_format):
         """
         @summary: Assemble SDMProjection attributes from process inputs the
             first time it is created.
@@ -341,26 +341,26 @@ class SDMProjection(_ProjectionType, Raster):
         if squid is None:
             squid = occ_layer.squid
         if bbox is None:
-            bbox = projScenario.bbox
+            bbox = proj_scenario.bbox
         if epsgcode is None:
-            epsgcode = projScenario.epsgcode
+            epsgcode = proj_scenario.epsgcode
         if mapunits is None:
-            mapunits = projScenario.mapUnits
+            mapunits = proj_scenario.mapUnits
         if resolution is None:
-            resolution = projScenario.resolution
+            resolution = proj_scenario.resolution
         if process_type is None:
             if Algorithms.is_att(algorithm.code):
                 process_type = ProcessType.ATT_PROJECT
             else:
                 process_type = ProcessType.OM_PROJECT
-        isDiscreteData = Algorithms.returns_discrete_output(algorithm.code)
+        is_discrete_data = Algorithms.returns_discrete_output(algorithm.code)
         title = occ_layer._earl_jr.createSDMProjectTitle(
             occ_layer._user_id, occ_layer.display_name, algorithm.code,
-            model_scenario.code, projScenario.code)
-        if gdalFormat is None:
-            gdalFormat = Algorithms.get(algorithm.code).outputFormat
+            model_scenario.code, proj_scenario.code)
+        if gdal_format is None:
+            gdal_format = Algorithms.get(algorithm.code).output_format
         return (user_id, name, squid, process_type, bbox, epsgcode, mapunits,
-                resolution, isDiscreteData, gdalFormat, title)
+                resolution, is_discrete_data, gdal_format, title)
 
 # .............................................................................
 # Public methods

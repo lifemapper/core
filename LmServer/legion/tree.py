@@ -19,7 +19,7 @@ class Tree(TreeWrapper, ServiceObject):
     # .............................................................................
     def __init__(self, name, metadata={}, dlocation=None, data=None,
                  schema=DEFAULT_TREE_SCHEMA,
-                 metadataUrl=None, user_id=None, gridsetId=None, treeId=None,
+                 metadata_url=None, user_id=None, gridsetId=None, treeId=None,
                  mod_time=None):
         """Constructor for the tree class.
 
@@ -29,7 +29,7 @@ class Tree(TreeWrapper, ServiceObject):
             treeId: db_id  for ServiceObject
         """
         ServiceObject.__init__(self, user_id, treeId, LMServiceType.TREES,
-                               metadataUrl=metadataUrl, parentId=gridsetId,
+                               metadata_url=metadata_url, parentId=gridsetId,
                                mod_time=mod_time)
         self.name = name
         self._dlocation = dlocation
@@ -128,7 +128,7 @@ class Tree(TreeWrapper, ServiceObject):
 
     # ...............................................
     def getDataUrl(self, interface=JSON_INTERFACE):
-        durl = self._earl_jr.constructLMDataUrl(self.serviceType, self.get_id(),
+        durl = self._earl_jr.constructLMDataUrl(self.service_type, self.get_id(),
                                                interface)
         return durl
 

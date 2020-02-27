@@ -101,28 +101,28 @@ class _LayerSet(LMSpatialObject):
 #      pass
 
     # .............................................................................
-    def getLayer(self, metadataUrl):
+    def getLayer(self, metadata_url):
         """
         @summary Gets a layer from the LayerSet with the specified mapPrefix
-        @param metadataUrl: metadataUrl for which to find matching layer
-        @return the layer object with the given metadataUrl, None if there is no 
+        @param metadata_url: metadata_url for which to find matching layer
+        @return the layer object with the given metadata_url, None if there is no 
                 matching layer
         """
         for lyr in self._layers:
-            if lyr.metadataUrl == metadataUrl:
+            if lyr.metadata_url == metadata_url:
                 return lyr
         return None
 
     # .............................................................................
     def add_layer(self, lyr):
         """
-        @note: metadataUrl is used for identification - ensuring that a layer is 
+        @note: metadata_url is used for identification - ensuring that a layer is 
                not duplicated in the layerset.  MetadataUrl should be (relatively)
                unique, unlike mapPrefix which is constructed differently for each
                layerset (and mapfile) that contains a layer.
         """
         if isinstance(lyr, _Layer):
-            if self.getLayer(lyr.metadataUrl) is None:
+            if self.getLayer(lyr.metadata_url) is None:
                 if self._epsg is None or self._epsg == lyr.epsgcode:
                     self._layers.append(lyr)
                     if self._epsg is None:
@@ -251,7 +251,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
                  keywords=None, epsgcode=None, layers=None, user_id=None, 
                  db_id=None, mod_time=None, bbox=None, mapunits=None,
                  # This must be specified
-                 serviceType=LMServiceType.LAYERSETS,
+                 service_type=LMServiceType.LAYERSETS,
                  mapType=LMFileType.OTHER_MAP):
         """
         @summary Constructor for the LayerSet class
@@ -260,14 +260,14 @@ class MapLayerSet(_LayerSet, ServiceObject):
         @param mapname: mapname or code for this layerset
         @param layers: list of layers 
         @param dbid: database id of the object, occsetId for SDM_MAP layersets, 
-               gridsetId for RAD_MAP layersets, scenCode for Scenarios 
+               gridsetId for RAD_MAP layersets, scen_code for Scenarios 
         """
-        if serviceType is None:
-            raise LMError('Failed to specify serviceType for MapLayerSet superclass')
+        if service_type is None:
+            raise LMError('Failed to specify service_type for MapLayerSet superclass')
         _LayerSet.__init__(self, mapname, title=title, keywords=keywords,
                            epsgcode=epsgcode, layers=layers, bbox=bbox, 
                            mapunits=mapunits)
-        ServiceObject.__init__(self, user_id, db_id, serviceType, metadataUrl=url,
+        ServiceObject.__init__(self, user_id, db_id, service_type, metadata_url=url,
                                mod_time=mod_time)
         self._map_filename = dlocation
         self._mapType = mapType
@@ -365,7 +365,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         if self._mapType == LMFileType.SDM_MAP:
             for lyr in self.layers:
                 if isinstance(lyr, OccurrenceLayer):
-                    url = lyr.metadataUrl
+                    url = lyr.metadata_url
         elif self._mapType == LMFileType.RAD_MAP:
             print('RAD_MAP is not yet implemented')
         elif self._mapType == LMFileType.OTHER_MAP:
@@ -481,7 +481,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         for lyr in self.layers:
                 # todo: Check if lyr is OccurrenceLayer, respond differently to other
                 #       types of vector layers.
-                #       Maybe use ServiceObject._serviceType for display options
+                #       Maybe use ServiceObject._service_type for display options
             if isinstance(lyr, Vector):
                 lyrstr = self._createVectorLayer(lyr)
                 topLyrStr = '\n'.join([topLyrStr, lyrstr])
@@ -545,9 +545,9 @@ class MapLayerSet(_LayerSet, ServiceObject):
                           'wcs_rangeset_name  \"{}\"'.format(sdlLyr.name),
                           'wcs_rangeset_label \"{}\"'.format(sdlLyr.name)]
         # TODO: Where/how is this set??
-        #       if sdlLyr.nodataVal is not None:
+        #       if sdlLyr.nodata_val is not None:
         #          rasterMetadata.append('rangeset_nullvalue  {}'
-        #                               .format(str(sdlLyr.nodataVal))
+        #                               .format(str(sdlLyr.nodata_val))
 
         meta = self._getLayerMetadata(sdlLyr, metalines=rasterMetadata)
 
@@ -721,9 +721,9 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 parts.append('      UNITS  {}'.format(sdlLyr.mapUnits.upper()))
             parts.append('      OFFSITE  0  0  0')
 
-            if sdlLyr.nodataVal is None:
+            if sdlLyr.nodata_val is None:
                 sdlLyr.populateStats()
-            parts.append('      PROCESSING \"NODATA={}\"'.format(sdlLyr.nodataVal))
+            parts.append('      PROCESSING \"NODATA={}\"'.format(sdlLyr.nodata_val))
             # SDM projections are always scaled b/w 0 and 100
             if isinstance(sdlLyr, SDMProjection):
                 vmin = SCALE_PROJECTION_MINIMUM + 1

@@ -25,8 +25,8 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
     def __init__(self, name, user_id, epsgcode, cellsides, cellsize, mapunits,
                  bbox, siteId='siteid', siteX='centerX', siteY='centerY',
                  size=None, lyr_id=None, verify=None, dlocation=None,
-                 metadata={}, resolution=None, metadataUrl=None,
-                 parentMetadataUrl=None, mod_time=None, featureCount=0,
+                 metadata={}, resolution=None, metadata_url=None,
+                 parent_metadata_url=None, mod_time=None, featureCount=0,
                  feature_attributes={}, features={}, fidAttribute=None,
                  status=None, status_mod_time=None):
         """
@@ -57,10 +57,10 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         Vector.__init__(
             self, name, user_id, epsgcode, lyr_id=lyr_id, verify=verify,
             dlocation=dlocation, metadata=metadata,
-            dataFormat=LMFormat.SHAPE.driver, ogrType=ogr.wkbPolygon,
+            data_format=LMFormat.SHAPE.driver, ogrType=ogr.wkbPolygon,
             mapunits=mapunits, resolution=resolution, bbox=bbox,
-            svcObjId=lyr_id, serviceType=LMServiceType.SHAPEGRIDS,
-            metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
+            svc_obj_id=lyr_id, service_type=LMServiceType.SHAPEGRIDS,
+            metadata_url=metadata_url, parent_metadata_url=parent_metadata_url,
             mod_time=mod_time, featureCount=featureCount,
             feature_attributes=feature_attributes, features=features,
             fidAttribute=fidAttribute)
@@ -86,8 +86,8 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             siteY=siteY, size=size, lyr_id=vector.getLayerId(),
             verify=vector.verify, dlocation=vector.get_dlocation(),
             metadata=vector.lyrMetadata, resolution=vector.resolution,
-            metadataUrl=vector.metadataUrl,
-            parentMetadataUrl=vector.parentMetadataUrl, mod_time=vector.mod_time,
+            metadata_url=vector.metadata_url,
+            parent_metadata_url=vector.parent_metadata_url, mod_time=vector.mod_time,
             featureCount=vector.featureCount,
             feature_attributes=vector.feature_attributes,
             features=vector.features, fidAttribute=vector.fidAttribute,

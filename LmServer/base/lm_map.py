@@ -190,33 +190,33 @@ class LMMap(LMSpatialObject):
         return maplayers
 
 # ...............................................
-    def _createVectorLayer(self, sdlLyr):
+    def _createVectorLayer(self, sdl_lyr):
         attMeta = []
         proj = None
         meta = None
         cls = None
 
-        dataspecs = self._getVectorDataSpecs(sdlLyr)
+        dataspecs = self._getVectorDataSpecs(sdl_lyr)
         if dataspecs:
-            proj = self._createProjectionInfo(sdlLyr.epsgcode)
-            meta = self._getLayerMetadata(sdlLyr, metalines=attMeta,
+            proj = self._createProjectionInfo(sdl_lyr.epsgcode)
+            meta = self._getLayerMetadata(sdl_lyr, metalines=attMeta,
                                                     isVector=True)
 
-        if (sdlLyr.ogrType == ogr.wkbPoint
-             or sdlLyr.ogrType == ogr.wkbMultiPoint):
+        if (sdl_lyr.ogrType == ogr.wkbPoint
+             or sdl_lyr.ogrType == ogr.wkbMultiPoint):
             style = self._createStyle(POINT_SYMBOL, POINT_SIZE,
                                               colorstr=DEFAULT_POINT_COLOR)
-        elif (sdlLyr.ogrType == ogr.wkbLineString
-                or sdlLyr.ogrType == ogr.wkbMultiLineString):
+        elif (sdl_lyr.ogrType == ogr.wkbLineString
+                or sdl_lyr.ogrType == ogr.wkbMultiLineString):
             style = self._createStyle(LINE_SYMBOL, LINE_SIZE,
                                               colorstr=DEFAULT_LINE_COLOR)
-        elif (sdlLyr.ogrType == ogr.wkbPolygon
-                or sdlLyr.ogrType == ogr.wkbMultiPolygon):
+        elif (sdl_lyr.ogrType == ogr.wkbPolygon
+                or sdl_lyr.ogrType == ogr.wkbMultiPolygon):
             style = self._createStyle(POLYGON_SYMBOL, POLYGON_SIZE,
                                               outlinecolorstr=DEFAULT_LINE_COLOR)
-        cls = self._createClass(sdlLyr.name, [style])
+        cls = self._createClass(sdl_lyr.name, [style])
 
-        lyr = self._createLayer(sdlLyr, dataspecs, proj, meta, cls=cls)
+        lyr = self._createLayer(sdl_lyr, dataspecs, proj, meta, cls=cls)
         return lyr
 
 # ...............................................
@@ -256,35 +256,35 @@ class LMMap(LMSpatialObject):
         return jlyrs
 
 # ...............................................
-    def _createRasterLayer(self, sdlLyr, paletteName):
-        dataspecs = self._getRasterDataSpecs(sdlLyr, paletteName)
-        proj = self._createProjectionInfo(sdlLyr.epsgcode)
+    def _createRasterLayer(self, sdl_lyr, paletteName):
+        dataspecs = self._getRasterDataSpecs(sdl_lyr, paletteName)
+        proj = self._createProjectionInfo(sdl_lyr.epsgcode)
         rasterMetadata = [  # following 3 required in MS 6.0+
-                                'wcs_label  \"%s\"' % sdlLyr.name,
-                                'wcs_rangeset_name  \"%s\"' % sdlLyr.name,
-                                'wcs_rangeset_label \"%s\"' % sdlLyr.name]
+                                'wcs_label  \"%s\"' % sdl_lyr.name,
+                                'wcs_rangeset_name  \"%s\"' % sdl_lyr.name,
+                                'wcs_rangeset_label \"%s\"' % sdl_lyr.name]
         # TODO: Where/how is this set??
-#         if sdlLyr.nodata_val is not None:
+#         if sdl_lyr.nodata_val is not None:
 #             rasterMetadata.append('rangeset_nullvalue  %s'
-#                                          % str(sdlLyr.nodata_val))
+#                                          % str(sdl_lyr.nodata_val))
 
-        meta = self._getLayerMetadata(sdlLyr, metalines=rasterMetadata)
+        meta = self._getLayerMetadata(sdl_lyr, metalines=rasterMetadata)
 
-        lyr = self._createLayer(sdlLyr, dataspecs, proj, meta)
+        lyr = self._createLayer(sdl_lyr, dataspecs, proj, meta)
         return lyr
 
 # ...............................................
-    def _createLayer(self, sdlLyr, dataspecs, proj, meta, cls=None):
+    def _createLayer(self, sdl_lyr, dataspecs, proj, meta, cls=None):
         lyr = ''
         if dataspecs:
             lyr = '\n'.join([lyr, '    LAYER'])
-            lyr = '\n'.join([lyr, '        NAME  \"%s\"' % sdlLyr.name])
-            lyr = '\n'.join([lyr, '        TYPE  %s' % self._getMSText(sdlLyr)])
+            lyr = '\n'.join([lyr, '        NAME  \"%s\"' % sdl_lyr.name])
+            lyr = '\n'.join([lyr, '        TYPE  %s' % self._getMSText(sdl_lyr)])
             lyr = '\n'.join([lyr, '        STATUS  ON'])
             lyr = '\n'.join([lyr, '        OPACITY 100'])
 #             lyr = '\n'.join([lyr, '        DUMP  TRUE'])
 
-            ext = sdlLyr.getSSVExtentString()
+            ext = sdl_lyr.getSSVExtentString()
             if ext is not None:
                 lyr = '\n'.join([lyr, '        EXTENT  %s' % ext])
 
@@ -376,11 +376,11 @@ class LMMap(LMSpatialObject):
         return prj
 
 # ...............................................
-    def _getLayerMetadata(self, sdlLyr, metalines=[], isVector=False):
+    def _getLayerMetadata(self, sdl_lyr, metalines=[], isVector=False):
         meta = ''
         meta = '\n'.join([meta, '        METADATA'])
         try:
-            lyrTitle = sdlLyr.lyr_metadata[ServiceObject.META_TITLE]
+            lyrTitle = sdl_lyr.lyr_metadata[ServiceObject.META_TITLE]
         except:
             lyrTitle = None
         # DUMP True deprecated in Mapserver 6.0, replaced by
@@ -389,7 +389,7 @@ class LMMap(LMSpatialObject):
             meta = '\n'.join([meta, '            gml_geom_type \"point\"'])
             meta = '\n'.join([meta, '            gml_include_items \"all\"'])
         # ows_ used in metadata for multiple OGC services
-        meta = '\n'.join([meta, '            ows_name  \"%s\"' % sdlLyr.name])
+        meta = '\n'.join([meta, '            ows_name  \"%s\"' % sdl_lyr.name])
         if lyrTitle is not None:
             meta = '\n'.join([meta, '            ows_title  \"%s\"' % lyrTitle])
         for line in metalines:
@@ -398,17 +398,17 @@ class LMMap(LMSpatialObject):
         return meta
 
 # ...............................................
-    def _getVectorDataSpecs(self, sdlLyr):
+    def _getVectorDataSpecs(self, sdl_lyr):
         dataspecs = None
         # limit to 1000 features for archive point data
-        if (isinstance(sdlLyr, OccurrenceLayer) and
-             sdlLyr.getUserId() == PUBLIC_USER and
-             sdlLyr.query_count > POINT_COUNT_MAX):
-            dlocation = sdlLyr.get_dlocation(largeFile=False)
+        if (isinstance(sdl_lyr, OccurrenceLayer) and
+             sdl_lyr.getUserId() == PUBLIC_USER and
+             sdl_lyr.query_count > POINT_COUNT_MAX):
+            dlocation = sdl_lyr.get_dlocation(largeFile=False)
             if not os.path.exists(dlocation):
-                dlocation = sdlLyr.get_dlocation()
+                dlocation = sdl_lyr.get_dlocation()
         else:
-            dlocation = sdlLyr.get_dlocation()
+            dlocation = sdl_lyr.get_dlocation()
 
         if dlocation is not None and os.path.exists(dlocation):
             dataspecs = '        CONNECTIONTYPE  OGR'
@@ -419,38 +419,38 @@ class LMMap(LMSpatialObject):
         return dataspecs
 
 # ...............................................
-    def _getRasterDataSpecs(self, sdlLyr, paletteName):
+    def _getRasterDataSpecs(self, sdl_lyr, paletteName):
         dataspecs = None
-        dlocation = sdlLyr.get_dlocation()
+        dlocation = sdl_lyr.get_dlocation()
         if dlocation is not None and os.path.exists(dlocation):
             dataspecs = '        DATA  \"%s\"' % dlocation
-            if sdlLyr.mapUnits is not None:
+            if sdl_lyr.mapUnits is not None:
                 dataspecs = '\n'.join([dataspecs, '        UNITS  %s' %
-                                              sdlLyr.mapUnits.upper()])
+                                              sdl_lyr.mapUnits.upper()])
             dataspecs = '\n'.join([dataspecs, '        OFFSITE  0  0  0'])
 
-            if sdlLyr.nodata_val is None:
-                sdlLyr.populateStats()
+            if sdl_lyr.nodata_val is None:
+                sdl_lyr.populateStats()
             dataspecs = '\n'.join(
                 [dataspecs, '        PROCESSING \"NODATA={}\"'.format(
-                    sdlLyr.nodata_val)])
+                    sdl_lyr.nodata_val)])
             # SDM projections are always scaled b/w 0 and 100
-            if isinstance(sdlLyr, SDMProjection):
+            if isinstance(sdl_lyr, SDMProjection):
                 vmin = SCALE_PROJECTION_MINIMUM + 1
                 vmax = SCALE_PROJECTION_MAXIMUM
             else:
-                vmin = sdlLyr.minVal
-                vmax = sdlLyr.maxVal
+                vmin = sdl_lyr.min_val
+                vmax = sdl_lyr.max_val
             rampClass = self._createColorRamp(vmin, vmax, paletteName)
             dataspecs = '\n'.join([dataspecs, rampClass])
 
 #             # Continuous data
-#             if not(sdlLyr.getIsDiscreteData()):
+#             if not(sdl_lyr.getIsDiscreteData()):
 #                 rampClass = self._createColorRamp(vmin, vmax, paletteName)
 #                 dataspecs = '\n'.join([dataspecs, rampClass])
 #             # Classified data (8-bit projections)
 #             else:
-#                 vals = sdlLyr.getHistogram()
+#                 vals = sdl_lyr.getHistogram()
 #                 classdata = self._getDiscreteClasses(vals, paletteName)
 #                 if classdata is not None:
 #                     dataspecs = '\n'.join([dataspecs, classdata])
@@ -469,18 +469,18 @@ class LMMap(LMSpatialObject):
             return None
 
 # ...............................................
-    def _getMSText(self, sdllyr):
-        if isinstance(sdllyr, Raster):
+    def _getMSText(self, sdl_lyr):
+        if isinstance(sdl_lyr, Raster):
             return 'RASTER'
-        elif isinstance(sdllyr, Vector):
-            if (sdllyr.ogrType == ogr.wkbPoint or
-                 sdllyr.ogrType == ogr.wkbMultiPoint):
+        elif isinstance(sdl_lyr, Vector):
+            if (sdl_lyr.ogrType == ogr.wkbPoint or
+                 sdl_lyr.ogrType == ogr.wkbMultiPoint):
                 return 'POINT'
-            elif (sdllyr.ogrType == ogr.wkbLineString or
-                    sdllyr.ogrType == ogr.wkbMultiLineString):
+            elif (sdl_lyr.ogrType == ogr.wkbLineString or
+                    sdl_lyr.ogrType == ogr.wkbMultiLineString):
                 return 'LINE'
-            elif (sdllyr.ogrType == ogr.wkbPolygon or
-                    sdllyr.ogrType == ogr.wkbMultiPolygon):
+            elif (sdl_lyr.ogrType == ogr.wkbPolygon or
+                    sdl_lyr.ogrType == ogr.wkbMultiPolygon):
                 return 'POLYGON'
         else:
             raise Exception('Unknown _Layer type')

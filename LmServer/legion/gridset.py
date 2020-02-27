@@ -31,7 +31,7 @@ class Gridset(ServiceObject):  # LMMap
                      shapeGrid=None, shapeGridId=None, tree=None, treeId=None,
                      siteIndicesFilename=None,
                      dlocation=None, epsgcode=None, matrices=None,
-                     user_id=None, gridsetId=None, metadataUrl=None, mod_time=None):
+                     user_id=None, gridsetId=None, metadata_url=None, mod_time=None):
         """
         @summary Constructor for the Gridset class
         @copydoc LmServer.base.service_object.ServiceObject::__init__()
@@ -57,7 +57,7 @@ class Gridset(ServiceObject):  # LMMap
                                   .format(self._epsg, shapeGrid.epsgcode))
 
         ServiceObject.__init__(self, user_id, gridsetId, LMServiceType.GRIDSETS,
-                                      metadataUrl=metadataUrl, mod_time=mod_time)
+                                      metadata_url=metadata_url, mod_time=mod_time)
         # TODO: Aimee, do you want to move this somewhere else?
         self._dlocation = None
         self._map_filename = None
@@ -143,7 +143,7 @@ class Gridset(ServiceObject):  # LMMap
         grdid = self.get_id()
         if grdid is None:
             grdid = ID_PLACEHOLDER
-        mapprefix = self._earl_jr.constructMapPrefixNew(urlprefix=self.metadataUrl,
+        mapprefix = self._earl_jr.constructMapPrefixNew(urlprefix=self.metadata_url,
                                         ftype=LMFileType.RAD_MAP, mapname=self.map_name,
                                         usr=self._user_id)
         return mapprefix
@@ -275,7 +275,7 @@ class Gridset(ServiceObject):  # LMMap
             # Make sure to set the parent Id and URL
             if self.get_id() is not None:
                 tree.parentId = self.get_id()
-                tree.setParentMetadataUrl(self.metadataUrl)
+                tree.setParentMetadataUrl(self.metadata_url)
             self._tree = tree
 
 # ...............................................
@@ -297,7 +297,7 @@ class Gridset(ServiceObject):  # LMMap
                 # Make sure to set the parent Id and URL
                 if self.get_id() is not None:
                     mtx.parentId = self.get_id()
-                    mtx.setParentMetadataUrl(self.metadataUrl)
+                    mtx.setParentMetadataUrl(self.metadata_url)
                 if mtx.get_id() is None:
                     self._matrices.append(mtx)
                 else:

@@ -72,7 +72,7 @@ class Boomer(LMObject):
         # iterator tool for species
         self.christopher = None
 
-#         # Dictionary of {scenCode: (potatoChain, triagePotatoFile)}
+#         # Dictionary of {scen_code: (potatoChain, triagePotatoFile)}
 #         self.potatoes = None
 
         # MFChain for lots of spuds

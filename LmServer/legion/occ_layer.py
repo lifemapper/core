@@ -94,8 +94,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
                  data_format=LMFormat.SHAPE.driver, valUnits=None,
                  val_attribute=None, nodata_val=None, min_val=None, max_val=None,
                  mapunits=None, resolution=None, bbox=None,
-                 occ_layer_id=None, serviceType=LMServiceType.OCCURRENCES,
-                 metadataUrl=None, parentMetadataUrl=None, featureCount=0,
+                 occ_layer_id=None, service_type=LMServiceType.OCCURRENCES,
+                 metadata_url=None, parent_metadata_url=None, featureCount=0,
                  feature_attributes={}, features={}, fidAttribute=None,
                  occMetadata={}, sci_name=None, objId=None, process_type=None,
                  status=None, status_mod_time=None):
@@ -118,8 +118,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
             data_format=data_format, ogrType=ogr.wkbPoint, valUnits=valUnits,
             val_attribute=val_attribute, nodata_val=nodata_val, min_val=min_val,
             max_val=max_val, mapunits=mapunits, resolution=resolution, bbox=bbox,
-            svcObjId=occ_layer_id, serviceType=serviceType,
-            metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl,
+            svc_obj_id=occ_layer_id, service_type=service_type,
+            metadata_url=metadata_url, parent_metadata_url=parent_metadata_url,
             mod_time=status_mod_time, featureCount=featureCount,
             feature_attributes=feature_attributes, features=features,
             fidAttribute=fidAttribute)
@@ -219,7 +219,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                      OccurrenceSet._dlocation of the shapefile if it is None.
         @param occid: The database id for the object
         @note: Also sets OccurrenceSet._dlocation, _Layer.map_prefix, and
-            Vector.name.  ServiceObject.metadataUrl is constructed using the id
+            Vector.name.  ServiceObject.metadata_url is constructed using the id
             on first access.
         """
         super(OccurrenceLayer, self).set_id(occid)
@@ -305,11 +305,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
         occid = self.get_id()
         if occid is None:
             occid = ID_PLACEHOLDER
-        lyrname = self._earl_jr.createBasename(
+        lyrname = self._earl_jr.create_basename(
             LMFileType.OCCURRENCE_FILE, objCode=occid, usr=self._user_id,
             epsg=self.epsgcode)
-        mapprefix = self._earl_jr.constructMapPrefixNew(
-            urlprefix=self.metadataUrl, ftype=LMFileType.SDM_MAP,
+        mapprefix = self._earl_jr.construct_map_prefix_new(
+            urlprefix=self.metadata_url, ftype=LMFileType.SDM_MAP,
             mapname=self.map_name, lyrname=lyrname, usr=self._user_id)
         return mapprefix
 
@@ -326,7 +326,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
     def map_layername(self):
         lyrname = None
         if self._db_id is not None:
-            lyrname = self._earl_jr.createLayername(occsetId=self._db_id)
+            lyrname = self._earl_jr.create_layername(occsetId=self._db_id)
         return lyrname
 
 # ...............................................
