@@ -95,7 +95,6 @@ class ServiceObject(LMObject):
                 self._metadata_url = self.construct_metadata_url()
             except Exception as e:
                 print(str(e))
-                pass
         return self._metadata_url
 
     # ....................................
