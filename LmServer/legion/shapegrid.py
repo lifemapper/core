@@ -131,7 +131,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         if size is not None and isinstance(size, int):
             self._size = size
         else:
-            self._size = self._getFeatureCount()
+            self._size = self._get_feature_count()
 
     # .................................
     @property

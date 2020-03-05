@@ -11,6 +11,8 @@ from LmServer.common.lmconstants import LMServiceType
 
 # .............................................................................
 class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
+    """Class representing individual matrix columns
+    """
     # BoomKeys uses these strings, prefixed by 'INTERSECT_'
     # Query to filter layer for intersect
     INTERSECT_PARAM_FILTER_STRING = 'filter_string'
@@ -35,7 +37,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
 
     # ....................................
     def __init__(self, matrix_index, matrix_id, user_id,
-                     # inputs if this is connected to a layer and shapegrid
+                 # inputs if this is connected to a layer and shapegrid
                  layer=None, layer_id=None, shapegrid=None, shapegrid_id=None,
                  intersect_params=None, squid=None, ident=None,
                  process_type=None, metadata=None, matrix_column_id=None,
