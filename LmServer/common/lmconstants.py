@@ -5,7 +5,7 @@ import inspect
 import os
 
 from LmCommon.common.lmconstants import (
-    DWCNames, JobStatus, LMFormat, MatrixType)
+    DwcNames, JobStatus, LMFormat, MatrixType)
 from LmServer.common.localconstants import (
     APP_PATH, CS_PORT, DATA_PATH, DEFAULT_EPSG, EXTRA_CS_OPTIONS,
     EXTRA_MAKEFLOW_OPTIONS, EXTRA_WORKER_FACTORY_OPTIONS, EXTRA_WORKER_OPTIONS,
@@ -189,10 +189,10 @@ class OccurrenceFieldNames(Enum):
     LOCAL_ID = ['localid', 'localId', 'occkey']
     UUID = ['uuid']
     LONGITUDE = ['longitude', 'x', 'lon', 'long',
-                 DWCNames.DECIMAL_LONGITUDE['SHORT'],
-                 DWCNames.DECIMAL_LONGITUDE['FULL']]
-    LATITUDE = ['latitude', 'y', 'lat', DWCNames.DECIMAL_LATITUDE['SHORT'],
-                DWCNames.DECIMAL_LATITUDE['FULL']]
+                 DwcNames.DECIMAL_LONGITUDE['SHORT'],
+                 DwcNames.DECIMAL_LONGITUDE['FULL']]
+    LATITUDE = ['latitude', 'y', 'lat', DwcNames.DECIMAL_LATITUDE['SHORT'],
+                DwcNames.DECIMAL_LATITUDE['FULL']]
     DATANAME = ['canname', 'species']
     GEOMETRY_WKT = ['geomwkt']
 
@@ -373,7 +373,7 @@ class LMFileType(Enum):
 
     @staticmethod
     def is_map(rtype):
-        if rtype in LMFileType.mapTypes():
+        if rtype in LMFileType.map_types():
             return True
         return False
 
@@ -559,11 +559,11 @@ class FileFix:
     @staticmethod
     def get_map_type_from_name(prefix=None, ext=None):
         if prefix is not None:
-            for ftype in LMFileType.mapTypes():
+            for ftype in LMFileType.map_types():
                 if FileFix.PREFIX[ftype] == prefix:
                     return ftype
         elif ext is not None:
-            for ftype in LMFileType.mapTypes():
+            for ftype in LMFileType.map_types():
                 if FileFix.EXTENSION[ftype] == ext:
                     return ftype
         return None

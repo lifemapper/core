@@ -162,6 +162,10 @@ class DbPostgresql(LMAbstractObject):
         Args:
             query string containing a stored function name and parameters
 
+        Returns:
+            tuple of values representing the matching row, and a dictionary of
+                indexes for the column names
+
         Raises:
             LMError: on error returned from the database.
         """
@@ -201,6 +205,10 @@ class DbPostgresql(LMAbstractObject):
                 views
             where_etc_clause: string containing all modifiers following 'where'
                 in a query
+
+        Returns:
+            List of rows (row = tuple of values for a record) and dictionary of 
+            field names and column indexes.
 
         Raises:
             LMError: on error returned from the database.
@@ -272,8 +280,8 @@ class DbPostgresql(LMAbstractObject):
             fn_args: 0..n arguments for the stored function
 
         Returns:
-            tuple of values representing the matching rows, and a dictionary of
-                indexes for the column names
+            List of rows (row = tuple of values for a record) and dictionary of 
+            field names and column indexes.
 
         Raises:
             LMError: on error returned from the database
@@ -288,6 +296,10 @@ class DbPostgresql(LMAbstractObject):
         Args:
             fn_name: stored function name
             fn_args: 0..n arguments to the stored function
+
+        Returns:
+            List of rows (row = tuple of values for a record) and dictionary of 
+            field names and column indexes.
 
         Raises:
             LMError: on error returned from the database.
@@ -325,6 +337,9 @@ class DbPostgresql(LMAbstractObject):
         Args:
             fn_name: stored function name
             fn_args: 0..n arguments to the stored function
+
+        Returns:
+            An integer indicating the number of records modified. 
 
         Raises:
             LMError: on error returned from the database.
@@ -375,6 +390,10 @@ class DbPostgresql(LMAbstractObject):
         Args:
             fn_name: stored function name
             fn_args: 0..n arguments to the stored function
+            
+        Returns:
+            tuple of values representing the matching row, and a dictionary of
+                indexes for the column names
 
         Raises:
             LMError: on error returned from the database.
@@ -398,7 +417,8 @@ class DbPostgresql(LMAbstractObject):
             fn_args: 0..n arguments to the stored function
 
         Returns:
-            List of rows and dictionary of indexes
+            List of rows (row = tuple of values for a record) and dictionary of 
+            field names and column indexes.
 
         Raises:
             LMError: on error returned from the database.
@@ -438,8 +458,8 @@ class DbPostgresql(LMAbstractObject):
             *cmds: 0..n commands to be executed.
 
         Returns:
-            A list of tuples and a dictionary of indexes for the column names.
-                Each tuple contains values for a single row.
+            List of rows (row = tuple of values for a record) and dictionary of 
+            field names and column indexes
 
         Raises:
             LMError: on error returned from the database.

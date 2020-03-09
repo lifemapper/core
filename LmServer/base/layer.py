@@ -29,8 +29,7 @@ DEFAULT_GDAL = LMFormat.GTIFF
 
 # .............................................................................
 class _Layer(LMSpatialObject, ServiceObject):
-    """Superclass for all spatial layer objects.
-    """
+    """Superclass for all spatial layer objects."""
     META_IS_CATEGORICAL = 'isCategorical'
     META_IS_DISCRETE = 'isDiscrete'
 
@@ -133,29 +132,25 @@ class _Layer(LMSpatialObject, ServiceObject):
     # .............................
     @property
     def data_format(self):
-        """Gets the data format of the layer
-        """
+        """Gets the data format of the layer"""
         return self._data_format
 
     # .............................
     @property
     def gdal_type(self):
-        """Gets the GDAL data format of the layer
-        """
+        """Gets the GDAL data format of the layer"""
         return self._gdal_type
 
     # .............................
     @property
     def ogr_type(self):
-        """Gets the OGR data format of the layer
-        """
+        """Gets the OGR data format of the layer"""
         return self._ogr_type
 
     # .............................
     @property
     def val_attribute(self):
-        """Get the value attribute of the layer
-        """
+        """Get the value attribute of the layer"""
         return self._val_attribute
 
     # .............................
@@ -249,14 +244,12 @@ class _Layer(LMSpatialObject, ServiceObject):
     # .............................
     @property
     def verify(self):
-        """Get the verify hash value
-        """
+        """Get the verify hash value"""
         return self._verify
 
     # .............................
     def get_meta_location(self):
-        """Returns the location of metadata file
-        """
+        """Returns the location of metadata file"""
         return self._meta_location
 
     # .............................
@@ -297,8 +290,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def clear_dlocation(self):
-        """Clears the _dlocation attribute
-        """
+        """Clears the _dlocation attribute"""
         self._dlocation = None
         self._absolute_path = None
         self._base_filename = None
@@ -329,21 +321,18 @@ class _Layer(LMSpatialObject, ServiceObject):
     # .............................
     @staticmethod
     def clear_data():
-        """Clear layer data
-        """
+        """Clear layer data"""
         raise LMError('Method must be implemented in subclass')
 
     # .............................
     @staticmethod
     def copy_data():
-        """Copy layer data
-        """
+        """Copy layer data"""
         raise LMError('Method must be implemented in subclass')
 
     # .............................
     def get_absolute_path(self):
-        """Returns the absolute path, without filename, of the object
-        """
+        """Returns the absolute path, without filename, of the object"""
         if self._absolute_path is None and self._dlocation is not None:
             self._absolute_path, self._base_filename = os.path.split(
                 self._dlocation)
@@ -351,8 +340,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def get_base_filename(self):
-        """Returns the base filename, without path, of the object
-        """
+        """Returns the base filename, without path, of the object"""
         if self._base_filename is None and self._dlocation is not None:
             self._absolute_path, self._base_filename = os.path.split(
                 self._dlocation)
@@ -360,28 +348,24 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def dump_layer_metadata(self):
-        """Returns a string of the dictionary of metadata for this object
-        """
+        """Returns a string of the dictionary of metadata for this object"""
         return super(_Layer, self)._dump_metadata(self.layer_metadata)
 
     # .............................
     def load_layer_metadata(self, new_metadata):
-        """Loads a dictionary or JSON object of metadata into this object
-        """
+        """Loads a dictionary or JSON object of metadata into this object"""
         self.layer_metadata = super(_Layer, self)._load_metadata(new_metadata)
 
     # .............................
     def add_layer_metadata(self, new_metadata_dict):
-        """Adds dictionary of metadata to the existing metadata for this object
-        """
+        """Adds dictionary of metadata to the existing metadata for this object"""
         self.layer_metadata = super(
             _Layer, self)._add_metadata(
                 new_metadata_dict, existing_metadata_dict=self.layer_metadata)
 
     # .............................
     def update_layer(self, mod_time, metadata=None):
-        """Updates mod_time, data verification hash, metadata of the object
-        """
+        """Updates mod_time, data verification hash, metadata of the object"""
         self.update_mod_time(mod_time)
         if metadata is not None:
             self.load_layer_metadata(metadata)
@@ -390,8 +374,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 
 # .............................................................................
 class _LayerParameters(LMObject):
-    """Decorator for _Layer class
-    """
+    """Decorator for _Layer class"""
     # Constants for metadata dictionary keys
     PARAM_FILTER_STRING = 'filterString'
     PARAM_VAL_NAME = 'valName'
@@ -424,8 +407,7 @@ class _LayerParameters(LMObject):
 
     # .............................
     def dump_param_metadata(self):
-        """Returns a string of the metadata for this object
-        """
+        """Returns a string of the metadata for this object"""
         return super(
             _LayerParameters, self)._dump_metadata(self.param_metadata)
 
@@ -548,8 +530,7 @@ class _LayerParameters(LMObject):
 
 # .............................................................................
 class Raster(_Layer):
-    """Class to hold information about a raster dataset.
-    """
+    """Class to hold information about a raster dataset."""
 
     # .............................
     def __init__(self, name, user_id, epsg_code, lyr_id=None, squid=None,
@@ -651,8 +632,7 @@ class Raster(_Layer):
     # .............................
     @staticmethod
     def test_raster(dlocation, band_num=1):
-        """Test a raster file
-        """
+        """Test a raster file"""
         success = True
         try:
             try:
@@ -691,8 +671,7 @@ class Raster(_Layer):
 
     # .............................
     def open_with_gdal(self, dlocation=None, band_num=1):
-        """Open the raster with GDAL
-        """
+        """Open the raster with GDAL"""
         if dlocation is None:
             dlocation = self._dlocation
         try:
@@ -741,8 +720,7 @@ class Raster(_Layer):
 
     # .............................
     def get_is_discrete_data(self):
-        """Get the is_discrete_data value.
-        """
+        """Get the is_discrete_data value."""
         return self._is_discrete_data
 
     # .............................
@@ -758,8 +736,7 @@ class Raster(_Layer):
     # .............................
     def populate_stats(self, dlocation, verify, gdal_type, data_format, bbox,
                        resolution, min_val, max_val, nodata_val, band_num=1):
-        """Updates or fills layer parameters by reading the data.
-        """
+        """Updates or fills layer parameters by reading the data."""
         msgs = []
         # msgs.append('File does not exist: {}'.format(dlocation))
         dataset, band = self.open_with_gdal(
@@ -964,8 +941,7 @@ class Raster(_Layer):
 
     # .............................
     def get_srs(self):
-        """Get the spatial reference system of the layer
-        """
+        """Get the spatial reference system of the layer"""
         if (self._dlocation is not None and os.path.exists(self._dlocation)):
             dataset = gdal.Open(str(self._dlocation), gdalconst.GA_ReadOnly)
             wkt_srs = dataset.GetProjection()
@@ -1059,7 +1035,7 @@ class Raster(_Layer):
     def get_wcs_request(bbox=None, resolution=None):
         """Gets a WCS request to retrieve layer data.
 
-        Todo:
+        TODO:
             Consider a "ServiceLayer" class that could include this function
         """
         raise LMError(
@@ -1069,10 +1045,7 @@ class Raster(_Layer):
 
 # .............................................................................
 class Vector(_Layer):
-    """
-    Class to hold information about a vector dataset.
-    """
-
+    """Class to hold information about a vector dataset."""
     # .............................
     def __init__(self, name, user_id, epsg_code, lyr_id=None, squid=None,
                  ident=None, verify=None, dlocation=None, metadata=None,
@@ -1194,8 +1167,7 @@ class Vector(_Layer):
     # .............................
     @property
     def features(self):
-        """Converts the private dictionary of features into a list of LmAttObjs
-        """
+        """Converts the private dictionary of features into a list of LmAttObjs"""
         return [
             LmAttObj(
                 {self._feature_attributes[k2][0]: self._features[k1][k2]
@@ -1205,15 +1177,13 @@ class Vector(_Layer):
     # .............................
     @property
     def feature_attributes(self):
-        """Get the attributes of the features
-        """
+        """Get the attributes of the features"""
         return self._feature_attributes
 
     # .............................
     @property
     def fid_attribute(self):
-        """Get the field identifier attribute
-        """
+        """Get the field identifier attribute"""
         return self._fid_attribute
 
     # .............................
@@ -1272,14 +1242,12 @@ class Vector(_Layer):
 
     # .............................
     def get_features(self):
-        """Get the features of the layer.
-        """
+        """Get the features of the layer."""
         return self._features
 
     # .............................
     def clear_features(self):
-        """Clear the features of the layer
-        """
+        """Clear the features of the layer"""
         del self._feature_attributes
         del self._features
         self.set_features(None, None)
@@ -1301,13 +1269,12 @@ class Vector(_Layer):
 
     # .............................
     def get_feature_attributes(self):
-        """Gets the feature attributes dictionary
-        """
+        """Returns the feature attributes dictionary"""
         return self._feature_attributes
 
     # .............................
     def set_val_attribute(self, val_attribute):
-        """Sets teh value attribute.
+        """Sets the value attribute.
 
         Args:
             val_attribute: field name for the attribute to map
@@ -1329,8 +1296,7 @@ class Vector(_Layer):
 
     # .............................
     def get_val_attribute(self):
-        """Gets the value attribute
-        """
+        """Returns the value attribute"""
         return self._val_attribute
 
     # .............................
@@ -1364,8 +1330,7 @@ class Vector(_Layer):
 
     # .............................
     def get_local_id_index(self):
-        """Gets the local id index
-        """
+        """Gets the local id index"""
         if self._local_id_idx is None:
             self._set_local_id_index()
         return self._local_id_idx
@@ -1388,8 +1353,7 @@ class Vector(_Layer):
 
     # .............................
     def get_shapefiles(self, other_location=None):
-        """Get the shapefile files for this layer
-        """
+        """Get the shapefile files for this layer"""
         shpnames = []
         if other_location is not None:
             dloc = other_location
@@ -1487,6 +1451,12 @@ class Vector(_Layer):
     @staticmethod
     def get_xy(wkt):
         """Get the X,Y values from well-known text
+        
+        Args:
+            wkt: well-known text for a point
+            
+        Note: 
+            this assumes the WKT is for a point
         """
         startidx = wkt.find('(')
         if wkt[:startidx].strip().lower() == 'point':
@@ -1507,6 +1477,15 @@ class Vector(_Layer):
     @classmethod
     def get_shapefile_row_headers(cls, shapefile_filename):
         """Get row headers for a shapefile.
+        
+        Args:
+            shapefile_filename: absolute filename for shapefile
+            
+        Returns:
+            a list of tuples representing points, (FeatureID, x, y)
+            
+        TODO:
+            rename for clarity
         """
         ogr.RegisterAll()
         drv = ogr.GetDriverByName(DEFAULT_OGR.driver)
@@ -1687,8 +1666,7 @@ class Vector(_Layer):
     # .............................
     @staticmethod
     def create_point_feature(o_dict, x_col, y_col, lyr_def, new_names):
-        """Create a point feature
-        """
+        """Create a point feature"""
         pt_feat = None
         try:
             pt_geom = ogr.Geometry(ogr.wkbPoint)
@@ -2040,7 +2018,7 @@ class Vector(_Layer):
         if ready:
             # unzip zip file stream
             for zname in zip_in.namelist():
-                tmp, ext = os.path.splitext(zname)
+                _, ext = os.path.splitext(zname)
                 # Check file extension and only unzip valid files
                 if ext in LMFormat.SHAPE.get_extensions():
                     newname = new_fname_wo_ext + ext
@@ -2160,8 +2138,7 @@ class Vector(_Layer):
 
     # .............................
     def get_features_wkt(self):
-        """Return Well Known Text (wkt) of the data features.
-        """
+        """Return Well Known Text (wkt) of the data features."""
         wkt = None
         self._set_geometry()
         if self._geometry is not None:
@@ -2218,8 +2195,7 @@ class Vector(_Layer):
     # .............................
     @staticmethod
     def test_vector(dlocation, driver=DEFAULT_OGR.driver):
-        """Test the vector file for validity
-        """
+        """Test the vector file for validity"""
         good_data = False
         feat_count = 0
         if dlocation is not None and os.path.exists(dlocation):
@@ -2243,6 +2219,11 @@ class Vector(_Layer):
     # .............................
     @staticmethod
     def index_shapefile(dlocation):
+        """Create a shptree index on the data
+        
+        Args:
+            dlocation: target location for the shptree index file
+        """
         try:
             shp_tree_cmd = os.path.join(APP_PATH, 'shptree')
             retcode = subprocess.call([shp_tree_cmd, '{}'.format(dlocation)])
@@ -2267,7 +2248,7 @@ class Vector(_Layer):
             - If column headers are not present, assume columns 0 = id,
                 1 = longitude, 2 = latitude
 
-        Todo:
+        TODO:
             - Save the rest of the fields using
                 Vector.split_csv_points_to_shapefiles
             - Remove feature_limit, read subset_dlocation if there is a limit
@@ -2375,7 +2356,7 @@ class Vector(_Layer):
         Note:
             populate_stats calls this
 
-        Todo:
+        TODO:
             remove feature_limit, read subset_dlocation if there is a limit
         """
         this_bbox = local_id_idx = geom_idx = feats = feat_attrs = None
@@ -2516,7 +2497,7 @@ class Vector(_Layer):
         Returns:
             New bbox string, indices of the localId int and geometry fields
 
-        Todo:
+        TODO:
             Remove feature_limit, read subset_dlocation if there is a limit
         """
         new_bbox = local_id_idx = geom_idx = None

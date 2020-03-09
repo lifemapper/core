@@ -24,20 +24,28 @@ from osgeo import gdal, gdalconst, ogr
 
 # .............................................................................
 class _LayerSet(LMSpatialObject):
-    """
-    Superclass of MapLayerSet
-    @todo: extend as collections.MutableSequence subclass
+    """Superclass of MapLayerSet
+    
+    TODO:
+        extend as collections.MutableSequence subclass
     """
 
-    def __init__(self, name, title=None, keywords=None, epsgcode=None,
-              layers=None, bbox=None, mapunits=None):
-        """
-        @summary Constructor for the LayerSet class
-        @copydoc LmServer.base.lmobj.LMSpatialObject::__init__()
-        @param name: name or code for this layerset
-        @param title: (optional) human readable title of this layerset
-        @param keywords: (optional) sequence of keywords for this layerset
-        @param layers: (optional) list of layers 
+    def __init__(self, name, title=None, keywords=None, layers=None, 
+                 epsgcode=None, bbox=None, mapunits=None):
+        """Constructor for the _LayerSet class
+        
+        Args:
+            name: name or code for this layerset
+            title: human readable title of this layerset
+            keywords: sequence of keywords for this layerset
+            layers: list of layers
+            epsgcode (int): EPSG code indicating the SRS to use
+            bbox: spatial extent of data
+                sequence in the form (minX, minY, maxX, maxY)
+                or comma-delimited string in the form 'minX, minY, maxX, maxY'
+            mapunits: units of measurement for the data. These are keywords as
+                used in  mapserver, choice of LegalMapUnits described in
+                    http://mapserver.gis.umn.edu/docs/reference/mapfile/mapObj)
         """
         LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
 
@@ -247,30 +255,42 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # .............................................................................
     # Constructor
     # .............................................................................
-    def __init__(self, mapname, title=None, url=None, dlocation=None, 
-                 keywords=None, epsgcode=None, layers=None, user_id=None, 
-                 db_id=None, mod_time=None, bbox=None, mapunits=None,
-                 # This must be specified
-                 service_type=LMServiceType.LAYERSETS,
-                 mapType=LMFileType.OTHER_MAP):
-        """
-        @summary Constructor for the LayerSet class
-        @copydoc LmServer.base.layerset._LayerSet::__init__()
-        @copydoc LmServer.base.service_object.ServiceObject::__init__()
-        @param mapname: mapname or code for this layerset
-        @param layers: list of layers 
-        @param dbid: database id of the object, occsetId for SDM_MAP layersets, 
-               gridsetId for RAD_MAP layersets, scen_code for Scenarios 
+    def __init__(self, name, title=None, keywords=None, layers=None,  
+                 epsgcode=None, bbox=None, mapunits=None, 
+                 user_id=None, db_id=None, service_type=LMServiceType.LAYERSETS,
+                 metadata_url=None, mod_time=None, 
+                 dlocation=None, map_type=LMFileType.OTHER_MAP):
+        """Constructor for the MapLayerSet class
+        
+        Args:
+            name: name or code for this layerset
+            title: human readable title of this layerset
+            keywords: sequence of keywords for this layerset
+            layers: list of layers
+            epsgcode (int): EPSG code indicating the SRS to use
+            bbox: spatial extent of data
+                sequence in the form (minX, minY, maxX, maxY)
+                or comma-delimited string in the form 'minX, minY, maxX, maxY'
+            mapunits: units of measurement for the data. These are keywords as
+                used in  mapserver, choice of LegalMapUnits described in
+                    http://mapserver.gis.umn.edu/docs/reference/mapfile/mapObj)
+            user_id: id for the owner of these data
+            db_id: database id of the object
+            service_type: constant from LMServiceType
+            metadata_url: URL for retrieving the metadata
+            mod_time: Last modification Time/Date, in MJD format
+            dlocation: data location of the mapfile
+            map_type: one of LmServer.common.LMFileType.map_types
         """
         if service_type is None:
             raise LMError('Failed to specify service_type for MapLayerSet superclass')
-        _LayerSet.__init__(self, mapname, title=title, keywords=keywords,
+        _LayerSet.__init__(self, name, title=title, keywords=keywords,
                            epsgcode=epsgcode, layers=layers, bbox=bbox, 
                            mapunits=mapunits)
-        ServiceObject.__init__(self, user_id, db_id, service_type, metadata_url=url,
-                               mod_time=mod_time)
+        ServiceObject.__init__(self, user_id, db_id, service_type, 
+                               metadata_url=metadata_url, mod_time=mod_time)
         self._map_filename = dlocation
-        self._mapType = mapType
+        self._map_type = map_type
         self._map_prefix = None
 
     # ...............................................
@@ -294,22 +314,22 @@ class MapLayerSet(_LayerSet, ServiceObject):
         @note: This method is overridden in Scenario  
         """
         fname = None
-        if self._mapType == LMFileType.SDM_MAP:
-            fname = self._earl_jr.create_filename(self._mapType,
+        if self._map_type == LMFileType.SDM_MAP:
+            fname = self._earl_jr.create_filename(self._map_type,
                                                occsetId=self.get_id(),
                                                usr=self._user_id)
         # This will not occur here? only in
         # LmServer.base.legion.gridset.Gridset
-        elif self._mapType == LMFileType.RAD_MAP:
-            fname = self._earl_jr.create_filename(self._mapType,
+        elif self._map_type == LMFileType.RAD_MAP:
+            fname = self._earl_jr.create_filename(self._map_type,
                                                gridsetId=self.get_id(),
                                                usr=self._user_id)
-        elif self._mapType == LMFileType.OTHER_MAP:
-            fname = self._earl_jr.create_filename(self._mapType,
+        elif self._map_type == LMFileType.OTHER_MAP:
+            fname = self._earl_jr.create_filename(self._map_type,
                                                usr=self._user_id,
                                                epsg=self._epsg)
         else:
-            print(('Unsupported mapType {}'.format(self._mapType)))
+            print(('Unsupported mapType {}'.format(self._map_type)))
         return fname
 
     # ...............................................
@@ -362,16 +382,16 @@ class MapLayerSet(_LayerSet, ServiceObject):
         """
         url = None
         self.set_local_map_filename()
-        if self._mapType == LMFileType.SDM_MAP:
+        if self._map_type == LMFileType.SDM_MAP:
             for lyr in self.layers:
                 if isinstance(lyr, OccurrenceLayer):
                     url = lyr.metadata_url
-        elif self._mapType == LMFileType.RAD_MAP:
+        elif self._map_type == LMFileType.RAD_MAP:
             print('RAD_MAP is not yet implemented')
-        elif self._mapType == LMFileType.OTHER_MAP:
+        elif self._map_type == LMFileType.OTHER_MAP:
             print('OTHER_MAP is not yet implemented')
         else:
-            print(('Unsupported mapType {}'.format(self._mapType)))
+            print(('Unsupported mapType {}'.format(self._map_type)))
         return url
 
     # .............................................................................

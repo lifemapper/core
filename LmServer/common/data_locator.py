@@ -22,16 +22,14 @@ class EarlJr(LMObject):
 
     # ................................
     def __init__(self, scribe=None):
-        """Constructor
-        """
+        """Constructor"""
         self.ogc_url = OGC_SERVICE_URL
         self._scribe = scribe
 
     # ................................
     @staticmethod
     def create_start_walken_filename(user, archive_name):
-        """Create the start walken filename
-        """
+        """Create the start walken filename"""
         name = '{}_{}'.format(user, archive_name)
         fname = os.path.join(LOG_PATH, 'start.{}.txt'.format(name))
         return fname
@@ -63,16 +61,14 @@ class EarlJr(LMObject):
     @staticmethod
     def create_sdm_project_title(user_id, taxa_name, alg_code, mdl_scen_code,
                                  prj_scen_code):
-        """Create a title for an SDM projection
-        """
+        """Create a title for an SDM projection"""
         return '{} modeled with {} projected onto {}'.format(
             taxa_name, alg_code, prj_scen_code)
 
     # ................................
     @staticmethod
     def _parse_sdm_id(id_str, group_size=3):
-        """Return a list of 3-digit strings from a multi-digit string.
-        """
+        """Return a list of 3-digit strings from a multi-digit string."""
         num_zeros = group_size - len(id_str) % group_size
         if num_zeros >= group_size:
             num_zeros -= group_size
@@ -278,6 +274,12 @@ class EarlJr(LMObject):
     # ................................
     def get_map_filename_from_map_name(self, map_name):
         """Get the map filename from the map name
+        
+        Args:
+            map_name: name for the map, used in Mapserver mapfile
+            
+        Returns:
+            absolute pathname for the mapfile
         """
         pth = self._create_static_map_path()
         if map_name == MAP_TEMPLATE:
@@ -327,6 +329,9 @@ class EarlJr(LMObject):
             parent_metadata_url: The nested structure of this object's parent
                 objects.  The nested structure will begin with a '/', and take
                 a form like: /{parent_class}/{parent id}/{class}/{id}
+                
+        Returns:
+            a URL for the service object REST API
         """
         postfix = self._create_web_service_postfix(
             service_type, object_id, parent_metadata_url=parent_metadata_url)
@@ -577,6 +582,13 @@ class EarlJr(LMObject):
     # ................................
     def parse_map_filename(self, map_f_name):
         """Parse a map filename
+        
+        Args:
+            map_f_name: absolute filename for the mapfile
+            
+        Returns:
+            A tuple containing map_name, ancillary flag, user id, epsg code, 
+            db id of OccurrenceLayer, db id of Gridset, scenario code
         """
         full_path, fname = os.path.split(map_f_name)
         map_name, _ = os.path.splitext(fname)

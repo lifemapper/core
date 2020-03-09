@@ -145,7 +145,7 @@ class Scenario(MapLayerSet):
         # layers are set not set in LayerSet or Layerset - done here to check
         # that each layer is an EnvLayer
         MapLayerSet.__init__(
-            self, code, url=metadata_url, epsg_code=epsg_code, user_id=user_id,
+            self, code, metadata_url=metadata_url, epsg_code=epsg_code, user_id=user_id,
             db_id=scenario_id, bbox=bbox, map_units=units, mod_time=mod_time,
             service_type=LMServiceType.SCENARIOS,
             map_type=LMFileType.SCENARIO_MAP)

@@ -34,7 +34,7 @@ class LMMap(LMSpatialObject):
 # Constructor
 # .............................................................................
     def __init__(self, mapname, title, url, epsgcode, bbox, mapunits,
-                     layers=[], gridset=None, mapType=LMFileType.OTHER_MAP):
+                     layers=[], gridset=None, map_type=LMFileType.OTHER_MAP):
         """
         @summary Constructor for the LayerSet class
         @copydoc LmServer.base.lmobj.LMSpatialObject::__init__()
@@ -51,7 +51,7 @@ class LMMap(LMSpatialObject):
         self.title = title
         self.layers = layers
         self._gridset = gridset
-        self._mapType = mapType
+        self._map_type = map_type
         self._map_prefix = None
 
 # .............................................................................
@@ -116,13 +116,13 @@ class LMMap(LMSpatialObject):
         @summary Set map attributes on the map from the LayerSet
         @param mapstr: string for a mapserver mapfile to modify
         """
-        if self._mapType == LMFileType.SDM_MAP:
+        if self._map_type == LMFileType.SDM_MAP:
             label = 'Lifemapper Species Map Service'
-        elif self._mapType == LMFileType.SCENARIO_MAP:
+        elif self._map_type == LMFileType.SCENARIO_MAP:
             label = 'Lifemapper Environmental Data Map Service'
-        elif self._mapType == LMFileType.ANCILLARY_MAP:
+        elif self._map_type == LMFileType.ANCILLARY_MAP:
             label = 'Lifemapper Ancillary Map Service'
-        elif self._mapType == LMFileType.RAD_MAP:
+        elif self._map_type == LMFileType.RAD_MAP:
             label = 'Lifemapper RAD Map Service'
         else:
             label = 'Lifemapper Data Service'
