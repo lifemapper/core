@@ -16,8 +16,7 @@ from LmServer.db.borg_scribe import BorgScribe
 
 # .............................................................................
 class Stockpile(LMObject):
-    """Update database with status of generated object files
-    """
+    """Update database with status of generated object files."""
 
     # ..................................
     @classmethod
@@ -80,8 +79,6 @@ class Stockpile(LMObject):
     # ..................................
     @classmethod
     def _get_object(cls, scribe, ptype, obj_id):
-        """Get object and update DB with status.
-        """
         # Get object
         obj = None
         try:
@@ -111,8 +108,6 @@ class Stockpile(LMObject):
     # ..................................
     @classmethod
     def _copy_object(cls, ptype, obj, file_names, meta_filename):
-        """Get object and update DB with status.
-        """
         metadata = None
         try:
             with open(meta_filename) as in_meta:
@@ -152,8 +147,6 @@ class Stockpile(LMObject):
     # ..................................
     @classmethod
     def _update_object(cls, scribe, obj, status):
-        """Get object and update DB with status.
-        """
         # Update verify hash and modtime for layers
         try:
             obj.update_layer()
@@ -173,8 +166,7 @@ class Stockpile(LMObject):
     # ...............................................
     @classmethod
     def test_file(cls, output_f_name):
-        """Test the validity of a file
-        """
+        """Test the validity of a file."""
         success = True
         msgs = []
         _, ext = os.path.splitext(output_f_name)
@@ -223,8 +215,7 @@ class Stockpile(LMObject):
 
 # .............................................................................
 def main():
-    """Main method of script
-    """
+    """Main method of script."""
     parser = argparse.ArgumentParser(
         description='This script updates a Lifemapper object')
     # Inputs

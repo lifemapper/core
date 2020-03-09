@@ -28,11 +28,11 @@ class ShapeShifter:
         """Constructor
 
         Args:
-            csv_fname: File containing CSV data of species occurrence records
+            csv_f_name: File containing CSV data of species occurrence records
             metadata: dictionary or filename containing JSON format metadata
             logger: logger for debugging output
             delimiter: delimiter of values in csv records
-            isGbif: boolean flag to indicate whether data contains GBIF/DwC
+            is_gbif: boolean flag to indicate whether data contains GBIF/DwC
                 fields.
         """
         if not os.path.exists(csv_f_name):
@@ -109,7 +109,7 @@ class ShapeShifter:
 # ...............................................
     @staticmethod
     def test_shapefile(dlocation):
-        """Test the validity of a shapefile
+        """Test the validity of a shapefile.
 
         Todo:
             This should go into a LmCommon base layer class
@@ -145,6 +145,16 @@ class ShapeShifter:
     def write_occurrences(self, out_f_name, max_points=None, big_f_name=None,
                           overwrite=True):
         """Write the occurrences to a shapefile.
+        
+        Args:
+            out_f_name: destination filename
+            max_points: maximum number of points to include in shapefile 
+            big_f_name: destination filename for shapefile with all points
+            overwrite: flag indicating whether to overwrite an existing file, or
+                throw an Exception
+                
+        Raises:
+            LMError if write failure
         """
         if not ready_filename(out_f_name, overwrite=overwrite):
             raise LMError(
@@ -242,7 +252,7 @@ class ShapeShifter:
             f_count, out_f_name)))
 
         # Write shapetree index for faster access
-        # TODO: Uncomment this if we restore shapetree
+        # TODO: Uncomment this if we restore shapetree on compute nodes
         # try:
         #     shp_tree_cmd = os.path.join(BIN_PATH, 'shptree')
         #     ret_code = subprocess.call([shp_tree_cmd, out_f_name])
@@ -415,8 +425,7 @@ class ShapeShifter:
 
     # ...............................................
     def _fill_feature(self, feat, rec_dict):
-        """Fill a feature using the provided dictionary
-        """
+        """Fill a feature using the provided dictionary."""
         try:
             x = rec_dict[self.occ_parser.xIdx]
             y = rec_dict[self.occ_parser.yIdx]
