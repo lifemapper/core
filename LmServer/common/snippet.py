@@ -12,8 +12,7 @@ from LmServer.common.solr import build_solr_document, post_solr_document
 
 # .............................................................................
 class SnippetShooter(LMObject):
-    """Creates snippets and "shoots" them to an awaiting snippet server
-    """
+    """Creates snippets and "shoots" them to an awaiting snippet server"""
 
     # ............................
     def __init__(self, snippet_server=SOLR_SERVER,
@@ -32,7 +31,7 @@ class SnippetShooter(LMObject):
     # ............................
     def add_snippets(self, obj1, operation, op_time=None, obj2ident=None,
                      url=None, who=None, agent=None, why=None):
-        """Adds snippets for posting to the snippet shooter's list
+        """Add snippets for posting to the snippet shooter's list
 
         Args:
             obj1: Required, this will start out as only occurrence sets but
@@ -48,7 +47,6 @@ class SnippetShooter(LMObject):
             why: (optional) Why this action was initiated (archive, user
                 request, etc)
         """
-#         if not isinstance(obj1, OccurrenceLayer):
         try:
             obj1.get_scientific_name()
         except Exception as err:
@@ -95,7 +93,7 @@ class SnippetShooter(LMObject):
 
     # ............................
     def shoot_snippets(self, solr_post_filename=None):
-        """Shoots the snippets to the snippet collection
+        """Shoot the snippets to the snippet collection.
 
         Args:
             solr_post_filename: If provided, write out the Solr post document

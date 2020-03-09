@@ -14,7 +14,7 @@ from LmServer.common.log import SolrLogger
 
 # .............................................................................
 def build_solr_document(doc_pairs):
-    """Builds a document for a Solr POST from the key, value pairs
+    """Build a document for a Solr POST from the key, value pairs.
 
     Args:
         doc_pairs: A list of lists of [field name, value] pairs --
@@ -44,7 +44,7 @@ def build_solr_document(doc_pairs):
 
 # .............................................................................
 def post_solr_document(collection, doc_filename):
-    """Posts a document to a Solr index
+    """Post a document to a Solr index.
 
     Args:
         collection: The name of the Solr core (index) to add this document to
@@ -56,8 +56,7 @@ def post_solr_document(collection, doc_filename):
 
 # .............................................................................
 def _post(collection, doc_filename, headers=None):
-    """Post a document to a Solr index
-    """
+    """Post a document to a Solr index."""
     if not headers:
         headers = {}
     url = '{}{}/update?commit=true'.format(SOLR_SERVER, collection)
@@ -72,7 +71,7 @@ def _post(collection, doc_filename, headers=None):
 # .............................................................................
 def _query(collection, q_params=None, fq_params=None,
            other_params='wt=python&indent=true'):
-    """Perform a query on a Solr index
+    """Perform a query on a Solr index.
 
     Args:
         collection: The Solr collection (index / core) to query
@@ -144,8 +143,7 @@ def _query(collection, q_params=None, fq_params=None,
 
 # .............................................................................
 def raw_query(collection, query_string):
-    """Performs a raw solr query and returns the unprocessed results
-    """
+    """Perform a raw solr query and return the unprocessed results."""
     url = '{}{}/select?{}'.format(SOLR_SERVER, collection, query_string)
     res = urllib.request.urlopen(url)
     return res.read()
@@ -153,8 +151,7 @@ def raw_query(collection, query_string):
 
 # .............................................................................
 def add_taxa_to_taxonomy_index(sciname_objects):
-    """Create a solr document and post it for the provided objects
-    """
+    """Create a solr document and post it for the provided objects."""
     doc_pairs = []
     for sno in sciname_objects:
         doc_pairs.append([
@@ -185,7 +182,7 @@ def add_taxa_to_taxonomy_index(sciname_objects):
 
 # .............................................................................
 def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
-    """Create a solr document and post it for the provided objects
+    """Create a solr document and post it for the provided objects.
 
     Note:
         Should have the following keys
@@ -234,7 +231,7 @@ def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
 # .............................................................................
 def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
                               occ_id=None, squid=None, user_id=None):
-    """Deletes records from the archive index
+    """Delete records from the archive index.
 
     Args:
         gridset_id (:obj:`int`, optional): The database identifier of a gridset
@@ -286,9 +283,9 @@ def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
 
 # .............................................................................
 def facet_archive_on_gridset(user_id=None):
-    """Query the global pam index and get the number of matches for gridsets
+    """Query the global pam index and get the number of matches for gridsets.
 
-    Todo:
+    TODO:
         Consider integrating this with regular solr query
     """
     q_params = [
@@ -320,8 +317,7 @@ def query_archive_index(algorithm_code=None, bbox=None, display_name=None,
                         tax_kingdom=None, tax_phylum=None, tax_class=None,
                         tax_order=None, tax_family=None, tax_genus=None,
                         tax_species=None, user_id=None, pam_id=None):
-    """Query the PAV archive Solr index
-    """
+    """Query the PAV archive Solr index."""
     q_params = [
         (SOLR_FIELDS.ALGORITHM_CODE, algorithm_code),
         (SOLR_FIELDS.DISPLAY_NAME, display_name),
@@ -372,7 +368,7 @@ def query_snippet_index(ident1=None, provider=None, collection=None,
                         catalog_number=None, operation=None, after_time=None,
                         before_time=None, ident2=None, url=None, who=None,
                         agent=None, why=None):
-    """Query the snippet Solr index
+    """Query the snippet Solr index.
 
     Args:
         ident1: An identifier for the primary object (probably occurrence
@@ -436,7 +432,7 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
                          taxon_genus=None, taxon_key=None,
                          scientific_name=None, canonical_name=None, squid=None,
                          user_id=None):
-    """Query the Taxonomy index
+    """Query the Taxonomy index.
 
     Args:
         taxon_kingdom: Search for matches in this kingdom

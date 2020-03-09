@@ -7,8 +7,7 @@ from LmServer.common.lmconstants import LMServiceType, LMFileType
 
 # .........................................................................
 class EnvType(_LayerParameters):
-    """Environmental layer type
-    """
+    """Superclass for EnvLayer"""
     # ................................
     def __init__(self, env_code, user_id, gcm_code=None, alt_pred_code=None,
                  date_code=None, metadata=None, mod_time=None,

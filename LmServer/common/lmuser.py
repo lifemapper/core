@@ -8,8 +8,7 @@ from LmServer.common.lmconstants import SALT
 
 # .............................................................................
 class LMUser(LMObject):
-    """Class representing user objects
-    """
+    """Class representing user objects"""
 
     # ................................
     def __init__(self, user_id, email, password, is_encrypted=False,
@@ -31,7 +30,6 @@ class LMUser(LMObject):
             phone: Phone number of user (optional)
             mod_time: Last modification time of this object (optional)
         """
-        LMObject.__init__(self)
         self.user_id = user_id
         self.email = email
         self.set_password(password, is_encrypted)
@@ -46,26 +44,22 @@ class LMUser(LMObject):
 
     # ................................
     def get_user_id(self):
-        """Get the user id for this object.
-        """
+        """Returns the user id for this object."""
         return self.user_id
 
     # ................................
     def set_user_id(self, user_id):
-        """Set the user id for this object
-        """
+        """Sets the user id for this object"""
         self.user_id = user_id
 
     # ................................
     def check_password(self, passwd):
-        """Check that the provided password is the same
-        """
+        """Check that the provided password is the same"""
         return self._password == self._encrypt_password(passwd)
 
     # ................................
     def set_password(self, passwd, is_encrypted):
-        """Set the password for this user object
-        """
+        """Sets the password for this user object"""
         if is_encrypted:
             self._password = passwd
         else:
@@ -73,8 +67,7 @@ class LMUser(LMObject):
 
     # ................................
     def get_password(self):
-        """Get the password of this uer object
-        """
+        """Returns the password of this user object"""
         return self._password
 
     # ................................
@@ -87,6 +80,12 @@ class LMUser(LMObject):
 
     # ................................
     def equals(self, other):
-        """Checks that this user is the same as another
+        """Returns true/false if this user equals another
+        
+        Args:
+            other: a LMUser object to test for equality
+            
+        Returns:
+            boolean indicating whether self equals other
         """
         return isinstance(other, LMUser) and self.user_id == other.user_id

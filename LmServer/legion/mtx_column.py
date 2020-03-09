@@ -11,8 +11,7 @@ from LmServer.common.lmconstants import LMServiceType
 
 # .............................................................................
 class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
-    """Class representing individual matrix columns
-    """
+    """Class representing individual matrix columns."""
     # BoomKeys uses these strings, prefixed by 'INTERSECT_'
     # Query to filter layer for intersect
     INTERSECT_PARAM_FILTER_STRING = 'filter_string'
@@ -38,20 +37,30 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
     # ....................................
     def __init__(self, matrix_index, matrix_id, user_id,
                  # inputs if this is connected to a layer and shapegrid
-                 layer=None, layer_id=None, shapegrid=None, shapegrid_id=None,
+                 layer=None, layer_id=None, shapegrid=None, #shapegrid_id=None,
                  intersect_params=None, squid=None, ident=None,
-                 process_type=None, metadata=None, matrix_column_id=None,
-                 post_to_solr=True, status=None, status_mod_time=None):
+                 metadata=None, matrix_column_id=None, post_to_solr=True, 
+                 process_type=None, status=None, status_mod_time=None):
         """Constructor
 
         Args:
             matrix_index: index for column within a matrix.  For the Global
                 PAM, assembled dynamically, this will be None.
+            matrix_id: parent matrix database id for ServiceObject
+            user_id: id for the owner of these data
             layer: layer input to intersect
+            layer_id: database id for layer
             shapegrid: grid input to intersect
             intersect_params: parameters input to intersect
             squid: species unique identifier for column
             ident: (non-species) unique identifier for column
+            metadata: dictionary of metadata keys/values; key constants are
+                class attributes.
+            matrix_column_id: database id of the object
+            post_to_solr: flag indicating whether to write values to Solr index
+            process_type: Integer code LmCommon.common.lmconstants.ProcessType
+            status: status of processing
+            status_mod_time: last status modification time in MJD format
         """
         _LayerParameters.__init__(
             self, user_id, param_id=matrix_column_id,
@@ -92,8 +101,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
 
     # ....................................
     def get_layer_id(self):
-        """Get the layer identifier for the matrix column
-        """
+        """Return the layer identifier for the matrix column."""
         if self.layer is not None:
             return self.layer.get_id()
         if self._layer_id is not None:
@@ -103,8 +111,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
     # ....................................
     @property
     def display_name(self):
-        """Get the display name for the matrix column
-        """
+        """Return the display name for the matrix column."""
         try:
             return self.layer.display_name
         except AttributeError:
@@ -122,23 +129,20 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
 
     # ....................................
     def load_intersect_params(self, new_intersect_params):
-        """Load intersect parameters
-        """
+        """Load intersect parameters as a string."""
         self.intersect_params = super(MatrixColumn, self)._load_metadata(
             new_intersect_params)
 
     # ....................................
     def add_intersect_params(self, new_intersect_params):
-        """Add intersect parameters for the matrix column
-        """
+        """Add intersect parameters for the matrix column."""
         self.intersect_params = super(MatrixColumn, self)._add_metadata(
             new_intersect_params, existing_metadata_dict=self.intersect_params)
 
     # ....................................
     def update_status(self, status, matrix_index=None, metadata=None,
                       mod_time=gmt().mjd):
-        """Update status of matrix column and update metadata.
-        """
+        """Update status of matrix column and update metadata."""
         ProcessObject.update_status(self, status, mod_time)
         _LayerParameters.update_params(
             self, mod_time, matrix_index=matrix_index, metadata=metadata)

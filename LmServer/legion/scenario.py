@@ -10,14 +10,12 @@ from LmServer.legion.env_layer import EnvLayer
 
 # .........................................................................
 class ScenPackage(ServiceObject, LMSpatialObject):
-    """Class containing multiple, related, scenario objects for SDMs
-    """
+    """Class containing multiple, related, scenario objects for SDMs."""
     # ................................
     def __init__(self, name, user_id, metadata={}, metadata_url=None,
                  epsg_code=None, bbox=None, map_units=None, mod_time=None,
                  scenarios=None, scen_package_id=None):
-        """Constructor for the ScenPackage class
-        """
+        """Constructor."""
         ServiceObject.__init__(
             self, user_id, scen_package_id, LMServiceType.SCEN_PACKAGES,
             metadata_url=metadata_url, mod_time=mod_time)
@@ -32,8 +30,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
 
     # ................................
     def reset_bbox(self):
-        """Reset the scenario package bounding box
-        """
+        """Reset the scenario package bounding box."""
         bbox_list = [scen.bbox for scen in list(self._scenarios.values())]
         min_bbox = self.intersect_bboxes(bbox_list)
         self._set_bbox(min_bbox)
@@ -61,7 +58,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
 
     # ................................
     def get_scenario(self, code=None, metadata_url=None):
-        """Gets a scenario from the ScenPackage with the specified metadata_url
+        """Return a scenario from the ScenPackage with the specified metadata_url.
 
         Args:
             metadata_url: metadata_url for which to find matching scenario
@@ -88,14 +85,12 @@ class ScenPackage(ServiceObject, LMSpatialObject):
     # ................................
     @property
     def scenarios(self):
-        """Return the package's scenarios
-        """
+        """Return the package's scenarios."""
         return self._scenarios
 
     # ................................
     def set_scenarios(self, scens):
-        """Set the scenarios of the package
-        """
+        """Set the scenarios of the package."""
         self._scenarios = {}
         if scens:
             for scen in scens:
@@ -103,22 +98,19 @@ class ScenPackage(ServiceObject, LMSpatialObject):
 
     # ................................
     def dump_scenpkg_metadata(self):
-        """Dump the scenario package metadata to a string
-        """
+        """Dump the scenario package metadata to a string."""
         return super(ScenPackage, self)._dump_metadata(
             self.scen_package_metadata)
 
     # ................................
     def load_scenpkg_metadata(self, new_metadata):
-        """Load scenario package metadata
-        """
+        """Load scenario package metadata."""
         self.scen_package_metadata = super(ScenPackage, self)._load_metadata(
             new_metadata)
 
     # ................................
     def add_scenpkg_metadata(self, new_metadata_dict):
-        """Add scenario package metadata
-        """
+        """Add scenario package metadata."""
         self.scen_package_metadata = super(ScenPackage, self)._add_metadata(
             new_metadata_dict,
             existing_metadata_dict=self.scen_package_metadata)
@@ -166,7 +158,7 @@ class Scenario(MapLayerSet):
 
     # ................................
     def set_id(self, scenario_id):
-        """Sets the database id on the object
+        """Set the database id on the object.
 
         Args:
             scenario_id: The database identifier for the Scenario
@@ -175,27 +167,24 @@ class Scenario(MapLayerSet):
 
     # ................................
     def dump_scenario_metadata(self):
-        """Dump scenario metadata to string
-        """
+        """Dump scenario metadata to string."""
         return super(Scenario, self)._dump_metadata(self.scen_metadata)
 
     # ................................
     def load_scenario_metadata(self, new_metadata):
-        """Load scenario metadata
-        """
+        """Load scenario metadata."""
         self.scen_metadata = super(Scenario, self)._load_metadata(new_metadata)
 
     # ................................
     def add_scenario_metadata(self, new_metadata_dict):
-        """Add scenario metadata
-        """
+        """Add scenario metadata."""
         self.scen_metadata = super(Scenario, self)._add_metadata(
             new_metadata_dict, existing_metadata_dict=self.scen_metadata)
 
     # ................................
     @property
     def layers(self):
-        """Return the layers in the scenario
+        """Return the layers in the scenario.
 
         Note:
             layers property code overrides the same methods in LayerSet
@@ -230,8 +219,7 @@ class Scenario(MapLayerSet):
     # ................................
     @property
     def resolution(self):
-        """Get the resolution of the scenario
-        """
+        """Return the resolution of the scenario."""
         if self._resolution is None and len(self._layers) > 0:
             self._resolution = self._layers[0].resolution
         return self._resolution
@@ -268,7 +256,7 @@ class Scenario(MapLayerSet):
 
     # ................................
     def set_layers(self, lyrs):
-        """Set the layers for the scenario
+        """Set the layers for the scenario.
 
         Args:
             lyrs: List of Layers (layer.Raster) to add to this scenario.
@@ -284,7 +272,7 @@ class Scenario(MapLayerSet):
 
     # ................................
     def create_map_prefix(self, lyr_name=None):
-        """Gets the OGC service URL prefix for this object
+        """Return the OGC service URL prefix for this object.
 
         Returns:
             str - URL representing a webservice request for maps of this object
@@ -306,8 +294,7 @@ class Scenario(MapLayerSet):
 
     # ................................
     def create_local_map_filename(self):
-        """Find mapfile containing this layer.
-        """
+        """Find mapfile containing this layer."""
         return self._earl_jr.create_filename(
             self._map_type, obj_code=self.code, usr=self._user_id,
             epsg=self._epsg)

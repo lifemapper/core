@@ -18,7 +18,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
     def __init__(self, occ_layer, algorithm, model_scenario, model_mask,
                  proj_scenario, proj_mask, process_type, proj_metadata,
                  status, status_mod_time, user_id, project_id):
-        """Constructor for the _ProjectionType class
+        """Constructor
 
         Args:
             occ_layer: OccurrenceLayer object for SDM model process
@@ -32,6 +32,10 @@ class _ProjectionType(_LayerParameters, ProcessObject):
             process_type: LmCommon.common.lmconstants.ProcessType for
                 computation
             proj_metadata: Metadata for this projection
+            status: status of processing
+            status_mod_time: last status modification time in MJD format
+            user_id: id for the owner of these data
+            project_id: Unique identifier for this parameterized object
 
         Note:
             proj_mask and mdlMask are currently input data layer for the only
@@ -67,7 +71,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
     # ................................
     def get_occ_layer_id(self):
-        """Gets the occurrence layer identifier
+        """Return the occurrence layer identifier
         """
         return self._occ_layer.get_id()
 
@@ -79,7 +83,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
     # ................................
     def get_model_mask_id(self):
-        """Get the model mask identifier
+        """Return the model mask identifier
         """
         try:
             return self._model_mask.get_id()
@@ -88,13 +92,13 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
     # ................................
     def get_model_scenario_id(self):
-        """Get the identifier of the model scenario
+        """Return the identifier of the model scenario
         """
         return self._model_scenario.get_id()
 
     # ................................
     def get_proj_mask_id(self):
-        """Get the projection mask layer id
+        """Return the projection mask layer id
         """
         try:
             return self._proj_mask.get_id()
@@ -103,7 +107,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
     # ................................
     def get_proj_scenario_id(self):
-        """Get the projection scenario id
+        """Return the projection scenario id
         """
         return self._proj_scenario.get_id()
 
@@ -122,28 +126,28 @@ class _ProjectionType(_LayerParameters, ProcessObject):
     # ................................
     @property
     def display_name(self):
-        """Get the display name from the occurrence layer
+        """Return the display name from the occurrence layer
         """
         return self._occ_layer.display_name
 
     # ................................
     @property
     def proj_scenario(self):
-        """Gets the projection's scenario object
+        """Return the projection's scenario object
         """
         return self._proj_scenario
 
     # ................................
     @property
     def proj_scenario_code(self):
-        """Get the projection scenario's code
+        """Return the projection scenario's code
         """
         return self._proj_scenario.code
 
     # ................................
     @property
     def proj_mask(self):
-        """Gets the projection mask layer
+        """Return the projection mask layer
         """
         return self._proj_mask
 
@@ -156,56 +160,56 @@ class _ProjectionType(_LayerParameters, ProcessObject):
     # ................................
     @property
     def occ_layer(self):
-        """Get the occurrence layer for the projection
+        """Return the occurrence layer for the projection
         """
         return self._occ_layer
 
     # ................................
     @property
     def status(self):
-        """Get the projection status
+        """Return the projection status
         """
         return self._status
 
     # ................................
     @property
     def status_mod_time(self):
-        """Get the time that the object status was last modified
+        """Return the time that the object status was last modified
         """
         return self._status_mod_time
 
     # ................................
     @property
     def species_name(self):
-        """Gets the species name of the occurrence data
+        """Return the species name of the occurrence data
         """
         return self._occ_layer.display_name
 
     # ................................
     @property
     def algorithm_code(self):
-        """Gets the code of the algorithm used
+        """Return the code of the algorithm used
         """
         return self._algorithm.code
 
     # ................................
     @property
     def model_scenario(self):
-        """Get the model scenario object
+        """Return the model scenario object
         """
         return self._model_scenario
 
     # ................................
     @property
     def model_scenario_code(self):
-        """Get the model scenario code
+        """Return the model scenario code
         """
         return self._model_scenario.code
 
     # ................................
     @property
     def model_mask(self):
-        """Get the model mask layer
+        """Return the model mask layer
         """
         return self._model_mask
 
@@ -218,7 +222,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
     # ................................
     @property
     def proj_input_layers(self):
-        """Gets the layers of the projection Scenario
+        """Return the layers of the projection Scenario
         """
         return self._proj_scenario.layers
 
@@ -247,8 +251,7 @@ class SDMProjection(_ProjectionType, Raster):
                  nodata_val=None, min_val=None, max_val=None, map_units=None,
                  resolution=None, bbox=None, metadata_url=None,
                  parent_metadata_url=None):
-        """Constructor for the SDMProjection class
-        """
+        """Constructor"""
         (user_id, name, squid, process_type, bbox, epsg, map_units, resolution,
          is_discrete_data, data_format, title
          ) = self._get_defaults_from_inputs(
@@ -284,8 +287,7 @@ class SDMProjection(_ProjectionType, Raster):
                         proj_scenario, layer, process_type=None,
                         model_mask=None, proj_mask=None, proj_metadata={},
                         status=None, status_mod_time=None, sdm_proj_id=None):
-        """Create a projection object from its parts
-        """
+        """Create a projection object from its parts."""
         return SDMProjection(
             occ_layer, algorithm, model_scenario, proj_scenario,
             process_type=process_type, model_mask=model_mask,
@@ -319,8 +321,7 @@ class SDMProjection(_ProjectionType, Raster):
 
     # ................................
     def create_local_dlocation(self):
-        """Create data location
-        """
+        """Create data location."""
         dloc = None
         if self.get_id() is not None:
             dloc = self._earl_jr.create_filename(
@@ -331,14 +332,13 @@ class SDMProjection(_ProjectionType, Raster):
 
     # ................................
     def get_dlocation(self):
-        """Get the projection data location
-        """
+        """Return the projection data location."""
         self.set_dlocation()
         return self._dlocation
 
     # ................................
     def set_dlocation(self, dlocation=None):
-        """Set the data location of the projection
+        """Set the data location of the projection.
 
         Note:
             Does NOT override existing dlocation, use clear_dlocation for that
@@ -351,15 +351,14 @@ class SDMProjection(_ProjectionType, Raster):
 
     # ................................
     def get_absolute_path(self):
-        """Gets the absolute path to the species data
+        """Return the absolute path to the species data
         """
         return self._occ_layer.get_absolute_path()
 
     # ................................
     def _create_metadata(self, prj_scenario, species_name, algorithm_code,
                          title=None, is_discrete_data=False):
-        """Assemble SDMProjection metadata the first time it is created.
-        """
+        """Assemble SDMProjection metadata the first time it is created."""
         metadata = {}
         keywords = ['SDM', 'potential habitat', species_name, algorithm_code]
         prj_keywords = prj_scenario.scenario_metadata[
@@ -383,8 +382,7 @@ class SDMProjection(_ProjectionType, Raster):
                                   model_scenario, proj_scenario, name, squid,
                                   process_type, bbox, epsg_code, map_units,
                                   resolution, gdal_format):
-        """Assemble attributes from process inputs the first time created.
-        """
+        """Assemble attributes from process inputs the first time created."""
         user_id = occ_layer.get_user_id()
         if name is None:
             if lyr_id is None:
@@ -416,8 +414,7 @@ class SDMProjection(_ProjectionType, Raster):
 
     # ................................
     def update_status(self, status, metadata=None, mod_time=gmt().mjd):
-        """Update status, metadata, mod_time attributes on the SDMProjection.
-        """
+        """Update status, metadata, mod_time attributes on the SDMProjection."""
         ProcessObject.update_status(self, status, mod_time)
         ServiceObject.update_mod_time(self, mod_time)
         _LayerParameters.update_params(self, mod_time, metadata=metadata)
@@ -432,8 +429,7 @@ class SDMProjection(_ProjectionType, Raster):
 
     # ................................
     def clear_output_files(self):
-        """Clear projection output files
-        """
+        """Clear projection output files."""
         req_fname = self.get_proj_request_filename()
         success, _ = self.delete_file(req_fname)
         pkg_fname = self.get_proj_package_filename()
@@ -446,45 +442,39 @@ class SDMProjection(_ProjectionType, Raster):
 
     # ................................
     def rollback(self, status=JobStatus.GENERAL):
-        """Rollback processing
-        """
+        """Rollback processing."""
         self.update_status(status)
         self.clear_output_files()
         self.clear_local_mapfile()
 
     # ................................
     def get_proj_package_filename(self):
-        """Get the projection package file name
-        """
+        """Return the projection package file name."""
         return self._earl_jr.create_filename(
             LMFileType.PROJECTION_PACKAGE, obj_code=self.get_id(),
             occ_set_id=self._occ_layer.get_id(), usr=self._user_id,
             epsg=self._epsg)
 
     # ................................
-    def clear_local_mapfile(self, scen_code=None):
-        """Delete the mapfile containing this layer
-        """
+    def clear_local_mapfile(self):
+        """Delete the mapfile containing this layer."""
         return self._occ_layer.clear_local_mapfile()
 
     # ................................
     def set_local_map_filename(self):
-        """Find mapfile containing layers for this projection's occ_layer.
-        """
+        """Find mapfile containing layers for this projection's occ_layer."""
         self._occ_layer.set_local_map_filename()
 
     # ................................
     @property
     def map_filename(self):
-        """Get the map file name for the projection
-        """
+        """Return the map file name for the projection."""
         return self._occ_layer.map_filename
 
     # ................................
     @property
     def map_name(self):
-        """Get the map name property of the projection
-        """
+        """Return the map name property of the projection."""
         return self._occ_layer.map_name
 
     # ................................
@@ -511,24 +501,21 @@ class SDMProjection(_ProjectionType, Raster):
 
     # ................................
     def _set_map_prefix(self):
-        """Set the map prefix for the projection
-        """
+        """Set the map prefix for the projection."""
         map_prefix = self._create_map_prefix()
         self._map_prefix = map_prefix
 
     # ................................
     @property
     def map_prefix(self):
-        """Get the projection map prefix
-        """
+        """Return the projection map prefix."""
         self._set_map_prefix()
         return self._map_prefix
 
     # ................................
     @property
     def map_layername(self):
-        """Get the projection layer name property
-        """
+        """Return the projection layer name property."""
         lyr_name = None
         if self._db_id is not None:
             lyr_name = self._earl_jr.create_layer_name(proj_id=self._db_id)

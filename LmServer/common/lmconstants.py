@@ -184,8 +184,7 @@ class ReferenceType(Enum):
 
 # .............................................................................
 class OccurrenceFieldNames(Enum):
-    """Occurrence filed names enumeration.
-    """
+    """Occurrence filed names enumeration."""
     LOCAL_ID = ['localid', 'localId', 'occkey']
     UUID = ['uuid']
     LONGITUDE = ['longitude', 'x', 'lon', 'long',
@@ -239,8 +238,7 @@ RAD_EXPERIMENT_DIR_PREFIX = 'RAD'
 
 # .............................................................................
 class MapPrefix(Enum):
-    """Map data prefix enumeration
-    """
+    """Map data prefix enumeration"""
     SDM = 'data'
     USER = 'usr'
     # Computed map products for bucket
@@ -251,8 +249,7 @@ class MapPrefix(Enum):
 
 # .............................................................................
 class LMFileType(Enum):
-    """Lifemapper file type enumeration
-    """
+    """Lifemapper file type enumeration"""
     # User level
     OTHER_MAP = 1
     TMP_JSON = 2
@@ -591,8 +588,7 @@ RECOVERABLE_ERRORS = [
 
 # ............................................................................
 class Priority(Enum):
-    """Constants to define the priority of a Job.
-    """
+    """Constants to define the priority of a Job"""
     LOW = 0
     NORMAL = 1
     HIGH = 2
@@ -603,8 +599,7 @@ class Priority(Enum):
 
 # ............................................................................
 class LMServiceType(Enum):
-    """Lifemapper web service type enum
-    """
+    """Lifemapper web service type enum"""
     TREES = 'tree'
     GRIDSETS = 'gridset'
     OCCURRENCES = 'occurrence'
@@ -935,9 +930,7 @@ AQUAMAPS_PARAMS = {
 
 # .............................................................................
 class AlgQualities:
-    """Algorithm qualities metadata class.
-    """
-
+    """Algorithm qualities metadata class."""
     # ...........................
     def __init__(self, code, name, is_discrete_output=False,
                  output_format=LMFormat.get_default_gdal().driver,
@@ -956,8 +949,7 @@ class AlgQualities:
 
 # .............................................................................
 class Algorithms(Enum):
-    """Algorithms enumeration
-    """
+    """Algorithms enumeration"""
     BIOCLIM = AlgQualities(
         'BIOCLIM', 'Bioclimatic Envelope Algorithm',
         # output is 0, 0.5, 1.0
@@ -1006,8 +998,7 @@ class Algorithms(Enum):
 
     @staticmethod
     def implemented():
-        """Return a list of implemented algorithms
-        """
+        """Return a list of implemented algorithms"""
         return (Algorithms.BIOCLIM, Algorithms.CSMBS,
                 Algorithms.ENVDIST, Algorithms.ENVSCORE, Algorithms.GARP,
                 Algorithms.DG_GARP, Algorithms.GARP_BS, Algorithms.DG_GARP_BS,
@@ -1016,14 +1007,12 @@ class Algorithms(Enum):
 
     @staticmethod
     def codes():
-        """Returns a list of implemented algorithm codes.
-        """
+        """Returns a list of implemented algorithm codes."""
         return [alg.code for alg in Algorithms.implemented()]
 
     @staticmethod
     def is_openModeller(code):
-        """Returns a boolean if the provided algorithm code is in openModeller.
-        """
+        """Returns a boolean if the provided algorithm code is in openModeller"""
         atype = Algorithms.get(code)
         if atype == Algorithms.ATT_MAXENT:
             return False
@@ -1031,8 +1020,7 @@ class Algorithms(Enum):
 
     @staticmethod
     def is_att(code):
-        """Returns a boolean if the provided algorithm code is in ATT Maxent.
-        """
+        """Returns a boolean if the provided algorithm code is in ATT Maxent"""
         atype = Algorithms.get(code)
         if atype == Algorithms.ATT_MAXENT:
             return True
@@ -1040,24 +1028,21 @@ class Algorithms(Enum):
 
     @staticmethod
     def get(code):
-        """Gets an algorithm from the provided code.
-        """
+        """Gets an algorithm from the provided code."""
         for alg in Algorithms.implemented():
             if alg.code == code:
                 return alg
 
     @staticmethod
     def returns_discrete_output(code):
-        """Returns boolean if algorithm provides discrete output
-        """
+        """Returns boolean if algorithm provides discrete output"""
         atype = Algorithms.get(code)
         return atype.is_discrete_output
 
 
 # .............................................................................
 class SdmMasks(Enum):
-    """SDM mask methods enumeration.
-    """
+    """SDM mask methods enumeration."""
     HULL_INTERSECT = AlgQualities(
         'hull_region_intersect', 'Convex Hull Region Intersect',
         is_discrete_output=True,
@@ -1071,8 +1056,7 @@ class SdmMasks(Enum):
 # =                           Snippet Constants                              =
 # ============================================================================
 class SnippetOperations(Enum):
-    """Class of available snippet operations
-    """
+    """Class of available snippet operations"""
     DOWNLOADED = 'downloaded'
     VIEWED = 'viewed'
     ADDED_TO = 'addedTo'
@@ -1081,8 +1065,7 @@ class SnippetOperations(Enum):
 
 # =============================================================================
 class SnippetFields(Enum):
-    """Snippet fields in Solr index
-    """
+    """Snippet fields in Solr index"""
     AGENT = 'agent'
     CATALOG_NUMBER = 'catalogNumber'
     COLLECTION = 'collection'
@@ -1110,8 +1093,7 @@ NUM_DOCS_PER_POST = 100
 
 
 class SOLR_FIELDS(Enum):
-    """This class contains constants for SOLR index field names
-    """
+    """This class contains constants for SOLR index field names"""
     ALGORITHM_CODE = 'algorithmCode'
     ALGORITHM_PARAMETERS = 'algorithmParameters'
     COMPRESSED_PAV = 'compressedPAV'
@@ -1161,8 +1143,7 @@ class SOLR_FIELDS(Enum):
 
 # .............................................................................
 class SOLR_TAXONOMY_FIELDS(Enum):
-    """Constants for Taxonomy Solr index fields
-    """
+    """Constants for Taxonomy Solr index fields"""
     CANONICAL_NAME = 'canonical_name'
     ID = 'id'
     SCIENTIFIC_NAME = 'scientific_name'
@@ -1201,8 +1182,7 @@ PROCESSING_KEY = 'processing'
 
 
 class SubsetMethod(Enum):
-    """Subset method enumeration
-    """
+    """Subset method enumeration"""
     COLUMN = 0  # Same shapegrid, just cut out columns
     SPATIAL = 1  # Spatial subset of original shapegrid.  Column and row,
     #                cut out columns and remove sites

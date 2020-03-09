@@ -15,8 +15,7 @@ from LmServer.common.lmconstants import (
 
 # .............................................................................
 class OccurrenceType(_LayerParameters, ProcessObject):
-    """Occurrence type class
-    """
+    """Occurrence type class"""
 
     # ................................
     def __init__(self, display_name, query_count, mod_time, user_id,
@@ -47,8 +46,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 
     # ................................
     def get_scientific_name_id(self):
-        """Get the scientific name identifier
-        """
+        """Return the scientific name identifier."""
         if self._scientific_name is not None:
             return self._scientific_name.get_id()
 
@@ -56,7 +54,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 
     # ................................
     def get_scientific_name(self):
-        """Get the scientific name object
+        """Return the scientific name object
         """
         return self._scientific_name
 
@@ -68,7 +66,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 
     # ................................
     def get_raw_dlocation(self):
-        """Get the raw data location
+        """Return the raw data location
         """
         return self._raw_dlocation
 
@@ -133,7 +131,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
     # ................................
     @staticmethod
     def get_user_point_feature_attributes():
-        """Get user point feature attributes
+        """Return user point feature attributes
         """
         feature_attributes = {
             0: (Vector._local_id_field_name, Vector._local_id_field_type),
@@ -146,7 +144,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
     # ................................
     @staticmethod
     def get_user_point_feature(id_val, x_val, y_val):
-        """Get user point feature
+        """Return user point feature
         """
         geom_wkt = OccurrenceLayer.get_point_wkt(x_val, y_val)
         return [id_val, x_val, y_val, geom_wkt]
@@ -171,7 +169,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
     # ................................
     @staticmethod
     def get_point_from_wkt(wkt):
-        """Get a point from well-known text
+        """Return a point from well-known text
         """
         if wkt is None:
             raise LMError('Missing wkt')
@@ -235,7 +233,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
     # ................................
     def get_absolute_path(self):
-        """Get the absolute data path for the occurrence layer
+        """Return the absolute data path for the occurrence layer
         """
         self.set_dlocation()
         return Vector.get_absolute_path(self)
@@ -269,7 +267,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
     # ................................
     def get_dlocation(self, large_file=False):
-        """Get the data location of the occurrence layer
+        """Return the data location of the occurrence layer
         """
         if large_file:
             if self._big_dlocation is None:
@@ -315,14 +313,14 @@ class OccurrenceLayer(OccurrenceType, Vector):
     # ................................
     @property
     def map_prefix(self):
-        """Get the occurrence lyaer map prefix
+        """Return the occurrence lyaer map prefix
         """
         return self._map_prefix
 
     # ................................
     @property
     def map_layer_name(self):
-        """Get the map layer name
+        """Return the map layer name
         """
         lyr_name = None
         if self._db_id is not None:
@@ -352,16 +350,14 @@ class OccurrenceLayer(OccurrenceType, Vector):
     # ................................
     @property
     def map_filename(self):
-        """Get the map filename
-        """
+        """Return the map filename."""
         self.set_local_map_filename()
         return self._map_filename
 
     # ................................
     @property
     def map_name(self):
-        """Gets the map name for the occurrence layer
-        """
+        """Return the map name for the occurrence layer."""
         if self._map_filename is None:
             self.set_local_map_filename()
         _, fname = os.path.split(self._map_filename)
@@ -371,14 +367,12 @@ class OccurrenceLayer(OccurrenceType, Vector):
     # ................................
     @property
     def layer_name(self):
-        """Gets the layer name of the occurrence layer
-        """
+        """Return the layer name of the occurrence layer."""
         return self._earl_jr.create_layer_name(occ_set_id=self.get_id())
 
     # ................................
     def clear_local_mapfile(self):
-        """Delete the mapfile containing this layer
-        """
+        """Delete the mapfile containing this layer."""
         if self._map_filename is None:
             self.set_local_map_filename()
         self.delete_local_mapfile()
@@ -386,24 +380,22 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
     # ................................
     def clear_output_files(self):
-        """Clear occurrence layer output files
-        """
+        """Clear occurrence layer output files."""
         self.delete_data()
         self.clear_dlocation()
 
     # ................................
     def delete_local_mapfile(self):
-        """Delete the mapfile containing this layer
-        """
+        """Delete the mapfile containing this layer."""
         success, _ = self.delete_file(self._map_filename, delete_dir=True)
         return success
 
     # ................................
     def read_shapefile(self, large_file=False, dlocation=None):
-        """Read the occurrence layer shapefile
+        """Read the occurrence layer shapefile.
 
         Args:
-            large_file: Indicates if the large_file should be retrieved
+            large_file: Flag to indicate if the large_file should be retrieved
             dlocation: Overrides the object's dlocation (possibly for temporary
                 file)
         """

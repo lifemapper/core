@@ -12,8 +12,7 @@ from LmServer.common.lmconstants import LMFileType
 
 # .........................................................................
 class MFChain(ProcessObject):
-    """Makefow chain class
-    """
+    """Makeflow chain class."""
     META_CREATED_BY = 'createdBy'
     META_GRIDSET = 'gridsetId'
     META_DESCRIPTION = 'description'
@@ -24,7 +23,6 @@ class MFChain(ProcessObject):
                  status=None, status_mod_time=None, headers=None,
                  mf_chain_id=None):
         """Class used for generating Makeflow document for LM computations.
-
 
         Args:
             user_id: Id for the owner of this process
@@ -51,8 +49,7 @@ class MFChain(ProcessObject):
 
     # ................................
     def dump_makeflow_metadata(self):
-        """Dump metadata to string
-        """
+        """Dump metadata to string."""
         return super(MFChain, self)._dump_metadata(self.makeflow_metadata)
 
     # ................................
@@ -81,13 +78,13 @@ class MFChain(ProcessObject):
 
     # ................................
     def get_id(self):
-        """Get the database identifier for the chain
+        """Return the database identifier for the chain
         """
         return self.obj_id
 
     # ................................
     def get_relative_directory(self):
-        """Get the relative data directory for this makeflow process.
+        """Return the relative data directory for this makeflow process.
 
         Note:
             - If the object does not have an ID, this returns None
@@ -117,7 +114,7 @@ class MFChain(ProcessObject):
 
     # ................................
     def get_dlocation(self):
-        """Get the data location of this makeflow chain
+        """Return the data location of this makeflow chain
         """
         self.set_dlocation()
         return self._dlocation
@@ -175,32 +172,23 @@ class MFChain(ProcessObject):
 
     # ................................
     def get_triage_output_name(self, prefix='mashed'):
-        """Get the triage output name
-        """
+        """Return the triage output name."""
         return os.path.join(
             prefix, '{}_{}{}'.format(prefix, self.obj_id, LMFormat.TXT.ext))
 
     # ................................
     def get_user_id(self):
-        """Gets the User id
-
-        Todo:
-            Remove, this is duplicate code
-        """
+        """Return the User id."""
         return self._user_id
 
     # ................................
     def set_user_id(self, usr):
-        """Sets the user id on the object
-
-        Todo:
-            Remove, this is duplciate code from parent class
-        """
+        """Set the user id on the object."""
         self._user_id = usr
 
     # ................................
     def _add_job_command(self, outputs, cmd, dependencies=None, comment=''):
-        """Adds a job command to the document
+        """Add a job command to the document.
 
         Args:
             outputs: A list of output files created by this job
@@ -224,7 +212,7 @@ class MFChain(ProcessObject):
 
     # ................................
     def add_commands(self, rule_list):
-        """Adds a list of commands to the Makeflow document
+        """Add a list of commands to the Makeflow document.
 
         Args:
             rule_list: A list of MfRule objects
@@ -254,7 +242,7 @@ class MFChain(ProcessObject):
 
     # ................................
     def add_headers(self, headers):
-        """Adds headers to the document
+        """Add headers to the document.
 
         Args:
             headers: A list of (header, value) tuples
@@ -265,7 +253,7 @@ class MFChain(ProcessObject):
 
     # ................................
     def write(self, filename=None):
-        """Write the document to the specified location
+        """Write the document to the specified location.
 
         Args:
             filename: The file location to write this document
@@ -290,6 +278,5 @@ class MFChain(ProcessObject):
 
     # ................................
     def update_status(self, status, mod_time=gmt().mjd):
-        """Update the status of the workflow
-        """
+        """Update the status of the workflow."""
         ProcessObject.update_status(self, status, mod_time)

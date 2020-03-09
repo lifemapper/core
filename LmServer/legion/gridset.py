@@ -19,24 +19,29 @@ NUM_RAND_PER_GROUP = 2
 
 # .............................................................................
 class Gridset(ServiceObject):  # LMMap
-    """Gridset class containing information for multispecies experiment.
-    """
+    """Gridset class containing information for multispecies experiment."""
     # ................................
     def __init__(self, name=None, metadata=None, shapegrid=None,
-                 shapegrid_id=None, tree=None, tree_id=None,
-                 site_indices_filename=None, dlocation=None, epsg_code=None,
-                 matrices=None, user_id=None, gridset_id=None,
-                 metadata_url=None, mod_time=None):
+                 shapegrid_id=None, tree=None, matrices=None, dlocation=None, 
+                 gridset_id=None,
+#                  tree_id=None, site_indices_filename=None, 
+                 user_id=None, epsg_code=None, metadata_url=None, mod_time=None):
         """Constructor for the Gridset class
 
         Args:
-            gridset_id: db_id  for ServiceObject
             name: Short identifier for this gridset, unique for userid.
+            metadata: dictionary of metadata for gridset
             shapegrid: Vector layer with polygons representing geographic
                 sites.
-            epsg_code: The EPSG code of the spatial reference system of data.
-            matrices: list of matrices for this gridset
+            shapegrid_id: database id for shapegrid
             tree: A Tree with taxa matching those in the PAM
+            matrices: list of matrices for this gridset
+            dlocation: data location for data file
+            gridset_id: db_id  for ServiceObject
+            user_id: id for the owner of these data
+            epsg_code: The EPSG code of the spatial reference system of data.
+            metadata_url: URL for retrieving the metadata
+            mod_time: Last modification Time/Date, in MJD format
         """
         if shapegrid is not None:
             if user_id is None:
@@ -88,8 +93,7 @@ class Gridset(ServiceObject):  # LMMap
     # ................................
     @property
     def tree_id(self):
-        """Get the gridset's tree identifier
-        """
+        """Return the gridset's tree identifier."""
         try:
             return self._tree.get_id()
         except Exception:
@@ -98,14 +102,12 @@ class Gridset(ServiceObject):  # LMMap
     # ................................
     @property
     def tree(self):
-        """Get the gridset's tree
-        """
+        """Return the gridset's tree."""
         return self._tree
 
     # ................................
     def set_local_map_filename(self, map_fname=None):
-        """Set absolute map_filename for this gridset.
-        """
+        """Set absolute map_filename for this gridset."""
         if map_fname is None:
             map_fname = self._earl_jr.create_filename(
                 LMFileType.RAD_MAP, gridset_id=self.get_id(),
@@ -114,8 +116,7 @@ class Gridset(ServiceObject):  # LMMap
 
     # ................................
     def clear_local_mapfile(self):
-        """Delete the mapfile containing this layer
-        """
+        """Delete the mapfile containing this layer."""
         if self.map_filename is None:
             self.set_local_map_filename()
         success, _ = self.delete_file(self.map_filename)
@@ -142,15 +143,13 @@ class Gridset(ServiceObject):  # LMMap
     # ................................
     @property
     def map_prefix(self):
-        """Get the map prefix for the gridset
-        """
+        """Get the map prefix for the gridset."""
         return self._map_prefix
 
     # ................................
     @property
     def map_filename(self):
-        """Gets the gridset's map filename
-        """
+        """Return the gridset's map filename."""
         if self._map_filename is None:
             self.set_local_map_filename()
         return self._map_filename
@@ -158,8 +157,7 @@ class Gridset(ServiceObject):  # LMMap
     # ................................
     @property
     def map_name(self):
-        """Gets the gridset's map name
-        """
+        """Return the gridset's map name."""
         map_name = None
         if self._map_filename is not None:
             _, map_fname = os.path.split(self._map_filename)
@@ -168,21 +166,18 @@ class Gridset(ServiceObject):  # LMMap
 
     # ................................
     def get_shapegrid(self):
-        """Get the gridset's shapegrid
-        """
+        """Return the gridset's shapegrid."""
         return self._shapegrid
 
     # ................................
     def set_id(self, gridset_id):
-        """Set the identifier of the gridset
-        """
+        """Set the identifier of the gridset."""
         ServiceObject.set_id(self, gridset_id)
         self.set_path()
 
     # ................................
     def set_path(self):
-        """Set the gridset path
-        """
+        """Set the gridset path."""
         if self._path is None:
             if all([self._user_id, self.get_id(), self.epsg_code]):
                 self._path = self._earl_jr.create_data_path(
@@ -211,15 +206,13 @@ class Gridset(ServiceObject):  # LMMap
 
     # ................................
     def get_dlocation(self):
-        """Return the _dlocation attribute; create and set it if empty
-        """
+        """Return the _dlocation attribute; create and set it if empty."""
         self.set_dlocation()
         return self._dlocation
 
     # ................................
     def set_dlocation(self, dlocation=None):
-        """Set the data location of the gridset.
-        """
+        """Set the data location of the gridset."""
         if self._dlocation is None:
             if dlocation is None:
                 dlocation = self.create_local_dlocation()
@@ -227,25 +220,19 @@ class Gridset(ServiceObject):  # LMMap
 
     # ................................
     def clear_dlocation(self):
-        """Clear the gridset data location
-
-        Todo:
-            Remove, this is duplicate code from the parent class
-        """
+        """Clear the gridset data location."""
         self._dlocation = None
 
     # ................................
     def get_package_location(self):
-        """Get the file path for storing or retrieving a gridset package
-        """
+        """Return the file path for a gridset package."""
         return os.path.join(
             os.path.dirname(self.get_dlocation()),
             'gs_{}_package{}'.format(self.get_id(), LMFormat.ZIP.ext))
 
     # ................................
     def set_matrices(self, matrices, do_read=False):
-        """Fill a Matrix object from Matrix or existing file
-        """
+        """Fill a Matrix object from Matrix or existing file."""
         if matrices is not None:
             for mtx in matrices:
                 try:
@@ -256,8 +243,7 @@ class Gridset(ServiceObject):  # LMMap
 
     # ................................
     def add_tree(self, tree, do_read=False):
-        """Fill the Tree object, updating the tree dlocation
-        """
+        """Fill the Tree object, updating the tree dlocation."""
         if isinstance(tree, Tree):
             tree.set_user_id(self.get_user_id())
             # Make sure to set the parent Id and URL
@@ -268,8 +254,7 @@ class Gridset(ServiceObject):  # LMMap
 
     # ................................
     def add_matrix(self, mtx_file_or_obj, do_read=False):
-        """Fill a Matrix object from Matrix or existing file
-        """
+        """Fill a Matrix object from Matrix or existing file."""
         mtx = None
         if mtx_file_or_obj is not None:
             usr = self.get_user_id()
@@ -295,8 +280,7 @@ class Gridset(ServiceObject):  # LMMap
 
     # ................................
     def get_matrices(self):
-        """Get the matrices of the gridset
-        """
+        """Return the matrices of the gridset."""
         return self._matrices
 
     # ................................
@@ -311,38 +295,32 @@ class Gridset(ServiceObject):  # LMMap
 
     # ................................
     def get_all_pams(self):
-        """Get all pams in the gridset, including rolling
-        """
+        """Return all pams in the gridset, including rolling."""
         return self._get_matrix_types([MatrixType.PAM, MatrixType.ROLLING_PAM])
 
     # ................................
     def get_pams(self):
-        """Get the pams in the gridset
-        """
+        """Return the pams in the gridset."""
         return self._get_matrix_types(MatrixType.PAM)
 
     # ................................
     def get_rolling_pams(self):
-        """Get the rolling pams in the gridset
-        """
+        """Return the rolling pams in the gridset."""
         return self._get_matrix_types(MatrixType.ROLLING_PAM)
 
     # ................................
     def get_grims(self):
-        """Get the grims of the gridset
-        """
+        """Return the grims of the gridset."""
         return self._get_matrix_types(MatrixType.GRIM)
 
     # ................................
     def get_biogeographic_hypotheses(self):
-        """Get biogeographic hypotheses matrices
-        """
+        """Return biogeographic hypotheses matrices."""
         return self._get_matrix_types(MatrixType.BIOGEO_HYPOTHESES)
 
     # ................................
     def get_grim_for_codes(self, gcm_code, alt_pred_code, date_code):
-        """Get GRIMs matching the provided codes.
-        """
+        """Return GRIMs matching the provided codes."""
         for grim in self.get_grims():
             if all([grim.gcm_code == gcm_code,
                     grim.alt_pred_code == alt_pred_code,
@@ -353,8 +331,7 @@ class Gridset(ServiceObject):  # LMMap
     # ................................
     def get_pam_for_codes(self, gcm_code, alt_pred_code, date_code,
                           algorithm_code):
-        """Get PAMs matching provided codes
-        """
+        """Return PAMs matching provided codes."""
         for pam in self.get_all_pams():
             if all([pam.gcm_code == gcm_code,
                     pam.alt_pred_code == alt_pred_code,
@@ -366,8 +343,7 @@ class Gridset(ServiceObject):  # LMMap
     # ................................
     def set_matrix_process_type(self, process_type, matrix_types=None,
                                 matrix_id=None):
-        """Set matrix process type
-        """
+        """Set matrix process type."""
         if isinstance(matrix_types, int):
             matrix_types = [matrix_types]
         matching = []
@@ -384,7 +360,9 @@ class Gridset(ServiceObject):  # LMMap
     # ................................
     def create_layer_shapefile_from_matrix(self, shp_filename,
                                            is_presence_absence=True):
-        """Only partially tested, field creation is not holding
+        """
+        TODO: 
+            Only partially tested, field creation is not holding.
         """
         if is_presence_absence:
             matrix = self.get_full_pam()
@@ -463,26 +441,22 @@ class Gridset(ServiceObject):  # LMMap
 
     # ................................
     def dump_grid_metadata(self):
-        """Dump grid metadata to string
-        """
+        """Dump grid metadata to string."""
         return super(Gridset, self)._dump_metadata(self.grid_metadata)
 
     # ................................
     def load_grid_metadata(self, new_metadata):
-        """Load grid metadata
-        """
+        """Load grid metadata."""
         self.grid_metadata = super(Gridset, self)._load_metadata(new_metadata)
 
     # ................................
     def add_grid_metadata(self, new_metadata_dict):
-        """Add grid metadata
-        """
+        """Add grid metadata."""
         self.grid_metadata = super(Gridset, self)._add_metadata(
             new_metadata_dict, existing_metadata_dict=self.grid_metadata)
 
     # ................................
     @property
     def shapegrid_id(self):
-        """Return the gridset's shapegrid identifier
-        """
+        """Return the gridset's shapegrid identifier."""
         return self._shapegrid_id

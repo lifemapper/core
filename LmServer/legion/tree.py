@@ -12,8 +12,7 @@ from LmServer.common.lmconstants import LMServiceType, LMFileType
 
 # .........................................................................
 class Tree(TreeWrapper, ServiceObject):
-    """Class to hold Tree data
-    """
+    """Class to hold Tree data."""
 
     # ................................
     def __init__(self, name, metadata=None, dlocation=None, data=None,
@@ -48,30 +47,27 @@ class Tree(TreeWrapper, ServiceObject):
 
     # ................................
     def read(self, dlocation=None, schema=DEFAULT_TREE_SCHEMA):
-        """Reads tree data, either from the dlocation or get_dlocation
-        """
+        """Read tree data, either from the dlocation or get_dlocation."""
         if dlocation is None:
             dlocation = self.get_dlocation()
         self.get(path=dlocation, schema=schema)
 
     # ................................
     def set_tree(self, tree):
-        """Set the value of the tree
-        """
+        """Set the value of the tree."""
         self.get(
             data=tree.as_string(schema=DEFAULT_TREE_SCHEMA),
             schema=DEFAULT_TREE_SCHEMA)
 
     # ................................
     def write_tree(self):
-        """Writes the tree to disk
-        """
+        """Write the tree to disk."""
         dloc = self.get_dlocation()
         self.write(path=dloc, schema=DEFAULT_TREE_SCHEMA)
 
     # ................................
     def get_relative_dlocation(self):
-        """Return the relative filepath from object attributes
+        """Return the relative filepath from object attributes.
 
         Note:
             - If the object does not have an ID, this returns None
@@ -96,8 +92,7 @@ class Tree(TreeWrapper, ServiceObject):
 
     # ................................
     def get_dlocation(self):
-        """Get the data location for this tree
-        """
+        """Return the data location for this tree."""
         self.set_dlocation()
         return self._dlocation
 
@@ -118,32 +113,27 @@ class Tree(TreeWrapper, ServiceObject):
 
     # ................................
     def clear_dlocation(self):
-        """Clear the dlocation attribute
-        """
+        """Clear the dlocation attribute."""
         self._dlocation = None
 
     # ................................
     def dump_tree_metadata(self):
-        """Dump tree metadata
-        """
+        """Dump tree metadata as a string."""
         return LMObject._dump_metadata(self.tree_metadata)
 
     # ................................
     def load_tree_metadata(self, new_metadata):
-        """Load tree metadata
-        """
+        """Load tree metadata."""
         self.tree_metadata = LMObject._load_metadata(new_metadata)
 
     # ................................
     def add_tree_metadata(self, new_metadata_dict):
-        """Add additional tree metadata
-        """
+        """Add additional tree metadata."""
         self.tree_metadata = LMObject._add_metadata(
             new_metadata_dict, existing_metadata_dict=self.tree_metadata)
 
     # ................................
     def get_data_url(self, interface=JSON_INTERFACE):
-        """Get a data service url for this tree
-        """
+        """Return a data service url for this tree."""
         return self._earl_jr.construct_lm_data_url(
             self.service_type, self.get_id(), interface)
