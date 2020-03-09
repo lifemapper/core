@@ -877,38 +877,6 @@ class MapLayerSet(_LayerSet, ServiceObject):
         ramp = '\n'.join(parts)
         return ramp
 
-# ...............................................
-#    def _createContinousBins(self, vmin, vmax, vnodata, palette_name='gray'):
-#       bins = ''
-#       rng = vmax - vmin
-#       if rng < 10:
-#          numBins = 10
-#       else:
-#          # Changed from 128 - unable to visually distinguish that many
-#          numBins = min(int(rng), 32)
-#       palette = colorPalette(n=numBins, ptype=palette_name)
-#
-#       mmscale = 1.0
-#       try:
-#          mmscale = (rng)/((len(palette)-1)*1.0)
-#       except:
-#          mmscale = (1.0)/((len(palette)-1)*1.0)
-#
-#       # lowest values class
-#       expr, name = self._get_range_expr(None, vmin + mmscale, vmin, vmax)
-#       bins = '\n'.join([bins, self._create_class_bin(expr, name, palette[0])])
-#       # middle classes
-#       for i in range(1, numBins-1):
-#          lo = vmin + mmscale * (i * 1.0)
-#          hi = vmin + mmscale * ((i+1) * 1.0)
-#          expr, name = self._get_range_expr(lo, hi, vmin, vmax)
-#          bins = '\n'.join([bins, self._create_class_bin(expr, name, palette[i])])
-#       # highest values class
-#       expr, name = self._get_range_expr(vmax - mmscale, None, vmin, vmax)
-#       bins = '\n'.join([bins, self._create_class_bin(expr, name, palette[numBins])])
-#
-#       return bins, numBins
-
     # ...............................................
     def _get_range_expr(self, lo, hi, vmin, vmax):
         if lo is None:
