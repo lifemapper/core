@@ -17,9 +17,9 @@ class ColorPalette:
 
     def __init__(self, ptype='pretty', n=255, alpha=0):
         """Constructor for ColorPalette
-        
+
         Args:
-            ptype: name of the palette to use: 
+            ptype: name of the palette to use:
                 pretty, gray, red, green, blue, or safe.
             n: number of bins/gradients to use for the color range
             alpha: opacity for color, 0 is transparent, 255 is opaque.
