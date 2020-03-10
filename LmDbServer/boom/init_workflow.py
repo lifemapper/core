@@ -2,6 +2,8 @@
 """
 import argparse
 import configparser
+import glob
+import imp
 import json
 import logging
 import os
@@ -67,7 +69,7 @@ class BOOMFiller(LMObject):
     """
 
     # ................................
-    def __init__(self, paramFname, logname=None):
+    def __init__(self, param_fname, logname=None):
         """
         @summary Constructor for BOOMFiller class.
         """
@@ -82,7 +84,7 @@ class BOOMFiller(LMObject):
             logname = '{}.{}'.format(scriptname, timestamp)
         self.log_name = logname
 
-        self.in_param_fname = paramFname
+        self.in_param_fname = param_fname
         # Get database
         try:
             self.scribe = self._get_db(self.log_name)
@@ -90,9 +92,26 @@ class BOOMFiller(LMObject):
             raise
         self.open()
 
+        # Initialize variables
+        self.user_id = self.user_id_path = self.user_email = None
+        self.user_taxonomy_base_filename = self.archive_name = None
+        self.priority = self.scen_package_name = self.data_source = None
+        self.occ_id_fname = self.taxon_name_filename = None
+        self.taxon_id_filename = self.occ_fname = self.occ_sep = None
+        self.min_points = self.exp_date = self.algorithms = None
+        self.do_assemble_pams = self.grid_bbox = self.cell_sides = None
+        self.cell_size = self.grid_name = self.intersect_params = None
+        self.mask_alg = self.tree_fname = self.bg_hyp_fnames = None
+        self.compute_pam_stats = self.compute_mcpa = None
+        self.num_permutations = self.scen_pkg = self.shapegrid = None
+        self.other_lyr_names = self.woof_time_mjd = None
+        self.out_config_filename = self.mdl_scencode = None
+        self.prj_scencodes = None
+
     # ................................
     @property
     def log(self):
+        """Gets the logger off of the scribe attribute."""
         return self.scribe.log
 
     # ................................
@@ -102,29 +121,29 @@ class BOOMFiller(LMObject):
         """
         (self.user_id, self.user_id_path,
          self.user_email,
-         self.user_taxonomy_basefilename,
+         self.user_taxonomy_base_filename,
          self.archive_name,
          self.priority,
-         self.scenPackageName,
+         self.scen_package_name,
          mdl_scencode,
          prj_scencodes,
-         self.dataSource,
-         self.occIdFname,
+         self.data_source,
+         self.occ_id_fname,
          self.taxon_name_filename,
          self.taxon_id_filename,
-         self.occFname,
-         self.occSep,
-         self.minpoints,
-         self.expdate,
+         self.occ_fname,
+         self.occ_sep,
+         self.min_points,
+         self.exp_date,
          self.algorithms,
          self.do_assemble_pams,
-         self.gridbbox,
-         self.cellsides,
-         self.cellsize,
+         self.grid_bbox,
+         self.cell_sides,
+         self.cell_size,
          self.grid_name,
          self.intersect_params,
-         self.maskAlg,
-         self.treeFname,
+         self.mask_alg,
+         self.tree_fname,
          self.bg_hyp_fnames,
          self.compute_pam_stats,
          self.compute_mcpa,
@@ -132,193 +151,219 @@ class BOOMFiller(LMObject):
          self.other_lyr_names) = self.read_param_vals()
         self.woof_time_mjd = gmt().mjd
         earl = EarlJr()
-        self.outConfigFilename = earl.create_filename(LMFileType.BOOM_CONFIG,
-                                                     objCode=self.archive_name,
-                                                     usr=self.user_id)
+        self.out_config_filename = earl.create_filename(
+            LMFileType.BOOM_CONFIG, obj_code=self.archive_name,
+            usr=self.user_id)
 
-        # # TODO: Decide: do we want to start from beginning of species CSV
+        # TODO: Decide: do we want to start from beginning of species CSV
         #         for every woof???
-        startFile = earl.createStartWalkenFilename(self.user_id, self.archive_name)
-        if os.path.exists(startFile):
-            os.remove(startFile)
+        start_file = earl.create_start_walken_filename(
+            self.user_id, self.archive_name)
+        if os.path.exists(start_file):
+            os.remove(start_file)
 
         # Add/find user for this Boom process (should exist)
         self.add_user()
 
-        # Find existing scenarios or create from user or public ScenPackage metadata
+        # Find existing scenarios or create from user or public ScenPackage
+        #    metadata
         self.scen_pkg = self.find_or_add_scenario_package()
         (self.mdl_scencode, self.prj_scencodes,
-         mask_lyrname_scen) = self.find_mdl_proj_scenarios(mdl_scencode, prj_scencodes)
+         mask_lyr_name_scen) = self.find_mdl_proj_scenarios(
+             mdl_scencode, prj_scencodes)
         # TODO: Allow any existing raster with intersecting region
         # TODO: Allow packaging of ancillary layers in data package,
         #       specify role in params file
-        if self.maskAlg:
-            if self.maskAlg.code == 'hull_region_intersect':
-                mask_lyrname = self.maskAlg.getParameterValue('region')
+        if self.mask_alg:
+            if self.mask_alg.code == 'hull_region_intersect':
+                mask_lyr_name = self.mask_alg.getParameterValue('region')
                 # TODO: Delete this from Scenario packages and code
                 # Take SDM_MASK_META from old (v2.0) scenario metadata
-                if mask_lyrname is None:
-                    self.maskAlg.setParameter('region', mask_lyrname_scen)
+                if mask_lyr_name is None:
+                    self.mask_alg.setParameter('region', mask_lyr_name_scen)
 
-        # Fill grid bbox with scenario package (intersection of all bboxes) if it is absent
-        if self.gridbbox is None:
-            self.gridbbox = self.scen_pkg.bbox
+        # Fill grid bbox with scenario package (intersection of all bboxes) if
+        #    it is absent
+        if self.grid_bbox is None:
+            self.grid_bbox = self.scen_pkg.bbox
 
         # Created by addArchive
         self.shapegrid = None
 
     # ................................
     def find_or_add_scenario_package(self):
-        """
-        @summary Find Scenarios from codes 
-        @note: Boom parameters must include SCENARIO_PACKAGE, 
-                            and optionally, SCENARIO_PACKAGE_MODEL_SCENARIO,
-                                            SCENARIO_PACKAGE_PROJECTION_SCENARIOS
-               If SCENARIO_PACKAGE_PROJECTION_SCENARIOS is not present, SDMs 
-               will be projected onto all scenarios
-        @note: This code can only parse scenario metadata marked as version 2.x
+        """Find Scenarios from codes.
+
+        Note:
+            - Boom parameters must include SCENARIO_PACKAGE, and optionally,
+                SCENARIO_PACKAGE_MODEL_SCENARIO,
+                SCENARIO_PACKAGE_PROJECTION_SCENARIOS
+            - If SCENARIO_PACKAGE_PROJECTION_SCENARIOS is not present, SDMs
+                will be projected onto all scenarios
+            - This code can only parse scenario metadata marked as version 2.x
         """
         # Make sure Scenario Package exists for this user
-        scenPkg = self.scribe.getScenPackage(user_id=self.user_id,
-                                        scenPkgName=self.scenPackageName,
-                                        fillLayers=True)
-        if scenPkg is None:
+        scen_package = self.scribe.get_scen_package(
+            user_id=self.user_id, scen_package_name=self.scen_package_name,
+            fill_layers=True)
+        if scen_package is None:
             # See if metadata exists in user or public environmental directory
-            spMetaFname = None
+            sp_meta_fname = None
             for pth in (self.user_id_path, ENV_DATA_PATH):
-                thisFname = os.path.join(pth, self.scenPackageName + '.py')
-                if os.path.exists(thisFname):
-                    spMetaFname = thisFname
+                this_fname = os.path.join(pth, self.scen_package_name + '.py')
+                if os.path.exists(this_fname):
+                    sp_meta_fname = this_fname
                     break
-        #          spMetaFname = os.path.join(ENV_DATA_PATH, self.scenPackageName + '.py')
-            if spMetaFname is None:
-                raise LMError("""ScenPackage {} must be authorized for User {} 
-                               or all users (with public metadata file {})"""
-                               .format(self.scenPackageName, self.user_id, spMetaFname))
-            else:
-                spFiller = SPFiller(spMetaFname, self.user_id, scribe=self.scribe)
-                scenPkg = spFiller.catalogScenPackages()
+                #  sp_meta_fname = os.path.join(ENV_DATA_PATH,
+                #    self.scen_package_name + '.py')
+            if sp_meta_fname is None:
+                raise LMError(
+                    ('ScenPackage {} must be authorized for user {} or all '
+                     'users (with public metadata file {})').format(
+                         self.scen_package_name, self.user_id, sp_meta_fname))
 
-        return scenPkg
+            sp_filler = SPFiller(
+                sp_meta_fname, self.user_id, scribe=self.scribe)
+            scen_package = sp_filler.catalog_scen_packages()
+
+        return scen_package
 
     # ................................
     def find_mdl_proj_scenarios(self, mdl_scencode, prj_scencodes):
-        """
-        @summary Find which Scenario for modeling, which (list) for projecting  
-        @note: Boom parameters must include SCENARIO_PACKAGE, 
-                                may include SCENARIO_PACKAGE_MODEL_SCENARIO,
-                                            SCENARIO_PACKAGE_PROJECTION_SCENARIOS
+        """Find which Scenario for modeling, which (list) for projecting.
+
+        Note:
+            Boom parameters must include SCENARIO_PACKAGE, may include
+                SCENARIO_PACKAGE_MODEL_SCENARIO,
+                SCENARIO_PACKAGE_PROJECTION_SCENARIOS
         """
         valid_scencodes = list(self.scen_pkg.scenarios.keys())
         if len(valid_scencodes) == 0 or None in valid_scencodes:
-            raise LMError('ScenPackage {} metadata is incorrect, scenario codes = {}'
-                         .format(self.scenPackageName, valid_scencodes))
+            raise LMError(
+                ('ScenPackage {} metadata is incorrect, scenario '
+                 'codes = {}').format(self.scen_package_name, valid_scencodes))
 
-        # TODO: Allow alternate masklayer for any Scenario, requires test and/or transform
-        base_scencode, mask_lyrname = self._find_scenpkg_base_and_mask(
-                                                          self.scenPackageName)
-        if not base_scencode in valid_scencodes:
-            raise LMError('ScenPackage {} metadata is incorrect, {} not in scenarios'
-                         .format(self.scenPackageName, base_scencode))
+        # TODO: Allow alternate masklayer for any Scenario, requires test
+        #    and/or transform
+        base_scencode, mask_lyr_name = self._find_scenpkg_base_and_mask(
+            self.scen_package_name)
+        if base_scencode not in valid_scencodes:
+            raise LMError(
+                ('ScenPackage {} metadata is incorrect, {} not in scenarios'
+                 ).format(self.scen_package_name, base_scencode))
 
         # If model Scenarios are not listed, use scenPackage default baseline
         if mdl_scencode is None:
             mdl_scencode = base_scencode
         # If model scenarios does not match scenPackage, error params file
         elif mdl_scencode not in valid_scencodes:
-            raise LMError('Params file {} metadata is incorrect, {} not in scenarios {} for package {}'
-                         .format(self.in_param_fname, mdl_scencode, valid_scencodes, self.scenPackageName))
-        # If projection Scenarios are not listed, use all scenarios in scenPackage
+            raise LMError(
+                ('Params file {} metadata is incorrect, {} not in scenarios '
+                 '{} for package {}').format(
+                     self.in_param_fname, mdl_scencode, valid_scencodes,
+                     self.scen_package_name))
+        # If projection Scenarios are not listed, use all scenarios in
+        #    scenPackage
         if not prj_scencodes:
             prj_scencodes = valid_scencodes
         # If any prj scenario does not match scenPackage, error params file
         else:
             for pcode in prj_scencodes:
                 if pcode not in valid_scencodes:
-                    raise LMError('Params file {} metadata is incorrect, {} not in scenarios {} for package {}'
-                                 .format(self.in_param_fname, pcode, valid_scencodes, self.scenPackageName))
+                    raise LMError(
+                        ('Params file {} metadata is incorrect, {} not in '
+                         'scenarios {} for package {}').format(
+                             self.in_param_fname, pcode, valid_scencodes,
+                             self.scen_package_name))
 
-        return mdl_scencode, prj_scencodes, mask_lyrname
+        return mdl_scencode, prj_scencodes, mask_lyr_name
 
     # ................................
     def open(self):
-        success = self.scribe.openConnections()
+        """Open database connection."""
+        success = self.scribe.open_connections()
         if not success:
             raise LMError('Failed to open database')
 
     # ................................
     def close(self):
-        self.scribe.closeConnections()
+        """Close database connection."""
+        self.scribe.close_connections()
 
     # ................................
     @property
     def log_filename(self):
+        """Get the log filename."""
         try:
-            fname = self.scribe.log.baseFilename
-        except:
+            fname = self.scribe.log.base_filename
+        except Exception:
             fname = None
         return fname
 
     # ................................
-    def _fix_permissions(self, files=[], dirs=[]):
+    def _fix_permissions(self, files=None, dirs=None):
         if is_lm_user:
             print('Permissions created correctly by LMUser')
         else:
-            dirname = os.path.dirname(self.outConfigFilename)
+            dirname = os.path.dirname(self.out_config_filename)
             stats = os.stat(dirname)
             # item 5 is group id; get for lmwriter
             gid = stats[5]
             if files is not None:
-                if not (isinstance(files, list) or
-                        isinstance(files, tuple)):
+                if not isinstance(files, (list, tuple)):
                     files = [files]
-                    for fd in files:
+                    for file_descriptor in files:
                         try:
-                            os.chown(fd, -1, gid)
-                            os.chmod(fd, 0o664)
+                            os.chown(file_descriptor, -1, gid)
+                            os.chmod(file_descriptor, 0o664)
                         except Exception as e:
-                            print(('Failed to fix permissions on {} ({})'.format(
-                                fd, e)))
+                            print((
+                                'Failed to fix permissions on {} ({})'.format(
+                                    file_descriptor, e)))
             if dirs is not None:
-                if not (isinstance(dirs, list) or
-                        isinstance(dirs, tuple)):
+                if not isinstance(dirs, (list, tuple)):
                     dirs = [dirs]
-                    for d in dirs:
-                        currperms = oct(os.stat(d)[stat.ST_MODE])[-3:]
+                    for my_dir in dirs:
+                        currperms = oct(os.stat(my_dir)[stat.ST_MODE])[-3:]
                         if currperms != '775':
                             try:
-                                os.chown(d, -1, gid)
-                                os.chmod(d, 0o775)
+                                os.chown(my_dir, -1, gid)
+                                os.chmod(my_dir, 0o775)
                             except Exception as e:
-                                print(('Failed to fix permissions on {}'.format(d)))
+                                print((
+                                    'Failed to fix permissions on {}'.format(
+                                        my_dir)))
 
     # ................................
-    def _get_db(self, logname):
-        logger = ScriptLogger(logname, level=logging.INFO)
+    @staticmethod
+    def _get_db(log_name):
+        logger = ScriptLogger(log_name, level=logging.INFO)
         # DB connection
-        scribe = BorgScribe(logger)
-        return scribe
+        return BorgScribe(logger)
 
     # ................................
-    def _get_algorithm(self, config, algHeading):
+    @staticmethod
+    def _get_algorithm(config, alg_heading):
+        """Get a configured algorithm.
+
+        Returns:
+            Algorithm - Configured with the parameters in config
         """
-        @note: Returns configured algorithm
-        """
-        acode = config.get(algHeading, BoomKeys.ALG_CODE)
+        acode = config.get(alg_heading, BoomKeys.ALG_CODE)
         alg = Algorithm(acode)
-        alg.fillWithDefaults()
+        alg.fill_with_defaults()
         inputs = {}
         # override defaults with any option specified
-        algoptions = config.getoptions(algHeading)
-        for name in algoptions:
-            pname, ptype = alg.findParamNameType(name)
+        alg_options = config.getoptions(alg_heading)
+        for name in alg_options:
+            pname, ptype = alg.find_param_name_type(name)
             if pname is not None:
                 if ptype == int:
-                    val = config.getint(algHeading, pname)
+                    val = config.getint(alg_heading, pname)
                 elif ptype == float:
-                    val = config.getfloat(algHeading, pname)
+                    val = config.getfloat(alg_heading, pname)
                 else:
-                    val = config.get(algHeading, pname)
+                    val = config.get(alg_heading, pname)
                     # Some algorithms(mask) may have a parameter indicating a
                     # layer if so, add name to parameters and object to inputs
                     if acode == 'hull_region_intersect' and pname == 'region':
@@ -326,37 +371,44 @@ class BOOMFiller(LMObject):
                         #    Now, always use layer in SDM_MASK_META in
                         #    scenario meta
                         pass
-                alg.setParameter(pname, val)
+                alg.set_parameter(pname, val)
         if inputs:
-            alg.setInputs(inputs)
+            alg.set_inputs(inputs)
         return alg
 
     # ................................
-    def _get_algorithms(self, config, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX):
-        """
-        @note: Returns configured algorithms, uses default algorithms only 
-               if no others exist
+    def _get_algorithms(self, config,
+                        section_prefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX):
+        """Get configured algorithms.
+
+        Note:
+            Uses default algorithms only if no others exist
+
+        Returns:
+            List of Algorithms
         """
         algs = {}
-        defaultAlgs = {}
+        default_algs = {}
         # Get algorithms for SDM modeling or SDM mask
-        sections = config.getsections(sectionPrefix)
-        for algHeading in sections:
-            alg = self._get_algorithm(config, algHeading)
+        sections = config.getsections(section_prefix)
+        for alg_heading in sections:
+            alg = self._get_algorithm(config, alg_heading)
 
-            if algHeading.endswith(SERVER_DEFAULT_HEADING_POSTFIX):
-                defaultAlgs[algHeading] = alg
+            if alg_heading.endswith(SERVER_DEFAULT_HEADING_POSTFIX):
+                default_algs[alg_heading] = alg
             else:
-                algs[algHeading] = alg
+                algs[alg_heading] = alg
         if len(algs) == 0:
-            algs = defaultAlgs
+            algs = default_algs
         return algs
 
     # ................................
-    def _find_scenpkg_base_and_mask(self, scenpkgName):
-        # pkgMeta, mask_lyrname = self._findScenPkgMeta(scenpkgName)
-        public_scenpkg_meta_file = os.path.join(ENV_DATA_PATH, scenpkgName + '.py')
-        user_scenpkg_meta_file = os.path.join(self.user_id_path, scenpkgName + '.py')
+    def _find_scenpkg_base_and_mask(self, scen_package_name):
+        # pkg_meta, mask_lyr_name = self._findScenPkgMeta(scen_package_name)
+        public_scenpkg_meta_file = os.path.join(
+            ENV_DATA_PATH, scen_package_name + '.py')
+        user_scenpkg_meta_file = os.path.join(
+            self.user_id_path, scen_package_name + '.py')
         if os.path.exists(public_scenpkg_meta_file):
             scenpkg_meta_file = public_scenpkg_meta_file
         elif os.path.exists(user_scenpkg_meta_file):
@@ -367,36 +419,39 @@ class BOOMFiller(LMObject):
                     public_scenpkg_meta_file, user_scenpkg_meta_file))
         # TODO: change to importlib on python 2.7 --> 3.3+
         try:
-            import imp
-            SPMETA = imp.load_source('currentmetadata', scenpkg_meta_file)
+            sp_meta = imp.load_source('currentmetadata', scenpkg_meta_file)
         except Exception as e:
             raise LMError(
                 'Climate metadata {} cannot be imported; ({})'.format(
                     scenpkg_meta_file, e))
-        pkgMeta = SPMETA.CLIMATE_PACKAGES[scenpkgName]
+        pkg_meta = sp_meta.CLIMATE_PACKAGES[scen_package_name]
         # Mask is optional
         try:
-            mask_lyrname = SPMETA.SDM_MASK_META['name']
-        except:
-            mask_lyrname = None
-        baseCode = pkgMeta['baseline']
-        return baseCode, mask_lyrname
+            mask_lyr_name = sp_meta.SDM_MASK_META['name']
+        except Exception:
+            mask_lyr_name = None
+        base_code = pkg_meta['baseline']
+        return base_code, mask_lyr_name
 
     # ................................
     def read_param_vals(self):
-        if self.in_param_fname is None or not os.path.exists(self.in_param_fname):
-            raise Exception('Missing config file {}'.format(self.in_param_fname))
+        """Read parameter values."""
+        if self.in_param_fname is None or not os.path.exists(
+                self.in_param_fname):
+            raise LMError(
+                'Missing config file {}'.format(self.in_param_fname))
 
-        paramFname = self.in_param_fname
-        config = Config(site_fn=paramFname)
+        param_fname = self.in_param_fname
+        config = Config(site_fn=param_fname)
 
         # ..........................
-        usr = self._get_boom_param(config, BoomKeys.ARCHIVE_USER, defaultValue=PUBLIC_USER)
+        usr = self._get_boom_param(
+            config, BoomKeys.ARCHIVE_USER, default_value=PUBLIC_USER)
         earl = EarlJr()
-        usrPath = earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
-        usrEmail = self._get_boom_param(config, BoomKeys.ARCHIVE_USER_EMAIL,
-                                          defaultValue='{}{}'.format(usr,
-                                                        DEFAULT_EMAIL_POSTFIX))
+        user_path = earl.create_data_path(usr, LMFileType.BOOM_CONFIG)
+        user_email = self._get_boom_param(
+            config, BoomKeys.ARCHIVE_USER_EMAIL,
+            default_value='{}{}'.format(usr, DEFAULT_EMAIL_POSTFIX))
 
         archive_name = self._get_boom_param(config, BoomKeys.ARCHIVE_NAME)
         if archive_name is None:
@@ -406,73 +461,92 @@ class BOOMFiller(LMObject):
             def_priority = Priority.NORMAL
         else:
             def_priority = Priority.REQUESTED
-        priority = self._get_boom_param(config, BoomKeys.ARCHIVE_PRIORITY,
-                                          defaultValue=def_priority)
+        priority = self._get_boom_param(
+            config, BoomKeys.ARCHIVE_PRIORITY, default_value=def_priority)
 
         # ..........................
         # Species data source and input
-        occFname = occSep = user_taxonomy_basefilename = occIdFname = None
+        occ_fname = occ_sep = user_taxonomy_base_filename = occ_id_fname = None
         taxon_id_filename = taxon_name_filename = None
-        dataSource = self._get_boom_param(config, BoomKeys.DATA_SOURCE)
-        if dataSource is None:
+        data_source = self._get_boom_param(config, BoomKeys.DATA_SOURCE)
+        if data_source is None:
             raise Exception('Failed to configure DATA_SOURCE')
-        else:
-            dataSource = dataSource.upper()
-        if dataSource not in (SpeciesDatasource.GBIF,
-                              SpeciesDatasource.USER,
-                              SpeciesDatasource.EXISTING,
-                              SpeciesDatasource.TAXON_IDS,
-                              SpeciesDatasource.TAXON_NAMES):
-            raise Exception('Failed to configure supported DATA_SOURCE')
-        elif dataSource in (SpeciesDatasource.GBIF, SpeciesDatasource.USER):
-            occFname = self._get_boom_param(config, BoomKeys.OCC_DATA_NAME)
-            occSep = self._get_boom_param(config, BoomKeys.OCC_DATA_DELIMITER)
+
+        data_source = data_source.upper()
+        if data_source not in (
+                SpeciesDatasource.GBIF, SpeciesDatasource.USER,
+                SpeciesDatasource.EXISTING, SpeciesDatasource.TAXON_IDS,
+                SpeciesDatasource.TAXON_NAMES):
+            raise LMError('Failed to configure supported DATA_SOURCE')
+        if data_source in (SpeciesDatasource.GBIF, SpeciesDatasource.USER):
+            occ_fname = self._get_boom_param(config, BoomKeys.OCC_DATA_NAME)
+            occ_sep = self._get_boom_param(config, BoomKeys.OCC_DATA_DELIMITER)
             # Taxonomy is optional,
-            if dataSource == SpeciesDatasource.USER:
-                user_taxonomy_basefilename = self._get_boom_param(config, BoomKeys.USER_TAXONOMY_FILENAME)
-            if occSep is None:
-                occSep = GBIF.DATA_DUMP_DELIMITER
-            if occFname is None:
-                raise Exception('Failed to configure OCC_DATA_NAME for DATA_SOURCE=GBIF or USER')
-        elif dataSource == SpeciesDatasource.EXISTING:
-            occIdFname = self._get_boom_param(config, BoomKeys.OCC_ID_FILENAME)
-            if occIdFname is None:
-                raise Exception('Failed to configure OCC_ID_FILENAME for DATA_SOURCE=EXISTING')
-        elif dataSource == SpeciesDatasource.TAXON_IDS:
-            taxon_id_filename = self._get_boom_param(config, BoomKeys.TAXON_ID_FILENAME)
+            if data_source == SpeciesDatasource.USER:
+                user_taxonomy_base_filename = self._get_boom_param(
+                    config, BoomKeys.USER_TAXONOMY_FILENAME)
+            if occ_sep is None:
+                occ_sep = GBIF.DATA_DUMP_DELIMITER
+            if occ_fname is None:
+                raise LMError(
+                    ('Failed to configure OCC_DATA_NAME for DATA_SOURCE=GBIF '
+                     'or USER'))
+        elif data_source == SpeciesDatasource.EXISTING:
+            occ_id_fname = self._get_boom_param(
+                config, BoomKeys.OCC_ID_FILENAME)
+            if occ_id_fname is None:
+                raise LMError(
+                    ('Failed to configure OCC_ID_FILENAME for '
+                     'DATA_SOURCE=EXISTING'))
+        elif data_source == SpeciesDatasource.TAXON_IDS:
+            taxon_id_filename = self._get_boom_param(
+                config, BoomKeys.TAXON_ID_FILENAME)
             if taxon_id_filename is None:
-                raise Exception('Failed to configure TAXON_ID_FILENAME for DATA_SOURCE=TAXON_IDS')
-        elif dataSource == SpeciesDatasource.TAXON_NAMES:
-            taxon_name_filename = self._get_boom_param(config, BoomKeys.TAXON_NAME_FILENAME)
+                raise LMError(
+                    ('Failed to configure TAXON_ID_FILENAME for '
+                     'DATA_SOURCE=TAXON_IDS'))
+        elif data_source == SpeciesDatasource.TAXON_NAMES:
+            taxon_name_filename = self._get_boom_param(
+                config, BoomKeys.TAXON_NAME_FILENAME)
             if taxon_name_filename is None:
-                raise Exception('Failed to configure TAXON_NAME_FILENAME for DATA_SOURCE=TAXON_NAMES')
-        # ..........................
-        minpoints = self._get_boom_param(config, BoomKeys.POINT_COUNT_MIN)
-        today = gmt()
-        expyr = self._get_boom_param(config, BoomKeys.OCC_EXP_YEAR, defaultValue=today.year)
-        expmo = self._get_boom_param(config, BoomKeys.OCC_EXP_MONTH, defaultValue=today.month)
-        expdy = self._get_boom_param(config, BoomKeys.OCC_EXP_DAY, defaultValue=today.day)
+                raise LMError(
+                    ('Failed to configure TAXON_NAME_FILENAME for '
+                     'DATA_SOURCE=TAXON_NAMES'))
 
         # ..........................
-        algs = self._get_algorithms(config, sectionPrefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
+        min_points = self._get_boom_param(config, BoomKeys.POINT_COUNT_MIN)
+        today = gmt()
+        exp_year = self._get_boom_param(
+            config, BoomKeys.OCC_EXP_YEAR, default_value=today.year)
+        exp_month = self._get_boom_param(
+            config, BoomKeys.OCC_EXP_MONTH, default_value=today.month)
+        exp_day = self._get_boom_param(
+            config, BoomKeys.OCC_EXP_DAY, default_value=today.day)
+
+        # ..........................
+        algs = self._get_algorithms(
+            config, section_prefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
         # ..........................
         # One optional Mask for pre-processing
-        maskAlg = None
-        maskAlgList = self._get_algorithms(config, sectionPrefix=SERVER_SDM_MASK_HEADING_PREFIX)
-        if maskAlgList:
-            if len(maskAlgList) == 1:
-                maskAlg = list(maskAlgList.values())[0]
+        mask_alg = None
+        mask_alg_list = self._get_algorithms(
+            config, section_prefix=SERVER_SDM_MASK_HEADING_PREFIX)
+        if mask_alg_list:
+            if len(mask_alg_list) == 1:
+                mask_alg = list(mask_alg_list.values())[0]
             else:
-                raise Exception('Only one PREPROCESSING SDM_MASK supported')
+                raise LMError('Only one PREPROCESSING SDM_MASK supported')
         # ..........................
         # optional MCPA inputs, data values indicate processing steps
-        treeFname = self._get_boom_param(config, BoomKeys.TREE)
-        biogeoName = self._get_boom_param(config, BoomKeys.BIOGEO_HYPOTHESES_LAYERS)
-        bghypFnames = self._get_biogeo_hypotheses_layer_filenames(biogeoName, usrPath)
+        tree_fname = self._get_boom_param(config, BoomKeys.TREE)
+        biogeo_name = self._get_boom_param(
+            config, BoomKeys.BIOGEO_HYPOTHESES_LAYERS)
+        biogeo_hyp_names = self._get_biogeo_hypotheses_layer_filenames(
+            biogeo_name, user_path)
         # ..........................
         # optional layer inputs
-        other_lyr_names = self._get_boom_param(config, BoomKeys.OTHER_LAYERS,
-                                                 defaultValue=[], isList=True)
+        other_lyr_names = self._get_boom_param(
+            config, BoomKeys.OTHER_LAYERS, default_value=[], is_list=True)
         # ..........................
         # RAD/PAM params, defaults to "Do not intersect"
         intersect_params = None
@@ -480,61 +554,81 @@ class BOOMFiller(LMObject):
         compute_mcpa = None
         num_permutations = None
 
-        do_assemble_pams = self._get_boom_param(config, BoomKeys.ASSEMBLE_PAMS,
-                                                  isBool=True, defaultValue=False)
-        gridbbox = self._get_boom_param(config, BoomKeys.GRID_BBOX, isList=True)
-        cellsides = self._get_boom_param(config, BoomKeys.GRID_NUM_SIDES)
-        cellsize = self._get_boom_param(config, BoomKeys.GRID_CELL_SIZE)
-        gridname = '{}-Grid-{}'.format(archive_name, cellsize)
+        do_assemble_pams = self._get_boom_param(
+            config, BoomKeys.ASSEMBLE_PAMS, is_bool=True, default_value=False)
+        grid_bbox = self._get_boom_param(
+            config, BoomKeys.GRID_BBOX, is_list=True)
+        cell_sides = self._get_boom_param(config, BoomKeys.GRID_NUM_SIDES)
+        cell_size = self._get_boom_param(config, BoomKeys.GRID_CELL_SIZE)
+        grid_name = '{}-Grid-{}'.format(archive_name, cell_size)
         # TODO: enable filter string
-        gridFilter = self._get_boom_param(config, BoomKeys.INTERSECT_FILTER_STRING)
-        gridIntVal = self._get_boom_param(config, BoomKeys.INTERSECT_VAL_NAME)
-        gridMinPct = self._get_boom_param(config, BoomKeys.INTERSECT_MIN_PERCENT)
-        gridMinPres = self._get_boom_param(config, BoomKeys.INTERSECT_MIN_PRESENCE)
-        gridMaxPres = self._get_boom_param(config, BoomKeys.INTERSECT_MAX_PRESENCE)
+        grid_filter = self._get_boom_param(
+            config, BoomKeys.INTERSECT_FILTER_STRING)
+        grid_int_val = self._get_boom_param(
+            config, BoomKeys.INTERSECT_VAL_NAME)
+        grid_min_pct = self._get_boom_param(
+            config, BoomKeys.INTERSECT_MIN_PERCENT)
+        grid_min_pres = self._get_boom_param(
+            config, BoomKeys.INTERSECT_MIN_PRESENCE)
+        grid_max_pres = self._get_boom_param(
+            config, BoomKeys.INTERSECT_MAX_PRESENCE)
         if do_assemble_pams:
-            for var in (gridbbox, cellsides, cellsize, gridIntVal, gridMinPct,
-                        gridMinPres, gridMaxPres):
+            for var in (
+                    grid_bbox, cell_sides, cell_size, grid_int_val,
+                    grid_min_pct, grid_min_pres, grid_max_pres):
                 if not var:
-                    raise Exception("""Failed to configure one or more GRID 
-                    parameters: GRID_BBOX, GRID_NUM_SIDES, GRID_CELL_SIZE,
-                    INTERSECT_VAL_NAME, INTERSECT_MIN_PERCENT, 
-                    INTERSECT_MIN_PRESENCE, INTERSECT_MAX_PERCENT""")
-            intersect_params = {MatrixColumn.INTERSECT_PARAM_FILTER_STRING: gridFilter,
-                               MatrixColumn.INTERSECT_PARAM_VAL_NAME: gridIntVal,
-                               MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
-                               MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
-                               MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
+                    raise LMError(
+                        ('Failed to configure one or more GRID parameters: '
+                         'GRID_BBOX, GRID_NUM_SIDES, GRID_CELL_SIZE, '
+                         'INTERSECT_VAL_NAME, INTERSECT_MIN_PERCENT, '
+                         'INTERSECT_MIN_PRESENCE, INTERSECT_MAX_PRESENCE'))
+            intersect_params = {
+                MatrixColumn.INTERSECT_PARAM_FILTER_STRING: grid_filter,
+                MatrixColumn.INTERSECT_PARAM_VAL_NAME: grid_int_val,
+                MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: grid_min_pres,
+                MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: grid_max_pres,
+                MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: grid_min_pct
+                }
             # More computations, only if
-            compute_pam_stats = self._get_boom_param(config, BoomKeys.COMPUTE_PAM_STATS,
-                                                       isBool=True, defaultValue=False)
-            compute_mcpa = self._get_boom_param(config, BoomKeys.COMPUTE_MCPA,
-                                                  isBool=True, defaultValue=False)
-            num_permutations = self._get_boom_param(config, BoomKeys.NUM_PERMUTATIONS,
-                                                      defaultValue=DEFAULT_NUM_PERMUTATIONS)
+            compute_pam_stats = self._get_boom_param(
+                config, BoomKeys.COMPUTE_PAM_STATS, is_bool=True,
+                default_value=False)
+            compute_mcpa = self._get_boom_param(
+                config, BoomKeys.COMPUTE_MCPA, is_bool=True,
+                default_value=False)
+            num_permutations = self._get_boom_param(
+                config, BoomKeys.NUM_PERMUTATIONS,
+                default_value=DEFAULT_NUM_PERMUTATIONS)
         # ..........................
-        scenPackageName = self._get_boom_param(config, BoomKeys.SCENARIO_PACKAGE)
-        if scenPackageName is None:
+        scen_package_name = self._get_boom_param(
+            config, BoomKeys.SCENARIO_PACKAGE)
+        if scen_package_name is None:
             raise LMError('Failed to configure SCENARIO_PACKAGE')
-        mdl_scencode = self._get_boom_param(config, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO)
+        mdl_scencode = self._get_boom_param(
+            config, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO)
         if mdl_scencode is None:
-            self.log.info('Retrieve `baseline` scenario from SCENARIO_PACKAGE metadata')
-        prj_scencodes = self._get_boom_param(config,
-                    BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, isList=True)
+            self.log.info(
+                'Retrieve `baseline` scenario from SCENARIO_PACKAGE metadata')
+        prj_scencodes = self._get_boom_param(
+            config, BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS,
+            is_list=True)
         if not prj_scencodes:
-            self.log.info('Retrieve all scenarios from SCENARIO_PACKAGE metadata')
+            self.log.info(
+                'Retrieve all scenarios from SCENARIO_PACKAGE metadata')
 
-        return (usr, usrPath, usrEmail, user_taxonomy_basefilename,
-                archive_name, priority, scenPackageName,
-                mdl_scencode, prj_scencodes, dataSource,
-                occIdFname, taxon_name_filename, taxon_id_filename,
-                occFname, occSep, minpoints, (expyr, expmo, expdy), algs,
-                do_assemble_pams, gridbbox, cellsides, cellsize, gridname,
-                intersect_params, maskAlg, treeFname, bghypFnames,
-                compute_pam_stats, compute_mcpa, num_permutations, other_lyr_names)
+        return (usr, user_path, user_email, user_taxonomy_base_filename,
+                archive_name, priority, scen_package_name,
+                mdl_scencode, prj_scencodes, data_source,
+                occ_id_fname, taxon_name_filename, taxon_id_filename,
+                occ_fname, occ_sep, min_points, (exp_year, exp_month, exp_day),
+                algs, do_assemble_pams, grid_bbox, cell_sides, cell_size,
+                grid_name, intersect_params, mask_alg, tree_fname,
+                biogeo_hyp_names, compute_pam_stats, compute_mcpa,
+                num_permutations, other_lyr_names)
 
     # ................................
-    def write_config_file(self, tree=None, biogeoLayers=[]):
+    def write_config_file(self, tree=None, biogeo_layers=None):
+        """Write configuration file."""
         config = configparser.SafeConfigParser()
         config.add_section(SERVER_BOOM_HEADING)
         # .........................................
@@ -545,11 +639,11 @@ class BOOMFiller(LMObject):
             for name, val in alg.parameters.items():
                 config.set(heading, name, str(val))
         # SDM Mask input for optional pre-processing
-        if self.maskAlg is not None:
+        if self.mask_alg is not None:
             config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
             config.set(SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.ALG_CODE,
-                       self.maskAlg.code)
-            for name, val in self.maskAlg.parameters.items():
+                       self.mask_alg.code)
+            for name, val in self.mask_alg.parameters.items():
                 config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
         # .........................................
         email = self.user_email
@@ -557,89 +651,125 @@ class BOOMFiller(LMObject):
             email = ''
         # General config
         config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, self.user_id)
-        config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_NAME, self.archive_name)
-        config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_PRIORITY, str(self.priority))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_NAME, self.archive_name)
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_PRIORITY, str(self.priority))
         config.set(SERVER_BOOM_HEADING, BoomKeys.TROUBLESHOOTERS, email)
         # .........................................
         # SDM input environmental data, pulled from SCENARIO_PACKAGE metadata
         pcodes = ','.join(self.prj_scencodes)
-        config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS,
-                   pcodes)
-        config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO,
-                   self.mdl_scencode)
-        config.set(SERVER_BOOM_HEADING, BoomKeys.MAPUNITS, self.scen_pkg.mapUnits)
-        config.set(SERVER_BOOM_HEADING, BoomKeys.EPSG, str(self.scen_pkg.epsgcode))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE, self.scen_pkg.name)
+        config.set(
+            SERVER_BOOM_HEADING,
+            BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, pcodes)
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO,
+            self.mdl_scencode)
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.MAPUNITS, self.scen_pkg.map_units)
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.EPSG, str(self.scen_pkg.epsg_code))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE, self.scen_pkg.name)
         # SDM input species source data
-        config.set(SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE, self.dataSource)
+        config.set(SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE, self.data_source)
         # Use/copy public data
-        if self.dataSource == SpeciesDatasource.EXISTING:
-            config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_ID_FILENAME,
-                      self.occIdFname)
+        if self.data_source == SpeciesDatasource.EXISTING:
+            config.set(
+                SERVER_BOOM_HEADING, BoomKeys.OCC_ID_FILENAME,
+                self.occ_id_fname)
         # Use GBIF taxon ids to pull iDigBio data
-        elif self.dataSource == SpeciesDatasource.TAXON_IDS:
-            config.set(SERVER_BOOM_HEADING, BoomKeys.TAXON_ID_FILENAME, self.taxon_id_filename)
+        elif self.data_source == SpeciesDatasource.TAXON_IDS:
+            config.set(
+                SERVER_BOOM_HEADING, BoomKeys.TAXON_ID_FILENAME,
+                self.taxon_id_filename)
         # Use GBIF data dump, with supporting provider and taxonomy files
-        elif self.dataSource == SpeciesDatasource.GBIF:
+        elif self.data_source == SpeciesDatasource.GBIF:
             config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_PROVIDER_FILENAME,
                        GBIF_PROVIDER_FILENAME)
             config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_TAXONOMY_FILENAME,
                        GBIF_TAXONOMY_FILENAME)
-            config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occFname)
-            config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occSep)
+            config.set(
+                SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occ_fname)
+            config.set(
+                SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occ_sep)
         # User data
         else:
-            config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occFname)
-            config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occSep)
+            config.set(
+                SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occ_fname)
+            config.set(
+                SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occ_sep)
             # optional user-provided taxonomy
-            if self.user_taxonomy_basefilename is not None:
-                config.set(SERVER_BOOM_HEADING, BoomKeys.USER_TAXONOMY_FILENAME,
-                           self.userTaxonomyBasename)
+            if self.user_taxonomy_base_filename is not None:
+                config.set(
+                    SERVER_BOOM_HEADING, BoomKeys.USER_TAXONOMY_FILENAME,
+                    self.user_taxonomy_base_filename)
         # .........................................
         # Expiration date triggering re-query and computation
-        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_YEAR, str(self.expdate[0]))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MONTH, str(self.expdate[1]))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_DAY, str(self.expdate[2]))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN, str(self.minpoints))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_YEAR, str(self.exp_date[0]))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MONTH, str(self.exp_date[1]))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_DAY, str(self.exp_date[2]))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN,
+            str(self.min_points))
         # TODO: Use this in boomer
-        config.set(SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MJD, str(self.woof_time_mjd))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MJD, str(self.woof_time_mjd))
         # .........................................
         # Multi-species flags
-        config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, str(self.do_assemble_pams))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, str(self.compute_pam_stats))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, str(self.compute_mcpa))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS,
+            str(self.do_assemble_pams))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS,
+            str(self.compute_pam_stats))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, str(self.compute_mcpa))
         # Grid and Intersect params
-        config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_NUM_SIDES, str(self.cellsides))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_CELL_SIZE, str(self.cellsize))
-        config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_BBOX,
-                   ','.join(str(v) for v in self.gridbbox))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.GRID_NUM_SIDES, str(self.cell_sides))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.GRID_CELL_SIZE, str(self.cell_size))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.GRID_BBOX,
+            ','.join(str(v) for v in self.grid_bbox))
         config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_NAME, self.grid_name)
         # Intersection params
-        for k, v in self.intersect_params.items():
+        for k, val in self.intersect_params.items():
             # refer to BoomKeys.INTERSECT_*
-            config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), str(v))
+            config.set(
+                SERVER_BOOM_HEADING,
+                'INTERSECT_{}'.format(k.upper()), str(val))
         # Multi-species randomization
-        config.set(SERVER_BOOM_HEADING, BoomKeys.NUM_PERMUTATIONS,
-                   str(self.num_permutations))
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.NUM_PERMUTATIONS,
+            str(self.num_permutations))
         # .........................................
         # MCPA Biogeographic Hypotheses
-        if len(biogeoLayers) > 0:
-            bioGeoLayerNames = ','.join(biogeoLayers)
-            config.set(SERVER_BOOM_HEADING, BoomKeys.BIOGEO_HYPOTHESES_LAYERS, bioGeoLayerNames)
+        if biogeo_layers and len(biogeo_layers) > 0:
+            biogeo_layer_names = ','.join(biogeo_layers)
+            config.set(
+                SERVER_BOOM_HEADING, BoomKeys.BIOGEO_HYPOTHESES_LAYERS,
+                biogeo_layer_names)
         # Phylogenetic data for PD
         if tree is not None:
             config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree.name)
 
-        ready_filename(self.outConfigFilename, overwrite=True)
-        with open(self.outConfigFilename, 'wb') as configfile:
-            config.write(configfile)
-        self._fix_permissions(files=[self.outConfigFilename])
+        ready_filename(self.out_config_filename, overwrite=True)
+        with open(self.out_config_filename, 'wb') as config_file:
+            config.write(config_file)
+        self._fix_permissions(files=[self.out_config_filename])
         self.scribe.log.info('******')
-        self.scribe.log.info('--config_file={}'.format(self.outConfigFilename))
+        self.scribe.log.info(
+            '--config_file={}'.format(self.out_config_filename))
         self.scribe.log.info('******')
 
     # ................................
-    def _get_var_value(self, var):
+    @staticmethod
+    def _get_var_value(var):
         # Remove spaces and empty strings
         if var is not None and not isinstance(var, bool):
             var = var.strip()
@@ -648,137 +778,146 @@ class BOOMFiller(LMObject):
         # Convert to number if needed
         try:
             var = int(var)
-        except:
+        except TypeError:
             try:
                 var = float(var)
-            except:
+            except TypeError:
                 pass
         return var
 
     # ................................
-    def _get_boom_param(self, config, varname, defaultValue=None,
-                      isList=False, isBool=False):
+    def _get_boom_param(self, config, var_name, default_value=None,
+                        is_list=False, is_bool=False):
         var = None
         # Get value from BOOM or default config file
-        if isBool:
+        if is_bool:
             try:
-                var = config.getboolean(SERVER_BOOM_HEADING, varname)
-            except:
-                if isinstance(defaultValue, bool):
-                    var = defaultValue
+                var = config.getboolean(SERVER_BOOM_HEADING, var_name)
+            except Exception:
+                if isinstance(default_value, bool):
+                    var = default_value
                 else:
-                    raise LMError('Var {} must be set to True or False'.format(varname))
+                    raise LMError(
+                        'Var {} must be set to True or False'.format(var_name))
         else:
             try:
-                var = config.get(SERVER_BOOM_HEADING, varname)
-            except:
+                var = config.get(SERVER_BOOM_HEADING, var_name)
+            except Exception:
                 pass
             # Interpret value
             if var is not None:
-                if isList:
+                if is_list:
                     try:
-                        tmplist = [v.strip() for v in var.split(',')]
+                        tmp_list = [v.strip() for v in var.split(',')]
                         var = []
-                    except:
+                    except Exception:
                         raise LMError('Failed to split variables on \',\'')
-                    for v in tmplist:
-                        v = self._get_var_value(v)
-                        var.append(v)
+                    for val in tmp_list:
+                        var.append(self._get_var_value(val))
                 else:
                     var = self._get_var_value(var)
             # or take default if present
             else:
-                if defaultValue is not None:
-                    if isList and isinstance(defaultValue, list):
-                        var = defaultValue
-                    elif isBool and isinstance(defaultValue, bool):
-                        var = defaultValue
-                    elif not isList and not isBool:
-                        var = defaultValue
+                if default_value is not None:
+                    if is_list and isinstance(default_value, list):
+                        var = default_value
+                    elif is_bool and isinstance(default_value, bool):
+                        var = default_value
+                    elif not is_list and not is_bool:
+                        var = default_value
         return var
 
     # ................................
     def add_user(self):
-        """
-        @summary Adds provided userid to the database
-        """
-        user = LMUser(self.user_id, self.user_email, self.user_email,
-                      mod_time=gmt().mjd)
-        self.scribe.log.info('  Find or insert user {} ...'.format(self.user_id))
-        updatedUser = self.scribe.findOrInsertUser(user)
+        """Adds provided user_id to the database."""
+        user = LMUser(
+            self.user_id, self.user_email, self.user_email, mod_time=gmt().mjd)
+        self.scribe.log.info(
+            '  Find or insert user {} ...'.format(self.user_id))
+        updated_user = self.scribe.find_or_insert_user(user)
         # If exists, found by unique Id or Email, update values
-        self.user_id = updatedUser.userid
-        self.user_email = updatedUser.email
+        self.user_id = updated_user.user_id
+        self.user_email = updated_user.email
 
     # ................................
     def _check_occurrence_sets(self, limit=10):
-        legalUsers = [PUBLIC_USER, self.user_id]
-        missingCount = 0
-        wrongUserCount = 0
-        nonIntCount = 0
-        if not os.path.exists(self.occIdFname):
-            raise LMError('Missing OCCURRENCE_ID_FILENAME {}'.format(self.occIdFname))
-        else:
-            count = 0
-            for line in open(self.occIdFname, 'r'):
-                count += 1
-                try:
-                    tmp = line.strip()
-                except Exception as e:
-                    self.scribe.log.info('Error reading line {} ({}), stopping'
-                                         .format(count, str(e)))
-                    break
-                try:
-                    occid = int(tmp)
-                except Exception as e:
-                    self.scribe.log.info('Unable to get Id from data {} on line {}'
-                                         .format(tmp, count))
-                    nonIntCount += 1
-                else:
-                    occ = self.scribe.getOccurrenceSet(occId=occid)
-                    if occ is None:
-                        missingCount += 1
-                    elif occ.get_user_id() not in legalUsers:
-                        self.scribe.log.info('Unauthorized user {} for ID {}'
-                                             .format(occ.get_user_id(), occid))
-                        wrongUserCount += 1
-                if count >= limit:
-                    break
-        self.scribe.log.info('Errors out of {} read OccurrenceSets (limit {}):'.format(count, limit))
-        self.scribe.log.info('  Missing: {} '.format(missingCount))
-        self.scribe.log.info('  Unauthorized data: {} '.format(wrongUserCount))
-        self.scribe.log.info('  Bad ID: {} '.format(nonIntCount))
+        legal_users = [PUBLIC_USER, self.user_id]
+        missing_count = 0
+        wrong_user_count = 0
+        non_int_count = 0
+        if not os.path.exists(self.occ_id_fname):
+            raise LMError('Missing OCCURRENCE_ID_FILENAME {}'.format(
+                self.occ_id_fname))
+
+        count = 0
+        for line in open(self.occ_id_fname, 'r'):
+            count += 1
+            try:
+                tmp = line.strip()
+            except Exception as e:
+                self.scribe.log.info(
+                    'Error reading line {} ({}), stopping'.format(
+                        count, str(e)))
+                break
+            try:
+                occ_id = int(tmp)
+            except Exception as e:
+                self.scribe.log.info(
+                    'Unable to get Id from data {} on line {}'.format(
+                        tmp, count))
+                non_int_count += 1
+            else:
+                occ = self.scribe.get_occurrence_set(occ_id=occ_id)
+                if occ is None:
+                    missing_count += 1
+                elif occ.get_user_id() not in legal_users:
+                    self.scribe.log.info(
+                        'Unauthorized user {} for ID {}'.format(
+                            occ.get_user_id(), occ_id))
+                    wrong_user_count += 1
+            if count >= limit:
+                break
+        self.scribe.log.info(
+            'Errors out of {} read OccurrenceSets (limit {}):'.format(
+                count, limit))
+        self.scribe.log.info('  Missing: {} '.format(missing_count))
+        self.scribe.log.info(
+            '  Unauthorized data: {} '.format(wrong_user_count))
+        self.scribe.log.info('  Bad ID: {} '.format(non_int_count))
 
     # ................................
     def _add_intersect_grid(self):
-        shp = Shapegrid(self.grid_name, self.user_id, self.scen_pkg.epsgcode, self.cellsides,
-                        self.cellsize, self.scen_pkg.mapUnits, self.gridbbox,
-                        status=JobStatus.INITIALIZE,
-                        status_mod_time=gmt().mjd)
-        newshp = self.scribe.findOrInsertShapegrid(shp)
-        validData = False
-        if newshp:
+        shp = Shapegrid(
+            self.grid_name, self.user_id, self.scen_pkg.epsg_code,
+            self.cell_sides, self.cell_size, self.scen_pkg.map_units,
+            self.grid_bbox, status=JobStatus.INITIALIZE,
+            status_mod_time=gmt().mjd)
+        new_shp = self.scribe.find_or_insert_shapegrid(shp)
+        valid_data = False
+        if new_shp:
             # check existence
-            validData, _ = Shapegrid.test_vector(newshp.get_dlocation())
-            if not validData:
+            valid_data, _ = Shapegrid.test_vector(new_shp.get_dlocation())
+            if not valid_data:
                 try:
                     # Write new shapegrid
-                    dloc = newshp.get_dlocation()
-                    newshp.buildShape(overwrite=True)
-                    validData, _ = Shapegrid.test_vector(dloc)
-                    self._fixPermissions(files=newshp.get_shapefiles())
+                    dloc = new_shp.get_dlocation()
+                    new_shp.build_shape(overwrite=True)
+                    valid_data, _ = Shapegrid.test_vector(dloc)
+                    self._fix_permissions(files=new_shp.get_shapefiles())
                 except Exception as e:
-                    self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
-                if not validData:
+                    self.scribe.log.warning(
+                        'Unable to build Shapegrid ({})'.format(str(e)))
+                if not valid_data:
                     raise LMError('Failed to write Shapegrid {}'.format(dloc))
-            if validData and newshp.status != JobStatus.COMPLETE:
-                newshp.update_status(JobStatus.COMPLETE)
-                success = self.scribe.updateObject(newshp)
+            if valid_data and new_shp.status != JobStatus.COMPLETE:
+                new_shp.update_status(JobStatus.COMPLETE)
+                success = self.scribe.update_object(new_shp)
                 if success is False:
-                    self.scribe.log.warning('Failed to update Shapegrid record')
+                    self.scribe.log.warning(
+                        'Failed to update Shapegrid record')
         else:
             raise LMError('Failed to find or insert Shapegrid')
-        return newshp
+        return new_shp
 
     # ................................
     def _find_or_add_pam(self, gridset, alg, scen):
@@ -788,113 +927,120 @@ class BOOMFiller(LMObject):
         if not self.compute_pam_stats:
             pam_type = MatrixType.ROLLING_PAM
 
-        kws = [GPAM_KEYWORD]
-        for kw in (scen.code, scen.gcm_code, scen.alt_pred_code, scen.date_code):
-            if kw is not None:
-                kws.append(kw)
+        keywords = [GPAM_KEYWORD]
+        for keyword in (
+                scen.code, scen.gcm_code, scen.alt_pred_code, scen.date_code):
+            if keyword is not None:
+                keywords.append(keyword)
 
         desc = '{} for Scenario {}'.format(GPAM_KEYWORD, scen.code)
-        pamMeta = {ServiceObject.META_DESCRIPTION: desc,
-                   ServiceObject.META_KEYWORDS: kws}
+        pam_meta = {
+            ServiceObject.META_DESCRIPTION: desc,
+            ServiceObject.META_KEYWORDS: keywords
+            }
 
-        tmpGpam = LMMatrix(None, matrix_type=pam_type,
-                           # TODO: replace 3 codes with scenarioId
-                           scenario_id=scen.get_id(),
-                           gcm_code=scen.gcm_code, alt_pred_code=scen.alt_pred_code,
-                           date_code=scen.date_code,
-                           algCode=alg.code,
-                           metadata=pamMeta, user_id=self.user_id,
-                           gridset=gridset,
-                           status=JobStatus.GENERAL,
-                           status_mod_time=gmt().mjd)
-        gpam = self.scribe.find_or_insert_matrix(tmpGpam)
-        return gpam
+        tmp_global_pam = LMMatrix(
+            None, matrix_type=pam_type,
+            # TODO: replace 3 codes with scenarioId
+            scenario_id=scen.get_id(), gcm_code=scen.gcm_code,
+            alt_pred_code=scen.alt_pred_code, date_code=scen.date_code,
+            alg_code=alg.code, metadata=pam_meta, user_id=self.user_id,
+            gridset=gridset, status=JobStatus.GENERAL,
+            status_mod_time=gmt().mjd)
+        return self.scribe.find_or_insert_matrix(tmp_global_pam)
 
     # ................................
     def _find_or_add_grim(self, gridset, scen):
         # Create Scenario-GRIM for this archive, scenario
         # GRIM layers are added now
-        kws = [GGRIM_KEYWORD]
-        for kw in (scen.code, scen.gcm_code, scen.alt_pred_code, scen.date_code):
-            if kw is not None:
-                kws.append(kw)
+        keywords = [GGRIM_KEYWORD]
+        for keyword in (
+                scen.code, scen.gcm_code, scen.alt_pred_code, scen.date_code):
+            if keyword is not None:
+                keywords.append(keyword)
 
         desc = '{} for Scenario {}'.format(GGRIM_KEYWORD, scen.code)
-        grim_meta = {ServiceObject.META_DESCRIPTION: desc,
-                    ServiceObject.META_KEYWORDS: kws}
+        grim_meta = {
+            ServiceObject.META_DESCRIPTION: desc,
+            ServiceObject.META_KEYWORDS: keywords
+            }
 
-        tmpGrim = LMMatrix(None, matrix_type=MatrixType.GRIM,
-                           # TODO: replace 3 codes with scenarioId
-                           scenario_id=scen.get_id(),
-                           gcm_code=scen.gcm_code, alt_pred_code=scen.alt_pred_code,
-                           date_code=scen.date_code,
-                           metadata=grim_meta, user_id=self.user_id,
-                           gridset=gridset,
-                           status=JobStatus.GENERAL,
-                           status_mod_time=gmt().mjd)
-        grim = self.scribe.find_or_insert_matrix(tmpGrim)
+        tmp_grim = LMMatrix(
+            None, matrix_type=MatrixType.GRIM,
+            # TODO: replace 3 codes with scenarioId
+            scenario_id=scen.get_id(), gcm_code=scen.gcm_code,
+            alt_pred_code=scen.alt_pred_code, date_code=scen.date_code,
+            metadata=grim_meta, user_id=self.user_id, gridset=gridset,
+            status=JobStatus.GENERAL, status_mod_time=gmt().mjd)
+        grim = self.scribe.find_or_insert_matrix(tmp_grim)
         for lyr in scen.layers:
             # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
-            mtxcol = self._init_grim_intersect(lyr, grim)
+            _ = self._init_grim_intersect(lyr, grim)
         return grim
 
     # ................................
     def add_shapegrid_gpam_gridset(self):
-        """
-        @summary: Create a Gridset, Shapegrid, PAMs, GRIMs for this archive, and
-                  update attributes with new or existing values from DB
+        """Add shapegrid and create gridset.
+
+        Create a Gridset, Shapegrid, PAMs, GRIMs for this archive, and update
+        attributes with new or existing values from DB
         """
         scen_grims = {}
-        self.scribe.log.info('  Find or insert, build shapegrid {} ...'.format(self.grid_name))
+        self.scribe.log.info(
+            '  Find or insert, build shapegrid {} ...'.format(self.grid_name))
         shp = self._add_intersect_grid()
         self.scribe.log.info('  Found or inserted shapegrid')
         self.shapegrid = shp
         # "BOOM" Archive
         # TODO: change 'parameters' to ServiceObject.META_PARAMS
-        meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
-                ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD],
-                'parameters': self.in_param_fname}
-        grdset = Gridset(name=self.archive_name, metadata=meta, shapeGrid=shp,
-                         epsgcode=self.scen_pkg.epsgcode,
-                         user_id=self.user_id, mod_time=self.woof_time_mjd)
-        updatedGrdset = self.scribe.findOrInsertGridset(grdset)
-        if updatedGrdset.mod_time < self.woof_time_mjd:
-            updatedGrdset.mod_time = self.woof_time_mjd
-            self.scribe.updateObject(updatedGrdset)
+        meta = {
+            ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
+            ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD],
+            'parameters': self.in_param_fname}
+        grdset = Gridset(
+            name=self.archive_name, metadata=meta, shapegrid=shp,
+            epsg_code=self.scen_pkg.epsg_code, user_id=self.user_id,
+            mod_time=self.woof_time_mjd)
+        updated_gridset = self.scribe.find_or_insert_gridset(grdset)
+        if updated_gridset.mod_time < self.woof_time_mjd:
+            updated_gridset.mod_time = self.woof_time_mjd
+            self.scribe.update_object(updated_gridset)
 
-            # TODO: Decide: do we want to delete old makeflows for this gridset?
-            fnames = self.scribe.deleteMFChainsReturnFilenames(updatedGrdset.get_id())
-            for fn in fnames:
-                os.remove(fn)
+            # TODO: Decide: do we want to delete old makeflows for this
+            #    gridset?
+            fnames = self.scribe.delete_mf_chains_return_filenames(
+                updated_gridset.get_id())
+            for fname in fnames:
+                os.remove(fname)
 
-            self.scribe.log.info('  Found and updated mod_time for gridset {}'
-                                 .format(updatedGrdset.get_id()))
+            self.scribe.log.info(
+                '  Found and updated mod_time for gridset {}'.format(
+                    updated_gridset.get_id()))
         else:
-            self.scribe.log.info('  Inserted new gridset {}'
-                                 .format(updatedGrdset.get_id()))
+            self.scribe.log.info(
+                '  Inserted new gridset {}'.format(updated_gridset.get_id()))
 
         # TODO: Reset expiration date to Woof-date in MJD
 
         for code, scen in self.scen_pkg.scenarios.items():
             # "Global" PAM (one per scenario/algorithm)
             if code in self.prj_scencodes:
-                # TODO: Allow alg to be specified for each species, all in same PAM
+                # TODO: Allow alg to be specified for each species, all in same
+                #    PAM
                 for alg in list(self.algorithms.values()):
-                    gPam = self._find_or_add_pam(updatedGrdset, alg, scen)
+                    _ = self._find_or_add_pam(updated_gridset, alg, scen)
 
                 # "Global" GRIM (one per scenario)
                 if not(self.user_id == DEFAULT_POST_USER) or self.compute_mcpa:
-                    scenGrim = self._find_or_add_grim(updatedGrdset, scen)
-                    scen_grims[code] = scenGrim
+                    scen_grims[code] = self._find_or_add_grim(
+                        updated_gridset, scen)
 
-        return scen_grims, updatedGrdset
+        return scen_grims, updated_gridset
 
     # ................................
     def _init_grim_intersect(self, lyr, mtx):
-        """
-        @summary: Initialize model, projections for inputs/algorithm.
-        """
-        mtxcol = None
+        """Initialize model, projections for inputs/algorithm."""
+        mtx_col = None
         intersect_params = {MatrixColumn.INTERSECT_PARAM_WEIGHTED_MEAN: True}
 
         if lyr is not None:
@@ -902,62 +1048,65 @@ class BOOMFiller(LMObject):
             if LMFormat.is_gdal(driver=lyr.data_format):
                 ptype = ProcessType.INTERSECT_RASTER_GRIM
             else:
-                self.scribe.log.debug('Vector intersect not yet implemented for GRIM column {}'
-                                      .format(mtxcol.get_id()))
+                self.scribe.log.debug(
+                    ('Vector intersect not yet implemented for GRIM '
+                     'column {}').format(mtx_col.get_id()))
 
             # TODO: Change ident to lyr.ident when that is populated
-            tmpCol = MatrixColumn(
+            tmp_col = MatrixColumn(
                 None, mtx.get_id(), self.user_id, layer=lyr,
                 shapegrid=self.shapegrid, intersect_params=intersect_params,
-                   squid=lyr.squid, ident=lyr.name, process_type=ptype,
-                   status=JobStatus.GENERAL, status_mod_time=self.woof_time_mjd,
-                   post_to_solr=False)
-            mtxcol = self.scribe.find_or_insert_matrixColumn(tmpCol)
+                squid=lyr.squid, ident=lyr.name, process_type=ptype,
+                status=JobStatus.GENERAL, status_mod_time=self.woof_time_mjd,
+                post_to_solr=False)
+            mtx_col = self.scribe.find_or_insert_matrix_column(tmp_col)
 
             # DB does not populate with shapegrid on insert
-            mtxcol.shapegrid = self.shapegrid
+            mtx_col.shapegrid = self.shapegrid
 
             # TODO: This is a hack, post to solr needs to be retrieved from DB
-            mtxcol.post_to_solr = False
-            if mtxcol is not None:
-                self.scribe.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.get_id()))
+            mtx_col.post_to_solr = False
+            if mtx_col is not None:
+                self.scribe.log.debug(
+                    'Found/inserted MatrixColumn {}'.format(mtx_col.get_id()))
                 # Reset process_type (not in db)
-                mtxcol.process_type = ptype
-        return mtxcol
+                mtx_col.process_type = ptype
+        return mtx_col
 
     # ................................
-    def _get_mc_process_type(self, mtxColumn, mtxType):
-        """
-        @summary Initialize configured and stored inputs for ArchiveFiller class.
-        """
-        if LMFormat.is_ogr(driver=mtxColumn.layer.data_format):
-            if mtxType == MatrixType.PAM:
+    @staticmethod
+    def _get_mc_process_type(mtx_column, mtx_type):
+        """Initialize configured and stored inputs for ArchiveFiller class."""
+        if LMFormat.is_ogr(driver=mtx_column.layer.data_format):
+            if mtx_type == MatrixType.PAM:
                 ptype = ProcessType.INTERSECT_VECTOR
-            elif mtxType == MatrixType.GRIM:
+            elif mtx_type == MatrixType.GRIM:
                 raise LMError('Vector GRIM intersection is not implemented')
         else:
-            if mtxType == MatrixType.PAM:
+            if mtx_type == MatrixType.PAM:
                 ptype = ProcessType.INTERSECT_RASTER
-            elif mtxType == MatrixType.GRIM:
+            elif mtx_type == MatrixType.GRIM:
                 ptype = ProcessType.INTERSECT_RASTER_GRIM
         return ptype
 
     # ................................
     def add_tree(self, gridset, encoded_tree=None):
+        """Add a tree to the workflow."""
         tree = None
         # Provided tree filename takes precedence
-        if self.treeFname is not None:
-            name, _ = os.path.splitext(self.treeFname)
-            treeFilename = os.path.join(self.user_id_path, self.treeFname)
-            if os.path.exists(treeFilename):
-                baretree = Tree(name, dlocation=treeFilename, user_id=self.user_id,
-                                gridsetId=gridset.get_id(), mod_time=self.woof_time_mjd)
+        if self.tree_fname is not None:
+            name, _ = os.path.splitext(self.tree_fname)
+            tree_filename = os.path.join(self.user_id_path, self.tree_fname)
+            if os.path.exists(tree_filename):
+                baretree = Tree(
+                    name, dlocation=tree_filename, user_id=self.user_id,
+                    gridset_id=gridset.get_id(), mod_time=self.woof_time_mjd)
                 baretree.read()
-                tree = self.scribe.findOrInsertTree(baretree)
+                tree = self.scribe.find_or_insert_tree(baretree)
             else:
-                self.scribe.log.warning('No tree at {}'.format(treeFilename))
+                self.scribe.log.warning('No tree at {}'.format(tree_filename))
         elif encoded_tree is not None:
-            tree = self.scribe.findOrInsertTree(encoded_tree)
+            tree = self.scribe.find_or_insert_tree(encoded_tree)
 
         if tree is not None:
             # Update tree properties and write file
@@ -966,7 +1115,7 @@ class BOOMFiller(LMObject):
             tree.writeTree()
             tree.update_mod_time(gmt().mjd)
             # Update database
-            success = self.scribe.updateObject(tree)
+            success = self.scribe.update_object(tree)
             self._fix_permissions(files=[tree.get_dlocation()])
 
             # Save tree link to gridset
@@ -974,97 +1123,105 @@ class BOOMFiller(LMObject):
             gridset.add_tree(tree)
             gridset.update_mod_time(self.woof_time_mjd)
 
-            self.scribe.updateObject(gridset)
+            self.scribe.update_object(gridset)
         return tree
 
     # ................................
-    def _get_bg_meta(self, bg_fname):
+    @staticmethod
+    def _get_bg_meta(bg_fname):
         # defaults for no metadata file
         # lower-case dict keys
-        bgkeyword = 'biogeographic hypothesis'
-        lyr_meta = {MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): None,
-                   ServiceObject.META_DESCRIPTION.lower():
-        'Biogeographic hypothesis based on layer {}'.format(bg_fname)}
+        bg_keyword = 'biogeographic hypothesis'
+        lyr_meta = {
+            MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower(): None,
+            ServiceObject.META_DESCRIPTION.lower():
+                'Biogeographic hypothesis based on layer {}'.format(bg_fname)
+                }
         fpthbasename, _ = os.path.splitext(bg_fname)
-        metaFname = fpthbasename + LMFormat.JSON.ext
-        if os.path.exists(metaFname):
-            with open(metaFname) as f:
-                meta = json.load(f)
-                if type(meta) is dict:
-                    for k, v in meta.items():
-                        lyr_meta[k.lower()] = v
+        meta_fname = fpthbasename + LMFormat.JSON.ext
+        if os.path.exists(meta_fname):
+            with open(meta_fname) as in_file:
+                meta = json.load(in_file)
+                if isinstance(meta, dict):
+                    for k, val in meta.items():
+                        lyr_meta[k.lower()] = val
                     # Add keyword to metadata
                     try:
-                        kwdStr = meta[ServiceObject.META_KEYWORDS]
-                        keywords = kwdStr.split(',')
-                        if bgkeyword not in keywords:
-                            keywords.append(bgkeyword)
-                    except:
-                        meta[ServiceObject.META_KEYWORDS] = bgkeyword
+                        kwd_str = meta[ServiceObject.META_KEYWORDS]
+                        keywords = kwd_str.split(',')
+                        if bg_keyword not in keywords:
+                            keywords.append(bg_keyword)
+                    except Exception:
+                        meta[ServiceObject.META_KEYWORDS] = bg_keyword
                 else:
-                    raise LMError('Metadata must be a dictionary or a JSON-encoded dictionary')
+                    raise LMError(
+                        'Metadata must be a dictionary or JSON')
         return lyr_meta
 
     # ................................
     def _get_other_layer_filenames(self):
         layers = []
-        for lyrname in self.other_lyr_names:
-            lyrpth = os.path.join(self.user_id_path, lyrname)
+        for lyr_name in self.other_lyr_names:
+            lyr_path = os.path.join(self.user_id_path, lyr_name)
             # accept vector shapefiles
-            if os.path.exists(lyrpth + LMFormat.SHAPE.ext):
-                layers.append((lyrname, lyrpth + LMFormat.SHAPE.ext))
+            if os.path.exists(lyr_path + LMFormat.SHAPE.ext):
+                layers.append((lyr_name, lyr_path + LMFormat.SHAPE.ext))
             # accept raster geotiffs
-            elif os.path.exists(lyrpth + LMFormat.GTIFF.ext):
-                layers.append((lyrname, lyrpth + LMFormat.GTIFF.ext))
+            elif os.path.exists(lyr_path + LMFormat.GTIFF.ext):
+                layers.append((lyr_name, lyr_path + LMFormat.GTIFF.ext))
             # accept shapefiles or geotiffs in a
             else:
-                self.scribe.log.warning('No layers at {}'.format(lyrpth))
+                self.scribe.log.warning('No layers at {}'.format(lyr_path))
         return layers
 
     # ................................
     def add_other_layers(self):
-        """
-        @note: assumes same EPSG as scenario provided
+        """Add other layers.
+
+        Note:
+            Assumes same EPSG as scenario provided
         """
         other_layer_names = []
         layers = self._get_other_layer_filenames()
-        for (lyrname, fname) in layers:
+        for (lyr_name, fname) in layers:
             lyr = None
             if fname.endswith(LMFormat.SHAPE.ext):
-                lyr = Vector(lyrname, self.user_id, self.scen_pkg.epsgcode,
+                lyr = Vector(lyr_name, self.user_id, self.scen_pkg.epsg_code,
                              dlocation=fname,
                              data_format=LMFormat.SHAPE.driver,
                              mod_time=self.woof_time_mjd)
                 updated_layer = self.scribe.find_or_insert_layer(lyr)
                 other_layer_names.append(updated_layer.name)
             elif fname.endswith(LMFormat.GTIFF.ext):
-                lyr = Raster(lyrname, self.user_id, self.scen_pkg.epsgcode,
+                lyr = Raster(lyr_name, self.user_id, self.scen_pkg.epsg_code,
                              dlocation=fname,
                              data_format=LMFormat.GTIFF.driver,
                              mod_time=self.woof_time_mjd)
             if lyr is not None:
                 updated_layer = self.scribe.find_or_insert_layer(lyr)
                 other_layer_names.append(updated_layer.name)
-        self.scribe.log.info('  Added other layers {} for user'.format(other_layer_names))
+        self.scribe.log.info(
+            '  Added other layers {} for user'.format(other_layer_names))
         return other_layer_names
 
     # ................................
-    def _get_biogeo_hypotheses_layer_filenames(self, biogeoName, usrPath):
-        bghypFnames = []
-        if biogeoName is not None:
-            bgpth = os.path.join(usrPath, biogeoName)
+    def _get_biogeo_hypotheses_layer_filenames(self, biogeo_name, user_path):
+        biogeo_hyp_names = []
+        if biogeo_name is not None:
+            bgpth = os.path.join(user_path, biogeo_name)
             if os.path.exists(bgpth + LMFormat.SHAPE.ext):
-                bghypFnames = [bgpth + LMFormat.SHAPE.ext]
+                biogeo_hyp_names = [bgpth + LMFormat.SHAPE.ext]
             elif os.path.isdir(bgpth):
-                import glob
                 pattern = os.path.join(bgpth, '*' + LMFormat.SHAPE.ext)
-                bghypFnames = glob.glob(pattern)
+                biogeo_hyp_names = glob.glob(pattern)
             else:
-                self.scribe.log.warning('No biogeo shapefiles at {}'.format(bgpth))
-        return bghypFnames
+                self.scribe.log.warning(
+                    'No biogeo shapefiles at {}'.format(bgpth))
+        return biogeo_hyp_names
 
     # ................................
     def add_biogeo_hypotheses_matrix_and_layers(self, gridset):
+        """Add hypotheses matrix and layers to the workflow."""
         biogeo_layer_names = []
         bg_mtx = None
 
@@ -1081,7 +1238,7 @@ class BOOMFiller(LMObject):
                         name, _ = os.path.splitext(os.path.basename(bg_fname))
                     mtx_keywords.append('Layer {}'.format(name))
                     lyr = Vector(
-                        name, self.user_id, self.scen_pkg.epsgcode,
+                        name, self.user_id, self.scen_pkg.epsg_code,
                         dlocation=bg_fname, metadata=lyr_meta,
                         data_format=LMFormat.SHAPE.driver,
                         val_attribute=val_attr, mod_time=self.woof_time_mjd)
@@ -1119,30 +1276,30 @@ class BOOMFiller(LMObject):
         shapegrid_filename = self.shapegrid.get_dlocation()
 
         for code, grim in default_grims.items():
-            mtxcols = self.scribe.get_columns_for_matrix(grim.get_id())
+            mtx_cols = self.scribe.get_columns_for_matrix(grim.get_id())
             self.scribe.log.info(
                 '  Adding {} grim columns for scen_code {}'.format(
-                    len(mtxcols), code))
+                    len(mtx_cols), code))
 
             col_filenames = []
-            for mtxcol in mtxcols:
-                mtxcol.post_to_solr = False
-                mtxcol.process_type = self._get_mc_process_type(
-                    mtxcol, grim.matrix_type)
-                mtxcol.shapegrid = self.shapegrid
+            for mtx_col in mtx_cols:
+                mtx_col.post_to_solr = False
+                mtx_col.process_type = self._get_mc_process_type(
+                    mtx_col, grim.matrix_type)
+                mtx_col.shapegrid = self.shapegrid
 
                 rel_dir, _ = os.path.splitext(
-                    mtxcol.layer.get_relative_dlocation())
+                    mtx_col.layer.get_relative_dlocation())
                 col_filename = os.path.join(
-                    target_dir, rel_dir, mtxcol.getTargetFilename())
+                    target_dir, rel_dir, mtx_col.getTargetFilename())
                 try:
-                    min_percent = mtxcol.intersect_params[
-                        mtxcol.INTERSECT_PARAM_MIN_PERCENT]
+                    min_percent = mtx_col.intersect_params[
+                        mtx_col.INTERSECT_PARAM_MIN_PERCENT]
                 except KeyError:
                     min_percent = None
                 intersect_cmd = GrimRasterCommand(
-                    shapegrid_filename, mtxcol.layer.get_dlocation(),
-                    col_filename, minPercent=min_percent, ident=mtxcol.ident)
+                    shapegrid_filename, mtx_col.layer.get_dlocation(),
+                    col_filename, minPercent=min_percent, ident=mtx_col.ident)
                 rules.append(intersect_cmd.get_makeflow_rule())
 
                 # Keep track of intersection filenames for matrix concatenation
@@ -1200,7 +1357,8 @@ class BOOMFiller(LMObject):
         base_fname = os.path.basename(
             os.path.splitext(self.taxon_id_filename)[0])
         earl = EarlJr()
-        tmp_pth = earl.createDataPath(self.user_id, LMFileType.TEMP_USER_DATA)
+        tmp_pth = earl.create_data_path(
+            self.user_id, LMFileType.TEMP_USER_DATA)
         self._fix_permissions(dirs=[tmp_pth])
         point_output_file = os.path.join(
             tmp_pth, base_fname + LMFormat.CSV.ext)
@@ -1217,59 +1375,66 @@ class BOOMFiller(LMObject):
 
     # ................................
     def _get_taxonomy_command(self, target_dir):
+        """Get a command to insert taxonomic information into the database.
+
+        Todo:
+            Define format and enable ingest user taxonomy, commented out below
         """
-        @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-                  and configFile written by BOOMFiller.init_boom.
-        @todo: Define format and enable ingest user taxonomy, commented out below
-        """
-        cattaxCmd = taxSuccessFname = taxSuccessLocalFname = taxDataFname = None
+        cat_tax_cmd = tax_success_fname = tax_success_local_fname = None
+        tax_data_fname = None
         config = Config(site_fn=self.in_param_fname)
-        if self.dataSource == SpeciesDatasource.GBIF:
-            taxDataBasename = self._get_boom_param(config,
-                        BoomKeys.GBIF_TAXONOMY_FILENAME, GBIF_TAXONOMY_FILENAME)
-            taxDataFname = os.path.join(SPECIES_DATA_PATH, taxDataBasename)
-            taxSourceName = TAXONOMIC_SOURCE['GBIF']['name']
-            taxSourceUrl = TAXONOMIC_SOURCE['GBIF']['url']
+        if self.data_source == SpeciesDatasource.GBIF:
+            tax_data_base_name = self._get_boom_param(
+                config, BoomKeys.GBIF_TAXONOMY_FILENAME,
+                GBIF_TAXONOMY_FILENAME)
+            tax_data_fname = os.path.join(
+                SPECIES_DATA_PATH, tax_data_base_name)
+            tax_source_name = TAXONOMIC_SOURCE['GBIF']['name']
+            tax_source_url = TAXONOMIC_SOURCE['GBIF']['url']
 
         # If there is taxonomy ...
-        if taxDataFname and os.path.exists(taxDataFname):
-            taxDataBase, _ = os.path.splitext(taxDataFname)
-            taxSuccessFname = os.path.join(taxDataBase + '.success')
-            if os.path.exists(taxSuccessFname):
-                self.scribe.log.info('Taxonomy {} has already been cataloged'
-                                     .format(taxDataFname))
+        if tax_data_fname and os.path.exists(tax_data_fname):
+            tax_data_base, _ = os.path.splitext(tax_data_fname)
+            tax_success_fname = os.path.join(tax_data_base + '.success')
+            if os.path.exists(tax_success_fname):
+                self.scribe.log.info(
+                    'Taxonomy {} has already been cataloged'.format(
+                        tax_data_fname))
             else:
-                # logfile, walkedTaxFname added to outputs in command construction
-                taxSuccessLocalFname = os.path.join(
+                # logfile, walkedTaxFname added to outputs in command
+                #    construction
+                tax_success_local_fname = os.path.join(
                     target_dir, 'catalog_taxonomy.success')
                 # Write taxonomy success to workspace and pass that along, also
                 #    copy local taxonomy success file to absolute location
-                cattaxCmd = ChainCommand(
+                cat_tax_cmd = ChainCommand(
                     [CatalogTaxonomyCommand(
-                        taxSourceName, taxDataFname, taxSuccessLocalFname,
-                        source_url=taxSourceUrl, delimiter='\t'),
-                    SystemCommand(
+                        tax_source_name, tax_data_fname,
+                        tax_success_local_fname, source_url=tax_source_url,
+                        delimiter='\t'),
+                     SystemCommand(
                         'cp', '{} {}'.format(
-                            taxSuccessLocalFname, taxSuccessFname),
-                        inputs=taxSuccessLocalFname)])
-        return cattaxCmd, taxSuccessLocalFname
+                            tax_success_local_fname, tax_success_fname),
+                        inputs=tax_success_local_fname)])
+        return cat_tax_cmd, tax_success_local_fname
 
     # ................................
-    def _write_update_MF(self, mfchain):
-        mfchain.write()
+    def _write_update_mf(self, mf_chain):
+        mf_chain.write()
         # Give lmwriter rw access (this script may be run as root)
-        self._fix_permissions(files=[mfchain.get_dlocation()])
+        self._fix_permissions(files=[mf_chain.get_dlocation()])
         # Set as ready to go
-        mfchain.update_status(JobStatus.INITIALIZE)
-        self.scribe.updateObject(mfchain)
+        mf_chain.update_status(JobStatus.INITIALIZE)
+        self.scribe.update_object(mf_chain)
         try:
-            self.scribe.log.info('  Wrote Makeflow {} for {} for gridset {}'
-                .format(mfchain.objId,
-                        mfchain.mfMetadata[MFChain.META_DESCRIPTION],
-                        mfchain.mfMetadata[MFChain.META_GRIDSET]))
-        except:
-            self.scribe.log.info('  Wrote Makeflow {}'.format(mfchain.objId))
-        return mfchain
+            self.scribe.log.info(
+                '  Wrote Makeflow {} for {} for gridset {}'.format(
+                    mf_chain.obj_id,
+                    mf_chain.makeflow_metadata[MFChain.META_DESCRIPTION],
+                    mf_chain.makeflow_metadata[MFChain.META_GRIDSET]))
+        except Exception:
+            self.scribe.log.info('  Wrote Makeflow {}'.format(mf_chain.obj_id))
+        return mf_chain
 
     # ................................
     def add_boom_rules(self, tree, target_dir):
@@ -1280,35 +1445,35 @@ class BOOMFiller(LMObject):
             target_dir: The directory to store workspace files.
         """
         rules = []
-        base_config_fname = os.path.basename(self.outConfigFilename)
+        base_config_fname = os.path.basename(self.out_config_filename)
         # ChristopherWalken writes when finished walking through
         # species data (initiated by this Makeflow).
         boom_success_fname = os.path.join(
             target_dir, base_config_fname + '.success')
-        boomCmd = BoomerCommand(self.outConfigFilename, boom_success_fname)
+        boom_cmd = BoomerCommand(self.out_config_filename, boom_success_fname)
 
         # Add iDigBio MF before Boom, if specified as occurrence input
-        if self.dataSource == SpeciesDatasource.TAXON_IDS:
+        if self.data_source == SpeciesDatasource.TAXON_IDS:
             idig_cmd, point_output_file = self._get_idig_query_cmd(target_dir)
             # Update config to User (CSV) datasource and point_output_file
-            self.dataSource = SpeciesDatasource.USER
-            self.occFname = point_output_file
-            self.occSep = IdigbioAPI.DELIMITER
+            self.data_source = SpeciesDatasource.USER
+            self.occ_fname = point_output_file
+            self.occ_sep = IdigbioAPI.DELIMITER
             # Add command to this Makeflow
             rules.append(idig_cmd.get_makeflow_rule(local=True))
             # Boom requires iDigBio data
-            boomCmd.inputs.extend(idig_cmd.outputs)
+            boom_cmd.inputs.extend(idig_cmd.outputs)
 
         # Add taxonomy before Boom, if taxonomy is specified
-        cattaxCmd, taxSuccessFname = self._get_taxonomy_command(target_dir)
-        if cattaxCmd:
+        cat_tax_cmd, tax_success_fname = self._get_taxonomy_command(target_dir)
+        if cat_tax_cmd:
             # Add catalog taxonomy command to this Makeflow
-            rules.append(cattaxCmd.get_makeflow_rule(local=True))
+            rules.append(cat_tax_cmd.get_makeflow_rule(local=True))
             # Boom requires catalog taxonomy completion
-            boomCmd.inputs.append(taxSuccessFname)
+            boom_cmd.inputs.append(tax_success_fname)
 
         # Add boom command to this Makeflow
-        rules.append(boomCmd.get_makeflow_rule(local=True))
+        rules.append(boom_cmd.get_makeflow_rule(local=True))
         return rules
 
     # ................................
@@ -1320,8 +1485,8 @@ class BOOMFiller(LMObject):
         self._fix_permissions(dirs=[mfdir])
 
     # ................................
-    def _get_partner_tree_data(self, pquery, gbifids, basefilename):
-        treename = os.path.basename(basefilename)
+    def _get_partner_tree_data(self, pquery, gbifids, base_filename):
+        treename = os.path.basename(base_filename)
         (otree, gbif_to_ott, ott_unmatched_gbif_ids
          ) = pquery.assemble_otol_data(gbifids, treename)
         encoded_tree = pquery.encode_ott_tree_to_gbif(
@@ -1330,8 +1495,8 @@ class BOOMFiller(LMObject):
 
     # ................................
     @staticmethod
-    def _get_partner_ids(pquery, names, basefilename):
-        gbif_results_filename = basefilename + '.gids'
+    def _get_partner_ids(pquery, names, base_filename):
+        gbif_results_filename = base_filename + '.gids'
         (unmatched_names, name_to_gbif_ids
          ) = pquery.assemble_gbif_taxon_ids(names, gbif_results_filename)
         return unmatched_names, name_to_gbif_ids, gbif_results_filename
@@ -1380,14 +1545,14 @@ class BOOMFiller(LMObject):
                 status=JobStatus.GENERAL, status_mod_time=gmt().mjd)
             gridset_mf = self.scribe.insert_mf_chain(
                 new_mfc, boom_gridset.get_id())
-            target_dir = gridset_mf.getRelativeDirectory()
+            target_dir = gridset_mf.get_relative_directory()
             rules = []
 
             # Add GRIM rules
             rules.extend(self.add_grim_mfs(scen_grims, target_dir))
 
             # Check for a file OccurrenceLayer Ids for existing or PUBLIC user
-            if self.occIdFname:
+            if self.occ_id_fname:
                 self._check_occurrence_sets()
 
             # Fix user makeflow and layer directory permissions
@@ -1417,11 +1582,11 @@ class BOOMFiller(LMObject):
             rules.extend(self.add_boom_rules(tree, target_dir))
 
             # Write config file for archive, update permissions
-            self.write_config_file(tree=tree, biogeoLayers=biogeo_layer_names)
+            self.write_config_file(tree=tree, biogeo_layers=biogeo_layer_names)
 
             # Write rules
             gridset_mf.add_commands(rules)
-            self._write_update_MF(gridset_mf)
+            self._write_update_mf(gridset_mf)
 
         finally:
             self.close()
@@ -1448,11 +1613,11 @@ def main():
         '--logname', type=str, default=None,
         help=('Basename of the logfile, without extension'))
     args = parser.parse_args()
-    paramFname = args.param_file
+    param_fname = args.param_file
     logname = args.logname
 
-    if paramFname is not None and not os.path.exists(paramFname):
-        print(('Missing configuration file {}'.format(paramFname)))
+    if param_fname is not None and not os.path.exists(param_fname):
+        print(('Missing configuration file {}'.format(param_fname)))
         sys.exit(-1)
 
     if logname is None:
@@ -1462,12 +1627,13 @@ def main():
             time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(scriptname, timestamp)
 
-    print(('Running initWorkflow with paramFname = {}'
-          .format(paramFname)))
+    print(('Running initWorkflow with param_fname = {}'
+          .format(param_fname)))
 
-    filler = BOOMFiller(paramFname, logname=logname)
-    gs = filler.init_boom()
-    print(('Completed initWorkflow creating gridset: {}'.format(gs.get_id())))
+    filler = BOOMFiller(param_fname, logname=logname)
+    gridset = filler.init_boom()
+    print(('Completed initWorkflow creating gridset: {}'.format(
+        gridset.get_id())))
 
 
 # .............................................................................

@@ -762,7 +762,7 @@ class BorgScribe(LMObject):
         Args:
             mtx_col: The MatrixColumn object to get or insert.
         """
-        self._borg.find_or_insert_matrix_column(mtx_col)
+        return self._borg.find_or_insert_matrix_column(mtx_col)
 
     # ................................
     def init_or_rollback_intersect(self, lyr, mtx, intersect_params, mod_time):
