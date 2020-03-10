@@ -19,7 +19,6 @@ from LmServer.common.log import ScriptLogger
 # .............................................................................
 class DaBoom(Daemon):
     """Class to run the Boomer as a Daemon process."""
-
     # .............................
     def __init__(self, pidfile, config_fname, priority=None):
         # Logfile
