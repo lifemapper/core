@@ -52,7 +52,7 @@ class BoomCollate(LMObject):
             self.log = log
         self._scribe = BorgScribe(self.log)
         self.gridset = gridset
-        self.user_id = gridset.getUserId()
+        self.user_id = gridset.get_user_id()
         if work_dir is not None:
             self.workspace_dir = os.path.join(
                 work_dir, 'gs_{}'.format(gridset.get_id()))

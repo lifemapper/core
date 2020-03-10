@@ -61,7 +61,7 @@ class UserLogin(LmService):
             # Provided correct credentials
             cherrypy.session.regenerate()
             cherrypy.session[SESSION_KEY] = user.get_user_id()
-            cherrypy.request.login = user.getUserId()
+            cherrypy.request.login = user.get_user_id()
             cookie = cherrypy.response.cookie
             cookie[REFERER_KEY] = referer_page
             cookie[REFERER_KEY]['expires'] = 0
