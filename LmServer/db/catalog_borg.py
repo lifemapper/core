@@ -204,7 +204,7 @@ class Borg(DbPostgresql):
 
         if row is not None:
             scen = ScenPackage(
-                name, usr, metadata=meta, epsgcode=epsg, bbox=bbox,
+                name, usr, metadata=meta, epsg_code=epsg, bbox=bbox,
                 map_units=units, mod_time=mod_time, scen_package_id=pkg_id)
         return scen
 
@@ -256,7 +256,7 @@ class Borg(DbPostgresql):
                 row, idxs, ['grdmodtime', 'modtime'])
             gridset = Gridset(
                 name=name, metadata=meta, shapegrid=shp, shapegrid_id=shp_id,
-                tree=tree, dlocation=dloc, epsgcode=epsg, user_id=usr,
+                tree=tree, dlocation=dloc, epsg_code=epsg, user_id=usr,
                 gridset_id=grid_id, mod_time=mtime)
         return gridset
 
@@ -276,10 +276,11 @@ class Borg(DbPostgresql):
                 name = self._get_column_value(row, idxs, ['treename', 'name'])
                 dloc = self._get_column_value(
                     row, idxs, ['treedlocation', 'dlocation'])
-#                 is_bin = self._get_column_value(row, idxs, ['isbinary'])
-#                 is_ultra = self._get_column_value(row, idxs, ['isultrametric'])
-#                 has_len = self._get_column_value(
-#                     row, idxs, ['hasbranchlengths'])
+                # is_bin = self._get_column_value(row, idxs, ['isbinary'])
+                # is_ultra = self._get_column_value(
+                #    row, idxs, ['isultrametric'])
+                # has_len = self._get_column_value(
+                #     row, idxs, ['hasbranchlengths'])
                 meta = self._get_column_value(
                     row, idxs, ['treemetadata', 'metadata'])
                 mod_time = self._get_column_value(
@@ -299,7 +300,7 @@ class Borg(DbPostgresql):
             mtx_id = self._get_column_value(row, idxs, ['matrixid'])
             mtype = self._get_column_value(row, idxs, ['matrixtype'])
             scen_id = self._get_column_value(row, idxs, ['scenarioid'])
-#             TODO: replace 3 Codes with scenario_id
+            # TODO: replace 3 Codes with scenario_id
             gcm = self._get_column_value(row, idxs, ['gcmcode'])
             rcp = self._get_column_value(row, idxs, ['altpredcode'])
             date_code = self._get_column_value(row, idxs, ['datecode'])
@@ -352,7 +353,7 @@ class Borg(DbPostgresql):
 
     # ................................
     def _get_layer_inputs(self, row, idxs):
-        """Create Raster or Vector layer from a Layer or view in the Borg. 
+        """Create Raster or Vector layer from a Layer or view in the Borg.
 
         Note:
             - OccurrenceSet and SDMProject objects do not use this function
@@ -449,7 +450,7 @@ class Borg(DbPostgresql):
         env_rst = None
         env_layer_id = self._get_column_value(row, idxs, ['envlayerid'])
         if row is not None:
-#             scen_id = self._get_column_value(row, idxs, ['scenarioid'])
+            # scen_id = self._get_column_value(row, idxs, ['scenarioid'])
             scen_code = self._get_column_value(row, idxs, ['scenariocode'])
             rst = self._create_layer(row, idxs)
             if rst is not None:
@@ -577,7 +578,8 @@ class Borg(DbPostgresql):
         return tax_source_id
 
     # ................................
-    def get_base_layer(self, lyr_id, lyr_verify, lyr_user, lyr_name, epsgcode):
+    def get_base_layer(self, lyr_id, lyr_verify, lyr_user, lyr_name,
+                       epsg_code):
         """Get and fill a layer
 
         Args:
@@ -591,7 +593,7 @@ class Borg(DbPostgresql):
             _Layer base object
         """
         row, idxs = self.execute_select_one_function(
-            'lm_getLayer', lyr_id, lyr_verify, lyr_user, lyr_name, epsgcode)
+            'lm_getLayer', lyr_id, lyr_verify, lyr_user, lyr_name, epsg_code)
         lyr = self._create_layer(row, idxs)
         return lyr
 
@@ -616,7 +618,7 @@ class Borg(DbPostgresql):
     # ................................
     def list_layers(self, first_rec_num, max_num, user_id, squid, after_time,
                     before_time, epsg, atom):
-        """Return Layer Objects or Atoms matching filter conditions 
+        """Return Layer Objects or Atoms matching filter conditions
 
         Args:
             first_rec_num: The first record to return, 0 is the first record
@@ -661,12 +663,12 @@ class Borg(DbPostgresql):
                 Scribe method also adds and joins Scenarios present
         """
         wkt = None
-        if scen_pkg.epsgcode == DEFAULT_EPSG:
+        if scen_pkg.epsg_code == DEFAULT_EPSG:
             wkt = scen_pkg.get_wkt()
         meta = scen_pkg.dump_scenpkg_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertScenPackage', scen_pkg.get_user_id(),
-            scen_pkg.name, meta, scen_pkg.map_units, scen_pkg.epsgcode,
+            scen_pkg.name, meta, scen_pkg.map_units, scen_pkg.epsg_code,
             scen_pkg.get_csv_extent_string(), wkt, scen_pkg.mod_time)
         new_or_existing_scen_pkg = self._create_scen_package(row, idxs)
         return new_or_existing_scen_pkg
@@ -829,13 +831,13 @@ class Borg(DbPostgresql):
         """
         scen.mod_time = gmt().mjd
         wkt = None
-        if scen.epsgcode == DEFAULT_EPSG:
+        if scen.epsg_code == DEFAULT_EPSG:
             wkt = scen.get_wkt()
         meta = scen.dump_scen_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertScenario', scen.get_user_id(), scen.code, meta,
             scen.gcm_code, scen.alt_pred_code, scen.date_code, scen.map_units,
-            scen.resolution, scen.epsgcode, scen.get_csv_extent_string(), wkt,
+            scen.resolution, scen.epsg_code, scen.get_csv_extent_string(), wkt,
             scen.mod_time)
         new_or_existing_scen = self._create_scenario(row, idxs)
         if scen_pkg_id is not None:
@@ -908,28 +910,6 @@ class Borg(DbPostgresql):
                 objs.append(self._create_scenario(row, idxs))
         return objs
 
-#     # ................................
-#     def get_environmental_type(self, type_id, type_code, user_id):
-#         """Get an environmental layer type.
-#         
-#         Args:
-#             type_id: database id for the EnvType to return
-#             type_code: database id for the EnvType to return
-#             type_id: database id for the EnvType to return
-#         """
-#         try:
-#             if type_id is not None:
-#                 row, idxs = self.execute_select_one_function(
-#                     'lm_getLayerType', type_id)
-#             else:
-#                 row, idxs = self.execute_select_one_function(
-#                     'lm_getLayerType', user_id, type_code)
-#         except Exception:
-#             env_type = None
-#         else:
-#             env_type = self._create_env_type(row, idxs)
-#         return env_type
-
     # ................................
     def find_or_insert_env_type(self, env_type):
         """Insert or find EnvType values.
@@ -962,14 +942,14 @@ class Borg(DbPostgresql):
         """
         wkt = None
         if lyr.data_format in LMFormat.ogr_drivers() and \
-                lyr.epsgcode == DEFAULT_EPSG:
+                lyr.epsg_code == DEFAULT_EPSG:
             wkt = lyr.get_wkt()
         meta = lyr.dump_lyr_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertLayer', lyr.get_id(), lyr.get_user_id(), lyr.squid,
             lyr.verify, lyr.name, lyr.get_dlocation(), meta, lyr.data_format,
             lyr.gdal_type, lyr.ogr_type, lyr.val_units, lyr.nodata_val,
-            lyr.min_val, lyr.max_val, lyr.epsgcode, lyr.map_units,
+            lyr.min_val, lyr.max_val, lyr.epsg_code, lyr.map_units,
             lyr.resolution, lyr.get_csv_extent_string(), wkt, lyr.mod_time)
         updated_lyr = self._create_layer(row, idxs)
         return updated_lyr
@@ -985,7 +965,7 @@ class Borg(DbPostgresql):
             New or existing ShapeGrid.
         """
         wkt = None
-        if shpgrd.epsgcode == DEFAULT_EPSG:
+        if shpgrd.epsg_code == DEFAULT_EPSG:
             wkt = shpgrd.get_wkt()
         meta = shpgrd.dump_param_metadata()
         gdal_type = val_units = nodata_val = min_val = max_val = None
@@ -993,7 +973,7 @@ class Borg(DbPostgresql):
             'lm_findOrInsertShapeGrid', shpgrd.get_id(), shpgrd.get_user_id(),
             shpgrd.squid, shpgrd.verify, shpgrd.name, shpgrd.get_dlocation(),
             meta, shpgrd.data_format, gdal_type, shpgrd.ogr_type, val_units,
-            nodata_val, min_val, max_val, shpgrd.epsgcode, shpgrd.map_units,
+            nodata_val, min_val, max_val, shpgrd.epsg_code, shpgrd.map_units,
             shpgrd.resolution, shpgrd.get_csv_extent_string(), wkt,
             shpgrd.mod_time, shpgrd.cell_sides, shpgrd.cell_size, shpgrd.size,
             shpgrd.site_id, shpgrd.site_x, shpgrd.site_y, shpgrd.status,
@@ -1013,7 +993,7 @@ class Borg(DbPostgresql):
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertGridset', grdset.get_id(), grdset.get_user_id(),
             grdset.name, grdset.shapegrid_id, grdset.get_dlocation(),
-            grdset.epsgcode, meta, grdset.mod_time)
+            grdset.epsg_code, meta, grdset.mod_time)
         updated_gridset = self._create_gridset(row, idxs)
         # Populate dlocation in obj then db if this is a new Gridset
         if updated_gridset._dlocation is None:
@@ -1294,7 +1274,7 @@ class Borg(DbPostgresql):
 
     # ................................
     def find_or_insert_env_layer(self, lyr, scenario_id):
-        """Find or insert a layer's metadata in the database and optionally 
+        """Find or insert a layer's metadata in the database and optionally
         join it to the indicated scenario.
 
         Args:
@@ -1306,7 +1286,7 @@ class Borg(DbPostgresql):
         """
         lyr.mod_time = gmt().mjd
         wkt = None
-        if lyr.epsgcode == DEFAULT_EPSG:
+        if lyr.epsg_code == DEFAULT_EPSG:
             wkt = lyr.get_wkt()
         envmeta = lyr.dump_param_metadata()
         lyrmeta = lyr.dump_lyr_metadata()
@@ -1314,7 +1294,7 @@ class Borg(DbPostgresql):
             'lm_findOrInsertEnvLayer', lyr.get_id(), lyr.get_user_id(),
             lyr.squid, lyr.verify, lyr.name, lyr.get_dlocation(), lyrmeta,
             lyr.data_format, lyr.gdal_type, lyr.ogr_type, lyr.val_units,
-            lyr.nodata_val, lyr.min_val, lyr.max_val, lyr.epsgcode,
+            lyr.nodata_val, lyr.min_val, lyr.max_val, lyr.epsg_code,
             lyr.map_units, lyr.resolution, lyr.get_csv_extent_string(), wkt,
             lyr.mod_time, lyr.get_param_id(), lyr.env_code, lyr.gcm_code,
             lyr.alt_pred_code, lyr.date_code, envmeta, lyr.param_mod_time)
@@ -1328,7 +1308,7 @@ class Borg(DbPostgresql):
 
     # ................................
     def get_env_layer(self, env_lyr_id, lyr_id, lyr_verify, lyr_user, lyr_name,
-                      epsgcode):
+                      epsg_code):
         """Get and fill a Layer
 
         Args:
@@ -1344,7 +1324,7 @@ class Borg(DbPostgresql):
         """
         row, idxs = self.execute_select_one_function(
             'lm_getEnvLayer', env_lyr_id, lyr_id, lyr_verify, lyr_user,
-            lyr_name, epsgcode)
+            lyr_name, epsg_code)
         lyr = self._create_env_layer(row, idxs)
         return lyr
 
@@ -1511,7 +1491,7 @@ class Borg(DbPostgresql):
         """
         row, idxs = self.execute_select_one_function(
             'lm_findUser', user_id, email)
-        usr = self._createUser(row, idxs)
+        usr = self._create_user(row, idxs)
         return usr
 
     # ................................
@@ -1808,7 +1788,8 @@ class Borg(DbPostgresql):
             occ: OccurrenceLayer to be updated.
 
         Note:
-            Does not update the userid, squid, and epsgcode (unique constraint)
+            Does not update the userid, squid, and epsg_code
+                (unique constraint)
 
         Returns:
             True/False for successful update.
@@ -1828,7 +1809,7 @@ class Borg(DbPostgresql):
             success = self.execute_modify_function(
                 'lm_updateOccurrenceSet', occ.get_id(), occ.verify,
                 occ.display_name, occ.get_dlocation(), occ.get_raw_dlocation(),
-                occ.query_count, occ.get_csv_extent_string(), occ.epsgcode,
+                occ.query_count, occ.get_csv_extent_string(), occ.epsg_code,
                 metadata, occ.status, occ.status_mod_time, poly_wkt,
                 points_wkt)
         except Exception as err:
@@ -1861,7 +1842,7 @@ class Borg(DbPostgresql):
             success = self.execute_modify_function(
                 'lm_updateSDMProjectLayer', proj.get_param_id(), proj.get_id(),
                 proj.verify, proj.get_dlocation(), lyr_meta, proj.val_units,
-                proj.nodata_val, proj.min_val, proj.max_val, proj.epsgcode,
+                proj.nodata_val, proj.min_val, proj.max_val, proj.epsg_code,
                 proj.get_csv_extent_string(), proj.get_wkt(), proj.mod_time,
                 prj_meta, proj.status, proj.status_mod_time)
         except Exception as err:
@@ -1889,7 +1870,7 @@ class Borg(DbPostgresql):
             'lm_findOrInsertOccurrenceSet', occ.get_id(), occ.get_user_id(),
             occ.squid, occ.verify, occ.display_name, occ.get_dlocation(),
             occ.get_raw_dlocation(), point_total, occ.get_csv_extent_string(),
-            occ.epsgcode, occ.dump_lyr_metadata(), occ.status,
+            occ.epsg_code, occ.dump_lyr_metadata(), occ.status,
             occ.status_mod_time, poly_wkt, points_wkt)
         new_or_existing_occ = self._create_occurrence_layer(row, idxs)
         return new_or_existing_occ
@@ -2110,7 +2091,7 @@ class Borg(DbPostgresql):
             proj.get_id(), proj.get_user_id(), proj.squid, proj.verify,
             proj.name, proj.get_dlocation(), lyr_meta, proj.data_format,
             proj.gdal_type, proj.ogr_type, proj.val_units, proj.nodata_val,
-            proj.min_val, proj.max_val, proj.epsgcode, proj.map_units,
+            proj.min_val, proj.max_val, proj.epsg_code, proj.map_units,
             proj.resolution, proj.get_csv_extent_string(), proj.get_wkt(),
             proj.mod_time, proj.get_occurrence_set_id(), proj.algorithm_code,
             alg_params, proj.get_model_scenario_id(),

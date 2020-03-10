@@ -9,114 +9,111 @@ import tarfile
 
 from LmCommon.common.lmconstants import DEFAULT_POST_USER, LMFormat
 from LmCommon.common.time import gmt
-from LmServer.common.datalocator import EarlJr
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import LM_SCHEMA
 from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
+
 
 DEBUG = False
 USER_REPLACE_STR = '#USERS#'
 # list of (table, columns, selectStatement)
 SDM_USER_DEPENDENCIES = [
     ('{}.lmuser'.format(LM_SCHEMA),
-     'SELECT * FROM {}.lmuser WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
-
-#     ('{}.lmjob'.format(LM_SCHEMA),
-#      'SELECT j.* FROM {}.lmjob j, {}.occurrenceset o'.format(LM_SCHEMA)+
-#      ' WHERE (j.referencetype = 104 AND j.referenceid = o.occurrencesetid  '+
-#      '          AND o.user_id IN ({}))'.format(USER_REPLACE_STR)),
-#
-#     ('{}.lmjob'.format(LM_SCHEMA),
-#      'SELECT j.* FROM {}.lmjob j, {}.model m '.format(LM_SCHEMA)+
-#      ' WHERE (j.referencetype = 101 AND j.referenceid = m.modelid  '+
-#      '          AND m.user_id IN ({}))'.format(USER_REPLACE_STR)),
-#
-#     ('{}.lmjob'.format(LM_SCHEMA),
-#      'SELECT j.* FROM {}.lmjob j, {}.lm_fullprojection p '.format(LM_SCHEMA)+
-#      ' WHERE (j.referencetype = 102 AND j.referenceid = p.projectionid  '+
-#      '          AND p.mdl_user_id IN ({}))'.format(USER_REPLACE_STR)),
+     'SELECT * FROM {}.lmuser WHERE userid IN ({})'.format(
+         LM_SCHEMA, USER_REPLACE_STR)),
 
     ('{}.experiment'.format(LM_SCHEMA),
-     'SELECT * FROM {}.experiment WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+     'SELECT * FROM {}.experiment WHERE userid IN ({})'.format(
+         LM_SCHEMA, USER_REPLACE_STR)),
     ('{}.occurrenceset'.format(LM_SCHEMA),
-     'SELECT * FROM {}.occurrenceset WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+     'SELECT * FROM {}.occurrenceset WHERE userid IN ({})'.format(
+         LM_SCHEMA, USER_REPLACE_STR)),
     ('{}.scenario'.format(LM_SCHEMA),
-     'SELECT * FROM {}.scenario WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+     'SELECT * FROM {}.scenario WHERE userid IN ({})'.format(
+         LM_SCHEMA, USER_REPLACE_STR)),
     ('{}.layertype'.format(LM_SCHEMA),
-     'SELECT * FROM {}.layertype WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+     'SELECT * FROM {}.layertype WHERE userid IN ({})'.format(
+         LM_SCHEMA, USER_REPLACE_STR)),
     ('{}.layer'.format(LM_SCHEMA),
-     'SELECT * FROM {}.layer WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+     'SELECT * FROM {}.layer WHERE userid IN ({})'.format(
+         LM_SCHEMA, USER_REPLACE_STR)),
 
     ('{}.scenariolayers'.format(LM_SCHEMA),
-     'SELECT sl.* FROM {0}.scenariolayers sl, {0}.scenario s'.format(LM_SCHEMA) +
-     ' WHERE sl.scenarioid = s.scenarioid AND s.userid IN ({})'.format(USER_REPLACE_STR)),
+     'SELECT sl.* FROM {0}.scenariolayers sl, {0}.scenario s'.format(
+         LM_SCHEMA) +
+     ' WHERE sl.scenarioid = s.scenarioid AND s.userid IN ({})'.format(
+         USER_REPLACE_STR)),
 
     ('{}.keyword'.format(LM_SCHEMA),
-     'SELECT k.* FROM {0}.keyword k, {0}.layertypekeyword ltk, {0}.layertype lt  '.format(LM_SCHEMA) +
-     ' WHERE k.keywordid = ltk.keywordid AND ltk.layertypeid = lt.layertypeid AND lt.userid = \'changeThinking\''),
+     ('SELECT k.* FROM {0}.keyword k, {0}.layertypekeyword '
+      'ltk, {0}.layertype lt WHERE k.keywordid = ltk.keywordid AND '
+      'ltk.layertypeid = lt.layertypeid AND lt.userid = \'changeThinking\''
+      ).format(LM_SCHEMA)),
     ('{}.keyword'.format(LM_SCHEMA),
-     'SELECT k.* FROM {0}.keyword k, {0}.scenariokeywords sk, {0}.scenario s '.format(LM_SCHEMA) +
-     ' WHERE k.keywordid = sk.keywordid AND sk.scenarioid = s.scenarioid AND s.userid = \'changeThinking\''),
+     ('SELECT k.* FROM {0}.keyword k, {0}.scenariokeywords sk, {0}.scenario s '
+      ' WHERE k.keywordid = sk.keywordid AND sk.scenarioid = s.scenarioid AND '
+      's.userid = \'changeThinking\'').format(LM_SCHEMA)),
 
-#     ('{}.layertypekeyword'.format(LM_SCHEMA),
-#      'SELECT * FROM {0}.layertypekeyword ltk, {0}.layertype lt'.format(LM_SCHEMA)+
-#      ' WHERE ltk.layertypeid = lt.layertypeid '+
-#      ' AND lt.userid IN ({})'.format(USER_REPLACE_STR)),
-#     ('{}.scenariokeywords'.format(LM_SCHEMA),
-#      'SELECT * FROM {0}.scenariokeywords sk, {0}.scenario s'.format(LM_SCHEMA)+
-#      ' WHERE sk.scenarioid = s.scenarioid '+
-#      ' AND s.userid IN ({})'.format(USER_REPLACE_STR)),
 
     ('{}.model'.format(LM_SCHEMA),
-     'SELECT m.* FROM {0}.model m, {0}.scenario s '.format(LM_SCHEMA) +
-     '  WHERE m.scenarioid = s.scenarioid AND m.userid = s.userid AND m.userid IN ({})'.format(USER_REPLACE_STR)),
+     ('SELECT m.* FROM {0}.model m, {0}.scenario s WHERE '
+      'm.scenarioid = s.scenarioid AND m.userid = s.userid AND '
+      'm.userid IN ({1})').format(LM_SCHEMA, USER_REPLACE_STR)),
     ('{}.projection'.format(LM_SCHEMA),
-     'SELECT p.* FROM {0}.projection p, {0}.model m, {0}.scenario s'.format(LM_SCHEMA) +
-     ' WHERE p.modelid = m.modelid AND p.scenarioid = s.scenarioid AND m.userid = s.userid AND m.userid IN ({})'.format(USER_REPLACE_STR)) ]
+     ('SELECT p.* FROM {0}.projection p, {0}.model m, {0}.scenario s WHERE '
+      'p.modelid = m.modelid AND p.scenarioid = s.scenarioid AND '
+      'm.userid = s.userid AND m.userid IN ({1})').format(
+          LM_SCHEMA, USER_REPLACE_STR))
+    ]
 
 RAD_USER_DEPENDENCIES = [
     ('{}.layer'.format(LM_SCHEMA),
-     'SELECT * FROM {}.layer WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+     'SELECT * FROM {}.layer WHERE userid IN ({})'.format(
+         LM_SCHEMA, USER_REPLACE_STR)),
 
     ('{}.shapegrid'.format(LM_SCHEMA),
      'SELECT s.* FROM {0}.shapegrid s, {0}.layer l '.format(LM_SCHEMA) +
-     'WHERE s.layerid = l.layerid AND l.userid IN ({})'.format(USER_REPLACE_STR)),
+     'WHERE s.layerid = l.layerid AND l.userid IN ({})'.format(
+         USER_REPLACE_STR)),
 
     ('{}.ancillaryvalue'.format(LM_SCHEMA),
-     'SELECT * FROM {}.ancillaryvalue WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+     'SELECT * FROM {}.ancillaryvalue WHERE userid IN ({})'.format(
+         LM_SCHEMA, USER_REPLACE_STR)),
     ('{}.presenceabsence'.format(LM_SCHEMA),
-     'SELECT * FROM {}.presenceabsence WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+     'SELECT * FROM {}.presenceabsence WHERE userid IN ({})'.format(
+         LM_SCHEMA, USER_REPLACE_STR)),
     ('{}.experiment'.format(LM_SCHEMA),
-     'SELECT * FROM {}.experiment WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+     'SELECT * FROM {}.experiment WHERE userid IN ({})'.format(
+         LM_SCHEMA, USER_REPLACE_STR)),
 
     ('{}.bucket'.format(LM_SCHEMA),
      'SELECT b.* FROM {0}.bucket b, {0}.experiment e '.format(LM_SCHEMA) +
-     ' WHERE b.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
+     ' WHERE b.experimentid = e.experimentid AND e.userid IN ({})'.format(
+         USER_REPLACE_STR)),
 
     ('{}.pamsum'.format(LM_SCHEMA),
-     'SELECT ps.* FROM {0}.pamsum ps, {0}.bucket b, {0}.experiment e '.format(LM_SCHEMA) +
-     ' WHERE ps.bucketid = b.bucketid AND b.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
+     ('SELECT ps.* FROM {0}.pamsum ps, {0}.bucket b, {0}.experiment e '
+      ' WHERE ps.bucketid = b.bucketid AND b.experimentid = e.experimentid AND'
+      ' e.userid IN ({1})').format(LM_SCHEMA, USER_REPLACE_STR)),
 
     ('{}.ExperimentPALayer'.format(LM_SCHEMA),
-     'SELECT xl.* FROM {0}.ExperimentPALayer xl, {0}.experiment e '.format(LM_SCHEMA) +
-     ' WHERE xl.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
+     'SELECT xl.* FROM {0}.ExperimentPALayer xl, {0}.experiment e '.format(
+         LM_SCHEMA) +
+     ' WHERE xl.experimentid = e.experimentid AND e.userid IN ({})'.format(
+         USER_REPLACE_STR)),
 
     ('{}.ExperimentAncLayer'.format(LM_SCHEMA),
-     'SELECT xl.* FROM {0}.ExperimentAncLayer xl, {0}.experiment e '.format(LM_SCHEMA) +
-     ' WHERE xl.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
+     'SELECT xl.* FROM {0}.ExperimentAncLayer xl, {0}.experiment e '.format(
+         LM_SCHEMA) +
+     ' WHERE xl.experimentid = e.experimentid AND e.userid IN ({})'.format(
+         USER_REPLACE_STR))
+    ]
 
-#     ('{}.BucketPALayer'.format(LM_SCHEMA),
-#      'SELECT xl.* FROM {0}.BucketPALayer xl, {0}.bucket b, {0}.experiment e '.format(LM_SCHEMA)+
-#      ' WHERE xl.bucketid = b.bucketid AND b.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
-#
-#     ('{}.BucketAncLayer'.format(LM_SCHEMA),
-#      'SELECT xl.* FROM {0}.BucketAncLayer xl, {0}.bucket b, {0}.experiment e '.format(LM_SCHEMA)+
-#      ' WHERE xl.bucketid = b.bucketid AND b.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
-                                 ]
 
 
 # MAXSIZE = '1T'
 # MULTI_VOLUME_SCRIPT='new-volume.sh'
-# ...............................................
+# .............................................................................
 class SetPass:
 
     def __call__(self):

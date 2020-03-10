@@ -768,7 +768,7 @@ class BorgScribe(LMObject):
     def init_or_rollback_intersect(self, lyr, mtx, intersect_params, mod_time):
         """Initialize model, projections for inputs/algorithm.
         """
-        new_or_existing__mtx_col = None
+        new_or_existing_mtx_col = None
         if mtx is not None and mtx.get_id() is not None:
             # TODO: Save this into the DB??
             if lyr.data_format in LMFormat.gdal_drivers():

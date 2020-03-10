@@ -43,10 +43,10 @@ def main():
             'Base point data {} does not exist'.format(args.base_point_data))
 
     merge_csv_fname = None
-    merge_meta_fname = None
+    # merge_meta_fname = None
     if args.merge_point_data is not None:
         merge_csv_fname = args.merge_point_data + '.csv'
-        merge_meta_fname = args.merge_point_data + '.json'
+        # merge_meta_fname = args.merge_point_data + '.json'
         merge_delimiter = args.merge_point_delimiter
         if merge_delimiter not in ('\t', ','):
             merge_delimiter = '\t'

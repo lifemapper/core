@@ -207,8 +207,8 @@ class DbPostgresql(LMAbstractObject):
                 in a query
 
         Returns:
-            List of rows (row = tuple of values for a record) and dictionary of 
-            field names and column indexes.
+            List of rows (row = tuple of values for a record) and dictionary of
+                field names and column indexes.
 
         Raises:
             LMError: on error returned from the database.
@@ -280,8 +280,8 @@ class DbPostgresql(LMAbstractObject):
             fn_args: 0..n arguments for the stored function
 
         Returns:
-            List of rows (row = tuple of values for a record) and dictionary of 
-            field names and column indexes.
+            List of rows (row = tuple of values for a record) and dictionary of
+                field names and column indexes.
 
         Raises:
             LMError: on error returned from the database
@@ -298,8 +298,8 @@ class DbPostgresql(LMAbstractObject):
             fn_args: 0..n arguments to the stored function
 
         Returns:
-            List of rows (row = tuple of values for a record) and dictionary of 
-            field names and column indexes.
+            List of rows (row = tuple of values for a record) and dictionary of
+                field names and column indexes.
 
         Raises:
             LMError: on error returned from the database.
@@ -339,7 +339,7 @@ class DbPostgresql(LMAbstractObject):
             fn_args: 0..n arguments to the stored function
 
         Returns:
-            An integer indicating the number of records modified. 
+            An integer indicating the number of records modified.
 
         Raises:
             LMError: on error returned from the database.
@@ -390,7 +390,7 @@ class DbPostgresql(LMAbstractObject):
         Args:
             fn_name: stored function name
             fn_args: 0..n arguments to the stored function
-            
+
         Returns:
             tuple of values representing the matching row, and a dictionary of
                 indexes for the column names
@@ -417,8 +417,8 @@ class DbPostgresql(LMAbstractObject):
             fn_args: 0..n arguments to the stored function
 
         Returns:
-            List of rows (row = tuple of values for a record) and dictionary of 
-            field names and column indexes.
+            List of rows (row = tuple of values for a record) and dictionary of
+                field names and column indexes.
 
         Raises:
             LMError: on error returned from the database.
@@ -458,8 +458,8 @@ class DbPostgresql(LMAbstractObject):
             *cmds: 0..n commands to be executed.
 
         Returns:
-            List of rows (row = tuple of values for a record) and dictionary of 
-            field names and column indexes
+            List of rows (row = tuple of values for a record) and dictionary of
+                field names and column indexes
 
         Raises:
             LMError: on error returned from the database.

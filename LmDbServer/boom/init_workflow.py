@@ -1273,15 +1273,18 @@ class BOOMFiller(LMObject):
 
     # ................................
     def add_boom_rules(self, tree, target_dir):
-        """
-        @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-                  and configFile written by BOOMFiller.init_boom.
+        """Create a Makeflow to initiate Boomer with inputs
+
+        Args:
+            tree (TreeWrapper): A tree to add rules for.
+            target_dir: The directory to store workspace files.
         """
         rules = []
         base_config_fname = os.path.basename(self.outConfigFilename)
         # ChristopherWalken writes when finished walking through
         # species data (initiated by this Makeflow).
-        boom_success_fname = os.path.join(target_dir, base_config_fname + '.success')
+        boom_success_fname = os.path.join(
+            target_dir, base_config_fname + '.success')
         boomCmd = BoomerCommand(self.outConfigFilename, boom_success_fname)
 
         # Add iDigBio MF before Boom, if specified as occurrence input
@@ -1455,7 +1458,8 @@ def main():
     if logname is None:
         scriptname, _ = os.path.splitext(os.path.basename(__file__))
         secs = time.time()
-        timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+        timestamp = "{}".format(
+            time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(scriptname, timestamp)
 
     print(('Running initWorkflow with paramFname = {}'

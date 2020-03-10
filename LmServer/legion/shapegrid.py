@@ -202,7 +202,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
             self.ready_filename(dloc, overwrite=False)
 
         t_srs = osr.SpatialReference()
-        t_srs.ImportFromEPSG(self.epsgcode)
+        t_srs.ImportFromEPSG(self.epsg_code)
         drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
         dataset = drv.CreateDataSource(new_dloc)
         new_layer = dataset.CreateLayer(
@@ -243,7 +243,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         self.ready_filename(self._dlocation, overwrite=overwrite)
         cell_count = build_shapegrid(
             self._dlocation, self.min_x, self.min_y, self.max_x, self.max_y,
-            self.cell_size, self.epsgcode, self._cell_sides,
+            self.cell_size, self.epsg_code, self._cell_sides,
             site_id=self.site_id, site_x=self.site_x, site_y=self.site_y,
             cutout_wkt=cutout)
         self._set_cell_measurements(size=cell_count)

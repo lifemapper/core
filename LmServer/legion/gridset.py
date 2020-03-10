@@ -22,10 +22,10 @@ class Gridset(ServiceObject):  # LMMap
     """Gridset class containing information for multispecies experiment."""
     # ................................
     def __init__(self, name=None, metadata=None, shapegrid=None,
-                 shapegrid_id=None, tree=None, matrices=None, dlocation=None, 
-                 gridset_id=None,
-#                  tree_id=None, site_indices_filename=None, 
-                 user_id=None, epsg_code=None, metadata_url=None, mod_time=None):
+                 shapegrid_id=None, tree=None, matrices=None, dlocation=None,
+                 gridset_id=None,  # tree_id=None, site_indices_filename=None,
+                 user_id=None, epsg_code=None, metadata_url=None,
+                 mod_time=None):
         """Constructor for the Gridset class
 
         Args:
@@ -361,7 +361,7 @@ class Gridset(ServiceObject):  # LMMap
     def create_layer_shapefile_from_matrix(self, shp_filename,
                                            is_presence_absence=True):
         """
-        TODO: 
+        TODO:
             Only partially tested, field creation is not holding.
         """
         if is_presence_absence:

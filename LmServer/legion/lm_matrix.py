@@ -57,7 +57,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         if gridset is not None:
             gridset_url = gridset.metadata_url
             gridset_id = gridset.get_id()
-        lmpy.Matrix.__init__(self, matrix, headers=headers)
+        Matrix.__init__(self, matrix, headers=headers)
         ServiceObject.__init__(
             self, user_id, matrix_id, LMServiceType.MATRICES,
             metadata_url=metadata_url, parent_metadata_url=gridset_url,
@@ -234,4 +234,4 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                 .data attribute for this class if that is the best way to
                 proceed.
         """
-        lmpy.Matrix.__init__(self, new_data, headers=headers)
+        Matrix.__init__(self, new_data, headers=headers)

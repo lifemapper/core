@@ -81,10 +81,10 @@ class LMUser(LMObject):
     # ................................
     def equals(self, other):
         """Returns true/false if this user equals another
-        
+
         Args:
             other: a LMUser object to test for equality
-            
+
         Returns:
             boolean indicating whether self equals other
         """

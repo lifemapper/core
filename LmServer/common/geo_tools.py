@@ -4,8 +4,8 @@ Note:
      From http://perrygeo.googlecode.com/svn/trunk/gis-bin/flip_raster.py
 """
 
-import numpy
 import os
+import numpy
 from osgeo import gdal, gdalconst
 
 from LmBackend.common.lmobj import LMError, LMObject
@@ -465,7 +465,7 @@ class GeoFileInfo(LMObject):
         Args:
             point: A tuple representing a point.
         """
-        ext = self.get_extents()
+        ext = self.get_bounds()()
         return ext[0] <= point[0] <= ext[2] and ext[1] <= point[1] <= ext[3]
 
     # ................................

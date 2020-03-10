@@ -358,7 +358,8 @@ class _Layer(LMSpatialObject, ServiceObject):
 
     # .............................
     def add_layer_metadata(self, new_metadata_dict):
-        """Adds dictionary of metadata to the existing metadata for this object"""
+        """Adds dictionary of metadata to the existing metadata for this object
+        """
         self.layer_metadata = super(
             _Layer, self)._add_metadata(
                 new_metadata_dict, existing_metadata_dict=self.layer_metadata)

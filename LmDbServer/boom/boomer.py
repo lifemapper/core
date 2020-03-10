@@ -81,16 +81,11 @@ class Boomer(LMObject):
         # iterator tool for species
         self.christopher = None
 
-<<<<<<< HEAD
-#         # Dictionary of {scen_code: (potatoChain, triagePotatoFile)}
-#         self.potatoes = None
-=======
         self.gridset = None
         self.gridset_id = None
         self.priority = None
         self.pav_index_filenames = []
         self.master_potato_head = None
->>>>>>> 3edfdac2a3d76f43fbf20274bf64e18a6fd585ca
 
         # MFChain for lots of spuds
         self.potato_bushel = None

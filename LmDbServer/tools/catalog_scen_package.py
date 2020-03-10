@@ -72,7 +72,8 @@ class SPFiller(LMObject):
         self.user_id = user_id
         self.user_email = email
         if self.user_email is None:
-            self.user_email = '{}{}'.format(self.user_id, DEFAULT_EMAIL_POSTFIX)
+            self.user_email = '{}{}'.format(
+                self.user_id, DEFAULT_EMAIL_POSTFIX)
 
         # Logfile
         if logname is None:

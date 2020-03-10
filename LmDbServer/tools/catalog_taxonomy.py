@@ -212,8 +212,8 @@ class TaxonFiller(LMObject):
         meta = {
             MFChain.META_CREATED_BY: script_name,
             MFChain.META_DESCRIPTION:
-                'Catalog Taxonomy task for source {}'.format(
-                    PUBLIC_USER, self._taxonomy_source_name)}
+                'Catalog Taxonomy task for source {}, user {}'.format(
+                    self._taxonomy_source_name, PUBLIC_USER)}
         new_mfc = MFChain(
             PUBLIC_USER, priority=Priority.HIGH, metadata=meta,
             status=JobStatus.GENERAL, status_mod_time=gmt().mjd)

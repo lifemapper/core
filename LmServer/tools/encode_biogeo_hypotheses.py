@@ -143,7 +143,7 @@ def encode_hypotheses_to_matrix(scribe, usr, gridset, layers=None):
         enc_mtx = encoder.get_encoded_matrix()
 
         bg_mtx.data = enc_mtx.data
-        bg_mtx.setHeaders(enc_mtx.getHeaders())
+        bg_mtx.setHeaders(enc_mtx.get_headers())
 
     # Save matrix and update record
     bg_mtx.write(overwrite=True)

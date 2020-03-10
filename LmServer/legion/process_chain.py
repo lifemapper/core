@@ -64,7 +64,7 @@ class MFChain(ProcessObject):
         """Add to metadata
         """
         self.makeflow_metadata = super(MFChain, self)._add_metadata(
-            new_metadata_dict, existing_metadata_dict=self.mtx_col_metadata)
+            new_metadata_dict, existing_metadata_dict=self.makeflow_metadata)
 
     # ................................
     def set_id(self, mf_id):

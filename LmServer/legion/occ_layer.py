@@ -72,6 +72,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 
     # ................................
     def set_raw_dlocation(self, raw_dlocation, mod_time):
+        """Set the raw data location of the occurrence layer."""
         self._raw_dlocation = raw_dlocation
         self.param_mod_time = mod_time
 

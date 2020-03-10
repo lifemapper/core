@@ -8,10 +8,13 @@ Todo:
 
 import os
 
+import numpy as np
+from osgeo import ogr
+
 from LmBackend.command.server import IndexPAVCommand, StockpileCommand
 from LmBackend.command.single import IntersectRasterCommand, GrimRasterCommand
-from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
-                                         ProcessType)
+from LmCommon.common.lmconstants import (
+    JobStatus, LMFormat, MatrixType, ProcessType)
 from LmCommon.common.time import gmt
 from LmCommon.compression.binary_list import decompress
 from LmCommon.encoding.layer_encoder import LayerEncoder
@@ -26,8 +29,6 @@ from LmServer.legion.process_chain import MFChain
 from LmServer.legion.shapegrid import Shapegrid
 from LmServer.legion.tree import Tree
 from lmpy import Matrix
-import numpy as np
-from osgeo import ogr
 
 
 # .............................................................................
@@ -53,17 +54,17 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
     # Get metadata
     match_1 = matches[0]
-    orig_shp = scribe.getShapeGrid(match_1[SOLR_FIELDS.SHAPEGRID_ID])
-    orig_num_rows = orig_shp.featureCount
+    orig_shp = scribe.get_shapegrid(match_1[SOLR_FIELDS.SHAPEGRID_ID])
+    orig_num_rows = orig_shp.feature_count
     epsg = match_1[SOLR_FIELDS.EPSG_CODE]
     orig_gs_id = match_1[SOLR_FIELDS.GRIDSET_ID]
-    orig_gs = scribe.getGridset(gridsetId=orig_gs_id, fillMatrices=True)
+    orig_gs = scribe.get_gridset(gridset_id=orig_gs_id, fill_matrices=True)
 
     # Initialize variables we'll test
     if bbox is None:
         bbox = orig_shp.bbox
     if cell_size is None:
-        cell_size = orig_shp.cellsize
+        cell_size = orig_shp.cell_size
 
     # TODO: Add these to function so they can be specified by user
     intersect_params = {
@@ -77,24 +78,24 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
     orig_row_headers = get_row_headers(orig_shp.get_dlocation())
 
     # If bounding box, resolution, or user is different, create a new shapegrid
-    if bbox != orig_shp.bbox or cell_size != orig_shp.cellsize or \
+    if bbox != orig_shp.bbox or cell_size != orig_shp.cell_size or \
             user_id != orig_gs.get_user_id():
 
         my_sg_name = 'Shapegrid_{}_{}'.format(
             str(bbox).replace(' ', '_'), cell_size)
         new_shp = Shapegrid(
-            my_sg_name, user_id, orig_gs.epsgcode, orig_shp.cellsides,
-            cell_size, orig_shp.mapUnits, bbox, status=JobStatus.INITIALIZE,
+            my_sg_name, user_id, orig_gs.epsg_code, orig_shp.cell_sides,
+            cell_size, orig_shp.map_units, bbox, status=JobStatus.INITIALIZE,
             status_mod_time=gmt().mjd)
 
         # Insert our new shapegrid
-        my_shp = scribe.findOrInsertShapeGrid(new_shp)
+        my_shp = scribe.find_or_insert_shapegrid(new_shp)
 
         # Determine how to create the data files
         # ----------------
         # If the cell size is different or the bounding box is not completely
         #     within the original, we need to reintersect
-        if cell_size != orig_shp.cellsize or bbox[0] < orig_shp.bbox[0] or \
+        if cell_size != orig_shp.cell_size or bbox[0] < orig_shp.bbox[0] or \
                 bbox[1] < orig_shp.bbox[1] or bbox[2] > orig_shp.bbox[2] or \
                 bbox[3] > orig_shp.bbox[3]:
             method = SubsetMethod.REINTERSECT
@@ -159,9 +160,9 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
     # Create grid set
     gridset = Gridset(
-        name=archive_name, metadata=gs_meta, shapeGrid=my_shp, epsgcode=epsg,
+        name=archive_name, metadata=gs_meta, shapeGrid=my_shp, epsg_code=epsg,
         user_id=user_id, mod_time=gmt().mjd)
-    updated_gs = scribe.findOrInsertGridset(gridset)
+    updated_gs = scribe.find_or_insert_gridset(gridset)
 
     # Copy the tree if available.  It may be subsetted according to the data in
     #     the gridset and therefore should be separate
@@ -178,7 +179,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 tree_data = otree.tree
             # TODO: Remove this
             except Exception:  # Handle bad dlocation from gridset tree
-                otree = scribe.getTree(treeId=otree.get_id())
+                otree = scribe.get_tree(tree_id=otree.get_id())
                 otree.read()
                 tree_data = otree.tree
 
@@ -188,17 +189,17 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             tree_name = otree.get_id()
         new_tree = Tree(
             'Copy of {} tree at {}'.format(tree_name, gmt().mjd), metadata={},
-            user_id=user_id, gridsetId=updated_gs.get_id(), mod_time=gmt().mjd)
+            user_id=user_id, gridset_id=updated_gs.get_id(), mod_time=gmt().mjd)
         new_tree.setTree(tree_data)
-        inserted_tree = scribe.findOrInsertTree(new_tree)
+        inserted_tree = scribe.find_or_insert_tree(new_tree)
         new_tree.tree = tree_data
-        inserted_tree.setTree(tree_data)
-        inserted_tree.writeTree()
-        updated_gs.addTree(inserted_tree, doRead=True)
+        inserted_tree.set_tree(tree_data)
+        inserted_tree.write_tree()
+        updated_gs.add_tree(inserted_tree, do_read=True)
         log.debug(
             'Tree for gridset {} is {}'.format(
                 updated_gs.get_id(), updated_gs.tree.get_id()))
-        scribe.updateObject(updated_gs)
+        scribe.update_object(updated_gs)
 
     # If we can reuse data from Solr index, do it
     if method in [SubsetMethod.COLUMN, SubsetMethod.SPATIAL]:
@@ -241,8 +242,8 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 #    slice them immediately after construction.  We do this to
                 #    keep consistent with other matrix slicing
                 pam_mtx = LMMatrix(
-                    pam_data, matrixType=MatrixType.PAM, gcm_code=gcm_code,
-                    altpredCode=alt_pred_code, date_code=date_code,
+                    pam_data, matrix_type=MatrixType.PAM, gcm_code=gcm_code,
+                    alt_pred_code=alt_pred_code, date_code=date_code,
                     metadata=scn_meta, user_id=user_id, gridset=updated_gs,
                     status=JobStatus.GENERAL, status_mod_time=gmt().mjd,
                     headers={'0': orig_row_headers, '1': squids})
@@ -252,9 +253,9 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                     pam_mtx.slice(keep_sites)
 
                 # Insert it into db
-                updated_pam_mtx = scribe.findOrInsertMatrix(pam_mtx)
+                updated_pam_mtx = scribe.find_or_insert_matrix(pam_mtx)
                 updated_pam_mtx.update_status(JobStatus.COMPLETE)
-                scribe.updateObject(updated_pam_mtx)
+                scribe.update_object(updated_pam_mtx)
                 log.debug(
                     'Dlocation for updated pam: {}'.format(
                         updated_pam_mtx.get_dlocation()))
@@ -265,23 +266,24 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         # --------
         for grim in orig_gs.getGRIMs():
             new_grim = LMMatrix(
-                None, matrixType=MatrixType.GRIM,
+                None, matrix_type=MatrixType.GRIM,
                 process_type=ProcessType.RAD_INTERSECT, gcm_code=grim.gcm_code,
-                altpredCode=grim.altpredCode, date_code=grim.date_code,
-                metadata=grim.mtxMetadata, user_id=user_id, gridset=updated_gs,
-                status=JobStatus.INITIALIZE)
-            inserted_grim = scribe.findOrInsertMatrix(new_grim)
-            grim_metadata = grim.mtxMetadata
+                alt_pred_code=grim.alt_pred_code, date_code=grim.date_code,
+                metadata=grim.matrix_metadata, user_id=user_id,
+                gridset=updated_gs, status=JobStatus.INITIALIZE)
+            inserted_grim = scribe.find_or_insert_matrix(new_grim)
+            grim_metadata = grim.matrix_metadata
             grim_metadata['keywords'].append('subset')
             grim_metadata['description'] = 'Subset of GRIM {}'.format(
                 grim.get_id())
 
-            if 'keywords' in grim.mtxMetadata:
-                grim_metadata['keywords'].extend(grim.mtxMetadata['keywords'])
+            if 'keywords' in grim.matrix_metadata:
+                grim_metadata['keywords'].extend(
+                    grim.matrix_metadata['keywords'])
 
             inserted_grim.update_status(
                 JobStatus.COMPLETE, metadata=grim_metadata)
-            scribe.updateObject(inserted_grim)
+            scribe.update_object(inserted_grim)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
             grim_mtx = Matrix.load_flo(grim.get_dlocation())
@@ -297,15 +299,15 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         # --------
         for orig_bg in orig_gs.getBiogeographicHypotheses():
             new_bg = LMMatrix(
-                None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
+                None, matrix_type=MatrixType.BIOGEO_HYPOTHESES,
                 process_type=ProcessType.ENCODE_HYPOTHESES,
-                gcm_code=orig_bg.gcm_code, altpredCode=orig_bg.altpredCode,
-                date_code=orig_bg.date_code, metadata=orig_bg.mtxMetadata,
+                gcm_code=orig_bg.gcm_code, alt_pred_code=orig_bg.alt_pred_code,
+                date_code=orig_bg.date_code, metadata=orig_bg.matrix_metadata,
                 user_id=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
-            inserted_bg = scribe.findOrInsertMatrix(new_bg)
+            inserted_bg = scribe.find_or_insert_matrix(new_bg)
             inserted_bg.update_status(JobStatus.COMPLETE)
-            scribe.updateObject(inserted_bg)
+            scribe.update_object(inserted_bg)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
             bg_mtx = Matrix.load_flo(orig_bg.get_dlocation())
@@ -341,7 +343,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
         my_shp.buildShape()
         my_shp.write_shapefile(my_shp.get_dlocation())
         my_shp.update_status(JobStatus.COMPLETE)
-        scribe.updateObject(my_shp)
+        scribe.update_object(my_shp)
 
         # PAMs
         # --------
@@ -360,7 +362,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                     alt_pred_code = mtx_matches[0][
                         SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE]
 
-                scnMeta = {
+                scn_meta = {
                     ServiceObject.META_DESCRIPTION:
                         'Subset of grid set {}, scen {}, algorithm {}'.format(
                             orig_gs_id, scn_id, alg_code),
@@ -371,16 +373,16 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
                 # Create PAM
                 pam_mtx = LMMatrix(
-                    None, matrixType=MatrixType.PAM, gcm_code=gcm_code,
-                    altpredCode=alt_pred_code, date_code=date_code,
-                    metadata=scnMeta, user_id=user_id, gridset=updated_gs,
+                    None, matrix_type=MatrixType.PAM, gcm_code=gcm_code,
+                    alt_pred_code=alt_pred_code, date_code=date_code,
+                    metadata=scn_meta, user_id=user_id, gridset=updated_gs,
                     status=JobStatus.GENERAL, status_mod_time=gmt().mjd)
-                pam = scribe.findOrInsertMatrix(pam_mtx)
+                pam = scribe.find_or_insert_matrix(pam_mtx)
 
                 # Insert matrix columns for each match
                 for i, mtx_match in enumerate(mtx_matches):
                     try:
-                        prj = scribe.getSDMProject(
+                        prj = scribe.get_sdm_project(
                             int(mtx_match[SOLR_FIELDS.PROJ_ID]))
                     except Exception as err:
                         prj = None
@@ -393,13 +395,14 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
                         tmp_col = MatrixColumn(
                             None, pam.get_id(), user_id, layer=prj,
-                            shapegrid=my_shp, intersectParams=intersect_params,
+                            shapegrid=my_shp,
+                            intersect_params=intersect_params,
                             squid=prj.squid, ident=prj.ident,
                             process_type=ProcessType.INTERSECT_RASTER,
-                            metadata=prj_meta, matrixColumnId=None,
-                            postToSolr=True, status=JobStatus.GENERAL,
+                            metadata=prj_meta, matrix_column_id=None,
+                            post_to_solr=True, status=JobStatus.GENERAL,
                             status_mod_time=gmt().mjd)
-                        mtx_col = scribe.findOrInsertMatrixColumn(tmp_col)
+                        mtx_col = scribe.find_or_insert_matrix_column(tmp_col)
 
                         # Need to intersect this projection with the new
                         #    shapegrid, stockpile it, and post to solr
@@ -409,14 +412,15 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                             work_dir, 'pav_{}_post.xml'.format(
                                 mtx_col.get_id()))
                         pav_success_fname = os.path.join(
-                            work_dir, 'pav_{}.success'.format(mtx_col.get_id()))
+                            work_dir, 'pav_{}.success'.format(
+                                mtx_col.get_id()))
 
                         # Intersect parameters
-                        min_presence = mtx_col.intersectParams[
+                        min_presence = mtx_col.intersect_params[
                             MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE]
-                        max_presence = mtx_col.intersectParams[
+                        max_presence = mtx_col.intersect_params[
                             MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE]
-                        min_percent = mtx_col.intersectParams[
+                        min_percent = mtx_col.intersect_params[
                             MatrixColumn.INTERSECT_PARAM_MIN_PERCENT]
 
                         intersect_cmd = IntersectRasterCommand(
@@ -437,49 +441,52 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
                 # Initialize PAM after matrix columns inserted
                 pam.update_status(JobStatus.INITIALIZE)
-                scribe.updateObject(pam)
+                scribe.update_object(pam)
 
         # GRIMs
         # --------
         for grim in orig_gs.getGRIMs():
             new_grim = LMMatrix(
-                None, matrixType=MatrixType.GRIM,
+                None, matrix_type=MatrixType.GRIM,
                 process_type=ProcessType.RAD_INTERSECT, gcm_code=grim.gcm_code,
-                altpredCode=grim.altpredCode, date_code=grim.date_code,
-                metadata=grim.mtxMetadata, user_id=user_id, gridset=updated_gs,
-                status=JobStatus.INITIALIZE)
-            inserted_grim = scribe.findOrInsertMatrix(new_grim)
-            grim_metadata = grim.mtxMetadata
+                alt_pred_code=grim.alt_pred_code, date_code=grim.date_code,
+                metadata=grim.matrix_metadata, user_id=user_id,
+                gridset=updated_gs, status=JobStatus.INITIALIZE)
+            inserted_grim = scribe.find_or_insert_matrix(new_grim)
+            grim_metadata = grim.matrix_metadata
             grim_metadata['keywords'].append('subset')
             grim_metadata = {
                 'keywords': ['subset'],
-                'description': 'Reintersection of GRIM {}'.format(grim.get_id())
+                'description': 'Reintersection of GRIM {}'.format(
+                    grim.get_id())
             }
-            if 'keywords' in grim.mtxMetadata:
-                grim_metadata['keywords'].extend(grim.mtxMetadata['keywords'])
+            if 'keywords' in grim.matrix_metadata:
+                grim_metadata['keywords'].extend(
+                    grim.matrix_metadata['keywords'])
 
             # Get corresponding grim layers (scenario)
-            old_grim_cols = scribe.getColumnsForMatrix(grim.get_id())
+            old_grim_cols = scribe.get_columns_for_matrix(grim.get_id())
 
             for old_col in old_grim_cols:
                 # TODO: Metadata
                 grim_lyr_meta = {}
                 tmp_col = MatrixColumn(
                     None, inserted_grim.get_id(), user_id, layer=old_col.layer,
-                    shapegrid=my_shp, intersectParams=old_col.intersectParams,
+                    shapegrid=my_shp,
+                    intersect_params=old_col.intersect_params,
                     squid=old_col.squid, ident=old_col.ident,
                     process_type=ProcessType.INTERSECT_RASTER_GRIM,
-                    metadata=grim_lyr_meta, matrixColumnId=None,
-                    postToSolr=False, status=JobStatus.GENERAL,
+                    metadata=grim_lyr_meta, matrix_column_id=None,
+                    post_to_solr=False, status=JobStatus.GENERAL,
                     status_mod_time=gmt().mjd)
-                mtx_col = scribe.findOrInsertMatrixColumn(tmp_col)
+                mtx_col = scribe.find_or_insert_matrix_column(tmp_col)
 
                 # Add rules to workflow, intersect and stockpile
                 grim_col_fname = os.path.join(
                     work_dir, 'grim_col_{}.lmm'.format(mtx_col.get_id()))
                 grim_col_success_fname = os.path.join(
                     work_dir, 'grim_col_{}.success'.format(mtx_col.get_id()))
-                min_percent = mtx_col.intersectParams[
+                min_percent = mtx_col.intersect_params[
                     MatrixColumn.INTERSECT_PARAM_MIN_PERCENT]
                 intersect_cmd = GrimRasterCommand(
                     my_shp.get_dlocation(), old_col.layer.get_dlocation(),
@@ -493,21 +500,21 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 rules.append(stockpile_cmd.get_makeflow_rule(local=True))
 
             inserted_grim.update_status(JobStatus.INITIALIZE)
-            scribe.updateObject(inserted_grim)
+            scribe.update_object(inserted_grim)
 
         # BioGeo
         # --------
         for orig_bg in orig_gs.getBiogeographicHypotheses():
             new_bg = LMMatrix(
-                None, matrixType=MatrixType.BIOGEO_HYPOTHESES,
+                None, matrix_type=MatrixType.BIOGEO_HYPOTHESES,
                 process_type=ProcessType.ENCODE_HYPOTHESES,
-                gcm_code=orig_bg.gcm_code, altpredCode=orig_bg.altpredCode,
-                date_code=orig_bg.date_code, metadata=orig_bg.mtxMetadata,
+                gcm_code=orig_bg.gcm_code, alt_pred_code=orig_bg.alt_pred_code,
+                date_code=orig_bg.date_code, metadata=orig_bg.matrix_metadata,
                 user_id=user_id, gridset=updated_gs,
                 status=JobStatus.INITIALIZE)
-            inserted_bg = scribe.findOrInsertMatrix(new_bg)
+            inserted_bg = scribe.find_or_insert_matrix(new_bg)
             mtx_cols = []
-            old_cols = scribe.getColumnsForMatrix(orig_bg.get_id())
+            old_cols = scribe.get_columns_for_matrix(orig_bg.get_id())
 
             encoder = LayerEncoder(my_shp.get_dlocation())
             # TODO(CJ): This should be pulled from a default config or the
@@ -552,28 +559,29 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                         ServiceObject.META_TITLE.lower():
                             'Biogeographic hypothesis column ({})'.format(col)
                     }
-                    mc = MatrixColumn(
-                        len(mtx_cols), inserted_bg.get_id(), user_id, layer=lyr,
-                        shapegrid=my_shp, intersectParams=int_params,
-                        metadata=metadata, postToSolr=False,
-                        status=JobStatus.COMPLETE, status_mod_time=gmt().mjd)
-                    updated_mc = scribe.findOrInsertMatrixColumn(mc)
+                    mtx_col = MatrixColumn(
+                        len(mtx_cols), inserted_bg.get_id(), user_id,
+                        layer=lyr, shapegrid=my_shp,
+                        intersect_params=int_params, metadata=metadata,
+                        post_to_solr=False, status=JobStatus.COMPLETE,
+                        status_mod_time=gmt().mjd)
+                    updated_mc = scribe.find_or_insert_matrix_column(mtx_col)
                     mtx_cols.append(updated_mc)
 
             enc_mtx = encoder.get_encoded_matrix()
             # Write matrix
             # TODO(CJ): Evaluate if this is how we want to do it
             inserted_bg = enc_mtx
-            inserted_bg.setHeaders(enc_mtx.getHeaders())
+            inserted_bg.set_headers(enc_mtx.get_Headers())
             inserted_bg.write(overwrite=True)
             inserted_bg.update_status(JobStatus.COMPLETE, mod_time=gmt().mjd)
-            scribe.updateObject(inserted_bg)
+            scribe.update_object(inserted_bg)
 
         # Write workflow and update db object
-        my_wf.addCommands(rules)
+        my_wf.add_commands(rules)
         my_wf.write()
         my_wf.update_status(JobStatus.INITIALIZE)
-        scribe.updateObject(my_wf)
+        scribe.update_object(my_wf)
 
     return updated_gs
 

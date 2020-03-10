@@ -276,10 +276,10 @@ class Algorithm(LMObject):
     # ................................
     def has_parameter(self, name):
         """Return boolean indicating if this algorithm object has the parameter.
-        
+
         Args:
             name: string to check for existence as a parameter name
-            
+
         Returns:
             boolean indicating if the name is a parameter for this alogorithm
         """

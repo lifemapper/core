@@ -37,9 +37,10 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
     # ....................................
     def __init__(self, matrix_index, matrix_id, user_id,
                  # inputs if this is connected to a layer and shapegrid
-                 layer=None, layer_id=None, shapegrid=None, #shapegrid_id=None,
+                 layer=None, layer_id=None, shapegrid=None,
+                 # shapegrid_id=None,
                  intersect_params=None, squid=None, ident=None,
-                 metadata=None, matrix_column_id=None, post_to_solr=True, 
+                 metadata=None, matrix_column_id=None, post_to_solr=True,
                  process_type=None, status=None, status_mod_time=None):
         """Constructor
 

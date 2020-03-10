@@ -274,10 +274,10 @@ class EarlJr(LMObject):
     # ................................
     def get_map_filename_from_map_name(self, map_name):
         """Get the map filename from the map name
-        
+
         Args:
             map_name: name for the map, used in Mapserver mapfile
-            
+
         Returns:
             absolute pathname for the mapfile
         """
@@ -329,7 +329,7 @@ class EarlJr(LMObject):
             parent_metadata_url: The nested structure of this object's parent
                 objects.  The nested structure will begin with a '/', and take
                 a form like: /{parent_class}/{parent id}/{class}/{id}
-                
+
         Returns:
             a URL for the service object REST API
         """
@@ -582,13 +582,13 @@ class EarlJr(LMObject):
     # ................................
     def parse_map_filename(self, map_f_name):
         """Parse a map filename
-        
+
         Args:
             map_f_name: absolute filename for the mapfile
-            
+
         Returns:
-            A tuple containing map_name, ancillary flag, user id, epsg code, 
-            db id of OccurrenceLayer, db id of Gridset, scenario code
+            A tuple containing map_name, ancillary flag, user id, epsg code,
+                db id of OccurrenceLayer, db id of Gridset, scenario code
         """
         full_path, fname = os.path.split(map_f_name)
         map_name, _ = os.path.splitext(fname)

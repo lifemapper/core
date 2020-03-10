@@ -166,7 +166,7 @@ def main():
 
         pav = scribe.get_matrix_column(mtx_col_id=pav_id)
         prj = scribe.get_sdm_project(proj_id)
-        occ = prj.occurrence_set
+        occ = prj.occ_layer
         pam = scribe.get_matrix(mtx_id=pav.parent_id)
         sci_name = scribe.get_taxon(squid=pav.squid)
 
