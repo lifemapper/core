@@ -198,17 +198,17 @@ def merge_sorted_files(log, merge_fname, data_path, input_prefix, basename,
                 log, srt_fname, meta_fname, delimiter=OUT_DELIMITER,
                 pull_chunks=True)
             occ_parser.initialize_me()
-        except IOError as e:
+        except IOError as err:
             log.warning(
                 ('Enough already, IOError! Final file {}. Using only '
                  'indices {} - {}, err {}').format(
-                     srt_fname, in_idx, curr_idx, str(e)))
+                     srt_fname, in_idx, curr_idx, str(err)))
             enough_already = True
-        except Exception as e:
+        except Exception as err:
             log.warning(
                 'Enough already! Final file {}. {}'.format(
                     srt_fname, 'Using only indices {} - {}, err {}'.format(
-                        in_idx, curr_idx, e)))
+                        in_idx, curr_idx, err)))
             enough_already = True
         else:
             sorted_files.append(occ_parser)
@@ -230,7 +230,7 @@ def merge_sorted_files(log, merge_fname, data_path, input_prefix, basename,
                 # Find smallest again
                 _, pos = _get_smallest_key_and_position(sorted_files)
 
-    except Exception as e:
+    except Exception:
         raise
     finally:
         for open_file in sorted_files:

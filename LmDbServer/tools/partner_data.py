@@ -303,7 +303,11 @@ class PartnerQuery:
 
     # .................................
     def assemble_gbif_taxon_ids(self, names, out_f_name):
-        """Assemble GBIF taxon ids for a list of names
+        """Assemble GBIF taxon ids for a list of names.
+        
+        Args:
+            names: list of names to be sent to the GBIF species API
+            out_f_name: absolute filename for output
         """
         unmatched_names = []
         name_to_gbif_ids = {}
@@ -335,6 +339,10 @@ class PartnerQuery:
     @staticmethod
     def assemble_otol_data(gbif_taxon_ids, data_name):
         """Assemble Open Tree data
+        
+        Args:
+            gbif_taxon_ids: list of GBIF taxon keys for accepted taxa
+            data_name: name for output tree
         """
         tree = None
         gbif_to_ott = open_tree.get_ottids_from_gbifids(gbif_taxon_ids)
@@ -358,6 +366,11 @@ class PartnerQuery:
     # .................................
     def encode_ott_tree_to_gbif(self, otree, gbif_ott, scribe=None):
         """Encode open tree with gbif ids
+        
+        Args:
+            otree: labeled tree from Open Tree of Life (OTOL)
+            gbif_ott: dictionary GBIF taxon keys to matching OTOL 
+            scribe: BorgScribe object with open database connection
         """
         labeled_tree = otree
         if scribe is None:

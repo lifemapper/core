@@ -1,5 +1,4 @@
-"""Initialize a BOOM workflow
-"""
+"""Initialize a BOOM workflow."""
 import argparse
 import configparser
 import glob
@@ -70,8 +69,12 @@ class BOOMFiller(LMObject):
 
     # ................................
     def __init__(self, param_fname, logname=None):
-        """
-        @summary Constructor for BOOMFiller class.
+        """Constructor.
+
+        Args:
+            param_fname: Absolute path to file containing parameters for
+                initiating a Lifemapper workflow
+            logname: name for logfile
         """
         super(BOOMFiller, self).__init__()
 
@@ -116,9 +119,7 @@ class BOOMFiller(LMObject):
 
     # ................................
     def initialize_inputs(self):
-        """
-        @summary Initialize configured and stored inputs for BOOMFiller class.
-        """
+        """Initialize configured inputs for workflow."""
         (self.user_id, self.user_id_path,
          self.user_email,
          self.user_taxonomy_base_filename,
@@ -230,12 +231,16 @@ class BOOMFiller(LMObject):
 
     # ................................
     def find_mdl_proj_scenarios(self, mdl_scencode, prj_scencodes):
-        """Find which Scenario for modeling, which (list) for projecting.
+        """Find Scenario for modeling, which for projecting.
+
+        Args:
+            mdl_scencode: scenario code to use for SDM modeling
+            prj_scencodes: list of scenario codes to use for SDM projecting
 
         Note:
-            Boom parameters must include SCENARIO_PACKAGE, may include
-                SCENARIO_PACKAGE_MODEL_SCENARIO,
-                SCENARIO_PACKAGE_PROJECTION_SCENARIOS
+            If either of these codes is None, use the scenario designated as
+                "base" in the scenario package metadata for modeling, and use
+                all scenarios in the package for projecting.
         """
         valid_scencodes = list(self.scen_pkg.scenarios.keys())
         if len(valid_scencodes) == 0 or None in valid_scencodes:
@@ -293,7 +298,7 @@ class BOOMFiller(LMObject):
     # ................................
     @property
     def log_filename(self):
-        """Get the log filename."""
+        """Return the absolute log filename."""
         try:
             fname = self.scribe.log.base_filename
         except Exception:
@@ -435,7 +440,7 @@ class BOOMFiller(LMObject):
 
     # ................................
     def read_param_vals(self):
-        """Read parameter values."""
+        """Return parameters for workflow from the configuration file."""
         if self.in_param_fname is None or not os.path.exists(
                 self.in_param_fname):
             raise LMError(
@@ -628,7 +633,13 @@ class BOOMFiller(LMObject):
 
     # ................................
     def write_config_file(self, tree=None, biogeo_layers=None):
-        """Write configuration file."""
+        """Write configuration file.
+
+        Args:
+            tree: tree object for a multi-species workflow.
+            biogeo_layers: list of names of layers to be used as biogeographic
+                hypotheses in a multi-species workflow.
+        """
         config = configparser.SafeConfigParser()
         config.add_section(SERVER_BOOM_HEADING)
         # .........................................
@@ -829,7 +840,7 @@ class BOOMFiller(LMObject):
 
     # ................................
     def add_user(self):
-        """Adds provided user_id to the database."""
+        """Add provided user_id to the database."""
         user = LMUser(
             self.user_id, self.user_email, self.user_email, mod_time=gmt().mjd)
         self.scribe.log.info(
@@ -1091,7 +1102,15 @@ class BOOMFiller(LMObject):
 
     # ................................
     def add_tree(self, gridset, encoded_tree=None):
-        """Add a tree to the workflow."""
+        """Find or insert a tree from an encoded tree or configured tree name.
+
+        Args:
+            gridset: Gridset object for this workflow
+            encoded_tree: tree object
+
+        Return:
+            new or existing tree object
+        """
         tree = None
         # Provided tree filename takes precedence
         if self.tree_fname is not None:
@@ -1176,11 +1195,7 @@ class BOOMFiller(LMObject):
 
     # ................................
     def add_other_layers(self):
-        """Add other layers.
-
-        Note:
-            Assumes same EPSG as scenario provided
-        """
+        """Add other layers in the configuration file for workflow."""
         other_layer_names = []
         layers = self._get_other_layer_filenames()
         for (lyr_name, fname) in layers:
@@ -1221,7 +1236,11 @@ class BOOMFiller(LMObject):
 
     # ................................
     def add_biogeo_hypotheses_matrix_and_layers(self, gridset):
-        """Add hypotheses matrix and layers to the workflow."""
+        """Add hypotheses matrix and layers to the workflow.
+
+        Args:
+            gridset: gridset object for this workflow.
+        """
         biogeo_layer_names = []
         bg_mtx = None
 
@@ -1268,7 +1287,12 @@ class BOOMFiller(LMObject):
 
     # ................................
     def add_grim_mfs(self, default_grims, target_dir):
-        """Add grim makeflows
+        """Add makeflows to compute scenario GRIMs.
+
+        Args:
+            default_grims: matrices for intersection of scenarios with
+                shapegrid.
+            target_dir: absolute path to directory for makeflow files.
         """
         rules = []
 
@@ -1321,8 +1345,8 @@ class BOOMFiller(LMObject):
 
         Args:
             matrix_id : The matrix database id
-                process_type : The ProcessType constant for the process used to
-            create this matrix
+            process_type : The ProcessType constant for the process used to
+                create this matrix
             col_filenames : A list of file names for each column in the matrix
             work_dir : A relative directory where work should be performed
         """
@@ -1517,8 +1541,7 @@ class BOOMFiller(LMObject):
 
     # ................................
     def init_boom(self):
-        """Initialize boom
-        """
+        """Initialize a workflow from configuration file."""
         try:
             # Also adds user
             self.initialize_inputs()
@@ -1597,8 +1620,7 @@ class BOOMFiller(LMObject):
 
 # .............................................................................
 def main():
-    """Main method for script
-    """
+    """Main method for script"""
     parser = argparse.ArgumentParser(
         description=(
             'Populate a Lifemapper archive with metadata for single- or '
