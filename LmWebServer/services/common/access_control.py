@@ -27,4 +27,4 @@ def check_user_permission(session_user, obj, method):
 
     # Return boolean indicating if the object's user id is in the valid user
     #     list for the HTTP method
-    return obj.getUserId() in valid_users
+    return obj.get_user_id() in valid_users

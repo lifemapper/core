@@ -286,16 +286,16 @@ def _add_sdms_to_package(zip_f, projections, scribe):
                     'prj_id': prj.get_id(),
                     'file_path': arc_prj_path,
                     'image_path': arc_prj_img_path,
-                    'scenario_code': prj.projScenarioCode,
-                    'species_name': prj.speciesName,
+                    'scenario_code': prj.proj_scenario_code,
+                    'species_name': prj.species_name,
                     'algorithm_code': prj.algorithm_code,
-                    'gcm_code': scn.gcmCode,
-                    'alt_pred_code': scn.altpredCode,
-                    'date_code': scn.dateCode,
+                    'gcm_code': scn.gcm_code,
+                    'alt_pred_code': scn.altpred_code,
+                    'date_code': scn.date_code,
                     'epsg': prj.epsgcode,
                     'label': '{} {} {} {}'.format(
                         prj.display_name, prj.algorithm_code,
-                        prj.projScenarioCode, arc_prj_path)
+                        prj.proj_scenario_code, arc_prj_path)
                 })
 
         # Add occurrence set
@@ -364,7 +364,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
     # --------------
     package_filename = gridset.getPackageLocation()
     scribe = BorgScribe(WebLogger())
-    user_id = gridset.getUserId()
+    user_id = gridset.get_user_id()
     occ_info = None
     prj_info = None
     tree = None

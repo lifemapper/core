@@ -908,22 +908,27 @@ class Borg(DbPostgresql):
                 objs.append(self._create_scenario(row, idxs))
         return objs
 
-    # ................................
-    def get_environmental_type(self, type_id, type_code, user_id):
-        """Get an environmental layer type
-        """
-        try:
-            if type_id is not None:
-                row, idxs = self.execute_select_one_function(
-                    'lm_getLayerType', type_id)
-            else:
-                row, idxs = self.execute_select_one_function(
-                    'lm_getLayerType', user_id, type_code)
-        except Exception:
-            env_type = None
-        else:
-            env_type = self._create_layer_type(row, idxs)
-        return env_type
+#     # ................................
+#     def get_environmental_type(self, type_id, type_code, user_id):
+#         """Get an environmental layer type.
+#         
+#         Args:
+#             type_id: database id for the EnvType to return
+#             type_code: database id for the EnvType to return
+#             type_id: database id for the EnvType to return
+#         """
+#         try:
+#             if type_id is not None:
+#                 row, idxs = self.execute_select_one_function(
+#                     'lm_getLayerType', type_id)
+#             else:
+#                 row, idxs = self.execute_select_one_function(
+#                     'lm_getLayerType', user_id, type_code)
+#         except Exception:
+#             env_type = None
+#         else:
+#             env_type = self._create_env_type(row, idxs)
+#         return env_type
 
     # ................................
     def find_or_insert_env_type(self, env_type):
@@ -1289,10 +1294,12 @@ class Borg(DbPostgresql):
 
     # ................................
     def find_or_insert_env_layer(self, lyr, scenario_id):
-        """Insert or find a layer's metadata in the Borg.
+        """Find or insert a layer's metadata in the database and optionally 
+        join it to the indicated scenario.
 
         Args:
             lyr: layer to insert
+            scenario_id: database id for scenario if joining layer
 
         Returns:
             New or existing EnvironmentalLayer
@@ -2128,7 +2135,7 @@ class Borg(DbPostgresql):
             epsg: filter by this EPSG code
             after_status: filter by status >= value
             before_status: filter by status <= value
-            occsetId: filter by occurrenceSet identifier
+            occsetId: filter by occ_layer identifier
             alg_code: filter by algorithm code
             mdl_scen_code: filter by model scenario code
             prj_scen_code: filter by projection scenario code
@@ -2163,7 +2170,7 @@ class Borg(DbPostgresql):
             epsg: filter by this EPSG code
             after_status: filter by status >= value
             before_status: filter by status <= value
-            occsetId: filter by occurrenceSet identifier
+            occsetId: filter by occ_layer identifier
             alg_code: filter by algorithm code
             mdl_scen_code: filter by model scenario code
             prj_scen_code: filter by projection scenario code

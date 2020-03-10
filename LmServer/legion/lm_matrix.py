@@ -2,7 +2,7 @@
 """
 import os
 
-import lmpy
+from lmpy import Matrix
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import CSV_INTERFACE, MatrixType
@@ -13,8 +13,7 @@ from LmServer.common.lmconstants import (LMServiceType, LMFileType)
 
 # .............................................................................
 class LMMatrix(Matrix, ServiceObject, ProcessObject):
-    """The Matrix class contains a 2-dimensional numeric matrix.
-    """
+    """The Matrix class contains a 2-dimensional numeric matrix."""
     # ....................................
     def __init__(self, matrix, headers=None, matrix_type=MatrixType.PAM,
                  process_type=None, scenario_id=None, gcm_code=None,
@@ -101,8 +100,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
     # ....................................
     @property
     def gridset_name(self):
-        """Get the name of the gridset
-        """
+        """Return the name of the gridset."""
         name = None
         if self._gridset is not None:
             name = self._gridset.name
@@ -111,8 +109,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
     # ....................................
     @property
     def gridset_id(self):
-        """Get the gridset database identifier
-        """
+        """Return the gridset database identifier."""
         gid = None
         if self._gridset is not None:
             gid = self._gridset.get_id()
@@ -121,8 +118,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
     # ....................................
     @property
     def gridset_url(self):
-        """Get the gridset metadata url
-        """
+        """Return the gridset metadata url."""
         url = None
         if self._gridset is not None:
             url = self._gridset.metadata_url
@@ -130,14 +126,13 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
     # ....................................
     def get_data_url(self, interface=CSV_INTERFACE):
-        """Get a data url for this matrix object
-        """
+        """Return a data url for this matrix object."""
         return self._earl_jr.construct_lm_data_url(
             self.service_type, self.get_id(), interface)
 
     # ....................................
     def get_relative_dlocation(self):
-        """Return the relative filepath from object attributes
+        """Return the relative filepath from object attributes.
 
         Note:
             - If the object does not have an ID, this returns None
@@ -152,7 +147,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
     # ....................................
     def create_local_dlocation(self):
-        """Create an absolute filepath from object attributes
+        """Create an absolute filepath from object attributes.
 
         Note:
             If the object does not have an ID, this returns None
@@ -166,8 +161,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
     # ....................................
     def get_dlocation(self):
-        """Return the _dlocation attribute; create and set it if empty
-        """
+        """Return the _dlocation attribute; create and set it if empty."""
         self.set_dlocation()
         return self._dlocation
 
@@ -188,46 +182,39 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
     # ....................................
     def clear_dlocation(self):
-        """Clear the dlocation for the matrix object
-        """
+        """Clear the dlocation for the matrix object."""
         self._dlocation = None
 
     # ....................................
     def get_gridset(self):
-        """Get the gridset that this matrix belongs to
-        """
+        """Get the gridset that this matrix belongs to."""
         return self._gridset
 
     # ....................................
     def get_shapegrid(self):
-        """Get the shapegrid for the gridset that this matrix belongs to
-        """
+        """Get the shapegrid for the gridset that this matrix belongs to."""
         return self._gridset.get_shapegrid()
 
     # ....................................
     def dump_matrix_metadata(self):
-        """Dump the matrix metadata
-        """
+        """Return the matrix metadata as a string."""
         return super(LMMatrix, self)._dump_metadata(self.matrix_metadata)
 
     # ....................................
     def add_matrix_metadata(self, new_metadata_dict):
-        """Add matrix metadata
-        """
+        """Add matrix metadata."""
         self.matrix_metadata = super(LMMatrix, self)._add_metadata(
             new_metadata_dict, existing_metadata_dict=self.matrix_metadata)
 
     # ....................................
     def load_matrix_metadata(self, new_metadata):
-        """Load the metadata for this matrix
-        """
+        """Load the metadata for this matrix."""
         self.matrix_metadata = super(LMMatrix, self)._load_metadata(
             new_metadata)
 
     # ....................................
     def write(self, dlocation=None, overwrite=False):
-        """Writes this matrix to the file system
-        """
+        """Write this matrix to the file system."""
         if dlocation is None:
             dlocation = self.get_dlocation()
         self.ready_filename(dlocation, overwrite=overwrite)

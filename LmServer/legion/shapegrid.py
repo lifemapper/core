@@ -15,8 +15,7 @@ from LmServer.common.lmconstants import (LMFileType, LMServiceType)
 
 # .............................................................................
 class Shapegrid(_LayerParameters, Vector, ProcessObject):
-    """Shapegrid class
-    """
+    """Shapegrid class"""
     # .................................
     def __init__(self, name, user_id, epsg_code, cell_sides, cell_size,
                  map_units, bbox, site_id='site_id', site_x='center_x',
@@ -80,10 +79,9 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
                         site_x='center_x', site_y='center_y', size=None,
                         site_indices_filename=None, status=None,
                         status_mod_time=None):
-        """Create a shaepgrid object from its parts
-        """
+        """Create a shaepgrid object from its parts."""
         return Shapegrid(
-            vector.name, vector.getUserId(), vector.epsg_code, cell_sides,
+            vector.name, vector.get_user_id(), vector.epsg_code, cell_sides,
             cell_size, vector.mapUnits, vector.bbox, site_id=site_id,
             site_x=site_x, site_y=site_y, size=size,
             lyr_id=vector.get_layer_id(), verify=vector.verify,
@@ -98,8 +96,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
     # .................................
     def update_status(self, status, matrix_index=None, metadata=None,
                       mod_time=gmt().mjd):
-        """Update the status of the shapegrid
-        """
+        """Update the status of the shapegrid."""
         ProcessObject.update_status(self, status, mod_time)
         ServiceObject.update_mod_time(self, mod_time)
         _LayerParameters.update_params(
@@ -122,8 +119,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
     # .................................
     @property
     def cell_sides(self):
-        """Get the number of sides for each cell of the grid
-        """
+        """Return the number of sides for each cell of the grid."""
         return self._cell_sides
 
     # .................................
@@ -131,18 +127,17 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         if size is not None and isinstance(size, int):
             self._size = size
         else:
-            self._size = self._getFeatureCount()
+            self._size = self._get_feature_count()
 
     # .................................
     @property
     def size(self):
-        """Get the size of the shapegrid
-        """
+        """Return the size of the shapegrid."""
         return self._size
 
     # .................................
     def get_site_indices(self):
-        """Get site indices for the shapegrid
+        """Return site indices for the shapegrid.
 
         Todo:
             Make sure to add this to base object
@@ -169,8 +164,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
     # .................................
     @staticmethod
     def check_bbox(min_x, min_y, max_x, max_y, res):
-        """Checks the extent envelop to ensure minx is less than maxx etc.
-        """
+        """Check the extent envelope to ensure minx is less than maxx etc."""
         if min_x > max_x or min_y > max_y:
             raise LMError(
                 'Min x > max x or min y > max y; ({}, {}, {}, {})'.format(
@@ -182,7 +176,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
 
     # .................................
     def cutout(self, cutout_wkt, remove_orig=False, dloc=None):
-        """Create a new shapegrid from original using cutout
+        """Create a new shapegrid from original using cutout.
 
         Todo:
             Check this, it may fail on newer versions of OGR -
@@ -237,8 +231,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
 
     # .................................
     def build_shape(self, cutout=None, overwrite=False):
-        """Build the shapegrid
-        """
+        """Build and write the shapegrid"""
         # After build, set_dlocation, write shapefile
         if os.path.exists(self._dlocation) and not overwrite:
             print((
@@ -258,8 +251,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
 
     # .................................
     def get_target_files(self, work_dir=None):
-        """Get target files for shapegrid data creation
-        """
+        """Return target files for shapegrid data creation"""
         if work_dir is None:
             work_dir = ''
         target_files = []

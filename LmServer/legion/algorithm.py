@@ -8,9 +8,7 @@ from LmServer.common.lmconstants import Algorithms
 
 # .........................................................................
 class InvalidParameterError(LMError):
-    """Error thrown when a property does not exist for the algorithm
-    """
-
+    """Error thrown when a property does not exist for the algorithm"""
     def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
         LMError.__init__(
             self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
@@ -18,9 +16,7 @@ class InvalidParameterError(LMError):
 
 # .........................................................................
 class InvalidValueError(LMError):
-    """Error thrown when a string value is not a valid choice for the parameter
-    """
-
+    """Error thrown when a value is not a valid choice for the parameter"""
     def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
         LMError.__init__(
             self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
@@ -28,9 +24,7 @@ class InvalidValueError(LMError):
 
 # .........................................................................
 class WrongTypeError(LMError):
-    """Error thrown when a value is of the wrong type for a parameter
-    """
-
+    """Error thrown when a value is of the wrong type for a parameter."""
     def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
         LMError.__init__(
             self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
@@ -38,9 +32,7 @@ class WrongTypeError(LMError):
 
 # .........................................................................
 class OutOfRangeError(LMError):
-    """Error thrown when a value is out of range for a parameter
-    """
-
+    """Error thrown when a value is out of range for a parameter."""
     def __init__(self, *args, line_num=None, do_trace=False, **kwargs):
         LMError.__init__(
             self, *args, line_num=line_num, do_trace=do_trace, **kwargs)
@@ -48,9 +40,7 @@ class OutOfRangeError(LMError):
 
 # .........................................................................
 class Algorithm(LMObject):
-    """Class to hold algorithm and its parameter values and constraints
-    """
-
+    """Class to hold algorithm and its parameter values and constraints."""
     # ................................
     def __init__(self, code, metadata=None, parameters=None, inputs=None,
                  name=None):
@@ -87,14 +77,12 @@ class Algorithm(LMObject):
 
     # ................................
     def _get_parameters(self):
-        """Return the parameters of this algorithm object.
-        """
+        """Return the parameters of this algorithm object."""
         return self._parameters
 
     # ................................
     def _set_parameters(self, params):
-        """Set the properties of the algorithm
-        """
+        """Set the properties of the algorithm"""
         if isinstance(params, str):
             params = json.loads(str)
         if isinstance(params, dict):
@@ -122,59 +110,50 @@ class Algorithm(LMObject):
 
     # ................................
     def set_input(self, input_key, input_val):
-        """Set a data input of the (masking) algorithm
-        """
+        """Set a data input of the (masking) algorithm"""
         self._input_data[input_key] = input_val
 
     # ................................
     def get_inputs(self):
-        """Return the inputs dictionary of this algorithm object.
-        """
+        """Return the inputs dictionary of this algorithm object."""
         return self._input_data
 
     # ................................
     def dump_algorithm_parameters(self):
-        """Dump algorithm parameters to a string
-        """
+        """Dump algorithm parameters to a string"""
         return LMObject._dump_metadata(self._parameters)
 
     # ................................
     def load_algorithm_parameters(self, new_metadata):
-        """Load algorithm metadata
-        """
+        """Load algorithm metadata"""
         self._parameters = LMObject._load_metadata(new_metadata)
 
     # ................................
     def dump_algorithm_metadata(self):
-        """Dump algorithm metadata to a string
-        """
+        """Dump algorithm metadata to a string"""
         return LMObject._dump_metadata(self.algorithm_metadata)
 
     # ................................
     def load_algorithm_metadata(self, new_metadata):
-        """Load algorithm metadata
-        """
+        """Load algorithm metadata"""
         self.algorithm_metadata = LMObject._load_metadata(new_metadata)
 
     # ................................
     def add_algorithm_metadata(self, new_metadata_dict):
-        """Add algorithm metadata
-        """
+        """Add algorithm metadata"""
         self.algorithm_metadata = LMObject._add_metadata(
             new_metadata_dict, existing_metadata_dict=self.algorithm_metadata)
 
     # ................................
     def fill_with_defaults(self):
-        """Fill the parameters for this algorithm object with defaults.
-        """
+        """Fill the parameters for this algorithm object with defaults."""
         self._parameters = {}
         for key, constraints in self._parameter_constraints.items():
             self._parameters[key] = constraints['default']
 
     # ................................
     def find_param_name_type(self, name):
-        """Find the correct, case-sensitive, property name.
-        """
+        """Find the correct, case-sensitive, property name."""
         p_name = self._get_param_key(name)
         if p_name is not None:
             p_type = self._parameter_constraints[p_name]['type']
@@ -183,7 +162,7 @@ class Algorithm(LMObject):
 
     # ................................
     def _get_param_key(self, name):
-        """Find the correct case-sensitive string for this property
+        """Find the correct case-sensitive string for this property.
 
         Args:
             name: The parameter to find
@@ -288,8 +267,7 @@ class Algorithm(LMObject):
 
     # ................................
     def get_parameter_value(self, name):
-        """Get the value of a parameter
-        """
+        """Get the value of a parameter."""
         if name in self._parameters:
             return self._parameters[name]
         # If didn't find name and return
@@ -297,7 +275,13 @@ class Algorithm(LMObject):
 
     # ................................
     def has_parameter(self, name):
-        """Return boolean indicating if this algorithm object has the parameter
+        """Return boolean indicating if this algorithm object has the parameter.
+        
+        Args:
+            name: string to check for existence as a parameter name
+            
+        Returns:
+            boolean indicating if the name is a parameter for this alogorithm
         """
         if name in self._parameters:
             return True
@@ -318,8 +302,7 @@ class Algorithm(LMObject):
 
     # ................................
     def get_dictionary(self):
-        """Get the algorithm as a dictionary
-        """
+        """Get the algorithm as a dictionary."""
         return {
             'algorithm_code': self.code,
             'parameters': [

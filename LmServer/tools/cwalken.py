@@ -4,8 +4,6 @@ import datetime
 import glob
 import os
 
-from osgeo.ogr import wkbPoint
-
 from LmBackend.command.server import (
     MultiIndexPAVCommand, MultiStockpileCommand)
 from LmBackend.command.single import SpeciesParameterSweepCommand
@@ -47,8 +45,7 @@ class ChristopherWalken(LMObject):
     """
     # ....................................
     def __init__(self, config_fname, json_fname=None, scribe=None):
-        """Constructor
-        """
+        """Constructor."""
         super(ChristopherWalken, self).__init__()
 
         self.config_fname = config_fname
@@ -89,8 +86,7 @@ class ChristopherWalken(LMObject):
 
     # ....................................
     def initialize_me(self):
-        """Sets objects and parameters for workflow on this object
-        """
+        """Set objects and parameters for workflow on this object."""
         self.more_data_to_process = False
         (self.user_id,
          self.archive_name,
@@ -126,42 +122,36 @@ class ChristopherWalken(LMObject):
 
     # ....................................
     def move_to_start(self):
-        """Move to starting location of WoC
-        """
+        """Move to starting location of WoC."""
         self.weapon_of_choice.move_to_start()
 
     # ....................................
     def save_next_start(self, fail=False):
-        """Save the next starting location
-        """
+        """Save the next starting location."""
         self.weapon_of_choice.save_next_start(fail=fail)
 
     # ....................................
     @property
     def curr_rec_num(self):
-        """Get the current record number
-        """
+        """Return the current record number."""
         return self.weapon_of_choice.curr_rec_num
 
     # ....................................
     @property
     def next_start(self):
-        """Get the next starting location
-        """
+        """Return the next starting location."""
         return self.weapon_of_choice.next_start
 
     # ....................................
     @property
     def complete(self):
-        """Return boolean indicating if complete
-        """
+        """Return boolean indicating if complete."""
         return self.weapon_of_choice.complete
 
     # ....................................
     @property
     def occ_delimiter(self):
-        """Get the occurrence delimiter
-        """
+        """Return the occurrence delimiter."""
         return self.weapon_of_choice.occ_delimiter
 
     # ....................................
@@ -245,7 +235,8 @@ class ChristopherWalken(LMObject):
 
         else:
             occ_name = self._get_boom_or_default(BoomKeys.OCC_DATA_NAME)
-            occ_dir = self._get_boom_or_default(BoomKeys.OCC_DATA_DIR)
+#             occ_dir = self._get_boom_or_default(BoomKeys.OCC_DATA_DIR)
+            occ_dir = None
             occ_delimiter = str(
                 self._get_boom_or_default(BoomKeys.OCC_DATA_DELIMITER))
             if occ_delimiter != ',':
@@ -345,8 +336,6 @@ class ChristopherWalken(LMObject):
 
     # ....................................
     def _get_algorithm(self, alg_heading):
-        """Get the configured algorithm
-        """
         acode = self.cfg.get(alg_heading, BoomKeys.ALG_CODE)
         alg = Algorithm(acode)
         alg.fill_with_defaults()
@@ -529,8 +518,7 @@ class ChristopherWalken(LMObject):
     # ....................................
     @classmethod
     def get_config(cls, config_fname):
-        """Get user, archive, path, and configuration object
-        """
+        """Return user, archive, path, and configuration object."""
         if config_fname is None or not os.path.exists(config_fname):
             raise LMError('Missing config file {}'.format(config_fname))
         config = Config(site_fn=config_fname)
@@ -538,7 +526,7 @@ class ChristopherWalken(LMObject):
 
     # ....................................
     def _get_configured_objects(self):
-        """Get configured string values and any corresponding db objects
+        """Return configured string values and any corresponding db objects.
 
         Todo:
             Make all archive/default config keys consistent
@@ -589,7 +577,7 @@ class ChristopherWalken(LMObject):
 
     # ....................................
     def _get_json_objects(self):
-        """Get provided values from JSON and any corresponding db objects
+        """Return provided values from JSON and any corresponding db objects.
         {
         OccDriver: data_source,
         Occdata: ( filename of taxonids, csv of datablocks, etc
@@ -601,7 +589,7 @@ class ChristopherWalken(LMObject):
 
     # ....................................
     def start_walken(self, work_dir):
-        """Walks a list of Lifemapper objects for computation
+        """Walks the configured data parameters for computation.
 
         Returns:
             Single-species MFChain (spud), dictionary of
@@ -793,8 +781,7 @@ class ChristopherWalken(LMObject):
 
     # ....................................
     def stop_walken(self):
-        """Walks a list of Lifemapper objects for computation
-        """
+        """Stop walking configured data."""
         if not self.weapon_of_choice.complete:
             self.log.info('Christopher, stop walken')
             self.log.info('Saving next start {} ...'.format(self.next_start))
@@ -805,8 +792,7 @@ class ChristopherWalken(LMObject):
 
     # ....................................
     def _find_or_insert_intersect(self, prj, mtx, curr_time):
-        """Initialize model, projections for inputs/algorithm.
-        """
+        """Initialize model, projections for inputs/algorithm."""
         mtx_col = None
         if prj is not None:
             # TODO: Save process_type into the DB??
@@ -844,8 +830,6 @@ class ChristopherWalken(LMObject):
 
     # ....................................
     def _find_or_insert_sdm_project(self, occ, alg, prj_scen, curr_time):
-        """Find or insert a projection
-        """
         prj = None
         if occ is not None:
             tmp_prj = SDMProjection(

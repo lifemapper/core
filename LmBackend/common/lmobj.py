@@ -151,7 +151,13 @@ class LMObject:
     # ..........................
     @staticmethod
     def _load_metadata(new_metadata):
-        """Load metadata into a dictionary
+        """Read metadata into a dictionary
+        
+        Args:
+            new_metadata: dictionary or JSON object of metadata
+            
+        Returns:
+            a dictionary of metadata
         """
         obj_metadata = {}
         if new_metadata is not None:

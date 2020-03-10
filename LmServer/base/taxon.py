@@ -17,10 +17,8 @@ class ScientificName(LMObject):
                  taxonomy_source_genus_key=None,
                  taxonomy_source_species_key=None,
                  taxonomy_source_key_hierarchy=None, scientific_name_id=None):
+        """Constructor for the ScientificName class
         """
-        @summary: Constructor for the ScientificName class
-        """
-        LMObject.__init__(self)
         # species
         self.scientific_name = scientific_name
         self.canonical_name = canonical_name

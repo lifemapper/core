@@ -16,9 +16,13 @@ class ColorPalette:
     """
 
     def __init__(self, ptype='pretty', n=255, alpha=0):
-        """
-        ptype is the name of the palette to use:
-        pretty, gray, red, green, blue, or safe.
+        """Constructor for ColorPalette
+        
+        Args:
+            ptype: name of the palette to use: 
+                pretty, gray, red, green, blue, or safe.
+            n: number of bins/gradients to use for the color range
+            alpha: opacity for color, 0 is transparent, 255 is opaque.
         """
         self.pal = []
         if n > 0:
@@ -66,9 +70,7 @@ class ColorPalette:
         return self.pal.__setitem__(key, value)
 
     def grayscale(self):
-        """
-        Standard grayscale.
-        """
+        """Standard grayscale."""
         self.pal = []
         a = 0
         scl = 255.0 / (self.n * 1.0)
@@ -81,9 +83,7 @@ class ColorPalette:
             self.pal.append([v, v, v, a])
 
     def redscale(self):
-        """
-        Reds from black to very red.
-        """
+        """Reds from black to very red."""
         self.pal = []
         a = 0
         scl = 255.0 / (self.n * 1.0)
@@ -96,9 +96,7 @@ class ColorPalette:
             self.pal.append([v, 0, 0, a])
 
     def greenscale(self):
-        """
-        Greens from black to green
-        """
+        """Greens from black to green"""
         self.pal = []
         a = 0
         scl = 255.0 / (self.n * 1.0)
@@ -111,9 +109,7 @@ class ColorPalette:
             self.pal.append([0, v, 0, a])
 
     def bluescale(self):
-        """
-        Blues from black to blue blue.
-        """
+        """Blues from black to blue."""
         self.pal = []
         a = 0
         scl = 255.0 / (self.n * 1.0)
@@ -126,9 +122,7 @@ class ColorPalette:
             self.pal.append([0, 0, v, a])
 
     def yellowscale(self):
-        """
-        Yellows from black to yellow.
-        """
+        """Yellows from black to yellow."""
         self.pal = []
         a = 0
         scl = 255.0 / (self.n * 1.0)
@@ -141,9 +135,7 @@ class ColorPalette:
             self.pal.append([v, v, 0, a])
 
     def fuschiascale(self):
-        """
-        Fuschias from black to fuschia.
-        """
+        """Fuschias from black to fuschia."""
         self.pal = []
         a = 0
         scl = 255.0 / (self.n * 1.0)
@@ -156,9 +148,7 @@ class ColorPalette:
             self.pal.append([v, 0, v, a])
 
     def aquascale(self):
-        """
-        Aquas from black to aqua.
-        """
+        """Aquas from black to aqua."""
         self.pal = []
         a = 0
         scl = 255.0 / (self.n * 1.0)
@@ -221,9 +211,7 @@ class ColorPalette:
             self.pal.append([int(r * 255), int(g * 255), int(b * 255), a])
 
     def blueredscale(self):
-        """
-        Colors ranging from blue through to red
-        """
+        """Colors ranging from blue through to red"""
         self.pal = []
         a = 0
         scl = 255.0 / (self.n * 1.0)
@@ -237,9 +225,7 @@ class ColorPalette:
             self.pal.append([vr, 0, vb, a])
 
     def bluegreenscale(self):
-        """
-        Colors ranging from blue through to green
-        """
+        """Colors ranging from blue through to green"""
         self.pal = []
         a = 0
         scl = 255.0 / (self.n * 1.0)
@@ -253,9 +239,7 @@ class ColorPalette:
             self.pal.append([0, vg, vb, a])
 
     def greenredscale(self):
-        """
-        Colors ranging from green through to red
-        """
+        """Colors ranging from green through to red"""
         self.pal = []
         a = 0
         scl = 255.0 / (self.n * 1.0)

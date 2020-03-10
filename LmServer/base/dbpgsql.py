@@ -15,8 +15,7 @@ from LmServer.common.lmconstants import LM_SCHEMA
 
 # ............................................................................
 class DbPostgresql(LMAbstractObject):
-    """Class for interacting with PostgreSQL.
-    """
+    """Class for interacting with PostgreSQL."""
     RETRY_COUNT = 4
 
     # ................................
@@ -145,16 +144,14 @@ class DbPostgresql(LMAbstractObject):
 
     # ................................
     def close(self):
-        """Close database connection
-        """
+        """Close database connection"""
         if self.pconn is not None:
             self.pconn.close()
         self.pconn = None
 
     # ................................
     def reopen(self):
-        """Close database connection and reopen
-        """
+        """Close database connection and reopen"""
         self.close()
         self.open()
 
@@ -164,6 +161,10 @@ class DbPostgresql(LMAbstractObject):
 
         Args:
             query string containing a stored function name and parameters
+
+        Returns:
+            tuple of values representing the matching row, and a dictionary of
+                indexes for the column names
 
         Raises:
             LMError: on error returned from the database.
@@ -204,6 +205,10 @@ class DbPostgresql(LMAbstractObject):
                 views
             where_etc_clause: string containing all modifiers following 'where'
                 in a query
+
+        Returns:
+            List of rows (row = tuple of values for a record) and dictionary of 
+            field names and column indexes.
 
         Raises:
             LMError: on error returned from the database.
@@ -275,8 +280,8 @@ class DbPostgresql(LMAbstractObject):
             fn_args: 0..n arguments for the stored function
 
         Returns:
-            tuple of values representing the matching rows, and a dictionary of
-                indexes for the column names
+            List of rows (row = tuple of values for a record) and dictionary of 
+            field names and column indexes.
 
         Raises:
             LMError: on error returned from the database
@@ -291,6 +296,10 @@ class DbPostgresql(LMAbstractObject):
         Args:
             fn_name: stored function name
             fn_args: 0..n arguments to the stored function
+
+        Returns:
+            List of rows (row = tuple of values for a record) and dictionary of 
+            field names and column indexes.
 
         Raises:
             LMError: on error returned from the database.
@@ -328,6 +337,9 @@ class DbPostgresql(LMAbstractObject):
         Args:
             fn_name: stored function name
             fn_args: 0..n arguments to the stored function
+
+        Returns:
+            An integer indicating the number of records modified. 
 
         Raises:
             LMError: on error returned from the database.
@@ -378,6 +390,10 @@ class DbPostgresql(LMAbstractObject):
         Args:
             fn_name: stored function name
             fn_args: 0..n arguments to the stored function
+            
+        Returns:
+            tuple of values representing the matching row, and a dictionary of
+                indexes for the column names
 
         Raises:
             LMError: on error returned from the database.
@@ -401,7 +417,8 @@ class DbPostgresql(LMAbstractObject):
             fn_args: 0..n arguments to the stored function
 
         Returns:
-            List of rows and dictionary of indexes
+            List of rows (row = tuple of values for a record) and dictionary of 
+            field names and column indexes.
 
         Raises:
             LMError: on error returned from the database.
@@ -441,8 +458,8 @@ class DbPostgresql(LMAbstractObject):
             *cmds: 0..n commands to be executed.
 
         Returns:
-            A list of tuples and a dictionary of indexes for the column names.
-                Each tuple contains values for a single row.
+            List of rows (row = tuple of values for a record) and dictionary of 
+            field names and column indexes
 
         Raises:
             LMError: on error returned from the database.

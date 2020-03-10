@@ -738,9 +738,9 @@ class BOOMFiller(LMObject):
                     occ = self.scribe.getOccurrenceSet(occId=occid)
                     if occ is None:
                         missingCount += 1
-                    elif occ.getUserId() not in legalUsers:
+                    elif occ.get_user_id() not in legalUsers:
                         self.scribe.log.info('Unauthorized user {} for ID {}'
-                                             .format(occ.getUserId(), occid))
+                                             .format(occ.get_user_id(), occid))
                         wrongUserCount += 1
                 if count >= limit:
                     break
@@ -1121,7 +1121,7 @@ class BOOMFiller(LMObject):
         for code, grim in default_grims.items():
             mtxcols = self.scribe.get_columns_for_matrix(grim.get_id())
             self.scribe.log.info(
-                '  Adding {} grim columns for scencode {}'.format(
+                '  Adding {} grim columns for scen_code {}'.format(
                     len(mtxcols), code))
 
             col_filenames = []

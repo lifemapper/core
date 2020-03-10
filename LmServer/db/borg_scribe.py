@@ -22,11 +22,10 @@ from LmServer.legion.sdm_proj import SDMProjection
 
 # .............................................................................
 class BorgScribe(LMObject):
-    """Class for interacting with the Lifemapper database
-    """
+    """Class for interacting with the Lifemapper database."""
     # ................................
     def __init__(self, logger, db_user=DbUser.Pipeline):
-        """Constructor for the BorgScribe
+        """Constructor
 
         Args:
             logger (LmLogger): A logger object for info and error reporting
@@ -46,14 +45,12 @@ class BorgScribe(LMObject):
     # ................................
     @property
     def is_open(self):
-        """Return boolean indicating if the database connection is open
-        """
+        """Return boolean indicating if the database connection is open."""
         return self._borg.is_open
 
     # ................................
     def open_connections(self):
-        """Open database connection
-        """
+        """Open database connection."""
         try:
             self._borg.open()
         except Exception as e:
@@ -67,26 +64,33 @@ class BorgScribe(LMObject):
 
     # ................................
     def close_connections(self):
-        """Close database connections
-        """
+        """Close database connections."""
         self._borg.close()
 
     # ................................
     def find_or_insert_algorithm(self, alg, mod_time=None):
-        """Find or insert an algorithm into the database
+        """Find or insert an algorithm into the database.
+        
+        Args:
+            alg: LmServer.legion.algorithm object to insert
+            mod_time: date/time in MJD
         """
         algo = self._borg.find_or_insert_algorithm(alg, mod_time)
         return algo
 
-    # ................................
-    def get_layer_type_code(self, type_code=None, user_id=None, type_id=None):
-        """Get a layer type code object
-        """
-        return self._borg.get_environmental_type(type_id, type_code, user_id)
+#     # ................................
+#     def get_layer_type_code(self, type_code=None, user_id=None, type_id=None):
+#         """Get a layer type code object.
+#         
+#         Args:
+#             type_code: LmServer.legion.env_layer.EnvType to match
+#             user_id: 
+#         """
+#         return self._borg.get_environmental_type(type_id, type_code, user_id)
 
     # ................................
     def count_job_chains(self, status, user_ids=None):
-        """Count the number of job chains at the specified status
+        """Count the number of job chains at the specified status.
 
         Args:
             status (int): Return the number of job chains with this status
@@ -102,10 +106,15 @@ class BorgScribe(LMObject):
 
     # ................................
     def find_or_insert_env_layer(self, lyr, scenario_id=None):
-        """Find or insert an environmental layer into the database
+        """Find or insert a layer's metadata in the database and optionally 
+        join it to the indicated scenario.
 
-        Note:
-            This inserts an EnvLayer and optionally joins it to a scenario
+        Args:
+            lyr: layer to insert
+            scenario_id: database id for scenario if joining layer
+
+        Returns:
+            New or existing EnvironmentalLayer
         """
         updated_lyr = None
         if isinstance(lyr, EnvLayer):
@@ -120,21 +129,26 @@ class BorgScribe(LMObject):
 
     # ................................
     def find_or_insert_layer(self, lyr):
-        """Find or insert a layer object
+        """Find or insert a layer object.
+        
+        Args:
+            lyr: _Layer object to find or insert into the database
+            
+        Return: 
+            updated layer object
         """
         return self._borg.find_or_insert_layer(lyr)
 
     # ................................
     def get_env_layer(self, env_lyr_id=None, lyr_id=None, lyr_verify=None,
                       user_id=None, lyr_name=None, epsg=None):
-        """Get an environmental layer object
-        """
+        """Get an environmental layer object."""
         return self._borg.get_env_layer(
             env_lyr_id, lyr_id, lyr_verify, user_id, lyr_name, epsg)
 
     # ................................
     def delete_scenario_layer(self, env_lyr, scenario_id):
-        """Delete the scenario layer join from the database
+        """Delete the scenario layer join from the database.
 
         Note:
             This deletes the join only, not the EnvLayer
@@ -143,8 +157,7 @@ class BorgScribe(LMObject):
 
     # ................................
     def delete_env_layer(self, env_lyr, scenario_id=None):
-        """Delete an environmental layer from the database
-        """
+        """Delete an environmental layer from the database."""
         if scenario_id is not None:
             _ = self.delete_scenario_layer(env_lyr, scenario_id=scenario_id)
         return self._borg.delete_env_layer(env_lyr)
@@ -154,8 +167,7 @@ class BorgScribe(LMObject):
                          gcm_code=None, alt_pred_code=None, date_code=None,
                          after_time=None, before_time=None, epsg=None,
                          env_type_id=None, scenario_code=None):
-        """Count the number of environmental layers that match the criteria.
-        """
+        """Count the number of environmental layers that match the criteria."""
         return self._borg.count_env_layers(
             user_id, env_code, gcm_code, alt_pred_code, date_code, after_time,
             before_time, epsg, env_type_id, scenario_code)
@@ -166,8 +178,7 @@ class BorgScribe(LMObject):
                         date_code=None, after_time=None, before_time=None,
                         epsg=None, env_type_id=None, scen_code=None,
                         atom=True):
-        """Return a list of environmental layers matching the criteria.
-        """
+        """Return a list of environmental layers matching the criteria."""
         return self._borg.list_env_layers(
             first_rec_num, max_num, user_id, env_code, gcm_code, alt_pred_code,
             date_code, after_time, before_time, epsg, env_type_id, scen_code,
@@ -175,8 +186,7 @@ class BorgScribe(LMObject):
 
     # ................................
     def find_or_insert_env_type(self, env_type):
-        """Find or insert an environmental layer type
-        """
+        """Find or insert an environmental layer type"""
         if isinstance(env_type, EnvType):
             return self._borg.find_or_insert_env_type(env_type=env_type)
 
@@ -185,8 +195,7 @@ class BorgScribe(LMObject):
     # ................................
     def count_scen_packages(self, user_id=PUBLIC_USER, after_time=None,
                             before_time=None, epsg=None, scen_id=None):
-        """Count the scenario packages that match the specified criteria.
-        """
+        """Count the scenario packages that match the specified criteria."""
         return self._borg.count_scen_packages(
             user_id, after_time, before_time, epsg, scen_id)
 
@@ -214,8 +223,7 @@ class BorgScribe(LMObject):
     def get_scen_packages_for_scenario(self, scen=None, scen_id=None,
                                        user_id=None, scen_code=None,
                                        fill_layers=False):
-        """Get scenario packages that include the specified scenario
-        """
+        """Get scenario packages that include the specified scenario."""
         return self._borg.get_scen_packages_for_scenario(
             scen, scen_id, user_id, scen_code, fill_layers)
 
@@ -223,15 +231,14 @@ class BorgScribe(LMObject):
     def get_scenarios_for_scen_package(self, scen_package=None,
                                        scen_package_id=None, user_id=None,
                                        scen_package_name=None):
-        """Get scenarios in the specified scenario package
-        """
+        """Get scenarios in the specified scenario package."""
         return self._borg.get_scenarios_for_scen_package(
             scen_package, scen_package_id, user_id, scen_package_name)
 
     # ................................
     def get_scen_packages_for_user_codes(self, usr, scen_codes,
                                          fill_layers=False):
-        """Get scenario packages for the specified user scenario codes
+        """Get scenario packages for the specified user scenario codes.
 
         Note:
             This returns all ScenPackages containing this scenario.  All
@@ -258,15 +265,14 @@ class BorgScribe(LMObject):
     def get_scen_package(self, scen_package=None, scen_package_id=None,
                          user_id=None, scen_package_name=None,
                          fill_layers=False):
-        """Get a scenario package
-        """
+        """Return a scenario package."""
         return self._borg.get_scen_package(
             scen_package, scen_package_id, user_id, scen_package_name,
             fill_layers)
 
     # ................................
     def find_or_insert_scenario(self, scen, scen_package_id=None):
-        """Find or insert a scenario into the database
+        """Find or insert a scenario into the database.
 
         Note:
             This returns the updated Scenario filled with Layers
@@ -281,14 +287,12 @@ class BorgScribe(LMObject):
 
     # ................................
     def delete_computed_user_data(self, user_id):
-        """Delete computed user data
-        """
+        """Delete computed user data."""
         return self._borg.delete_computed_user_data(user_id)
 
     # ................................
     def clear_user(self, user_id):
-        """Clear all data for a user.
-        """
+        """Clear all data for a user."""
         mtx_col_ids = []
         grid_ids = self._borg.find_user_gridsets(user_id)
         for grid_id in grid_ids:
@@ -300,69 +304,59 @@ class BorgScribe(LMObject):
 
     # ................................
     def find_or_insert_user(self, usr):
-        """Find or insert a user into the database
-        """
+        """Find or insert a user into the database."""
         return self._borg.find_or_insert_user(usr)
 
     # ................................
     def update_user(self, usr):
-        """Update a user in the database
-        """
+        """Update a user in the database."""
         return self._borg.update_user(usr)
 
     # ................................
     def find_user(self, user_id=None, email=None):
-        """Find a user in the database by user id or email
-        """
+        """Find a user in the database by user id or email."""
         return self._borg.find_user(user_id, email)
 
     # ................................
     def find_user_for_object(self, layer_id=None, scen_code=None, occ_id=None,
                              matrix_id=None, gridset_id=None,
                              mf_process_id=None):
-        """Find the user for a specified object
-        """
+        """Find the user for a specified object."""
         return self._borg.find_user_for_object(
             layer_id, scen_code, occ_id, matrix_id, gridset_id, mf_process_id)
 
     # ................................
     def find_or_insert_taxon_source(self, tax_source_name, tax_source_url):
-        """Find or insert a taxon source into the database.
-        """
+        """Find or insert a taxon source into the database."""
         return self._borg.find_or_insert_taxon_source(
             tax_source_name, tax_source_url)
 
     # ................................
     def find_or_insert_shapegrid(self, shapegrid, cutout=None):
-        """Find or insert a shapegrid into the database.
-        """
+        """Find or insert a shapegrid into the database."""
         return self._borg.find_or_insert_shapegrid(shapegrid, cutout)
 
     # ................................
     def find_or_insert_gridset(self, gridset):
-        """Find or insert a gridset into the database.
-        """
+        """Find or insert a gridset into the database."""
         return self._borg.find_or_insert_gridset(gridset)
 
     # ................................
     def find_or_insert_matrix(self, mtx):
-        """Find or insert a matrix into the database.
-        """
+        """Find or insert a matrix into the database."""
         return self._borg.find_or_insert_matrix(mtx)
 
     # ................................
     def get_shapegrid(self, lyr_id=None, user_id=None, lyr_name=None,
                       epsg=None):
-        """Get a shapegrid from the database.
-        """
+        """Get a shapegrid from the database."""
         return self._borg.get_shapegrid(lyr_id, user_id, lyr_name, epsg)
 
     # ................................
     def count_shapegrids(self, user_id=PUBLIC_USER, cell_sides=None,
                          cell_size=None, after_time=None, before_time=None,
                          epsg=None):
-        """Count the number of shapegrids that match the specified criteria.
-        """
+        """Count the number of shapegrids that match the specified criteria."""
         return self._borg.count_shapegrids(
             user_id, cell_sides, cell_size, after_time, before_time, epsg)
 
@@ -387,8 +381,7 @@ class BorgScribe(LMObject):
     # ................................
     def count_layers(self, user_id=PUBLIC_USER, squid=None, after_time=None,
                      before_time=None, epsg=None):
-        """Count layers matching the specified criteria.
-        """
+        """Count layers matching the specified criteria."""
         return self._borg.count_layers(
             user_id, squid, after_time, before_time, epsg)
 
@@ -396,36 +389,31 @@ class BorgScribe(LMObject):
     def list_layers(self, first_rec_num, max_num, user_id=PUBLIC_USER,
                     squid=None, after_time=None, before_time=None, epsg=None,
                     atom=True):
-        """Return a list of layers matching the specified criteria.
-        """
+        """Return a list of layers matching the specified criteria."""
         return self._borg.list_layers(
             first_rec_num, max_num, user_id, squid, after_time, before_time,
             epsg, atom)
 
     # ................................
     def get_matrix_column(self, mtx_col=None, mtx_col_id=None):
-        """Get the specified matrix column
-        """
+        """Get the specified matrix column."""
         return self._borg.get_matrix_column(mtx_col, mtx_col_id)
 
     # ................................
     def get_columns_for_matrix(self, mtx_id):
-        """Get matrix columns for the specified matrix.
-        """
+        """Get matrix columns for the specified matrix."""
         return self._borg.get_columns_for_matrix(mtx_id)
 
     # ................................
     def get_sdm_columns_for_matrix(self, mtx_id, return_columns=True,
                                    return_projections=True):
-        """Get SDM-based matrix columns for the specified matrix.
-        """
+        """Get SDM-based matrix columns for the specified matrix."""
         return self._borg.get_sdm_columns_for_matrix(
             mtx_id, return_columns, return_projections)
 
     # ................................
     def get_occ_layers_for_matrix(self, mtx_id):
-        """Get occurrence layers for the specified matrix.
-        """
+        """Get occurrence layers for the specified matrix.."""
         return self._borg.get_occ_layers_for_matrix(mtx_id)
 
     # ................................

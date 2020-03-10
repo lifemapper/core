@@ -11,7 +11,7 @@ from LmServer.common.lmconstants import LOG_PATH, USER_LOG_PATH
 
 # .............................................................................
 class LmServerLogger(LmLogger):
-    """Base class for server-side loggers
+    """Base class for server-side loggers.
 
     Args:
         name: The name of this logger
@@ -19,7 +19,6 @@ class LmServerLogger(LmLogger):
         add_console: (optional) Should a console logger be added
         add_file: (optional) Should a file logger be added
     """
-
     def __init__(self, name, level=logging.DEBUG, add_console=False,
                  add_file=False):
         LmLogger.__init__(self, name, level)
@@ -33,27 +32,21 @@ class LmServerLogger(LmLogger):
 
 # .............................................................................
 class WebLogger(LmServerLogger):
-    """The web logger logs requests to the Lifemapper services
-    """
-
+    """Log requests to the Lifemapper services."""
     def __init__(self, level=logging.DEBUG):
         LmServerLogger.__init__(self, 'web', level=level, add_file=True)
 
 
 # .............................................................................
 class ConsoleLogger(LmServerLogger):
-    """The console logger only logs output to the console
-    """
-
+    """Log output to the console."""
     def __init__(self, level=logging.DEBUG):
         LmServerLogger.__init__(self, 'console', level=level, add_console=True)
 
 
 # .............................................................................
 class ScriptLogger(LmServerLogger):
-    """The script logger is used to log the events of a particular script
-    """
-
+    """Log the events of a particular script."""
     def __init__(self, scriptName, level=logging.DEBUG):
         LmServerLogger.__init__(self, scriptName, level=level,
                                 add_console=True, add_file=True)
@@ -61,18 +54,14 @@ class ScriptLogger(LmServerLogger):
 
 # .............................................................................
 class SolrLogger(LmServerLogger):
-    """The solr logger is used by Lifemapper solr client tools
-    """
-
+    """Log output from Lifemapper solr client tools."""
     def __init__(self, level=logging.DEBUG):
         LmServerLogger.__init__(self, 'lm_solr', level=level, add_file=True)
 
 
 # .............................................................................
 class UnittestLogger(LmServerLogger):
-    """The unit test logger logs the results of a unit test
-    """
-
+    """Log the results of a unit test."""
     def __init__(self, level=logging.DEBUG):
         name = 'unittest.%d' % os.getpid()
         LmServerLogger.__init__(self, name, level=level, add_console=True,
@@ -81,9 +70,7 @@ class UnittestLogger(LmServerLogger):
 
 # .............................................................................
 class UserLogger(WebLogger):
-    """The user logger logs information about a specific user's activities
-    """
-
+    """Log information about a specific user's activities."""
     def __init__(self, user_id, level=logging.DEBUG):
         WebLogger.__init__(self, level=level)
 

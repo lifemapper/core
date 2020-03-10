@@ -3,10 +3,9 @@
 Note:
      From http://perrygeo.googlecode.com/svn/trunk/gis-bin/flip_raster.py
 """
-import os
 
 import numpy
-
+import os
 from osgeo import gdal, gdalconst
 
 from LmBackend.common.lmobj import LMError, LMObject
@@ -15,8 +14,7 @@ from LmCommon.common.lmconstants import DEFAULT_NODATA
 
 # ............................................................................
 class GeoFileInfo(LMObject):
-    """Class for getting information from a raster dataset readable by GDAL.
-    """
+    """Class for getting information from a raster dataset readable by GDAL."""
 
     # ................................
     def __init__(self, dlocation, var_pattern=None, updateable=False):
