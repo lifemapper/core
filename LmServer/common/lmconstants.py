@@ -921,7 +921,7 @@ ANN_PARAMS = {
     'MinimunError': {'type': float, 'min': 0.0, 'default': 0.01, 'max': 0.05}}
 
 AQUAMAPS_PARAMS = {
-    'UseSurfaceLayers': {'type': int, 'min':-1, 'default': -1, 'max': 1},
+    'UseSurfaceLayers': {'type': int, 'min': -1, 'default': -1, 'max': 1},
     'UseDepthRange': {'type': int, 'min': 0, 'default': 1, 'max': 1},
     'UseIceConcentration': {'type': int, 'min': 0, 'default': 1, 'max': 1},
     'UseDistanceToLand': {'type': int, 'min': 0, 'default': 1, 'max': 1},
@@ -1014,7 +1014,11 @@ class Algorithms(Enum):
 
     @staticmethod
     def is_openModeller(code):
-        """Returns a boolean if the provided algorithm code is in openModeller"""
+        """Return if algorithm is part of openModeller.
+
+        Returns:
+            bool - Inidcation if the provided algorithm code is in openModeller
+        """
         atype = Algorithms.get(code)
         if atype == Algorithms.ATT_MAXENT:
             return False

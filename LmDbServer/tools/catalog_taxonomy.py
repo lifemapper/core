@@ -39,11 +39,12 @@ class TaxonFiller(LMObject):
         Args:
             tax_src_name: short name for source of taxonomy in database
             taxonomy_fname: absolute filename for taxonomy data
-            tax_success_fname: absolute filename to be written indicating success
+            tax_success_fname: absolute filename to be written indicating
+                success
             tax_src_url: url for source of taxonomy in database
-            delimiter: delimiter for taxonomy CSV data 
+            delimiter: delimiter for taxonomy CSV data
             log_name: basename for logfile
-        
+
         TODO:
             - Allow tax_src_name to be a user_id, and user taxonomy is allowed
             - Define data format for user-provided taxonomy

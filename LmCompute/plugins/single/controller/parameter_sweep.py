@@ -515,10 +515,11 @@ class ParameterSweep:
                                     raw_prj_filename = \
                                         wrapper.get_projection_filename()
                                     # Convert layer and scale layer
-                                    layer_tools.convert_and_modify_ascii_to_tiff(
-                                        raw_prj_filename, projection_path,
-                                        scale=scale_params,
-                                        multiplier=multiplier)
+                                    layer_tools\
+                                        .convert_and_modify_ascii_to_tiff(
+                                            raw_prj_filename, projection_path,
+                                            scale=scale_params,
+                                            multiplier=multiplier)
 
                                     # Append log
                                     if os.path.exists(

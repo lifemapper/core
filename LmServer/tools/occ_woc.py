@@ -714,8 +714,8 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         return binomial, open_tree_id, record_count
 
     # ................................
-    def  _get_insert_sci_name_for_tiny_bubble(self, binomial, open_tree_id,
-                                              record_count):
+    def _get_insert_sci_name_for_tiny_bubble(self, binomial, open_tree_id,
+                                             record_count):
         if binomial is not None:
             if open_tree_id is not None:
                 sci_name = ScientificName(

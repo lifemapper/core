@@ -15,6 +15,7 @@ from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borg_scribe import BorgScribe
 
+
 # .............................................................................
 class EarlJr(LMObject):
     """Object to construct and parse filenames and URLs.

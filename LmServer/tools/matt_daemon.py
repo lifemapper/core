@@ -254,7 +254,8 @@ class MattDaemon(Daemon):
                 'Waited for {} seconds.  Stopping.'.format(time_waited))
             for running_proc in self._mf_pool:
                 try:
-                    mf_obj, _, mf_proc, proc_std_out, proc_std_err = running_proc
+                    (mf_obj, _, mf_proc, proc_std_out, proc_std_err
+                     ) = running_proc
                     self.log.debug(
                         'Killing process group: {}'.format(
                             os.getpgid(mf_proc.pid)))

@@ -414,7 +414,7 @@ class SDMProjection(_ProjectionType, Raster):
 
     # ................................
     def update_status(self, status, metadata=None, mod_time=gmt().mjd):
-        """Update status, metadata, mod_time attributes on the SDMProjection."""
+        """Update status, metadata, mod_time on the SDMProjection."""
         ProcessObject.update_status(self, status, mod_time)
         ServiceObject.update_mod_time(self, mod_time)
         _LayerParameters.update_params(self, mod_time, metadata=metadata)
@@ -424,7 +424,7 @@ class SDMProjection(_ProjectionType, Raster):
         try:
             if status == JobStatus.COMPLETE:
                 self.clear_local_mapfile()
-        except:
+        except Exception:
             pass
 
     # ................................

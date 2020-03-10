@@ -70,23 +70,13 @@ class BorgScribe(LMObject):
     # ................................
     def find_or_insert_algorithm(self, alg, mod_time=None):
         """Find or insert an algorithm into the database.
-        
+
         Args:
             alg: LmServer.legion.algorithm object to insert
             mod_time: date/time in MJD
         """
         algo = self._borg.find_or_insert_algorithm(alg, mod_time)
         return algo
-
-#     # ................................
-#     def get_layer_type_code(self, type_code=None, user_id=None, type_id=None):
-#         """Get a layer type code object.
-#         
-#         Args:
-#             type_code: LmServer.legion.env_layer.EnvType to match
-#             user_id: 
-#         """
-#         return self._borg.get_environmental_type(type_id, type_code, user_id)
 
     # ................................
     def count_job_chains(self, status, user_ids=None):

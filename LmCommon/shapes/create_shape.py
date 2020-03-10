@@ -145,14 +145,14 @@ class ShapeShifter:
     def write_occurrences(self, out_f_name, max_points=None, big_f_name=None,
                           overwrite=True):
         """Write the occurrences to a shapefile.
-        
+
         Args:
             out_f_name: destination filename
-            max_points: maximum number of points to include in shapefile 
+            max_points: maximum number of points to include in shapefile
             big_f_name: destination filename for shapefile with all points
-            overwrite: flag indicating whether to overwrite an existing file, or
-                throw an Exception
-                
+            overwrite: flag indicating whether to overwrite an existing file,
+                or throw an Exception
+
         Raises:
             LMError if write failure
         """

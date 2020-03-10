@@ -1168,7 +1168,7 @@ class Vector(_Layer):
     # .............................
     @property
     def features(self):
-        """Converts the private dictionary of features into a list of LmAttObjs"""
+        """Converts the dictionary of features into a list of LmAttObjs"""
         return [
             LmAttObj(
                 {self._feature_attributes[k2][0]: self._features[k1][k2]
