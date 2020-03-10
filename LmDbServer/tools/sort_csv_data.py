@@ -40,47 +40,51 @@ def _get_smallest_key_and_position(sorted_files):
 
 # .............................................................................
 def check_merged_file(log, merge_fname, meta_fname):
-    chunkCount = recCount = failSortCount = failChunkCount = 0
-    bigSortedData = OccDataParser(log, merge_fname, meta_fname,
-                                  delimiter=OUT_DELIMITER, pull_chunks=True)
-    bigSortedData.initialize_me()
-    prevKey = bigSortedData.groupVal
+    """Check the status of a merged file."""
+    chunk_count = rec_count = fail_sort_count = fail_chunk_count = 0
+    big_sorted_data = OccDataParser(
+        log, merge_fname, meta_fname, delimiter=OUT_DELIMITER,
+        pull_chunks=True)
+    big_sorted_data.initialize_me()
+    prev_key = big_sorted_data.group_val
 
-    chunk, chunkGroup, chunkName = bigSortedData.pullCurrentChunk()
+    chunk, chunk_group, _ = big_sorted_data.pull_current_chunk()
     try:
-        while not bigSortedData.closed and len(chunk) > 0:
-            if bigSortedData.groupVal > prevKey:
-                chunkCount += 1
-                recCount += len(chunk)
-            elif bigSortedData.groupVal < prevKey:
-                log.debug('Failure to sort prevKey {},  currKey {}'.format(
-                          prevKey, bigSortedData.groupVal))
-                failSortCount += 1
+        while not big_sorted_data.closed and len(chunk) > 0:
+            if big_sorted_data.group_val > prev_key:
+                chunk_count += 1
+                rec_count += len(chunk)
+            elif big_sorted_data.group_val < prev_key:
+                log.debug('Failure to sort prev_key {},  currKey {}'.format(
+                          prev_key, big_sorted_data.group_val))
+                fail_sort_count += 1
             else:
-                log.debug('Current chunk key = prev key %d' % (prevKey))
-                failChunkCount += 1
+                log.debug('Current chunk key = prev key %d' % (prev_key))
+                fail_chunk_count += 1
 
-        prevKey = chunkGroup
-        chunk = bigSortedData.pullCurrentChunk()
+        prev_key = chunk_group
+        chunk = big_sorted_data.pull_current_chunk()
 
     except Exception as e:
         log.error(str(e))
     finally:
-        bigSortedData.close()
+        big_sorted_data.close()
 
-    msg = """ Test {} file: 
-                  recCount {}
-                  chunkCount {} 
-                  failSortCount {} 
-                  failChunkCount{}  
-                  currRecnum {}""".format(merge_fname, recCount, chunkCount,
-                                          failSortCount, failChunkCount,
-                                          bigSortedData.currRecnum)
+    msg = """\
+        Test {} file:
+            rec_count {}
+            chunk_count {}
+            fail_sort_count {}
+            fail_chunk_count{}
+            curr_rec_num {}""".format(
+                merge_fname, rec_count, chunk_count, fail_sort_count,
+                fail_chunk_count, big_sorted_data.curr_rec_num)
     log.debug(msg)
 
 
 # .............................................................................
-def sortRecs(array, idx):
+def sort_recs(array, idx):
+    """Sort records."""
     less = []
     equals = []
     greater = []
@@ -95,104 +99,93 @@ def sortRecs(array, idx):
             if rec[idx] > pivot:
                 greater.append(rec)
         # Don't forget to return something!
-        return sortRecs(less, idx) + equals + sortRecs(greater, idx)
-    else:
-        # At the end of the recursion - when only one element, return the array.
-        return array
+        return sort_recs(less, idx) + equals + sort_recs(greater, idx)
+
+    # At the end of the recursion - when only one element, return the array.
+    return array
 
 
 # .............................................................................
-def split_into_files(log, occ_parser, data_path, prefix, basename, max_file_size):
+def split_into_files(log, occ_parser, data_path, prefix, basename,
+                     max_file_size):
+    """Split occurrence data into files."""
     idx = 0
     while not occ_parser.closed:
-        chunk = occ_parser.getSizeChunk(max_file_size)
+        chunk = occ_parser.get_size_chunk(max_file_size)
         fname = _get_op_filename(data_path, prefix, basename, run=idx)
-        csvwriter, f = get_unicodecsv_writer(fname, OUT_DELIMITER, doAppend=False)
-        # Skip header, rely on metadata with column indices
-        #       csvwriter.writerow(occ_parser.header)
-        for rec in chunk:
-            csvwriter.writerow(rec)
-        f.close()
+        with open(fname, 'w') as out_file:
+            csv_writer = csv.writer(out_file, delimiter=OUT_DELIMITER)
+            # Skip header, rely on metadata with column indices
+            #       csvwriter.writerow(occ_parser.header)
+            for rec in chunk:
+                csv_writer.writerow(rec)
         log.debug('Wrote {} records to {}'.format(len(chunk), fname))
-        csvwriter = None
         idx += 1
     return idx
 
 
 # .............................................................................
-def sort_files(log, group_by_idx, data_path, inprefix, outprefix, basename):
+def sort_files(log, group_by_idx, data_path, in_prefix, out_prefix, basename):
+    """Sort files."""
     idx = 0
 
-    infname = _get_op_filename(data_path, inprefix, basename, run=idx)
-    while os.path.exists(infname):
-        outfname = _get_op_filename(data_path, outprefix, basename, run=idx)
-        log.debug('Write from {} to {}'.format(infname, outfname))
+    in_fname = _get_op_filename(data_path, in_prefix, basename, run=idx)
+    while os.path.exists(in_fname):
+        out_fname = _get_op_filename(data_path, out_prefix, basename, run=idx)
+        log.debug('Write from {} to {}'.format(in_fname, out_fname))
         # Read rows
-        unsRows = []
-        occreader, infile = get_unicodecsv_reader(infname, OUT_DELIMITER)
-        occwriter, outfile = get_unicodecsv_writer(outfname, OUT_DELIMITER,
-                                                   doAppend=False)
+        uns_rows = []
+        with open(in_fname) as in_file, open(out_fname, 'w') as out_file:
+            with csv.reader(in_file, delimiter=OUT_DELIMITER) as occ_reader:
+                with csv.writer(
+                        out_file, delimiter=OUT_DELIMITER) as occ_writer:
+                    while True:
+                        try:
+                            uns_rows.append(next(occ_reader))
+                        except StopIteration:
+                            break
+                        except Exception as err:
+                            print('Error file {}, line {}: {}'.format(
+                                in_fname, occ_reader.line_num, err))
+                            break
 
-        # Skip header, rely on metadata with column indices
-        while True:
-            try:
-                unsRows.append(next(occreader))
-            except StopIteration:
-                break
-            except Exception as e:
-                print(('Error file %s, line %d: %s' %
-                     (infname, occreader.line_num, e)))
-                break
-        infile.close()
-
-        # Sort records into new array, then write to file, no header
-        srtRows = sortRecs(unsRows, group_by_idx)
-        for rec in srtRows:
-            occwriter.writerow(rec)
-        outfile.close()
+                    # Sort records into new array, then write to file, no
+                    #    header
+                    srt_rows = sort_recs(uns_rows, group_by_idx)
+                    for rec in srt_rows:
+                        occ_writer.writerow(rec)
 
         # Move to next file
         idx += 1
-        infname = _get_op_filename(data_path, inprefix, basename, run=idx)
+        in_fname = _get_op_filename(data_path, in_prefix, basename, run=idx)
     return idx
 
 
 # .............................................................................
-def _switchFiles(openFile, data_path, prefix, basename, run=None):
-    openFile.close()
-    # Open next output sorted file
-    fname = _get_op_filename(data_path, prefix, basename, run=run)
-    csvwriter, outfile = get_unicodecsv_writer(fname, OUT_DELIMITER,
-                                               doAppend=False)
-    return outfile, csvwriter
-
-
-# .............................................................................
-def _pop_chunk_and_write(csvwriter, occPrsr):
+def _pop_chunk_and_write(csv_writer, occ_parser):
     # first get chunk
-    thiskey = occPrsr.groupVal
-    chunk, chunkGroup, chunkName = occPrsr.pullCurrentChunk()
+    this_key = occ_parser.group_val
+    chunk, _, _ = occ_parser.pull_current_chunk()
     for rec in chunk:
-        csvwriter.writerow(rec)
-    return thiskey
+        csv_writer.writerow(rec)
+    return this_key
 
 
 # .............................................................................
 def merge_sorted_files(log, merge_fname, data_path, input_prefix, basename,
-                     meta_fname, in_idx=0, max_file_size=None):
-    """
-    @summary: Merge multiple files of csv records sorted on keyCol, with the 
-              same keyCol values in one or more files, into a single file, 
-              sorted on keyCol, placing records containing the same keyCol value
-              together.
-    @param merge_fname: Output filename
-    @param data_path: Path for input files
-    @param input_prefix: Filename prefix for input sorted files
-    @param basename: original base filename
-    @param meta_fname: Metadata filename for these data
-    @param max_file_size: (optional) maximum number of bytes for output files; 
-                        this results in multiple, numbered, sorted output files,  
-                        with no keys in more than one file
+                       meta_fname, in_idx=0):
+    """Merge multile files of csv records.
+
+    Merge multiple files of csv records sorted on keyCol, with the same key col
+    values in one or more files, into a single file, sorted on key col, placing
+    records containing the same key col value together.
+
+    Args:
+        merge_fname: Output filename
+        data_path: Path for input files
+        input_prefix: Filename prefix for input sorted files
+        basename: original base filename
+        meta_fname: Metadata filename for these data
     """
     # Open all input split files
     sorted_files = []
@@ -201,12 +194,15 @@ def merge_sorted_files(log, merge_fname, data_path, input_prefix, basename,
     enough_already = False
     while not enough_already and os.path.exists(srt_fname):
         try:
-            op = OccDataParser(log, srt_fname, meta_fname, delimiter=OUT_DELIMITER,
-                               pull_chunks=True)
-            op.initialize_me()
+            occ_parser = OccDataParser(
+                log, srt_fname, meta_fname, delimiter=OUT_DELIMITER,
+                pull_chunks=True)
+            occ_parser.initialize_me()
         except IOError as e:
-            log.warning('Enough already, IOError! Final file {}. Using only indices {} - {}, err {}'
-                        .format(srt_fname, in_idx, curr_idx, str(e)))
+            log.warning(
+                ('Enough already, IOError! Final file {}. Using only '
+                 'indices {} - {}, err {}').format(
+                     srt_fname, in_idx, curr_idx, str(e)))
             enough_already = True
         except Exception as e:
             log.warning(
@@ -215,7 +211,7 @@ def merge_sorted_files(log, merge_fname, data_path, input_prefix, basename,
                         in_idx, curr_idx, e)))
             enough_already = True
         else:
-            sorted_files.append(op)
+            sorted_files.append(occ_parser)
             curr_idx += 1
             srt_fname = _get_op_filename(
                 data_path, input_prefix, basename, run=curr_idx)
@@ -237,32 +233,15 @@ def merge_sorted_files(log, merge_fname, data_path, input_prefix, basename,
     except Exception as e:
         raise
     finally:
-        for op in sorted_files:
-            log.debug('Closing file {}'.format(op.data_fname))
-            op.close()
-
-
-# .............................................................................
-def usage():
-    output = """
-    Usage:
-       sortCSVData inputDelimiter inputCSVFile [split | sort | merge | check]
-    """
-    print(output)
+        for open_file in sorted_files:
+            log.debug('Closing file {}'.format(open_file.data_fname))
+            open_file.close()
 
 
 # .............................................................................
 def main():
     """Main method of the script
     """
-    if len(sys.argv) in (3, 4):
-        if len(sys.argv) == 3:
-            cmd = 'all'
-        else:
-            cmd = sys.argv[3]
-    else:
-        usage()
-
     parser = argparse.ArgumentParser(
              description=('Populate a Lifemapper archive with metadata ' +
                           'for single- or multi-species computations ' +
@@ -280,7 +259,8 @@ def main():
               '    sort: sort smaller files individually\n'
               '    merge: Merge smaller sorted files into large sorted file\n'
               '    check: Test large sorted file for errors\n'
-              '    all: performa ll (split, sort, merge) functions'))
+              '    all: perform all (split, sort, merge) functions'),
+        choices=('split', 'sort', 'merge', 'check', 'all'))
     parser.add_argument(
         '--start_idx', default=0,
         help=('For merging, start at this file number (limit on number of '
@@ -297,8 +277,6 @@ def main():
         print('delimiter is comma')
     else:
         in_delimiter = '\t'
-    if cmd not in ('split', 'sort', 'merge', 'check', 'all'):
-        usage()
 
     unsorted_prefix = 'chunk'
     sorted_prefix = 'smsort'
@@ -343,7 +321,7 @@ def main():
         print('Merge smaller sorted files into huge sorted file')
         merge_sorted_files(
             log, merge_fname, pth, sorted_prefix, basename, meta_fname,
-            in_idx=start_idx, max_file_size=None)
+            in_idx=start_idx)
 
     if cmd == 'check':
         # Check final output (only for single file now)
@@ -373,9 +351,9 @@ basepath, ext = os.path.splitext(datafname)
 pth, basename = os.path.split(basepath)
 logname = 'sortCSVData_{}_{}'.format(basename, cmd)
 metafname = basepath + '.json'
-mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename, 
+mergefname = os.path.join(pth, '{}_{}{}'.format(mergedPrefix, basename,
                                                 LMFormat.CSV.ext))
-   
+
 log = ScriptLogger(logname)
 
 occparser = OccDataParser(log, datafname, metafname, delimiter=inDelimiter,
@@ -385,56 +363,56 @@ groupByIdx = occparser.groupByIdx
 print 'groupByIdx = ', groupByIdx
 
 (datapath, prefix, maxFileSize) = (pth, unsortedPrefix, 5000000)
- 
+
 ######################### SPLIT
-# splitIntoFiles(log, occparser, pth, unsortedPrefix, basename, 5000000)   
+# splitIntoFiles(log, occparser, pth, unsortedPrefix, basename, 5000000)
 # occparser.close()
 
 
-######################### SORT 
+######################### SORT
 groupByIdx = 2
 # sortFiles(log, groupByIdx, pth, unsortedPrefix, sortedPrefix, basename)
-(datapath, inprefix, outprefix)=(pth, unsortedPrefix, sortedPrefix)
+(datapath, in_prefix, out_prefix)=(pth, unsortedPrefix, sortedPrefix)
 idx = 0
-infname = _getOPFilename(datapath, inprefix, basename, run=idx)
+in_fname = _getOPFilename(datapath, in_prefix, basename, run=idx)
 
-######################### 
+#########################
 ######################### loop
-######################### 
+#########################
 
-outfname = _getOPFilename(datapath, outprefix, basename, run=idx)
-log.debug('Write from {} to {}'.format(infname, outfname))
+out_fname = _getOPFilename(datapath, out_prefix, basename, run=idx)
+log.debug('Write from {} to {}'.format(in_fname, out_fname))
 
-unsRows = []
-occreader, infile = get_unicodecsv_reader(infname, OUT_DELIMITER)
-occwriter, outfile = get_unicodecsv_writer(outfname, OUT_DELIMITER, 
+uns_rows = []
+occreader, infile = get_unicodecsv_reader(in_fname, OUT_DELIMITER)
+occwriter, outfile = get_unicodecsv_writer(out_fname, OUT_DELIMITER,
                                            doAppend=False)
 
 while True:
-    try: 
-        unsRows.append(occreader.next())
+    try:
+        uns_rows.append(occreader.next())
     except StopIteration:
         break
     except Exception, e:
-        print('Error file %s, line %d: %s' % 
-             (infname, occreader.line_num, e))
+        print('Error file %s, line %d: %s' %
+             (in_fname, occreader.line_num, e))
         break
 
 infile.close()
 
-srtRows = sortRecs(unsRows, groupByIdx)
+srtRows = sort_recs(uns_rows, groupByIdx)
 
 for rec in srtRows:
     occwriter.writerow(rec)
 
 outfile.close()
 idx += 1
-infname = _getOPFilename(datapath, inprefix, basename, run=idx)
+in_fname = _getOPFilename(datapath, in_prefix, basename, run=idx)
 
 
-######################### 
+#########################
 ######################### end loop
-######################### 
+#########################
 
 ######################### MERGE
 mergeSortedFiles(log, mergefname, pth, sortedPrefix, basename, metafname)
