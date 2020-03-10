@@ -18,9 +18,7 @@ from LmServer.common.log import ScriptLogger
 
 # .............................................................................
 class DaBoom(Daemon):
-    """
-    Class to run the Boomer as a Daemon process
-    """
+    """Class to run the Boomer as a Daemon process."""
 
     # .............................
     def __init__(self, pidfile, config_fname, priority=None):
@@ -36,14 +34,12 @@ class DaBoom(Daemon):
 
     # .............................
     def initialize(self):
-        """Initialize the Daemon
-        """
+        """Initialize the Daemon."""
         self.boomer.initialize_me()
 
     # .............................
     def run(self):
-        """Run the daemon
-        """
+        """Run the daemon."""
         print(
             'Running daBoom with config_fname = {}'.format(
                 self.boomer.config_fname))
@@ -62,8 +58,7 @@ class DaBoom(Daemon):
 
     # .............................
     def on_shutdown(self):
-        """Shutdown the daemon
-        """
+        """Shutdown the daemon and related processes."""
         self.log.info('Shutdown!')
         # Stop walken the archive and saveNextStart
         self.boomer.close()
@@ -72,8 +67,7 @@ class DaBoom(Daemon):
     # ...............................................
     @property
     def log_filename(self):
-        """Get the log file name
-        """
+        """Return the log file name."""
         try:
             fname = self.log.baseFilename
         except AttributeError:
@@ -83,8 +77,7 @@ class DaBoom(Daemon):
 
 # .............................................................................
 def main():
-    """Main method for script
-    """
+    """Main method for script."""
     if not is_lm_user():
         print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)

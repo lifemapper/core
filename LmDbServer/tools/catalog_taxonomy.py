@@ -27,7 +27,7 @@ class TaxonFiller(LMObject):
     Class to populates a Lifemapper database with taxonomy for accepted names
     in the GBIF Backbone Taxonomy as read from a text file provided by GBIF.
 
-    Todo:
+    TODO:
         Extend this script to add taxonomy for users
     """
 
@@ -36,7 +36,15 @@ class TaxonFiller(LMObject):
                  tax_src_url=None, delimiter='\t', log_name=None):
         """Constructor for TaxonFiller class.
 
-        Todo:
+        Args:
+            tax_src_name: short name for source of taxonomy in database
+            taxonomy_fname: absolute filename for taxonomy data
+            tax_success_fname: absolute filename to be written indicating success
+            tax_src_url: url for source of taxonomy in database
+            delimiter: delimiter for taxonomy CSV data 
+            log_name: basename for logfile
+        
+        TODO:
             - Allow tax_src_name to be a user_id, and user taxonomy is allowed
             - Define data format for user-provided taxonomy
         """
@@ -58,23 +66,20 @@ class TaxonFiller(LMObject):
 
     # ...............................................
     def open(self):
-        """Open database connection
-        """
+        """Open database connection."""
         success = self.scribe.open_connections()
         if not success:
             raise LMError('Failed to open database')
 
     # ...............................................
     def close(self):
-        """Close the object and connections
-        """
+        """Close the object and connections."""
         self._taxon_file.close()
         self.scribe.close_connections()
 
     # ...............................................
     def initialize_me(self):
-        """Initialize the object
-        """
+        """Initialize the object."""
         self._taxonomy_source_id = self.scribe.find_or_insert_taxon_source(
             self._taxonomy_source_name, self._taxonomy_source_url)
         self._taxon_file = open(self.taxonomy_fname, 'r')
@@ -84,8 +89,7 @@ class TaxonFiller(LMObject):
     # ...............................................
     @property
     def log_filename(self):
-        """Get the log filename
-        """
+        """Return the log filename."""
         try:
             fname = self.scribe.log.base_filename
         except AttributeError:
@@ -140,8 +144,7 @@ class TaxonFiller(LMObject):
 
     # ...............................................
     def write_success_file(self, message):
-        """Write the success file
-        """
+        """Write a file to indicate to makeflow that the process succeeded."""
         self.ready_filename(self._success_fname, overwrite=True)
         try:
             with open(self._success_fname, 'w') as out_file:
@@ -151,8 +154,7 @@ class TaxonFiller(LMObject):
 
     # ...............................................
     def read_and_insert_taxonomy(self):
-        """Read taxonomy and insert into the database
-        """
+        """Read taxonomy and insert into the database."""
         total_in = total_out = total_wrong_rank = 0
 
         sciname_objs = []
@@ -203,7 +205,7 @@ class TaxonFiller(LMObject):
 
     # ...............................................
     def create_catalog_taxonomy_mf(self):
-        """Create a makeflow to initiate boomer with assembled inputs
+        """Create a makeflow to initiate taxonomy reader.
 
         Note:
             Not currently used, MF is created in initWorkflow
@@ -232,8 +234,7 @@ class TaxonFiller(LMObject):
 
 # .............................................................................
 def main():
-    """Main method for script
-    """
+    """Main method for script."""
     parser = argparse.ArgumentParser(
         description=('Populate a Lifemapper archive with taxonomic data for '
                      'one or more species, from a CSV file'))

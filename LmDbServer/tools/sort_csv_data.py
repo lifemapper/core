@@ -37,6 +37,73 @@ def _get_smallest_key_and_position(sorted_files):
 
     return smallest, idx_of_smallest
 
+# .............................................................................
+def get_csv_reader(datafile, delimiter, encoding):
+    try:
+        f = open(datafile, 'r', encoding=encoding) 
+        reader = csv.reader(f, delimiter=delimiter)        
+    except Exception as e:
+        raise Exception('Failed to read or open {}, ({})'
+                        .format(datafile, str(e)))
+    else:
+        print('Opened file {} for read'.format(datafile))
+    return reader, f
+
+# .............................................................................
+def get_csv_writer(datafile, delimiter, encoding, fmode='w'):
+    '''
+    @summary: Get a CSV writer that can handle encoding
+    '''
+    if fmode not in ('w', 'a'):
+        raise Exception('File mode must be "w" (write) or "a" (append)')
+    
+    csv.field_size_limit(sys.maxsize)
+    try:
+        f = open(datafile, fmode, encoding=encoding) 
+        writer = csv.writer(f, delimiter=delimiter)
+    except Exception as e:
+        raise Exception('Failed to read or open {}, ({})'
+                        .format(datafile, str(e)))
+    else:
+        print('Opened file {} for write'.format(datafile))
+    return writer, f
+
+# # .............................................................................
+# def getCSVDictReader(datafile, delimiter, encoding, fieldnames=None):
+#     try:
+#         f = open(datafile, 'r', encoding=encoding)
+#         if fieldnames is None:
+#             header = next(f)
+#             tmpflds = header.split(delimiter)
+#             fieldnames = [fld.strip() for fld in tmpflds]
+#         dreader = csv.DictReader(f, fieldnames=fieldnames, 
+#                                  restkey=EXTRA_VALS_KEY,
+#                                  delimiter=delimiter)        
+#     except Exception as e:
+#         raise Exception('Failed to read or open {}, ({})'
+#                         .format(datafile, str(e)))
+#     else:
+#         print('Opened file {} for read'.format(datafile))
+#     return dreader, f
+# 
+# # .............................................................................
+# def getCSVDictWriter(datafile, delimiter, encoding, fldnames, fmode='w'):
+#     '''
+#     @summary: Get a CSV writer that can handle encoding
+#     '''
+#     if fmode not in ('w', 'a'):
+#         raise Exception('File mode must be "w" (write) or "a" (append)')
+#     
+#     csv.field_size_limit(maxsize)
+#     try:
+#         f = open(datafile, fmode, encoding=encoding) 
+#         writer = csv.DictWriter(f, fieldnames=fldnames, delimiter=delimiter)
+#     except Exception as e:
+#         raise Exception('Failed to read or open {}, ({})'
+#                         .format(datafile, str(e)))
+#     else:
+#         print('Opened file {} for write'.format(datafile))
+#     return writer, f
 
 # .............................................................................
 def check_merged_file(log, merge_fname, meta_fname):
@@ -46,7 +113,7 @@ def check_merged_file(log, merge_fname, meta_fname):
     bigSortedData.initialize_me()
     prevKey = bigSortedData.groupVal
 
-    chunk, chunkGroup, chunkName = bigSortedData.pullCurrentChunk()
+    chunk, chunkGroup, _ = bigSortedData.pullCurrentChunk()
     try:
         while not bigSortedData.closed and len(chunk) > 0:
             if bigSortedData.groupVal > prevKey:
@@ -107,7 +174,7 @@ def split_into_files(log, occ_parser, data_path, prefix, basename, max_file_size
     while not occ_parser.closed:
         chunk = occ_parser.getSizeChunk(max_file_size)
         fname = _get_op_filename(data_path, prefix, basename, run=idx)
-        csvwriter, f = get_unicodecsv_writer(fname, OUT_DELIMITER, doAppend=False)
+        csvwriter, f = get_csv_writer(fname, OUT_DELIMITER, doAppend=False)
         # Skip header, rely on metadata with column indices
         #       csvwriter.writerow(occ_parser.header)
         for rec in chunk:
@@ -129,8 +196,8 @@ def sort_files(log, group_by_idx, data_path, inprefix, outprefix, basename):
         log.debug('Write from {} to {}'.format(infname, outfname))
         # Read rows
         unsRows = []
-        occreader, infile = get_unicodecsv_reader(infname, OUT_DELIMITER)
-        occwriter, outfile = get_unicodecsv_writer(outfname, OUT_DELIMITER,
+        occreader, inf = get_csv_reader(infname, OUT_DELIMITER)
+        occwriter, outf = get_csv_writer(outfname, OUT_DELIMITER,
                                                    doAppend=False)
 
         # Skip header, rely on metadata with column indices
@@ -143,13 +210,13 @@ def sort_files(log, group_by_idx, data_path, inprefix, outprefix, basename):
                 print(('Error file %s, line %d: %s' %
                      (infname, occreader.line_num, e)))
                 break
-        infile.close()
+        inf.close()
 
         # Sort records into new array, then write to file, no header
         srtRows = sortRecs(unsRows, group_by_idx)
         for rec in srtRows:
             occwriter.writerow(rec)
-        outfile.close()
+        outf.close()
 
         # Move to next file
         idx += 1
@@ -162,16 +229,16 @@ def _switchFiles(openFile, data_path, prefix, basename, run=None):
     openFile.close()
     # Open next output sorted file
     fname = _get_op_filename(data_path, prefix, basename, run=run)
-    csvwriter, outfile = get_unicodecsv_writer(fname, OUT_DELIMITER,
+    csvwriter, outf = get_csv_writer(fname, OUT_DELIMITER,
                                                doAppend=False)
-    return outfile, csvwriter
+    return outf, csvwriter
 
 
 # .............................................................................
 def _pop_chunk_and_write(csvwriter, occPrsr):
     # first get chunk
     thiskey = occPrsr.groupVal
-    chunk, chunkGroup, chunkName = occPrsr.pullCurrentChunk()
+    chunk, _, _= occPrsr.pullCurrentChunk()
     for rec in chunk:
         csvwriter.writerow(rec)
     return thiskey
@@ -255,12 +322,7 @@ def usage():
 def main():
     """Main method of the script
     """
-    if len(sys.argv) in (3, 4):
-        if len(sys.argv) == 3:
-            cmd = 'all'
-        else:
-            cmd = sys.argv[3]
-    else:
+    if len(sys.argv) not in (3, 4):
         usage()
 
     parser = argparse.ArgumentParser(

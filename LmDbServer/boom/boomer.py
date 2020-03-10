@@ -73,24 +73,18 @@ class Boomer(LMObject):
         self.config_fname = config_fname
         self._success_fname = success_fname
 
-#         self.do_intersect = None
         self.do_pam_stats = None
         self.do_mcpa = None
-        # Send Database connection
+        # Database connection
         self._scribe = BorgScribe(self.log)
         # iterator tool for species
         self.christopher = None
 
-<<<<<<< HEAD
-#         # Dictionary of {scen_code: (potatoChain, triagePotatoFile)}
-#         self.potatoes = None
-=======
         self.gridset = None
         self.gridset_id = None
         self.priority = None
         self.pav_index_filenames = []
         self.master_potato_head = None
->>>>>>> 3edfdac2a3d76f43fbf20274bf64e18a6fd585ca
 
         # MFChain for lots of spuds
         self.potato_bushel = None
@@ -116,9 +110,7 @@ class Boomer(LMObject):
 
     # .............................
     def initialize_me(self):
-        """Creates objects for workflow computation requests.
-        """
-        # Send Database connection
+        """Creates objects for workflow computation requests."""
         try:
             success = self._scribe.open_connections()
         except Exception as e:
@@ -163,8 +155,7 @@ class Boomer(LMObject):
 
     # .............................
     def process_one_species(self):
-        """Process one species occurrence set
-        """
+        """Process one species occurrence set."""
         try:
             self.log.info('Next species ...')
             # Get Spud rules (single-species SDM) and dict of
@@ -222,8 +213,7 @@ class Boomer(LMObject):
 
     # .............................
     def rotate_potatoes(self):
-        """Rotate potatoes to start on next set of species
-        """
+        """Rotate potatoes to start on next set of species."""
         if self.potato_bushel:
             self._write_bushel()
 
@@ -236,8 +226,7 @@ class Boomer(LMObject):
 
     # .............................
     def close(self):
-        """Close connections and stop
-        """
+        """Close connections and stop."""
         self.keep_walken = False
         self.log.info('Closing boomer ...')
         # Stop walken the archive and saveNextStart
@@ -246,6 +235,7 @@ class Boomer(LMObject):
 
     # .............................
     def restart_walken(self):
+        """Restart species processing."""
         if self.christopher.complete() and\
                 self.christopher.more_data_to_process():
             # Rename old file
@@ -311,8 +301,7 @@ class Boomer(LMObject):
 
     # ...............................................
     def write_success_file(self, message):
-        """Write out the success file
-        """
+        """Write out the success file."""
         self.ready_filename(self._success_fname, overwrite=True)
         try:
             with open(self._success_fname, 'w') as out_file:
@@ -322,8 +311,7 @@ class Boomer(LMObject):
 
     # .............................
     def process_all_species(self):
-        """Process all species
-        """
+        """Read and process all species, while checking for stop signal."""
         print(('processAll with config_fname = {}'.format(self.config_fname)))
         count = 0
         while self.keep_walken:
@@ -337,8 +325,7 @@ class Boomer(LMObject):
 
 # .............................................................................
 def main():
-    """Main method for script
-    """
+    """Main method for script."""
     if not is_lm_user():
         print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)

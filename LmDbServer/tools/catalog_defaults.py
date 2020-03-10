@@ -30,8 +30,7 @@ class Defcat(LMObject):
 
     # ..........................................
     def __init__(self, logname):
-        """Constructor
-        """
+        """Constructor"""
         super(Defcat, self).__init__()
         self.name = self.__class__.__name__.lower()
 
@@ -44,23 +43,20 @@ class Defcat(LMObject):
 
     # ..........................................
     def open(self):
-        """Open database connection
-        """
+        """Open database connection."""
         success = self.scribe.open_connections()
         if not success:
             raise LMError('Failed to open database')
 
     # ...............................................
     def close(self):
-        """Close database connection
-        """
+        """Close database connection."""
         self.scribe.close_connections()
 
     # ...............................................
     @property
     def log_filename(self):
-        """Get the log file name
-        """
+        """Return the log file name."""
         try:
             fname = self.scribe.log.base_filename
         except Exception:
@@ -100,7 +96,7 @@ class Defcat(LMObject):
 
     # ...............................................
     def add_taxonomic_sources(self):
-        """Adds Taxonomic Sources to the database
+        """Adds Taxonomic Sources to the database.
 
         Sources are added from the TAXONOMIC_SOURCE dictionary
         """
@@ -111,8 +107,7 @@ class Defcat(LMObject):
 
     # .............................
     def add_tnc_ecoregions(self):
-        """Add ecoregion layers
-        """
+        """Add ecoregion layers."""
         meta = {
             Vector.META_IS_CATEGORICAL: TNCMetadata.is_categorical,
             ServiceObject.META_TITLE: TNCMetadata.title,
@@ -136,8 +131,7 @@ class Defcat(LMObject):
 
     # ...............................................
     def add_algorithms(self):
-        """Adds algorithms to the database from the algorithm dictionary
-        """
+        """Add algorithms to the database from the algorithm dictionary."""
         algs = []
         for alginfo in Algorithms.implemented():
             meta = {
@@ -154,8 +148,7 @@ class Defcat(LMObject):
 
     # ...............................................
     def add_defaults(self):
-        """Adds default users, taxonomy, algorithms, and ecoregions to db.
-        """
+        """Add default users, taxonomy, algorithms, and ecoregions to db."""
         # Insert PUBLIC_USER, DEFAULT_POST_USER
         self.scribe.log.info('  Insert public and default users ...')
         self.add_users()
@@ -175,8 +168,7 @@ class Defcat(LMObject):
 
 # .............................................................................
 def main():
-    """Main method for script
-    """
+    """Main method for script."""
     parser = argparse.ArgumentParser(
         description=('Populate a LM archive with metadata for default data '
                      'and parameters'))

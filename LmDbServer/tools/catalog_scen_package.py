@@ -24,8 +24,7 @@ CURRDATE = (gmt().year, gmt().month, gmt().day)
 
 # .............................................................................
 class SPFiller(LMObject):
-    """Populates database with scenario metadata for a BOOM archive
-    """
+    """Populate database with scenario metadata for a BOOM archive."""
     version = '2.0'
 
 # .............................................................................
@@ -33,8 +32,7 @@ class SPFiller(LMObject):
 # .............................................................................
     def __init__(self, sp_meta_fname, user_id, email=None, logname=None,
                  scribe=None):
-        """Constructor for SPFiller class.
-        """
+        """Constructor."""
         super(SPFiller, self).__init__()
         self.name = self.__class__.__name__.lower()
         if not os.path.exists(sp_meta_fname):
@@ -82,8 +80,7 @@ class SPFiller(LMObject):
 
     # ...............................................
     def initialize_me(self):
-        """Initialize the object
-        """
+        """Initialize this object with the database connection."""
         if not (self.scribe and self.scribe.is_open):
             # Get database
             try:
@@ -94,23 +91,20 @@ class SPFiller(LMObject):
 
     # ...............................................
     def open(self):
-        """Open database connections
-        """
+        """Open database connections."""
         success = self.scribe.open_connections()
         if not success:
             raise LMError('Failed to open database')
 
     # ...............................................
     def close(self):
-        """Close database connection
-        """
+        """Close database connection."""
         self.scribe.close_connections()
 
     # ...............................................
     @property
     def log_filename(self):
-        """Get the log file name
-        """
+        """Return the absolute logfile name."""
         try:
             fname = self.scribe.log.baseFilename
         except:
@@ -127,7 +121,7 @@ class SPFiller(LMObject):
 
     # ...............................................
     def _create_mask_layer(self, package_meta, mask_meta):
-        """Create a mask layer for the package
+        """Create a mask layer for the package.
 
         Assembles layer metadata for input to optional pre-processing SDM Mask
         step identified in scenario package metadata.
@@ -177,7 +171,7 @@ class SPFiller(LMObject):
 
     # ...............................................
     def add_user(self):
-        """Adds a user to the database.
+        """Add a user to the database.
 
         Adds or finds PUBLIC_USER, DEFAULT_POST_USER and USER arguments in the
         database
@@ -194,7 +188,8 @@ class SPFiller(LMObject):
 
     # ...............................................
     def create_scen_package(self, sp_name):
-        """Create a scenario package object
+        """Create a scenario package from a metadata document and insert into 
+            database.
         """
         package_meta = self.sp_meta.CLIMATE_PACKAGES[sp_name]
         layer_meta = self.sp_meta.LAYERTYPE_META
@@ -255,8 +250,7 @@ class SPFiller(LMObject):
     # ...............................................
     @staticmethod
     def _get_optional_metadata(meta_dict, key):
-        """Assembles layer metadata for mask
-        """
+        """Assemble layer metadata for mask."""
         val = None
         try:
             val = meta_dict[key]
@@ -267,8 +261,7 @@ class SPFiller(LMObject):
     # ...............................................
     def _get_scen_layers(self, package_meta, scen_code, scenario_meta,
                          layer_meta):
-        """Assembles layer metadata for a single layerset
-        """
+        """Assemble layer metadata for a single layerset."""
         curr_time = gmt().mjd
         layers = []
         try:
@@ -320,8 +313,6 @@ class SPFiller(LMObject):
     # ...............................................
     def _create_scenario(self, package_meta, scen_code, scenario_meta,
                          layer_meta):
-        """Assemble Worldclim/bioclim scenario
-        """
         res_val = scenario_meta['res'][1]
         lyrs = self._get_scen_layers(
             package_meta, scen_code, scenario_meta, layer_meta)
