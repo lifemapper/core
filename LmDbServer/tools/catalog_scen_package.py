@@ -64,8 +64,9 @@ class SPFiller(LMObject):
                          self.version, scen_package_names,
                          self.sp_meta.VERSION))
         except Exception:
-            raise LMError('SPFiller version {} cannot parse {} non-versioned metadata'
-                          .format(scen_package_names, self.version))
+            raise LMError(
+                ('SPFiller version {} cannot parse {} non-versioned metadata'
+                 ).format(scen_package_names, self.version))
 
         self.sp_meta_fname = sp_meta_fname
         self.user_id = user_id
