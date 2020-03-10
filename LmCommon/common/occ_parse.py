@@ -14,10 +14,10 @@ from LmCommon.common.log import TestLogger
 # TODO: Move these to a testing module
 try:
     from LmServer.common.localconstants import APP_PATH
-except:
+except ImportError:
     try:
         from LmCompute.common.localconstants import LM_PATH as APP_PATH
-    except:
+    except ImportError:
         raise Exception('Testing must be done on a Lifemapper instance')
 
 

@@ -8,7 +8,7 @@ from LmServer.common.lmconstants import SPECIES_DATA_PATH
 
 try:
     from osgeo.ogr import wkbPolygon
-except:
+except ImportError:
     wkbPolygon = 3
 
 # from LmCommon.common.lmconstants import LMFormat

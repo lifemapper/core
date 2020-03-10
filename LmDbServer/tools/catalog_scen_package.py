@@ -108,8 +108,8 @@ class SPFiller(LMObject):
     def log_filename(self):
         """Return the absolute logfile name."""
         try:
-            fname = self.scribe.log.baseFilename
-        except:
+            fname = self.scribe.log.base_filename
+        except Exception:
             fname = None
         return fname
 

@@ -11,5 +11,5 @@ PACKAGING_DIR = _CFG.get(SERVER_ENV_HEADING, 'PACKAGING_DIR')
 # Max size for anonymous uploads (in lines)
 try:
     MAX_ANON_UPLOAD_SIZE = _CFG.get(SERVER_ENV_HEADING, 'MAX_ANON_UPLOAD_SIZE')
-except:
+except Exception:
     MAX_ANON_UPLOAD_SIZE = 20000

@@ -2,7 +2,7 @@
 """
 try:
     from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
-except:
+except ImportError:
     OFTInteger = 0
     OFTReal = 2
     OFTString = 4
