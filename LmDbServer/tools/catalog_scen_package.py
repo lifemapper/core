@@ -131,17 +131,17 @@ class SPFiller(LMObject):
         # Required keys in SDM_MASK_INPUT: name, bbox, gdaltype, gdalformat,
         #    file
         lyr_meta = {
-           Vector.META_IS_CATEGORICAL: self._get_optional_metadata(
+            Vector.META_IS_CATEGORICAL: self._get_optional_metadata(
                 mask_meta, 'iscategorical'),
-           ServiceObject.META_TITLE: self._get_optional_metadata(
+            ServiceObject.META_TITLE: self._get_optional_metadata(
                 mask_meta, 'title'),
-           ServiceObject.META_AUTHOR: self._get_optional_metadata(
+            ServiceObject.META_AUTHOR: self._get_optional_metadata(
                 mask_meta, 'author'),
-           ServiceObject.META_DESCRIPTION: self._get_optional_metadata(
+            ServiceObject.META_DESCRIPTION: self._get_optional_metadata(
                 mask_meta, 'description'),
-           ServiceObject.META_KEYWORDS: self._get_optional_metadata(
+            ServiceObject.META_KEYWORDS: self._get_optional_metadata(
                 mask_meta, 'keywords'),
-           ServiceObject.META_CITATION: self._get_optional_metadata(
+            ServiceObject.META_CITATION: self._get_optional_metadata(
                 mask_meta, 'citation')}
         # required
         try:

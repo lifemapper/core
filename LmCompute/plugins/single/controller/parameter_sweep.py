@@ -524,9 +524,8 @@ class ParameterSweep:
                                     # Append log
                                     if os.path.exists(
                                             wrapper.get_log_filename()):
-                                        with open(
-                                                wrapper.get_log_filename()
-                                                ) as log_f:
+                                        with open(wrapper.get_log_filename()
+                                                  ) as log_f:
                                             self.log.debug('-----------------')
                                             self.log.debug(
                                                 wrapper.get_log_filename())
@@ -780,8 +779,8 @@ class ParameterSweep:
         # Write metrics
         with open(
             os.path.join(
-                self.base_work_dir,
-                self.sweep_config.metrics_filename), 'w') as out_metrics:
+                    self.base_work_dir,
+                    self.sweep_config.metrics_filename), 'w') as out_metrics:
             json.dump(self.get_metrics(), out_metrics)
 
         # Write snippets
@@ -794,8 +793,8 @@ class ParameterSweep:
         # Write stockpile information
         with open(
                 os.path.join(
-                    self.base_work_dir,
-                    self.sweep_config.stockpile_filename),
+                        self.base_work_dir,
+                        self.sweep_config.stockpile_filename),
                 'w') as out_stockpile:
             json.dump(self.get_stockpile_info(), out_stockpile)
 

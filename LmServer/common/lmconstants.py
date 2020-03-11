@@ -146,7 +146,7 @@ class ReferenceType(Enum):
 
     @staticmethod
     def is_sdm(rtype):
-        if rtype in ReferenceType.sdmTypes():
+        if rtype in ReferenceType.sdm_types():
             return True
         return False
 
@@ -158,19 +158,19 @@ class ReferenceType(Enum):
 
     @staticmethod
     def is_rad(rtype):
-        if rtype in ReferenceType.radTypes():
+        if rtype in ReferenceType.rad_types():
             return True
         return False
 
     @staticmethod
     def boom_types():
-        allTypes = ReferenceType.sdmTypes()
-        allTypes.extend(ReferenceType.radTypes())
-        return allTypes
+        all_types = ReferenceType.sdm_types()
+        all_types.extend(ReferenceType.rad_types())
+        return all_types
 
     @staticmethod
     def is_boom(rtype):
-        if rtype in ReferenceType.boomTypes():
+        if rtype in ReferenceType.boom_types():
             return True
         return False
 
@@ -182,7 +182,7 @@ class ReferenceType(Enum):
 
     @staticmethod
     def status_types():
-        tps = ReferenceType.progressTypes()
+        tps = ReferenceType.progress_types()
         tps.append(ReferenceType.ShapeGrid)
         return tps
 
@@ -399,42 +399,43 @@ class LMFileType(Enum):
     def get_matrix_filetype(mtype):
         if mtype in (MatrixType.PAM, MatrixType.ROLLING_PAM):
             return LMFileType.PAM
-        elif mtype == MatrixType.ANC_PAM:
+        if mtype == MatrixType.ANC_PAM:
             return LMFileType.ANC_PAM
-        elif mtype == MatrixType.GRIM:
+        if mtype == MatrixType.GRIM:
             return LMFileType.GRIM
-        elif mtype == MatrixType.BIOGEO_HYPOTHESES:
+        if mtype == MatrixType.BIOGEO_HYPOTHESES:
             return LMFileType.BIOGEO_HYPOTHESES
-        # elif mtype == MatrixType.PADDED_PAM:
+        # if mtype == MatrixType.PADDED_PAM:
         #    return LMFileType.PADDED_PAM
-        elif mtype == MatrixType.MCPA_OUTPUTS:
+        if mtype == MatrixType.MCPA_OUTPUTS:
             return LMFileType.MCPA_OUTPUTS
-        elif mtype == MatrixType.SITES_OBSERVED:
+        if mtype == MatrixType.SITES_OBSERVED:
             return LMFileType.SITES_OBSERVED
-        elif mtype == MatrixType.SPECIES_OBSERVED:
+        if mtype == MatrixType.SPECIES_OBSERVED:
             return LMFileType.SPECIES_OBSERVED
-        elif mtype == MatrixType.DIVERSITY_OBSERVED:
+        if mtype == MatrixType.DIVERSITY_OBSERVED:
             return LMFileType.DIVERSITY_OBSERVED
-        elif mtype == MatrixType.SCHLUTER_OBSERVED:
+        if mtype == MatrixType.SCHLUTER_OBSERVED:
             return LMFileType.SCHLUTER_OBSERVED
-        elif mtype == MatrixType.SPECIES_COV_OBSERVED:
+        if mtype == MatrixType.SPECIES_COV_OBSERVED:
             return LMFileType.SPECIES_COV_OBSERVED
-        elif mtype == MatrixType.SITES_COV_OBSERVED:
+        if mtype == MatrixType.SITES_COV_OBSERVED:
             return LMFileType.SITES_COV_OBSERVED
-        elif mtype == MatrixType.RANDOM_CALC:
+        if mtype == MatrixType.RANDOM_CALC:
             return LMFileType.RANDOM_CALC
-        elif mtype == MatrixType.SITES_RANDOM:
+        if mtype == MatrixType.SITES_RANDOM:
             return LMFileType.SITES_RANDOM
-        elif mtype == MatrixType.SPECIES_RANDOM:
+        if mtype == MatrixType.SPECIES_RANDOM:
             return LMFileType.SPECIES_RANDOM
-        elif mtype == MatrixType.DIVERSITY_RANDOM:
+        if mtype == MatrixType.DIVERSITY_RANDOM:
             return LMFileType.DIVERSITY_RANDOM
-        elif mtype == MatrixType.SCHLUTER_RANDOM:
+        if mtype == MatrixType.SCHLUTER_RANDOM:
             return LMFileType.SCHLUTER_RANDOM
-        elif mtype == MatrixType.SPECIES_COV_RANDOM:
+        if mtype == MatrixType.SPECIES_COV_RANDOM:
             return LMFileType.SPECIES_COV_RANDOM
-        elif mtype == MatrixType.SITES_COV_RANDOM:
+        if mtype == MatrixType.SITES_COV_RANDOM:
             return LMFileType.SITES_COV_RANDOM
+        return None
 
 
 NAME_SEPARATOR = '_'
@@ -1041,6 +1042,7 @@ class Algorithms(Enum):
         for alg in Algorithms.implemented():
             if alg.code == code:
                 return alg
+        return None
 
     @staticmethod
     def returns_discrete_output(code):
