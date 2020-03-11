@@ -177,7 +177,7 @@ def create_blank_mask_from_layer(
     Args:
         template_layer_filename: Use this layer as a template for the mask
         nodata: A value to use for NODATA
-        ascii_filename: If provided, write the mask raster as ASCII to this 
+        ascii_filename: If provided, write the mask raster as ASCII to this
             location
         tiff_filename: If provided, write the mask raster as GeoTiff to this
             location

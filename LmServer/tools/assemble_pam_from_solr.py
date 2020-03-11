@@ -110,7 +110,7 @@ def main():
 
     pam_id = args.pam_id
     try:
-        pam = assemble_pam(pam_id)
+        _pam = assemble_pam(pam_id)
         success = 1
     except Exception as e:
         print((str(e)))

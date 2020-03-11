@@ -73,7 +73,7 @@ class PhyloEncoding:
                 p_mtx = self._build_p_matrix_no_branch_lengths()
         else:
             raise EncodingException(
-                        "PAM and Tree do not match, fix before encoding")
+                "PAM and Tree do not match, fix before encoding")
 
         return p_mtx
 

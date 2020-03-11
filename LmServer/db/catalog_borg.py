@@ -345,7 +345,8 @@ class Borg(DbPostgresql):
 
             mtx_col = MatrixColumn(
                 mtx_index, mtx_id, usr, layer=input_lyr, layer_id=lyr_id,
-                shapegrid_id=shapegrid_id, intersect_params=int_params,
+                # shapegrid_id=shapegrid_id,
+                intersect_params=int_params,
                 squid=squid, ident=ident, process_type=None,
                 metadata=mtx_col_meta, matrix_column_id=mtx_col_id,
                 status=mtx_col_stat, status_mod_time=mtx_col_stat_time)
@@ -505,7 +506,7 @@ class Borg(DbPostgresql):
                 raw_dlocation=self._get_column_value(
                     row, idxs, ['rawdlocation']),
                 bbox=self._get_column_value(row, idxs, ['occbbox', 'bbox']),
-                occurrence_set_id=self._get_column_value(
+                occ_layer_id=self._get_column_value(
                     row, idxs, ['occurrencesetid']),
                 occ_metadata=self._get_column_value(
                     row, idxs, ['occmetadata', 'metadata']),
@@ -534,7 +535,7 @@ class Borg(DbPostgresql):
                 status=self._get_column_value(row, idxs, ['prjstatus']),
                 status_mod_time=self._get_column_value(
                     row, idxs, ['prjstatusmodtime']),
-                sdm_projection_id=self._get_column_value(
+                sdm_proj_id=self._get_column_value(
                     row, idxs, ['sdmprojectid']))
         return prj
 
@@ -919,6 +920,9 @@ class Borg(DbPostgresql):
 
         Returns:
             New or existing EnvironmentalType
+
+        Todo:
+            Is this used?  self._create_layer_type does not exist
         """
         currtime = gmt().mjd
         meta = env_type.dump_param_metadata()
@@ -2058,13 +2062,13 @@ class Borg(DbPostgresql):
         pavs = []
         prjs = self.list_sdm_projects(
             0, 500, usr, None, None, None, None, None, None, None, occ_id,
-            None, None, None, not return_projs)
+            None, None, None, None, not return_projs)
         if return_mtx_cols:
             for prj in prjs:
                 layer_id = prj.get_id()
                 pavs = self.list_matrix_columns(
                     0, 500, usr, None, None, None, None, None, None, None,
-                    None, layer_id, False)
+                    None, None, layer_id, False)
         if not return_projs:
             prjs = []
         return prjs, pavs

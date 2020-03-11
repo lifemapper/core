@@ -43,6 +43,7 @@ class Gridset(ServiceObject):  # LMMap
             metadata_url: URL for retrieving the metadata
             mod_time: Last modification Time/Date, in MJD format
         """
+        self._path = None
         if shapegrid is not None:
             if user_id is None:
                 user_id = shapegrid.get_user_id()
@@ -119,7 +120,7 @@ class Gridset(ServiceObject):  # LMMap
         """Delete the mapfile containing this layer."""
         if self.map_filename is None:
             self.set_local_map_filename()
-        success, _ = self.delete_file(self.map_filename)
+        _ = self.delete_file(self.map_filename)
 
     # ................................
     def _create_map_prefix(self):
@@ -260,9 +261,7 @@ class Gridset(ServiceObject):  # LMMap
             usr = self.get_user_id()
             if isinstance(mtx_file_or_obj, str) and \
                     os.path.exists(mtx_file_or_obj):
-                mtx = LMMatrix(dlocation=mtx_file_or_obj, user_id=usr)
-                if do_read:
-                    mtx.read_data()
+                mtx = LMMatrix.init_from_file(mtx_file_or_obj, user_id=usr)
             elif isinstance(mtx_file_or_obj, LMMatrix):
                 mtx = mtx_file_or_obj
                 mtx.set_user_id(usr)

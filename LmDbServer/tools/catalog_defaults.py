@@ -35,10 +35,7 @@ class Defcat(LMObject):
         self.name = self.__class__.__name__.lower()
 
         # Get database
-        try:
-            self.scribe = self._get_db(logname)
-        except Exception:
-            raise
+        self.scribe = self._get_db(logname)
         self.open()
 
     # ..........................................
@@ -101,8 +98,8 @@ class Defcat(LMObject):
         Sources are added from the TAXONOMIC_SOURCE dictionary
         """
         # Insert all taxonomic sources for now
-        for name, tax_info in TAXONOMIC_SOURCE.items():
-            tax_source_id = self.scribe.find_or_insert_taxon_source(
+        for _name, tax_info in TAXONOMIC_SOURCE.items():
+            _tax_source_id = self.scribe.find_or_insert_taxon_source(
                 tax_info['name'], tax_info['url'])
 
     # .............................
@@ -187,8 +184,7 @@ def main():
             time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(scriptname, timestamp)
 
-    print(('Running {} with logbasename: {}'
-          .format(scriptname, logname)))
+    print(('Running {} with logbasename: {}'.format(scriptname, logname)))
 
     defcat = Defcat(logname)
     defcat.add_defaults()

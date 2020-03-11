@@ -27,7 +27,7 @@ class MatrixColumnService(LmService):
 
         if mtx_col is None:
             raise cherrypy.HTTPError(
-                 HTTPStatus.NOT_FOUND, 'Matrix column not found')
+                HTTPStatus.NOT_FOUND, 'Matrix column not found')
 
         # If allowed to, delete
         if check_user_permission(

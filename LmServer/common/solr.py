@@ -7,9 +7,10 @@ import urllib.request
 
 from LmCommon.common.time import LmTime
 from LmServer.common.lmconstants import (
-     SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER,
-     SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
+    SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER,
+    SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
 from LmServer.common.log import SolrLogger
+from LmBackend.common.lmobj import LMError
 
 
 # .............................................................................
@@ -155,20 +156,20 @@ def add_taxa_to_taxonomy_index(sciname_objects):
     doc_pairs = []
     for sno in sciname_objects:
         doc_pairs.append([
-                   [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, sno.canonicalName],
-                   [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, sno.scientificName],
-                   [SOLR_TAXONOMY_FIELDS.SQUID, sno.squid],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, sno.txClass],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, sno.family],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, sno.genus],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_KEY, sno.sourceTaxonKey],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sno.kingdom],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.txOrder],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
-                   [SOLR_TAXONOMY_FIELDS.USER_ID, sno.user_id],
-                   [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
-                    sno.taxonomySourceId],
-                   [SOLR_TAXONOMY_FIELDS.ID, sno.get_id()]
+            [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, sno.canonical_name],
+            [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, sno.scientific_name],
+            [SOLR_TAXONOMY_FIELDS.SQUID, sno.squid],
+            [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, sno.class_],
+            [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, sno.family],
+            [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, sno.genus],
+            [SOLR_TAXONOMY_FIELDS.TAXON_KEY, sno.source_taxon_key],
+            [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sno.kingdom],
+            [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.order_],
+            [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
+            [SOLR_TAXONOMY_FIELDS.USER_ID, sno.user_id],
+            [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
+             sno.taxonomy_source_id],
+            [SOLR_TAXONOMY_FIELDS.ID, sno.get_id()]
         ])
     post_doc = build_solr_document(doc_pairs)
     # Note: This is somewhat redundant.
@@ -302,8 +303,8 @@ def facet_archive_on_gridset(user_id=None):
         r_dict = _query(
             SOLR_ARCHIVE_COLLECTION, q_params=q_params,
             other_params=other_params)
-    except Exception:
-        raise
+    except Exception as err:
+        raise LMError(err)
     else:
         sdata = r_dict['facet_counts']['facet_fields'][SOLR_FIELDS.GRIDSET_ID]
         return sdata
@@ -350,17 +351,13 @@ def query_archive_index(algorithm_code=None, bbox=None, display_name=None,
             (SOLR_FIELDS.PRESENCE, '%5B{},{}%20{},{}%5D'.format(
                 miny, minx, maxy, maxx)))
 
-    # rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams,
-    #                                      fqParams=fqParams))
-    # return rDict['response']['docs']
     try:
         r_dict = _query(
             SOLR_ARCHIVE_COLLECTION, q_params=q_params, fq_params=fq_params)
-    except Exception:
-        raise
-    else:
-        sdata = r_dict['response']['docs']
-        return sdata
+    except Exception as err:
+        raise LMError(err)
+
+    return r_dict['response']['docs']
 
 
 # .............................................................................
@@ -419,11 +416,10 @@ def query_snippet_index(ident1=None, provider=None, collection=None,
     try:
         r_dict = _query(
             SOLR_SNIPPET_COLLECTION, q_params=q_params, fq_params=fq_params)
-    except Exception:
-        raise
-    else:
-        sdata = r_dict['response']['docs']
-        return sdata
+    except Exception as err:
+        raise LMError(err)
+
+    return r_dict['response']['docs']
 
 
 # .............................................................................
@@ -462,9 +458,7 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
 
     try:
         r_dict = _query(SOLR_TAXONOMY_COLLECTION, q_params=q_params)
-    except Exception:
-        raise
-    else:
-        sdata = r_dict['response']['docs']
-        return sdata
+    except Exception as err:
+        raise LMError(err)
 
+    return r_dict['response']['docs']

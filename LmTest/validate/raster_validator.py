@@ -42,7 +42,7 @@ def validate_raster_file(raster_filename, raster_format=None):
                 if dataset is None:
                     msg = 'Could not open {}'.format(raster_filename)
                 else:
-                    lyr = dataset.GetRasterBand(1)
+                    _lyr = dataset.GetRasterBand(1)
                     valid = True
             except Exception as e:
                 msg = str(e)

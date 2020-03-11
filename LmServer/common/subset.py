@@ -160,7 +160,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
     # Create grid set
     gridset = Gridset(
-        name=archive_name, metadata=gs_meta, shapeGrid=my_shp, epsg_code=epsg,
+        name=archive_name, metadata=gs_meta, shapegrid=my_shp, epsg_code=epsg,
         user_id=user_id, mod_time=gmt().mjd)
     updated_gs = scribe.find_or_insert_gridset(gridset)
 
@@ -533,15 +533,10 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                     val_attribute = None
 
                 new_cols = encoder.encode_biogeographic_hypothesis(
-                     lyr.get_dlocation(), lyr.name, min_coverage,
-                     event_field=val_attribute)
+                    lyr.get_dlocation(), lyr.name, min_coverage,
+                    event_field=val_attribute)
 
                 for col in new_cols:
-                    try:
-                        ef_value = col.split(' - ')[1]
-                    except Exception:
-                        ef_value = col
-
                     if val_attribute is not None:
                         int_params = {
                             MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower():

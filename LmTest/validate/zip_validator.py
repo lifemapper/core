@@ -20,7 +20,7 @@ def validate_zip_file(zip_filename):
     if os.path.exists(zip_filename):
         try:
             with zipfile.ZipFile(zip_filename) as zip_file:
-                info = zip_file.infolist()
+                _ = zip_file.infolist()
             valid = True
         except Exception as e:
             msg = str(e)

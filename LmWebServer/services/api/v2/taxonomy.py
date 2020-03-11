@@ -21,6 +21,7 @@ class TaxonomyHintService(LmService):
             order_=None, family=None, genus=None,
             taxon_key=None, scientific_name=None, canonical_name=None,
             squid=None, limit=100, url_user=None, **params):
+        """Perform a get request for taxonomy matches."""
         docs = query_taxonomy_index(
             taxon_kingdom=kingdom, taxon_phylum=phylum,
             taxon_class=class_, taxon_order=order_,

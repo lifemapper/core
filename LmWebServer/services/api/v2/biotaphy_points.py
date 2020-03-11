@@ -36,7 +36,7 @@ class IDigBioOccurrenceService(LmService):
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         basename = earl.create_basename(
-            LMFileType.OCCURRENCE_RAW_FILE, objCode=random.randint(0, 100000))
+            LMFileType.OCCURRENCE_RAW_FILE, obj_code=random.randint(0, 100000))
 
         point_output_file = os.path.join(
             out_dir,
@@ -57,7 +57,7 @@ class IDigBioOccurrenceService(LmService):
                 HTTPStatus.BAD_REQUEST,
                 'GBIF taxon ids must be provided as a JSON list')
 
-        point_output_file, meta_output_file = self._get_data_targets()
+        _point_output_file, _meta_output_file = self._get_data_targets()
         ret = []
         idig_api = IdigbioAPI()
         try:

@@ -29,7 +29,7 @@ from LmWebServer.services.api.v2.upload import UserUploadService
 
 # .............................................................................
 @cherrypy.expose
-class ApiRootV2(object):
+class ApiRootV2:
     """Top level class containing Lifemapper services V2
     """
     biotaphynames = GBIFTaxonService()

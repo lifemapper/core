@@ -242,8 +242,7 @@ class ChristopherWalken(LMObject):
             if occ_delimiter != ',':
                 occ_delimiter = GBIF.DATA_DUMP_DELIMITER
             (occ_csv_fname, occ_meta_fname, self.more_data_to_process
-             ) = self._find_data(
-                occ_name, occ_dir, boom_path)
+             ) = self._find_data(occ_name, occ_dir, boom_path)
 
             # Handle GBIF data, taxon and provider lookup data
             use_gbif_taxon_ids = False
@@ -266,7 +265,8 @@ class ChristopherWalken(LMObject):
         return weapon_of_choice, exp_date
 
     # ....................................
-    def _find_data(self, occ_name, occ_dir, boom_path):
+    @staticmethod
+    def _find_data(occ_name, occ_dir, boom_path):
         more_data_to_process = False
         occ_csv_fname = occ_meta_fname = None
 
@@ -299,7 +299,7 @@ class ChristopherWalken(LMObject):
                          occ_name, SPECIES_DATA_PATH, boom_path))
 
         # TODO: Add 'OCC_DATA_DIR' as parameter for individual CSV files
-        #       in a directory, one per species 
+        #       in a directory, one per species
         #       (for LmServer.tools.occwoc.TinyBubblesWoC)
         elif occ_dir is not None:
             installed_dir = os.path.join(SPECIES_DATA_PATH, occ_dir)
@@ -420,15 +420,17 @@ class ChristopherWalken(LMObject):
 
             # Get processing parameters for masking
             proc_params = {
-                  PRE_PROCESS_KEY: {
-                     MASK_KEY: {
+                PRE_PROCESS_KEY: {
+                    MASK_KEY: {
                         MASK_LAYER_KEY: lyr_name,
                         MASK_LAYER_NAME_KEY: sdm_mask_alg.get_parameter_value(
                             'region'),
                         CODE_KEY: ECOREGION_MASK_METHOD,
                         BUFFER_KEY: sdm_mask_alg.get_parameter_value(
                             BUFFER_KEY)
-                     }}}
+                        }
+                    }
+                }
 
             mask_layer_name = proc_params[
                 PRE_PROCESS_KEY][MASK_KEY][MASK_LAYER_KEY]
@@ -496,19 +498,19 @@ class ChristopherWalken(LMObject):
                 sdm_mask_alg.setInput(input_key, sdm_mask_input_layer)
 
             proc_params = {
-               PROCESSING_KEY: {
-                  PRE_PROCESS_KEY: {
-                     MASK_KEY: {
-                        MASK_LAYER_KEY: sdm_mask_input_layer,
-                        MASK_LAYER_NAME_KEY: sdm_mask_alg.get_parameter_value(
-                            'region'),
-                        CODE_KEY: ECOREGION_MASK_METHOD,
-                        BUFFER_KEY: sdm_mask_alg.get_parameter_value(
-                            BUFFER_KEY)
-                     }
-                  }
-               }
-            }
+                PROCESSING_KEY: {
+                    PRE_PROCESS_KEY: {
+                        MASK_KEY: {
+                            MASK_LAYER_KEY: sdm_mask_input_layer,
+                            MASK_LAYER_NAME_KEY:
+                                sdm_mask_alg.get_parameter_value('region'),
+                            CODE_KEY: ECOREGION_MASK_METHOD,
+                            BUFFER_KEY: sdm_mask_alg.get_parameter_value(
+                                BUFFER_KEY)
+                            }
+                        }
+                    }
+                }
             # TODO: AMS - If this will be saved, may need to remove the mask
             #    layer object
             boom_gridset.add_grid_metadata(proc_params)
@@ -769,14 +771,14 @@ class ChristopherWalken(LMObject):
             # TODO: Make sure this works as expected, was refrencing 'prj'
             #    form previous loop, changed to .layer property of mtx_col
             sweep_config.add_pav_intersect(
-                 mtx_col.shapegrid.get_dlocation(), mtx_col.get_id(),
-                 mtx_col.layer.get_id(), pav_filename, mtx_col.layer.squid,
-                 mtx_col.intersect_params[
-                     mtx_col.INTERSECT_PARAM_MIN_PRESENCE],
-                 mtx_col.intersect_params[
-                     mtx_col.INTERSECT_PARAM_MAX_PRESENCE],
-                 mtx_col.intersect_params[
-                     mtx_col.INTERSECT_PARAM_MIN_PERCENT])
+                mtx_col.shapegrid.get_dlocation(), mtx_col.get_id(),
+                mtx_col.layer.get_id(), pav_filename, mtx_col.layer.squid,
+                mtx_col.intersect_params[
+                    mtx_col.INTERSECT_PARAM_MIN_PRESENCE],
+                mtx_col.intersect_params[
+                    mtx_col.INTERSECT_PARAM_MAX_PRESENCE],
+                mtx_col.intersect_params[
+                    mtx_col.INTERSECT_PARAM_MIN_PERCENT])
         return sweep_config
 
     # ....................................

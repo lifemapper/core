@@ -22,7 +22,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
                  site_y='center_y', size=None, lyr_id=None, verify=None,
                  dlocation=None, metadata=None, resolution=None,
                  metadata_url=None, parent_metadata_url=None, mod_time=None,
-                 feature_count=0, feature_attributes={}, features={},
+                 feature_count=0, feature_attributes=None, features=None,
                  fid_attribute=None, status=None, status_mod_time=None):
         """Constructor
 

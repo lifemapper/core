@@ -12,7 +12,7 @@ import csv
 from enum import Enum
 import os
 
-import ot_service_wrapper as open_tree
+import ot_service_wrapper.open_tree as open_tree
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.api_query import GbifAPI
@@ -304,7 +304,7 @@ class PartnerQuery:
     # .................................
     def assemble_gbif_taxon_ids(self, names, out_f_name):
         """Assemble GBIF taxon ids for a list of names.
-        
+
         Args:
             names: list of names to be sent to the GBIF species API
             out_f_name: absolute filename for output

@@ -12,5 +12,5 @@ def validate_geojson(obj_generator):
         assert 'type' in test_json
         assert 'geometry' in test_json
         return True
-    except Exception as e:
+    except Exception:
         return False

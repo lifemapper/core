@@ -92,7 +92,8 @@ class LmWebClient:
         return url
 
     # ............................
-    def _make_request(self, req_url, method=HTTPMethod.GET, body=None,
+    @staticmethod
+    def _make_request(req_url, method=HTTPMethod.GET, body=None,
                       headers=None, **query_parameters):
         """Submits a request to the server and returns an open file-like object
 

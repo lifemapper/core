@@ -78,8 +78,8 @@ def rebuild_index_for_gridset(gridset_id):
                             mtx_col.compute_me(workDir=work_dir))
 
                         prj_target_dir = os.path.join(
-                             work_dir, os.path.splitext(
-                                 lyr.get_relative_dlocation())[0])
+                            work_dir, os.path.splitext(
+                                lyr.get_relative_dlocation())[0])
                         prj_touch_fn = os.path.join(
                             prj_target_dir, 'touch.out')
                         touch_cmd = TouchFileCommand(prj_touch_fn)
@@ -87,7 +87,7 @@ def rebuild_index_for_gridset(gridset_id):
                             touch_cmd.get_makeflow_rule(local=True))
 
                         prj_name = os.path.basename(
-                             os.path.splitext(lyr.get_dlocation())[0])
+                            os.path.splitext(lyr.get_dlocation())[0])
 
                         prj_status_filename = os.path.join(
                             prj_target_dir, '{}.status'.format(prj_name))

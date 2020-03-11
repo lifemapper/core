@@ -114,6 +114,7 @@ class _Layer(LMSpatialObject, ServiceObject):
         self._verify = None
         # self.set_verify(verify=verify)
         self._map_filename = None
+        self._meta_location = None
 
     # .............................
     def set_layer_id(self, lyr_id):
@@ -305,6 +306,10 @@ class _Layer(LMSpatialObject, ServiceObject):
         Note:
             If argument is None, compute dlocation based on object attributes
             Does NOT override existing dlocation, use clear_dlocation for that
+
+        Todo:
+            Fix this, call to create_local_dlocation needs an extension
+                argument.  Does this make sense on the base class?
         """
         # Only set DLocation if it is currently None
         if self._dlocation is None:
@@ -871,7 +876,8 @@ class Raster(_Layer):
             raise LMError('Must set_dlocation before writing file')
 
     # .............................
-    def _copy_gdal_data(self, band_num, in_fname, out_fname, format_='GTiff',
+    @staticmethod
+    def _copy_gdal_data(band_num, in_fname, out_fname, format_='GTiff',
                         kwargs=None):
         """Copy the dataset into a new file.
 
@@ -1047,6 +1053,11 @@ class Raster(_Layer):
 # .............................................................................
 class Vector(_Layer):
     """Class to hold information about a vector dataset."""
+    _local_id_field_name = OccurrenceFieldNames.LOCAL_ID[0]
+    _local_id_field_type = OFTInteger
+    _geom_field_name = OccurrenceFieldNames.GEOMETRY_WKT[0]
+    _geom_field_type = OFTString
+
     # .............................
     def __init__(self, name, user_id, epsg_code, lyr_id=None, squid=None,
                  ident=None, verify=None, dlocation=None, metadata=None,
@@ -1105,13 +1116,9 @@ class Vector(_Layer):
             fid_attribute: field name of the attribute holding the featureID
         """
         self._geom_idx = None
-        self._geom_field_name = OccurrenceFieldNames.GEOMETRY_WKT[0]
-        self._geom_field_type = OFTString
         self._geometry = None
         self._convex_hull = None
         self._local_id_idx = None
-        self._local_id_field_name = OccurrenceFieldNames.LOCAL_ID[0]
-        self._local_id_field_type = OFTInteger
         self._fid_attribute = fid_attribute
         self._feature_attributes = {}
         self._features = {}
@@ -1172,7 +1179,7 @@ class Vector(_Layer):
         return [
             LmAttObj(
                 {self._feature_attributes[k2][0]: self._features[k1][k2]
-                    for k2 in self._feature_attributes},
+                 for k2 in self._feature_attributes},
                 'Feature') for k1 in self._features]
 
     # .............................
@@ -1452,11 +1459,11 @@ class Vector(_Layer):
     @staticmethod
     def get_xy(wkt):
         """Get the X,Y values from well-known text
-        
+
         Args:
             wkt: well-known text for a point
-            
-        Note: 
+
+        Note:
             this assumes the WKT is for a point
         """
         startidx = wkt.find('(')
@@ -1478,13 +1485,13 @@ class Vector(_Layer):
     @classmethod
     def get_shapefile_row_headers(cls, shapefile_filename):
         """Get row headers for a shapefile.
-        
+
         Args:
             shapefile_filename: absolute filename for shapefile
-            
+
         Returns:
             a list of tuples representing points, (FeatureID, x, y)
-            
+
         TODO:
             rename for clarity
         """
@@ -1576,7 +1583,7 @@ class Vector(_Layer):
                             fld_def.GetNameRef(), dlocation))
         # If layer fields are not yet defined, create from field_names
         elif (fld_names is not None and id_col is not None and
-                x_col is not None and y_col is not None):
+              x_col is not None and y_col is not None):
             # Create field definitions
             fld_def_list = []
             for fldname in fld_names:
@@ -1689,7 +1696,7 @@ class Vector(_Layer):
 
     # .............................
     @staticmethod
-    def split_csv_points_to_shapefiles(outpath, dlocation, group_field, 
+    def split_csv_points_to_shapefiles(outpath, dlocation, group_field,
                                        combo_layer_name,
                                        srs_epsg_or_wkt=DEFAULT_EPSG,
                                        delimiter=';', quotechar='\"',
@@ -1730,9 +1737,9 @@ class Vector(_Layer):
                  y_name=y_col)
             (combo_dataset, combo_lyr, name_changes
              ) = Vector._create_point_shapefile(
-                drv, outpath, sp_ref, combo_layer_name,
-                fld_names=pt_reader.fieldnames, id_col=id_name, x_col=x_name,
-                y_col=y_name, overwrite=overwrite)
+                 drv, outpath, sp_ref, combo_layer_name,
+                 fld_names=pt_reader.fieldnames, id_col=id_name, x_col=x_name,
+                 y_col=y_name, overwrite=overwrite)
             lyr_def = combo_lyr.GetLayerDefn()
             # Iterate through records
             for o_dict in pt_reader:
@@ -2221,7 +2228,7 @@ class Vector(_Layer):
     @staticmethod
     def index_shapefile(dlocation):
         """Create a shptree index on the data
-        
+
         Args:
             dlocation: target location for the shptree index file
         """
@@ -2516,9 +2523,9 @@ class Vector(_Layer):
             # only for Point data
             elif data_format == 'CSV':
                 (this_bbox, local_id_idx, features, feature_attributes,
-                    feature_count) = self.read_csv_points_with_ids(
-                        dlocation=dlocation, feature_limit=feature_limit,
-                        do_read_data=do_read_data)
+                 feature_count) = self.read_csv_points_with_ids(
+                     dlocation=dlocation, feature_limit=feature_limit,
+                     do_read_data=do_read_data)
             self.set_features(
                 features, feature_attributes, feature_count=feature_count)
             new_bbox = self._transform_bbox(orig_bbox=this_bbox)

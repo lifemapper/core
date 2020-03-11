@@ -419,27 +419,27 @@ class ItisAPI(APIQuery):
     """
 
     # ...............................................
-    def __init__(self, other_filters={}):
+    def __init__(self, other_filters=None):
         """Constructor for ItisAPI class
         """
         APIQuery.__init__(
             self, Itis.TAXONOMY_HIERARCHY_URL, other_filters=other_filters)
 
-    # ...............................................
-    @staticmethod
-    def _find_taxon_by_rank(root, rank_key):
-        for tax in root.iter(
-                '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.HIERARCHY_TAG)):
-            rank = tax.find(
-                '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.RANK_TAG)).text
-            if rank == rank_key:
-                name = tax.find(
-                    '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXON_TAG)).text
-                tsn = tax.find(
-                    '{{}}{}'.format(
-                        Itis.DATA_NAMESPACE, Itis.TAXONOMY_KEY)).text
-                return (tsn, name)
-        return None
+    # # ...............................................
+    # @staticmethod
+    # def _find_taxon_by_rank(root, rank_key):
+    #     for tax in root.iter(
+    #             '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.HIERARCHY_TAG)):
+    #         rank = tax.find(
+    #             '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.RANK_TAG)).text
+    #         if rank == rank_key:
+    #             name = tax.find(
+    #                '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXON_TAG)).text
+    #             tsn = tax.find(
+    #                 '{{}}{}'.format(
+    #                     Itis.DATA_NAMESPACE, Itis.TAXONOMY_KEY)).text
+    #             return (tsn, name)
+    #     return None
 
     # ...............................................
     @staticmethod
@@ -738,8 +738,9 @@ class GbifAPI(APIQuery):
 
         return good_names
 
-# ...............................................
-    def _post_json_to_parser(self, url, data):
+    # ......................................
+    @staticmethod
+    def _post_json_to_parser(url, data):
         response = output = None
         try:
             response = requests.post(url, json=data)
@@ -775,7 +776,8 @@ class GbifAPI(APIQuery):
         return output
 
     # ...............................................
-    def parse_names(self, filename=None):
+    @staticmethod
+    def parse_names(filename=None):
         """Return dictionary of given, and clean taxon name for namestrings
         """
         if os.path.exists(filename):
@@ -788,11 +790,11 @@ class GbifAPI(APIQuery):
         name_api = GbifAPI(service=GBIF.PARSER_SERVICE)
         try:
             output = name_api._post_json_to_parser(names)
-        except Exception as e:
+        except Exception as err:
             print((
                 'Failed to get response from GBIF for data {}, {}'.format(
-                    filename, str(e))))
-            raise e
+                    filename, str(err))))
+            raise err
 
         if output:
             for rec in output:
@@ -800,10 +802,10 @@ class GbifAPI(APIQuery):
                     try:
                         sci_name = rec['scientificName']
                         can_name = rec['canonicalName']
-                    except KeyError as e:
+                    except KeyError as key_err:
                         print('Missing scientific or canonicalName in record')
-                    except Exception as e:
-                        print(('Failed, err: {}'.format(str(e))))
+                    except Exception as err:
+                        print(('Failed, err: {}'.format(str(err))))
                     clean_names[sci_name] = can_name
 
         return clean_names
@@ -883,11 +885,6 @@ class IdigbioAPI(APIQuery):
         APIQuery.query_by_post(self, output_type='json')
 
     # ...............................................
-    @staticmethod
-    def get_taxon_ids_binomials():
-        pass
-
-    # ...............................................
     def query_by_gbif_taxon_id(self, taxon_key):
         """Return a list of occurrence record dictionaries.
         """
@@ -911,7 +908,8 @@ class IdigbioAPI(APIQuery):
         return specimen_list
 
     # ...............................................
-    def _write_idigbio_metadata(self, orig_fld_names, meta_f_name):
+    @staticmethod
+    def _write_idigbio_metadata(orig_fld_names, meta_f_name):
         new_meta = {}
         for col_idx, fld_name in enumerate(orig_fld_names):
             val_dict = {'name': fld_name, 'type': 'str'}
@@ -948,7 +946,7 @@ class IdigbioAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def _count_idigbio_records(self, gbif_taxon_id):
+    def _count_idigbio_records(gbif_taxon_id):
         """Count iDigBio records for a GBIF taxon id.
         """
         api = idigbio.json()
@@ -994,7 +992,7 @@ class IdigbioAPI(APIQuery):
                     # Write header in datafile
                     writer.writerow(fields)
                     # Write metadata file with column indices
-                    meta = self._write_idigbio_metadata(
+                    _meta = self._write_idigbio_metadata(
                         fields, meta_output_file)
 
                 # Write these records
@@ -1096,12 +1094,13 @@ class IdigbioAPI(APIQuery):
         elif not os.path.exists(meta_file_name):
             print(('Metadata {} does not exist'.format(meta_file_name)))
         else:
+            log = None
             occ_parser = OccDataParser(
-                self.log, pt_file_name, meta_file_name,
-                delimiter=self.DELIMITER, pullChunks=True)
-            occ_parser.initializeMe()
+                log, pt_file_name, meta_file_name, delimiter=self.DELIMITER,
+                pull_chunks=True)
+            occ_parser.initialize_me()
             # returns dict with key = taxonid, val = (name, count)
-            summary = occ_parser.readAllChunks()
+            summary = occ_parser.read_all_chunks()
             for tax_id, (_, count) in summary.items():
                 gbif_id_counts[tax_id] = count
         return gbif_id_counts
@@ -1165,7 +1164,7 @@ def test_idigbio_taxon_ids():
         #          with line in file:
         for _ in range(test_count):
             line = in_f.readline()
-            vals = []
+
             if line is not None:
                 temp_vals = line.strip().split()
                 if len(temp_vals) < 3:
@@ -1191,13 +1190,10 @@ def test_idigbio_taxon_ids():
                         [curr_gbif_taxon_id, curr_reported_count, curr_name])
                     out_f.write(line)
 
-    in_f.close()
     out_f.close()
     return idig_list
 
 
 # .............................................................................
-# .............................................................................
 if __name__ == '__main__':
     pass
-

@@ -85,10 +85,7 @@ class SPFiller(LMObject):
         """Initialize this object with the database connection."""
         if not (self.scribe and self.scribe.is_open):
             # Get database
-            try:
-                self.scribe = self._get_db(self.logname)
-            except Exception:
-                raise
+            self.scribe = self._get_db(self.logname)
             self.open()
 
     # ...............................................
@@ -135,17 +132,17 @@ class SPFiller(LMObject):
         #    file
         lyr_meta = {
            Vector.META_IS_CATEGORICAL: self._get_optional_metadata(
-               mask_meta, 'iscategorical'),
+                mask_meta, 'iscategorical'),
            ServiceObject.META_TITLE: self._get_optional_metadata(
-               mask_meta, 'title'),
+                mask_meta, 'title'),
            ServiceObject.META_AUTHOR: self._get_optional_metadata(
-               mask_meta, 'author'),
+                mask_meta, 'author'),
            ServiceObject.META_DESCRIPTION: self._get_optional_metadata(
-               mask_meta, 'description'),
+                mask_meta, 'description'),
            ServiceObject.META_KEYWORDS: self._get_optional_metadata(
-               mask_meta, 'keywords'),
+                mask_meta, 'keywords'),
            ServiceObject.META_CITATION: self._get_optional_metadata(
-               mask_meta, 'citation')}
+                mask_meta, 'citation')}
         # required
         try:
             dloc = os.path.join(self.layer_base_path, mask_meta['file'])
@@ -190,7 +187,7 @@ class SPFiller(LMObject):
 
     # ...............................................
     def create_scen_package(self, sp_name):
-        """Create a scenario package from a metadata document and insert into 
+        """Create a scenario package from a metadata document and insert into
             database.
         """
         package_meta = self.sp_meta.CLIMATE_PACKAGES[sp_name]
@@ -379,7 +376,7 @@ class SPFiller(LMObject):
         try:
             self.initialize_me()
             # If exists, found by unique Id or Email, update values
-            user_id = self.add_user()
+            _user_id = self.add_user()
 
             mask_lyr = None
             for sp_name in list(self.sp_meta.CLIMATE_PACKAGES.keys()):
@@ -392,15 +389,15 @@ class SPFiller(LMObject):
                     self.scribe.log.info(
                         'Adding mask layer {}'.format(mask_lyr.name))
                     updated_mask = self.add_mask_layer(mask_lyr)
-                    if updated_mask.get_dlocation(
-                            ) != mask_lyr.get_dlocation():
+                    if updated_mask.get_dlocation() != \
+                            mask_lyr.get_dlocation():
                         raise LMError(
                             ('Returned existing layer name {} for user {} '
                              'with filename {}, not expected filename {}'
                              ).format(
                                  mask_lyr.name, self.user_id,
                                  updated_mask.get_dlocation(),
-                                mask_lyr.get_dlocation()))
+                                 mask_lyr.get_dlocation()))
                 updated_scen_pkg = self.add_package_scenarios_layers(scen_pkg)
                 if all([
                         updated_scen_pkg is not None,

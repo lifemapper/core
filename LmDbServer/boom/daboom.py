@@ -20,7 +20,7 @@ from LmServer.common.log import ScriptLogger
 class DaBoom(Daemon):
     """Class to run the Boomer as a Daemon process."""
     # .............................
-    def __init__(self, pidfile, config_fname, priority=None):
+    def __init__(self, pidfile, config_fname, success_fname, priority=None):
         # Logfile
         secs = time.time()
         timestamp = "{}".format(
@@ -29,7 +29,7 @@ class DaBoom(Daemon):
         log = ScriptLogger(logname, level=logging.INFO)
 
         Daemon.__init__(self, pidfile, log=log)
-        self.boomer = Boomer(config_fname, log=log)
+        self.boomer = Boomer(config_fname, success_fname, log=log)
 
     # .............................
     def initialize(self):
@@ -44,7 +44,7 @@ class DaBoom(Daemon):
                 self.boomer.config_fname))
         try:
             while self.boomer.keep_walken:
-                self.boomer.process_spud()
+                self.boomer.process_one_species()()
         except Exception as e:
             self.log.debug('Exception {} on potato'.format(str(e)))
             trace_back = traceback.format_exc()
@@ -99,13 +99,14 @@ def main():
     args = parser.parse_args()
     config_fname = args.config_file
     cmd = args.cmd.lower()
+    success_fname = './success'
 
     print('')
     print(
         'Running daboom with configFilename={} and command={}'.format(
             config_fname, cmd))
     print('')
-    boomer = DaBoom(BOOM_PID_FILE, config_fname)
+    boomer = DaBoom(BOOM_PID_FILE, config_fname, success_fname)
 
     if cmd == 'start':
         boomer.start()

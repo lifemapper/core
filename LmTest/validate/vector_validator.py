@@ -29,7 +29,7 @@ def validate_vector_file(vector_filename):
                 msg = 'Could not open {}'.format(vector_filename)
             else:
                 lyr = dataset.GetLayer()
-                feature_count = lyr.GetFeatureCount()
+                _ = lyr.GetFeatureCount()
                 valid = True
         except Exception as e:
             msg = str(e)
@@ -37,4 +37,3 @@ def validate_vector_file(vector_filename):
         msg = 'File does not exist'
 
     return valid, msg
-

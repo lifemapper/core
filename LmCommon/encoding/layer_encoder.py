@@ -284,8 +284,8 @@ class LayerEncoder:
         return column_headers
 
     # ...............................
-    def _get_window_function(self, data, layer_bbox, cell_size,
-                             num_cell_sides=4):
+    @staticmethod
+    def _get_window_function(data, layer_bbox, cell_size, num_cell_sides=4):
         """Gets a windowing function for the data.
 
         This function generates a function that will return a "window" of array

@@ -57,22 +57,22 @@ RESOLUTIONS = {'10min': 0.16667, '5min': 0.083333, '30sec': 0.0083333}
 # Chosen package(s) in CLIMATE_PACKAGES to be pulled.  OBSERVED_PREDICTED_META
 # and LAYERTYPE_META have specifics about the chosen data or predicted data
 CLIMATE_PACKAGES = {
-   '10min-past-present-future': {
-       'res': '10min',
-       'bbox': [-180, -60, 180, 90],
-       # 'baseline': 'observed',
-       # {REPORT: [(GCM, Time, RCP(opt)), (model, Time, RCP(opt)) ...]}
-       'predicted': {'AR5': [('CCSM4', '2050', 'RCP4.5'),
-                             ('CCSM4', '2070', 'RCP4.5'),
-                             ('CCSM4', '2050', 'RCP8.5'),
-                             ('CCSM4', '2070', 'RCP8.5')]},
-       'layertypes': ['bio1', 'bio2', 'bio3', 'bio4', 'bio5', 'bio6', 'bio7',
-                      'bio8', 'bio9', 'bio10', 'bio11', 'bio12', 'bio13',
-                      'bio14', 'bio15', 'bio16', 'bio17', 'bio18', 'bio19',
-                      'alt'],
-       # Append to all scenario codes if needed for identification
-       # (i.e. of a region or other constraint)
-       'suffix': None}
+    '10min-past-present-future': {
+        'res': '10min',
+        'bbox': [-180, -60, 180, 90],
+        # 'baseline': 'observed',
+        # {REPORT: [(GCM, Time, RCP(opt)), (model, Time, RCP(opt)) ...]}
+        'predicted': {'AR5': [('CCSM4', '2050', 'RCP4.5'),
+                              ('CCSM4', '2070', 'RCP4.5'),
+                              ('CCSM4', '2050', 'RCP8.5'),
+                              ('CCSM4', '2070', 'RCP8.5')]},
+        'layertypes': ['bio1', 'bio2', 'bio3', 'bio4', 'bio5', 'bio6', 'bio7',
+                       'bio8', 'bio9', 'bio10', 'bio11', 'bio12', 'bio13',
+                       'bio14', 'bio15', 'bio16', 'bio17', 'bio18', 'bio19',
+                       'alt'],
+        # Append to all scenario codes if needed for identification
+        # (i.e. of a region or other constraint)
+        'suffix': None}
 }
 
 # # Required keys in SDM_MASK_INPUT: name, bbox, gdaltype, gdalformat, file
@@ -439,7 +439,7 @@ LAYERTYPE_META = {
                 'AR5', 'HadGEM2-ES', 'RCP8.5', '2050'],
             'CCSM4/2070/RCP8.5/cc85bi7010.tif': [
                 'AR5', 'HadGEM2-ES', 'RCP8.5', '2070']},
-         },
+        },
     'bio11': {
         'title': 'Mean Temperature of Coldest Quarter',
         'description': 'Mean Temperature of Coldest Quarter',
@@ -455,7 +455,7 @@ LAYERTYPE_META = {
                 'AR5', 'HadGEM2-ES', 'RCP8.5', '2050'],
             'CCSM4/2070/RCP8.5/cc85bi7011.tif': [
                 'AR5', 'HadGEM2-ES', 'RCP8.5', '2070']},
-         },
+        },
     'bio12': {
         'title': 'Annual Precipitation',
         'description': 'Annual Precipitation',
@@ -471,7 +471,7 @@ LAYERTYPE_META = {
                 'AR5', 'HadGEM2-ES', 'RCP8.5', '2050'],
             'CCSM4/2070/RCP8.5/cc85bi7012.tif': [
                 'AR5', 'HadGEM2-ES', 'RCP8.5', '2070']},
-         },
+        },
     'bio13': {
         'title': 'Precipitation of Wettest Month',
         'description': 'Precipitation of Wettest Month',
@@ -487,7 +487,7 @@ LAYERTYPE_META = {
                 'AR5', 'HadGEM2-ES', 'RCP8.5', '2050'],
             'CCSM4/2070/RCP8.5/cc85bi7013.tif': [
                 'AR5', 'HadGEM2-ES', 'RCP8.5', '2070']},
-         },
+        },
     'bio14': {
         'title': 'Precipitation of Driest Month',
         'description': 'Precipitation of Driest Month',
@@ -503,7 +503,7 @@ LAYERTYPE_META = {
                 'AR5', 'HadGEM2-ES', 'RCP8.5', '2050'],
             'CCSM4/2070/RCP8.5/cc85bi7014.tif': [
                 'AR5', 'HadGEM2-ES', 'RCP8.5', '2070']},
-         },
+        },
     'bio15': {
         'title': 'Precipitation Seasonality',
         'description': 'Precipitation Seasonality (Coefficient of Variation)',

@@ -35,7 +35,7 @@ def _get_biogeo_matrix(scribe, usr, gridset, layers=None):
     try:
         bg_mtx_list = gridset.get_biogeographic_hypotheses()
     except Exception:
-        print ('No gridset for hypotheses')
+        print('No gridset for hypotheses')
     # TODO: There should be only one?!?
     if len(bg_mtx_list) > 0:
         bg_mtx = bg_mtx_list[0]
@@ -98,8 +98,8 @@ def encode_hypotheses_to_matrix(scribe, usr, gridset, layers=None):
             val_attribute = None
             column_name = lyr.name
         new_cols = encoder.encode_biogeographic_hypothesis(
-             lyr.get_dlocation(), column_name, min_coverage,
-             event_field=val_attribute)
+            lyr.get_dlocation(), column_name, min_coverage,
+            event_field=val_attribute)
         print((
             'layer name={}, eventField={}, dloc={}'.format(
                 lyr.name, val_attribute, lyr.get_dlocation())))
@@ -245,7 +245,7 @@ def main():
         if gridset and layers:
             encode_hypotheses_to_matrix(scribe, usr, gridset, layers=layers)
         else:
-            print ('No gridset or layers to encode as hypotheses')
+            print('No gridset or layers to encode as hypotheses')
 
     if args.tree_name:
         bare_tree = Tree(args.tree_name, user_id=args.user)

@@ -244,9 +244,9 @@ class SDMProjection(_ProjectionType, Raster):
     # ................................
     def __init__(self, occ_layer, algorithm, model_scenario, proj_scenario,
                  process_type=None, model_mask=None, proj_mask=None,
-                 proj_metadata={}, status=None, status_mod_time=None,
+                 proj_metadata=None, status=None, status_mod_time=None,
                  sdm_proj_id=None, name=None, epsgcode=None, lyr_id=None,
-                 squid=None, verify=None, dlocation=None, layer_metadata={},
+                 squid=None, verify=None, dlocation=None, layer_metadata=None,
                  data_format=None, gdal_type=None, val_units=None,
                  nodata_val=None, min_val=None, max_val=None, map_units=None,
                  resolution=None, bbox=None, metadata_url=None,
@@ -255,9 +255,9 @@ class SDMProjection(_ProjectionType, Raster):
         (user_id, name, squid, process_type, bbox, epsg, map_units, resolution,
          is_discrete_data, data_format, title
          ) = self._get_defaults_from_inputs(
-            lyr_id, occ_layer, algorithm, model_scenario, proj_scenario,
-            name, squid, process_type, bbox, epsgcode, map_units, resolution,
-            data_format)
+             lyr_id, occ_layer, algorithm, model_scenario, proj_scenario,
+             name, squid, process_type, bbox, epsgcode, map_units, resolution,
+             data_format)
         _ProjectionType.__init__(
             self, occ_layer, algorithm, model_scenario, model_mask,
             proj_scenario, proj_mask, process_type, proj_metadata, status,
@@ -285,7 +285,7 @@ class SDMProjection(_ProjectionType, Raster):
     @classmethod
     def init_from_parts(cls, occ_layer, algorithm, model_scenario,
                         proj_scenario, layer, process_type=None,
-                        model_mask=None, proj_mask=None, proj_metadata={},
+                        model_mask=None, proj_mask=None, proj_metadata=None,
                         status=None, status_mod_time=None, sdm_proj_id=None):
         """Create a projection object from its parts."""
         return SDMProjection(
@@ -356,7 +356,8 @@ class SDMProjection(_ProjectionType, Raster):
         return self._occ_layer.get_absolute_path()
 
     # ................................
-    def _create_metadata(self, prj_scenario, species_name, algorithm_code,
+    @staticmethod
+    def _create_metadata(prj_scenario, species_name, algorithm_code,
                          title=None, is_discrete_data=False):
         """Assemble SDMProjection metadata the first time it is created."""
         metadata = {}
@@ -430,8 +431,6 @@ class SDMProjection(_ProjectionType, Raster):
     # ................................
     def clear_output_files(self):
         """Clear projection output files."""
-        req_fname = self.get_proj_request_filename()
-        success, _ = self.delete_file(req_fname)
         pkg_fname = self.get_proj_package_filename()
         success, _ = self.delete_file(pkg_fname)
         # metadata files
@@ -493,7 +492,7 @@ class SDMProjection(_ProjectionType, Raster):
             proj_id = ID_PLACEHOLDER
         lyr_name = self._earl_jr.create_basename(
             LMFileType.PROJECTION_LAYER, obj_code=proj_id, usr=self._user_id,
-            epsg=self.epsgcode)
+            epsg=self.epsg_code)
         map_prefix = self._earl_jr.construct_map_prefix_new(
             f_type=LMFileType.SDM_MAP, map_name=self._occ_layer.map_name,
             lyr_name=lyr_name, usr=self._user_id)

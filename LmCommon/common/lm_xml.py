@@ -206,12 +206,15 @@ def _pretty_format(elem, level=0):
     if len(elem) > 0:
         if not elem.text or not elem.text.strip():
             elem.text = i + tab
-        for e in elem:
-            _pretty_format(e, level + 1)
-            if not e.tail or not e.tail.strip():
-                e.tail = i + tab
-        if not e.tail or not e.tail.strip():
-            e.tail = i
+        e_1 = None
+
+        for my_el in elem:
+            e_1 = my_el
+            _pretty_format(e_1, level + 1)
+            if not e_1.tail or not e_1.tail.strip():
+                e_1.tail = i + tab
+        if not e_1.tail or not e_1.tail.strip():
+            e_1.tail = i
     else:
         if level and (not elem.tail or not elem.tail.strip()):
             elem.tail = i

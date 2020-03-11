@@ -163,7 +163,7 @@ class TaxonFiller(LMObject):
         for line in self._csv_reader:
             (taxon_key, kingdom_str, phylum_str, class_str, order_str,
              family_str, genus_str, sci_name_str, genus_key, species_key,
-             count) = self._get_taxon_values(line)
+             _count) = self._get_taxon_values(line)
 
             if taxon_key not in (species_key, genus_key):
                 total_wrong_rank += 1
@@ -276,7 +276,7 @@ def main():
             taxon_fname = GBIF_TAXONOMY_DUMP_FILE
         if success_fname is None:
             taxbasename, _ = os.path.splitext(taxon_fname)
-            taxon_success_fname = taxbasename + '.success'
+            _taxon_success_fname = taxbasename + '.success'
 
     if log_name is None:
         scriptname, _ = os.path.splitext(os.path.basename(__file__))

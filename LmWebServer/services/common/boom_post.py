@@ -82,7 +82,7 @@ class BoomPoster:
             self._process_occurrence_sets(occ_section)
         else:
             raise cherrypy.HTTPError(
-                    HTTPStatus.BAD_REQUEST, 'Must provide occurrence data')
+                HTTPStatus.BAD_REQUEST, 'Must provide occurrence data')
 
         # Look for scenario package information at top level
         scn_section = self._get_json_section(
@@ -91,7 +91,7 @@ class BoomPoster:
             self._process_scenario_package(scn_section)
         else:
             raise cherrypy.HTTPError(
-                    HTTPStatus.BAD_REQUEST, 'Must provide climate data')
+                HTTPStatus.BAD_REQUEST, 'Must provide climate data')
 
         # Look for global pam information
         global_pam_section = self._get_json_section(
@@ -110,7 +110,7 @@ class BoomPoster:
             self._process_sdm(sdm_section)
         else:
             raise cherrypy.HTTPError(
-                    HTTPStatus.BAD_REQUEST, 'Must provide SDM configuration')
+                HTTPStatus.BAD_REQUEST, 'Must provide SDM configuration')
 
         # PAM stats
         pam_stats_section = self._get_json_section(
@@ -331,9 +331,9 @@ class BoomPoster:
 
             try:
                 meta_filename = os.path.join(
-                        ARCHIVE_PATH, self.user_id, '{}{}'.format(
-                            points_filename.replace(
-                                LMFormat.CSV.ext, ''), LMFormat.JSON.ext))
+                    ARCHIVE_PATH, self.user_id, '{}{}'.format(
+                        points_filename.replace(
+                            LMFormat.CSV.ext, ''), LMFormat.JSON.ext))
                 self.scribe.log.debug(
                     'Meta filename?: {}'.format(meta_filename))
                 if os.path.exists(meta_filename):

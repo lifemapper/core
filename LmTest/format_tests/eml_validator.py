@@ -10,5 +10,5 @@ def validate_eml(obj_generator):
         # Just try to validate XML
         deserialize(fromstring(obj_generator))
         return True
-    except Exception as e:
+    except Exception:
         return False

@@ -97,8 +97,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
                         'No background points with data in all layers') >= 0:
                     status = JobStatus.ME_POINTS_ERROR
                 elif log_content.find(
-                        'No features available: select more feature types'
-                        ) >= 0:
+                        'No features available: select more feature') >= 0:
                     status = JobStatus.ME_NO_FEATURES_CLASSES_AVAILABLE
         else:
             # Computed but process terminated with status 1, seems to be fine

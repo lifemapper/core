@@ -340,7 +340,8 @@ class EarlJr(LMObject):
         return url
 
     # ................................
-    def _create_web_service_postfix(self, service_type, object_id,
+    @staticmethod
+    def _create_web_service_postfix(service_type, object_id,
                                     parent_metadata_url=None, interface=None):
         """Return the relative REST service url without leading ROOT
 

@@ -96,7 +96,7 @@ class BorgScribe(LMObject):
 
     # ................................
     def find_or_insert_env_layer(self, lyr, scenario_id=None):
-        """Find or insert a layer's metadata in the database and optionally 
+        """Find or insert a layer's metadata in the database and optionally
         join it to the indicated scenario.
 
         Args:
@@ -120,11 +120,11 @@ class BorgScribe(LMObject):
     # ................................
     def find_or_insert_layer(self, lyr):
         """Find or insert a layer object.
-        
+
         Args:
             lyr: _Layer object to find or insert into the database
-            
-        Return: 
+
+        Return:
             updated layer object
         """
         return self._borg.find_or_insert_layer(lyr)
@@ -223,7 +223,7 @@ class BorgScribe(LMObject):
                                        scen_package_name=None):
         """Get scenarios in the specified scenario package."""
         return self._borg.get_scenarios_for_scen_package(
-            scen_package, scen_package_id, user_id, scen_package_name)
+            scen_package, scen_package_id, user_id, scen_package_name, False)
 
     # ................................
     def get_scen_packages_for_user_codes(self, usr, scen_codes,
@@ -365,7 +365,7 @@ class BorgScribe(LMObject):
                   lyr_name=None, epsg=None):
         """Get a layer object from the database.
         """
-        return self._borg.getBaseLayer(
+        return self._borg.get_base_layer(
             lyr_id, lyr_verify, user_id, lyr_name, epsg)
 
     # ................................
@@ -572,7 +572,7 @@ class BorgScribe(LMObject):
                              sci_name=None):
         """Find our insert a ScientificName object into the database.
         """
-        return self._borg.find_or_insert_Taxon(
+        return self._borg.find_or_insert_taxon(
             taxon_source_id, taxon_key, sci_name)
 
     # ................................
@@ -593,7 +593,7 @@ class BorgScribe(LMObject):
         except ValueError:
             code = id_or_code
         return self._borg.get_scenario(
-            scenario_id=sid, code=code, user_id=user_id,
+            scen_id=sid, code=code, user_id=user_id,
             fill_layers=fill_layers)
 
     # ................................
@@ -634,7 +634,7 @@ class BorgScribe(LMObject):
             user_id: the database primary key of the LMUser
         """
         sci_name = ScientificName(sci_name_str, user_id=user_id)
-        updated_sci_name = self.find_or_insert_Taxon(sci_name=sci_name)
+        updated_sci_name = self.find_or_insert_taxon(sci_name=sci_name)
         occ_sets = self._borg.get_occurrence_sets_for_squid(
             updated_sci_name.squid, user_id)
         return occ_sets
@@ -783,7 +783,8 @@ class BorgScribe(LMObject):
             if JobStatus.finished(new_or_existing_mtx_col.status):
                 new_or_existing_mtx_col.update_status(
                     JobStatus.GENERAL, mod_time=mod_time)
-                success = self.update_matrix_column(new_or_existing_mtx_col)
+                _success = self._borg.update_matrix_column(
+                    new_or_existing_mtx_col)
         return new_or_existing_mtx_col
 
     # ................................
@@ -984,7 +985,7 @@ class BorgScribe(LMObject):
             LMFileType.SDM_MAP, obj_code=occ.get_id(), usr=occ.get_user_id())
         map_svc = MapLayerSet(
             map_name, layers=lyrs, db_id=occ.get_id(),
-            user_id=occ.get_user_id(), epsgcode=occ.epsgcode, bbox=occ.bbox,
+            user_id=occ.get_user_id(), epsg_code=occ.epsg_code, bbox=occ.bbox,
             map_units=occ.map_units, map_type=LMFileType.SDM_MAP)
         return map_svc
 
@@ -996,7 +997,7 @@ class BorgScribe(LMObject):
             map_filename: absolute path of mapfile
         """
         earl = EarlJr()
-        (mapname, ancillary, usr, epsg, occ_set_id, gridset_id, scen_code
+        (mapname, _ancillary, usr, _epsg, occ_set_id, _gridset_id, scen_code
          ) = earl.parse_map_filename(map_filename)
         prefix = mapname.split(NAME_SEPARATOR)[0]
         file_type = FileFix.get_map_type_from_name(prefix=prefix)

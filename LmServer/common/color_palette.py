@@ -4,6 +4,7 @@
 Note:
     Written by Dave Vieglais
 """
+import math
 
 
 class ColorPalette:
@@ -49,6 +50,7 @@ class ColorPalette:
         self.method()
 
     def keys(self):
+        """Get pallete keys."""
         return list(self.ptypes.keys())
 
     def __getitem__(self, key):
@@ -188,7 +190,6 @@ class ColorPalette:
         gradient.  The colors and intensities are intended to maximize
         perceived separation of values across the range.
         """
-        import math
         self.pal = []
         a = 0
         rscl = [0.0, -1.0, math.pi / (self.n * 0.8)]
@@ -198,12 +199,18 @@ class ColorPalette:
             r = rscl[0] + rscl[1] * math.cos(i * rscl[2])
             g = gscl[0] + gscl[1] * math.sin(i * gscl[2])
             b = bscl[0] + bscl[1] * math.cos(i * bscl[2])
-            if r < 0: r = 0
-            elif r > 1.0: r = 1.0
-            if g < 0: g = 0
-            elif g > 1.0: g = 1.0
-            if b < 0: b = 0
-            elif b > 1.0: b = 1.0
+            if r < 0:
+                r = 0
+            elif r > 1.0:
+                r = 1.0
+            if g < 0:
+                g = 0
+            elif g > 1.0:
+                g = 1.0
+            if b < 0:
+                b = 0
+            elif b > 1.0:
+                b = 1.0
             if i == self.alpha:
                 a = 0
             else:
@@ -251,4 +258,3 @@ class ColorPalette:
             else:
                 a = 255
             self.pal.append([vr, vg, 0, a])
-

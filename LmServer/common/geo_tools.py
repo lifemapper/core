@@ -170,6 +170,7 @@ class GeoFileInfo(LMObject):
         # Close new dataset to flush to disk
         out_ds.FlushCache()
         out_ds = None
+        return None
 
     # ................................
     def _check_sub_datasets(self, var_pattern):
@@ -465,7 +466,7 @@ class GeoFileInfo(LMObject):
         Args:
             point: A tuple representing a point.
         """
-        ext = self.get_bounds()()
+        ext = self.get_bounds()
         return ext[0] <= point[0] <= ext[2] and ext[1] <= point[1] <= ext[3]
 
     # ................................

@@ -427,26 +427,26 @@ def get_lat_lon_for_point(point):
     if wkt is not None:
         lon, lat, _ = ogr.CreateGeometryFromWkt(wkt).GetPoint()
         return lat, lon
-    else:
-        # Find lat and lon
-        lat = None
-        for att in OccurrenceFieldNames.LATITUDE:
-            try:
-                lat = point._attrib[att]
-                break
-            except Exception:
-                pass
 
-        lon = None
-        for att in OccurrenceFieldNames.LONGITUDE:
-            try:
-                lon = point._attrib[att]
-                break
-            except Exception:
-                pass
+    # Find lat and lon
+    lat = None
+    for att in OccurrenceFieldNames.LATITUDE:
+        try:
+            lat = point._attrib[att]
+            break
+        except Exception:
+            pass
 
-        if lat is not None and lon is not None:
-            return lat, lon
+    lon = None
+    for att in OccurrenceFieldNames.LONGITUDE:
+        try:
+            lon = point._attrib[att]
+            break
+        except Exception:
+            pass
+
+    if lat is not None and lon is not None:
+        return lat, lon
 
     # Raise exception if we get to here without determining lat and lon
     raise Exception('Could not retrieve latitude and / or longitude for point')

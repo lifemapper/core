@@ -19,8 +19,9 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 
     # ................................
     def __init__(self, display_name, query_count, mod_time, user_id,
-                 occ_layer_id,  metadata={}, sci_name=None, raw_dlocation=None,
-                 process_type=None, status=None, status_mod_time=None):
+                 occ_layer_id, metadata=None, sci_name=None,
+                 raw_dlocation=None, process_type=None, status=None,
+                 status_mod_time=None):
         """Initialize the _Occurrences class instance
 
         Args:
@@ -88,6 +89,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
 
 # .............................................................................
 class OccurrenceLayer(OccurrenceType, Vector):
+    """Class for occurrence layers."""
 
     # ................................
     def __init__(self, display_name, user_id, epsg_code, query_count,

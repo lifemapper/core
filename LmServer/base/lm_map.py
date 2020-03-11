@@ -89,8 +89,8 @@ class LMMap(LMSpatialObject):
                 map_str = self._get_base_map(map_template)
                 map_str = self._add_map_base_attributes(map_str)
                 map_str = map_str.replace('##_LAYERS_##', lyr_str)
-            except Exception as e:
-                raise
+            except Exception as err:
+                raise LMError(err)
 
             try:
                 self._write_base_map(map_str, map_filename)
@@ -111,7 +111,8 @@ class LMMap(LMSpatialObject):
                 'Failed to write {}: {}'.format(map_filename, str(e)))
 
     # ................................
-    def _get_base_map(self, fname):
+    @staticmethod
+    def _get_base_map(fname):
         # TODO: in python 2.6, use 'with open(fname, 'r'):'
         try:
             with open(fname, 'r') as in_file:
@@ -214,11 +215,11 @@ class LMMap(LMSpatialObject):
                 style = self._create_style(
                     POINT_SYMBOL, POINT_SIZE, color_str=DEFAULT_POINT_COLOR)
             elif (sdl_lyr.ogr_type == ogr.wkbLineString
-                    or sdl_lyr.ogr_type == ogr.wkbMultiLineString):
+                  or sdl_lyr.ogr_type == ogr.wkbMultiLineString):
                 style = self._create_style(
                     LINE_SYMBOL, LINE_SIZE, color_str=DEFAULT_LINE_COLOR)
             elif (sdl_lyr.ogr_type == ogr.wkbPolygon
-                    or sdl_lyr.ogr_type == ogr.wkbMultiPolygon):
+                  or sdl_lyr.ogr_type == ogr.wkbMultiPolygon):
                 style = self._create_style(
                     POLYGON_SYMBOL, POLYGON_SIZE,
                     outline_color_str=DEFAULT_LINE_COLOR)

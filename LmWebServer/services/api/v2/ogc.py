@@ -106,10 +106,10 @@ class MapService(LmService):
             content_type, content = self._wxs_get_text()
 
         elif service is not None and request is not None and (
-            service.lower(), request.lower()) in [
-                ('wcs', 'getcoverage'),
-                ('wms', 'getmap'),
-                ('wms', 'getlegendgraphic')]:
+                service.lower(), request.lower()) in [
+                    ('wcs', 'getcoverage'),
+                    ('wms', 'getmap'),
+                    ('wms', 'getlegendgraphic')]:
             try:
                 content_type, content = self._wxs_get_image(
                     layers, color=color)
@@ -153,7 +153,7 @@ class MapService(LmService):
         if point is not None:
             self._add_data_point(point, color)
         mapscript.msIO_installStdoutToBuffer()
-        result = self.map_obj.OWSDispatch(self.ows_req)
+        _result = self.map_obj.OWSDispatch(self.ows_req)
         content_type = mapscript.msIO_stripStdoutBufferContentType()
         # Get the image through msIO_getStdoutBufferBytes which uses GDAL,
         # which is needed to process Float32 geotiff images
@@ -178,7 +178,7 @@ class MapService(LmService):
 
         if maplyr.type == mapscript.MS_LAYER_RASTER:
             if maplyr.numclasses == 1:
-                success = stl.updateFromString(
+                _success = stl.updateFromString(
                     'STYLE COLOR {} {} {} END'.format(clr[0], clr[1], clr[2]))
             else:
                 palette_name = self._get_palette_name(color)
@@ -186,7 +186,7 @@ class MapService(LmService):
                 for i in range(maplyr.numclasses):
                     stl = maplyr.getClass(i).getStyle(0)
                     clr = pal[i + 1]
-                    success = stl.updateFromString(
+                    _success = stl.updateFromString(
                         'STYLE COLOR %d %d %d END' % (clr[0], clr[1], clr[2]))
         else:
             if maplyr.type == mapscript.MS_LAYER_POINT:
@@ -195,12 +195,12 @@ class MapService(LmService):
             elif maplyr.type == mapscript.MS_LAYER_LINE:
                 sym = LINE_SYMBOL
                 p_size = LINE_SIZE
-            success = stl.updateFromString(
+            _success = stl.updateFromString(
                 'STYLE SYMBOL \"{}\" SIZE {} COLOR {} {} {} END'.format(
                     sym, p_size, clr[0], clr[1], clr[2]))
 
             if maplyr.type == mapscript.MS_LAYER_POLYGON:
-                success = stl.updateFromString(
+                _success = stl.updateFromString(
                     'STYLE WIDTH {} COLOR {} {} {} END'.format(
                         str(POLYGON_SIZE), clr[0], clr[1], clr[2]))
 
@@ -274,7 +274,7 @@ class MapService(LmService):
                         colorme = lyrname
 
         elif (self.map_name.startswith(MapPrefix.SCEN) or
-                self.map_name.startswith(MapPrefix.ANC)):
+              self.map_name.startswith(MapPrefix.ANC)):
             for lyrname in lyrnames:
                 if lyrname != bluemarblelayer:
                     colorme = lyrname
@@ -319,7 +319,7 @@ class MapService(LmService):
                 if not color_char.isdigit() and\
                         color_char.lower() not in valid_chars:
                     self.log.error('input {} is not a valid hex color'.format(
-                            color_string))
+                        color_string))
                     return None
         else:
             self.log.error('input {} is not in #RRGGBB format'.format(
@@ -334,13 +334,14 @@ class MapService(LmService):
         (r, g, b) = self._html_color_to_rgb(color_string)
         if (r > g and r > b):
             return 'red'
-        elif (g > r and g > b):
+        if (g > r and g > b):
             return 'green'
-        elif (b > r and b > g):
+        if (b > r and b > g):
             return 'blue'
-        elif (r < g and r < b):
+        if (r < g and r < b):
             return 'bluegreen'
-        elif (g < r and g < b):
+        if (g < r and g < b):
             return 'bluered'
-        elif (b < r and b < g):
+        if (b < r and b < g):
             return 'greenred'
+        return None

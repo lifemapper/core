@@ -5,10 +5,9 @@ import json
 
 # .............................................................................
 def validate_json(obj_generator):
-    """Validates that the response is json by trying to load it
-    """
+    """Validates that the response is json by trying to load it."""
     try:
         json.load(obj_generator)
         return True
-    except Exception as e:
+    except Exception:
         return False

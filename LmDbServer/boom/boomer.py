@@ -239,7 +239,7 @@ class Boomer(LMObject):
         if self.christopher.complete() and\
                 self.christopher.more_data_to_process():
             # Rename old file
-            oldfname = self.christopher.weapon_of_choice.occ_parser.data_fname
+            oldfname = self.christopher.weapon_of_choice.occ_parser.csv_fname
             ts = lt.localtime().tuple()
             timestamp = '{}{:02d}{:02d}-{:02d}{:02d}'.format(
                 ts[0], ts[1], ts[2], ts[3], ts[4])

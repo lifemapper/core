@@ -411,8 +411,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 online_url = self._get_mapset_url()
                 map_str = self._add_map_base_attributes(map_str, online_url)
                 map_str = map_str.replace('##_LAYERS_##', layers)
-            except Exception as e:
-                raise
+            except Exception as err:
+                raise LMError(err)
 
             try:
                 self._write_base_map(map_str)
@@ -549,11 +549,11 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 style = self._create_style(
                     POINT_SYMBOL, POINT_SIZE, color_str=DEFAULT_POINT_COLOR)
             elif (sdl_lyr.ogr_type == ogr.wkbLineString
-                    or sdl_lyr.ogr_type == ogr.wkbMultiLineString):
+                  or sdl_lyr.ogr_type == ogr.wkbMultiLineString):
                 style = self._create_style(
                     LINE_SYMBOL, LINE_SIZE, color_str=DEFAULT_LINE_COLOR)
             elif (sdl_lyr.ogr_type == ogr.wkbPolygon
-                    or sdl_lyr.ogr_type == ogr.wkbMultiPolygon):
+                  or sdl_lyr.ogr_type == ogr.wkbMultiPolygon):
                 style = self._create_style(
                     POLYGON_SYMBOL, POLYGON_SIZE,
                     outline_color_str=DEFAULT_LINE_COLOR)

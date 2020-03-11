@@ -152,12 +152,12 @@ class ParameterSweep:
         """
         for mdl_config in self.sweep_config.get_model_config():
             if len(mdl_config) == 13:
-                (process_type, model_id, occ_set_id, occ_shp_filename,
+                (process_type, model_id, _occ_set_id, occ_shp_filename,
                  algorithm, model_scenario, mask_id, mdl_ruleset_path,
                  projection_id, projection_path, package_path, scale_params,
                  multiplier) = mdl_config
             else:
-                (process_type, model_id, occ_set_id, occ_shp_filename,
+                (process_type, model_id, _occ_set_id, occ_shp_filename,
                  algorithm, model_scenario, mask_id, mdl_ruleset_path
                  ) = mdl_config
                 projection_id = projection_path = package_path = None
@@ -525,8 +525,8 @@ class ParameterSweep:
                                     if os.path.exists(
                                             wrapper.get_log_filename()):
                                         with open(
-                                            wrapper.get_log_filename()
-                                                  ) as log_f:
+                                                wrapper.get_log_filename()
+                                                ) as log_f:
                                             self.log.debug('-----------------')
                                             self.log.debug(
                                                 wrapper.get_log_filename())
@@ -778,15 +778,17 @@ class ParameterSweep:
         self._create_pavs()
 
         # Write metrics
-        with open(os.path.join(
-                    self.base_work_dir,
-                    self.sweep_config.metrics_filename), 'w') as out_metrics:
+        with open(
+            os.path.join(
+                self.base_work_dir,
+                self.sweep_config.metrics_filename), 'w') as out_metrics:
             json.dump(self.get_metrics(), out_metrics)
 
         # Write snippets
-        with open(os.path.join(
-                    self.base_work_dir,
-                    self.sweep_config.snippets_filename), 'w') as out_snippets:
+        with open(
+            os.path.join(
+                self.base_work_dir,
+                self.sweep_config.snippets_filename), 'w') as out_snippets:
             json.dump(self.get_snippets(), out_snippets)
 
         # Write stockpile information

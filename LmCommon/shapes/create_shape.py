@@ -68,20 +68,20 @@ class ShapeShifter:
 
         self.occ_parser = OccDataParser(
             logger, csv_f_name, metadata, delimiter=delimiter,
-            pullChunks=False)
+            pull_chunks=False)
         self.occ_parser.initialize_me()
         if self.occ_parser.header is not None:
             self._rec_count = self._rec_count - 1
-        self.id_field = self.occ_parser.idFieldName
-        if self.occ_parser.xFieldName is not None:
-            self.x_field = self.occ_parser.xFieldName
+        self.id_field = self.occ_parser.id_field_name
+        if self.occ_parser.x_field_name is not None:
+            self.x_field = self.occ_parser.x_field_name
         else:
             self.x_field = DwcNames.DECIMAL_LONGITUDE['SHORT']
-        if self.occ_parser.yFieldName is not None:
-            self.y_field = self.occ_parser.yFieldName
+        if self.occ_parser.y_field_name is not None:
+            self.y_field = self.occ_parser.y_field_name
         else:
             self.y_field = DwcNames.DECIMAL_LATITUDE['SHORT']
-        self.pt_field = self.occ_parser.ptFieldName
+        self.pt_field = self.occ_parser.pt_field_name
 
         self.special_fields = (
             self.id_field, self.link_field, self.provider_key_field,
@@ -312,12 +312,12 @@ class ShapeShifter:
         # skip lines w/o valid coordinates
         while not success and not self.occ_parser.closed:
             try:
-                self.occ_parser.pullNextValidRec()
-                this_rec = self.occ_parser.currLine
+                self.occ_parser.pull_next_valid_rec()
+                this_rec = self.occ_parser.curr_line
                 if this_rec is not None:
                     x_coord, y_coord = OccDataParser.get_xy(
-                        this_rec, self.occ_parser.xIdx, self.occ_parser.yIdx,
-                        self.occ_parser.ptIdx)
+                        this_rec, self.occ_parser.x_idx, self.occ_parser.y_idx,
+                        self.occ_parser.pt_idx)
                     # Unique identifier field is not required, default to FID
                     # ignore records without valid lat/long; all occ jobs
                     #    contain these fields
@@ -329,13 +329,13 @@ class ShapeShifter:
             except (OverflowError, ValueError, Exception) as err:
                 bad_rec_count += 1
                 print(('Exception reading line {} ({})'.format(
-                    self.occ_parser.currRecnum, str(err))))
+                    self.occ_parser.curr_rec_num, str(err))))
 
         if success:
-            for idx, vals in self.occ_parser.columnMeta.items():
+            for idx, vals in self.occ_parser.column_meta.items():
                 if vals is not None and idx not in (
-                        self.occ_parser.xIdx, self.occ_parser.yIdx):
-                    fld_name = self.occ_parser.columnMeta[idx][
+                        self.occ_parser.x_idx, self.occ_parser.y_idx):
+                    fld_name = self.occ_parser.column_meta[idx][
                         OccDataParser.FIELD_NAME_KEY]
                     tmp_dict[fld_name] = this_rec[idx]
             rec_dict = tmp_dict
@@ -361,7 +361,7 @@ class ShapeShifter:
                 JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
                 'Layer creation failed')
 
-        for _, vals in self.occ_parser.columnMeta.items():
+        for _, vals in self.occ_parser.column_meta.items():
             if vals is not None:
                 fld_name = str(vals[OccDataParser.FIELD_NAME_KEY])
                 fld_type = vals[OccDataParser.FIELD_TYPE_KEY]
@@ -427,15 +427,15 @@ class ShapeShifter:
     def _fill_feature(self, feat, rec_dict):
         """Fill a feature using the provided dictionary."""
         try:
-            x = rec_dict[self.occ_parser.xIdx]
-            y = rec_dict[self.occ_parser.yIdx]
+            x_coord = rec_dict[self.occ_parser.x_idx]
+            y_coord = rec_dict[self.occ_parser.y_idx]
         except AttributeError:
-            x = rec_dict[self.x_field]
-            y = rec_dict[self.y_field]
+            x_coord = rec_dict[self.x_field]
+            y_coord = rec_dict[self.y_field]
 
         try:
             # Set LM added fields, geometry, geomwkt
-            wkt = 'POINT ({} {})'.format(x, y)
+            wkt = 'POINT ({} {})'.format(x_coord, y_coord)
             feat.SetField(LM_WKT_FIELD, wkt)
             geom = ogr.CreateGeometryFromWkt(wkt)
             feat.SetGeometryDirectly(geom)
@@ -467,7 +467,7 @@ class ShapeShifter:
 
 # ...............................................
 if __name__ == '__main__':
-    print ('__main__ is not implemented')
+    print('__main__ is not implemented')
 
 """
 from osgeo import ogr, osr
@@ -534,5 +534,4 @@ status = JobStatus.COMPUTED
 goodData, featCount = ShapeShifter.test_shapefile(outFile)
 
 # ......................................................
-
 """

@@ -125,6 +125,7 @@ class LmAttList(list, LmAttObj):
             attrib (dict): A dictionary of attributes to attach to the list.
             name (str): The name of the object (useful for serialization).
         """
+        list.__init__(self)
         if not items:
             items = []
         if not attrib:

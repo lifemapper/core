@@ -392,7 +392,7 @@ class UserUploadService(LmService):
                     tree.write(
                         path=out_tree_filename, schema=DEFAULT_TREE_SCHEMA)
                     break
-                except Exception as e:
+                except Exception:
                     pass
         else:
             raise cherrypy.HTTPError(

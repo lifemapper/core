@@ -23,7 +23,8 @@ class LmAPI:
     signup = UserSignUp()
 
     # ...........................
-    def index(self):
+    @staticmethod
+    def index():
         """Index page
         """
         return "API index"

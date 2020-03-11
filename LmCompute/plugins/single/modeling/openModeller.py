@@ -57,15 +57,13 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
             if log_content.find('[Error] No presence points available') >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_MISSING_ERROR
             elif log_content.find(
-                    '[Error] Cannot use zero presence points for sampling'
-                    ) >= 0:
+                    '[Error] Cannot use zero presence points for') >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_MISSING_ERROR
             elif log_content.find(
                     '[Error] Algorithm could not be initialized') >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_OUT_OF_RANGE_ERROR
             elif log_content.find(
-                    '[Error] Cannot create model without any presence'
-                    ) >= 0:
+                    '[Error] Cannot create model without any presence') >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_OUT_OF_RANGE_ERROR
             elif log_content.find(
                     '[Error] XML Parser fatal error: not well-formed') >= 0:

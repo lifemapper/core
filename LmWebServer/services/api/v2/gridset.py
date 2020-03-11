@@ -253,7 +253,7 @@ class GridsetBioGeoService(LmService):
                             # Check to see if file is in zip package
                             if hyp_filename in avail_files or \
                                     '{}{}'.format(
-                                        hyp_filename, LMFormat.SHAPE.ext
+                                            hyp_filename, LMFormat.SHAPE.ext
                                         ) in avail_files:
                                 if HYPOTHESIS_NAME_KEY in hyp_lyr:
                                     hyp_name = hyp_lyr[HYPOTHESIS_NAME_KEY]
@@ -599,14 +599,14 @@ class GridsetService(LmService):
         usr = self.scribe.find_user(self.get_user_id())
 
         boom_post = BoomPoster(
-            usr.userid, usr.email, gridset_data, self.scribe)
+            usr.user_id, usr.email, gridset_data, self.scribe)
         gridset = boom_post.init_boom()
 
         # TODO: What do we return?
         cherrypy.response.status = HTTPStatus.ACCEPTED
         return Atom(
             gridset.get_id(), gridset.name, gridset.metadata_url,
-            gridset.mod_time, epsg=gridset.epsgcode)
+            gridset.mod_time, epsg=gridset.epsg_code)
 
     # ................................
     def _count_gridsets(self, user_id, after_time=None, before_time=None,

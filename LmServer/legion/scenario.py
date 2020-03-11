@@ -12,7 +12,7 @@ from LmServer.legion.env_layer import EnvLayer
 class ScenPackage(ServiceObject, LMSpatialObject):
     """Class containing multiple, related, scenario objects for SDMs."""
     # ................................
-    def __init__(self, name, user_id, metadata={}, metadata_url=None,
+    def __init__(self, name, user_id, metadata=None, metadata_url=None,
                  epsg_code=None, bbox=None, map_units=None, mod_time=None,
                  scenarios=None, scen_package_id=None):
         """Constructor."""
@@ -69,17 +69,9 @@ class ScenPackage(ServiceObject, LMSpatialObject):
                 combination. None if not found.
         """
         for scen in self._scenarios:
-            if code is not None:
-                try:
-                    scen = self._scenarios[code]
-                except KeyError:
-                    pass
-                else:
-                    return scen
-            elif metadata_url is not None:
-                for code, scen in self._scenarios.items():
-                    if scen.metadata_url == metadata_url:
-                        return scen
+            if any([code and scen.code.lower() == code.lower(),
+                    metadata_url and metadata_url == scen.metadata_url]):
+                return scen
         return None
 
     # ................................
@@ -121,7 +113,7 @@ class Scenario(MapLayerSet):
     """Class containing environmental data layers used to create SDMs
     """
     # ................................
-    def __init__(self, code, user_id, epsg_code, metadata={},
+    def __init__(self, code, user_id, epsg_code, metadata=None,
                  metadata_url=None, units=None, res=None, gcm_code=None,
                  alt_pred_code=None, date_code=None, bbox=None, mod_time=None,
                  layers=None, scenario_id=None):

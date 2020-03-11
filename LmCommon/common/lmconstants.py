@@ -653,10 +653,10 @@ class ProcessType(Enum):
         """Return boolean indicating if the process type is for occurrences
         """
         return ptype in (
-                ProcessType.GBIF_TAXA_OCCURRENCE,
-                # ProcessType.BISON_TAXA_OCCURRENCE,
-                # ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                ProcessType.USER_TAXA_OCCURRENCE)
+            ProcessType.GBIF_TAXA_OCCURRENCE,
+            # ProcessType.BISON_TAXA_OCCURRENCE,
+            # ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+            ProcessType.USER_TAXA_OCCURRENCE)
 
     @staticmethod
     def is_project(ptype):

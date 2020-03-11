@@ -6,6 +6,7 @@ import csv
 import os
 import sys
 
+from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.occ_parse import OccDataParser
 from LmServer.common.log import ScriptLogger
@@ -56,7 +57,7 @@ def check_merged_file(log, merge_fname, meta_fname):
                 rec_count += len(chunk)
             elif big_sorted_data.group_val < prev_key:
                 log.debug('Failure to sort prev_key {},  currKey {}'.format(
-                          prev_key, big_sorted_data.group_val))
+                    prev_key, big_sorted_data.group_val))
                 fail_sort_count += 1
             else:
                 log.debug('Current chunk key = prev key %d' % (prev_key))
@@ -230,8 +231,8 @@ def merge_sorted_files(log, merge_fname, data_path, input_prefix, basename,
                 # Find smallest again
                 _, pos = _get_smallest_key_and_position(sorted_files)
 
-    except Exception:
-        raise
+    except Exception as err:
+        raise LMError(err)
     finally:
         for open_file in sorted_files:
             log.debug('Closing file {}'.format(open_file.data_fname))
@@ -243,10 +244,10 @@ def main():
     """Main method of the script
     """
     parser = argparse.ArgumentParser(
-             description=('Populate a Lifemapper archive with metadata ' +
-                          'for single- or multi-species computations ' +
-                          'specific to the configured input data or the ' +
-                          'data package named.'))
+        description=(
+            'Populate a Lifemapper archive with metadata for single- or '
+            'multi-species computations specific to the configured input data '
+            'or the data package named.'))
     parser.add_argument(
         'dump_filename', help=('Filename for unsorted database dump.'))
     parser.add_argument(

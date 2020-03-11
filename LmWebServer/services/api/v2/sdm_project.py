@@ -109,7 +109,7 @@ class SdmProjectService(LmService):
         cherrypy.response.status = HTTPStatus.ACCEPTED
         return Atom(
             gridset.get_id(), gridset.name, gridset.metadata_url,
-            gridset.mod_time, epsg=gridset.epsgcode)
+            gridset.mod_time, epsg=gridset.epsg_code)
 
     # ................................
     def _count_projections(self, user_id, after_status=None, after_time=None,

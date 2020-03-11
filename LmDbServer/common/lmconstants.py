@@ -49,6 +49,7 @@ class SpeciesDatasource:
     space.
     """
 
+    GBIF = 'GBIF'
     """The default or boom config file must specify GBIF_OCCURRENCE_FILENAME, a
         CSV file (with extension) grouped by TaxonId.  Two additional files may
         be provided:
@@ -57,33 +58,35 @@ class SpeciesDatasource:
             2) GBIF_PROVIDER_FILENAME (with extension) containing CSV data for
                 the data providers referenced in the data file.
     """
-    GBIF = 'GBIF'
 
+    USER = 'USER'
     """The default or boom config file must specify USER_OCCURRENCE_DATA
         (without extension) which points to the basename of 2 files:
             1) a .csv file of data and 2) a .meta file of metadata describing
                 the csv data.  The config file must also specify
                 USER_OCCURRENCE_DATA_DELIMITER.
     """
-    USER = 'USER'
 
+    EXISTING = 'EXISTING'
     """The default or boom config file must specify an OCCURRENCE_ID_FILENAME
         containing OccurrenceSet database IDs for public or user data to serve
         as input to a BOOM process.
     """
-    EXISTING = 'EXISTING'
 
+    TAXON_IDS = 'TAXON_IDS'
     """The default or boom config file must specify a TAXON_ID_FILENAME
         containing taxon ids for GBIF taxonomy to serve as input to a BOOM
         process.
     """
-    TAXON_IDS = 'TAXON_IDS'
 
+    TAXON_NAMES = 'TAXON_NAMES'
     """The default or boom config file must specify a TAXON_NAME_FILENAME
         containing taxon name strings to be matched in GBIF taxonomy to serve
         as input to a BOOM process.
     """
-    TAXON_NAMES = 'TAXON_NAMES'
+
+    BISON = 'BISON'
+    IDIGBIO = 'IDIGBIO'
 
     # ................................
     @staticmethod

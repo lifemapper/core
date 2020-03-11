@@ -23,5 +23,5 @@ def validate_zipfile(obj_generator):
 
         shutil.rmtree(out_dir)
         return True
-    except Exception as e:
+    except Exception:
         return False

@@ -73,13 +73,51 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                         status_mod_time=None):
         """Initialize a matrix from its parts
         """
-        return LMMatrix(
+        return cls(
             None, matrix_type=base_matrix.matrix_type,
             process_type=process_type, metadata=base_matrix.matrix_metadata,
             dlocation=base_matrix.get_dlocation(),
             metadata_url=metadata_url, user_id=user_id, gridset=gridset,
             matrix_id=base_matrix.get_matrix_id(), status=base_matrix.status,
             status_mod_time=base_matrix.status_mod_time)
+
+    # ....................................
+    @classmethod
+    def init_from_file(cls, filename, matrix_type=MatrixType.PAM,
+                       process_type=None, scenario_id=None, gcm_code=None,
+                       alt_pred_code=None, date_code=None, alg_code=None,
+                       metadata=None, metadata_url=None, user_id=None,
+                       gridset=None, matrix_id=None, status=None,
+                       status_mod_time=None):
+        """Initialize a matrix from a file.
+
+        Args:
+            dlocation: The location of the matrix data.
+            matrix_type (int): Constant from MatrixType.
+            gcm_code: Code for the Global Climate Model used to create these
+                data.
+            alt_pred_code: Code for the alternate prediction (i.e. IPCC
+                scenario or Representative Concentration Pathways/RCPs) used to
+                create these data
+            date_code: Code for the time period for which these data are
+                predicted.
+            metadata: dictionary of metadata using Keys defined in superclasses
+            dlocation: file location of the array
+            gridset: parent gridset of this Matrixupdate_mod_time
+            matrix_id: Database identifier for the matrix object.
+
+        Todo:
+            Replace 3 codes with scenario id
+        """
+        with open(filename) as in_file:
+            mtx = Matrix.load_flo(in_file)
+        return cls(mtx, matrix_type=matrix_type, process_type=process_type,
+                   scenario_id=scenario_id, gcm_code=gcm_code,
+                   alt_pred_code=alt_pred_code, date_code=date_code,
+                   alg_code=alg_code, metadata=metadata, dlocation=filename,
+                   metadata_url=metadata_url, user_id=user_id, gridset=gridset,
+                   matrix_id=matrix_id, status=status,
+                   status_mod_time=status_mod_time)
 
     # ....................................
     def update_status(self, status, metadata=None, mod_time=gmt().mjd):

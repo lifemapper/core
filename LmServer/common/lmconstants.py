@@ -73,13 +73,13 @@ MAKEFLOW_OPTIONS = '-X {} -a -C {}:{} {}'.format(
     MASTER_WORKER_PATH, PUBLIC_FQDN, CS_PORT, EXTRA_MAKEFLOW_OPTIONS)
 
 # Worker factory options
-WORKER_FACTORY_OPTIONS = '-w {} -W {} -E "{}" -S {} {}'.format(
-    MAX_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_SGE_PATH,
+WORKER_FACTORY_OPTIONS = '-w {0} -W {0} -E "{1}" -S {2} {3}'.format(
+    MAX_WORKERS, WORKER_OPTIONS, SHARED_SGE_PATH,
     EXTRA_WORKER_FACTORY_OPTIONS)
 
 # Remove old worker directories command
 RM_OLD_WORKER_DIRS_CMD = 'rocks run host compute "rm -rf {}/worker-*"'.format(
-                           WORKER_PATH)
+    WORKER_PATH)
 
 DEFAULT_CONFIG = 'config'
 
@@ -106,6 +106,7 @@ SERVER_SCRIPTS_DIR = 'LmServer/tools'
 
 # ............................................................................
 class DbUser(Enum):
+    """Database user constant class."""
     Map = 'mapuser'
     WebService = 'wsuser'
     Pipeline = 'sdlapp'
@@ -115,12 +116,14 @@ class DbUser(Enum):
 
 # ............................................................................
 class PrimaryEnvironment(Enum):
+    """Primary environment for an instance class."""
     TERRESTRIAL = 1
     MARINE = 2
 
 
 # ............................................................................
 class ReferenceType(Enum):
+    """Reference type constant class."""
     SDMProjection = 102
     OccurrenceSet = 104
     MatrixColumn = 201
@@ -131,7 +134,7 @@ class ReferenceType(Enum):
     @staticmethod
     def name(rt):
         attrs = inspect.getmembers(
-            ReferenceType, lambda a: not(inspect.isroutine(a)))
+            ReferenceType, lambda a: not inspect.isroutine(a))
         for att in attrs:
             if rt == att[1]:
                 return att[0]
@@ -577,14 +580,14 @@ HINT_PREFIX = 'hint'
 # .............................................................................
 # List of error statuses that can be recovered
 RECOVERABLE_ERRORS = [
-   JobStatus.DB_CREATE_ERROR,
-   JobStatus.DB_DELETE_ERROR,
-   JobStatus.DB_INSERT_ERROR,
-   JobStatus.DB_READ_ERROR,
-   JobStatus.DB_UPDATE_ERROR,
-   JobStatus.IO_READ_ERROR,
-   JobStatus.IO_WRITE_ERROR,
-   JobStatus.IO_WAIT_ERROR
+    JobStatus.DB_CREATE_ERROR,
+    JobStatus.DB_DELETE_ERROR,
+    JobStatus.DB_INSERT_ERROR,
+    JobStatus.DB_READ_ERROR,
+    JobStatus.DB_UPDATE_ERROR,
+    JobStatus.IO_READ_ERROR,
+    JobStatus.IO_WRITE_ERROR,
+    JobStatus.IO_WAIT_ERROR
 ]
 
 
@@ -873,9 +876,9 @@ ATT_MAXENT_PARAMS = {
         # 8 - Equal test sensitivity and specificity
         # 9 - Maximum test sensitivity plus specificity
         # 10 - Equate entropy of thresholded and origial distributions
-        'type': int, 'min': 0, 'max': 10, 'default': 0},
+        'type': int, 'min': 0, 'max': 10, 'default': 0
+        },
     'verbose': {'type': int, 'min': 0, 'max': 1, 'default': 0}
-
     # Disabled
     # askoverwrite - not needed for us
     # autorun - we need this to always be on

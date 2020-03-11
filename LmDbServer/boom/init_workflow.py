@@ -89,10 +89,7 @@ class BOOMFiller(LMObject):
 
         self.in_param_fname = param_fname
         # Get database
-        try:
-            self.scribe = self._get_db(self.log_name)
-        except Exception:
-            raise
+        self.scribe = self._get_db(self.log_name)
         self.open()
 
         # Initialize variables
@@ -307,7 +304,7 @@ class BOOMFiller(LMObject):
 
     # ................................
     def _fix_permissions(self, files=None, dirs=None):
-        if is_lm_user:
+        if is_lm_user():
             print('Permissions created correctly by LMUser')
         else:
             dirname = os.path.dirname(self.out_config_filename)
@@ -1134,7 +1131,7 @@ class BOOMFiller(LMObject):
             tree.writeTree()
             tree.update_mod_time(gmt().mjd)
             # Update database
-            success = self.scribe.update_object(tree)
+            _success = self.scribe.update_object(tree)
             self._fix_permissions(files=[tree.get_dlocation()])
 
             # Save tree link to gridset
@@ -1437,9 +1434,9 @@ class BOOMFiller(LMObject):
                         tax_success_local_fname, source_url=tax_source_url,
                         delimiter='\t'),
                      SystemCommand(
-                        'cp', '{} {}'.format(
-                            tax_success_local_fname, tax_success_fname),
-                        inputs=tax_success_local_fname)])
+                         'cp', '{} {}'.format(
+                             tax_success_local_fname, tax_success_fname),
+                         inputs=tax_success_local_fname)])
         return cat_tax_cmd, tax_success_local_fname
 
     # ................................
@@ -1511,7 +1508,7 @@ class BOOMFiller(LMObject):
     # ................................
     def _get_partner_tree_data(self, pquery, gbifids, base_filename):
         treename = os.path.basename(base_filename)
-        (otree, gbif_to_ott, ott_unmatched_gbif_ids
+        (otree, gbif_to_ott, _ott_unmatched_gbif_ids
          ) = pquery.assemble_otol_data(gbifids, treename)
         encoded_tree = pquery.encode_ott_tree_to_gbif(
             otree, gbif_to_ott, scribe=self.scribe)
@@ -1552,7 +1549,7 @@ class BOOMFiller(LMObject):
             scen_grims, boom_gridset = self.add_shapegrid_gpam_gridset()
             # Insert other layers that may be used for SDM_MASK or other
             #    processing
-            other_layer_names = self.add_other_layers()
+            _other_layer_names = self.add_other_layers()
 
             # Create makeflow for computations and start rule list
             # TODO: Init makeflow
@@ -1649,8 +1646,7 @@ def main():
             time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(scriptname, timestamp)
 
-    print(('Running initWorkflow with param_fname = {}'
-          .format(param_fname)))
+    print(('Running initWorkflow with param_fname = {}'.format(param_fname)))
 
     filler = BOOMFiller(param_fname, logname=logname)
     gridset = filler.init_boom()

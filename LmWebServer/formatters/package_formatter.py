@@ -64,8 +64,8 @@ def get_map_content_for_proj(prj, scribe):
     map_obj = mapscript.mapObj(map_filename)
     # TODO: Color
     mapscript.msIO_installStdoutToBuffer()
-    result = map_obj.OWSDispatch(ows_req)
-    content_type = mapscript.msIO_stripStdoutBufferContentType()
+    _result = map_obj.OWSDispatch(ows_req)
+    _content_type = mapscript.msIO_stripStdoutBufferContentType()
     content = mapscript.msIO_getStdoutBufferBytes()
     mapscript.msIO_resetHandlers()
     return content
@@ -737,3 +737,4 @@ def gridset_package_formatter(gridset, include_csv=True, include_sdm=True,
         with open(package_filename) as package_file:
             cnt = package_file.read()
         return cnt
+    return None

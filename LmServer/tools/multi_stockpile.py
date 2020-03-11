@@ -133,7 +133,7 @@ def test_spatial(spatial_filename):
             _, ext = os.path.splitext(spatial_filename)
             file_format = LMFormat.get_format_by_extension(ext)
             if LMFormat.is_ogr(ext=ext):
-                success, feat_count = Vector.test_vector(
+                success, _feat_count = Vector.test_vector(
                     spatial_filename, driver=file_format.driver)
             elif LMFormat.is_gdal(ext=ext):
                 success = Raster.test_raster(spatial_filename)

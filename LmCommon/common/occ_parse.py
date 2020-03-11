@@ -429,7 +429,7 @@ class OccDataParser(LMObject):
             ogr_type = role = accepted_vals = None
             if vals is not None:
                 # Get required vals for columns to save
-                name = field_index_meta[idx][OccDataParser.FIELD_NAME_KEY]
+                _name = field_index_meta[idx][OccDataParser.FIELD_NAME_KEY]
                 ogr_type = field_index_meta[idx][OccDataParser.FIELD_TYPE_KEY]
                 # Check for optional filter AcceptedValues.
                 try:
