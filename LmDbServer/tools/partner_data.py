@@ -9,7 +9,6 @@ except ImportError:
     OFTBinary = 8
 
 import csv
-from enum import Enum
 import os
 
 import ot_service_wrapper.open_tree as open_tree
@@ -28,7 +27,7 @@ GBIF_MISSING_KEY = GbifAPI.GBIF_MISSING_KEY
 
 
 # .............................................................................
-class Partners(Enum):
+class Partners:
     """Constants for partner data
     """
     OTT_MISSING_KEY = 'unmatched_ott_ids'

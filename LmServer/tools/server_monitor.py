@@ -1,6 +1,5 @@
 """This script runs several monitoring tests on a Lifemapper front end.
 """
-from enum import Enum
 import subprocess
 
 from LmServer.common.localconstants import WEBSERVICES_ROOT, TROUBLESHOOTERS
@@ -8,7 +7,7 @@ from LmServer.notifications.email import EmailNotifier
 
 
 # .............................................................................
-class ProcKeys(Enum):
+class ProcKeys:
     """Constants class for process dictionary keys
     """
     USER = 'user'

@@ -1,7 +1,5 @@
 """Lifemapper backend constants module
 """
-from enum import Enum
-
 # Relative paths
 # For LmCompute command construction by LmServer (for Makeflow)
 SINGLE_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/single'
@@ -18,7 +16,7 @@ CMD_PYBIN = '$PYTHON'
 
 # Constants for configuration and processing of single species processes
 # .............................................................................
-class MaskMethod(Enum):
+class MaskMethod:
     """Constants for SDM masking methods
     """
     HULL_REGION_INTERSECT = 'hull_region_intersect'
@@ -26,7 +24,7 @@ class MaskMethod(Enum):
 
 
 # .............................................................................
-class RegistryKey(Enum):
+class RegistryKey:
     """Constants for dictionary keys used when processing single species SDMs
     """
     ALGORITHM_CODE = 'algorithm_code'

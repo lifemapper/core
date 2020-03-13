@@ -1,6 +1,5 @@
 """Lifemapper server constants.
 """
-from enum import Enum
 import inspect
 import os
 
@@ -105,7 +104,7 @@ SERVER_SCRIPTS_DIR = 'LmServer/tools'
 
 
 # ............................................................................
-class DbUser(Enum):
+class DbUser:
     """Database user constant class."""
     Map = 'mapuser'
     WebService = 'wsuser'
@@ -115,14 +114,14 @@ class DbUser(Enum):
 
 
 # ............................................................................
-class PrimaryEnvironment(Enum):
+class PrimaryEnvironment:
     """Primary environment for an instance class."""
     TERRESTRIAL = 1
     MARINE = 2
 
 
 # ............................................................................
-class ReferenceType(Enum):
+class ReferenceType:
     """Reference type constant class."""
     SDMProjection = 102
     OccurrenceSet = 104
@@ -188,7 +187,7 @@ class ReferenceType(Enum):
 
 
 # .............................................................................
-class OccurrenceFieldNames(Enum):
+class OccurrenceFieldNames:
     """Occurrence filed names enumeration."""
     LOCAL_ID = ['localid', 'localId', 'occkey']
     UUID = ['uuid']
@@ -242,7 +241,7 @@ RAD_EXPERIMENT_DIR_PREFIX = 'RAD'
 
 
 # .............................................................................
-class MapPrefix(Enum):
+class MapPrefix:
     """Map data prefix enumeration"""
     SDM = 'data'
     USER = 'usr'
@@ -253,7 +252,7 @@ class MapPrefix(Enum):
 
 
 # .............................................................................
-class LMFileType(Enum):
+class LMFileType:
     """Lifemapper file type enumeration"""
     # User level
     OTHER_MAP = 1
@@ -593,7 +592,7 @@ RECOVERABLE_ERRORS = [
 
 
 # ............................................................................
-class Priority(Enum):
+class Priority:
     """Constants to define the priority of a Job"""
     LOW = 0
     NORMAL = 1
@@ -604,7 +603,7 @@ class Priority(Enum):
 
 
 # ............................................................................
-class LMServiceType(Enum):
+class LMServiceType:
     """Lifemapper web service type enum"""
     TREES = 'tree'
     GRIDSETS = 'gridset'
@@ -954,7 +953,7 @@ class AlgQualities:
 
 
 # .............................................................................
-class Algorithms(Enum):
+class Algorithms:
     """Algorithms enumeration"""
     BIOCLIM = AlgQualities(
         'BIOCLIM', 'Bioclimatic Envelope Algorithm',
@@ -1052,7 +1051,7 @@ class Algorithms(Enum):
 
 
 # .............................................................................
-class SdmMasks(Enum):
+class SdmMasks:
     """SDM mask methods enumeration."""
     HULL_INTERSECT = AlgQualities(
         'hull_region_intersect', 'Convex Hull Region Intersect',
@@ -1066,7 +1065,7 @@ class SdmMasks(Enum):
 # ============================================================================
 # =                           Snippet Constants                              =
 # ============================================================================
-class SnippetOperations(Enum):
+class SnippetOperations:
     """Class of available snippet operations"""
     DOWNLOADED = 'downloaded'
     VIEWED = 'viewed'
@@ -1075,7 +1074,7 @@ class SnippetOperations(Enum):
 
 
 # =============================================================================
-class SnippetFields(Enum):
+class SnippetFields:
     """Snippet fields in Solr index"""
     AGENT = 'agent'
     CATALOG_NUMBER = 'catalogNumber'
@@ -1103,7 +1102,7 @@ SOLR_SERVER = 'http://localhost:8983/solr/'
 NUM_DOCS_PER_POST = 100
 
 
-class SOLR_FIELDS(Enum):
+class SOLR_FIELDS:
     """This class contains constants for SOLR index field names"""
     ALGORITHM_CODE = 'algorithmCode'
     ALGORITHM_PARAMETERS = 'algorithmParameters'
@@ -1153,7 +1152,7 @@ class SOLR_FIELDS(Enum):
 
 
 # .............................................................................
-class SOLR_TAXONOMY_FIELDS(Enum):
+class SOLR_TAXONOMY_FIELDS:
     """Constants for Taxonomy Solr index fields"""
     CANONICAL_NAME = 'canonical_name'
     ID = 'id'
@@ -1192,7 +1191,7 @@ PRE_PROCESS_KEY = 'preprocess'
 PROCESSING_KEY = 'processing'
 
 
-class SubsetMethod(Enum):
+class SubsetMethod:
     """Subset method enumeration"""
     COLUMN = 0  # Same shapegrid, just cut out columns
     SPATIAL = 1  # Spatial subset of original shapegrid.  Column and row,

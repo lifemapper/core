@@ -1,6 +1,5 @@
 """This module contains constants used by the Lifemapper web services
 """
-from enum import Enum
 import os
 
 from LmServer.base.utilities import get_mjd_time_from_iso_8601
@@ -23,7 +22,7 @@ MAX_PROJECTIONS = 1000
 
 
 # .............................................................................
-class HTTPMethod(Enum):
+class HTTPMethod:
     """Constant class for HTTP methods
     """
     DELETE = 'DELETE'
@@ -447,7 +446,7 @@ KML_NS_PREFIX = None
 
 
 # .............................................................................
-class APIPostKeys(Enum):
+class APIPostKeys:
     """This class contains constants for API JSON POST keys
     """
     ALGORITHM = 'algorithm'

@@ -4,7 +4,6 @@ Todo:
     * Consider adding constants for collected metric names
     * Make file name optional or only used in write method
 """
-from enum import Enum
 import json
 import os
 
@@ -12,7 +11,7 @@ from LmBackend.common.lmobj import LMObject
 
 
 # .............................................................................
-class LmMetricNames(Enum):
+class LmMetricNames:
     """Class containing standard metric names
 
     Note:

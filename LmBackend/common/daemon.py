@@ -1,7 +1,6 @@
 """This module contains a base-Daemon class
 """
 import atexit
-from enum import Enum
 import os
 import signal
 import subprocess
@@ -12,7 +11,7 @@ from LmCommon.common.log import DaemonLogger
 
 
 # .............................................................................
-class DaemonCommands(Enum):
+class DaemonCommands:
     """Class containing command constants
     """
     START = 'start'

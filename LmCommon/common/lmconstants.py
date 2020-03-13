@@ -1,7 +1,5 @@
 """Module containing common Lifemapper constants
 """
-from enum import Enum
-
 try:
     from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
 except ImportError:
@@ -43,7 +41,7 @@ ENCODING = 'utf-8'
 
 
 # ............................................................................
-class BoomKeys(Enum):
+class BoomKeys:
     """Constants class for BOOM config document keys
     """
     # Algorithm
@@ -354,7 +352,7 @@ SHAPEFILE_INTERFACE = 'shapefile'
 
 
 # .............................................................................
-class MatrixType(Enum):
+class MatrixType:
     """Constants to define the type of matrix (or set of matrix outputs)
     """
     # Inputs
@@ -381,7 +379,7 @@ class MatrixType(Enum):
     MCPA_OUTPUTS = 201  # Could be used for permutations
 
 
-class JobStatus(Enum):
+class JobStatus:
     """Constants to define the status of a job.
 
     Note:
@@ -592,7 +590,7 @@ class JobStatus(Enum):
 
 # ............................................................................
 # Aka reqSoftware in LmJob table
-class ProcessType(Enum):
+class ProcessType:
     """Process type enumeration
     """
     # .........................
@@ -734,7 +732,7 @@ DEFAULT_NODATA = -9999
 DWC_QUALIFIER = 'dwc:'
 
 
-class DwcNames(Enum):
+class DwcNames:
     """Darwin core names enumeration
     """
     OCCURRENCE_ID = {'FULL': 'occurrenceID', 'SHORT': 'occurid'}
@@ -773,7 +771,7 @@ PROVIDER_FIELD_COMMON = 'provider'
 
 
 # ......................................................
-class GBIF(Enum):
+class GBIF:
     """GBIF constants enumeration
     """
     DATA_DUMP_DELIMITER = '\t'
@@ -829,7 +827,7 @@ class GBIF(Enum):
     LINK_PREFIX = 'http://www.gbif.org/occurrence/'
 
 
-class GbifQuery(Enum):
+class GbifQuery:
     """GBIF query constants
     """
     TAXON_FIELDS = {0: ('taxonkey', OFTString),
@@ -885,7 +883,7 @@ class GbifQuery(Enum):
 # .............................................................................
 # ......................................................
 # For parsing BISON Solr API response, updated Feb 2015
-class BISON(Enum):
+class BISON:
     """Bison constant enumeration
     """
     OCCURRENCE_URL = 'https://bison.usgs.gov/solr/occurrences/select'
@@ -907,7 +905,7 @@ class BISON(Enum):
 
 
 # .............................................................................
-class BisonQuery(Enum):
+class BisonQuery:
     """BISON query constants enumeration
     """
     # Expected Response Dictionary Keys
@@ -976,7 +974,7 @@ class BisonQuery(Enum):
 
 
 # .............................................................................
-class Itis(Enum):
+class Itis:
     """ITIS constants enumeration
     """
     DATA_NAMESPACE = 'http://data.itis_service.itis.usgs.gov/xsd'
@@ -1000,7 +998,7 @@ class Itis(Enum):
 # .............................................................................
 # .                           iDigBio constants                               .
 # .............................................................................
-class Idigbio(Enum):
+class Idigbio:
     """iDigBio constants enumeration
     """
     LINK_PREFIX = 'https://www.idigbio.org/portal/records/'
@@ -1021,7 +1019,7 @@ class Idigbio(Enum):
 
 
 # .............................................................................
-class IdigbioDump(Enum):
+class IdigbioDump:
     """iDigBio dump constants enumeration
     """
     EXPORT_FIELDS = {0: ('coreid', None),
@@ -1191,7 +1189,7 @@ class IdigbioDump(Enum):
 
 
 # .............................................................................
-class IdigbioQuery(Enum):
+class IdigbioQuery:
     """iDigBio query constants enumeration
     """
     EXPORT_FIELDS = {0: (Idigbio.ID_FIELD, OFTString),
@@ -1264,7 +1262,7 @@ LEGAL_MAP_UNITS = [
 URL_ESCAPES = [[" ", "%20"], [",", "%2C"]]
 
 
-class HTTPStatus(Enum):
+class HTTPStatus:
     """HTTP 1.1 Status Codes
 
     See:
@@ -1347,7 +1345,7 @@ LOGFILE_BACKUP_COUNT = 5
 # .............................................................................
 # .                               PAM Statisitcs                              .
 # .............................................................................
-class PamStatKeys(Enum):
+class PamStatKeys:
     """Class containing PAM statistics keys
 
     Todo:
@@ -1422,7 +1420,7 @@ DEFAULT_TREE_SCHEMA = 'nexus'
 
 
 # .............................
-class PhyloTreeKeys(Enum):
+class PhyloTreeKeys:
     """Keys for phylogenetic trees
     """
     MTX_IDX = 'mx'  # The matrix index for this node
