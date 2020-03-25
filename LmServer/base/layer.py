@@ -17,7 +17,6 @@ from LmCommon.common.time import gmt
 from LmCommon.common.verify import compute_hash, verify_hash
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.service_object import ServiceObject
-from LmServer.common.geo_tools import GeoFileInfo
 from LmServer.common.lmconstants import (
     GDALDataTypes, OGRDataTypes, LMFormat, LMServiceType, OccurrenceFieldNames,
     UPLOAD_PATH)
@@ -975,10 +974,17 @@ class Raster(_Layer):
         """
 
         if (self._dlocation is not None and os.path.exists(self._dlocation)):
-            geo_file_info = GeoFileInfo(self._dlocation, updateable=True)
-            if isinstance(srs, osr.SpatialReference):
-                srs = srs.ExportToWkt()
-            geo_file_info.write_wkt_srs(srs)
+            try:
+                dataset = gdal.Open(str(self.dlocation), gdalconst.GA_Update)
+                if isinstance(srs, osr.SpatialReference):
+                    srs = srs.ExportToWkt()
+                dataset.SetProjection(srs)
+                dataset.FlushCache()
+                dataset = None
+            except Exception as err:
+                raise LMError(
+                    'Unable to write SRS info to file', err, srs=srs,
+                    d_location=self.dlocation)
 
     # .............................
     def copy_srs_from_file(self, fname):
@@ -992,8 +998,10 @@ class Raster(_Layer):
             LMError: on failure to open dataset or write srs
         """
         if (fname is not None and os.path.exists(fname)):
-            srs = GeoFileInfo.get_srs_as_wkt(fname)
-            self.write_srs(srs)
+            dataset = gdal.Open(fname, gdalconst.GA_ReadOnly)
+            wkt_srs = dataset.GetProjection()
+            dataset = None
+            self.write_srs(wkt_srs)
         else:
             raise LMError(['Unable to read file %s' % fname])
 
