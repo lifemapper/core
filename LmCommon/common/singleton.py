@@ -11,7 +11,7 @@ def singleton(cls):
 
     def get_instance(*args, **kwargs):
         name = hashlib.md5(
-            ''.join([str(args), str(kwargs)]).encode()).hexdigest()
+            ''.join([str(args), str(kwargs)]).encode('utf-8')).hexdigest()
         if name not in instances:
             instances[name] = cls(*args, **kwargs)
         return instances[name]
