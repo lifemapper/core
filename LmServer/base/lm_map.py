@@ -85,7 +85,8 @@ class LMMap(LMSpatialObject):
             lyr_str = '\n'.join(all_layers)
             try:
                 earl_jr = EarlJr()
-                map_template = earl_jr.get_map_filename_from_map_name(template)
+                map_template = earl_jr.get_map_filename_from_map_name(
+                    template, user_id=self._user_id)
                 map_str = self._get_base_map(map_template)
                 map_str = self._add_map_base_attributes(map_str)
                 map_str = map_str.replace('##_LAYERS_##', lyr_str)

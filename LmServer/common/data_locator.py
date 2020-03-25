@@ -13,7 +13,6 @@ from LmServer.common.lmconstants import (
     USER_MAKEFLOW_DIR, USER_TEMP_DIR, WCS_LAYER_KEY, WEB_DIR, WMS_LAYER_KEY)
 from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
 from LmServer.common.log import ConsoleLogger
-from LmServer.db.borg_scribe import BorgScribe
 
 
 # .............................................................................
@@ -273,7 +272,7 @@ class EarlJr(LMObject):
         return filename
 
     # ................................
-    def get_map_filename_from_map_name(self, map_name):
+    def get_map_filename_from_map_name(self, map_name, user_id=None):
         """Get the map filename from the map name
 
         Args:
@@ -288,9 +287,8 @@ class EarlJr(LMObject):
         else:
             (file_type, _, occ_set_id, gridset_id, usr, ancillary, _
              ) = self._parse_map_name(map_name)
-
             if usr is None:
-                usr = self._find_user_for_object(occ_id=occ_set_id)
+                usr = user_id
 
             if not ancillary:
                 pth = self.create_data_path(
@@ -605,19 +603,6 @@ class EarlJr(LMObject):
 
         return (
             map_name, ancillary, usr, epsg, occ_set_id, gridset_id, scen_code)
-
-    # ................................
-    def _find_user_for_object(self, layer_id=None, occ_id=None,
-                              matrix_id=None, gridset_id=None,
-                              mf_process_id=None):
-        if self._scribe is None:
-            scribe = BorgScribe(ConsoleLogger())
-            scribe.open_connections()
-
-        usr = self._scribe.find_user_for_object(
-            layer_id=layer_id, occ_id=occ_id, matrix_id=matrix_id,
-            gridset_id=gridset_id, mf_process_id=mf_process_id)
-        return usr
 
     # ................................
     @staticmethod

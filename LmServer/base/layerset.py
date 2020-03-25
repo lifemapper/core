@@ -7,7 +7,7 @@ from osgeo import gdal, gdalconst, ogr
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT, DEFAULT_EPSG)
-from LmServer.base.layer import _Layer, Raster, Vector
+from LmServer.base.layer import Raster, Vector
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.service_object import ServiceObject
 from LmServer.common.color_palette import ColorPalette
@@ -105,7 +105,7 @@ class _LayerSet(LMSpatialObject):
                 differently for each layerset (and mapfile) that contains a
                 layer.
         """
-        if isinstance(lyr, _Layer):
+        if isinstance(lyr, Raster) or isinstance(lyr, Vector):
             if self.get_layer(lyr.metadata_url) is None:
                 if self._epsg is None or self._epsg == lyr.epsg_code:
                     self._layers.append(lyr)
@@ -406,7 +406,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
             try:
                 layers = self._create_layers()
                 map_template = self._earl_jr.get_map_filename_from_map_name(
-                    template)
+                    template, user_id=self._user_id)
                 map_str = self._get_base_map(map_template)
                 online_url = self._get_mapset_url()
                 map_str = self._add_map_base_attributes(map_str, online_url)
