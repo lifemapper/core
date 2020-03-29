@@ -31,8 +31,7 @@ def format_time_human(d_time=None):
 
 # ...........................................
 def get_mjd_time_from_iso_8601(d_time):
-    """Get mjd time from iso 8601
-    """
+    """Get mjd time from iso 8601"""
     try:
         return LmTime.strptime(d_time, ISO_8601_TIME_FORMAT_FULL).mjd
     except Exception:
@@ -45,11 +44,9 @@ def get_mjd_time_from_iso_8601(d_time):
             except Exception:
                 return gmt().mjd
 
-
 # .............................................................................
 def _get_current_user():
-    """Get the system user running python
-    """
+    """Get the system user running python"""
     cmd = '/usr/bin/whoami'
     info, _ = subprocess.Popen(
         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -59,13 +56,11 @@ def _get_current_user():
 
 # .............................
 def is_lm_user():
-    """Determine if current user is the non-root Lifemapper user
-    """
+    """Determine if current user is the non-root Lifemapper user"""
     return _get_current_user() == LM_USER
 
 
 # .............................
 def is_root_user():
-    """Determine if current user is the root Lifemapper user
-    """
+    """Determine if current user is the root Lifemapper user"""
     return _get_current_user() == 'root'

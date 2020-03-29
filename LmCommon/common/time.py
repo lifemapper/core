@@ -3,7 +3,7 @@
 Note:
     * Replacement for mx.DateTime calls for Python 3
 
-Todo:
+TODO:
     * Allow both struct_time and datetime?
     * Maybe just use datetime
     * Make sure all attributes match internal data object for time
@@ -11,30 +11,29 @@ Todo:
     * Less than / greater than / etc
 """
 import datetime
-import time
 
-MJD_EPOCH_TIME = datetime.datetime(1858, 11, 17, 0, 0, 0, 0)
+MJD_EPOCH_TIME = datetime.datetime(1858, 11, 17, tzinfo=datetime.timezone.utc)
 SECONDS_IN_DAY = 86400
 
 
 # .............................................................................
 class LmTime:
-    """Subclass for time for Lifemapper purposes
-    """
+    """Subclass for time for Lifemapper purposes"""
 
     # ...........................
     def __init__(self, dtime=None):
-        """Constructor that takes an optional time.struct_time object.
-        """
+        """Constructor that takes an optional time.struct_time object."""
         if dtime is None:
             self._time = datetime.datetime.utcnow()
-        else:
+        elif isinstance(dtime, datetime.datetime):
             self._time = dtime
+        else:
+            raise Exception(
+                'Optional LmTime argument must be a datetime.datetime object')
 
     # ...........................
     def __float__(self):
-        """Returns a floating point value for the LmTime object
-        """
+        """Returns a floating point value for the LmTime object"""
         return float(
             '{}{:02d}{:02d}.{:02d}{:02d}{:02d}'.format(
                 self._time.tm_year, self._time.tm_mon,
@@ -44,8 +43,7 @@ class LmTime:
     # ...........................
     @classmethod
     def from_mjd(cls, mjd_time):
-        """Return an LmTime object for the MJD time.
-        """
+        """Return an LmTime object for the MJD time."""
         num_days = int(mjd_time)
         num_seconds = SECONDS_IN_DAY * (mjd_time - num_days)
         return cls(
@@ -56,14 +54,73 @@ class LmTime:
     @classmethod
     def strptime(cls, time_string, time_format):
         """Return an LmTime object for the time string.
+            
+        Args:
+            cls: Call with Class
+            time_string: string in the format YYYY-MM-DDThh:mm:ss
+        Note:
+            Year:
+                  YYYY (eg 1997)
+               Year and month:
+                  YYYY-MM (eg 1997-07)
+               Complete date:
+                  YYYY-MM-DD (eg 1997-07-16)
+               Complete date plus hours and minutes:
+                  YYYY-MM-DDThh:mmTZD (eg 1997-07-16T19:20+01:00)
+               Complete date plus hours, minutes and seconds:
+                  YYYY-MM-DDThh:mm:ssTZD (eg 1997-07-16T19:20:30+01:00)
+               Complete date plus hours, minutes, seconds and a decimal fraction 
+               of a second
+                  YYYY-MM-DDThh:mm:ss.sTZD (eg 1997-07-16T19:20:30.45+01:00)
         """
-        return cls(dtime=time.strptime(time_string, time_format))
+        parts = time_string.split('T')
+        dstr = parts[0]
+        dparts = dstr.split('-')
+        try:
+            yr = int(dparts[0])
+        except:
+            yr = None
+        else:
+            try:
+                mo = int(dparts[1])
+            except:
+                mo = None
+            else:
+                try:
+                    dy = int(dparts[2])
+                except:
+                    dy = None
+        if None in (yr, mo, dy):
+            raise Exception('Year, month and day cannot be parsed from {}'
+                            .format(time_string))
+        hr = mn = sc = 0
+        try:
+            tstr = parts[1]
+        except:
+            pass
+        else:
+            tparts = tstr.split(':')            
+            try:
+                hr = int(tparts[0])
+            except:
+                pass
+            else:
+                try:
+                    mn = int(tparts[1])
+                except:
+                    pass
+                else:
+                    try:
+                        sc = int(dparts[2])
+                    except:
+                        pass
+        d_time = datetime.datetime(yr, mo, dy, hour=hr, minute=mn, second=sc)
+        return cls(dtime=d_time)
 
     # ...........................
     @property
     def day(self):
-        """Return the day value of the time
-        """
+        """Return the day value of the time"""
         return self._time.day
 
     # ...........................
@@ -81,54 +138,46 @@ class LmTime:
     # ...........................
     @property
     def month(self):
-        """Return the month value of the time
-        """
+        """Return the month value of the time"""
         return self._time.month
 
     # ...........................
     def strftime(self, format_str=None):
-        """Format time as specified by format string
-        """
+        """Format time as specified by format string"""
         return self._time.strftime(format_str)
 
     # ...........................
     def tuple(self):
-        """Return the time as tuple.
-        """
+        """Return the time as tuple."""
         return tuple(self._time)
 
     # ...........................
     @property
     def year(self):
-        """Return the year value of the time
-        """
+        """Return the year value of the time"""
         return self._time.tm_year
 
 
 # .............................................................................
 def from_timestamp(ticks):
-    """Return an LmTime object from timestamp ticks
-    """
+    """Return an LmTime object from timestamp ticks"""
     return LmTime(dtime=datetime.datetime.fromtimestamp(ticks))
 
 
 # .............................................................................
 def gmt():
-    """Return a LmTime object for GMT
-    """
-    return LmTime(dtime=time.gmtime())
+    """Return a LmTime object for GMT"""
+    return LmTime(datetime.datetime.now(datetime.timezone.utc))
 
 
 # .............................................................................
 def localtime():
-    """Return a LmTime object for time.localtime.
-    """
-    return LmTime(dtime=time.localtime())
+    """Return a LmTime object for time.localtime."""
+    return LmTime(dtime=datetime.datetime.now())
 
 
 # .............................................................................
 def time_delta_from_mjd(mjd_value):
-    """Get a time delta from an mjd value
-    """
+    """Get a time delta from an mjd value"""
     num_seconds = (mjd_value - int(mjd_value)) * SECONDS_IN_DAY
     return datetime.timedelta(days=int(mjd_value), seconds=num_seconds)
