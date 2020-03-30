@@ -155,7 +155,7 @@ class LmTime:
     @property
     def year(self):
         """Return the year value of the time"""
-        return self._time.tm_year
+        return self._time.year
 
 
 # .............................................................................

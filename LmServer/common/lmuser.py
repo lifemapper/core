@@ -73,9 +73,15 @@ class LMUser(LMObject):
     # ................................
     @staticmethod
     def _encrypt_password(passwd):
+        if not isinstance(passwd, bytes):
+            passwd = passwd.encode('utf-8')
+        salt = SALT
+        if not isinstance(salt, bytes):
+            salt = salt.encode('utf-8')
         hash_1 = hashlib.md5(passwd)
-        hash_2 = hashlib.md5(SALT)
-        hash_3 = hashlib.md5(''.join((hash_1.hexdigest(), hash_2.hexdigest())))
+        hash_2 = hashlib.md5(salt)
+        hash_3 = hashlib.md5(''.join((hash_1.hexdigest(), 
+                                      hash_2.hexdigest())).encode('utf-8'))
         return hash_3.hexdigest()
 
     # ................................
