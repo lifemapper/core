@@ -1,7 +1,6 @@
 """Catalog a scenario package for a user
 """
 import argparse
-from copy import copy
 import imp
 import logging
 import os
@@ -276,12 +275,12 @@ class SPFiller(LMObject):
         except KeyError:
             gcm_code = None
         res_val = scenario_meta['res'][1]
-        scen_keywords = copy(scenario_meta['keywords'])
+        scen_keywords = list(scenario_meta['keywords'])
         region = scenario_meta['region']
 
         for env_code in package_meta['layertypes']:
             lt_meta = layer_meta[env_code]
-            layer_keywords = copy(lt_meta['keywords'])
+            layer_keywords = list(lt_meta['keywords'])
             layer_keywords.extend(scen_keywords)
             relative_fname = lt_meta['files'][scen_code]
             lyr_name = '{}_{}'.format(env_code, scen_code)

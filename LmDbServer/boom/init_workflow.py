@@ -786,10 +786,10 @@ class BOOMFiller(LMObject):
         # Convert to number if needed
         try:
             var = int(var)
-        except TypeError:
+        except:
             try:
                 var = float(var)
-            except TypeError:
+            except:
                 pass
         return var
 
@@ -1659,43 +1659,48 @@ if __name__ == '__main__':
     main()
 
 """
-import ConfigParser
+import argparse
+import configparser
+import glob
+import imp
 import json
+import logging
 import os
 import stat
-import types
+import sys
+import time
 
 from LmBackend.command.boom import BoomerCommand
-from LmBackend.command.common import (IdigbioQueryCommand ,
-    ConcatenateMatricesCommand, SystemCommand, ChainCommand)
+from LmBackend.command.common import (
+    ChainCommand, ConcatenateMatricesCommand, IdigbioQueryCommand,
+    SystemCommand)
 from LmBackend.command.server import (
     CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand, StockpileCommand)
+from LmBackend.command.single import GrimRasterCommand
 from LmBackend.common.lmobj import LMError, LMObject
-
 from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (JobStatus, LMFormat, MatrixType,
-      ProcessType, DEFAULT_POST_USER, GBIF, BoomKeys,
-      SERVER_BOOM_HEADING, SERVER_SDM_MASK_HEADING_PREFIX,
-      SERVER_SDM_ALGORITHM_HEADING_PREFIX,
-      SERVER_DEFAULT_HEADING_POSTFIX, SERVER_PIPELINE_HEADING)
+from LmCommon.common.lmconstants import (
+    BoomKeys, DEFAULT_POST_USER, GBIF, JobStatus, LMFormat, MatrixType,
+    ProcessType, SERVER_BOOM_HEADING, SERVER_DEFAULT_HEADING_POSTFIX,
+    SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX)
 from LmCommon.common.ready_file import ready_filename
-
+from LmCommon.common.time import gmt
 from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
-from LmDbServer.common.localconstants import (GBIF_PROVIDER_FILENAME,
-                                              GBIF_TAXONOMY_FILENAME)
+from LmDbServer.common.localconstants import (
+    GBIF_PROVIDER_FILENAME, GBIF_TAXONOMY_FILENAME)
 from LmDbServer.tools.catalog_scen_package import SPFiller
+from LmServer.base.layer import Vector, Raster
+from LmServer.base.service_object import ServiceObject
+from LmServer.base.utilities import is_lm_user
 from LmServer.common.data_locator import EarlJr
-from LmServer.common.lmconstants import (ARCHIVE_KEYWORD, GGRIM_KEYWORD,
-                           GPAM_KEYWORD, LMFileType, Priority, ENV_DATA_PATH,
-                           PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX,
-                           SPECIES_DATA_PATH, DEFAULT_NUM_PERMUTATIONS)
+from LmServer.common.lmconstants import (
+    ARCHIVE_KEYWORD, DEFAULT_EMAIL_POSTFIX, DEFAULT_NUM_PERMUTATIONS,
+    ENV_DATA_PATH, GGRIM_KEYWORD, GPAM_KEYWORD, LMFileType, Priority,
+    SPECIES_DATA_PATH)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.base.layer import Vector
-from LmServer.base.service_object import ServiceObject
-from LmServer.base.utilities import is_lm_user
 from LmServer.db.borg_scribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
@@ -1704,9 +1709,8 @@ from LmServer.legion.mtx_column import MatrixColumn
 from LmServer.legion.process_chain import MFChain
 from LmServer.legion.shapegrid import Shapegrid
 from LmServer.legion.tree import Tree
-from LmBackend.command.single import GrimRasterCommand
 
-from LmDbServer.boom.initWorkflow import *
+from LmDbServer.boom.init_workflow import *
 
 
 # Public archive
@@ -1718,7 +1722,12 @@ timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 logname = 'initWorkflow.debug.{}'.format(timestamp)
 
 self = BOOMFiller(config_file, logname=logname)
-self.initialize_inputs()
+param_fname = self.in_param_fname
+config = Config(site_fn=param_fname)
+usr = self._get_boom_param(
+    config, BoomKeys.ARCHIVE_USER, default_value=PUBLIC_USER)
+
+# self.initialize_inputs()
 
 ###################################################################
 ###################################################################

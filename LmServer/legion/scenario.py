@@ -68,7 +68,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
             Scenario object with the given metadata_url, or user_id/code
                 combination. None if not found.
         """
-        for scen in self._scenarios:
+        for scen in self._scenarios.values():
             if any([code and scen.code.lower() == code.lower(),
                     metadata_url and metadata_url == scen.metadata_url]):
                 return scen
@@ -195,7 +195,7 @@ class Scenario(MapLayerSet):
         if lyrs:
             for lyr in lyrs:
                 self.add_layer(lyr)
-            self._bbox = MapLayerSet.intersect_bboxes(self)
+            self._bbox = self.intersect_bboxes
 
     # ................................
     def _set_res(self, res):
@@ -235,7 +235,6 @@ class Scenario(MapLayerSet):
                     lyr.metadata_url) is None:
                 if isinstance(lyr, EnvLayer):
                     self._layers.append(lyr)
-                    self._bbox = MapLayerSet.intersect_bboxes(self)
                     # Set map_prefix only if does not exist. Could be in
                     #    multiple mapfiles, but all should use
                     #    same url/map_prefix.
@@ -260,7 +259,7 @@ class Scenario(MapLayerSet):
             if not isinstance(lyr, EnvLayer):
                 raise LMError('Incompatible Layer type {}'.format(type(lyr)))
         self._layers = lyrs
-        self._bbox = MapLayerSet.intersect_bboxes(self)
+        self._bbox = self.intersect_bboxes
 
     # ................................
     def create_map_prefix(self, lyr_name=None):

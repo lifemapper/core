@@ -530,6 +530,6 @@ class DbPostgresql(LMAbstractObject):
         for name in field_names:
             try:
                 return row[idxs[name]]
-            except AttributeError:
+            except:
                 pass
         return None

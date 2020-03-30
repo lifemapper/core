@@ -51,7 +51,6 @@ class LMSpatialObject(LMObject):
         self._set_bbox(bbox)
         self._map_units = None
         self._set_units(map_units)
-        super().__init__(self)
 
     # ................................
     def create_srs_from_epsg(self, epsg_code=None):

@@ -108,7 +108,7 @@ class Borg(DbPostgresql):
 
     # ................................
     def _create_algorithm(self, row, idxs):
-        """Created only from a model, lm_fullModel, or lm_fullProjection
+        """Created only from an algorithm, model, lm_fullModel, or lm_fullProjection
         """
         code = self._get_column_value(row, idxs, ['algorithmcode'])
         params = self._get_column_value(row, idxs, ['algparams'])
@@ -552,7 +552,7 @@ class Borg(DbPostgresql):
         """
         if not mod_time:
             mod_time = gmt().mjd
-        meta = alg.dump_alg_metadata()
+        meta = alg.dump_algorithm_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertAlgorithm', alg.code, meta, mod_time)
         algo = self._create_algorithm(row, idxs)
@@ -948,7 +948,7 @@ class Borg(DbPostgresql):
         if lyr.data_format in LMFormat.ogr_drivers() and \
                 lyr.epsg_code == DEFAULT_EPSG:
             wkt = lyr.get_wkt()
-        meta = lyr.dump_lyr_metadata()
+        meta = lyr.dump_layer_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertLayer', lyr.get_id(), lyr.get_user_id(), lyr.squid,
             lyr.verify, lyr.name, lyr.get_dlocation(), meta, lyr.data_format,
@@ -1203,7 +1203,7 @@ class Borg(DbPostgresql):
         Returns:
             Updated record for successful update.
         """
-        meta = shpgrd.dump_lyr_metadata()
+        meta = shpgrd.dump_layer_metadata()
         success = self.execute_modify_function(
             'lm_updateShapeGrid', shpgrd.get_id(), shpgrd.verify,
             shpgrd.get_dlocation(), meta, shpgrd.mod_time, shpgrd.size,
@@ -1293,7 +1293,7 @@ class Borg(DbPostgresql):
         if lyr.epsg_code == DEFAULT_EPSG:
             wkt = lyr.get_wkt()
         envmeta = lyr.dump_param_metadata()
-        lyrmeta = lyr.dump_lyr_metadata()
+        lyrmeta = lyr.dump_layer_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertEnvLayer', lyr.get_id(), lyr.get_user_id(),
             lyr.squid, lyr.verify, lyr.name, lyr.get_dlocation(), lyrmeta,
@@ -1800,7 +1800,7 @@ class Borg(DbPostgresql):
         """
         success = False
         poly_wkt = points_wkt = None
-        metadata = occ.dump_lyr_metadata()
+        metadata = occ.dump_layer_metadata()
         try:
             poly_wkt = occ.get_convex_hull_wkt()
         except Exception:
@@ -1840,7 +1840,7 @@ class Borg(DbPostgresql):
             proj: The SDMProjection object to update
         """
         success = False
-        lyr_meta = proj.dump_lyr_metadata()
+        lyr_meta = proj.dump_layer_metadata()
         prj_meta = proj.dump_param_metadata()
         try:
             success = self.execute_modify_function(
@@ -1874,7 +1874,7 @@ class Borg(DbPostgresql):
             'lm_findOrInsertOccurrenceSet', occ.get_id(), occ.get_user_id(),
             occ.squid, occ.verify, occ.display_name, occ.get_dlocation(),
             occ.get_raw_dlocation(), point_total, occ.get_csv_extent_string(),
-            occ.epsg_code, occ.dump_lyr_metadata(), occ.status,
+            occ.epsg_code, occ.dump_layer_metadata(), occ.status,
             occ.status_mod_time, poly_wkt, points_wkt)
         new_or_existing_occ = self._create_occurrence_layer(row, idxs)
         return new_or_existing_occ
@@ -2087,7 +2087,7 @@ class Borg(DbPostgresql):
             Assumes that pre- or post-processing layer inputs have already been
                 inserted
         """
-        lyr_meta = proj.dump_lyr_metadata()
+        lyr_meta = proj.dump_layer_metadata()
         prj_meta = proj.dump_param_metadata()
         alg_params = proj.dump_algorithm_parameters_as_string()
         row, idxs = self.execute_insert_and_select_one_function(
