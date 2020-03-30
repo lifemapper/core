@@ -834,7 +834,7 @@ class Borg(DbPostgresql):
         wkt = None
         if scen.epsg_code == DEFAULT_EPSG:
             wkt = scen.get_wkt()
-        meta = scen.dump_scen_metadata()
+        meta = scen.dump_scenario_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertScenario', scen.get_user_id(), scen.code, meta,
             scen.gcm_code, scen.alt_pred_code, scen.date_code, scen.map_units,
