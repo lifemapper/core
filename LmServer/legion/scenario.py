@@ -4,7 +4,9 @@ from LmBackend.common.lmobj import LMError
 from LmServer.base.layerset import MapLayerSet
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.service_object import ServiceObject
-from LmServer.common.lmconstants import LMFileType, LMServiceType
+from LmServer.common.lmconstants import (
+    LMFileType, LMServiceType, ID_PLACEHOLDER)
+
 from LmServer.legion.env_layer import EnvLayer
 
 
@@ -69,8 +71,11 @@ class ScenPackage(ServiceObject, LMSpatialObject):
                 combination. None if not found.
         """
         for scen in self._scenarios.values():
-            if any([code and scen.code.lower() == code.lower(),
-                    metadata_url and metadata_url == scen.metadata_url]):
+            if code and scen.code.lower() == code.lower():
+                return scen
+            elif (metadata_url 
+                  and not (scen.metadata_url.endswith(ID_PLACEHOLDER)) 
+                  and scen.metadata_url == scen.metadata_url):
                 return scen
         return None
 

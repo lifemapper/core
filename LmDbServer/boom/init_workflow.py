@@ -1727,6 +1727,133 @@ config = Config(site_fn=param_fname)
 usr = self._get_boom_param(
     config, BoomKeys.ARCHIVE_USER, default_value=PUBLIC_USER)
 
+(self.user_id, self.user_id_path,
+         self.user_email,
+         self.user_taxonomy_base_filename,
+         self.archive_name,
+         self.priority,
+         self.scen_package_name,
+         mdl_scencode,
+         prj_scencodes,
+         self.data_source,
+         self.occ_id_fname,
+         self.taxon_name_filename,
+         self.taxon_id_filename,
+         self.occ_fname,
+         self.occ_sep,
+         self.min_points,
+         self.exp_date,
+         self.algorithms,
+         self.do_assemble_pams,
+         self.grid_bbox,
+         self.cell_sides,
+         self.cell_size,
+         self.grid_name,
+         self.intersect_params,
+         self.mask_alg,
+         self.tree_fname,
+         self.bg_hyp_fnames,
+         self.compute_pam_stats,
+         self.compute_mcpa,
+         self.num_permutations,
+         self.other_lyr_names) = self.read_param_vals()
+        self.woof_time_mjd = gmt().mjd
+        earl = EarlJr()
+        self.out_config_filename = earl.create_filename(
+            LMFileType.BOOM_CONFIG, obj_code=self.archive_name,
+            usr=self.user_id)
+
+self.woof_time_mjd = gmt().mjd
+earl = EarlJr()
+self.out_config_filename = earl.create_filename(
+    LMFileType.BOOM_CONFIG, obj_code=self.archive_name,
+    usr=self.user_id)
+
+self.add_user()
+
+
+scen_package = self.scribe.get_scen_package(
+    user_id=self.user_id, scen_package_name=self.scen_package_name,
+    fill_layers=True)
+
+if scen_package is not None:
+    print('found it')
+    
+sp_meta_fname = os.path.join(ENV_DATA_PATH, self.scen_package_name + '.py')
+
+boomer = self
+sp_filler = SPFiller(
+    sp_meta_fname, self.user_id, scribe=self.scribe)
+
+self = sp_filler
+updated_scen_pkg = None
+self.initialize_me()
+_user_id = self.add_user()
+mask_lyr = None
+sp_name = list(self.sp_meta.CLIMATE_PACKAGES.keys())[0]
+
+
+package_meta = self.sp_meta.CLIMATE_PACKAGES[sp_name]
+layer_meta = self.sp_meta.LAYERTYPE_META
+try:
+    mask_meta = self.sp_meta.SDM_MASK_META
+except AttributeError:
+    mask_lyr = None
+else:
+    mask_lyr = self._create_mask_layer(package_meta, mask_meta)
+
+from LmServer.legion.scenario import Scenario, ScenPackage
+scen_pkg = ScenPackage(
+    sp_name, self.user_id, epsg_code=package_meta['epsg'],
+    map_units=package_meta['mapunits'], mod_time=gmt().mjd)
+
+base_code = package_meta['baseline']
+base_meta = self.sp_meta.SCENARIO_META[base_code]
+scen_code, scenario_meta = base_code, base_meta
+res_val = scenario_meta['res'][1]
+lyrs = self._get_scen_layers(
+    package_meta, scen_code, scenario_meta, layer_meta)
+
+date_code = scenario_meta['date']
+alt_pred_code = scenario_meta['altpred']
+gcm_code = scenario_meta['gcm']
+
+
+# bscen = self._create_scenario(
+#     package_meta, base_code, base_meta, layer_meta)
+all_scens = {base_code: bscen}
+
+# scen_pkg, mask_lyr = self.create_scen_package(sp_name)
+
+# Only one Mask is included per scenario package
+if mask_lyr is not None:
+    self.scribe.log.info(
+        'Adding mask layer {}'.format(mask_lyr.name))
+    updated_mask = self.add_mask_layer(mask_lyr)
+    if updated_mask.get_dlocation() != \
+            mask_lyr.get_dlocation():
+        raise LMError(
+            ('Returned existing layer name {} for user {} '
+             'with filename {}, not expected filename {}'
+             ).format(
+                 mask_lyr.name, self.user_id,
+                 updated_mask.get_dlocation(),
+                 mask_lyr.get_dlocation()))
+updated_scen_pkg = self.add_package_scenarios_layers(scen_pkg)
+if all([
+        updated_scen_pkg is not None,
+        updated_scen_pkg.get_id() is not None,
+        updated_scen_pkg.name == sp_name,
+        updated_scen_pkg.get_user_id() == self.user_id]):
+    self.scribe.log.info(
+        ('Successfully added scenario package {} for '
+         'user {}').format(sp_name, self.user_id))
+
+# scen_package = sp_filler.catalog_scen_packages()
+
+    
+# self.scen_pkg = self.find_or_add_scenario_package()
+
 # self.initialize_inputs()
 
 ###################################################################

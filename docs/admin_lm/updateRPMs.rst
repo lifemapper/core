@@ -18,7 +18,7 @@ For lifemapper-server and lifemapper compute rolls:
 
 #. Update LMCODE_VERSION and VERSION in github:
    * pragmagrid/lifemapper-compute/src/version.mk 
-   * pragmagrid/lifemapper-server/src/version.mk
+   * pragmagrid/lifemapper-server/src/version.mkself
    * pragmagrid/lifemapper-server/src/webclient/version.mk.in
    * pragmagrid/lifemapper-server/src/biotaphy-otol
    

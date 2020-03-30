@@ -101,12 +101,13 @@ class Algorithm(LMObject):
         Args:
             inputs: A dictionary of layer objects for the algorithm
         """
-        if isinstance(inputs, str):
-            inputs = json.loads(inputs)
-        if isinstance(inputs, dict):
-            self._input_data = inputs
-        else:
-            print('Cannot set inputs.  Must be dictionary')
+        if inputs is not None:
+            if isinstance(inputs, str):
+                inputs = json.loads(inputs)
+            if isinstance(inputs, dict):
+                self._input_data = inputs
+            else:
+                print('Cannot set inputs.  Must be dictionary')
 
     # ................................
     def set_input(self, input_key, input_val):

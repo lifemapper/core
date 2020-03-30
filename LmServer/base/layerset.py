@@ -231,7 +231,8 @@ class _LayerSet(LMSpatialObject):
     def intersect_bboxes(self):
         """Intersects bounding boxes."""
         bboxes = [lyr.bbox for lyr in self._layers]
-        return bboxes
+        newbbox = LMSpatialObject.intersect_bboxes(bboxes)
+        return newbbox
 
 
 # .............................................................................
