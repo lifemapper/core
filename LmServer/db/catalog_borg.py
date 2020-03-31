@@ -223,7 +223,7 @@ class Borg(DbPostgresql):
             mod_time = self._get_column_value(
                 row, idxs, ['envmodtime', 'modtime'])
             usr = self._get_column_value(row, idxs, ['envuserid', 'userid'])
-            lt_id = self._get_column_value(row, idxs, ['env_typeid'])
+            lt_id = self._get_column_value(row, idxs, ['envtypeid'])
             lyr_type = EnvType(
                 env_code, usr, gcm_code=gcm_code, alt_pred_code=alt_code,
                 date_code=dt_code, metadata=meta, mod_time=mod_time,
