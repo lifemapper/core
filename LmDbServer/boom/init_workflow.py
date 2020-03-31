@@ -1721,12 +1721,10 @@ secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 logname = 'initWorkflow.debug.{}'.format(timestamp)
 
-self = BOOMFiller(config_file, logname=logname)
+boomer = BOOMFiller(config_file, logname=logname)
+self = boomer 
 param_fname = self.in_param_fname
 config = Config(site_fn=param_fname)
-usr = self._get_boom_param(
-    config, BoomKeys.ARCHIVE_USER, default_value=PUBLIC_USER)
-
 (self.user_id, self.user_id_path,
          self.user_email,
          self.user_taxonomy_base_filename,
@@ -1757,12 +1755,7 @@ usr = self._get_boom_param(
          self.compute_mcpa,
          self.num_permutations,
          self.other_lyr_names) = self.read_param_vals()
-        self.woof_time_mjd = gmt().mjd
-        earl = EarlJr()
-        self.out_config_filename = earl.create_filename(
-            LMFileType.BOOM_CONFIG, obj_code=self.archive_name,
-            usr=self.user_id)
-
+         
 self.woof_time_mjd = gmt().mjd
 earl = EarlJr()
 self.out_config_filename = earl.create_filename(
@@ -1781,7 +1774,6 @@ if scen_package is not None:
     
 sp_meta_fname = os.path.join(ENV_DATA_PATH, self.scen_package_name + '.py')
 
-boomer = self
 sp_filler = SPFiller(
     sp_meta_fname, self.user_id, scribe=self.scribe)
 
@@ -1791,55 +1783,24 @@ self.initialize_me()
 _user_id = self.add_user()
 mask_lyr = None
 sp_name = list(self.sp_meta.CLIMATE_PACKAGES.keys())[0]
+scen_pkg, mask_lyr = self.create_scen_package(sp_name)
+
+updated_mask = self.add_mask_layer(mask_lyr)
 
 
-package_meta = self.sp_meta.CLIMATE_PACKAGES[sp_name]
-layer_meta = self.sp_meta.LAYERTYPE_META
-try:
-    mask_meta = self.sp_meta.SDM_MASK_META
-except AttributeError:
-    mask_lyr = None
-else:
-    mask_lyr = self._create_mask_layer(package_meta, mask_meta)
-
-from LmServer.legion.scenario import Scenario, ScenPackage
-scen_pkg = ScenPackage(
-    sp_name, self.user_id, epsg_code=package_meta['epsg'],
-    map_units=package_meta['mapunits'], mod_time=gmt().mjd)
-
-base_code = package_meta['baseline']
-base_meta = self.sp_meta.SCENARIO_META[base_code]
-scen_code, scenario_meta = base_code, base_meta
-res_val = scenario_meta['res'][1]
-lyrs = self._get_scen_layers(
-    package_meta, scen_code, scenario_meta, layer_meta)
-
-date_code = scenario_meta['date']
-alt_pred_code = scenario_meta['altpred']
-gcm_code = scenario_meta['gcm']
 
 
-# bscen = self._create_scenario(
-#     package_meta, base_code, base_meta, layer_meta)
-all_scens = {base_code: bscen}
+updated_scen_pkg = self.scribe.find_or_insert_scen_package(scen_pkg)
+updated_scens = []
+for scode, scen in scen_pkg.scenarios.items():
+    new_scen = self.scribe.find_or_insert_scenario(
+        scen, scen_package_id=updated_scen_pkg.get_id())
+    updated_scens.append(new_scen)
 
-# scen_pkg, mask_lyr = self.create_scen_package(sp_name)
+updated_scen_pkg.set_scenarios(updated_scens)
 
-# Only one Mask is included per scenario package
-if mask_lyr is not None:
-    self.scribe.log.info(
-        'Adding mask layer {}'.format(mask_lyr.name))
-    updated_mask = self.add_mask_layer(mask_lyr)
-    if updated_mask.get_dlocation() != \
-            mask_lyr.get_dlocation():
-        raise LMError(
-            ('Returned existing layer name {} for user {} '
-             'with filename {}, not expected filename {}'
-             ).format(
-                 mask_lyr.name, self.user_id,
-                 updated_mask.get_dlocation(),
-                 mask_lyr.get_dlocation()))
-updated_scen_pkg = self.add_package_scenarios_layers(scen_pkg)
+# updated_scen_pkg = self.add_package_scenarios_layers(scen_pkg)
+
 if all([
         updated_scen_pkg is not None,
         updated_scen_pkg.get_id() is not None,
