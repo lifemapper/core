@@ -251,7 +251,8 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
                 # If we need to spatially subset, slice the matrix
                 if method == SubsetMethod.SPATIAL:
-                    pam_mtx.slice(keep_sites)
+                    tmp = pam_mtx.matrix.slice(keep_sites)
+                    pam_mtx.set_data(tmp, headers=tmp.headers)
 
                 # Insert it into db
                 updated_pam_mtx = scribe.find_or_insert_matrix(pam_mtx)
@@ -260,8 +261,8 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 log.debug(
                     'Dlocation for updated pam: {}'.format(
                         updated_pam_mtx.get_dlocation()))
-                with open(updated_pam_mtx.get_dlocation(), 'w') as out_file:
-                    pam_mtx.save(out_file)
+                with open(updated_pam_mtx.get_dlocation(), 'wb') as out_file:
+                    pam_mtx.matrix.save(out_file)
 
         # GRIMs
         # --------
@@ -293,7 +294,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             if method == SubsetMethod.SPATIAL:
                 grim_mtx = grim_mtx.slice(keep_sites)
 
-            with open(inserted_grim.get_dlocation(), 'w') as out_file:
+            with open(inserted_grim.get_dlocation(), 'wb') as out_file:
                 grim_mtx.save(out_file)
 
         # BioGeo
@@ -317,7 +318,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             if method == SubsetMethod.SPATIAL:
                 bg_mtx = bg_mtx.slice(keep_sites)
 
-            with open(inserted_bg.get_dlocation(), 'w') as out_file:
+            with open(inserted_bg.get_dlocation(), 'wb') as out_file:
                 bg_mtx.save(out_file)
 
     else:
@@ -568,7 +569,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             # Write matrix
             # TODO(CJ): Evaluate if this is how we want to do it
             inserted_bg = enc_mtx
-            inserted_bg.set_headers(enc_mtx.get_Headers())
+            inserted_bg.set_headers(enc_mtx.get_headers())
             inserted_bg.write(overwrite=True)
             inserted_bg.update_status(JobStatus.COMPLETE, mod_time=gmt().mjd)
             scribe.update_object(inserted_bg)
