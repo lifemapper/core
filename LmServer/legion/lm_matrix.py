@@ -12,7 +12,7 @@ from LmServer.common.lmconstants import (LMServiceType, LMFileType)
 
 
 # .............................................................................
-class LMMatrix(Matrix, ServiceObject, ProcessObject):
+class LMMatrix(ServiceObject, ProcessObject):
     """The Matrix class contains a 2-dimensional numeric matrix."""
     # ....................................
     def __init__(self, matrix, headers=None, matrix_type=MatrixType.PAM,
@@ -57,7 +57,12 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         if gridset is not None:
             gridset_url = gridset.metadata_url
             gridset_id = gridset.get_id()
-        Matrix.__init__(self, matrix, headers=headers)
+        # Note: CJG - 04/01/2020 -
+        # We really shouldn't inherit from Matrix as this object will not have
+        #    the same functionality.  Use the 'matrix' attribute to get the
+        #    Matrix object.
+        # Matrix.__init__(self, matrix, headers=headers)
+        self.matrix = matrix
         ServiceObject.__init__(
             self, user_id, matrix_id, LMServiceType.MATRICES,
             metadata_url=metadata_url, parent_metadata_url=gridset_url,
@@ -109,7 +114,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
         Todo:
             Replace 3 codes with scenario id
         """
-        with open(filename) as in_file:
+        with open(filename, 'rb') as in_file:
             mtx = Matrix.load_flo(in_file)
         return cls(mtx, matrix_type=matrix_type, process_type=process_type,
                    scenario_id=scenario_id, gcm_code=gcm_code,
@@ -262,14 +267,5 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
     # ....................................
     def set_data(self, new_data, headers=None):
-        """Set the data value for the matrix
-
-        Note:
-            This may not work as we expect, when the underlying Matrix class
-                became a direct subclass of numpy.ndarray it may have broken
-                code that relied on the .data attribute for the raw array data.
-                Modify this function as necessary and potentially restore the
-                .data attribute for this class if that is the best way to
-                proceed.
-        """
-        Matrix.__init__(self, new_data, headers=headers)
+        """Set the data value for the matrix."""
+        self.matrix = Matrix(new_data, headers=headers)
