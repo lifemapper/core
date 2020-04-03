@@ -1154,11 +1154,11 @@ class Vector(_Layer):
             (new_bbox, local_id_idx, geom_idx) = self.read_data(
                 dlocation=dlocation, data_format=data_format,
                 do_read_data=False)
-        # Reset some attributes based on data
-        if new_bbox is not None:
-            self.bbox = new_bbox
-            self._geom_idx = geom_idx
-            self._local_id_idx = local_id_idx
+            # Reset some attributes based on data
+            if new_bbox is not None:
+                self.bbox = new_bbox
+                self._geom_idx = geom_idx
+                self._local_id_idx = local_id_idx
 
     # .............................
     @staticmethod

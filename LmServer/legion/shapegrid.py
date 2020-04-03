@@ -82,7 +82,7 @@ class Shapegrid(_LayerParameters, Vector, ProcessObject):
         """Create a shaepgrid object from its parts."""
         return Shapegrid(
             vector.name, vector.get_user_id(), vector.epsg_code, cell_sides,
-            cell_size, vector.mapUnits, vector.bbox, site_id=site_id,
+            cell_size, vector.map_units, vector.bbox, site_id=site_id,
             site_x=site_x, site_y=site_y, size=size,
             lyr_id=vector.get_layer_id(), verify=vector.verify,
             dlocation=vector.get_dlocation(), metadata=vector.layer_metadata,

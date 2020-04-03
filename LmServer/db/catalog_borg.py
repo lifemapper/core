@@ -993,7 +993,7 @@ class Borg(DbPostgresql):
             grdset: Gridset to insert
         Returns:Updated new or existing Gridset.
         """
-        meta = grdset.dump_grd_metadata()
+        meta = grdset.dump_grid_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertGridset', grdset.get_id(), grdset.get_user_id(),
             grdset.name, grdset.shapegrid_id, grdset.get_dlocation(),
@@ -1165,7 +1165,7 @@ class Borg(DbPostgresql):
         Returns:
             Boolean success/failure
         """
-        meta = gridset.dump_grd_metadata()
+        meta = gridset.dump_grid_metadata()
         success = self.execute_modify_function(
             'lm_updateGridset', gridset.get_id(), gridset.tree_id,
             gridset.get_dlocation(), meta, gridset.mod_time)

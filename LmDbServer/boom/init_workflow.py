@@ -174,7 +174,7 @@ class BOOMFiller(LMObject):
         #       specify role in params file
         if self.mask_alg:
             if self.mask_alg.code == 'hull_region_intersect':
-                mask_lyr_name = self.mask_alg.getParameterValue('region')
+                mask_lyr_name = self.mask_alg.get_parameter_value('region')
                 # TODO: Delete this from Scenario packages and code
                 # Take SDM_MASK_META from old (v2.0) scenario metadata
                 if mask_lyr_name is None:
@@ -1722,100 +1722,156 @@ timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 logname = 'initWorkflow.debug.{}'.format(timestamp)
 
 boomer = BOOMFiller(config_file, logname=logname)
-self = boomer 
-param_fname = self.in_param_fname
-config = Config(site_fn=param_fname)
-(self.user_id, self.user_id_path,
-         self.user_email,
-         self.user_taxonomy_base_filename,
-         self.archive_name,
-         self.priority,
-         self.scen_package_name,
-         mdl_scencode,
-         prj_scencodes,
-         self.data_source,
-         self.occ_id_fname,
-         self.taxon_name_filename,
-         self.taxon_id_filename,
-         self.occ_fname,
-         self.occ_sep,
-         self.min_points,
-         self.exp_date,
-         self.algorithms,
-         self.do_assemble_pams,
-         self.grid_bbox,
-         self.cell_sides,
-         self.cell_size,
-         self.grid_name,
-         self.intersect_params,
-         self.mask_alg,
-         self.tree_fname,
-         self.bg_hyp_fnames,
-         self.compute_pam_stats,
-         self.compute_mcpa,
-         self.num_permutations,
-         self.other_lyr_names) = self.read_param_vals()
-         
-self.woof_time_mjd = gmt().mjd
-earl = EarlJr()
-self.out_config_filename = earl.create_filename(
-    LMFileType.BOOM_CONFIG, obj_code=self.archive_name,
-    usr=self.user_id)
+self = boomer          
 
-self.add_user()
-
-
-scen_package = self.scribe.get_scen_package(
-    user_id=self.user_id, scen_package_name=self.scen_package_name,
-    fill_layers=True)
-
-if scen_package is not None:
-    print('found it')
-    
-sp_meta_fname = os.path.join(ENV_DATA_PATH, self.scen_package_name + '.py')
-
-sp_filler = SPFiller(
-    sp_meta_fname, self.user_id, scribe=self.scribe)
-
-self = sp_filler
-updated_scen_pkg = None
-self.initialize_me()
-_user_id = self.add_user()
-mask_lyr = None
-sp_name = list(self.sp_meta.CLIMATE_PACKAGES.keys())[0]
-scen_pkg, mask_lyr = self.create_scen_package(sp_name)
-
-updated_mask = self.add_mask_layer(mask_lyr)
+self.initialize_inputs()
 
 
 
 
-updated_scen_pkg = self.scribe.find_or_insert_scen_package(scen_pkg)
-updated_scens = []
-for scode, scen in scen_pkg.scenarios.items():
-    new_scen = self.scribe.find_or_insert_scenario(
-        scen, scen_package_id=updated_scen_pkg.get_id())
-    updated_scens.append(new_scen)
 
-updated_scen_pkg.set_scenarios(updated_scens)
 
-# updated_scen_pkg = self.add_package_scenarios_layers(scen_pkg)
 
-if all([
-        updated_scen_pkg is not None,
-        updated_scen_pkg.get_id() is not None,
-        updated_scen_pkg.name == sp_name,
-        updated_scen_pkg.get_user_id() == self.user_id]):
-    self.scribe.log.info(
-        ('Successfully added scenario package {} for '
-         'user {}').format(sp_name, self.user_id))
 
-# scen_package = sp_filler.catalog_scen_packages()
 
-    
-# self.scen_pkg = self.find_or_add_scenario_package()
 
-# self.initialize_inputs()
+
+
+
+
+##init_boom#############################################################
+scen_grims = {}
+shp = self._add_intersect_grid()
+self.shapegrid = shp
+meta = {
+    ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
+    ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD],
+    'parameters': self.in_param_fname}
+grdset = Gridset(
+    name=self.archive_name, metadata=meta, shapegrid=shp,
+    epsg_code=self.scen_pkg.epsg_code, user_id=self.user_id,
+    mod_time=self.woof_time_mjd)
+updated_gridset = self.scribe.find_or_insert_gridset(grdset)
+# if updated_gridset.mod_time < self.woof_time_mjd:
+updated_gridset.mod_time = self.woof_time_mjd
+self.scribe.update_object(updated_gridset)
+
+fnames = self.scribe.delete_mf_chains_return_filenames(
+    updated_gridset.get_id())
+for fname in fnames:
+    os.remove(fname)
+
+# for code, scen in self.scen_pkg.scenarios.items():
+alg = list(self.algorithms.values())[0]
+
+
+##_find_or_add_pam#############################################################
+gridset = updated_gridset
+pam_type = MatrixType.PAM
+if not self.compute_pam_stats:
+    pam_type = MatrixType.ROLLING_PAM
+
+keywords = [GPAM_KEYWORD]
+for keyword in (
+        scen.code, scen.gcm_code, scen.alt_pred_code, scen.date_code):
+    if keyword is not None:
+        keywords.append(keyword)
+
+desc = '{} for Scenario {}'.format(GPAM_KEYWORD, scen.code)
+pam_meta = {
+    ServiceObject.META_DESCRIPTION: desc,
+    ServiceObject.META_KEYWORDS: keywords
+    }
+
+tmp_global_pam = LMMatrix(None, headers=None, matrix_type=pam_type,
+    scenario_id=scen.get_id(), gcm_code=scen.gcm_code,
+    alt_pred_code=scen.alt_pred_code, date_code=scen.date_code,
+    alg_code=alg.code, metadata=pam_meta, user_id=self.user_id,
+    gridset=gridset, status=JobStatus.GENERAL,
+    status_mod_time=gmt().mjd)
+##_find_or_add_pam#############################################################
+
+# _ = self._find_or_add_pam(updated_gridset, alg, scen)
+
+# "Global" GRIM (one per scenario)
+if not(self.user_id == DEFAULT_POST_USER) or self.compute_mcpa:
+    scen_grims[code] = self._find_or_add_grim(
+        updated_gridset, scen)
+##init_boom#############################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# scen_grims, boom_gridset = self.add_shapegrid_gpam_gridset()
+
+_other_layer_names = self.add_other_layers()
+
+script_name = os.path.splitext(os.path.basename(__file__))[0]
+meta = {
+    MFChain.META_CREATED_BY: script_name,
+    MFChain.META_GRIDSET: boom_gridset.get_id(),
+    MFChain.META_DESCRIPTION: 'Makeflow for gridset {}'.format(
+        boom_gridset.get_id())
+    }
+
+new_mfc = MFChain(
+    self.user_id, priority=Priority.HIGH, metadata=meta,
+    status=JobStatus.GENERAL, status_mod_time=gmt().mjd)
+
+gridset_mf = self.scribe.insert_mf_chain(
+    new_mfc, boom_gridset.get_id())
+target_dir = gridset_mf.get_relative_directory()
+rules = []
+
+rules.extend(self.add_grim_mfs(scen_grims, target_dir))
+
+if self.occ_id_fname:
+    self._check_occurrence_sets()
+
+self._fix_directory_permissions(boom_gridset)
+
+tree = self.add_tree(boom_gridset, encoded_tree=None)
+
+(biogeo_mtx, biogeo_layer_names
+ ) = self.add_biogeo_hypotheses_matrix_and_layers(boom_gridset)
+
+if biogeo_mtx and len(biogeo_layer_names) > 0:
+    bgh_success_fname = os.path.join(target_dir, 'bg.success')
+    bg_cmd = EncodeBioGeoHypothesesCommand(
+        self.user_id, boom_gridset.name, bgh_success_fname)
+    rules.append(bg_cmd.get_makeflow_rule(local=True))
+
+rules.extend(self.add_boom_rules(tree, target_dir))
+
+self.write_config_file(tree=tree, biogeo_layers=biogeo_layer_names)
+
+gridset_mf.add_commands(rules)
+self._write_update_mf(gridset_mf)
 
 ###################################################################
 ###################################################################
