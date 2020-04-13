@@ -1893,7 +1893,7 @@ class Vector(_Layer):
                 try:
                     self._fill_ogr_feature(feat, f_vals)
                 except Exception as e:
-                    print('Failed to fillOGRFeature, e = {}'.format(e))
+                    print('Failed to _fill_ogr_feature, e = {}'.format(e))
                 else:
                     # Create new feature, setting FID, in this layer
                     lyr.CreateFeature(feat)

@@ -22,7 +22,7 @@ from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (
     BoomKeys, DEFAULT_POST_USER, GBIF, JobStatus, LMFormat, MatrixType,
-    ProcessType, SERVER_BOOM_HEADING, SERVER_DEFAULT_HEADING_POSTFIX,
+    ProcessType, SERVER_BOOM_HEADING, SERVER_DEFAULT_HEADING_POSTFIX, ENCODING,
     SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX)
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
@@ -628,6 +628,7 @@ class BOOMFiller(LMObject):
                 biogeo_hyp_names, compute_pam_stats, compute_mcpa,
                 num_permutations, other_lyr_names)
 
+            
     # ................................
     def write_config_file(self, tree=None, biogeo_layers=None):
         """Write configuration file.
@@ -639,7 +640,7 @@ class BOOMFiller(LMObject):
         """
         config = configparser.SafeConfigParser()
         config.add_section(SERVER_BOOM_HEADING)
-        # .........................................
+
         # SDM Algorithms with all parameters
         for heading, alg in self.algorithms.items():
             config.add_section(heading)
@@ -653,7 +654,7 @@ class BOOMFiller(LMObject):
                        self.mask_alg.code)
             for name, val in self.mask_alg.parameters.items():
                 config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
-        # .........................................
+
         email = self.user_email
         if email is None:
             email = ''
@@ -664,7 +665,7 @@ class BOOMFiller(LMObject):
         config.set(
             SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_PRIORITY, str(self.priority))
         config.set(SERVER_BOOM_HEADING, BoomKeys.TROUBLESHOOTERS, email)
-        # .........................................
+
         # SDM input environmental data, pulled from SCENARIO_PACKAGE metadata
         pcodes = ','.join(self.prj_scencodes)
         config.set(
@@ -712,7 +713,7 @@ class BOOMFiller(LMObject):
                 config.set(
                     SERVER_BOOM_HEADING, BoomKeys.USER_TAXONOMY_FILENAME,
                     self.user_taxonomy_base_filename)
-        # .........................................
+
         # Expiration date triggering re-query and computation
         config.set(
             SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_YEAR, str(self.exp_date[0]))
@@ -726,7 +727,7 @@ class BOOMFiller(LMObject):
         # TODO: Use this in boomer
         config.set(
             SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MJD, str(self.woof_time_mjd))
-        # .........................................
+
         # Multi-species flags
         config.set(
             SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS,
@@ -755,7 +756,7 @@ class BOOMFiller(LMObject):
         config.set(
             SERVER_BOOM_HEADING, BoomKeys.NUM_PERMUTATIONS,
             str(self.num_permutations))
-        # .........................................
+
         # MCPA Biogeographic Hypotheses
         if biogeo_layers and len(biogeo_layers) > 0:
             biogeo_layer_names = ','.join(biogeo_layers)
@@ -767,13 +768,14 @@ class BOOMFiller(LMObject):
             config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree.name)
 
         ready_filename(self.out_config_filename, overwrite=True)
-        with open(self.out_config_filename, 'wb') as config_file:
+        with open(self.out_config_filename, 'w') as config_file:
             config.write(config_file)
         self._fix_permissions(files=[self.out_config_filename])
         self.scribe.log.info('******')
         self.scribe.log.info(
             '--config_file={}'.format(self.out_config_filename))
         self.scribe.log.info('******')
+
 
     # ................................
     @staticmethod
@@ -1682,7 +1684,7 @@ from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (
     BoomKeys, DEFAULT_POST_USER, GBIF, JobStatus, LMFormat, MatrixType,
-    ProcessType, SERVER_BOOM_HEADING, SERVER_DEFAULT_HEADING_POSTFIX,
+    ProcessType, SERVER_BOOM_HEADING, SERVER_DEFAULT_HEADING_POSTFIX, ENCODING,
     SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX)
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
@@ -1713,7 +1715,6 @@ from LmServer.legion.tree import Tree
 from LmDbServer.boom.init_workflow import *
 
 
-# Public archive
 config_file = '/opt/lifemapper/config/boom.public.params'
 
 import time
@@ -1726,112 +1727,10 @@ self = boomer
 
 self.initialize_inputs()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-##init_boom#############################################################
-scen_grims = {}
-shp = self._add_intersect_grid()
-self.shapegrid = shp
-meta = {
-    ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
-    ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD],
-    'parameters': self.in_param_fname}
-grdset = Gridset(
-    name=self.archive_name, metadata=meta, shapegrid=shp,
-    epsg_code=self.scen_pkg.epsg_code, user_id=self.user_id,
-    mod_time=self.woof_time_mjd)
-updated_gridset = self.scribe.find_or_insert_gridset(grdset)
-# if updated_gridset.mod_time < self.woof_time_mjd:
-updated_gridset.mod_time = self.woof_time_mjd
-self.scribe.update_object(updated_gridset)
-
-fnames = self.scribe.delete_mf_chains_return_filenames(
-    updated_gridset.get_id())
-for fname in fnames:
-    os.remove(fname)
-
-# for code, scen in self.scen_pkg.scenarios.items():
-alg = list(self.algorithms.values())[0]
-
-
-##_find_or_add_pam#############################################################
-gridset = updated_gridset
-pam_type = MatrixType.PAM
-if not self.compute_pam_stats:
-    pam_type = MatrixType.ROLLING_PAM
-
-keywords = [GPAM_KEYWORD]
-for keyword in (
-        scen.code, scen.gcm_code, scen.alt_pred_code, scen.date_code):
-    if keyword is not None:
-        keywords.append(keyword)
-
-desc = '{} for Scenario {}'.format(GPAM_KEYWORD, scen.code)
-pam_meta = {
-    ServiceObject.META_DESCRIPTION: desc,
-    ServiceObject.META_KEYWORDS: keywords
-    }
-
-tmp_global_pam = LMMatrix(None, headers=None, matrix_type=pam_type,
-    scenario_id=scen.get_id(), gcm_code=scen.gcm_code,
-    alt_pred_code=scen.alt_pred_code, date_code=scen.date_code,
-    alg_code=alg.code, metadata=pam_meta, user_id=self.user_id,
-    gridset=gridset, status=JobStatus.GENERAL,
-    status_mod_time=gmt().mjd)
-##_find_or_add_pam#############################################################
-
-# _ = self._find_or_add_pam(updated_gridset, alg, scen)
-
-# "Global" GRIM (one per scenario)
-if not(self.user_id == DEFAULT_POST_USER) or self.compute_mcpa:
-    scen_grims[code] = self._find_or_add_grim(
-        updated_gridset, scen)
-##init_boom#############################################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# scen_grims, boom_gridset = self.add_shapegrid_gpam_gridset()
-
+scen_grims, boom_gridset = self.add_shapegrid_gpam_gridset()
 _other_layer_names = self.add_other_layers()
 
-script_name = os.path.splitext(os.path.basename(__file__))[0]
+script_name = 'test'
 meta = {
     MFChain.META_CREATED_BY: script_name,
     MFChain.META_GRIDSET: boom_gridset.get_id(),
@@ -1845,11 +1744,12 @@ new_mfc = MFChain(
 
 gridset_mf = self.scribe.insert_mf_chain(
     new_mfc, boom_gridset.get_id())
+
 target_dir = gridset_mf.get_relative_directory()
+
+
 rules = []
-
 rules.extend(self.add_grim_mfs(scen_grims, target_dir))
-
 if self.occ_id_fname:
     self._check_occurrence_sets()
 
@@ -1868,10 +1768,151 @@ if biogeo_mtx and len(biogeo_layer_names) > 0:
 
 rules.extend(self.add_boom_rules(tree, target_dir))
 
-self.write_config_file(tree=tree, biogeo_layers=biogeo_layer_names)
 
+config = configparser.SafeConfigParser()
+config.add_section(SERVER_BOOM_HEADING)
+
+for heading, alg in self.algorithms.items():
+    config.add_section(heading)
+    config.set(heading, BoomKeys.ALG_CODE, alg.code)
+    for name, val in alg.parameters.items():
+        config.set(heading, name, str(val))
+
+if self.mask_alg is not None:
+    config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
+    config.set(SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.ALG_CODE,
+               self.mask_alg.code)
+    for name, val in self.mask_alg.parameters.items():
+        config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
+
+email = self.user_email
+if email is None:
+    email = ''
+
+config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, self.user_id)
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_NAME, self.archive_name)
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_PRIORITY, str(self.priority))
+config.set(SERVER_BOOM_HEADING, BoomKeys.TROUBLESHOOTERS, email)
+
+pcodes = ','.join(self.prj_scencodes)
+config.set(
+    SERVER_BOOM_HEADING,
+    BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, pcodes)
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO,
+    self.mdl_scencode)
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.MAPUNITS, self.scen_pkg.map_units)
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.EPSG, str(self.scen_pkg.epsg_code))
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE, self.scen_pkg.name)
+
+config.set(SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE, self.data_source)
+
+if self.data_source == SpeciesDatasource.EXISTING:
+    config.set(
+        SERVER_BOOM_HEADING, BoomKeys.OCC_ID_FILENAME,
+        self.occ_id_fname)
+elif self.data_source == SpeciesDatasource.TAXON_IDS:
+    config.set(
+        SERVER_BOOM_HEADING, BoomKeys.TAXON_ID_FILENAME,
+        self.taxon_id_filename)
+elif self.data_source == SpeciesDatasource.GBIF:
+    config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_PROVIDER_FILENAME,
+               GBIF_PROVIDER_FILENAME)
+    config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_TAXONOMY_FILENAME,
+               GBIF_TAXONOMY_FILENAME)
+    config.set(
+        SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occ_fname)
+    config.set(
+        SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occ_sep)
+else:
+    config.set(
+        SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occ_fname)
+    config.set(
+        SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occ_sep)
+
+    if self.user_taxonomy_base_filename is not None:
+        config.set(
+            SERVER_BOOM_HEADING, BoomKeys.USER_TAXONOMY_FILENAME,
+            self.user_taxonomy_base_filename)
+
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_YEAR, str(self.exp_date[0]))
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MONTH, str(self.exp_date[1]))
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_DAY, str(self.exp_date[2]))
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN,
+    str(self.min_points))
+
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MJD, str(self.woof_time_mjd))
+
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS,
+    str(self.do_assemble_pams))
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS,
+    str(self.compute_pam_stats))
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, str(self.compute_mcpa))
+
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.GRID_NUM_SIDES, str(self.cell_sides))
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.GRID_CELL_SIZE, str(self.cell_size))
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.GRID_BBOX,
+    ','.join(str(v) for v in self.grid_bbox))
+config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_NAME, self.grid_name)
+
+for k, val in self.intersect_params.items():
+    config.set(
+        SERVER_BOOM_HEADING,
+        'INTERSECT_{}'.format(k.upper()), str(val))
+
+config.set(
+    SERVER_BOOM_HEADING, BoomKeys.NUM_PERMUTATIONS,
+    str(self.num_permutations))
+
+
+if tree is not None:
+    config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree.name)
+
+ready_filename(self.out_config_filename, overwrite=True)
+with open(self.out_config_filename, 'w') as config_file:
+    config.write(config_file)
+self._fix_permissions(files=[self.out_config_filename])
+self.scribe.log.info('******')
+self.scribe.log.info(
+    '--config_file={}'.format(self.out_config_filename))
+self.scribe.log.info('******')
+
+# self.write_config_file(tree=tree, biogeo_layers=biogeo_layer_names)
+
+
+
+
+
+
+# Write rules
 gridset_mf.add_commands(rules)
 self._write_update_mf(gridset_mf)
+
+
+
+
+
+
+
+
+
+
 
 ###################################################################
 ###################################################################

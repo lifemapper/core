@@ -3,6 +3,7 @@
 import hashlib
 
 from LmBackend.common.lmobj import LMObject
+from LmCommon.common.lmconstants import ENCODING
 from LmServer.common.lmconstants import SALT
 
 
@@ -74,10 +75,10 @@ class LMUser(LMObject):
     @staticmethod
     def _encrypt_password(passwd):
         if not isinstance(passwd, bytes):
-            passwd = passwd.encode('utf-8')
+            passwd = passwd.encode(ENCODING)
         salt = SALT
         if not isinstance(salt, bytes):
-            salt = salt.encode('utf-8')
+            salt = salt.encode(ENCODING)
         hash_1 = hashlib.md5(passwd)
         hash_2 = hashlib.md5(salt)
         hash_3 = hashlib.md5(''.join((hash_1.hexdigest(), 

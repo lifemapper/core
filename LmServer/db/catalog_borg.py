@@ -2460,7 +2460,7 @@ class Borg(DbPostgresql):
         Todo:
             Allow update of MatrixType, gcm_code, alt_pred_code, date_code?
         """
-        meta = mtx.dump_mtx_metadata()
+        meta = mtx.dump_matrix_metadata()
         success = self.execute_modify_function(
             'lm_updateMatrix', mtx.get_id(), mtx.get_dlocation(), meta,
             mtx.status, mtx.status_mod_time)
@@ -2559,7 +2559,7 @@ class Borg(DbPostgresql):
         Returns:
             New or existing Matrix
         """
-        meta = mtx.dump_mtx_metadata()
+        meta = mtx.dump_matrix_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertMatrix', mtx.get_id(), mtx.matrix_type,
             mtx.parent_id, mtx.gcm_code, mtx.alt_pred_code, mtx.date_code,
@@ -2680,7 +2680,7 @@ class Borg(DbPostgresql):
         Returns:
             Updated MFChain object
         """
-        meta = mf_chain.dump_mf_metadata()
+        meta = mf_chain.dump_makeflow_metadata()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_insertMFChain', mf_chain.get_user_id(), gridset_id,
             mf_chain.get_dlocation(), mf_chain.priority, meta, mf_chain.status,
