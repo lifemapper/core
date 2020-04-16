@@ -1314,7 +1314,7 @@ class BOOMFiller(LMObject):
                 rel_dir, _ = os.path.splitext(
                     mtx_col.layer.get_relative_dlocation())
                 col_filename = os.path.join(
-                    target_dir, rel_dir, mtx_col.getTargetFilename())
+                    target_dir, rel_dir, mtx_col.get_target_filename())
                 try:
                     min_percent = mtx_col.intersect_params[
                         mtx_col.INTERSECT_PARAM_MIN_PERCENT]

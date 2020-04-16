@@ -1,7 +1,5 @@
 """Module containing MatrixColumn class
 """
-from lmpy import Matrix
-
 from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.time import gmt
 from LmServer.base.layer import _LayerParameters
@@ -10,7 +8,7 @@ from LmServer.common.lmconstants import LMServiceType
 
 
 # .............................................................................
-class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
+class MatrixColumn(_LayerParameters, ServiceObject, ProcessObject):
     """Class representing individual matrix columns."""
     # BoomKeys uses these strings, prefixed by 'INTERSECT_'
     # Query to filter layer for intersect
