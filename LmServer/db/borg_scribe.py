@@ -570,8 +570,7 @@ class BorgScribe(LMObject):
     # ................................
     def find_or_insert_taxon(self, taxon_source_id=None, taxon_key=None,
                              sci_name=None):
-        """Find our insert a ScientificName object into the database.
-        """
+        """Find or insert a ScientificName object into the database."""
         return self._borg.find_or_insert_taxon(
             taxon_source_id, taxon_key, sci_name)
 

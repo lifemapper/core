@@ -1647,7 +1647,7 @@ class Borg(DbPostgresql):
         if not taxon_source_id:
             taxon_source_id = sci_name.taxonomy_source_id
         if not taxon_key:
-            taxon_key = sci_name.source_key
+            taxon_key = sci_name.source_taxon_key
         usr = sci_name.user_id
         squid = sci_name.squid
         kingdom = sci_name.kingdom
