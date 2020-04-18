@@ -4,6 +4,7 @@
 import hashlib
 import os
 
+from LmCommon.common.lmconstants import ENCODING
 
 # .............................................................................
 def _get_hex_hash_value(dlocation=None, content=None):
@@ -19,12 +20,19 @@ def _get_hex_hash_value(dlocation=None, content=None):
     hexhash = None
     if content is None:
         if dlocation and os.path.exists(dlocation):
-            with open(dlocation, 'rb') as in_f:
+            with open(dlocation, 'r') as in_f:
                 content = in_f.read()
         else:
             print(('Failed to hash missing file {}'.format(dlocation)))
     if content is not None:
-        hashval = hashlib.sha256(content)
+        try:
+            hashval = hashlib.sha256(content)
+        except:
+            content  = content.encode(ENCODING)
+            try:
+                hashval = hashlib.sha256(content)
+            except:
+                raise
         hexhash = hashval.hexdigest()
     else:
         print('Failed to hash empty content')

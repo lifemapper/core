@@ -20,7 +20,7 @@ from LmBackend.common.lmconstants import (
 
 # .............................................................................
 class _LmServerCommand(_LmCommand):
-    """A command subclass for server commands
+    """Subclass for server commands
 
     The _LmServerCommand class is an intermediate class that all server command
     classes should inherit from.
@@ -42,7 +42,7 @@ class _LmServerCommand(_LmCommand):
 
 # .............................................................................
 class _LmDbServerCommand(_LmServerCommand):
-    """A command subclass for database server commands
+    """Subclass for database server commands
 
     The _LmDbServerCommand class is an intermediate class that all database
     server command classes should inherit from.
@@ -52,8 +52,7 @@ class _LmDbServerCommand(_LmServerCommand):
 
 # .............................................................................
 class AssemblePamFromSolrQueryCommand(_LmServerCommand):
-    """Command to assemble PAM data from a Solr query
-    """
+    """Assembles PAM data from a Solr query"""
     script_name = 'assemble_pam_from_solr.py'
 
     # ................................
@@ -84,13 +83,13 @@ class AssemblePamFromSolrQueryCommand(_LmServerCommand):
 
 # .............................................................................
 class CatalogTaxonomyCommand(_LmDbServerCommand):
-    """Command to create taxonomy workflows
+    """Create taxonomy workflows
 
     This command will create makeflows to catalog boom archive inputs, create
     GRIMs, create an archive ini file, and run the Boomer Daemon to walk
     through the inputs
     """
-    script_name = 'catalogTaxonomy.py'
+    script_name = 'catalog_taxonomy.py'
 
     # ................................
     def __init__(self, source_name, taxon_data_filename,
@@ -126,7 +125,7 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
             taxon_data_filename)
         self.opt_args += ' --success_filename={}'.format(
             taxon_success_filename)
-        self.opt_args += ' --logname={}'.format(logname)
+        self.opt_args += ' --log_name={}'.format(logname)
 
         # Optional args
         if source_url:
@@ -142,9 +141,9 @@ class CatalogTaxonomyCommand(_LmDbServerCommand):
 
 # .............................................................................
 class EncodeBioGeoHypothesesCommand(_LmServerCommand):
-    """Command to encode biogeographic hypotheses
-    """
-    script_name = 'encodeBioGeoHypotheses.py'
+    """Encode biogeographic hypotheses"""
+    
+    script_name = 'encode_biogeo_hypotheses.py'
 
     # ................................
     def __init__(self, user_id, gridset_name, success_file):
@@ -172,9 +171,8 @@ class EncodeBioGeoHypothesesCommand(_LmServerCommand):
 
 # .............................................................................
 class IndexPAVCommand(_LmServerCommand):
-    """This command will post PAV information to a solr index
-    """
-    script_name = 'indexPAV.py'
+    """Post PAV information to a solr index"""
+    script_name = 'index_pavs.py'
 
     # ................................
     def __init__(self, pav_file_name, pav_id, proj_id, pam_id,
@@ -198,8 +196,7 @@ class IndexPAVCommand(_LmServerCommand):
 
 # .............................................................................
 class TouchFileCommand(_LmServerCommand):
-    """This command will touch a file, creating necessary directories.
-    """
+    """Touches a file, creating necessary directories."""
     script_name = 'touch_file.py'
 
     # ................................
@@ -216,8 +213,7 @@ class TouchFileCommand(_LmServerCommand):
 
 # .............................................................................
 class MultiIndexPAVCommand(_LmServerCommand):
-    """This command indexes multiple PAV objects in one call
-    """
+    """Indexes multiple PAV objects in one call"""
     script_name = 'index_pavs.py'
 
     # ..............................
@@ -236,8 +232,7 @@ class MultiIndexPAVCommand(_LmServerCommand):
 
 # .............................................................................
 class MultiStockpileCommand(_LmServerCommand):
-    """This command stockpiles multiple objects in one call
-    """
+    """Stockpiles multiple objects in one call"""
     script_name = 'multi_stockpile.py'
 
     # ..............................
@@ -260,9 +255,8 @@ class MultiStockpileCommand(_LmServerCommand):
 
 # .............................................................................
 class ShootSnippetsCommand(_LmServerCommand):
-    """This command will shoot snippets into an index
-    """
-    script_name = 'shootSnippets.py'
+    """Shoots snippets into an index"""
+    script_name = 'shoot_snippets.py'
 
     # ................................
     def __init__(self, occ_id, operation, post_file_name, o2ident=None,
@@ -301,8 +295,7 @@ class ShootSnippetsCommand(_LmServerCommand):
 
 # .............................................................................
 class SquidAndLabelTreeCommand(_LmServerCommand):
-    """Add SQUIDs and node labels to tree
-    """
+    """Add SQUIDs and node labels to tree"""
     script_name = 'add_squids_to_tree.py'
 
     # ................................
@@ -323,8 +316,7 @@ class SquidAndLabelTreeCommand(_LmServerCommand):
 
 # .............................................................................
 class StockpileCommand(_LmServerCommand):
-    """This command will stockpile the outputs of a process
-    """
+    """Stockpile the outputs of a process"""
     script_name = 'stockpile.py'
 
     # ................................

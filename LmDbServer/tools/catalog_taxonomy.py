@@ -300,3 +300,127 @@ def main():
 # .............................................................................
 if __name__ == '__main__':
     main()
+
+
+"""
+import csv
+import os
+import time
+
+from LmBackend.command.server import CatalogTaxonomyCommand
+from LmBackend.common.lmobj import LMError, LMObject
+from LmCommon.common.lmconstants import GBIF, JobStatus
+from LmCommon.common.time import gmt
+from LmDbServer.common.lmconstants import (
+    GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE)
+from LmServer.base.taxon import ScientificName
+from LmServer.common.lmconstants import NUM_DOCS_PER_POST, Priority
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.log import ScriptLogger
+import LmServer.common.solr as lm_solr
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.process_chain import MFChain
+
+from LmDbServer.tools.catalog_taxonomy import *
+
+source_name = "GBIF Backbone Taxonomy"
+taxon_fname = '/share/lmserver/data/species/gbif_taxonomy-2019.04.12.csv'
+success_fname = 'catalog_taxonomy.success'
+log_name = 'catalog_taxonomy.gbif_taxonomy-2019.04.12.20200418-1542'
+source_url = 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'
+delimiter = '\t'
+
+
+self = TaxonFiller(
+    source_name, taxon_fname, success_fname, tax_src_url=source_url,
+    delimiter=delimiter, log_name=log_name)
+self.open()
+
+self.initialize_me()
+
+
+line = next(self._csv_reader)
+(taxon_key, kingdom_str, phylum_str, class_str, order_str,
+ family_str, genus_str, sci_name_str, genus_key, species_key,
+ _count) = self._get_taxon_values(line)
+
+if taxon_key not in (species_key, genus_key):
+    total_wrong_rank += 1
+    
+# else:
+if taxon_key == species_key:
+    rank = GBIF.RESPONSE_SPECIES_KEY
+elif taxon_key == genus_key:
+    rank = GBIF.RESPONSE_GENUS_KEY
+sci_name = ScientificName(
+    sci_name_str, rank=rank, canonical_name=None,
+    kingdom=kingdom_str, phylum=phylum_str, class_=class_str,
+    order_=order_str, family=family_str, genus=genus_str,
+    taxonomy_source_id=self._taxonomy_source_id,
+    taxonomy_source_key=taxon_key,
+    taxonomy_source_genus_key=genus_key,
+    taxonomy_source_species_key=species_key)
+
+
+
+
+scientific_name = None
+curr_time = gmt().mjd
+usr = squid = kingdom = phylum = class_ = order_ = family = None
+genus = rank = can_name = sci_name = gen_key = sp_key = None
+key_hierarchy = last_count = None
+
+try:
+    taxon_source_id = sci_name.taxonomy_source_id
+    taxon_key = sci_name.sourceTaxonKey
+    usr = sci_name.user_id
+    squid = sci_name.squid
+    kingdom = sci_name.kingdom
+    phylum = sci_name.phylum
+    class_ = sci_name.txClass
+    order_ = sci_name.txOrder
+    family = sci_name.family
+    genus = sci_name.genus
+    rank = sci_name.rank
+    can_name = sci_name.canonicalName
+    sci_name = sci_name.scientificName
+    gen_key = sci_name.sourceGenusKey
+    sp_key = sci_name.sourceSpeciesKey
+    key_hierarchy = sci_name.sourceKeyHierarchy
+    last_count = sci_name.lastOccurrenceCount
+except Exception:
+    pass
+try:
+    row, idxs = self.execute_insert_and_select_one_function(
+        'lm_findOrInsertTaxon', taxon_source_id, taxon_key, usr, squid,
+        kingdom, phylum, class_, order_, family, genus, rank, can_name,
+        sci_name, gen_key, sp_key, key_hierarchy, last_count,
+        curr_time)
+except Exception as e:
+    raise e
+else:
+    scientific_name = self._create_scientific_name(row, idxs)
+
+# up_sci_name = self.scribe.find_or_insert_taxon(
+#     taxon_source_id=self._taxonomy_source_id,
+#     taxon_key=taxon_key, sci_name=sci_name)
+
+if up_sci_name:
+    total_in += 1
+    self.scribe.log.info(
+        'Found or inserted {}'.format(sci_name_str))
+    # Add object to list, post to solr if we reach threshold
+    sciname_objs.append(up_sci_name)
+    if len(sciname_objs) >= NUM_DOCS_PER_POST:
+        lm_solr.add_taxa_to_taxonomy_index(sciname_objs)
+        sciname_objs = []
+else:
+    total_out += 1
+    self.scribe.log.info(
+        'Failed to insert or find {}'.format(sci_name_str))
+
+# self.read_and_insert_taxonomy()
+
+filler.close()
+
+"""

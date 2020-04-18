@@ -1644,29 +1644,26 @@ class Borg(DbPostgresql):
         """
         scientific_name = None
         curr_time = gmt().mjd
-        usr = squid = kingdom = phylum = class_ = order_ = family = None
-        genus = rank = can_name = sci_name = gen_key = sp_key = None
-        key_hierarchy = last_count = None
-        try:
+        if not taxon_source_id:
             taxon_source_id = sci_name.taxonomy_source_id
-            taxon_key = sci_name.sourceTaxonKey
-            usr = sci_name.user_id
-            squid = sci_name.squid
-            kingdom = sci_name.kingdom
-            phylum = sci_name.phylum
-            class_ = sci_name.txClass
-            order_ = sci_name.txOrder
-            family = sci_name.family
-            genus = sci_name.genus
-            rank = sci_name.rank
-            can_name = sci_name.canonicalName
-            sci_name = sci_name.scientificName
-            gen_key = sci_name.sourceGenusKey
-            sp_key = sci_name.sourceSpeciesKey
-            key_hierarchy = sci_name.sourceKeyHierarchy
-            last_count = sci_name.lastOccurrenceCount
-        except Exception:
-            pass
+        if not taxon_key:
+            taxon_key = sci_name.source_key
+        usr = sci_name.user_id
+        squid = sci_name.squid
+        kingdom = sci_name.kingdom
+        phylum = sci_name.phylum
+        class_ = sci_name.class_
+        order_ = sci_name.order_
+        family = sci_name.family
+        genus = sci_name.genus
+        rank = sci_name.rank
+        can_name = sci_name.canonical_name
+        sci_name = sci_name.scientific_name
+        gen_key = sci_name.source_genus_key
+        sp_key = sci_name.source_species_key
+        key_hierarchy = sci_name.source_key_hierarchy
+        last_count = sci_name.last_occurrence_count
+
         try:
             row, idxs = self.execute_insert_and_select_one_function(
                 'lm_findOrInsertTaxon', taxon_source_id, taxon_key, usr, squid,
