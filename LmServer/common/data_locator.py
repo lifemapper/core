@@ -249,7 +249,7 @@ class EarlJr(LMObject):
         """Return the absolute filename for given filetype and parameters
 
         Args:
-            f_type:
+            f_type: LmServer.common.lmconstants.LMFileType
             occ_set_id: SDM OccurrenceLayer database Id, used for path
             gridset_id: RAD Gridset database Id, used for path
             obj_code: ScenarioCode or database Id for primary object contained

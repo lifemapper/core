@@ -6,7 +6,7 @@ import subprocess
 
 from LmCommon.common.lmconstants import (
     ISO_8601_TIME_FORMAT_FULL, ISO_8601_TIME_FORMAT_TRUNCATED, LM_USER,
-    YMD_HH_MM_SS)
+    YMD_HH_MM_SS, ENCODING)
 from LmCommon.common.time import gmt, LmTime
 
 
@@ -51,7 +51,10 @@ def _get_current_user():
     info, _ = subprocess.Popen(
         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         ).communicate()
-    return info.split()[0]
+    usr = info.split()[0]
+    if isinstance(usr, bytes):
+        usr = usr.decode(ENCODING)
+    return usr
 
 
 # .............................
