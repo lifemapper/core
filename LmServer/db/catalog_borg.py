@@ -1658,7 +1658,7 @@ class Borg(DbPostgresql):
         genus = sci_name.genus
         rank = sci_name.rank
         can_name = sci_name.canonical_name
-        sci_name = sci_name.scientific_name
+        sci_namestr = sci_name.scientific_name
         gen_key = sci_name.source_genus_key
         sp_key = sci_name.source_species_key
         key_hierarchy = sci_name.source_key_hierarchy
@@ -1668,7 +1668,7 @@ class Borg(DbPostgresql):
             row, idxs = self.execute_insert_and_select_one_function(
                 'lm_findOrInsertTaxon', taxon_source_id, taxon_key, usr, squid,
                 kingdom, phylum, class_, order_, family, genus, rank, can_name,
-                sci_name, gen_key, sp_key, key_hierarchy, last_count,
+                sci_namestr, gen_key, sp_key, key_hierarchy, last_count,
                 curr_time)
         except Exception as e:
             raise e
