@@ -11,6 +11,7 @@ from LmServer.common.lmconstants import (
     SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
 from LmServer.common.log import SolrLogger
 from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import ENCODING
 
 
 # .............................................................................
@@ -40,7 +41,9 @@ def build_solr_document(doc_pairs):
                         f_name, str(f_val).replace('&', '&amp;')))
         doc_lines.append('    </doc>')
     doc_lines.append('</add>')
-    return '\n'.join(doc_lines)
+    tmpstr = '\n'.join(doc_lines)
+    solr_doc = tmpstr.encode(encoding=ENCODING)
+    return solr_doc
 
 
 # .............................................................................
@@ -178,7 +181,8 @@ def add_taxa_to_taxonomy_index(sciname_objects):
         SOLR_SERVER, SOLR_TAXONOMY_COLLECTION)
     req = urllib.request.Request(
         url, data=post_doc, headers={'Content-Type': 'text/xml'})
-    return urllib.request.urlopen(req).read()
+    response = urllib.request.urlopen(req)
+    return response.read()
 
 
 # .............................................................................
