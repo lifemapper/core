@@ -1769,147 +1769,18 @@ if biogeo_mtx and len(biogeo_layer_names) > 0:
 rules.extend(self.add_boom_rules(tree, target_dir))
 
 
-config = configparser.SafeConfigParser()
-config.add_section(SERVER_BOOM_HEADING)
 
-for heading, alg in self.algorithms.items():
-    config.add_section(heading)
-    config.set(heading, BoomKeys.ALG_CODE, alg.code)
-    for name, val in alg.parameters.items():
-        config.set(heading, name, str(val))
-
-if self.mask_alg is not None:
-    config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
-    config.set(SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.ALG_CODE,
-               self.mask_alg.code)
-    for name, val in self.mask_alg.parameters.items():
-        config.set(SERVER_SDM_MASK_HEADING_PREFIX, name, str(val))
-
-email = self.user_email
-if email is None:
-    email = ''
-
-config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, self.user_id)
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_NAME, self.archive_name)
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_PRIORITY, str(self.priority))
-config.set(SERVER_BOOM_HEADING, BoomKeys.TROUBLESHOOTERS, email)
-
-pcodes = ','.join(self.prj_scencodes)
-config.set(
-    SERVER_BOOM_HEADING,
-    BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, pcodes)
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO,
-    self.mdl_scencode)
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.MAPUNITS, self.scen_pkg.map_units)
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.EPSG, str(self.scen_pkg.epsg_code))
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE, self.scen_pkg.name)
-
-config.set(SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE, self.data_source)
-
-if self.data_source == SpeciesDatasource.EXISTING:
-    config.set(
-        SERVER_BOOM_HEADING, BoomKeys.OCC_ID_FILENAME,
-        self.occ_id_fname)
-elif self.data_source == SpeciesDatasource.TAXON_IDS:
-    config.set(
-        SERVER_BOOM_HEADING, BoomKeys.TAXON_ID_FILENAME,
-        self.taxon_id_filename)
-elif self.data_source == SpeciesDatasource.GBIF:
-    config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_PROVIDER_FILENAME,
-               GBIF_PROVIDER_FILENAME)
-    config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_TAXONOMY_FILENAME,
-               GBIF_TAXONOMY_FILENAME)
-    config.set(
-        SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occ_fname)
-    config.set(
-        SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occ_sep)
-else:
-    config.set(
-        SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occ_fname)
-    config.set(
-        SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occ_sep)
-
-    if self.user_taxonomy_base_filename is not None:
-        config.set(
-            SERVER_BOOM_HEADING, BoomKeys.USER_TAXONOMY_FILENAME,
-            self.user_taxonomy_base_filename)
-
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_YEAR, str(self.exp_date[0]))
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MONTH, str(self.exp_date[1]))
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_DAY, str(self.exp_date[2]))
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN,
-    str(self.min_points))
-
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MJD, str(self.woof_time_mjd))
-
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS,
-    str(self.do_assemble_pams))
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS,
-    str(self.compute_pam_stats))
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, str(self.compute_mcpa))
-
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.GRID_NUM_SIDES, str(self.cell_sides))
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.GRID_CELL_SIZE, str(self.cell_size))
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.GRID_BBOX,
-    ','.join(str(v) for v in self.grid_bbox))
-config.set(SERVER_BOOM_HEADING, BoomKeys.GRID_NAME, self.grid_name)
-
-for k, val in self.intersect_params.items():
-    config.set(
-        SERVER_BOOM_HEADING,
-        'INTERSECT_{}'.format(k.upper()), str(val))
-
-config.set(
-    SERVER_BOOM_HEADING, BoomKeys.NUM_PERMUTATIONS,
-    str(self.num_permutations))
-
-
-if tree is not None:
-    config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree.name)
-
-ready_filename(self.out_config_filename, overwrite=True)
-with open(self.out_config_filename, 'w') as config_file:
-    config.write(config_file)
-self._fix_permissions(files=[self.out_config_filename])
 self.scribe.log.info('******')
 self.scribe.log.info(
     '--config_file={}'.format(self.out_config_filename))
 self.scribe.log.info('******')
 
-# self.write_config_file(tree=tree, biogeo_layers=biogeo_layer_names)
-
-
-
-
+self.write_config_file(tree=tree, biogeo_layers=biogeo_layer_names)
 
 
 # Write rules
 gridset_mf.add_commands(rules)
 self._write_update_mf(gridset_mf)
-
-
-
-
-
-
-
 
 
 
