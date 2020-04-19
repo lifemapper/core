@@ -144,18 +144,17 @@ def build_shapegrid(shapegrid_file_name, min_x, min_y, max_x, max_y, cell_size,
     shape_id = 0
     for cell_wkt in wkt_generator:
         geom = ogr.CreateGeometryFromWkt(cell_wkt)
-        geom.AssignSpatialReference(target_srs)
-        centroid = geom.Centroid()
-        x_center = centroid.GetX()
-        y_center = centroid.GetY()
-        feat = ogr.Feature(feature_def=layer.GetLayerDefn())
-        feat.SetField(site_x, x_center)
-        feat.SetField(site_y, y_center)
-        feat.SetField(site_id, shape_id)
         # Check for intersection
         if geom.Intersection(selected_poly):
+            feat = ogr.Feature(feature_def=layer.GetLayerDefn())
+            feat.SetGeometry(geom)
+            centroid = geom.Centroid()
+            feat.SetField(site_x, centroid.GetX())
+            feat.SetField(site_y, centroid.GetY())
+            feat.SetField(site_id, shape_id)
             layer.CreateFeature(feat)
             shape_id += 1
         feat.Destroy()
     data_set.Destroy()
     return shape_id
+
