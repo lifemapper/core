@@ -20,7 +20,7 @@ def _get_hex_hash_value(dlocation=None, content=None):
     hexhash = None
     if content is None:
         if dlocation and os.path.exists(dlocation):
-            with open(dlocation, 'r') as in_f:
+            with open(dlocation, 'rb') as in_f:
                 content = in_f.read()
         else:
             print(('Failed to hash missing file {}'.format(dlocation)))
