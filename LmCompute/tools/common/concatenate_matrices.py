@@ -37,8 +37,7 @@ def main():
     # Make sure directory exists
     LMObject().ready_filename(args.out_fn)
 
-    with open(args.out_fn, 'w') as out_f:
-        joined_mtx.save(out_f)
+    joined_mtx.write(args.out_fn)
 
 
 # .............................................................................

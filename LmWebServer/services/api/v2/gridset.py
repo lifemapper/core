@@ -226,8 +226,7 @@ class GridsetBioGeoService(LmService):
                 self.scribe.update_object(inserted_bg)
                 # Save the original grim data into the new location
                 bg_mtx = Matrix.load_flo(bg_hyp.get_dlocation())
-                with open(inserted_bg.get_dlocation(), 'wb') as out_f:
-                    bg_mtx.save(out_f)
+                bg_mtx.write(inserted_bg.get_dlocation())
                 ret.append(inserted_bg)
         elif ref_obj[BG_REF_TYPE_KEY].lower() == 'upload':
             curr_time = gmt().mjd
@@ -341,8 +340,7 @@ class GridsetBioGeoService(LmService):
 
                 # Encode the hypotheses
                 enc_mtx = encoder.get_encoded_matrix()
-                with open(bg_mtx.get_dlocation(), 'wb') as out_f:
-                    enc_mtx.save(out_f)
+                enc_mtx.write(bg_mtx.get_dlocation())
 
                 # We'll return the newly inserted biogeo matrix
                 ret = [bg_mtx]

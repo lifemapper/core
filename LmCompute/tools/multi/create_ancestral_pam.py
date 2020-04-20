@@ -156,8 +156,7 @@ def main():
     # Build the Ancestral PAM
     anc_pam = build_ancestral_pam(pam, tree)
 
-    with open(args.out_fn, 'w') as out_f:
-        anc_pam.save(out_f)
+    anc_pam.write(args.out_fn)
 
 
 # .............................................................................

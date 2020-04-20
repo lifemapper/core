@@ -414,8 +414,7 @@ class ParameterSweep:
                     pav = encoder.get_encoded_matrix()
                     if pav is not None:
                         status = JobStatus.COMPUTED
-                        with open(pav_filename, 'w') as pav_out_f:
-                            pav.save(pav_out_f)
+                        pav.write(pav_filename)
                 except Exception as err:
                     self._process_error(
                         err, msg='Failed to encode PAV: {}'.format(str(err)))

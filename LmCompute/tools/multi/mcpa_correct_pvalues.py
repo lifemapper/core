@@ -51,13 +51,11 @@ def main():
     p_values = get_p_values(obs_vals, test_values,
                             num_permutations=num_values)
 
-    with open(args.p_values_filename, 'w') as p_val_f:
-        p_values.save(p_val_f)
+    p_values.write(args.p_values_filename)
 
     bh_values = correct_p_values(p_values)
 
-    with open(args.bh_values_filename, 'w') as bh_val_f:
-        bh_values.save(bh_val_f)
+    bh_values.write(args.bh_values_filename)
 
 
 # .............................................................................

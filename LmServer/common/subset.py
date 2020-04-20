@@ -261,8 +261,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 log.debug(
                     'Dlocation for updated pam: {}'.format(
                         updated_pam_mtx.get_dlocation()))
-                with open(updated_pam_mtx.get_dlocation(), 'wb') as out_file:
-                    pam_mtx.matrix.save(out_file)
+                pam_mtx.matrix.write(updated_pam_mtx.get_dlocation())
 
         # GRIMs
         # --------
@@ -294,8 +293,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             if method == SubsetMethod.SPATIAL:
                 grim_mtx = grim_mtx.slice(keep_sites)
 
-            with open(inserted_grim.get_dlocation(), 'wb') as out_file:
-                grim_mtx.save(out_file)
+            grim_mtx.write(inserted_grim.get_dlocation())
 
         # BioGeo
         # --------
@@ -318,8 +316,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             if method == SubsetMethod.SPATIAL:
                 bg_mtx = bg_mtx.slice(keep_sites)
 
-            with open(inserted_bg.get_dlocation(), 'wb') as out_file:
-                bg_mtx.save(out_file)
+            bg_mtx.write(inserted_bg.get_dlocation())
 
     else:
         # Reintersect everything

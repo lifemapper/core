@@ -50,8 +50,7 @@ def main():
 
     p_mtx = encoder.encode_phylogeny()
 
-    with open(args.out_file_name, 'w') as out_f:
-        p_mtx.save(out_f)
+    p_mtx.write(args.out_file_name)
 
 
 # .............................................................................

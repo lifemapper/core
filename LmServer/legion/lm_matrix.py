@@ -262,8 +262,7 @@ class LMMatrix(ServiceObject, ProcessObject):
             dlocation = self.get_dlocation()
         self.ready_filename(dlocation, overwrite=overwrite)
 
-        with open(dlocation, 'wb') as out_file:
-            self.matrix.save(out_file)
+        self.matrix.write(dlocation)
 
     # ....................................
     def set_data(self, new_data, headers=None):

@@ -146,8 +146,7 @@ def main():
     metrics = get_metrics(args.points_file, layer_info, args.points_name)
 
     # Write outputs
-    with open(args.output_file, 'w') as out_file:
-        metrics.save(out_file)
+    metrics.write(args.output_file)
 
 
 # .............................................................................

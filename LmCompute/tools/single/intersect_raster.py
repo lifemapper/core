@@ -74,8 +74,7 @@ def main():
 
         if pav is not None:
             ready_filename(args.pav_filename, overwrite=True)
-            with open(args.pav_filename, 'w') as pav_out_f:
-                pav.save(pav_out_f)
+            pav.write(args.pav_filename)
         if args.status_file is not None:
             ready_filename(args.status_file, overwrite=True)
             with open(args.status_file, 'w') as out_file:

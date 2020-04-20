@@ -107,8 +107,7 @@ def main():
     out_pam, out_tree, metadata = prune_pam_and_tree(pam, tree)
 
     # Write the outputs
-    with open(args.out_pam_fn, 'w') as out_file:
-        out_pam.save(out_file)
+    out_pam.write(args.out_pam_fn)
 
     out_tree.write(args.out_tree_fn, schema=DEFAULT_TREE_SCHEMA)
 

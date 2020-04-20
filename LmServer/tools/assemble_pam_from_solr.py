@@ -88,8 +88,7 @@ def assemble_pam(pam_id):
 
     pam.update_status(JobStatus.COMPLETE)
     scribe.update_object(pam)
-    with open(pam.get_dlocation(), 'w') as out_f:
-        pam.save(out_f)
+    pam.write(pam.get_dlocation())
     scribe.close_connections()
     return pam
 

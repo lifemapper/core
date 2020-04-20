@@ -215,45 +215,38 @@ def main():
     # Write outputs if they are not empty lists
     # PAM stats - diversity
     if diversity_stats:
-        with open(args.diversity_stats_filename, 'w') as out_f:
-            diversity_mtx = Matrix.concatenate(diversity_stats, axis=2)
-            diversity_mtx.save(out_f)
+        diversity_mtx = Matrix.concatenate(diversity_stats, axis=2)
+        diversity_mtx.write(args.diversity_stats_filename)
 
     # PAM stats - site stats
     if site_stats:
-        with open(args.site_stats_filename, 'w') as out_f:
-            site_stats_mtx = Matrix.concatenate(site_stats, axis=2)
-            site_stats_mtx.save(out_f)
+        site_stats_mtx = Matrix.concatenate(site_stats, axis=2)
+        site_stats_mtx.write(args.site_stats_filename)
 
     # PAM stats - species stats
     if species_stats:
-        with open(args.species_stats_filename, 'w') as out_f:
-            species_stats_mtx = Matrix.concatenate(species_stats, axis=2)
-            species_stats_mtx.save(out_f)
+        species_stats_mtx = Matrix.concatenate(species_stats, axis=2)
+        species_stats_mtx.write(args.species_stats_filename)
 
     # PAM stats - site covariance
     if site_cov_stats:
-        with open(args.site_covariance_filename, 'w') as out_f:
-            site_cov_mtx = Matrix.concatenate(site_cov_stats, axis=2)
-            site_cov_mtx.save(out_f)
+        site_cov_mtx = Matrix.concatenate(site_cov_stats, axis=2)
+        site_cov_mtx.write(args.site_covariance_filename)
 
     # PAM stats - species covariance
     if species_cov_stats:
-        with open(args.species_covariance_filename, 'w') as out_f:
-            sp_cov_mtx = Matrix.concatenate(species_cov_stats, axis=2)
-            sp_cov_mtx.save(out_f)
+        sp_cov_mtx = Matrix.concatenate(species_cov_stats, axis=2)
+        sp_cov_mtx.write(args.species_covariance_filename)
 
     # MCPA - observed values
     if args.mcpa_output_matrix_filename is not None:
-        with open(args.mcpa_output_matrix_filename, 'w') as out_f:
-            mcpa_out_mtx = Matrix.concatenate(mcpa_outs, axis=2)
-            mcpa_out_mtx.save(out_f)
+        mcpa_out_mtx = Matrix.concatenate(mcpa_outs, axis=2)
+        mcpa_out_mtx.write(args.mcpa_output_matrix_filename)
 
     # MCPA - F values
     if args.mcpa_f_matrix_filename is not None:
-        with open(args.mcpa_f_matrix_filename, 'w') as out_f:
-            mcpa_f_mtx = Matrix.concatenate(mcpa_fs, axis=2)
-            mcpa_f_mtx.save(out_f)
+        mcpa_f_mtx = Matrix.concatenate(mcpa_fs, axis=2)
+        mcpa_f_mtx.write(args.mcpa_f_matrix_filename)
 
 
 # .............................................................................

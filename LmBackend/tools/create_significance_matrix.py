@@ -81,8 +81,7 @@ def main():
         [obs, p_values, sig_values], axis=concat_axis)
 
     ready_filename(args.out_matrix_filename)
-    with open(args.out_matrix_filename, 'w') as out_f:
-        out_matrix.save(out_f)
+    out_matrix.write(args.out_matrix_filename)
 
 
 # .............................................................................
