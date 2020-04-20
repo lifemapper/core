@@ -407,26 +407,26 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
             if mtx.status == JobStatus.COMPLETE and mtx.dateCode == 'Curr':
                 # Handle each matrix type
                 if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
-                    pam = Matrix.load_flo(mtx.get_dlocation())
+                    pam = Matrix.load(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'pam_{}.csv'.format(mtx.get_id()))
                 elif mtx.matrixType == MatrixType.ANC_PAM:
-                    anc_pam = Matrix.load_flo(mtx.get_dlocation())
+                    anc_pam = Matrix.load(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'anc_pam_{}.csv'.format(mtx.get_id()))
                 elif mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
-                    sites_cov_obs = Matrix.load_flo(mtx.get_dlocation())
+                    sites_cov_obs = Matrix.load(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'sitesCovarianceObserved_{}.csv'.format(
                             mtx.get_id()))
                 elif mtx.matrixType == MatrixType.SITES_OBSERVED:
-                    sites_obs = Matrix.load_flo(mtx.get_dlocation())
+                    sites_obs = Matrix.load(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'sitesObserved_{}.csv'.format(
                             mtx.get_id()))
                     do_pam_stats = True
                 elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
-                    mcpa_mtx = Matrix.load_flo(mtx.get_dlocation())
+                    mcpa_mtx = Matrix.load(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'mcpa_{}.csv'.format(mtx.get_id()))
                     do_mcpa = True
@@ -438,7 +438,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
 
                 # If we should write the CSV file, and the matrix exists, do it
                 if include_csv and os.path.exists(mtx.get_dlocation()):
-                    mtx_obj = Matrix.load_flo(mtx.get_dlocation())
+                    mtx_obj = Matrix.load(mtx.get_dlocation())
                     csv_mtx_str = StringIO()
                     mtx_obj.write_csv(csv_mtx_str)
                     csv_mtx_str.seek(0)

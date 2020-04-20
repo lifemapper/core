@@ -30,7 +30,7 @@ def main():
     mtxs = []
     if args.mtx_fn:
         for mtx_fn in args.mtx_fn:
-            mtxs.append(Matrix.load_flo(mtx_fn))
+            mtxs.append(Matrix.load(mtx_fn))
 
     joined_mtx = Matrix.concatenate(mtxs, axis=args.axis)
 

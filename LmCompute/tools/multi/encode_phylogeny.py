@@ -44,7 +44,7 @@ def main():
         tree.resolve_polytomies()
 
     # Load the PAM
-    pam = Matrix.load_flo(args.pam_file_name)
+    pam = Matrix.load(args.pam_file_name)
 
     encoder = PhyloEncoding(tree, pam)
 

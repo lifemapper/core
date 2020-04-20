@@ -96,7 +96,7 @@ def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
             print(('Matrix: ({} of {}) {}'.format(
                 i, len(matrices), mtx.get_dlocation())))
             print(' - Loading matrix')
-            mtx_obj = Matrix.load_flo(mtx.get_dlocation())
+            mtx_obj = Matrix.load(mtx.get_dlocation())
             print(' - Loaded')
 
             # Need to get geojson where we can

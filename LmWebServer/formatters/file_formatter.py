@@ -63,7 +63,7 @@ def csv_object_formatter(obj):
         cherrypy.response.headers[
             'Content-Disposition'] = 'attachment; filename="mtx{}.csv"'.format(
                 obj.get_id())
-        mtx = Matrix.load_flo(obj.get_dlocation())
+        mtx = Matrix.load(obj.get_dlocation())
         out_stream = StringIO()
         mtx.write_csv(out_stream)
         out_stream.seek(0)

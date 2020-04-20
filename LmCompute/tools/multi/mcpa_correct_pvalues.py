@@ -36,7 +36,7 @@ def main():
     num_values = 0
 
     for f_val in args.f_value_filename:
-        test_mtx = Matrix.load_flo(f_val)
+        test_mtx = Matrix.load(f_val)
 
         # Add the values to the test values list
         test_values.append(test_mtx)
@@ -47,7 +47,7 @@ def main():
         else:
             num_values += 1
 
-    obs_vals = Matrix.load_flo(args.observed_filename)
+    obs_vals = Matrix.load(args.observed_filename)
     p_values = get_p_values(obs_vals, test_values,
                             num_permutations=num_values)
 

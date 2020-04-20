@@ -225,7 +225,7 @@ class GridsetBioGeoService(LmService):
                 inserted_bg.update_status(JobStatus.COMPLETE)
                 self.scribe.update_object(inserted_bg)
                 # Save the original grim data into the new location
-                bg_mtx = Matrix.load_flo(bg_hyp.get_dlocation())
+                bg_mtx = Matrix.load(bg_hyp.get_dlocation())
                 bg_mtx.write(inserted_bg.get_dlocation())
                 ret.append(inserted_bg)
         elif ref_obj[BG_REF_TYPE_KEY].lower() == 'upload':

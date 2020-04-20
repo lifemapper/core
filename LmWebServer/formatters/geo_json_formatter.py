@@ -201,7 +201,7 @@ def _format_object(obj):
                 MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM):
 
             shapegrid = obj.get_gridset().get_shapegrid()
-            mtx = Matrix.load_flo(obj.get_dlocation())
+            mtx = Matrix.load(obj.get_dlocation())
             cherrypy.response.headers[
                 'Content-Disposition'
                 ] = 'attachment; filename="mtx_{}.geojson"'.format(

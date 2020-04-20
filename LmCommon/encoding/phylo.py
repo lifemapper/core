@@ -52,7 +52,7 @@ class PhyloEncoding:
             IOError: If one or both of the files are not found.
         """
         tree = TreeWrapper.from_filename(tree_file_name)
-        pam = Matrix.load_flo(pam_file_name)
+        pam = Matrix.load(pam_file_name)
         return cls(tree, pam)
 
     # ..............................

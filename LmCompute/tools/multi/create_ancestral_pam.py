@@ -150,7 +150,7 @@ def main():
     args = parser.parse_args()
 
     # Read in inputs
-    pam = Matrix.load_flo(args.pam_fn)
+    pam = Matrix.load(args.pam_fn)
     tree = TreeWrapper.from_filename(args.tree_fn)
 
     # Build the Ancestral PAM

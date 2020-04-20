@@ -114,8 +114,7 @@ class LMMatrix(ServiceObject, ProcessObject):
         Todo:
             Replace 3 codes with scenario id
         """
-        with open(filename, 'rb') as in_file:
-            mtx = Matrix.load_flo(in_file)
+        mtx = Matrix.load(filename)
         return cls(mtx, matrix_type=matrix_type, process_type=process_type,
                    scenario_id=scenario_id, gcm_code=gcm_code,
                    alt_pred_code=alt_pred_code, date_code=date_code,

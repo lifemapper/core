@@ -111,7 +111,7 @@ def test_matrix(matrix_filename):
     test_status = JobStatus.COMPLETE
     if os.path.exists(matrix_filename):
         try:
-            Matrix.load_flo(matrix_filename)
+            Matrix.load(matrix_filename)
         except Exception:
             test_status = JobStatus.IO_GENERAL_ERROR
     else:

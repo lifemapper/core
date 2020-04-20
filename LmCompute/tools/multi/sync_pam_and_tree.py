@@ -100,7 +100,7 @@ def main():
     args = parser.parse_args()
 
     # Get the inputs
-    pam = Matrix.load_flo(args.in_pam_fn)
+    pam = Matrix.load(args.in_pam_fn)
     tree = TreeWrapper.from_filename(args.in_tree_fn)
 
     # Prune the PAM and tree

@@ -25,7 +25,7 @@ def matrix_object_generator(matrix_filenames):
             Matrix objects
     """
     for file_name in matrix_filenames:
-        yield Matrix.load_flo(file_name)
+        yield Matrix.load(file_name)
 
 
 # .............................................................................
@@ -58,10 +58,10 @@ def main():
     else:
         cmp_func = ptest.compare_signed_values
 
-    obs = Matrix.load_flo(args.observed_matrix)
+    obs = Matrix.load(args.observed_matrix)
 
     if args.test_mtx is not None:
-        test_mtx = Matrix.load_flo(args.test_mtx)
+        test_mtx = Matrix.load(args.test_mtx)
     else:
         test_mtx = obs
 

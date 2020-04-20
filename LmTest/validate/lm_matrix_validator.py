@@ -20,7 +20,7 @@ def validate_lm_matrix_file(lmmatrix_filename):
     valid = False
     if os.path.exists(lmmatrix_filename):
         try:
-            _ = Matrix.load_flo(lmmatrix_filename)
+            _ = Matrix.load(lmmatrix_filename)
             valid = True
         except Exception as e:
             msg = str(e)

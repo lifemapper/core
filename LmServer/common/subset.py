@@ -287,7 +287,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             scribe.update_object(inserted_grim)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
-            grim_mtx = Matrix.load_flo(grim.get_dlocation())
+            grim_mtx = Matrix.load(grim.get_dlocation())
 
             # If we need to spatially subset, slice the matrix
             if method == SubsetMethod.SPATIAL:
@@ -310,7 +310,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             scribe.update_object(inserted_bg)
             # Save the original grim data into the new location
             # TODO: Add read / load method for LMMatrix
-            bg_mtx = Matrix.load_flo(orig_bg.get_dlocation())
+            bg_mtx = Matrix.load(orig_bg.get_dlocation())
 
             # If we need to spatially subset, slice the matrix
             if method == SubsetMethod.SPATIAL:

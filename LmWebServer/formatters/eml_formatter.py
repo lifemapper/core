@@ -33,7 +33,7 @@ def _create_data_table_section(data_table):
         'formatName', value='Lifemapper Matrix Json')
 
     att_list_el = SubElement(dt_el, 'attributeList')
-    mtx = Matrix.load_flo(data_table.get_dlocation())
+    mtx = Matrix.load(data_table.get_dlocation())
     for col_header in mtx.get_column_headers():
         SubElement(att_list_el, 'attribute', value=col_header)
     return dt_el
@@ -102,7 +102,7 @@ def _create_spatial_vector(spatial_vector):
 
     attrib_list_element = SubElement(sv_element, 'attributeList')
     if isinstance(spatial_vector, Matrix):
-        mtx = Matrix.load_flo(spatial_vector.get_dlocation())
+        mtx = Matrix.load(spatial_vector.get_dlocation())
         for col_header in mtx.get_column_headers():
             SubElement(attrib_list_element, 'attribute', value=col_header)
         SubElement(sv_element, 'geometry', value='polygon')

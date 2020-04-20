@@ -181,7 +181,7 @@ def main():
 
     args = parser.parse_args()
 
-    pam = Matrix.load_flo(args.pam_filename)
+    pam = Matrix.load(args.pam_filename)
     tree = None
     biogeo = None
     grim = None
@@ -191,9 +191,9 @@ def main():
         tree = TreeWrapper.from_filename(args.tree_filename)
     if args.do_mcpa:
         try:
-            biogeo = Matrix.load_flo(args.biogeo)
-            grim = Matrix.load_flo(args.grim)
-            tree_mtx = Matrix.load_flo(args.tree_matrix)
+            biogeo = Matrix.load(args.biogeo)
+            grim = Matrix.load(args.grim)
+            tree_mtx = Matrix.load(args.tree_matrix)
         except Exception as err:
             print((str(err)))
             msg = ('Cannot perform MCPA without PAM, Grim, Biogeo, '
