@@ -223,7 +223,8 @@ class ChristopherWalken(LMObject):
             dtime=datetime.datetime(
                 self._get_boom_or_default(BoomKeys.OCC_EXP_YEAR),
                 self._get_boom_or_default(BoomKeys.OCC_EXP_MONTH),
-                self._get_boom_or_default(BoomKeys.OCC_EXP_DAY))).mjd
+                self._get_boom_or_default(BoomKeys.OCC_EXP_DAY),
+                tzinfo=datetime.timezone.utc)).mjd
 
         # Copy public data to user space
         # TODO: Handle taxonomy, use_gbif_taxonomy=??
