@@ -13,7 +13,7 @@ import sys
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.api_query import GbifAPI
 from LmCommon.common.lmconstants import (
-    GBIF, JobStatus, LMFormat, ONE_HOUR, ProcessType)
+    GBIF, JobStatus, LMFormat, ONE_HOUR, ProcessType, ENCODING)
 from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt, LmTime
@@ -114,7 +114,7 @@ class _SpeciesWeaponOfChoice(LMObject):
         line_num = 0
         complete = False
         if os.path.exists(self.start_file):
-            with open(self.start_file, 'r') as in_file:
+            with open(self.start_file, 'r', encoding=ENCODING) as in_file:
                 for line in in_file:
                     if not complete:
                         self.log.info(
@@ -174,7 +174,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             line_num = self.next_start
         if line_num is not None:
             try:
-                with open(self.start_file, 'w') as out_f:
+                with open(self.start_file, 'w', encoding=ENCODING) as out_f:
                     out_f.write(
                         ('# Next start line for {} '
                          'using species data {}\n{}\n').format(
@@ -202,7 +202,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                 self.log.error(
                     'Missing provider file {}'.format(provider_key_file))
             else:
-                with open(provider_key_file, 'r') as dump_file:
+                with open(provider_key_file, 'r', encoding=ENCODING) as dump_file:
                     csv.field_size_limit(sys.maxsize)
                     csv_reader = csv.reader(dump_file, delimiter=';')
                     for line in csv_reader:
@@ -614,7 +614,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
     def _write_raw_data(self, occ, data=None, metadata=None):
         raw_dloc = occ.create_local_dlocation(raw=True)
 
-        with open(raw_dloc, 'w') as out_file:
+        with open(raw_dloc, 'w', encoding=ENCODING) as out_file:
             writer = csv.writer(out_file, delimiter=self._delimiter)
 
             try:
@@ -628,7 +628,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 # Write interpreted metadata along with raw CSV
                 raw_meta_dloc = raw_dloc + LMFormat.JSON.ext
                 ready_filename(raw_meta_dloc, overwrite=True)
-                with open(raw_meta_dloc, 'w') as meta_f:
+                with open(raw_meta_dloc, 'w', encoding=ENCODING) as meta_f:
                     json.dump(metadata, meta_f)
         return raw_dloc, raw_meta_dloc
 
@@ -668,7 +668,8 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         self._dir_contents_file = None
         self._update_file(dir_contents_fname, exp_date)
         try:
-            self._dir_contents_file = open(dir_contents_fname, 'r')
+            self._dir_contents_file = open(dir_contents_fname, 'r', 
+                                           encoding=ENCODING)
         except IOError:
             raise LMError('Unable to open {}'.format(dir_contents_fname))
         self.use_gbif_taxonomy = use_gbif_taxonomy
@@ -706,7 +707,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
                         basename))
 
         idx = 0
-        with open(bubble_fname) as in_file:
+        with open(bubble_fname, 'r', encoding=ENCODING) as in_file:
             for idx, _ in enumerate(in_file):
                 pass
         record_count = idx
@@ -793,7 +794,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         """Create a new file from BISON query for matches with > 20 points.
         """
         self.ready_filename(dir_contents_fname, overwrite=True)
-        with open(dir_contents_fname, 'w') as out_f:
+        with open(dir_contents_fname, 'w', encoding=ENCODING) as out_f:
             for root, _, files in os.walk(self._occ_csv_dir):
                 for fname in files:
                     if fname.endswith(LMFormat.CSV.ext):
@@ -846,7 +847,7 @@ class TinyBubblesWoC(_SpeciesWeaponOfChoice):
         if metadata is not None:
             rawmeta_dloc = raw_dloc + LMFormat.JSON.ext
             ready_filename(rawmeta_dloc, overwrite=True)
-            with open(rawmeta_dloc, 'w') as out_f:
+            with open(rawmeta_dloc, 'w', encoding=ENCODING) as out_f:
                 json.dump(metadata, out_f)
         return raw_dloc, rawmeta_dloc
 
@@ -883,7 +884,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
         # Copy the occurrencesets
         self.process_type = None
         try:
-            self._id_file = open(occ_id_fname, 'r')
+            self._id_file = open(occ_id_fname, 'r', encoding=ENCODING)
         except IOError:
             raise LMError('Failed to open {}'.format(occ_id_fname))
 

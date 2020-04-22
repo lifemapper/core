@@ -8,7 +8,8 @@ import os
 import shutil
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import ProcessType, LMFormat, JobStatus
+from LmCommon.common.lmconstants import (
+    ProcessType, LMFormat, JobStatus, ENCODING)
 from LmServer.base.layer import Raster, Vector
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borg_scribe import BorgScribe
@@ -110,7 +111,7 @@ class Stockpile(LMObject):
     def _copy_object(cls, ptype, obj, file_names, meta_filename):
         metadata = None
         try:
-            with open(meta_filename) as in_meta:
+            with open(meta_filename, 'r', encoding=ENCODING) as in_meta:
                 metadata = json.load(in_meta)
         except Exception:
             pass
@@ -181,7 +182,8 @@ class Stockpile(LMObject):
                         output_f_name, driver=file_format.driver)
                     if not success:
                         try:
-                            with open(output_f_name, 'r') as in_f:
+                            with open(output_f_name, 'r', 
+                                      encoding=ENCODING) as in_f:
                                 msg = in_f.read()
                             msgs.append(msg)
                         except Exception:
@@ -200,7 +202,7 @@ class Stockpile(LMObject):
                             'File {} is not a valid GDAL file'.format(
                                 output_f_name))
             else:
-                with open(output_f_name, 'r') as in_f:
+                with open(output_f_name, 'r', encoding=ENCODING) as in_f:
                     data = in_f.read()
                 if LMFormat.is_json(ext):
                     try:
@@ -249,7 +251,7 @@ def main():
         status = args.status
     elif args.status_file is not None:
         try:
-            with open(args.status_file) as status_in:
+            with open(args.status_file, 'r', encoding=ENCODING) as status_in:
                 status = int(status_in.read())
         except IOError:
             # Need to catch empty status file

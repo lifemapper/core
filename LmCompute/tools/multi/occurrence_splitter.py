@@ -1,12 +1,10 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """Splits a sorted CSV file on the group field
 """
 import argparse
 import csv
 import os
 
-
+from LmCommon.common.lmconstants import ENCODING
 # .............................................................................
 def group_by_field(input_filename, out_dir, group_position,
                    file_prefix='taxon_'):
@@ -21,7 +19,7 @@ def group_by_field(input_filename, out_dir, group_position,
     group_id = None
     out_file = None
 
-    with open(input_filename) as in_file:
+    with open(input_filename, 'r', encoding=ENCODING) as in_file:
         reader = csv.reader(in_file)
         for row in reader:
             if row[group_position] != group_id:
@@ -32,7 +30,7 @@ def group_by_field(input_filename, out_dir, group_position,
                     pass
                 out_filename = os.path.join(
                     out_dir, '{}{}.csv'.format(file_prefix, group_id))
-                out_file = open(out_filename, 'w')
+                out_file = open(out_filename, 'w', encoding=ENCODING)
                 writer = csv.writer(out_file)
 
             writer.writerow(row)

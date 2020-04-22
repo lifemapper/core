@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """This module provides services for query and subsetting of global PAMs
 """
 import cherrypy

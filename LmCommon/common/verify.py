@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Module containing functions to handle data verification
-"""
+"""Module containing functions to handle data verification"""
 import hashlib
 import os
 

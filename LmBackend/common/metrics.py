@@ -8,6 +8,7 @@ import json
 import os
 
 from LmBackend.common.lmobj import LMObject
+from LmCommon.common.lmconstants import ENCODING
 
 
 # .............................................................................
@@ -101,5 +102,5 @@ class LmMetrics(LMObject):
         """
         if self.out_file_name is not None:
             self.ready_filename(self.out_file_name, overwrite=True)
-            with open(self.out_file_name, 'w') as out_file:
+            with open(self.out_file_name, 'w', encoding=ENCODING) as out_file:
                 json.dump(self._metrics, out_file)

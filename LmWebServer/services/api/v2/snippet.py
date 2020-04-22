@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides services for querying snippets
-"""
+"""This module provides services for querying snippets"""
 import cherrypy
 
 from LmServer.common.solr import query_snippet_index

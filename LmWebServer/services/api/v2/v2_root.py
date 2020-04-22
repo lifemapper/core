@@ -1,7 +1,4 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-"""This module provides REST services for service objects
-"""
+"""This module provides REST services for service objects"""
 import cherrypy
 
 from LmWebServer.services.api.v2.biotaphy_names import GBIFTaxonService

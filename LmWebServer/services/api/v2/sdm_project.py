@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides REST services for Projections
-"""
+"""This module provides REST services for Projections"""
 import json
 
 import cherrypy

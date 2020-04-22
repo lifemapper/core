@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """This script creates a workflow to rebuild the solr index for a gridset
 """
 import argparse

@@ -768,7 +768,7 @@ class BOOMFiller(LMObject):
             config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree.name)
 
         ready_filename(self.out_config_filename, overwrite=True)
-        with open(self.out_config_filename, 'w') as config_file:
+        with open(self.out_config_filename, 'w', encoding=ENCODING) as config_file:
             config.write(config_file)
         self._fix_permissions(files=[self.out_config_filename])
         self.scribe.log.info('******')
@@ -860,7 +860,7 @@ class BOOMFiller(LMObject):
                 self.occ_id_fname))
 
         count = 0
-        for line in open(self.occ_id_fname, 'r'):
+        for line in open(self.occ_id_fname, 'r', encoding=ENCODING):
             count += 1
             try:
                 tmp = line.strip()
@@ -1158,7 +1158,7 @@ class BOOMFiller(LMObject):
         fpthbasename, _ = os.path.splitext(bg_fname)
         meta_fname = fpthbasename + LMFormat.JSON.ext
         if os.path.exists(meta_fname):
-            with open(meta_fname) as in_file:
+            with open(meta_fname, 'r', encoding=ENCODING) as in_file:
                 meta = json.load(in_file)
                 if isinstance(meta, dict):
                     for k, val in meta.items():
@@ -1530,7 +1530,7 @@ class BOOMFiller(LMObject):
         items = []
         if os.path.exists(filename):
             try:
-                for line in open(filename):
+                for line in open(filename, 'r', encoding=ENCODING):
                     items.append(line.strip())
             except Exception:
                 raise LMError('Failed to read file {}'.format(filename))

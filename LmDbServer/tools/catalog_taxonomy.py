@@ -7,7 +7,7 @@ import time
 
 from LmBackend.command.server import CatalogTaxonomyCommand
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import GBIF, JobStatus
+from LmCommon.common.lmconstants import GBIF, JobStatus, ENCODING
 from LmCommon.common.time import gmt
 from LmDbServer.common.lmconstants import (
     GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE)
@@ -83,7 +83,7 @@ class TaxonFiller(LMObject):
         """Initialize the object."""
         self._taxonomy_source_id = self.scribe.find_or_insert_taxon_source(
             self._taxonomy_source_name, self._taxonomy_source_url)
-        self._taxon_file = open(self.taxonomy_fname, 'r')
+        self._taxon_file = open(self.taxonomy_fname, 'r', encoding=ENCODING)
         self._csv_reader = csv.reader(
             self._taxon_file, delimiter=self._delimiter)
 
@@ -148,7 +148,7 @@ class TaxonFiller(LMObject):
         """Write a file to indicate to makeflow that the process succeeded."""
         self.ready_filename(self._success_fname, overwrite=True)
         try:
-            with open(self._success_fname, 'w') as out_file:
+            with open(self._success_fname, 'w', encoding=ENCODING) as out_file:
                 out_file.write(message)
         except IOError as io_err:
             raise LMError('Failed to write success file', io_err)

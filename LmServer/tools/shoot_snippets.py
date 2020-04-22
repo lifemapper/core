@@ -77,5 +77,5 @@ def main():
         # Shoot snippets
         shooter.shoot_snippets(solr_post_filename=args.post_filename)
     else:
-        with open(args.post_filename, 'w') as out_f:
+        with open(args.post_filename, 'w', encoding=ENCODING) as out_f:
             out_f.write('none')

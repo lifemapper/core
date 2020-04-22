@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """This module contains a class for encoding spatial layers into a Matrix
 
 The 'LayerEncoder' class uses a shapegrid to generate a base matrix structure

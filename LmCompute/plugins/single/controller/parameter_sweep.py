@@ -22,7 +22,8 @@ from osgeo import ogr
 
 import LmBackend.common.layer_tools as layer_tools
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
-from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
+from LmCommon.common.lmconstants import (
+    ProcessType, JobStatus, LMFormat, ENCODING)
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.compression.binary_list import compress
 from LmCommon.encoding.layer_encoder import LayerEncoder
@@ -227,7 +228,8 @@ class ParameterSweep:
 
                         # Append log
                         if os.path.exists(wrapper.get_log_filename()):
-                            with open(wrapper.get_log_filename()) as log_f:
+                            with open(wrapper.get_log_filename(), 
+                                      encoding=ENCODING) as log_f:
                                 self.log.debug('-----------------------------')
                                 self.log.debug(wrapper.get_log_filename())
                                 self.log.debug('-----------------------------')
@@ -279,7 +281,8 @@ class ParameterSweep:
                         wrapper.copy_ruleset(mdl_ruleset_path, overwrite=True)
 
                         # Append log
-                        with open(wrapper.get_log_filename()) as log_f:
+                        with open(wrapper.get_log_filename(), 
+                                  encoding=ENCODING) as log_f:
                             self.log.debug('---------------------------------')
                             self.log.debug(wrapper.get_log_filename())
                             self.log.debug('---------------------------------')
@@ -297,7 +300,8 @@ class ParameterSweep:
                             status = wrapper.get_status()
                             if status < JobStatus.GENERAL_ERROR:
                                 # Append log
-                                with open(wrapper.get_log_filename()) as log_f:
+                                with open(wrapper.get_log_filename(), 
+                                          encoding=ENCODING) as log_f:
                                     self.log.debug(
                                         '-----------------------------')
                                     self.log.debug('Projection log')
@@ -439,7 +443,7 @@ class ParameterSweep:
                 # successes
                 # Touch file if it doesn't exist
                 if not os.path.exists(pav_filename):
-                    with open(pav_filename, 'a'):
+                    with open(pav_filename, 'a', encoding=ENCODING):
                         os.utime(pav_filename, None)
 
     # ........................................
@@ -523,8 +527,8 @@ class ParameterSweep:
                                     # Append log
                                     if os.path.exists(
                                             wrapper.get_log_filename()):
-                                        with open(wrapper.get_log_filename()
-                                                  ) as log_f:
+                                        with open(wrapper.get_log_filename(), 
+                                                  encoding=ENCODING) as log_f:
                                             self.log.debug('-----------------')
                                             self.log.debug(
                                                 wrapper.get_log_filename())
@@ -561,8 +565,8 @@ class ParameterSweep:
 
                                 # Append log
                                 if os.path.exists(wrapper.get_log_filename()):
-                                    with open(wrapper.get_log_filename()
-                                              ) as log_f:
+                                    with open(wrapper.get_log_filename(), 
+                                              encoding=ENCODING) as log_f:
                                         self.log.debug('---------------------')
                                         self.log.debug(
                                             wrapper.get_log_filename())
@@ -778,28 +782,30 @@ class ParameterSweep:
         # Write metrics
         with open(
             os.path.join(
-                    self.base_work_dir,
-                    self.sweep_config.metrics_filename), 'w') as out_metrics:
+                self.base_work_dir, self.sweep_config.metrics_filename), 'w', 
+                encoding=ENCODING) as out_metrics:
             json.dump(self.get_metrics(), out_metrics)
 
         # Write snippets
         with open(
             os.path.join(
                 self.base_work_dir,
-                self.sweep_config.snippets_filename), 'w') as out_snippets:
+                self.sweep_config.snippets_filename), 'w',
+                encoding=ENCODING) as out_snippets:
             json.dump(self.get_snippets(), out_snippets)
 
         # Write stockpile information
         with open(
-                os.path.join(
-                        self.base_work_dir,
-                        self.sweep_config.stockpile_filename),
-                'w') as out_stockpile:
+            os.path.join(
+                self.base_work_dir,
+                self.sweep_config.stockpile_filename), 'w', 
+                encoding=ENCODING) as out_stockpile:
             json.dump(self.get_stockpile_info(), out_stockpile)
 
         # Write PAV information
         with open(
                 os.path.join(
                     self.base_work_dir,
-                    self.sweep_config.pavs_filename), 'w') as out_pavs:
+                    self.sweep_config.pavs_filename), 'w', 
+                    encoding=ENCODING) as out_pavs:
             json.dump(self.get_pav_info(), out_pavs)

@@ -3,7 +3,7 @@
 import os
 
 from LmBackend.common.cmd import MfRule
-from LmCommon.common.lmconstants import LMFormat
+from LmCommon.common.lmconstants import LMFormat, ENCODING
 from LmCommon.common.time import gmt
 from LmServer.base.service_object import ProcessObject
 from LmServer.common.data_locator import EarlJr
@@ -268,7 +268,7 @@ class MFChain(ProcessObject):
         if filename is None:
             filename = self.get_dlocation()
         self.ready_filename(filename, overwrite=True)
-        with open(filename, 'w') as out_file:
+        with open(filename, 'w', encoding=ENCODING) as out_file:
             for header, value in self.headers:
                 out_file.write(
                     '{header}={value}\n'.format(header=header, value=value))

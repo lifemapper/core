@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """This script encodes a Phylogenetic tree into a matrix by using a PAM
 
 Note:

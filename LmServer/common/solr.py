@@ -65,7 +65,7 @@ def _post(collection, doc_filename, headers=None):
         headers = {}
     url = '{}{}/update?commit=true'.format(SOLR_SERVER, collection)
 
-    with open(doc_filename) as in_file:
+    with open(doc_filename, 'r', encoding=ENCODING) as in_file:
         data = in_file.read()
 
     req = urllib.request.Request(url, data=data, headers=headers)

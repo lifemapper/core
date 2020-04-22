@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """This module provides a wrapper around GBIF's names service
 """
 import json

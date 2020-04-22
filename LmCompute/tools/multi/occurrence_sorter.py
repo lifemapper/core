@@ -1,11 +1,10 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """Sorts a CSV file on the group field
 """
 import argparse
 import csv
 from operator import itemgetter
 
+from LmCommon.common.lmconstants import ENCODING
 
 # .............................................................................
 def sort_file_on_field(input_filename, output_filename, group_position):
@@ -17,12 +16,12 @@ def sort_file_on_field(input_filename, output_filename, group_position):
         group_position: The column to sort on
     """
     rows = []
-    with open(input_filename) as in_file:
+    with open(input_filename, 'r', encoding=ENCODING) as in_file:
         reader = csv.reader(in_file)
         for row in reader:
             rows.append(row)
 
-    with open(output_filename, 'w') as out_file:
+    with open(output_filename, 'w', encoding=ENCODING) as out_file:
         writer = csv.writer(out_file)
         for row in sorted(rows, key=itemgetter(group_position)):
             writer.writerow(row)

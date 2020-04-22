@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """Split a CSV into buckets
 
 This script takes an input file (or files) of occurrence records, in CSV
@@ -9,6 +7,8 @@ field (such as taxon id)
 import argparse
 import csv
 import os
+
+from LmCommon.common.lmconstants import ENCODING
 
 BASE_BUCKET_NUM = 10  # 10 possibilities for numeric characters
 DEF_CHAR = '0'  # Default character
@@ -37,12 +37,11 @@ def split_into_buckets(input_filenames, output_basename, group_pos, str_pos=0,
         #     become '900', etc)
         if k not in buckets:
             buckets[k] = csv.writer(
-                open('{}{}.csv'.format(output_basename, k), 'w'))
-            # buckets[k] = csv.writer(
-            #    open('{}{}.csv'.format(outputBasename, k), 'w'))
+                open('{}{}.csv'.format(output_basename, k), 'w', 
+                     encoding=ENCODING))
 
     for filename in input_filenames:
-        with open(filename) as in_file:
+        with open(filename, 'r', encoding=ENCODING) as in_file:
             reader = csv.reader(in_file)
             i = 0
             for row in reader:

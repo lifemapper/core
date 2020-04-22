@@ -15,7 +15,7 @@ import ot_service_wrapper.open_tree as open_tree
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.api_query import GbifAPI
-from LmCommon.common.lmconstants import PhyloTreeKeys
+from LmCommon.common.lmconstants import PhyloTreeKeys, ENCODING
 from LmCommon.common.time import gmt
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmServer.base.taxon import ScientificName
@@ -48,7 +48,6 @@ class PartnerQuery:
         if logger is None:
             logger = ScriptLogger(self.name)
         self.log = logger
-        self.encoding = 'utf-8'
         self.delimiter = '\t'
 
     # .................................
@@ -224,9 +223,9 @@ class PartnerQuery:
         taxon_ids = []
         name_to_gbif_ids = {}
         try:
-            in_file = open(gbif_id_f_name, 'r')
+            in_file = open(gbif_id_f_name, 'r', encoding=ENCODING)
             csv_reader = csv.reader(
-                in_file, delimiter=self.delimiter, encoding=self.encoding)
+                in_file, delimiter=self.delimiter)
         except Exception as err:
             raise Exception(
                 'Failed to read or open {}, ({})'.format(
@@ -317,7 +316,7 @@ class PartnerQuery:
             print(('Deleting existing file {} ...'.format(out_f_name)))
             os.remove(out_f_name)
 
-        with open(out_f_name, 'w') as out_file:
+        with open(out_f_name, 'w', encoding=ENCODING) as out_file:
             writer = csv.writer(out_file, delimiter='\t')
             header = ['providedName']
             header.extend(GbifAPI.NameMatchFieldnames)

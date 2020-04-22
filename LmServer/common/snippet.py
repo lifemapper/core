@@ -6,7 +6,8 @@ from random import randint
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.time import gmt, LmTime
 from LmServer.common.lmconstants import (
-    SnippetFields, SOLR_SERVER, SOLR_SNIPPET_COLLECTION, UPLOAD_PATH)
+    SnippetFields, SOLR_SERVER, SOLR_SNIPPET_COLLECTION, UPLOAD_PATH,
+    ENCODING)
 from LmServer.common.solr import build_solr_document, post_solr_document
 
 
@@ -110,7 +111,7 @@ class SnippetShooter(LMObject):
                 UPLOAD_PATH, 'snippetPost-{}'.format(randint(0, 10000)))
             delete_post_filename = True
 
-        with open(solr_post_filename, 'w') as out_f:
+        with open(solr_post_filename, 'w', encoding=ENCODING) as out_f:
             out_f.write(solr_post_str)
 
         # Shoot snippets

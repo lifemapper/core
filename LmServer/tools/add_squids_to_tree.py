@@ -56,7 +56,7 @@ def main():
     scribe.close_connections()
 
     ready_filename(args.success_filename, overwrite=True)
-    with open(args.success_filename, 'w') as out_f:
+    with open(args.success_filename, 'w', encoding=ENCODING) as out_f:
         out_f.write('1\n')
 
 

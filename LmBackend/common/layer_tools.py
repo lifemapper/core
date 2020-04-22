@@ -14,7 +14,7 @@ import numpy
 
 from osgeo import gdal
 
-from LmCommon.common.lmconstants import (LMFormat, DEFAULT_NODATA)
+from LmCommon.common.lmconstants import (LMFormat, DEFAULT_NODATA, ENCODING)
 from LmCompute.common.lmconstants import (
     CONVERT_JAVA_CMD, CONVERT_TOOL, ME_CMD)
 
@@ -194,7 +194,7 @@ def convert_tiff_to_ascii(tiff_file_name, asc_file_name, header_precision=6):
     output.append('cellsize    {}\n'.format(x_res))
     output.append('NODATA_value    {}\n'.format(int(nodata)))
     past_header = False
-    with open(asc_file_name, 'r') as asc_in:
+    with open(asc_file_name, 'r', encoding=ENCODING) as asc_in:
         for line in asc_in:
             low_line = line.lower()
             if not past_header and any([
@@ -206,7 +206,7 @@ def convert_tiff_to_ascii(tiff_file_name, asc_file_name, header_precision=6):
                 past_header = True
                 output.append(line)
     # Rewrite ASCII Grid
-    with open(asc_file_name, 'w') as asc_out:
+    with open(asc_file_name, 'w', encoding=ENCODING) as asc_out:
         for line in output:
             asc_out.write(line)
 

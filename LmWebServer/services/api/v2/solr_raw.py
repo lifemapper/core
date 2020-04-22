@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides a raw interface to solr
-"""
+"""This module provides a raw interface to solr"""
 import json
 
 import cherrypy

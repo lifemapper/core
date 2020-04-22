@@ -82,7 +82,7 @@ class LMUser(LMObject):
         hash_1 = hashlib.md5(passwd)
         hash_2 = hashlib.md5(salt)
         hash_3 = hashlib.md5(''.join((hash_1.hexdigest(), 
-                                      hash_2.hexdigest())).encode('utf-8'))
+                                      hash_2.hexdigest())).encode(ENCODING))
         return hash_3.hexdigest()
 
     # ................................

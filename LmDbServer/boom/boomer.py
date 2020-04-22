@@ -304,7 +304,7 @@ class Boomer(LMObject):
         """Write out the success file."""
         self.ready_filename(self._success_fname, overwrite=True)
         try:
-            with open(self._success_fname, 'w') as out_file:
+            with open(self._success_fname, 'w', encoding=ENCODING) as out_file:
                 out_file.write(message)
         except IOError as io_err:
             raise LMError('Failed to write success file', io_err)
@@ -455,8 +455,8 @@ infname = ('/state/partition1/workspace/issues/data/'
 outfname = ('/state/partition1/workspace/issues/data/'
             'cshl/prenolepis_imparis3.csv')
 
-outf = open(outfname, 'w')
-for line in open(infname, 'r'):
+outf = open(outfname, 'w', encoding=ENCODING)
+for line in open(infname, 'r', encoding=ENCODING):
     parts = line.split('\t')
     newline = ','.join(parts)
     outf.write(newline)

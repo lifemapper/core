@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides OGC services
-"""
+"""This module provides OGC services"""
 import os
 
 import cherrypy

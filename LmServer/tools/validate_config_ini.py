@@ -7,7 +7,7 @@ from LmCommon.common.lmconstants import (
     COMPUTE_ENV_HEADING, COMPUTE_OPTIONS_HEADING, COMPUTE_METRICS_HEADING,
     COMPUTE_ME_PLUGIN_HEADING, SERVER_BOOM_HEADING, SERVER_DB_HEADING,
     SERVER_ENV_HEADING, SERVER_MATT_DAEMON_HEADING, SERVER_PIPELINE_HEADING,
-    SERVER_SDM_MASK_HEADING_PREFIX)
+    SERVER_SDM_MASK_HEADING_PREFIX, ENCODING)
 from LmServer.common.lmconstants import Algorithms
 
 VALID_ALG_PARAMS = []
@@ -98,7 +98,7 @@ def main():
     parser.add_argument('config_filename')
     args = parser.parse_args()
 
-    with open(args.config_filename) as in_file:
+    with open(args.config_filename, 'r', encoding=ENCODING) as in_file:
         validate_method = validate_boom_entry
         for line in in_file:
             if line.startswith('['):

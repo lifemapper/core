@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """Synchronize a PAM and tree for computation
 
 This script modifies a tree and a PAM as necessary so that they can be used
@@ -111,7 +109,7 @@ def main():
 
     out_tree.write(args.out_tree_fn, schema=DEFAULT_TREE_SCHEMA)
 
-    with open(args.metadata_fn, 'w') as out_metadata:
+    with open(args.metadata_fn, 'w', encoding=ENCODING) as out_metadata:
         json.dump(metadata, out_metadata)
 
 

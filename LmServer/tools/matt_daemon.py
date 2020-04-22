@@ -17,7 +17,7 @@ from time import sleep
 import traceback
 
 from LmBackend.common.daemon import Daemon, DaemonCommands
-from LmCommon.common.lmconstants import LM_USER, JobStatus
+from LmCommon.common.lmconstants import LM_USER, JobStatus, ENCODING
 from LmCommon.common.time import gmt
 from LmServer.base.utilities import is_lm_user
 from LmServer.common.lmconstants import (
@@ -124,8 +124,8 @@ class MattDaemon(Daemon):
                             self.log_dir, 'mf_{}.out'.format(mf_obj.get_id()))
                         err_log_filename = os.path.join(
                             self.log_dir, 'mf_{}.err'.format(mf_obj.get_id()))
-                        proc_out = open(out_log_filename, 'a')
-                        proc_err = open(err_log_filename, 'a')
+                        proc_out = open(out_log_filename, 'a', encoding=ENCODING)
+                        proc_err = open(err_log_filename, 'a', encoding=ENCODING)
 
                         mf_proc = subprocess.Popen(
                             cmd, shell=True, stdout=proc_out, stderr=proc_err,

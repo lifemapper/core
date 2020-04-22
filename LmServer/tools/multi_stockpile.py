@@ -11,7 +11,8 @@ from lmpy import Matrix
 
 from LmBackend.common.lmconstants import RegistryKey
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import JobStatus, LMFormat, ProcessType
+from LmCommon.common.lmconstants import (
+    JobStatus, LMFormat, ProcessType, ENCODING)
 from LmCommon.compression.binary_list import decompress
 from LmServer.base.layer import Raster, Vector
 from LmServer.common.log import ConsoleLogger
@@ -43,8 +44,7 @@ def stockpile_pavs(pav_list):
 
 # .............................................................................
 def stockpile_objects(stockpile_list):
-    """Stockpiles objects from a list of dictionary entries
-    """
+    """Stockpiles objects from a list of dictionary entries"""
     log = ConsoleLogger()
     scribe = BorgScribe(log)
     scribe.open_connections()
@@ -167,7 +167,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        with open(args.stockpile_filename) as in_stockpile:
+        with open(args.stockpile_filename, 'r', encoding=ENCODING) as in_stockpile:
             stockpile_list = json.load(in_stockpile)
             stockpile_objects(stockpile_list)
         msg = 'success'
@@ -179,7 +179,7 @@ def main():
             pav_list = json.load(in_pavs)
             stockpile_pavs(pav_list)
 
-    with open(args.success_filename, 'w') as out_success:
+    with open(args.success_filename, 'w', encoding=ENCODING) as out_success:
         out_success.write(msg)
 
 

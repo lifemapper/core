@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Module containing a class for generating color palettes
 
 Note:

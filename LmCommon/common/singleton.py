@@ -1,6 +1,7 @@
 """Module containing a singleton decorator function
 """
 import hashlib
+from LmCommon.common.lmconstants import ENCODING
 
 
 # ............................................................................
@@ -11,7 +12,7 @@ def singleton(cls):
 
     def get_instance(*args, **kwargs):
         name = hashlib.md5(
-            ''.join([str(args), str(kwargs)]).encode('utf-8')).hexdigest()
+            ''.join([str(args), str(kwargs)]).encode(ENCODING)).hexdigest()
         if name not in instances:
             instances[name] = cls(*args, **kwargs)
         return instances[name]

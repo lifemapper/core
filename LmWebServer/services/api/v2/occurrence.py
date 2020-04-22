@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides REST services for Occurrence sets
-"""
+"""This module provides REST services for Occurrence sets"""
 import json
 
 import cherrypy

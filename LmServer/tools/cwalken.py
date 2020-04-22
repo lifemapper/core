@@ -15,7 +15,7 @@ from LmCommon.common.lmconstants import (
     BoomKeys, GBIF, JobStatus, LMFormat, MatrixType, ProcessType,
     SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING,
     SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX,
-    SERVER_SDM_MASK_HEADING_PREFIX)
+    SERVER_SDM_MASK_HEADING_PREFIX, ENCODING)
 from LmCommon.common.time import gmt, LmTime
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmServer.common.data_locator import EarlJr
@@ -851,7 +851,8 @@ class ChristopherWalken(LMObject):
     # ....................................
     def _write_done_walken_file(self):
         try:
-            with open(self.walked_archive_fname, 'w') as out_file:
+            with open(self.walked_archive_fname, 'w', 
+                      encoding=ENCODING) as out_file:
                 out_file.write(
                     '# Completed walking species input {}\n'.format(
                         self.weapon_of_choice.input_filename))

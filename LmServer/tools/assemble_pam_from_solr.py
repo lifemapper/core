@@ -8,7 +8,7 @@ import argparse
 import numpy as np
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import LMFormat, JobStatus
+from LmCommon.common.lmconstants import LMFormat, JobStatus, ENCODING
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.compression.binary_list import decompress
 from LmServer.common.lmconstants import SOLR_FIELDS
@@ -116,7 +116,7 @@ def main():
         success = 0
 
     ready_filename(args.success_filename)
-    with open(args.success_filename, 'w') as out_f:
+    with open(args.success_filename, 'w', encoding=ENCODING) as out_f:
         out_f.write(str(success))
 
 

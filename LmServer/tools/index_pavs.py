@@ -7,6 +7,7 @@ import os
 from osgeo import ogr
 
 from LmBackend.common.lmconstants import RegistryKey
+from LmCommon.common.lmconstants import ENCODING
 from LmCommon.common.time import LmTime
 from LmCommon.compression.binary_list import decompress
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS)
@@ -153,7 +154,7 @@ def main():
 
     args = parser.parse_args()
 
-    with open(args.pavs_filename) as in_file:
+    with open(args.pavs_filename, 'r', encoding=ENCODING) as in_file:
         pav_config = json.load(in_file)
 
     scribe = BorgScribe(ConsoleLogger())
@@ -180,13 +181,13 @@ def main():
         doc = build_solr_document(doc_pairs)
 
         # Write the post document
-        with open(args.post_index_filename, 'w') as out_f:
+        with open(args.post_index_filename, 'w', encoding=ENCODING) as out_f:
             out_f.write(doc)
 
         post_solr_document(SOLR_ARCHIVE_COLLECTION, args.post_index_filename)
     else:
         print('No documents to post')
-        with open(args.post_index_filename, 'a'):
+        with open(args.post_index_filename, 'a', encoding=ENCODING):
             os.utime(args.post_index_filename, None)
 
     scribe.close_connections()

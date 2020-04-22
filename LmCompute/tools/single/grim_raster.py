@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """Intersect a shapegrid and a raster layer to create a GRIM column
 """
 import argparse

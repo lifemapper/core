@@ -6,6 +6,7 @@ import os
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.api_query import IdigbioAPI
+from LmCommon.common.lmconstants import ENCODING
 from LmCommon.common.ready_file import ready_filename
 
 
@@ -14,7 +15,7 @@ def _get_user_input(filename):
     items = []
     if os.path.exists(filename):
         try:
-            for line in open(filename):
+            for line in open(filename, 'r', encoding=ENCODING):
                 items.append(line.strip())
         except Exception:
             raise LMError('Failed to read file {}'.format(filename))
@@ -67,7 +68,7 @@ def main():
         args.taxon_id_file, args.point_output_file, args.meta_output_file,
         missing_id_file=args.missing_id_file)
     ready_filename(args.success_file)
-    with open(args.success_file, 'w') as out_f:
+    with open(args.success_file, 'w', encoding=ENCODING) as out_f:
         out_f.write('1')
 
 

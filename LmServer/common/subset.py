@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """This module provides functionality for subsetting a gridset using Solr
 
 Todo:

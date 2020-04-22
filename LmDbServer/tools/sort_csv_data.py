@@ -7,7 +7,7 @@ import os
 import sys
 
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import LMFormat
+from LmCommon.common.lmconstants import LMFormat, ENCODING
 from LmCommon.common.occ_parse import OccDataParser
 from LmServer.common.log import ScriptLogger
 
@@ -114,7 +114,7 @@ def split_into_files(log, occ_parser, data_path, prefix, basename,
     while not occ_parser.closed:
         chunk = occ_parser.get_size_chunk(max_file_size)
         fname = _get_op_filename(data_path, prefix, basename, run=idx)
-        with open(fname, 'w') as out_file:
+        with open(fname, 'w', encoding=ENCODING) as out_file:
             csv_writer = csv.writer(out_file, delimiter=OUT_DELIMITER)
             # Skip header, rely on metadata with column indices
             #       csvwriter.writerow(occ_parser.header)
@@ -136,7 +136,7 @@ def sort_files(log, group_by_idx, data_path, in_prefix, out_prefix, basename):
         log.debug('Write from {} to {}'.format(in_fname, out_fname))
         # Read rows
         uns_rows = []
-        with open(in_fname) as in_file, open(out_fname, 'w') as out_file:
+        with open(in_fname, 'r', encoding=ENCODING) as in_file, open(out_fname, 'w', encoding=ENCODING) as out_file:
             with csv.reader(in_file, delimiter=OUT_DELIMITER) as occ_reader:
                 with csv.writer(
                         out_file, delimiter=OUT_DELIMITER) as occ_writer:
@@ -219,7 +219,7 @@ def merge_sorted_files(log, merge_fname, data_path, input_prefix, basename,
 
     try:
         # Open output sorted file
-        with open(merge_fname, 'w') as out_file:
+        with open(merge_fname, 'w', encoding=ENCODING) as out_file:
             csv_writer = csv.writer(out_file, delimiter=OUT_DELIMITER)
             # Skip header (no longer written to files)
             # find file with record containing smallest key

@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """Encode a PAM and a Tree into a ancestral node matrix
 
 This script encodes a PAM and Tree into a quarternary site by ancestral node

@@ -6,7 +6,8 @@ from LmBackend.common.lmconstants import RegistryKey
 from LmBackend.common.lmobj import LMError
 from LmBackend.common.metrics import LmMetricNames
 from LmCommon.common.lm_xml import (Element, fromstring, SubElement, tostring)
-from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
+from LmCommon.common.lmconstants import (
+    JobStatus, ProcessType, LMFormat, ENCODING)
 from LmCompute.plugins.single.modeling.base import ModelSoftwareWrapper
 from LmCompute.plugins.single.modeling.openModeller_constants import (
     DEFAULT_FILE_TYPE, OM_DEFAULT_LOG_LEVEL, OM_MODEL_TOOL, OM_PROJECT_TOOL,
@@ -46,7 +47,7 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
 
         self.logger.debug('Checking output')
         if os.path.exists(self.get_log_filename()):
-            with open(self.get_log_filename()) as log_f:
+            with open(self.get_log_filename(), 'w', encoding=ENCODING) as log_f:
                 log_content = log_f.read()
 
             self.logger.debug('openModeller error log')
@@ -116,7 +117,7 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         # Generate the model request XML file
         model_request_filename = os.path.join(
             self.work_dir, 'model_request.xml')
-        with open(model_request_filename, 'w') as req_f:
+        with open(model_request_filename, 'w', encoding=ENCODING) as req_f:
             cnt = omr.generate()
             # As of openModeller 1.3, need to remove <?xml ... first line
             if cnt.startswith("<?xml version"):
@@ -176,7 +177,7 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         omr = OmProjectionRequest(
             ruleset_filename, layer_filenames, mask_filename=mask_filename)
 
-        with open(prj_request_filename, 'w') as req_f:
+        with open(prj_request_filename, 'w', encoding=ENCODING) as req_f:
             cnt = omr.generate()
             # As of openModeller 1.3, need to remove <?xml ... first line
             if cnt.startswith("<?xml version"):
@@ -383,7 +384,7 @@ class OmProjectionRequest(OmRequest):
         self.mask_filename = mask_filename
 
         # Get the algorithm section out of the ruleset
-        with open(ruleset_filename) as ruleset_in:
+        with open(ruleset_filename, 'r', encoding=ENCODING) as ruleset_in:
             ruleset = ruleset_in.read()
             mdl_element = fromstring(ruleset)
             # Find the algorithm element, and pull it out

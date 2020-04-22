@@ -289,7 +289,7 @@ class ShapeShifter:
             'ogrformat': LMFormat.SHAPE.driver,
             'geomtype': geom_type, 'count': count, 'minx': min_x,
             'miny': min_y, 'maxx': max_x, 'maxy': max_y}
-        with open(basename + '.meta', 'w') as out_file:
+        with open(basename + '.meta', 'w', encoding=ENCODING) as out_file:
             json.dump(meta_dict, out_file)
 
     # ...............................................
@@ -470,68 +470,6 @@ if __name__ == '__main__':
     print('__main__ is not implemented')
 
 """
-from osgeo import ogr, osr
-import StringIO
-import subprocess
-
-from LmBackend.common.occparse import OccDataParser
-from LmCommon.shapes.create_shape import ShapeShifter
-from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
-                    GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY,
-                    PROVIDER_FIELD_COMMON,
-                    LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
-                    DWCNames, LMFormat)
-from LmServer.common.log import ScriptLogger
-import ast
-
-log = LmComputeLogger('csvocc_testing', addConsole=True)
-
-# ......................................................
-# User test
-csvfname = '/share/lm/data/archive/taffy/000/000/396/487/pt_396487.csv'
-metafname = '/share/lm/data/archive/taffy/heuchera.json'
-outfname = '/state/partition1/lmscratch/temp/testpoints.shp'
-bigfname = '/state/partition1/lmscratch/temp/testpoints_big.shp'
-
-with open(csvfname, 'r') as f:
-    blob = f.read()
-
-with open(csvfname, 'r') as f:
-    blob2 = f.readlines()
-
-# with open(metafname, 'r') as f:
-#     metad = ast.literal_eval(f.read())
-
-shaper = ShapeShifter(blob, metafname, logger=logger)
-shaper.writeOccurrences(outfname, maxPoints=50, bigfname=bigfname)
-
-
-# ......................................................
-# GBIF test
-csv_fn = '/share/lm/data/archive/kubi/000/000/398/505/pt_398505.csv'
-out_fn = '/state/partition1/lmscratch/temp/test_points'
-big_out_fn = '/state/partition1/lmscratch/temp/big_test_points'
-metadata = '/share/lmserver/data/species/gbif_occ_subset-2019.01.10.json'
-delimiter = '\t'
-maxPoints = 500
-ready_filename(out_fn, overwrite=True)
-ready_filename(big_out_fn, overwrite=True)
-
-
-with open(csv_fn) as inF:
-    csvInputBlob = inF.readlines()
-
-rawdata = ''.join(csvInputBlob)
-count = len(csvInputBlob)
-
-log = LmComputeLogger('csvocc_testing', addConsole=True)
-
-shaper = ShapeShifter(
-    rawData, metadata, count, logger=log, delimiter='\t', isGbif=True)
-shaper.writeOccurrences(out_fn, maxPoints=maxPoints, bigfname=big_out_fn)
-
-status = JobStatus.COMPUTED
-goodData, featCount = ShapeShifter.test_shapefile(outFile)
 
 # ......................................................
 """

@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """Add a tree and biogeographic hypotheses to a grid set
 
 Todo:
@@ -185,7 +183,7 @@ def _get_boom_biogeo_params(scribe, grid_name, usr):
 # ...............................................
 def _write_success_file(message, successFname):
     ready_filename(successFname, overwrite=True)
-    with open(successFname, 'w') as in_file:
+    with open(successFname, 'w', encoding=ENCODING) as in_file:
         in_file.write(message)
 
 

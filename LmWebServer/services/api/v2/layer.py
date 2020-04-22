@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides REST services for Layers
-"""
+"""This module provides REST services for Layers"""
 import cherrypy
 
 from LmCommon.common.lmconstants import HTTPStatus

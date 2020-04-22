@@ -16,7 +16,8 @@ from time import sleep
 from LmBackend.common.layer_tools import convert_ascii_to_mxe
 from LmBackend.common.lmconstants import RegistryKey
 from LmBackend.common.metrics import LmMetricNames
-from LmCommon.common.lmconstants import JobStatus, LMFormat, ProcessType
+from LmCommon.common.lmconstants import (
+    JobStatus, LMFormat, ProcessType, ENCODING)
 from LmCompute.common.lmconstants import JAVA_CMD, ME_CMD
 from LmCompute.plugins.single.modeling.base import ModelSoftwareWrapper
 from LmCompute.plugins.single.modeling.maxent_constants import (
@@ -76,7 +77,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
 
             # Look at Maxent error (might be more specific)
             if os.path.exists(errfname):
-                with open(errfname, 'r') as in_f:
+                with open(errfname, 'r', encoding=ENCODING) as in_f:
                     log_content = in_f.read()
                 self.logger.debug('---------------------------------------')
                 self.logger.debug(log_content)
@@ -171,7 +172,7 @@ class MaxentWrapper(ModelSoftwareWrapper):
 
         # Process points
         points_csv = os.path.join(self.work_dir, 'points.csv')
-        with open(points_csv, 'w') as out_csv:
+        with open(points_csv, 'w', encoding=ENCODING) as out_csv:
             out_csv.write("Species, X, Y\n")
             for _, x_coord, y_coord in list(points):
                 out_csv.write(

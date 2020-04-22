@@ -7,6 +7,7 @@ import numpy as np
 from osgeo import gdal, ogr
 
 from lmpy import Matrix
+from LmCommon.common.lmconstants import ENCODING
 
 
 # .............................................................................
@@ -21,7 +22,7 @@ def is_close(a_val, b_val, rel_tol=1e-09, abs_tol=0.0):
 def get_layer_info(layer_json_file):
     """Get layer information to use for metrics from the JSON file
     """
-    with open(layer_json_file) as in_file:
+    with open(layer_json_file, 'r', encoding=ENCODING) as in_file:
         raw_layers = json.load(in_file)
 
     layers = []

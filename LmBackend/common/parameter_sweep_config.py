@@ -5,7 +5,7 @@ import json
 import os
 
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
-from LmCommon.common.lmconstants import LMFormat, ProcessType
+from LmCommon.common.lmconstants import LMFormat, ProcessType, ENCODING
 from LmCommon.common.ready_file import ready_filename
 
 # Local dictionary keys for determining the type of masks to create
@@ -55,7 +55,7 @@ class ParameterSweepConfiguration:
             config = json.load(fn_or_flo)
         except AttributeError:
             # Try to load as if argument is a file name
-            with open(fn_or_flo) as in_file:
+            with open(fn_or_flo, 'r', encoding=ENCODING) as in_file:
                 config = json.load(in_file)
         my_obj = cls(work_dir=config[RegistryKey.WORK_DIR])
         my_obj.masks = config[RegistryKey.MASK]
@@ -500,7 +500,7 @@ class ParameterSweepConfiguration:
 
         if not hasattr(fn_or_flo, 'write'):
             ready_filename(fn_or_flo, overwrite=True)
-            with open(fn_or_flo, 'w') as out_f:
+            with open(fn_or_flo, 'w', encoding=ENCODING) as out_f:
                 json.dump(config, out_f)
         else:
             json.dump(config, fn_or_flo)

@@ -8,7 +8,8 @@ import os
 from osgeo import gdal, gdalconst, ogr
 
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT, DEFAULT_EPSG)
+from LmCommon.common.lmconstants import (
+    DEFAULT_GLOBAL_EXTENT, DEFAULT_EPSG, ENCODING)
 from LmServer.base.layer import Raster, Vector
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.service_object import ServiceObject
@@ -104,7 +105,7 @@ class LMMap(LMSpatialObject):
         self.ready_filename(map_filename, overwrite=True)
         try:
             # make sure that group is set correctly
-            with open(map_filename, 'w') as out_file:
+            with open(map_filename, 'w', encoding=ENCODING) as out_file:
                 out_file.write(map_str)
             print(('Wrote {}'.format(map_filename)))
         except Exception as e:
@@ -114,9 +115,8 @@ class LMMap(LMSpatialObject):
     # ................................
     @staticmethod
     def _get_base_map(fname):
-        # TODO: in python 2.6, use 'with open(fname, 'r'):'
         try:
-            with open(fname, 'r') as in_file:
+            with open(fname, 'r', encoding=ENCODING) as in_file:
                 base_map = in_file.read()
         except Exception as e:
             raise LMError('Failed to read {}: {}'.format(fname, e))

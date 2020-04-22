@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides REST services for matrix columns
-"""
+"""This module provides REST services for matrix columns"""
 import cherrypy
 
 from LmCommon.common.lmconstants import HTTPStatus, JobStatus

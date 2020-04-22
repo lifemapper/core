@@ -1,11 +1,9 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """This script intersects a shapegrid and a raster layer to create a PAV
 """
 import argparse
 import os
 
-from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.lmconstants import JobStatus, ENCODING
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.encoding.layer_encoder import LayerEncoder
 
@@ -53,7 +51,7 @@ def main():
 
     lyr_status = JobStatus.GENERAL
     if args.layer_status_file is not None:
-        with open(args.layer_status_file) as in_file:
+        with open(args.layer_status_file, 'r', encoding=ENCODING) as in_file:
             lyr_status = int(in_file.read().strip())
 
     if lyr_status < JobStatus.GENERAL_ERROR:
@@ -77,12 +75,12 @@ def main():
             pav.write(args.pav_filename)
         if args.status_file is not None:
             ready_filename(args.status_file, overwrite=True)
-            with open(args.status_file, 'w') as out_file:
+            with open(args.status_file, 'w', encoding=ENCODING) as out_file:
                 out_file.write('{}'.format(JobStatus.COMPUTED))
     else:
         if args.status_file is not None:
             ready_filename(args.status_file, overwrite=True)
-            with open(args.status_file, 'w') as out_file:
+            with open(args.status_file, 'w', encoding=ENCODING) as out_file:
                 out_file.write('{}'.format(lyr_status))
 
 

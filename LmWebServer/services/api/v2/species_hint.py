@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides services for fuzzy search for occurrence sets
-"""
+"""This module provides services for fuzzy search for occurrence sets"""
 import cherrypy
 
 from LmCommon.common.lmconstants import HTTPStatus

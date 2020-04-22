@@ -12,7 +12,7 @@ from osgeo import gdal, gdalconst, ogr, osr
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.attribute_object import LmAttObj
 from LmCommon.common.lmconstants import (
-    GEOTIFF_INTERFACE, OFTInteger, OFTString, SHAPEFILE_INTERFACE)
+    GEOTIFF_INTERFACE, OFTInteger, OFTString, SHAPEFILE_INTERFACE, ENCODING)
 from LmCommon.common.time import gmt
 from LmCommon.common.verify import compute_hash, verify_hash
 from LmServer.base.lmobj import LMSpatialObject
@@ -850,7 +850,7 @@ class Raster(_Layer):
             # Copy from input stream
             elif src_data is not None:
                 try:
-                    with open(out_file, 'w') as out_file_2:
+                    with open(out_file, 'w', encoding=ENCODING) as out_file_2:
                         out_file_2.write(src_data)
                 except Exception as err:
                     raise LMError(
@@ -1736,7 +1736,7 @@ class Vector(_Layer):
         drv = ogr.GetDriverByName(DEFAULT_OGR.driver)
         sp_ref = Vector._get_spatial_ref(srs_epsg_or_wkt)
 
-        with open(dlocation, 'rb') as in_file:
+        with open(dlocation, 'r', encoding=ENCODING) as in_file:
             pt_reader = csv.DictReader(
                 in_file, delimiter=delimiter, quotechar=quotechar)
             ((id_name, _), (x_name, _), (y_name, _)
@@ -1807,7 +1807,7 @@ class Vector(_Layer):
         success = self.ready_filename(dlocation, overwrite=overwrite)
         if success:
             try:
-                with open(dlocation, 'wb') as csvfile:
+                with open(dlocation, 'w', encoding=ENCODING) as csvfile:
                     spamwriter = csv.writer(csvfile, delimiter='\t')
                     if header:
                         spamwriter.writerow(header)
@@ -2060,13 +2060,13 @@ class Vector(_Layer):
         pid = str(os.getpid())
         dump_name = os.path.join(
             UPLOAD_PATH, '{}_{}_dump.csv'.format(curr_time, pid))
-        with open(dump_name, 'w') as f_1:
+        with open(dump_name, 'w', encoding=ENCODING) as f_1:
             f_1.write(csv_data)
 
-        with open(dump_name, 'rU') as f_1:
+        with open(dump_name, 'r', encoding=ENCODING) as f_1:
             tmp_name = os.path.join(
                 UPLOAD_PATH, '{}_{}.csv'.format(curr_time, pid))
-            with open(tmp_name, 'w') as f_2:
+            with open(tmp_name, 'w', encoding=ENCODING) as f_2:
                 try:
                     for line in f_1:
                         f_2.write(line)
@@ -2276,7 +2276,7 @@ class Vector(_Layer):
         if dlocation is None:
             dlocation = self._dlocation
         self.clear_features()
-        infile = open(dlocation, 'rU')
+        infile = open(dlocation, 'r', encoding=ENCODING)
         reader = csv.reader(infile)
 
         # Read row with possible field_names

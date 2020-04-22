@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides REST services for trees
-"""
+"""This module provides REST services for trees"""
 import cherrypy
 import dendropy
 

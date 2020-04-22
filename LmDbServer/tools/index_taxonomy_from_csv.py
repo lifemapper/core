@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """This script processes an exported CSV from the db and indexes the taxonomy
 
 Note:
@@ -12,6 +10,7 @@ import csv
 import os
 import time
 
+from LmCommon.common.lmconstants import ENCODING
 from LmServer.common.lmconstants import NUM_DOCS_PER_POST
 import LmServer.common.solr as lm_solr
 from LmBackend.common.lmobj import LMError
@@ -52,7 +51,7 @@ def main():
     if not os.path.exists(args.csv_filename):
         raise LMError('CSV path: {} does not exist'.format(args.csv_filename))
 
-    with open(args.csv_filename) as in_csv:
+    with open(args.csv_filename, 'r', encoding=ENCODING) as in_csv:
         index_taxonomy_csv_flo(in_csv, num_per_post=args.number_per_post)
 
 

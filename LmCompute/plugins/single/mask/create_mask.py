@@ -274,7 +274,7 @@ def write_ascii(out_filename, bbox, cell_size, data, epsg,
         cell_size = round(cell_size, header_precision)
 
     ready_filename(out_filename, overwrite=True)
-    with open(out_filename, 'w') as out_f:
+    with open(out_filename, 'w', encoding=ENCODING) as out_f:
         out_f.write('ncols    {}\n'.format(num_cols))
         out_f.write('nrows    {}\n'.format(num_rows))
         out_f.write('xllcorner    {}\n'.format(minx))
@@ -291,7 +291,7 @@ def write_ascii(out_filename, bbox, cell_size, data, epsg,
     # Write .prj file
     if epsg is not None:
         prj_filename = '{}.prj'.format(os.path.splitext(out_filename)[0])
-        with open(prj_filename, 'w') as prj_out:
+        with open(prj_filename, 'w', encoding=ENCODING) as prj_out:
             prj_out.write(spatial_ref.ExportToWkt())
 
 

@@ -7,7 +7,7 @@ import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import (
-    LMFormat, OFTInteger, OFTReal, OFTString)
+    LMFormat, OFTInteger, OFTReal, OFTString, ENCODING)
 
 from LmCommon.common.log import TestLogger
 
@@ -71,7 +71,7 @@ class OccDataParser(LMObject):
         self.delimiter = delimiter
         self.csv_fname = csv_data_or_fname
 
-        self._file = open(csv_data_or_fname, 'r')
+        self._file = open(csv_data_or_fname, 'r', encoding=ENCODING)
         self._csv_reader = csv.reader(self._file, delimiter=delimiter)
         if self._file is None:
             self.csv_fname = None
@@ -278,7 +278,7 @@ class OccDataParser(LMObject):
         # Read as JSON
         try:
             # from file
-            with open(metadata) as in_file:
+            with open(metadata, 'r', encoding=ENCODING) as in_file:
                 meta = json.load(in_file)
         except IOError as io_err:
             print(('Failed to open {} err: {}'.format(metadata, str(io_err))))
@@ -289,7 +289,7 @@ class OccDataParser(LMObject):
                 meta = json.loads(metadata)
             # or parse oldstyle CSV
             except Exception:
-                with open(metadata) as in_file:
+                with open(metadata, 'r', encoding=ENCODING) as in_file:
                     meta_lines = in_file.readlines()
                 meta = OccDataParser.read_old_metadata(meta_lines)
 

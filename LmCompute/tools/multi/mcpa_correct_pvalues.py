@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """This script calculates corrected P-values for F-pseudo values.
 """
 import argparse

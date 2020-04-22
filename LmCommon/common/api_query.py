@@ -13,7 +13,7 @@ import idigbio
 from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.lmconstants import (
     BISON, BisonQuery, DwcNames, GBIF, HTTPStatus, Idigbio, IdigbioQuery,
-    Itis, URL_ESCAPES)
+    Itis, URL_ESCAPES, ENCODING)
 from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import ready_filename
 
@@ -25,7 +25,6 @@ class APIQuery:
     Note:
         CSV files are created with tab delimiter
     """
-    ENCODING = 'utf-8'
     DELIMITER = GBIF.DATA_DUMP_DELIMITER
     GBIF_MISSING_KEY = 'unmatched_gbif_ids'
 
@@ -130,7 +129,7 @@ class APIQuery:
         for k, val in of_dict.items():
             if isinstance(val, bool):
                 val = str(val).lower()
-            of_dict[k] = str(val).encode('utf-8')
+            of_dict[k] = str(val).encode(ENCODING)
         filter_string = urllib.parse.urlencode(of_dict)
         return filter_string
 
@@ -225,6 +224,7 @@ class APIQuery:
         self.output = None
         # Post a file
         if file is not None:
+            # TODO: send as bytes here?
             files = {'files': open(file, 'rb')}
             try:
                 response = requests.post(self.base_url, files=files)
@@ -522,7 +522,7 @@ class GbifAPI(APIQuery):
     def _get_output_val(out_dict, name):
         try:
             tmp = out_dict[name]
-            val = str(tmp).encode('utf-8')
+            val = str(tmp).encode(ENCODING)
         except Exception:
             return None
         return val
@@ -633,7 +633,7 @@ class GbifAPI(APIQuery):
         complete = False
 
         ready_filename(out_f_name, overwrite=True)
-        with open(out_f_name, 'w', newline='') as csv_f:
+        with open(out_f_name, 'w', encoding=ENCODING, newline='') as csv_f:
             writer = csv.writer(csv_f, delimiter=GbifAPI.DELIMITER)
 
             while not complete and offset <= gbif_total:
@@ -782,7 +782,7 @@ class GbifAPI(APIQuery):
         """
         if os.path.exists(filename):
             names = []
-            with open(filename, 'r', encoding='utf-8') as in_file:
+            with open(filename, 'r', encoding=ENCODING) as in_file:
                 for line in in_file:
                     names.append(line.strip())
 
@@ -929,7 +929,7 @@ class IdigbioAPI(APIQuery):
             new_meta[str(col_idx)] = val_dict
 
         ready_filename(meta_f_name, overwrite=True)
-        with open(meta_f_name, 'w') as out_f:
+        with open(meta_f_name, 'w', encoding=ENCODING) as out_f:
             json.dump(new_meta, out_f)
         return new_meta
 
@@ -1045,7 +1045,7 @@ class IdigbioAPI(APIQuery):
         summary = {self.GBIF_MISSING_KEY: []}
 
         ready_filename(point_output_file, overwrite=True)
-        with open(point_output_file, 'w', newline='') as csv_f:
+        with open(point_output_file, 'w', encoding=ENCODING, newline='') as csv_f:
             writer = csv.writer(csv_f, delimiter=GbifAPI.DELIMITER)
             fld_names = None
             for gid in taxon_ids:
@@ -1060,7 +1060,7 @@ class IdigbioAPI(APIQuery):
         # get/write missing data
         if missing_id_file is not None and len(
                 summary[self.GBIF_MISSING_KEY]) > 0:
-            with open(missing_id_file, 'w') as out_f:
+            with open(missing_id_file, 'w', encoding=ENCODING) as out_f:
                 for gid in summary[self.GBIF_MISSING_KEY]:
                     out_f.write('{}\n'.format(gid))
 
@@ -1157,10 +1157,10 @@ def test_idigbio_taxon_ids():
     out_list = '/tmp/idigbio_accepted_list.txt'
     if os.path.exists(out_list):
         os.remove(out_list)
-    out_f = open(out_list, 'w')
+    out_f = open(out_list, 'w', encoding=ENCODING)
 
     idig_list = []
-    with open(in_f_name, 'r') as in_f:
+    with open(in_f_name, 'r', encoding=ENCODING) as in_f:
         #          with line in file:
         for _ in range(test_count):
             line = in_f.readline()

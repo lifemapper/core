@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides REST services for Scenario packages
-"""
+"""This module provides REST services for Scenario packages"""
 import cherrypy
 from LmCommon.common.lmconstants import HTTPStatus
 from LmWebServer.common.lmconstants import HTTPMethod
