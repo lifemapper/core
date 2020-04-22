@@ -496,7 +496,7 @@ class ChristopherWalken(LMObject):
             for input_key, lyr_name in sdm_mask_alg.get_inputs().items():
                 sdm_mask_input_layer = self._scribe.get_layer(
                     user_id=user_id, lyr_name=lyr_name, epsg=epsg)
-                sdm_mask_alg.setInput(input_key, sdm_mask_input_layer)
+                sdm_mask_alg.set_input(input_key, sdm_mask_input_layer)
 
             proc_params = {
                 PROCESSING_KEY: {
