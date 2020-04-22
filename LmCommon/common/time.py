@@ -10,11 +10,11 @@ TODO:
     * Need to implement math functions for time deltas
     * Less than / greater than / etc
 """
-import datetime
+import datetime as DT
 
-MJD_EPOCH_TIME = datetime.datetime(1858, 11, 17, tzinfo=datetime.timezone.utc)
+
+MJD_EPOCH_TIME = DT.datetime(1858, 11, 17, tzinfo=DT.timezone.utc)
 SECONDS_IN_DAY = 86400
-
 
 # .............................................................................
 class LmTime:
@@ -24,8 +24,10 @@ class LmTime:
     def __init__(self, dtime=None):
         """Constructor that takes an optional time.struct_time object."""
         if dtime is None:
-            self._time = datetime.datetime.utcnow()
-        elif isinstance(dtime, datetime.datetime):
+            self._time  = DT.datetime.now(DT.timezone.utc)
+        elif isinstance(dtime, DT.datetime):
+            if not (dtime.tzinfo):
+                dtime.replace(tzinfo=DT.timezone.utc)
             self._time = dtime
         else:
             raise Exception(
@@ -47,7 +49,7 @@ class LmTime:
         num_days = int(mjd_time)
         num_seconds = SECONDS_IN_DAY * (mjd_time - num_days)
         return cls(
-            dtime=MJD_EPOCH_TIME + datetime.timedelta(
+            dtime=MJD_EPOCH_TIME + DT.timedelta(
                 days=num_days, seconds=num_seconds))
 
     # ...........................
@@ -114,7 +116,8 @@ class LmTime:
                         sc = int(dparts[2])
                     except:
                         pass
-        d_time = datetime.datetime(yr, mo, dy, hour=hr, minute=mn, second=sc)
+        d_time = DT.datetime(yr, mo, dy, hour=hr, minute=mn, second=sc, 
+                             tzinfo=DT.timezone.utc)
         return cls(dtime=d_time)
 
     # ...........................
@@ -160,24 +163,26 @@ class LmTime:
 
 # .............................................................................
 def from_timestamp(ticks):
-    """Return an LmTime object from timestamp ticks"""
-    return LmTime(dtime=datetime.datetime.fromtimestamp(ticks))
+    """Return an aware LmTime object from timestamp ticks"""
+    return LmTime(dtime=DT.datetime.fromtimestamp(ticks, tzinfo=DT.timezone.utc))
 
 
 # .............................................................................
 def gmt():
-    """Return a LmTime object for GMT"""
-    return LmTime(datetime.datetime.now(datetime.timezone.utc))
+    """Return an aware LmTime object for GMT"""
+    return LmTime(DT.datetime.now(DT.timezone.utc))
 
 
 # .............................................................................
 def localtime():
-    """Return a LmTime object for time.localtime."""
-    return LmTime(dtime=datetime.datetime.now())
+    """Return a naive LmTime object for datetime.localtime.  The object cannot
+    be compared to LmTime timezone-aware objects, the default"""
+    # returns a naive object
+    return LmTime(dtime=DT.datetime.now())
 
 
 # .............................................................................
 def time_delta_from_mjd(mjd_value):
     """Get a time delta from an mjd value"""
     num_seconds = (mjd_value - int(mjd_value)) * SECONDS_IN_DAY
-    return datetime.timedelta(days=int(mjd_value), seconds=num_seconds)
+    return DT.timedelta(days=int(mjd_value), seconds=num_seconds)
