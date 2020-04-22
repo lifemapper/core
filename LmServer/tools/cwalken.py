@@ -159,10 +159,10 @@ class ChristopherWalken(LMObject):
     def _get_var_value(var):
         try:
             var = int(var)
-        except TypeError:
+        except (TypeError, ValueError):
             try:
                 var = float(var)
-            except TypeError:
+            except (TypeError, ValueError):
                 pass
         return var
 
