@@ -429,7 +429,7 @@ class ShapeShifter:
         try:
             x_coord = rec_dict[self.occ_parser.x_idx]
             y_coord = rec_dict[self.occ_parser.y_idx]
-        except AttributeError:
+        except (AttributeError, KeyError):
             x_coord = rec_dict[self.x_field]
             y_coord = rec_dict[self.y_field]
 
