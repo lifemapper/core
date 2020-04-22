@@ -223,7 +223,8 @@ class ChristopherWalken(LMObject):
             dtime=datetime.datetime(
                 self._get_boom_or_default(BoomKeys.OCC_EXP_YEAR),
                 self._get_boom_or_default(BoomKeys.OCC_EXP_MONTH),
-                self._get_boom_or_default(BoomKeys.OCC_EXP_DAY))).mjd
+                self._get_boom_or_default(BoomKeys.OCC_EXP_DAY),
+                tzinfo=datetime.timezone.utc)).mjd
 
         # Copy public data to user space
         # TODO: Handle taxonomy, use_gbif_taxonomy=??
@@ -495,7 +496,7 @@ class ChristopherWalken(LMObject):
             for input_key, lyr_name in sdm_mask_alg.get_inputs().items():
                 sdm_mask_input_layer = self._scribe.get_layer(
                     user_id=user_id, lyr_name=lyr_name, epsg=epsg)
-                sdm_mask_alg.setInput(input_key, sdm_mask_input_layer)
+                sdm_mask_alg.set_input(input_key, sdm_mask_input_layer)
 
             proc_params = {
                 PROCESSING_KEY: {

@@ -260,7 +260,7 @@ def main():
         args.object_output, meta_filename=args.metadata_filename)
 
     with open(args.success_filename, 'w') as success_out:
-        success_out.write(int(success))
+        success_out.write(str(int(success)))
 
 
 # .............................................................................
