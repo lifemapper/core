@@ -174,7 +174,7 @@ class Boomer(LMObject):
             # TODO: Master process for occurrence only? SDM only?
             if spud_rules:
                 self.log.debug('Processing spud for potatoes')
-                self.potato_bushel.addCommands(spud_rules)
+                self.potato_bushel.add_commands(spud_rules)
                 # TODO: Don't write triage file, but don't delete code
                 if not self.do_pam_stats and len(
                         self.squid_names) >= SPUD_LIMIT:
@@ -196,7 +196,7 @@ class Boomer(LMObject):
                     collate_rules = self._get_multispecies_rules()
 
                     # Add rules to bushel workflow
-                    self.potato_bushel.addCommands(collate_rules)
+                    self.potato_bushel.add_commands(collate_rules)
 
                 self.potato_bushel.write()
                 self.potato_bushel.update_status(JobStatus.INITIALIZE)
