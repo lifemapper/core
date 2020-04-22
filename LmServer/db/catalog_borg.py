@@ -1644,25 +1644,32 @@ class Borg(DbPostgresql):
         """
         scientific_name = None
         curr_time = gmt().mjd
-        if not taxon_source_id:
-            taxon_source_id = sci_name.taxonomy_source_id
-        if not taxon_key:
-            taxon_key = sci_name.source_taxon_key
-        usr = sci_name.user_id
-        squid = sci_name.squid
-        kingdom = sci_name.kingdom
-        phylum = sci_name.phylum
-        class_ = sci_name.class_
-        order_ = sci_name.order_
-        family = sci_name.family
-        genus = sci_name.genus
-        rank = sci_name.rank
-        can_name = sci_name.canonical_name
-        sci_namestr = sci_name.scientific_name
-        gen_key = sci_name.source_genus_key
-        sp_key = sci_name.source_species_key
-        key_hierarchy = sci_name.source_key_hierarchy
-        last_count = sci_name.last_occurrence_count
+        usr = squid = last_count = None
+        kingdom = phylum = class_ = order_ = family = genus = None
+        rank = can_name = sci_namestr = gen_key = sp_key = key_hierarchy = None
+        
+        try:
+            if not taxon_source_id:
+                taxon_source_id = sci_name.taxonomy_source_id
+            if not taxon_key:
+                taxon_key = sci_name.source_taxon_key
+            usr = sci_name.user_id
+            squid = sci_name.squid
+            kingdom = sci_name.kingdom
+            phylum = sci_name.phylum
+            class_ = sci_name.class_
+            order_ = sci_name.order_
+            family = sci_name.family
+            genus = sci_name.genus
+            rank = sci_name.rank
+            can_name = sci_name.canonical_name
+            sci_namestr = sci_name.scientific_name
+            gen_key = sci_name.source_genus_key
+            sp_key = sci_name.source_species_key
+            key_hierarchy = sci_name.source_key_hierarchy
+            last_count = sci_name.last_occurrence_count
+        except:
+            pass
 
         try:
             row, idxs = self.execute_insert_and_select_one_function(
