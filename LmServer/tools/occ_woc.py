@@ -613,6 +613,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
     # ................................
     def _write_raw_data(self, occ, data=None, metadata=None):
         raw_dloc = occ.create_local_dlocation(raw=True)
+        ready_filename(raw_dloc)
 
         with open(raw_dloc, 'w', encoding=ENCODING) as out_file:
             writer = csv.writer(out_file, delimiter=self._delimiter)
