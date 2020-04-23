@@ -11,7 +11,7 @@ import os
 import cherrypy
 from ot_service_wrapper import get_ottids_from_gbifids, induced_subtree
 
-from LmCommon.common.lmconstants import HTTPStatus
+from LmCommon.common.lmconstants import HTTPStatus, ENCODING
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
 from LmDbServer.tools.partner_data import Partners
@@ -80,7 +80,7 @@ class OpenTreeService(LmService):
         out_filename = os.path.join(self._get_user_dir(), tree_name)
         if not os.path.exists(out_filename):
             ready_filename(out_filename)
-            with open(out_filename, 'w') as out_f:
+            with open(out_filename, 'w', encoding=ENCODING) as out_f:
                 out_f.write(tree_data)
         else:
             raise cherrypy.HTTPError(

@@ -850,7 +850,8 @@ class Raster(_Layer):
             # Copy from input stream
             elif src_data is not None:
                 try:
-                    with open(out_file, 'w', encoding=ENCODING) as out_file_2:
+                    # Write raster data as bytes
+                    with open(out_file, 'wb') as out_file_2:
                         out_file_2.write(src_data)
                 except Exception as err:
                     raise LMError(

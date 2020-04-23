@@ -16,7 +16,7 @@ import cherrypy
 
 from LmCommon.common.api_query import IdigbioAPI
 from LmCommon.common.lmconstants import (
-    BoomKeys, HTTPStatus, LMFormat, SERVER_BOOM_HEADING,
+    BoomKeys, HTTPStatus, LMFormat, ENCODING, SERVER_BOOM_HEADING,
     SERVER_SDM_MASK_HEADING_PREFIX, SERVER_SDM_ALGORITHM_HEADING_PREFIX)
 from LmCommon.common.time import gmt
 from LmDbServer.boom.init_workflow import BOOMFiller
@@ -281,7 +281,7 @@ class BoomPoster:
         if APIPostKeys.OCCURRENCE_IDS in list(occ_json.keys()):
             occ_filename = self._get_temp_filename(
                 LMFormat.TXT.ext, prefix='user_existing_occ_')
-            with open(occ_filename, 'w') as out_f:
+            with open(occ_filename, 'w', encoding=ENCODING) as out_f:
                 for occ_id in occ_json[APIPostKeys.OCCURRENCE_IDS]:
                     out_f.write('{}\n'.format(occ_id))
             self.config.set(
@@ -293,7 +293,7 @@ class BoomPoster:
         elif APIPostKeys.TAXON_IDS in list(occ_json.keys()):
             tax_id_filename = self._get_temp_filename(
                 LMFormat.TXT.ext, prefix='user_taxon_ids_')
-            with open(tax_id_filename, 'w') as out_f:
+            with open(tax_id_filename, 'w', encoding=ENCODING) as out_f:
                 for tax_id in occ_json[APIPostKeys.TAXON_IDS]:
                     out_f.write('{}\n'.format(tax_id))
             self.config.set(
@@ -308,7 +308,7 @@ class BoomPoster:
         elif APIPostKeys.TAXON_NAMES in list(occ_json.keys()):
             tax_names_filename = self._get_temp_filename(
                 LMFormat.TXT.ext, prefix='user_taxon_names_')
-            with open(tax_names_filename, 'w') as out_f:
+            with open(tax_names_filename, 'w', encoding=ENCODING) as out_f:
                 for tax_name in occ_json[APIPostKeys.TAXON_NAMES]:
                     out_f.write('{}\n'.format(tax_name))
             self.config.set(
@@ -337,7 +337,7 @@ class BoomPoster:
                 self.scribe.log.debug(
                     'Meta filename?: {}'.format(meta_filename))
                 if os.path.exists(meta_filename):
-                    with open(meta_filename) as in_file:
+                    with open(meta_filename, 'r', encoding=ENCODING) as in_file:
                         point_meta = json.load(in_file)
                     if 'delimiter' in list(point_meta.keys()):
                         # TODO: Remove this pop hack when we can process
@@ -348,7 +348,7 @@ class BoomPoster:
                         #    SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
                         #    delim)
                         self.scribe.log.debug(json.dumps(point_meta))
-                        with open(meta_filename, 'w') as out_f:
+                        with open(meta_filename, 'w', encoding=ENCODING) as out_f:
                             json.dump(point_meta, out_f)
 
             except Exception as e:
@@ -549,7 +549,7 @@ class BoomPoster:
         filename = self._get_temp_filename(
             LMFormat.PARAMS.ext, prefix='boom_config_')
 
-        with open(filename, 'w') as config_out_f:
+        with open(filename, 'w', encoding=ENCODING) as config_out_f:
             self.config.write(config_out_f)
 
         scriptname, _ = os.path.splitext(os.path.basename(__file__))

@@ -13,7 +13,7 @@ import zipfile
 from lmpy import Matrix
 
 from LmCommon.common.lm_xml import tostring
-from LmCommon.common.lmconstants import LMFormat, MatrixType
+from LmCommon.common.lmconstants import LMFormat, MatrixType, ENCODING
 from LmServer.common.lmconstants import TEMP_PATH
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borg_scribe import BorgScribe
@@ -117,7 +117,7 @@ def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
                 # Make a temporary file
                 temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
                 print((' - Temporary file name: {}'.format(temp_file_name)))
-                with open(temp_file_name, 'w') as temp_f:
+                with open(temp_file_name, 'w', encoding=ENCODING) as temp_f:
                     print(' - Getting GeoJSON')
                     geo_jsonify_flo(
                         temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
@@ -140,7 +140,7 @@ def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
                 # Make a temporary file
                 temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
                 print((' - Temporary file name: {}'.format(temp_file_name)))
-                with open(temp_file_name, 'w') as temp_f:
+                with open(temp_file_name, 'w', encoding=ENCODING) as temp_f:
                     print(' - Getting GeoJSON')
                     geo_jsonify_flo(
                         temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
@@ -158,7 +158,7 @@ def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
                 # Make a temporary file
                 temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
                 print((' - Temporary file name: {}'.format(temp_file_name)))
-                with open(temp_file_name, 'w') as temp_f:
+                with open(temp_file_name, 'w', encoding=ENCODING) as temp_f:
                     print(' - Getting GeoJSON')
                     geo_jsonify_flo(
                         temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
@@ -172,7 +172,7 @@ def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
                 # Make a temporary file
                 temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
                 print((' - Temporary file name: {}'.format(temp_file_name)))
-                with open(temp_file_name, 'w') as temp_f:
+                with open(temp_file_name, 'w', encoding=ENCODING) as temp_f:
                     print(' - Getting CSV')
                     mtx_obj.write_csv(temp_f)
 
