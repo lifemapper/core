@@ -231,7 +231,7 @@ def format_projection(prj):
     prj_dict['species_name'] = prj.species_name
     prj_dict['squid'] = prj.squid
     prj_dict['occurrence_set'] = {
-        'id': prj.get_occurrence_set_id(),
+        'id': prj.get_occ_layer_id(),
         'metadata_url': prj._occurrence_set.metadata_url
     }
 

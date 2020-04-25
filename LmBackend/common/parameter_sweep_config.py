@@ -98,8 +98,9 @@ class ParameterSweepConfiguration:
                     RegistryKey.VALUE: algorithm.parameters[param]
                 })
             algorithm_info.append((param, str(algorithm.parameters[param])))
-
-        identifier = md5(str(set(algorithm_info))).hexdigest()[:16]
+            
+        tmp = str(set(algorithm_info)).encode(ENCODING)
+        identifier = md5(tmp).hexdigest()[:16]
 
         return identifier, algorithm_object
 
@@ -115,9 +116,8 @@ class ParameterSweepConfiguration:
         # Determine mask id
         mask_id = None
         if mask_info is not None:
-            mask_id = md5(
-                str(set((k, val) for k, val in mask_info.items()))
-                ).hexdigest()[:16]
+            tmp = str(set((k, val) for k, val in mask_info.items())).encode(ENCODING)
+            mask_id = md5(tmp).hexdigest()[:16]
             # See if the mask has been defined, if not, add it
             if mask_id not in self.masks.keys():
                 self.masks[mask_id] = mask_info

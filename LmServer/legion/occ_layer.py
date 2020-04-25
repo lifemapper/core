@@ -172,8 +172,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
     # ................................
     @staticmethod
     def get_point_from_wkt(wkt):
-        """Return a point from well-known text
-        """
+        """Return a point from well-known text"""
         if wkt is None:
             raise LMError('Missing wkt')
         start = wkt.find('(')
@@ -188,6 +187,79 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
             return (x_val, y_val)
         return (None, None)
+
+    # .............................
+    def get_multipoint_wkt(self, ogr_format, feature_limit=None):
+        """Read the occurrence shapefile using OGR.
+        
+        TODO:
+            FIXME
+            psycopg2.errors.InvalidParameterValue: Geometry has Z dimension but column does not
+            CONTEXT:  SQL statement "UPDATE lm_v3.OccurrenceSet SET geompts = ST_GeomFromText(pointswkt, epsg) 
+            WHERE occurrenceSetId = occid"
+
+
+        Read OGR-accessible data and set the features and feature_attributes on
+        the Vector object
+
+        Args:
+            dlocation: Full path location of the data
+            ogr_format: OGR-supported data format code, available at
+                http://www.gdal.org/ogr/ogr_formats.html
+
+        Returns:
+            string with the WKT of a MULTIPOINT feature containing all (or the 
+            first feature_limit number) points
+
+        Raises:
+            LMError: On failure to read data.
+        """
+        multipoint = multipoint_wkt = None
+        if self._dlocation is not None and os.path.exists(self._dlocation):
+            ogr.RegisterAll()
+            drv = ogr.GetDriverByName(ogr_format)
+            try:
+                dataset = drv.Open(self._dlocation)
+            except Exception as e:
+                raise LMError('Invalid datasource {}'.format(
+                    self._dlocation, str(e)), do_trace=True)
+            try:
+                slyr = dataset.GetLayer(0)
+            except Exception as err:
+                raise LMError(
+                    '#### Failed to GetLayer from {}'.format(self._dlocation), err,
+                    do_trace=True)
+            feat_count = slyr.GetFeatureCount()
+            if feat_count == 0:
+                return None
+            
+            multipoint = ogr.Geometry(ogr.wkbMultiPoint)
+            # Limit the number of features to read?
+            if feature_limit is not None and feature_limit < feat_count:
+                feat_count = feature_limit
+            try:
+                # Add each point to a MULTIPOINT geometry
+                for j in range(feat_count):
+                    curr_feat = slyr.GetFeature(j)
+                    if curr_feat is not None:
+                        try:
+                            geom = curr_feat.geometry()
+                            lon = geom.GetX()
+                            lat = geom.GetY()
+                            pt = ogr.Geometry(ogr.wkbPoint)
+                            pt.AddPoint(lon, lat)
+                            multipoint.AddGeometry(pt)
+                        except:
+                            self._log.error('Failed to read coords for feat {}'
+                                            .format(curr_feat.GetFID()))
+            except Exception as e:
+                raise LMError(
+                    'Failed to read features from {} ({})'.format(
+                        self._dlocation, str(e)), do_trace=True)
+            multipoint_wkt = multipoint.ExportToWkt()
+        else:
+            raise LMError('dlocation {} does not exist'.format(self._dlocation))
+        return multipoint_wkt
 
     # ................................
     @staticmethod

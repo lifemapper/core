@@ -293,7 +293,7 @@ class SDMProjection(_ProjectionType, Raster):
             process_type=process_type, model_mask=model_mask,
             proj_mask=proj_mask, proj_metadata=proj_metadata, status=status,
             status_mod_time=status_mod_time, sdm_proj_id=sdm_proj_id,
-            name=layer.name, epsgcode=layer.epsgcode, lyr_id=layer.get_id(),
+            name=layer.name, epsgcode=layer.epsg_code, lyr_id=layer.get_id(),
             squid=layer.squid, verify=layer.verify, dlocation=layer._dlocation,
             layer_metadata=layer.layer_metadata, data_format=layer.data_format,
             gdal_type=layer.gdal_type, val_units=layer.val_units,
@@ -362,7 +362,7 @@ class SDMProjection(_ProjectionType, Raster):
         """Assemble SDMProjection metadata the first time it is created."""
         metadata = {}
         keywords = ['SDM', 'potential habitat', species_name, algorithm_code]
-        prj_keywords = prj_scenario.scenario_metadata[
+        prj_keywords = prj_scenario.scen_metadata[
             ServiceObject.META_KEYWORDS]
         keywords.extend(prj_keywords)
         # remove duplicates

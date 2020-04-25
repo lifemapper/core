@@ -371,81 +371,139 @@ if __name__ == '__main__':
     main()
 
 """
-from LmDbServer.boom.boomer import Boomer
-
 import logging
-import LmCommon.common.time as lt
-import os, sys, time
+import os
+import sys
+import time
 import signal
 
 from LmBackend.common.lmobj import LMError, LMObject
-
 from LmCommon.common.lmconstants import JobStatus, LM_USER
-
+import LmCommon.common.time as lt
+from LmDbServer.boom.boom_collate import BoomCollate
 from LmServer.base.utilities import is_lm_user
 from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (
-    DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
-    PUBLIC_ARCHIVE_NAME)
+    DEFAULT_RANDOM_GROUP_SIZE, LMFileType, PUBLIC_ARCHIVE_NAME)
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borg_scribe import BorgScribe
 from LmServer.legion.process_chain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
-from LmDbServer.boom.boom_collate import BoomCollate
-
-config_fname = '/share/lm/data/archive/kubi/public_boom-2019.04.12.ini'
-success_fname= 'mf_3/public_boom-2019.04.12.ini.success'
-
-secs = time.time()
-timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-
-scriptname = 'testing.boomer'
-logname = '{}.{}'.format(scriptname, timestamp)
-logger = ScriptLogger(logname, level=logging.INFO)
-boomer = Boomer(config_fname, success_fname, log=logger)
-boomer.initialize_me()
-
-
-# squid, spud_rules, idx_success_filename = boomer.christopher.start_walken(
-#     workdir)
-# boomer.process_all_species()
-# ##########################################################################
-# occwoc
-
-import shutil
-try:
-    import LmCommon.common.time as lt
-except:
-    pass
-
 import csv
+import datetime
 import json
 import os
+import shutil
 import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.api_query import GbifAPI
-from LmCommon.common.lmconstants import (GBIF, ProcessType,
-                                         JobStatus, ONE_HOUR, LMFormat)
+from LmCommon.common.lmconstants import (
+    GBIF, JobStatus, LMFormat, ONE_HOUR, ProcessType, ENCODING)
 from LmCommon.common.occ_parse import OccDataParser
-from LmCommon.common.ready_file import (ready_filename)
-
+from LmCommon.common.ready_file import ready_filename
+from LmCommon.common.time import gmt, LmTime
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import LOG_PATH
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.legion.occ_layer import OccurrenceLayer
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
-workdir = boomer.potato_bushel.get_relative_directory()
-self = boomer.christopher
+from LmDbServer.boom.boomer import *
 
+SPUD_LIMIT = 5000import datetime
+import glob
+import os
+
+from LmBackend.command.server import (
+    MultiIndexPAVCommand, MultiStockpileCommand)
+from LmBackend.command.single import SpeciesParameterSweepCommand
+from LmBackend.common.lmconstants import RegistryKey, MaskMethod
+from LmBackend.common.lmobj import LMError, LMObject
+from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (
+    BoomKeys, GBIF, JobStatus, LMFormat, MatrixType, ProcessType,
+    SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING,
+    SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX,
+    SERVER_SDM_MASK_HEADING_PREFIX, ENCODING)
+from LmCommon.common.time import gmt, LmTime
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
+from LmServer.common.data_locator import EarlJr
+from LmServer.common.lmconstants import (
+    BUFFER_KEY, CODE_KEY, DEFAULT_NUM_PERMUTATIONS, ECOREGION_MASK_METHOD,
+    LMFileType, MASK_KEY, MASK_LAYER_KEY, MASK_LAYER_NAME_KEY, PRE_PROCESS_KEY,
+    Priority, PROCESSING_KEY, SCALE_PROJECTION_MAXIMUM,
+    SCALE_PROJECTION_MINIMUM, SPECIES_DATA_PATH)
+from LmServer.common.localconstants import (findOrInsert
+    DEFAULT_EPSG, POINT_COUNT_MAX, PUBLIC_USER)
+from LmServer.common.log import ScriptLogger
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.mtx_column import MatrixColumn
+from LmServer.legion.sdm_proj import SDMProjection
+from LmServer.tools.occ_woc import (UserWoC, ExistingWoC)
+
+
+config_fname = '/share/lm/data/archive/kubi/public_boom-2019.04.12.ini'
+success_fname = 'mf_8/public_boom-2019.04.12.ini.success'
+
+
+secs = time.time()
+timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+
+scriptname = 'testboomer'
+logname = '{}.{}'.format(scriptname, timestamp)
+logger = ScriptLogger(logname, level=logging.INFO)
+boomer = Boomer(config_fname, success_fname, log=logger)
+self = boomer
+self.initialize_me()
+
+workdir = self.potato_bushel.get_relative_directory()
+chris = self.christopher
+self = chris
+
+
+# (squid, spud_rules, idx_success_filename
+#  ) = self.start_walken(workdir)
 # ##########################################################################
 # in cwalken.start_walken
+squid = None
+spud_rules = []
+index_pavs_document_filename = None
+gs_id = 0
+curr_time = gmt().mjd
+alg = self.algs[0]
+prjs = []
+mtx_cols = []
+prj_scen = self.prj_scens[0]
+pamcode = '{}_{}'.format(prj_scen.code, alg.code)
 
-occ = self.weapon_of_choice.getOne()
+occ = self.weapon_of_choice.get_one()
+print(occ.query_count)
+
+squid = occ.squid
+
+occ_work_dir = 'occ_{}'.format(occ.get_id())
+sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
+pamcode = '{}_{}'.format(prj_scen.code, alg.code)
+
+prj = self._find_or_insert_sdm_project(
+    occ, alg, prj_scen, gmt().mjd)
+
+# if prj is not None:
+
+prjs.append(prj)
+mtx = self.global_pams[pamcode]
+mtx_col = self._find_or_insert_intersect(
+    prj, mtx, curr_time)
+if mtx_col is not None:
+    mtx_cols.append(mtx_col)
+
+do_sdm = self._do_compute_sdm(occ, prjs, mtx_cols)
 
 
 # ##########################################################################

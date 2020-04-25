@@ -518,8 +518,7 @@ class Borg(DbPostgresql):
 
     # ................................
     def _create_sdm_projection(self, row, idxs, layer=None):
-        """Create an SDMProjection object from a database row.
-        """
+        """Create an SDMProjection object from a database row."""
         prj = None
         if row is not None:
             occ = self._create_occurrence_layer(row, idxs)
@@ -1809,10 +1808,10 @@ class Borg(DbPostgresql):
             poly_wkt = occ.get_convex_hull_wkt()
         except Exception:
             pass
-        try:
-            points_wkt = occ.get_wkt()
-        except Exception:
-            pass
+#         try:
+#             points_wkt = occ.get_multipoint_wkt(LMFormat.SHAPE.driver)
+#         except Exception:
+#             pass
         try:
             success = self.execute_modify_function(
                 'lm_updateOccurrenceSet', occ.get_id(), occ.verify,
@@ -2093,7 +2092,7 @@ class Borg(DbPostgresql):
         """
         lyr_meta = proj.dump_layer_metadata()
         prj_meta = proj.dump_param_metadata()
-        alg_params = proj.dump_algorithm_parameters_as_string()
+        alg_params = proj.dump_algorithm_parameter_string()
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertSDMProjectLayer', proj.get_param_id(),
             proj.get_id(), proj.get_user_id(), proj.squid, proj.verify,
@@ -2101,7 +2100,7 @@ class Borg(DbPostgresql):
             proj.gdal_type, proj.ogr_type, proj.val_units, proj.nodata_val,
             proj.min_val, proj.max_val, proj.epsg_code, proj.map_units,
             proj.resolution, proj.get_csv_extent_string(), proj.get_wkt(),
-            proj.mod_time, proj.get_occurrence_set_id(), proj.algorithm_code,
+            proj.mod_time, proj.get_occ_layer_id(), proj.algorithm_code,
             alg_params, proj.get_model_scenario_id(),
             proj.get_proj_scenario_id(), prj_meta, proj.process_type,
             proj.status, proj.status_mod_time)

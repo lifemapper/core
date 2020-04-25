@@ -740,7 +740,7 @@ class ChristopherWalken(LMObject):
                 model_mask = self.model_mask_base.copy()
                 model_mask[
                     RegistryKey.OCCURRENCE_SET_PATH
-                    ] = prj.occurrence_set.get_dlocation()
+                    ] = prj.occ_layer.get_dlocation()
                 projection_mask = {
                     RegistryKey.METHOD: MaskMethod.BLANK_MASK,
                     RegistryKey.TEMPLATE_LAYER_PATH: prj.proj_scenario.layers[
@@ -758,8 +758,8 @@ class ChristopherWalken(LMObject):
                 multiplier = None
 
             sweep_config.add_projection(
-                prj.process_type, prj.get_id(), prj.get_occurrence_set_id(),
-                prj.occurrence_set.get_dlocation(),
+                prj.process_type, prj.get_id(), prj.get_occ_layer_id(),
+                prj.occ_layer.get_dlocation(),
                 alg, prj.model_scenario, prj.proj_scenario,
                 prj.get_dlocation(), prj.get_proj_package_filename(),
                 model_mask=model_mask, projection_mask=projection_mask,
@@ -811,7 +811,7 @@ class ChristopherWalken(LMObject):
                 ident=prj.ident, process_type=ptype, metadata={},
                 matrix_column_id=None, post_to_solr=True,
                 status=JobStatus.GENERAL, status_mod_time=curr_time)
-            mtx_col = self._scribe.findOrInsertMatrixColumn(tmp_col)
+            mtx_col = self._scribe.find_or_insert_matrix_column(tmp_col)
             if mtx_col is not None:
                 self.log.debug(
                     'Found/inserted MatrixColumn {}'.format(mtx_col.get_id()))

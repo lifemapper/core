@@ -224,7 +224,7 @@ class OccurrenceLayerService(LmService):
                     'metadata_url': occ.metadata_url,
                     'name': occ.display_name,
                     'modification_time': occ.status_mod_time,
-                    'epsg': occ.epsgcode,
+                    'epsg': occ.epsg_code,
                     'status': occ.status,
                     'count': occ.query_count
                 }

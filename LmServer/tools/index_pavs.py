@@ -84,7 +84,7 @@ def get_post_pairs(pav, prj, occ, pam, sci_name, compressed_pav):
         (SOLR_FIELDS.TAXON_SPECIES, species),
         (SOLR_FIELDS.ALGORITHM_CODE, prj.algorithm_code),
         (SOLR_FIELDS.ALGORITHM_PARAMETERS,
-         prj.dump_algorithm_parameters_as_string()),
+         prj.dump_algorithm_parameter_string()),
         (SOLR_FIELDS.POINT_COUNT, occ.query_count),
         (SOLR_FIELDS.OCCURRENCE_ID, occ.get_id()),
         (SOLR_FIELDS.OCCURRENCE_DATA_URL, occ.get_data_url()),

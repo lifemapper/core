@@ -584,15 +584,14 @@ class Raster(_Layer):
             mod_time: time of last modification, in MJD
         """
         self.verify_data_description(gdal_type, data_format)
-        if all([
-                dlocation, os.path.exists(dlocation),
-                any([verify is None, gdal_type is None, data_format is None,
-                     resolution is None, bbox is None, min_val is None,
-                     max_val is None, nodata_val is None])]):
-            (dlocation, verify, gdal_type, data_format, bbox, resolution,
-             min_val, max_val, nodata_val) = self.populate_stats(
-                 dlocation, verify, gdal_type, data_format, bbox, resolution,
-                 min_val, max_val, nodata_val)
+        if dlocation is not None and os.path.exists(dlocation):
+            if any([verify is None, gdal_type is None, data_format is None,
+                    resolution is None, bbox is None, min_val is None,
+                    max_val is None, nodata_val is None]):
+                (dlocation, verify, gdal_type, data_format, bbox, resolution,
+                 min_val, max_val, nodata_val) = self.populate_stats(
+                     dlocation, verify, gdal_type, data_format, bbox, resolution,
+                     min_val, max_val, nodata_val)
         _Layer.__init__(
             self, name, user_id, epsg_code, lyr_id=lyr_id, squid=squid,
             ident=ident, verify=verify, dlocation=dlocation, metadata=metadata,
@@ -2420,13 +2419,14 @@ class Vector(_Layer):
                 feat_attrs[i] = (fld.GetNameRef(), fld.GetType())
 
             # .........................
-            # Add fields FID (if not present) and geom to feat_attrs
+            # Add field FID if not present to feat_attrs
             i = fld_count
             if not found_local_id:
                 feat_attrs[i] = (
                     self._local_id_field_name, self._local_id_field_type)
                 local_id_idx = i
                 i += 1
+            # Add geometry field to feat_attrs last
             feat_attrs[i] = (self._geom_field_name, self._geom_field_type)
             geom_idx = i
 
@@ -2449,16 +2449,15 @@ class Vector(_Layer):
                                 curr_feature_vals.append(val)
                                 if k == local_id_idx:
                                     localid = val
-                            # Add values localId (if not present) and geom to
-                            #    features
+                            # Add value localId if not present
                             if not found_local_id:
                                 localid = curr_feat.GetFID()
                                 curr_feature_vals.append(localid)
+                            # Add geometry value last
                             curr_feature_vals.append(
                                 curr_feat.geometry().ExportToWkt())
 
-                            # Add the feature values with key=localId to the
-                            #    dictionary
+                            # Add feature values with key=localId to the dict
                             feats[localid] = curr_feature_vals
                 except Exception as e:
                     raise LMError(

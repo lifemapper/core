@@ -84,12 +84,12 @@ class Algorithm(LMObject):
     def _set_parameters(self, params):
         """Set the properties of the algorithm"""
         if isinstance(params, str):
-            params = json.loads(str)
+            params = json.loads(params)
         if isinstance(params, dict):
             for param_name, param_value in params.items():
                 self.set_parameter(param_name, param_value)
         else:
-            raise LMError('Algorithm parmeters must be dictionary')
+            raise LMError('Algorithm parameters must be dictionary')
 
     # # List of algorithm parameters
     parameters = property(_get_parameters, _set_parameters)
