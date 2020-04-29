@@ -2,7 +2,7 @@
 """
 import argparse
 
-from LmCommon.common.lmconstants import PhyloTreeKeys
+from LmCommon.common.lmconstants import ENCODING, PhyloTreeKeys
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
 from LmServer.common.log import ScriptLogger

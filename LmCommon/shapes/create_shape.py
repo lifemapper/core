@@ -6,7 +6,7 @@ from random import shuffle
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (
-    DEFAULT_EPSG, DwcNames, GBIF, JobStatus, LM_WKT_FIELD, LMFormat,
+    DEFAULT_EPSG, DwcNames, ENCODING, GBIF, JobStatus, LM_WKT_FIELD, LMFormat,
     PROVIDER_FIELD_COMMON)
 from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import ready_filename

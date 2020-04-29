@@ -11,7 +11,7 @@ import json
 
 import numpy as np
 
-from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA
+from LmCommon.common.lmconstants import DEFAULT_TREE_SCHEMA, ENCODING
 from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
 
 

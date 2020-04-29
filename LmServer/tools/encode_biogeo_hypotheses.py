@@ -12,7 +12,8 @@ import time
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (
-    BoomKeys, JobStatus, LM_USER, MatrixType, ProcessType, SERVER_BOOM_HEADING)
+    BoomKeys, ENCODING, JobStatus, LM_USER, MatrixType, ProcessType,
+    SERVER_BOOM_HEADING)
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
 from LmCommon.encoding.layer_encoder import LayerEncoder
