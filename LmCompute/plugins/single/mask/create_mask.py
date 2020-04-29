@@ -123,7 +123,8 @@ def create_convex_hull_array(base_path, convex_hull, bbox, cell_size, epsg,
 
     # Create the convex hull shapefile
     out_ds = shp_drv.CreateDataSource(tmp_shp_filename)
-    out_lyr = out_ds.CreateLayer(lyr_name, geom_type=ogr.wkbPolygon)
+    out_lyr = out_ds.CreateLayer(
+        lyr_name.decode(ENCODING), geom_type=ogr.wkbPolygon)
 
     # Add an ID field
     id_field = ogr.FieldDefn('id', ogr.OFTInteger)

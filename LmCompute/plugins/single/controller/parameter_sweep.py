@@ -434,7 +434,7 @@ class ParameterSweep:
             if status < JobStatus.GENERAL_ERROR:
                 self.pavs.append(
                     {
-                        RegistryKey.COMPRESSED_PAV_DATA: compress(pav.data),
+                        RegistryKey.COMPRESSED_PAV_DATA: compress(pav),
                         RegistryKey.IDENTIFIER: pav_id,
                         RegistryKey.PROJECTION_ID: projection_id
                     })
