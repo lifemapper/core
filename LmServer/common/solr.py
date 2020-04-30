@@ -21,6 +21,13 @@ def build_solr_document(doc_pairs):
     Args:
         doc_pairs: A list of lists of [field name, value] pairs --
             [[(field name, value)]]
+            
+    Returns: 
+        a bytes object, suitable for posting to a solr/HTTP service
+        
+    Note: 
+        When writing the results to a file (encoded), solr_doc must first 
+        be decoded
     """
     if not doc_pairs:
         raise Exception("Must provide at least one pair for Solr POST")
@@ -66,9 +73,10 @@ def _post(collection, doc_filename, headers=None):
     url = '{}{}/update?commit=true'.format(SOLR_SERVER, collection)
 
     with open(doc_filename, 'r', encoding=ENCODING) as in_file:
-        data = in_file.read()
-
-    req = urllib.request.Request(url, data=data, headers=headers)
+        data_str = in_file.read()
+    # urllib requires byte data for post
+    data_bytes = data_str.encode(encoding=ENCODING)
+    req = urllib.request.Request(url, data=data_bytes, headers=headers)
     return urllib.request.urlopen(req).read()
 
 

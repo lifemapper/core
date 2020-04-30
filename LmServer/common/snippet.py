@@ -4,10 +4,10 @@ import os
 from random import randint
 
 from LmBackend.common.lmobj import LMError, LMObject
+from LmCommon.common.lmconstants import ENCODING
 from LmCommon.common.time import gmt, LmTime
 from LmServer.common.lmconstants import (
-    SnippetFields, SOLR_SERVER, SOLR_SNIPPET_COLLECTION, UPLOAD_PATH,
-    ENCODING)
+    SnippetFields, SOLR_SERVER, SOLR_SNIPPET_COLLECTION, UPLOAD_PATH)
 from LmServer.common.solr import build_solr_document, post_solr_document
 
 
@@ -100,8 +100,8 @@ class SnippetShooter(LMObject):
             solr_post_filename: If provided, write out the Solr post document
                 here
         """
-        # Build the Solr document
-        solr_post_str = build_solr_document(self.snippets)
+        # Build the Solr document, returning bytes object
+        solr_post_bytes = build_solr_document(self.snippets)
 
         delete_post_filename = False
         # Write to temp file
@@ -111,6 +111,9 @@ class SnippetShooter(LMObject):
                 UPLOAD_PATH, 'snippetPost-{}'.format(randint(0, 10000)))
             delete_post_filename = True
 
+        # Encode to string before writing to file
+        # Write the (bytes) post document as an encoded string
+        solr_post_str =  solr_post_bytes.decode(encoding=ENCODING)
         with open(solr_post_filename, 'w', encoding=ENCODING) as out_f:
             out_f.write(solr_post_str)
 

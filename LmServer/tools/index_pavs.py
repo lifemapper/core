@@ -178,11 +178,12 @@ def main():
 
     # Get all the information for a POST
     if len(doc_pairs) > 0:
-        doc = build_solr_document(doc_pairs)
+        solr_post_bytes = build_solr_document(doc_pairs)
 
-        # Write the post document
+        # Write the (bytes) post document as an encoded string
+        solr_post_str =  solr_post_bytes.decode(encoding=ENCODING)
         with open(args.post_index_filename, 'w', encoding=ENCODING) as out_f:
-            out_f.write(doc)
+            out_f.write(solr_post_str)
 
         post_solr_document(SOLR_ARCHIVE_COLLECTION, args.post_index_filename)
     else:
