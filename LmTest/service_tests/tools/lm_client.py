@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import urllib.request
 import urllib.parse
 
+from LmCommon.common.lmconstants import ENCODING
 from LmServer.common.localconstants import PUBLIC_FQDN
 from LmWebServer.common.lmconstants import HTTPMethod
 
@@ -119,6 +120,9 @@ class LmWebClient:
 
             if headers is None:
                 headers = {}
+            
+            if isinstance(body, str):
+                body = body.encode(encoding=ENCODING)
             req = urllib.request.Request(req_url, data=body, headers=headers)
             req.get_method = lambda: method.upper()
 

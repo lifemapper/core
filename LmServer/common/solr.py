@@ -287,10 +287,10 @@ def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
             "query": query
         }
     }
-
+    
+    data_str = json.dumps(doc).encode(encoding=ENCODING)
     req = urllib.request.Request(
-        url, data=json.dumps(doc),
-        headers={'Content-Type': 'application/json'})
+        url, data=data_str, headers={'Content-Type': 'application/json'})
     return urllib.request.urlopen(req).read()
 
 
