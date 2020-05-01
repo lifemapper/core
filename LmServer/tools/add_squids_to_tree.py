@@ -34,19 +34,21 @@ def main():
     scribe.open_connections()
 
     tree = scribe.get_tree(tree_id=args.tree_id)
+    shrub = tree.get_tree_object()
 
     squid_dict = {}
 
-    for label in tree.get_labels():
+    for label in shrub.get_labels():
         sno = scribe.get_taxon(user_id=user_id, taxon_name=label)
         if sno is not None:
             squid_dict[label] = sno.squid
 
-    tree.annotate_tree(PhyloTreeKeys.SQUID, squid_dict)
+    shrub.annotate_tree(PhyloTreeKeys.SQUID, squid_dict)
 
     # Write tree
     tree.clear_dlocation()
     tree.set_dlocation()
+    tree.set_tree(shrub)
     tree.write_tree()
 
     # Update metadata
