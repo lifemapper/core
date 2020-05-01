@@ -2649,10 +2649,19 @@ class Borg(DbPostgresql):
             New or existing Tree
         """
         meta = tree.dump_tree_metadata()
+        shrub = tree.get_tree_object()
+        is_binary = False
+        is_ultrametric = False
+        has_branch_lengths = False
+        if shrub is not None:
+            is_binary = shrub.is_binary()
+            is_ultrametric = bool(shrub.is_ultrametric())
+            has_branch_lengths = shrub.has_branch_lengths()
+
         row, idxs = self.execute_insert_and_select_one_function(
             'lm_findOrInsertTree', tree.get_id(), tree.get_user_id(),
-            tree.name, tree.get_dlocation(), tree.is_binary(),
-            tree.is_ultrametric(), tree.has_branch_lengths(), meta,
+            tree.name, tree.get_dlocation(), is_binary,
+            is_ultrametric, has_branch_lengths, meta,
             tree.mod_time)
         return self._create_tree(row, idxs)
 
@@ -2862,10 +2871,19 @@ class Borg(DbPostgresql):
             success = self.update_taxon(obj)
         elif isinstance(obj, Tree):
             meta = obj.dump_tree_metadata()
+            shrub = obj.get_tree_object()
+            is_binary = False
+            is_ultrametric = False
+            has_branch_lengths = False
+            if shrub is not None:
+                is_binary = shrub.is_binary()
+                is_ultrametric = bool(shrub.is_ultrametric())
+                has_branch_lengths = shrub.has_branch_lengths()
+
             success = self.execute_modify_function(
                 'lm_updateTree', obj.get_id(), obj.get_dlocation(),
-                obj.is_binary(), obj.is_ultrametric(),
-                obj.has_branch_lengths(), meta, obj.mod_time)
+                is_binary, is_ultrametric, has_branch_lengths, meta,
+                obj.mod_time)
         elif isinstance(obj, MFChain):
             success = self.execute_modify_function(
                 'lm_updateMFChain', obj.obj_id, obj.get_dlocation(),

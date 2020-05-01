@@ -9,6 +9,7 @@ from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
+from lmpy.tree import TreeWrapper
 
 
 # .............................................................................
@@ -89,13 +90,13 @@ class TreeService(LmService):
         if name is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.BAD_REQUEST, 'Must provide name for tree')
-        tree = dendropy.Tree.get(
+        tree = TreeWrapper.get(
             file=cherrypy.request.body, schema=tree_schema)
 
         new_tree = Tree(name, user_id=self.get_user_id())
         updated_tree = self.scribe.find_or_insert_tree(new_tree)
-        updated_tree.setTree(tree)
-        updated_tree.writeTree()
+        updated_tree.set_tree(tree)
+        updated_tree.write_tree()
         updated_tree.mod_time = gmt().mjd
         self.scribe.update_object(updated_tree)
 

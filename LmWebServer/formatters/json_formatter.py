@@ -335,8 +335,9 @@ def format_tree(tree):
     tree_dict = _get_lifemapper_metadata(
         'tree', tree.get_id(), tree.metadata_url, tree.get_user_id(),
         metadata=tree.tree_metadata)
-    tree_dict['ultrametric'] = tree.is_ultrametric()
-    tree_dict['binary'] = tree.is_binary()
+    shrub = tree.get_tree_object()
+    tree_dict['ultrametric'] = shrub.is_ultrametric()
+    tree_dict['binary'] = shrub.is_binary()
     return tree_dict
 
 

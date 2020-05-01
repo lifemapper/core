@@ -160,22 +160,24 @@ def squidify_tree(scribe, usr, tree):
         Matching species must be present in the taxon table of the database
     """
     squid_dict = {}
-    for label in tree.get_labels():
+    shrub = tree.get_tree_object()
+    for label in shrub.get_labels():
         # TODO: Do we always need to do this?
         tax_label = label.replace(' ', '_')
         sno = scribe.get_taxon(user_id=usr, taxon_name=tax_label)
         if sno is not None:
             squid_dict[label] = sno.squid
 
-    tree.annotate_tree(PhyloTreeKeys.SQUID, squid_dict)
+    shrub.annotate_tree(PhyloTreeKeys.SQUID, squid_dict)
 
     print("Adding interior node labels to tree")
     # Add node labels
-    tree.add_node_labels()
+    shrub.add_node_labels()
 
     # Update tree properties
     tree.clear_dlocation()
     tree.set_dlocation()
+    tree.set_tree(shrub)
     print("Write tree to final location")
     tree.write_tree()
     tree.update_mod_time(gmt().mjd)

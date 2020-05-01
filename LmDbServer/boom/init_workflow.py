@@ -628,7 +628,6 @@ class BOOMFiller(LMObject):
                 biogeo_hyp_names, compute_pam_stats, compute_mcpa,
                 num_permutations, other_lyr_names)
 
-            
     # ................................
     def write_config_file(self, tree=None, biogeo_layers=None):
         """Write configuration file.
@@ -775,7 +774,6 @@ class BOOMFiller(LMObject):
         self.scribe.log.info(
             '--config_file={}'.format(self.out_config_filename))
         self.scribe.log.info('******')
-
 
     # ................................
     @staticmethod
@@ -1130,7 +1128,7 @@ class BOOMFiller(LMObject):
             # Update tree properties and write file
             tree.clear_dlocation()
             tree.set_dlocation()
-            tree.writeTree()
+            tree.write_tree()
             tree.update_mod_time(gmt().mjd)
             # Update database
             _success = self.scribe.update_object(tree)

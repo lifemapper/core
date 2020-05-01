@@ -164,22 +164,22 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
 
     # Copy the tree if available.  It may be subsetted according to the data in
     #     the gridset and therefore should be separate
-    if orig_gs.tree is not None:
+    if orig_gs.get_tree_object() is not None:
 
         # Need to get and fill in tree
-        otree = orig_gs.tree
+        otree = orig_gs.get_tree_object()
 
         try:
-            tree_data = otree.tree
+            tree_data = otree.get_tree_object()
         except Exception:  # May need to be read
             try:
                 otree.read()
-                tree_data = otree.tree
+                tree_data = otree.get_tree_object()
             # TODO: Remove this
             except Exception:  # Handle bad dlocation from gridset tree
                 otree = scribe.get_tree(tree_id=otree.get_id())
                 otree.read()
-                tree_data = otree.tree
+                tree_data = otree.get_tree_object()
 
         if otree.name:
             tree_name = otree.name
@@ -191,13 +191,13 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             mod_time=gmt().mjd)
         new_tree.setTree(tree_data)
         inserted_tree = scribe.find_or_insert_tree(new_tree)
-        new_tree.tree = tree_data
+        new_tree.get_tree_object() = tree_data
         inserted_tree.set_tree(tree_data)
         inserted_tree.write_tree()
         updated_gs.add_tree(inserted_tree, do_read=True)
         log.debug(
             'Tree for gridset {} is {}'.format(
-                updated_gs.get_id(), updated_gs.tree.get_id()))
+                updated_gs.get_id(), updated_gs.get_tree_object().get_id()))
         scribe.update_object(updated_gs)
 
     # If we can reuse data from Solr index, do it

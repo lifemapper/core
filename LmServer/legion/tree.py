@@ -11,7 +11,7 @@ from LmServer.common.lmconstants import LMServiceType, LMFileType
 
 
 # .........................................................................
-class Tree(TreeWrapper, ServiceObject):
+class Tree(ServiceObject):
     """Class to hold Tree data."""
 
     # ................................
@@ -31,6 +31,9 @@ class Tree(TreeWrapper, ServiceObject):
             self, user_id, tree_id, LMServiceType.TREES,
             metadata_url=metadata_url, parent_id=gridset_id, mod_time=mod_time)
         self.name = name
+        # _shrub is the phylogenetic tree data object
+        #    (TreeWrapper wrapped Dendropy.Tree)
+        self._shrub = None
         self._dlocation = dlocation
         self.tree_metadata = {}
         self.load_tree_metadata(metadata)
@@ -40,30 +43,33 @@ class Tree(TreeWrapper, ServiceObject):
             dlocation = self.get_dlocation()
 
         if data is not None:
-            self.get(data=data, schema=schema)
+            self._shrub = TreeWrapper.get(data=data, schema=schema)
         elif dlocation is not None:
             if os.path.exists(dlocation):
-                self.from_filename(dlocation)
+                self._shrub = TreeWrapper.from_filename(dlocation)
+
+    # ................................
+    def get_tree_object(self):
+        """Get the TreeWrapper instance containing tree data."""
+        return self._shrub
 
     # ................................
     def read(self, dlocation=None, schema=DEFAULT_TREE_SCHEMA):
         """Read tree data, either from the dlocation or get_dlocation."""
         if dlocation is None:
             dlocation = self.get_dlocation()
-        self.get(path=dlocation, schema=schema)
+        self._shrub = TreeWrapper.get(path=dlocation, schema=schema)
 
     # ................................
     def set_tree(self, tree):
         """Set the value of the tree."""
-        self.get(
-            data=tree.as_string(schema=DEFAULT_TREE_SCHEMA),
-            schema=DEFAULT_TREE_SCHEMA)
+        self._shrub = tree
 
     # ................................
     def write_tree(self):
         """Write the tree to disk."""
         dloc = self.get_dlocation()
-        self.write(path=dloc, schema=DEFAULT_TREE_SCHEMA)
+        self._shrub.write(path=dloc, schema=DEFAULT_TREE_SCHEMA)
 
     # ................................
     def get_relative_dlocation(self):
