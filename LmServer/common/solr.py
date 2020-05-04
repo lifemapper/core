@@ -1,17 +1,16 @@
 """This module wraps interactions with Solr
 """
-from ast import literal_eval
 import json
 from urllib.error import URLError
 import urllib.request
 
+from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import ENCODING
 from LmCommon.common.time import LmTime
 from LmServer.common.lmconstants import (
     SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER,
     SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
 from LmServer.common.log import SolrLogger
-from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import ENCODING
 
 
 # .............................................................................
@@ -21,12 +20,12 @@ def build_solr_document(doc_pairs):
     Args:
         doc_pairs: A list of lists of [field name, value] pairs --
             [[(field name, value)]]
-            
-    Returns: 
+
+    Returns:
         a bytes object, suitable for posting to a solr/HTTP service
-        
-    Note: 
-        When writing the results to a file (encoded), solr_doc must first 
+
+    Note:
+        When writing the results to a file (encoded), solr_doc must first
         be decoded
     """
     if not doc_pairs:
@@ -82,7 +81,7 @@ def _post(collection, doc_filename, headers=None):
 
 # .............................................................................
 def _query(collection, q_params=None, fq_params=None,
-           other_params='wt=python&indent=true'):
+           other_params='wt=json&indent=true'):
     """Perform a query on a Solr index.
 
     Args:
@@ -140,17 +139,8 @@ def _query(collection, q_params=None, fq_params=None,
         log.error('Exception on urlopen for {}: {}'.format(url, str(err)), err)
         raise
 
-    retcode = res.getcode()
-    try:
-        resp = res.read()
-    except Exception as err:
-        log.error(
-            'Exception, code {}, on response read for {}: {}'.format(
-                retcode, url, str(err)), err)
-        raise
-    else:
-        r_dict = literal_eval(resp)
-        return r_dict
+    # retcode = res.getcode()
+    return json.load(res)
 
 
 # .............................................................................
@@ -287,7 +277,7 @@ def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
             "query": query
         }
     }
-    
+
     data_str = json.dumps(doc).encode(encoding=ENCODING)
     req = urllib.request.Request(
         url, data=data_str, headers={'Content-Type': 'application/json'})
@@ -308,9 +298,6 @@ def facet_archive_on_gridset(user_id=None):
 
     other_params = '&facet=true&facet.field={}&wt=python&indent=true'.format(
         SOLR_FIELDS.GRIDSET_ID)
-#     rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams,
-#                                          other_params=other_params))
-#     return rDict['facet_counts']['facet_fields'][SOLR_FIELDS.GRIDSET_ID]
     try:
         r_dict = _query(
             SOLR_ARCHIVE_COLLECTION, q_params=q_params,
