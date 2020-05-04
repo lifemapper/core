@@ -43,7 +43,7 @@ def main():
         if sno is not None:
             squid_dict[label] = sno.squid
 
-    shrub.annotate_tree(PhyloTreeKeys.SQUID, squid_dict)
+    shrub.annotate_tree_tips(PhyloTreeKeys.SQUID, squid_dict)
 
     # Write tree
     tree.clear_dlocation()
