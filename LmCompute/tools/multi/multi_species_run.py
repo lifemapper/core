@@ -213,7 +213,7 @@ def main():
     # Write outputs if they are not empty lists
     # PAM stats - diversity
     if diversity_stats:
-        diversity_mtx = Matrix.concatenate(diversity_stats, axis=2)
+        diversity_mtx = Matrix.concatenate(diversity_stats, axis=1)
         diversity_mtx.write(args.diversity_stats_filename)
 
     # PAM stats - site stats
