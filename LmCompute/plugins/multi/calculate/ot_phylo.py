@@ -144,11 +144,11 @@ def phylogenetic_diversity(pam, tree, taxon_labels):
         sp_idxs = np.where(pam[idx] == 1)[0]
         if len(sp_idxs) > 1:
             present_taxa = [taxon_labels[i] for i in sp_idxs]
-            mrca = tree.tree.mrca(taxon_labels=present_taxa)
+            mrca = tree.mrca(taxon_labels=present_taxa)
             visited = set([mrca])
             total_distance = 0.0
             flt = _get_node_filter(present_taxa)
-            for node in tree.tree.find_nodes(filter_fn=flt):
+            for node in tree.find_nodes(filter_fn=flt):
                 check_node = node
                 # n = tree.find_node_with_taxon_label(tax_label)
                 while check_node not in visited:
