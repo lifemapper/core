@@ -217,6 +217,7 @@ def main():
     grid_name = args.gridset_name
     success_file = args.success_file
     log_name = args.logname
+    success_val = 0
 
     if log_name is None:
         scriptname, _ = os.path.splitext(os.path.basename(__file__))
@@ -235,10 +236,14 @@ def main():
         if gridset and layers:
             encode_hypotheses_to_matrix(
                 scribe, usr, gridset, layers=layers)
+            success_val = 1
         else:
             scribe.log.info('No gridset or layers to encode as hypotheses')
     finally:
         scribe.close_connections()
+        # Write success file
+        with open(success_file, mode='w', encoding=ENCODING) as out_file:
+            out_file.write(success_val)
 
 
 # .............................................................................
