@@ -19,7 +19,7 @@ class Atom(LMObject):
             mod_time: The date / time that the object was last modified
             epsg: The EPSG code for the object if it is spatial
         """
-        super().__init__(self)
+        super().__init__()
         self.object_id = obj_id
         self.name = name
         self.url = url
