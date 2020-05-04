@@ -181,10 +181,10 @@ def _get_boom_biogeo_params(scribe, grid_name, usr):
 
 
 # ...............................................
-def _write_success_file(message, successFname):
-    ready_filename(successFname, overwrite=True)
-    with open(successFname, 'w', encoding=ENCODING) as in_file:
-        in_file.write(message)
+def _write_success_file(message, success_fname):
+    ready_filename(success_fname, overwrite=True)
+    with open(success_fname, 'w', encoding=ENCODING) as in_file:
+        in_file.write(str(message))
 
 
 # .............................................................................
@@ -242,8 +242,8 @@ def main():
     finally:
         scribe.close_connections()
         # Write success file
-        with open(success_file, mode='w', encoding=ENCODING) as out_file:
-            out_file.write(str(success_val))
+        _write_success_file(success_val, success_file)
+
 
 
 # .............................................................................
