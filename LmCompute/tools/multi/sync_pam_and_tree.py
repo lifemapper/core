@@ -107,7 +107,7 @@ def main():
     # Write the outputs
     out_pam.write(args.out_pam_fn)
 
-    out_tree.write(args.out_tree_fn, schema=DEFAULT_TREE_SCHEMA)
+    out_tree.write(path=args.out_tree_fn, schema=DEFAULT_TREE_SCHEMA)
 
     with open(args.metadata_fn, 'w', encoding=ENCODING) as out_metadata:
         json.dump(metadata, out_metadata)
