@@ -243,7 +243,7 @@ def main():
         scribe.close_connections()
         # Write success file
         with open(success_file, mode='w', encoding=ENCODING) as out_file:
-            out_file.write(success_val)
+            out_file.write(str(success_val))
 
 
 # .............................................................................
