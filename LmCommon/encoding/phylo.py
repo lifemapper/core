@@ -371,7 +371,7 @@ class PhyloEncoding:
         labels = self.pam.get_column_headers()
         mtx = Matrix(
             np.zeros((len(labels), len(p_val_dict)), dtype=np.float),
-            headers={'0': labels, '1': p_val_dict.keys()})
+            headers={'0': labels, '1': list(p_val_dict.keys())})
 
         # We need a mapping of node path id to matrix column.  I don't think
         #     order matters

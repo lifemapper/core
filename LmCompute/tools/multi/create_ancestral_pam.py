@@ -89,7 +89,7 @@ def build_ancestral_pam(pam, tree):
         squid_lookup[squid_hdr] = i
 
     # Get the lookup dictionary
-    clade_dict, _ = _get_squids_in_clade(tree.tree.seed_node)
+    clade_dict, _ = _get_squids_in_clade(tree.seed_node)
 
     # Initialize new matrix
     num_rows = pam.shape[0]

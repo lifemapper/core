@@ -83,8 +83,7 @@ def assemble_pam(pam_id):
         column_headers.append(match[SOLR_FIELDS.SQUID])
         pam_data[:, i] = decompress(match[SOLR_FIELDS.COMPRESSED_PAV])
 
-    pam.set_data(pam_data)
-    pam.set_headers({'0': row_headers, '1': column_headers})
+    pam.set_data(pam_data, headers={'0': row_headers, '1': column_headers})
 
     pam.update_status(JobStatus.COMPLETE)
     scribe.update_object(pam)
@@ -114,6 +113,7 @@ def main():
     except Exception as e:
         print((str(e)))
         success = 0
+        raise e
 
     ready_filename(args.success_filename)
     with open(args.success_filename, 'w', encoding=ENCODING) as out_f:

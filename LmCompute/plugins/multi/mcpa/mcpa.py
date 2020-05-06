@@ -435,17 +435,17 @@ def mcpa(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
     f_results = np.clip(
         np.expand_dims(np.nan_to_num(f_results), axis=2), -1.0, 1.0)
 
-    column_headers = env_mtx.getColumnHeaders()
+    column_headers = env_mtx.get_column_headers()
     column_headers.append('Env - Adjusted R-squared')
-    column_headers.extend(bg_mtx.getColumnHeaders())
+    column_headers.extend(bg_mtx.get_column_headers())
     column_headers.append('BG - Adjusted R-squared')
     obs_headers = {
-        '0': phylo_mtx.getColumnHeaders(),
+        '0': phylo_mtx.get_column_headers(),
         '1': column_headers,
         '2': ['Observed']
     }
     f_headers = {
-        '0': phylo_mtx.getColumnHeaders(),
+        '0': phylo_mtx.get_column_headers(),
         '1': column_headers,
         '2': ['F-values']
     }
@@ -513,17 +513,17 @@ def mcpa_parallel(incidence_matrix, phylo_mtx, env_mtx, bg_mtx):
     obs_results = np.clip(np.nan_to_num(obs_results), -1.0, 1.0)
     f_results = np.clip(np.nan_to_num(f_results), -1.0, 1.0)
 
-    column_headers = env_mtx.getColumnHeaders()
+    column_headers = env_mtx.get_column_headers()
     column_headers.append('Env - Adjusted R-squared')
-    column_headers.extend(bg_mtx.getColumnHeaders())
+    column_headers.extend(bg_mtx.get_column_headers())
     column_headers.append('BG - Adjusted R-squared')
     obs_headers = {
-        '0': phylo_mtx.getColumnHeaders(),
+        '0': phylo_mtx.get_column_headers(),
         '1': column_headers,
         '2': ['Observed']
     }
     f_headers = {
-        '0': phylo_mtx.getColumnHeaders(),
+        '0': phylo_mtx.get_column_headers(),
         '1': column_headers,
         '2': ['F-values']
     }

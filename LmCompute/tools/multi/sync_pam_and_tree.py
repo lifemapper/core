@@ -58,7 +58,7 @@ def prune_pam_and_tree(pam, tree):
 
     # Add matrix indices to tree
     squid_dict = {val: idx for idx, val in enumerate(pam.get_column_headers())}
-    tree.annotate_tree(
+    tree.annotate_tree_tips(
         PhyloTreeKeys.MTX_IDX, squid_dict, label_attribute=PhyloTreeKeys.SQUID)
     # Prune tips not in PAM
     tree.prune_tips_without_attribute(search_attribute=PhyloTreeKeys.MTX_IDX)
@@ -107,7 +107,7 @@ def main():
     # Write the outputs
     out_pam.write(args.out_pam_fn)
 
-    out_tree.write(args.out_tree_fn, schema=DEFAULT_TREE_SCHEMA)
+    out_tree.write(path=args.out_tree_fn, schema=DEFAULT_TREE_SCHEMA)
 
     with open(args.metadata_fn, 'w', encoding=ENCODING) as out_metadata:
         json.dump(metadata, out_metadata)
