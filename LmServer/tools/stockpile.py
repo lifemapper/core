@@ -42,7 +42,7 @@ class Stockpile(LMObject):
         success = True
 
         # Check incoming status
-        if status >= JobStatus.GENERAL_ERROR:
+        if status is not None and status >= JobStatus.GENERAL_ERROR:
             success = False
             output_info.append('Incoming status value was {}'.format(success))
         else:
