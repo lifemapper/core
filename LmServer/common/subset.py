@@ -189,9 +189,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
             'Copy of {} tree at {}'.format(tree_name, gmt().mjd), metadata={},
             user_id=user_id, gridset_id=updated_gs.get_id(),
             mod_time=gmt().mjd)
-        new_tree.setTree(tree_data)
         inserted_tree = scribe.find_or_insert_tree(new_tree)
-        new_tree.get_tree_object() = tree_data
         inserted_tree.set_tree(tree_data)
         inserted_tree.write_tree()
         updated_gs.add_tree(inserted_tree, do_read=True)
