@@ -16,6 +16,7 @@ import datetime as DT
 MJD_EPOCH_TIME = DT.datetime(1858, 11, 17, tzinfo=DT.timezone.utc)
 SECONDS_IN_DAY = 86400
 
+
 # .............................................................................
 class LmTime:
     """Subclass for time for Lifemapper purposes"""
@@ -24,9 +25,11 @@ class LmTime:
     def __init__(self, dtime=None):
         """Constructor that takes an optional time.struct_time object."""
         if dtime is None:
-            self._time  = DT.datetime.now(DT.timezone.utc)
+            self._time = DT.datetime.now(DT.timezone.utc)
+        elif isinstance(dtime, LmTime):
+            self._time = dtime._time
         elif isinstance(dtime, DT.datetime):
-            if not (dtime.tzinfo):
+            if not dtime.tzinfo:
                 dtime.replace(tzinfo=DT.timezone.utc)
             self._time = dtime
         else:
@@ -56,7 +59,7 @@ class LmTime:
     @classmethod
     def strptime(cls, time_string, time_format):
         """Return an LmTime object for the time string.
-            
+
         Args:
             cls: Call with Class
             time_string: string in the format YYYY-MM-DDThh:mm:ss
@@ -164,7 +167,8 @@ class LmTime:
 # .............................................................................
 def from_timestamp(ticks):
     """Return an aware LmTime object from timestamp ticks"""
-    return LmTime(dtime=DT.datetime.fromtimestamp(ticks, tzinfo=DT.timezone.utc))
+    return LmTime(
+        dtime=DT.datetime.fromtimestamp(ticks, tzinfo=DT.timezone.utc))
 
 
 # .............................................................................
