@@ -25,7 +25,7 @@ def format_time_human(d_time=None):
     elif d_time == 0:
         return ''
     else:
-        d_time = LmTime(dtime=d_time)
+        d_time = LmTime.from_mjd(d_time)
     return d_time.strftime('%Y-%m-%d %H:%M:%S')
 
 
