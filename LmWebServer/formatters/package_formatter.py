@@ -292,7 +292,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
                     'gcm_code': scn.gcm_code,
                     'alt_pred_code': scn.altpred_code,
                     'date_code': scn.date_code,
-                    'epsg': prj.epsgcode,
+                    'epsg': prj.epsg_code,
                     'label': '{} {} {} {}'.format(
                         prj.display_name, prj.algorithm_code,
                         prj.proj_scenario_code, arc_prj_path)

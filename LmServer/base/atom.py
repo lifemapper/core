@@ -24,7 +24,7 @@ class Atom(LMObject):
         self.name = name
         self.url = url
         self.mod_time = mod_time
-        self.epsgcode = epsg
+        self.epsg_code = epsg
 
     # ................................
     def get_id(self):
