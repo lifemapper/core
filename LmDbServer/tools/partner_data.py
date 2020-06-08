@@ -11,7 +11,7 @@ except ImportError:
 import csv
 import os
 
-import ot_service_wrapper.open_tree as open_tree
+import biotaphy.client.ot_service_wrapper.open_tree as open_tree
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.api_query import GbifAPI

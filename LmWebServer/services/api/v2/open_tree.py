@@ -9,7 +9,8 @@ import json
 import os
 
 import cherrypy
-from ot_service_wrapper import get_ottids_from_gbifids, induced_subtree
+from biotaphy.client.ot_service_wrapper.open_tree import (
+    get_ottids_from_gbifids, induced_subtree)
 
 from LmCommon.common.lmconstants import HTTPStatus, ENCODING
 from LmCommon.common.ready_file import ready_filename
