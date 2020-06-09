@@ -23,7 +23,10 @@ def file_formatter(filename, mode='r', stream=False, content_type=None):
             file contents
     """
     # Check to see if filename is a non-string iterable
-    if hasattr(filename, '__iter__'):
+    if isinstance(filename, str):
+        content_flo = open(filename, mode=mode)
+        ret_file_name = os.path.basename(filename)
+    else:
         # Zip together before returning
         content_flo = StringIO()
         with zipfile.ZipFile(
@@ -35,9 +38,6 @@ def file_formatter(filename, mode='r', stream=False, content_type=None):
         ret_file_name = '{}.zip'.format(
             os.path.splitext(os.path.basename(filename[0]))[0])
         content_flo.seek(0)
-    else:
-        content_flo = open(filename, mode=mode)
-        ret_file_name = os.path.basename(filename)
 
     cherrypy.response.headers[
         'Content-Disposition'] = 'attachment; filename="{}"'.format(
