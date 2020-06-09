@@ -66,9 +66,9 @@ def _create_spatial_raster(spatial_raster):
     """
     sr_element = Element('spatialRaster')
     SubElement(
-        sr_element, 'cellSizeXDirection', value=spatial_raster.resolution)
+        sr_element, 'cellSizeXDirection', value=str(spatial_raster.resolution))
     SubElement(
-        sr_element, 'cellSizeYDirection', value=spatial_raster.resolution)
+        sr_element, 'cellSizeYDirection', value=str(spatial_raster.resolution))
     SubElement(sr_element, 'numberOfBands', value='1')
     min_x, min_y, max_x, max_y = spatial_raster.bbox
     num_cols = int((max_x - min_x) / spatial_raster.resolution)
