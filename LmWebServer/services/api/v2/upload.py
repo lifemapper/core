@@ -5,7 +5,7 @@ Todo:
         discover limitations
     * Use sub-services for different upload types rather than query parameter
 """
-from io import StringIO
+from io import BytesIO
 import json
 import os
 import zipfile
@@ -108,7 +108,7 @@ class UserUploadService(LmService):
             data = upload_file.file.read()
         else:
             data = cherrypy.request.body.read()
-        instr = StringIO()
+        instr = BytesIO()
         instr.write(data)
         instr.seek(0)
 
@@ -212,8 +212,8 @@ class UserUploadService(LmService):
                 HTTPStatus.BAD_REQUEST,
                 'Must provide metadata with occurrence data upload')
 
-        m_stringio = StringIO()
-        m_stringio.write(metadata)
+        m_stringio = BytesIO()
+        m_stringio.write(metadata.encode())
         m_stringio.seek(0)
         metadata = json.load(m_stringio)
         self.log.debug('Metadata: {}'.format(metadata))
@@ -227,7 +227,7 @@ class UserUploadService(LmService):
         else:
             data = cherrypy.request.body.read()
 
-        header_row = data.split('\n')[0]
+        header_row = data.split('\n'.encode())[0]
         meta_obj = {}
         # Check for delimiter
         if 'delimiter' in list(metadata.keys()):
@@ -235,7 +235,7 @@ class UserUploadService(LmService):
         else:
             delim = ','
         meta_obj['delimiter'] = delim
-        headers = header_row.split(delim)
+        headers = header_row.split(delim.encode())
         short_names = []
 
         roles = metadata['role']
@@ -295,7 +295,7 @@ class UserUploadService(LmService):
             json.dump(meta_obj, out_f)
 
         # Process file
-        instr = StringIO()
+        instr = BytesIO()
         # data = cherrypy.request.body.read()
         instr.write(data)
         instr.seek(0)
@@ -335,13 +335,13 @@ class UserUploadService(LmService):
         else:
             # self.log.debug('Data: {}'.format(data))
             if self.get_user_id() == DEFAULT_POST_USER and \
-                    len(data.split('\n')) > MAX_ANON_UPLOAD_SIZE:
+                    len(data.split('\n'.encode())) > MAX_ANON_UPLOAD_SIZE:
                 raise cherrypy.HTTPError(
                     HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
                     ('Anonymous users may only upload occurrence data less '
                      'than {} lines'.format(MAX_ANON_UPLOAD_SIZE)))
             with open(csv_filename, 'w') as out_f:
-                out_f.write(data)
+                out_f.write(data.decode())
 
         # Return
         cherrypy.response.status = HTTPStatus.ACCEPTED
