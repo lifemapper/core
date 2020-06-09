@@ -52,7 +52,7 @@ def format_env_layer(lyr):
     """
     layer_dict = _get_lifemapper_metadata(
         'environmental layer', lyr.get_id(), lyr.metadata_url,
-        lyr.get_user_id(), metadata=lyr.lyr_metadata)
+        lyr.get_user_id(), metadata=lyr.layer_metadata)
     data_url = lyr.get_data_url()
     min_val = lyr.min_val
     max_val = lyr.max_val
@@ -160,7 +160,7 @@ def format_occurrence_set(occ):
     occ_dict = _get_lifemapper_metadata(
         'occurrence set', occ.get_id(), occ.metadata_url, occ.get_user_id(),
         status=occ.status, status_mod_time=occ.status_mod_time,
-        metadata=occ.lyr_metadata)
+        metadata=occ.layer_metadata)
     map_name = EarlJr().create_basename(
         LMFileType.SDM_MAP, obj_code=occ.get_id(), usr=occ.get_user_id(),
         epsg=occ.epsg_code)
@@ -196,7 +196,7 @@ def format_projection(prj):
     prj_dict = _get_lifemapper_metadata(
         'projection', prj.get_id(), prj.metadata_url, prj.get_user_id(),
         status=prj.status, status_mod_time=prj.status_mod_time,
-        metadata=prj.lyr_metadata)
+        metadata=prj.layer_metadata)
     occ = prj._occurrence_set
     map_name = EarlJr().create_basename(
         LMFileType.SDM_MAP, obj_code=occ.get_id(), usr=occ.get_user_id(),
@@ -250,7 +250,7 @@ def format_raster_layer(lyr):
     """
     layer_dict = _get_lifemapper_metadata(
         'raster layer', lyr.get_id(), lyr.metadata_url, lyr.get_user_id(),
-        metadata=lyr.lyr_metadata)
+        metadata=lyr.layer_metadata)
     data_url = lyr.get_data_url()
     min_val = lyr.min_val
     max_val = lyr.max_val
@@ -313,7 +313,7 @@ def format_shapegrid(shapegrid):
         'shapegrid', shapegrid.get_id(), shapegrid.metadata_url,
         shapegrid.get_user_id(), status=shapegrid.status,
         status_mod_time=shapegrid.status_mod_time,
-        metadata=shapegrid.lyr_metadata)
+        metadata=shapegrid.layer_metadata)
     shapegrid_dict['spatialVector'] = _get_spatial_vector_metadata(
         shapegrid.epsg_code, shapegrid.bbox, shapegrid.map_units,
         shapegrid.get_data_url(), shapegrid.verify, shapegrid.ogr_type,
@@ -347,7 +347,7 @@ def format_vector(vector_layer):
     """
     vector_dict = _get_lifemapper_metadata(
         'Vector Layer', vector_layer.get_id(), vector_layer.metadata_url,
-        vector_layer.get_user_id(), metadata=vector_layer.lyr_metadata)
+        vector_layer.get_user_id(), metadata=vector_layer.layer_metadata)
     vector_dict['spatialVector'] = _get_spatial_vector_metadata(
         vector_layer.epsg_code, vector_layer.bbox, vector_layer.map_units,
         vector_layer.get_data_url(), vector_layer.verify,

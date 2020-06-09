@@ -714,7 +714,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
                           '         gml_include_items \"all\"'])
         parts.append('         ows_name  \"{}\"'.format(sdl_lyr.name))
         try:
-            ltitle = sdl_lyr.lyr_metadata[ServiceObject.META_TITLE]
+            ltitle = sdl_lyr.layer_metadata[ServiceObject.META_TITLE]
             parts.append('         ows_title  \"{}\"'.format(ltitle))
         except Exception:
             pass

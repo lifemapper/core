@@ -524,7 +524,7 @@ def subset_global_pam(archive_name, matches, user_id, bbox=None,
                 lyr = old_col.layer
 
                 try:
-                    val_attribute = old_col.layer.lyr_metadata[
+                    val_attribute = old_col.layer.layer_metadata[
                         MatrixColumn.INTERSECT_PARAM_VAL_NAME.lower()]
                 except KeyError:
                     val_attribute = None
