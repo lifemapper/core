@@ -423,7 +423,8 @@ def _get_lifemapper_metadata(object_type, lm_id, url, user_id, status=None,
         lm_dict['status'] = status
     if status_mod_time is not None:
         lm_dict['status_mod_time'] = format_time_human(status_mod_time)
-        lm_dict['etag'] = md5('{}-{}'.format(url, status_mod_time)).hexdigest()
+        lm_dict['etag'] = md5(
+            '{}-{}'.format(url, status_mod_time).encode()).hexdigest()
     if metadata is not None:
         lm_dict['metadata'] = metadata
 
