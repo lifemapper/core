@@ -76,7 +76,7 @@ def format_gridset(gridset):
     """
     gridset_dict = _get_lifemapper_metadata(
         'gridset', gridset.get_id(), gridset.metadata_url,
-        gridset.get_user_id(), metadata=gridset.grd_metadata)
+        gridset.get_user_id(), metadata=gridset.grid_metadata)
     gridset_dict['epsg'] = gridset.epsg_code
 
     gridset_dict['bioGeoHypotheses'] = []
@@ -197,7 +197,7 @@ def format_projection(prj):
         'projection', prj.get_id(), prj.metadata_url, prj.get_user_id(),
         status=prj.status, status_mod_time=prj.status_mod_time,
         metadata=prj.layer_metadata)
-    occ = prj._occurrence_set
+    occ = prj.occ_layer
     map_name = EarlJr().create_basename(
         LMFileType.SDM_MAP, obj_code=occ.get_id(), usr=occ.get_user_id(),
         epsg=occ.epsg_code)
@@ -232,7 +232,7 @@ def format_projection(prj):
     prj_dict['squid'] = prj.squid
     prj_dict['occurrence_set'] = {
         'id': prj.get_occ_layer_id(),
-        'metadata_url': prj._occurrence_set.metadata_url
+        'metadata_url': prj.occ_layer.metadata_url
     }
 
     return prj_dict
@@ -298,7 +298,8 @@ def format_scenario_package(scen_package):
     """
     scen_package_dict = _get_lifemapper_metadata(
         'scenario package', scen_package.get_id(), scen_package.metadata_url,
-        scen_package.get_user_id(), metadata=scen_package.scen_pkg_metadata)
+        scen_package.get_user_id(),
+        metadata=scen_package.scen_package_metadata)
     scen_package_dict['name'] = scen_package.name
     scen_package_dict['scenarios'] = [
         format_scenario(scn) for (_, scn) in scen_package.scenarios.items()]
