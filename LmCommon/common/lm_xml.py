@@ -150,14 +150,15 @@ ET._original_serialize_xml = ET._serialize_xml
 
 
 # .............................................................................
-def _serialize_xml(write, elem, encoding, qnames, namespaces):
+def _serialize_xml(write, elem, qnames, namespaces,
+                   short_empty_elements, **kwargs):
     """Monkey patch to add support for CDATA in serialization
     """
     if elem.tag == '![CDATA[':
         write('<{}{}]]>{}'.format(elem.tag, elem.txt, elem.tail))
         return None
     return ET._original_serialize_xml(
-        write, elem, encoding, qnames, namespaces)
+        write, elem, qnames, namespaces, short_empty_elements, **kwargs)
 
 
 # .............................................................................
