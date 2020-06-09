@@ -77,13 +77,13 @@ def lm_formatter(f):
                         handler_result).encode(ENCODING)
                 if accept_hdr == LMFormat.GTIFF.get_mime_type():
                     return gtiff_object_formatter(
-                        handler_result).encode(ENCODING)
+                        handler_result)
                 if accept_hdr == LMFormat.SHAPE.get_mime_type():
                     shoot_snippets(
                         handler_result, SnippetOperations.DOWNLOADED,
                         SHAPEFILE_INTERFACE)
                     return shapefile_object_formatter(
-                        handler_result).encode(ENCODING)
+                        handler_result)
                 if accept_hdr == LMFormat.CSV.get_mime_type():
                     shoot_snippets(
                         handler_result, SnippetOperations.DOWNLOADED,
@@ -104,7 +104,7 @@ def lm_formatter(f):
                     sdms = True
                     return gridset_package_formatter(
                         handler_result, include_csv=csvs, include_sdm=sdms
-                        ).encode(ENCODING)
+                        )
                 if accept_hdr == LMFormat.PROGRESS.get_mime_type():
                     obj_type, obj_id, detail = handler_result
                     return progress_object_formatter(
