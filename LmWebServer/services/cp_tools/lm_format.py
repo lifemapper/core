@@ -71,10 +71,10 @@ def lm_formatter(f):
                         handler_result).encode(ENCODING)
                 if accept_hdr == LMFormat.EML.get_mime_type():
                     return eml_object_formatter(
-                        handler_result).encode(ENCODING)
+                        handler_result)
                 if accept_hdr == LMFormat.KML.get_mime_type():
                     return kml_object_formatter(
-                        handler_result).encode(ENCODING)
+                        handler_result)
                 if accept_hdr == LMFormat.GTIFF.get_mime_type():
                     return gtiff_object_formatter(
                         handler_result)
