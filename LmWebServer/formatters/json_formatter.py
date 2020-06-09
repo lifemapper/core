@@ -9,7 +9,7 @@ import json
 
 import cherrypy
 
-from LmCommon.common.lmconstants import LMFormat, ENCODING
+from LmCommon.common.lmconstants import LMFormat
 from LmServer.base.atom import Atom
 from LmServer.base.layer import Raster, Vector
 from LmServer.base.utilities import format_time_human
@@ -368,7 +368,7 @@ def json_object_formatter(obj):
     else:
         response = _format_object(obj)
 
-    return json.dumps(response, indent=4).encode(ENCODING)
+    return json.dumps(response, indent=4)
 
 
 # .............................................................................

@@ -6,7 +6,8 @@ the accept headers of the request
 import cherrypy
 
 from LmCommon.common.lmconstants import (
-    CSV_INTERFACE, HTTPStatus, JSON_INTERFACE, LMFormat, SHAPEFILE_INTERFACE)
+    CSV_INTERFACE, ENCODING, HTTPStatus, JSON_INTERFACE, LMFormat,
+    SHAPEFILE_INTERFACE)
 from LmServer.common.lmconstants import SnippetOperations
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.snippet import SnippetShooter
@@ -59,29 +60,36 @@ def lm_formatter(f):
         for accept_hdr, _ in sorted_accepts:
             try:
                 if accept_hdr == LMFormat.GEO_JSON.get_mime_type():
-                    return geo_json_object_formatter(handler_result)
+                    return geo_json_object_formatter(
+                        handler_result).encode(ENCODING)
                 # If JSON or default
                 if accept_hdr in [LMFormat.JSON.get_mime_type(), '*/*']:
                     shoot_snippets(
                         handler_result, SnippetOperations.VIEWED,
                         JSON_INTERFACE)
-                    return json_object_formatter(handler_result)
+                    return json_object_formatter(
+                        handler_result).encode(ENCODING)
                 if accept_hdr == LMFormat.EML.get_mime_type():
-                    return eml_object_formatter(handler_result)
+                    return eml_object_formatter(
+                        handler_result).encode(ENCODING)
                 if accept_hdr == LMFormat.KML.get_mime_type():
-                    return kml_object_formatter(handler_result)
+                    return kml_object_formatter(
+                        handler_result).encode(ENCODING)
                 if accept_hdr == LMFormat.GTIFF.get_mime_type():
-                    return gtiff_object_formatter(handler_result)
+                    return gtiff_object_formatter(
+                        handler_result).encode(ENCODING)
                 if accept_hdr == LMFormat.SHAPE.get_mime_type():
                     shoot_snippets(
                         handler_result, SnippetOperations.DOWNLOADED,
                         SHAPEFILE_INTERFACE)
-                    return shapefile_object_formatter(handler_result)
+                    return shapefile_object_formatter(
+                        handler_result).encode(ENCODING)
                 if accept_hdr == LMFormat.CSV.get_mime_type():
                     shoot_snippets(
                         handler_result, SnippetOperations.DOWNLOADED,
                         CSV_INTERFACE)
-                    return csv_object_formatter(handler_result)
+                    return csv_object_formatter(
+                        handler_result).encode(ENCODING)
                 if accept_hdr == LMFormat.NEWICK.get_mime_type():
                     raise cherrypy.HTTPError(
                         HTTPStatus.BAD_REQUEST,
@@ -89,16 +97,18 @@ def lm_formatter(f):
                     # TODO: Use dendropy to convert nexus to newick
                     # return file_formatter(handler_result.get_dlocation())
                 if accept_hdr == LMFormat.NEXUS.get_mime_type():
-                    return file_formatter(handler_result.get_dlocation())
+                    return file_formatter(
+                        handler_result.get_dlocation()).encode(ENCODING)
                 if accept_hdr == LMFormat.ZIP.get_mime_type():
                     csvs = True
                     sdms = True
                     return gridset_package_formatter(
-                        handler_result, include_csv=csvs, include_sdm=sdms)
+                        handler_result, include_csv=csvs, include_sdm=sdms
+                        ).encode(ENCODING)
                 if accept_hdr == LMFormat.PROGRESS.get_mime_type():
                     obj_type, obj_id, detail = handler_result
                     return progress_object_formatter(
-                        obj_type, obj_id, detail=detail)
+                        obj_type, obj_id, detail=detail).encode(ENCODING)
             except Exception as e:
                 # Ignore and try next accept header
                 raise cherrypy.HTTPError(
