@@ -129,7 +129,7 @@ class UserUploadService(LmService):
 
                     # zipF.extract(zfname, outFn)
                     with zip_f.open(zfname) as zip_f2:
-                        with open(out_fn, 'w') as out_f:
+                        with open(out_fn, 'wb') as out_f:
                             for line in zip_f2:
                                 out_f.write(line)
 
