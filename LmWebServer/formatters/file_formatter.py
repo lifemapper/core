@@ -1,6 +1,6 @@
 """Module containing File Formatter class and helping functions
 """
-from io import StringIO
+from io import BytesIO, StringIO
 import os
 import zipfile
 
@@ -28,7 +28,7 @@ def file_formatter(filename, mode='r', stream=False, content_type=None):
         ret_file_name = os.path.basename(filename)
     else:
         # Zip together before returning
-        content_flo = StringIO()
+        content_flo = BytesIO()
         with zipfile.ZipFile(
                 content_flo, mode='w', compression=zipfile.ZIP_DEFLATED,
                 allowZip64=True) as zip_f:
