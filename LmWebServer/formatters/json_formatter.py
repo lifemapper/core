@@ -135,7 +135,7 @@ def format_matrix(mtx):
     matrix_dict = _get_lifemapper_metadata(
         'matrix', mtx.get_id(), mtx.metadata_url, mtx.get_user_id(),
         status=mtx.status, status_mod_time=mtx.status_mod_time,
-        metadata=mtx.mtx_metadata)
+        metadata=mtx.matrix_metadata)
     matrix_dict['alt_pred_code'] = mtx.alt_pred_code
     matrix_dict['date_code'] = mtx.date_code
     matrix_dict['gcm_code'] = mtx.gcm_code
