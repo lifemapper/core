@@ -55,9 +55,10 @@ class BoomPoster:
         self.config.add_section(SERVER_BOOM_HEADING)
         self.config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, user_id)
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER_EMAIL, user_email)
+            SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER_EMAIL, str(user_email))
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_PRIORITY, Priority.REQUESTED)
+            SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_PRIORITY,
+            str(Priority.REQUESTED))
 
         # Look for an archive name
         if APIPostKeys.ARCHIVE_NAME in req_json.keys():
@@ -211,11 +212,13 @@ class BoomPoster:
 
         shapegrid_cell_sides = shapegrid_json[APIPostKeys.CELL_SIDES]
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.GRID_NUM_SIDES, shapegrid_cell_sides)
+            SERVER_BOOM_HEADING, BoomKeys.GRID_NUM_SIDES,
+            str(shapegrid_cell_sides))
 
         shapegrid_resolution = shapegrid_json[APIPostKeys.RESOLUTION]
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.GRID_CELL_SIZE, shapegrid_resolution)
+            SERVER_BOOM_HEADING, BoomKeys.GRID_CELL_SIZE,
+            str(shapegrid_resolution))
 
         # Process intersect parameters
         intersect_parameters = global_pam_json[
@@ -226,16 +229,19 @@ class BoomPoster:
         min_percent = intersect_parameters[APIPostKeys.MIN_PERCENT]
 
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.INTERSECT_FILTER_STRING, None)
+            SERVER_BOOM_HEADING, BoomKeys.INTERSECT_FILTER_STRING, str(None))
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.INTERSECT_VAL_NAME, value_name)
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.INTERSECT_MIN_PERCENT, min_percent)
+            SERVER_BOOM_HEADING, BoomKeys.INTERSECT_MIN_PERCENT,
+            str(min_percent))
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.INTERSECT_MIN_PRESENCE, min_presence)
+            SERVER_BOOM_HEADING, BoomKeys.INTERSECT_MIN_PRESENCE,
+            str(min_presence))
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.INTERSECT_MAX_PRESENCE, max_presence)
-        self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, True)
+            SERVER_BOOM_HEADING, BoomKeys.INTERSECT_MAX_PRESENCE,
+            str(max_presence))
+        self.config.set(SERVER_BOOM_HEADING, BoomKeys.ASSEMBLE_PAMS, str(True))
 
     # ................................
     def _process_mcpa(self, mcpa_json):
@@ -253,7 +259,7 @@ class BoomPoster:
         should_compute = int(self.has_tree)
 
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, should_compute)
+            SERVER_BOOM_HEADING, BoomKeys.COMPUTE_MCPA, str(should_compute))
 
         # Try to add SDM mask via ecoregion layer if available
         region_layer_name = 'ecoreg_10min_global'
@@ -367,7 +373,7 @@ class BoomPoster:
         else:
             min_points = 5
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN, min_points)
+            SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN, str(min_points))
 
     # ................................
     def _process_pam_stats(self, pam_stats_json):
@@ -389,7 +395,8 @@ class BoomPoster:
             should_compute = 0
 
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS, should_compute)
+            SERVER_BOOM_HEADING, BoomKeys.COMPUTE_PAM_STATS,
+            str(should_compute))
 
     # ................................
     def _process_scenario_package(self, scenario_json):
@@ -494,7 +501,7 @@ class BoomPoster:
             for param in algo[APIPostKeys.ALGORITHM_PARAMETERS].keys():
                 self.config.set(
                     algo_section, param.lower(),
-                    algo[APIPostKeys.ALGORITHM_PARAMETERS][param])
+                    str(algo[APIPostKeys.ALGORITHM_PARAMETERS][param]))
             i += 1
 
         # Masks
@@ -511,7 +518,7 @@ class BoomPoster:
                     'hull_region_intersect')
                 self.config.set(
                     SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.BUFFER,
-                    buffer_val)
+                    str(buffer_val))
                 self.config.set(
                     SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.REGION, region)
                 # Set the model and scenario mask options
