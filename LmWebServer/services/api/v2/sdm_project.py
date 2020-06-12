@@ -100,7 +100,7 @@ class SdmProjectService(LmService):
             usr = self.scribe.find_user(self.get_user_id())
 
         boom_post = BoomPoster(
-            usr.userid, usr.email, projection_data, self.scribe)
+            usr.user_id, usr.email, projection_data, self.scribe)
         gridset = boom_post.init_boom()
 
         cherrypy.response.status = HTTPStatus.ACCEPTED
