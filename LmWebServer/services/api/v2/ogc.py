@@ -66,7 +66,7 @@ class MapService(LmService):
                 map_file_name)
 
             if map_svc is not None and map_svc.count > 0:
-                map_svc._write_map(MAP_TEMPLATE)
+                map_svc.write_map(MAP_TEMPLATE)
 
         self.ows_req = mapscript.OWSRequest()
         map_params = [

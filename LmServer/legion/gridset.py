@@ -433,7 +433,7 @@ class Gridset(ServiceObject):  # LMMap
         return success
 
     # ................................
-    def _write_map(self, map_filename):
+    def write_map(self, map_filename):
         pass
         # LMMap._write_map(self, map_filename, shpGrid=self._shapegrid,
         #                    matrices=self._matrices)

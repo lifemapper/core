@@ -87,8 +87,8 @@ def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
             gridset.tree.get_dlocation(),
             os.path.basename(gridset.tree.get_dlocation()))
         print('Getting shapegrid')
-        shapegrid = gridset.getShapegrid()
-        matrices = gridset.getMatrices()
+        shapegrid = gridset.get_shapegrid()
+        matrices = gridset.get_matrices()
         i = 0
         print(('{} matrices'.format(len(matrices))))
         for mtx in matrices:
@@ -100,7 +100,7 @@ def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
             print(' - Loaded')
 
             # Need to get geojson where we can
-            if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
+            if mtx.matrix_type in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
                 mtx_file_name = '{}{}'.format(
                     os.path.splitext(
                         os.path.basename(
@@ -124,7 +124,7 @@ def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
                         mtx_join_attrib=0, ident=0,
                         header_lookup_filename=hlfn, transform=mung)
 
-            elif mtx.matrixType == MatrixType.ANC_PAM:
+            elif mtx.matrix_type == MatrixType.ANC_PAM:
                 mtx_file_name = '{}{}'.format(
                     os.path.splitext(
                         os.path.basename(
@@ -147,7 +147,7 @@ def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
                         mtx_join_attrib=0, ident=0,
                         header_lookup_filename=hlfn, transform=mung)
 
-            elif mtx.matrixType in [
+            elif mtx.matrix_type in [
                     MatrixType.SITES_COV_OBSERVED, MatrixType.SITES_COV_RANDOM,
                     MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM]:
                 mtx_file_name = '{}{}'.format(

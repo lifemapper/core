@@ -5,7 +5,7 @@ Todo:
 """
 from collections import defaultdict
 import csv
-from io import StringIO
+from io import BytesIO
 import json
 import os
 import zipfile
@@ -40,7 +40,8 @@ def get_map_content_for_proj(prj, scribe):
     """
     ows_req = mapscript.OWSRequest()
     earl_jr = EarlJr(scribe=scribe)
-    map_filename = earl_jr.get_map_filename_from_map_name(prj.map_name)
+    map_filename = earl_jr.get_map_filename_from_map_name(
+        prj.map_name, user_id=prj.get_user_id())
     if not os.path.exists(map_filename):
         map_svc = scribe.get_map_service_from_map_filename(map_filename)
         if map_svc is not None and map_svc.count > 0:
@@ -49,7 +50,7 @@ def get_map_content_for_proj(prj, scribe):
         ('map', prj.map_name),
         ('bbox', str(prj.bbox).strip('(').strip(')')),
         ('height', '500'),
-        ('layers', 'bmng,{}'.format(prj.map_layer_name)),
+        ('layers', 'bmng,{}'.format(prj.map_layername)),
         ('request', 'GetMap'),
         ('format', 'image/png'),
         ('service', 'WMS'),
@@ -306,7 +307,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
                 os.path.splitext(occ.get_dlocation())[0], LMFormat.CSV.ext)
 
             # string io object
-            occ_string_io = StringIO()
+            occ_string_io = BytesIO()
             headers = list(occ.getFeatureAttributes().items())
             with open(sys_occ_path) as in_f:
                 # Get Delimiter
@@ -362,7 +363,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
     """
     # Initialization
     # --------------
-    package_filename = gridset.getPackageLocation()
+    package_filename = gridset.get_package_location()
     scribe = BorgScribe(WebLogger())
     user_id = gridset.get_user_id()
     occ_info = None
@@ -372,8 +373,8 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
         gs_name = gridset.name
     except AttributeError:
         gs_name = 'Gridset {}'.format(gridset.get_id())
-    shapegrid = gridset.getShapegrid()
-    matrices = gridset.getMatrices()
+    shapegrid = gridset.get_shapegrid()
+    matrices = gridset.get_matrices()
     do_mcpa = False
     do_pam_stats = False
     pam = None
@@ -404,28 +405,28 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
         #    Populate variables
         for mtx in matrices:
             # Only add if matrix is complete and observed scenario
-            if mtx.status == JobStatus.COMPLETE and mtx.dateCode == 'Curr':
+            if mtx.status == JobStatus.COMPLETE and mtx.date_code == 'Curr':
                 # Handle each matrix type
-                if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
+                if mtx.matrix_type in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
                     pam = Matrix.load(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'pam_{}.csv'.format(mtx.get_id()))
-                elif mtx.matrixType == MatrixType.ANC_PAM:
+                elif mtx.matrix_type == MatrixType.ANC_PAM:
                     anc_pam = Matrix.load(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'anc_pam_{}.csv'.format(mtx.get_id()))
-                elif mtx.matrixType == MatrixType.SITES_COV_OBSERVED:
+                elif mtx.matrix_type == MatrixType.SITES_COV_OBSERVED:
                     sites_cov_obs = Matrix.load(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'sitesCovarianceObserved_{}.csv'.format(
                             mtx.get_id()))
-                elif mtx.matrixType == MatrixType.SITES_OBSERVED:
+                elif mtx.matrix_type == MatrixType.SITES_OBSERVED:
                     sites_obs = Matrix.load(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'sitesObserved_{}.csv'.format(
                             mtx.get_id()))
                     do_pam_stats = True
-                elif mtx.matrixType == MatrixType.MCPA_OUTPUTS:
+                elif mtx.matrix_type == MatrixType.MCPA_OUTPUTS:
                     mcpa_mtx = Matrix.load(mtx.get_dlocation())
                     csv_mtx_fn = os.path.join(
                         MATRIX_DIR, 'mcpa_{}.csv'.format(mtx.get_id()))
@@ -439,7 +440,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 # If we should write the CSV file, and the matrix exists, do it
                 if include_csv and os.path.exists(mtx.get_dlocation()):
                     mtx_obj = Matrix.load(mtx.get_dlocation())
-                    csv_mtx_str = StringIO()
+                    csv_mtx_str = BytesIO()
                     mtx_obj.write_csv(csv_mtx_str)
                     csv_mtx_str.seek(0)
                     zip_f.writestr(csv_mtx_fn, csv_mtx_str.getvalue())
@@ -537,7 +538,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if pam is not None:
                     header_lookup_fn = os.path.join(
                         DYN_PACKAGE_DIR, 'squidLookup.json')
-                    pam_str = StringIO()
+                    pam_str = BytesIO()
                     geo_jsonify_flo(
                         pam_str, shapegrid.get_dlocation(), matrix=pam,
                         mtx_join_attrib=0, ident=0,
@@ -553,7 +554,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     temp_filler = TemplateFiller(
                         squid_lookup=json.dumps(
                             create_header_lookup(
-                                pam.getColumnHeaders(), squids=True,
+                                pam.get_column_headers(), squids=True,
                                 scribe=scribe, user_id=user_id), indent=4))
                 else:
                     write_template = False
@@ -562,14 +563,14 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     temp_filler = TemplateFiller(
                         node_lookup_json=json.dumps(
                             create_header_lookup(
-                                anc_pam.getColumnHeaders()), indent=4))
+                                anc_pam.get_column_headers()), indent=4))
                 else:
                     write_template = False
             elif r_path.endswith('ancPam.js'):
                 if anc_pam is not None:
                     header_lookup_fn = os.path.join(
                         DYN_PACKAGE_DIR, 'nodeLookup.json')
-                    anc_pam_str = StringIO()
+                    anc_pam_str = BytesIO()
                     geo_jsonify_flo(
                         anc_pam_str, shapegrid.get_dlocation(), matrix=anc_pam,
                         mtx_join_attrib=0, ident=0,
@@ -583,7 +584,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     write_template = False
             elif r_path.endswith('mcpaMatrix.js'):
                 if mcpa_mtx is not None:
-                    mtx_str = StringIO()
+                    mtx_str = BytesIO()
                     mcpa_mtx.write_csv(mtx_str)
                     mtx_str.seek(0)
                     temp_filler = TemplateFiller(mcpa_csv=mtx_str.getvalue())
@@ -592,7 +593,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     write_template = False
             elif r_path.endswith('sitesCovarianceObserved.js'):
                 if sites_cov_obs is not None:
-                    mtx_str = StringIO()
+                    mtx_str = BytesIO()
                     mtx_2d = Matrix(
                         sites_cov_obs[:, :, 0],
                         headers={
@@ -609,7 +610,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     write_template = False
             elif r_path.endswith('sitesObserved.js'):
                 if sites_obs is not None:
-                    mtx_str = StringIO()
+                    mtx_str = BytesIO()
                     mtx_2d = Matrix(
                         sites_obs[:, :, 0],
                         headers={
@@ -734,7 +735,7 @@ def gridset_package_formatter(gridset, include_csv=True, include_sdm=True,
     if stream:
         cherrypy.lib.file_generator(open(package_filename, 'r'))
     else:
-        with open(package_filename) as package_file:
+        with open(package_filename, 'r') as package_file:
             cnt = package_file.read()
         return cnt
     return None

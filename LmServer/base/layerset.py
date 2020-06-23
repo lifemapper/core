@@ -202,8 +202,8 @@ class _LayerSet(LMSpatialObject):
                 self.add_layer(lyr)
         else:
             self._layers = []
-        bboxes = [lyr.bbox for lyr in self._layers]
-        bbox = self.union_bboxes(bboxes)
+        # bboxes = [lyr.bbox for lyr in self._layers]
+        bbox = self.union_bboxes
         self._set_bbox(bbox)
 
     # ................................
@@ -225,7 +225,7 @@ class _LayerSet(LMSpatialObject):
     def union_bboxes(self):
         """Creates a union of layer bounding boxes."""
         bboxes = [lyr.bbox for lyr in self._layers]
-        return self.union_bboxes(bboxes)
+        return LMSpatialObject.union_bboxes(bboxes)
 
     # ................................
     @property
@@ -389,7 +389,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         return url
 
     # ................................
-    def _write_map(self, template=MAP_TEMPLATE):
+    def write_map(self, template=MAP_TEMPLATE):
         """Writes the map file for this layerset.
 
         Create a mapfile by replacing strings in a template mapfile with text

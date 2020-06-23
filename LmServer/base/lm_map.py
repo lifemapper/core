@@ -60,7 +60,7 @@ class LMMap(LMSpatialObject):
         self._map_prefix = None
 
     # ................................
-    def _write_map(self, map_filename, layers=None, shapegrid=None,
+    def write_map(self, map_filename, layers=None, shapegrid=None,
                    matrices=None, template=MAP_TEMPLATE):
         """Write a map
 
