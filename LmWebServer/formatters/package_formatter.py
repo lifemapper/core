@@ -5,7 +5,7 @@ Todo:
 """
 from collections import defaultdict
 import csv
-from io import BytesIO
+from io import BytesIO, StringIO
 import json
 import os
 import zipfile
@@ -17,7 +17,7 @@ from lmpy import Matrix
 
 from LmCommon.common.lm_xml import tostring
 from LmCommon.common.lmconstants import (
-    HTTPStatus, JobStatus, LMFormat, MatrixType, PamStatKeys)
+    HTTPStatus, JobStatus, LMFormat, MatrixType, PamStatKeys, ENCODING)
 from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import MAP_TEMPLATE
 from LmServer.common.log import WebLogger
@@ -215,17 +215,17 @@ def create_header_lookup(headers, squids=False, scribe=None, user_id=None):
         }
 
     def get_squid_header_dict(header, idx, scribe, user_id):
-        taxon = scribe.getTaxon(squid=header, user_id=user_id)
+        taxon = scribe.get_taxon(squid=header, user_id=user_id)
         ret = get_header_dict(header, idx)
 
         for attrib, key in [
-                ('scientificName', 'scientific_name'),
-                ('canonicalName', 'canonical_name'),
+                ('scientific_name', 'scientific_name'),
+                ('canonical_name', 'canonical_name'),
                 ('rank', 'taxon_rank'),
                 ('kingdom', 'taxon_kingdom'),
                 ('phylum', 'taxon_phylum'),
-                ('txClass', 'taxon_class'),
-                ('txOrder', 'taxon_order'),
+                ('class_', 'taxon_class'),
+                ('order_', 'taxon_order'),
                 ('family', 'taxon_family'),
                 ('genus', 'taxon_genus')]:
             val = getattr(taxon, attrib)
@@ -281,7 +281,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
             zip_f.write(prj.get_dlocation(), arc_prj_path)
             zip_f.writestr(
                 arc_prj_img_path, get_map_content_for_proj(prj, scribe))
-            scn = prj.projScenario
+            scn = prj.proj_scenario
             prj_info.append(
                 {
                     'prj_id': prj.get_id(),
@@ -291,7 +291,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
                     'species_name': prj.species_name,
                     'algorithm_code': prj.algorithm_code,
                     'gcm_code': scn.gcm_code,
-                    'alt_pred_code': scn.altpred_code,
+                    'alt_pred_code': scn.alt_pred_code,
                     'date_code': scn.date_code,
                     'epsg': prj.epsg_code,
                     'label': '{} {} {} {}'.format(
@@ -308,7 +308,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
 
             # string io object
             occ_string_io = BytesIO()
-            headers = list(occ.getFeatureAttributes().items())
+            headers = list(occ.get_feature_attributes().items())
             with open(sys_occ_path) as in_f:
                 # Get Delimiter
                 dialect = sniffer.sniff(in_f.read(32))
@@ -318,10 +318,11 @@ def _add_sdms_to_package(zip_f, projections, scribe):
                 # Write header line
                 header_line = delimiter.join(
                     [i[1][0] for i in sorted(headers)])
-                occ_string_io.write('{}\n'.format(header_line))
+                occ_string_io.write(
+                    '{}\n'.format(header_line).encode(ENCODING))
                 # Write the rest of the lines
                 for line in in_f:
-                    occ_string_io.write(line)
+                    occ_string_io.write(line.encode(ENCODING))
             occ_string_io.seek(0)
             zip_f.writestr(arc_occ_path, occ_string_io.getvalue())
             occ_string_io = None
@@ -440,7 +441,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 # If we should write the CSV file, and the matrix exists, do it
                 if include_csv and os.path.exists(mtx.get_dlocation()):
                     mtx_obj = Matrix.load(mtx.get_dlocation())
-                    csv_mtx_str = BytesIO()
+                    csv_mtx_str = StringIO()
                     mtx_obj.write_csv(csv_mtx_str)
                     csv_mtx_str.seek(0)
                     zip_f.writestr(csv_mtx_fn, csv_mtx_str.getvalue())
@@ -538,7 +539,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if pam is not None:
                     header_lookup_fn = os.path.join(
                         DYN_PACKAGE_DIR, 'squidLookup.json')
-                    pam_str = BytesIO()
+                    pam_str = StringIO()
                     geo_jsonify_flo(
                         pam_str, shapegrid.get_dlocation(), matrix=pam,
                         mtx_join_attrib=0, ident=0,
@@ -570,7 +571,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                 if anc_pam is not None:
                     header_lookup_fn = os.path.join(
                         DYN_PACKAGE_DIR, 'nodeLookup.json')
-                    anc_pam_str = BytesIO()
+                    anc_pam_str = StringIO()
                     geo_jsonify_flo(
                         anc_pam_str, shapegrid.get_dlocation(), matrix=anc_pam,
                         mtx_join_attrib=0, ident=0,
@@ -584,7 +585,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     write_template = False
             elif r_path.endswith('mcpaMatrix.js'):
                 if mcpa_mtx is not None:
-                    mtx_str = BytesIO()
+                    mtx_str = StringIO()
                     mcpa_mtx.write_csv(mtx_str)
                     mtx_str.seek(0)
                     temp_filler = TemplateFiller(mcpa_csv=mtx_str.getvalue())
@@ -593,7 +594,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     write_template = False
             elif r_path.endswith('sitesCovarianceObserved.js'):
                 if sites_cov_obs is not None:
-                    mtx_str = BytesIO()
+                    mtx_str = StringIO()
                     mtx_2d = Matrix(
                         sites_cov_obs[:, :, 0],
                         headers={
@@ -610,7 +611,7 @@ def _package_gridset(gridset, include_csv=False, include_sdm=False):
                     write_template = False
             elif r_path.endswith('sitesObserved.js'):
                 if sites_obs is not None:
-                    mtx_str = BytesIO()
+                    mtx_str = StringIO()
                     mtx_2d = Matrix(
                         sites_obs[:, :, 0],
                         headers={
@@ -733,9 +734,9 @@ def gridset_package_formatter(gridset, include_csv=True, include_sdm=True,
     cherrypy.response.headers['Content-Type'] = LMFormat.ZIP.get_mime_type()
 
     if stream:
-        cherrypy.lib.file_generator(open(package_filename, 'r'))
+        cherrypy.lib.file_generator(open(package_filename, 'rb'))
     else:
-        with open(package_filename, 'r') as package_file:
+        with open(package_filename, 'rb') as package_file:
             cnt = package_file.read()
         return cnt
     return None

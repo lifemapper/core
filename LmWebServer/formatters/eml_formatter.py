@@ -10,6 +10,7 @@ from LmCommon.common.lmconstants import LMFormat, MatrixType
 from LmServer.base.layer import Raster, Vector
 from LmServer.legion.env_layer import EnvLayer
 from LmServer.legion.gridset import Gridset
+from LmServer.legion.lm_matrix import LMMatrix
 from LmServer.legion.sdm_proj import SDMProjection
 
 
@@ -101,7 +102,7 @@ def _create_spatial_vector(spatial_vector):
             'externallyDefinedFormat'), 'formatName', value='geojson')
 
     attrib_list_element = SubElement(sv_element, 'attributeList')
-    if isinstance(spatial_vector, Matrix):
+    if isinstance(spatial_vector, LMMatrix):
         mtx = Matrix.load(spatial_vector.get_dlocation())
         for col_header in mtx.get_column_headers():
             SubElement(attrib_list_element, 'attribute', value=col_header)
