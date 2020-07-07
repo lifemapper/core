@@ -53,7 +53,8 @@ class BoomPoster:
         self.user_id = user_id
         self.config = ConfigParser()
         self.config.add_section(SERVER_BOOM_HEADING)
-        self.config.set(SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, user_id)
+        self.config.set(
+            SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER, str(user_id))
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_USER_EMAIL, str(user_email))
         self.config.set(
@@ -66,7 +67,7 @@ class BoomPoster:
         else:
             archive_name = '{}_{}'.format(user_id, gmt().mjd)
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_NAME, archive_name)
+            SERVER_BOOM_HEADING, BoomKeys.ARCHIVE_NAME, str(archive_name))
 
         # NOTE: For this version, we will follow what is available from the
         #             .ini file and not let it get too fancy / complicated.  We
@@ -205,10 +206,10 @@ class BoomPoster:
             shapegrid_json[APIPostKeys.MAX_X],
             shapegrid_json[APIPostKeys.MAX_Y])
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.GRID_BBOX, shapegrid_bbox)
+            SERVER_BOOM_HEADING, BoomKeys.GRID_BBOX, str(shapegrid_bbox))
         shapegrid_name = shapegrid_json[APIPostKeys.NAME]
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.GRID_NAME, shapegrid_name)
+            SERVER_BOOM_HEADING, BoomKeys.GRID_NAME, str(shapegrid_name))
 
         shapegrid_cell_sides = shapegrid_json[APIPostKeys.CELL_SIDES]
         self.config.set(
@@ -231,7 +232,7 @@ class BoomPoster:
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.INTERSECT_FILTER_STRING, str(None))
         self.config.set(
-            SERVER_BOOM_HEADING, BoomKeys.INTERSECT_VAL_NAME, value_name)
+            SERVER_BOOM_HEADING, BoomKeys.INTERSECT_VAL_NAME, str(value_name))
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.INTERSECT_MIN_PERCENT,
             str(min_percent))
@@ -255,7 +256,7 @@ class BoomPoster:
         """
         self.config.set(
             SERVER_BOOM_HEADING, BoomKeys.BIOGEO_HYPOTHESES_LAYERS,
-            mcpa_json['hypotheses_package_name'])
+            str(mcpa_json['hypotheses_package_name']))
         should_compute = int(self.has_tree)
 
         self.config.set(
@@ -270,12 +271,12 @@ class BoomPoster:
         self.config.add_section(SERVER_SDM_MASK_HEADING_PREFIX)
         self.config.set(
             SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.ALG_CODE,
-            ECOREGION_MASK_METHOD)
+            str(ECOREGION_MASK_METHOD))
         self.config.set(
-            SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.BUFFER, 0.5)
+            SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.BUFFER, '0.5')
         self.config.set(
             SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.REGION,
-            region_layer_name)
+            str(region_layer_name))
 
     # ................................
     def _process_occurrence_sets(self, occ_json):
@@ -292,10 +293,10 @@ class BoomPoster:
                     out_f.write('{}\n'.format(occ_id))
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.OCC_ID_FILENAME,
-                occ_filename)
+                str(occ_filename))
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE,
-                SpeciesDatasource.EXISTING)
+                str(SpeciesDatasource.EXISTING))
         elif APIPostKeys.TAXON_IDS in list(occ_json.keys()):
             tax_id_filename = self._get_temp_filename(
                 LMFormat.TXT.ext, prefix='user_taxon_ids_')
@@ -304,13 +305,13 @@ class BoomPoster:
                     out_f.write('{}\n'.format(tax_id))
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.TAXON_ID_FILENAME,
-                tax_id_filename)
+                str(tax_id_filename))
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE,
-                SpeciesDatasource.TAXON_IDS)
+                str(SpeciesDatasource.TAXON_IDS))
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
-                IdigbioAPI.DELIMITER)
+                str(IdigbioAPI.DELIMITER))
         elif APIPostKeys.TAXON_NAMES in list(occ_json.keys()):
             tax_names_filename = self._get_temp_filename(
                 LMFormat.TXT.ext, prefix='user_taxon_names_')
@@ -319,19 +320,19 @@ class BoomPoster:
                     out_f.write('{}\n'.format(tax_name))
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.TAXON_NAME_FILENAME,
-                tax_names_filename)
+                str(tax_names_filename))
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE,
-                SpeciesDatasource.TAXON_NAMES)
+                str(SpeciesDatasource.TAXON_NAMES))
         else:
             points_filename = occ_json[APIPostKeys.POINTS_FILENAME]
             # TODO: Full file path?
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.DATA_SOURCE,
-                SpeciesDatasource.USER)
+                str(SpeciesDatasource.USER))
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME,
-                points_filename)
+                str(points_filename))
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, ',')
 
@@ -365,7 +366,7 @@ class BoomPoster:
                     delimiter = occ_json[APIPostKeys.DELIMITER]
                     self.config.set(
                         SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER,
-                        delimiter)
+                        str(delimiter))
                 except KeyError:  # Not provided, default to tab
                     pass
         if APIPostKeys.MIN_POINTS in list(occ_json.keys()):
@@ -408,13 +409,13 @@ class BoomPoster:
         if APIPostKeys.PACKAGE_FILENAME in list(scenario_json.keys()):
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE,
-                scenario_json[APIPostKeys.PACKAGE_FILENAME])
+                str(scenario_json[APIPostKeys.PACKAGE_FILENAME]))
         else:
             model_scenario_code = scenario_json[
                 APIPostKeys.MODEL_SCENARIO][APIPostKeys.SCENARIO_CODE]
             self.config.set(
                 SERVER_BOOM_HEADING, BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO,
-                model_scenario_code)
+                str(model_scenario_code))
             proj_scenario_codes = []
             for scn in scenario_json[APIPostKeys.PROJECTION_SCENARIO]:
                 proj_scenario_codes.append(scn[APIPostKeys.SCENARIO_CODE])
@@ -473,7 +474,8 @@ class BoomPoster:
                 scenario_package_name = scenario_package.name
 
             self.config.set(
-                SERVER_BOOM_HEADING, 'scenario_package', scenario_package_name)
+                SERVER_BOOM_HEADING, 'scenario_package',
+                str(scenario_package_name))
 
     # ................................
     def _process_sdm(self, sdm_json):
@@ -497,7 +499,7 @@ class BoomPoster:
 
             self.config.set(
                 algo_section, BoomKeys.ALG_CODE,
-                algo[APIPostKeys.ALGORITHM_CODE])
+                str(algo[APIPostKeys.ALGORITHM_CODE]))
             for param in algo[APIPostKeys.ALGORITHM_PARAMETERS].keys():
                 self.config.set(
                     algo_section, param.lower(),
@@ -520,13 +522,16 @@ class BoomPoster:
                     SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.BUFFER,
                     str(buffer_val))
                 self.config.set(
-                    SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.REGION, region)
+                    SERVER_SDM_MASK_HEADING_PREFIX, BoomKeys.REGION,
+                    str(region))
                 # Set the model and scenario mask options
                 # TODO: Take this out later
                 self.config.set(
-                    SERVER_BOOM_HEADING, BoomKeys.MODEL_MASK_NAME, region)
+                    SERVER_BOOM_HEADING, BoomKeys.MODEL_MASK_NAME,
+                    str(region))
                 self.config.set(
-                    SERVER_BOOM_HEADING, BoomKeys.PROJECTION_MASK_NAME, region)
+                    SERVER_BOOM_HEADING, BoomKeys.PROJECTION_MASK_NAME,
+                    str(region))
             except KeyError as k_err:
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST,
@@ -546,7 +551,7 @@ class BoomPoster:
         # Make sure we include extension
         tree_base, _ = os.path.splitext(tree_name_1)
         tree_name = '{}{}'.format(tree_base, LMFormat.NEXUS.ext)
-        self.config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, tree_name)
+        self.config.set(SERVER_BOOM_HEADING, BoomKeys.TREE, str(tree_name))
         self.has_tree = True
 
     # ................................
