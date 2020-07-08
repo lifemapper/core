@@ -372,7 +372,8 @@ class UserUploadService(LmService):
                 data = cherrypy.request.body.read()
             for schema in ['newick', 'nexus', 'phyloxml']:
                 try:
-                    tree = TreeWrapper.get(data=data, schema=schema)
+                    self.log.debug(data.decode())
+                    tree = TreeWrapper.get(data=data.decode(), schema=schema)
                     # Add squids
                     squid_dict = {}
                     user_id = self.get_user_id()
@@ -390,7 +391,9 @@ class UserUploadService(LmService):
                     tree.write(
                         path=out_tree_filename, schema=DEFAULT_TREE_SCHEMA)
                     break
-                except Exception:
+                except Exception as err:
+                    # Uncomment for debugging purposes
+                    # self.log.debug(err)
                     pass
         else:
             raise cherrypy.HTTPError(
