@@ -120,7 +120,8 @@ def build_ancestral_pam(pam, tree):
         # Build the column of quaternary values indicating which clade is
         #    present; a1 - a2 + 2*((a1+a2)/2)
         node_data[:, col] = left_side - right_side + 2 * (
-            (left_side + right_side) / 2)
+            (left_side + right_side) / 2).astype(np.int)
+
         col += 1
 
     node_mtx = Matrix(
