@@ -169,3 +169,5 @@ Check LmCompute
      * installComputeCronJobs.log
      * transformData.log (transformData must be run manually by user after reboot)
 
+Accepted species from GBIF:
+https://www.gbif.org/species/search?rank=SPECIES&dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&status=ACCEPTED&advanced=1

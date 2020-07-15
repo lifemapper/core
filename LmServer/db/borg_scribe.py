@@ -354,8 +354,7 @@ class BorgScribe(LMObject):
     def list_shapegrids(self, first_rec_num, max_num, user_id=PUBLIC_USER,
                         cell_sides=None, cell_size=None, after_time=None,
                         before_time=None, epsg=None, atom=True):
-        """Return a list of shapegrids matching the specified criteria.
-        """
+        """Return a list of shapegrids matching the specified criteria."""
         return self._borg.list_shapegrids(
             first_rec_num, max_num, user_id, cell_sides, cell_size, after_time,
             before_time, epsg, atom)
