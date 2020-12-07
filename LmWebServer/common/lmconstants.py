@@ -71,6 +71,10 @@ QUERY_PARAMETERS = {
     'archivename': {
         QP_NAME_KEY: 'archive_name'
     },
+    'atom': {
+        QP_NAME_KEY: 'atom',
+        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+    },
     'beforestatus': {
         QP_NAME_KEY: 'before_status',
         QP_PROCESS_KEY: int
