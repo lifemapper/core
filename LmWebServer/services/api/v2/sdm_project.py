@@ -59,7 +59,7 @@ class SdmProjectService(LmService):
             display_name=None, epsg_code=None, limit=100,
             model_scenario_code=None, occurrence_set_id=None, offset=0,
             projection_scenario_code=None, url_user=None, scenario_id=None,
-            status=None, gridset_id=None, **params):
+            status=None, gridset_id=None, atom=True, **params):
         """Perform a GET request. List, count, or get individual projection.
         """
         if path_projection_id is None:
@@ -71,7 +71,7 @@ class SdmProjectService(LmService):
                 mdl_scenario_code=model_scenario_code,
                 occurrence_set_id=occurrence_set_id, offset=offset,
                 prj_scenario_code=projection_scenario_code, status=status,
-                gridset_id=gridset_id)
+                gridset_id=gridset_id, atom=atom)
 
         if path_projection_id.lower() == 'count':
             return self._count_projections(
@@ -161,7 +161,7 @@ class SdmProjectService(LmService):
                           display_name=None, epsg_code=None, limit=100,
                           mdl_scenario_code=None, occurrence_set_id=None,
                           offset=0, prj_scenario_code=None, status=None,
-                          gridset_id=None):
+                          gridset_id=None, atom=True):
         """Return a list of projections matching the specified criteria
         """
         # Process status parameter
@@ -180,5 +180,5 @@ class SdmProjectService(LmService):
             after_status=after_status, before_status=before_status,
             occ_set_id=occurrence_set_id, alg_code=alg_code,
             mdl_scen_code=mdl_scenario_code, prj_scen_code=prj_scenario_code,
-            gridset_id=gridset_id)
+            gridset_id=gridset_id, atom=atom)
         return prj_atoms
