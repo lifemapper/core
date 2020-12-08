@@ -41,6 +41,26 @@ def sci_name_prep(name):
     return name[:20]
 
 
+# .............................................................................
+def boolify_parameter(param, default=True):
+    """Convert an input query parameter to boolean."""
+    try:
+        # If zero or one
+        return bool(int(param))
+    except ValueError:
+        try:
+            # Try processing a string
+            str_val = param.lower().strip()
+            if str_val == 'false':
+                return False
+            if str_val == 'true':
+                return True
+        except Exception:
+            pass
+    # Return default if we can't figure it out
+    return default
+
+
 # This constant is used for processing query parameters.  If no 'processIn'
 #     key, just take the parameter as it comes in
 # Note: The dictionary keys are the .lower() version of the parameter names.
@@ -73,7 +93,7 @@ QUERY_PARAMETERS = {
     },
     'atom': {
         QP_NAME_KEY: 'atom',
-        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)  # Boolify, default is true
     },
     'beforestatus': {
         QP_NAME_KEY: 'before_status',
@@ -123,18 +143,18 @@ QUERY_PARAMETERS = {
     },
     'detail': {
         QP_NAME_KEY: 'detail',
-        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
     },
     'displayname': {
         QP_NAME_KEY: 'display_name'
     },
     'docalc': {
         QP_NAME_KEY: 'do_calc',
-        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
     },
     'domcpa': {
         QP_NAME_KEY: 'do_mcpa',
-        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
     },
     'envcode': {
         QP_NAME_KEY: 'env_code'
@@ -155,7 +175,7 @@ QUERY_PARAMETERS = {
     },
     'fillpoints': {
         QP_NAME_KEY: 'fill_points',
-        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
     },
     'format': {
         # TODO: Forward to respFormat since format is reserved
@@ -170,7 +190,7 @@ QUERY_PARAMETERS = {
     },
     'hasbranchlengths': {
         QP_NAME_KEY: 'has_branch_lengths',
-        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)  # Boolify, default is true
     },
     'height': {
         QP_NAME_KEY: 'height',
@@ -184,19 +204,19 @@ QUERY_PARAMETERS = {
     },
     'includecsvs': {
         QP_NAME_KEY: 'include_csvs',
-        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
     },
     'includesdms': {
         QP_NAME_KEY: 'include_sdms',
-        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
     },
     'isbinary': {
         QP_NAME_KEY: 'is_binary',
-        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)  # Boolify, default is true
     },
     'isultrametric': {
         QP_NAME_KEY: 'is_ultrametric',
-        QP_PROCESS_KEY: lambda x: bool(int(x))  # Zero is false, one is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)  # Boolify, default is true
     },
     'keyword': {
         QP_NAME_KEY: 'keyword',
