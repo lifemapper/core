@@ -51,9 +51,9 @@ def boolify_parameter(param, default=True):
         try:
             # Try processing a string
             str_val = param.lower().strip()
-            if str_val == 'false':
+            if str_val == 'false' or str_val == 'no':
                 return False
-            if str_val == 'true':
+            if str_val == 'true' or str_val == 'yes':
                 return True
         except Exception:
             pass
