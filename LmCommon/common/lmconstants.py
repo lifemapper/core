@@ -199,14 +199,12 @@ class LMFormat:
 
     @staticmethod
     def gdal_formats():
-        """Returns a list of GDAL raster formats
-        """
+        """Returns a list of GDAL raster formats"""
         return [LMFormat.ASCII, LMFormat.GTIFF, LMFormat.HFA]
 
     @staticmethod
     def get_default_gdal():
-        """Get the default gdal format
-        """
+        """Get the default gdal format"""
         for frmt in LMFormat.gdal_formats():
             if frmt.is_default:
                 return frmt

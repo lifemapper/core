@@ -18,7 +18,7 @@ from LmServer.common.lmconstants import (
     LINE_SYMBOL, LMFileType, LMServiceType, MAP_TEMPLATE, MapPrefix,
     POINT_SIZE, POINT_SYMBOL, POLYGON_SIZE, POLYGON_SYMBOL, PROJ_LIB,
     QUERY_TEMPLATE, QUERY_TOLERANCE, SCALE_PROJECTION_MAXIMUM,
-    SCALE_PROJECTION_MINIMUM, SYMBOL_FILENAME)
+    SCALE_PROJECTION_MINIMUM, SYMBOL_FILENAME, WEB_MERCATOR_EPSG)
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX)
 from LmServer.legion.occ_layer import OccurrenceLayer
 from LmServer.legion.sdm_proj import SDMProjection
@@ -485,7 +485,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
             label = 'Lifemapper Data Service'
         parts = [
             '      METADATA',
-            '         ows_srs     \"epsg:{}\"'.format(self.epsg_code),
+            '         ows_srs     \"epsg:{} epsg:{}\"'.format(
+                self.epsg_code, WEB_MERCATOR_EPSG),
             '         ows_enable_request   \"*\"',
             '         ows_label   \"{}\"'.format(label),
             '         ows_title   \"{}\"'.format(self.title),
