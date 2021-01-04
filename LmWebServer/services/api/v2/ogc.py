@@ -1,20 +1,34 @@
 """This module provides OGC services"""
-import os
-
 import cherrypy
 import mapscript
+import os
 
 from LmCommon.common.lmconstants import HTTPStatus
 from LmServer.common.color_palette import ColorPalette
 from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (
     LINE_SIZE, LINE_SYMBOL, MAP_TEMPLATE, MapPrefix, OCC_NAME_PREFIX,
-    POINT_SIZE, POINT_SYMBOL, POLYGON_SIZE, PRJ_PREFIX)
+    POINT_SIZE, POINT_SYMBOL, POLYGON_SIZE, PRJ_PREFIX, WEB_MERCATOR_EPSG)
 from LmWebServer.services.api.v2.base import LmService
 
 PALETTES = (
     'gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia',
     'aqua', 'bluered', 'bluegreen', 'greenred')
+
+# .............................................................................
+def delete_obsolete_mapfile(self, filename):
+    """ Delete obsolete mapfiles without web-mercator EPSG for W*S services """
+    if os.path.exists(filename):
+        import subprocess
+        cmd = '/usr/bin/grep  epsg:{}  {}'.format(WEB_MERCATOR_EPSG, filename)
+        info, err = subprocess.Popen(
+            cmd, shell=True, stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE).communicate()
+        if len(info) == 0:
+            try:
+                os.remove(filename)
+            except Exception as err:
+                print('Failed to remove {}, {}'.format(filename, err))
 
 
 # .............................................................................
@@ -61,6 +75,9 @@ class MapService(LmService):
         earl_jr = EarlJr(scribe=self.scribe)
         map_file_name = earl_jr.get_map_filename_from_map_name(map_name)
 
+        # TODO: Remove this after production mapfiles are updated
+        delete_obsolete_mapfile(map_file_name)
+            
         if not os.path.exists(map_file_name):
             map_svc = self.scribe.get_map_service_from_map_filename(
                 map_file_name)
