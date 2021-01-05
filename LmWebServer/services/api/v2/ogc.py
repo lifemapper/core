@@ -16,7 +16,7 @@ PALETTES = (
     'aqua', 'bluered', 'bluegreen', 'greenred')
 
 # .............................................................................
-def delete_obsolete_mapfile(self, filename):
+def delete_obsolete_mapfile(filename):
     """ Delete obsolete mapfiles without web-mercator EPSG for W*S services """
     if os.path.exists(filename):
         import subprocess
