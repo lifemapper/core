@@ -13,7 +13,7 @@
 				"occ_data_name": "$OCCURRENCE_FILENAME$",
 				"occ_data_delimiter": ",",
 				"point_count_min": 5,
-				"scenario_package_model_scenario": "worldclim-curr",,
+				"scenario_package_model_scenario": "worldclim-curr",
 				"scenario_package_projection_scenarios": "worldclim-curr",
 				"scenario_package": "10min-past-present-future",
 				"compute_pam_stats": 0,
