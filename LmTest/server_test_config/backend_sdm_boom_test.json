@@ -39,7 +39,7 @@
                 "autofeature": 1,
                 "betamultiplier": 1,
                 "beta_categorical": -1,
-                "beta_hinge"; -1,
+                "beta_hinge": -1,
                 "beta_lqp": -1,
                 "beta_threshold": -1,
                 "convergencethreshold": 1e-05,
