@@ -20,28 +20,26 @@ class BoomJobSubmissionTest(test_base.LmTest):
     # .............................
     def __init__(
         self,
-        test_user,
+        user_id,
         config,
         wait_timeout,
         delay_time=0,
         delay_interval=3600,
     ):
         """Construct the simulated submission test."""
-        test_base.LmTest.__init__(
-            self, delay_time=delay_time, delay_interval=delay_interval
-        )
+        test_base.LmTest.__init__(self, delay_time=delay_time)
         self.wait_timeout = wait_timeout
         self.boom_config = config
         # Create a random value used for filenames
         rand_val = randint(0, 99999)
-        self.user_dir = os.path.join(ARCHIVE_PATH, test_user)
+        self.user_dir = os.path.join(ARCHIVE_PATH, user_id)
         self._replace_lookup = {
-            'TEST_USER': test_user,
+            'TEST_USER': user_id,
             'ARCHIVE_NAME': 'Auto_test-{}'.format(rand_val),
             'OCCURRENCE_FILENAME': 'Auto_test_occ-{}'.format(rand_val),
         }
         self.test_name = 'SDM BOOM Job test (user: {}, archive: {})'.format(
-            test_user, self._replace_lookup['ARCHIVE_NAME']
+            user_id, self._replace_lookup['ARCHIVE_NAME']
         )
         self.config_filename = os.path.join(
             TEMP_PATH, '{}.ini'.format(self._replace_lookup['ARCHIVE_NAME'])
