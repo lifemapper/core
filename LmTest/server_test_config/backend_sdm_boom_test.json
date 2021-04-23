@@ -3,6 +3,7 @@
     "test_class": "BoomJobSubmissionTest",
     "parameters": {
         "user_id": "test_user",
+        "wait_timeout": 3600,
         "config": {
             "BOOM": {
                 "archive_user": "test_user",
