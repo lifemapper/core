@@ -68,7 +68,7 @@ class BoomJobSubmissionTest(test_base.LmTest):
         with open(csv_filename, mode='wt') as out_file:
             out_file.write('Species,Longitude,Latitude\n')
             for i in range(num_species):
-                for _ in randint(min_points, max_points):
+                for _ in range(randint(min_points, max_points)):
                     out_file.write(
                         '{},{},{}\n'.format(
                             'Species {}'.format(i),
@@ -105,7 +105,7 @@ class BoomJobSubmissionTest(test_base.LmTest):
         Args:
             value (str): A string potentially containing a template value.
         """
-        parts = value.split('$')
+        parts = str(value).split('$')
         # Replace odd values with lookup replace values.
         for i in range(1, len(parts), 2):
             parts[i] = self._replace_lookup[parts[i]]
