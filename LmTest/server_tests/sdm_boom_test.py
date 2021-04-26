@@ -20,28 +20,26 @@ class BoomJobSubmissionTest(test_base.LmTest):
     # .............................
     def __init__(
         self,
-        test_user,
+        user_id,
         config,
         wait_timeout,
         delay_time=0,
         delay_interval=3600,
     ):
         """Construct the simulated submission test."""
-        test_base.LmTest.__init__(
-            self, delay_time=delay_time, delay_interval=delay_interval
-        )
+        test_base.LmTest.__init__(self, delay_time=delay_time)
         self.wait_timeout = wait_timeout
         self.boom_config = config
         # Create a random value used for filenames
         rand_val = randint(0, 99999)
-        self.user_dir = os.path.join(ARCHIVE_PATH, test_user)
+        self.user_dir = os.path.join(ARCHIVE_PATH, user_id)
         self._replace_lookup = {
-            'TEST_USER': test_user,
+            'TEST_USER': user_id,
             'ARCHIVE_NAME': 'Auto_test-{}'.format(rand_val),
             'OCCURRENCE_FILENAME': 'Auto_test_occ-{}'.format(rand_val),
         }
         self.test_name = 'SDM BOOM Job test (user: {}, archive: {})'.format(
-            test_user, self._replace_lookup['ARCHIVE_NAME']
+            user_id, self._replace_lookup['ARCHIVE_NAME']
         )
         self.config_filename = os.path.join(
             TEMP_PATH, '{}.ini'.format(self._replace_lookup['ARCHIVE_NAME'])
@@ -61,16 +59,18 @@ class BoomJobSubmissionTest(test_base.LmTest):
             min_points (int): Minimum number of points per species.
             max_points (int): Maximum number of points per species.
         """
+        print(1)
         csv_filename = os.path.join(
             self.user_dir, '{}.csv'.format(self._replace_lookup['OCCURRENCE_FILENAME'])
         )
         json_filename = os.path.join(
             self.user_dir, '{}.json'.format(self._replace_lookup['OCCURRENCE_FILENAME'])
         )
+        print(2)
         with open(csv_filename, mode='wt') as out_file:
             out_file.write('Species,Longitude,Latitude\n')
             for i in range(num_species):
-                for _ in randint(min_points, max_points):
+                for _ in range(randint(min_points, max_points)):
                     out_file.write(
                         '{},{},{}\n'.format(
                             'Species {}'.format(i),
@@ -78,6 +78,7 @@ class BoomJobSubmissionTest(test_base.LmTest):
                             180.0 * random() - 90.0,
                         )
                     )
+        print(3)
         point_meta = {
             '0': {'name': 'Species', 'role': 'taxaName', 'type': 'string'},
             '1': {'name': 'Longitude', 'role': 'longitude', 'type': 'real'},
@@ -107,7 +108,7 @@ class BoomJobSubmissionTest(test_base.LmTest):
         Args:
             value (str): A string potentially containing a template value.
         """
-        parts = value.split('$')
+        parts = str(value).split('$')
         # Replace odd values with lookup replace values.
         for i in range(1, len(parts), 2):
             parts[i] = self._replace_lookup[parts[i]]
@@ -116,6 +117,9 @@ class BoomJobSubmissionTest(test_base.LmTest):
     # .............................
     def run_test(self):
         """Run the test."""
+        num_species = 10
+        min_points = 200
+        max_points = 1000
         try:
             # Create point file
             self._generate_random_occurrences(num_species, min_points, max_points)
@@ -186,6 +190,8 @@ class BoomWaitTest(test_base.LmTest):
                 BoomWaitTest(
                     self.gridset_id,
                     self.wait_timeout - self.delay_interval,
+                    delay_time=self.delay_interval,
+                    delay_interval=self.delay_interval,
                 )
             )
         else:
@@ -200,9 +206,7 @@ class BoomValidateTest(test_base.LmTest):
     # .............................
     def __init__(self, gridset_id, delay_time=0, delay_interval=60):
         """Construct the instance."""
-        test_base.LmTest.__init__(
-            self, delay_time=delay_time, delay_interval=delay_interval
-        )
+        test_base.LmTest.__init__(self, delay_time=delay_time)
         self.gridset_id = gridset_id
         self.test_name = 'Gridset {} validation test'.format(self.gridset_id)
 
