@@ -1,5 +1,5 @@
 {
-    "module": "cj_tests.sdm_boom_test",
+    "module": "LmTest.server_tests.sdm_boom_test",
     "test_class": "BoomJobSubmissionTest",
     "parameters": {
         "user_id": "test_user",
