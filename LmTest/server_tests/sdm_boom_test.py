@@ -3,7 +3,7 @@ import json
 import os
 from random import randint, random
 
-import lm_test.base.test_base as test_base
+import lmtest.base.test_base as test_base
 from LmCommon.common.lmconstants import JobStatus
 from LmDbServer.boom.init_workflow import BOOMFiller
 from LmServer.common.lmconstants import ARCHIVE_PATH, TEMP_PATH
