@@ -587,6 +587,7 @@ class GridsetService(LmService):
             cherrypy.response.status = HTTPStatus.OK
 
     # ................................
+    @lm_formatter
     def POST(self, **params):
         """Posts a new grid set
         """
