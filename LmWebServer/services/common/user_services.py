@@ -57,7 +57,7 @@ class UserLogin(LmService):
             pass
 
         user = self.scribe.find_user(user_id=user_id)
-        if user is not None and user.checkPassword(pword):
+        if user is not None and user.check_password(pword):
             # Provided correct credentials
             cherrypy.session.regenerate()
             cherrypy.session[SESSION_KEY] = user.get_user_id()
